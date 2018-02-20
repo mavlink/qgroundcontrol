@@ -9,6 +9,7 @@ Button {
     property bool   primary:        false                               ///< primary button for a group of buttons
     property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
     property bool   showBorder:     _qgcPal.globalTheme === QGCPalette.Light
+    property bool   iconLeft:       false
     property real   backRadius:     0
     property real   heightFactor:   0.5
 
@@ -73,31 +74,35 @@ Button {
 
             /*! This defines the label of the button.  */
             label: Item {
-                implicitWidth:          row.implicitWidth
-                implicitHeight:         row.implicitHeight
-                baselineOffset:         row.y + text.y + text.baselineOffset
+                implicitWidth:          text.implicitWidth + icon.width
+                implicitHeight:         text.implicitHeight
+                baselineOffset:         text.y + text.baselineOffset
 
-                Row {
-                    id:                 row
-                    anchors.centerIn:   parent
-                    spacing:            ScreenTools.defaultFontPixelWidth * 0.25
+                QGCColoredImage {
+                    id:                     icon
+                    source:                 control.iconSource
+                    height:                 source === "" ? 0 : text.height
+                    width:                  height
+                    color:                  text.color
+                    fillMode:               Image.PreserveAspectFit
+                    sourceSize.height:      height
+                    anchors.left:           control.iconLeft ? parent.left : undefined
+                    anchors.leftMargin:     control.iconLeft ? ScreenTools.defaultFontPixelWidth : undefined
+                    anchors.right:          !control.iconLeft ? parent.right : undefined
+                    anchors.rightMargin:    !control.iconLeft ? ScreenTools.defaultFontPixelWidth : undefined
+                    anchors.verticalCenter: parent.verticalCenter
+                }
 
-                    Image {
-                        source:                 control.iconSource
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-
-                    Text {
-                        id:                     text
-                        anchors.verticalCenter: parent.verticalCenter
-                        antialiasing:           true
-                        text:                   control.text
-                        font.pointSize:         pointSize
-                        font.family:            ScreenTools.normalFontFamily
-                        color:                  _showHighlight ?
-                                                    control._qgcPal.buttonHighlightText :
-                                                    (primary ? control._qgcPal.primaryButtonText : control._qgcPal.buttonText)
-                    }
+                Text {
+                    id:                     text
+                    anchors.centerIn:       parent
+                    antialiasing:           true
+                    text:                   control.text
+                    font.pointSize:         pointSize
+                    font.family:            ScreenTools.normalFontFamily
+                    color:                  _showHighlight ?
+                                                control._qgcPal.buttonHighlightText :
+                                                (primary ? control._qgcPal.primaryButtonText : control._qgcPal.buttonText)
                 }
             }
         }

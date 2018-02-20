@@ -31,6 +31,7 @@ Item {
             source:                 _valid ? QGroundControl.airspaceManager.weatherInfo.icon : ""
             color:                  contentColor
             visible:                _valid
+            fillMode:               Image.PreserveAspectFit
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCLabel {
