@@ -118,6 +118,7 @@ Item {
             sourceSize.height:      height
             source:                 "qrc:/airmap/expand.svg"
             color:                  _textColor
+            fillMode:               Image.PreserveAspectFit
             anchors.right:          parent.right
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
@@ -166,6 +167,7 @@ Item {
                         sourceSize.height:      height
                         source:                 "qrc:/airmap/advisory-icon.svg"
                         color:                  _textColor
+                        fillMode:               Image.PreserveAspectFit
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     Column {
@@ -199,6 +201,7 @@ Item {
                     source:                 "qrc:/airmap/colapse.svg"
                     color:                  _textColor
                     visible:                showColapse
+                    fillMode:               Image.PreserveAspectFit
                     anchors.right:          parent.right
                     anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                     anchors.verticalCenter: parent.verticalCenter
@@ -244,7 +247,7 @@ Item {
                         anchors.rightMargin:            ScreenTools.defaultFontPixelWidth * 0.5
                         Column {
                             id:                         regCol
-                            spacing:                    ScreenTools.defaultFontPixelHeight * 0.5
+                            spacing:                    ScreenTools.defaultFontPixelHeight * 0.25
                             anchors.left:               parent.left
                             anchors.leftMargin:         ScreenTools.defaultFontPixelWidth  * 0.5
                             anchors.right:              parent.right
@@ -256,13 +259,12 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                             }
                             QGCLabel {
-                                text:                   qsTr("Airspace advisories based on the selected rules.")
-                                color:                  _colorWhite
-                                anchors.left:           parent.left
-                                anchors.right:          parent.right
-                                wrapMode:               Text.WordWrap
-                                font.pointSize:         ScreenTools.smallFontPointSize
+                                text:                       qsTr("Advisories based on the selected rules.")
+                                color:                      _colorWhite
+                                anchors.horizontalCenter:   parent.horizontalCenter
+                                font.pointSize:             ScreenTools.smallFontPointSize
                             }
+                            Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.125; }
                             GridLayout {
                                 columns:                2
                                 anchors.left:           parent.left
@@ -280,6 +282,7 @@ Item {
                                         sourceSize.height:  height
                                         source:             "qrc:/airmap/pencil.svg"
                                         color:              _colorWhite
+                                        fillMode:           Image.PreserveAspectFit
                                         anchors.centerIn:   parent
                                         MouseArea {
                                             anchors.fill:   parent
@@ -314,7 +317,7 @@ Item {
                     }
                     Flickable {
                         clip:               true
-                        height:             ScreenTools.defaultFontPixelHeight * 8
+                        height:             ScreenTools.defaultFontPixelHeight * 6
                         contentHeight:      advisoryCol.height
                         flickableDirection: Flickable.VerticalFlick
                         anchors.left:       parent.left
@@ -343,24 +346,16 @@ Item {
                 }
             }
             //-- Footer
-            Row {
-                spacing: ScreenTools.defaultFontPixelWidth * 2
+            QGCButton {
+                text:           qsTr("File Flight Plan")
+                backRadius:     4
+                heightFactor:   0.3333
+                showBorder:     true
+                width:          ScreenTools.defaultFontPixelWidth * 16
                 anchors.horizontalCenter: parent.horizontalCenter
-                QGCButton {
-                    text:           qsTr("Details")
-                    backRadius:     4
-                    heightFactor:   0.3333
-                    showBorder:     true
-                    enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
-                    width:          ScreenTools.defaultFontPixelWidth * 10
-                }
-                QGCButton {
-                    text:           qsTr("File Plan")
-                    backRadius:     4
-                    heightFactor:   0.3333
-                    showBorder:     true
-                    enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
-                    width:          ScreenTools.defaultFontPixelWidth * 10
+                onClicked: {
+                    rootLoader.sourceComponent = flightDetails
+                    mainWindow.disableToolbar()
                 }
             }
             QGCLabel {
@@ -544,6 +539,294 @@ Item {
                 var target = mainWindow.mapFromItem(pencilIcon, 0, 0)
                 ruleSelectorRect.x = target.x - ruleSelectorRect.width - (ScreenTools.defaultFontPixelWidth * 7)
                 ruleSelectorRect.y = target.y - (ScreenTools.defaultFontPixelHeight * 4)
+            }
+        }
+    }
+    //---------------------------------------------------------------
+    //-- Flight Details
+    Component {
+        id:             flightDetails
+        Rectangle {
+            id:         flightDetailsRoot
+            width:      mainWindow.width
+            height:     mainWindow.height
+            color:      Qt.rgba(0,0,0,0.1)
+            property real flickHeight: ScreenTools.defaultFontPixelHeight * 22
+            property real flickWidth:  ScreenTools.defaultFontPixelWidth  * 40
+            MouseArea {
+                anchors.fill:   parent
+                onWheel:        { wheel.accepted = true; }
+                onPressed:      { mouse.accepted = true; }
+                onReleased:     { mouse.accepted = true; }
+            }
+            Rectangle {
+                id:             flightDetailsShadow
+                anchors.fill:   flightDetailsRect
+                radius:         flightDetailsRect.radius
+                color:          qgcPal.window
+                visible:        false
+            }
+            DropShadow {
+                anchors.fill:       flightDetailsShadow
+                visible:            flightDetailsRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             flightDetailsShadow
+            }
+            Rectangle {
+                id:                 flightDetailsRect
+                color:              qgcPal.window
+                width:              flDetailsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+                height:             flDetailsRow.height + (ScreenTools.defaultFontPixelHeight * 2)
+                radius:             ScreenTools.defaultFontPixelWidth
+                anchors.centerIn:   parent
+                Row {
+                    id:             flDetailsRow
+                    spacing:        ScreenTools.defaultFontPixelWidth
+                    anchors.centerIn: parent
+                    //---------------------------------------------------------
+                    //-- Flight Details
+                    Column {
+                        spacing:        ScreenTools.defaultFontPixelHeight * 0.25
+                        Rectangle {
+                            color:          qgcPal.windowShade
+                            anchors.right:  parent.right
+                            anchors.left:   parent.left
+                            height:         detailsLabel.height + ScreenTools.defaultFontPixelHeight
+                            QGCLabel {
+                                id:             detailsLabel
+                                text:           qsTr("Flight Details")
+                                font.pointSize: ScreenTools.mediumFontPointSize
+                                font.family:    ScreenTools.demiboldFontFamily
+                                anchors.centerIn: parent
+                            }
+                        }
+                        Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.5; }
+                        Flickable {
+                            clip:           true
+                            width:          flightDetailsRoot.flickWidth
+                            height:         flightDetailsRoot.flickHeight
+                            contentHeight:  flContextCol.height
+                            flickableDirection: Flickable.VerticalFlick
+                            Column {
+                                id:                 flContextCol
+                                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                anchors.right:      parent.right
+                                anchors.left:       parent.left
+                                QGCLabel {
+                                    text:           qsTr("Flight Date & Time")
+                                }
+                                Rectangle {
+                                    id:             dateRect
+                                    color:          qgcPal.windowShade
+                                    anchors.right:  parent.right
+                                    anchors.left:   parent.left
+                                    height:         datePickerCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                                    Column {
+                                        id:                 datePickerCol
+                                        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                        anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                        anchors.right:      parent.right
+                                        anchors.left:       parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        QGCButton {
+                                            text: {
+                                                var today = new Date();
+                                                if(datePicker.selectedDate.setHours(0,0,0,0) === today.setHours(0,0,0,0)) {
+                                                    return qsTr("Today")
+                                                } else {
+                                                    return datePicker.selectedDate.toLocaleDateString(Qt.locale())
+                                                }
+                                            }
+                                            iconSource:     "qrc:/airmap/expand.svg"
+                                            anchors.right:  parent.right
+                                            anchors.left:   parent.left
+                                            onClicked:      datePicker.visible = true
+                                        }
+                                        Item {
+                                            anchors.right:  parent.right
+                                            anchors.left:   parent.left
+                                            height:         timeSlider.height
+                                            QGCLabel {
+                                                id:         timeLabel
+                                                text:       ('00' + hour).slice(-2) + ":" + ('00' + minute).slice(-2)
+                                                width:      ScreenTools.defaultFontPixelWidth * 5
+                                                anchors.left:  parent.left
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                property int hour:   (timeSlider.value * 0.25).toFixed(0)
+                                                property int minute: (timeSlider.value * 15) % 60
+                                            }
+                                            QGCSlider {
+                                                id:             timeSlider
+                                                width:          parent.width - timeLabel.width - ScreenTools.defaultFontPixelWidth
+                                                stepSize:       1
+                                                minimumValue:   0
+                                                maximumValue:   95 // 96 blocks of 15 minutes in 24 hours
+                                                anchors.right:  parent.right
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                Component.onCompleted: {
+                                                    var today = new Date()
+                                                    var val = (((today.getHours() * 60) + today.getMinutes()) * (96/1440)) + 1
+                                                    if(val > 95) val = 95
+                                                    value = Math.ceil(val)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.25; }
+                                QGCLabel {
+                                    text:           qsTr("Flight Context")
+                                }
+                                Repeater {
+                                    model:          [1, 2, 3, 4, 5, 6]
+                                    delegate: FlightFeature {
+                                        anchors.right:  parent.right
+                                        anchors.left:   parent.left
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //---------------------------------------------------------
+                    //-- Divider
+                    Rectangle {
+                        color:      qgcPal.text
+                        width:      1
+                        height:     parent.height
+                        opacity:    0.25
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                    //---------------------------------------------------------
+                    //-- Flight Brief
+                    Column {
+                        spacing:        ScreenTools.defaultFontPixelHeight * 0.25
+                        Rectangle {
+                            color:          qgcPal.windowShade
+                            anchors.right:  parent.right
+                            anchors.left:   parent.left
+                            height:         briefLabel.height + ScreenTools.defaultFontPixelHeight
+                            QGCLabel {
+                                id:             briefLabel
+                                text:           qsTr("Flight Brief")
+                                font.pointSize: ScreenTools.mediumFontPointSize
+                                font.family:    ScreenTools.demiboldFontFamily
+                                anchors.centerIn: parent
+                            }
+                        }
+                        Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.5; }
+                        Flickable {
+                            clip:           true
+                            width:          flightDetailsRoot.flickWidth
+                            height:         flightDetailsRoot.flickHeight - buttonRow.height - ScreenTools.defaultFontPixelHeight
+                            contentHeight:  briefCol.height
+                            flickableDirection: Flickable.VerticalFlick
+                            Column {
+                                id:                 briefCol
+                                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                anchors.right:      parent.right
+                                anchors.left:       parent.left
+                                QGCLabel {
+                                    text:           qsTr("Authorizations")
+                                }
+                                Rectangle {
+                                    color:          qgcPal.windowShade
+                                    anchors.right:  parent.right
+                                    anchors.left:   parent.left
+                                    height:         dateRect.height
+                                    Column {
+                                        id:                 authCol
+                                        spacing:            ScreenTools.defaultFontPixelHeight * 0.25
+                                        anchors.margins:    ScreenTools.defaultFontPixelWidth
+                                        anchors.right:      parent.right
+                                        anchors.left:       parent.left
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        QGCLabel {
+                                            text:           qsTr("Federal Aviation Administration")
+                                        }
+                                        QGCLabel {
+                                            text:           qsTr("Automatic authorization to fly in controlled airspace")
+                                            font.pointSize: ScreenTools.smallFontPointSize
+                                        }
+                                    }
+                                }
+                                Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.25; }
+                                QGCLabel {
+                                    text:           qsTr("Rules & Compliance")
+                                }
+                                ComplianceRules {
+                                    text:           qsTr("Rules you may be violating")
+                                    anchors.right:  parent.right
+                                    anchors.left:   parent.left
+                                }
+                                ComplianceRules {
+                                    text:           qsTr("Rules needing more information")
+                                    anchors.right:  parent.right
+                                    anchors.left:   parent.left
+                                }
+                                ComplianceRules {
+                                    text:           qsTr("Rules you should review")
+                                    anchors.right:  parent.right
+                                    anchors.left:   parent.left
+                                }
+                                ComplianceRules {
+                                    text:           qsTr("Rules you are following")
+                                    anchors.right:  parent.right
+                                    anchors.left:   parent.left
+                                }
+                            }
+                        }
+                        //-------------------------------------------------------------
+                        //-- File Flight Plan or Close
+                        Item { width: 1; height: ScreenTools.defaultFontPixelHeight; }
+                        Row {
+                            id:         buttonRow
+                            spacing: ScreenTools.defaultFontPixelWidth * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCButton {
+                                text:           qsTr("Submit Plan")
+                                backRadius:     4
+                                heightFactor:   0.3333
+                                showBorder:     true
+                                enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+                                width:          ScreenTools.defaultFontPixelWidth * 12
+                                onClicked: {
+                                    //-- TODO: File Plan
+                                    mainWindow.enableToolbar()
+                                    rootLoader.sourceComponent = null
+                                }
+                            }
+                            QGCButton {
+                                text:           qsTr("Close")
+                                backRadius:     4
+                                heightFactor:   0.3333
+                                showBorder:     true
+                                width:          ScreenTools.defaultFontPixelWidth * 12
+                                onClicked: {
+                                    mainWindow.enableToolbar()
+                                    rootLoader.sourceComponent = null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Calendar {
+                id: datePicker
+                anchors.centerIn: parent
+                visible: false;
+                minimumDate: {
+                    return new Date()
+                }
+                onClicked: {
+                    visible = false;
+                }
+            }
+            Component.onCompleted: {
+                mainWindow.disableToolbar()
             }
         }
     }
