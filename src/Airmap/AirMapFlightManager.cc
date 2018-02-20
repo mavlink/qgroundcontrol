@@ -94,7 +94,7 @@ void AirMapFlightManager::createFlight(const QList<MissionItem*>& missionItems)
                     qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
                     _uploadFlight();
                 } else {
-                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
+                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
                     emit flightPermitStatusChanged();
                     _state = State::Idle;
 
@@ -372,7 +372,7 @@ void AirMapFlightManager::endFlight()
     }
     _endFlight(_currentFlightId);
 
-    _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
+    _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
     emit flightPermitStatusChanged();
 }
 

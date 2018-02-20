@@ -634,7 +634,7 @@ QGCView {
         width:          airspaceRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         airspaceRow.height * 1.25
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitUnknown && !messageArea.visible && !criticalMmessageArea.visible
+        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitNone && !messageArea.visible && !criticalMmessageArea.visible
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)

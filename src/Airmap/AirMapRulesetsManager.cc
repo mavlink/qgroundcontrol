@@ -248,8 +248,8 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
                 //-- Sort rules by display order
                 std::sort(pRuleSet->_rules.objectList()->begin(), pRuleSet->_rules.objectList()->end(), rules_sort);
                 _ruleSets.append(pRuleSet);
-                /*
                 qCDebug(AirMapManagerLog) << "Adding ruleset" << pRuleSet->name();
+                /*
                 qDebug() << "------------------------------------------";
                 qDebug() << "Jurisdiction:" << ruleset.jurisdiction.name.data() << (int)ruleset.jurisdiction.region;
                 qDebug() << "Name:        " << ruleset.name.data();

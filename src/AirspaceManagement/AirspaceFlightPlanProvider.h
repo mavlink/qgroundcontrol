@@ -29,7 +29,7 @@ class AirspaceFlightPlanProvider : public QObject
 public:
 
     enum PermitStatus {
-        PermitUnknown = 0,
+        PermitNone = 0,     //-- No flght plan
         PermitPending,
         PermitAccepted,
         PermitRejected,
@@ -48,7 +48,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  ruleSets                READ ruleSets                                       NOTIFY advisoryChanged)
     Q_PROPERTY(AirspaceAdvisoryProvider::AdvisoryColor airspaceColor READ airspaceColor                         NOTIFY advisoryChanged)
 
-    virtual PermitStatus        flightPermitStatus  () const { return PermitUnknown; }
+    virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
     virtual QDateTime           flightEndTime       () const = 0;
     virtual bool                valid               () = 0;                     ///< Current advisory list is valid

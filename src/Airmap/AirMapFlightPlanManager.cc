@@ -143,7 +143,7 @@ AirMapFlightPlanManager::_createFlightPlan()
                     qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
                     _uploadFlightPlan();
                 } else {
-                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitUnknown;
+                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
                     emit flightPermitStatusChanged();
                     _state = State::Idle;
                     QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
