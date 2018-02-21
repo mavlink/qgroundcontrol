@@ -113,11 +113,11 @@ Item {
             width:      mainWindow.width
             height:     mainWindow.height
 
-            property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-            property real _labelWidth:          ScreenTools.defaultFontPixelWidth * 15
-            property real _editFieldWidth:      ScreenTools.defaultFontPixelWidth * 30
-            property var  _selectedSSID:        ""
-            property var  _connectText:         qsTr("Connect")
+            property var    _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+            property real   _labelWidth:          ScreenTools.defaultFontPixelWidth * 15
+            property real   _editFieldWidth:      ScreenTools.defaultFontPixelWidth * 30
+            property string _selectedSSID:        ""
+            property var    _connectText:         qsTr("Connect")
 
             ExclusiveGroup  { id: ssidGroup }
 

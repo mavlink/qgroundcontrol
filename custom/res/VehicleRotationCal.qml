@@ -26,7 +26,7 @@ Rectangle {
     property string calInProgressText: qsTr("Hold Still")
 
     // Image source and size
-    property var    imageSource:    ""
+    property string imageSource:    ""
     property real   imageWidth:     parent.width
     property real   imageHeight:    parent.height
 
