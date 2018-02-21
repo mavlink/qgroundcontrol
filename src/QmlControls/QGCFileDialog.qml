@@ -144,7 +144,7 @@ Item {
 
                     QGCLabel {
                         text:       qsTr("No files")
-                        visible:    fileList.model.length == 0
+                        visible:    fileList.model.length === 0
                     }
                 }
             }

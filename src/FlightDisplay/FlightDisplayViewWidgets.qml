@@ -72,7 +72,7 @@ Item {
                     instrumentsLoader.state  = "topMode"
                 } else {
                     instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value == 1 ? "centerMode" : "topMode"
+                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value === 1 ? "centerMode" : "topMode"
                 }
             }
         } else {

@@ -110,7 +110,7 @@ AnalyzePage {
                 }
 
                 QGCLabel {
-                    text: geoController.saveDirectory != "" ? geoController.saveDirectory : "/TAGGED folder in your image folder"
+                    text: geoController.saveDirectory !== "" ? geoController.saveDirectory : "/TAGGED folder in your image folder"
                     anchors.verticalCenter:   parent.verticalCenter
                 }
             }
