@@ -154,7 +154,7 @@ QGCFlickable {
 
                         QGCLabel {
                             text:       qsTr("None")
-                            visible:    polygonSection.checked && myGeoFenceController.polygons.count == 0
+                            visible:    polygonSection.checked && myGeoFenceController.polygons.count === 0
                         }
 
                         GridLayout {
@@ -239,7 +239,7 @@ QGCFlickable {
 
                         QGCLabel {
                             text:       qsTr("None")
-                            visible:    circleSection.checked && myGeoFenceController.circles.count == 0
+                            visible:    circleSection.checked && myGeoFenceController.circles.count === 0
                         }
 
                         GridLayout {

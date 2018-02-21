@@ -90,6 +90,7 @@ Item {
 
     QGCMapPolygonVisuals {
         id:                 mapPolygonVisuals
+        qgcView:            _root.qgcView
         mapControl:         map
         mapPolygon:         _mapPolygon
         interactive:        _missionItem.isCurrentItem

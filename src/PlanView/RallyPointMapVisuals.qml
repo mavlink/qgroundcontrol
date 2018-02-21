@@ -45,7 +45,7 @@ Item {
 
         MissionItemIndicatorDrag {
             itemCoordinate: rallyPointObject.coordinate
-            visible:        rallyPointObject == myRallyPointController.currentRallyPoint
+            visible:        rallyPointObject === myRallyPointController.currentRallyPoint
 
             property var rallyPointObject
 
@@ -67,7 +67,7 @@ Item {
             sourceItem: MissionItemIndexLabel {
                 id:         itemIndexLabel
                 label:      qsTr("R", "rally point map item label")
-                checked:    _editingLayer == _layerRallyPoints ? rallyPointObject == myRallyPointController.currentRallyPoint : false
+                checked:    _editingLayer == _layerRallyPoints ? rallyPointObject === myRallyPointController.currentRallyPoint : false
 
                 onClicked: myRallyPointController.currentRallyPoint = rallyPointObject
             }
