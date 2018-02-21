@@ -16,7 +16,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
 /// Guided actions confirmation dialog
-NoMouseThroughRectangle {
+Rectangle {
     id:             _root
     border.color:   qgcPal.alertBorder
     border.width:   1
@@ -65,6 +65,10 @@ NoMouseThroughRectangle {
     }
 
     QGCPalette { id: qgcPal }
+
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
     Column {
         id:                 confirmColumn

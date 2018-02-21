@@ -28,7 +28,7 @@ Item {
 
     QGCPalette { id: qgcPal }
 
-    NoMouseThroughRectangle {
+    Rectangle {
         id:             mvCommands
         anchors.left:   parent.left
         anchors.right:  parent.right
@@ -36,6 +36,10 @@ Item {
         color:          qgcPal.missionItemEditor
         opacity:        _rectOpacity
         radius:         _margin
+
+        DeadMouseArea {
+            anchors.fill: parent
+        }
 
         Column {
             id:                 mvCommandsColumn

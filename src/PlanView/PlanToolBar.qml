@@ -84,11 +84,8 @@ Rectangle {
     }
 
     //-- Eat mouse events, preventing them from reaching toolbar, which is underneath us.
-    MouseArea {
-        anchors.fill:   parent
-        onWheel:        { wheel.accepted = true; }
-        onPressed:      { mouse.accepted = true; }
-        onReleased:     { mouse.accepted = true; }
+    DeadMouseArea {
+        anchors.fill: parent
     }
 
     //-- The reason for this Row to be here is so the Logo (Home) button is in the same
