@@ -26,7 +26,7 @@ Item {
     width:  ScreenTools.defaultFontPixelWidth  * 80
 
     property alias  text:   label.text
-    property var    value:  0
+    property real   value:  0
 
     property real   _indicatorWidth: ScreenTools.defaultFontPixelWidth * 60
 

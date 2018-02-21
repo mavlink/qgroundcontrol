@@ -61,7 +61,7 @@ DropButton {
     /// Fits the visible region of the map to inclues all of the specified coordinates. If no coordinates
     /// are specified the map will center to fitHomePosition()
     function fitMapViewportToAllCoordinates(coordList) {
-        if (coordList.length == 0) {
+        if (coordList.length === 0) {
             map.center = fitHomePosition()
             return
         }
@@ -115,16 +115,17 @@ DropButton {
     }
 
     function addFenceItemCoordsForFit(coordList) {
+        var i
         var homePosition = fitHomePosition()
         if (homePosition.isValid && geoFenceController.circleEnabled) {
             var azimuthList = [ 0, 180, 90, 270 ]
-            for (var i=0; i<azimuthList.length; i++) {
+            for (i = 0; i < azimuthList.length; i++) {
                 var edgeCoordinate = homePosition.atDistanceAndAzimuth(geoFenceController.circleRadius, azimuthList[i])
                 coordList.push(edgeCoordinate)
             }
         }
         if (geoFenceController.polygonEnabled && geoFenceController.polygon.count() > 2) {
-            for (var i=0; i<geoFenceController.polygon.count(); i++) {
+            for (i = 0; i < geoFenceController.polygon.count(); i++) {
                 coordList.push(geoFenceController.polygon.path[i])
             }
         }

@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.61 - Feb 21 2018
+
+* Fix KML Import
+
 ### V1.2.58 - Feb 18 2018
 
 * Hide camera section from mission start

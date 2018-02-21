@@ -102,9 +102,9 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel { text: qsTr("Voltage:") }
-                    QGCLabel { text: (_activeVehicle && _activeVehicle.battery.voltage.value != -1) ? (_activeVehicle.battery.voltage.valueString + " " + _activeVehicle.battery.voltage.units) : "N/A" }
+                    QGCLabel { text: (_activeVehicle && _activeVehicle.battery.voltage.value !== -1) ? (_activeVehicle.battery.voltage.valueString + " " + _activeVehicle.battery.voltage.units) : "N/A" }
                     QGCLabel { text: qsTr("Accumulated Consumption:") }
-                    QGCLabel { text: (_activeVehicle && _activeVehicle.battery.mahConsumed.value != -1) ? (_activeVehicle.battery.mahConsumed.valueString + " " + _activeVehicle.battery.mahConsumed.units) : "N/A" }
+                    QGCLabel { text: (_activeVehicle && _activeVehicle.battery.mahConsumed.value !== -1) ? (_activeVehicle.battery.mahConsumed.valueString + " " + _activeVehicle.battery.mahConsumed.units) : "N/A" }
                 }
             }
 

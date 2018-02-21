@@ -25,8 +25,8 @@ FactPanel {
     property Fact airspeedDisabledFact: controller.getParameterFact(-1, "FW_ARSP_MODE")
     property Fact airspeedBreakerFact:  controller.getParameterFact(-1, "CBRK_AIRSPD_CHK")
 
-    property bool _airspeedVisible:     airspeedDisabledFact.value == false && airspeedBreakerFact.value != 162128
-    property bool _airspeedCalRequired: _airspeedVisible && dpressOffFact.value == 0
+    property bool _airspeedVisible:     airspeedDisabledFact.value === false && airspeedBreakerFact.value !== 162128
+    property bool _airspeedCalRequired: _airspeedVisible && dpressOffFact.value === 0
 
     Column {
         anchors.fill:       parent

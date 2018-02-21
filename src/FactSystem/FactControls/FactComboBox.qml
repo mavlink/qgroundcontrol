@@ -12,7 +12,7 @@ QGCComboBox {
 
     model: fact ? fact.enumStrings : null
 
-    currentIndex: indexModel ? fact.value : fact.enumIndex
+    currentIndex: fact ? (indexModel ? fact.value : fact.enumIndex) : 0
 
     onActivated: {
         if (indexModel) {
