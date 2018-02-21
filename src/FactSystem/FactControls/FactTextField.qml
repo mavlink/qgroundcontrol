@@ -32,7 +32,7 @@ QGCTextField {
         }
         if (typeof qgcView !== 'undefined' && qgcView) {
             var errorString = fact.validate(text, false /* convertOnly */)
-            if (errorString == "") {
+            if (errorString === "") {
                 fact.value = text
             } else {
                 _validateString = text

@@ -11,9 +11,9 @@ Rectangle {
     color:                 parent.indicatorColor
     visible:               showIndicator
 
-    property bool showIndicator: (parent.flickableDirection == Flickable.AutoFlickDirection ||
-                                  parent.flickableDirection == Flickable.HorizontalFlick ||
-                                  parent.flickableDirection == Flickable.HorizontalAndVerticalFlick) &&
+    property bool showIndicator: (parent.flickableDirection === Flickable.AutoFlickDirection ||
+                                  parent.flickableDirection === Flickable.HorizontalFlick ||
+                                  parent.flickableDirection === Flickable.HorizontalAndVerticalFlick) &&
                                  (parent.contentWidth > parent.width)
 
     Component.onCompleted:  animateOpacity.restart()
