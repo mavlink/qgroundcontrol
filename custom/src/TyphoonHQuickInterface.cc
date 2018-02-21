@@ -76,6 +76,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     , _pHandler(NULL)
 #endif
     , _vehicle(NULL)
+    , _vehicleInReadyState(false)
     , _pFileCopy(NULL)
     , _videoReceiver(NULL)
     , _exporter(NULL)
@@ -359,15 +360,17 @@ TyphoonHQuickInterface::_vehicleRemoved(Vehicle* vehicle)
         disconnect(_vehicle, &Vehicle::dynamicCamerasChanged,   this, &TyphoonHQuickInterface::_dynamicCamerasChanged);
 #endif
         _vehicle = NULL;
+        _vehicleInReadyState = false;
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::_vehicleReady(bool)
+TyphoonHQuickInterface::_vehicleReady(bool ready)
 {
-    if(_vehicle) {
-        //-- Update LED Fact
+    _vehicleInReadyState = ready;
+    if(_vehicle && ready) {
+        //-- Update LED Fact now that the parameters are loaded
         emit ledFactChanged();
     }
 }
@@ -525,7 +528,7 @@ TyphoonHQuickInterface::_powerTrigger()
 {
     //-- If RC is not working, and if we actually have the vehicle,
     //-- otherwise this will trigger while fetching params initially.
-    if(!_pHandler->rcActive() && _vehicle) {
+    if(!_pHandler->rcActive() && _vehicle && _vehicleInReadyState) {
         //-- Panic button held down
         emit powerHeld();
     }
