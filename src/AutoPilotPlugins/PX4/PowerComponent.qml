@@ -379,7 +379,7 @@ SetupPage {
                 QGCCheckBox {
                     id:         showUAVCAN
                     text:       qsTr("Show UAVCAN Settings")
-                    checked:    uavcanEnable.rawValue !== 0
+                    checked:    uavcanEnable ? uavcanEnable.rawValue !== 0 : false
                 }
 
                 QGCGroupBox {
