@@ -17,7 +17,7 @@ Rectangle {
     property var rallyPoint ///< RallyPoint object associated with editor
     property var controller ///< RallyPointController
 
-    property bool   _currentItem:       rallyPoint ? rallyPoint == controller.currentRallyPoint : false
+    property bool   _currentItem:       rallyPoint ? rallyPoint === controller.currentRallyPoint : false
     property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
 
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2

@@ -116,7 +116,7 @@ QGCViewDialog {
                 QGCTextField {
                     id:                 valueField
                     text:               validate ? validateValue : fact.valueString
-                    visible:            fact.enumStrings.length == 0 || validate || manualEntry.checked
+                    visible:            fact.enumStrings.length === 0 || validate || manualEntry.checked
                     unitsLabel:         fact.units
                     showUnits:          fact.units != ""
                     Layout.fillWidth:   true
@@ -145,7 +145,7 @@ QGCViewDialog {
                 visible:        _showCombo
                 model:          fact.enumStrings
 
-                property bool _showCombo: fact.enumStrings.length != 0 && fact.bitmaskStrings.length == 0 && !validate
+                property bool _showCombo: fact.enumStrings.length !== 0 && fact.bitmaskStrings.length === 0 && !validate
 
                 Component.onCompleted: {
                     // We can't bind directly to fact.enumIndex since that would add an unknown value

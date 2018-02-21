@@ -27,10 +27,10 @@ FactPanel {
     signal hideDialog
 
     Keys.onReleased: {
-        if (event.key == Qt.Key_Escape) {
+        if (event.key === Qt.Key_Escape) {
             reject()
             event.accepted = true
-        } else if (event.key == Qt.Key_Return || event.key == Qt.Key_Enter) {
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
             accept()
             event.accepted = true
         }

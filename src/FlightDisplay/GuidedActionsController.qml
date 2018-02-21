@@ -318,6 +318,8 @@ Item {
 
     // Executes the specified action
     function executeAction(actionCode, actionData) {
+        var i;
+        var rgVehicle;
         switch (actionCode) {
         case actionRTL:
             _activeVehicle.guidedModeRTL()
@@ -341,10 +343,9 @@ Item {
             _activeVehicle.startMission()
             break
         case actionMVStartMission:
-            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
-            for (var i=0; i<rgVehicle.count; i++) {
-                var vehicle = rgVehicle.get(i)
-                vehicle.startMission()
+            rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (i = 0; i < rgVehicle.count; i++) {
+                rgVehicle.get(i).startMission()
             }
             break
         case actionArm:
@@ -375,10 +376,9 @@ Item {
             _activeVehicle.pauseVehicle()
             break
         case actionMVPause:
-            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
-            for (var i=0; i<rgVehicle.count; i++) {
-                var vehicle = rgVehicle.get(i)
-                vehicle.pauseVehicle()
+            rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (i = 0; i < rgVehicle.count; i++) {
+                rgVehicle.get(i).pauseVehicle()
             }
             break
         case actionVtolTransitionToFwdFlight:

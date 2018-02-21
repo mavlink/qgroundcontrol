@@ -241,7 +241,7 @@ QGCView {
     QGCFileDialog {
         id:             fileDialog
         qgcView:        _qgcView
-        property var plan:           true
+        property bool plan: true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
         fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
@@ -266,7 +266,7 @@ QGCView {
             function accept() {
                 var toIndex = toCombo.currentIndex
 
-                if (toIndex == 0) {
+                if (toIndex === 0) {
                     toIndex = 1
                 }
                 _missionController.moveMissionItem(_moveDialogMissionItemIndex, toIndex)
