@@ -138,7 +138,7 @@ Rectangle {
                 // Header row
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: ""
+                    property string text: ""
                 }
                 Text {
                     width: 80
@@ -172,7 +172,7 @@ Rectangle {
                 // window
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "window"
+                    property string text: "window"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -204,7 +204,7 @@ Rectangle {
                 // windowShade
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "windowShade"
+                    property string text: "windowShade"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -236,7 +236,7 @@ Rectangle {
                 // windowShadeDark
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "windowShadeDark"
+                    property string text: "windowShadeDark"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -268,7 +268,7 @@ Rectangle {
                 // text
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "text"
+                    property string text: "text"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -300,7 +300,7 @@ Rectangle {
                 // button
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "button"
+                    property string text: "button"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -332,7 +332,7 @@ Rectangle {
                 // buttonText
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "buttonText"
+                    property string text: "buttonText"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -364,7 +364,7 @@ Rectangle {
                 // buttonHighlight
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "buttonHighlight"
+                    property string text: "buttonHighlight"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -396,7 +396,7 @@ Rectangle {
                 // buttonHighlightText
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "buttonHighlightText"
+                    property string text: "buttonHighlightText"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -428,7 +428,7 @@ Rectangle {
                 // primaryButton
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "primaryButton"
+                    property string text: "primaryButton"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -460,7 +460,7 @@ Rectangle {
                 // primaryButtonText
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "primaryButtonText"
+                    property string text: "primaryButtonText"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -492,7 +492,7 @@ Rectangle {
                 // textField
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "textField"
+                    property string text: "textField"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -524,7 +524,7 @@ Rectangle {
                 // textFieldText
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "textFieldText"
+                    property string text: "textFieldText"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -556,7 +556,7 @@ Rectangle {
                 // warningText
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "warningText"
+                    property string text: "warningText"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -588,7 +588,7 @@ Rectangle {
                 // colorGreen
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "colorGreen"
+                    property string text: "colorGreen"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -620,7 +620,7 @@ Rectangle {
                 // colorOrange
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "colorOrange"
+                    property string text: "colorOrange"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -652,7 +652,7 @@ Rectangle {
                 // colorRed
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "colorRed"
+                    property string text: "colorRed"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -684,7 +684,7 @@ Rectangle {
                 // colorGrey
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "colorGrey"
+                    property string text: "colorGrey"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -716,7 +716,7 @@ Rectangle {
                 // colorBlue
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "colorBlue"
+                    property string text: "colorBlue"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -748,7 +748,7 @@ Rectangle {
                 // alertBackground
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "alertBackground"
+                    property string text: "alertBackground"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -780,7 +780,7 @@ Rectangle {
                 // alertBorder
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "alertBorder"
+                    property string text: "alertBorder"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -812,7 +812,7 @@ Rectangle {
                 // alertText
                 Loader {
                     sourceComponent: rowHeader
-                    property var text: "alertText"
+                    property string text: "alertText"
                 }
                 ClickableColor {
                     property var palette: QGCPalette { colorGroupEnabled: false }
@@ -868,7 +868,7 @@ Rectangle {
                     // Header row
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: ""
+                        property string text: ""
                     }
                     Text {
                         width: 100
@@ -888,7 +888,7 @@ Rectangle {
                     // QGCLabel
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCLabel"
+                        property string text: "QGCLabel"
                     }
                     QGCLabel {
                         width: 100
@@ -905,7 +905,7 @@ Rectangle {
                     // QGCButton
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCButton"
+                        property string text: "QGCButton"
                     }
                     QGCButton {
                         width: 100
@@ -922,7 +922,7 @@ Rectangle {
                     // QGCButton - primary
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCButton(primary)"
+                        property string text: "QGCButton(primary)"
                     }
                     QGCButton {
                         width: 100
@@ -941,7 +941,7 @@ Rectangle {
                     // QGCButton - menu
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCButton(menu)"
+                        property string text: "QGCButton(menu)"
                     }
                     Menu {
                         id: buttonMenu
@@ -972,7 +972,7 @@ Rectangle {
                     // QGCRadioButton
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCRadioButton"
+                        property string text: "QGCRadioButton"
                     }
                     QGCRadioButton {
                         width: 100
@@ -989,7 +989,7 @@ Rectangle {
                     // QGCCheckBox
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCCheckBox"
+                        property string text: "QGCCheckBox"
                     }
                     QGCCheckBox {
                         width: 100
@@ -1006,7 +1006,7 @@ Rectangle {
                     // QGCTextField
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCTextField"
+                        property string text: "QGCTextField"
                     }
                     QGCTextField {
                         width: 100
@@ -1023,7 +1023,7 @@ Rectangle {
                     // QGCComboBox
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "QGCComboBox"
+                        property string text: "QGCComboBox"
                     }
                     QGCComboBox {
                         width: 100
@@ -1040,7 +1040,7 @@ Rectangle {
                     // SubMenuButton
                     Loader {
                         sourceComponent: ctlRowHeader
-                        property var text: "SubMenuButton"
+                        property string text: "SubMenuButton"
                     }
                     SubMenuButton {
                         width: 100
@@ -1079,15 +1079,15 @@ Rectangle {
             spacing: 10
             anchors.horizontalCenter: parent.horizontalCenter
             Loader {
-                property var backgroundColor: qgcPal.window
+                property color backgroundColor: qgcPal.window
                 sourceComponent: arbBox
             }
             Loader {
-                property var backgroundColor: qgcPal.windowShade
+                property color backgroundColor: qgcPal.windowShade
                 sourceComponent: arbBox
             }
             Loader {
-                property var backgroundColor: qgcPal.windowShadeDark
+                property color backgroundColor: qgcPal.windowShadeDark
                 sourceComponent: arbBox
             }
         }
