@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.62 - Feb 21 2018
+
+*   Fix Emergency Stop popup appearing before params are loaded.
+
 ### V1.2.61 - Feb 21 2018
 
 * Fix KML Import

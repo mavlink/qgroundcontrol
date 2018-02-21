@@ -493,6 +493,7 @@ private:
     QTimer                  _powerTimer;
 #endif
     Vehicle*                _vehicle;
+    bool                    _vehicleInReadyState;
     TyphoonHFileCopy*       _pFileCopy;
     VideoReceiver*          _videoReceiver;
     YExportFiles*           _exporter;
