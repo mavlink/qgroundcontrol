@@ -523,8 +523,9 @@ TyphoonHQuickInterface::_setWiFiPassword()
 void
 TyphoonHQuickInterface::_powerTrigger()
 {
-    //-- If RC is not working
-    if(!_pHandler->rcActive()) {
+    //-- If RC is not working, and if we actually have the vehicle,
+    //-- otherwise this will trigger while fetching params initially.
+    if(!_pHandler->rcActive() && _vehicle) {
         //-- Panic button held down
         emit powerHeld();
     }

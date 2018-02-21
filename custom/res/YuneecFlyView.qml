@@ -216,7 +216,7 @@ Item {
         }
         //-- Big Red Button down for > 1 second
         onPowerHeld: {
-            if(_activeVehicle && !TyphoonHQuickInterface.firstRun) {
+            if(_activeVehicle) {
                 rootLoader.sourceComponent = panicDialog
                 mainWindow.disableToolbar()
             }
