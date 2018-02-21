@@ -555,6 +555,7 @@ Item {
             property real flickWidth:  ScreenTools.defaultFontPixelWidth  * 40
             MouseArea {
                 anchors.fill:   parent
+                hoverEnabled:   true
                 onWheel:        { wheel.accepted = true; }
                 onPressed:      { mouse.accepted = true; }
                 onReleased:     { mouse.accepted = true; }
@@ -656,7 +657,7 @@ Item {
                                                 width:      ScreenTools.defaultFontPixelWidth * 5
                                                 anchors.left:  parent.left
                                                 anchors.verticalCenter: parent.verticalCenter
-                                                property int hour:   (timeSlider.value * 0.25).toFixed(0)
+                                                property int hour:   Math.floor(timeSlider.value * 0.25)
                                                 property int minute: (timeSlider.value * 15) % 60
                                             }
                                             QGCSlider {
@@ -784,8 +785,21 @@ Item {
                         Item { width: 1; height: ScreenTools.defaultFontPixelHeight; }
                         Row {
                             id:         buttonRow
-                            spacing: ScreenTools.defaultFontPixelWidth * 2
+                            spacing: ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
+                            QGCButton {
+                                text:           qsTr("Update Plan")
+                                backRadius:     4
+                                heightFactor:   0.3333
+                                showBorder:     true
+                                enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+                                width:          ScreenTools.defaultFontPixelWidth * 12
+                                onClicked: {
+                                    //-- TODO: Update Plan
+                                    mainWindow.enableToolbar()
+                                    rootLoader.sourceComponent = null
+                                }
+                            }
                             QGCButton {
                                 text:           qsTr("Submit Plan")
                                 backRadius:     4
