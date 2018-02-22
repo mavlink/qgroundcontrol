@@ -134,26 +134,29 @@ class TyphoonHOptions : public QGCOptions
 {
 public:
     TyphoonHOptions(TyphoonHPlugin* plugin, QObject* parent = NULL);
-    bool        combineSettingsAndSetup     () { return true;  }
+    bool        combineSettingsAndSetup     () { return true; }
 #if defined(__android__)
     double      toolbarHeightMultiplier     () { return 1.25; }
 #elif defined(__mobile__)
-    double      toolbarHeightMultiplier     () { return 1.5; }
+    double      toolbarHeightMultiplier     () { return 1.5;  }
 #endif
-    bool        enablePlanViewSelector      () { return false; }
+    bool        enablePlanViewSelector      () { return false;}
     CustomInstrumentWidget* instrumentWidget();
+
 #if !defined(__planner__)
     QUrl        flyViewOverlay                 () const { return QUrl::fromUserInput("qrc:/typhoonh/YuneecFlyView.qml"); }
+    bool        showMissionStatus              () { return false; }
 #endif
+
     bool        showSensorCalibrationCompass   () const final;
     bool        showSensorCalibrationGyro      () const final;
     bool        showSensorCalibrationAccel     () const final;
     bool        showSensorCalibrationLevel     () const final;
-    bool        wifiReliableForCalibration     () const final { return true; }
-    bool        sensorsHaveFixedOrientation    () const final { return true; }
+    bool        wifiReliableForCalibration     () const final { return true;  }
+    bool        sensorsHaveFixedOrientation    () const final { return true;  }
     bool        guidedBarShowEmergencyStop     () const final { return false; }
     bool        guidedBarShowOrbit             () const final { return false; }
-    bool        missionWaypointsOnly           () const final { return true; }
+    bool        missionWaypointsOnly           () const final { return true;  }
     bool        multiVehicleEnabled            () const final { return false; }
 
 #if defined(__planner__)
@@ -161,7 +164,7 @@ public:
     //   file dialog for it.
     bool        showOfflineMapExport           () const final { return false; }
     bool        showOfflineMapImport           () const final { return false; }
-    bool        useMobileFileDialog            () const final { return false;}
+    bool        useMobileFileDialog            () const final { return false; }
 #endif
 
 private slots:
