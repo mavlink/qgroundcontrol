@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.63 - Feb 21 2018
+
+*   Prevent mouse clicks to bleed through disabled elements ("Go To" when hitting disabled "Pause" in Fly View)
+
 ### V1.2.62 - Feb 21 2018
 
 *   Fix Emergency Stop popup appearing before params are loaded.
