@@ -654,11 +654,9 @@ QGCView {
             color:              Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.85)
             radius:             ScreenTools.defaultFontPixelWidth * 0.5
 
-            MouseArea {
-                anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
+            //-- Eat mouse events
+            DeadMouseArea {
+                anchors.fill: parent
             }
 
             QGCLabel {
