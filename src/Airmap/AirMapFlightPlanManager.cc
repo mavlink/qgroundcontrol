@@ -12,8 +12,9 @@
 #include "AirMapRulesetsManager.h"
 #include "AirMapAdvisoryManager.h"
 #include "QGCApplication.h"
+#include "SettingsManager.h"
 
-#include "MissionController.h"
+#include "PlanMasterController.h"
 #include "QGCMAVLink.h"
 
 #include "airmap/pilots.h"
@@ -72,7 +73,7 @@ AirMapFlightPlanManager::setFlightEndTime(QDateTime end)
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::createFlightPlan(MissionController* missionController)
+AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planController)
 {
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Will not create a flight";
@@ -85,11 +86,10 @@ AirMapFlightPlanManager::createFlightPlan(MissionController* missionController)
     }
 
     //-- TODO: Check if there is an ongoing flight plan and do something about it (Delete it?)
-    _createPlan = true;
-    if(!_controller) {
-        _controller = missionController;
+    if(!_planController) {
+        _planController = planController;
         //-- Get notified of mission changes
-        connect(missionController, &MissionController::missionBoundingCubeChanged, this, &AirMapFlightPlanManager::_missionChanged);
+        connect(planController->missionController(), &MissionController::missionBoundingCubeChanged, this, &AirMapFlightPlanManager::_missionChanged);
     }
 }
 
@@ -100,18 +100,21 @@ AirMapFlightPlanManager::_createFlightPlan()
     _flight.reset();
 
     //-- Get flight bounding cube and prepare (box) polygon
+    QGCGeoBoundingCube bc = _planController->missionController()->travelBoundingCube();
+    if(!bc.area()) {
+        //-- TODO: If single point, we need to set a point and a radius instead
+        return;
+    }
 
-    //-- TODO: If single point, we need to set a point and a radius instead
-
-    QGCGeoBoundingCube bc = _controller->travelBoundingCube();
     _flight.maxAltitude   = fmax(bc.pointNW.altitude(), bc.pointSE.altitude());
-    _flight.takeoffCoord  = _controller->takeoffCoordinate();
+    _flight.takeoffCoord  = _planController->missionController()->takeoffCoordinate();
     _flight.coords        = bc.polygon2D();
+
+    //-- Flight Date/Time
     if(_flightStartTime.isNull() || _flightStartTime < QDateTime::currentDateTime()) {
         _flightStartTime = QDateTime::currentDateTime().addSecs(5 * 60);
         emit flightStartTimeChanged();
     }
-
     if(_flightEndTime.isNull() || _flightEndTime < _flightStartTime) {
         _flightEndTime = _flightStartTime.addSecs(30 * 60);
         emit flightEndTimeChanged();
@@ -469,11 +472,21 @@ AirMapFlightPlanManager::_deleteFlightPlan()
 void
 AirMapFlightPlanManager::_missionChanged()
 {
-    //-- Creating a new flight plan?
-    if(_createPlan) {
-        _createPlan = false;
-        _createFlightPlan();
+    //-- Are we enabled?
+    if(!qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
+        return;
     }
-    //-- Plan is being modified
-    // _updateFlightPlan();
+    //-- Do we have a license?
+    if(!_shared.hasAPIKey()) {
+        return;
+    }
+    //-- Creating a new flight plan?
+    if(_state == State::Idle) {
+        if(_flightPlan.isEmpty()) {
+            _createFlightPlan();
+        } else {
+            //-- Plan is being modified
+            // _updateFlightPlan();
+        }
+    }
 }

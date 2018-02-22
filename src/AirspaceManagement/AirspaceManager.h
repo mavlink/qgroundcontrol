@@ -40,6 +40,7 @@ class AirspaceRestrictionProvider;
 class AirspaceRulesetsProvider;
 class AirspaceVehicleManager;
 class AirspaceWeatherInfoProvider;
+class PlanMasterController;
 class QGCApplication;
 class Vehicle;
 
