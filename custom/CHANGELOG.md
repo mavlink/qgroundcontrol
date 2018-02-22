@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.65 - Feb 21 2018
+
+*   Hide mission status (Elevation data) for mobile builds (ST16)
+
 ### V1.2.64 - Feb 21 2018
 
 *   Fix image capture while in video mode (auto switch)
