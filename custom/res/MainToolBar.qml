@@ -32,6 +32,10 @@ Rectangle {
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
+    DeadMouseArea {
+        anchors.fill: parent;
+    }
+
     signal showSettingsView
     signal showSetupView
     signal showPlanView
