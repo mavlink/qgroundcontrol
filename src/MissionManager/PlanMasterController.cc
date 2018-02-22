@@ -71,6 +71,13 @@ void PlanMasterController::start(bool editMode)
 
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);
     _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
+
+#if defined(QGC_AIRMAP_ENABLED)
+    //-- This assumes there is one single instance of PlanMasterController in edit mode.
+    if(editMode) {
+        qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
+    }
+#endif
 }
 
 void PlanMasterController::startStaticActiveVehicle(Vehicle* vehicle)
@@ -123,6 +130,7 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_managerVehicle->geoFenceManager(),     &GeoFenceManager::sendComplete,             this, &PlanMasterController::_sendGeoFenceComplete);
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
     }
+
     if (newOffline != _offline) {
         _offline = newOffline;
         emit offlineEditingChanged(newOffline);
@@ -169,7 +177,7 @@ void PlanMasterController::loadFromVehicle(void)
     } else if (syncInProgress()) {
         qCWarning(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle called while syncInProgress";
     } else {
-        _loadGeoFence = true;
+        _loadGeoFence   = true;
         _syncInProgress = true;
         emit syncInProgressChanged(true);
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::loadFromVehicle _missionController.loadFromVehicle";
@@ -504,7 +512,7 @@ void PlanMasterController::_showPlanFromManagerVehicle(void)
         _managerVehicle->forceInitialPlanRequestComplete();
     }
 
-    // The crazy if structure is to handle the load propogating by itself through the system
+    // The crazy if structure is to handle the load propagating by itself through the system
     if (!_missionController.showPlanFromManagerVehicle()) {
         if (!_geoFenceController.showPlanFromManagerVehicle()) {
             _rallyPointController.showPlanFromManagerVehicle();

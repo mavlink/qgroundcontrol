@@ -199,13 +199,6 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         _initAllVisualItems();
         _updateContainsItems();
         emit newItemsFromVehicle();
-
-        //-- If airspace management enabled, create new flight
-#if defined(QGC_AIRMAP_ENABLED)
-        if(qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
-            qgcApp()->toolbox()->airspaceManager()->flightPlan()->createFlightPlan(this);
-        }
-#endif
     }
     _itemsRequested = false;
 }
@@ -367,14 +360,6 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     _visualItems->insert(i, newItem);
 
     _recalcAll();
-
-    //-- If airspace management enabled and this is the first item, create new flight
-#if defined(QGC_AIRMAP_ENABLED)
-    if(_visualItems->count() == 2 && qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
-        qgcApp()->toolbox()->airspaceManager()->flightPlan()->createFlightPlan(this);
-    }
-#endif
-
     return newItem->sequenceNumber();
 }
 
@@ -460,13 +445,6 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     _initVisualItem(newItem);
     _visualItems->insert(i, newItem);
     _recalcAll();
-
-    //-- If airspace management enabled and this is the first item, create new flight
-#if defined(QGC_AIRMAP_ENABLED)
-    if(_visualItems->count() == 2 && qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
-        qgcApp()->toolbox()->airspaceManager()->flightPlan()->createFlightPlan(this);
-    }
-#endif
 
     return newItem->sequenceNumber();
 }

@@ -18,6 +18,8 @@
 #include <QList>
 #include <QGeoCoordinate>
 
+class PlanMasterController;
+
 //-----------------------------------------------------------------------------
 /// class to upload a flight
 class AirMapFlightPlanManager : public AirspaceFlightPlanProvider, public LifetimeChecker
@@ -36,7 +38,7 @@ public:
     QmlObjectListModel* ruleSets            () override { return &_rulesets; }
     AirspaceAdvisoryProvider::AdvisoryColor airspaceColor   () override { return _airspaceColor; }
 
-    void            createFlightPlan    (MissionController* missionController) override;
+    void            startFlightPlanning (PlanMasterController* planController) override;
     void            setFlightStartTime  (QDateTime start) override;
     void            setFlightEndTime    (QDateTime end) override;
 
@@ -45,7 +47,7 @@ signals:
 
 private slots:
     void _pollBriefing                  ();
-    void _missionChanged    ();
+    void _missionChanged                ();
 
 private:
     void _uploadFlightPlan              ();
@@ -79,8 +81,7 @@ private:
     QTimer                  _pollTimer;             ///< timer to poll for approval check
     QString                 _flightPlan;            ///< Current flight plan
     QString                 _pilotID;               ///< Pilot ID in the form "auth0|abc123"
-    MissionController*      _controller = nullptr;
-    bool                    _createPlan = true;
+    PlanMasterController*   _planController = nullptr;
     bool                    _valid = false;
     QDateTime               _flightStartTime;
     QDateTime               _flightEndTime;

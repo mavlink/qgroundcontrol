@@ -20,7 +20,7 @@
 #include <QObject>
 #include <QDateTime>
 
-class MissionController;
+class PlanMasterController;
 
 //-----------------------------------------------------------------------------
 class AirspaceFlightPlanProvider : public QObject
@@ -58,7 +58,7 @@ public:
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
-    virtual void                createFlightPlan    (MissionController* missionController) = 0;
+    virtual void                startFlightPlanning (PlanMasterController* planController) = 0;
 
 signals:
     void flightPermitStatusChanged                  ();
