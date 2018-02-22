@@ -90,6 +90,7 @@ public:
 
     Q_PROPERTY(int                  batteryChangePoint      READ batteryChangePoint         NOTIFY batteryChangePointChanged)
     Q_PROPERTY(int                  batteriesRequired       READ batteriesRequired          NOTIFY batteriesRequiredChanged)
+    Q_PROPERTY(QGCGeoBoundingCube*  travelBoundingCube      READ travelBoundingCube         NOTIFY missionBoundingCubeChanged)
 
     Q_INVOKABLE void removeMissionItem(int index);
 
@@ -125,7 +126,7 @@ public:
     bool loadJsonFile(QFile& file, QString& errorString);
     bool loadTextFile(QFile& file, QString& errorString);
 
-    QGCGeoBoundingCube  travelBoundingCube  () { return _travelBoundingCube; }
+    QGCGeoBoundingCube* travelBoundingCube  () { return &_travelBoundingCube; }
     QGeoCoordinate      takeoffCoordinate   () { return _takeoffCoordinate; }
 
     // Overrides from PlanElementController

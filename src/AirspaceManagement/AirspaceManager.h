@@ -65,7 +65,7 @@ public:
     Q_PROPERTY(AirspaceFlightPlanProvider*  flightPlan          READ flightPlan         CONSTANT)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
-    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE);
+    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView);
 
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }

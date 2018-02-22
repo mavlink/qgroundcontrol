@@ -36,6 +36,7 @@ public:
     bool                valid               () override { return _valid; }
     QmlObjectListModel* advisories          () override { return &_advisories; }
     QmlObjectListModel* ruleSets            () override { return &_rulesets; }
+    QGCGeoBoundingCube* missionArea         () override { return &_flight.bc; }
     AirspaceAdvisoryProvider::AdvisoryColor airspaceColor   () override { return _airspaceColor; }
 
     void            startFlightPlanning (PlanMasterController* planController) override;
@@ -54,6 +55,7 @@ private:
     void _updateFlightPlan              ();
     void _createFlightPlan              ();
     void _deleteFlightPlan              ();
+    bool _collectFlightDtata            ();
 
 private:
     enum class State {
@@ -66,10 +68,12 @@ private:
     };
 
     struct Flight {
+        QGCGeoBoundingCube bc;
         QList<QGeoCoordinate> coords;
         QGeoCoordinate  takeoffCoord;
         float maxAltitude = 0;
         void reset() {
+            bc.reset();
             coords.clear();
             maxAltitude = 0;
         }

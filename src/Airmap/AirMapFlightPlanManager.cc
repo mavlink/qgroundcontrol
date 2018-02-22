@@ -94,22 +94,24 @@ AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planControlle
 }
 
 //-----------------------------------------------------------------------------
-void
-AirMapFlightPlanManager::_createFlightPlan()
+bool
+AirMapFlightPlanManager::_collectFlightDtata()
 {
-    _flight.reset();
-
-    //-- Get flight bounding cube and prepare (box) polygon
-    QGCGeoBoundingCube bc = _planController->missionController()->travelBoundingCube();
-    if(!bc.area()) {
-        //-- TODO: If single point, we need to set a point and a radius instead
-        return;
+    if(!_planController || !_planController->missionController()) {
+        return false;
     }
-
+    //-- Get flight bounding cube and prepare (box) polygon
+    QGCGeoBoundingCube bc = *_planController->missionController()->travelBoundingCube();
+    if(!bc.isValid() || !bc.area()) {
+        //-- TODO: If single point, we need to set a point and a radius instead
+        qCDebug(AirMapManagerLog) << "Not enough points for a flight plan.";
+        return false;
+    }
     _flight.maxAltitude   = fmax(bc.pointNW.altitude(), bc.pointSE.altitude());
     _flight.takeoffCoord  = _planController->missionController()->takeoffCoordinate();
     _flight.coords        = bc.polygon2D();
-
+    _flight.bc            = bc;
+    emit missionAreaChanged();
     //-- Flight Date/Time
     if(_flightStartTime.isNull() || _flightStartTime < QDateTime::currentDateTime()) {
         _flightStartTime = QDateTime::currentDateTime().addSecs(5 * 60);
@@ -119,15 +121,28 @@ AirMapFlightPlanManager::_createFlightPlan()
         _flightEndTime = _flightStartTime.addSecs(30 * 60);
         emit flightEndTimeChanged();
     }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::_createFlightPlan()
+{
+    _flight.reset();
+
+    //-- Get flight data
+    if(!_collectFlightDtata()) {
+        return;
+    }
 
     qCDebug(AirMapManagerLog) << "About to create flight plan";
     qCDebug(AirMapManagerLog) << "Takeoff:     " << _flight.takeoffCoord;
-    qCDebug(AirMapManagerLog) << "Bounding box:" << bc.pointNW << bc.pointSE;
+    qCDebug(AirMapManagerLog) << "Bounding box:" << _flight.bc.pointNW << _flight.bc.pointSE;
     qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
     qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
 
     //-- Not Yet
-    //return;
+    return;
 
     if (_pilotID == "") {
         //-- Need to get the pilot id before uploading the flight plan
@@ -259,6 +274,17 @@ AirMapFlightPlanManager::_updateFlightPlan()
     //   little to do with those used when creating it.
 
     qCDebug(AirMapManagerLog) << "Updating flight plan";
+    //-- Get flight data
+    if(!_collectFlightDtata()) {
+        return;
+    }
+
+    qCDebug(AirMapManagerLog) << "About to update the flight plan";
+    qCDebug(AirMapManagerLog) << "Takeoff:     " << _flight.takeoffCoord;
+    qCDebug(AirMapManagerLog) << "Bounding box:" << _flight.bc.pointNW << _flight.bc.pointSE;
+    qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
+    qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
+
     _state = State::FlightUpdate;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {

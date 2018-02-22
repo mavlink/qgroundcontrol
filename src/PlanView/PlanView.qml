@@ -73,9 +73,9 @@ QGCView {
 
     function addComplexItem(complexItemName) {
         var coordinate = editorMap.center
-        coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
+        coordinate.latitude  = coordinate.latitude.toFixed(_decimalPlaces)
         coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
-        coordinate.altitude = coordinate.altitude.toFixed(_decimalPlaces)
+        coordinate.altitude  = coordinate.altitude.toFixed(_decimalPlaces)
         insertComplexMissionItem(complexItemName, coordinate, _missionController.visualItems.count)
     }
 
@@ -89,7 +89,7 @@ QGCView {
             var coordinateNW = editorMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
             var coordinateSE = editorMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
             if(coordinateNW.isValid && coordinateSE.isValid) {
-                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE)
+                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, true /*planView*/)
             }
         }
     }
