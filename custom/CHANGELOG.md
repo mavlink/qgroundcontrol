@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.66 - Feb 21 2018
+
+*   Prevent mouse bleed through toolbar (causing a "Go To" underneath it)
+
 ### V1.2.65 - Feb 21 2018
 
 *   Hide mission status (Elevation data) for mobile builds (ST16)
