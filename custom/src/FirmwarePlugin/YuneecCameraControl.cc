@@ -655,7 +655,7 @@ YuneecCameraControl::_buttonStateChanged(M4Lib::ButtonId buttonId, M4Lib::Button
                 } else {
                     if(cameraMode() == CAM_MODE_VIDEO) {
                         //-- Can camera capture images in video mode?
-                        if(photosInVideoMode()) {
+                        if(!photosInVideoMode()) {
                             //-- Can't take photos while video is being recorded
                             if(videoStatus() != VIDEO_CAPTURE_STATUS_STOPPED) {
                                 _errorSound.setLoopCount(1);

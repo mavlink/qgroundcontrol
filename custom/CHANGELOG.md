@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.64 - Feb 21 2018
+
+*   Fix image capture while in video mode (auto switch)
+
 ### V1.2.63 - Feb 21 2018
 
 *   Prevent mouse clicks to bleed through disabled elements ("Go To" when hitting disabled "Pause" in Fly View)
