@@ -70,15 +70,28 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
     _flightPlan         = _instantiateAirspaceFlightPlanProvider();
 }
 
-void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE)
+void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView)
 {
+    if(planView) {
+        //-- Is there a mission?
+        if(_flightPlan->flightPermitStatus() != AirspaceFlightPlanProvider::PermitNone) {
+            //-- Is there a polygon to work with?
+            if(_flightPlan->missionArea()->isValid() && _flightPlan->missionArea()->area() > 0.0) {
+                _setROI(*_flightPlan->missionArea());
+                return;
+            }
+        }
+    }
+    //-- Use screen coordinates (what you see is what you get)
     _setROI(QGCGeoBoundingCube(pointNW, pointSE));
 }
 
 void AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 {
-    _roi = roi;
-    _roiUpdateTimer.start();
+    if(_roi != roi) {
+        _roi = roi;
+        _roiUpdateTimer.start();
+    }
 }
 
 void AirspaceManager::_updateToROI()

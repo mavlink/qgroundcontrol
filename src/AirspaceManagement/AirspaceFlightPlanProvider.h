@@ -46,11 +46,13 @@ public:
     Q_PROPERTY(bool                 valid                   READ valid                                          NOTIFY advisoryChanged)
     Q_PROPERTY(QmlObjectListModel*  advisories              READ advisories                                     NOTIFY advisoryChanged)
     Q_PROPERTY(QmlObjectListModel*  ruleSets                READ ruleSets                                       NOTIFY advisoryChanged)
+    Q_PROPERTY(QGCGeoBoundingCube*  missionArea             READ missionArea                                    NOTIFY missionAreaChanged)
     Q_PROPERTY(AirspaceAdvisoryProvider::AdvisoryColor airspaceColor READ airspaceColor                         NOTIFY advisoryChanged)
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
     virtual QDateTime           flightEndTime       () const = 0;
+    virtual QGCGeoBoundingCube* missionArea         () = 0;
     virtual bool                valid               () = 0;                     ///< Current advisory list is valid
     virtual QmlObjectListModel* advisories          () = 0;                     ///< List of AirspaceAdvisory
     virtual QmlObjectListModel* ruleSets            () = 0;                     ///< List of AirspaceRuleSet
@@ -65,4 +67,5 @@ signals:
     void flightStartTimeChanged                     ();
     void flightEndTimeChanged                       ();
     void advisoryChanged                            ();
+    void missionAreaChanged                         ();
 };

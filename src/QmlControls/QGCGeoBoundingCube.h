@@ -39,8 +39,9 @@ public:
     Q_PROPERTY(QGeoCoordinate pointNW MEMBER pointNW CONSTANT)
     Q_PROPERTY(QGeoCoordinate pointSE MEMBER pointNW CONSTANT)
 
-    Q_INVOKABLE bool isValid() const;
-    Q_INVOKABLE QGeoCoordinate center() const;
+    Q_INVOKABLE void            reset   ();
+    Q_INVOKABLE bool            isValid () const;
+    Q_INVOKABLE QGeoCoordinate  center  () const;
 
     inline bool operator ==(const QGCGeoBoundingCube& other)
     {
@@ -61,10 +62,11 @@ public:
 
     //-- 2D
     QList<QGeoCoordinate> polygon2D() const;
-    double width    () const;
-    double height   () const;
-    double area     () const;
-    double radius   () const;
+
+    Q_INVOKABLE double width    () const;
+    Q_INVOKABLE double height   () const;
+    Q_INVOKABLE double area     () const;
+    Q_INVOKABLE double radius   () const;
 
     QGeoCoordinate  pointNW;
     QGeoCoordinate  pointSE;

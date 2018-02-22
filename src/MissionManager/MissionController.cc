@@ -1435,6 +1435,8 @@ void MissionController::_recalcMissionFlightStatus()
             }
         }
     }
+
+    _updateTimer.start(UPDATE_TIMEOUT);
 }
 
 // This will update the sequence numbers to be sequential starting from 0
