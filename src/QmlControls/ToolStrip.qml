@@ -52,6 +52,10 @@ Rectangle {
         }
     }
 
+    DeadMouseArea {
+        anchors.fill: parent
+    }
+
     Column {
         id:                 buttonStripColumn
         anchors.margins:    ScreenTools.defaultFontPixelWidth  / 2

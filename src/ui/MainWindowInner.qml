@@ -296,13 +296,10 @@ Item {
         onVtolTransitionToMRFlight:     flightView.guidedController.confirmAction(flightView.guidedController.actionVtolTransitionToMRFlight)
 
         //-- Entire tool bar area disable on cammand
-        MouseArea {
+        DeadMouseArea {
             id:             toolbarBlocker
-            anchors.fill:   parent
             enabled:        false
-            onWheel:        { wheel.accepted = true; }
-            onPressed:      { mouse.accepted = true; }
-            onReleased:     { mouse.accepted = true; }
+            anchors.fill:   parent
         }
     }
 
