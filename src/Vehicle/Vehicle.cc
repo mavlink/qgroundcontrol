@@ -390,9 +390,6 @@ void Vehicle::_commonInit(void)
     connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearCameraTriggerPoints);
     connect(_missionManager, &MissionManager::sendComplete,             this, &Vehicle::_clearTrajectoryPoints);
 
-    _parameterManager = new ParameterManager(this);
-    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
-
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = new GeoFenceManager(this);
     connect(_geoFenceManager, &GeoFenceManager::error,          this, &Vehicle::_geoFenceManagerError);
@@ -450,8 +447,13 @@ void Vehicle::_commonInit(void)
     _gcsHeartbeatTimer.setSingleShot(false);
     connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &Vehicle::_sendGCSHeartbeat);
     //-- Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
+    _updateHighLatencyLink();
     _sendGCSHeartbeat();
     _gcsHeartbeatTimer.start();
+    //-- This will trigger a parameter request, so it must be after the link has been flagged as High Latency
+    _parameterManager = new ParameterManager(this);
+    connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
+
 }
 
 Vehicle::~Vehicle()
@@ -3154,25 +3156,27 @@ void Vehicle::_vehicleParamLoaded(bool ready)
 
 void Vehicle::_updateHighLatencyLink(void)
 {
-    if (_priorityLink->highLatency() != _highLatencyLink) {
-        _highLatencyLink = _priorityLink->highLatency();
-        _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
-       // Handle link timeout
-       if(_highLatencyLink) {
-            //-- If defined, set the desired timeout
-            if(_firmwarePlugin->highLatencyTimeout() > 0) {
-                _connectionLostTimer.setInterval(_firmwarePlugin->highLatencyTimeout());
-                _connectionLostTimer.start();
+    if(_firmwarePlugin && _priorityLink) {
+        if (_priorityLink->highLatency() != _highLatencyLink) {
+            _highLatencyLink = _priorityLink->highLatency();
+            _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
+           // Handle link timeout
+           if(_highLatencyLink) {
+                //-- If defined, set the desired timeout
+                if(_firmwarePlugin->highLatencyTimeout() > 0) {
+                    _connectionLostTimer.setInterval(_firmwarePlugin->highLatencyTimeout());
+                    _connectionLostTimer.start();
+                } else {
+                    // Otherwise, stop timer altogether.
+                    _connectionLostTimer.stop();
+                }
             } else {
-                // Otherwise, stop timer altogether.
-                _connectionLostTimer.stop();
+                // Restore normal link timeout
+                _connectionLostTimer.setInterval(_connectionLostTimeoutMSecs);
+                _connectionLostTimer.start();
             }
-        } else {
-            // Restore normal link timeout
-            _connectionLostTimer.setInterval(_connectionLostTimeoutMSecs);
-            _connectionLostTimer.start();
+            emit highLatencyLinkChanged(_highLatencyLink);
         }
-        emit highLatencyLinkChanged(_highLatencyLink);
     }
 }
 
