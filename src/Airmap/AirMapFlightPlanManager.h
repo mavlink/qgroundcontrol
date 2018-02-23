@@ -39,6 +39,11 @@ public:
     QGCGeoBoundingCube* missionArea         () override { return &_flight.bc; }
     AirspaceAdvisoryProvider::AdvisoryColor airspaceColor   () override { return _airspaceColor; }
 
+    QmlObjectListModel* rulesViolation      () override { return &_rulesViolation; }
+    QmlObjectListModel* rulesInfo           () override { return &_rulesInfo; }
+    QmlObjectListModel* rulesReview         () override { return &_rulesReview; }
+    QmlObjectListModel* rulesFollowing      () override { return &_rulesFollowing; }
+
     void            startFlightPlanning (PlanMasterController* planController) override;
     void            setFlightStartTime  (QDateTime start) override;
     void            setFlightEndTime    (QDateTime end) override;
@@ -91,6 +96,10 @@ private:
     QDateTime               _flightEndTime;
     QmlObjectListModel      _advisories;
     QmlObjectListModel      _rulesets;
+    QmlObjectListModel      _rulesViolation;
+    QmlObjectListModel      _rulesInfo;
+    QmlObjectListModel      _rulesReview;
+    QmlObjectListModel      _rulesFollowing;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
