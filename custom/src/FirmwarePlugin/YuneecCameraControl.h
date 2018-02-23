@@ -144,6 +144,7 @@ public:
 
 private slots:
     void    _recTimerHandler        ();
+    void    _setCameraTime          ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
 #if defined(__androidx86__)
     void    _buttonStateChanged     (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
@@ -203,6 +204,7 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
+    QTimer                  _setTimeTimer;
     QTimer                  _irStatusTimer;
     QTimer                  _gimbalTimer;
     QTimer                  _recTimer;
