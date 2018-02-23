@@ -142,7 +142,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
 
     //-- Not Yet
-    return;
+    //return;
 
     if (_pilotID == "") {
         //-- Need to get the pilot id before uploading the flight plan
@@ -190,6 +190,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         if (_state != State::FlightUpload) return;
         FlightPlans::Create::Parameters params;
         params.max_altitude = _flight.maxAltitude;
+        params.min_altitude = 0.0;
         params.buffer       = 2.f;
         params.latitude     = _flight.takeoffCoord.latitude();
         params.longitude    = _flight.takeoffCoord.longitude();
@@ -400,6 +401,10 @@ AirMapFlightPlanManager::_pollBriefing()
             _advisories.endReset();
             _valid = true;
             //-- Collect Rulesets
+            _rulesViolation.clearAndDeleteContents();
+            _rulesInfo.clearAndDeleteContents();
+            _rulesReview.clearAndDeleteContents();
+            _rulesFollowing.clearAndDeleteContents();
             for(const auto& ruleset : briefing.evaluation.rulesets) {
                 AirMapRuleSet* pRuleSet = new AirMapRuleSet(this);
                 pRuleSet->_id = QString::fromStdString(ruleset.id);
@@ -412,13 +417,33 @@ AirMapFlightPlanManager::_pollBriefing()
                         pRule->_features.append(pFeature);
                     }
                     pRuleSet->_rules.append(pRule);
+                    //-- Rules separated by status for presentation
+                    switch(rule.status) {
+                    case RuleSet::Rule::Status::conflicting:
+                        _rulesViolation.append(new AirMapRule(rule, this));
+                        break;
+                    case RuleSet::Rule::Status::not_conflicting:
+                        _rulesFollowing.append(new AirMapRule(rule, this));
+                        break;
+                    case RuleSet::Rule::Status::missing_info:
+                        _rulesInfo.append(new AirMapRule(rule, this));
+                        break;
+                    case RuleSet::Rule::Status::informational:
+                        _rulesReview.append(new AirMapRule(rule, this));
+                        break;
+                    default:
+                        break;
+                    }
                 }
                 //-- Sort rules by relevance order
+                pRuleSet->_rules.beginReset();
                 std::sort(pRuleSet->_rules.objectList()->begin(), pRuleSet->_rules.objectList()->end(), rules_sort);
+                pRuleSet->_rules.endReset();
                 _rulesets.append(pRuleSet);
                 qCDebug(AirMapManagerLog) << "Adding briefing ruleset" << pRuleSet->id();
             }
             emit advisoryChanged();
+            emit rulesChanged();
             //-- Evaluate briefing status
             bool rejected = false;
             bool accepted = false;
@@ -512,7 +537,7 @@ AirMapFlightPlanManager::_missionChanged()
             _createFlightPlan();
         } else {
             //-- Plan is being modified
-            // _updateFlightPlan();
+            //_updateFlightPlan();
         }
     }
 }

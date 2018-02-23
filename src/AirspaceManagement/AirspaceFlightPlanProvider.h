@@ -49,6 +49,11 @@ public:
     Q_PROPERTY(QGCGeoBoundingCube*  missionArea             READ missionArea                                    NOTIFY missionAreaChanged)
     Q_PROPERTY(AirspaceAdvisoryProvider::AdvisoryColor airspaceColor READ airspaceColor                         NOTIFY advisoryChanged)
 
+    Q_PROPERTY(QmlObjectListModel*  rulesViolation          READ rulesViolation                                 NOTIFY rulesChanged)
+    Q_PROPERTY(QmlObjectListModel*  rulesInfo               READ rulesInfo                                      NOTIFY rulesChanged)
+    Q_PROPERTY(QmlObjectListModel*  rulesReview             READ rulesReview                                    NOTIFY rulesChanged)
+    Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
+
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
     virtual QDateTime           flightEndTime       () const = 0;
@@ -57,6 +62,11 @@ public:
     virtual QmlObjectListModel* advisories          () = 0;                     ///< List of AirspaceAdvisory
     virtual QmlObjectListModel* ruleSets            () = 0;                     ///< List of AirspaceRuleSet
     virtual AirspaceAdvisoryProvider::AdvisoryColor  airspaceColor () = 0;      ///< Aispace overall color
+
+    virtual QmlObjectListModel* rulesViolation      () = 0;                     ///< List of AirspaceRule in violation
+    virtual QmlObjectListModel* rulesInfo           () = 0;                     ///< List of AirspaceRule need more information
+    virtual QmlObjectListModel* rulesReview         () = 0;                     ///< List of AirspaceRule should review
+    virtual QmlObjectListModel* rulesFollowing      () = 0;                     ///< List of AirspaceRule following
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
@@ -68,4 +78,5 @@ signals:
     void flightEndTimeChanged                       ();
     void advisoryChanged                            ();
     void missionAreaChanged                         ();
+    void rulesChanged                               ();
 };

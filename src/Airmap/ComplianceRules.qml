@@ -13,27 +13,36 @@ import QGroundControl.SettingsManager   1.0
 
 Item {
     id:             _root
-    height:         ScreenTools.defaultFontPixelHeight * 2
-    property alias text:        title.text
-    readonly property color     _colorOrange:       "#d75e0d"
-    readonly property color     _colorYellow:       "#d7c61d"
-    readonly property color     _colorRed:          "#aa1200"
-    readonly property color     _colorGreen:        "#125f00"
+    height:         checked ? (header.height + content.height) : header.height
+    property var    rules:      null
+    property color  color:      "white"
+    property alias  text:       title.text
+    property bool   checked:    false
+    property ExclusiveGroup exclusiveGroup: null
+    onExclusiveGroupChanged: {
+        if (exclusiveGroup) {
+            exclusiveGroup.bindCheckable(_root)
+        }
+    }
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
     }
     Rectangle {
-        anchors.fill:       parent
+        id:                 header
+        height:             ScreenTools.defaultFontPixelHeight * 2
         color:              qgcPal.windowShade
+        anchors.top:        parent.top
+        anchors.right:      parent.right
+        anchors.left:       parent.left
     }
     Row {
         spacing:            ScreenTools.defaultFontPixelWidth * 2
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.fill:       header
         Rectangle {
-            height:         _root.height
+            height:         parent.height
             width:          ScreenTools.defaultFontPixelWidth * 0.75
-            color:          _colorGreen
+            color:          _root.color
         }
         QGCLabel {
             id:                 title
@@ -41,14 +50,75 @@ Item {
         }
     }
     QGCColoredImage {
-        source:                 "qrc:/airmap/expand.svg"
+        source:                 checked ? "qrc:/airmap/colapse.svg" : "qrc:/airmap/expand.svg"
         height:                 ScreenTools.defaultFontPixelHeight
         width:                  height
         color:                  qgcPal.text
         fillMode:               Image.PreserveAspectFit
         sourceSize.height:      height
-        anchors.right:          parent.right
+        anchors.right:          header.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: header.verticalCenter
+    }
+    MouseArea {
+        anchors.fill:       header
+        onClicked: {
+            _root.checked = !_root.checked
+        }
+    }
+    Rectangle {
+        id:             content
+        color:          qgcPal.window
+        visible:        checked
+        height:         ScreenTools.defaultFontPixelHeight * 10
+        anchors.top:    header.bottom
+        anchors.right:  parent.right
+        anchors.left:   parent.left
+        anchors.margins: ScreenTools.defaultFontPixelWidth
+        Flickable {
+            clip:           true
+            anchors.fill:   parent
+            contentHeight:  rulesetCol.height
+            flickableDirection: Flickable.VerticalFlick
+            Column {
+                id:         rulesetCol
+                spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                anchors.right: parent.right
+                anchors.left:  parent.left
+                Repeater {
+                    model:    _root.rules ? _root.rules : []
+                    delegate: Item {
+                        height:         ruleCol.height
+                        anchors.right:  parent.right
+                        anchors.left:   parent.left
+                        anchors.margins: ScreenTools.defaultFontPixelWidth
+                        Column {
+                            id:         ruleCol
+                            spacing:    ScreenTools.defaultFontPixelHeight * 0.5
+                            anchors.right:  parent.right
+                            anchors.left:   parent.left
+                            Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.25; }
+                            QGCLabel {
+                                text:           object.shortText !== "" ? object.shortText : qsTr("Rule")
+                                anchors.right:  parent.right
+                                anchors.left:   parent.left
+                                wrapMode:       Text.WordWrap
+                            }
+                            QGCLabel {
+                                text:           object.description
+                                visible:        object.description !== ""
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                anchors.right:  parent.right
+                                anchors.left:   parent.left
+                                wrapMode:       Text.WordWrap
+                                anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                                anchors.leftMargin:  ScreenTools.defaultFontPixelWidth * 0.5
+                            }
+                        }
+                    }
+                }
+                Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.25; }
+            }
+        }
     }
 }
