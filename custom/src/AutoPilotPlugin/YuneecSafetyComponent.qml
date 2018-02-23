@@ -44,11 +44,11 @@ SetupPage {
             property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
             property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
             property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
-
+/*
             property Fact _maxVelUp:        controller.getParameterFact(-1, "MPC_Z_VEL_MAX_DN")
             property Fact _maxVelDn:        controller.getParameterFact(-1, "MPC_Z_VEL_MAX_UP")
             property Fact _maxVelHz:        controller.getParameterFact(-1, "MPC_VEL_MANUAL")
-
+*/
             ExclusiveGroup { id: homeLoiterGroup }
 
             Rectangle {
@@ -60,13 +60,14 @@ SetupPage {
             }
 
             Rectangle {
+                id:     lastRect
                 x:      returnHomeGrid.x + outerGrid.x - _margins
                 y:      returnHomeGrid.y + outerGrid.y - _margins
                 width:  returnHomeGrid.width + (_margins * 2)
                 height: returnHomeGrid.height + (_margins * 2)
                 color:  qgcPal.windowShade
             }
-
+/*
             Rectangle {
                 x:      maxVertGrid.x + outerGrid.x - _margins
                 y:      maxVertGrid.y + outerGrid.y - _margins
@@ -83,7 +84,7 @@ SetupPage {
                 height: maxHorzGrid.height + (_margins * 2)
                 color:  qgcPal.windowShade
             }
-
+*/
             GridLayout {
                 id:         outerGrid
                 columns:    3
@@ -185,7 +186,7 @@ SetupPage {
                         Layout.alignment:       Qt.AlignVCenter
                     }
                 }
-
+/*
                 Item { width: 1; height: _margins; Layout.columnSpan: 3 }
 
                 QGCLabel {
@@ -266,7 +267,7 @@ SetupPage {
                         Layout.alignment:       Qt.AlignVCenter
                     }
                 }
-
+*/
                 Item { width: 1; height: _margins; Layout.columnSpan: 3 }
 
             }

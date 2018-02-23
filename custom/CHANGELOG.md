@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.68 - Feb 23 2018
+
+*   Hiding Max Vertical/Horizontal Velocity from the Safety Panel until it's fully tested.
+
 ### V1.2.67 - Feb 23 2018
 
 *   DataPilot now sends the time to the camera periodically. This is to make sure the camera has the correct time. The camera firmware will need changes to accept and consume this.
