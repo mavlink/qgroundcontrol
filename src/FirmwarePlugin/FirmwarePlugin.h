@@ -304,6 +304,12 @@ public:
     /// Returns true if the vehicle is a VTOL
     virtual bool isVtol(const Vehicle* vehicle) const;
 
+    /// Amount of time (in milliseconds) before a high latency link times out (0 for no timeout)
+    virtual int highLatencyTimeout() { return 0; }
+
+    /// Defines when to send heartbeats on a high latency link (once in every n heartbeat times). 0 for no heartbeats on hight latency.
+    virtual int highLatencyHeartbeatFrequency() { return 0; }
+
     /// Convert from HIGH_LATENCY2.custom_mode value to correct 32 bit value.
     virtual uint32_t highLatencyCustomModeTo32Bits(uint16_t hlCustomMode);
 

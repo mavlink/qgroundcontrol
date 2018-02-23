@@ -41,15 +41,7 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
-
     _gcsHeartbeatEnabled = settings.value(_gcsHeartbeatEnabledKey, true).toBool();
-
-    _gcsHeartbeatTimer.setInterval(_gcsHeartbeatRateMSecs);
-    _gcsHeartbeatTimer.setSingleShot(false);
-    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &MultiVehicleManager::_sendGCSHeartbeat);
-    if (_gcsHeartbeatEnabled) {
-        _gcsHeartbeatTimer.start();
-    }
 }
 
 void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
@@ -124,10 +116,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &MultiVehicleManager::_vehicleParametersReadyChanged);
 
     _vehicles.append(vehicle);
-
-    // Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
-    _sendGCSHeartbeat();
-
     qgcApp()->toolbox()->settingsManager()->appSettings()->defaultFirmwareType()->setRawValue(vehicleFirmwareType);
 
     emit vehicleAdded(vehicle);
@@ -341,41 +329,8 @@ void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
     if (gcsHeartBeatEnabled != _gcsHeartbeatEnabled) {
         _gcsHeartbeatEnabled = gcsHeartBeatEnabled;
         emit gcsHeartBeatEnabledChanged(gcsHeartBeatEnabled);
-
         QSettings settings;
         settings.setValue(_gcsHeartbeatEnabledKey, gcsHeartBeatEnabled);
-
-        if (gcsHeartBeatEnabled) {
-            _gcsHeartbeatTimer.start();
-        } else {
-            _gcsHeartbeatTimer.stop();
-        }
-    }
-}
-
-void MultiVehicleManager::_sendGCSHeartbeat(void)
-{
-    // Send a heartbeat out on each link
-    LinkManager* linkMgr = _toolbox->linkManager();
-    for (int i=0; i<linkMgr->links().count(); i++) {
-        LinkInterface* link = linkMgr->links()[i];
-        if (link->isConnected() && !link->highLatency()) {
-            mavlink_message_t message;
-            mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
-                                            _mavlinkProtocol->getComponentId(),
-                                            link->mavlinkChannel(),
-                                            &message,
-                                            MAV_TYPE_GCS,            // MAV_TYPE
-                                            MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
-                                            MAV_MODE_MANUAL_ARMED,   // MAV_MODE
-                                            0,                       // custom mode
-                                            MAV_STATE_ACTIVE);       // MAV_STATE
-
-            uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-            int len = mavlink_msg_to_send_buffer(buffer, &message);
-
-            link->writeBytesSafe((const char*)buffer, len);
-        }
     }
 }
 

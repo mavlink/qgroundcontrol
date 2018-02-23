@@ -93,7 +93,6 @@ private slots:
     void _deleteVehiclePhase2(void);
     void _setActiveVehiclePhase2(void);
     void _vehicleParametersReadyChanged(bool parametersReady);
-    void _sendGCSHeartbeat(void);
     void _vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
     void _requestProtocolVersion(unsigned version);
 
@@ -116,9 +115,7 @@ private:
     JoystickManager*            _joystickManager;
     MAVLinkProtocol*            _mavlinkProtocol;
 
-    QTimer              _gcsHeartbeatTimer;             ///< Timer to emit heartbeats
     bool                _gcsHeartbeatEnabled;           ///< Enabled/disable heartbeat emission
-    static const int    _gcsHeartbeatRateMSecs = 1000;  ///< Heartbeat rate
     static const char*  _gcsHeartbeatEnabledKey;
 };
 

@@ -752,6 +752,8 @@ public:
     void _setHomePosition(QGeoCoordinate& homeCoord);
     void _setMaxProtoVersion (unsigned version);
 
+    QList<LinkInterface*>       links() { return _links; }
+
     /// Vehicle is about to be deleted
     void prepareDelete();
 
@@ -886,6 +888,7 @@ private slots:
     void _updateDistanceToHome(void);
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
+    void _sendGCSHeartbeat(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -1021,6 +1024,10 @@ private:
     QString             _prearmError;
     QTimer              _prearmErrorTimer;
     static const int    _prearmErrorTimeoutMSecs = 35 * 1000;   ///< Take away prearm error after 35 seconds
+
+    QTimer              _gcsHeartbeatTimer;                     ///< Timer to emit heartbeats
+    uint64_t            _gcsHeartbeatCount     = 0;             ///< Number of heartbeats sent
+    static const int    _gcsHeartbeatRateMSecs = 1000;          ///< Heartbeat rate
 
     // Lost connection handling
     bool                _connectionLost;

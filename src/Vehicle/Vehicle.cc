@@ -444,6 +444,14 @@ void Vehicle::_commonInit(void)
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
+
+    //-- GCS Heartbeats
+    _gcsHeartbeatTimer.setInterval(_gcsHeartbeatRateMSecs);
+    _gcsHeartbeatTimer.setSingleShot(false);
+    connect(&_gcsHeartbeatTimer, &QTimer::timeout, this, &Vehicle::_sendGCSHeartbeat);
+    //-- Send QGC heartbeat ASAP, this allows PX4 to start accepting commands
+    _sendGCSHeartbeat();
+    _gcsHeartbeatTimer.start();
 }
 
 Vehicle::~Vehicle()
@@ -536,6 +544,45 @@ void Vehicle::resetCounters()
     _messagesLost       = 0;
     _messageSeq         = 0;
     _heardFrom          = false;
+}
+
+void Vehicle::_sendGCSHeartbeat(void)
+{
+    if(qgcApp()->toolbox()->multiVehicleManager()->gcsHeartbeatEnabled()) {
+        // Send a heartbeat out on each link
+        _gcsHeartbeatCount++;
+        for (int i = 0; i < _links.count(); i++) {
+            LinkInterface* link = _links[i];
+            if (link->isConnected()) {
+                if(link->highLatency()) {
+                    if(_firmwarePlugin->highLatencyHeartbeatFrequency() > 0) {
+                        if(_gcsHeartbeatCount % _firmwarePlugin->highLatencyHeartbeatFrequency() != 0) {
+                            //-- Skip it
+                            continue;
+                        }
+                    } else {
+                        //-- No heartbeats on this high latency link
+                        continue;
+                    }
+                }
+                mavlink_message_t message;
+                mavlink_msg_heartbeat_pack_chan(
+                    _mavlink->getSystemId(),
+                    _mavlink->getComponentId(),
+                    link->mavlinkChannel(),
+                    &message,
+                    MAV_TYPE_GCS,            // MAV_TYPE
+                    MAV_AUTOPILOT_INVALID,   // MAV_AUTOPILOT
+                    MAV_MODE_MANUAL_ARMED,   // MAV_MODE
+                    0,                       // custom mode
+                    MAV_STATE_ACTIVE);       // MAV_STATE
+                uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+                int len = mavlink_msg_to_send_buffer(buffer, &message);
+                link->writeBytesSafe((const char*)buffer, len);
+                qDebug() << "Send heartbeat on" << link->getName();
+            }
+        }
+    }
 }
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
@@ -3110,6 +3157,21 @@ void Vehicle::_updateHighLatencyLink(void)
     if (_priorityLink->highLatency() != _highLatencyLink) {
         _highLatencyLink = _priorityLink->highLatency();
         _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
+       // Handle link timeout
+       if(_highLatencyLink) {
+            //-- If defined, set the desired timeout
+            if(_firmwarePlugin->highLatencyTimeout() > 0) {
+                _connectionLostTimer.setInterval(_firmwarePlugin->highLatencyTimeout());
+                _connectionLostTimer.start();
+            } else {
+                // Otherwise, stop timer altogether.
+                _connectionLostTimer.stop();
+            }
+        } else {
+            // Restore normal link timeout
+            _connectionLostTimer.setInterval(_connectionLostTimeoutMSecs);
+            _connectionLostTimer.start();
+        }
         emit highLatencyLinkChanged(_highLatencyLink);
     }
 }
