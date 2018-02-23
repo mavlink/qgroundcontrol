@@ -2195,7 +2195,20 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
+    if (_mavCommandQueue.size() > 2) {
+        // HACK
+        // FIX PROPERLY
+        // don't queue
+        return;
+    }
+
     //-- Incoming pitch and yaw values are -1.00 to 1.00
+    if (std::isfinite(pitch) && std::isfinite(yaw)) {
+        // good
+    } else {
+        return;
+    }
+
     pitch = pitch * 120.0;
     yaw = yaw * 120.0f;
     qDebug() << pitch << yaw;
