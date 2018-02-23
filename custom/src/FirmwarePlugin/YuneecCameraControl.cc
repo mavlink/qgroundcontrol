@@ -112,6 +112,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     connect(&_recTimer,     &QTimer::timeout, this, &YuneecCameraControl::_recTimerHandler);
     connect(&_gimbalTimer,  &QTimer::timeout, this, &YuneecCameraControl::_gimbalCalTimeout);
     connect(&_irStatusTimer,&QTimer::timeout, this, &YuneecCameraControl::_irStatusTimeout);
+    connect(&_setTimeTimer, &QTimer::timeout, this, &YuneecCameraControl::_setCameraTime);
     connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &YuneecCameraControl::_mavlinkMessageReceived);
     connect(this,       &QGCCameraControl::parametersReady, this, &YuneecCameraControl::_parametersReady);
 
@@ -195,6 +196,9 @@ YuneecCameraControl::_parametersReady()
         if(isCGOET()) {
             _presetChanged(_irPresets->rawValue());
         }
+        //-- Start sending time to the camera (every 10 seconds)
+        _setCameraTime();
+        _setTimeTimer.start(10000);
     }
 }
 
@@ -1075,4 +1079,20 @@ YuneecCameraControl::_presetChanged(QVariant value)
             }
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::_setCameraTime()
+{
+    MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_message_t msg;
+    mavlink_msg_system_time_pack_chan(
+        pMavlink->getSystemId(),
+        pMavlink->getComponentId(),
+        _vehicle->priorityLink()->mavlinkChannel(),
+        &msg,
+        QDateTime::currentDateTime().toLocalTime().toMSecsSinceEpoch() * 1000,
+        0);
+    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 }
