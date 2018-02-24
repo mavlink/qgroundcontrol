@@ -44,11 +44,13 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
+    case FactMetaData::valueTypeUint64:
         convertTo = QVariant::UInt;
         break;
     case FactMetaData::valueTypeInt8:
     case FactMetaData::valueTypeInt16:
     case FactMetaData::valueTypeInt32:
+    case FactMetaData::valueTypeInt64:
         convertTo = QVariant::Int;
         break;
     case FactMetaData::valueTypeFloat:
@@ -531,12 +533,14 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
                 break;
 
             case FactMetaData::valueTypeInt32:
+            case FactMetaData::valueTypeInt64:
                 typedBitSet = QVariant((int)bitSet);
                 break;
 
             case FactMetaData::valueTypeUint8:
             case FactMetaData::valueTypeUint16:
             case FactMetaData::valueTypeUint32:
+            case FactMetaData::valueTypeUint64:
                 typedBitSet = QVariant(bitSet);
                 break;
 

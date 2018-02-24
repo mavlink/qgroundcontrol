@@ -31,6 +31,7 @@ static const char *kCAM_SPOTAREA    = "CAM_SPOTAREA";
 static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
 static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
+static const char *kCAM_SYSTEMTIME  = "CAM_SYSTEMTIME";
 
 static const char *kCAM_IRPALETTE   = "CAM_IRPALETTE";
 static const char *kCAM_IRTEMPRENA  = "CAM_IRTEMPRENA";
@@ -112,7 +113,6 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     connect(&_recTimer,     &QTimer::timeout, this, &YuneecCameraControl::_recTimerHandler);
     connect(&_gimbalTimer,  &QTimer::timeout, this, &YuneecCameraControl::_gimbalCalTimeout);
     connect(&_irStatusTimer,&QTimer::timeout, this, &YuneecCameraControl::_irStatusTimeout);
-    connect(&_setTimeTimer, &QTimer::timeout, this, &YuneecCameraControl::_setCameraTime);
     connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &YuneecCameraControl::_mavlinkMessageReceived);
     connect(this,       &QGCCameraControl::parametersReady, this, &YuneecCameraControl::_parametersReady);
 
@@ -196,9 +196,8 @@ YuneecCameraControl::_parametersReady()
         if(isCGOET()) {
             _presetChanged(_irPresets->rawValue());
         }
-        //-- Start sending time to the camera (every 10 seconds)
+        //-- Set camera time
         _setCameraTime();
-        _setTimeTimer.start(10000);
     }
 }
 
@@ -1085,14 +1084,10 @@ YuneecCameraControl::_presetChanged(QVariant value)
 void
 YuneecCameraControl::_setCameraTime()
 {
-    MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_message_t msg;
-    mavlink_msg_system_time_pack_chan(
-        pMavlink->getSystemId(),
-        pMavlink->getComponentId(),
-        _vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        QDateTime::currentDateTime().toLocalTime().toMSecsSinceEpoch() * 1000,
-        0);
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
+    if(_paramComplete) {
+        Fact* pFact = getFact(kCAM_SYSTEMTIME);
+        if(pFact) {
+            pFact->setRawValue(QVariant((quint64)(QDateTime::currentDateTime().toLocalTime().toMSecsSinceEpoch() * 1000)));
+        }
+    }
 }

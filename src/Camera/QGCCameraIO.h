@@ -19,6 +19,9 @@ MAVPACKED(
 typedef struct {
     union {
         float       param_float;
+        double      param_double;
+        int64_t     param_int64;
+        uint64_t    param_uint64;
         int32_t     param_int32;
         uint32_t    param_uint32;
         int16_t     param_int16;
