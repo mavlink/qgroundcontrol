@@ -43,6 +43,7 @@ public:
     QmlObjectListModel* rulesInfo           () override { return &_rulesInfo; }
     QmlObjectListModel* rulesReview         () override { return &_rulesReview; }
     QmlObjectListModel* rulesFollowing      () override { return &_rulesFollowing; }
+    QmlObjectListModel* briefFeatures       () override { return &_briefFeatures; }
 
     void            startFlightPlanning (PlanMasterController* planController) override;
     void            setFlightStartTime  (QDateTime start) override;
@@ -100,6 +101,7 @@ private:
     QmlObjectListModel      _rulesInfo;
     QmlObjectListModel      _rulesReview;
     QmlObjectListModel      _rulesFollowing;
+    QmlObjectListModel      _briefFeatures;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;

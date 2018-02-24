@@ -55,6 +55,18 @@ Item {
         return _colorGray;
     }
 
+    function hasBriefRules() {
+        if(QGroundControl.airspaceManager.flightPlan.rulesViolation.count > 0)
+            return true;
+        if(QGroundControl.airspaceManager.flightPlan.rulesInfo.count > 0)
+            return true;
+        if(QGroundControl.airspaceManager.flightPlan.rulesReview.count > 0)
+            return true;
+        if(QGroundControl.airspaceManager.flightPlan.rulesFollowing.count > 0)
+            return true;
+        return false;
+    }
+
     on_AirspaceColorChanged: {
        if(_validAdvisories) {
            if(QGroundControl.airspaceManager.advisories.airspaceColor === AirspaceAdvisoryProvider.Yellow) {
@@ -692,10 +704,14 @@ Item {
                                 Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.25; }
                                 QGCLabel {
                                     text:           qsTr("Flight Context")
+                                    visible:        QGroundControl.airspaceManager.flightPlan.briefFeatures.count > 0
                                 }
                                 Repeater {
-                                    model:          [1, 2, 3, 4, 5, 6]
-                                    delegate: FlightFeature {
+                                    model:          QGroundControl.airspaceManager.flightPlan.briefFeatures
+                                    visible:        QGroundControl.airspaceManager.flightPlan.briefFeatures.count > 0
+                                    delegate:       FlightFeature {
+                                        feature:    object
+                                        visible:     object && object.type !== AirspaceRuleFeature.Unknown && object.description !== "" && object.name !== ""
                                         anchors.right:  parent.right
                                         anchors.left:   parent.left
                                     }
@@ -798,6 +814,7 @@ Item {
                                 Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.25; }
                                 QGCLabel {
                                     text:           qsTr("Rules & Compliance")
+                                    visible:        hasBriefRules()
                                 }
                                 ExclusiveGroup { id: ruleGroup }
                                 ComplianceRules {

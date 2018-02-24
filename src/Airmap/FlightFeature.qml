@@ -5,32 +5,71 @@ import QtQuick.Dialogs          1.2
 import QtQml                    2.2
 
 import QGroundControl                   1.0
-import QGroundControl.ScreenTools       1.0
+import QGroundControl.Airmap            1.0
+import QGroundControl.Airspace          1.0
 import QGroundControl.Controls          1.0
 import QGroundControl.Palette           1.0
-import QGroundControl.Airmap            1.0
+import QGroundControl.ScreenTools       1.0
 import QGroundControl.SettingsManager   1.0
 
 Rectangle {
     id:                         _root
     height:                     questionCol.height + (ScreenTools.defaultFontPixelHeight * 1.25)
     color:                      qgcPal.windowShade
+    property var feature:       null
     QGCPalette {
         id: qgcPal
         colorGroupEnabled: enabled
     }
     Column {
-        id:         questionCol
-        spacing:    ScreenTools.defaultFontPixelHeight * 0.5
-        anchors.centerIn:   parent
+        id:                 questionCol
+        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        anchors.right:      parent.right
+        anchors.left:       parent.left
+        anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
-            text:   "Question?"
-            anchors.left: questionText.left
+            text:           feature.description
+            anchors.right:  parent.right
+            anchors.left:   parent.left
+            wrapMode:       Text.WordWrap
+            visible:        feature.type !== AirspaceRuleFeature.Boolean
         }
         QGCTextField {
-            id:     questionText
-            width:  _root.width - (ScreenTools.defaultFontPixelWidth * 2)
-            anchors.horizontalCenter: parent.horizontalCenter
+            text:           feature.value ? feature.value : ""
+            visible:        feature.type !== AirspaceRuleFeature.Boolean
+            anchors.right:  parent.right
+            anchors.left:   parent.left
+            inputMethodHints: feature.type === AirspaceRuleFeature.Float ? Qt.ImhFormattedNumbersOnly :Qt.ImhNone
+            onAccepted: {
+                feature.value = parseFloat(text)
+            }
+            onEditingFinished: {
+                feature.value = parseFloat(text)
+            }
+        }
+        Item {
+            height:         Math.max(checkBox.height, label.height)
+            anchors.right:  parent.right
+            anchors.left:   parent.left
+            visible:        feature.type === AirspaceRuleFeature.Boolean
+            QGCCheckBox {
+                id:             checkBox
+                text:           ""
+                checked:        feature.value ? feature.value : false
+                onClicked:      feature.value = checked
+                anchors.left:   parent.left
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QGCLabel {
+                id:             label
+                text:           feature.description
+                anchors.right:  parent.right
+                anchors.left:   checkBox.right
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5
+                wrapMode:       Text.WordWrap
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
     }
 }

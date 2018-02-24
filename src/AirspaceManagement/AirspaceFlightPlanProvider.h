@@ -53,6 +53,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  rulesInfo               READ rulesInfo                                      NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesReview             READ rulesReview                                    NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
+    Q_PROPERTY(QmlObjectListModel*  briefFeatures           READ briefFeatures                                  NOTIFY rulesChanged)
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
@@ -67,6 +68,7 @@ public:
     virtual QmlObjectListModel* rulesInfo           () = 0;                     ///< List of AirspaceRule need more information
     virtual QmlObjectListModel* rulesReview         () = 0;                     ///< List of AirspaceRule should review
     virtual QmlObjectListModel* rulesFollowing      () = 0;                     ///< List of AirspaceRule following
+    virtual QmlObjectListModel* briefFeatures       () = 0;                     ///< List of AirspaceRule in violation
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
