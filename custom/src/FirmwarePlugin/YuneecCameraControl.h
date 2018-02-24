@@ -144,7 +144,6 @@ public:
 
 private slots:
     void    _recTimerHandler        ();
-    void    _setCameraTime          ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
 #if defined(__androidx86__)
     void    _buttonStateChanged     (M4Lib::ButtonId buttonId, M4Lib::ButtonState buttonState);
@@ -185,9 +184,10 @@ protected:
 private:
     void    _handleHeartBeat        (const mavlink_message_t& message);
     void    _handleCommandAck       (const mavlink_message_t& message);
-    void    _handleHardwareVersion    (const mavlink_message_t& message);
+    void    _handleHardwareVersion  (const mavlink_message_t& message);
     void    _handleGimbalOrientation(const mavlink_message_t& message);
     void    _handleGimbalResult     (uint16_t result, uint8_t progress);
+    void    _setCameraTime          ();
 
     QVariant _validateShutterSpeed  (Fact* pFact, QVariant& newValue);
     QVariant _validateISO           (Fact* pFact, QVariant& newValue);
@@ -204,7 +204,6 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
-    QTimer                  _setTimeTimer;
     QTimer                  _irStatusTimer;
     QTimer                  _gimbalTimer;
     QTimer                  _recTimer;
