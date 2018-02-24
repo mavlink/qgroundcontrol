@@ -32,13 +32,13 @@ Rectangle {
     property real   missionMaxTelemetry:        _controllerValid ? planMasterController.missionController.missionMaxTelemetry : NaN
     property bool   missionDirty:               _controllerValid ? planMasterController.missionController.dirty : false
 
-    property bool   _controllerValid:           planMasterController != undefined
+    property bool   _controllerValid:           planMasterController !== undefined
     property bool   _controllerOffline:         _controllerValid ? planMasterController.offline : true
     property var    _controllerDirty:           _controllerValid ? planMasterController.dirty : false
     property var    _controllerSyncInProgress:  _controllerValid ? planMasterController.syncInProgress : false
 
-    property bool   _statusValid:               currentMissionItem != undefined
-    property bool   _missionValid:              missionItems != undefined
+    property bool   _statusValid:               currentMissionItem !== undefined
+    property bool   _missionValid:              missionItems !== undefined
 
     property real   _dataFontSize:              ScreenTools.defaultFontPointSize
     property real   _largeValueWidth:           ScreenTools.defaultFontPixelWidth * 8
@@ -84,11 +84,8 @@ Rectangle {
     }
 
     //-- Eat mouse events, preventing them from reaching toolbar, which is underneath us.
-    MouseArea {
-        anchors.fill:   parent
-        onWheel:        { wheel.accepted = true; }
-        onPressed:      { mouse.accepted = true; }
-        onReleased:     { mouse.accepted = true; }
+    DeadMouseArea {
+        anchors.fill: parent
     }
 
     //-- The reason for this Row to be here is so the Logo (Home) button is in the same

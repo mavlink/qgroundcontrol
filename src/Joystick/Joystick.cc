@@ -49,7 +49,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _hatCount(hatCount)
     , _hatButtonCount(4*hatCount)
     , _totalButtonCount(_buttonCount+_hatButtonCount)
-    , _calibrationMode(CalibrationModeOff)
+    , _calibrationMode(false)
     , _rgAxisValues(NULL)
     , _rgCalibration(NULL)
     , _rgButtonValues(NULL)
@@ -431,7 +431,7 @@ void Joystick::run(void)
             }
         }
 
-        if (_calibrationMode != CalibrationModeCalibrating && _calibrated) {
+        if (_outputEnabled && _calibrated) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
@@ -757,36 +757,28 @@ void Joystick::setDeadband(bool deadband)
     _saveSettings();
 }
 
-void Joystick::startCalibrationMode(CalibrationMode_t mode)
+void Joystick::setCalibrationMode(bool calibrating)
 {
-    if (mode == CalibrationModeOff) {
-        qWarning() << "Incorrect mode CalibrationModeOff";
-        return;
-    }
+    _calibrationMode = calibrating;
 
-    _calibrationMode = mode;
-
-    if (!isRunning()) {
+    if (calibrating && !isRunning()) {
         _pollingStartedForCalibration = true;
         startPolling(_multiVehicleManager->activeVehicle());
     }
+    else if (_pollingStartedForCalibration) {
+        stopPolling();
+    }
+    if (calibrating){
+        setOutputEnabled(false); //Disable the joystick output before calibrating
+    }
+    else if (!calibrating && _calibrated){
+        setOutputEnabled(true); //Enable joystick output after calibration
+    }
 }
 
-void Joystick::stopCalibrationMode(CalibrationMode_t mode)
-{
-    if (mode == CalibrationModeOff) {
-        qWarning() << "Incorrect mode: CalibrationModeOff";
-        return;
-    }
-
-    if (mode == CalibrationModeCalibrating) {
-        _calibrationMode = CalibrationModeMonitor;
-    } else {
-        _calibrationMode = CalibrationModeOff;
-        if (_pollingStartedForCalibration) {
-            stopPolling();
-        }
-    }
+void Joystick::setOutputEnabled(bool enabled){
+    _outputEnabled = enabled;
+    emit outputEnabledChanged(_outputEnabled);
 }
 
 void Joystick::_buttonAction(const QString& action)

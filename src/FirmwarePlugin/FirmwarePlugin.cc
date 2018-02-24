@@ -492,6 +492,18 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       0.8,      // minTriggerInterval
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("GoPro Hero 4"),
+                                      6.17,     // sensorWidth
+                                      4.55,     // sendsorHeight
+                                      4000,     // imageWidth
+                                      3000,     // imageHeight
+                                      2.98,     // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;
@@ -620,4 +632,9 @@ QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_infor
     return NULL;
 }
 
+uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
+{
+    // Standard implementation assumes no special handling. Upper part of 32 bit value is not used.
+    return hlCustomMode;
+}
 

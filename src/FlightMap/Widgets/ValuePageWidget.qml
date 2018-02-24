@@ -174,8 +174,8 @@ Column {
                         anchors.right:      parent.right
                         sourceComponent:    factGroupList
 
-                        property var factGroup:     _activeVehicle
-                        property var factGroupName: "Vehicle"
+                        property var    factGroup:     _activeVehicle
+                        property string factGroupName: "Vehicle"
                     }
                 }
             }

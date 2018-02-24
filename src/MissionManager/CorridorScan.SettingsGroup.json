@@ -35,8 +35,8 @@
     "defaultValue":     30
 },
 {
-    "name":             "TurnaroundDist",
-    "shortDescription": "Amount of additional distance to add outside the grid area for vehicle turnaround.",
+    "name":             "TurnaroundDistance",
+    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turnaround.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,

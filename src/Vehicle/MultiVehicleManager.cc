@@ -359,7 +359,7 @@ void MultiVehicleManager::_sendGCSHeartbeat(void)
     LinkManager* linkMgr = _toolbox->linkManager();
     for (int i=0; i<linkMgr->links().count(); i++) {
         LinkInterface* link = linkMgr->links()[i];
-        if (link->isConnected()) {
+        if (link->isConnected() && !link->highLatency()) {
             mavlink_message_t message;
             mavlink_msg_heartbeat_pack_chan(_mavlinkProtocol->getSystemId(),
                                             _mavlinkProtocol->getComponentId(),

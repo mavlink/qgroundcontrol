@@ -58,7 +58,7 @@ FactPanel {
             console.log("Error loading QGCViewDialogContainer.qml: ", dialogComponent.errorString())
             return
         }
-        var dialogWidth = charWidth == showDialogFullWidth ? parent.width : ScreenTools.defaultFontPixelWidth * charWidth
+        var dialogWidth = charWidth === showDialogFullWidth ? parent.width : ScreenTools.defaultFontPixelWidth * charWidth
         var dialog = dialogComponent.createObject(_rootItem,
                                                   {
                                                       "anchors.fill":       _rootItem,

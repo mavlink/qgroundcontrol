@@ -61,14 +61,14 @@ double limitAngleToPMPId(double angle)
         {
             while (angle < -M_PI)
             {
-                angle += M_PI;
+                angle += 2.0f * M_PI;
             }
         }
         else if (angle > M_PI)
         {
             while (angle > M_PI)
             {
-                angle -= M_PI;
+                angle -= 2.0f * M_PI;
             }
         }
     }

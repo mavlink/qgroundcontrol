@@ -51,8 +51,8 @@ Item {
         anchors.right: parent.right
         height: ScreenTools.minTouchPixels
         width: height
-        property var initialX: 0
-        property var initialWidth: 0
+        property real initialX: 0
+        property real initialWidth: 0
 
         onClicked: {
             // TODO propagate
@@ -98,7 +98,7 @@ Item {
     }
 
     // Resize pip window if necessary when main window is resized
-    property var pipLock: 2
+    property int pipLock: 2
 
     Connections {
         target: pip.parent
