@@ -301,10 +301,10 @@ QGCCameraParamIO::_valueFromMessage(const char* value, uint8_t param_type)
             var = QVariant(u.param_int32);
             break;
         case MAV_PARAM_EXT_TYPE_UINT64:
-            var = QVariant(u.param_uint64);
+            var = QVariant((qulonglong)u.param_uint64);
             break;
         case MAV_PARAM_EXT_TYPE_INT64:
-            var = QVariant(u.param_int64);
+            var = QVariant((qlonglong)u.param_int64);
             break;
         case MAV_PARAM_EXT_TYPE_CUSTOM:
             var = QVariant(QByteArray(value, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN));
