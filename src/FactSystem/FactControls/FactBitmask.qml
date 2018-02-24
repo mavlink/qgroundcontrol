@@ -33,10 +33,12 @@ Flow {
             checked:    fact.value & fact.bitmaskValues[index]
 
             onClicked: {
+                var i;
+                var otherCheckbox;
                 if (checked) {
                     if (firstEntryIsAll && index == 0) {
-                        for (var i=1; i<repeater.count; i++) {
-                            var otherCheckbox = repeater.itemAt(i)
+                        for (i = 1; i < repeater.count; i++) {
+                            otherCheckbox = repeater.itemAt(i)
                             fact.value &= ~fact.bitmaskValues[i]
                             otherCheckbox.checked = false
                             otherCheckbox.enabled = false
@@ -45,8 +47,8 @@ Flow {
                     fact.value |= fact.bitmaskValues[index]
                 } else {
                     if (firstEntryIsAll && index == 0) {
-                        for (var i=1; i<repeater.count; i++) {
-                            var otherCheckbox = repeater.itemAt(i)
+                        for (i = 1; i < repeater.count; i++) {
+                            otherCheckbox = repeater.itemAt(i)
                             otherCheckbox.enabled = true
                         }
                     }

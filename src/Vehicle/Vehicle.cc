@@ -221,7 +221,7 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     // Send MAV_CMD ack timer
     _mavCommandAckTimer.setSingleShot(true);
-    _mavCommandAckTimer.setInterval(_mavCommandAckTimeoutMSecs);
+    _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
     connect(&_mavCommandAckTimer, &QTimer::timeout, this, &Vehicle::_sendMavCommandAgain);
 
     _mav = uas();
@@ -814,16 +814,23 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     mavlink_high_latency2_t highLatency2;
     mavlink_msg_high_latency2_decode(&message, &highLatency2);
 
-#if 0
-    typedef struct __mavlink_high_latency2_t {
-     uint16_t wp_num; /*< Current waypoint number*/
-     uint16_t failure_flags; /*< Indicates failures as defined in MAV_FAILURE_FLAG ENUM. */
-     uint8_t flight_mode; /*< Flight Mode of the vehicle as defined in the FLIGHT_MODE ENUM*/
-     uint8_t failsafe; /*< Indicates if a failsafe mode is triggered, defined in MAV_FAILSAFE_FLAG ENUM*/
-    }) mavlink_high_latency2_t;
-#endif
+    QString previousFlightMode;
+    if (_base_mode != 0 || _custom_mode != 0){
+        // Vehicle is initialized with _base_mode=0 and _custom_mode=0. Don't pass this to flightMode() since it will complain about
+        // bad modes while unit testing.
+        previousFlightMode = flightMode();
+    }
+    _base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+    _custom_mode = _firmwarePlugin->highLatencyCustomModeTo32Bits(highLatency2.custom_mode);
+    if (previousFlightMode != flightMode()) {
+        emit flightModeChanged(flightMode());
+    }
 
-    // FIXME: flight mode not yet supported
+    // Assume armed since we don't know
+    if (_armed != true) {
+        _armed = true;
+        emit armedChanged(_armed);
+    }
 
     _coordinate.setLatitude(highLatency2.latitude  / (double)1E7);
     _coordinate.setLongitude(highLatency2.longitude / (double)1E7);
@@ -833,8 +840,9 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _airSpeedFact.setRawValue((double)highLatency2.airspeed / 5.0);
     _groundSpeedFact.setRawValue((double)highLatency2.groundspeed / 5.0);
     _climbRateFact.setRawValue((double)highLatency2.climb_rate / 10.0);
-
     _headingFact.setRawValue((double)highLatency2.heading * 2.0);
+    _altitudeRelativeFact.setRawValue(std::numeric_limits<double>::quiet_NaN());
+    _altitudeAMSLFact.setRawValue(highLatency2.altitude);
 
     _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
     _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
@@ -848,6 +856,48 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _gpsFactGroup.count()->setRawValue(0);
     _gpsFactGroup.hdop()->setRawValue(highLatency2.eph == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.eph / 10.0);
     _gpsFactGroup.vdop()->setRawValue(highLatency2.epv == UINT8_MAX ? std::numeric_limits<double>::quiet_NaN() : highLatency2.epv / 10.0);
+
+    struct failure2Sensor_s {
+        HL_FAILURE_FLAG         failureBit;
+        MAV_SYS_STATUS_SENSOR   sensorBit;
+    };
+
+    static const failure2Sensor_s rgFailure2Sensor[] = {
+        { HL_FAILURE_FLAG_GPS,                      MAV_SYS_STATUS_SENSOR_GPS },
+        { HL_FAILURE_FLAG_DIFFERENTIAL_PRESSURE,    MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE },
+        { HL_FAILURE_FLAG_ABSOLUTE_PRESSURE,        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE },
+        { HL_FAILURE_FLAG_3D_ACCEL,                 MAV_SYS_STATUS_SENSOR_3D_ACCEL },
+        { HL_FAILURE_FLAG_3D_GYRO,                  MAV_SYS_STATUS_SENSOR_3D_GYRO },
+        { HL_FAILURE_FLAG_3D_MAG,                   MAV_SYS_STATUS_SENSOR_3D_MAG },
+#if 0
+        // FIXME: These don't currently map to existing sensor health bits. Support needs to be added to show them
+        // on health page of instrument panel as well.
+        { HL_FAILURE_FLAG_TERRAIN=64, /* Terrain subsystem failure. | */
+        { HL_FAILURE_FLAG_BATTERY=128, /* Battery failure/critical low battery. | */
+        { HL_FAILURE_FLAG_RC_RECEIVER=256, /* RC receiver failure/no rc connection. | */
+        { HL_FAILURE_FLAG_OFFBOARD_LINK=512, /* Offboard link failure. | */
+        { HL_FAILURE_FLAG_ENGINE=1024, /* Engine failure. | */
+        { HL_FAILURE_FLAG_GEOFENCE=2048, /* Geofence violation. | */
+        { HL_FAILURE_FLAG_ESTIMATOR=4096, /* Estimator failure, for example measurement rejection or large variances. | */
+        { HL_FAILURE_FLAG_MISSION=8192, /* Mission failure. | */
+#endif
+    };
+
+    // Map from MAV_FAILURE bits to standard SYS_STATUS message handling
+    uint32_t newOnboardControlSensorsEnabled = 0;
+    for (size_t i=0; i<sizeof(rgFailure2Sensor)/sizeof(failure2Sensor_s); i++) {
+        const failure2Sensor_s* pFailure2Sensor = &rgFailure2Sensor[i];
+        if (highLatency2.failure_flags & pFailure2Sensor->failureBit) {
+            // Assume if reporting as unhealthy that is it present and enabled
+            newOnboardControlSensorsEnabled |= pFailure2Sensor->sensorBit;
+        }
+    }
+    if (newOnboardControlSensorsEnabled != _onboardControlSensorsEnabled) {
+        _onboardControlSensorsEnabled = newOnboardControlSensorsEnabled;
+        _onboardControlSensorsPresent = newOnboardControlSensorsEnabled;
+        _onboardControlSensorsUnhealthy = 0;
+        emit unhealthySensorsChanged();
+    }
 }
 
 void Vehicle::_handleAltitude(mavlink_message_t& message)
@@ -1466,38 +1516,68 @@ void Vehicle::_updatePriorityLink(void)
 {
     LinkInterface* newPriorityLink = NULL;
 
-#ifndef NO_SERIAL_LINK
-    // Note that this routine specificallty does not clear _priorityLink when there are no links remaining.
+    // This routine specifically does not clear _priorityLink when there are no links remaining.
     // By doing this we hold a reference on the last link as the Vehicle shuts down. Thus preventing shutdown
     // ordering NULL pointer crashes where priorityLink() is still called during shutdown sequence.
+    if (_links.count() == 0) {
+        return;
+    }
+
+    // Check for the existing priority link to still be valid
+    for (int i=0; i<_links.count(); i++) {
+        if (_priorityLink.data() == _links[i]) {
+            if (!_priorityLink.data()->highLatency()) {
+                // Link is still valid. Continue to use it unless it is high latency. In that case we still look for a better
+                // link to use as priority link.
+                return;
+            }
+        }
+    }
+
+    // The previous priority link is no longer valid. We must no find the best link available in this priority order:
+    //      Direct USB connection
+    //      Not a high latency link
+    //      Any link
+
+#ifndef NO_SERIAL_LINK
+    // Search for direct usb connection
     for (int i=0; i<_links.count(); i++) {
         LinkInterface* link = _links[i];
-        if (link->isConnected()) {
-            SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
-            if (pSerialLink) {
-                LinkConfiguration* config = pSerialLink->getLinkConfiguration();
-                if (config) {
-                    SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
-                    if (pSerialConfig && pSerialConfig->usbDirect()) {
-                        if (_priorityLink.data() != link) {
-                            newPriorityLink = link;
-                            break;
-                        }
-                        return;
+        SerialLink* pSerialLink = qobject_cast<SerialLink*>(link);
+        if (pSerialLink) {
+            LinkConfiguration* config = pSerialLink->getLinkConfiguration();
+            if (config) {
+                SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
+                if (pSerialConfig && pSerialConfig->usbDirect()) {
+                    if (_priorityLink.data() != link) {
+                        newPriorityLink = link;
+                        break;
                     }
+                    return;
                 }
             }
         }
     }
 #endif
 
-    if (!newPriorityLink && !_priorityLink.data() && _links.count()) {
+    if (!newPriorityLink) {
+        // Search for non-high latency link
+        for (int i=0; i<_links.count(); i++) {
+            LinkInterface* link = _links[i];
+            if (!link->highLatency()) {
+                newPriorityLink = link;
+                break;
+            }
+        }
+    }
+
+    if (!newPriorityLink) {
+        // Use any link
         newPriorityLink = _links[0];
     }
 
-    if (newPriorityLink) {
-        _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
-    }
+    _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
+    _updateHighLatencyLink();
 }
 
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
@@ -2724,6 +2804,7 @@ QStringList Vehicle::unhealthySensors(void) const
         { MAV_SYS_STATUS_TERRAIN,                       "Terrain" },
         { MAV_SYS_STATUS_REVERSE_MOTOR,                 "Motors reversed" },
         { MAV_SYS_STATUS_LOGGING,                       "Logging" },
+        { MAV_SYS_STATUS_SENSOR_BATTERY,                "Battery" },
     };
 
     for (size_t i=0; i<sizeof(rgSensorInfo)/sizeof(sensorInfo_s); i++) {
@@ -3028,6 +3109,7 @@ void Vehicle::_updateHighLatencyLink(void)
 {
     if (_priorityLink->highLatency() != _highLatencyLink) {
         _highLatencyLink = _priorityLink->highLatency();
+        _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
         emit highLatencyLinkChanged(_highLatencyLink);
     }
 }

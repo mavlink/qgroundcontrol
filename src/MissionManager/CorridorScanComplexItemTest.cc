@@ -25,94 +25,37 @@ void CorridorScanComplexItemTest::init(void)
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _corridorItem = new CorridorScanComplexItem(_offlineVehicle, this);
 //    _corridorItem->setTurnaroundDist(0);  // Unit test written for no turnaround distance
+    _setPolyline();
     _corridorItem->setDirty(false);
-    _mapPolyline = _corridorItem->corridorPolyline();
-
-    _rgSignals[complexDistanceChangedIndex] =     SIGNAL(complexDistanceChanged());
-    _rgSignals[greatestDistanceToChangedIndex] =  SIGNAL(greatestDistanceToChanged());
-    _rgSignals[additionalTimeDelayChangedIndex] = SIGNAL(additionalTimeDelayChanged());
-    _rgSignals[transectPointsChangedIndex] =      SIGNAL(transectPointsChanged());
-    _rgSignals[cameraShotsChangedIndex] =         SIGNAL(cameraShotsChanged());
-    _rgSignals[coveredAreaChangedIndex] =         SIGNAL(coveredAreaChanged());
-    _rgSignals[timeBetweenShotsChangedIndex] =    SIGNAL(timeBetweenShotsChanged());
-    _rgSignals[dirtyChangedIndex] =               SIGNAL(dirtyChanged(bool));
-
-    _multiSpy = new MultiSignalSpy();
-    QCOMPARE(_multiSpy->init(_corridorItem, _rgSignals, _cSignals), true);
 
     _rgCorridorPolygonSignals[corridorPolygonPathChangedIndex] = SIGNAL(pathChanged());
 
     _multiSpyCorridorPolygon = new MultiSignalSpy();
-    QCOMPARE(_multiSpyCorridorPolygon->init(_corridorItem->corridorPolygon(), _rgCorridorPolygonSignals, _cCorridorPolygonSignals), true);
+    QCOMPARE(_multiSpyCorridorPolygon->init(_corridorItem->surveyAreaPolygon(), _rgCorridorPolygonSignals, _cCorridorPolygonSignals), true);
 }
 
 void CorridorScanComplexItemTest::cleanup(void)
 {
     delete _corridorItem;
     delete _offlineVehicle;
-    delete _multiSpy;
 }
 
 void CorridorScanComplexItemTest::_testDirty(void)
 {
-    QVERIFY(!_corridorItem->dirty());
-    _corridorItem->setDirty(false);
-    QVERIFY(!_corridorItem->dirty());
-    QVERIFY(_multiSpy->checkNoSignals());
-
-    _corridorItem->setDirty(true);
+    Fact* fact = _corridorItem->corridorWidth();
+    fact->setRawValue(fact->rawValue().toDouble() + 1);
     QVERIFY(_corridorItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
-    _multiSpy->clearAllSignals();
-
     _corridorItem->setDirty(false);
-    QVERIFY(!_corridorItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
-    _multiSpy->clearAllSignals();
 
-    // These facts should set dirty when changed
-    QList<Fact*> rgFacts;
-#if 0
-    rgFacts << _corridorItem->gridAltitude() << _corridorItem->gridAngle() << _corridorItem->gridSpacing() << _corridorItem->turnaroundDist() << _corridorItem->cameraTriggerDistance() <<
-               _corridorItem->gridAltitudeRelative() << _corridorItem->cameraTriggerInTurnaround() << _corridorItem->hoverAndCapture();
-#endif
-    rgFacts << _corridorItem->corridorWidth();
-    foreach(Fact* fact, rgFacts) {
-        qDebug() << fact->name();
-        QVERIFY(!_corridorItem->dirty());
-        if (fact->typeIsBool()) {
-            fact->setRawValue(!fact->rawValue().toBool());
-        } else {
-            fact->setRawValue(fact->rawValue().toDouble() + 1);
-        }
-        QVERIFY(_multiSpy->checkSignalByMask(dirtyChangedMask));
-        QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
-        _corridorItem->setDirty(false);
-        _multiSpy->clearAllSignals();
-    }
-    rgFacts.clear();
+    changeFactValue(_corridorItem->cameraCalc()->distanceToSurface());
+    QVERIFY(_corridorItem->dirty());
+    _corridorItem->setDirty(false);
 
-    // These facts should not change dirty bit
-#if 0
-    rgFacts << _corridorItem->groundResolution() << _corridorItem->frontalOverlap() << _corridorItem->sideOverlap() << _corridorItem->cameraSensorWidth() << _corridorItem->cameraSensorHeight() <<
-               _corridorItem->cameraResolutionWidth() << _corridorItem->cameraResolutionHeight() << _corridorItem->cameraFocalLength() << _corridorItem->cameraOrientationLandscape() <<
-               _corridorItem->fixedValueIsAltitude() << _corridorItem->camera() << _corridorItem->manualGrid();
-#endif
-    foreach(Fact* fact, rgFacts) {
-        qDebug() << fact->name();
-        QVERIFY(!_corridorItem->dirty());
-        if (fact->typeIsBool()) {
-            fact->setRawValue(!fact->rawValue().toBool());
-        } else {
-            fact->setRawValue(fact->rawValue().toDouble() + 1);
-        }
-        QVERIFY(_multiSpy->checkNoSignalByMask(dirtyChangedMask));
-        QVERIFY(!_corridorItem->dirty());
-        _multiSpy->clearAllSignals();
-    }
-    rgFacts.clear();
+    QGeoCoordinate coord = _corridorItem->corridorPolyline()->vertexCoordinate(0);
+    coord.setLatitude(coord.latitude() + 1);
+    _corridorItem->corridorPolyline()->adjustVertex(1, coord);
+    QVERIFY(_corridorItem->dirty());
+    _corridorItem->setDirty(false);
 }
 
 void CorridorScanComplexItemTest::_testCameraTrigger(void)
@@ -155,7 +98,7 @@ void CorridorScanComplexItemTest::_setPolyline(void)
 {
     for (int i=0; i<_linePoints.count(); i++) {
         QGeoCoordinate& vertex = _linePoints[i];
-        _mapPolyline->appendVertex(vertex);
+        _corridorItem->corridorPolyline()->appendVertex(vertex);
     }
 }
 
@@ -191,27 +134,24 @@ void CorridorScanComplexItemTest::_testItemCount(void)
 {
     QList<MissionItem*> items;
 
-    _setPolyline();
+    _corridorItem->turnAroundDistance()->setRawValue(20);
 
-//    _corridorItem->cameraTriggerInTurnaround()->setRawValue(false);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
     _corridorItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _corridorItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
+    items.clear();
+
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(true);
+    _corridorItem->appendMissionItems(items, this);
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
     items.clear();
 }
 
 void CorridorScanComplexItemTest::_testPathChanges(void)
 {
-    _setPolyline();
-    _corridorItem->setDirty(false);
-     _multiSpy->clearAllSignals();
-     _multiSpyCorridorPolygon->clearAllSignals();
-
-     QGeoCoordinate vertex = _mapPolyline->vertexCoordinate(1);
+     QGeoCoordinate vertex = _corridorItem->corridorPolyline()->vertexCoordinate(1);
      vertex.setLatitude(vertex.latitude() + 0.01);
-     _mapPolyline->adjustVertex(1, vertex);
+     _corridorItem->corridorPolyline()->adjustVertex(1, vertex);
 
-     QVERIFY(_corridorItem->dirty());
-     QVERIFY(_multiSpy->checkOnlySignalsByMask(dirtyChangedMask | transectPointsChangedMask | cameraShotsChangedMask | coveredAreaChangedMask | complexDistanceChangedMask | greatestDistanceToChangedMask));
      QVERIFY(_multiSpyCorridorPolygon->checkSignalsByMask(corridorPolygonPathChangedMask));
-     _multiSpy->clearAllSignals();
 }

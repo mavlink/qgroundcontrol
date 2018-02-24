@@ -59,15 +59,6 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING WORK IN PROGRESS: BE VERY CAREFUL WHEN FLYING")
-            wrapMode:       Text.WordWrap
-            color:          qgcPal.warningText
-            font.pointSize: ScreenTools.smallFontPointSize
-        }
-
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
             text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
@@ -100,6 +91,39 @@ Rectangle {
                 fact:                   missionItem.corridorWidth
                 Layout.fillWidth:       true
             }
+
+            QGCLabel { text: qsTr("Turnaround dist") }
+            FactTextField {
+                fact:                   missionItem.turnAroundDistance
+                Layout.fillWidth:       true
+            }
+
+            FactCheckBox {
+                text:               qsTr("Take images in turnarounds")
+                fact:               missionItem.cameraTriggerInTurnAround
+                enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
+                Layout.columnSpan:  2
+            }
+
+            QGCCheckBox {
+                id:                 relAlt
+                anchors.left:       parent.left
+                text:               qsTr("Relative altitude")
+                checked:            missionItem.cameraCalc.distanceToSurfaceRelative
+                enabled:            missionItem.cameraCalc.isManualCamera
+                Layout.columnSpan:  2
+                onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
+
+                Connections {
+                    target: missionItem.cameraCalc
+                    onDistanceToSurfaceRelativeChanged: relAlt.checked = missionItem.cameraCalc.distanceToSurfaceRelative
+                }
+            }
+        }
+
+        QGCButton {
+            text:       qsTr("Rotate Entry Point")
+            onClicked:  missionItem.rotateEntryPoint()
         }
 
         SectionHeader {

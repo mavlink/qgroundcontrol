@@ -18,7 +18,7 @@ FactPanel {
     property Fact _nullFact
     property Fact _rcMapFltmode:    controller.parameterExists(-1, "RC_MAP_FLTMODE") ? controller.getParameterFact(-1, "RC_MAP_FLTMODE") : _nullFact
     property Fact _rcMapModeSw:     controller.getParameterFact(-1, "RC_MAP_MODE_SW")
-    property bool _simpleMode:      _rcMapFltmode.value > 0 || _rcMapModeSw.value == 0
+    property bool _simpleMode:      _rcMapFltmode.value > 0 || _rcMapModeSw.value === 0
 
     Loader {
         anchors.fill:       parent

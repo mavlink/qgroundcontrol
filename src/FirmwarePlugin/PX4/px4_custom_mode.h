@@ -71,7 +71,11 @@ union px4_custom_mode {
 		uint8_t main_mode;
 		uint8_t sub_mode;
 	};
-	uint32_t data;
+    struct {
+        uint16_t reserved_hl;
+        uint16_t custom_mode_hl;
+    };
+    uint32_t data;
 	float data_float;
 };
 

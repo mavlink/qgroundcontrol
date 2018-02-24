@@ -20,6 +20,8 @@ Rectangle {
     border.width:   _showBorder ? 1: 0
     border.color:   qgcPal.buttonText
 
+    property var    tileSet:    null
+    property var    currentSet: null
     property bool   checked:    false
     property bool   complete:   false
     property alias  text:       nameLabel.text
@@ -36,6 +38,19 @@ Rectangle {
     property bool   _hovered:          false
 
     signal clicked()
+
+    property ExclusiveGroup exclusiveGroup:  null
+    onExclusiveGroupChanged: {
+        if (exclusiveGroup) {
+            checked = false
+            exclusiveGroup.bindCheckable(mapButton)
+        }
+    }
+    onCheckedChanged: {
+        if(checked) {
+            currentSet = tileSet
+        }
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -85,26 +100,53 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        hoverEnabled: true
+        hoverEnabled: !ScreenTools.isMobile
         onMouseXChanged: {
-            _lastGlobalMouseX = ScreenTools.mouseX()
-            _lastGlobalMouseY = ScreenTools.mouseY()
+            if(!ScreenTools.isMobile) {
+                _lastGlobalMouseX = ScreenTools.mouseX()
+                _lastGlobalMouseY = ScreenTools.mouseY()
+            }
         }
         onMouseYChanged: {
-            _lastGlobalMouseX = ScreenTools.mouseX()
-            _lastGlobalMouseY = ScreenTools.mouseY()
+            if(!ScreenTools.isMobile) {
+                _lastGlobalMouseX = ScreenTools.mouseX()
+                _lastGlobalMouseY = ScreenTools.mouseY()
+            }
         }
-        onEntered:  { _hovered = true;  _forceHoverOff = false; hoverTimer.start() }
-        onExited:   { _hovered = false; _forceHoverOff = false; hoverTimer.stop()  }
-        onPressed:  { _pressed = true;  }
-        onReleased: { _pressed = false; }
-        onClicked:  mapButton.clicked()
+        onEntered:  {
+            if(!ScreenTools.isMobile) {
+                _hovered = true
+                _forceHoverOff = false
+                hoverTimer.start()
+            }
+        }
+        onExited:   {
+            if(!ScreenTools.isMobile) {
+                _hovered = false
+                _forceHoverOff = false
+                hoverTimer.stop()
+            }
+        }
+        onPressed:  {
+            if(!ScreenTools.isMobile) {
+                _pressed = true
+            }
+        }
+        onReleased: {
+            if(!ScreenTools.isMobile) {
+                _pressed = false
+            }
+        }
+        onClicked: {
+            checked = true
+            mapButton.clicked()
+        }
     }
 
     Timer {
         id:         hoverTimer
         interval:   250
-        repeat:     true
+        repeat:     !ScreenTools.isMobile
         onTriggered: {
             if (_lastGlobalMouseX !== ScreenTools.mouseX() || _lastGlobalMouseY !== ScreenTools.mouseY()) {
                 _forceHoverOff = true
