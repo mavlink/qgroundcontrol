@@ -36,6 +36,8 @@ public:
         valueTypeInt16,
         valueTypeUint32,
         valueTypeInt32,
+        valueTypeUint64,
+        valueTypeInt64,
         valueTypeFloat,
         valueTypeDouble,
         valueTypeString,
