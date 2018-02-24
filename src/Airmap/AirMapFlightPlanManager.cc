@@ -159,6 +159,7 @@ AirMapFlightPlanManager::_createFlightPlan()
                 if (result) {
                     _pilotID = QString::fromStdString(result.value().id);
                     qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    _state = State::Idle;
                     _uploadFlightPlan();
                 } else {
                     _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
@@ -257,9 +258,10 @@ AirMapFlightPlanManager::_uploadFlightPlan()
             if (result) {
                 _flightPlan = QString::fromStdString(result.value().id);
                 qCDebug(AirMapManagerLog) << "Flight plan created:" << _flightPlan;
-                _state = State::FlightPolling;
+                _state = State::Idle;
                 _pollBriefing();
             } else {
+                _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                 emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
             }
@@ -332,10 +334,11 @@ AirMapFlightPlanManager::_updateFlightPlan()
             if (!isAlive.lock()) return;
             if (_state != State::FlightUpdate) return;
             if (result) {
+                _state = State::Idle;
                 qCDebug(AirMapManagerLog) << "Flight plan updated:" << _flightPlan;
-                _state = State::FlightPolling;
                 _pollBriefing();
             } else {
+                _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                 emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
             }
@@ -367,10 +370,12 @@ rules_sort(QObject* a, QObject* b)
 void
 AirMapFlightPlanManager::_pollBriefing()
 {
-    if (_state != State::FlightPolling) {
-        qCWarning(AirMapManagerLog) << "AirMapFlightPlanManager::_pollBriefing: not in polling state";
+    if (_state != State::Idle) {
+        qCWarning(AirMapManagerLog) << "AirMapFlightPlanManager::_pollBriefing: not idle" << (int)_state;
+        _pollTimer.start(500);
         return;
     }
+    _state = State::FlightPolling;
     FlightPlans::RenderBriefing::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _flightPlan.toStdString();
@@ -405,6 +410,7 @@ AirMapFlightPlanManager::_pollBriefing()
             _rulesInfo.clearAndDeleteContents();
             _rulesReview.clearAndDeleteContents();
             _rulesFollowing.clearAndDeleteContents();
+            _briefFeatures.clear();
             for(const auto& ruleset : briefing.evaluation.rulesets) {
                 AirMapRuleSet* pRuleSet = new AirMapRuleSet(this);
                 pRuleSet->_id = QString::fromStdString(ruleset.id);
@@ -415,6 +421,10 @@ AirMapFlightPlanManager::_pollBriefing()
                     for (const auto& feature : rule.features) {
                         AirMapRuleFeature* pFeature = new AirMapRuleFeature(feature, this);
                         pRule->_features.append(pFeature);
+                        if(rule.status == RuleSet::Rule::Status::missing_info) {
+                            _briefFeatures.append(pFeature);
+                            qCDebug(AirMapManagerLog) << "Adding briefing feature" << pFeature->name() << pFeature->description() << pFeature->type();
+                        }
                     }
                     pRuleSet->_rules.append(pRule);
                     //-- Rules separated by status for presentation
@@ -478,14 +488,15 @@ AirMapFlightPlanManager::_pollBriefing()
                 _state = State::Idle;
             } else if(pending) {
                 //-- Wait until we send the next polling request
+                _state = State::Idle;
                 _pollTimer.setSingleShot(true);
                 _pollTimer.start(2000);
             }
         } else {
+            _state = State::Idle;
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
             emit error("Brief Request failed",
                     QString::fromStdString(result.error().message()), description);
-            _state = State::Idle;
         }
     });
 }
@@ -513,6 +524,7 @@ AirMapFlightPlanManager::_deleteFlightPlan()
             qCDebug(AirMapManagerLog) << "Flight plan deleted";
             _state = State::Idle;
         } else {
+            _state = State::Idle;
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
             emit error("Flight Plan deletion failed", QString::fromStdString(result.error().message()), description);
         }
