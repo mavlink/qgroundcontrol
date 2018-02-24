@@ -289,6 +289,12 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         case MAV_PARAM_TYPE_INT32:
             factType = FactMetaData::valueTypeInt32;
             break;
+        case MAV_PARAM_TYPE_UINT64:
+            factType = FactMetaData::valueTypeUint64;
+            break;
+        case MAV_PARAM_TYPE_INT64:
+            factType = FactMetaData::valueTypeInt64;
+            break;
         case MAV_PARAM_TYPE_REAL32:
             factType = FactMetaData::valueTypeFloat;
             break;
@@ -983,8 +989,17 @@ MAV_PARAM_TYPE ParameterManager::_factTypeToMavType(FactMetaData::ValueType_t fa
     case FactMetaData::valueTypeUint32:
         return MAV_PARAM_TYPE_UINT32;
 
+    case FactMetaData::valueTypeUint64:
+        return MAV_PARAM_TYPE_UINT64;
+
+    case FactMetaData::valueTypeInt64:
+        return MAV_PARAM_TYPE_INT64;
+
     case FactMetaData::valueTypeFloat:
         return MAV_PARAM_TYPE_REAL32;
+
+    case FactMetaData::valueTypeDouble:
+        return MAV_PARAM_TYPE_REAL64;
 
     default:
         qWarning() << "Unsupported fact type" << factType;
@@ -1013,8 +1028,17 @@ FactMetaData::ValueType_t ParameterManager::_mavTypeToFactType(MAV_PARAM_TYPE ma
     case MAV_PARAM_TYPE_UINT32:
         return FactMetaData::valueTypeUint32;
 
+    case MAV_PARAM_TYPE_UINT64:
+        return FactMetaData::valueTypeUint64;
+
+    case MAV_PARAM_TYPE_INT64:
+        return FactMetaData::valueTypeInt64;
+
     case MAV_PARAM_TYPE_REAL32:
         return FactMetaData::valueTypeFloat;
+
+    case MAV_PARAM_TYPE_REAL64:
+        return FactMetaData::valueTypeDouble;
 
     default:
         qWarning() << "Unsupported mav param type" << mavType;
