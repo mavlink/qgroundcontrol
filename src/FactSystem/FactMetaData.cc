@@ -258,9 +258,9 @@ QVariant FactMetaData::_minForType(void) const
     case valueTypeInt32:
         return QVariant(std::numeric_limits<int32_t>::min());
     case valueTypeUint64:
-        return QVariant(std::numeric_limits<uint64_t>::min());
+        return QVariant((qulonglong)std::numeric_limits<uint64_t>::min());
     case valueTypeInt64:
-        return QVariant(std::numeric_limits<int64_t>::min());
+        return QVariant((qlonglong)std::numeric_limits<int64_t>::min());
     case valueTypeFloat:
         return QVariant(-std::numeric_limits<float>::max());
     case valueTypeDouble:
@@ -295,9 +295,9 @@ QVariant FactMetaData::_maxForType(void) const
     case valueTypeInt32:
         return QVariant(std::numeric_limits<int32_t>::max());
     case valueTypeUint64:
-        return QVariant(std::numeric_limits<uint64_t>::max());
+        return QVariant((qulonglong)std::numeric_limits<uint64_t>::max());
     case valueTypeInt64:
-        return QVariant(std::numeric_limits<int64_t>::max());
+        return QVariant((qlonglong)std::numeric_limits<int64_t>::max());
     case valueTypeFloat:
         return QVariant(std::numeric_limits<float>::max());
     case valueTypeElapsedTimeInSeconds:
