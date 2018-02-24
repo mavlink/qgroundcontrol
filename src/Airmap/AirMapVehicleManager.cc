@@ -35,7 +35,7 @@ AirMapVehicleManager::createFlight(const QList<MissionItem*>& missionItems)
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Will not create a flight";
         return;
     }
-    _flightManager.createFlight(missionItems);
+    //_flightManager.createFlight(missionItems);
 }
 
 AirspaceFlightPlanProvider::PermitStatus

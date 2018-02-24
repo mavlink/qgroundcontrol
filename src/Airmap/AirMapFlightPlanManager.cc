@@ -81,7 +81,7 @@ AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planControlle
     }
 
     if (_state != State::Idle) {
-        qCWarning(AirMapManagerLog) << "AirMapFlightPlanManager::createFlight: State not idle";
+        qCWarning(AirMapManagerLog) << "AirMapFlightPlanManager::startFlightPlanning: State not idle";
         return;
     }
 
