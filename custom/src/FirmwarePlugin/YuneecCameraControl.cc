@@ -799,6 +799,16 @@ YuneecCameraControl::factChanged(Fact* pFact)
         _captureInfoRetries = 0;
         _captureStatusTimer.start(1000);
     }
+    //-- Autopilot is changing the camera mode. We need to keep track of it.
+    if(pFact->name() == kCAM_MODE) {
+        if(_inMissionMode) {
+            if(pFact->rawValue().toUInt() == CAM_MODE_PHOTO || pFact->rawValue().toUInt() == CAM_MODE_SURVEY) {
+                _setCameraMode(CAM_MODE_PHOTO);
+            } else {
+                _setCameraMode(CAM_MODE_VIDEO);
+            }
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
