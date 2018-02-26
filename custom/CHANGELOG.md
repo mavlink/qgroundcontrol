@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.71 - Feb 26 2018
+
+*   Keep track of camera mode switch done by the autopilot (during missions). Needs updated camera firmware as well.
+
 ### V1.2.70 - Feb 26 2018
 
 *   Calibrating the E10T camera for its new 4.4mm lens
