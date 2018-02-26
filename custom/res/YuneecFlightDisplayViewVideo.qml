@@ -38,7 +38,7 @@ Item {
     property double _ar:                    _arFact ? _arFact.rawValue : QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
     property real   _minLabel:              ScreenTools.defaultFontPixelWidth * 8
     property double _thermalAspect:         _camera ? (_camera.isE10T ? 1.25 : 1.33) : 1
-    property double _thermalHeightFactor:   _camera ? (_camera.isE10T ? 0.3955 : 0.9444) : 1
+    property double _thermalHeightFactor:   _camera ? (_camera.isE10T ? 0.8333 : 0.9444) : 1
     property bool   _celcius:               QGroundControl.settingsManager.unitsSettings.temperatureUnits.rawValue === UnitsSettings.TemperatureUnitsCelsius
 
     property real   spotSize:               48
@@ -319,9 +319,9 @@ Item {
     Column {
         anchors.right:          thermalItem.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.top:            _camera && _camera.isE10T ? undefined : parent.top
-        anchors.topMargin:      _camera && _camera.isE10T ? undefined : ScreenTools.defaultFontPixelHeight * 6.5
-        anchors.verticalCenter: _camera && _camera.isE10T ? thermalItem.verticalCenter : undefined
+        anchors.top:            _camera ? undefined : parent.top
+        anchors.topMargin:      _camera ? undefined : ScreenTools.defaultFontPixelHeight * 6.5
+        anchors.verticalCenter: _camera ? thermalItem.verticalCenter : undefined
         spacing:                ScreenTools.defaultFontPixelHeight * 0.25
         visible:                thermalItem.visible && _camera && _camera.irValid && TyphoonHQuickInterface.thermalMode !== TyphoonHQuickInterface.ThermalPIP
         Rectangle {
@@ -340,7 +340,7 @@ Item {
         }
         Rectangle {
             width:              ScreenTools.defaultFontPixelWidth  * 4
-            height:             _camera && _camera.isE10T ? thermalItem.height : thermalItem.height * 0.5
+            height:             thermalItem.height * 0.5
             color:              Qt.rgba(0,0,0,0)
             border.width:       1
             border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)

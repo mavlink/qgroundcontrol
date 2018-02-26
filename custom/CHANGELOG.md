@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.2.70 - Feb 26 2018
+
+*   Calibrating the E10T camera for its new 4.4mm lens
+
 ### V1.2.69 - Feb 24 2018
 
 *   Set camera time using parameter instead of messages. Again, the camera firmware will need to be updated for this to work.
