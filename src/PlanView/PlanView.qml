@@ -571,6 +571,7 @@ QGCView {
                     id:             airspaceControl
                     width:          parent.width
                     visible:        _airspaceEnabled
+                    planView:       true
                     showColapse:    true
                 }
                 //-------------------------------------------------------

@@ -139,6 +139,7 @@ Item {
         AirspaceControl {
             id:                 airspaceControl
             width:              getPreferredInstrumentWidth()
+            planView:           false
             visible:            _airspaceEnabled
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
         }
