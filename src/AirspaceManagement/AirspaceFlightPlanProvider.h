@@ -55,6 +55,8 @@ public:
     Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  briefFeatures           READ briefFeatures                                  NOTIFY rulesChanged)
 
+    Q_INVOKABLE virtual void    updateFlightPlan    () = 0;
+
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
     virtual QDateTime           flightEndTime       () const = 0;
@@ -73,6 +75,8 @@ public:
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
     virtual void                startFlightPlanning (PlanMasterController* planController) = 0;
+    //-- TODO: This will submit the current flight plan in memory.
+    virtual void                submitFlightPlan    () = 0;
 
 signals:
     void flightPermitStatusChanged                  ();

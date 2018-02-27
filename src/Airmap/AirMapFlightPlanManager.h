@@ -26,18 +26,19 @@ class AirMapFlightPlanManager : public AirspaceFlightPlanProvider, public Lifeti
 {
     Q_OBJECT
 public:
-    AirMapFlightPlanManager     (AirMapSharedState& shared, QObject *parent = nullptr);
-    ~AirMapFlightPlanManager    ();
+    AirMapFlightPlanManager                 (AirMapSharedState& shared, QObject *parent = nullptr);
+    ~AirMapFlightPlanManager                ();
 
     PermitStatus        flightPermitStatus  () const override { return _flightPermitStatus; }
-    QString             flightID            () { return _flightPlan; }
     QDateTime           flightStartTime     () const override { return _flightStartTime; }
     QDateTime           flightEndTime       () const override { return _flightEndTime; }
     bool                valid               () override { return _valid; }
     QmlObjectListModel* advisories          () override { return &_advisories; }
     QmlObjectListModel* ruleSets            () override { return &_rulesets; }
     QGCGeoBoundingCube* missionArea         () override { return &_flight.bc; }
-    AirspaceAdvisoryProvider::AdvisoryColor airspaceColor   () override { return _airspaceColor; }
+
+    AirspaceAdvisoryProvider::AdvisoryColor
+                        airspaceColor       () override { return _airspaceColor; }
 
     QmlObjectListModel* rulesViolation      () override { return &_rulesViolation; }
     QmlObjectListModel* rulesInfo           () override { return &_rulesInfo; }
@@ -45,23 +46,25 @@ public:
     QmlObjectListModel* rulesFollowing      () override { return &_rulesFollowing; }
     QmlObjectListModel* briefFeatures       () override { return &_briefFeatures; }
 
-    void            startFlightPlanning (PlanMasterController* planController) override;
-    void            setFlightStartTime  (QDateTime start) override;
-    void            setFlightEndTime    (QDateTime end) override;
+    void                updateFlightPlan    () override;
+    void                startFlightPlanning (PlanMasterController* planController) override;
+    void                setFlightStartTime  (QDateTime start) override;
+    void                setFlightEndTime    (QDateTime end) override;
+    void                submitFlightPlan    () override;
 
 signals:
-    void            error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void            error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 private slots:
-    void _pollBriefing                  ();
-    void _missionChanged                ();
+    void _pollBriefing                      ();
+    void _missionChanged                    ();
 
 private:
-    void _uploadFlightPlan              ();
-    void _updateFlightPlan              ();
-    void _createFlightPlan              ();
-    void _deleteFlightPlan              ();
-    bool _collectFlightDtata            ();
+    void _uploadFlightPlan                  ();
+    void _updateFlightPlan                  ();
+    void _createFlightPlan                  ();
+    void _deleteFlightPlan                  ();
+    bool _collectFlightDtata                ();
 
 private:
     enum class State {
@@ -69,8 +72,10 @@ private:
         GetPilotID,
         FlightUpload,
         FlightUpdate,
+        FlightPlanPolling,
+        FlightDelete,
+        FlightSubmit,
         FlightPolling,
-        FlightDelete
     };
 
     struct Flight {
@@ -90,6 +95,7 @@ private:
     AirMapSharedState&      _shared;
     QTimer                  _pollTimer;             ///< timer to poll for approval check
     QString                 _flightPlan;            ///< Current flight plan
+    QString                 _flightId;              ///< Current flight ID, not necessarily accepted yet
     QString                 _pilotID;               ///< Pilot ID in the form "auth0|abc123"
     PlanMasterController*   _planController = nullptr;
     bool                    _valid = false;

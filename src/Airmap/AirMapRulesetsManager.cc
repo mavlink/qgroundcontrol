@@ -29,7 +29,19 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
     //-- Restore persisted value (if it exists)
     QSettings settings;
     settings.beginGroup(kAirMapFeatureGroup);
-    _value = settings.value(name());
+    switch(_feature.type) {
+    case RuleSet::Feature::Type::boolean:
+        _value = settings.value(name(), false);
+        break;;
+    case RuleSet::Feature::Type::floating_point:
+        _value = settings.value(name(), 0.0f);
+        break;;
+    case RuleSet::Feature::Type::string:
+        _value = settings.value(name(), QString());
+        break;;
+    default:
+        break;
+    }
     settings.endGroup();
 }
 

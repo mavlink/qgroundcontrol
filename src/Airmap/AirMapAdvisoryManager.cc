@@ -97,7 +97,8 @@ AirMapAdvisoryManager::_requestAdvisories()
             _advisories.endReset();
             _valid = true;
         } else {
-            qCDebug(AirMapManagerLog) << "Advisories Request Failed";
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            qCDebug(AirMapManagerLog) << "Advisories Request Failed" << QString::fromStdString(result.error().message()) << description;
         }
         emit advisoryChanged();
     });

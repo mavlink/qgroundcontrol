@@ -20,10 +20,6 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
-#if defined(QGC_AIRMAP_ENABLED)
-#include "AirspaceManager.h"
-#include "AirspaceVehicleManager.h"
-#endif
 
 class UAS;
 class UASInterface;
@@ -39,6 +35,9 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
+#if defined(QGC_AIRMAP_ENABLED)
+class AirspaceVehicleManager;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -757,10 +756,6 @@ public:
 
     /// Vehicle is about to be deleted
     void prepareDelete();
-
-#if defined(QGC_AIRMAP_ENABLED)
-    AirspaceVehicleManager* airspaceManager() const { return _airspaceVehicleManager; }
-#endif
 
 signals:
     void allLinksInactive(Vehicle* vehicle);

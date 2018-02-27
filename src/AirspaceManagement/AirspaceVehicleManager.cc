@@ -9,6 +9,7 @@
 
 
 #include "AirspaceManager.h"
+#include "AirspaceVehicleManager.h"
 #include "Vehicle.h"
 #include "MissionItem.h"
 

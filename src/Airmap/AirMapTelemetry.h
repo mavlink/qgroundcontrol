@@ -16,33 +16,28 @@
 
 #include <QObject>
 
-/// class to send telemetry data to AirMap
+/// Class to send telemetry data to AirMap
 class AirMapTelemetry : public QObject, public LifetimeChecker
 {
     Q_OBJECT
 public:
-    AirMapTelemetry(AirMapSharedState& shared);
-    virtual ~AirMapTelemetry() = default;
+    AirMapTelemetry                 (AirMapSharedState& shared);
+    virtual ~AirMapTelemetry        () = default;
 
-    /**
-     * Setup the connection to start sending telemetry
-     */
-    void startTelemetryStream(const QString& flightID);
-
-    void stopTelemetryStream();
-
-    bool isTelemetryStreaming() const;
+    void startTelemetryStream       (const QString& flightID);
+    void stopTelemetryStream        ();
+    bool isTelemetryStreaming       ();
 
 signals:
-    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void error                      (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 
 public slots:
-    void vehicleMavlinkMessageReceived(const mavlink_message_t& message);
+    void vehicleMessageReceived     (const mavlink_message_t& message);
 
 private:
 
-    void _handleGlobalPositionInt(const mavlink_message_t& message);
-    void _handleGPSRawInt(const mavlink_message_t& message);
+    void _handleGlobalPositionInt   (const mavlink_message_t& message);
+    void _handleGPSRawInt           (const mavlink_message_t& message);
 
     enum class State {
         Idle,
@@ -52,11 +47,9 @@ private:
     };
 
     State                   _state = State::Idle;
-
     AirMapSharedState&      _shared;
-    std::string              _key; ///< key for AES encryption (16 bytes)
+    std::string             _key; ///< key for AES encryption (16 bytes)
     QString                 _flightID;
-
     float                   _lastHdop = 1.f;
 };
 

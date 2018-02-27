@@ -18,19 +18,7 @@
 #include <QList>
 #include <QGeoCoordinate>
 
-class MissionItem;
-
-
-
-/*
- * TODO: This is here for reference. It will have to modifed quite a bit before it
- * can be used. This was the original file that combined both the creation of a
- * flight plan and immediate submission of a flight. The flight plan is now handled
- * by its own class. This now needs to be made into a proper "Flight Manager".
-*/
-
-
-
+//-- TODO: This is not even WIP yet. Just a skeleton of what's to come.
 
 //-----------------------------------------------------------------------------
 /// class to upload a flight
@@ -38,79 +26,28 @@ class AirMapFlightManager : public QObject, public LifetimeChecker
 {
     Q_OBJECT
 public:
-    AirMapFlightManager(AirMapSharedState& shared);
+    AirMapFlightManager             (AirMapSharedState& shared);
 
-    /// Send flight path to AirMap
-    void createFlight(const QList<MissionItem*>& missionItems);
-
-    AirspaceFlightPlanProvider::PermitStatus flightPermitStatus() const { return _flightPermitStatus; }
-
-    const QString& flightID() const { return _currentFlightId; }
-
-public slots:
-    void endFlight();
+    void    findFlight              (const QGCGeoBoundingCube& bc);
+    void    endFlight               (const QString& id);
+    QString flightID                () { return _flightID; }
 
 signals:
-    void error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
-    void flightPermitStatusChanged();
-
-private slots:
-    void _pollBriefing();
+    void error              (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void flightIDChanged    ();
 
 private:
-
-    /**
-     * upload flight stored in _flight
-     */
-    void _uploadFlight();
-
-    /**
-     * query the active flights and end the first one (because only a single flight can be active at a time).
-     */
-    void _endFirstFlight();
-
-    /**
-     * implementation of endFlight()
-     */
-    void _endFlight(const QString& flightID);
-
-    /**
-     * check if the briefing response is valid and call _submitPendingFlightPlan() if it is.
-     */
-    void _checkForValidBriefing();
-
-    void _submitPendingFlightPlan();
 
     enum class State {
         Idle,
         GetPilotID,
-        FlightUpload,
-        FlightBrief,
-        FlightSubmit,
-        FlightPolling, // poll & check for approval
+        FetchFlights,
         FlightEnd,
-        EndFirstFlight, // get a list of open flights & end the first one (because there can only be 1 active at a time)
     };
-    struct Flight {
-        QList<QGeoCoordinate> coords;
-        QGeoCoordinate takeoffCoord;
-        float maxAltitude = 0;
-
-        void reset() {
-            coords.clear();
-            maxAltitude = 0;
-        }
-    };
-    Flight                              _flight; ///< flight pending to be uploaded
 
     State                               _state = State::Idle;
     AirMapSharedState&                  _shared;
-    QString                             _currentFlightId; ///< Flight ID, empty if there is none
-    QString                             _pendingFlightId; ///< current flight ID, not necessarily accepted yet (once accepted, it's equal to _currentFlightId)
-    QString                             _pendingFlightPlan; ///< current flight plan, waiting to be submitted
-    AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
+    QString                             _flightID;
     QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
-    bool                                _noFlightCreatedYet = true;
-    QTimer                              _pollTimer; ///< timer to poll for approval check
 };
 

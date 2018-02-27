@@ -86,11 +86,64 @@ AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planControlle
     }
 
     //-- TODO: Check if there is an ongoing flight plan and do something about it (Delete it?)
+
+    /*
+     * if(!_flightPlan.isEmpty()) {
+     *     do something;
+     * }
+     */
+
     if(!_planController) {
         _planController = planController;
         //-- Get notified of mission changes
         connect(planController->missionController(), &MissionController::missionBoundingCubeChanged, this, &AirMapFlightPlanManager::_missionChanged);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::submitFlightPlan()
+{
+    if(_flightPlan.isEmpty()) {
+        qCWarning(AirMapManagerLog) << "Submit flight with no flight plan.";
+        return;
+    }
+    _state = State::FlightSubmit;
+    FlightPlans::Submit::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id            = _flightPlan.toStdString();
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.client()->flight_plans().submit(params, [this, isAlive](const FlightPlans::Submit::Result& result) {
+        if (!isAlive.lock()) return;
+        if (_state != State::FlightSubmit) return;
+        if (result) {
+            _flightId = QString::fromStdString(result.value().flight_id.get());
+            _state    = State::FlightPolling;
+            _pollBriefing();
+        } else {
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Failed to submit Flight Plan",
+                    QString::fromStdString(result.error().message()), description);
+            _state = State::Idle;
+        }
+    });
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::updateFlightPlan()
+{
+    //-- Are we enabled?
+    if(!qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirMap()->rawValue().toBool()) {
+        return;
+    }
+    //-- Do we have a license?
+    if(!_shared.hasAPIKey()) {
+        return;
+    }
+    _flightPermitStatus = AirspaceFlightPlanProvider::PermitPending;
+    emit flightPermitStatusChanged();
+    _updateFlightPlan();
 }
 
 //-----------------------------------------------------------------------------
@@ -215,6 +268,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                 if(ruleSet && ruleSet->selected()) {
                     params.rulesets.push_back(ruleSet->id().toStdString());
                     //-- Features within each rule
+                    /*
                     for(int r = 0; r < ruleSet->rules()->count(); r++) {
                         AirMapRule* rule = qobject_cast<AirMapRule*>(ruleSet->rules()->get(r));
                         if(rule) {
@@ -238,6 +292,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                             }
                         }
                     }
+                    */
                 }
             }
         }
@@ -258,12 +313,12 @@ AirMapFlightPlanManager::_uploadFlightPlan()
             if (result) {
                 _flightPlan = QString::fromStdString(result.value().id);
                 qCDebug(AirMapManagerLog) << "Flight plan created:" << _flightPlan;
-                _state = State::Idle;
+                _state = State::FlightPlanPolling;
                 _pollBriefing();
             } else {
                 _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-                emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
+                emit error("Flight Plan update failed", QString::fromStdString(result.error().message()), description);
             }
         });
     });
@@ -293,12 +348,13 @@ AirMapFlightPlanManager::_updateFlightPlan()
     _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
         if (!isAlive.lock()) return;
         if (_state != State::FlightUpdate) return;
-        FlightPlans::Update::Parameters params;
-        params.authorization  = login_token.toStdString();
-        params.flight_plan.id = _flightPlan.toStdString();
-        params.flight_plan.pilot.id = _pilotID.toStdString();
-        params.flight_plan.altitude_agl.max = _flight.maxAltitude;
-        params.flight_plan.buffer = 2.f;
+        FlightPlans::Update::Parameters params = {};
+        params.authorization                 = login_token.toStdString();
+        params.flight_plan.id                = _flightPlan.toStdString();
+        params.flight_plan.pilot.id          = _pilotID.toStdString();
+        params.flight_plan.altitude_agl.max  = _flight.maxAltitude;
+        params.flight_plan.altitude_agl.min  = 0.0f;
+        params.flight_plan.buffer            = 2.f;
         params.flight_plan.takeoff.latitude  = _flight.takeoffCoord.latitude();
         params.flight_plan.takeoff.longitude = _flight.takeoffCoord.longitude();
         /*
@@ -309,8 +365,8 @@ AirMapFlightPlanManager::_updateFlightPlan()
         quint64 end   = _flightEndTime.toUTC().toMSecsSinceEpoch();
 
         */
-        params.flight_plan.start_time   = Clock::universal_time() + Minutes{5};
-        params.flight_plan.end_time     = Clock::universal_time() + Hours{2};
+        params.flight_plan.start_time        = Clock::universal_time() + Minutes{5};
+        params.flight_plan.end_time          = Clock::universal_time() + Hours{2};
         //-- Rules
         /*
         AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
@@ -334,7 +390,7 @@ AirMapFlightPlanManager::_updateFlightPlan()
             if (!isAlive.lock()) return;
             if (_state != State::FlightUpdate) return;
             if (result) {
-                _state = State::Idle;
+                _state = State::FlightPlanPolling;
                 qCDebug(AirMapManagerLog) << "Flight plan updated:" << _flightPlan;
                 _pollBriefing();
             } else {
@@ -370,19 +426,16 @@ rules_sort(QObject* a, QObject* b)
 void
 AirMapFlightPlanManager::_pollBriefing()
 {
-    if (_state != State::Idle) {
-        qCWarning(AirMapManagerLog) << "AirMapFlightPlanManager::_pollBriefing: not idle" << (int)_state;
-        _pollTimer.start(500);
+    if (_state != State::FlightPlanPolling && _state != State::FlightPolling) {
         return;
     }
-    _state = State::FlightPolling;
     FlightPlans::RenderBriefing::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
-    params.id = _flightPlan.toStdString();
+    params.id            = _flightPlan.toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flight_plans().render_briefing(params, [this, isAlive](const FlightPlans::RenderBriefing::Result& result) {
         if (!isAlive.lock()) return;
-        if (_state != State::FlightPolling) return;
+        if (_state != State::FlightPlanPolling && _state != State::FlightPolling) return;
         if (result) {
             const FlightPlan::Briefing& briefing = result.value();
             qCDebug(AirMapManagerLog) << "Flight polling/briefing response";
@@ -486,11 +539,10 @@ AirMapFlightPlanManager::_pollBriefing()
                 }
                 emit flightPermitStatusChanged();
                 _state = State::Idle;
-            } else if(pending) {
-                //-- Wait until we send the next polling request
-                _state = State::Idle;
+            } else {
+                //-- Pending. Try again.
                 _pollTimer.setSingleShot(true);
-                _pollTimer.start(2000);
+                _pollTimer.start(1000);
             }
         } else {
             _state = State::Idle;
@@ -549,7 +601,7 @@ AirMapFlightPlanManager::_missionChanged()
             _createFlightPlan();
         } else {
             //-- Plan is being modified
-            //_updateFlightPlan();
+            _updateFlightPlan();
         }
     }
 }

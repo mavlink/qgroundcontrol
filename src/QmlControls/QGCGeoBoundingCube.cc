@@ -61,6 +61,18 @@ QGCGeoBoundingCube::polygon2D() const
 }
 
 //-----------------------------------------------------------------------------
+bool
+QGCGeoBoundingCube::operator ==(const QList<QGeoCoordinate>& coords) const
+{
+    QList<QGeoCoordinate> c = polygon2D();
+    if(c.size() != coords.size()) return false;
+    for(int i = 0; i < c.size(); i++) {
+        if(c[i] != coords[i]) return false;
+    }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
 double
 QGCGeoBoundingCube::width() const
 {

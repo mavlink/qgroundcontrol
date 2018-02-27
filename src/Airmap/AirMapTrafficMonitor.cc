@@ -12,11 +12,19 @@
 
 using namespace airmap;
 
+//-----------------------------------------------------------------------------
+AirMapTrafficMonitor::AirMapTrafficMonitor(AirMapSharedState& shared)
+    : _shared(shared)
+{
+}
+
+//-----------------------------------------------------------------------------
 AirMapTrafficMonitor::~AirMapTrafficMonitor()
 {
     stop();
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapTrafficMonitor::startConnection(const QString& flightID)
 {
@@ -39,6 +47,7 @@ AirMapTrafficMonitor::startConnection(const QString& flightID)
     _shared.client()->traffic().monitor(params, handler);
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traffic::Update>& update)
 {
@@ -53,6 +62,7 @@ AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traf
     }
 }
 
+//-----------------------------------------------------------------------------
 void
 AirMapTrafficMonitor::stop()
 {
