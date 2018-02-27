@@ -229,6 +229,46 @@ QGCView {
                         FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.password; echoMode: TextInput.Password }
                     }
                 }
+                //-----------------------------------------------------------------
+                //-- Flight List
+                Item {
+                    width:                      _panelWidth
+                    height:                     flightListLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.appSettings.visible
+                    QGCLabel {
+                        id:             flightListLabel
+                        text:           qsTr("Flight List")
+                        font.family:    ScreenTools.demiboldFontFamily
+                    }
+                    Component.onCompleted: {
+                        QGroundControl.airspaceManager.flightPlan.loadFlightList()
+                    }
+                }
+                Rectangle {
+                    height:                     flightCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    Column {
+                        id:                 flightCol
+                        spacing:            ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn:   parent
+                        Repeater {
+                            model:          QGroundControl.airspaceManager.flightPlan.flightList
+                            Row {
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                QGCCheckBox {
+                                    text:       object.flightID
+                                    checked:    object.selected
+                                    onClicked:  object.selected = checked
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

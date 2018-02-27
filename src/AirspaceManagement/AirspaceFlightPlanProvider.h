@@ -23,6 +23,38 @@
 class PlanMasterController;
 
 //-----------------------------------------------------------------------------
+class AirspaceFlightInfo : public QObject
+{
+    Q_OBJECT
+public:
+    AirspaceFlightInfo                          (QObject *parent = nullptr);
+
+    Q_PROPERTY(QString              flightID    READ flightID       CONSTANT)
+    Q_PROPERTY(QDateTime            createdTime READ createdTime    CONSTANT)
+    Q_PROPERTY(QDateTime            startTime   READ startTime      CONSTANT)
+    Q_PROPERTY(QDateTime            endTime     READ endTime        CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       takeOff     READ takeOff        CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  boundingBox READ boundingBox    CONSTANT)
+    Q_PROPERTY(bool                 selected    READ selected       WRITE setSelected   NOTIFY selectedChanged)
+
+    virtual QString                 flightID    () = 0;
+    virtual QDateTime               createdTime () = 0;
+    virtual QDateTime               startTime   () = 0;
+    virtual QDateTime               endTime     () = 0;
+    virtual QGeoCoordinate          takeOff     () = 0;
+    virtual QmlObjectListModel*     boundingBox () = 0;
+
+    virtual bool                    selected    () { return _selected; }
+    virtual void                    setSelected (bool sel) { _selected = sel; emit selectedChanged(); }
+
+signals:
+    void    selectedChanged         ();
+
+protected:
+    bool    _selected;
+};
+
+//-----------------------------------------------------------------------------
 class AirspaceFlightPlanProvider : public QObject
 {
     Q_OBJECT
@@ -38,7 +70,6 @@ public:
     Q_ENUM(PermitStatus)
 
     AirspaceFlightPlanProvider                      (QObject *parent = nullptr);
-    virtual ~AirspaceFlightPlanProvider             () {}
 
     Q_PROPERTY(PermitStatus         flightPermitStatus      READ flightPermitStatus                             NOTIFY flightPermitStatusChanged)   ///< State of flight permission
     Q_PROPERTY(QDateTime            flightStartTime         READ flightStartTime    WRITE  setFlightStartTime   NOTIFY flightStartTimeChanged)      ///< Start of flight
@@ -54,8 +85,12 @@ public:
     Q_PROPERTY(QmlObjectListModel*  rulesReview             READ rulesReview                                    NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  briefFeatures           READ briefFeatures                                  NOTIFY rulesChanged)
+    Q_PROPERTY(QmlObjectListModel*  flightList              READ flightList                                     NOTIFY flightListChanged)
 
+    //-- TODO: This will submit the current flight plan in memory.
+    Q_INVOKABLE virtual void    submitFlightPlan    () = 0;
     Q_INVOKABLE virtual void    updateFlightPlan    () = 0;
+    Q_INVOKABLE virtual void    loadFlightList      () = 0;
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
@@ -71,12 +106,11 @@ public:
     virtual QmlObjectListModel* rulesReview         () = 0;                     ///< List of AirspaceRule should review
     virtual QmlObjectListModel* rulesFollowing      () = 0;                     ///< List of AirspaceRule following
     virtual QmlObjectListModel* briefFeatures       () = 0;                     ///< List of AirspaceRule in violation
+    virtual QmlObjectListModel* flightList          () = 0;                     ///< List of AirspaceFlightInfo
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
     virtual void                startFlightPlanning (PlanMasterController* planController) = 0;
-    //-- TODO: This will submit the current flight plan in memory.
-    virtual void                submitFlightPlan    () = 0;
 
 signals:
     void flightPermitStatusChanged                  ();
@@ -85,4 +119,5 @@ signals:
     void advisoryChanged                            ();
     void missionAreaChanged                         ();
     void rulesChanged                               ();
+    void flightListChanged                          ();
 };

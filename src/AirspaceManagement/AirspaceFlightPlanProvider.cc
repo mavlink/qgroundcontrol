@@ -9,6 +9,12 @@
 
 #include "AirspaceFlightPlanProvider.h"
 
+AirspaceFlightInfo::AirspaceFlightInfo(QObject *parent)
+    : QObject(parent)
+    , _selected(false)
+{
+}
+
 AirspaceFlightPlanProvider::AirspaceFlightPlanProvider(QObject *parent)
     : QObject(parent)
 {

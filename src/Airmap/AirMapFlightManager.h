@@ -13,8 +13,8 @@
 #include "AirMapSharedState.h"
 #include "AirspaceFlightPlanProvider.h"
 
-#include <QObject>
 #include <QTimer>
+#include <QObject>
 #include <QList>
 #include <QGeoCoordinate>
 
@@ -33,8 +33,8 @@ public:
     QString flightID                () { return _flightID; }
 
 signals:
-    void error              (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
-    void flightIDChanged    ();
+    void    error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void    flightIDChanged         ();
 
 private:
 
@@ -49,5 +49,6 @@ private:
     AirMapSharedState&                  _shared;
     QString                             _flightID;
     QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
+    QGCGeoBoundingCube                  _searchArea;
 };
 

@@ -26,6 +26,16 @@
 using namespace airmap;
 
 //-----------------------------------------------------------------------------
+AirMapFlightInfo::AirMapFlightInfo(const airmap::Flight& flight, QObject *parent)
+    : AirspaceFlightInfo(parent)
+{
+    _flight = flight;
+    //-- TODO: Load bounding box geometry
+
+
+}
+
+//-----------------------------------------------------------------------------
 AirMapFlightPlanManager::AirMapFlightPlanManager(AirMapSharedState& shared, QObject *parent)
     : AirspaceFlightPlanProvider(parent)
     , _shared(shared)
@@ -108,6 +118,7 @@ AirMapFlightPlanManager::submitFlightPlan()
         qCWarning(AirMapManagerLog) << "Submit flight with no flight plan.";
         return;
     }
+    _flightId.clear();
     _state = State::FlightSubmit;
     FlightPlans::Submit::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
@@ -125,6 +136,8 @@ AirMapFlightPlanManager::submitFlightPlan()
             emit error("Failed to submit Flight Plan",
                     QString::fromStdString(result.error().message()), description);
             _state = State::Idle;
+            _flightPermitStatus = AirspaceFlightPlanProvider::PermitRejected;
+            emit flightPermitStatusChanged();
         }
     });
 }
@@ -318,7 +331,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
             } else {
                 _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-                emit error("Flight Plan update failed", QString::fromStdString(result.error().message()), description);
+                emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
             }
         });
     });
@@ -396,7 +409,7 @@ AirMapFlightPlanManager::_updateFlightPlan()
             } else {
                 _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-                emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
+                emit error("Flight Plan update failed", QString::fromStdString(result.error().message()), description);
             }
         });
     });
@@ -605,3 +618,75 @@ AirMapFlightPlanManager::_missionChanged()
         }
     }
 }
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::loadFlightList()
+{
+    qCDebug(AirMapManagerLog) << "Search flights";
+    if (_pilotID == "") {
+        //-- Need to get the pilot id
+        qCDebug(AirMapManagerLog) << "Getting pilot ID";
+        _state = State::GetPilotID;
+        std::weak_ptr<LifetimeChecker> isAlive(_instance);
+        _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
+            if (!isAlive.lock()) return;
+            Pilots::Authenticated::Parameters params;
+            params.authorization = login_token.toStdString();
+            _shared.client()->pilots().authenticated(params, [this, isAlive](const Pilots::Authenticated::Result& result) {
+                if (!isAlive.lock()) return;
+                if (_state != State::GetPilotID) return;
+                if (result) {
+                    _pilotID = QString::fromStdString(result.value().id);
+                    qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    _state = State::Idle;
+                    _loadFlightList();
+                } else {
+                    _state = State::Idle;
+                    QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                    emit error("Failed to get pilot ID", QString::fromStdString(result.error().message()), description);
+                    return;
+                }
+            });
+        });
+    } else {
+        _loadFlightList();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::_loadFlightList()
+{
+    _flightList.clearAndDeleteContents();
+    emit flightListChanged();
+    _state = State::LoadFlightList;
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
+        if (!isAlive.lock()) return;
+        if (_state != State::LoadFlightList) return;
+        Flights::Search::Parameters params;
+        params.authorization = login_token.toStdString();
+        params.limit    = 200;
+        params.pilot_id = _pilotID.toStdString();
+        _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
+            if (!isAlive.lock()) return;
+            if (_state != State::LoadFlightList) return;
+            if (result && result.value().flights.size() > 0) {
+                const Flights::Search::Response& response = result.value();
+                for (const auto& flight : response.flights) {
+                    AirMapFlightInfo* pFlight = new AirMapFlightInfo(flight, this);
+                    _flightList.append(pFlight);
+                    qCDebug(AirMapManagerLog) << "Found:" << pFlight->flightID();
+                }
+                emit flightListChanged();
+            } else {
+                if(!result) {
+                    QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                    emit error("Flight search failed", QString::fromStdString(result.error().message()), description);
+                }
+            }
+        });
+    });
+}
+
