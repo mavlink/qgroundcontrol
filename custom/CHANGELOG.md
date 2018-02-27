@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.0 - Feb 26 2018
+
+*   Promoting version number to 1.3.0 (No code changes)
+
 ### V1.2.71 - Feb 26 2018
 
 *   Keep track of camera mode switch done by the autopilot (during missions). Needs updated camera firmware as well.
