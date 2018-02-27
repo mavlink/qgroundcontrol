@@ -13,8 +13,8 @@ message("Adding Yuneec Typhoon H520 plugin")
 #-- IMPORTANT: When changing these, make sure to update s3_deploy.sh and update_manifest.sh
 
 DATA_PILOT_VER_MAJOR = 1
-DATA_PILOT_VER_MINOR = 2
-DATA_PILOT_VER_FIRST_BUILD = 3564
+DATA_PILOT_VER_MINOR = 3
+DATA_PILOT_VER_FIRST_BUILD = 3636
 
 #   Build number is automatic
 
