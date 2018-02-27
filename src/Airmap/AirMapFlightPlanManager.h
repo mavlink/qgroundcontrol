@@ -18,7 +18,26 @@
 #include <QList>
 #include <QGeoCoordinate>
 
+#include "airmap/flight.h"
+
 class PlanMasterController;
+
+//-----------------------------------------------------------------------------
+class AirMapFlightInfo : public AirspaceFlightInfo
+{
+    Q_OBJECT
+public:
+    AirMapFlightInfo                            (const airmap::Flight& flight, QObject *parent = nullptr);
+    virtual QString                 flightID    () override { return QString::fromStdString(_flight.id); }
+    virtual QDateTime               createdTime () override { return QDateTime(); } //-- TODO: Need to get rid of boost first
+    virtual QDateTime               startTime   () override { return QDateTime(); } //-- TODO: Need to get rid of boost first
+    virtual QDateTime               endTime     () override { return QDateTime(); } //-- TODO: Need to get rid of boost first
+    virtual QGeoCoordinate          takeOff     () override { return QGeoCoordinate(_flight.latitude, _flight.longitude);}
+    virtual QmlObjectListModel*     boundingBox () override { return &_boundingBox; }
+private:
+    airmap::Flight      _flight;
+    QmlObjectListModel  _boundingBox;
+};
 
 //-----------------------------------------------------------------------------
 /// class to upload a flight
@@ -45,12 +64,14 @@ public:
     QmlObjectListModel* rulesReview         () override { return &_rulesReview; }
     QmlObjectListModel* rulesFollowing      () override { return &_rulesFollowing; }
     QmlObjectListModel* briefFeatures       () override { return &_briefFeatures; }
+    QmlObjectListModel* flightList          () override { return &_flightList; }
 
     void                updateFlightPlan    () override;
+    void                submitFlightPlan    () override;
     void                startFlightPlanning (PlanMasterController* planController) override;
     void                setFlightStartTime  (QDateTime start) override;
     void                setFlightEndTime    (QDateTime end) override;
-    void                submitFlightPlan    () override;
+    void                loadFlightList      () override;
 
 signals:
     void            error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -65,6 +86,7 @@ private:
     void _createFlightPlan                  ();
     void _deleteFlightPlan                  ();
     bool _collectFlightDtata                ();
+    void _loadFlightList                    ();
 
 private:
     enum class State {
@@ -76,6 +98,7 @@ private:
         FlightDelete,
         FlightSubmit,
         FlightPolling,
+        LoadFlightList,
     };
 
     struct Flight {
@@ -108,6 +131,7 @@ private:
     QmlObjectListModel      _rulesReview;
     QmlObjectListModel      _rulesFollowing;
     QmlObjectListModel      _briefFeatures;
+    QmlObjectListModel      _flightList;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;

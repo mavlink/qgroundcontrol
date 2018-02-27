@@ -179,7 +179,7 @@ Item {
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 visible:        planView
                 onClicked: {
-                    //-- TODO: File Plan
+                    QGroundControl.airspaceManager.flightPlan.submitFlightPlan()
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
                 }

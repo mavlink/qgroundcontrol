@@ -31,6 +31,7 @@ void
 AirMapVehicleManager::startTelemetryStream()
 {
     if (!_flightManager.flightID().isEmpty()) {
+        //-- TODO: This will start telemetry using the current flight ID in memory
         _telemetry.startTelemetryStream(_flightManager.flightID());
     }
 }
