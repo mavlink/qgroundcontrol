@@ -38,6 +38,10 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#if defined(QGC_AIRMAP_ENABLED)
+#include "AirspaceVehicleManager.h"
+#endif
+
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
 #define UPDATE_TIMER 50

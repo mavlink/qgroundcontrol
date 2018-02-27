@@ -15,6 +15,9 @@
 #include "JsonHelper.h"
 #include "MissionManager.h"
 #include "KML.h"
+#if defined(QGC_AIRMAP_ENABLED)
+#include "AirspaceFlightPlanProvider.h"
+#endif
 
 #include <QDomDocument>
 #include <QJsonDocument>

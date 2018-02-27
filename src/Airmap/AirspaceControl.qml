@@ -331,7 +331,7 @@ Item {
                     }
                     Flickable {
                         clip:               true
-                        height:             ScreenTools.defaultFontPixelHeight * 6
+                        height:             ScreenTools.defaultFontPixelHeight * 8
                         contentHeight:      advisoryCol.height
                         flickableDirection: Flickable.VerticalFlick
                         anchors.left:       parent.left
@@ -366,6 +366,7 @@ Item {
                 heightFactor:   0.3333
                 showBorder:     true
                 width:          ScreenTools.defaultFontPixelWidth * 16
+                visible:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
                     rootLoader.sourceComponent = planView ? flightDetails : flightBrief

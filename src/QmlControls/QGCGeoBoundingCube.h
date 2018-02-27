@@ -48,6 +48,8 @@ public:
         return pointNW == other.pointNW && pointSE == other.pointSE;
     }
 
+    bool operator ==(const QList<QGeoCoordinate>& coords) const;
+
     inline bool operator !=(const QGCGeoBoundingCube& other)
     {
         return !(*this == other);

@@ -65,7 +65,8 @@ AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate
             qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << "Icon:" << QString::fromStdString(_weather.icon) << "Condition:" << QString::fromStdString(_weather.condition) << "Temp:" << _weather.temperature;
         } else {
             _valid  = false;
-            qCDebug(AirMapManagerLog) << "Request Weather Failed";
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            qCDebug(AirMapManagerLog) << "Request Weather Failed" << QString::fromStdString(result.error().message()) << description;
         }
         emit weatherChanged();
     });

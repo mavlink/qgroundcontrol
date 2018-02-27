@@ -62,24 +62,27 @@ Item {
                         anchors.left:       parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         QGCLabel {
-                            text:           qsTr("Federal Aviation Administration")
+                            text:           qsTr("No Authorization Required")
                             visible:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+                            anchors.horizontalCenter: parent.horizontalCenter
                         }
+                        /*
                         QGCLabel {
                             text:           qsTr("Automatic authorization to fly in controlled airspace")
                             visible:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
                             font.pointSize: ScreenTools.smallFontPointSize
                         }
+                        */
                         Rectangle {
                             anchors.right:      parent.right
                             anchors.left:       parent.left
                             height:             label.height + (ScreenTools.defaultFontPixelHeight * 0.5)
                             color: {
-                                if(_flightPermit == AirspaceFlightPlanProvider.PermitPending)
+                                if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
                                     return _colorOrange
-                                if(_flightPermit == AirspaceFlightPlanProvider.PermitAccepted)
+                                if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
                                     return _colorGreen
-                                if(_flightPermit == AirspaceFlightPlanProvider.PermitRejected)
+                                if(_flightPermit === AirspaceFlightPlanProvider.PermitRejected)
                                     return _colorRed
                                 return _colorGray
                             }
@@ -164,9 +167,7 @@ Item {
                 visible:        planView
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 onClicked: {
-                    //-- TODO: Update Plan
-                    mainWindow.enableToolbar()
-                    rootLoader.sourceComponent = null
+                    QGroundControl.airspaceManager.flightPlan.updateFlightPlan()
                 }
             }
             QGCButton {
@@ -174,7 +175,7 @@ Item {
                 backRadius:     4
                 heightFactor:   0.3333
                 showBorder:     true
-                enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+                enabled:        _flightPermit === AirspaceFlightPlanProvider.PermitAccepted
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 visible:        planView
                 onClicked: {

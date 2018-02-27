@@ -17,12 +17,15 @@
 
 using namespace airmap;
 
+//-----------------------------------------------------------------------------
 AirMapTelemetry::AirMapTelemetry(AirMapSharedState& shared)
-: _shared(shared)
+    : _shared(shared)
 {
 }
 
-void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& message)
+//-----------------------------------------------------------------------------
+void
+AirMapTelemetry::vehicleMessageReceived(const mavlink_message_t& message)
 {
     switch (message.msgid) {
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
@@ -32,23 +35,24 @@ void AirMapTelemetry::vehicleMavlinkMessageReceived(const mavlink_message_t& mes
         _handleGPSRawInt(message);
         break;
     }
-
 }
 
-bool AirMapTelemetry::isTelemetryStreaming() const
+//-----------------------------------------------------------------------------
+bool
+AirMapTelemetry::isTelemetryStreaming()
 {
     return _state == State::Streaming;
 }
 
-void AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
+//-----------------------------------------------------------------------------
+void
+AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
 {
     if (!isTelemetryStreaming()) {
         return;
     }
-
     mavlink_gps_raw_int_t gps_raw;
     mavlink_msg_gps_raw_int_decode(&message, &gps_raw);
-
     if (gps_raw.eph == UINT16_MAX) {
         _lastHdop = 1.f;
     } else {
@@ -56,15 +60,15 @@ void AirMapTelemetry::_handleGPSRawInt(const mavlink_message_t& message)
     }
 }
 
-void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
+//-----------------------------------------------------------------------------
+void
+AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
 {
     if (!isTelemetryStreaming()) {
         return;
     }
-
     mavlink_global_position_int_t globalPosition;
     mavlink_msg_global_position_int_decode(&message, &globalPosition);
-
     Telemetry::Position position{
         milliseconds_since_epoch(Clock::universal_time()),
         (double) globalPosition.lat / 1e7,
@@ -84,21 +88,19 @@ void AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
     flight.id = _flightID.toStdString();
     _shared.client()->telemetry().submit_updates(flight, _key,
         {Telemetry::Update{position}, Telemetry::Update{speed}});
-
 }
 
-void AirMapTelemetry::startTelemetryStream(const QString& flightID)
+//-----------------------------------------------------------------------------
+void
+AirMapTelemetry::startTelemetryStream(const QString& flightID)
 {
     if (_state != State::Idle) {
         qCWarning(AirMapManagerLog) << "Not starting telemetry: not in idle state:" << (int)_state;
         return;
     }
-
     qCInfo(AirMapManagerLog) << "Starting Telemetry stream with flightID" << flightID;
-
-    _state = State::StartCommunication;
-    _flightID = flightID;
-
+    _state      = State::StartCommunication;
+    _flightID   = flightID;
     Flights::StartFlightCommunications::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id = _flightID.toStdString();
@@ -106,7 +108,6 @@ void AirMapTelemetry::startTelemetryStream(const QString& flightID)
     _shared.client()->flights().start_flight_communications(params, [this, isAlive](const Flights::StartFlightCommunications::Result& result) {
         if (!isAlive.lock()) return;
         if (_state != State::StartCommunication) return;
-
         if (result) {
             _key = result.value().key;
             _state = State::Streaming;
@@ -119,13 +120,14 @@ void AirMapTelemetry::startTelemetryStream(const QString& flightID)
     });
 }
 
-void AirMapTelemetry::stopTelemetryStream()
+//-----------------------------------------------------------------------------
+void
+AirMapTelemetry::stopTelemetryStream()
 {
     if (_state == State::Idle) {
         return;
     }
     qCInfo(AirMapManagerLog) << "Stopping Telemetry stream with flightID" << _flightID;
-
     _state = State::EndCommunication;
     Flights::EndFlightCommunications::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
@@ -135,7 +137,6 @@ void AirMapTelemetry::stopTelemetryStream()
         Q_UNUSED(result);
         if (!isAlive.lock()) return;
         if (_state != State::EndCommunication) return;
-
         _key = "";
         _state = State::Idle;
     });

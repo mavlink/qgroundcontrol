@@ -16,24 +16,18 @@
 #include "AirMapTelemetry.h"
 #include "AirMapTrafficMonitor.h"
 
-#include "QGCToolbox.h"
-
 /// AirMap per vehicle management class.
 
 class AirMapVehicleManager : public AirspaceVehicleManager
 {
     Q_OBJECT
 public:
-    AirMapVehicleManager        (AirMapSharedState& shared, const Vehicle& vehicle, QGCToolbox& toolbox);
+    AirMapVehicleManager        (AirMapSharedState& shared, const Vehicle& vehicle);
     ~AirMapVehicleManager       () = default;
 
-
-    void createFlight           (const QList<MissionItem*>& missionItems) override;
     void startTelemetryStream   () override;
     void stopTelemetryStream    () override;
-    bool isTelemetryStreaming   () const override;
-
-    AirspaceFlightPlanProvider::PermitStatus flightPermitStatus() const override;
+    bool isTelemetryStreaming   () override;
 
 signals:
     void error                  (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -44,13 +38,9 @@ public slots:
 protected slots:
     virtual void vehicleMavlinkMessageReceived(const mavlink_message_t& message) override;
 
-private slots:
-    void _flightPermitStatusChanged();
-
 private:
     AirMapSharedState&           _shared;
     AirMapFlightManager          _flightManager;
     AirMapTelemetry              _telemetry;
     AirMapTrafficMonitor         _trafficMonitor;
-    QGCToolbox&                  _toolbox;
 };

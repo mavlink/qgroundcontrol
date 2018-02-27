@@ -95,7 +95,7 @@ AirMapManager::_settingsChanged()
         qCDebug(AirMapManagerLog) << "Creating AirMap client";
         auto credentials    = Credentials{};
         credentials.api_key = _shared.settings().apiKey.toStdString();
-        auto configuration  = Client::default_staging_configuration(credentials);
+        auto configuration  = Client::default_production_configuration(credentials);
         qt::Client::create(configuration, _dispatchingLogger, this, [this, ap](const qt::Client::CreateResult& result) {
             if (result) {
                 qCDebug(AirMapManagerLog) << "Successfully created airmap::qt::Client instance";
@@ -114,7 +114,7 @@ AirMapManager::_settingsChanged()
 AirspaceVehicleManager*
 AirMapManager::instantiateVehicle(const Vehicle& vehicle)
 {
-    AirMapVehicleManager* manager = new AirMapVehicleManager(_shared, vehicle, *_toolbox);
+    AirMapVehicleManager* manager = new AirMapVehicleManager(_shared, vehicle);
     connect(manager, &AirMapVehicleManager::error, this, &AirMapManager::_error);
     return manager;
 }
