@@ -38,7 +38,8 @@ public:
     Q_PROPERTY(QString              endTime         READ endTime        CONSTANT)
     Q_PROPERTY(QGeoCoordinate       takeOff         READ takeOff        CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  boundingBox     READ boundingBox    CONSTANT)
-    Q_PROPERTY(bool                 selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(bool                 beingDeleted    READ beingDeleted   WRITE  setBeingDeleted  NOTIFY beingDeletedChanged)
+    Q_PROPERTY(bool                 selected        READ selected       WRITE  setSelected      NOTIFY selectedChanged)
 
     virtual QString                 flightID        () = 0;
     virtual QString                 flightPlanID    () = 0;
@@ -48,13 +49,17 @@ public:
     virtual QGeoCoordinate          takeOff         () = 0;
     virtual QmlObjectListModel*     boundingBox     () = 0;
 
+    virtual bool                    beingDeleted    () { return _beingDeleted; }
+    virtual void                    setBeingDeleted (bool val) { _beingDeleted = val; emit beingDeletedChanged(); }
     virtual bool                    selected        () { return _selected; }
     virtual void                    setSelected     (bool sel) { _selected = sel; emit selectedChanged(); }
 
 signals:
     void    selectedChanged                         ();
+    void    beingDeletedChanged                     ();
 
 protected:
+    bool    _beingDeleted;
     bool    _selected;
 };
 
@@ -71,10 +76,14 @@ public:
     AirspaceFlightModel(QObject *parent = 0);
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
-    Q_INVOKABLE AirspaceFlightInfo* get(int index);
+
+    Q_INVOKABLE AirspaceFlightInfo* get                 (int index);
+    Q_INVOKABLE int                 findFlightPlanID    (QString flightPlanID);
 
     int         count           (void) const;
     void        append          (AirspaceFlightInfo *entry);
+    void        remove          (const QString& flightPlanID);
+    void        remove          (int index);
     void        clear           (void);
 
     AirspaceFlightInfo*
@@ -124,11 +133,14 @@ public:
     Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  briefFeatures           READ briefFeatures                                  NOTIFY rulesChanged)
     Q_PROPERTY(AirspaceFlightModel* flightList              READ flightList                                     NOTIFY flightListChanged)
+    Q_PROPERTY(bool                 loadingFlightList       READ loadingFlightList                              NOTIFY loadingFlightListChanged)
 
     //-- TODO: This will submit the current flight plan in memory.
-    Q_INVOKABLE virtual void    submitFlightPlan    () = 0;
-    Q_INVOKABLE virtual void    updateFlightPlan    () = 0;
-    Q_INVOKABLE virtual void    loadFlightList      () = 0;
+    Q_INVOKABLE virtual void    submitFlightPlan            () = 0;
+    Q_INVOKABLE virtual void    updateFlightPlan            () = 0;
+    Q_INVOKABLE virtual void    loadFlightList              (QDateTime startTime, QDateTime endTime) = 0;
+    Q_INVOKABLE virtual void    deleteFlightPlan            (QString flighPlanID) = 0;
+    Q_INVOKABLE virtual void    deleteSelectedFlightPlans   () = 0;
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
@@ -145,6 +157,7 @@ public:
     virtual QmlObjectListModel* rulesFollowing      () = 0;                     ///< List of AirspaceRule following
     virtual QmlObjectListModel* briefFeatures       () = 0;                     ///< List of AirspaceRule in violation
     virtual AirspaceFlightModel*flightList          () = 0;                     ///< List of AirspaceFlightInfo
+    virtual bool                loadingFlightList   () = 0;
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
@@ -158,4 +171,5 @@ signals:
     void missionAreaChanged                         ();
     void rulesChanged                               ();
     void flightListChanged                          ();
+    void loadingFlightListChanged                   ();
 };

@@ -36,6 +36,27 @@ AirMapFlightInfo::AirMapFlightInfo(const airmap::Flight& flight, QObject *parent
 }
 
 //-----------------------------------------------------------------------------
+QString
+AirMapFlightInfo::createdTime()
+{
+    return QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flight.created_at)).toString("yyyy MM dd - hh:mm:ss");
+}
+
+//-----------------------------------------------------------------------------
+QString
+AirMapFlightInfo::startTime()
+{
+    return QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flight.start_time)).toString("yyyy MM dd - hh:mm:ss");
+}
+
+//-----------------------------------------------------------------------------
+QString
+AirMapFlightInfo::endTime()
+{
+    return QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flight.end_time)).toString("yyyy MM dd - hh:mm:ss");
+}
+
+//-----------------------------------------------------------------------------
 AirMapFlightPlanManager::AirMapFlightPlanManager(AirMapSharedState& shared, QObject *parent)
     : AirspaceFlightPlanProvider(parent)
     , _shared(shared)
@@ -160,6 +181,113 @@ AirMapFlightPlanManager::updateFlightPlan()
 }
 
 //-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::deleteSelectedFlightPlans()
+{
+    qCDebug(AirMapManagerLog) << "Delete flight plan";
+    _flightsToDelete.clear();
+    for(int i = 0; i < _flightList.count(); i++) {
+        AirspaceFlightInfo* pInfo = _flightList.get(i);
+        if(pInfo && pInfo->selected()) {
+            _flightsToDelete << pInfo->flightPlanID();
+        }
+    }
+    if(_flightsToDelete.count()) {
+        deleteFlightPlan(QString());
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::deleteFlightPlan(QString flightPlanID)
+{
+    qCDebug(AirMapManagerLog) << "Delete flight plan";
+    if(!flightPlanID.isEmpty()) {
+        _flightsToDelete.clear();
+        _flightsToDelete << flightPlanID;
+    }
+    if (_pilotID == "") {
+        //-- Need to get the pilot id
+        qCDebug(AirMapManagerLog) << "Getting pilot ID";
+        _state = State::GetPilotID;
+        std::weak_ptr<LifetimeChecker> isAlive(_instance);
+        _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
+            if (!isAlive.lock()) return;
+            Pilots::Authenticated::Parameters params;
+            params.authorization = login_token.toStdString();
+            _shared.client()->pilots().authenticated(params, [this, isAlive](const Pilots::Authenticated::Result& result) {
+                if (!isAlive.lock()) return;
+                if (_state != State::GetPilotID) return;
+                if (result) {
+                    _pilotID = QString::fromStdString(result.value().id);
+                    qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    _state = State::Idle;
+                    _deleteFlightPlan();
+                } else {
+                    _state = State::Idle;
+                    QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                    emit error("Failed to get pilot ID", QString::fromStdString(result.error().message()), description);
+                    return;
+                }
+            });
+        });
+    } else {
+        _deleteFlightPlan();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::_deleteFlightPlan()
+{
+    if(_flightsToDelete.count() < 1) {
+        qCDebug(AirMapManagerLog) << "Delete non existing flight plan";
+        return;
+    }
+    if(_state != State::Idle) {
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_deleteFlightPlan);
+        return;
+    }
+    int idx = _flightList.findFlightPlanID(_flightsToDelete.last());
+    if(idx >= 0) {
+        AirspaceFlightInfo* pInfo = _flightList.get(idx);
+        if(pInfo) {
+            pInfo->setBeingDeleted(true);
+        }
+    }
+    qCDebug(AirMapManagerLog) << "Deleting flight plan:" << _flightsToDelete.last();
+    _state = State::FlightDelete;
+    std::weak_ptr<LifetimeChecker> isAlive(_instance);
+    FlightPlans::Delete::Parameters params;
+    params.authorization = _shared.loginToken().toStdString();
+    params.id = _flightsToDelete.last().toStdString();
+    //-- Delete flight plan
+    _shared.client()->flight_plans().delete_(params, [this, isAlive](const FlightPlans::Delete::Result& result) {
+        if (!isAlive.lock()) return;
+        if (_state != State::FlightDelete) return;
+        if (result) {
+            qCDebug(AirMapManagerLog) << "Flight plan deleted";
+            _flightList.remove(_flightsToDelete.last());
+        } else {
+            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+            emit error("Flight Plan deletion failed", QString::fromStdString(result.error().message()), description);
+            AirspaceFlightInfo* pFlight = _flightList.get(_flightList.findFlightPlanID(_flightsToDelete.last()));
+            if(pFlight) {
+                pFlight->setBeingDeleted(false);
+            }
+        }
+        _flightsToDelete.removeLast();
+        //-- Keep at it until all flights are deleted
+        //   TODO: This is ineficient. These whole airmapd transactions need to be moved into a separate
+        //   worker thread.
+        if(_flightsToDelete.count()) {
+            QTimer::singleShot(10, this, &AirMapFlightPlanManager::_deleteFlightPlan);
+        }
+        _state = State::Idle;
+    });
+}
+
+//-----------------------------------------------------------------------------
 bool
 AirMapFlightPlanManager::_collectFlightDtata()
 {
@@ -250,6 +378,10 @@ void
 AirMapFlightPlanManager::_uploadFlightPlan()
 {
     qCDebug(AirMapManagerLog) << "Uploading flight plan";
+    if(_state != State::Idle) {
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_uploadFlightPlan);
+        return;
+    }
     _state = State::FlightUpload;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
@@ -262,16 +394,10 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         params.latitude     = _flight.takeoffCoord.latitude();
         params.longitude    = _flight.takeoffCoord.longitude();
         params.pilot.id     = _pilotID.toStdString();
-        /*
-
-        TODO: Convert this to fucking boost
-
-        quint64 start = _flightStartTime.toUTC().toMSecsSinceEpoch();
-        quint64 end   = _flightEndTime.toUTC().toMSecsSinceEpoch();
-
-        */
-        params.start_time   = Clock::universal_time() + Minutes{5};
-        params.end_time     = Clock::universal_time() + Hours{2};
+        quint64 start       = _flightStartTime.toUTC().toMSecsSinceEpoch();
+        quint64 end         = _flightEndTime.toUTC().toMSecsSinceEpoch();
+        params.start_time   = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
+        params.end_time     = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
         //-- Rules
         AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
         if(pRulesMgr) {
@@ -345,12 +471,16 @@ AirMapFlightPlanManager::_updateFlightPlan()
     //   little to do with those used when creating it.
 
     qCDebug(AirMapManagerLog) << "Updating flight plan";
+
+    if(_state != State::Idle) {
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_updateFlightPlan);
+        return;
+    }
     //-- Get flight data
     if(!_collectFlightDtata()) {
         return;
     }
 
-    qCDebug(AirMapManagerLog) << "About to update the flight plan";
     qCDebug(AirMapManagerLog) << "Takeoff:     " << _flight.takeoffCoord;
     qCDebug(AirMapManagerLog) << "Bounding box:" << _flight.bc.pointNW << _flight.bc.pointSE;
     qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
@@ -370,16 +500,10 @@ AirMapFlightPlanManager::_updateFlightPlan()
         params.flight_plan.buffer            = 2.f;
         params.flight_plan.takeoff.latitude  = _flight.takeoffCoord.latitude();
         params.flight_plan.takeoff.longitude = _flight.takeoffCoord.longitude();
-        /*
-
-        TODO: Convert this to fucking boost
-
-        quint64 start = _flightStartTime.toUTC().toMSecsSinceEpoch();
-        quint64 end   = _flightEndTime.toUTC().toMSecsSinceEpoch();
-
-        */
-        params.flight_plan.start_time        = Clock::universal_time() + Minutes{5};
-        params.flight_plan.end_time          = Clock::universal_time() + Hours{2};
+        quint64 start                        = _flightStartTime.toUTC().toMSecsSinceEpoch();
+        quint64 end                          = _flightEndTime.toUTC().toMSecsSinceEpoch();
+        params.flight_plan.start_time        = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
+        params.flight_plan.end_time          = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
         //-- Rules
         /*
         AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
@@ -568,36 +692,6 @@ AirMapFlightPlanManager::_pollBriefing()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::_deleteFlightPlan()
-{
-    if(_flightPlan.isEmpty()) {
-        qCDebug(AirMapManagerLog) << "Delete non existing flight plan";
-        return;
-    }
-    qCDebug(AirMapManagerLog) << "Deleting flight plan";
-    _state = State::FlightDelete;
-    std::weak_ptr<LifetimeChecker> isAlive(_instance);
-    FlightPlans::Delete::Parameters params;
-    params.authorization = _shared.loginToken().toStdString();
-    params.id = _flightPlan.toStdString();
-    //-- Delete flight plan
-    _shared.client()->flight_plans().delete_(params, [this, isAlive](const FlightPlans::Delete::Result& result) {
-        if (!isAlive.lock()) return;
-        if (_state != State::FlightDelete) return;
-        if (result) {
-            _flightPlan.clear();
-            qCDebug(AirMapManagerLog) << "Flight plan deleted";
-            _state = State::Idle;
-        } else {
-            _state = State::Idle;
-            QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            emit error("Flight Plan deletion failed", QString::fromStdString(result.error().message()), description);
-        }
-    });
-}
-
-//-----------------------------------------------------------------------------
-void
 AirMapFlightPlanManager::_missionChanged()
 {
     //-- Are we enabled?
@@ -621,9 +715,16 @@ AirMapFlightPlanManager::_missionChanged()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::loadFlightList()
+AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
 {
-    qCDebug(AirMapManagerLog) << "Search flights";
+    //-- TODO: This is not checking if the state is Idle. Again, these need to
+    //   queued up and handled by a worker thread.
+    qCDebug(AirMapManagerLog) << "Preparing load flight list";
+    _loadingFlightList = true;
+    emit loadingFlightListChanged();
+    _rangeStart = startTime;
+    _rangeEnd   = endTime;
+    qCDebug(AirMapManagerLog) << "List flights from:" << _rangeStart.toString("yyyy MM dd - hh:mm:ss") << "to" << _rangeEnd.toString("yyyy MM dd - hh:mm:ss");
     if (_pilotID == "") {
         //-- Need to get the pilot id
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
@@ -645,6 +746,8 @@ AirMapFlightPlanManager::loadFlightList()
                     _state = State::Idle;
                     QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                     emit error("Failed to get pilot ID", QString::fromStdString(result.error().message()), description);
+                    _loadingFlightList = false;
+                    emit loadingFlightListChanged();
                     return;
                 }
             });
@@ -658,6 +761,11 @@ AirMapFlightPlanManager::loadFlightList()
 void
 AirMapFlightPlanManager::_loadFlightList()
 {
+    qCDebug(AirMapManagerLog) << "Load flight list";
+    if(_state != State::Idle) {
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_loadFlightList);
+        return;
+    }
     _flightList.clear();
     emit flightListChanged();
     _state = State::LoadFlightList;
@@ -667,8 +775,13 @@ AirMapFlightPlanManager::_loadFlightList()
         if (_state != State::LoadFlightList) return;
         Flights::Search::Parameters params;
         params.authorization = login_token.toStdString();
-        params.limit    = 60;
+        quint64 start   = _rangeStart.toUTC().toMSecsSinceEpoch();
+        quint64 end     = _rangeEnd.toUTC().toMSecsSinceEpoch();
+        params.start_after  = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
+        params.start_before = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
+        params.limit    = 250;
         params.pilot_id = _pilotID.toStdString();
+        qCDebug(AirMapManagerLog) << "List flights from:" << _rangeStart.toUTC().toString("yyyy MM dd - hh:mm:ss") << "to" << _rangeEnd.toUTC().toString("yyyy MM dd - hh:mm:ss");
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
             if (!isAlive.lock()) return;
             if (_state != State::LoadFlightList) return;
@@ -686,6 +799,9 @@ AirMapFlightPlanManager::_loadFlightList()
                     emit error("Flight search failed", QString::fromStdString(result.error().message()), description);
                 }
             }
+            _state = State::Idle;
+            _loadingFlightList = false;
+            emit loadingFlightListChanged();
         });
     });
 }
