@@ -29,9 +29,9 @@ class AirMapFlightInfo : public AirspaceFlightInfo
 public:
     AirMapFlightInfo                            (const airmap::Flight& flight, QObject *parent = nullptr);
     virtual QString                 flightID    () override { return QString::fromStdString(_flight.id); }
-    virtual QDateTime               createdTime () override { return QDateTime(); } //-- TODO: Need to get rid of boost first
-    virtual QDateTime               startTime   () override { return QDateTime(); } //-- TODO: Need to get rid of boost first
-    virtual QDateTime               endTime     () override { return QDateTime(); } //-- TODO: Need to get rid of boost first
+    virtual QString                 createdTime () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
+    virtual QString                 startTime   () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
+    virtual QString                 endTime     () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
     virtual QGeoCoordinate          takeOff     () override { return QGeoCoordinate(_flight.latitude, _flight.longitude);}
     virtual QmlObjectListModel*     boundingBox () override { return &_boundingBox; }
 private:
@@ -64,7 +64,7 @@ public:
     QmlObjectListModel* rulesReview         () override { return &_rulesReview; }
     QmlObjectListModel* rulesFollowing      () override { return &_rulesFollowing; }
     QmlObjectListModel* briefFeatures       () override { return &_briefFeatures; }
-    QmlObjectListModel* flightList          () override { return &_flightList; }
+    AirspaceFlightModel*flightList          () override { return &_flightList; }
 
     void                updateFlightPlan    () override;
     void                submitFlightPlan    () override;
@@ -131,7 +131,7 @@ private:
     QmlObjectListModel      _rulesReview;
     QmlObjectListModel      _rulesFollowing;
     QmlObjectListModel      _briefFeatures;
-    QmlObjectListModel      _flightList;
+    AirspaceFlightModel     _flightList;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;

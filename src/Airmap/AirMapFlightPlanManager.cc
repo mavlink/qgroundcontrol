@@ -658,7 +658,7 @@ AirMapFlightPlanManager::loadFlightList()
 void
 AirMapFlightPlanManager::_loadFlightList()
 {
-    _flightList.clearAndDeleteContents();
+    _flightList.clear();
     emit flightListChanged();
     _state = State::LoadFlightList;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
@@ -667,7 +667,7 @@ AirMapFlightPlanManager::_loadFlightList()
         if (_state != State::LoadFlightList) return;
         Flights::Search::Parameters params;
         params.authorization = login_token.toStdString();
-        params.limit    = 200;
+        params.limit    = 60;
         params.pilot_id = _pilotID.toStdString();
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
             if (!isAlive.lock()) return;
