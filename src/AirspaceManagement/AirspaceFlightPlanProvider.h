@@ -19,8 +19,10 @@
 
 #include <QObject>
 #include <QDateTime>
+#include <QAbstractListModel>
 
 class PlanMasterController;
+class AirspaceFlightInfo;
 
 //-----------------------------------------------------------------------------
 class AirspaceFlightInfo : public QObject
@@ -30,17 +32,17 @@ public:
     AirspaceFlightInfo                          (QObject *parent = nullptr);
 
     Q_PROPERTY(QString              flightID    READ flightID       CONSTANT)
-    Q_PROPERTY(QDateTime            createdTime READ createdTime    CONSTANT)
-    Q_PROPERTY(QDateTime            startTime   READ startTime      CONSTANT)
-    Q_PROPERTY(QDateTime            endTime     READ endTime        CONSTANT)
+    Q_PROPERTY(QString              createdTime READ createdTime    CONSTANT)
+    Q_PROPERTY(QString              startTime   READ startTime      CONSTANT)
+    Q_PROPERTY(QString              endTime     READ endTime        CONSTANT)
     Q_PROPERTY(QGeoCoordinate       takeOff     READ takeOff        CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  boundingBox READ boundingBox    CONSTANT)
     Q_PROPERTY(bool                 selected    READ selected       WRITE setSelected   NOTIFY selectedChanged)
 
     virtual QString                 flightID    () = 0;
-    virtual QDateTime               createdTime () = 0;
-    virtual QDateTime               startTime   () = 0;
-    virtual QDateTime               endTime     () = 0;
+    virtual QString                 createdTime () = 0;
+    virtual QString                 startTime   () = 0;
+    virtual QString                 endTime     () = 0;
     virtual QGeoCoordinate          takeOff     () = 0;
     virtual QmlObjectListModel*     boundingBox () = 0;
 
@@ -52,6 +54,40 @@ signals:
 
 protected:
     bool    _selected;
+};
+
+//-----------------------------------------------------------------------------
+class AirspaceFlightModel : public QAbstractListModel
+{
+    Q_OBJECT
+public:
+
+    enum QGCLogModelRoles {
+        ObjectRole = Qt::UserRole + 1
+    };
+
+    AirspaceFlightModel(QObject *parent = 0);
+
+    Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_INVOKABLE AirspaceFlightInfo* get(int index);
+
+    int         count           (void) const;
+    void        append          (AirspaceFlightInfo *entry);
+    void        clear           (void);
+
+    AirspaceFlightInfo*
+                operator[]      (int i);
+
+    int         rowCount        (const QModelIndex & parent = QModelIndex()) const;
+    QVariant    data            (const QModelIndex & index, int role = Qt::DisplayRole) const;
+
+signals:
+    void        countChanged    ();
+
+protected:
+    QHash<int, QByteArray> roleNames() const;
+private:
+    QList<AirspaceFlightInfo*> _flightEntries;
 };
 
 //-----------------------------------------------------------------------------
@@ -85,7 +121,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  rulesReview             READ rulesReview                                    NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  briefFeatures           READ briefFeatures                                  NOTIFY rulesChanged)
-    Q_PROPERTY(QmlObjectListModel*  flightList              READ flightList                                     NOTIFY flightListChanged)
+    Q_PROPERTY(AirspaceFlightModel* flightList              READ flightList                                     NOTIFY flightListChanged)
 
     //-- TODO: This will submit the current flight plan in memory.
     Q_INVOKABLE virtual void    submitFlightPlan    () = 0;
@@ -106,7 +142,7 @@ public:
     virtual QmlObjectListModel* rulesReview         () = 0;                     ///< List of AirspaceRule should review
     virtual QmlObjectListModel* rulesFollowing      () = 0;                     ///< List of AirspaceRule following
     virtual QmlObjectListModel* briefFeatures       () = 0;                     ///< List of AirspaceRule in violation
-    virtual QmlObjectListModel* flightList          () = 0;                     ///< List of AirspaceFlightInfo
+    virtual AirspaceFlightModel*flightList          () = 0;                     ///< List of AirspaceFlightInfo
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
     virtual void                setFlightEndTime    (QDateTime end) = 0;
