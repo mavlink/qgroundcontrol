@@ -677,7 +677,7 @@ AirMapFlightPlanManager::_loadFlightList()
                 for (const auto& flight : response.flights) {
                     AirMapFlightInfo* pFlight = new AirMapFlightInfo(flight, this);
                     _flightList.append(pFlight);
-                    qCDebug(AirMapManagerLog) << "Found:" << pFlight->flightID();
+                    qCDebug(AirMapManagerLog) << "Found:" << pFlight->flightID() << pFlight->flightPlanID();
                 }
                 emit flightListChanged();
             } else {
