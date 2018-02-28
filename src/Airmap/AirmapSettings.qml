@@ -434,6 +434,7 @@ QGCView {
                         text:           qsTr("Flight Area")
                         anchors.bottom: map.top
                         anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.25
+                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                     Map {
                         id:             map
@@ -448,9 +449,9 @@ QGCView {
                         function updateActiveMapType() {
                             var settings =  QGroundControl.settingsManager.flightMapSettings
                             var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
-                            for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-                                if (fullMapName === _map.supportedMapTypes[i].name) {
-                                    _map.activeMapType = _map.supportedMapTypes[i]
+                            for (var i = 0; i < map.supportedMapTypes.length; i++) {
+                                if (fullMapName === map.supportedMapTypes[i].name) {
+                                    map.activeMapType = map.supportedMapTypes[i]
                                     return
                                 }
                             }

@@ -31,26 +31,28 @@ class AirspaceFlightInfo : public QObject
 public:
     AirspaceFlightInfo                          (QObject *parent = nullptr);
 
-    Q_PROPERTY(QString              flightID    READ flightID       CONSTANT)
-    Q_PROPERTY(QString              createdTime READ createdTime    CONSTANT)
-    Q_PROPERTY(QString              startTime   READ startTime      CONSTANT)
-    Q_PROPERTY(QString              endTime     READ endTime        CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       takeOff     READ takeOff        CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  boundingBox READ boundingBox    CONSTANT)
-    Q_PROPERTY(bool                 selected    READ selected       WRITE setSelected   NOTIFY selectedChanged)
+    Q_PROPERTY(QString              flightID        READ flightID       CONSTANT)
+    Q_PROPERTY(QString              flightPlanID    READ flightPlanID   CONSTANT)
+    Q_PROPERTY(QString              createdTime     READ createdTime    CONSTANT)
+    Q_PROPERTY(QString              startTime       READ startTime      CONSTANT)
+    Q_PROPERTY(QString              endTime         READ endTime        CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       takeOff         READ takeOff        CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  boundingBox     READ boundingBox    CONSTANT)
+    Q_PROPERTY(bool                 selected        READ selected       WRITE setSelected   NOTIFY selectedChanged)
 
-    virtual QString                 flightID    () = 0;
-    virtual QString                 createdTime () = 0;
-    virtual QString                 startTime   () = 0;
-    virtual QString                 endTime     () = 0;
-    virtual QGeoCoordinate          takeOff     () = 0;
-    virtual QmlObjectListModel*     boundingBox () = 0;
+    virtual QString                 flightID        () = 0;
+    virtual QString                 flightPlanID    () = 0;
+    virtual QString                 createdTime     () = 0;
+    virtual QString                 startTime       () = 0;
+    virtual QString                 endTime         () = 0;
+    virtual QGeoCoordinate          takeOff         () = 0;
+    virtual QmlObjectListModel*     boundingBox     () = 0;
 
-    virtual bool                    selected    () { return _selected; }
-    virtual void                    setSelected (bool sel) { _selected = sel; emit selectedChanged(); }
+    virtual bool                    selected        () { return _selected; }
+    virtual void                    setSelected     (bool sel) { _selected = sel; emit selectedChanged(); }
 
 signals:
-    void    selectedChanged         ();
+    void    selectedChanged                         ();
 
 protected:
     bool    _selected;

@@ -27,13 +27,14 @@ class AirMapFlightInfo : public AirspaceFlightInfo
 {
     Q_OBJECT
 public:
-    AirMapFlightInfo                            (const airmap::Flight& flight, QObject *parent = nullptr);
-    virtual QString                 flightID    () override { return QString::fromStdString(_flight.id); }
-    virtual QString                 createdTime () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
-    virtual QString                 startTime   () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
-    virtual QString                 endTime     () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
-    virtual QGeoCoordinate          takeOff     () override { return QGeoCoordinate(_flight.latitude, _flight.longitude);}
-    virtual QmlObjectListModel*     boundingBox () override { return &_boundingBox; }
+    AirMapFlightInfo                        (const airmap::Flight& flight, QObject *parent = nullptr);
+    QString             flightID            () override { return QString::fromStdString(_flight.id); }
+    QString             flightPlanID        () override { return QString::fromStdString(_flight.flight_plan_id.get()); }
+    QString             createdTime         () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
+    QString             startTime           () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
+    QString             endTime             () override { return QDateTime::currentDateTime().toString(Qt::SystemLocaleShortDate); } //-- TODO: Need to get rid of boost first
+    QGeoCoordinate      takeOff             () override { return QGeoCoordinate(_flight.latitude, _flight.longitude);}
+    QmlObjectListModel* boundingBox         () override { return &_boundingBox; }
 private:
     airmap::Flight      _flight;
     QmlObjectListModel  _boundingBox;
