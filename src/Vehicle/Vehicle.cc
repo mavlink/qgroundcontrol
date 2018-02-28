@@ -2195,7 +2195,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
-    if (_mavCommandQueue.size() > 2) {
+    if (_mavCommandQueue.size() > 0) {
         // HACK
         // FIX PROPERLY
         // don't queue

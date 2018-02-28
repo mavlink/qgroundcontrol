@@ -23,7 +23,7 @@ Item {
     property bool _gimbalMode:      _activeVehicle && _virtualJoystick && _virtualJoystick.value === 2
 
     Timer {
-        interval:   40  // 25Hz, same as real joystick rate
+        interval:   _gimbalMode ? 100 : 40  // 10Hz gimbal mode, otherwise 25Hz, same as real joystick rate
         running:    _virtualJoystick && _virtualJoystick.value === 1 && _activeVehicle
         repeat:     true
         onTriggered: {
