@@ -125,6 +125,7 @@ QGCView {
                         QGCLabel { text: qsTr("Email:") }
                         FactTextField {
                             fact:           _loginEmailFact
+                            width:          _editFieldWidth
                             enabled:        _airMapEnabled
                             visible:        _loginEmailFact.visible
                             property Fact _loginEmailFact: QGroundControl.settingsManager.airMapSettings.loginEmail
@@ -132,6 +133,7 @@ QGCView {
                         QGCLabel { text: qsTr("Password:") }
                         FactTextField {
                             fact:           _loginPasswordFact
+                            width:          _editFieldWidth
                             enabled:        _airMapEnabled
                             visible:        _loginPasswordFact.visible
                             property Fact _loginPasswordFact: QGroundControl.settingsManager.airMapSettings.loginPassword
@@ -225,13 +227,13 @@ QGCView {
                         rowSpacing:         ScreenTools.defaultFontPixelWidth  * 0.25
                         anchors.centerIn:   parent
                         QGCLabel        { text: qsTr("API Key:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey;   width: _editFieldWidth; }
                         QGCLabel        { text: qsTr("Client ID:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; width: _editFieldWidth; }
                         QGCLabel        { text: qsTr("User Name:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.userName; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.userName; width: _editFieldWidth; }
                         QGCLabel        { text: qsTr("Password:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.password; echoMode: TextInput.Password }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.password; width: _editFieldWidth; echoMode: TextInput.Password }
                     }
                 }
                 //-----------------------------------------------------------------
@@ -283,22 +285,26 @@ QGCView {
             width:      _qgcView.width
             height:     _qgcView.height
             color:      qgcPal.window
-            property var _flightList: QGroundControl.airspaceManager.flightPlan.flightList
-            Component.onCompleted: {
-                QGroundControl.airspaceManager.flightPlan.loadFlightList()
-            }
-            Connections {
-                target: _flightList
-                onCountChanged: {
-                    tableView.resizeColumnsToContents()
-                }
-            }
+            property var    _flightList: QGroundControl.airspaceManager.flightPlan.flightList
+            property real   _mapWidth:   ScreenTools.defaultFontPixelWidth * 40
             MouseArea {
                 anchors.fill:   parent
                 hoverEnabled:   true
                 onWheel:        { wheel.accepted = true; }
                 onPressed:      { mouse.accepted = true; }
                 onReleased:     { mouse.accepted = true; }
+            }
+            function updateSelection() {
+                //-- Clear selection
+                for(var i = 0; i < _flightList.count; i++) {
+                    var o = _flightList.get(i)
+                    if (o) o.selected = false
+                }
+                //-- Flag selected flights
+                tableView.selection.forEach(function(rowIndex){
+                    var o = _flightList.get(rowIndex)
+                    if (o) o.selected = true
+                })
             }
             //---------------------------------------------------------
             //-- Flight List
@@ -312,8 +318,20 @@ QGCView {
                     selectionMode:      SelectionMode.MultiSelection
                     Layout.fillWidth:   true
                     TableViewColumn {
-                        title: qsTr("Created")
-                        width: ScreenTools.defaultFontPixelWidth * 20
+                        title:  qsTr("No")
+                        width:  ScreenTools.defaultFontPixelWidth * 3
+                        horizontalAlignment: Text.AlignHCenter
+                        delegate : Text {
+                            horizontalAlignment: Text.AlignHCenter
+                            text:  (styleData.row + 1)
+                            color: tableView.currentRow === styleData.row ? qgcPal.colorBlue : "black"
+                            font.family: ScreenTools.fixedFontFamily
+                            font.pixelSize: ScreenTools.smallFontPointSize
+                        }
+                    }
+                    TableViewColumn {
+                        title:  qsTr("Created")
+                        width:  ScreenTools.defaultFontPixelWidth * 20
                         horizontalAlignment: Text.AlignHCenter
                         delegate : Text {
                             horizontalAlignment: Text.AlignHCenter
@@ -321,11 +339,14 @@ QGCView {
                                 var o = _flightList.get(styleData.row)
                                 return o ? o.createdTime : ""
                             }
+                            color: tableView.currentRow === styleData.row ? qgcPal.colorBlue : "black"
+                            font.family: ScreenTools.fixedFontFamily
+                            font.pixelSize: ScreenTools.smallFontPointSize
                         }
                     }
                     TableViewColumn {
-                        title: qsTr("Flight Start")
-                        width: ScreenTools.defaultFontPixelWidth * 20
+                        title:  qsTr("Flight Start")
+                        width:  ScreenTools.defaultFontPixelWidth * 20
                         horizontalAlignment: Text.AlignHCenter
                         delegate : Text  {
                             horizontalAlignment: Text.AlignHCenter
@@ -333,32 +354,125 @@ QGCView {
                                 var o = _flightList.get(styleData.row)
                                 return o ? o.startTime : ""
                             }
+                            color: tableView.currentRow === styleData.row ? qgcPal.colorBlue : "black"
+                            font.family: ScreenTools.fixedFontFamily
+                            font.pixelSize: ScreenTools.smallFontPointSize
                         }
                     }
                     TableViewColumn {
-                        title: qsTr("Take Off")
-                        width: ScreenTools.defaultFontPixelWidth * 22
+                        title:  qsTr("State")
+                        width:  ScreenTools.defaultFontPixelWidth * 22
                         horizontalAlignment: Text.AlignHCenter
                         delegate : Text  {
                             horizontalAlignment: Text.AlignHCenter
                             text: {
                                 var o = _flightList.get(styleData.row)
-                                return o ? o.takeOff.latitude.toFixed(6) + ', ' + o.takeOff.longitude.toFixed(6) : ""
+                                return o ? (o.beingDeleted ? qsTr("Deleting") : qsTr("Valid")) : qsTr("Unknown")
                             }
+                            color: tableView.currentRow === styleData.row ? qgcPal.colorBlue : "black"
+                            font.family: ScreenTools.fixedFontFamily
+                            font.pixelSize: ScreenTools.smallFontPointSize
                         }
                     }
                 }
                 Item {
-                    width:              map.width
+                    width:              flightListRoot._mapWidth
                     height:             parent.height
                     Layout.alignment:   Qt.AlignTop | Qt.AlignLeft
+                    QGCLabel {
+                        id:             loadingLabel
+                        text:           qsTr("Loading Flight List")
+                        visible:        QGroundControl.airspaceManager.flightPlan.loadingFlightList
+                        anchors.centerIn: parent
+                    }
+                    QGCColoredImage {
+                        id:                 busyIndicator
+                        height:             ScreenTools.defaultFontPixelHeight * 2.5
+                        width:              height
+                        source:             "/qmlimages/MapSync.svg"
+                        sourceSize.height:  height
+                        fillMode:           Image.PreserveAspectFit
+                        mipmap:             true
+                        smooth:             true
+                        color:              qgcPal.colorGreen
+                        visible:            loadingLabel.visible
+                        anchors.top:        loadingLabel.bottom
+                        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        RotationAnimation on rotation {
+                            loops:          Animation.Infinite
+                            from:           360
+                            to:             0
+                            duration:       740
+                            running:        busyIndicator.visible
+                        }
+                    }
                     Column {
-                        spacing:            ScreenTools.defaultFontPixelHeight
+                        spacing:            ScreenTools.defaultFontPixelHeight * 0.75
+                        visible:            !QGroundControl.airspaceManager.flightPlan.loadingFlightList
                         anchors.top:        parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Flight List")
                             anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        Rectangle {
+                            color:          qgcPal.window
+                            border.color:   qgcPal.globalTheme === QGCPalette.Dark ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
+                            border.width:   1
+                            radius:         4
+                            width:          _mapWidth - (ScreenTools.defaultFontPixelWidth * 2)
+                            height:         rangeCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                            Column {
+                                id:         rangeCol
+                                anchors.centerIn: parent
+                                spacing:    ScreenTools.defaultFontPixelHeight * 0.5
+                                QGCLabel {
+                                    text:   qsTr("Range")
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                }
+                                Row {
+                                    spacing:            ScreenTools.defaultFontPixelWidth * 2
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    Column {
+                                        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                        QGCButton {
+                                            text:           qsTr("From")
+                                            backRadius:     4
+                                            heightFactor:   0.3333
+                                            showBorder:     true
+                                            width:          _buttonWidth * 0.5
+                                            onClicked:      fromPicker.visible = true
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+                                        QGCLabel {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: fromPicker.selectedDate.toLocaleDateString(Qt.locale())
+                                        }
+                                    }
+                                    Rectangle {
+                                        width:  1
+                                        height: parent.height
+                                        color:  qgcPal.globalTheme === QGCPalette.Dark ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
+                                    }
+                                    Column {
+                                        spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                        QGCButton {
+                                            text:           qsTr("To")
+                                            backRadius:     4
+                                            heightFactor:   0.3333
+                                            showBorder:     true
+                                            width:          _buttonWidth * 0.5
+                                            onClicked:      toPicker.visible = true
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                        }
+                                        QGCLabel {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: toPicker.selectedDate.toLocaleDateString(Qt.locale())
+                                        }
+                                    }
+                                }
+                            }
                         }
                         QGCButton {
                             text:           qsTr("Refresh")
@@ -369,7 +483,11 @@ QGCView {
                             enabled:        true
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
-                                QGroundControl.airspaceManager.flightPlan.loadFlightList()
+                                var start   = fromPicker.selectedDate
+                                var end     = toPicker.selectedDate
+                                start.setHours(0,0,0,0)
+                                end.setHours(23,59,59,0)
+                                QGroundControl.airspaceManager.flightPlan.loadFlightList(start, end)
                             }
                         }
                         QGCButton {
@@ -402,20 +520,11 @@ QGCView {
                             heightFactor:   0.3333
                             showBorder:     true
                             width:          _buttonWidth
-                            enabled:        false
+                            enabled:        tableView.selection.count > 0
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
-                                //-- Clear selection
-                                for(var i = 0; i < _flightList.count; i++) {
-                                    var o = _flightList.get(i)
-                                    if (o) o.selected = false
-                                }
-                                //-- Flag selected flights
-                                tableView.selection.forEach(function(rowIndex){
-                                    var o = _flightList.get(rowIndex)
-                                    if (o) o.selected = true
-                                })
-                                //TODO:
+                                flightListRoot.updateSelection();
+                                QGroundControl.airspaceManager.flightPlan.deleteSelectedFlightPlans()
                             }
                         }
                         QGCButton {
@@ -429,9 +538,21 @@ QGCView {
                                 panelLoader.sourceComponent = null
                             }
                         }
+                        QGCLabel {
+                            text:           _flightList.count > 0 ? tableView.selection.count + '/' + _flightList.count + qsTr(" Flights Selected") : qsTr("No Flights Loaded")
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCLabel {
+                            text:           qsTr("A maximum of 250 flights were loaded")
+                            color:          qgcPal.colorOrange
+                            font.pixelSize: ScreenTools.smallFontPointSize
+                            visible:        _flightList.count >= 250
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
                     }
                     QGCLabel {
-                        text:           qsTr("Flight Area")
+                        text:           qsTr("Flight Area ") + (tableView.currentRow + 1)
+                        visible:        !QGroundControl.airspaceManager.flightPlan.loadingFlightList && _flightList.count > 0 && tableView.currentRow >= 0
                         anchors.bottom: map.top
                         anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.25
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -446,6 +567,7 @@ QGCView {
                         center:         QGroundControl.flightMapPosition
                         gesture.acceptedGestures: MapGestureArea.PinchGesture
                         plugin:         Plugin { name: "QGroundControl" }
+                        visible:        !QGroundControl.airspaceManager.flightPlan.loadingFlightList && _flightList.count > 0 && tableView.currentRow >= 0
                         function updateActiveMapType() {
                             var settings =  QGroundControl.settingsManager.flightMapSettings
                             var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
@@ -469,6 +591,23 @@ QGCView {
                             onRawValueChanged:  updateActiveMapType()
                         }
 
+                    }
+                    Calendar {
+                        id: fromPicker
+                        anchors.centerIn: parent
+                        visible: false;
+                        onClicked: {
+                            visible = false;
+                        }
+                    }
+                    Calendar {
+                        id: toPicker
+                        anchors.centerIn: parent
+                        visible: false;
+                        minimumDate: fromPicker.selectedDate
+                        onClicked: {
+                            visible = false;
+                        }
                     }
                 }
             }
