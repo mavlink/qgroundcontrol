@@ -23,6 +23,22 @@
 class PlanMasterController;
 
 //-----------------------------------------------------------------------------
+class AirMapFlightAuthorization : public AirspaceFlightAuthorization
+{
+    Q_OBJECT
+public:
+    AirMapFlightAuthorization               (const airmap::Evaluation::Authorization auth, QObject *parent = nullptr);
+
+    AirspaceFlightAuthorization::AuthorizationStatus
+                            status          () override;
+    QString                 name            () override { return QString::fromStdString(_auth.authority.name); }
+    QString                 id              () override { return QString::fromStdString(_auth.authority.id); }
+    QString                 message         () override { return QString::fromStdString(_auth.message); }
+private:
+    airmap::Evaluation::Authorization   _auth;
+};
+
+//-----------------------------------------------------------------------------
 class AirMapFlightInfo : public AirspaceFlightInfo
 {
     Q_OBJECT
@@ -65,6 +81,7 @@ public:
     QmlObjectListModel* rulesReview         () override { return &_rulesReview; }
     QmlObjectListModel* rulesFollowing      () override { return &_rulesFollowing; }
     QmlObjectListModel* briefFeatures       () override { return &_briefFeatures; }
+    QmlObjectListModel* authorizations      () override { return &_authorizations; }
     AirspaceFlightModel*flightList          () override { return &_flightList; }
     bool                loadingFlightList   () override { return _loadingFlightList; }
 
@@ -138,6 +155,7 @@ private:
     QmlObjectListModel      _rulesReview;
     QmlObjectListModel      _rulesFollowing;
     QmlObjectListModel      _briefFeatures;
+    QmlObjectListModel      _authorizations;
     AirspaceFlightModel     _flightList;
     QDateTime               _rangeStart;
     QDateTime               _rangeEnd;

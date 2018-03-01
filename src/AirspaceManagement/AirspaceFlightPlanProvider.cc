@@ -12,6 +12,12 @@
 #include <QQmlEngine>
 
 //-----------------------------------------------------------------------------
+AirspaceFlightAuthorization::AirspaceFlightAuthorization(QObject *parent)
+    : QObject(parent)
+{
+}
+
+//-----------------------------------------------------------------------------
 AirspaceFlightInfo::AirspaceFlightInfo(QObject *parent)
     : QObject(parent)
     , _beingDeleted(false)

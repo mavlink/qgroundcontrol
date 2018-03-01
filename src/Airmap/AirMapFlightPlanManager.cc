@@ -26,10 +26,36 @@
 using namespace airmap;
 
 //-----------------------------------------------------------------------------
+AirMapFlightAuthorization::AirMapFlightAuthorization(const Evaluation::Authorization auth, QObject *parent)
+    : AirspaceFlightAuthorization(parent)
+    , _auth(auth)
+{
+}
+
+//-----------------------------------------------------------------------------
+AirspaceFlightAuthorization::AuthorizationStatus
+AirMapFlightAuthorization::status()
+{
+    switch(_auth.status) {
+    case Evaluation::Authorization::Status::accepted:
+        return AirspaceFlightAuthorization::Accepted;
+    case Evaluation::Authorization::Status::rejected:
+        return AirspaceFlightAuthorization::Rejected;
+    case Evaluation::Authorization::Status::pending:
+        return AirspaceFlightAuthorization::Pending;
+    case Evaluation::Authorization::Status::accepted_upon_submission:
+        return AirspaceFlightAuthorization::AcceptedOnSubmission;
+    case Evaluation::Authorization::Status::rejected_upon_submission:
+        return AirspaceFlightAuthorization::RejectedOnSubmission;
+    }
+    return AirspaceFlightAuthorization::Unknown;
+}
+
+//-----------------------------------------------------------------------------
 AirMapFlightInfo::AirMapFlightInfo(const airmap::Flight& flight, QObject *parent)
     : AirspaceFlightInfo(parent)
+    , _flight(flight)
 {
-    _flight = flight;
     //-- TODO: Load bounding box geometry
 
 
@@ -596,6 +622,7 @@ AirMapFlightPlanManager::_pollBriefing()
             _advisories.endReset();
             _valid = true;
             //-- Collect Rulesets
+            _authorizations.clearAndDeleteContents();
             _rulesViolation.clearAndDeleteContents();
             _rulesInfo.clearAndDeleteContents();
             _rulesReview.clearAndDeleteContents();
@@ -642,13 +669,14 @@ AirMapFlightPlanManager::_pollBriefing()
                 _rulesets.append(pRuleSet);
                 qCDebug(AirMapManagerLog) << "Adding briefing ruleset" << pRuleSet->id();
             }
-            emit advisoryChanged();
-            emit rulesChanged();
             //-- Evaluate briefing status
             bool rejected = false;
             bool accepted = false;
             bool pending  = false;
             for (const auto& authorization : briefing.evaluation.authorizations) {
+                AirMapFlightAuthorization* pAuth = new AirMapFlightAuthorization(authorization, this);
+                _authorizations.append(pAuth);
+                qCDebug(AirMapManagerLog) << "Autorization:" << pAuth->name() << " (" << pAuth->message() << ")" << (int)pAuth->status();
                 switch (authorization.status) {
                 case Evaluation::Authorization::Status::accepted:
                 case Evaluation::Authorization::Status::accepted_upon_submission:
@@ -661,12 +689,18 @@ AirMapFlightPlanManager::_pollBriefing()
                 case Evaluation::Authorization::Status::pending:
                     pending = true;
                     break;
+                //-- If we don't know, accept it
+                default:
+                    accepted = true;
+                    break;
                 }
             }
             if (briefing.evaluation.authorizations.size() == 0) {
                 // If we don't get any authorizations, we assume it's accepted
                 accepted = true;
             }
+            emit advisoryChanged();
+            emit rulesChanged();
             qCDebug(AirMapManagerLog) << "Flight approval: accepted=" << accepted << "rejected" << rejected << "pending" << pending;
             if ((rejected || accepted) && !pending) {
                 if (rejected) { // rejected has priority
