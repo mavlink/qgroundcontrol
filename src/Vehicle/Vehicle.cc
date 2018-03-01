@@ -2195,7 +2195,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
-    if (_mavCommandQueue.size() > 0) {
+    if (_mavCommandQueue.size() > 1) {
         // HACK
         // FIX PROPERLY
         // don't queue
@@ -2211,6 +2211,15 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
 
     pitch = pitch * 120.0;
     yaw = yaw * 120.0f;
+
+    if ((std::abs(pitch - _gimbalPitchLast) < 0.1) && (std::abs(yaw - _gimbalYawLast) < 0.1)) {
+        return;
+    }
+
+    //_gimbalRollLast = roll;
+    _gimbalPitchLast = pitch;
+    _gimbalYawLast = yaw;
+
     qDebug() << pitch << yaw;
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONTROL,

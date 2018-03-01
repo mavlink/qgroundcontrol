@@ -1094,7 +1094,11 @@ private:
     uint8_t             _messageSeq;
     uint8_t             _compID;
     bool                _heardFrom;
+
     bool                _gimbalAcknowledged;
+    double              _gimbalRollLast{0.0};
+    double              _gimbalPitchLast{0.0};
+    double              _gimbalYawLast{0.0};
 
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;
