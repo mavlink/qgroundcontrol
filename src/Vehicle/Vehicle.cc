@@ -2209,10 +2209,9 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
         return;
     }
 
-    pitch = pitch * 120.0;
-    yaw = yaw * 120.0f;
-
-    if ((std::abs(pitch - _gimbalPitchLast) < 0.1) && (std::abs(yaw - _gimbalYawLast) < 0.1)) {
+    if (pitch < 0.1 && yaw < 0.1) {
+        // good, let near zero rates pass
+    } else if ((std::abs(pitch - _gimbalPitchLast) < 0.1) && (std::abs(yaw - _gimbalYawLast) < 0.1)) {
         return;
     }
 
@@ -2224,9 +2223,9 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONTROL,
                    false,                               // show errors
-                   pitch,                               // Pitch
+                   pitch * 120.0,                       // Pitch
                    0,                                   // Roll
-                   yaw,                                 // Yaw
+                   yaw * 120.0f,                        // Yaw
                    0,                                   // Altitude (not used)
                    0,                                   // Latitude (not used)
                    0,                                   // Longitude (not used)
@@ -2236,6 +2235,13 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
 
 void Vehicle::cameraZoomValue(double zoom)
 {
+    if (_mavCommandQueue.size() > 1) {
+        // HACK
+        // FIX PROPERLY
+        // don't queue
+        return;
+    }
+    qDebug() << "cameraZoomValue";
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    false,                           // show errors
@@ -2246,6 +2252,7 @@ void Vehicle::cameraZoomValue(double zoom)
 
 void Vehicle::triggerCamera(void)
 {
+    qDebug() << "triggerCamera";
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    false,                           // show errors
@@ -2257,6 +2264,7 @@ void Vehicle::triggerCamera(void)
 
 void Vehicle::initGimbal(void)
 {
+    qDebug() << "initGimbal";
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONFIGURE,
                    true,                            // Show errors
@@ -2272,7 +2280,8 @@ void Vehicle::initGimbal(void)
 
 void Vehicle::retractGimbal(void)
 {
-  sendMavCommand(_defaultComponentId,
+    qDebug() << "retractGimbal";
+    sendMavCommand(_defaultComponentId,
                  MAV_CMD_DO_MOUNT_CONFIGURE,
                  true,                            // Show errors
                  MAV_MOUNT_MODE_RETRACT,          // Mode
