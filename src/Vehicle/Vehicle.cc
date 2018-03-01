@@ -2195,23 +2195,10 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
-    if (_mavCommandQueue.size() > 1) {
-        // HACK
-        // FIX PROPERLY
-        // don't queue
-        return;
-    }
-
     //-- Incoming pitch and yaw values are -1.00 to 1.00
     if (std::isfinite(pitch) && std::isfinite(yaw)) {
         // good
     } else {
-        return;
-    }
-
-    if (pitch < 0.1 && yaw < 0.1) {
-        // good, let near zero rates pass
-    } else if ((std::abs(pitch - _gimbalPitchLast) < 0.1) && (std::abs(yaw - _gimbalYawLast) < 0.1)) {
         return;
     }
 
@@ -2235,13 +2222,6 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
 
 void Vehicle::cameraZoomValue(double zoom)
 {
-    if (_mavCommandQueue.size() > 1) {
-        // HACK
-        // FIX PROPERLY
-        // don't queue
-        return;
-    }
-    qDebug() << "cameraZoomValue";
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    false,                           // show errors
@@ -2252,7 +2232,6 @@ void Vehicle::cameraZoomValue(double zoom)
 
 void Vehicle::triggerCamera(void)
 {
-    qDebug() << "triggerCamera";
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_DIGICAM_CONTROL,
                    false,                           // show errors
@@ -2264,7 +2243,6 @@ void Vehicle::triggerCamera(void)
 
 void Vehicle::initGimbal(void)
 {
-    qDebug() << "initGimbal";
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONFIGURE,
                    true,                            // Show errors
@@ -2280,7 +2258,6 @@ void Vehicle::initGimbal(void)
 
 void Vehicle::retractGimbal(void)
 {
-    qDebug() << "retractGimbal";
     sendMavCommand(_defaultComponentId,
                  MAV_CMD_DO_MOUNT_CONFIGURE,
                  true,                            // Show errors
@@ -2615,20 +2592,45 @@ void Vehicle::setCurrentMissionSequence(int seq)
 
 void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-    MavCommandQueueEntry_t entry;
+    bool updated = false;
 
-    entry.component = component;
-    entry.command = command;
-    entry.showError = showError;
-    entry.rgParam[0] = param1;
-    entry.rgParam[1] = param2;
-    entry.rgParam[2] = param3;
-    entry.rgParam[3] = param4;
-    entry.rgParam[4] = param5;
-    entry.rgParam[5] = param6;
-    entry.rgParam[6] = param7;
+    if (_mavCommandQueue.size() > 1) {
+        for (int i = 1; i < _mavCommandQueue.size(); i++) {
+            MavCommandQueueEntry_t& entry = _mavCommandQueue[i];
+            // if the command is already queued (and not next in line), replace with latest command
+            if (entry.command == command) {
+                entry.component = component;
+                entry.command = command;
+                entry.showError = showError;
+                entry.rgParam[0] = param1;
+                entry.rgParam[1] = param2;
+                entry.rgParam[2] = param3;
+                entry.rgParam[3] = param4;
+                entry.rgParam[4] = param5;
+                entry.rgParam[5] = param6;
+                entry.rgParam[6] = param7;
 
-    _mavCommandQueue.append(entry);
+                updated = true;
+            }
+        }
+    }
+
+    if (!updated) {
+        MavCommandQueueEntry_t entry;
+
+        entry.component = component;
+        entry.command = command;
+        entry.showError = showError;
+        entry.rgParam[0] = param1;
+        entry.rgParam[1] = param2;
+        entry.rgParam[2] = param3;
+        entry.rgParam[3] = param4;
+        entry.rgParam[4] = param5;
+        entry.rgParam[5] = param6;
+        entry.rgParam[6] = param7;
+
+        _mavCommandQueue.append(entry);
+    }
 
     if (_mavCommandQueue.count() == 1) {
         _mavCommandRetryCount = 0;
@@ -2638,7 +2640,7 @@ void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, flo
 
 void Vehicle::_sendMavCommandAgain(void)
 {
-    if(!_mavCommandQueue.size()) {
+    if (_mavCommandQueue.size() == 0) {
         qWarning() << "Command resend with no commands in queue";
         _mavCommandAckTimer.stop();
         return;
@@ -2727,7 +2729,7 @@ void Vehicle::_sendMavCommandAgain(void)
 
 void Vehicle::_sendNextQueuedMavCommand(void)
 {
-    if (_mavCommandQueue.count()) {
+    if (_mavCommandQueue.count() > 0) {
         _mavCommandRetryCount = 0;
         _sendMavCommandAgain();
     }
