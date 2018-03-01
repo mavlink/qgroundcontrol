@@ -91,9 +91,9 @@ public:
     void                setFlightStartTime  (QDateTime start) override;
     void                setFlightEndTime    (QDateTime end) override;
     void                loadFlightList      (QDateTime startTime, QDateTime endTime) override;
-    void                deleteFlightPlan    (QString flightPlanID) override;
+    void                deleteFlight        (QString flightID) override;
 
-    void                deleteSelectedFlightPlans() override;
+    void                deleteSelectedFlights() override;
 
 signals:
     void            error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -101,7 +101,7 @@ signals:
 private slots:
     void _pollBriefing                      ();
     void _missionChanged                    ();
-    void _deleteFlightPlan                  ();
+    void _deleteFlight                      ();
     void _uploadFlightPlan                  ();
     void _updateFlightPlan                  ();
     void _loadFlightList                    ();
@@ -116,7 +116,6 @@ private:
         GetPilotID,
         FlightUpload,
         FlightUpdate,
-        FlightPlanPolling,
         FlightDelete,
         FlightSubmit,
         FlightPolling,

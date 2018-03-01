@@ -175,8 +175,8 @@ public:
     Q_INVOKABLE virtual void    submitFlightPlan            () = 0;
     Q_INVOKABLE virtual void    updateFlightPlan            () = 0;
     Q_INVOKABLE virtual void    loadFlightList              (QDateTime startTime, QDateTime endTime) = 0;
-    Q_INVOKABLE virtual void    deleteFlightPlan            (QString flighPlanID) = 0;
-    Q_INVOKABLE virtual void    deleteSelectedFlightPlans   () = 0;
+    Q_INVOKABLE virtual void    deleteFlight            (QString flighPlanID) = 0;
+    Q_INVOKABLE virtual void    deleteSelectedFlights       () = 0;
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
