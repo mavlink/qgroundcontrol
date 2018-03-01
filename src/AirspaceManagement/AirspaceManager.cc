@@ -38,6 +38,8 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     qmlRegisterUncreatableType<AirspaceRuleSet>             ("QGroundControl.Airspace",      1, 0, "AirspaceRuleSet",                "Reference only");
     qmlRegisterUncreatableType<AirspaceRulesetsProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceRulesetsProvider",       "Reference only");
     qmlRegisterUncreatableType<AirspaceWeatherInfoProvider> ("QGroundControl.Airspace",      1, 0, "AirspaceWeatherInfoProvider",    "Reference only");
+    qmlRegisterUncreatableType<AirspaceFlightAuthorization> ("QGroundControl.Airspace",      1, 0, "AirspaceFlightAuthorization",    "Reference only");
+    qmlRegisterUncreatableType<AirspaceFlightInfo>          ("QGroundControl.Airspace",      1, 0, "AirspaceFlightInfo",             "Reference only");
 }
 
 AirspaceManager::~AirspaceManager()

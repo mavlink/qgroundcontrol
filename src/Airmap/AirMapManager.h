@@ -31,7 +31,6 @@ Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
 class AirMapManager : public AirspaceManager
 {
     Q_OBJECT
-    
 public:
     AirMapManager(QGCApplication* app, QGCToolbox* toolbox);
     virtual ~AirMapManager();

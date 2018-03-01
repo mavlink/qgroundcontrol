@@ -25,11 +25,42 @@ class PlanMasterController;
 class AirspaceFlightInfo;
 
 //-----------------------------------------------------------------------------
+class AirspaceFlightAuthorization : public QObject
+{
+    Q_OBJECT
+public:
+    AirspaceFlightAuthorization                     (QObject *parent = nullptr);
+
+    enum AuthorizationStatus {
+        Accepted,
+        Rejected,
+        Pending,
+        AcceptedOnSubmission,
+        RejectedOnSubmission,
+        Unknown
+    };
+
+    Q_ENUM(AuthorizationStatus)
+
+    Q_PROPERTY(QString              name            READ name           CONSTANT)
+    Q_PROPERTY(QString              id              READ id             CONSTANT)
+    Q_PROPERTY(AuthorizationStatus  status          READ status         CONSTANT)
+    Q_PROPERTY(QString              message         READ message        CONSTANT)
+
+    virtual QString                 name            () = 0;
+    virtual QString                 id              () = 0;
+    virtual AuthorizationStatus     status          () = 0;
+    virtual QString                 message         () = 0;
+
+};
+
+
+//-----------------------------------------------------------------------------
 class AirspaceFlightInfo : public QObject
 {
     Q_OBJECT
 public:
-    AirspaceFlightInfo                          (QObject *parent = nullptr);
+    AirspaceFlightInfo                              (QObject *parent = nullptr);
 
     Q_PROPERTY(QString              flightID        READ flightID       CONSTANT)
     Q_PROPERTY(QString              flightPlanID    READ flightPlanID   CONSTANT)
@@ -73,7 +104,7 @@ public:
         ObjectRole = Qt::UserRole + 1
     };
 
-    AirspaceFlightModel(QObject *parent = 0);
+    AirspaceFlightModel         (QObject *parent = 0);
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
@@ -118,20 +149,25 @@ public:
 
     AirspaceFlightPlanProvider                      (QObject *parent = nullptr);
 
-    Q_PROPERTY(PermitStatus         flightPermitStatus      READ flightPermitStatus                             NOTIFY flightPermitStatusChanged)   ///< State of flight permission
+    ///< Flight Planning and Filing
     Q_PROPERTY(QDateTime            flightStartTime         READ flightStartTime    WRITE  setFlightStartTime   NOTIFY flightStartTimeChanged)      ///< Start of flight
     Q_PROPERTY(QDateTime            flightEndTime           READ flightEndTime      WRITE  setFlightEndTime     NOTIFY flightEndTimeChanged)        ///< End of flight
+
+    ///< Flight Briefing
+    Q_PROPERTY(PermitStatus         flightPermitStatus      READ flightPermitStatus                             NOTIFY flightPermitStatusChanged)   ///< State of flight permission
     Q_PROPERTY(bool                 valid                   READ valid                                          NOTIFY advisoryChanged)
     Q_PROPERTY(QmlObjectListModel*  advisories              READ advisories                                     NOTIFY advisoryChanged)
     Q_PROPERTY(QmlObjectListModel*  ruleSets                READ ruleSets                                       NOTIFY advisoryChanged)
     Q_PROPERTY(QGCGeoBoundingCube*  missionArea             READ missionArea                                    NOTIFY missionAreaChanged)
     Q_PROPERTY(AirspaceAdvisoryProvider::AdvisoryColor airspaceColor READ airspaceColor                         NOTIFY advisoryChanged)
-
     Q_PROPERTY(QmlObjectListModel*  rulesViolation          READ rulesViolation                                 NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesInfo               READ rulesInfo                                      NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesReview             READ rulesReview                                    NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  rulesFollowing          READ rulesFollowing                                 NOTIFY rulesChanged)
     Q_PROPERTY(QmlObjectListModel*  briefFeatures           READ briefFeatures                                  NOTIFY rulesChanged)
+    Q_PROPERTY(QmlObjectListModel*  authorizations          READ authorizations                                 NOTIFY rulesChanged)
+
+    ///< Flight Management
     Q_PROPERTY(AirspaceFlightModel* flightList              READ flightList                                     NOTIFY flightListChanged)
     Q_PROPERTY(bool                 loadingFlightList       READ loadingFlightList                              NOTIFY loadingFlightListChanged)
 
@@ -156,6 +192,7 @@ public:
     virtual QmlObjectListModel* rulesReview         () = 0;                     ///< List of AirspaceRule should review
     virtual QmlObjectListModel* rulesFollowing      () = 0;                     ///< List of AirspaceRule following
     virtual QmlObjectListModel* briefFeatures       () = 0;                     ///< List of AirspaceRule in violation
+    virtual QmlObjectListModel* authorizations      () = 0;                     ///< List of AirspaceFlightAuthorization
     virtual AirspaceFlightModel*flightList          () = 0;                     ///< List of AirspaceFlightInfo
     virtual bool                loadingFlightList   () = 0;
 

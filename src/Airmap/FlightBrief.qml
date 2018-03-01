@@ -61,22 +61,55 @@ Item {
                         anchors.right:      parent.right
                         anchors.left:       parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        QGCLabel {
-                            text:           qsTr("No Authorization Required")
-                            visible:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
-                            anchors.horizontalCenter: parent.horizontalCenter
+                        //-- Actual Authorization from some jurisdiction
+                        Repeater {
+                            visible:        QGroundControl.airspaceManager.flightPlan.authorizations.count > 0
+                            model:          QGroundControl.airspaceManager.flightPlan.authorizations
+                            Column {
+                                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                anchors.right:      parent.right
+                                anchors.left:       parent.left
+                                QGCLabel {
+                                    text:           object.name
+                                    font.family:    ScreenTools.demiboldFontFamily
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                }
+                                Rectangle {
+                                    anchors.right:      parent.right
+                                    anchors.left:       parent.left
+                                    height:             label.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+                                    color: {
+                                        if(object.status === AirspaceFlightAuthorization.Pending)
+                                            return _colorOrange
+                                        if(object.status === AirspaceFlightAuthorization.Accepted || object.status === AirspaceFlightAuthorization.AcceptedOnSubmission)
+                                            return _colorGreen
+                                        if(object.status === AirspaceFlightAuthorization.Rejected || object.status === AirspaceFlightAuthorization.RejectedOnSubmission)
+                                            return _colorRed
+                                        return _colorGray
+                                    }
+                                    QGCLabel {
+                                        id:     label
+                                        color:  _colorWhite
+                                        text: {
+                                            if(object.status === AirspaceFlightAuthorization.Pending)
+                                                return qsTr("Authorization Pending")
+                                            if(object.status === AirspaceFlightAuthorization.Accepted || object.status === AirspaceFlightAuthorization.AcceptedOnSubmission)
+                                                return qsTr("Authorization Accepted")
+                                            if(object.status === AirspaceFlightAuthorization.Rejected || object.status === AirspaceFlightAuthorization.RejectedOnSubmission)
+                                                return qsTr("Authorization Rejected")
+                                            return qsTr("Authorization Unknown")
+                                        }
+                                        anchors.centerIn: parent
+                                    }
+                                }
+                            }
                         }
-                        /*
-                        QGCLabel {
-                            text:           qsTr("Automatic authorization to fly in controlled airspace")
-                            visible:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
-                            font.pointSize: ScreenTools.smallFontPointSize
-                        }
-                        */
+                        //-- Implied Authorization from no jurisdiction
                         Rectangle {
                             anchors.right:      parent.right
                             anchors.left:       parent.left
-                            height:             label.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+                            height:             noAuthLabel.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+                            visible:            QGroundControl.airspaceManager.flightPlan.authorizations.count < 1
                             color: {
                                 if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
                                     return _colorOrange
@@ -87,7 +120,7 @@ Item {
                                 return _colorGray
                             }
                             QGCLabel {
-                                id:     label
+                                id:     noAuthLabel
                                 color:  _colorWhite
                                 text: {
                                     if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
