@@ -524,7 +524,7 @@ QGCView {
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
                                 flightListRoot.updateSelection();
-                                QGroundControl.airspaceManager.flightPlan.deleteSelectedFlightPlans()
+                                QGroundControl.airspaceManager.flightPlan.deleteSelectedFlights()
                             }
                         }
                         QGCButton {

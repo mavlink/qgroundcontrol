@@ -176,7 +176,6 @@ AirMapFlightPlanManager::submitFlightPlan()
         if (_state != State::FlightSubmit) return;
         if (result) {
             _flightId = QString::fromStdString(result.value().flight_id.get());
-            _state    = State::FlightPolling;
             _pollBriefing();
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
@@ -208,29 +207,29 @@ AirMapFlightPlanManager::updateFlightPlan()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::deleteSelectedFlightPlans()
+AirMapFlightPlanManager::deleteSelectedFlights()
 {
-    qCDebug(AirMapManagerLog) << "Delete flight plan";
+    qCDebug(AirMapManagerLog) << "Delete flights";
     _flightsToDelete.clear();
     for(int i = 0; i < _flightList.count(); i++) {
         AirspaceFlightInfo* pInfo = _flightList.get(i);
         if(pInfo && pInfo->selected()) {
-            _flightsToDelete << pInfo->flightPlanID();
+            _flightsToDelete << pInfo->flightID();
         }
     }
     if(_flightsToDelete.count()) {
-        deleteFlightPlan(QString());
+        deleteFlight(QString());
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::deleteFlightPlan(QString flightPlanID)
+AirMapFlightPlanManager::deleteFlight(QString flightID)
 {
-    qCDebug(AirMapManagerLog) << "Delete flight plan";
-    if(!flightPlanID.isEmpty()) {
+    qCDebug(AirMapManagerLog) << "Delete flight";
+    if(!flightID.isEmpty()) {
         _flightsToDelete.clear();
-        _flightsToDelete << flightPlanID;
+        _flightsToDelete << flightID;
     }
     if (_pilotID == "") {
         //-- Need to get the pilot id
@@ -248,7 +247,7 @@ AirMapFlightPlanManager::deleteFlightPlan(QString flightPlanID)
                     _pilotID = QString::fromStdString(result.value().id);
                     qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
                     _state = State::Idle;
-                    _deleteFlightPlan();
+                    _deleteFlight();
                 } else {
                     _state = State::Idle;
                     QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
@@ -258,20 +257,21 @@ AirMapFlightPlanManager::deleteFlightPlan(QString flightPlanID)
             });
         });
     } else {
-        _deleteFlightPlan();
+        _deleteFlight();
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::_deleteFlightPlan()
+AirMapFlightPlanManager::_deleteFlight()
 {
     if(_flightsToDelete.count() < 1) {
-        qCDebug(AirMapManagerLog) << "Delete non existing flight plan";
+        qCDebug(AirMapManagerLog) << "Delete non existing flight";
         return;
     }
+    qCDebug(AirMapManagerLog) << "Delete Flight. State:" << (int)_state;
     if(_state != State::Idle) {
-        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_deleteFlightPlan);
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_deleteFlight);
         return;
     }
     int idx = _flightList.findFlightPlanID(_flightsToDelete.last());
@@ -281,7 +281,7 @@ AirMapFlightPlanManager::_deleteFlightPlan()
             pInfo->setBeingDeleted(true);
         }
     }
-    qCDebug(AirMapManagerLog) << "Deleting flight plan:" << _flightsToDelete.last();
+    qCDebug(AirMapManagerLog) << "Deleting flight:" << _flightsToDelete.last();
     _state = State::FlightDelete;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     FlightPlans::Delete::Parameters params;
@@ -292,11 +292,11 @@ AirMapFlightPlanManager::_deleteFlightPlan()
         if (!isAlive.lock()) return;
         if (_state != State::FlightDelete) return;
         if (result) {
-            qCDebug(AirMapManagerLog) << "Flight plan deleted";
+            qCDebug(AirMapManagerLog) << "Flight deleted";
             _flightList.remove(_flightsToDelete.last());
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            emit error("Flight Plan deletion failed", QString::fromStdString(result.error().message()), description);
+            emit error("Flight deletion failed", QString::fromStdString(result.error().message()), description);
             AirspaceFlightInfo* pFlight = _flightList.get(_flightList.findFlightPlanID(_flightsToDelete.last()));
             if(pFlight) {
                 pFlight->setBeingDeleted(false);
@@ -307,7 +307,7 @@ AirMapFlightPlanManager::_deleteFlightPlan()
         //   TODO: This is ineficient. These whole airmapd transactions need to be moved into a separate
         //   worker thread.
         if(_flightsToDelete.count()) {
-            QTimer::singleShot(10, this, &AirMapFlightPlanManager::_deleteFlightPlan);
+            QTimer::singleShot(10, this, &AirMapFlightPlanManager::_deleteFlight);
         }
         _state = State::Idle;
     });
@@ -403,7 +403,7 @@ AirMapFlightPlanManager::_createFlightPlan()
 void
 AirMapFlightPlanManager::_uploadFlightPlan()
 {
-    qCDebug(AirMapManagerLog) << "Uploading flight plan";
+    qCDebug(AirMapManagerLog) << "Uploading flight plan. State:" << (int)_state;
     if(_state != State::Idle) {
         QTimer::singleShot(100, this, &AirMapFlightPlanManager::_uploadFlightPlan);
         return;
@@ -433,7 +433,6 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                 if(ruleSet && ruleSet->selected()) {
                     params.rulesets.push_back(ruleSet->id().toStdString());
                     //-- Features within each rule
-                    /*
                     for(int r = 0; r < ruleSet->rules()->count(); r++) {
                         AirMapRule* rule = qobject_cast<AirMapRule*>(ruleSet->rules()->get(r));
                         if(rule) {
@@ -445,10 +444,16 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                                         params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toBool());
                                         break;
                                     case AirspaceRuleFeature::Float:
-                                        params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toFloat());
+                                        //-- Sanity check for floats
+                                        if(isfinite(feature->value().toFloat())) {
+                                            params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toFloat());
+                                        }
                                         break;
                                     case AirspaceRuleFeature::String:
-                                        params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toString().toStdString());
+                                        //-- Skip empty responses
+                                        if(!feature->value().toString().isEmpty()) {
+                                            params.features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toString().toStdString());
+                                        }
                                         break;
                                     default:
                                         qCWarning(AirMapManagerLog) << "Unknown type for feature" << feature->name();
@@ -457,7 +462,6 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                             }
                         }
                     }
-                    */
                 }
             }
         }
@@ -475,13 +479,12 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         _shared.client()->flight_plans().create_by_polygon(params, [this, isAlive](const FlightPlans::Create::Result& result) {
             if (!isAlive.lock()) return;
             if (_state != State::FlightUpload) return;
+            _state = State::Idle;
             if (result) {
                 _flightPlan = QString::fromStdString(result.value().id);
                 qCDebug(AirMapManagerLog) << "Flight plan created:" << _flightPlan;
-                _state = State::FlightPlanPolling;
                 _pollBriefing();
             } else {
-                _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                 emit error("Flight Plan creation failed", QString::fromStdString(result.error().message()), description);
             }
@@ -496,7 +499,7 @@ AirMapFlightPlanManager::_updateFlightPlan()
     //-- TODO: This is broken as the parameters for updating the plan have
     //   little to do with those used when creating it.
 
-    qCDebug(AirMapManagerLog) << "Updating flight plan";
+    qCDebug(AirMapManagerLog) << "Updating flight plan. State:" << (int)_state;
 
     if(_state != State::Idle) {
         QTimer::singleShot(100, this, &AirMapFlightPlanManager::_updateFlightPlan);
@@ -552,12 +555,11 @@ AirMapFlightPlanManager::_updateFlightPlan()
         _shared.client()->flight_plans().update(params, [this, isAlive](const FlightPlans::Update::Result& result) {
             if (!isAlive.lock()) return;
             if (_state != State::FlightUpdate) return;
+            _state = State::Idle;
             if (result) {
-                _state = State::FlightPlanPolling;
                 qCDebug(AirMapManagerLog) << "Flight plan updated:" << _flightPlan;
                 _pollBriefing();
             } else {
-                _state = State::Idle;
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                 emit error("Flight Plan update failed", QString::fromStdString(result.error().message()), description);
             }
@@ -589,16 +591,19 @@ rules_sort(QObject* a, QObject* b)
 void
 AirMapFlightPlanManager::_pollBriefing()
 {
-    if (_state != State::FlightPlanPolling && _state != State::FlightPolling) {
+    qCDebug(AirMapManagerLog) << "Poll Briefing. State:" << (int)_state;
+    if(_state != State::Idle) {
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_pollBriefing);
         return;
     }
+    _state = State::FlightPolling;
     FlightPlans::RenderBriefing::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
     params.id            = _flightPlan.toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flight_plans().render_briefing(params, [this, isAlive](const FlightPlans::RenderBriefing::Result& result) {
         if (!isAlive.lock()) return;
-        if (_state != State::FlightPlanPolling && _state != State::FlightPolling) return;
+        if (_state != State::FlightPolling) return;
         if (result) {
             const FlightPlan::Briefing& briefing = result.value();
             qCDebug(AirMapManagerLog) << "Flight polling/briefing response";
@@ -702,6 +707,7 @@ AirMapFlightPlanManager::_pollBriefing()
             emit advisoryChanged();
             emit rulesChanged();
             qCDebug(AirMapManagerLog) << "Flight approval: accepted=" << accepted << "rejected" << rejected << "pending" << pending;
+            _state = State::Idle;
             if ((rejected || accepted) && !pending) {
                 if (rejected) { // rejected has priority
                     _flightPermitStatus = AirspaceFlightPlanProvider::PermitRejected;
@@ -709,7 +715,6 @@ AirMapFlightPlanManager::_pollBriefing()
                     _flightPermitStatus = AirspaceFlightPlanProvider::PermitAccepted;
                 }
                 emit flightPermitStatusChanged();
-                _state = State::Idle;
             } else {
                 //-- Pending. Try again.
                 _pollTimer.setSingleShot(true);
@@ -795,7 +800,7 @@ AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
 void
 AirMapFlightPlanManager::_loadFlightList()
 {
-    qCDebug(AirMapManagerLog) << "Load flight list";
+    qCDebug(AirMapManagerLog) << "Load flight list. State:" << (int)_state;
     if(_state != State::Idle) {
         QTimer::singleShot(100, this, &AirMapFlightPlanManager::_loadFlightList);
         return;
@@ -815,7 +820,6 @@ AirMapFlightPlanManager::_loadFlightList()
         params.start_before = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
         params.limit    = 250;
         params.pilot_id = _pilotID.toStdString();
-        qCDebug(AirMapManagerLog) << "List flights from:" << _rangeStart.toUTC().toString("yyyy MM dd - hh:mm:ss") << "to" << _rangeEnd.toUTC().toString("yyyy MM dd - hh:mm:ss");
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
             if (!isAlive.lock()) return;
             if (_state != State::LoadFlightList) return;

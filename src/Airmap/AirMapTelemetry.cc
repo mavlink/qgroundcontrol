@@ -98,6 +98,10 @@ AirMapTelemetry::startTelemetryStream(const QString& flightID)
         qCWarning(AirMapManagerLog) << "Not starting telemetry: not in idle state:" << (int)_state;
         return;
     }
+    if(flightID.isEmpty()) {
+        qCWarning(AirMapManagerLog) << "Not starting telemetry: No flight ID.";
+        return;
+    }
     qCInfo(AirMapManagerLog) << "Starting Telemetry stream with flightID" << flightID;
     _state      = State::StartCommunication;
     _flightID   = flightID;
