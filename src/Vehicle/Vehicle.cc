@@ -2210,7 +2210,7 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONTROL,
                    false,                               // show errors
-                   pitch * 120.0,                       // Pitch
+                   -pitch * 120.0,                       // Pitch
                    0,                                   // Roll
                    yaw * 120.0f,                        // Yaw
                    0,                                   // Altitude (not used)
