@@ -20,8 +20,6 @@ AirspaceFlightAuthorization::AirspaceFlightAuthorization(QObject *parent)
 //-----------------------------------------------------------------------------
 AirspaceFlightInfo::AirspaceFlightInfo(QObject *parent)
     : QObject(parent)
-    , _beingDeleted(false)
-    , _selected(false)
 {
 }
 
@@ -50,10 +48,10 @@ AirspaceFlightModel::get(int index)
 
 //-----------------------------------------------------------------------------
 int
-AirspaceFlightModel::findFlightPlanID(QString flightPlanID)
+AirspaceFlightModel::findFlightID(QString flightID)
 {
     for(int i = 0; i < _flightEntries.count(); i++) {
-        if(_flightEntries[i]->flightPlanID() == flightPlanID) {
+        if(_flightEntries[i]->flightID() == flightID) {
             return i;
         }
     }
@@ -80,9 +78,9 @@ AirspaceFlightModel::append(AirspaceFlightInfo* object)
 
 //-----------------------------------------------------------------------------
 void
-AirspaceFlightModel::remove(const QString& flightPlanID)
+AirspaceFlightModel::remove(const QString& flightID)
 {
-    remove(findFlightPlanID(flightPlanID));
+    remove(findFlightID(flightID));
 }
 
 //-----------------------------------------------------------------------------
@@ -117,6 +115,26 @@ AirspaceFlightModel::clear(void)
         emit countChanged();
     }
 }
+
+//-----------------------------------------------------------------------------
+static bool
+flight_sort(QObject* a, QObject* b)
+{
+    AirspaceFlightInfo* aa = qobject_cast<AirspaceFlightInfo*>(a);
+    AirspaceFlightInfo* bb = qobject_cast<AirspaceFlightInfo*>(b);
+    if(!aa || !bb) return false;
+    return aa->qStartTime() > bb->qStartTime();
+}
+
+//-----------------------------------------------------------------------------
+void
+AirspaceFlightModel::sortStartFlight()
+{
+    beginResetModel();
+    std::sort(_flightEntries.begin(), _flightEntries.end(), flight_sort);
+    endResetModel();
+}
+
 
 //-----------------------------------------------------------------------------
 AirspaceFlightInfo*

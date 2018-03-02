@@ -19,6 +19,7 @@
 #include <QGeoCoordinate>
 
 #include "airmap/flight.h"
+#include "airmap/flight_plan.h"
 
 class PlanMasterController;
 
@@ -49,11 +50,14 @@ public:
     QString             createdTime         () override;
     QString             startTime           () override;
     QString             endTime             () override;
+    QDateTime           qStartTime          () override;
     QGeoCoordinate      takeOff             () override { return QGeoCoordinate(_flight.latitude, _flight.longitude);}
-    QmlObjectListModel* boundingBox         () override { return &_boundingBox; }
+    QVariantList        boundingBox         () override { return _boundingBox; }
+    bool                active              () override;
+    void                setEndFlight        (airmap::DateTime end);
 private:
     airmap::Flight      _flight;
-    QmlObjectListModel  _boundingBox;
+    QVariantList        _boundingBox;
 };
 
 //-----------------------------------------------------------------------------
@@ -66,8 +70,8 @@ public:
     ~AirMapFlightPlanManager                ();
 
     PermitStatus        flightPermitStatus  () const override { return _flightPermitStatus; }
-    QDateTime           flightStartTime     () const override { return _flightStartTime; }
-    QDateTime           flightEndTime       () const override { return _flightEndTime; }
+    QDateTime           flightStartTime     () const override;
+    QDateTime           flightEndTime       () const override;
     bool                valid               () override { return _valid; }
     QmlObjectListModel* advisories          () override { return &_advisories; }
     QmlObjectListModel* ruleSets            () override { return &_rulesets; }
@@ -84,6 +88,7 @@ public:
     QmlObjectListModel* authorizations      () override { return &_authorizations; }
     AirspaceFlightModel*flightList          () override { return &_flightList; }
     bool                loadingFlightList   () override { return _loadingFlightList; }
+    QString             flightPlanID        () {return QString::fromStdString(_flightPlan.id); }
 
     void                updateFlightPlan    () override;
     void                submitFlightPlan    () override;
@@ -91,9 +96,7 @@ public:
     void                setFlightStartTime  (QDateTime start) override;
     void                setFlightEndTime    (QDateTime end) override;
     void                loadFlightList      (QDateTime startTime, QDateTime endTime) override;
-    void                deleteFlight        (QString flightID) override;
-
-    void                deleteSelectedFlights() override;
+    void                endFlight           (QString flightID) override;
 
 signals:
     void            error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
@@ -101,7 +104,7 @@ signals:
 private slots:
     void _pollBriefing                      ();
     void _missionChanged                    ();
-    void _deleteFlight                      ();
+    void _endFlight                         ();
     void _uploadFlightPlan                  ();
     void _updateFlightPlan                  ();
     void _loadFlightList                    ();
@@ -116,7 +119,7 @@ private:
         GetPilotID,
         FlightUpload,
         FlightUpdate,
-        FlightDelete,
+        FlightEnd,
         FlightSubmit,
         FlightPolling,
         LoadFlightList,
@@ -138,15 +141,12 @@ private:
     State                   _state = State::Idle;
     AirMapSharedState&      _shared;
     QTimer                  _pollTimer;             ///< timer to poll for approval check
-    QString                 _flightPlan;            ///< Current flight plan
     QString                 _flightId;              ///< Current flight ID, not necessarily accepted yet
     QString                 _pilotID;               ///< Pilot ID in the form "auth0|abc123"
-    QStringList             _flightsToDelete;
+    QString                 _flightToEnd;
     PlanMasterController*   _planController = nullptr;
     bool                    _valid = false;
     bool                    _loadingFlightList = false;
-    QDateTime               _flightStartTime;
-    QDateTime               _flightEndTime;
     QmlObjectListModel      _advisories;
     QmlObjectListModel      _rulesets;
     QmlObjectListModel      _rulesViolation;
@@ -158,6 +158,7 @@ private:
     AirspaceFlightModel     _flightList;
     QDateTime               _rangeStart;
     QDateTime               _rangeEnd;
+    airmap::FlightPlan      _flightPlan;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;
