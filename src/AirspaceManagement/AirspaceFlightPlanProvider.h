@@ -68,30 +68,21 @@ public:
     Q_PROPERTY(QString              startTime       READ startTime      CONSTANT)
     Q_PROPERTY(QString              endTime         READ endTime        CONSTANT)
     Q_PROPERTY(QGeoCoordinate       takeOff         READ takeOff        CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  boundingBox     READ boundingBox    CONSTANT)
-    Q_PROPERTY(bool                 beingDeleted    READ beingDeleted   WRITE  setBeingDeleted  NOTIFY beingDeletedChanged)
-    Q_PROPERTY(bool                 selected        READ selected       WRITE  setSelected      NOTIFY selectedChanged)
+    Q_PROPERTY(QVariantList         boundingBox     READ boundingBox    CONSTANT)
+    Q_PROPERTY(bool                 active          READ active         NOTIFY activeChanged)
 
     virtual QString                 flightID        () = 0;
     virtual QString                 flightPlanID    () = 0;
     virtual QString                 createdTime     () = 0;
     virtual QString                 startTime       () = 0;
+    virtual QDateTime               qStartTime      () = 0;
     virtual QString                 endTime         () = 0;
     virtual QGeoCoordinate          takeOff         () = 0;
-    virtual QmlObjectListModel*     boundingBox     () = 0;
-
-    virtual bool                    beingDeleted    () { return _beingDeleted; }
-    virtual void                    setBeingDeleted (bool val) { _beingDeleted = val; emit beingDeletedChanged(); }
-    virtual bool                    selected        () { return _selected; }
-    virtual void                    setSelected     (bool sel) { _selected = sel; emit selectedChanged(); }
+    virtual QVariantList            boundingBox     () = 0;
+    virtual bool                    active          () = 0;
 
 signals:
-    void    selectedChanged                         ();
-    void    beingDeletedChanged                     ();
-
-protected:
-    bool    _beingDeleted;
-    bool    _selected;
+    void    activeChanged                           ();
 };
 
 //-----------------------------------------------------------------------------
@@ -109,13 +100,14 @@ public:
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 
     Q_INVOKABLE AirspaceFlightInfo* get                 (int index);
-    Q_INVOKABLE int                 findFlightPlanID    (QString flightPlanID);
+    Q_INVOKABLE int                 findFlightID        (QString flightID);
 
-    int         count           (void) const;
+    int         count           () const;
     void        append          (AirspaceFlightInfo *entry);
-    void        remove          (const QString& flightPlanID);
+    void        remove          (const QString& flightID);
     void        remove          (int index);
-    void        clear           (void);
+    void        clear           ();
+    void        sortStartFlight ();
 
     AirspaceFlightInfo*
                 operator[]      (int i);
@@ -175,8 +167,7 @@ public:
     Q_INVOKABLE virtual void    submitFlightPlan            () = 0;
     Q_INVOKABLE virtual void    updateFlightPlan            () = 0;
     Q_INVOKABLE virtual void    loadFlightList              (QDateTime startTime, QDateTime endTime) = 0;
-    Q_INVOKABLE virtual void    deleteFlight            (QString flighPlanID) = 0;
-    Q_INVOKABLE virtual void    deleteSelectedFlights       () = 0;
+    Q_INVOKABLE virtual void    endFlight                   (QString flighID) = 0;
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;

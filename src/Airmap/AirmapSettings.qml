@@ -294,18 +294,6 @@ QGCView {
                 onPressed:      { mouse.accepted = true; }
                 onReleased:     { mouse.accepted = true; }
             }
-            function updateSelection() {
-                //-- Clear selection
-                for(var i = 0; i < _flightList.count; i++) {
-                    var o = _flightList.get(i)
-                    if (o) o.selected = false
-                }
-                //-- Flag selected flights
-                tableView.selection.forEach(function(rowIndex){
-                    var o = _flightList.get(rowIndex)
-                    if (o) o.selected = true
-                })
-            }
             //---------------------------------------------------------
             //-- Flight List
             RowLayout {
@@ -315,8 +303,19 @@ QGCView {
                     anchors.top:        parent.top
                     anchors.bottom:     parent.bottom
                     model:              _flightList
-                    selectionMode:      SelectionMode.MultiSelection
+                    selectionMode:      SelectionMode.SingleSelection
                     Layout.fillWidth:   true
+                    onCurrentRowChanged: {
+                        map.fitViewportToMapItems()
+                        var o = _flightList.get(tableView.currentRow)
+                        if(o) {
+                            console.log(o.boundingBox.count)
+                            console.log(o.boundingBox)
+                            console.log(o.flightID)
+                        } else {
+                            console.log('No bounding box')
+                        }
+                    }
                     TableViewColumn {
                         title:  qsTr("No")
                         width:  ScreenTools.defaultFontPixelWidth * 3
@@ -331,7 +330,7 @@ QGCView {
                     }
                     TableViewColumn {
                         title:  qsTr("Created")
-                        width:  ScreenTools.defaultFontPixelWidth * 20
+                        width:  ScreenTools.defaultFontPixelWidth * 18
                         horizontalAlignment: Text.AlignHCenter
                         delegate : Text {
                             horizontalAlignment: Text.AlignHCenter
@@ -346,7 +345,7 @@ QGCView {
                     }
                     TableViewColumn {
                         title:  qsTr("Flight Start")
-                        width:  ScreenTools.defaultFontPixelWidth * 20
+                        width:  ScreenTools.defaultFontPixelWidth * 18
                         horizontalAlignment: Text.AlignHCenter
                         delegate : Text  {
                             horizontalAlignment: Text.AlignHCenter
@@ -360,14 +359,29 @@ QGCView {
                         }
                     }
                     TableViewColumn {
-                        title:  qsTr("State")
-                        width:  ScreenTools.defaultFontPixelWidth * 22
+                        title:  qsTr("Flight End")
+                        width:  ScreenTools.defaultFontPixelWidth * 18
                         horizontalAlignment: Text.AlignHCenter
                         delegate : Text  {
                             horizontalAlignment: Text.AlignHCenter
                             text: {
                                 var o = _flightList.get(styleData.row)
-                                return o ? (o.beingDeleted ? qsTr("Deleting") : qsTr("Valid")) : qsTr("Unknown")
+                                return o ? o.endTime : ""
+                            }
+                            color: tableView.currentRow === styleData.row ? qgcPal.colorBlue : "black"
+                            font.family: ScreenTools.fixedFontFamily
+                            font.pixelSize: ScreenTools.smallFontPointSize
+                        }
+                    }
+                    TableViewColumn {
+                        title:  qsTr("State")
+                        width:  ScreenTools.defaultFontPixelWidth * 8
+                        horizontalAlignment: Text.AlignHCenter
+                        delegate : Text  {
+                            horizontalAlignment: Text.AlignHCenter
+                            text: {
+                                var o = _flightList.get(styleData.row)
+                                return o ? (o.active ? qsTr("Active") : qsTr("Completed")) : qsTr("Unknown")
                             }
                             color: tableView.currentRow === styleData.row ? qgcPal.colorBlue : "black"
                             font.family: ScreenTools.fixedFontFamily
@@ -491,40 +505,21 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:           qsTr("Select All")
+                            text:           qsTr("End Selected")
                             backRadius:     4
                             heightFactor:   0.3333
                             showBorder:     true
                             width:          _buttonWidth
-                            enabled:        _flightList.count > 0
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            onClicked: {
-                                tableView.selection.selectAll()
+                            enabled: {
+                                var o = _flightList.get(tableView.currentRow)
+                                return o && o.active
                             }
-                        }
-                        QGCButton {
-                            text:           qsTr("Select None")
-                            backRadius:     4
-                            heightFactor:   0.3333
-                            showBorder:     true
-                            width:          _buttonWidth
-                            enabled:        _flightList.count > 0
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
-                                tableView.selection.clear()
-                            }
-                        }
-                        QGCButton {
-                            text:           qsTr("Delete Selected")
-                            backRadius:     4
-                            heightFactor:   0.3333
-                            showBorder:     true
-                            width:          _buttonWidth
-                            enabled:        tableView.selection.count > 0
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            onClicked: {
-                                flightListRoot.updateSelection();
-                                QGroundControl.airspaceManager.flightPlan.deleteSelectedFlights()
+                                var o = _flightList.get(tableView.currentRow)
+                                if(o) {
+                                    QGroundControl.airspaceManager.flightPlan.endFlight(o.flightID)
+                                }
                             }
                         }
                         QGCButton {
@@ -539,7 +534,7 @@ QGCView {
                             }
                         }
                         QGCLabel {
-                            text:           _flightList.count > 0 ? tableView.selection.count + '/' + _flightList.count + qsTr(" Flights Selected") : qsTr("No Flights Loaded")
+                            text:           _flightList.count > 0 ? _flightList.count + qsTr(" Flights Loaded") : qsTr("No Flights Loaded")
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                         QGCLabel {
@@ -576,6 +571,20 @@ QGCView {
                                     map.activeMapType = map.supportedMapTypes[i]
                                     return
                                 }
+                            }
+                        }
+                        MapItemView {
+                            model: {
+                                var o = _flightList.get(tableView.currentRow)
+                                if(o) {
+                                    return o.boundingBox
+                                }
+                                return []
+                            }
+                            delegate: MapPolygon {
+                                path:           object
+                                color:          Qt.rgba(1,0,0,0.2)
+                                border.color:   Qt.rgba(1,1,1,0.65)
                             }
                         }
                         Component.onCompleted: {

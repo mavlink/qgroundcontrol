@@ -56,9 +56,20 @@ AirMapFlightInfo::AirMapFlightInfo(const airmap::Flight& flight, QObject *parent
     : AirspaceFlightInfo(parent)
     , _flight(flight)
 {
-    //-- TODO: Load bounding box geometry
-
-
+    //-- Load bounding box geometry
+    const Geometry& geometry = flight.geometry;
+    if(geometry.type() == Geometry::Type::polygon) {
+        const Geometry::Polygon& polygon = geometry.details_for_polygon();
+        for (const auto& vertex :  polygon.outer_ring.coordinates) {
+            QGeoCoordinate coord;
+            if (vertex.altitude) {
+                coord = QGeoCoordinate(vertex.latitude, vertex.longitude, vertex.altitude.get());
+            } else {
+                coord = QGeoCoordinate(vertex.latitude, vertex.longitude);
+            }
+            _boundingBox.append(QVariant::fromValue(coord));
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -76,6 +87,30 @@ AirMapFlightInfo::startTime()
 }
 
 //-----------------------------------------------------------------------------
+QDateTime
+AirMapFlightInfo::qStartTime()
+{
+    return QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flight.start_time));
+}
+
+//-----------------------------------------------------------------------------
+bool
+AirMapFlightInfo::active()
+{
+    QDateTime end = QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flight.end_time));
+    QDateTime now = QDateTime::currentDateTime();
+    return end > now;
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapFlightInfo::setEndFlight(DateTime end)
+{
+    _flight.end_time = end;
+    emit activeChanged();
+}
+
+//-----------------------------------------------------------------------------
 QString
 AirMapFlightInfo::endTime()
 {
@@ -88,9 +123,6 @@ AirMapFlightPlanManager::AirMapFlightPlanManager(AirMapSharedState& shared, QObj
     , _shared(shared)
 {
     connect(&_pollTimer, &QTimer::timeout, this, &AirMapFlightPlanManager::_pollBriefing);
-    //-- Set some valid, initial start/end time
-    _flightStartTime = QDateTime::currentDateTime().addSecs(10 * 60);
-    _flightEndTime   = _flightStartTime.addSecs(30 * 60);
 }
 
 //-----------------------------------------------------------------------------
@@ -104,12 +136,14 @@ AirMapFlightPlanManager::~AirMapFlightPlanManager()
 void
 AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
 {
-    if(_flightStartTime != start) {
+    quint64 startt = start.toUTC().toMSecsSinceEpoch();
+    if(_flightPlan.start_time != airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)startt})) {
         //-- Can't start in the past
         if(start < QDateTime::currentDateTime()) {
             start = QDateTime::currentDateTime().addSecs(5 * 60);
+            startt = start.toUTC().toMSecsSinceEpoch();
         }
-        _flightStartTime = start;
+        _flightPlan.start_time = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)startt});
         emit flightStartTimeChanged();
     }
 }
@@ -118,14 +152,30 @@ AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
 void
 AirMapFlightPlanManager::setFlightEndTime(QDateTime end)
 {
-    if(_flightEndTime != end) {
+    quint64 endt = end.toUTC().toMSecsSinceEpoch();
+    if(_flightPlan.end_time != airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)endt})) {
         //-- End has to be after start
-        if(end < _flightStartTime) {
-            end = _flightStartTime.addSecs(30 * 60);
+        if(end < flightStartTime()) {
+            end = flightStartTime().addSecs(30 * 60);
+            endt = end.toUTC().toMSecsSinceEpoch();
         }
-        _flightEndTime = end;
+        _flightPlan.end_time = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)endt});
         emit flightEndTimeChanged();
     }
+}
+
+//-----------------------------------------------------------------------------
+QDateTime
+AirMapFlightPlanManager::flightStartTime() const
+{
+    return QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flightPlan.start_time));
+}
+
+//-----------------------------------------------------------------------------
+QDateTime
+AirMapFlightPlanManager::flightEndTime() const
+{
+    return QDateTime::fromMSecsSinceEpoch((quint64)airmap::milliseconds_since_epoch(_flightPlan.end_time));
 }
 
 //-----------------------------------------------------------------------------
@@ -145,7 +195,7 @@ AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planControlle
     //-- TODO: Check if there is an ongoing flight plan and do something about it (Delete it?)
 
     /*
-     * if(!_flightPlan.isEmpty()) {
+     * if(!flightPlanID().isEmpty()) {
      *     do something;
      * }
      */
@@ -161,7 +211,7 @@ AirMapFlightPlanManager::startFlightPlanning(PlanMasterController *planControlle
 void
 AirMapFlightPlanManager::submitFlightPlan()
 {
-    if(_flightPlan.isEmpty()) {
+    if(flightPlanID().isEmpty()) {
         qCWarning(AirMapManagerLog) << "Submit flight with no flight plan.";
         return;
     }
@@ -169,13 +219,15 @@ AirMapFlightPlanManager::submitFlightPlan()
     _state = State::FlightSubmit;
     FlightPlans::Submit::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
-    params.id            = _flightPlan.toStdString();
+    params.id            = flightPlanID().toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flight_plans().submit(params, [this, isAlive](const FlightPlans::Submit::Result& result) {
         if (!isAlive.lock()) return;
         if (_state != State::FlightSubmit) return;
         if (result) {
-            _flightId = QString::fromStdString(result.value().flight_id.get());
+            _flightPlan = result.value();
+            _flightId = QString::fromStdString(_flightPlan.flight_id.get());
+            _state = State::Idle;
             _pollBriefing();
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
@@ -207,30 +259,10 @@ AirMapFlightPlanManager::updateFlightPlan()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::deleteSelectedFlights()
+AirMapFlightPlanManager::endFlight(QString flightID)
 {
-    qCDebug(AirMapManagerLog) << "Delete flights";
-    _flightsToDelete.clear();
-    for(int i = 0; i < _flightList.count(); i++) {
-        AirspaceFlightInfo* pInfo = _flightList.get(i);
-        if(pInfo && pInfo->selected()) {
-            _flightsToDelete << pInfo->flightID();
-        }
-    }
-    if(_flightsToDelete.count()) {
-        deleteFlight(QString());
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-AirMapFlightPlanManager::deleteFlight(QString flightID)
-{
-    qCDebug(AirMapManagerLog) << "Delete flight";
-    if(!flightID.isEmpty()) {
-        _flightsToDelete.clear();
-        _flightsToDelete << flightID;
-    }
+    qCDebug(AirMapManagerLog) << "End flight";
+    _flightToEnd = flightID;
     if (_pilotID == "") {
         //-- Need to get the pilot id
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
@@ -247,7 +279,7 @@ AirMapFlightPlanManager::deleteFlight(QString flightID)
                     _pilotID = QString::fromStdString(result.value().id);
                     qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
                     _state = State::Idle;
-                    _deleteFlight();
+                    _endFlight();
                 } else {
                     _state = State::Idle;
                     QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
@@ -257,58 +289,47 @@ AirMapFlightPlanManager::deleteFlight(QString flightID)
             });
         });
     } else {
-        _deleteFlight();
+        _endFlight();
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::_deleteFlight()
+AirMapFlightPlanManager::_endFlight()
 {
-    if(_flightsToDelete.count() < 1) {
-        qCDebug(AirMapManagerLog) << "Delete non existing flight";
+    if(_flightToEnd.isEmpty()) {
+        qCDebug(AirMapManagerLog) << "End non existing flight";
         return;
     }
-    qCDebug(AirMapManagerLog) << "Delete Flight. State:" << (int)_state;
+    qCDebug(AirMapManagerLog) << "End Flight. State:" << (int)_state;
     if(_state != State::Idle) {
-        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_deleteFlight);
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_endFlight);
         return;
     }
-    int idx = _flightList.findFlightPlanID(_flightsToDelete.last());
-    if(idx >= 0) {
-        AirspaceFlightInfo* pInfo = _flightList.get(idx);
-        if(pInfo) {
-            pInfo->setBeingDeleted(true);
-        }
-    }
-    qCDebug(AirMapManagerLog) << "Deleting flight:" << _flightsToDelete.last();
-    _state = State::FlightDelete;
+    qCDebug(AirMapManagerLog) << "Ending flight:" << _flightToEnd;
+    _state = State::FlightEnd;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
-    FlightPlans::Delete::Parameters params;
+    Flights::EndFlight::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
-    params.id = _flightsToDelete.last().toStdString();
-    //-- Delete flight plan
-    _shared.client()->flight_plans().delete_(params, [this, isAlive](const FlightPlans::Delete::Result& result) {
+    params.id = _flightToEnd.toStdString();
+    //-- End flight
+    _shared.client()->flights().end_flight(params, [this, isAlive](const Flights::EndFlight::Result& result) {
         if (!isAlive.lock()) return;
-        if (_state != State::FlightDelete) return;
+        if (_state != State::FlightEnd) return;
         if (result) {
-            qCDebug(AirMapManagerLog) << "Flight deleted";
-            _flightList.remove(_flightsToDelete.last());
+            qCDebug(AirMapManagerLog) << "Flight Ended";
+            int idx = _flightList.findFlightID(_flightToEnd);
+            if(idx >= 0) {
+                AirMapFlightInfo* pInfo = qobject_cast<AirMapFlightInfo*>(_flightList.get(idx));
+                if(pInfo) {
+                    pInfo->setEndFlight(result.value().end_time);
+                }
+            }
         } else {
             QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-            emit error("Flight deletion failed", QString::fromStdString(result.error().message()), description);
-            AirspaceFlightInfo* pFlight = _flightList.get(_flightList.findFlightPlanID(_flightsToDelete.last()));
-            if(pFlight) {
-                pFlight->setBeingDeleted(false);
-            }
+            emit error("End flight failed", QString::fromStdString(result.error().message()), description);
         }
-        _flightsToDelete.removeLast();
-        //-- Keep at it until all flights are deleted
-        //   TODO: This is ineficient. These whole airmapd transactions need to be moved into a separate
-        //   worker thread.
-        if(_flightsToDelete.count()) {
-            QTimer::singleShot(10, this, &AirMapFlightPlanManager::_deleteFlight);
-        }
+        _flightToEnd.clear();
         _state = State::Idle;
     });
 }
@@ -332,15 +353,6 @@ AirMapFlightPlanManager::_collectFlightDtata()
     _flight.coords        = bc.polygon2D();
     _flight.bc            = bc;
     emit missionAreaChanged();
-    //-- Flight Date/Time
-    if(_flightStartTime.isNull() || _flightStartTime < QDateTime::currentDateTime()) {
-        _flightStartTime = QDateTime::currentDateTime().addSecs(5 * 60);
-        emit flightStartTimeChanged();
-    }
-    if(_flightEndTime.isNull() || _flightEndTime < _flightStartTime) {
-        _flightEndTime = _flightStartTime.addSecs(30 * 60);
-        emit flightEndTimeChanged();
-    }
     return true;
 }
 
@@ -358,8 +370,8 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "About to create flight plan";
     qCDebug(AirMapManagerLog) << "Takeoff:     " << _flight.takeoffCoord;
     qCDebug(AirMapManagerLog) << "Bounding box:" << _flight.bc.pointNW << _flight.bc.pointSE;
-    qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
-    qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
+    qCDebug(AirMapManagerLog) << "Flight Start:" << flightStartTime().toString();
+    qCDebug(AirMapManagerLog) << "Flight End:  " << flightEndTime().toString();
 
     //-- Not Yet
     //return;
@@ -420,8 +432,8 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         params.latitude     = _flight.takeoffCoord.latitude();
         params.longitude    = _flight.takeoffCoord.longitude();
         params.pilot.id     = _pilotID.toStdString();
-        quint64 start       = _flightStartTime.toUTC().toMSecsSinceEpoch();
-        quint64 end         = _flightEndTime.toUTC().toMSecsSinceEpoch();
+        quint64 start       = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
+        quint64 end         = start + 60 * 30 * 1000;
         params.start_time   = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
         params.end_time     = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
         //-- Rules
@@ -433,6 +445,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                 if(ruleSet && ruleSet->selected()) {
                     params.rulesets.push_back(ruleSet->id().toStdString());
                     //-- Features within each rule
+                    /*
                     for(int r = 0; r < ruleSet->rules()->count(); r++) {
                         AirMapRule* rule = qobject_cast<AirMapRule*>(ruleSet->rules()->get(r));
                         if(rule) {
@@ -462,18 +475,19 @@ AirMapFlightPlanManager::_uploadFlightPlan()
                             }
                         }
                     }
+                    */
                 }
             }
         }
-        //-- Geometry: LineString
-        Geometry::LineString lineString;
+        //-- Geometry: polygon
+        Geometry::Polygon polygon;
         for (const auto& qcoord : _flight.coords) {
             Geometry::Coordinate coord;
             coord.latitude  = qcoord.latitude();
             coord.longitude = qcoord.longitude();
-            lineString.coordinates.push_back(coord);
+            polygon.outer_ring.coordinates.push_back(coord);
         }
-        params.geometry = Geometry(lineString);
+        params.geometry = Geometry(polygon);
         params.authorization = login_token.toStdString();
         //-- Create flight plan
         _shared.client()->flight_plans().create_by_polygon(params, [this, isAlive](const FlightPlans::Create::Result& result) {
@@ -481,8 +495,8 @@ AirMapFlightPlanManager::_uploadFlightPlan()
             if (_state != State::FlightUpload) return;
             _state = State::Idle;
             if (result) {
-                _flightPlan = QString::fromStdString(result.value().id);
-                qCDebug(AirMapManagerLog) << "Flight plan created:" << _flightPlan;
+                _flightPlan = result.value();
+                qCDebug(AirMapManagerLog) << "Flight plan created:" << flightPlanID();
                 _pollBriefing();
             } else {
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
@@ -512,8 +526,34 @@ AirMapFlightPlanManager::_updateFlightPlan()
 
     qCDebug(AirMapManagerLog) << "Takeoff:     " << _flight.takeoffCoord;
     qCDebug(AirMapManagerLog) << "Bounding box:" << _flight.bc.pointNW << _flight.bc.pointSE;
-    qCDebug(AirMapManagerLog) << "Flight Start:" << _flightStartTime;
-    qCDebug(AirMapManagerLog) << "Flight End:  " << _flightEndTime;
+    qCDebug(AirMapManagerLog) << "Flight Start:" << flightStartTime().toString();
+    qCDebug(AirMapManagerLog) << "Flight End:  " << flightEndTime().toString();
+
+    //-- Update local instance of the flight plan
+    _flightPlan.altitude_agl.max  = _flight.maxAltitude;
+    _flightPlan.altitude_agl.min  = 0.0f;
+    _flightPlan.buffer            = 2.f;
+    _flightPlan.takeoff.latitude  = _flight.takeoffCoord.latitude();
+    _flightPlan.takeoff.longitude = _flight.takeoffCoord.longitude();
+    //-- Geometry: polygon
+    Geometry::Polygon polygon;
+    for (const auto& qcoord : _flight.coords) {
+        Geometry::Coordinate coord;
+        coord.latitude  = qcoord.latitude();
+        coord.longitude = qcoord.longitude();
+        polygon.outer_ring.coordinates.push_back(coord);
+    }
+    _flightPlan.geometry = Geometry(polygon);
+
+    //-- Rules
+    /*
+    AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
+    if(pRulesMgr) {
+        foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
+            params.flight_plan.rulesets.push_back(ruleset.toStdString());
+        }
+    }
+    */
 
     _state = State::FlightUpdate;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
@@ -522,42 +562,14 @@ AirMapFlightPlanManager::_updateFlightPlan()
         if (_state != State::FlightUpdate) return;
         FlightPlans::Update::Parameters params = {};
         params.authorization                 = login_token.toStdString();
-        params.flight_plan.id                = _flightPlan.toStdString();
-        params.flight_plan.pilot.id          = _pilotID.toStdString();
-        params.flight_plan.altitude_agl.max  = _flight.maxAltitude;
-        params.flight_plan.altitude_agl.min  = 0.0f;
-        params.flight_plan.buffer            = 2.f;
-        params.flight_plan.takeoff.latitude  = _flight.takeoffCoord.latitude();
-        params.flight_plan.takeoff.longitude = _flight.takeoffCoord.longitude();
-        quint64 start                        = _flightStartTime.toUTC().toMSecsSinceEpoch();
-        quint64 end                          = _flightEndTime.toUTC().toMSecsSinceEpoch();
-        params.flight_plan.start_time        = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
-        params.flight_plan.end_time          = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
-        //-- Rules
-        /*
-        AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
-        if(pRulesMgr) {
-            foreach(QString ruleset, pRulesMgr->rulesetsIDs()) {
-                params.flight_plan.rulesets.push_back(ruleset.toStdString());
-            }
-        }
-        */
-        //-- Geometry: LineString
-        Geometry::LineString lineString;
-        for (const auto& qcoord : _flight.coords) {
-            Geometry::Coordinate coord;
-            coord.latitude  = qcoord.latitude();
-            coord.longitude = qcoord.longitude();
-            lineString.coordinates.push_back(coord);
-        }
-        params.flight_plan.geometry = Geometry(lineString);
+        params.flight_plan                   = _flightPlan;
         //-- Update flight plan
         _shared.client()->flight_plans().update(params, [this, isAlive](const FlightPlans::Update::Result& result) {
             if (!isAlive.lock()) return;
             if (_state != State::FlightUpdate) return;
             _state = State::Idle;
             if (result) {
-                qCDebug(AirMapManagerLog) << "Flight plan updated:" << _flightPlan;
+                qCDebug(AirMapManagerLog) << "Flight plan updated:" << flightPlanID();
                 _pollBriefing();
             } else {
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
@@ -599,7 +611,7 @@ AirMapFlightPlanManager::_pollBriefing()
     _state = State::FlightPolling;
     FlightPlans::RenderBriefing::Parameters params;
     params.authorization = _shared.loginToken().toStdString();
-    params.id            = _flightPlan.toStdString();
+    params.id            = flightPlanID().toStdString();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->flight_plans().render_briefing(params, [this, isAlive](const FlightPlans::RenderBriefing::Result& result) {
         if (!isAlive.lock()) return;
@@ -743,7 +755,7 @@ AirMapFlightPlanManager::_missionChanged()
     }
     //-- Creating a new flight plan?
     if(_state == State::Idle) {
-        if(_flightPlan.isEmpty()) {
+        if(flightPlanID().isEmpty()) {
             _createFlightPlan();
         } else {
             //-- Plan is being modified
@@ -828,8 +840,9 @@ AirMapFlightPlanManager::_loadFlightList()
                 for (const auto& flight : response.flights) {
                     AirMapFlightInfo* pFlight = new AirMapFlightInfo(flight, this);
                     _flightList.append(pFlight);
-                    qCDebug(AirMapManagerLog) << "Found:" << pFlight->flightID() << pFlight->flightPlanID();
+                    qCDebug(AirMapManagerLog) << "Found:" << pFlight->flightID() << pFlight->flightPlanID() << pFlight->endTime();
                 }
+                _flightList.sortStartFlight();
                 emit flightListChanged();
             } else {
                 if(!result) {
