@@ -199,7 +199,7 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
         qCWarning(AirMapManagerLog) << "AirMapRulesetsManager::updateROI: state not idle";
         return;
     }
-    qCDebug(AirMapManagerLog) << "Setting ROI for Rulesets";
+    qCDebug(AirMapManagerLog) << "Rulesets Request (ROI Changed)";
     _valid = false;
     _ruleSets.clearAndDeleteContents();
     _state = State::RetrieveItems;

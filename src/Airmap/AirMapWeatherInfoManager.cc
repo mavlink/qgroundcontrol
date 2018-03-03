@@ -42,7 +42,7 @@ AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi)
 void
 AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate)
 {
-    qCDebug(AirMapManagerLog) << "Request Weather";
+    qCDebug(AirMapManagerLog) << "Weather Request (ROI Changed)";
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Weather information";
         _valid = false;

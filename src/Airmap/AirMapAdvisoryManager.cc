@@ -58,7 +58,7 @@ adv_sort(QObject* a, QObject* b)
 void
 AirMapAdvisoryManager::_requestAdvisories()
 {
-    qCDebug(AirMapManagerLog) << "Advisories Request";
+    qCDebug(AirMapManagerLog) << "Advisories Request (ROI Changed)";
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Advisories";
         _valid = false;
