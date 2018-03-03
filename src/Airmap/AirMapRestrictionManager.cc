@@ -49,7 +49,7 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
         qCWarning(AirMapManagerLog) << "AirMapRestrictionManager::updateROI: state not idle";
         return;
     }
-    qCDebug(AirMapManagerLog) << "Setting Restriction Manager ROI";
+    qCDebug(AirMapManagerLog) << "Restrictions Request (ROI Changed)";
     _polygons.clear();
     _circles.clear();
     _state = State::RetrieveItems;

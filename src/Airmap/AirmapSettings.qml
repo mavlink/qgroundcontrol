@@ -306,14 +306,10 @@ QGCView {
                     selectionMode:      SelectionMode.SingleSelection
                     Layout.fillWidth:   true
                     onCurrentRowChanged: {
-                        map.fitViewportToMapItems()
                         var o = _flightList.get(tableView.currentRow)
                         if(o) {
-                            console.log(o.boundingBox.count)
-                            console.log(o.boundingBox)
-                            console.log(o.flightID)
-                        } else {
-                            console.log('No bounding box')
+                            flightArea.path = o.boundingBox
+                            map.fitViewportToMapItems()
                         }
                     }
                     TableViewColumn {
@@ -516,9 +512,24 @@ QGCView {
                             }
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
-                                var o = _flightList.get(tableView.currentRow)
-                                if(o) {
-                                    QGroundControl.airspaceManager.flightPlan.endFlight(o.flightID)
+                                endFlightDialog.visible = true
+                            }
+                            MessageDialog {
+                                id:         endFlightDialog
+                                visible:    false
+                                icon:       StandardIcon.Warning
+                                standardButtons: StandardButton.Yes | StandardButton.No
+                                title:      qsTr("End Flight")
+                                text:       qsTr("Confirm ending active flight?")
+                                onYes: {
+                                    var o = _flightList.get(tableView.currentRow)
+                                    if(o) {
+                                        QGroundControl.airspaceManager.flightPlan.endFlight(o.flightID)
+                                    }
+                                    endFlightDialog.visible = false
+                                }
+                                onNo: {
+                                    endFlightDialog.visible = false
                                 }
                             }
                         }
@@ -573,19 +584,10 @@ QGCView {
                                 }
                             }
                         }
-                        MapItemView {
-                            model: {
-                                var o = _flightList.get(tableView.currentRow)
-                                if(o) {
-                                    return o.boundingBox
-                                }
-                                return []
-                            }
-                            delegate: MapPolygon {
-                                path:           object
-                                color:          Qt.rgba(1,0,0,0.2)
-                                border.color:   Qt.rgba(1,1,1,0.65)
-                            }
+                        MapPolygon {
+                            id:             flightArea
+                            color:          Qt.rgba(1,0,0,0.2)
+                            border.color:   Qt.rgba(1,1,1,0.65)
                         }
                         Component.onCompleted: {
                             updateActiveMapType()

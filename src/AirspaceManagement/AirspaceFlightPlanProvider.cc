@@ -105,13 +105,13 @@ void
 AirspaceFlightModel::clear(void)
 {
     if(!_flightEntries.isEmpty()) {
-        beginRemoveRows(QModelIndex(), 0, _flightEntries.count());
+        beginResetModel();
         while (_flightEntries.count()) {
             AirspaceFlightInfo* entry = _flightEntries.last();
             if(entry) entry->deleteLater();
             _flightEntries.removeLast();
         }
-        endRemoveRows();
+        endResetModel();
         emit countChanged();
     }
 }
