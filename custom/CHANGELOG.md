@@ -1,5 +1,13 @@
 ## DataPilot Release Changelog
 
+### V1.3.3 - Mar 4 2018
+
+*   Reduce upload bandwidth for Remote Sync (upload missions from ST16 to Desktop). The link was not coping with the upload and the ST16 would run out of memory buffering it.
+
+### V1.3.2 - Mar 4 2018
+
+*   Fix KML load. It was not defining the extension type to look for.
+
 ### V1.3.1 - Mar 4 2018
 
 *   Flip Gimbal Yaw indicator. Gimbal now sends its position inverted.
