@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.1 - Mar 4 2018
+
+*   Flip Gimbal Yaw indicator. Gimbal now sends its position inverted.
+
 ### V1.3.0 - Feb 26 2018
 
 *   Promoting version number to 1.3.0 (No code changes)
