@@ -22,20 +22,71 @@ Item {
     property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
     property bool _gimbalMode:      _activeVehicle && _virtualJoystick && _virtualJoystick.value === 2
 
-    Timer {
-        interval:   40  // 25Hz, same as real joystick rate
-        running:    _virtualJoystick && _virtualJoystick.value === 1 && _activeVehicle
-        repeat:     true
-        onTriggered: {
-            if (_activeVehicle && !_gimbalMode) {
-                _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
-            }
+    property real _lastP:           0
+    property real _lastY:           0
+    property real _lastZ:           0
+
+    function getFrequency() {
+        if(!_activeVehicle) {
+            return 0
         }
+        //-- Gimbal doesn't need a high frequency (4Hz)
+        if(_gimbalMode) {
+            return 250
+        }
+        // 40  - 25Hz, same as real joystick rate
+        // 200 - 5Hz,  for slow links
+        if(_activeVehicle && _activeVehicle.linkType === Vehicle.LinkNormal) {
+            return 40
+        }
+        return 200
     }
 
-    function setGimbal() {
-        //-- Set Pitch and Yaw ( -1.00 -> 1.00)
-        _activeVehicle.gimbalControlValue(rightStick.yAxis, rightStick.xAxis)
+    function isActive() {
+        if(!_virtualJoystick) {
+            return false
+        }
+        if(_virtualJoystick.value < 1) {
+            return false
+        }
+        if(!_activeVehicle) {
+            return false
+        }
+        if(_gimbalMode && !_activeVehicle.gimbalAcknowledged) {
+            return false
+        }
+        if(_activeVehicle.linkType === Vehicle.LinkNone || _activeVehicle.linkType === Vehicle.LinkHighLatency) {
+            return false
+        }
+        return true
+    }
+
+    Timer {
+        interval:   getFrequency()
+        running:    isActive()
+        repeat:     true
+        onTriggered: {
+            if (_activeVehicle) {
+                if(_gimbalMode) {
+                    //-- Gimbal changes are only sent if they exist. These are
+                    //   MAVLink Commands
+                    if(rightStick.yAxis !== _lastP || rightStick.xAxis !== _lastY) {
+                        _lastP = rightStick.yAxis
+                        _lastY = rightStick.xAxis
+                        //-- Set Pitch and Yaw ( -1.00 -> 1.00)
+                        _activeVehicle.gimbalControlValue(rightStick.yAxis, rightStick.xAxis)
+                    }
+                    if(leftStick.yAxis !== _lastZ) {
+                        _lastZ = leftStick.yAxis
+                        //-- Set Camera Zoom ( 0.00 -> 1.00)
+                        _activeVehicle.cameraZoomValue(leftStick.yAxis)
+                    }
+                } else {
+                    //-- For joystick, we send a stream of messages just like a real RC
+                    _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+                }
+            }
+        }
     }
 
     JoystickThumbPad {
@@ -49,12 +100,6 @@ Item {
         yAxisThrottle:          true
         gimbalMode:             _gimbalMode
         lightColors:            useLightColors
-        onYAxisChanged: {
-            if(_gimbalMode) {
-                //-- Set Camera Zoom ( 0.00 -> 1.00)
-                _activeVehicle.cameraZoomValue(leftStick.yAxis)
-            }
-        }
     }
 
     JoystickThumbPad {
@@ -67,15 +112,5 @@ Item {
         height:                 parent.height
         gimbalMode:             _gimbalMode
         lightColors:            useLightColors
-        onYAxisChanged: {
-            if(_gimbalMode) {
-                setGimbal()
-            }
-        }
-        onXAxisChanged: {
-            if(_gimbalMode) {
-                setGimbal()
-            }
-        }
     }
 }

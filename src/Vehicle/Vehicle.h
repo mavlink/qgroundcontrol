@@ -255,6 +255,15 @@ class Vehicle : public FactGroup
     Q_OBJECT
 
 public:
+
+    enum LinkType {
+        LinkNone,
+        LinkHighLatency,
+        LinkSlow,
+        LinkNormal
+    };
+    Q_ENUM(LinkType)
+
     Vehicle(LinkInterface*          link,
             int                     vehicleId,
             int                     defaultComponentId,
@@ -273,6 +282,7 @@ public:
 
     Q_PROPERTY(int                  id                      READ id                                                     CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
+    Q_PROPERTY(LinkType             linkType                READ linkType                                               NOTIFY linkTypeChanged)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
     Q_PROPERTY(bool                 armed                   READ armed                  WRITE setArmed                  NOTIFY armedChanged)
@@ -488,7 +498,8 @@ public:
 
     // Property accessors
 
-    QGeoCoordinate coordinate(void) { return _coordinate; }
+    QGeoCoordinate coordinate   () { return _coordinate; }
+    LinkType       linkType     ();
 
     typedef enum {
         JoystickModeRC,         ///< Joystick emulates an RC Transmitter
@@ -765,6 +776,7 @@ public:
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
+    void linkTypeChanged();
     void coordinateChanged(QGeoCoordinate coordinate);
     void joystickModeChanged(int mode);
     void joystickEnabledChanged(bool enabled);
@@ -1097,8 +1109,7 @@ private:
 
     bool                _gimbalAcknowledged;
     double              _gimbalRollLast{0.0};
-    double              _gimbalPitchLast{0.0};
-    double              _gimbalYawLast{0.0};
+
 
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;

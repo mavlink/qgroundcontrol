@@ -214,6 +214,23 @@ Column {
         anchors.horizontalCenter: parent.horizontalCenter
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
+    QGCButton {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        text:                       qsTr("Deploy Gimbal")
+        width:                      parent.width
+        visible:                    _gimbalMode && _isCamera
+        onClicked:                  _activeVehicle.initGimbal()
+        enabled:                    _activeVehicle
+    }
+    QGCButton {
+        anchors.horizontalCenter:   parent.horizontalCenter
+        text:                       qsTr("Retract Gimbal")
+        width:                      parent.width
+        visible:                    _gimbalMode && _isCamera
+        onClicked:                  _activeVehicle.retractGimbal()
+        enabled:                    _activeVehicle
+    }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     Component {
         id: cameraSettings
         QGCViewDialog {

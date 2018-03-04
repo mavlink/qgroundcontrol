@@ -1583,6 +1583,31 @@ void Vehicle::_updatePriorityLink(void)
     _updateHighLatencyLink();
 }
 
+Vehicle::LinkType Vehicle::linkType()
+{
+    if(_priorityLink) {
+        if(_priorityLink->highLatency()) {
+            return Vehicle::LinkHighLatency;
+        } else {
+            LinkConfiguration* pConfig = _priorityLink->getLinkConfiguration();
+            if(pConfig) {
+#ifndef NO_SERIAL_LINK
+                if(pConfig->type() == LinkConfiguration::TypeSerial) {
+                    return Vehicle::LinkSlow;
+                }
+#endif
+#ifdef QGC_ENABLE_BLUETOOTH
+                if(pConfig->linkType() == LinkConfiguration::TypeBluetooth) {
+                    return Vehicle::LinkSlow;
+                }
+#endif
+                return Vehicle::LinkNormal;
+            }
+        }
+    }
+    return Vehicle::LinkNone;
+}
+
 void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
 {
     if (qIsInf(roll)) {
@@ -2196,15 +2221,9 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
     //-- Incoming pitch and yaw values are -1.00 to 1.00
-    if (std::isfinite(pitch) && std::isfinite(yaw)) {
-        // good
-    } else {
+    if (!isfinite(pitch) || !isfinite(yaw)) {
         return;
     }
-
-    //_gimbalRollLast = roll;
-    _gimbalPitchLast = pitch;
-    _gimbalYawLast = yaw;
 
     qDebug() << pitch << yaw;
     sendMavCommand(_defaultComponentId,
@@ -2751,7 +2770,6 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
 
     //-- Dumb (PWM) Gimbal State
     if (ack.command == MAV_CMD_DO_MOUNT_CONFIGURE ) {
-
         if (ack.result == MAV_RESULT_ACCEPTED) {
             _gimbalAcknowledged = !_gimbalAcknowledged;
             emit gimbalAcknowledgedChanged();
@@ -3216,6 +3234,7 @@ void Vehicle::_updateHighLatencyLink(void)
         _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
         emit highLatencyLinkChanged(_highLatencyLink);
     }
+    emit linkTypeChanged();
 }
 
 //-----------------------------------------------------------------------------
