@@ -2221,7 +2221,7 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
     //-- Incoming pitch and yaw values are -1.00 to 1.00
-    if (!isfinite(pitch) || !isfinite(yaw)) {
+    if (!std::isfinite(pitch) || !std::isfinite(yaw)) {
         return;
     }
 
