@@ -8161,6 +8161,15 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
         <value code="23">Roll 270°, Yaw 135°</value>
         <value code="24">Pitch 90°</value>
         <value code="25">Pitch 270°</value>
+        <value code="26">Roll 270°, Yaw 270°</value>
+        <value code="27">Roll 180°, Pitch 270°</value>
+        <value code="28">Pitch 90°, Yaw 180</value>
+        <value code="29">Pitch 90°, Roll 90°</value>
+        <value code="30">Yaw 293°, Pitch 68°, Roll 90° (Solo)</value>
+        <value code="31">Pitch 90°, Roll 270°</value>
+        <value code="32">Pitch 9°, Yaw 180°</value>
+        <value code="33">Pitch 45°</value>
+        <value code="34">Pitch 315°</value>
       </values>
     </parameter>
     <parameter default="0.0" name="SENS_BOARD_X_OFF" type="FLOAT">
@@ -9489,7 +9498,7 @@ to accelerate forward if necessary</short_desc>
       <short_desc>Front transition minimum time</short_desc>
       <long_desc>Minimum time in seconds for front transition.</long_desc>
       <min>0.0</min>
-      <max>10.0</max>
+      <max>20.0</max>
       <unit>s</unit>
       <scope>modules/vtol_att_control</scope>
     </parameter>
