@@ -70,7 +70,7 @@ Item {
     property real   _heading:           _activeVehicle   ? _activeVehicle.heading.rawValue : 0
     property bool   _st16GPS:           false
     property real   _gimbalPitch:       _camera ? -_camera.gimbalPitch : 0
-    property real   _gimbalYaw:         _camera ? _camera.gimbalYaw : 0
+    property real   _gimbalYaw:         _camera ? -_camera.gimbalYaw : 0
     property bool   _gimbalVisible:     _camera ? _camera.gimbalData && camControlLoader.visible : false
 
     property real   _distance:              0.0
