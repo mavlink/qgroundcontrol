@@ -437,6 +437,20 @@ QGCSyncFilesMobile::_mapFragment(QGCMapFragment fragment)
     }
 }
 
+/*
+#include <sys/sysinfo.h>
+static int64_t
+get_free_mem()
+{
+    struct sysinfo info;
+    if(sysinfo(&info) == 0) {
+        qDebug() << (info.freeram / 1024) << (info.bufferram / 1024);
+        return (int64_t)(info.freeram / 1024);
+    }
+    return -1;
+}
+*/
+
 //-----------------------------------------------------------------------------
 //-- Log upload thread
 void
@@ -467,6 +481,23 @@ QGCLogUploadWorker::doLogSync(QStringList logsToSend)
                 }
                 if(sofar >= total || bytes.size() == 0) {
                     break;
+                }
+                //-- Ugly hack. There is no way to control or monitor the bandwith.
+                //   Bytes are sent at the speed this can read off the disk but the
+                //   low level transport layer will just keep buffering until it sends
+                //   out the (WiFi) pipe. As we can read a whole lot faster than we
+                //   can transmit, the I/O buffer will keep growing to cope with the
+                //   data we feed here. Normally this is not an issue but if you are
+                //   transferring "huge" files (greater than 200MB), this "buffering"
+                //   can consume all available memory and Android ungraciously crashes
+                //   as it has no swap space.
+                //   So... we sleep for 100ms every MB for files larger than 5MB
+                if(total > (5 * 1024 * 1024) && bytes.size() == (1024 * 1024)) {
+                    for(int i = 0; i < 10; i++) {
+                        QThread::msleep(10);
+                        if(_pSync->cancel())
+                            break;
+                    }
                 }
             }
         }
@@ -512,6 +543,14 @@ QGCMapUploadWorker::doMapSync(QTemporaryFile* mapFile)
                     }
                     if(sofar >= total || bytes.size() == 0) {
                         break;
+                    }
+                    //-- See above in doLogSync()
+                    if(total > (5 * 1024 * 1024) && bytes.size() == (1024 * 1024)) {
+                        for(int i = 0; i < 10; i++) {
+                            QThread::msleep(10);
+                            if(_pSync->cancel())
+                                break;
+                        }
                     }
                 }
             }
