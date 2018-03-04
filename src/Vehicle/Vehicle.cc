@@ -1597,7 +1597,7 @@ Vehicle::LinkType Vehicle::linkType()
                 }
 #endif
 #ifdef QGC_ENABLE_BLUETOOTH
-                if(pConfig->linkType() == LinkConfiguration::TypeBluetooth) {
+                if(pConfig->type() == LinkConfiguration::TypeBluetooth) {
                     return Vehicle::LinkSlow;
                 }
 #endif
