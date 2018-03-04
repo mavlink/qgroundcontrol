@@ -177,8 +177,7 @@ Item {
         title:          qsTr("Select KML File")
         selectExisting: true
         nameFilters:    [ qsTr("KML files (*.kml)") ]
-
-
+        fileExtension:  "kml"
         onAcceptedForLoad: {
             mapPolygon.loadKMLFile(file)
             close()
