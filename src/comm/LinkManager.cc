@@ -195,6 +195,7 @@ void LinkManager::_addLink(LinkInterface* link)
 
     connect(link, &LinkInterface::communicationError,   _app,               &QGCApplication::criticalMessageBoxOnMainThread);
     connect(link, &LinkInterface::bytesReceived,        _mavlinkProtocol,   &MAVLinkProtocol::receiveBytes);
+    connect(link, &LinkInterface::bytesReceived,        this,               &LinkManager::_bytesReceived);
 
     _mavlinkProtocol->resetMetadataForLink(link);
     _mavlinkProtocol->setVersion(_mavlinkProtocol->getCurrentVersion());
@@ -1002,4 +1003,14 @@ int LinkManager::_reserveMavlinkChannel(void)
 void LinkManager::_freeMavlinkChannel(int channel)
 {
     _mavlinkChannelsUsedBitMask &= ~(1 << channel);
+}
+
+void LinkManager::_bytesReceived(LinkInterface *link, QByteArray bytes) {
+    Q_UNUSED(bytes);
+
+    link->timerStart();
+
+    if (!link->active()) {
+        link->setActive(true);
+    }
 }

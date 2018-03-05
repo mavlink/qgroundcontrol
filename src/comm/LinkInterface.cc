@@ -28,6 +28,7 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     , _active                   (false)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
+    , _bytesReceivedTimer(NULL)
 {
     _config->setLink(this);
 
@@ -43,14 +44,6 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
 
     QObject::connect(this, &LinkInterface::_invokeWriteBytes, this, &LinkInterface::_writeBytes);
     qRegisterMetaType<LinkInterface*>("LinkInterface*");
-
-    // active Lost timer
-    _bytesReceivedTimer.setInterval(_bytesReceivedTimeoutMSecs);
-    _bytesReceivedTimer.setSingleShot(false);
-    _bytesReceivedTimer.start();
-    QObject::connect(&_bytesReceivedTimer, &QTimer::timeout, this, &LinkInterface::_bytesReceivedTimeout);
-
-    QObject::connect(this, &LinkInterface::bytesReceived, this, &LinkInterface::_bytesReceived);
 }
 
 /// This function logs the send times and amounts of datas for input. Data is used for calculating
@@ -168,22 +161,30 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     _mavlinkChannel = channel;
 }
 
-void LinkInterface::_bytesReceived(LinkInterface* link, QByteArray bytes)
-{
-    Q_UNUSED(bytes);
-
-    if (this == link) {
-        _bytesReceivedTimer.start();
-
-        if (!link->active()) {
-            link->setActive(true);
-        }
-    }
-}
 
 void LinkInterface::_bytesReceivedTimeout()
 {
     if (_active && !_highLatency) {
         setActive(false);
+    }
+}
+
+void LinkInterface::timerStart() {
+    if (_bytesReceivedTimer) {
+        _bytesReceivedTimer->start();
+    } else {
+        _bytesReceivedTimer = new QTimer();
+        _bytesReceivedTimer->setInterval(_bytesReceivedTimeoutMSecs);
+        _bytesReceivedTimer->setSingleShot(true);
+        _bytesReceivedTimer->start();
+        QObject::connect(_bytesReceivedTimer, &QTimer::timeout, this, &LinkInterface::_bytesReceivedTimeout);
+    }
+}
+
+void LinkInterface::timerStop() {
+    if (_bytesReceivedTimer) {
+        _bytesReceivedTimer->stop();
+        QObject::disconnect(_bytesReceivedTimer, &QTimer::timeout, this, &LinkInterface::_bytesReceivedTimeout);
+        delete _bytesReceivedTimer;
     }
 }

@@ -204,6 +204,8 @@ private:
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
 #endif
 
+    void _bytesReceived(LinkInterface* link, QByteArray bytes);
+
     bool    _configUpdateSuspended;                     ///< true: stop updating configuration list
     bool    _configurationsLoaded;                      ///< true: Link configurations have been loaded
     bool    _connectionsSuspended;                      ///< true: all new connections should not be allowed

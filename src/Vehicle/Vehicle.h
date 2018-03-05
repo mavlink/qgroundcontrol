@@ -1032,7 +1032,7 @@ private slots:
     void _offlineVehicleTypeSettingChanged(QVariant value);
     void _offlineCruiseSpeedSettingChanged(QVariant value);
     void _offlineHoverSpeedSettingChanged(QVariant value);
-    void _updateHighLatencyLink(void);
+    void _updateHighLatencyLink(bool sendCommand = true);
 
     void _handleTextMessage                 (int newCount);
     void _handletextMessageReceived         (UASMessage* message);
@@ -1106,7 +1106,7 @@ private:
     void _handleMavlinkLoggingDataAcked(mavlink_message_t& message);
     void _ackMavlinkLogData(uint16_t sequence);
     void _sendNextQueuedMavCommand(void);
-    void _updatePriorityLink(bool updateActive);
+    void _updatePriorityLink(bool updateActive, bool sendCommand);
     void _commonInit(void);
     void _startPlanRequest(void);
     void _setupAutoDisarmSignalling(void);
