@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.4 - Mar 5 2018
+
+*   Moved log download directory from ~/somewhere to ~/Documents/DataPilotPlanner/Logs where it belongs. Added a notice at the bottom of the screen showing the path where logs are downloaded.
+
 ### V1.3.3 - Mar 4 2018
 
 *   Reduce upload bandwidth for Remote Sync (upload missions from ST16 to Desktop). The link was not coping with the upload and the ST16 would run out of memory buffering it.
