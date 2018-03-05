@@ -191,14 +191,14 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _clockFactGroup(this)
     , _distanceSensorFactGroup(this)
 {
-    _addLink(link);
-
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &Vehicle::_loadSettings);
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_loadSettings);
 
     _mavlink = _toolbox->mavlinkProtocol();
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
+
+    _addLink(link);
 
     connect(this, &Vehicle::_sendMessageOnLinkOnThread, this, &Vehicle::_sendMessageOnLink, Qt::QueuedConnection);
     connect(this, &Vehicle::flightModeChanged,          this, &Vehicle::_handleFlightModeChanged);
@@ -1609,8 +1609,12 @@ void Vehicle::_addLink(LinkInterface* link)
     if (!_containsLink(link)) {
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
         _links += link;
-        _updatePriorityLink(true);
-        _updateHighLatencyLink();
+        if (_links.count() <= 1) {
+            _updatePriorityLink(true, false);
+        } else {
+            _updatePriorityLink(true, true);
+        }
+
         connect(_toolbox->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
         connect(_toolbox->linkManager(), &LinkManager::linkDeleted, this, &Vehicle::_linkInactiveOrDeleted);
         connect(link, &LinkInterface::highLatencyChanged, this, &Vehicle::_updateHighLatencyLink);
@@ -1623,7 +1627,7 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
     qCDebug(VehicleLog) << "_linkInactiveOrDeleted linkCount" << _links.count();
 
     _links.removeOne(link);
-    _updatePriorityLink(true);
+    _updatePriorityLink(true, true);
 
     if (_links.count() == 0 && !_allLinksInactiveSent) {
         qCDebug(VehicleLog) << "All links inactive";
@@ -1669,7 +1673,7 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
     emit messagesSentChanged();
 }
 
-void Vehicle::_updatePriorityLink(bool updateActive)
+void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
 {
     emit linkNamesChanged();
     LinkInterface* newPriorityLink = NULL;
@@ -1751,7 +1755,9 @@ void Vehicle::_updatePriorityLink(bool updateActive)
             qgcApp()->showMessage((tr("switch to %2 as priority link")).arg(newPriorityLink->getName()));
         }
         _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
-        _updateHighLatencyLink();
+
+        _updateHighLatencyLink(sendCommand);
+
         emit priorityLinkNameChanged(_priorityLink->getName());
         if (updateActive) {
             _linkActiveChanged(_priorityLink.data(), _priorityLink->active());
@@ -2131,7 +2137,7 @@ void Vehicle::setPriorityLinkByName(const QString& priorityLinkName)
 
     if (newPriorityLink) {
         _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
-        _updateHighLatencyLink();
+        _updateHighLatencyLink(true);
         emit priorityLinkNameChanged(_priorityLink->getName());
         _linkActiveChanged(_priorityLink.data(), _priorityLink->active());
     }
@@ -2443,19 +2449,24 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active)
         if (active && _connectionLost) {
             // communication to priority link regained
             _connectionLost = false;
+            emit connectionLostChanged(false);
             qgcApp()->showMessage((tr("communication to priority link %2 regained")).arg(link->getName()));
 
-            // Re-negotiate protocol version for the link
-            sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
-                           MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                           false,                                   // No error shown if fails
-                           1);                                     // Request protocol version
+            if (_priorityLink->highLatency()) {
+                _setMaxProtoVersion(100);
+            } else {
+                // Re-negotiate protocol version for the link
+                sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+                               MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                               false,                                   // No error shown if fails
+                               1);                                     // Request protocol version
+            }
 
         } else if (!active && !_connectionLost) {
             // communication to priority link lost
             qgcApp()->showMessage((tr("communication to priority link %2 lost")).arg(link->getName()));
 
-            _updatePriorityLink(false);
+            _updatePriorityLink(false, true);
 
             if (link == _priorityLink) {
                 _say(QString(tr("%1 communication lost")).arg(_vehicleIdSpeech()));
@@ -3354,12 +3365,26 @@ void Vehicle::_vehicleParamLoaded(bool ready)
     }
 }
 
-void Vehicle::_updateHighLatencyLink(void)
+void Vehicle::_updateHighLatencyLink(bool sendCommand)
 {
     if (_priorityLink->highLatency() != _highLatencyLink) {
         _highLatencyLink = _priorityLink->highLatency();
         _mavCommandAckTimer.setInterval(_highLatencyLink ? _mavCommandAckTimeoutMSecsHighLatency : _mavCommandAckTimeoutMSecs);
         emit highLatencyLinkChanged(_highLatencyLink);
+
+        if (sendCommand) {
+            if (_highLatencyLink) {
+                sendMavCommand(defaultComponentId(),
+                               MAV_CMD_CONTROL_HIGH_LATENCY,
+                               true,
+                               1.0f); // request start transmitting over high latency telemetry
+            } else {
+                sendMavCommand(defaultComponentId(),
+                               MAV_CMD_CONTROL_HIGH_LATENCY,
+                               true,
+                               0.0f); // request stop transmitting over high latency telemetry
+            }
+        }
     }
 }
 

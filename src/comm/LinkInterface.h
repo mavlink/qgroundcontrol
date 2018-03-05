@@ -37,7 +37,10 @@ class LinkInterface : public QThread
     friend class LinkManager;
 
 public:    
-    ~LinkInterface() { _config->setLink(NULL); }
+    ~LinkInterface() {
+        _config->setLink(NULL);
+        timerStop();
+    }
 
     Q_PROPERTY(bool active      READ active         WRITE setActive         NOTIFY activeChanged)
 
@@ -150,6 +153,9 @@ public slots:
 
 private slots:
     virtual void _writeBytes(const QByteArray) = 0;
+
+    void _bytesReceivedTimeout(void);
+
     
 signals:
     void autoconnectChanged(bool autoconnect);
@@ -250,13 +256,23 @@ private:
 
     virtual void _disconnect(void) = 0;
 
-    void _bytesReceived(LinkInterface* link, QByteArray bytes);
-    
-    void _bytesReceivedTimeout(void);
-
     /// Sets the mavlink channel to use for this link
     void _setMavlinkChannel(uint8_t channel);
     
+    /**
+     * @brief timerStart
+     *
+     * Allocate the timer if it does not exist yet and start it.
+     */
+    void timerStart();
+
+    /**
+     * @brief timerStop
+     *
+     * Stop and deallocate the timer if it exists.
+     */
+    void timerStop();
+
     bool _mavlinkChannelSet;    ///< true: _mavlinkChannel has been set
     uint8_t _mavlinkChannel;    ///< mavlink channel to use for this link, as used by mavlink_parse_char
     
@@ -283,7 +299,7 @@ private:
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
 
     static const int    _bytesReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
-    QTimer              _bytesReceivedTimer;
+    QTimer*             _bytesReceivedTimer;
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;
