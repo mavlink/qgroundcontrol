@@ -21,6 +21,7 @@
 #include "QGCMapEngine.h"
 #include "ParameterManager.h"
 #include "Vehicle.h"
+#include "SettingsManager.h"
 
 #include <QDebug>
 #include <QSettings>
@@ -511,7 +512,7 @@ LogDownloadController::download(QString path)
     QString dir = path;
 #if defined(__mobile__)
     if(dir.isEmpty()) {
-        dir = QDir::homePath();
+        dir = qgcApp()->toolbox()->settingsManager()->appSettings()->logSavePath();
     }
 #else
     if(dir.isEmpty()) {
