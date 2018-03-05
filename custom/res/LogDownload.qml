@@ -56,14 +56,17 @@ QGCView {
         id:             panel
         anchors.fill:   parent
         QGCLabel {
-            text:       qsTr("Not Connected")
+            text:               qsTr("Not Connected")
             anchors.centerIn:   parent
-            visible:    !_activeVehicle
+            visible:            !_activeVehicle
         }
         RowLayout {
-            anchors.fill:   parent
-            visible:        _activeVehicle
-
+            anchors.right:      parent.right
+            anchors.left:       parent.left
+            anchors.top:        parent.top
+            anchors.bottom:     pathLabel.top
+            anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.5
+            visible:            _activeVehicle
             TableView {
                 id: tableView
                 anchors.top:        parent.top
@@ -133,7 +136,6 @@ QGCView {
                     }
                 }
             }
-
             Column {
                 spacing:            _margin
                 Layout.alignment:   Qt.AlignTop | Qt.AlignLeft
@@ -203,7 +205,14 @@ QGCView {
                     enabled:    controller.requestingList || controller.downloadingLogs
                     onClicked:  controller.cancel()
                 }
-            } // Column - Buttons
-        } // RowLayout
-    } // QGCViewPanel
-} // QGCView
+            }
+        }
+        QGCLabel {
+            id:         pathLabel
+            text:       qsTr("Logs saved to: ") + QGroundControl.settingsManager.appSettings.logSavePath
+            visible:    _activeVehicle
+            anchors.bottom:             parent.bottom
+            anchors.horizontalCenter:   parent.horizontalCenter
+        }
+    }
+}
