@@ -83,6 +83,58 @@ Item {
         smooth:             true
     }
 
+    QGCColoredImage {
+        color:                      lightColors ? "white" : "black"
+        height:                     ScreenTools.defaultFontPixelHeight
+        width:                      height
+        sourceSize.height:          height
+        mipmap:                     true
+        fillMode:                   Image.PreserveAspectFit
+        source:                     "/res/counter-clockwise-arrow.svg"
+        anchors.right:              parent.right
+        anchors.rightMargin:        ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter:     parent.verticalCenter
+    }
+
+    QGCColoredImage {
+        color:                      lightColors ? "white" : "black"
+        height:                     ScreenTools.defaultFontPixelHeight
+        width:                      height
+        sourceSize.height:          height
+        mipmap:                     true
+        fillMode:                   Image.PreserveAspectFit
+        source:                     "/res/clockwise-arrow.svg"
+        anchors.left:               parent.left
+        anchors.leftMargin:         ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter:     parent.verticalCenter
+    }
+
+    QGCColoredImage {
+        color:                      lightColors ? "white" : "black"
+        height:                     ScreenTools.defaultFontPixelHeight
+        width:                      height
+        sourceSize.height:          height
+        mipmap:                     true
+        fillMode:                   Image.PreserveAspectFit
+        source:                     "/res/chevron-up.svg"
+        anchors.top:                parent.top
+        anchors.topMargin:          ScreenTools.defaultFontPixelWidth
+        anchors.horizontalCenter:   parent.horizontalCenter
+    }
+
+    QGCColoredImage {
+        color:                      lightColors ? "white" : "black"
+        height:                     ScreenTools.defaultFontPixelHeight
+        width:                      height
+        sourceSize.height:          height
+        mipmap:                     true
+        fillMode:                   Image.PreserveAspectFit
+        source:                     "/res/chevron-down.svg"
+        anchors.bottom:             parent.bottom
+        anchors.bottomMargin:       ScreenTools.defaultFontPixelWidth
+        anchors.horizontalCenter:   parent.horizontalCenter
+    }
+
     Rectangle {
         anchors.margins:    parent.width / 4
         anchors.fill:       parent

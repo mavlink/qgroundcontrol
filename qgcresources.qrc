@@ -181,6 +181,10 @@
         <file alias="buttonLeft.svg">resources/buttonLeft.svg</file>
         <file alias="buttonRight.svg">resources/buttonRight.svg</file>
         <file alias="cancel.svg">resources/cancel.svg</file>
+        <file alias="clockwise-arrow.svg">resources/clockwise-arrow.svg</file>
+        <file alias="counter-clockwise-arrow.svg">resources/counter-clockwise-arrow.svg</file>
+        <file alias="chevron-down.svg">resources/chevron-down.svg</file>
+        <file alias="chevron-up.svg">resources/chevron-up.svg</file>
         <file alias="gear-black.svg">resources/gear-black.svg</file>
         <file alias="gear-white.svg">resources/gear-white.svg</file>
         <file alias="JoystickBezel.png">resources/JoystickBezel.png</file>
