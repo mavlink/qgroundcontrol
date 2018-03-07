@@ -526,6 +526,7 @@ int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], 
     //Iterate N times, ignore stop condition.
     unsigned int n = 0;
 
+#undef  FLT_EPSILON
 #define FLT_EPSILON 1.1920929e-07F  /* 1E-5 */
 
     while (n < max_iterations) {

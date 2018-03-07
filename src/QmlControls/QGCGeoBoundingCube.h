@@ -19,6 +19,7 @@ class QGCGeoBoundingCube : public QObject {
     Q_OBJECT
 public:
     QGCGeoBoundingCube(const QGCGeoBoundingCube& other)
+        : QObject()
     {
         pointNW = other.pointNW;
         pointSE = other.pointSE;
