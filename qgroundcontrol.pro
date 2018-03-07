@@ -1137,8 +1137,15 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapWeatherInfoManager.cc \
 
 } else {
+    #-- Dummies
+    INCLUDEPATH += \
+        src/Airmap/dummy
     RESOURCES += \
         src/Airmap/dummy/airmap_dummy.qrc
+    HEADERS += \
+        src/Airmap/dummy/AirspaceManager.h
+    SOURCES += \
+        src/Airmap/dummy/AirspaceManager.cc
 }
 
 #-------------------------------------------------------------------------------------
