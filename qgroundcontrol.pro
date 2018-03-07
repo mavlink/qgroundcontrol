@@ -97,6 +97,11 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
     message($$sprintf("Using user-supplied additional config: '%1' specified in user_config.pri", $$fromfile(user_config.pri, CONFIG)))
 }
 
+exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
+    MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
+    message($$sprintf("Using user-supplied mavlink dialect: '%1' specified in user_config.pri", $$fromfile(user_config.pri, MAVLINK_CONF)))
+}
+
 #
 # Custom Build
 #
