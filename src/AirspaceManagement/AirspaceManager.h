@@ -86,7 +86,7 @@ public:
     virtual AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) = 0;
 
 signals:
-    void    airspaceVisibleChanged  ();
+    void                airspaceVisibleChanged  ();
 
 protected:
     /**
