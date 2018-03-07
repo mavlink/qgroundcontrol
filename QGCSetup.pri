@@ -54,6 +54,7 @@ MacBuild {
     # AirMap
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         QMAKE_POST_LINK += && rsync -a $$BASEDIR/libs/airmapd/macOS/Qt.5.9/* $$DESTDIR/$${TARGET}.app/Contents/Frameworks/
+        QMAKE_POST_LINK += && install_name_tool -change "@rpath/libairmap-qt.0.0.1.dylib" "@executable_path/../Frameworks/libairmap-qt.0.0.1.dylib" $$DESTDIR/$${TARGET}.app/Contents/MacOS/$${TARGET}
     }
 }
 

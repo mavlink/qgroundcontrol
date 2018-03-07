@@ -49,6 +49,10 @@ public:
     virtual QString             providerName    () const { return QString("None"); }
 
     virtual bool                airspaceVisible () { return false; }
+
+signals:
+    void                airspaceVisibleChanged  ();
+
 private:
     QObject                     _dummy;
 };
