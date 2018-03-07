@@ -33,10 +33,10 @@ Column {
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
-    property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
-    property bool   _cameraVideoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === 1 : false
-    property bool   _cameraPhotoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === 0 : false
+    property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
+    property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
+    property bool   _cameraVideoMode:       _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === 1 : false
+    property bool   _cameraPhotoMode:       _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === 0 : false
     property bool   _cameraPhotoIdle:       _isCamera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
     property bool   _cameraElapsedMode:     _isCamera && _camera.cameraMode === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
     property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
@@ -46,6 +46,7 @@ Column {
     property bool   _hasModes:              _isCamera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
+    property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
 
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -202,6 +203,23 @@ Column {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     spacing:        _margins
+                    Row {
+                        visible:    _isCamera
+                        spacing:    ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:           qsTr("Camera Selector:")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            id:             cameraSelector
+                            model:          _isCamera ? _dynamicCameras.cameraLabels : []
+                            width:          _editFieldWidth
+                            onActivated:    _dynamicCameras.cameras = index
+                            currentIndex:   0
+                        }
+                    }
                     //-------------------------------------------
                     //-- Camera Settings
                     Repeater {

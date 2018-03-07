@@ -45,7 +45,7 @@ QVariant QmlObjectListModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
     
-    if (index.row() >= _objectList.count()) {
+    if (index.row() < 0 || index.row() >= _objectList.count()) {
         return QVariant();
     }
     
@@ -120,11 +120,17 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
 
 QObject* QmlObjectListModel::operator[](int index)
 {
+    if (index < 0 || index >= _objectList.count()) {
+        return NULL;
+    }
     return _objectList[index];
 }
 
 const QObject* QmlObjectListModel::operator[](int index) const
 {
+    if (index < 0 || index >= _objectList.count()) {
+        return NULL;
+    }
     return _objectList[index];
 }
 
