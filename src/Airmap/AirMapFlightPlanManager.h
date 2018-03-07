@@ -20,6 +20,7 @@
 
 #include "airmap/flight.h"
 #include "airmap/flight_plan.h"
+#include "airmap/ruleset.h"
 
 class PlanMasterController;
 
@@ -112,6 +113,7 @@ private slots:
 private:
     void _createFlightPlan                  ();
     bool _collectFlightDtata                ();
+    void _updateRulesAndFeatures            (std::vector<airmap::RuleSet::Id>& rulesets, std::unordered_map<std::string, airmap::RuleSet::Feature::Value>& features);
 
 private:
     enum class State {

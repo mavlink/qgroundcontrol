@@ -46,13 +46,15 @@ struct FlightPlan {
     float longitude;  ///< The longitude component of the takeoff coordinates in [°].
   } takeoff;          ///< The takeoff coordinate.
   struct {
-    float max;          ///< The maximum altitude over the entire flight in [m].
-    float min;          ///< The minimum altitude over the entire flight in [m].
-  } altitude_agl;       ///< The altitude range of the flight in [m] above ground level.
-  float buffer;         ///< The buffer in [m] around the geometry.
-  Geometry geometry;    ///< The geometry describing the flight.
-  DateTime start_time;  ///< Point in time when the flight will start/was started.
-  DateTime end_time;    ///< Point in time when the fligth will end.
+    float max;                        ///< The maximum altitude over the entire flight in [m].
+    float min;                        ///< The minimum altitude over the entire flight in [m].
+  } altitude_agl;                     ///< The altitude range of the flight in [m] above ground level.
+  float buffer;                       ///< The buffer in [m] around the geometry.
+  Geometry geometry;                  ///< The geometry describing the flight.
+  DateTime start_time;                ///< Point in time when the flight will start/was started.
+  DateTime end_time;                  ///< Point in time when the fligth will end.
+  std::vector<RuleSet::Id> rulesets;  ///< RuleSets that apply to this flight plan.
+  std::unordered_map<std::string, RuleSet::Feature::Value> features;  ///< Additional properties of the planned flight.
 };
 
 }  // namespace airmap
