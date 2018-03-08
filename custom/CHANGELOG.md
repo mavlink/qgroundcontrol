@@ -1,5 +1,14 @@
 ## DataPilot Release Changelog
 
+### V1.3.5 - Mar 8 2018
+
+*   Use the new "Set Password" API
+*   Reset (Android) WiFi configuration if the user entered the wrong password when attempting to connect to a camera. Android was leaving the WiFi configuration in an error state and further attempts to connect would fail (you had to go to WiFi settings and "forget" the SSID or restart the ST16).
+*   Do not attempt to connect to the camera when changing password. The camera needs to be rebooted before it will accept the new password. Instead, configure the connection and ask the user to reboot the vehicle. Once it's up, Android will connect to it automatically.
+*   Fixed an issue where the "first run" flag was not being properly read, causing DP to launch the "Initial Settings" dialog at random times.
+*   Make sure "second run" is truly second run and not just changing password. A forced look for an update is required on "second" run (first run forces settings and password reset)
+*   Moved the version info (Vehicle Settings dialog) to its own window, which can be accessed through an "About" button.
+
 ### V1.3.4 - Mar 5 2018
 
 *   Moved log download directory from ~/somewhere to ~/Documents/DataPilotPlanner/Logs where it belongs. Added a notice at the bottom of the screen showing the path where logs are downloaded.
