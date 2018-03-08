@@ -169,11 +169,8 @@ Item {
                 mainWindow.disableToolbar()
             }
 
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
 
             Rectangle {
@@ -389,11 +386,8 @@ Item {
                     Keys.onBackPressed: {
                         timeoutDialog.visible = false
                     }
-                    MouseArea {
+                    DeadMouseArea {
                         anchors.fill:   parent
-                        onWheel:        { wheel.accepted = true; }
-                        onPressed:      { mouse.accepted = true; }
-                        onReleased:     { mouse.accepted = true; }
                     }
                     Column {
                         id:         timeoutCol
@@ -427,11 +421,8 @@ Item {
                     Keys.onBackPressed: {
                         authErrorDialog.visible = false
                     }
-                    MouseArea {
+                    DeadMouseArea {
                         anchors.fill:   parent
-                        onWheel:        { wheel.accepted = true; }
-                        onPressed:      { mouse.accepted = true; }
-                        onReleased:     { mouse.accepted = true; }
                     }
                     Column {
                         id:         badPpwdCol
@@ -470,11 +461,8 @@ Item {
                         Keys.onBackPressed: {
                             passwordLoader.sourceComponent = null
                         }
-                        MouseArea {
+                        DeadMouseArea {
                             anchors.fill:   parent
-                            onWheel:        { wheel.accepted = true; }
-                            onPressed:      { mouse.accepted = true; }
-                            onReleased:     { mouse.accepted = true; }
                         }
                         Column {
                             id:         pwdCol

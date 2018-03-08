@@ -98,11 +98,8 @@ Rectangle {
         }
     }
 
-    MouseArea {
+    DeadMouseArea {
         anchors.fill:   parent
-        onWheel:        { wheel.accepted = true; }
-        onPressed:      { mouse.accepted = true; }
-        onReleased:     { mouse.accepted = true; }
     }
 
     Column {
@@ -366,11 +363,8 @@ Rectangle {
                 border.width:   1
                 border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.centerIn: parent
-                MouseArea {
+                DeadMouseArea {
                     anchors.fill:   parent
-                    onWheel:        { wheel.accepted = true; }
-                    onPressed:      { mouse.accepted = true; }
-                    onReleased:     { mouse.accepted = true; }
                 }
                 QGCLabel {
                     id:                 cameraSettingsLabel
@@ -737,11 +731,8 @@ Rectangle {
                 color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.5) : Qt.rgba(0,0,0,0.5)
                 anchors.fill:   parent
                 property var fact: null
-                MouseArea {
+                DeadMouseArea {
                     anchors.fill:   parent
-                    onWheel:        { wheel.accepted = true; }
-                    onPressed:      { mouse.accepted = true; }
-                    onReleased:     { mouse.accepted = true; }
                 }
                 Rectangle {
                     width:      factEditCol.width  * 1.25
@@ -794,12 +785,8 @@ Rectangle {
             id:         noCameraItem
             width:      mainWindow.width
             height:     mainWindow.height
-            z:          1000000
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
                 id:             noCameraShadow
@@ -907,11 +894,8 @@ Rectangle {
                 border.width:       1
                 border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.centerIn:   parent
-                MouseArea {
+                DeadMouseArea {
                     anchors.fill:   parent
-                    onWheel:        { wheel.accepted = true; }
-                    onPressed:      { mouse.accepted = true; }
-                    onReleased:     { mouse.accepted = true; }
                 }
                 Row {
                     spacing:                ScreenTools.defaultFontPixelWidth * 2
@@ -1151,11 +1135,8 @@ Rectangle {
                 border.width:       1
                 border.color:       qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
                 anchors.centerIn:   parent
-                MouseArea {
+                DeadMouseArea {
                     anchors.fill:   parent
-                    onWheel:        { wheel.accepted = true; }
-                    onPressed:      { mouse.accepted = true; }
-                    onReleased:     { mouse.accepted = true; }
                 }
                 Image {
                     id:             mediaContent

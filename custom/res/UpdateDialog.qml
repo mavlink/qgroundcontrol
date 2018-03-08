@@ -24,11 +24,8 @@ Item {
     id: dlgRoot
     anchors.fill: parent
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
-    MouseArea {
+    DeadMouseArea {
         anchors.fill:   parent
-        onWheel:        { wheel.accepted = true; }
-        onPressed:      { mouse.accepted = true; }
-        onReleased:     { mouse.accepted = true; }
     }
     Rectangle {
         id:             updateDialogShadow

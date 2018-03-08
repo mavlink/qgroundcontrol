@@ -60,6 +60,7 @@ typhoonHQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
     TyphoonHQuickInterface* pIFace = new TyphoonHQuickInterface();
     TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug) {
+        pPlug->setQFace(pIFace);
 #if defined(__androidx86__)
         pIFace->init(pPlug->handler());
 #else
@@ -223,6 +224,7 @@ TyphoonHOptions::instrumentWidget()
 TyphoonHPlugin::TyphoonHPlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCCorePlugin(app, toolbox)
     , _pOptions(NULL)
+    , _pQFace(NULL)
     , _pTyphoonSettings(NULL)
     , _pGeneral(NULL)
     , _pOfflineMaps(NULL)
