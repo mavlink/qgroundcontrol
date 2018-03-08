@@ -87,6 +87,7 @@ public:
     Q_PROPERTY(QUrl         palettetBar     READ    palettetBar         NOTIFY palettetBarChanged)
     Q_PROPERTY(bool         irValid         READ    irValid             NOTIFY irTempChanged)
 
+    Q_INVOKABLE void setWiFiPassword(QString pwd, bool restart = false);
     Q_INVOKABLE void calibrateGimbal();
 
     bool        takePhoto           () override;
@@ -101,6 +102,7 @@ public:
     bool        validateParameter   (Fact* pFact, QVariant& newValue) override;
     void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
     void        resetSettings       () override;
+    void        handleParamAck      (const mavlink_param_ext_ack_t& ack) override;
 
     QString     gimbalVersion       () { return _gimbalVersion; }
     bool        gimbalCalOn         () { return _gimbalCalOn; }
@@ -223,4 +225,6 @@ private:
     SettingsFact*           _irPresets;
     udp_ctrl_cam_lepton_area_temp_t _cgoetTempStatus;
     bool                    _videoRecording;
+    bool                    _shouldRestart;
+    QString                 _wifiPassword;
 };

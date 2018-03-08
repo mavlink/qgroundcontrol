@@ -49,6 +49,7 @@ public class QGCActivity extends QtActivity
     private static int currentWifiRssi = 0;
     private static float batteryLevel = 0.0f;
     private static boolean letItExit = false;
+    private static String lastAttemptedSSID;
 
     // WiFi: https://stackoverflow.com/questions/36098871/how-to-search-and-connect-to-a-specific-wifi-network-in-android-programmatically/36099552#36099552
 
@@ -305,14 +306,34 @@ public class QGCActivity extends QtActivity
         mainWifi.saveConfiguration();
         //-- Disconnect
         resetWifi();
-        //-- Reconnect using new configuration
-        bindSSID(ssid, password);
+        //-- Set new configuration (but don't connect as camera needs to reboot)
+        bindSSID(ssid, password, false);
     }
 
     //-------------------------------------------------------------------------
-    public static void bindSSID(String ssid, String passphrase) {
-        Log.i(TAG, "Bind: " + ssid + " " + passphrase);
+    public static void forgetSSID(String ssid) {
+        Log.i(TAG, "forgetSSID(): " + ssid);
+        List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+        if(list != null) {
+            mainWifi.disconnect();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+                    Log.i(TAG, "Forget " + ssid);
+                    mainWifi.removeNetwork(i.networkId);
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    public static void bindSSID(String ssid, String passphrase, boolean attemptConnect) {
+        Log.i(TAG, "Bind: " + ssid + " " + passphrase + " " + attemptConnect);
         try {
+            if(attemptConnect) {
+                lastAttemptedSSID = ssid;
+            } else {
+                lastAttemptedSSID = "";
+            }
             List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
             //-- Disable everything else
             mainWifi.disconnect();
@@ -324,11 +345,14 @@ public class QGCActivity extends QtActivity
             }
             mainWifi.saveConfiguration();
             receiverMode = ReceiverMode.BINDING;
-            //-- If already set, just make sure it's enabled
+            //-- If already set, set password an make sure it's enabled
             list = mainWifi.getConfiguredNetworks();
             for( WifiConfiguration i : list ) {
                 if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                    mainWifi.enableNetwork(i.networkId, true);
+                    i.preSharedKey = "\"" + passphrase + "\"";
+                    i.priority = 1;
+                    mainWifi.updateNetwork(i);
+                    mainWifi.enableNetwork(i.networkId, attemptConnect);
                     mainWifi.reconnect();
                     mainWifi.saveConfiguration();
                     return;
@@ -344,7 +368,7 @@ public class QGCActivity extends QtActivity
             list = mainWifi.getConfiguredNetworks();
             for( WifiConfiguration i : list ) {
                 if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                    mainWifi.enableNetwork(i.networkId, true);
+                    mainWifi.enableNetwork(i.networkId, attemptConnect);
                     mainWifi.reconnect();
                     return;
                 }
@@ -423,7 +447,10 @@ public class QGCActivity extends QtActivity
                             Log.e(TAG, "Authentication Error");
                             receiverMode = ReceiverMode.DISABLED;
                             currentConnection = "";
-                            nativeAuthError();
+                            if(lastAttemptedSSID != null && !lastAttemptedSSID.isEmpty()) {
+                                forgetSSID(lastAttemptedSSID);
+                                nativeAuthError();
+                            }
                         }
                     }
                 } else if (intent.getAction().equals(WifiManager.RSSI_CHANGED_ACTION)) {

@@ -117,7 +117,7 @@ TyphoonHQuickInterface::TyphoonHQuickInterface(QObject* parent)
     QSettings settings;
     _thermalOpacity = settings.value(kThermalOpacity, 85.0).toDouble();
     _thermalMode =  (ThermalViewMode)settings.value(kThermalMode, (uint32_t)ThermalBlend).toUInt();
-    _firstRun = settings.value(kThermalMode, true).toBool();
+    _firstRun = settings.value(kFirstRun, true).toBool();
     qCDebug(YuneecLog) << "FirstRun:" << _firstRun;
     _loadWifiConfigurations();
     _ssid = connectedSSID();
@@ -245,21 +245,24 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
     }
     bool res = false;
     QSettings settings;
-    bool SecondRun = settings.value(kSecondRun, true).toBool();
-    //-- If this is the first run, show it.
-    if(SecondRun) {
+    bool secondRun = settings.value(kSecondRun, true).toBool();
+    //-- First run sets the password. Now we check for updates.
+    QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
+    QDate now = QDate::currentDate();
+    if(secondRun) {
         settings.setValue(kSecondRun, false);
-        qWarning() << "First run after settings done. Force update dialog";
-        res = true;
-        //-- Reset update timer
-        settings.setValue(kUpdateCheck, QDate::currentDate());
+        // If we run recently, it's just a password change
+        if(lastCheck.year() != now.year()) {
+            qWarning() << "First run after settings done. Force update dialog";
+            res = true;
+            //-- Reset update timer
+            settings.setValue(kUpdateCheck, QDate::currentDate());
+        }
     } else {
         //-- If we have Internet, reset timer
         if(getQGCMapEngine()->isInternetActive()) {
             settings.setValue(kUpdateCheck, QDate::currentDate());
         } else {
-            QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
-            QDate now = QDate::currentDate();
             if(lastCheck.daysTo(now) > 29) {
                 //-- Reset update timer
                 settings.setValue(kUpdateCheck, QDate::currentDate());
@@ -279,7 +282,7 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
             if(fmver && frver >= fmver) {
                 //-- Reset update timer
                 settings.setValue(kUpdateCheck, QDate::currentDate());
-                //-- Show it as this is the shipping version
+                //-- Show the dialog as this is the shipping version
                 qWarning() << "Firmware version is shipping version. Force update dialog";
                 res = true;
             } else {
@@ -340,10 +343,7 @@ TyphoonHQuickInterface::_vehicleAdded(Vehicle* vehicle)
     if(!_passwordSet) {
         //-- If we dind't bind to anyting, it means this isn't really a first run. We've been here before.
         qCDebug(YuneecLog) << "Force firstRun to false";
-        _firstRun = false;
-        QSettings settings;
-        settings.setValue(kFirstRun, _firstRun);
-        emit firstRunChanged();
+        _resetFirstRun(true);
     }
 #endif
 }
@@ -483,42 +483,23 @@ void
 TyphoonHQuickInterface::setWiFiPassword(QString pwd, bool restart)
 {
     if(_vehicle) {
-        MAVLinkProtocol* pMavlink = qgcApp()->toolbox()->mavlinkProtocol();
-        mavlink_wifi_config_ap_t config;
-        memset(&config, 0, sizeof(config));
-        //-- Password must be up to 20 characters
-        strncpy(config.password, pwd.toStdString().c_str(), 20);
-        mavlink_message_t msg;
-        mavlink_msg_wifi_config_ap_encode(
-            pMavlink->getSystemId(),
-            pMavlink->getComponentId(),
-            &msg,
-            &config);
-        //-- Send command
-        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-        _password = pwd;
         //-- Save new password (Android Configuration)
-        QTimer::singleShot(300, this, &TyphoonHQuickInterface::_setWiFiPassword);
+        _password = pwd;
+        _configurations[_ssid] = _password;
+        _saveWifiConfigurations();
+#if defined __android__
+        reset_jni();
+        QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
+        QAndroidJniObject javaPWD  = QAndroidJniObject::fromString(_password);
+        QAndroidJniObject::callStaticMethod<void>(jniClassName, "setWifiPassword", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPWD.object<jstring>());
+#endif
+        _resetFirstRun(false);
         if(restart) {
 #if defined(__androidx86__)
             QTimer::singleShot(500, this, &TyphoonHQuickInterface::_restart);
 #endif
         }
     }
-}
-
-//-----------------------------------------------------------------------------
-void
-TyphoonHQuickInterface::_setWiFiPassword()
-{
-    _configurations[_ssid] = _password;
-    _saveWifiConfigurations();
-#if defined __android__
-    reset_jni();
-    QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
-    QAndroidJniObject javaPWD  = QAndroidJniObject::fromString(_password);
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "setWifiPassword", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPWD.object<jstring>());
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -1009,7 +990,8 @@ TyphoonHQuickInterface::_delayedBind()
     reset_jni();
     QAndroidJniObject javaSSID = QAndroidJniObject::fromString(_ssid);
     QAndroidJniObject javaPassword = QAndroidJniObject::fromString(_password);
-    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;Ljava/lang/String;)V", javaSSID.object<jstring>(), javaPassword.object<jstring>());
+    jboolean jTrue = true;
+    QAndroidJniObject::callStaticMethod<void>(jniClassName, "bindSSID", "(Ljava/lang/String;Ljava/lang/String;Z)V", javaSSID.object<jstring>(), javaPassword.object<jstring>(), jTrue);
     QTimer::singleShot(15000, this, &TyphoonHQuickInterface::_bindTimeout);
 #endif
 }
@@ -1734,13 +1716,15 @@ TyphoonHQuickInterface::setThermalMode(ThermalViewMode mode)
 
 //-----------------------------------------------------------------------------
 void
-TyphoonHQuickInterface::setFirstRun(bool set)
+TyphoonHQuickInterface::_resetFirstRun(bool skipSecond)
 {
-    qCDebug(YuneecLog) << "Set firstRun" << set;
-    _firstRun = set;
+    qCDebug(YuneecLog) << "Reset firstRun";
+    _firstRun = false;
     QSettings settings;
-    settings.setValue(kFirstRun, set);
-    settings.setValue(kSecondRun, true);
+    settings.setValue(kFirstRun, false);
+    if(!skipSecond) {
+        settings.setValue(kSecondRun, true);
+    }
     emit firstRunChanged();
 }
 

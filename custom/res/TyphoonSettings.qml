@@ -256,7 +256,7 @@ QGCView {
                     height:         ledControlRow.height * 2
                     width:          _rectWidth
                     color:          qgcPal.windowShade
-                    visible:        !TyphoonHQuickInterface.desktopPlanner && _activeVehicle && TyphoonHQuickInterface.ledFact && TyphoonHQuickInterface.ledFact.enumStrings.count
+                    visible:        !TyphoonHQuickInterface.desktopPlanner && _activeVehicle && TyphoonHQuickInterface.ledFact && TyphoonHQuickInterface.ledFact.enumStrings.length > 0
                     anchors.horizontalCenter: parent.horizontalCenter
                     Row {
                         id:         ledControlRow
@@ -301,27 +301,35 @@ QGCView {
                         }
                     }
                 }
+                //-----------------------------------------------------------------
+                Rectangle {
+                    height:         aboutRow.height * 2
+                    width:          _rectWidth
+                    color:          qgcPal.windowShade
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Row {
+                        id:         aboutRow
+                        spacing:    ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn: parent
+                        QGCButton {
+                            text:       qsTr("About")
+                            width:      _buttonWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                rootLoader.sourceComponent = aboutDataPilot
+                                mainWindow.disableToolbar()
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Version information")
+                            width:  _textWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
                 Item {
                     width:  1
                     height: ScreenTools.defaultFontPixelHeight * 0.5
-                }
-                GridLayout {
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    columns:            2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
-                    QGCLabel { text: QGroundControl.qgcVersion }
-                    QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                    QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                    QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                    QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
-                    QGCLabel { text: qsTr("Flight Controller Version:"); visible: _activeVehicle; }
-                    QGCLabel { text: firmwareVersion(); visible: _activeVehicle; }
-                    QGCLabel { text: qsTr("Vehicle ID:"); visible: _activeVehicle; }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : ""; visible: _activeVehicle; }
-                    QGCLabel { text: qsTr("HOBBS Meter:"); visible: _activeVehicle; }
-                    QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : ""; visible: _activeVehicle; }
                 }
             }
         }
@@ -334,11 +342,8 @@ QGCView {
             width:      mainWindow.width
             height:     mainWindow.height
             z:          1000000
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
                 id:             fileCopyDialogShadow
@@ -478,11 +483,8 @@ QGCView {
             width:      mainWindow.width
             height:     mainWindow.height
             z:          1000000
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
                 id:             bindDialogShadow
@@ -570,11 +572,8 @@ QGCView {
             width:      mainWindow.width
             height:     mainWindow.height
             z:          1000000
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
                 id:             firmwareUpdateShadow
@@ -660,6 +659,85 @@ QGCView {
             }
         }
     }
+    //-- About DataPilot
+    Component {
+        id:             aboutDataPilot
+        Item {
+            id:         aboutDataPilotItem
+            width:      mainWindow.width
+            height:     mainWindow.height
+            DeadMouseArea {
+                anchors.fill:       parent
+            }
+            Rectangle {
+                id:                 aboutDataPilotShadow
+                anchors.fill:       aboutDataPilotRect
+                radius:             aboutDataPilotRect.radius
+                color:              qgcPal.window
+                visible:            false
+            }
+            DropShadow {
+                anchors.fill:       aboutDataPilotShadow
+                visible:            aboutDataPilotRect.visible
+                horizontalOffset:   4
+                verticalOffset:     4
+                radius:             32.0
+                samples:            65
+                color:              Qt.rgba(0,0,0,0.75)
+                source:             aboutDataPilotShadow
+            }
+            Rectangle {
+                id:                 aboutDataPilotRect
+                width:              mainWindow.width * 0.65
+                height:             Math.max(aboutDataPilotCol.height * 1.25, ScreenTools.defaultFontPixelHeight * 8)
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.windowShade
+                border.color:       qgcPal.text
+                border.width:       2
+                anchors.centerIn:   parent
+                Column {
+                    id:                 aboutDataPilotCol
+                    width:              parent.width
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    GridLayout {
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth
+                        columns:            2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel { text: qsTr("%1 Version:").arg(QGroundControl.appName) }
+                        QGCLabel { text: QGroundControl.qgcVersion }
+                        QGCLabel { text: qsTr("Camera Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                        QGCLabel { text: _camera ? _camera.firmwareVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                        QGCLabel { text: qsTr("Gimbal Version:"); visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                        QGCLabel { text: _camera ? _camera.gimbalVersion : ""; visible: !TyphoonHQuickInterface.desktopPlanner && _activeVehicle; }
+                        QGCLabel { text: qsTr("Flight Controller Version:"); visible: _activeVehicle; }
+                        QGCLabel { text: firmwareVersion(); visible: _activeVehicle; }
+                        QGCLabel { text: qsTr("Vehicle ID:"); visible: _activeVehicle; }
+                        QGCLabel { text: _activeVehicle ? _activeVehicle.vehicleUIDStr : ""; visible: _activeVehicle; }
+                        QGCLabel { text: qsTr("HOBBS Meter:"); visible: _activeVehicle; }
+                        QGCLabel { text: _activeVehicle ? _activeVehicle.hobbsMeter : ""; visible: _activeVehicle; }
+                    }
+                    QGCButton {
+                        text:           qsTr("Close")
+                        width:          ScreenTools.defaultFontPixelWidth  * 16
+                        height:         ScreenTools.defaultFontPixelHeight * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        onClicked: {
+                            mainWindow.enableToolbar()
+                            rootLoader.sourceComponent = null
+                        }
+                    }
+                }
+            }
+            Component.onCompleted: {
+                rootLoader.width  = aboutDataPilotItem.width
+                rootLoader.height = aboutDataPilotItem.height
+                mainWindow.disableToolbar()
+            }
+        }
+    }
     //-- Password Dialog
     Rectangle {
         id:         passwordDialog
@@ -713,7 +791,7 @@ QGCView {
                     onClicked:  {
                         Qt.inputMethod.hide();
                         TyphoonHQuickInterface.newPasswordSet = true
-                        TyphoonHQuickInterface.setWiFiPassword(passwordField.text, false)
+                        _camera.setWiFiPassword(passwordField.text, false)
                         passwordField.text = ""
                         passwordFieldConf.text = ""
                         passwordDialog.visible = false

@@ -8,6 +8,7 @@
 #include "YuneecCameraControl.h"
 #include "QGCCameraIO.h"
 #include "TyphoonHPlugin.h"
+#include "TyphoonHQuickInterface.h"
 #if defined(__androidx86__)
 #include "TyphoonHM4Interface.h"
 #endif
@@ -32,6 +33,7 @@ static const char *kCAM_VIDFMT      = "CAM_VIDFMT";
 static const char *kCAM_VIDRES      = "CAM_VIDRES";
 static const char *kCAM_WBMODE      = "CAM_WBMODE";
 static const char *kCAM_SYSTEMTIME  = "CAM_SYSTEMTIME";
+static const char *kCAM_WIFIPASSWD  = "CAM_WIFIPASSWD";
 
 static const char *kCAM_IRPALETTE   = "CAM_IRPALETTE";
 static const char *kCAM_IRTEMPRENA  = "CAM_IRTEMPRENA";
@@ -94,6 +96,7 @@ YuneecCameraControl::YuneecCameraControl(const mavlink_camera_information_t *inf
     , _irROI(NULL)
     , _irPresets(NULL)
     , _videoRecording(false)
+    , _shouldRestart(false)
 {
 
     memset(&_cgoetTempStatus, 0, sizeof(udp_ctrl_cam_lepton_area_temp_t));
@@ -812,6 +815,32 @@ YuneecCameraControl::factChanged(Fact* pFact)
 }
 
 //-----------------------------------------------------------------------------
+void
+YuneecCameraControl::handleParamAck(const mavlink_param_ext_ack_t& ack)
+{
+    QGCCameraControl::handleParamAck(ack);
+    QByteArray bytes(ack.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+    QString paramName(bytes);
+    if(paramName == kCAM_WIFIPASSWD) {
+        //-- Password changed
+        if(ack.param_result == PARAM_ACK_ACCEPTED) {
+            //-- Update ST16 with new, accepted password
+            TyphoonHPlugin* pPlug = dynamic_cast<TyphoonHPlugin*>(qgcApp()->toolbox()->corePlugin());
+            if(pPlug) {
+                TyphoonHQuickInterface* pQFace = pPlug->pQFace();
+                if(pQFace) {
+                    qCDebug(YuneecCameraLog) << "New password accepted. Updating ST16...";
+                    pQFace->setWiFiPassword(_wifiPassword, _shouldRestart);
+                }
+            }
+        }
+        _wifiPassword.clear();
+        _shouldRestart = false;
+    }
+}
+
+
+//-----------------------------------------------------------------------------
 QSize
 YuneecCameraControl::videoSize()
 {
@@ -861,6 +890,25 @@ YuneecCameraControl::setSpotArea(QPoint p)
             uint16_t coords = (x << 8) | y;
             qCDebug(YuneecCameraLog) << "Set Spot X:" << x << "Y:" << y;
             pFact->setRawValue(coords);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+YuneecCameraControl::setWiFiPassword(QString pwd, bool restart)
+{
+    if(_paramComplete) {
+        Fact* pFact = getFact(kCAM_WIFIPASSWD);
+        if(pFact) {
+            _shouldRestart = restart;
+            _wifiPassword  = pwd;
+            //-- Password must be up to 20 characters
+            if(pwd.length() > 20) {
+                pwd.resize(20);
+            }
+            qCDebug(YuneecCameraLog) << "Set WiFi Password";
+            pFact->setRawValue(pwd);
         }
     }
 }

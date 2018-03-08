@@ -29,9 +29,13 @@ Item {
     anchors.fill: parent
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 12
-    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 20
-    property bool _validPassword:               passwordField.text === confirmField.text && passwordField.text.length > 7 && passwordField.text.length < 21
+    property real _labelWidth:              ScreenTools.defaultFontPixelWidth * 12
+    property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 20
+    property bool _validPassword:           passwordField.text === confirmField.text && passwordField.text.length > 7 && passwordField.text.length < 21
+    property var  _activeVehicle:           QGroundControl.multiVehicleManager.activeVehicle
+    property var  _dynamicCameras:          _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property bool _isCamera:                _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var  _camera:                  _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
 
     function setMetric() {
         QGroundControl.settingsManager.unitsSettings.distanceUnits.rawValue = UnitsSettings.DistanceUnitsMeters
@@ -45,12 +49,10 @@ Item {
         QGroundControl.settingsManager.unitsSettings.speedUnits.rawValue = UnitsSettings.SpeedUnitsFeetPerSecond
     }
 
-    MouseArea {
+    DeadMouseArea {
         anchors.fill:   parent
-        onWheel:        { wheel.accepted = true; }
-        onPressed:      { mouse.accepted = true; }
-        onReleased:     { mouse.accepted = true; }
     }
+
     Rectangle {
         id:             initialSettingsDlgShadow
         anchors.fill:   initialSettingsDlgRect
@@ -101,7 +103,6 @@ Item {
                 height: ScreenTools.defaultFontPixelHeight
             }
             Row {
-                visible:        TyphoonHQuickInterface.isDefaultPwd
                 spacing:        ScreenTools.defaultFontPixelWidth * 4
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
@@ -120,7 +121,6 @@ Item {
                 }
             }
             Row {
-                visible:        TyphoonHQuickInterface.isDefaultPwd
                 spacing:        ScreenTools.defaultFontPixelWidth * 4
                 anchors.horizontalCenter: parent.horizontalCenter
                 QGCLabel {
@@ -142,12 +142,11 @@ Item {
                 text:           qsTr("(Password must be between 8 and 20 characters)")
                 font.pointSize: ScreenTools.smallFontPointSize
                 color:          qgcPal.alertText
-                visible:        TyphoonHQuickInterface.isDefaultPwd && !_validPassword
+                visible:        !_validPassword
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Item {
                 width:      1
-                visible:    TyphoonHQuickInterface.isDefaultPwd
                 height:     ScreenTools.defaultFontPixelHeight
             }
             Row {
@@ -201,22 +200,13 @@ Item {
                     text:           qsTr("Accept")
                     width:          ScreenTools.defaultFontPixelWidth  * 16
                     height:         ScreenTools.defaultFontPixelHeight * 2
-                    enabled:        TyphoonHQuickInterface.isDefaultPwd ? _validPassword : true
+                    enabled:        _validPassword
                     onClicked: {
-                        restartConfirmation.open()
-                    }
-                    MessageDialog {
-                        id:                 restartConfirmation
-                        text:               qsTr("DataPilot will now restart")
-                        standardButtons:    StandardButton.Ok
-                        onAccepted: {
-                            mainWindow.enableToolbar()
-                            TyphoonHQuickInterface.firstRun = false
-                            if(TyphoonHQuickInterface.isDefaultPwd && passwordField.text !== "") {
-                                TyphoonHQuickInterface.setWiFiPassword(passwordField.text, true)
-                            }
-                            rootLoader.sourceComponent = null
-                        }
+                        Qt.inputMethod.hide();
+                        TyphoonHQuickInterface.newPasswordSet = true
+                        mainWindow.enableToolbar()
+                        _camera.setWiFiPassword(passwordField.text, false)
+                        rootLoader.sourceComponent = null
                     }
                 }
             }

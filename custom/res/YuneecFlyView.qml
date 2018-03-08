@@ -125,11 +125,6 @@ Item {
                         qsTr("Connected to Standard Wi-Fi"),
                         qsTr("The ST16 is connected to a standard Wi-Fi and not a vehicle."))
                 }
-            } else if(ScreenTools.isAndroid) {
-                //-- If we're using the default password, nag about it
-                //if(!TyphoonHQuickInterface.firstRun && TyphoonHQuickInterface.isDefaultPwd && rootLoader.sourceComponent !== updateDialog) {
-                //    rootLoader.sourceComponent = initialSettingsDialog
-                //}
             }
         }
     }
@@ -866,11 +861,8 @@ Item {
             width:      mainWindow.width
             height:     mainWindow.height
             z:          1000000
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
                 id:             simpleAlertShadow
@@ -945,11 +937,8 @@ Item {
             width:      mainWindow.width
             height:     mainWindow.height
             z:          1000000
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Rectangle {
                 id:             panicDialogShadow
@@ -1104,11 +1093,8 @@ Item {
                     }
                 }
             }
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Component.onCompleted: {
                 rootLoader.width  = connectionLostArmedItem.width
@@ -1173,11 +1159,8 @@ Item {
                     }
                 }
             }
-            MouseArea {
+            DeadMouseArea {
                 anchors.fill:   parent
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
             }
             Component.onCompleted: {
                 rootLoader.width  = desktopConnectedDlgItem.width

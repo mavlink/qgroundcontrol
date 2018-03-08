@@ -17,6 +17,7 @@ class TyphoonHM4Interface;
 
 class TyphoonHOptions;
 class TyphoonHSettings;
+class TyphoonHQuickInterface;
 
 class TyphoonHPlugin : public QGCCorePlugin
 {
@@ -48,25 +49,29 @@ public:
     // Overrides from QGCTool
     void                setToolbox                      (QGCToolbox* toolbox);
 
+    TyphoonHQuickInterface* pQFace                      () { return _pQFace; }
+    void                    setQFace                    (TyphoonHQuickInterface* pQFace) { _pQFace = pQFace; }
+
 private slots:
     void                _showAdvancedPages              ();
 
 private:
-    TyphoonHOptions*    _pOptions;
-    QGCSettings*        _pTyphoonSettings;
-    QGCSettings*        _pGeneral;
-    QGCSettings*        _pOfflineMaps;
-    QGCSettings*        _pMAVLink;
-    QGCSettings*        _pRCCal;
-    QGCSettings*        _pLogDownload;
-    QGCSettings*        _pPlannerSync;
+    TyphoonHOptions*        _pOptions;
+    TyphoonHQuickInterface* _pQFace;
+    QGCSettings*            _pTyphoonSettings;
+    QGCSettings*            _pGeneral;
+    QGCSettings*            _pOfflineMaps;
+    QGCSettings*            _pMAVLink;
+    QGCSettings*            _pRCCal;
+    QGCSettings*            _pLogDownload;
+    QGCSettings*            _pPlannerSync;
 #ifdef QT_DEBUG
-    QGCSettings*        _pMockLink;
+    QGCSettings*            _pMockLink;
 #endif
-    QGCSettings*        _pConsole;
-    QVariantList        _settingsList;
+    QGCSettings*            _pConsole;
+    QVariantList            _settingsList;
 #if defined(__androidx86__)
-    TyphoonHM4Interface*_pHandler;
+    TyphoonHM4Interface*    _pHandler;
 #endif
-    QTranslator         _YuneecTranslator;
+    QTranslator             _YuneecTranslator;
 };

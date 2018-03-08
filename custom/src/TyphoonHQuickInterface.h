@@ -200,12 +200,12 @@ public:
     Q_PROPERTY(bool             isInternet      READ    isInternet          NOTIFY isInternetChanged)
     Q_PROPERTY(bool             isDefaultPwd    READ    isDefaultPwd        NOTIFY isDefaultPwdChanged)
     Q_PROPERTY(bool             desktopPlanner  READ    desktopPlanner      CONSTANT)
+    Q_PROPERTY(bool             firstRun        READ    firstRun            NOTIFY  firstRunChanged)
 #if defined(__planner__)
     Q_PROPERTY(QGCSyncFilesDesktop* desktopSync READ    desktopSync         NOTIFY desktopSyncChanged)
 #else
     Q_PROPERTY(QGCSyncFilesMobile* mobileSync   READ    mobileSync          NOTIFY mobileSyncChanged)
 #endif
-    Q_PROPERTY(bool             firstRun            READ    firstRun            WRITE   setFirstRun         NOTIFY  firstRunChanged)
     Q_PROPERTY(bool             wifiAlertEnabled    READ    wifiAlertEnabled    WRITE   setWifiAlertEnabled NOTIFY  wifiAlertEnabledChanged)
     Q_PROPERTY(bool             browseVideos        READ    browseVideos        WRITE   setBrowseVideos     NOTIFY  browseVideosChanged)
 
@@ -262,7 +262,6 @@ public:
     Q_INVOKABLE void manualBind         ();
     Q_INVOKABLE void startCalibration   ();
     Q_INVOKABLE void stopCalibration    ();
-    Q_INVOKABLE void setWiFiPassword    (QString pwd, bool restart);
     Q_INVOKABLE void factoryTest        ();
     Q_INVOKABLE void launchBroswer      (QString url);
     Q_INVOKABLE void launchUpdater      ();
@@ -322,7 +321,6 @@ public:
     void        init                ();
 #endif
     void        setWifiAlertEnabled (bool enabled) { _wifiAlertEnabled = enabled; emit wifiAlertEnabledChanged(); }
-    void        setFirstRun         (bool set);
     void        setBrowseVideos     (bool video);
 
     bool        newPasswordSet      () { return _newPasswordSet; }
@@ -377,6 +375,8 @@ public:
     int                 mediaCount          ();
     void                clearMediaItems     ();
     int                 selectedCount       () { return _selectedCount; }
+
+    void                setWiFiPassword     (QString pwd, bool restart);
 
 private:
     static void appendMediaItem(QQmlListProperty<TyphoonMediaItem>*, TyphoonMediaItem*);
@@ -474,7 +474,6 @@ private slots:
     void    _exportMessage              (QString message);
     void    _restart                    ();
     void    _imageFileChanged           ();
-    void    _setWiFiPassword            ();
     void    _isVideoRecordingChanged    ();
 
 private:
@@ -486,6 +485,7 @@ private:
     void                    _distanceSensor     (int minDist, int maxDist, int curDist);
     TyphoonSSIDItem*        _findSsid           (QString ssid, int rssi);
     void                    _clearSSids         ();
+    void                    _resetFirstRun      (bool skipSecond);
 
 private:
 #if defined(__androidx86__)
