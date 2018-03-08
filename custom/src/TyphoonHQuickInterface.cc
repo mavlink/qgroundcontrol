@@ -247,19 +247,22 @@ TyphoonHQuickInterface::shouldWeShowUpdate()
     QSettings settings;
     bool secondRun = settings.value(kSecondRun, true).toBool();
     //-- First run sets the password. Now we check for updates.
+    QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
+    QDate now = QDate::currentDate();
     if(secondRun) {
         settings.setValue(kSecondRun, false);
-        qWarning() << "First run after settings done. Force update dialog";
-        res = true;
-        //-- Reset update timer
-        settings.setValue(kUpdateCheck, QDate::currentDate());
+        // If we run recently, it's just a password change
+        if(lastCheck.year() != now.year()) {
+            qWarning() << "First run after settings done. Force update dialog";
+            res = true;
+            //-- Reset update timer
+            settings.setValue(kUpdateCheck, QDate::currentDate());
+        }
     } else {
         //-- If we have Internet, reset timer
         if(getQGCMapEngine()->isInternetActive()) {
             settings.setValue(kUpdateCheck, QDate::currentDate());
         } else {
-            QDate lastCheck = settings.value(kUpdateCheck, QDate::currentDate()).toDate();
-            QDate now = QDate::currentDate();
             if(lastCheck.daysTo(now) > 29) {
                 //-- Reset update timer
                 settings.setValue(kUpdateCheck, QDate::currentDate());
