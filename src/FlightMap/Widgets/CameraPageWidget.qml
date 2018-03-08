@@ -216,8 +216,8 @@ Column {
                             id:             cameraSelector
                             model:          _isCamera ? _dynamicCameras.cameraLabels : []
                             width:          _editFieldWidth
-                            onActivated:    _dynamicCameras.cameras = index
-                            currentIndex:   0
+                            onActivated:    _dynamicCameras.currentCamera = index
+                            currentIndex:   _dynamicCameras.currentCamera
                         }
                     }
                     //-------------------------------------------
