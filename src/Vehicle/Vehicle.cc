@@ -2206,13 +2206,24 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
     _gimbalPitchLast = pitch;
     _gimbalYawLast = yaw;
 
+    // map pitch [-10, -90] (tilt)
+    // map yaw [-100, 100] (pan)
+
+    // pitch
+    const float pitch_max = -10;
+    const float pitch_min = -90;
+    const float pitch_mid = (pitch_max + pitch_min) / 2;
+
+    // yaw
+    const float yaw_range = 100.0f;
+
     qDebug() << pitch << yaw;
     sendMavCommand(_defaultComponentId,
                    MAV_CMD_DO_MOUNT_CONTROL,
                    false,                               // show errors
-                   -pitch * 120.0,                       // Pitch
+                   pitch * pitch_mid + pitch_mid,                       // Pitch
                    0,                                   // Roll
-                   yaw * 120.0f,                        // Yaw
+                   yaw * yaw_range,                        // Yaw
                    0,                                   // Altitude (not used)
                    0,                                   // Latitude (not used)
                    0,                                   // Longitude (not used)
@@ -2251,9 +2262,9 @@ void Vehicle::initGimbal(void)
                    0,                               // Yes, stabilize pitch
                    0,                               // Yes, stabilize yaw
                    //-- TODO: Angle (0) or Angular Rate (1)?
-                   1,                               // roll input (0 = angle, 1 = angular rate)
-                   1,                               // pitch input (0 = angle, 1 = angular rate)
-                   1);                              // yaw input (0 = angle, 1 = angular rate)
+                   0,                               // roll input (0 = angle, 1 = angular rate)
+                   0,                               // pitch input (0 = angle, 1 = angular rate)
+                   0);                              // yaw input (0 = angle, 1 = angular rate)
 }
 
 void Vehicle::retractGimbal(void)
