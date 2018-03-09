@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### V1.3.6 - Mar 9 2018
+
+*   Moved log save path indicator to the top of the window and made its font larger (DataPilot Planner)
+*   Fixed macOS bundle build (DataPilot Planner)
+
 ### V1.3.5 - Mar 8 2018
 
 *   Use the new "Set Password" API

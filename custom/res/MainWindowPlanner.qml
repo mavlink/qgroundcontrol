@@ -251,7 +251,6 @@ Window {
                 Rectangle {
                     height:             1
                     width:              1
-                    visible:            !activeVehicle
                 }
             }
         }

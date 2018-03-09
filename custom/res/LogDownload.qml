@@ -60,12 +60,20 @@ QGCView {
             anchors.centerIn:   parent
             visible:            !_activeVehicle
         }
+        QGCLabel {
+            id:                 pathLabel
+            text:               qsTr("Logs saved to: ") + QGroundControl.settingsManager.appSettings.logSavePath
+            visible:            _activeVehicle
+            font.pointSize:     ScreenTools.mediumFontPointSize
+            anchors.top:        parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
         RowLayout {
             anchors.right:      parent.right
             anchors.left:       parent.left
-            anchors.top:        parent.top
-            anchors.bottom:     pathLabel.top
-            anchors.bottomMargin: ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.bottom:     parent.bottom
+            anchors.top:        pathLabel.bottom
+            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
             visible:            _activeVehicle
             TableView {
                 id: tableView
@@ -81,6 +89,9 @@ QGCView {
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
                         horizontalAlignment: Text.AlignHCenter
+                        font.pointSize:      ScreenTools.defaultFontPointSize
+                        font.family:         ScreenTools.normalFontFamily
+                        antialiasing:        true
                         text: {
                             var o = controller.model.get(styleData.row)
                             return o ? o.id : ""
@@ -93,6 +104,9 @@ QGCView {
                     width: ScreenTools.defaultFontPixelWidth * 34
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
+                        font.pointSize:      ScreenTools.defaultFontPointSize
+                        font.family:         ScreenTools.normalFontFamily
+                        antialiasing:        true
                         text: {
                             var o = controller.model.get(styleData.row)
                             if (o) {
@@ -115,6 +129,9 @@ QGCView {
                     width: ScreenTools.defaultFontPixelWidth * 18
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
+                        font.pointSize:      ScreenTools.defaultFontPointSize
+                        font.family:         ScreenTools.normalFontFamily
+                        antialiasing:        true
                         horizontalAlignment: Text.AlignRight
                         text: {
                             var o = controller.model.get(styleData.row)
@@ -128,6 +145,9 @@ QGCView {
                     width: ScreenTools.defaultFontPixelWidth * 22
                     horizontalAlignment: Text.AlignHCenter
                     delegate : Text  {
+                        font.pointSize:      ScreenTools.defaultFontPointSize
+                        font.family:         ScreenTools.normalFontFamily
+                        antialiasing:        true
                         horizontalAlignment: Text.AlignHCenter
                         text: {
                             var o = controller.model.get(styleData.row)
@@ -206,13 +226,6 @@ QGCView {
                     onClicked:  controller.cancel()
                 }
             }
-        }
-        QGCLabel {
-            id:         pathLabel
-            text:       qsTr("Logs saved to: ") + QGroundControl.settingsManager.appSettings.logSavePath
-            visible:    _activeVehicle
-            anchors.bottom:             parent.bottom
-            anchors.horizontalCenter:   parent.horizontalCenter
         }
     }
 }
