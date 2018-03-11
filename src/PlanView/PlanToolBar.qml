@@ -301,7 +301,10 @@ Rectangle {
         enabled:                !_controllerSyncInProgress
         visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
         primary:                _controllerDirty
-        onClicked:              planMasterController.upload()
+        onClicked: {
+            focus = true
+            planMasterController.upload()
+        }
 
         PropertyAnimation on opacity {
             easing.type:    Easing.OutQuart
