@@ -168,7 +168,7 @@ SetupPage {
                     function accept() {
                         hideDialog()
                         if (_singleFirmwareMode) {
-                            controller.flashSingleFirmwareMode()
+                            controller.flashSingleFirmwareMode(controller.selectedFirmwareType)
                         } else {
                             var stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
                             if (px4Flow) {
@@ -353,7 +353,7 @@ SetupPage {
                             currentIndex:   controller.selectedFirmwareType
 
                             onActivated: {
-                                controller.selectedFirmwareType = index
+                                controller.selectedFirmwareType = model.get(index).firmwareType
                                 if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
                                     firmwareVersionWarningLabel.visible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
