@@ -30,6 +30,7 @@
 
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
+Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
 /// Connects to Parameter Manager to load/update Facts
 class ParameterManager : public QObject
@@ -153,7 +154,6 @@ private:
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);
-    void _saveToEEPROM(void);
     void _checkInitialLoadComplete(void);
 
     /// First mapping is by component id
@@ -174,6 +174,13 @@ private:
     QString     _versionParam;                  ///< Parameter which contains parameter set version
     int         _parameterSetMajorVersion;      ///< Version for parameter set, -1 if not known
     QObject*    _parameterMetaData;             ///< Opaque data from FirmwarePlugin::loadParameterMetaDataCall
+
+    typedef QPair<int /* FactMetaData::ValueType_t */, QVariant /* Fact::rawValue */> ParamTypeVal;
+    typedef QMap<QString /* parameter name */, ParamTypeVal> CacheMapName2ParamTypeVal;
+
+    QMap<int /* component id */, bool>                                              _debugCacheCRC; ///< true: debug cache crc failure
+    QMap<int /* component id */, CacheMapName2ParamTypeVal>                         _debugCacheMap;
+    QMap<int /* component id */, QMap<QString /* param name */, bool /* seen */>>   _debugCacheParamSeen;
 
     // Wait counts from previous parameter update cycle
     int         _prevWaitingReadParamIndexCount;

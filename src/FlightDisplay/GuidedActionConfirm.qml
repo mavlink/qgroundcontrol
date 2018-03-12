@@ -42,8 +42,26 @@ Rectangle {
         if (hideTrigger) {
             hideTrigger = false
             altitudeSlider.visible = false
+            visibleTimer.stop()
             visible = false
         }
+    }
+
+    function show(immediate) {
+        if (immediate) {
+            visible = true
+        } else {
+            // We delay showing the confirmation for a small amount in order to any other state
+            // changes to propogate through the system. This way only the final state shows up.
+            visibleTimer.restart()
+        }
+    }
+
+    Timer {
+        id:             visibleTimer
+        interval:       1000
+        repeat:         false
+        onTriggered:    visible = true
     }
 
     QGCPalette { id: qgcPal }
