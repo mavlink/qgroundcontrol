@@ -22,12 +22,9 @@
 #include <QVariantAnimation>
 #include <QJsonArray>
 
-/* types for local parameter cache */
-typedef QPair<int /* FactMetaData::ValueType_t */, QVariant /* Fact::rawValue */> ParamTypeVal;
-typedef QMap<QString /* parameter name */, ParamTypeVal> CacheMapName2ParamTypeVal;
-
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "ParameterManagerVerbose1Log")
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "ParameterManagerVerbose2Log")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")
+QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog,  "ParameterManagerDebugCacheFailureLog") // Turn on to debug parameter cache crc misses
 
 Fact ParameterManager::_defaultFact;
 
@@ -139,6 +136,24 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         	_tryCacheHashLoad(vehicleId, componentId, value);
 		}
 		return;
+    }
+
+    // Used to debug cache crc misses (turn on ParameterManagerDebugCacheFailureLog)
+    if (!_initialLoadComplete && !_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
+        if (_debugCacheMap[componentId].contains(parameterName)) {
+            const ParamTypeVal& cacheParamTypeVal = _debugCacheMap[componentId][parameterName];
+            size_t dataSize = FactMetaData::typeToSize(static_cast<FactMetaData::ValueType_t>(cacheParamTypeVal.first));
+            const void *cacheData = cacheParamTypeVal.second.constData();
+
+            const void *vehicleData = value.constData();
+
+            if (memcmp(cacheData, vehicleData, dataSize)) {
+                qDebug() << "Cache/Vehicle values differ for name:cache:actual" << parameterName << value << cacheParamTypeVal.second;
+            }
+            _debugCacheParamSeen[componentId][parameterName] = true;
+        } else {
+            qDebug() << "Parameter missing from cache" << parameterName;
+        }
     }
 
     _initialRequestTimeoutTimer.stop();
@@ -854,6 +869,14 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         _parameterSetMajorVersion = -1;
         _clearMetaData();
         qCInfo(ParameterManagerLog) << "Parameters cache match failed" << qPrintable(QFileInfo(cacheFile).absoluteFilePath());
+        if (ParameterManagerDebugCacheFailureLog().isDebugEnabled()) {
+            _debugCacheCRC[componentId] = true;
+            _debugCacheMap[componentId] = cacheMap;
+            foreach (const QString& name, cacheMap.keys()) {
+                _debugCacheParamSeen[componentId][name] = false;
+            }
+            qgcApp()->showMessage(tr("Parameter cache CRC match failed"));
+        }
     }
 }
 
@@ -1053,6 +1076,18 @@ void ParameterManager::_checkInitialLoadComplete(void)
 
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
     _initialLoadComplete = true;
+
+	// Parameter cache crc failure debugging
+	foreach (int componentId, _debugCacheParamSeen.keys()) {
+        if (!_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
+            foreach (const QString& paramName, _debugCacheParamSeen[componentId].keys()) {
+                if (!_debugCacheParamSeen[componentId][paramName]) {
+                    qDebug() << "Parameter in cache but not on vehicle componentId:Name" << componentId << paramName;
+                }
+            }
+        }
+    }
+    _debugCacheCRC.clear();
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Initial load complete";
 
@@ -1367,6 +1402,7 @@ void ParameterManager::_loadOfflineEditingParams(void)
     _setupCategoryMap();
     _parametersReady = true;
     _initialLoadComplete = true;
+    _debugCacheCRC.clear();
 }
 
 void ParameterManager::saveToJson(int componentId, const QStringList& paramsToSave, QJsonObject& saveObject)
