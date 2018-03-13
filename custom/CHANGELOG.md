@@ -1,5 +1,10 @@
 ## DataPilot Release Changelog
 
+### V1.3.7 - Mar 12 2018
+
+*   Added ParameterCacheDebugFailureLog for cache miss debugging
+*   Fixed focus problems with QGCButton abd QGCCheckBox
+
 ### V1.3.6 - Mar 9 2018
 
 *   Moved log save path indicator to the top of the window and made its font larger (DataPilot Planner)
