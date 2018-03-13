@@ -6,6 +6,8 @@ import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
 
 Button {
+    activeFocusOnPress: true
+
     property bool primary:      false                               ///< primary button for a group of buttons
     property real pointSize:    ScreenTools.defaultFontPointSize    ///< Point size for button text
 
