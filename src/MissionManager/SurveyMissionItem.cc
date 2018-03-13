@@ -554,53 +554,6 @@ void SurveyMissionItem::_swapPoints(QList<QPointF>& points, int index1, int inde
     points[index2] = temp;
 }
 
-QList<QPointF> SurveyMissionItem::_convexPolygon(const QList<QPointF>& polygon)
-{
-    // We use the Graham scan algorithem to convert the possibly concave polygon to a convex polygon
-    // https://en.wikipedia.org/wiki/Graham_scan
-
-    QList<QPointF> workPolygon(polygon);
-
-    // First point must be lowest y-coordinate point
-    for (int i=1; i<workPolygon.count(); i++) {
-        if (workPolygon[i].y() < workPolygon[0].y()) {
-            _swapPoints(workPolygon, i, 0);
-        }
-    }
-
-    // Sort the points by angle with first point
-    for (int i=1; i<workPolygon.count(); i++) {
-        qreal angle = _dp(workPolygon[0], workPolygon[i]);
-        for (int j=i+1; j<workPolygon.count(); j++) {
-            if (_dp(workPolygon[0], workPolygon[j]) > angle) {
-                _swapPoints(workPolygon, i, j);
-                angle = _dp(workPolygon[0], workPolygon[j]);
-            }
-        }
-    }
-
-    // Perform the the Graham scan
-
-    workPolygon.insert(0, workPolygon.last());  // Sentinel for algo stop
-    int convexCount = 1;                        // Number of points on the convex hull.
-
-    for (int i=2; i<=polygon.count(); i++) {
-        while (_ccw(workPolygon[convexCount-1], workPolygon[convexCount], workPolygon[i]) <= 0) {
-            if (convexCount > 1) {
-                convexCount -= 1;
-            } else if (i == polygon.count()) {
-                break;
-            } else {
-                i++;
-            }
-        }
-        convexCount++;
-        _swapPoints(workPolygon, convexCount, i);
-    }
-
-    return workPolygon.mid(1, convexCount);
-}
-
 /// Returns true if the current grid angle generates north/south oriented transects
 bool SurveyMissionItem::_gridAngleIsNorthSouthTransects()
 {
@@ -695,8 +648,6 @@ void SurveyMissionItem::_generateGrid(void)
         qCDebug(SurveyMissionItemLog) << "vertex:x:y" << vertex << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
-    polygonPoints = _convexPolygon(polygonPoints);
-
     double coveredArea = 0.0;
     for (int i=0; i<polygonPoints.count(); i++) {
         if (i != 0) {
@@ -714,8 +665,6 @@ void SurveyMissionItem::_generateGrid(void)
     _adjustTransectsToEntryPointLocation(_transectSegments);
     _appendGridPointsFromTransects(_transectSegments);
     if (_refly90Degrees) {
-        QVariantList reflyPointsGeo;
-
         transectSegments.clear();
         cameraShots += _gridGenerator(polygonPoints, transectSegments, true /* refly */);
         _convertTransectToGeo(transectSegments, tangentOrigin, _reflyTransectSegments);
@@ -844,28 +793,41 @@ void SurveyMissionItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
 void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
 {
     resultLines.clear();
-    for (int i=0; i<lineList.count(); i++) {
-        int foundCount = 0;
-        QLineF intersectLine;
-        const QLineF& line = lineList[i];
 
+    for (int i=0; i<lineList.count(); i++) {
+        const QLineF& line = lineList[i];
+        QList<QPointF> intersections;
+
+        // Intersect the line with all the polygon edges
         for (int j=0; j<polygon.count()-1; j++) {
             QPointF intersectPoint;
             QLineF polygonLine = QLineF(polygon[j], polygon[j+1]);
             if (line.intersect(polygonLine, &intersectPoint) == QLineF::BoundedIntersection) {
-                if (foundCount == 0) {
-                    foundCount++;
-                    intersectLine.setP1(intersectPoint);
-                } else {
-                    foundCount++;
-                    intersectLine.setP2(intersectPoint);
-                    break;
-                }
+                intersections.append(intersectPoint);
             }
         }
 
-        if (foundCount == 2) {
-            resultLines += intersectLine;
+        // We now have one or more intersection points all along the same line. Find the two
+        // which are furthest away from each other to form the transect.
+        if (intersections.count() > 1) {
+            QPointF firstPoint;
+            QPointF secondPoint;
+            double currentMaxDistance = 0;
+
+            for (int i=0; i<intersections.count(); i++) {
+                for (int j=0; j<intersections.count(); j++) {
+                    QLineF lineTest(intersections[i], intersections[j]);
+\
+                    double newMaxDistance = lineTest.length();
+                    if (newMaxDistance > currentMaxDistance) {
+                        firstPoint = intersections[i];
+                        secondPoint = intersections[j];
+                        currentMaxDistance = newMaxDistance;
+                    }
+                }
+            }
+
+            resultLines += QLineF(firstPoint, secondPoint);
         }
     }
 }
