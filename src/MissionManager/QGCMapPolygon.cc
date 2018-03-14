@@ -258,6 +258,19 @@ void QGCMapPolygon::appendVertex(const QGeoCoordinate& coordinate)
     emit pathChanged();
 }
 
+void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
+{
+    QList<QObject*> objects;
+
+    foreach (const QGeoCoordinate& coordinate, coordinates) {
+        objects.append(new QGCQGeoCoordinate(coordinate, this));
+        _polygonPath.append(QVariant::fromValue(coordinate));
+    }
+    _polygonModel.append(objects);
+    emit pathChanged();
+}
+
+
 void QGCMapPolygon::_polygonModelDirtyChanged(bool dirty)
 {
     if (dirty) {
@@ -509,9 +522,7 @@ bool QGCMapPolygon::loadKMLFile(const QString& kmlFile)
     }
 
     clear();
-    for (int i=0; i<rgCoords.count(); i++) {
-        appendVertex(rgCoords[i]);
-    }
+    appendVertices(rgCoords);
 
     return true;
 }
