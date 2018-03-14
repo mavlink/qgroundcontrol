@@ -1,5 +1,11 @@
 ## DataPilot Release Changelog
 
+### V1.3.8 - Mar 14 2018
+
+*   Fix KML load perf problem
+*   Fix complex survey polygon grid generation bug
+*   Fix Resume Mission showing up incorrectly
+
 ### V1.3.7 - Mar 12 2018
 
 *   Added ParameterCacheDebugFailureLog for cache miss debugging
