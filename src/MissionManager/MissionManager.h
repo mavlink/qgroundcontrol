@@ -38,10 +38,6 @@ public:
     /// from mission start to resumeIndex in the generate mission.
     void generateResumeMission(int resumeIndex);
 
-signals:
-    void currentIndexChanged        (int currentIndex);
-    void lastCurrentIndexChanged    (int lastCurrentIndex);
-
 private slots:
     void _mavlinkMessageReceived(const mavlink_message_t& message);
 

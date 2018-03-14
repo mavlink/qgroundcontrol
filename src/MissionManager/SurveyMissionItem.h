@@ -217,7 +217,6 @@ private:
     qreal _ccw(QPointF pt1, QPointF pt2, QPointF pt3);
     qreal _dp(QPointF pt1, QPointF pt2);
     void _swapPoints(QList<QPointF>& points, int index1, int index2);
-    QList<QPointF> _convexPolygon(const QList<QPointF>& polygon);
     void _reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects);
     void _reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects);
     void _adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects);

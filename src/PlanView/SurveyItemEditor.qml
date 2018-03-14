@@ -63,6 +63,7 @@ Rectangle {
                 }
             }
         }
+        recalcFromCameraValues()
     }
 
     function recalcFromCameraValues() {
