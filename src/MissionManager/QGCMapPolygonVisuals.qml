@@ -180,6 +180,7 @@ Item {
         fileExtension:  "kml"
         onAcceptedForLoad: {
             mapPolygon.loadKMLFile(file)
+            mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
     }

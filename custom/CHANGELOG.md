@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.9 - Mar 14 2018
+
+*   Position map after KML Load
+
 ### V1.3.8 - Mar 14 2018
 
 *   Fix KML load perf problem
