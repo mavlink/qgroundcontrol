@@ -56,7 +56,7 @@ SetupPage {
             readonly property int _defaultFimwareTypeAPM:   3
 
             property var    _defaultFirmwareFact:   QGroundControl.settingsManager.appSettings.defaultFirmwareType
-            property bool   _defaultFirmwareIsPX4:  _defaultFirmwareFact.rawValue == _defaultFimwareTypePX4
+            property bool   _defaultFirmwareIsPX4:  _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4
 
             property string firmwareWarningMessage
             property bool   controllerCompleted:      false
@@ -168,7 +168,7 @@ SetupPage {
                     function accept() {
                         hideDialog()
                         if (_singleFirmwareMode) {
-                            controller.flashSingleFirmwareMode()
+                            controller.flashSingleFirmwareMode(controller.selectedFirmwareType)
                         } else {
                             var stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
                             if (px4Flow) {
@@ -353,14 +353,14 @@ SetupPage {
                             currentIndex:   controller.selectedFirmwareType
 
                             onActivated: {
-                                controller.selectedFirmwareType = index
-                                if (model.get(index).firmwareType == FirmwareUpgradeController.BetaFirmware) {
+                                controller.selectedFirmwareType = model.get(index).firmwareType
+                                if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
                                     firmwareVersionWarningLabel.visible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
                                             qsTr("This firmware version is ONLY intended for beta testers. ") +
                                             qsTr("Although it has received FLIGHT TESTING, it represents actively changed code. ") +
                                             qsTr("Do NOT use for normal operation.")
-                                } else if (model.get(index).firmwareType == FirmwareUpgradeController.DeveloperFirmware) {
+                                } else if (model.get(index).firmwareType === FirmwareUpgradeController.DeveloperFirmware) {
                                     firmwareVersionWarningLabel.visible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: CONTINUOUS BUILD FIRMWARE. ") +
                                             qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +

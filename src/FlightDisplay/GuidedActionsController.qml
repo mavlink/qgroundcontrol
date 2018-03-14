@@ -185,9 +185,11 @@ Item {
 
     // Called when an action is about to be executed in order to confirm
     function confirmAction(actionCode, actionData) {
+        var showImmediate = true
         closeAll()
         confirmDialog.action = actionCode
         confirmDialog.actionData = actionData
+        confirmDialog.hideTrigger = true
         _actionData = actionData
         switch (actionCode) {
         case actionArm:
@@ -219,6 +221,7 @@ Item {
             altitudeSlider.visible = true
             break;
         case actionStartMission:
+            showImmediate = false
             confirmDialog.title = startMissionTitle
             confirmDialog.message = startMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission })
@@ -229,11 +232,13 @@ Item {
             confirmDialog.hideTrigger = true
             break;
         case actionContinueMission:
+            showImmediate = false
             confirmDialog.title = continueMissionTitle
             confirmDialog.message = continueMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showContinueMission })
             break;
         case actionResumeMission:
+            showImmediate = false
             confirmDialog.title = resumeMissionTitle
             confirmDialog.message = resumeMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showResumeMission })
@@ -308,11 +313,13 @@ Item {
             console.warn("Unknown actionCode", actionCode)
             return
         }
-        confirmDialog.visible = true
+        confirmDialog.show(showImmediate)
     }
 
     // Executes the specified action
     function executeAction(actionCode, actionData) {
+        var i;
+        var rgVehicle;
         switch (actionCode) {
         case actionRTL:
             _activeVehicle.guidedModeRTL()
@@ -336,10 +343,9 @@ Item {
             _activeVehicle.startMission()
             break
         case actionMVStartMission:
-            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
-            for (var i=0; i<rgVehicle.count; i++) {
-                var vehicle = rgVehicle.get(i)
-                vehicle.startMission()
+            rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (i = 0; i < rgVehicle.count; i++) {
+                rgVehicle.get(i).startMission()
             }
             break
         case actionArm:
@@ -370,10 +376,9 @@ Item {
             _activeVehicle.pauseVehicle()
             break
         case actionMVPause:
-            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
-            for (var i=0; i<rgVehicle.count; i++) {
-                var vehicle = rgVehicle.get(i)
-                vehicle.pauseVehicle()
+            rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (i = 0; i < rgVehicle.count; i++) {
+                rgVehicle.get(i).pauseVehicle()
             }
             break
         case actionVtolTransitionToFwdFlight:

@@ -57,8 +57,17 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
         case FactMetaData::valueTypeUint32:
             _mavParamType = MAV_PARAM_EXT_TYPE_UINT32;
             break;
+        case FactMetaData::valueTypeUint64:
+            _mavParamType = MAV_PARAM_EXT_TYPE_UINT64;
+            break;
+        case FactMetaData::valueTypeInt64:
+            _mavParamType = MAV_PARAM_EXT_TYPE_INT64;
+            break;
         case FactMetaData::valueTypeFloat:
             _mavParamType = MAV_PARAM_EXT_TYPE_REAL32;
+            break;
+        case FactMetaData::valueTypeDouble:
+            _mavParamType = MAV_PARAM_EXT_TYPE_REAL64;
             break;
             //-- String and custom are the same for now
         case FactMetaData::valueTypeString:
@@ -145,8 +154,17 @@ QGCCameraParamIO::_sendParameter()
         case FactMetaData::valueTypeUint32:
             union_value.param_uint32 = (uint32_t)_fact->rawValue().toUInt();
             break;
+        case FactMetaData::valueTypeInt64:
+            union_value.param_int64 = (int64_t)_fact->rawValue().toLongLong();
+            break;
+        case FactMetaData::valueTypeUint64:
+            union_value.param_uint64 = (uint64_t)_fact->rawValue().toULongLong();
+            break;
         case FactMetaData::valueTypeFloat:
             union_value.param_float = _fact->rawValue().toFloat();
+            break;
+        case FactMetaData::valueTypeDouble:
+            union_value.param_double = _fact->rawValue().toDouble();
             break;
             //-- String and custom are the same for now
         case FactMetaData::valueTypeString:
@@ -281,6 +299,12 @@ QGCCameraParamIO::_valueFromMessage(const char* value, uint8_t param_type)
             break;
         case MAV_PARAM_EXT_TYPE_INT32:
             var = QVariant(u.param_int32);
+            break;
+        case MAV_PARAM_EXT_TYPE_UINT64:
+            var = QVariant((qulonglong)u.param_uint64);
+            break;
+        case MAV_PARAM_EXT_TYPE_INT64:
+            var = QVariant((qlonglong)u.param_int64);
             break;
         case MAV_PARAM_EXT_TYPE_CUSTOM:
             var = QVariant(QByteArray(value, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN));

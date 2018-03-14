@@ -175,9 +175,9 @@ Item {
             id:             arrowCanvas
             anchors.fill:   parent
 
-            property var arrowPoint: Qt.point(0, 0)
-            property var arrowBase1: Qt.point(0, 0)
-            property var arrowBase2: Qt.point(0, 0)
+            property point arrowPoint: Qt.point(0, 0)
+            property point arrowBase1: Qt.point(0, 0)
+            property point arrowBase2: Qt.point(0, 0)
 
             onPaint: {
                 var context = getContext("2d")

@@ -272,7 +272,7 @@ QGCView {
     QGCFileDialog {
         id:             fileDialog
         qgcView:        _qgcView
-        property var plan:           true
+        property bool plan: true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
         fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension

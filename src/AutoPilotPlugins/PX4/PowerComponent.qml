@@ -143,7 +143,7 @@ SetupPage {
 
                                     onClicked:  {
                                         var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                                        if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
+                                        if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue)) {
                                             return
                                         }
                                         var newVoltageDivider = (measuredVoltageValue * battVoltageDivider.value) / controller.vehicle.battery.voltage.value
@@ -201,7 +201,7 @@ SetupPage {
 
                                     onClicked:  {
                                         var measuredCurrentValue = parseFloat(measuredCurrent.text)
-                                        if (measuredCurrentValue == 0) {
+                                        if (measuredCurrentValue === 0) {
                                             return
                                         }
                                         var newAmpsPerVolt = (measuredCurrentValue * battAmpsPerVolt.value) / controller.vehicle.battery.current.value
@@ -379,7 +379,7 @@ SetupPage {
                 QGCCheckBox {
                     id:         showUAVCAN
                     text:       qsTr("Show UAVCAN Settings")
-                    checked:    uavcanEnable.rawValue != 0
+                    checked:    uavcanEnable ? uavcanEnable.rawValue !== 0 : false
                 }
 
                 QGCGroupBox {

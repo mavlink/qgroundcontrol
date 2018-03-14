@@ -366,9 +366,15 @@ SetupPage {
                                 id:         enabledCheckBox
                                 enabled:    _activeJoystick ? _activeJoystick.calibrated : false
                                 text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
-                                checked:    _activeVehicle.joystickEnabled
 
-                                onClicked:  _activeVehicle.joystickEnabled = checked
+                                onClicked:  _activeJoystick.outputEnabled = checked
+
+                                Connections {
+                                    target: _activeJoystick
+                                    onOutputEnabledChanged: {
+                                        enabledCheckBox.checked=enabled
+                                    }
+                                }
 
                                 Connections {
                                     target: joystickManager

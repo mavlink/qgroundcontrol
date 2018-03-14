@@ -68,7 +68,7 @@ QGCViewDialog {
             color:  qgcPal.button
 
             property var    mavCmdInfo: modelData
-            property var    textColor:  qgcPal.buttonText
+            property color  textColor:  qgcPal.buttonText
 
             Column {
                 id:                 commandColumn

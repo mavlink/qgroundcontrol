@@ -6,6 +6,8 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 CheckBox {
+    activeFocusOnPress: true
+
     property var __qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     style: CheckBoxStyle {

@@ -49,7 +49,7 @@ Item {
     /// are specified the map will center to fitHomePosition()
     function fitMapViewportToAllCoordinates(coordList) {
         var mapFitViewport = Qt.rect(0, 0, map.width, map.height)
-        if (coordList.length == 0) {
+        if (coordList.length === 0) {
             var homeCoord = fitHomePosition()
             if (homeCoord.isValid) {
                 map.center = homeCoord
@@ -113,16 +113,17 @@ Item {
     }
 
     function addFenceItemCoordsForFit(coordList) {
+        var i
         var homePosition = fitHomePosition()
         if (homePosition.isValid && _geoFenceController.circleEnabled) {
             var azimuthList = [ 0, 180, 90, 270 ]
-            for (var i=0; i<azimuthList.length; i++) {
+            for (i = 0; i < azimuthList.length; i++) {
                 var edgeCoordinate = homePosition.atDistanceAndAzimuth(_geoFenceController.circleRadius, azimuthList[i])
                 coordList.push(edgeCoordinate)
             }
         }
         if (_geoFenceController.polygonEnabled && _geoFenceController.mapPolygon.path.count > 2) {
-            for (var i=0; i<_geoFenceController.mapPolygon.path.count; i++) {
+            for (i = 0; i < _geoFenceController.mapPolygon.path.count; i++) {
                 coordList.push(_geoFenceController.mapPolygon.path[i])
             }
         }

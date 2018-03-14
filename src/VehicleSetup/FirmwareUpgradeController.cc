@@ -114,9 +114,9 @@ void FirmwareUpgradeController::flash(const FirmwareIdentifier& firmwareId)
     flash(firmwareId.autopilotStackType, firmwareId.firmwareType, firmwareId.firmwareVehicleType);
 }
 
-void FirmwareUpgradeController::flashSingleFirmwareMode(void)
+void FirmwareUpgradeController::flashSingleFirmwareMode(FirmwareType_t firmwareType)
 {
-    flash(SingleFirmwareMode, StableFirmware, DefaultVehicleFirmware);
+    flash(SingleFirmwareMode, firmwareType, DefaultVehicleFirmware);
 }
 
 void FirmwareUpgradeController::cancel(void)
