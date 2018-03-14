@@ -32,6 +32,11 @@ const char* Joystick::_roverTXModeSettingsKey =         "TXMode_Rover";
 const char* Joystick::_vtolTXModeSettingsKey =          "TXMode_VTOL";
 const char* Joystick::_submarineTXModeSettingsKey =     "TXMode_Submarine";
 
+const char* Joystick::_buttonActionArm =                QT_TR_NOOP("Arm");
+const char* Joystick::_buttonActionDisarm =             QT_TR_NOOP("Disarm");
+const char* Joystick::_buttonActionVTOLFixedWing =      QT_TR_NOOP("VTOL: Fixed Wing");
+const char* Joystick::_buttonActionVTOLMultiRotor =     QT_TR_NOOP("VTOL: Multi-Rotor");
+
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
     "PitchAxis",
@@ -84,6 +89,10 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
 
 Joystick::~Joystick()
 {
+    // Crash out of the thread if it is still running
+    terminate();
+    wait();
+
     delete[] _rgAxisValues;
     delete[] _rgCalibration;
     delete[] _rgButtonValues;
@@ -638,11 +647,12 @@ QStringList Joystick::actions(void)
 {
     QStringList list;
 
-    list << "Arm" << "Disarm";
+    list << _buttonActionArm << _buttonActionDisarm;
 
     if (_activeVehicle) {
         list << _activeVehicle->flightModes();
     }
+    list << _buttonActionVTOLFixedWing << _buttonActionVTOLMultiRotor;
 
     return list;
 }
@@ -787,10 +797,14 @@ void Joystick::_buttonAction(const QString& action)
         return;
     }
 
-    if (action == "Arm") {
+    if (action == _buttonActionArm) {
         _activeVehicle->setArmed(true);
-    } else if (action == "Disarm") {
+    } else if (action == _buttonActionDisarm) {
         _activeVehicle->setArmed(false);
+    } else if (action == _buttonActionVTOLFixedWing) {
+        _activeVehicle->setVtolInFwdFlight(true);
+    } else if (action == _buttonActionVTOLMultiRotor) {
+        _activeVehicle->setVtolInFwdFlight(false);
     } else if (_activeVehicle->flightModes().contains(action)) {
         _activeVehicle->setFlightMode(action);
     } else {
