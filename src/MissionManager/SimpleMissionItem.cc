@@ -85,7 +85,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 }
 
-SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missionItem, QObject* parent)
+SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent)
     : VisualMissionItem(vehicle, parent)
     , _missionItem(missionItem)
     , _rawEdit(false)
@@ -111,11 +111,16 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, const MissionItem& missio
     _altitudeRelativeToHomeFact.setRawValue(true);
     _isCurrentItem = missionItem.isCurrentItem();
 
-    _setupMetaData();
+    // In !editMode we skip some of the intialization to save memory
+    if (editMode) {
+        _setupMetaData();
+    }
     _connectSignals();
     _updateOptionalSections();
     _syncFrameToAltitudeRelativeToHome();
-    _rebuildFacts();
+    if (editMode) {
+        _rebuildFacts();
+    }
 }
 
 SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* parent)
@@ -349,19 +354,21 @@ QString SimpleMissionItem::commandName(void) const
 QString SimpleMissionItem::abbreviation() const
 {
     if (homePosition())
-        return QStringLiteral("H");
+        return tr("H");
 
     switch(command()) {
+    case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
+        return tr("Takeoff");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
+        return tr("Land");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
+        return tr("VTOL Takeoff");
+    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
+        return tr("VTOL Land");
+    case MavlinkQmlSingleton::MAV_CMD_DO_SET_ROI:
+        return tr("ROI");
     default:
         return QString();
-    case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
-        return QStringLiteral("Takeoff");
-    case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
-        return QStringLiteral("Land");
-    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
-        return QStringLiteral("VTOL Takeoff");
-    case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
-        return QStringLiteral("VTOL Land");
     }
 }
 
@@ -407,9 +414,10 @@ void SimpleMissionItem::_rebuildTextFieldFacts(void)
         const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
 
         for (int i=1; i<=7; i++) {
-            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
+            bool showUI;
+            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
 
-            if (paramInfo && paramInfo->enumStrings().count() == 0 && !paramInfo->nanUnchanged()) {
+            if (showUI && paramInfo && paramInfo->enumStrings().count() == 0 && !paramInfo->nanUnchanged()) {
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
@@ -451,9 +459,10 @@ void SimpleMissionItem::_rebuildNaNFacts(void)
         const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
 
         for (int i=1; i<=7; i++) {
-            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
+            bool showUI;
+            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
 
-            if (paramInfo && paramInfo->nanUnchanged()) {
+            if (showUI && paramInfo && paramInfo->nanUnchanged()) {
                 // Show hide Heading field on waypoint based on vehicle yaw to next waypoint setting. This needs to come from the actual vehicle if it exists
                 // and not _vehicle which is always offline.
                 Vehicle* firmwareVehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
@@ -510,9 +519,10 @@ void SimpleMissionItem::_rebuildComboBoxFacts(void)
         }
 
         for (int i=1; i<=7; i++) {
-            const MissionCmdParamInfo* paramInfo = _commandTree->getUIInfo(_vehicle, command)->getParamInfo(i);
+            bool showUI;
+            const MissionCmdParamInfo* paramInfo = _commandTree->getUIInfo(_vehicle, command)->getParamInfo(i, showUI);
 
-            if (paramInfo && paramInfo->enumStrings().count() != 0) {
+            if (showUI && paramInfo && paramInfo->enumStrings().count() != 0) {
                 Fact*               paramFact =     rgParamFacts[i-1];
                 FactMetaData*       paramMetaData = rgParamMetaData[i-1];
 
@@ -628,7 +638,8 @@ void SimpleMissionItem::setDefaultsForCommand(void)
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
     if (uiInfo) {
         for (int i=1; i<=7; i++) {
-            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
+            bool showUI;
+            const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
             if (paramInfo) {
                 Fact* rgParamFacts[7] = { &_missionItem._param1Fact, &_missionItem._param2Fact, &_missionItem._param3Fact, &_missionItem._param4Fact, &_missionItem._param5Fact, &_missionItem._param6Fact, &_missionItem._param7Fact };
                 rgParamFacts[paramInfo->param()-1]->setRawValue(paramInfo->defaultValue());
@@ -715,6 +726,11 @@ double SimpleMissionItem::specifiedGimbalYaw(void)
     return _cameraSection->available() ? _cameraSection->specifiedGimbalYaw() : missionItem().specifiedGimbalYaw();
 }
 
+double SimpleMissionItem::specifiedGimbalPitch(void)
+{
+    return _cameraSection->available() ? _cameraSection->specifiedGimbalPitch() : missionItem().specifiedGimbalPitch();
+}
+
 bool SimpleMissionItem::scanForSections(QmlObjectListModel* visualItems, int scanIndex, Vehicle* vehicle)
 {
     bool sectionFound = false;
@@ -752,10 +768,12 @@ void SimpleMissionItem::_updateOptionalSections(void)
         _speedSection->setAvailable(true);
     }
 
-    connect(_cameraSection, &CameraSection::dirtyChanged,               this, &SimpleMissionItem::_sectionDirtyChanged);
-    connect(_cameraSection, &CameraSection::itemCountChanged,           this, &SimpleMissionItem::_updateLastSequenceNumber);
-    connect(_cameraSection, &CameraSection::availableChanged,           this, &SimpleMissionItem::specifiedGimbalYawChanged);
-    connect(_cameraSection, &CameraSection::specifiedGimbalYawChanged,  this, &SimpleMissionItem::specifiedGimbalYawChanged);
+    connect(_cameraSection, &CameraSection::dirtyChanged,                   this, &SimpleMissionItem::_sectionDirtyChanged);
+    connect(_cameraSection, &CameraSection::itemCountChanged,               this, &SimpleMissionItem::_updateLastSequenceNumber);
+    connect(_cameraSection, &CameraSection::availableChanged,               this, &SimpleMissionItem::specifiedGimbalYawChanged);
+    connect(_cameraSection, &CameraSection::availableChanged,               this, &SimpleMissionItem::specifiedGimbalPitchChanged);
+    connect(_cameraSection, &CameraSection::specifiedGimbalPitchChanged,    this, &SimpleMissionItem::specifiedGimbalPitchChanged);
+    connect(_cameraSection, &CameraSection::specifiedGimbalYawChanged,      this, &SimpleMissionItem::specifiedGimbalYawChanged);
 
     connect(_speedSection,  &SpeedSection::dirtyChanged,                this, &SimpleMissionItem::_sectionDirtyChanged);
     connect(_speedSection,  &SpeedSection::itemCountChanged,            this, &SimpleMissionItem::_updateLastSequenceNumber);
@@ -808,6 +826,23 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
         default:
             _missionItem.setParam7(newAltitude);
             break;
+        }
+    }
+}
+
+void SimpleMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+{
+    // If user has not already set speed/gimbal, set defaults from previous items.
+    VisualMissionItem::setMissionFlightStatus(missionFlightStatus);
+    if (_speedSection->available() && !_speedSection->specifyFlightSpeed() && !qFuzzyCompare(_speedSection->flightSpeed()->rawValue().toDouble(), missionFlightStatus.vehicleSpeed)) {
+        _speedSection->flightSpeed()->setRawValue(missionFlightStatus.vehicleSpeed);
+    }
+    if (_cameraSection->available() && !_cameraSection->specifyGimbal()) {
+        if (!qIsNaN(missionFlightStatus.gimbalYaw) && !qFuzzyCompare(_cameraSection->gimbalYaw()->rawValue().toDouble(), missionFlightStatus.gimbalYaw)) {
+            _cameraSection->gimbalYaw()->setRawValue(missionFlightStatus.gimbalYaw);
+        }
+        if (!qIsNaN(missionFlightStatus.gimbalPitch) && !qFuzzyCompare(_cameraSection->gimbalPitch()->rawValue().toDouble(), missionFlightStatus.gimbalPitch)) {
+            _cameraSection->gimbalPitch()->setRawValue(missionFlightStatus.gimbalPitch);
         }
     }
 }

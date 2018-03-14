@@ -46,7 +46,7 @@ Rectangle {
         } else {
             var index = -1
             for (index=0; index<_cameraList.length; index++) {
-                if (_cameraList[index] == missionItem.camera.value) {
+                if (_cameraList[index] === missionItem.camera.value) {
                     break;
                 }
             }
@@ -243,7 +243,7 @@ Rectangle {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        missionItem.manualGrid.value == true
+                visible:        missionItem.manualGrid.value
 
                 QGCCheckBox {
                     id:                 cameraTriggerDistanceCheckBox
@@ -273,7 +273,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        gridTypeCombo.currentIndex != _gridTypeManual
+            visible:        gridTypeCombo.currentIndex !== _gridTypeManual
 
             Row {
                 spacing:                    _margin
@@ -409,7 +409,7 @@ Rectangle {
             FactCheckBox {
                 text:       qsTr("Take images in turnarounds")
                 fact:       missionItem.cameraTriggerInTurnaround
-                enabled:    !missionItem.hoverAndCapture.rawValue
+                enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
             }
 
             SectionHeader {
@@ -443,7 +443,7 @@ Rectangle {
                         id:                     windRoseButton
                         anchors.verticalCenter: angleText.verticalCenter
                         iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        visible:                _vehicle.fixedWing
+                        visible:                _vehicle ? _vehicle.fixedWing : false
 
                         onClicked: {
                             windRosePie.angle = Number(gridAngleText.text)
@@ -522,7 +522,7 @@ Rectangle {
         SectionHeader {
             id:         manualGridHeader
             text:       qsTr("Grid")
-            visible:    gridTypeCombo.currentIndex == _gridTypeManual
+            visible:    gridTypeCombo.currentIndex === _gridTypeManual
         }
 
         GridLayout {
@@ -547,7 +547,7 @@ Rectangle {
                     anchors.verticalCenter: manualAngleText.verticalCenter
                     Layout.columnSpan:      1
                     iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    visible:                _vehicle.fixedWing
+                    visible:                _vehicle ? _vehicle.fixedWing : false
 
                     onClicked: {
                         var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
@@ -605,7 +605,7 @@ Rectangle {
             FactCheckBox {
                 text:               qsTr("Take images in turnarounds")
                 fact:               missionItem.cameraTriggerInTurnaround
-                enabled:            !missionItem.hoverAndCapture.rawValue
+                enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
                 Layout.columnSpan:  2
             }
 

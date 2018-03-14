@@ -47,9 +47,9 @@ public:
     static const char* jsonComplexItemTypeKey;
 
 signals:
-    void complexDistanceChanged     (double complexDistance);
+    void complexDistanceChanged     (void);
     void greatestDistanceToChanged  (void);
-    void additionalTimeDelayChanged (double additionalTimeDelay);
+    void additionalTimeDelayChanged (void);
 };
 
 #endif

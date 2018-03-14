@@ -17,7 +17,7 @@
 #ifndef VIDEO_STREAMING_H
 #define VIDEO_STREAMING_H
 
-extern void initializeVideoStreaming    (int &argc, char *argv[]);
+extern void initializeVideoStreaming    (int &argc, char *argv[], char* filename, char* debuglevel);
 extern void shutdownVideoStreaming      ();
 
 #endif // VIDEO_STREAMING_H

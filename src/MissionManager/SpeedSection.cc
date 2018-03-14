@@ -39,7 +39,7 @@ SpeedSection::SpeedSection(Vehicle* vehicle, QObject* parent)
     _flightSpeedFact.setRawValue(flightSpeed);
 
     connect(this,               &SpeedSection::specifyFlightSpeedChanged,   this, &SpeedSection::settingsSpecifiedChanged);
-    connect(&_flightSpeedFact,  &Fact::valueChanged,                        this, &SpeedSection::_setDirty);
+    connect(&_flightSpeedFact,  &Fact::valueChanged,                        this, &SpeedSection::_flightSpeedChanged);
 
     connect(this,               &SpeedSection::specifyFlightSpeedChanged,   this, &SpeedSection::_updateSpecifiedFlightSpeed);
     connect(&_flightSpeedFact,  &Fact::valueChanged,                        this, &SpeedSection::_updateSpecifiedFlightSpeed);
@@ -58,11 +58,6 @@ void SpeedSection::setAvailable(bool available)
             emit availableChanged(available);
         }
     }
-}
-
-void SpeedSection::_setDirty(void)
-{
-    setDirty(true);
 }
 
 void SpeedSection::setDirty(bool dirty)
@@ -146,6 +141,16 @@ double SpeedSection::specifiedFlightSpeed(void) const
 
 void SpeedSection::_updateSpecifiedFlightSpeed(void)
 {
-    emit specifiedFlightSpeedChanged(specifiedFlightSpeed());
+    if (_specifyFlightSpeed) {
+        emit specifiedFlightSpeedChanged(specifiedFlightSpeed());
+    }
 }
 
+void SpeedSection::_flightSpeedChanged(void)
+{
+    // We only set the dirty bit if specify flight speed it set. This allows us to change defaults for flight speed
+    // without affecting dirty.
+    if (_specifyFlightSpeed) {
+        setDirty(true);
+    }
+}

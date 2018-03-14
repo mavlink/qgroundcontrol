@@ -36,9 +36,11 @@ private slots:
     void _testCameraTrigger(void);
     void _testGridAngle(void);
     void _testEntryLocation(void);
+    void _testItemCount(void);
 
 private:
     double _clampGridAngle180(double gridAngle);
+    void _setPolygon(void);
 
     enum {
         gridPointsChangedIndex = 0,

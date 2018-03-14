@@ -26,23 +26,26 @@ import QGroundControl.FactControls      1.0
 /// Camera page for Instrument Panel PageView
 Column {
     width:      pageWidth
-    spacing:    ScreenTools.defaultFontPixelHeight
+    spacing:    ScreenTools.defaultFontPixelHeight * 0.25
 
     property bool   showSettingsIcon:       _camera !== null
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
     property bool   _cameraVideoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === 1 : false
     property bool   _cameraPhotoMode:       _isCamera ? _dynamicCameras.cameras.get(0).cameraMode === 0 : false
-    property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
+    property bool   _cameraPhotoIdle:       _isCamera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
+    property bool   _cameraElapsedMode:     _isCamera && _camera.cameraMode === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
     property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
     property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
     property bool   _hasModes:              _isCamera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
+    property bool   _noStorage:             _camera && _camera.storageTotal === 0
 
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -60,13 +63,21 @@ Column {
     //-- Actual controller
     QGCLabel {
         id:             cameraLabel
-        text:           _isCamera ? _dynamicCameras.cameras.get(0).modelName : qsTr("Camera")
+        text:           _isCamera ? _camera.modelName : qsTr("Camera")
         visible:        _isCamera
         font.pointSize: ScreenTools.smallFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
     }
+    QGCLabel {
+        text: _camera ? qsTr("Free Space: ") + _camera.storageFreeStr : ""
+        font.pointSize: ScreenTools.smallFontPointSize
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: _camera && !_noStorage
+    }
     //-- Camera Mode (visible only if camera has modes)
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camMode.visible; }
     Rectangle {
+        id:         camMode
         width:      _hasModes ? ScreenTools.defaultFontPixelWidth * 8 : 0
         height:     _hasModes ? ScreenTools.defaultFontPixelWidth * 4 : 0
         color:      qgcPal.button
@@ -129,19 +140,21 @@ Column {
         }
     }
     //-- Shutter
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camShutter.visible; }
     Rectangle {
+        id:         camShutter
         color:      Qt.rgba(0,0,0,0)
         width:      ScreenTools.defaultFontPixelWidth * 6
         height:     width
         radius:     width * 0.5
-        visible:        _isCamera
+        visible:    _isCamera
         border.color: qgcPal.buttonText
         border.width: 3
         anchors.horizontalCenter: parent.horizontalCenter
         Rectangle {
-            width:      parent.width * (_videoRecording ? 0.5 : 0.75)
+            width:      parent.width * (_videoRecording || (_cameraPhotoMode && !_cameraPhotoIdle && _cameraElapsedMode) ? 0.5 : 0.75)
             height:     width
-            radius:     _videoRecording ? 0 : width * 0.5
+            radius:     _videoRecording || (_cameraPhotoMode && !_cameraPhotoIdle && _cameraElapsedMode) ? 0 : width * 0.5
             color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
             anchors.centerIn:   parent
         }
@@ -152,10 +165,27 @@ Column {
                 if(_cameraVideoMode) {
                     _camera.toggleVideo()
                 } else {
-                    _camera.takePhoto()
+                    if(_cameraPhotoMode && !_cameraPhotoIdle && _cameraElapsedMode) {
+                        _camera.stopTakePhoto()
+                    } else {
+                        _camera.takePhoto()
+                    }
                 }
             }
         }
+    }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: _isCamera; }
+    QGCLabel {
+        text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
+        font.pointSize: ScreenTools.smallFontPointSize
+        visible: _cameraVideoMode
+        anchors.horizontalCenter: parent.horizontalCenter
+    }
+    QGCLabel {
+        text: _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+        font.pointSize: ScreenTools.smallFontPointSize
+        visible: _cameraPhotoMode
+        anchors.horizontalCenter: parent.horizontalCenter
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     Component {
@@ -227,6 +257,54 @@ Column {
                                     anchors.left:   parent.left
                                     checked:        parent._fact ? parent._fact.value : false
                                     onClicked:      parent._fact.value = checked ? 1 : 0
+                                }
+                            }
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Time Lapse
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:        _cameraPhotoMode
+                        property var photoModes: [qsTr("Single"), qsTr("Time Lapse")]
+                        QGCLabel {
+                            text:       qsTr("Photo Mode")
+                            width:      _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            id:             photoModeCombo
+                            width:          _editFieldWidth
+                            model:          parent.photoModes
+                            currentIndex:   _camera ? _camera.photoMode : 0
+                            onActivated:    _camera.photoMode = index
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Time Lapse Interval
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:        _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                        QGCLabel {
+                            text:       qsTr("Photo Interval (seconds)")
+                            width:      _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Item {
+                            height:     photoModeCombo.height
+                            width:      _editFieldWidth
+                            QGCSlider {
+                                maximumValue:   60
+                                minimumValue:   1
+                                stepSize:       1
+                                value:          _camera ? _camera.photoLapse : 5
+                                displayValue:   true
+                                updateValueWhileDragging: true
+                                anchors.fill:   parent
+                                onValueChanged: {
+                                    _camera.photoLapse = value
                                 }
                             }
                         }

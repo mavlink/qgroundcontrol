@@ -1013,7 +1013,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
-<value code="21">SafeRTL</value>
+<value code="21">SmartRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 2" name="ArduCopter:FLTMODE2" documentation="Flight mode when Channel 5 pwm is &gt;1230, &lt;= 1360" user="Standard">
@@ -1036,7 +1036,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
-<value code="21">SafeRTL</value>
+<value code="21">SmartRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 3" name="ArduCopter:FLTMODE3" documentation="Flight mode when Channel 5 pwm is &gt;1360, &lt;= 1490" user="Standard">
@@ -1059,7 +1059,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
-<value code="21">SafeRTL</value>
+<value code="21">SmartRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 4" name="ArduCopter:FLTMODE4" documentation="Flight mode when Channel 5 pwm is &gt;1490, &lt;= 1620" user="Standard">
@@ -1082,7 +1082,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
-<value code="21">SafeRTL</value>
+<value code="21">SmartRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 5" name="ArduCopter:FLTMODE5" documentation="Flight mode when Channel 5 pwm is &gt;1620, &lt;= 1749" user="Standard">
@@ -1105,7 +1105,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
-<value code="21">SafeRTL</value>
+<value code="21">SmartRTL</value>
 </values>
 </param>
 <param humanName="Flight Mode 6" name="ArduCopter:FLTMODE6" documentation="Flight mode when Channel 5 pwm is &gt;=1750" user="Standard">
@@ -1128,7 +1128,7 @@
 <value code="18">Throw</value>
 <value code="19">Avoid_ADSB</value>
 <value code="20">Guided_NoGPS</value>
-<value code="21">SafeRTL</value>
+<value code="21">SmartRTL</value>
 </values>
 </param>
 <param humanName="Simple mode bitmask" name="ArduCopter:SIMPLE" documentation="Bitmask which holds which flight modes use simple heading mode (eg bit 0 = 1 means Flight Mode 0 uses simple mode)" user="Advanced">

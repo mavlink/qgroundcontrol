@@ -44,6 +44,8 @@ public:
     Q_PROPERTY(bool                     multiVehicleEnabled             READ multiVehicleEnabled            NOTIFY multiVehicleEnabledChanged)
     Q_PROPERTY(bool                     showOfflineMapExport            READ showOfflineMapExport           NOTIFY showOfflineMapExportChanged)
     Q_PROPERTY(bool                     showOfflineMapImport            READ showOfflineMapImport           NOTIFY showOfflineMapImportChanged)
+    Q_PROPERTY(bool                     useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
+    Q_PROPERTY(bool                     showMissionStatus               READ showMissionStatus              CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -60,6 +62,10 @@ public:
     /// Provides an alternate instrument widget for the Fly View
     /// @return An alternate widget (see QGCInstrumentWidget.qml, the default widget)
     virtual CustomInstrumentWidget* instrumentWidget();
+
+    /// Should the mission status indicator (Plan View) be shown?
+    /// @return Yes or no
+    virtual bool        showMissionStatus           () { return true; }
 
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
@@ -80,9 +86,11 @@ public:
 #if defined(__mobile__)
     virtual bool    showOfflineMapExport            () const { return false; }
     virtual bool    showOfflineMapImport            () const { return false; }
+    virtual bool    useMobileFileDialog             () const { return true;}
 #else
     virtual bool    showOfflineMapExport            () const { return true; }
     virtual bool    showOfflineMapImport            () const { return true; }
+    virtual bool    useMobileFileDialog             () const { return false;}
 #endif
 
     /// If returned QString in non-empty it means that firmware upgrade will run in a mode which only
@@ -115,16 +123,19 @@ class CustomInstrumentWidget : public QObject
 public:
     //-- Widget Position
     enum Pos {
-        POS_TOP_RIGHT           = 0,
-        POS_CENTER_RIGHT        = 1,
-        POS_BOTTOM_RIGHT        = 2,
+        POS_TOP_RIGHT,
+        POS_CENTER_RIGHT,
+        POS_BOTTOM_RIGHT,
+        POS_TOP_LEFT,
+        POS_CENTER_LEFT,
+        POS_BOTTOM_LEFT
     };
     Q_ENUMS(Pos)
     CustomInstrumentWidget(QObject* parent = NULL);
     Q_PROPERTY(QUrl     source  READ source CONSTANT)
     Q_PROPERTY(Pos      widgetPosition              READ widgetPosition             NOTIFY widgetPositionChanged)
     virtual QUrl        source                      () { return QUrl(); }
-    virtual Pos         widgetPosition              () { return POS_CENTER_RIGHT; }
+    virtual Pos         widgetPosition              () { return POS_TOP_RIGHT; }
 signals:
     void widgetPositionChanged  ();
 };

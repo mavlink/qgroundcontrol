@@ -77,6 +77,7 @@ public:
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
     double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
 
@@ -90,6 +91,13 @@ public:
     void save               (QJsonArray&  missionItems) final;
 
     static const char* jsonComplexItemTypeValue;
+
+    static const char* loiterToLandDistanceName;
+    static const char* loiterAltitudeName;
+    static const char* loiterRadiusName;
+    static const char* landingHeadingName;
+    static const char* landingAltitudeName;
+    static const char* fallRateName;
 
 signals:
     void loiterCoordinateChanged        (QGeoCoordinate coordinate);
@@ -121,6 +129,8 @@ private:
     bool            _landingCoordSet;
     bool            _ignoreRecalcSignals;
 
+    QMap<QString, FactMetaData*> _metaDataMap;
+
     Fact            _landingDistanceFact;
     Fact            _loiterAltitudeFact;
     Fact            _loiterRadiusFact;
@@ -131,15 +141,6 @@ private:
     bool            _loiterClockwise;
     bool            _loiterAltitudeRelative;
     bool            _landingAltitudeRelative;
-
-    static QMap<QString, FactMetaData*> _metaDataMap;
-
-    static const char* _loiterToLandDistanceName;
-    static const char* _loiterAltitudeName;
-    static const char* _loiterRadiusName;
-    static const char* _landingHeadingName;
-    static const char* _landingAltitudeName;
-    static const char* _fallRateName;
 
     static const char* _jsonLoiterCoordinateKey;
     static const char* _jsonLoiterRadiusKey;

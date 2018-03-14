@@ -29,7 +29,6 @@ Rectangle {
     property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:       QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
 
-
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
     }
@@ -49,11 +48,6 @@ Rectangle {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
-    ExclusiveGroup {
-        id: yawRadiosGroup
-        onCurrentChanged: missionItem.yawVehicleToStructure = yawVehicleRadio.checked
-    }
-
     Column {
         id:                 editorColumn
         anchors.margins:    _margin
@@ -61,14 +55,6 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         spacing:            _margin
-
-        QGCLabel {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            text:           qsTr("WORK IN PROGRESS. CAREFUL!")
-            wrapMode:       Text.WordWrap
-            color:          qgcPal.warningText
-        }
 
         QGCLabel {
             anchors.left:   parent.left
@@ -113,13 +99,27 @@ Rectangle {
                 rowSpacing:     _margin
                 columns:        2
 
-                QGCLabel { text: qsTr("Layers") }
+                QGCLabel {
+                    text:       qsTr("Structure height")
+                    visible:    !missionItem.cameraCalc.isManualCamera
+                }
+                FactTextField {
+                    fact:               missionItem.structureHeight
+                    Layout.fillWidth:   true
+                    visible:            !missionItem.cameraCalc.isManualCamera
+                }
+
+                QGCLabel {
+                    text:       qsTr("# Layers")
+                    visible:    missionItem.cameraCalc.isManualCamera
+                }
                 FactTextField {
                     fact:               missionItem.layers
                     Layout.fillWidth:   true
+                    visible:            missionItem.cameraCalc.isManualCamera
                 }
 
-                QGCLabel { text: qsTr("Altitude") }
+                QGCLabel { text: qsTr("Bottom layer alt") }
                 FactTextField {
                     fact:               missionItem.altitude
                     Layout.fillWidth:   true
@@ -133,26 +133,9 @@ Rectangle {
                 }
             }
 
-            QGCLabel { text: qsTr("Point camera to structure using:") }
-
-            RowLayout {
-                spacing: _margin
-
-                QGCRadioButton {
-                    id:             yawVehicleRadio
-                    text:           qsTr("Vehicle yaw")
-                    exclusiveGroup: yawRadiosGroup
-                    checked:        !!missionItem.yawVehicleToStructure
-                    enabled:        false
-                }
-
-                QGCRadioButton
-                {
-                    text:           qsTr("Gimbal yaw")
-                    exclusiveGroup: yawRadiosGroup
-                    checked:        !missionItem.yawVehicleToStructure
-                    enabled:        false
-                }
+            Item {
+                height: ScreenTools.defaultFontPixelHeight / 2
+                width:  1
             }
 
             QGCButton {

@@ -16,6 +16,7 @@ import QtLocation               5.3
 import QtPositioning            5.3
 import QtMultimedia             5.5
 import QtQuick.Layouts          1.2
+import QtQuick.Window           2.2
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
@@ -43,8 +44,6 @@ QGCView {
     property var    _geoFenceController:    _planMasterController.geoFenceController
     property var    _rallyPointController:  _planMasterController.rallyPointController
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
-    property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property real   _savedZoomLevel:        0
@@ -92,6 +91,20 @@ QGCView {
     function setPipVisibility(state) {
         _isPipVisible = state;
         QGroundControl.saveBoolGlobalSetting(_PIPVisibleKey, state)
+    }
+
+    function isInstrumentRight() {
+        if(QGroundControl.corePlugin.options.instrumentWidget) {
+            if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
+                switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+                case CustomInstrumentWidget.POS_TOP_LEFT:
+                case CustomInstrumentWidget.POS_BOTTOM_LEFT:
+                case CustomInstrumentWidget.POS_CENTER_LEFT:
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     PlanMasterController {
@@ -184,6 +197,24 @@ QGCView {
         }
     }
 
+    Window {
+        id:             videoWindow
+        width:          !_mainIsMap ? _panel.width  : _pipSize
+        height:         !_mainIsMap ? _panel.height : _pipSize * (9/16)
+        visible:        false
+
+        Item {
+            id:             videoItem
+            anchors.fill:   parent
+        }
+
+        onClosing: {
+            _flightVideo.state = "unpopup"
+            videoWindow.visible = false
+        }
+
+    }
+
     QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
 
     QGCViewPanel {
@@ -244,7 +275,11 @@ QGCView {
                     name:   "pipMode"
                     PropertyChanges {
                         target: _flightVideo
-                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                        anchors.margins: ScreenTools.defaultFontPixelHeight
+                    }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: false
                     }
                 },
                 State {
@@ -253,10 +288,53 @@ QGCView {
                         target: _flightVideo
                         anchors.margins:    0
                     }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: false
+                    }
+                },
+                State {
+                    name: "popup"
+                    StateChangeScript {
+                        script: QGroundControl.videoManager.stopVideo()
+                    }
+                    ParentChange {
+                        target: _flightVideo
+                        parent: videoItem
+                        x: 0
+                        y: 0
+                        width: videoWindow.width
+                        height: videoWindow.height
+                    }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: true
+                    }
+                },
+                State {
+                    name: "unpopup"
+                    StateChangeScript {
+                        script: QGroundControl.videoManager.stopVideo()
+                    }
+                    ParentChange {
+                        target: _flightVideo
+                        parent: _panel
+                    }
+                    PropertyChanges {
+                        target: _flightVideo
+                        anchors.left:       _panel.left
+                        anchors.bottom:     _panel.bottom
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    }
+                    PropertyChanges {
+                        target: _flightVideoPipControl
+                        inPopup: false
+                    }
                 }
             ]
             //-- Video Streaming
             FlightDisplayViewVideo {
+                id:             videoStreaming
                 anchors.fill:   parent
                 visible:        QGroundControl.videoManager.isGStreamer
             }
@@ -277,15 +355,20 @@ QGCView {
             anchors.left:       _panel.left
             anchors.bottom:     _panel.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
-            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen
+            visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
+            enablePopup:        _mainIsMap
             onActivated: {
                 _mainIsMap = !_mainIsMap
                 setStates()
             }
             onHideIt: {
                 setPipVisibility(!state)
+            }
+            onPopup: {
+                videoWindow.visible = true
+                _flightVideo.state = "popup"
             }
             onNewWidth: {
                 _pipSize = newWidth
@@ -346,63 +429,6 @@ QGCView {
             property var qgcView: root
         }
 
-        // Button to start/stop video recording
-        Item {
-            z:                  _flightVideoPipControl.z + 1
-            anchors.margins:    ScreenTools.defaultFontPixelHeight / 2
-            anchors.bottom:     _flightVideo.bottom
-            anchors.right:      _flightVideo.right
-            height:             ScreenTools.defaultFontPixelHeight * 2
-            width:              height
-            visible:            _videoReceiver && _videoReceiver.videoRunning && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue && _flightVideo.visible && !_isCamera && !QGroundControl.videoManager.fullScreen
-            opacity:            0.75
-
-            readonly property string recordBtnBackground: "BackgroundName"
-
-            Rectangle {
-                id:                 recordBtnBackground
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                width:              height
-                radius:             _recordingVideo ? 0 : height
-                color:              "red"
-
-                SequentialAnimation on visible {
-                    running:        _recordingVideo
-                    loops:          Animation.Infinite
-                    PropertyAnimation { to: false; duration: 1000 }
-                    PropertyAnimation { to: true;  duration: 1000 }
-                }
-            }
-
-            QGCColoredImage {
-                anchors.top:                parent.top
-                anchors.bottom:             parent.bottom
-                anchors.horizontalCenter:   parent.horizontalCenter
-                width:                      height * 0.625
-                sourceSize.width:           width
-                source:                     "/qmlimages/CameraIcon.svg"
-                visible:                    recordBtnBackground.visible
-                fillMode:                   Image.PreserveAspectFit
-                color:                      "white"
-            }
-
-            MouseArea {
-                anchors.fill:   parent
-                onClicked: {
-                    if (_videoReceiver) {
-                        if (_recordingVideo) {
-                            _videoReceiver.stopRecording()
-                            // reset blinking animation
-                            recordBtnBackground.visible = true
-                        } else {
-                            _videoReceiver.startRecording()
-                        }
-                    }
-                }
-            }
-        }
-
         MultiVehicleList {
             anchors.margins:    _margins
             anchors.top:        singleMultiSelector.bottom
@@ -434,8 +460,10 @@ QGCView {
         ToolStrip {
             visible:            (_activeVehicle ? _activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
-            anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-            anchors.left:       _panel.left
+            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth : undefined
+            anchors.left:       isInstrumentRight() ? _panel.left : undefined
+            anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
+            anchors.right:      isInstrumentRight() ? undefined : _panel.right
             anchors.topMargin:  ScreenTools.toolbarHeight + (_margins * 2)
             anchors.top:        _panel.top
             z:                  _panel.z + 4

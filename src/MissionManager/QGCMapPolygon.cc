@@ -302,9 +302,10 @@ void QGCMapPolygon::_updateCenter(void)
             }
             center = _coordFromPointF(QPointF(centroid.x() / polygonF.count(), centroid.y() / polygonF.count()));
         }
-
-        _center = center;
-        emit centerChanged(center);
+        if (_center != center) {
+            _center = center;
+            emit centerChanged(center);
+        }
     }
 }
 
@@ -361,7 +362,7 @@ QGeoCoordinate QGCMapPolygon::vertexCoordinate(int vertex) const
     }
 }
 
-QList<QPointF> QGCMapPolygon::nedPolygon(void)
+QList<QPointF> QGCMapPolygon::nedPolygon(void) const
 {
     QList<QPointF>  nedPolygon;
 
@@ -513,4 +514,20 @@ bool QGCMapPolygon::loadKMLFile(const QString& kmlFile)
     }
 
     return true;
+}
+
+double QGCMapPolygon::area(void) const
+{
+    // https://www.mathopenref.com/coordpolygonarea2.html
+
+    double coveredArea = 0.0;
+    QList<QPointF> nedVertices = nedPolygon();
+    for (int i=0; i<nedVertices.count(); i++) {
+        if (i != 0) {
+            coveredArea += nedVertices[i - 1].x() * nedVertices[i].y() - nedVertices[i].x() * nedVertices[i -1].y();
+        } else {
+            coveredArea += nedVertices.last().x() * nedVertices[i].y() - nedVertices[i].x() * nedVertices.last().y();
+        }
+    }
+    return 0.5 * fabs(coveredArea);
 }

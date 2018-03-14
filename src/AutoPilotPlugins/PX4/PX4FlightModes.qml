@@ -39,7 +39,7 @@ SetupPage {
             property bool _rcMapFltmodeExists:  controller.parameterExists(-1, "RC_MAP_FLTMODE")
             property Fact _rcMapFltmode:        _rcMapFltmodeExists ? controller.getParameterFact(-1, "RC_MAP_FLTMODE") : _nullFact
             property Fact _rcMapModeSw:         controller.getParameterFact(-1, "RC_MAP_MODE_SW")
-            property bool _simpleMode:          _rcMapFltmodeExists ? _rcMapFltmode.value > 0 || _rcMapModeSw.value == 0 : false
+            property bool _simpleMode:          _rcMapFltmodeExists ? _rcMapFltmode.value > 0 || _rcMapModeSw.value === 0 : false
 
             FactPanelController {
                 id:         controller

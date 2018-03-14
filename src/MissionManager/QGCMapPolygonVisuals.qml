@@ -11,6 +11,7 @@ import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
 import QtPositioning    5.3
+import QtQuick.Dialogs  1.2
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -147,10 +148,6 @@ Item {
         setCircleRadius(center, radius)
     }
 
-    function loadKMLFile() {
-        mapPolygon.loadKMLFile("/Users/Don/Downloads/polygon.kml")
-    }
-
     onInteractiveChanged: {
         if (interactive) {
             addHandles()
@@ -180,8 +177,7 @@ Item {
         title:          qsTr("Select KML File")
         selectExisting: true
         nameFilters:    [ qsTr("KML files (*.kml)") ]
-
-
+        fileExtension:  "kml"
         onAcceptedForLoad: {
             mapPolygon.loadKMLFile(file)
             close()
@@ -379,6 +375,15 @@ Item {
     }
 
     Component {
+        id: editPositionDialog
+
+        EditPositionDialog {
+            coordinate: mapPolygon.center
+            onCoordinateChanged: mapPolygon.center = coordinate
+        }
+    }
+
+    Component {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
@@ -408,8 +413,14 @@ Item {
 
                 MenuItem {
                     text:           qsTr("Set radius..." )
-                    enabled:        _circle
+                    visible:        _circle
                     onTriggered:    radiusDialog.visible = true
+                }
+
+                MenuItem {
+                    text:           qsTr("Edit position..." )
+                    enabled:        _circle
+                    onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
                 }
 
                 MenuItem {
@@ -441,6 +452,7 @@ Item {
                         id:                 radiusField
                         text:               _circleRadius.toFixed(2)
                         onEditingFinished:  setRadiusFromDialog()
+                        inputMethodHints:   Qt.ImhFormattedNumbersOnly
                     }
                 }
 

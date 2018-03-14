@@ -30,7 +30,46 @@
     p->queryTerrainData(coordinates);
  */
 
-Q_DECLARE_LOGGING_CATEGORY(TerrainLog)
+Q_DECLARE_LOGGING_CATEGORY(ElevationProviderLog)
+
+class ElevationProvider;
+
+/// Used internally by ElevationProvider to batch requests together
+class TerrainBatchManager : public QObject {
+    Q_OBJECT
+
+public:
+    TerrainBatchManager(void);
+
+    void addQuery(ElevationProvider* elevationProvider, const QList<QGeoCoordinate>& coordinates);
+
+private slots:
+    void _requestFinished   (void);
+    void _fetchedTile       (void);                             /// slot to handle fetched elevation tiles
+
+private:
+    typedef struct {
+        ElevationProvider*      elevationProvider;
+        QList<QGeoCoordinate>   coordinates;
+    } QueuedRequestInfo_t;
+
+    enum class State {
+        Idle,
+        Downloading,
+    };
+
+    void _tileFailed(void);
+    bool _getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<float>& altitudes);
+    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
+
+    QList<QueuedRequestInfo_t>  _requestQueue;
+    State                       _state = State::Idle;
+    QNetworkAccessManager       _networkManager;
+
+    QMutex                      _tilesMutex;
+    QHash<QString, TerrainTile> _tiles;
+    QStringList                 _tileDownloadQueue;
+};
 
 class ElevationProvider : public QObject
 {
@@ -40,42 +79,16 @@ public:
 
     /**
      * Async elevation query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
-     * is emitted. This call directly looks elevations up online.
-     * @param coordinates
-     * @return true on success
-     */
-    bool queryTerrainDataPoints(const QList<QGeoCoordinate>& coordinates);
-
-    /**
-     * Async elevation query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
      * is emitted. This call caches local elevation tables for faster lookup in the future.
      * @param coordinates
      * @return true on success
      */
     bool queryTerrainData(const QList<QGeoCoordinate>& coordinates);
 
+    /// Internal method
+    void _signalTerrainData(bool success, QList<float>& altitudes);
+
 signals:
     /// signal returning requested elevation data
     void terrainData(bool success, QList<float> altitudes);
-
-private slots:
-    void _requestFinished();                                    /// slot to handle download of elevation of list of coordinates
-    void _fetchedTile();                                        /// slot to handle fetched elevation tiles
-
-private:
-
-    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
-
-    enum class State {
-        Idle,
-        Downloading,
-    };
-
-    State                       _state = State::Idle;
-    QNetworkAccessManager       _networkManager;
-    QList<QGeoCoordinate>       _coordinates;
-
-    static QMutex                       _tilesMutex;
-    static QHash<QString, TerrainTile>  _tiles;
-    static QStringList                  _downloadQueue;
 };

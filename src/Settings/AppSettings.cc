@@ -36,6 +36,7 @@ const char* AppSettings::autoLoadMissionsName =                         "AutoLoa
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
+const char* AppSettings::gstDebugName =                                 "GstreamerDebugLevel";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -75,6 +76,7 @@ AppSettings::AppSettings(QObject* parent)
     , _mapboxTokenFact(NULL)
     , _esriTokenFact(NULL)
     , _defaultFirmwareTypeFact(NULL)
+    , _gstDebugFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -230,6 +232,15 @@ Fact* AppSettings::virtualJoystick(void)
     }
 
     return _virtualJoystickFact;
+}
+
+Fact* AppSettings::gstDebug(void)
+{
+    if (!_gstDebugFact) {
+        _gstDebugFact = _createSettingsFact(gstDebugName);
+    }
+
+    return _gstDebugFact;
 }
 
 Fact* AppSettings::indoorPalette(void)

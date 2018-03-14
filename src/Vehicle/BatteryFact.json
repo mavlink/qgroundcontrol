@@ -39,5 +39,12 @@
     "shortDescription": "Cell Count",
     "type":             "int32",
     "decimalPlaces":    0
+},
+{
+    "name":             "instantPower",
+    "shortDescription": "Watts",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "W"
 }
 ]

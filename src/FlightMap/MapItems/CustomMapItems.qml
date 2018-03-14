@@ -29,9 +29,9 @@ Item {
 
             Component.onCompleted: {
                 var controlUrl = object.url
-                if (controlUrl != "") {
+                if (controlUrl !== "") {
                     var component = Qt.createComponent(controlUrl);
-                    if (component.status == Component.Ready) {
+                    if (component.status === Component.Ready) {
                         _customObject = component.createObject(map, { "customMapObject": object })
                         if (_customObject) {
                             map.addMapItem(_customObject)

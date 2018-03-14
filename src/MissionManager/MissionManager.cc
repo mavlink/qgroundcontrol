@@ -214,11 +214,6 @@ void MissionManager::generateResumeMission(int resumeIndex)
     }
     _resumeMission = true;
     _writeMissionItemsWorker();
-
-    // Clean up no longer needed resume items
-    for (int i=0; i<resumeMission.count(); i++) {
-        resumeMission[i]->deleteLater();
-    }
 }
 
 /// Called when a new mavlink message for out vehicle is received
@@ -247,7 +242,7 @@ void MissionManager::_handleMissionCurrent(const mavlink_message_t& message)
         emit currentIndexChanged(_currentMissionIndex);
     }
 
-    if (_currentMissionIndex != _lastCurrentIndex) {
+    if (_currentMissionIndex != _lastCurrentIndex && _cachedLastCurrentIndex != _currentMissionIndex) {
         // We have to be careful of an RTL sequence causing a change of index to the DO_LAND_START sequence. This also triggers
         // a flight mode change away from mission flight mode. So we only update _lastCurrentIndex when the flight mode is mission.
         // But we can run into problems where we may get the MISSION_CURRENT message for the RTL/DO_LAND_START sequenc change prior

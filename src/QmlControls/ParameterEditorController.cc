@@ -27,22 +27,23 @@
 
 /// @Brief Constructs a new ParameterEditorController Widget. This widget is used within the PX4VehicleConfig set of screens.
 ParameterEditorController::ParameterEditorController(void)
-    : _currentComponentId(_vehicle->defaultComponentId())
+    : _currentCategory("Standard")  // FIXME: firmware specific
     , _parameters(new QmlObjectListModel(this))
 {
-    const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
-    foreach (int componentId, groupMap.keys()) {
-        _componentIds += QString("%1").arg(componentId);
-    }
+    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
+    _categories = categoryMap.keys();
+
+    // Move default category to front
+    _categories.removeOne(_currentCategory);
+    _categories.prepend(_currentCategory);
 
     // Be careful about no parameters
-    if (groupMap.contains(_currentComponentId) && groupMap[_currentComponentId].size() != 0) {
-        _currentGroup = groupMap[_currentComponentId].keys()[0];
+    if (categoryMap.contains(_currentCategory) && categoryMap[_currentCategory].size() != 0) {
+        _currentGroup = categoryMap[_currentCategory].keys()[0];
     }
     _updateParameters();
 
     connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);
-    connect(this, &ParameterEditorController::currentComponentIdChanged, this, &ParameterEditorController::_updateParameters);
     connect(this, &ParameterEditorController::currentGroupChanged, this, &ParameterEditorController::_updateParameters);
 }
 
@@ -51,29 +52,29 @@ ParameterEditorController::~ParameterEditorController()
     
 }
 
-QStringList ParameterEditorController::getGroupsForComponent(int componentId)
+QStringList ParameterEditorController::getGroupsForCategory(const QString& category)
 {
-    const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
+    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
 
-    return groupMap[componentId].keys();
+    return categoryMap[category].keys();
 }
 
-QStringList ParameterEditorController::getParametersForGroup(int componentId, QString group)
+QStringList ParameterEditorController::getParametersForGroup(const QString& category, const QString& group)
 {
-    const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
+    const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
 
-    return groupMap[componentId][group];
+    return categoryMap[category][group];
 }
 
-QStringList ParameterEditorController::searchParametersForComponent(int componentId, const QString& searchText, bool searchInName, bool searchInDescriptions)
+QStringList ParameterEditorController::searchParameters(const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
     
-    foreach(const QString &paramName, _vehicle->parameterManager()->parameterNames(componentId)) {
+    foreach(const QString &paramName, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
-            Fact* fact = _vehicle->parameterManager()->getParameter(componentId, paramName);
+            Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), paramName);
             
             if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
                 list += paramName;
@@ -161,9 +162,9 @@ void ParameterEditorController::_updateParameters(void)
     QStringList searchItems = _searchText.split(' ', QString::SkipEmptyParts);
 
     if (searchItems.isEmpty()) {
-        const QMap<int, QMap<QString, QStringList> >& groupMap = _vehicle->parameterManager()->getGroupMap();
-        foreach (const QString& parameter, groupMap[_currentComponentId][_currentGroup]) {
-            newParameterList.append(_vehicle->parameterManager()->getParameter(_currentComponentId, parameter));
+        const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
+        foreach (const QString& parameter, categoryMap[_currentCategory][_currentGroup]) {
+            newParameterList.append(_vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter));
         }
     } else {
         foreach(const QString &parameter, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {

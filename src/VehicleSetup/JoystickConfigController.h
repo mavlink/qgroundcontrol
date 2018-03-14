@@ -67,6 +67,7 @@ public:
     Q_INVOKABLE void skipButtonClicked(void);
     Q_INVOKABLE void nextButtonClicked(void);
     Q_INVOKABLE void start(void);
+    Q_INVOKABLE void setDeadbandValue(int axis, int value);
 
     bool rollAxisMapped(void);
     bool pitchAxisMapped(void);
@@ -206,8 +207,6 @@ private:
     static const char* _imageRollRight;
     static const char* _imagePitchUp;
     static const char* _imagePitchDown;
-    
-    static const int _updateInterval;   ///< Interval for ui update timer
     
     int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 

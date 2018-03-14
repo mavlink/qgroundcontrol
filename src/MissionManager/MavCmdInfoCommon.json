@@ -238,33 +238,6 @@
         { "id": 32, "rawName": "MAV_CMD_DO_FOLLOW", "friendlyName": "Follow Me" },
         { "id": 33, "rawName": "MAV_CMD_DO_FOLLOW_REPOSITION", "friendlyName": "Vehicle reposition" },
         {
-            "id":                   80,
-            "rawName":              "MAV_CMD_NAV_ROI",
-            "friendlyName":         "Region of interest (nav)",
-            "description":          "Sets the region of interest for cameras.",
-            "specifiesCoordinate":  true,
-            "standaloneCoordinate": true,
-            "friendlyEdit":         true,
-            "category":             "Camera",
-            "param1": {
-                "label":            "Mode",
-                "enumStrings":      "None,Next waypoint,Mission item,Location,ROI item",
-                "enumValues":       "0,1,2,3,4",
-                "default":          3,
-                "decimalPlaces":    0
-            },
-            "param2": {
-                "label":            "Mission Index",
-                "default":          0,
-                "decimalPlaces":    0
-            },
-            "param3": {
-                "label":            "ROI Index",
-                "default":          0,
-                "decimalPlaces":    0
-            }
-        },
-        {
             "id":                   81,
             "rawName":              "MAV_CMD_NAV_PATHPLANNING",
             "friendlyName":         "Path planning",
@@ -651,11 +624,57 @@
                 "default":          0
             }
         },
+        {
+            "id":                   195,
+            "rawName":              "MAV_CMD_DO_SET_ROI_LOCATION",
+            "friendlyName":         "Region of interest (ROI)" ,
+            "description":          "Sets the region of interest for cameras.",
+            "specifiesCoordinate":  true,
+            "standaloneCoordinate": true,
+            "friendlyEdit":         true,
+            "category":             "Camera"
+        },
+        {
+            "id":                   196,
+            "rawName":              "MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET",
+            "friendlyName":         "ROI to next waypoint" ,
+            "description":          "Sets the region of interest to point towards the next waypoint with optional offsets.",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "Camera",
+            "param5": {
+                "label":            "Pitch offset",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    0
+            },
+            "param6": {
+                "label":            "Roll offset",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    0
+            },
+            "param7": {
+                "label":            "Yaw offset",
+                "default":          0,
+                "units":            "deg",
+                "decimalPlaces":    0
+            }
+        },
+        {
+            "id":                   197,
+            "rawName":              "MAV_CMD_DO_SET_ROI_NONE",
+            "friendlyName":         "Cancel ROI" ,
+            "description":          "Cancels the region of interest.",
+            "specifiesCoordinate":  false,
+            "friendlyEdit":         true,
+            "category":             "Camera"
+        },
         { "id": 200, "rawName": "MAV_CMD_DO_CONTROL_VIDEO", "friendlyName": "Control video" },
         {
             "id":                   201,
             "rawName":              "MAV_CMD_DO_SET_ROI",
-            "friendlyName":         "Region of interest (cmd)" ,
+            "friendlyName":         "Region of interest" ,
             "description":          "Sets the region of interest for cameras.",
             "specifiesCoordinate":  true,
             "standaloneCoordinate": true,
