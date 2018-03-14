@@ -87,7 +87,7 @@ QGCView {
     property bool _firstLoadComplete:           false
 
     MapFitFunctions {
-        id:                         mapFitFunctions
+        id:                         mapFitFunctions  // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        editorMap
         usePlannedHomePosition:     true
         planMasterController:       _planMasterController
