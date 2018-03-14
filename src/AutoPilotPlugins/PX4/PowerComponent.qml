@@ -43,23 +43,23 @@ SetupPage {
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
 
+            function getBatteryImage()
+            {
+                switch(battNumCells.value) {
+                case 1:  return "/qmlimages/PowerComponentBattery_01cell.svg";
+                case 2:  return "/qmlimages/PowerComponentBattery_02cell.svg"
+                case 3:  return "/qmlimages/PowerComponentBattery_03cell.svg"
+                case 4:  return "/qmlimages/PowerComponentBattery_04cell.svg"
+                case 5:  return "/qmlimages/PowerComponentBattery_05cell.svg"
+                case 6:  return "/qmlimages/PowerComponentBattery_06cell.svg"
+                default: return "/qmlimages/PowerComponentBattery_01cell.svg";
+                }
+            }
+
             ColumnLayout {
                 id:                         innerColumn
                 anchors.horizontalCenter:   parent.horizontalCenter
                 spacing:                    ScreenTools.defaultFontPixelHeight
-
-                function getBatteryImage()
-                {
-                    switch(battNumCells.value) {
-                    case 1:  return "/qmlimages/PowerComponentBattery_01cell.svg";
-                    case 2:  return "/qmlimages/PowerComponentBattery_02cell.svg"
-                    case 3:  return "/qmlimages/PowerComponentBattery_03cell.svg"
-                    case 4:  return "/qmlimages/PowerComponentBattery_04cell.svg"
-                    case 5:  return "/qmlimages/PowerComponentBattery_05cell.svg"
-                    case 6:  return "/qmlimages/PowerComponentBattery_06cell.svg"
-                    default: return "/qmlimages/PowerComponentBattery_01cell.svg";
-                    }
-                }
 
                 function drawArrowhead(ctx, x, y, radians)
                 {
@@ -143,7 +143,7 @@ SetupPage {
 
                                     onClicked:  {
                                         var measuredVoltageValue = parseFloat(measuredVoltage.text)
-                                        if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
+                                        if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue)) {
                                             return
                                         }
                                         var newVoltageDivider = (measuredVoltageValue * battVoltageDivider.value) / controller.vehicle.battery.voltage.value
@@ -201,7 +201,7 @@ SetupPage {
 
                                     onClicked:  {
                                         var measuredCurrentValue = parseFloat(measuredCurrent.text)
-                                        if (measuredCurrentValue == 0) {
+                                        if (measuredCurrentValue === 0) {
                                             return
                                         }
                                         var newAmpsPerVolt = (measuredCurrentValue * battAmpsPerVolt.value) / controller.vehicle.battery.current.value
@@ -379,7 +379,7 @@ SetupPage {
                 QGCCheckBox {
                     id:         showUAVCAN
                     text:       qsTr("Show UAVCAN Settings")
-                    checked:    uavcanEnable.rawValue != 0
+                    checked:    uavcanEnable ? uavcanEnable.rawValue !== 0 : false
                 }
 
                 QGCGroupBox {

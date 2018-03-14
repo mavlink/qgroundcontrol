@@ -200,14 +200,17 @@ double SurveyMissionItemTest::_clampGridAngle180(double gridAngle)
     return gridAngle;
 }
 
-void SurveyMissionItemTest::_testGridAngle(void)
+void SurveyMissionItemTest::_setPolygon(void)
 {
-    QGCMapPolygon* mapPolygon = _surveyItem->mapPolygon();
-
     for (int i=0; i<_polyPoints.count(); i++) {
         QGeoCoordinate& vertex = _polyPoints[i];
-        mapPolygon->appendVertex(vertex);
+        _mapPolygon->appendVertex(vertex);
     }
+}
+
+void SurveyMissionItemTest::_testGridAngle(void)
+{
+    _setPolygon();
 
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
@@ -223,12 +226,7 @@ void SurveyMissionItemTest::_testGridAngle(void)
 
 void SurveyMissionItemTest::_testEntryLocation(void)
 {
-    QGCMapPolygon* mapPolygon = _surveyItem->mapPolygon();
-
-    for (int i=0; i<_polyPoints.count(); i++) {
-        QGeoCoordinate& vertex = _polyPoints[i];
-        mapPolygon->appendVertex(vertex);
-    }
+    _setPolygon();
 
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
@@ -250,4 +248,40 @@ void SurveyMissionItemTest::_testEntryLocation(void)
         }
         rgSeenEntryCoords.clear();
     }
+}
+
+
+void SurveyMissionItemTest::_testItemCount(void)
+{
+    QList<MissionItem*> items;
+
+    _setPolygon();
+
+    _surveyItem->hoverAndCapture()->setRawValue(false);
+    _surveyItem->cameraTriggerInTurnaround()->setRawValue(false);
+    _surveyItem->setRefly90Degrees(false);
+    _surveyItem->appendMissionItems(items, this);
+    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    items.clear();
+
+    _surveyItem->hoverAndCapture()->setRawValue(false);
+    _surveyItem->cameraTriggerInTurnaround()->setRawValue(true);
+    _surveyItem->setRefly90Degrees(false);
+    _surveyItem->appendMissionItems(items, this);
+    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    items.clear();
+
+    _surveyItem->hoverAndCapture()->setRawValue(true);
+    _surveyItem->cameraTriggerInTurnaround()->setRawValue(false);
+    _surveyItem->setRefly90Degrees(false);
+    _surveyItem->appendMissionItems(items, this);
+    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    items.clear();
+
+    _surveyItem->hoverAndCapture()->setRawValue(true);
+    _surveyItem->cameraTriggerInTurnaround()->setRawValue(false);
+    _surveyItem->setRefly90Degrees(true);
+    _surveyItem->appendMissionItems(items, this);
+    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    items.clear();
 }

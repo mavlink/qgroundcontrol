@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef VisualMissionItem_H
-#define VisualMissionItem_H
+#pragma once
 
 #include <QObject>
 #include <QString>
@@ -65,7 +63,8 @@ public:
     Q_PROPERTY(QString          mapVisualQML                        READ mapVisualQML                                                   CONSTANT)                                           ///< QMl code for map visuals
     Q_PROPERTY(QmlObjectListModel* childItems                       READ childItems                                                     CONSTANT)
     Q_PROPERTY(double           specifiedFlightSpeed                READ specifiedFlightSpeed                                           NOTIFY specifiedFlightSpeedChanged)                 ///< NaN if this item does not specify flight speed
-    Q_PROPERTY(double           specifiedGimbalYaw                  READ specifiedGimbalYaw                                             NOTIFY specifiedGimbalYawChanged)                   ///< NaN if this item goes not specify gimbal yaw
+    Q_PROPERTY(double           specifiedGimbalYaw                  READ specifiedGimbalYaw                                             NOTIFY specifiedGimbalYawChanged)                   ///< Gimbal yaw, NaN for not specified
+    Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                           NOTIFY specifiedGimbalPitchChanged)                 ///< Gimbal pitch, NaN for not specified
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                               NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                              NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
 
@@ -116,6 +115,7 @@ public:
     virtual int             sequenceNumber          (void) const = 0;
     virtual double          specifiedFlightSpeed    (void) = 0;
     virtual double          specifiedGimbalYaw      (void) = 0;
+    virtual double          specifiedGimbalPitch    (void) = 0;
 
     /// Update item to mission flight status at point where this item appears in mission.
     /// IMPORTANT: Overrides must call base class implementation
@@ -173,6 +173,7 @@ signals:
     void specifiesAltitudeOnlyChanged   (void);
     void specifiedFlightSpeedChanged    (void);
     void specifiedGimbalYawChanged      (void);
+    void specifiedGimbalPitchChanged    (void);
     void lastSequenceNumberChanged      (int sequenceNumber);
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);
@@ -212,5 +213,3 @@ private:
     double _lastLatTerrainQuery;
     double _lastLonTerrainQuery;
 };
-
-#endif

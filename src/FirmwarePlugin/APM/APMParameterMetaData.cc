@@ -44,11 +44,13 @@ QVariant APMParameterMetaData::_stringToTypedVariant(const QString& string,
     case FactMetaData::valueTypeUint8:
     case FactMetaData::valueTypeUint16:
     case FactMetaData::valueTypeUint32:
+    case FactMetaData::valueTypeUint64:
         convertTo = QVariant::UInt;
         break;
     case FactMetaData::valueTypeInt8:
     case FactMetaData::valueTypeInt16:
     case FactMetaData::valueTypeInt32:
+    case FactMetaData::valueTypeInt64:
         convertTo = QVariant::Int;
         break;
     case FactMetaData::valueTypeFloat:
@@ -233,14 +235,18 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 QString group = name.split('_').first();
                 group = group.remove(QRegExp("[0-9]*$")); // remove any numbers from the end
 
+                QString category = xml.attributes().value("user").toString();
+                if (category.isEmpty()) {
+                    category = QStringLiteral("Advanced");
+                }
+
                 QString shortDescription = xml.attributes().value("humanName").toString();
                 QString longDescription = xml.attributes().value("documentation").toString();
-                QString userLevel = xml.attributes().value("user").toString();
 
                 qCDebug(APMParameterMetaDataVerboseLog) << "Found parameter name:" << name
                           << "short Desc:" << shortDescription
                           << "longDescription:" << longDescription
-                          << "user level: " << userLevel
+                          << "category: " << category
                           << "group: " << group;
 
                 Q_ASSERT(!rawMetaData);
@@ -254,6 +260,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 }
                 qCDebug(APMParameterMetaDataVerboseLog) << "inserting metadata for field" << name;
                 rawMetaData->name = name;
+                rawMetaData->category = category;
                 rawMetaData->group = group;
                 rawMetaData->shortDescription = shortDescription;
                 rawMetaData->longDescription = longDescription;
@@ -301,7 +308,7 @@ void APMParameterMetaData::correctGroupMemberships(ParameterNametoFactMetaDataMa
     foreach(const QString& groupName, groupMembers.keys()) {
             if (groupMembers[groupName].count() == 1) {
                 foreach(const QString& parameter, groupMembers.value(groupName)) {
-                    parameterToFactMetaDataMap[parameter]->group = "others";
+                    parameterToFactMetaDataMap[parameter]->group = FactMetaData::defaultGroup();
                 }
             }
         }
@@ -434,6 +441,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     }
 
     metaData->setName(rawMetaData->name);
+    metaData->setCategory(rawMetaData->category);
     metaData->setGroup(rawMetaData->group);
     metaData->setRebootRequired(rawMetaData->rebootRequired);
 
@@ -525,12 +533,14 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
                 break;
 
             case FactMetaData::valueTypeInt32:
+            case FactMetaData::valueTypeInt64:
                 typedBitSet = QVariant((int)bitSet);
                 break;
 
             case FactMetaData::valueTypeUint8:
             case FactMetaData::valueTypeUint16:
             case FactMetaData::valueTypeUint32:
+            case FactMetaData::valueTypeUint64:
                 typedBitSet = QVariant(bitSet);
                 break;
 

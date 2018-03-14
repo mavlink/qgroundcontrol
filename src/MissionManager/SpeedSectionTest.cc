@@ -73,7 +73,18 @@ void SpeedSectionTest::_testDirty(void)
     QCOMPARE(_speedSection->dirty(), false);
     _spySection->clearAllSignals();
 
-    // Check the remaining items that should set dirty bit
+    // Flight speed change should only signal if specifyFlightSpeed is set
+
+    _speedSection->setSpecifyFlightSpeed(false);
+    _speedSection->setDirty(false);
+    _spySection->clearAllSignals();
+    _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
+    QVERIFY(_spySection->checkNoSignalByMask(dirtyChangedMask));
+    QCOMPARE(_speedSection->dirty(), false);
+
+    _speedSection->setSpecifyFlightSpeed(true);
+    _speedSection->setDirty(false);
+    _spySection->clearAllSignals();
     _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
     QVERIFY(_spySection->checkSignalByMask(dirtyChangedMask));
     QCOMPARE(_spySection->pullBoolFromSignalIndex(dirtyChangedIndex), true);
@@ -123,7 +134,7 @@ void SpeedSectionTest::_checkAvailable(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    SimpleMissionItem* item = new SimpleMissionItem(_offlineVehicle, missionItem);
+    SimpleMissionItem* item = new SimpleMissionItem(_offlineVehicle, true /* editMode */, missionItem);
     QVERIFY(item->speedSection());
     QCOMPARE(item->speedSection()->available(), false);
 }
@@ -182,7 +193,7 @@ void SpeedSectionTest::_testScanForSection(void)
 
     double flightSpeed = 10.123456;
     MissionItem validSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _offlineVehicle->multiRotor() ? 1 : 0, flightSpeed, -1, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleItem(_offlineVehicle, validSpeedItem);
+    SimpleMissionItem simpleItem(_offlineVehicle, true /* editMode */, validSpeedItem);
     MissionItem& simpleMissionItem = simpleItem.missionItem();
     visualItems.append(&simpleItem);
     scanIndex = 0;
@@ -254,7 +265,7 @@ void SpeedSectionTest::_testScanForSection(void)
     // Valid item in wrong position
     QmlObjectListModel waypointVisualItems;
     MissionItem waypointMissionItem(0, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleWaypointItem(_offlineVehicle, waypointMissionItem);
+    SimpleMissionItem simpleWaypointItem(_offlineVehicle, true /* editMode */, waypointMissionItem);
     simpleMissionItem = validSpeedItem;
     visualItems.append(&simpleWaypointItem);
     visualItems.append(&simpleMissionItem);
@@ -263,4 +274,19 @@ void SpeedSectionTest::_testScanForSection(void)
     QCOMPARE(_speedSection->settingsSpecified(), false);
     visualItems.clear();
     scanIndex = 0;
+}
+
+void SpeedSectionTest::_testSpecifiedFlightSpeedChanged(void)
+{
+    // specifiedFlightSpeedChanged SHOULD NOT signal if flight speed is changed when specifyFlightSpeed IS NOT set
+    _speedSection->setSpecifyFlightSpeed(false);
+    _spySpeed->clearAllSignals();
+    _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
+    QVERIFY(_spySpeed->checkNoSignalByMask(specifiedFlightSpeedChangedMask));
+
+    // specifiedFlightSpeedChanged SHOULD signal if flight speed is changed when specifyFlightSpeed IS set
+    _speedSection->setSpecifyFlightSpeed(true);
+    _spySpeed->clearAllSignals();
+    _speedSection->flightSpeed()->setRawValue(_speedSection->flightSpeed()->rawValue().toDouble() + 1);
+    QVERIFY(_spySpeed->checkSignalByMask(specifiedFlightSpeedChangedMask));
 }

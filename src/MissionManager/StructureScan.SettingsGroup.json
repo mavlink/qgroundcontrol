@@ -1,5 +1,25 @@
 [
 {
+    "name":             "GimbalPitch",
+    "shortDescription": "Gimbal pitch rotation.",
+    "type":             "double",
+    "units":            "gimbal-degrees",
+    "min":              -90,
+    "max":              0,
+    "decimalPlaces":    0,
+    "defaultValue":     0
+},
+{
+    "name":             "GimbalYaw",
+    "shortDescription": "Gimbal yaw rotation.",
+    "type":             "double",
+    "units":            "deg",
+    "min":              -180.0,
+    "max":              180.0,
+    "decimalPlaces":    0,
+    "defaultValue":     90
+},
+{
     "name":             "Altitude",
     "shortDescription": "Altitude for the bottom layer of the structure scan.",
     "type":             "double",

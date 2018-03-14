@@ -48,6 +48,7 @@ Item {
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
     readonly property string gotoTitle:                     qsTr("Goto Location")
+    readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
@@ -67,6 +68,8 @@ Item {
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position.")
     readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
+    readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
+    readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
 
     readonly property int actionRTL:                        1
     readonly property int actionLand:                       2
@@ -87,6 +90,8 @@ Item {
     readonly property int actionPause:                      17
     readonly property int actionMVPause:                    18
     readonly property int actionMVStartMission:             19
+    readonly property int actionVtolTransitionToFwdFlight:  20
+    readonly property int actionVtolTransitionToMRFlight:   21
 
     property bool showEmergenyStop:     !_hideEmergenyStop && _activeVehicle && _vehicleArmed && _vehicleFlying
     property bool showArm:              _activeVehicle && !_vehicleArmed
@@ -96,12 +101,14 @@ Item {
     property bool showLand:             _activeVehicle && _activeVehicle.guidedModeSupported && _vehicleArmed && !_activeVehicle.fixedWing && !_vehicleInLandMode
     property bool showStartMission:     _activeVehicle && _missionAvailable && !_missionActive && !_vehicleFlying
     property bool showContinueMission:  _activeVehicle && _missionAvailable && !_missionActive && _vehicleFlying && (_currentMissionIndex < missionController.visualItems.count - 1)
-    property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < missionController.visualItems.count - 2)
     property bool showPause:            _activeVehicle && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused
     property bool showChangeAlt:        (_activeVehicle && _vehicleFlying) && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
     property bool showOrbit:            !_hideOrbit && _activeVehicle && _vehicleFlying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
     property bool showLandAbort:        _activeVehicle && _vehicleFlying && _activeVehicle.fixedWing && _vehicleLanding
     property bool showGotoLocation:     _activeVehicle && _vehicleFlying
+
+    // Note: The 'missionController.visualItems.count - 3' is a hack to not trigger resume mission when a mission ends with an RTL item
+    property bool showResumeMission:    _activeVehicle && !_vehicleArmed && _vehicleWasFlying && _missionAvailable && _resumeMissionIndex > 0 && (_resumeMissionIndex < missionController.visualItems.count - 3)
 
     property bool guidedUIVisible:      guidedActionConfirm.visible || guidedActionList.visible
 
@@ -178,9 +185,11 @@ Item {
 
     // Called when an action is about to be executed in order to confirm
     function confirmAction(actionCode, actionData) {
+        var showImmediate = true
         closeAll()
         confirmDialog.action = actionCode
         confirmDialog.actionData = actionData
+        confirmDialog.hideTrigger = true
         _actionData = actionData
         switch (actionCode) {
         case actionArm:
@@ -208,10 +217,11 @@ Item {
             confirmDialog.title = takeoffTitle
             confirmDialog.message = takeoffMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showTakeoff })
-            altitudeSlider.reset()
+            altitudeSlider.setToMinimumTakeoff()
             altitudeSlider.visible = true
             break;
         case actionStartMission:
+            showImmediate = false
             confirmDialog.title = startMissionTitle
             confirmDialog.message = startMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission })
@@ -222,11 +232,13 @@ Item {
             confirmDialog.hideTrigger = true
             break;
         case actionContinueMission:
+            showImmediate = false
             confirmDialog.title = continueMissionTitle
             confirmDialog.message = continueMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showContinueMission })
             break;
         case actionResumeMission:
+            showImmediate = false
             confirmDialog.title = resumeMissionTitle
             confirmDialog.message = resumeMissionMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showResumeMission })
@@ -287,15 +299,27 @@ Item {
             confirmDialog.message = mvPauseMessage
             confirmDialog.hideTrigger = true
             break;
+        case actionVtolTransitionToFwdFlight:
+            confirmDialog.title = vtolTransitionTitle
+            confirmDialog.message = vtolTransitionFwdMessage
+            confirmDialog.hideTrigger = true
+            break
+        case actionVtolTransitionToMRFlight:
+            confirmDialog.title = vtolTransitionTitle
+            confirmDialog.message = vtolTransitionMRMessage
+            confirmDialog.hideTrigger = true
+            break
         default:
             console.warn("Unknown actionCode", actionCode)
             return
         }
-        confirmDialog.visible = true
+        confirmDialog.show(showImmediate)
     }
 
     // Executes the specified action
     function executeAction(actionCode, actionData) {
+        var i;
+        var rgVehicle;
         switch (actionCode) {
         case actionRTL:
             _activeVehicle.guidedModeRTL()
@@ -319,10 +343,9 @@ Item {
             _activeVehicle.startMission()
             break
         case actionMVStartMission:
-            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
-            for (var i=0; i<rgVehicle.count; i++) {
-                var vehicle = rgVehicle.get(i)
-                vehicle.startMission()
+            rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (i = 0; i < rgVehicle.count; i++) {
+                rgVehicle.get(i).startMission()
             }
             break
         case actionArm:
@@ -353,11 +376,16 @@ Item {
             _activeVehicle.pauseVehicle()
             break
         case actionMVPause:
-            var rgVehicle = QGroundControl.multiVehicleManager.vehicles
-            for (var i=0; i<rgVehicle.count; i++) {
-                var vehicle = rgVehicle.get(i)
-                vehicle.pauseVehicle()
+            rgVehicle = QGroundControl.multiVehicleManager.vehicles
+            for (i = 0; i < rgVehicle.count; i++) {
+                rgVehicle.get(i).pauseVehicle()
             }
+            break
+        case actionVtolTransitionToFwdFlight:
+            _activeVehicle.vtolInFwdFlight = true
+            break
+        case actionVtolTransitionToMRFlight:
+            _activeVehicle.vtolInFwdFlight = false
             break
         default:
             console.warn(qsTr("Internal error: unknown actionCode"), actionCode)

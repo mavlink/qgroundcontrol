@@ -11,6 +11,7 @@
 import QtQuick              2.3
 import QtQuick.Controls     1.2
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
@@ -32,6 +33,8 @@ SetupPage {
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
+            property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+            property bool _oldFW:               !(_activeVehicle.firmwareMajorVersion > 3 || _activeVehicle.firmwareMinorVersion > 5 || _activeVehicle.firmwarePatchVersion >= 2)
             property Fact _rc5Function:         controller.getParameterFact(-1, "r.SERVO5_FUNCTION")
             property Fact _rc6Function:         controller.getParameterFact(-1, "r.SERVO6_FUNCTION")
             property Fact _rc7Function:         controller.getParameterFact(-1, "r.SERVO7_FUNCTION")
@@ -42,7 +45,8 @@ SetupPage {
             property Fact _rc12Function:        controller.getParameterFact(-1, "r.SERVO12_FUNCTION")
             property Fact _rc13Function:        controller.getParameterFact(-1, "r.SERVO13_FUNCTION")
             property Fact _rc14Function:        controller.getParameterFact(-1, "r.SERVO14_FUNCTION")
-            property Fact _stepSize:            controller.getParameterFact(-1, "JS_LIGHTS_STEP")
+            property Fact _stepSize:            _oldFW ? controller.getParameterFact(-1, "JS_LIGHTS_STEP") : null // v3.5.1 and prior
+            property Fact _numSteps:            _oldFW ? null : controller.getParameterFact(-1, "JS_LIGHTS_STEPS") // v3.5.2 and up
 
             readonly property real  _margins:                       ScreenTools.defaultFontPixelHeight
             readonly property int   _rcFunctionDisabled:            0
@@ -88,22 +92,30 @@ SetupPage {
             }
 
             function calcCurrentStep() {
-                var i = 1
-                for(i; i <= 10; i++) {
-                    var stepSize = (1900-1100)/i
-                    if(_stepSize.value >= stepSize) {
-                        _stepSize.value = stepSize;
-                        break;
+                if (_oldFW) {
+                    var i = 1
+                    for(i; i <= 10; i++) {
+                        var stepSize = (1900-1100)/i
+                        if(_stepSize.value >= stepSize) {
+                            _stepSize.value = stepSize;
+                            break;
+                        }
                     }
+                    if (_stepSize.value < 80) {
+                        _stepSize.value = 80;
+                    }
+                    lightsLoader.lightsSteps = i
+                } else {
+                    lightsLoader.lightsSteps = _numSteps.value
                 }
-                if (_stepSize.value < 80) {
-                    _stepSize.value = 80;
-                }
-                lightsLoader.lightsSteps = i
             }
 
             function calcStepSize(steps) {
-                _stepSize.value = (1900-1100)/steps
+                if (_oldFW) {
+                    _stepSize.value = (1900-1100)/steps
+                } else {
+                    _numSteps.value = steps
+                }
             }
 
             // Whenever any SERVO#_FUNCTION parameters chagnes we need to go looking for light output channels again

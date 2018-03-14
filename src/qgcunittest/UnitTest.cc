@@ -523,3 +523,12 @@ bool UnitTest::doubleNaNCompare(double value1, double value2)
         return ret;
     }
 }
+
+void UnitTest::changeFactValue(Fact* fact)
+{
+    if (fact->typeIsBool()) {
+        fact->setRawValue(!fact->rawValue().toBool());
+    } else {
+        fact->setRawValue(fact->rawValue().toDouble() + 1);
+    }
+}

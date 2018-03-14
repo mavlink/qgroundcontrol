@@ -27,25 +27,29 @@ class StructureScanComplexItem : public ComplexMissionItem
 public:
     StructureScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                     CONSTANT)
-    Q_PROPERTY(Fact*            altitude                    READ altitude                       CONSTANT)
-    Q_PROPERTY(Fact*            layers                      READ layers                         CONSTANT)
-    Q_PROPERTY(bool             altitudeRelative            MEMBER _altitudeRelative            NOTIFY altitudeRelativeChanged)
-    Q_PROPERTY(int              cameraShots                 READ cameraShots                    NOTIFY cameraShotsChanged)
-    Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots               NOTIFY timeBetweenShotsChanged)
-    Q_PROPERTY(double           cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval    NOTIFY cameraMinTriggerIntervalChanged)
-    Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon               CONSTANT)
-    Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                  CONSTANT)
-    Q_PROPERTY(bool             yawVehicleToStructure       MEMBER _yawVehicleToStructure       NOTIFY yawVehicleToStructureChanged)    ///< true: vehicle yaws to point to structure, false: gimbal yaws to point to structure
+    Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
+    Q_PROPERTY(Fact*            altitude                    READ altitude                                                   CONSTANT)
+    Q_PROPERTY(Fact*            structureHeight             READ structureHeight                                            CONSTANT)
+    Q_PROPERTY(Fact*            layers                      READ layers                                                     CONSTANT)
+    Q_PROPERTY(bool             altitudeRelative            READ altitudeRelative           WRITE setAltitudeRelative       NOTIFY altitudeRelativeChanged)
+    Q_PROPERTY(int              cameraShots                 READ cameraShots                                                NOTIFY cameraShotsChanged)
+    Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots                                           NOTIFY timeBetweenShotsChanged)
+    Q_PROPERTY(double           cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval                                NOTIFY cameraMinTriggerIntervalChanged)
+    Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon                                           CONSTANT)
+    Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                                              CONSTANT)
 
     CameraCalc* cameraCalc  (void) { return &_cameraCalc; }
     Fact* altitude          (void) { return &_altitudeFact; }
+    Fact* structureHeight   (void) { return &_structureHeightFact; }
     Fact* layers            (void) { return &_layersFact; }
 
-    int             cameraShots     (void) const;
-    double          timeBetweenShots(void);
-    QGCMapPolygon*  structurePolygon(void) { return &_structurePolygon; }
-    QGCMapPolygon*  flightPolygon   (void) { return &_flightPolygon; }
+    bool            altitudeRelative        (void) const { return _altitudeRelative; }
+    int             cameraShots             (void) const;
+    double          timeBetweenShots        (void);
+    QGCMapPolygon*  structurePolygon        (void) { return &_structurePolygon; }
+    QGCMapPolygon*  flightPolygon           (void) { return &_flightPolygon; }
+
+    void setAltitudeRelative        (bool altitudeRelative);
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -72,6 +76,7 @@ public:
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
     double          specifiedFlightSpeed    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     double          specifiedGimbalYaw      (void) final { return std::numeric_limits<double>::quiet_NaN(); }
+    double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
     void            applyNewAltitude        (double newAltitude) final;
@@ -92,17 +97,17 @@ signals:
     void timeBetweenShotsChanged        (void);
     void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void altitudeRelativeChanged        (bool altitudeRelative);
-    void yawVehicleToStructureChanged   (bool yawVehicleToStructure);
 
 private slots:
     void _setDirty(void);
-    void _polygonDirtyChanged(bool dirty);
-    void _polygonCountChanged(int count);
-    void _flightPathChanged(void);
-    void _clearInternal(void);
-    void _updateCoordinateAltitudes(void);
-    void _rebuildFlightPolygon(void);
-    void _recalcCameraShots(void);
+    void _polygonDirtyChanged       (bool dirty);
+    void _polygonCountChanged       (int count);
+    void _flightPathChanged         (void);
+    void _clearInternal             (void);
+    void _updateCoordinateAltitudes (void);
+    void _rebuildFlightPolygon      (void);
+    void _recalcCameraShots         (void);
+    void _recalcLayerInfo           (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
@@ -124,19 +129,21 @@ private:
     double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
-    bool            _yawVehicleToStructure;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
     Fact    _altitudeFact;
+    Fact    _structureHeightFact;
     Fact    _layersFact;
 
     static const char* _altitudeFactName;
+    static const char* _structureHeightFactName;
     static const char* _layersFactName;
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonAltitudeRelativeKey;
-    static const char* _jsonYawVehicleToStructureKey;
+
+    friend class StructureScanComplexItemTest;
 };
 
 #endif

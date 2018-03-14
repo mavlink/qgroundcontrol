@@ -52,6 +52,7 @@ MissionItem::MissionItem(QObject* parent)
 
     setAutoContinue(true);
 
+    connect(&_param1Fact, &Fact::rawValueChanged, this, &MissionItem::_param1Changed);
     connect(&_param2Fact, &Fact::rawValueChanged, this, &MissionItem::_param2Changed);
     connect(&_param3Fact, &Fact::rawValueChanged, this, &MissionItem::_param3Changed);
 }
@@ -170,10 +171,10 @@ bool MissionItem::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
     if (wpParams.size() == 12) {
+        setCommand((MAV_CMD)wpParams[3].toInt());   // Has to be first since it triggers defaults to be set, which are then override by below set calls
         setSequenceNumber(wpParams[0].toInt());
         setIsCurrentItem(wpParams[1].toInt() == 1 ? true : false);
         setFrame((MAV_FRAME)wpParams[2].toInt());
-        setCommand((MAV_CMD)wpParams[3].toInt());
         setParam1(wpParams[4].toDouble());
         setParam2(wpParams[5].toDouble());
         setParam3(wpParams[6].toDouble());
@@ -299,8 +300,8 @@ bool MissionItem::load(const QJsonObject& json, int sequenceNumber, QString& err
     }
 
     // Make sure to set these first since they can signal other changes
-    setFrame((MAV_FRAME)convertedJson[_jsonFrameKey].toInt());
     setCommand((MAV_CMD)convertedJson[_jsonCommandKey].toInt());
+    setFrame((MAV_FRAME)convertedJson[_jsonFrameKey].toInt());
 
     _doJumpId = -1;
     if (convertedJson.contains(_jsonDoJumpIdKey)) {
@@ -440,6 +441,27 @@ double MissionItem::specifiedGimbalYaw(void) const
     }
 
     return gimbalYaw;
+}
+
+double MissionItem::specifiedGimbalPitch(void) const
+{
+    double gimbalPitch = std::numeric_limits<double>::quiet_NaN();
+
+    if (_commandFact.rawValue().toInt() == MAV_CMD_DO_MOUNT_CONTROL && _param7Fact.rawValue().toInt() == MAV_MOUNT_MODE_MAVLINK_TARGETING) {
+        gimbalPitch = _param1Fact.rawValue().toDouble();
+    }
+
+    return gimbalPitch;
+}
+
+void MissionItem::_param1Changed(QVariant value)
+{
+    Q_UNUSED(value);
+
+    double gimbalPitch = specifiedGimbalPitch();
+    if (!qIsNaN(gimbalPitch)) {
+        emit specifiedGimbalPitchChanged(gimbalPitch);
+    }
 }
 
 void MissionItem::_param2Changed(QVariant value)

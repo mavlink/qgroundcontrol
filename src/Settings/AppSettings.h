@@ -40,6 +40,7 @@ public:
     Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
     Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
+    Q_PROPERTY(Fact* gstDebug                           READ gstDebug                           CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
@@ -75,6 +76,7 @@ public:
     Fact* mapboxToken                       (void);
     Fact* esriToken                         (void);
     Fact* defaultFirmwareType               (void);
+    Fact* gstDebug                          (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
@@ -107,6 +109,7 @@ public:
     static const char* mapboxTokenName;
     static const char* esriTokenName;
     static const char* defaultFirmwareTypeName;
+    static const char* gstDebugName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -154,6 +157,7 @@ private:
     SettingsFact* _mapboxTokenFact;
     SettingsFact* _esriTokenFact;
     SettingsFact* _defaultFirmwareTypeFact;
+    SettingsFact* _gstDebugFact;
 };
 
 #endif

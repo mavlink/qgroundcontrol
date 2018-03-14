@@ -77,7 +77,10 @@ public:
     bool loadFromJson(const QJsonObject& json, bool required, QString& errorString);
 
     /// Convert polygon to NED and return (D is ignored)
-    QList<QPointF> nedPolygon(void);
+    QList<QPointF> nedPolygon(void) const;
+
+    /// Returns the area of the polygon in meters squared
+    double area(void) const;
 
     // Property methods
 

@@ -43,11 +43,10 @@ public:
     /// Set of optional capabilites which firmware may support
     typedef enum {
         SetFlightModeCapability =           1 << 0, ///< FirmwarePlugin::setFlightMode method is supported
-        MavCmdPreflightStorageCapability =  1 << 1, ///< MAV_CMD_PREFLIGHT_STORAGE is supported
-        PauseVehicleCapability =            1 << 2, ///< Vehicle supports pausing at current location
-        GuidedModeCapability =              1 << 3, ///< Vehicle supports guided mode commands
-        OrbitModeCapability =               1 << 4, ///< Vehicle supports orbit mode
-        TakeoffVehicleCapability =          1 << 5, ///< Vehicle supports guided takeoff
+        PauseVehicleCapability =            1 << 1, ///< Vehicle supports pausing at current location
+        GuidedModeCapability =              1 << 2, ///< Vehicle supports guided mode commands
+        OrbitModeCapability =               1 << 3, ///< Vehicle supports orbit mode
+        TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
     } FirmwareCapabilities;
 
     /// Maps from on parameter name to another
@@ -129,6 +128,9 @@ public:
 
     /// Command vehicle to takeoff from current location to a firmware specific height.
     virtual void guidedModeTakeoff(Vehicle* vehicle, double takeoffAltRel);
+
+    /// @return The minimum takeoff altitude (relative) for guided takeoff.
+    virtual double minimumTakeoffAltitude(Vehicle* vehicle) { Q_UNUSED(vehicle); return 10; }
 
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
@@ -215,6 +217,11 @@ public:
     ///         call deleteParameterMetaData when no longer needed.
     virtual QObject* loadParameterMetaData(const QString& metaDataFile) { Q_UNUSED(metaDataFile); return NULL; }
 
+    /// Returns the FactMetaData associated with the parameter name
+    ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
+    ///     @param name Parameter name
+    virtual FactMetaData* getMetaDataForFact(QObject* parameterMetaData, const QString& name, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(name); Q_UNUSED(vehicleType); return NULL; }
+
     /// Adds the parameter meta data to the Fact
     ///     @param opaqueParameterMetaData Opaque pointer returned from loadParameterMetaData
     virtual void addMetaDataToFact(QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) { Q_UNUSED(parameterMetaData); Q_UNUSED(fact); Q_UNUSED(vehicleType); return; }
@@ -257,6 +264,7 @@ public:
     virtual QString vehicleImageCompass(const Vehicle* vehicle) const;
 
     /// Allows the core plugin to override the toolbar indicators
+    ///     signals toolbarIndicatorsChanged
     /// @return A list of QUrl with the indicators (see MainToolBarIndicators.qml)
     virtual const QVariantList& toolBarIndicators(const Vehicle* vehicle);
 
@@ -295,8 +303,14 @@ public:
     /// Returns true if the vehicle is a VTOL
     virtual bool isVtol(const Vehicle* vehicle) const;
 
+    /// Convert from HIGH_LATENCY2.custom_mode value to correct 32 bit value.
+    virtual uint32_t highLatencyCustomModeTo32Bits(uint16_t hlCustomMode);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
+
+signals:
+    void toolbarIndicatorsChanged(void);
 
 protected:
     // Arms the vehicle with validation and retries

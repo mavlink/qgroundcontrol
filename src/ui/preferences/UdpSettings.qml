@@ -175,5 +175,19 @@ Item {
                 }
             }
         }
+        QGCCheckBox {
+            text:       "High Latency"
+            checked:    false
+            visible:    editConfig ? editConfig.highLatencyAllowed : false
+            onCheckedChanged: {
+                if(editConfig) {
+                    editConfig.highLatency = checked
+                }
+            }
+            Component.onCompleted: {
+                if(editConfig)
+                    checked = editConfig.highLatency
+            }
+        }
     }
 }

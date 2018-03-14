@@ -122,7 +122,12 @@ void QGCMapPolygonTest::_testVertexManipulation(void)
         QCOMPARE(_mapPolygon->count(), i);
 
         _mapPolygon->appendVertex(_polyPoints[i]);
-        QVERIFY(_multiSpyPolygon->checkOnlySignalByMask(pathChangedMask | polygonDirtyChangedMask | polygonCountChangedMask | centerChangedMask));
+        if (i >= 2) {
+            // Center is no recalculated until there are 3 points or more
+            QVERIFY(_multiSpyPolygon->checkOnlySignalByMask(pathChangedMask | polygonDirtyChangedMask | polygonCountChangedMask | centerChangedMask));
+        } else {
+            QVERIFY(_multiSpyPolygon->checkOnlySignalByMask(pathChangedMask | polygonDirtyChangedMask | polygonCountChangedMask));
+        }
         QVERIFY(_multiSpyModel->checkOnlySignalByMask(modelDirtyChangedMask | modelCountChangedMask));
         QCOMPARE(_multiSpyPolygon->pullIntFromSignalIndex(polygonCountChangedIndex), i+1);
         QCOMPARE(_multiSpyModel->pullIntFromSignalIndex(modelCountChangedIndex), i+1);
@@ -200,17 +205,17 @@ void QGCMapPolygonTest::_testVertexManipulation(void)
 
 void QGCMapPolygonTest::_testKMLLoad(void)
 {
-    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/GoodPolygon.kml")));
+    QVERIFY(_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonGood.kml")));
 
     setExpectedMessageBox(QMessageBox::Ok);
-    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/BadXml.kml")));
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonBadXml.kml")));
     checkExpectedMessageBox();
 
     setExpectedMessageBox(QMessageBox::Ok);
-    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/MissingPolygonNode.kml")));
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonMissingNode.kml")));
     checkExpectedMessageBox();
 
     setExpectedMessageBox(QMessageBox::Ok);
-    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/BadCoordinatesNode.kml")));
+    QVERIFY(!_mapPolygon->loadKMLFile(QStringLiteral(":/unittest/PolygonBadCoordinatesNode.kml")));
     checkExpectedMessageBox();
 }

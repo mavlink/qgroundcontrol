@@ -17,7 +17,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
 /// Dialog showing list of available guided actions
-NoMouseThroughRectangle {
+Rectangle {
     id:         _root
     width:      actionColumn.width  + (_margins * 4)
     height:     actionColumn.height + (_margins * 4)
@@ -34,6 +34,10 @@ NoMouseThroughRectangle {
     property real _margins: Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
 
     QGCPalette { id: qgcPal }
+
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
     ColumnLayout {
         id:                 actionColumn

@@ -379,7 +379,7 @@ SetupPage {
                         text:       qsTr("Calibrate")
 
                         onClicked: {
-                            if (text == qsTr("Calibrate")) {
+                            if (text === qsTr("Calibrate")) {
                                 showDialog(zeroTrimsDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                             } else {
                                 controller.nextButtonClicked()

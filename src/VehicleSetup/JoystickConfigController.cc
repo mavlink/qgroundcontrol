@@ -16,7 +16,6 @@
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
-const int JoystickConfigController::_updateInterval =       150;        ///< Interval for timer which updates radio channel widgets
 const int JoystickConfigController::_calCenterPoint =       0;
 const int JoystickConfigController::_calValidMinValue =     -32768;     ///< Largest valid minimum axis value
 const int JoystickConfigController::_calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
@@ -71,10 +70,19 @@ void JoystickConfigController::start(void)
     _stopCalibration();
 }
 
+void JoystickConfigController::setDeadbandValue(int axis, int value)
+{
+    _axisDeadbandChanged(axis,value);
+    Joystick* joystick = _joystickManager->activeJoystick();
+    Joystick::Calibration_t calibration = joystick->getCalibration(axis);
+    calibration.deadband = value;
+    joystick->setCalibration(axis,calibration);
+}
+
 JoystickConfigController::~JoystickConfigController()
 {
     if(_activeJoystick) {
-        _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeMonitor);
+        _activeJoystick->setCalibrationMode(false);
     }
 }
 
@@ -407,8 +415,8 @@ void JoystickConfigController::_inputCenterWait(Joystick::AxisFunction_t functio
     
     if (_stickDetectAxis == _axisNoAxis) {
         // Sticks have not yet moved close enough to center
-        
-        if (abs(_calCenterPoint - value) < _calRoughCenterDelta) {
+        int roughCenter = getDeadbandToggle() ? std::max(_rgAxisInfo[axis].deadband,_calRoughCenterDelta) : _calRoughCenterDelta;
+        if (abs(_calCenterPoint - value) < roughCenter) {
             // Stick has moved close enough to center that we can start waiting for it to settle
             _stickDetectAxis = axis;
             _stickDetectInitialValue = value;
@@ -574,7 +582,7 @@ void JoystickConfigController::_writeCalibration(void)
 /// @brief Starts the calibration process
 void JoystickConfigController::_startCalibration(void)
 {
-    _activeJoystick->startCalibrationMode(Joystick::CalibrationModeCalibrating);
+    _activeJoystick->setCalibrationMode(true);
     _resetInternalCalibrationValues();
     
     _nextButton->setProperty("text", "Next");
@@ -590,7 +598,7 @@ void JoystickConfigController::_stopCalibration(void)
 {
     _currentStep = -1;
     
-    _activeJoystick->stopCalibrationMode(Joystick::CalibrationModeCalibrating);
+    _activeJoystick->setCalibrationMode(false);
     _setInternalCalibrationValuesFromSettings();
     
     _statusText->setProperty("text", "");
@@ -755,7 +763,6 @@ void JoystickConfigController::_signalAllAttitudeValueChanges(void)
 void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
 {
     bool joystickTransition = false;
-    
     if (_activeJoystick) {
         joystickTransition = true;
         disconnect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
@@ -773,7 +780,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         if (joystickTransition) {
             _stopCalibration();
         }
-        _activeJoystick->startCalibrationMode(Joystick::CalibrationModeMonitor);
+        _activeJoystick->setCalibrationMode(false);
         _axisCount = _activeJoystick->axisCount();
         _rgAxisInfo = new struct AxisInfo[_axisCount];
         _axisValueSave = new int[_axisCount];

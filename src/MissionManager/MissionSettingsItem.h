@@ -73,6 +73,7 @@ public:
     QGeoCoordinate  exitCoordinate          (void) const final { return _plannedHomePositionCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
     double          specifiedGimbalYaw      (void) final;
+    double          specifiedGimbalPitch    (void) final;
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
     double          specifiedFlightSpeed    (void) final;

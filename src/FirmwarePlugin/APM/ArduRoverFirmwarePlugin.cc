@@ -89,6 +89,9 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
         remapV3_2["SERVO13_REVERSED"] = QStringLiteral("RC13_REVERSED");
         remapV3_2["SERVO14_REVERSED"] = QStringLiteral("RC14_REVERSED");
 
+        remapV3_2["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
+        remapV3_2["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
+
         _remapParamNameIntialized = true;
     }
 }

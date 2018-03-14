@@ -40,7 +40,9 @@ Item {
 
     function getPreferredInstrumentWidth() {
         if(ScreenTools.isMobile) {
-            return ScreenTools.isTinyScreen ? mainWindow.width * 0.2 : mainWindow.width * 0.15
+            return mainWindow.width * 0.25
+        } else if(ScreenTools.isHugeScreen) {
+            return mainWindow.width * 0.11
         }
         return ScreenTools.defaultFontPixelWidth * 30
     }
@@ -50,15 +52,24 @@ Item {
             if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
                 instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
                 switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+                case CustomInstrumentWidget.POS_TOP_LEFT:
+                    instrumentsLoader.state  = "topLeftMode"
+                    break;
+                case CustomInstrumentWidget.POS_BOTTOM_LEFT:
+                    instrumentsLoader.state  = "bottomLeftMode"
+                    break;
+                case CustomInstrumentWidget.POS_CENTER_LEFT:
+                    instrumentsLoader.state  = "centerLeftMode"
+                    break;
                 case CustomInstrumentWidget.POS_TOP_RIGHT:
-                    instrumentsLoader.state  = "topMode"
+                    instrumentsLoader.state  = "topRightMode"
                     break;
                 case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
-                    instrumentsLoader.state  = "bottomMode"
+                    instrumentsLoader.state  = "bottomRightMode"
                     break;
                 case CustomInstrumentWidget.POS_CENTER_RIGHT:
                 default:
-                    instrumentsLoader.state  = "centerMode"
+                    instrumentsLoader.state  = "centerRightMode"
                     break;
                 }
             } else {
@@ -67,10 +78,9 @@ Item {
                 var useAlternateInstruments = true//QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
                 if(useAlternateInstruments) {
                     instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
-                    instrumentsLoader.state  = "topMode"
                 } else {
                     instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value == 1 ? "centerMode" : "topMode"
+                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value === 1 ? "centerRightMode" : "topRightMode"
                 }
             }
         } else {
@@ -139,30 +149,69 @@ Item {
         property real maxHeight:parent.height - (anchors.margins * 2)
         states: [
             State {
-                name:   "topMode"
+                name:   "topRightMode"
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.verticalCenter: undefined
                     anchors.bottom:         undefined
                     anchors.top:            _root ? _root.top : undefined
+                    anchors.right:          _root ? _root.right : undefined
+                    anchors.left:           undefined
                 }
             },
             State {
-                name:   "centerMode"
+                name:   "centerRightMode"
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.top:            undefined
                     anchors.bottom:         undefined
                     anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                    anchors.right:          _root ? _root.right : undefined
+                    anchors.left:           undefined
                 }
             },
             State {
-                name:   "bottomMode"
+                name:   "bottomRightMode"
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.top:            undefined
                     anchors.verticalCenter: undefined
                     anchors.bottom:         _root ? _root.bottom : undefined
+                    anchors.right:          _root ? _root.right : undefined
+                    anchors.left:           undefined
+                }
+            },
+            State {
+                name:   "topLeftMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         undefined
+                    anchors.top:            _root ? _root.top : undefined
+                    anchors.right:          undefined
+                    anchors.left:           _root ? _root.left : undefined
+                }
+            },
+            State {
+                name:   "centerLeftMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.bottom:         undefined
+                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                    anchors.right:          undefined
+                    anchors.left:           _root ? _root.left : undefined
+                }
+            },
+            State {
+                name:   "bottomLeftMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         _root ? _root.bottom : undefined
+                    anchors.right:          undefined
+                    anchors.left:           _root ? _root.left : undefined
                 }
             }
         ]

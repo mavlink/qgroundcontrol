@@ -7,20 +7,53 @@ WindowsBuild {
 
 #
 # [REQUIRED] Add support for the MAVLink communications protocol.
-# Mavlink dialect is hardwired to arudpilotmega for now. The reason being
-# the current codebase supports both PX4 and APM flight stack. PX4 flight stack
-# only usese common mavlink specifications, whereas APM flight stack uses custom
-# mavlink specifications which add to common. So by using the adupilotmega dialect
-# QGC can support both in the same codebase.
 #
+# By default MAVLink dialect is hardwired to arudpilotmega. The reason being
+# the current codebase supports both PX4 and APM flight stack. PX4 flight stack
+# only uses common MAVLink specifications, whereas APM flight stack uses custom
+# MAVLink specifications which adds to common. So by using the adupilotmega dialect
+# QGC can support both in the same codebase.
+
 # Once the mavlink helper routines include support for multiple dialects within
 # a single compiled codebase this hardwiring of dialect can go away. But until then
 # this "workaround" is needed.
 
-MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
-MAVLINKPATH = $$BASEDIR/$$MAVLINKPATH_REL
-MAVLINK_CONF = ardupilotmega
-DEFINES += MAVLINK_NO_DATA
+# In the mean time, it’s possible to define a completely different dialect by defining the
+# location and name below.
+
+# check for user defined settings in user_config.pri if not already set as qmake argument
+isEmpty(MAVLINKPATH_REL) {
+    exists(user_config.pri):infile(user_config.pri, MAVLINKPATH_REL) {
+        MAVLINKPATH_REL = $$fromfile(user_config.pri, MAVLINKPATH_REL)
+        message($$sprintf("Using user-supplied relativ mavlink path '%1' specified in user_config.pri", $$MAVLINKPATH_REL))
+    } else {
+        MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
+    }
+}
+
+isEmpty(MAVLINKPATH) {
+    exists(user_config.pri):infile(user_config.pri, MAVLINKPATH) {
+        MAVLINKPATH     = $$fromfile(user_config.pri, MAVLINKPATH)
+        message($$sprintf("Using user-supplied mavlink path '%1' specified in user_config.pri", $$MAVLINKPATH))
+    } else {
+        MAVLINKPATH     = $$BASEDIR/$$MAVLINKPATH_REL
+    }
+}
+
+isEmpty(MAVLINK_CONF) {
+    exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
+        MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
+        message($$sprintf("Using user-supplied mavlink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
+    } else {
+        MAVLINK_CONF = ardupilotmega
+    }
+}
+
+# If defined, all APM specific MAVLink messages are disabled
+contains (CONFIG, QGC_DISABLE_APM_MAVLINK) {
+    message("Disable APM MAVLink support")
+    DEFINES += NO_ARDUPILOT_DIALECT
+}
 
 # First we select the dialect, checking for valid user selection
 # Users can override all other settings by specifying MAVLINK_CONF as an argument to qmake

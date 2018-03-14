@@ -21,6 +21,7 @@ Slider {
 
     // Value indicator starts display from zero instead of min value
     property bool zeroCentered: false
+    property bool displayValue: false
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -67,8 +68,15 @@ Slider {
             implicitWidth:  _radius * 2
             implicitHeight: _radius * 2
             radius:         _radius
-
             property real _radius: Math.round(ScreenTools.defaultFontPixelHeight * 0.75)
+            Label {
+                text:               _root.value.toFixed(0)
+                visible:            _root.displayValue
+                anchors.centerIn:   parent
+                font.family:        ScreenTools.normalFontFamily
+                font.pointSize:     ScreenTools.smallFontPointSize
+                color:              qgcPal.buttonText
+            }
         }
     }
 }

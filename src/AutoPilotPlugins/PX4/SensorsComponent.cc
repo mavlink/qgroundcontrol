@@ -16,8 +16,9 @@
 #include "QGCQmlWidgetHolder.h"
 #include "SensorsComponentController.h"
 
-const char* SensorsComponent::_airspeedBreaker =    "CBRK_AIRSPD_CHK";
-const char* SensorsComponent::_airspeedCal =        "SENS_DPRES_OFF";
+const char* SensorsComponent::_airspeedBreakerParam =   "CBRK_AIRSPD_CHK";
+const char* SensorsComponent::_airspeedDisabledParam =  "FW_ARSP_MODE";
+const char* SensorsComponent::_airspeedCalParam =       "SENS_DPRES_OFF";
 
 SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
@@ -55,10 +56,10 @@ bool SensorsComponent::setupComplete(void) const
     }
 
     if (_vehicle->fixedWing() || _vehicle->vtol()) {
-        if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedBreaker)->rawValue().toInt() != 162128) {
-            if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedCal)->rawValue().toFloat() == 0.0f) {
-                return false;
-            }
+        if (!_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedDisabledParam)->rawValue().toBool() &&
+                _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedBreakerParam)->rawValue().toInt() != 162128 &&
+                _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedCalParam)->rawValue().toFloat() == 0.0f) {
+            return false;
         }
     }
 
@@ -71,7 +72,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
     
     triggers << _deviceIds;
     if (_vehicle->fixedWing() || _vehicle->vtol()) {
-        triggers << _airspeedCal << _airspeedBreaker;
+        triggers << _airspeedCalParam << _airspeedBreakerParam;
     }
     
     return triggers;

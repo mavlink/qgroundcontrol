@@ -70,7 +70,9 @@ void MissionCommandTreeTest::_checkBaseValues(const MissionCommandUIInfo* uiInfo
     QCOMPARE(uiInfo->isStandaloneCoordinate(), true);
     QCOMPARE(uiInfo->specifiesCoordinate(), true);
     for (int i=1; i<=7; i++) {
-        const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i);
+        bool showUI;
+        const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(i, showUI);
+        QVERIFY(showUI);
         QVERIFY(paramInfo);
         QCOMPARE(paramInfo->decimalPlaces(), 1);
         QCOMPARE(paramInfo->defaultValue(), 1.0);
@@ -91,7 +93,9 @@ void MissionCommandTreeTest::_checkOverrideParamValues(const MissionCommandUIInf
 {
     QString overrideString = QString("override fw %1 %2").arg(command).arg(paramIndex);
 
-    const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(paramIndex);
+    bool showUI;
+    const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(paramIndex, showUI);
+    QVERIFY(showUI);
     QVERIFY(paramInfo);
     QCOMPARE(paramInfo->decimalPlaces(), 1);
     QCOMPARE(paramInfo->defaultValue(), 1.0);
@@ -109,6 +113,7 @@ void MissionCommandTreeTest::_checkOverrideParamValues(const MissionCommandUIInf
 // Verifies that values match settings for an override
 void MissionCommandTreeTest::_checkOverrideValues(const MissionCommandUIInfo* uiInfo, int command)
 {
+    bool showUI;
     QString overrideString = QString("override fw %1").arg(command);
 
     QVERIFY(uiInfo != NULL);
@@ -121,9 +126,12 @@ void MissionCommandTreeTest::_checkOverrideValues(const MissionCommandUIInfo* ui
     QCOMPARE(uiInfo->friendlyName(), _friendlyName(command));
     QCOMPARE(uiInfo->isStandaloneCoordinate(), false);
     QCOMPARE(uiInfo->specifiesCoordinate(), false);
-    QVERIFY(uiInfo->getParamInfo(2) == NULL);
-    QVERIFY(uiInfo->getParamInfo(4) == NULL);
-    QVERIFY(uiInfo->getParamInfo(6) == NULL);
+    QVERIFY(uiInfo->getParamInfo(2, showUI));
+    QCOMPARE(showUI, false);
+    QVERIFY(uiInfo->getParamInfo(4, showUI));
+    QCOMPARE(showUI, false);
+    QVERIFY(uiInfo->getParamInfo(6, showUI));
+    QCOMPARE(showUI, false);
     _checkOverrideParamValues(uiInfo, command, 1);
     _checkOverrideParamValues(uiInfo, command, 3);
     _checkOverrideParamValues(uiInfo, command, 5);
@@ -131,6 +139,8 @@ void MissionCommandTreeTest::_checkOverrideValues(const MissionCommandUIInfo* ui
 
 void MissionCommandTreeTest::testJsonLoad(void)
 {
+    bool showUI;
+
     // Test loading from the bad command list
     MissionCommandList* commandList = _commandTree->_staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC];
     QVERIFY(commandList != NULL);
@@ -148,14 +158,16 @@ void MissionCommandTreeTest::testJsonLoad(void)
     QCOMPARE(uiInfo->isStandaloneCoordinate(), false);
     QCOMPARE(uiInfo->specifiesCoordinate(), false);
     for (int i=1; i<=7; i++) {
-        QVERIFY(uiInfo->getParamInfo(i) == NULL);
+        QVERIFY(uiInfo->getParamInfo(i, showUI) == NULL);
+        QCOMPARE(showUI, false);
     }
 
     // Command 2 should all values defaulted for param 1
     uiInfo = commandList->getUIInfo((MAV_CMD)2);
     QVERIFY(uiInfo != NULL);
-    const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(1);
+    const MissionCmdParamInfo* paramInfo = uiInfo->getParamInfo(1, showUI);
     QVERIFY(paramInfo);
+    QCOMPARE(showUI, true);
     QCOMPARE(paramInfo->decimalPlaces(), -1);
     QCOMPARE(paramInfo->defaultValue(), 0.0);
     QCOMPARE(paramInfo->enumStrings().count(), 0);
@@ -164,7 +176,8 @@ void MissionCommandTreeTest::testJsonLoad(void)
     QCOMPARE(paramInfo->param(), 1);
     QVERIFY(paramInfo->units().isEmpty());
     for (int i=2; i<=7; i++) {
-        QVERIFY(uiInfo->getParamInfo(i) == NULL);
+        QVERIFY(uiInfo->getParamInfo(i, showUI) == NULL);
+        QCOMPARE(showUI, false);
     }
 
     // Command 3 should have all values set

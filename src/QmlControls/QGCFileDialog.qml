@@ -17,29 +17,33 @@ Item {
     property var    qgcView
     property string folder
     property var    nameFilters
-    property string fileExtension   // Primary file extension to search for
-    property string fileExtension2  // Secondary file extension to search for
+    property string fileExtension       // Primary file extension to search for
+    property string fileExtension2: ""  // Secondary file extension to search for
     property string title
     property bool   selectExisting
     property bool   selectFolder
 
     property bool   _openForLoad:   true
     property real   _margins:       ScreenTools.defaultFontPixelHeight / 2
-    property bool   _mobile:        ScreenTools.isMobile
+    property bool   _mobileDlg:     QGroundControl.corePlugin.options.useMobileFileDialog
     property var    _rgExtensions
 
-    Component.onCompleted: {
-        if (fileExtension2 === "") {
+    Component.onCompleted: setupFileExtensions()
+
+    onFileExtensionChanged: setupFileExtensions()
+    onFileExtension2Changed: setupFileExtensions()
+
+    function setupFileExtensions() {
+        if (fileExtension2 == "") {
             _rgExtensions = [ fileExtension ]
         } else {
             _rgExtensions = [ fileExtension, fileExtension2 ]
-
         }
     }
 
     function openForLoad() {
         _openForLoad = true
-        if (_mobile && folder.length !== 0) {
+        if (_mobileDlg && folder.length !== 0) {
             qgcView.showDialog(mobileFileOpenDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Cancel)
         } else {
             fullFileDialog.open()
@@ -48,7 +52,7 @@ Item {
 
     function openForSave() {
         _openForLoad = false
-        if (_mobile && folder.length !== 0) {
+        if (_mobileDlg && folder.length !== 0) {
             qgcView.showDialog(mobileFileSaveDialog, title, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         } else {
             fullFileDialog.open()
@@ -128,10 +132,7 @@ Item {
 
                                 property string fileToDelete
 
-                                onAboutToHide: {
-                                    fileButton.highlight = false
-                                    hideDialog()
-                                }
+                                onAboutToHide: fileButton.highlight = false
 
                                 MenuItem {
                                     text:           qsTr("Delete")
@@ -143,7 +144,7 @@ Item {
 
                     QGCLabel {
                         text:       qsTr("No files")
-                        visible:    fileList.model.length == 0 && fileList2.model.length == 0
+                        visible:    fileList.model.length === 0
                     }
                 }
             }

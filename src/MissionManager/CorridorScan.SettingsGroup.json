@@ -1,0 +1,46 @@
+[
+{
+    "name":             "Altitude",
+    "shortDescription": "Altitude for the bottom layer of the structure scan.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     50
+},
+{
+    "name":             "CorridorWidth",
+    "shortDescription": "Corridor width. Specify 0 width for a single pass scan.",
+    "type":             "double",
+    "units":            "m",
+    "min":              0,
+    "decimalPlaces":    1,
+    "defaultValue":     50
+},
+{
+    "name":             "Trigger distance",
+    "shortDescription": "Distance between each triggering of the camera. 0 specifies not camera trigger.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+},
+{
+    "name":             "GridSpacing",
+    "shortDescription": "Amount of spacing in between parallel grid lines.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0.1,
+    "units":            "m",
+    "defaultValue":     30
+},
+{
+    "name":             "TurnaroundDistance",
+    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turnaround.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     30
+}
+]
