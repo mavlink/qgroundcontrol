@@ -6,15 +6,14 @@ import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
 
 Button {
-    property bool   primary:        false                               ///< primary button for a group of buttons
-    property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
-    property bool   showBorder:     _qgcPal.globalTheme === QGCPalette.Light
-    property bool   iconLeft:       false
-    property real   backRadius:     0
-    property real   heightFactor:   0.5
+    activeFocusOnPress: true
+
+    property bool primary:      false                               ///< primary button for a group of buttons
+    property real pointSize:    ScreenTools.defaultFontPointSize    ///< Point size for button text
 
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property bool   _showHighlight:     (pressed | hovered | checked) && !__forceHoverOff
+    property bool   _showBorder:        _qgcPal.globalTheme === QGCPalette.Light
 
     // This fixes the issue with button hover where if a Button is near the edge oa QQuickWidget you can
     // move the mouse fast enough such that the MouseArea does not trigger an onExited. This is turn
@@ -25,7 +24,7 @@ Button {
     property int __lastGlobalMouseX:    0
     property int __lastGlobalMouseY:    0
     property int _horizontalPadding:    ScreenTools.defaultFontPixelWidth
-    property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight * heightFactor)
+    property int _verticalPadding:      Math.round(ScreenTools.defaultFontPixelHeight / 2)
 
     Connections {
         target: __behavior
@@ -61,11 +60,9 @@ Button {
 
             /*! This defines the background of the button. */
             background: Rectangle {
-                id:             backRect
                 implicitWidth:  ScreenTools.implicitButtonWidth
                 implicitHeight: ScreenTools.implicitButtonHeight
-                radius:         backRadius
-                border.width:   showBorder ? 1 : 0
+                border.width:   _showBorder ? 1: 0
                 border.color:   _qgcPal.buttonText
                 color:          _showHighlight ?
                                     control._qgcPal.buttonHighlight :
@@ -74,35 +71,31 @@ Button {
 
             /*! This defines the label of the button.  */
             label: Item {
-                implicitWidth:          text.implicitWidth + icon.width
-                implicitHeight:         text.implicitHeight
-                baselineOffset:         text.y + text.baselineOffset
+                implicitWidth:          row.implicitWidth
+                implicitHeight:         row.implicitHeight
+                baselineOffset:         row.y + text.y + text.baselineOffset
 
-                QGCColoredImage {
-                    id:                     icon
-                    source:                 control.iconSource
-                    height:                 source === "" ? 0 : text.height
-                    width:                  height
-                    color:                  text.color
-                    fillMode:               Image.PreserveAspectFit
-                    sourceSize.height:      height
-                    anchors.left:           control.iconLeft ? parent.left : undefined
-                    anchors.leftMargin:     control.iconLeft ? ScreenTools.defaultFontPixelWidth : undefined
-                    anchors.right:          !control.iconLeft ? parent.right : undefined
-                    anchors.rightMargin:    !control.iconLeft ? ScreenTools.defaultFontPixelWidth : undefined
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                Row {
+                    id:                 row
+                    anchors.centerIn:   parent
+                    spacing:            ScreenTools.defaultFontPixelWidth * 0.25
 
-                Text {
-                    id:                     text
-                    anchors.centerIn:       parent
-                    antialiasing:           true
-                    text:                   control.text
-                    font.pointSize:         pointSize
-                    font.family:            ScreenTools.normalFontFamily
-                    color:                  _showHighlight ?
-                                                control._qgcPal.buttonHighlightText :
-                                                (primary ? control._qgcPal.primaryButtonText : control._qgcPal.buttonText)
+                    Image {
+                        source:                 control.iconSource
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Text {
+                        id:                     text
+                        anchors.verticalCenter: parent.verticalCenter
+                        antialiasing:           true
+                        text:                   control.text
+                        font.pointSize:         pointSize
+                        font.family:            ScreenTools.normalFontFamily
+                        color:                  _showHighlight ?
+                                                    control._qgcPal.buttonHighlightText :
+                                                    (primary ? control._qgcPal.primaryButtonText : control._qgcPal.buttonText)
+                    }
                 }
             }
         }

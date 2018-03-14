@@ -22,12 +22,9 @@
 #include <QVariantAnimation>
 #include <QJsonArray>
 
-/* types for local parameter cache */
-typedef QPair<int /* FactMetaData::ValueType_t */, QVariant /* Fact::rawValue */> ParamTypeVal;
-typedef QMap<QString /* parameter name */, ParamTypeVal> CacheMapName2ParamTypeVal;
-
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log, "ParameterManagerVerbose1Log")
-QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log, "ParameterManagerVerbose2Log")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVerbose1Log")
+QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")
+QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog,  "ParameterManagerDebugCacheFailureLog") // Turn on to debug parameter cache crc misses
 
 Fact ParameterManager::_defaultFact;
 
@@ -149,6 +146,24 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
             _tryCacheHashLoad(vehicleId, componentId, value);
         }
         return;
+    }
+
+    // Used to debug cache crc misses (turn on ParameterManagerDebugCacheFailureLog)
+    if (!_initialLoadComplete && !_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
+        if (_debugCacheMap[componentId].contains(parameterName)) {
+            const ParamTypeVal& cacheParamTypeVal = _debugCacheMap[componentId][parameterName];
+            size_t dataSize = FactMetaData::typeToSize(static_cast<FactMetaData::ValueType_t>(cacheParamTypeVal.first));
+            const void *cacheData = cacheParamTypeVal.second.constData();
+
+            const void *vehicleData = value.constData();
+
+            if (memcmp(cacheData, vehicleData, dataSize)) {
+                qDebug() << "Cache/Vehicle values differ for name:cache:actual" << parameterName << value << cacheParamTypeVal.second;
+            }
+            _debugCacheParamSeen[componentId][parameterName] = true;
+        } else {
+            qDebug() << "Parameter missing from cache" << parameterName;
+        }
     }
 
     _initialRequestTimeoutTimer.stop();
@@ -289,6 +304,12 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         case MAV_PARAM_TYPE_INT32:
             factType = FactMetaData::valueTypeInt32;
             break;
+        case MAV_PARAM_TYPE_UINT64:
+            factType = FactMetaData::valueTypeUint64;
+            break;
+        case MAV_PARAM_TYPE_INT64:
+            factType = FactMetaData::valueTypeInt64;
+            break;
         case MAV_PARAM_TYPE_REAL32:
             factType = FactMetaData::valueTypeFloat;
             break;
@@ -332,11 +353,6 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
         // new params. By handling this here, we can pick up components which finish up later than the default
         // component param set.
         _setupCategoryMap();
-    }
-
-    if (_prevWaitingWriteParamNameCount != 0 &&  waitingWriteParamNameCount == 0) {
-        // If all the writes just finished the vehicle is up to date, so persist.
-        _saveToEEPROM();
     }
 
     // Update param cache. The param cache is only used on PX4 Firmware since ArduPilot and Solo have volatile params
@@ -869,22 +885,13 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         _parameterSetMajorVersion = -1;
         _clearMetaData();
         qCInfo(ParameterManagerLog) << "Parameters cache match failed" << qPrintable(QFileInfo(cacheFile).absoluteFilePath());
-    }
-}
-
-void ParameterManager::_saveToEEPROM(void)
-{
-    if (_saveRequired) {
-        _saveRequired = false;
-        if (_vehicle->firmwarePlugin()->isCapable(_vehicle, FirmwarePlugin::MavCmdPreflightStorageCapability)) {
-            _vehicle->sendMavCommand(MAV_COMP_ID_ALL,
-                                     MAV_CMD_PREFLIGHT_STORAGE,
-                                     true,  // showError
-                                     1,     // Write parameters to EEPROM
-                                     -1);   // Don't do anything with mission storage
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_saveToEEPROM";
-        } else {
-            qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "_saveToEEPROM skipped due to FirmwarePlugin::isCapable";
+        if (ParameterManagerDebugCacheFailureLog().isDebugEnabled()) {
+            _debugCacheCRC[componentId] = true;
+            _debugCacheMap[componentId] = cacheMap;
+            foreach (const QString& name, cacheMap.keys()) {
+                _debugCacheParamSeen[componentId][name] = false;
+            }
+            qgcApp()->showMessage(tr("Parameter cache CRC match failed"));
         }
     }
 }
@@ -983,8 +990,17 @@ MAV_PARAM_TYPE ParameterManager::_factTypeToMavType(FactMetaData::ValueType_t fa
     case FactMetaData::valueTypeUint32:
         return MAV_PARAM_TYPE_UINT32;
 
+    case FactMetaData::valueTypeUint64:
+        return MAV_PARAM_TYPE_UINT64;
+
+    case FactMetaData::valueTypeInt64:
+        return MAV_PARAM_TYPE_INT64;
+
     case FactMetaData::valueTypeFloat:
         return MAV_PARAM_TYPE_REAL32;
+
+    case FactMetaData::valueTypeDouble:
+        return MAV_PARAM_TYPE_REAL64;
 
     default:
         qWarning() << "Unsupported fact type" << factType;
@@ -1013,8 +1029,17 @@ FactMetaData::ValueType_t ParameterManager::_mavTypeToFactType(MAV_PARAM_TYPE ma
     case MAV_PARAM_TYPE_UINT32:
         return FactMetaData::valueTypeUint32;
 
+    case MAV_PARAM_TYPE_UINT64:
+        return FactMetaData::valueTypeUint64;
+
+    case MAV_PARAM_TYPE_INT64:
+        return FactMetaData::valueTypeInt64;
+
     case MAV_PARAM_TYPE_REAL32:
         return FactMetaData::valueTypeFloat;
+
+    case MAV_PARAM_TYPE_REAL64:
+        return FactMetaData::valueTypeDouble;
 
     default:
         qWarning() << "Unsupported mav param type" << mavType;
@@ -1085,6 +1110,18 @@ void ParameterManager::_checkInitialLoadComplete(void)
 
     // We aren't waiting for any more initial parameter updates, initial parameter loading is complete
     _initialLoadComplete = true;
+
+	// Parameter cache crc failure debugging
+	foreach (int componentId, _debugCacheParamSeen.keys()) {
+        if (!_logReplay && _debugCacheCRC.contains(componentId) && _debugCacheCRC[componentId]) {
+            foreach (const QString& paramName, _debugCacheParamSeen[componentId].keys()) {
+                if (!_debugCacheParamSeen[componentId][paramName]) {
+                    qDebug() << "Parameter in cache but not on vehicle componentId:Name" << componentId << paramName;
+                }
+            }
+        }
+    }
+    _debugCacheCRC.clear();
 
     qCDebug(ParameterManagerLog) << _logVehiclePrefix() << "Initial load complete";
 
@@ -1399,6 +1436,7 @@ void ParameterManager::_loadOfflineEditingParams(void)
     _setupCategoryMap();
     _parametersReady = true;
     _initialLoadComplete = true;
+    _debugCacheCRC.clear();
 }
 
 void ParameterManager::saveToJson(int componentId, const QStringList& paramsToSave, QJsonObject& saveObject)

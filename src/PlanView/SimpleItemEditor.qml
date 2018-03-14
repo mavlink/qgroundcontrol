@@ -44,7 +44,7 @@ Rectangle {
 
                 QGCLabel {
                     text:           object.name
-                    visible:        object.name != ""
+                    visible:        object.name !== ""
                     Layout.column:  0
                     Layout.row:     index
                 }

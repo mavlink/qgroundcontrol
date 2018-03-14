@@ -46,7 +46,7 @@ Column {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        ScreenTools.defaultFontPixelWidth
-            visible:        _camera.cameraAction.rawValue == 1
+            visible:        _camera.cameraAction.rawValue === 1
 
             QGCLabel {
                 text:               qsTr("Time")
@@ -62,7 +62,7 @@ Column {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        ScreenTools.defaultFontPixelWidth
-            visible:        _camera.cameraAction.rawValue == 2
+            visible:        _camera.cameraAction.rawValue === 2
 
             QGCLabel {
                 text:               qsTr("Distance")
