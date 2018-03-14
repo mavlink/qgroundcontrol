@@ -39,9 +39,9 @@ Item {
     property bool   _circle:                    false
     property real   _circleRadius
 
-    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
+    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest zorder to prevent splitting when items overlap
     property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
-    property real _zorderCenterHandle:  QGroundControl.zOrderMapItems + 1   // Lowest such that drag or split takes precedence
+    property real _zorderCenterHandle:  QGroundControl.zOrderMapItems + 1   // Lowest zorder such that drag or split takes precedence
 
     function addVisuals() {
         _polygonComponent = polygonComponent.createObject(mapControl)
