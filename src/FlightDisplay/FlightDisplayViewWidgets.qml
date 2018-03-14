@@ -155,11 +155,6 @@ Item {
         anchors.top:            parent.top
         anchors.topMargin:      QGroundControl.corePlugin.options.instrumentWidget.widgetTopMargin + (ScreenTools.defaultFontPixelHeight * 0.5)
         anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.5
-
-    //-- Instrument Panel
-    Loader {
-        id:                     instrumentsLoader
-        anchors.margins:        ScreenTools.defaultFontPixelHeight / 2
         anchors.right:          parent.right
         //-------------------------------------------------------
         // Airmap Airspace Control
@@ -177,77 +172,74 @@ Item {
             anchors.margins:            ScreenTools.defaultFontPixelHeight * 0.5
             property var  qgcView:      widgetRoot.qgcView
             property real maxHeight:    widgetRoot ? widgetRoot.height - instrumentsColumn.y - airspaceControl.height - (ScreenTools.defaultFontPixelHeight * 4) : 0
+            states: [
+                State {
+                    name:   "topRightMode"
+                    AnchorChanges {
+                        target:                 instrumentsLoader
+                        anchors.verticalCenter: undefined
+                        anchors.bottom:         undefined
+                        anchors.top:            _root ? _root.top : undefined
+                        anchors.right:          _root ? _root.right : undefined
+                        anchors.left:           undefined
+                    }
+                },
+                State {
+                    name:   "centerRightMode"
+                    AnchorChanges {
+                        target:                 instrumentsLoader
+                        anchors.top:            undefined
+                        anchors.bottom:         undefined
+                        anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                        anchors.right:          _root ? _root.right : undefined
+                        anchors.left:           undefined
+                    }
+                },
+                State {
+                    name:   "bottomRightMode"
+                    AnchorChanges {
+                        target:                 instrumentsLoader
+                        anchors.top:            undefined
+                        anchors.verticalCenter: undefined
+                        anchors.bottom:         _root ? _root.bottom : undefined
+                        anchors.right:          _root ? _root.right : undefined
+                        anchors.left:           undefined
+                    }
+                },
+                State {
+                    name:   "topLeftMode"
+                    AnchorChanges {
+                        target:                 instrumentsLoader
+                        anchors.verticalCenter: undefined
+                        anchors.bottom:         undefined
+                        anchors.top:            _root ? _root.top : undefined
+                        anchors.right:          undefined
+                        anchors.left:           _root ? _root.left : undefined
+                    }
+                },
+                State {
+                    name:   "centerLeftMode"
+                    AnchorChanges {
+                        target:                 instrumentsLoader
+                        anchors.top:            undefined
+                        anchors.bottom:         undefined
+                        anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                        anchors.right:          undefined
+                        anchors.left:           _root ? _root.left : undefined
+                    }
+                },
+                State {
+                    name:   "bottomLeftMode"
+                    AnchorChanges {
+                        target:                 instrumentsLoader
+                        anchors.top:            undefined
+                        anchors.verticalCenter: undefined
+                        anchors.bottom:         _root ? _root.bottom : undefined
+                        anchors.right:          undefined
+                        anchors.left:           _root ? _root.left : undefined
+                    }
+                }
+            ]
         }
-        z:                      QGroundControl.zOrderWidgets
-        property var  qgcView:  _root.qgcView
-        property real maxHeight:parent.height - (anchors.margins * 2)
-        states: [
-            State {
-                name:   "topRightMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.verticalCenter: undefined
-                    anchors.bottom:         undefined
-                    anchors.top:            _root ? _root.top : undefined
-                    anchors.right:          _root ? _root.right : undefined
-                    anchors.left:           undefined
-                }
-            },
-            State {
-                name:   "centerRightMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.top:            undefined
-                    anchors.bottom:         undefined
-                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
-                    anchors.right:          _root ? _root.right : undefined
-                    anchors.left:           undefined
-                }
-            },
-            State {
-                name:   "bottomRightMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.top:            undefined
-                    anchors.verticalCenter: undefined
-                    anchors.bottom:         _root ? _root.bottom : undefined
-                    anchors.right:          _root ? _root.right : undefined
-                    anchors.left:           undefined
-                }
-            },
-            State {
-                name:   "topLeftMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.verticalCenter: undefined
-                    anchors.bottom:         undefined
-                    anchors.top:            _root ? _root.top : undefined
-                    anchors.right:          undefined
-                    anchors.left:           _root ? _root.left : undefined
-                }
-            },
-            State {
-                name:   "centerLeftMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.top:            undefined
-                    anchors.bottom:         undefined
-                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
-                    anchors.right:          undefined
-                    anchors.left:           _root ? _root.left : undefined
-                }
-            },
-            State {
-                name:   "bottomLeftMode"
-                AnchorChanges {
-                    target:                 instrumentsLoader
-                    anchors.top:            undefined
-                    anchors.verticalCenter: undefined
-                    anchors.bottom:         _root ? _root.bottom : undefined
-                    anchors.right:          undefined
-                    anchors.left:           _root ? _root.left : undefined
-                }
-            }
-        ]
     }
 }
