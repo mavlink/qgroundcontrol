@@ -236,6 +236,11 @@ private:
     static const char* _vtolTXModeSettingsKey;
     static const char* _submarineTXModeSettingsKey;
 
+    static const char* _buttonActionArm;
+    static const char* _buttonActionDisarm;
+    static const char* _buttonActionVTOLFixedWing;
+    static const char* _buttonActionVTOLMultiRotor;
+
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
 };
