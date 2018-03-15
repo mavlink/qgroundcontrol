@@ -440,16 +440,28 @@ Rectangle {
                         Layout.fillWidth:   true
                     }
 
-                    ToolButton {
-                        id:                     windRoseButton
-                        anchors.verticalCenter: angleText.verticalCenter
-                        iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                        visible:                _vehicle ? _vehicle.fixedWing : false
+                    Rectangle {
+                        id:         windRoseButton
+                        width:      ScreenTools.implicitTextFieldHeight
+                        height:     width
+                        color:      qgcPal.button
+                        visible:    _vehicle ? _vehicle.fixedWing : false
 
-                        onClicked: {
-                            windRosePie.angle = Number(gridAngleText.text)
-                            var cords = windRoseButton.mapToItem(_root, 0, 0)
-                            windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2)
+                        QGCColoredImage {
+                            anchors.fill:   parent
+                            source:         "/res/wind-rose.svg"
+                            smooth:         true
+                            color:          qgcPal.buttonText
+                        }
+
+                        QGCMouseArea {
+                            fillItem: parent
+
+                            onClicked: {
+                                windRosePie.angle = Number(gridAngleText.text)
+                                var cords = windRoseButton.mapToItem(_root, 0, 0)
+                                windRosePie.popup(cords.x + windRoseButton.width / 2, cords.y + windRoseButton.height / 2)
+                            }
                         }
                     }
                 }
@@ -543,16 +555,28 @@ Rectangle {
                     Layout.fillWidth:  true
                 }
 
-                ToolButton {
-                    id:                     manualWindRoseButton
-                    anchors.verticalCenter: manualAngleText.verticalCenter
-                    Layout.columnSpan:      1
-                    iconSource:             qgcPal.globalTheme === QGCPalette.Light ? "/res/wind-roseBlack.svg" : "/res/wind-rose.svg"
-                    visible:                _vehicle ? _vehicle.fixedWing : false
+                Rectangle {
+                    id:         manualWindRoseButton
+                    width:      ScreenTools.implicitTextFieldHeight
+                    height:     width
+                    color:      qgcPal.button
+                    visible:    _vehicle ? _vehicle.fixedWing : false
 
-                    onClicked: {
-                        var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
-                        windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2)
+                    QGCColoredImage {
+                        anchors.fill:   parent
+                        source:         "/res/wind-rose.svg"
+                        smooth:         true
+                        color:          qgcPal.buttonText
+                    }
+
+                    QGCMouseArea {
+                        fillItem: parent
+
+                        onClicked: {
+                            windRosePie.angle = Number(gridAngleText.text)
+                            var cords = manualWindRoseButton.mapToItem(_root, 0, 0)
+                            windRosePie.popup(cords.x + manualWindRoseButton.width / 2, cords.y + manualWindRoseButton.height / 2)
+                        }
                     }
                 }
             }
