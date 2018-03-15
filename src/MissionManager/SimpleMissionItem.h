@@ -29,12 +29,21 @@ public:
 
     ~SimpleMissionItem();
 
-    const SimpleMissionItem& operator=(const SimpleMissionItem& other);
+    enum AltitudeMode {
+        AltitudeRelative,
+        AltitudeAMSL,
+        AltitudeAboveTerrain
+    };
+
+    Q_ENUM(AltitudeMode)
     
     Q_PROPERTY(QString          category                READ category                                           NOTIFY commandChanged)
     Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
     Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
-    Q_PROPERTY(bool             relativeAltitude        READ relativeAltitude                                   NOTIFY frameChanged)
+    Q_PROPERTY(bool             specifiesAltitude       READ specifiesAltitude                                  NOTIFY commandChanged)
+    Q_PROPERTY(Fact*            altitude                READ altitude                                           CONSTANT)                           ///< Altitude as specified by altitudeMode. Not necessarily true mission item altitude
+    Q_PROPERTY(AltitudeMode     altitudeMode            READ altitudeMode           WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
+    Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
     Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
 
     /// Optional sections
@@ -42,7 +51,6 @@ public:
     Q_PROPERTY(QObject*         cameraSection           READ cameraSection                                      NOTIFY cameraSectionChanged)
 
     // These properties are used to display the editing ui
-    Q_PROPERTY(QmlObjectListModel*  checkboxFacts   READ checkboxFacts  CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  comboboxFacts   READ comboboxFacts  CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  textFieldFacts  READ textFieldFacts CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  nanFacts        READ nanFacts       CONSTANT)
@@ -60,15 +68,20 @@ public:
     MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_missionItem._commandFact.cookedValue().toInt(); }
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
+    bool            specifiesAltitude   (void) const;
+    AltitudeMode    altitudeMode        (void) const { return _altitudeMode; }
+    Fact*           altitude            (void) { return &_altitudeFact; }
+    Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
+
     CameraSection*  cameraSection       (void) { return _cameraSection; }
     SpeedSection*   speedSection        (void) { return _speedSection; }
 
     QmlObjectListModel* textFieldFacts  (void) { return &_textFieldFacts; }
     QmlObjectListModel* nanFacts        (void) { return &_nanFacts; }
-    QmlObjectListModel* checkboxFacts   (void) { return &_checkboxFacts; }
     QmlObjectListModel* comboboxFacts   (void) { return &_comboboxFacts; }
 
     void setRawEdit(bool rawEdit);
+    void setAltitudeMode(AltitudeMode altitudeMode);
     
     void setCommandByIndex(int index);
 
@@ -81,8 +94,6 @@ public:
 
     bool load(QTextStream &loadStream);
     bool load(const QJsonObject& json, int sequenceNumber, QString& errorString);
-
-    bool relativeAltitude(void) { return _missionItem.frame() == MAV_FRAME_GLOBAL_RELATIVE_ALT; }
 
     MissionItem& missionItem(void) { return _missionItem; }
     const MissionItem& missionItem(void) const { return _missionItem; }
@@ -107,6 +118,7 @@ public:
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
+    bool            readyForSave            (void) const final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }
@@ -123,51 +135,51 @@ public slots:
 
 signals:
     void commandChanged             (int command);
-    void frameChanged               (int frame);
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
     void headingDegreesChanged      (double heading);
     void rawEditChanged             (bool rawEdit);
     void cameraSectionChanged       (QObject* cameraSection);
     void speedSectionChanged        (QObject* cameraSection);
+    void altitudeModeChanged        (void);
 
 private slots:
-    void _setDirtyFromSignal                (void);
-    void _sectionDirtyChanged               (bool dirty);
-    void _sendCommandChanged                (void);
-    void _sendCoordinateChanged             (void);
-    void _sendFrameChanged                  (void);
-    void _sendFriendlyEditAllowedChanged    (void);
-    void _syncAltitudeRelativeToHomeToFrame (const QVariant& value);
-    void _syncFrameToAltitudeRelativeToHome (void);
-    void _updateLastSequenceNumber          (void);
-    void _rebuildFacts                      (void);
-
+    void _setDirty                      (void);
+    void _sectionDirtyChanged           (bool dirty);
+    void _sendCommandChanged            (void);
+    void _sendCoordinateChanged         (void);
+    void _sendFriendlyEditAllowedChanged(void);
+    void _altitudeChanged               (void);
+    void _altitudeModeChanged           (void);
+    void _terrainAltChanged             (void);
+    void _updateLastSequenceNumber      (void);
+    void _rebuildFacts                  (void);
+    void _rebuildTextFieldFacts         (void);
 
 private:
     void _connectSignals        (void);
     void _setupMetaData         (void);
     void _updateOptionalSections(void);
-    void _rebuildTextFieldFacts (void);
     void _rebuildNaNFacts       (void);
-    void _rebuildCheckboxFacts  (void);
     void _rebuildComboBoxFacts  (void);
 
-    MissionItem _missionItem;
-    bool        _rawEdit;
-    bool        _dirty;
-    bool        _ignoreDirtyChangeSignals;
+    MissionItem     _missionItem;
+    bool            _rawEdit;
+    bool            _dirty;
+    bool            _ignoreDirtyChangeSignals;
 
     SpeedSection*   _speedSection;
     CameraSection* _cameraSection;
 
     MissionCommandTree* _commandTree;
 
-    Fact    _altitudeRelativeToHomeFact;
-    Fact    _supportedCommandFact;
+    Fact                _supportedCommandFact;
+
+    AltitudeMode    _altitudeMode;
+    Fact            _altitudeFact;
+    Fact            _amslAltAboveTerrainFact;
 
     QmlObjectListModel  _textFieldFacts;
     QmlObjectListModel  _nanFacts;
-    QmlObjectListModel  _checkboxFacts;
     QmlObjectListModel  _comboboxFacts;
     
     static FactMetaData*    _altitudeMetaData;
@@ -185,8 +197,11 @@ private:
     FactMetaData    _param6MetaData;
     FactMetaData    _param7MetaData;
 
-    bool _syncingAltitudeRelativeToHomeAndFrame;    ///< true: already in a sync signal, prevents signal loop
-    bool _syncingHeadingDegreesAndParam4;           ///< true: already in a sync signal, prevents signal loop
+    bool _syncingHeadingDegreesAndParam4;   ///< true: already in a sync signal, prevents signal loop
+
+    static const char* _jsonAltitudeModeKey;
+    static const char* _jsonAltitudeKey;
+    static const char* _jsonAMSLAltAboveTerrainKey;
 };
 
 #endif
