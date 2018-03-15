@@ -162,7 +162,15 @@ QGCView {
             _missionController.setCurrentPlanViewIndex(0, true)
         }
 
+        function waitingOnDataMessage() {
+            _qgcView.showMessage(qsTr("Unable to Save/Upload"), qsTr("Plan is waiting on terrain data from server for correct altitude values."), StandardButton.Ok)
+        }
+
         function upload() {
+            if (!readyForSaveSend()) {
+                waitingOnDataMessage()
+                return
+            }
             if (_activeVehicle && _activeVehicle.armed && _activeVehicle.flightMode === _activeVehicle.missionFlightMode) {
                 _qgcView.showDialog(activeMissionUploadDialogComponent, qsTr("Plan Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Cancel)
             } else {
@@ -178,6 +186,10 @@ QGCView {
         }
 
         function saveToSelectedFile() {
+            if (!readyForSaveSend()) {
+                waitingOnDataMessage()
+                return
+            }
             fileDialog.title =          qsTr("Save Plan")
             fileDialog.plan =           true
             fileDialog.selectExisting = false
@@ -190,6 +202,10 @@ QGCView {
         }
 
         function saveKmlToSelectedFile() {
+            if (!readyForSaveSend()) {
+                waitingOnDataMessage()
+                return
+            }
             fileDialog.title =          qsTr("Save KML")
             fileDialog.plan =           false
             fileDialog.selectExisting = false
