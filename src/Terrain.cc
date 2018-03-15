@@ -41,7 +41,7 @@ void TerrainBatchManager::addQuery(ElevationProvider* elevationProvider, const Q
         }
 
         qCDebug(ElevationProviderLog) << "All altitudes taken from cached data";
-        elevationProvider->_signalTerrainData(true, altitudes);
+        elevationProvider->_signalTerrainData(coordinates.count() == altitudes.count(), altitudes);
     }
 }
 
@@ -71,6 +71,7 @@ bool TerrainBatchManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate
 
                 _tileDownloadQueue.append(tileHash);
             }
+            _tilesMutex.unlock();
 
             return false;
         } else {
@@ -123,11 +124,13 @@ void TerrainBatchManager::_fetchedTile()
         } else {
             qCDebug(ElevationProviderLog) << "Elevation tile fetching returned error. " << reply->errorString();
         }
+        _tileFailed();
         reply->deleteLater();
         return;
     }
     if (!reply->isFinished()) {
         qCDebug(ElevationProviderLog) << "Error in fetching elevation tile. Not finished. " << reply->errorString();
+        _tileFailed();
         reply->deleteLater();
         return;
     }
@@ -140,6 +143,7 @@ void TerrainBatchManager::_fetchedTile()
     if (parseError.error != QJsonParseError::NoError) {
         qCDebug(ElevationProviderLog) << "Could not parse terrain tile " << parseError.errorString();
         qCDebug(ElevationProviderLog) << responseBytes;
+        _tileFailed();
         reply->deleteLater();
         return;
     }
@@ -162,7 +166,7 @@ void TerrainBatchManager::_fetchedTile()
     for (int i = _requestQueue.count() - 1; i >= 0; i--) {
         QList<float> altitudes;
         if (_getAltitudesForCoordinates(_requestQueue[i].coordinates, altitudes)) {
-            _requestQueue[i].elevationProvider->_signalTerrainData(true, altitudes);
+            _requestQueue[i].elevationProvider->_signalTerrainData(_requestQueue[i].coordinates.count() == altitudes.count(), altitudes);
             _requestQueue.removeAt(i);
         }
     }
@@ -191,4 +195,9 @@ bool ElevationProvider::queryTerrainData(const QList<QGeoCoordinate>& coordinate
     _terrainBatchManager->addQuery(this, coordinates);
 
     return false;
+}
+
+void ElevationProvider::_signalTerrainData(bool success, QList<float>& altitudes)
+{
+    emit terrainData(success, altitudes);
 }
