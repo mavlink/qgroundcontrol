@@ -34,7 +34,6 @@ public:
     void addQuery(ElevationProvider* elevationProvider, const QList<QGeoCoordinate>& coordinates);
 
 private slots:
-    void _requestFinished   (void);
     void _fetchedTile       (void);                             /// slot to handle fetched elevation tiles
 
 private:
