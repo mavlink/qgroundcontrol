@@ -43,7 +43,7 @@ public:
 
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                   CONSTANT)                                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate         NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
-    Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                NOTIFY terrainAltitudeChanged)            ///< The altitude of terrain at the coordinate position, NaN if not known
+    Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
     Q_PROPERTY(bool             coordinateHasRelativeAltitude       READ coordinateHasRelativeAltitude                                  NOTIFY coordinateHasRelativeAltitudeChanged)        ///< true: coordinate.latitude is relative to home altitude
     Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                 NOTIFY exitCoordinateChanged)                       ///< This is the exit point for a waypoint line coming out of the item.
     Q_PROPERTY(bool             exitCoordinateHasRelativeAltitude   READ exitCoordinateHasRelativeAltitude                              NOTIFY exitCoordinateHasRelativeAltitudeChanged)    ///< true: coordinate.latitude is relative to home altitude
@@ -129,6 +129,11 @@ public:
     virtual void setCoordinate      (const QGeoCoordinate& coordinate) = 0;
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
     virtual int  lastSequenceNumber (void) const = 0;
+
+    /// Specifies whether the item has all the data it needs such that it can be saved. Currently the only
+    /// case where this returns false is if it has not determined terrain values yet.
+    /// @return true: Ready to save, false: Still waiting on information
+    virtual bool readyForSave(void) const { return true; }
 
     /// Save the item(s) in Json format
     ///     @param missionItems Current set of mission items, new items should be appended to the end
