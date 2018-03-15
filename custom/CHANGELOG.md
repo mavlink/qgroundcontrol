@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.10 - Mar 15 2018
+
+*   Fix KML file extensions on load/save
+
 ### V1.3.9 - Mar 14 2018
 
 *   Position map after KML Load

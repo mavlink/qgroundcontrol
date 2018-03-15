@@ -177,6 +177,8 @@ QGCView {
             fileDialog.title =          qsTr("Select Plan File")
             fileDialog.selectExisting = true
             fileDialog.nameFilters =    masterController.loadNameFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
+            fileDialog.fileExtension2 = QGroundControl.settingsManager.appSettings.missionFileExtension
             fileDialog.openForLoad()
         }
 
@@ -185,6 +187,8 @@ QGCView {
             fileDialog.plan =           true
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveNameFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
+            fileDialog.fileExtension2 = QGroundControl.settingsManager.appSettings.missionFileExtension
             fileDialog.openForSave()
         }
 
@@ -197,6 +201,8 @@ QGCView {
             fileDialog.plan =           false
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveKmlFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.kmlFileExtension
+            fileDialog.fileExtension2 = ""
             fileDialog.openForSave()
         }
     }
@@ -243,8 +249,6 @@ QGCView {
         qgcView:        _qgcView
         property bool plan: true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
-        fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
 
         onAcceptedForSave: {
             plan ? masterController.saveToFile(file) : masterController.saveToKml(file)
