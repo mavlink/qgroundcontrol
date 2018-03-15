@@ -77,7 +77,7 @@ void TerrainBatchManager::_sendNextBatch(void)
 
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("points"), points);
-    QUrl url(QStringLiteral("https://api.airmap.com/elevation/stage/srtm1/ele"));
+    QUrl url(QStringLiteral("https://api.airmap.com/elevation/v1/ele"));
     url.setQuery(query);
 
     QNetworkRequest request(url);
