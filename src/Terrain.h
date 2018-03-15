@@ -20,16 +20,6 @@
 #include <QMutex>
 #include <QtLocation/private/qgeotiledmapreply_p.h>
 
-/* usage example:
-    ElevationProvider *p = new ElevationProvider();
-    QList<QGeoCoordinate> coordinates;
-    QGeoCoordinate c(47.379243, 8.548265);
-    coordinates.push_back(c);
-    c.setLatitude(c.latitude()+0.01);
-    coordinates.push_back(c);
-    p->queryTerrainData(coordinates);
- */
-
 Q_DECLARE_LOGGING_CATEGORY(ElevationProviderLog)
 
 class ElevationProvider;
