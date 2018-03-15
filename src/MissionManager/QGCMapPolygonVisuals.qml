@@ -32,6 +32,7 @@ Item {
     property int    borderWidth:        0
     property color  borderColor:        "black"
 
+    property var    _gqcView:                   ggcView
     property var    _polygonComponent
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
@@ -172,12 +173,13 @@ Item {
 
     QGCFileDialog {
         id:             kmlLoadDialog
-        qgcView:        _root.qgcView
+        qgcView:        _qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select KML File")
         selectExisting: true
         nameFilters:    [ qsTr("KML files (*.kml)") ]
-        fileExtension:  "kml"
+        fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
+
         onAcceptedForLoad: {
             mapPolygon.loadKMLFile(file)
             mapFitFunctions.fitMapViewportToMissionItems()
