@@ -316,7 +316,7 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
                 return false;
             }
 
-            _altitudeMode = (AltitudeMode)json[_jsonAltitudeModeKey].toDouble();
+            _altitudeMode = (AltitudeMode)(int)json[_jsonAltitudeModeKey].toDouble();
             _altitudeFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
             _amslAltAboveTerrainFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
         } else {
