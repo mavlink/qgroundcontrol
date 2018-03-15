@@ -1284,7 +1284,7 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Link back to home if first item is takeoff and we have home position
-        if (firstCoordinateItem && simpleItem && simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF) {
+        if (firstCoordinateItem && simpleItem && (simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF || simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF)) {
             if (showHomePosition) {
                 linkStartToHome = true;
                 if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
@@ -1303,8 +1303,14 @@ void MissionController::_recalcMissionFlightStatus()
             case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
                 vtolInHover = false;
                 break;
+            case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
+                vtolInHover = true;
+                break;
             case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
                 vtolInHover = false;
+                break;
+            case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
+                vtolInHover = true;
                 break;
             case MavlinkQmlSingleton::MAV_CMD_DO_VTOL_TRANSITION:
             {
