@@ -101,5 +101,6 @@ public:
 
 private slots:
     // Overrides from TransectStyleComplexItem
-    void    _rebuildTransects   (void) final;
+    void _rebuildTransectsPhase1(void) final;
+    void _rebuildTransectsPhase2(void) final;
 };

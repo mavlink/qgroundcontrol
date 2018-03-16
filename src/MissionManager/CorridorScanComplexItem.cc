@@ -23,7 +23,7 @@ QGC_LOGGING_CATEGORY(CorridorScanComplexItemLog, "CorridorScanComplexItemLog")
 
 const char* CorridorScanComplexItem::settingsGroup =            "CorridorScan";
 const char* CorridorScanComplexItem::corridorWidthName =        "CorridorWidth";
-const char* CorridorScanComplexItem::_entryPointName =          "EntryPoint";
+const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
 
 const char* CorridorScanComplexItem::jsonComplexItemTypeValue = "CorridorScan";
 
@@ -77,16 +77,17 @@ int CorridorScanComplexItem::lastSequenceNumber(void) const
     return _sequenceNumber + itemCount - 1;
 }
 
-void CorridorScanComplexItem::save(QJsonArray&  missionItems)
+void CorridorScanComplexItem::save(QJsonArray&  planItems)
 {
     QJsonObject saveObject;
 
-    saveObject[JsonHelper::jsonVersionKey] =                    1;
+    _save(saveObject);
+
+    saveObject[JsonHelper::jsonVersionKey] =                    2;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[corridorWidthName] =                             _corridorWidthFact.rawValue().toDouble();
-    saveObject[turnAroundDistanceName] =                        _turnAroundDistanceFact.rawValue().toDouble();
-    saveObject[_entryPointName] =                               _entryPoint;
+    saveObject[_jsonEntryPointKey] =                            _entryPoint;
 
     QJsonObject cameraCalcObject;
     _cameraCalc.save(cameraCalcObject);
@@ -94,28 +95,29 @@ void CorridorScanComplexItem::save(QJsonArray&  missionItems)
 
     _corridorPolyline.saveToJson(saveObject);
 
-    _save(saveObject);
-
-    missionItems.append(saveObject);
+    planItems.append(saveObject);
 }
 
 bool CorridorScanComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
+    // We don't recalc while loading since all the information we need is specified in the file
+    _ignoreRecalc = true;
+
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { JsonHelper::jsonVersionKey,                   QJsonValue::Double, true },
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { corridorWidthName,                            QJsonValue::Double, true },
-        { turnAroundDistanceName,                       QJsonValue::Double, true },
-        { _entryPointName,                              QJsonValue::Double, true },
+        { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { QGCMapPolyline::jsonPolylineKey,              QJsonValue::Array,  true },
-        { _jsonCameraCalcKey,                           QJsonValue::Object, true },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
+        _ignoreRecalc = false;
         return false;
     }
 
     if (!_corridorPolyline.loadFromJson(complexObject, true, errorString)) {
+        _ignoreRecalc = false;
         return false;
     }
 
@@ -123,26 +125,31 @@ bool CorridorScanComplexItem::load(const QJsonObject& complexObject, int sequenc
     QString complexType = complexObject[ComplexMissionItem::jsonComplexItemTypeKey].toString();
     if (itemType != VisualMissionItem::jsonTypeComplexItemValue || complexType != jsonComplexItemTypeValue) {
         errorString = tr("%1 does not support loading this complex mission item type: %2:%3").arg(qgcApp()->applicationName()).arg(itemType).arg(complexType);
+        _ignoreRecalc = false;
         return false;
     }
 
     int version = complexObject[JsonHelper::jsonVersionKey].toInt();
-    if (version != 1) {
+    if (version != 2) {
         errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
+        _ignoreRecalc = false;
         return false;
     }
 
     setSequenceNumber(sequenceNumber);
 
     if (!_load(complexObject, errorString)) {
+        _ignoreRecalc = false;
         return false;
     }
 
     _corridorWidthFact.setRawValue      (complexObject[corridorWidthName].toDouble());
 
-    _entryPoint = complexObject[_entryPointName].toInt();
+    _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 
     _rebuildCorridor();
+
+    _ignoreRecalc = false;
 
     return true;
 }
@@ -159,8 +166,23 @@ int CorridorScanComplexItem::_transectCount(void) const
     return fullWidth > 0.0 ? qCeil(fullWidth / transectSpacing) : 1;
 }
 
-void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
+void CorridorScanComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
+    qCDebug(CorridorScanComplexItemLog) << "_appendLoadedMissionItems";
+
+    int seqNum = _sequenceNumber;
+
+    foreach (const MissionItem* loadedMissionItem, _loadedMissionItems) {
+        MissionItem* item = new MissionItem(*loadedMissionItem, missionItemParent);
+        item->setSequenceNumber(seqNum++);
+        items.append(item);
+    }
+}
+
+void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
+{
+    qCDebug(CorridorScanComplexItemLog) << "_buildAndAppendMissionItems";
+
     int seqNum =            _sequenceNumber;
     int pointIndex =        0;
     bool imagesEverywhere = _cameraTriggerInTurnAroundFact.rawValue().toBool();
@@ -279,6 +301,17 @@ void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QOb
     }
 }
 
+void CorridorScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
+{
+    if (_loadedMissionItems.count()) {
+        // We have mission items from the loaded plan, use those
+        _appendLoadedMissionItems(items, missionItemParent);
+    } else {
+        // Build the mission items on the fly
+        _buildAndAppendMissionItems(items, missionItemParent);
+    }
+}
+
 void CorridorScanComplexItem::applyNewAltitude(double newAltitude)
 {
     _cameraCalc.valueSetIsDistance()->setRawValue(true);
@@ -324,10 +357,20 @@ void CorridorScanComplexItem::_rebuildCorridorPolygon(void)
     }
 }
 
-void CorridorScanComplexItem::_rebuildTransects(void)
+void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
 {
+    if (_ignoreRecalc) {
+        return;
+    }
+
+    // If the transects are getting rebuilt then any previsouly loaded mission items are now invalid
+    if (_loadedMissionItemsParent) {
+        _loadedMissionItems.clear();
+        _loadedMissionItemsParent->deleteLater();
+        _loadedMissionItemsParent = NULL;
+    }
+
     _transectPoints.clear();
-    _cameraShots = 0;
 
     double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
     double fullWidth = _corridorWidthFact.rawValue().toDouble();
@@ -336,13 +379,9 @@ void CorridorScanComplexItem::_rebuildTransects(void)
     double normalizedTransectPosition = transectSpacing / 2.0;
 
     if (_corridorPolyline.count() >= 2) {
-        int singleTransectImageCount = qCeil(_corridorPolyline.length() / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
-
         // First build up the transects all going the same direction
         QList<QList<QGeoCoordinate>> transects;
         for (int i=0; i<transectCount; i++) {
-            _cameraShots += singleTransectImageCount;
-
             double offsetDistance;
             if (transectCount == 1) {
                 // Single transect is flown over scan line
@@ -415,8 +454,6 @@ void CorridorScanComplexItem::_rebuildTransects(void)
         // Convert the list of transects to grid points
         reverseVertices = false;
         for (int i=0; i<transects.count(); i++) {
-            _cameraShots += singleTransectImageCount;
-
             // We must reverse the vertices for every other transect in order to make a lawnmower pattern
             QList<QGeoCoordinate> transectVertices = transects[i];
             if (reverseVertices) {
@@ -436,15 +473,21 @@ void CorridorScanComplexItem::_rebuildTransects(void)
             normalizedTransectPosition += transectSpacing;
         }
     }
+}
 
+void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
+{
     // Calculate distance flown for complex item
     _complexDistance = 0;
     for (int i=0; i<_transectPoints.count() - 2; i++) {
         _complexDistance += _transectPoints[i].value<QGeoCoordinate>().distanceTo(_transectPoints[i+1].value<QGeoCoordinate>());
     }
 
-    if (_cameraTriggerInTurnAroundFact.rawValue().toDouble()) {
+    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
         _cameraShots = qCeil(_complexDistance / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+    } else {
+        int singleTransectImageCount = qCeil(_corridorPolyline.length() / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+        _cameraShots = singleTransectImageCount * _transectCount();
     }
 
     _coordinate = _transectPoints.count() ? _transectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
@@ -460,5 +503,6 @@ void CorridorScanComplexItem::_rebuildTransects(void)
 void CorridorScanComplexItem::_rebuildCorridor(void)
 {
     _rebuildCorridorPolygon();
-    _rebuildTransects();
+    _rebuildTransectsPhase1();
+    _rebuildTransectsPhase2();
 }
