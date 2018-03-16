@@ -534,6 +534,22 @@ SetupPage {
                                 width:      parent.width
                                 spacing:    ScreenTools.defaultFontPixelWidth
                                 visible:    advancedSettings.checked
+                                QGCCheckBox {
+                                    id:         joystickCircleCorrection
+                                    checked:    _activeVehicle.joystickMode != 0
+                                    text:       qsTr("Enable circle correction")
+
+                                    Component.onCompleted: checked = _activeJoystick.circleCorrection
+                                    onClicked: {
+                                        _activeJoystick.circleCorrection = checked
+                                    }
+                                }
+                            }
+
+                            Row {
+                                width:      parent.width
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    advancedSettings.checked
 
                                 QGCCheckBox {
                                     id:         deadband

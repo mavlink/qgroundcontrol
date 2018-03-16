@@ -40,6 +40,7 @@ public:
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
     Q_INVOKABLE void removeVertex(int vertexIndex);
+    Q_INVOKABLE void appendVertices(const QList<QGeoCoordinate>& coordinates);
 
     /// Adjust the value for the specified coordinate
     ///     @param vertexIndex Polygon point index to modify (0-based)

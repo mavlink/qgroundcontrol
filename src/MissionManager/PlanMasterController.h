@@ -47,10 +47,14 @@ public:
 
     /// Should be called immediately upon Component.onCompleted.
     ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
-    Q_INVOKABLE virtual void start(bool editMode);
+    Q_INVOKABLE void start(bool editMode);
 
     /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
-    Q_INVOKABLE virtual void startStaticActiveVehicle(Vehicle* vehicle);
+    Q_INVOKABLE void startStaticActiveVehicle(Vehicle* vehicle);
+
+    /// Determines if the plan has all data needed to be saved or sent to the vehicle. Currently the only case where this
+    /// would return false is when it is still waiting on terrain data to determine correct altitudes.
+    Q_INVOKABLE bool readyForSaveSend(void) const { return _missionController.readyForSaveSend(); }
 
     /// Sends a plan to the specified file
     ///     @param[in] vehicle Vehicle we are sending a plan to
