@@ -37,11 +37,13 @@ public:
     void setDirty(bool dirty);
     
     void append(QObject* object);
+    void append(QList<QObject*> objects);
     QObjectList swapObjectList(const QObjectList& newlist);
     void clear(void);
     QObject* removeAt(int i);
     QObject* removeOne(QObject* object) { return removeAt(indexOf(object)); }
     void insert(int i, QObject* object);
+    void insert(int i, QList<QObject*> objects);
     QObject* operator[](int i);
     const QObject* operator[](int i) const;
     bool contains(QObject* object) { return _objectList.indexOf(object) != -1; }
@@ -63,12 +65,12 @@ private slots:
     
 private:
     // Overrides from QAbstractListModel
-    virtual int	rowCount(const QModelIndex & parent = QModelIndex()) const;
-    virtual QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
-    virtual QHash<int, QByteArray> roleNames(void) const;
-    virtual bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex());
-    virtual bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex());
-    virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+    int	rowCount(const QModelIndex & parent = QModelIndex()) const override;
+    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    QHash<int, QByteArray> roleNames(void) const override;
+    bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
+    bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
+    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
 	
 private:
     QList<QObject*> _objectList;
