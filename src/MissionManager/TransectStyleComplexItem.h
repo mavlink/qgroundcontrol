@@ -66,7 +66,7 @@ public:
 
     // Overrides from VisualMissionItem
 
-    void            save                    (QJsonArray&  missionItems) override = 0;
+    void            save                    (QJsonArray&  planItems) override = 0;
     bool            specifiesCoordinate     (void) const override = 0;
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) override = 0;
     void            applyNewAltitude        (double newAltitude) override = 0;
@@ -108,7 +108,8 @@ signals:
     void coveredAreaChanged             (void);
 
 protected slots:
-    virtual void _rebuildTransects          (void) = 0;
+    virtual void _rebuildTransectsPhase1    (void) = 0;
+    virtual void _rebuildTransectsPhase2    (void) = 0;
 
     void _setDirty                          (void);
     void _setIfDirty                        (bool dirty);
@@ -121,7 +122,6 @@ protected:
     void    _setExitCoordinate  (const QGeoCoordinate& coordinate);
     void    _setCameraShots     (int cameraShots);
     double  _triggerDistance    (void) const;
-    int     _transectCount      (void) const;
     bool    _hasTurnaround      (void) const;
     double  _turnaroundDistance (void) const;
 
@@ -141,6 +141,9 @@ protected:
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
 
+    QObject*            _loadedMissionItemsParent;	///< Parent for all items in _loadedMissionItems for simpler delete
+    QList<MissionItem*> _loadedMissionItems;		///< Mission items loaded from plan file
+
     QMap<QString, FactMetaData*> _metaDataMap;
 
     SettingsFact _turnAroundDistanceFact;
@@ -149,4 +152,10 @@ protected:
     SettingsFact _refly90DegreesFact;
 
     static const char* _jsonCameraCalcKey;
+    static const char* _jsonTransectStyleComplexItemKey;
+    static const char* _jsonTransectPointsKey;
+    static const char* _jsonItemsKey;
+
+private slots:
+    void _rebuildTransects(void);
 };

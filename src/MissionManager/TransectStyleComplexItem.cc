@@ -27,19 +27,23 @@ const char* TransectStyleComplexItem::cameraTriggerInTurnAroundName =       "Cam
 const char* TransectStyleComplexItem::hoverAndCaptureName =                 "HoverAndCapture";
 const char* TransectStyleComplexItem::refly90DegreesName =                  "Refly90Degrees";
 
-const char* TransectStyleComplexItem::_jsonCameraCalcKey = "CameraCalc";
+const char* TransectStyleComplexItem::_jsonTransectStyleComplexItemKey =    "TransectStyleComplexItem";
+const char* TransectStyleComplexItem::_jsonCameraCalcKey =                  "CameraCalc";
+const char* TransectStyleComplexItem::_jsonTransectPointsKey =              "TransectPoints";
+const char* TransectStyleComplexItem::_jsonItemsKey =                       "Items";
 
 TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString settingsGroup, QObject* parent)
-    : ComplexMissionItem        (vehicle, parent)
-    , _settingsGroup            (settingsGroup)
-    , _sequenceNumber           (0)
-    , _dirty                    (false)
-    , _ignoreRecalc             (false)
-    , _complexDistance          (0)
-    , _cameraShots              (0)
-    , _cameraMinTriggerInterval (0)
-    , _cameraCalc               (vehicle)
-    , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
+    : ComplexMissionItem            (vehicle, parent)
+    , _settingsGroup                (settingsGroup)
+    , _sequenceNumber               (0)
+    , _dirty                        (false)
+    , _ignoreRecalc                 (false)
+    , _complexDistance              (0)
+    , _cameraShots                  (0)
+    , _cameraMinTriggerInterval     (0)
+    , _cameraCalc                   (vehicle)
+    , _loadedMissionItemsParent     (NULL)
+    , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
     , _turnAroundDistanceFact       (_settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
     , _cameraTriggerInTurnAroundFact(_settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
     , _hoverAndCaptureFact          (_settingsGroup, _metaDataMap[hoverAndCaptureName])
@@ -108,14 +112,38 @@ void TransectStyleComplexItem::setDirty(bool dirty)
 
 void TransectStyleComplexItem::_save(QJsonObject& complexObject)
 {
-    complexObject[turnAroundDistanceName] =         _turnAroundDistanceFact.rawValue().toDouble();
-    complexObject[cameraTriggerInTurnAroundName] =  _cameraTriggerInTurnAroundFact.rawValue().toBool();
-    complexObject[hoverAndCaptureName] =            _hoverAndCaptureFact.rawValue().toBool();
-    complexObject[refly90DegreesName] =             _refly90DegreesFact.rawValue().toBool();
+    QJsonObject innerObject;
+
+    innerObject[JsonHelper::jsonVersionKey] =       1;
+    innerObject[turnAroundDistanceName] =           _turnAroundDistanceFact.rawValue().toDouble();
+    innerObject[cameraTriggerInTurnAroundName] =    _cameraTriggerInTurnAroundFact.rawValue().toBool();
+    innerObject[hoverAndCaptureName] =              _hoverAndCaptureFact.rawValue().toBool();
+    innerObject[refly90DegreesName] =               _refly90DegreesFact.rawValue().toBool();
 
     QJsonObject cameraCalcObject;
     _cameraCalc.save(cameraCalcObject);
-    complexObject[_jsonCameraCalcKey] = cameraCalcObject;
+    innerObject[_jsonCameraCalcKey] = cameraCalcObject;
+
+    QJsonValue  transectPointsJson;
+
+    // Save transects polyline
+    JsonHelper::saveGeoCoordinateArray(_transectPoints, false /* writeAltitude */, transectPointsJson);
+    innerObject[_jsonTransectPointsKey] = transectPointsJson;
+
+    // Save the interal mission items
+    QJsonArray  missionItemsJsonArray;
+    QObject* missionItemParent = new QObject();
+    QList<MissionItem*> missionItems;
+    appendMissionItems(missionItems, missionItemParent);
+    foreach (const MissionItem* missionItem, missionItems) {
+        QJsonObject missionItemJsonObject;
+        missionItem->save(missionItemJsonObject);
+        missionItemsJsonArray.append(missionItemJsonObject);
+    }
+    missionItemParent->deleteLater();
+    innerObject[_jsonItemsKey] = missionItemsJsonArray;
+
+    complexObject[_jsonTransectStyleComplexItemKey] = innerObject;
 }
 
 void TransectStyleComplexItem::setSequenceNumber(int sequenceNumber)
@@ -129,25 +157,65 @@ void TransectStyleComplexItem::setSequenceNumber(int sequenceNumber)
 
 bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& errorString)
 {
+
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { turnAroundDistanceName,           QJsonValue::Double, true },
-        { cameraTriggerInTurnAroundName,    QJsonValue::Bool,   true },
-        { hoverAndCaptureName,              QJsonValue::Bool,   true },
-        { refly90DegreesName,               QJsonValue::Bool,   true },
-        { _jsonCameraCalcKey,               QJsonValue::Object, true },
+        { _jsonTransectStyleComplexItemKey, QJsonValue::Object, true },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
     }
 
-    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
+    // The TransectStyleComplexItem is a sub-object of the main complex item object
+    QJsonObject innerObject = complexObject[_jsonTransectStyleComplexItemKey].toObject();
+
+    QList<JsonHelper::KeyValidateInfo> innerKeyInfoList = {
+        { JsonHelper::jsonVersionKey,       QJsonValue::Double, true },
+        { turnAroundDistanceName,           QJsonValue::Double, true },
+        { cameraTriggerInTurnAroundName,    QJsonValue::Bool,   true },
+        { hoverAndCaptureName,              QJsonValue::Bool,   true },
+        { refly90DegreesName,               QJsonValue::Bool,   true },
+        { _jsonCameraCalcKey,               QJsonValue::Object, true },
+        { _jsonTransectPointsKey,           QJsonValue::Array,  true },
+        { _jsonItemsKey,                    QJsonValue::Array,  true },
+    };
+    if (!JsonHelper::validateKeys(innerObject, innerKeyInfoList, errorString)) {
         return false;
     }
 
-    _turnAroundDistanceFact.setRawValue         (complexObject[turnAroundDistanceName].toDouble());
-    _cameraTriggerInTurnAroundFact.setRawValue  (complexObject[cameraTriggerInTurnAroundName].toBool());
-    _hoverAndCaptureFact.setRawValue            (complexObject[hoverAndCaptureName].toBool());
-    _hoverAndCaptureFact.setRawValue            (complexObject[refly90DegreesName].toBool());
+    int version = innerObject[JsonHelper::jsonVersionKey].toInt();
+    if (version != 1) {
+        errorString = tr("TransectStyleComplexItem version %2 not supported").arg(version);
+        return false;
+    }
+
+    // Load transect points
+    if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonTransectPointsKey], false /* altitudeRequired */, _transectPoints, errorString)) {
+        return false;
+    }
+
+    // Load generated mission items
+    _loadedMissionItemsParent = new QObject(this);
+    QJsonArray missionItemsJsonArray = innerObject[_jsonItemsKey].toArray();
+    foreach (const QJsonValue& missionItemJson, missionItemsJsonArray) {
+        MissionItem* missionItem = new MissionItem(_loadedMissionItemsParent);
+        if (!missionItem->load(missionItemJson.toObject(), 0 /* sequenceNumber */, errorString)) {
+            _loadedMissionItemsParent->deleteLater();
+            _loadedMissionItemsParent = NULL;
+            return false;
+        }
+        _loadedMissionItems.append(missionItem);
+    }
+
+    // Load CameraCalc data
+    if (!_cameraCalc.load(innerObject[_jsonCameraCalcKey].toObject(), errorString)) {
+        return false;
+    }
+
+    // Load TransectStyleComplexItem individual values
+    _turnAroundDistanceFact.setRawValue         (innerObject[turnAroundDistanceName].toDouble());
+    _cameraTriggerInTurnAroundFact.setRawValue  (innerObject[cameraTriggerInTurnAroundName].toBool());
+    _hoverAndCaptureFact.setRawValue            (innerObject[hoverAndCaptureName].toBool());
+    _hoverAndCaptureFact.setRawValue            (innerObject[refly90DegreesName].toBool());
 
     return true;
 }
@@ -230,3 +298,8 @@ bool TransectStyleComplexItem::hoverAndCaptureAllowed(void) const
     return _vehicle->multiRotor() || _vehicle->vtol();
 }
 
+void TransectStyleComplexItem::_rebuildTransects(void)
+{
+    _rebuildTransectsPhase1();
+    _rebuildTransectsPhase2();
+}

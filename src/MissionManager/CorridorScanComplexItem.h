@@ -43,7 +43,7 @@ public:
 
     // Overrides from TransectStyleComplexItem
 
-    void        save                (QJsonArray&  missionItems) final;
+    void        save                (QJsonArray&  planItems) final;
     bool        specifiesCoordinate (void) const final;
     void        appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void        applyNewAltitude    (double newAltitude) final;
@@ -54,17 +54,19 @@ public:
     static const char* corridorWidthName;
 
 private slots:
-    void _polylineDirtyChanged              (bool dirty);
-    void _polylineCountChanged              (int count);
-    void _rebuildCorridor                   (void);
+    void _polylineDirtyChanged      (bool dirty);
+    void _polylineCountChanged      (int count);
+    void _rebuildCorridor           (void);
 
     // Overrides from TransectStyleComplexItem
-    virtual void _rebuildTransects          (void) final;
+    void _rebuildTransectsPhase1    (void) final;
+    void _rebuildTransectsPhase2    (void) final;
 
 private:
-    int _transectCount          (void) const;
-    void _rebuildCorridorPolygon(void);
-
+    int _transectCount              (void) const;
+    void _rebuildCorridorPolygon    (void);
+    void _buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent);
+    void _appendLoadedMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent);
 
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
@@ -75,5 +77,5 @@ private:
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;
 
-    static const char* _entryPointName;
+    static const char* _jsonEntryPointKey;
 };
