@@ -57,7 +57,6 @@ private:
 
     QMutex                      _tilesMutex;
     QHash<QString, TerrainTile> _tiles;
-    QStringList                 _tileDownloadQueue;
 };
 
 class ElevationProvider : public QObject

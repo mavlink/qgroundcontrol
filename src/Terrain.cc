@@ -54,23 +54,18 @@ bool TerrainBatchManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate
         if (!_tiles.contains(tileHash)) {
             qCDebug(ElevationProviderLog) << "Need to download tile " << tileHash;
 
-            if (!_tileDownloadQueue.contains(tileHash)) {
-                // Schedule the fetch task
-
-                if (_state != State::Downloading) {
-                    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(UrlFactory::AirmapElevation, QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1, &_networkManager);
-                    QGeoTileSpec spec;
-                    spec.setX(QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1));
-                    spec.setY(QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1));
-                    spec.setZoom(1);
-                    spec.setMapId(UrlFactory::AirmapElevation);
-                    QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
-                    connect(reply, &QGeoTiledMapReplyQGC::finished, this, &TerrainBatchManager::_fetchedTile);
-                    connect(reply, &QGeoTiledMapReplyQGC::aborted, this, &TerrainBatchManager::_fetchedTile);
-                    _state = State::Downloading;
-                }
-
-                _tileDownloadQueue.append(tileHash);
+            // Schedule the fetch task
+            if (_state != State::Downloading) {
+                QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(UrlFactory::AirmapElevation, QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1, &_networkManager);
+                QGeoTileSpec spec;
+                spec.setX(QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1));
+                spec.setY(QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1));
+                spec.setZoom(1);
+                spec.setMapId(UrlFactory::AirmapElevation);
+                QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
+                connect(reply, &QGeoTiledMapReplyQGC::finished, this, &TerrainBatchManager::_fetchedTile);
+                connect(reply, &QGeoTiledMapReplyQGC::aborted, this, &TerrainBatchManager::_fetchedTile);
+                _state = State::Downloading;
             }
             _tilesMutex.unlock();
 
@@ -111,13 +106,6 @@ void TerrainBatchManager::_fetchedTile()
     // remove from download queue
     QGeoTileSpec spec = reply->tileSpec();
     QString hash = QGCMapEngine::getTileHash(UrlFactory::AirmapElevation, spec.x(), spec.y(), spec.zoom());
-    _tilesMutex.lock();
-    if (_tileDownloadQueue.contains(hash)) {
-        _tileDownloadQueue.removeOne(hash);
-    } else {
-        qCDebug(ElevationProviderLog) << "Loaded elevation tile, but not found in download queue.";
-    }
-    _tilesMutex.unlock();
 
     // handle potential errors
     if (reply->error() != QGeoTiledMapReply::NoError) {
