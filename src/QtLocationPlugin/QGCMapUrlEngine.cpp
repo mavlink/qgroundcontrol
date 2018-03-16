@@ -415,10 +415,10 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     break;
     case AirmapElevation:
     {
-        return QString("https://api.airmap.com/elevation/stage/srtm1/ele/carpet?points=%1,%2,%3,%4").arg(static_cast<double>(y)*QGCMapEngine::srtm1TileSize - 90.0).arg(
-                                                                                                         static_cast<double>(x)*QGCMapEngine::srtm1TileSize - 180.0).arg(
-                                                                                                         static_cast<double>(y + 1)*QGCMapEngine::srtm1TileSize - 90.0).arg(
-                                                                                                         static_cast<double>(x + 1)*QGCMapEngine::srtm1TileSize - 180.0);
+        return QString("https://api.airmap.com/elevation/v1/ele/carpet?points=%1,%2,%3,%4").arg(static_cast<double>(y)*QGCMapEngine::srtm1TileSize - 90.0).arg(
+                                                                                                static_cast<double>(x)*QGCMapEngine::srtm1TileSize - 180.0).arg(
+                                                                                                static_cast<double>(y + 1)*QGCMapEngine::srtm1TileSize - 90.0).arg(
+                                                                                                static_cast<double>(x + 1)*QGCMapEngine::srtm1TileSize - 180.0);
     }
     break;
 
