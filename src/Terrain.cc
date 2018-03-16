@@ -38,6 +38,7 @@ void TerrainBatchManager::addQuery(ElevationProvider* elevationProvider, const Q
         if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
             QueuedRequestInfo_t queuedRequestInfo = { elevationProvider, coordinates };
             _requestQueue.append(queuedRequestInfo);
+            return;
         }
 
         qCDebug(ElevationProviderLog) << "All altitudes taken from cached data";
@@ -100,6 +101,7 @@ void TerrainBatchManager::_tileFailed(void)
 void TerrainBatchManager::_fetchedTile()
 {
     QGeoTiledMapReplyQGC* reply = qobject_cast<QGeoTiledMapReplyQGC*>(QObject::sender());
+    _state = State::Idle;
 
     if (!reply) {
         qCDebug(ElevationProviderLog) << "Elevation tile fetched but invalid reply data type.";
