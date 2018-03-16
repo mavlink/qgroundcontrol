@@ -128,17 +128,7 @@ void TerrainBatchManager::_fetchedTile()
     // parse received data and insert into hash table
     QByteArray responseBytes = reply->mapImageData();
 
-    QJsonParseError parseError;
-    QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
-    if (parseError.error != QJsonParseError::NoError) {
-        qCDebug(ElevationProviderLog) << "Could not parse terrain tile " << parseError.errorString();
-        qCDebug(ElevationProviderLog) << responseBytes;
-        _tileFailed();
-        reply->deleteLater();
-        return;
-    }
-
-    TerrainTile* terrainTile = new TerrainTile(responseJson);
+    TerrainTile* terrainTile = new TerrainTile(responseBytes);
     if (terrainTile->isValid()) {
         _tilesMutex.lock();
         if (!_tiles.contains(hash)) {
