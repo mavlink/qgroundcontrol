@@ -15,7 +15,7 @@
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
 #include "JsonHelper.h"
-#include "Terrain.h"
+#include "TerrainQuery.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
@@ -172,11 +172,11 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
     if (coord.isValid() && (qIsNaN(_terrainAltitude) || !qFuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || qFuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
-        ElevationProvider* terrain = new ElevationProvider(this);
-        connect(terrain, &ElevationProvider::terrainData, this, &VisualMissionItem::_terrainDataReceived);
+        TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
+        connect(terrain, &TerrainAtCoordinateQuery::terrainData, this, &VisualMissionItem::_terrainDataReceived);
         QList<QGeoCoordinate> rgCoord;
         rgCoord.append(coordinate());
-        terrain->queryTerrainData(rgCoord);
+        terrain->requestData(rgCoord);
     }
 }
 
