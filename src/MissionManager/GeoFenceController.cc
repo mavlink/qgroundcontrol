@@ -32,14 +32,16 @@
 
 QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
 
-const char* GeoFenceController::_jsonFileTypeValue =    "GeoFence";
-const char* GeoFenceController::_jsonBreachReturnKey =  "breachReturn";
+const char* GeoFenceController::_jsonFileTypeValue =        "GeoFence";
+const char* GeoFenceController::_jsonBreachReturnKey =      "breachReturn";
+const char* GeoFenceController::_px4ParamCircularFence =    "GF_MAX_HOR_DIST";
 
 GeoFenceController::GeoFenceController(PlanMasterController* masterController, QObject* parent)
-    : PlanElementController(masterController, parent)
-    , _geoFenceManager(_managerVehicle->geoFenceManager())
-    , _dirty(false)
-    , _itemsRequested(false)
+    : PlanElementController     (masterController, parent)
+    , _geoFenceManager          (_managerVehicle->geoFenceManager())
+    , _dirty                    (false)
+    , _itemsRequested           (false)
+    , _px4ParamCircularFenceFact(NULL)
 {
     connect(&_polygons, &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
     connect(&_circles,  &QmlObjectListModel::countChanged, this, &GeoFenceController::_updateContainsItems);
@@ -86,6 +88,7 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
     if (_managerVehicle) {
         _geoFenceManager->disconnect(this);
         _managerVehicle->disconnect(this);
+        _managerVehicle->parameterManager()->disconnect(this);
         _managerVehicle = NULL;
         _geoFenceManager = NULL;
     }
@@ -102,7 +105,10 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
     connect(_geoFenceManager, &GeoFenceManager::removeAllComplete,              this, &GeoFenceController::_managerRemoveAllComplete);
     connect(_geoFenceManager, &GeoFenceManager::inProgressChanged,              this, &GeoFenceController::syncInProgressChanged);
 
-    connect(_managerVehicle,  &Vehicle::capabilityBitsChanged,                  this, &RallyPointController::supportedChanged);
+    connect(_managerVehicle,  &Vehicle::capabilityBitsChanged,                  this, &GeoFenceController::supportedChanged);
+
+    connect(_managerVehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &GeoFenceController::_parametersReady);
+    _parametersReady();
 
     emit supportedChanged(supported());
     _signalAll();
@@ -412,4 +418,31 @@ void GeoFenceController::clearAllInteractive(void)
 bool GeoFenceController::supported(void) const
 {
     return (_managerVehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE) && (_managerVehicle->maxProtoVersion() >= 200);
+}
+
+// Hack for PX4
+double GeoFenceController::paramCircularFence(void)
+{
+    if (_managerVehicle->isOfflineEditingVehicle() || !_managerVehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _px4ParamCircularFence)) {
+        return 0;
+    }
+
+    return _managerVehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _px4ParamCircularFence)->rawValue().toDouble();
+}
+
+void GeoFenceController::_parametersReady(void)
+{
+    if (_px4ParamCircularFenceFact) {
+        _px4ParamCircularFenceFact->disconnect(this);
+        _px4ParamCircularFenceFact = NULL;
+    }
+
+    if (_managerVehicle->isOfflineEditingVehicle() || !_managerVehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, _px4ParamCircularFence)) {
+        emit paramCircularFenceChanged();
+        return;
+    }
+
+    _px4ParamCircularFenceFact = _managerVehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _px4ParamCircularFence);
+    connect(_px4ParamCircularFenceFact, &Fact::rawValueChanged, this, &GeoFenceController::paramCircularFenceChanged);
+    emit paramCircularFenceChanged();
 }
