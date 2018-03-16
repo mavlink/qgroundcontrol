@@ -174,7 +174,12 @@ TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
 
 }
 
-void TransectStyleItem::_rebuildTransects(void)
+void TransectStyleItem::_rebuildTransectsPhase1(void)
 {
     rebuildTransectsCalled = true;
+}
+
+void TransectStyleItem::_rebuildTransectsPhase2(void)
+{
+
 }
