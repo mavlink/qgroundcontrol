@@ -51,6 +51,10 @@
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QFile>
+#include "TerrainTile.h"
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 int QGeoTiledMapReplyQGC::_requestCount = 0;
 
@@ -121,8 +125,24 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         return;
     }
     QByteArray a = _reply->readAll();
-    setMapImageData(a);
     QString format = getQGCMapEngine()->urlFactory()->getImageFormat((UrlFactory::MapType)tileSpec().mapId(), a);
+
+    // convert "a" to binary in case we have elevation data
+    if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
+        QJsonParseError parseError;
+        QJsonDocument json = QJsonDocument::fromJson(a, &parseError);
+        if (parseError.error != QJsonParseError::NoError) {
+            emit aborted();
+            return;
+        } else {
+            a = TerrainTile::serialize(json);
+            if (a.isEmpty()) {
+                emit aborted();
+                return;
+            }
+        }
+    }
+    setMapImageData(a);
     if(!format.isEmpty()) {
         setMapImageFormat(format);
         getQGCMapEngine()->cacheTile((UrlFactory::MapType)tileSpec().mapId(), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
