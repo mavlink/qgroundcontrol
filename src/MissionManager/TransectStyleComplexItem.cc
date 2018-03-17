@@ -374,7 +374,7 @@ void TransectStyleComplexItem::_adjustTransectPointsForTerrain(void)
 
         bool surveyEdgeIndicator = transectPoint.altitude() == _surveyEdgeIndicator;
         if (_followTerrain) {
-            transectPoint.setAltitude(_transectsPathHeightInfo[i].rgHeight[0] + altitude);
+            transectPoint.setAltitude(_transectsPathHeightInfo[i].heights[0] + altitude);
         } else {
             transectPoint.setAltitude(altitude);
         }
@@ -390,7 +390,7 @@ void TransectStyleComplexItem::_adjustTransectPointsForTerrain(void)
     QGeoCoordinate transectPoint = _transectPoints.last().value<QGeoCoordinate>();
     bool surveyEdgeIndicator = transectPoint.altitude() == _surveyEdgeIndicator;
     if (_followTerrain){
-        transectPoint.setAltitude(_transectsPathHeightInfo.last().rgHeight.last() + altitude);
+        transectPoint.setAltitude(_transectsPathHeightInfo.last().heights.last() + altitude);
     } else {
         transectPoint.setAltitude(altitude);
     }
