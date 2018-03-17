@@ -264,7 +264,7 @@ void TerrainAtCoordinateQuery::_signalTerrainData(bool success, QList<float>& al
 TerrainPathQuery::TerrainPathQuery(QObject* parent)
     : TerrainQuery(parent)
 {
-
+    qRegisterMetaType<PathHeightInfo_t>();
 }
 
 void TerrainPathQuery::requestData(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
@@ -287,29 +287,29 @@ void TerrainPathQuery::requestData(const QGeoCoordinate& fromCoord, const QGeoCo
 
 void TerrainPathQuery::_getNetworkReplyFailed(void)
 {
-    QList<double> altitudes;
-    emit terrainData(false, 0, 0, altitudes);
+    PathHeightInfo_t pathHeightInfo;
+    emit terrainData(false, pathHeightInfo);
 }
 
 void TerrainPathQuery::_requestFailed(QNetworkReply::NetworkError error)
 {
     Q_UNUSED(error);
-    QList<double> altitudes;
-    emit terrainData(false, 0, 0, altitudes);
+    PathHeightInfo_t pathHeightInfo;
+    emit terrainData(false, pathHeightInfo);
 }
 
 void TerrainPathQuery::_requestJsonParseFailed(const QString& errorString)
 {
     Q_UNUSED(errorString);
-    QList<double> altitudes;
-    emit terrainData(false, 0, 0, altitudes);
+    PathHeightInfo_t pathHeightInfo;
+    emit terrainData(false, pathHeightInfo);
 }
 
 void TerrainPathQuery::_requestAirmapStatusFailed(const QString& status)
 {
     Q_UNUSED(status);
-    QList<double> altitudes;
-    emit terrainData(false, 0, 0, altitudes);
+    PathHeightInfo_t pathHeightInfo;
+    emit terrainData(false, pathHeightInfo);
 }
 
 void TerrainPathQuery::_requestSucess(const QJsonValue& dataJsonValue)
@@ -318,14 +318,56 @@ void TerrainPathQuery::_requestSucess(const QJsonValue& dataJsonValue)
     QJsonArray stepArray =      jsonObject["step"].toArray();
     QJsonArray profileArray =   jsonObject["profile"].toArray();
 
-    QList<double> rgProfile;
+    PathHeightInfo_t pathHeightInfo;
+    pathHeightInfo.latStep = stepArray[0].toDouble();
+    pathHeightInfo.lonStep = stepArray[1].toDouble();
     foreach (const QJsonValue& profileValue, profileArray) {
-        rgProfile.append(profileValue.toDouble());
+        pathHeightInfo.rgHeight.append(profileValue.toDouble());
     }
 
-    emit terrainData(true,                      // success
-                     stepArray[0].toDouble(),   // lat step
-                     stepArray[1].toDouble(),    // lon step
-                     rgProfile);
+    emit terrainData(true /* success */, pathHeightInfo);
 }
 
+TerrainPolyPathQuery::TerrainPolyPathQuery(QObject* parent)
+    : QObject   (parent)
+    , _curIndex (0)
+{
+    connect(&_pathQuery, &TerrainPathQuery::terrainData, this, &TerrainPolyPathQuery::_terrainDataReceived);
+}
+
+void TerrainPolyPathQuery::requestData(const QVariantList& polyPath)
+{
+    QList<QGeoCoordinate> path;
+
+    foreach (const QVariant& geoVar, polyPath) {
+        path.append(geoVar.value<QGeoCoordinate>());
+    }
+
+    requestData(path);
+}
+
+void TerrainPolyPathQuery::requestData(const QList<QGeoCoordinate>& polyPath)
+{
+    // Kick off first request
+    _rgCoords = polyPath;
+    _curIndex = 0;
+    _pathQuery.requestData(_rgCoords[0], _rgCoords[1]);
+}
+
+void TerrainPolyPathQuery::_terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo)
+{
+    if (!success) {
+        _rgPathHeightInfo.clear();
+        emit terrainData(false /* success */, _rgPathHeightInfo);
+        return;
+    }
+
+    _rgPathHeightInfo.append(pathHeightInfo);
+
+    if (++_curIndex >= _rgCoords.count() - 1) {
+        // We've finished all requests
+        emit terrainData(true /* success */, _rgPathHeightInfo);
+    } else {
+        _pathQuery.requestData(_rgCoords[_curIndex], _rgCoords[_curIndex+1]);
+    }
+}
