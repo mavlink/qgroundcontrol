@@ -211,7 +211,7 @@ protected:
 private slots:
     void _updateTerrainAltitude (void);
     void _reallyUpdateTerrainAltitude (void);
-    void _terrainDataReceived   (bool success, QList<float> altitudes);
+    void _terrainDataReceived   (bool success, QList<double> heights);
 
 private:
     QTimer _updateTerrainTimer;

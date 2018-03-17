@@ -23,16 +23,65 @@ QGC_LOGGING_CATEGORY(TerrainQueryLog, "TerrainQueryLog")
 
 Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _TerrainAtCoordinateBatchManager)
 
-TerrainQuery::TerrainQuery(QObject* parent)
-    : QObject(parent)
+TerrainAirMapQuery::TerrainAirMapQuery(QObject* parent)
+    : TerrainQueryInterface(parent)
 {
 
 }
 
-void TerrainQuery::_sendQuery(const QString& path, const QUrlQuery& urlQuery)
+void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
+{
+    QString points;
+    foreach (const QGeoCoordinate& coord, coordinates) {
+            points += QString::number(coord.latitude(), 'f', 10) + ","
+                    + QString::number(coord.longitude(), 'f', 10) + ",";
+    }
+    points = points.mid(0, points.length() - 1); // remove the last ',' from string
+
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("points"), points);
+
+    _queryMode = QueryModeCoordinates;
+    _sendQuery(QString() /* path */, query);
+}
+
+void TerrainAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
+{
+    QString points;
+    points += QString::number(fromCoord.latitude(), 'f', 10) + ","
+            + QString::number(fromCoord.longitude(), 'f', 10) + ",";
+    points += QString::number(toCoord.latitude(), 'f', 10) + ","
+            + QString::number(toCoord.longitude(), 'f', 10);
+
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("points"), points);
+
+    _queryMode = QueryModePath;
+    _sendQuery(QStringLiteral("/path"), query);
+}
+
+void TerrainAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
+{
+    QString points;
+    points += QString::number(swCoord.latitude(), 'f', 10) + ","
+            + QString::number(swCoord.longitude(), 'f', 10) + ",";
+    points += QString::number(neCoord.latitude(), 'f', 10) + ","
+            + QString::number(neCoord.longitude(), 'f', 10);
+
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("points"), points);
+
+    _queryMode = QueryModeCarpet;
+    _carpetStatsOnly = statsOnly;
+
+    _sendQuery(QStringLiteral("/carpet"), query);
+}
+
+void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQuery)
 {
     QUrl url(QStringLiteral("https://api.airmap.com/elevation/v1/ele") + path);
     url.setQuery(urlQuery);
+    qCDebug(TerrainQueryLog) << "_sendQuery" << url;
 
     QNetworkRequest request(url);
 
@@ -43,21 +92,21 @@ void TerrainQuery::_sendQuery(const QString& path, const QUrlQuery& urlQuery)
     QNetworkReply* networkReply = _networkManager.get(request);
     if (!networkReply) {
         qCDebug(TerrainQueryLog) << "QNetworkManager::Get did not return QNetworkReply";
-        _terrainData(false /* success */ , QJsonValue());
+        _requestFailed();
         return;
     }
 
-    connect(networkReply, &QNetworkReply::finished, this, &TerrainQuery::_requestFinished);
+    connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
 }
 
-void TerrainQuery::_requestFinished(void)
+void TerrainAirMapQuery::_requestFinished(void)
 {
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     if (reply->error() != QNetworkReply::NoError) {
         qCDebug(TerrainQueryLog) << "_requestFinished error:" << reply->error();
         reply->deleteLater();
-        _terrainData(false /* success */ , QJsonValue());
+        _requestFailed();
         return;
     }
 
@@ -69,7 +118,7 @@ void TerrainQuery::_requestFinished(void)
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
         qCDebug(TerrainQueryLog) << "_requestFinished unable to parse json:" << parseError.errorString();
-        _terrainData(false /* success */ , QJsonValue());
+        _requestFailed();
         return;
     }
 
@@ -78,12 +127,93 @@ void TerrainQuery::_requestFinished(void)
     QString status = rootObject["status"].toString();
     if (status != "success") {
         qCDebug(TerrainQueryLog) << "_requestFinished status != success:" << status;
-        _terrainData(false /* success */ , QJsonValue());
+        _requestFailed();
         return;
     }
 
     // Send back data
-    _terrainData(true /* success */ , rootObject["data"]);
+    const QJsonValue& jsonData = rootObject["data"];
+    qCDebug(TerrainQueryLog) << "_requestFinished" << jsonData;
+    switch (_queryMode) {
+    case QueryModeCoordinates:
+        emit _parseCoordinateData(jsonData);
+        break;
+    case QueryModePath:
+        emit _parsePathData(jsonData);
+        break;
+    case QueryModeCarpet:
+        emit _parseCarpetData(jsonData);
+        break;
+    }
+}
+
+void TerrainAirMapQuery::_requestFailed(void)
+{
+    switch (_queryMode) {
+    case QueryModeCoordinates:
+        emit coordinateHeights(false /* success */, QList<double>() /* heights */);
+        break;
+    case QueryModePath:
+        emit pathHeights(false /* success */, qQNaN() /* latStep */, qQNaN() /* lonStep */, QList<double>() /* heights */);
+        break;
+    case QueryModeCarpet:
+        emit carpetHeights(false /* success */, qQNaN() /* minHeight */, qQNaN() /* maxHeight */, QList<QList<double>>() /* carpet */);
+        break;
+    }
+}
+
+void TerrainAirMapQuery::_parseCoordinateData(const QJsonValue& coordinateJson)
+{
+    QList<double> heights;
+    const QJsonArray& dataArray = coordinateJson.toArray();
+    for (int i = 0; i < dataArray.count(); i++) {
+        heights.append(dataArray[i].toDouble());
+    }
+
+    emit coordinateHeights(true /* success */, heights);
+}
+
+void TerrainAirMapQuery::_parsePathData(const QJsonValue& pathJson)
+{
+    QJsonObject jsonObject =    pathJson.toArray()[0].toObject();
+    QJsonArray stepArray =      jsonObject["step"].toArray();
+    QJsonArray profileArray =   jsonObject["profile"].toArray();
+
+    double latStep = stepArray[0].toDouble();
+    double lonStep = stepArray[1].toDouble();
+
+    QList<double> heights;
+    foreach (const QJsonValue& profileValue, profileArray) {
+        heights.append(profileValue.toDouble());
+    }
+
+    emit pathHeights(true /* success */, latStep, lonStep, heights);
+}
+
+void TerrainAirMapQuery::_parseCarpetData(const QJsonValue& carpetJson)
+{
+    QJsonObject jsonObject =    carpetJson.toArray()[0].toObject();
+
+    QJsonObject statsObject =   jsonObject["stats"].toObject();
+    double      minHeight =     statsObject["min"].toDouble();
+    double      maxHeight =     statsObject["min"].toDouble();
+
+    QList<QList<double>> carpet;
+    if (!_carpetStatsOnly) {
+        QJsonArray carpetArray =   jsonObject["carpet"].toArray();
+
+        for (int i=0; i<carpetArray.count(); i++) {
+            QJsonArray rowArray = carpetArray[i].toArray();
+            carpet.append(QList<double>());
+
+            for (int j=0; j<rowArray.count(); j++) {
+                double height = rowArray[j].toDouble();
+                carpet.last().append(height);
+            }
+        }
+    }
+
+    emit carpetHeights(true /*success*/, minHeight, maxHeight, carpet);
 }
 
 TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(void)
@@ -91,6 +221,7 @@ TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(void)
     _batchTimer.setSingleShot(true);
     _batchTimer.setInterval(_batchTimeout);
     connect(&_batchTimer, &QTimer::timeout, this, &TerrainAtCoordinateBatchManager::_sendNextBatch);
+    connect(&_terrainQuery, &TerrainQueryInterface::coordinateHeights, this, &TerrainAtCoordinateBatchManager::_coordinateHeights);
 }
 
 void TerrainAtCoordinateBatchManager::addQuery(TerrainAtCoordinateQuery* terrainAtCoordinateQuery, const QList<QGeoCoordinate>& coordinates)
@@ -123,35 +254,28 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
     _sentRequests.clear();
 
     // Convert coordinates to point strings for json query
-    QString points;
+    QList<QGeoCoordinate> coords;
     foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
         SentRequestInfo_t sentRequestInfo = { requestInfo.terrainAtCoordinateQuery, false, requestInfo.coordinates.count() };
         qCDebug(TerrainQueryLog) << "Building request: coordinate count" << requestInfo.coordinates.count();
         _sentRequests.append(sentRequestInfo);
 
-        foreach (const QGeoCoordinate& coord, requestInfo.coordinates) {
-            points += QString::number(coord.latitude(), 'f', 10) + ","
-                    + QString::number(coord.longitude(), 'f', 10) + ",";
-        }
-
+        coords += requestInfo.coordinates;
     }
-    points = points.mid(0, points.length() - 1); // remove the last ',' from string
     _requestQueue.clear();
 
-    QUrlQuery query;
-    query.addQueryItem(QStringLiteral("points"), points);
-    _sendQuery(QString() /* path */, query);
+    _terrainQuery.requestCoordinateHeights(coords);
     _state = State::Downloading;
 }
 
 void TerrainAtCoordinateBatchManager::_batchFailed(void)
 {
-    QList<float>    noAltitudes;
+    QList<double> noHeights;
 
     foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
         if (!sentRequestInfo.queryObjectDestroyed) {
             disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
-            sentRequestInfo.terrainAtCoordinateQuery->_signalTerrainData(false, noAltitudes);
+            sentRequestInfo.terrainAtCoordinateQuery->_signalTerrainData(false, noHeights);
         }
     }
     _sentRequests.clear();
@@ -195,7 +319,7 @@ QString TerrainAtCoordinateBatchManager::_stateToString(State state)
     return QStringLiteral("State unknown");
 }
 
-void TerrainAtCoordinateBatchManager::_terrainData(bool success, const QJsonValue& dataJsonValue)
+void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<double> heights)
 {
     _state = State::Idle;
 
@@ -204,17 +328,11 @@ void TerrainAtCoordinateBatchManager::_terrainData(bool success, const QJsonValu
         return;
     }
 
-    QList<float> altitudes;
-    const QJsonArray& dataArray = dataJsonValue.toArray();
-    for (int i = 0; i < dataArray.count(); i++) {
-        altitudes.push_back(dataArray[i].toDouble());
-    }
-
     int currentIndex = 0;
     foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
         if (!sentRequestInfo.queryObjectDestroyed) {
             disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
-            QList<float> requestAltitudes = altitudes.mid(currentIndex, sentRequestInfo.cCoord);
+            QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
             sentRequestInfo.terrainAtCoordinateQuery->_signalTerrainData(true, requestAltitudes);
             currentIndex += sentRequestInfo.cCoord;
         }
@@ -236,54 +354,30 @@ void TerrainAtCoordinateQuery::requestData(const QList<QGeoCoordinate>& coordina
     _TerrainAtCoordinateBatchManager->addQuery(this, coordinates);
 }
 
-void TerrainAtCoordinateQuery::_signalTerrainData(bool success, QList<float>& altitudes)
+void TerrainAtCoordinateQuery::_signalTerrainData(bool success, QList<double>& heights)
 {
-    emit terrainData(success, altitudes);
+    emit terrainData(success, heights);
 }
 
 TerrainPathQuery::TerrainPathQuery(QObject* parent)
-    : TerrainQuery(parent)
+    : QObject(parent)
 {
     qRegisterMetaType<PathHeightInfo_t>();
+    connect(&_terrainQuery, &TerrainQueryInterface::pathHeights, this, &TerrainPathQuery::_pathHeights);
 }
 
 void TerrainPathQuery::requestData(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
 {
-    if (!fromCoord.isValid() || !toCoord.isValid()) {
-        return;
-    }
-
-    QString points;
-    points += QString::number(fromCoord.latitude(), 'f', 10) + ","
-            + QString::number(fromCoord.longitude(), 'f', 10) + ",";
-    points += QString::number(toCoord.latitude(), 'f', 10) + ","
-            + QString::number(toCoord.longitude(), 'f', 10);
-
-    QUrlQuery query;
-    query.addQueryItem(QStringLiteral("points"), points);
-
-    _sendQuery(QStringLiteral("/path"), query);
+    _terrainQuery.requestPathHeights(fromCoord, toCoord);
 }
 
-void TerrainPathQuery::_terrainData(bool success, const QJsonValue& dataJsonValue)
+void TerrainPathQuery::_pathHeights(bool success, double latStep, double lonStep, const QList<double>& heights)
 {
-    if (!success) {
-        emit terrainData(false /* success */, PathHeightInfo_t());
-        return;
-    }
-
-    QJsonObject jsonObject =    dataJsonValue.toArray()[0].toObject();
-    QJsonArray stepArray =      jsonObject["step"].toArray();
-    QJsonArray profileArray =   jsonObject["profile"].toArray();
-
     PathHeightInfo_t pathHeightInfo;
-    pathHeightInfo.latStep = stepArray[0].toDouble();
-    pathHeightInfo.lonStep = stepArray[1].toDouble();
-    foreach (const QJsonValue& profileValue, profileArray) {
-        pathHeightInfo.rgHeight.append(profileValue.toDouble());
-    }
-
-    emit terrainData(true /* success */, pathHeightInfo);
+    pathHeightInfo.latStep = latStep;
+    pathHeightInfo.lonStep = lonStep;
+    pathHeightInfo.heights = heights;
+    emit terrainData(success, pathHeightInfo);
 }
 
 TerrainPolyPathQuery::TerrainPolyPathQuery(QObject* parent)
@@ -331,61 +425,12 @@ void TerrainPolyPathQuery::_terrainDataReceived(bool success, const TerrainPathQ
 }
 
 TerrainCarpetQuery::TerrainCarpetQuery(QObject* parent)
-    : TerrainQuery(parent)
+    : QObject(parent)
 {
-
+    connect(&_terrainQuery, &TerrainQueryInterface::carpetHeights, this, &TerrainCarpetQuery::terrainData);
 }
 
 void TerrainCarpetQuery::requestData(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
 {
-    if (!swCoord.isValid() || !neCoord.isValid()) {
-        return;
-    }
-
-    _statsOnly = statsOnly;
-
-    QString points;
-    points += QString::number(swCoord.latitude(), 'f', 10) + ","
-            + QString::number(swCoord.longitude(), 'f', 10) + ",";
-    points += QString::number(neCoord.latitude(), 'f', 10) + ","
-            + QString::number(neCoord.longitude(), 'f', 10);
-
-    QUrlQuery query;
-    query.addQueryItem(QStringLiteral("points"), points);
-
-    _sendQuery(QStringLiteral("/carpet"), query);
+    _terrainQuery.requestCarpetHeights(swCoord, neCoord, statsOnly);
 }
-
-void TerrainCarpetQuery::_terrainData(bool success, const QJsonValue& dataJsonValue)
-{
-    if (!success) {
-        emit terrainData(false /* success */, qQNaN() /* minHeight */ , qQNaN() /* maxHeight */, QList<QList<double>>() /* carpet */);
-        return;
-    }
-
-    qDebug() << dataJsonValue;
-
-    QJsonObject jsonObject =    dataJsonValue.toArray()[0].toObject();
-
-    QJsonObject statsObject =   jsonObject["stats"].toObject();
-    double      minHeight =     statsObject["min"].toDouble();
-    double      maxHeight =     statsObject["min"].toDouble();
-
-    QList<QList<double>> carpet;
-    if (!_statsOnly) {
-        QJsonArray carpetArray =   jsonObject["carpet"].toArray();
-
-        for (int i=0; i<carpetArray.count(); i++) {
-            QJsonArray rowArray = carpetArray[i].toArray();
-            carpet.append(QList<double>());
-
-            for (int j=0; j<rowArray.count(); j++) {
-                double height = rowArray[j].toDouble();
-                carpet.last().append(height);
-            }
-        }
-    }
-
-    emit terrainData(true /*success*/, minHeight, maxHeight, carpet);
-}
-
