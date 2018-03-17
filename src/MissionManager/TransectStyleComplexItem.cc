@@ -388,10 +388,15 @@ void TransectStyleComplexItem::_adjustTransectPointsForTerrain(void)
 
     // Take care of last point
     QGeoCoordinate transectPoint = _transectPoints.last().value<QGeoCoordinate>();
+    bool surveyEdgeIndicator = transectPoint.altitude() == _surveyEdgeIndicator;
     if (_followTerrain){
         transectPoint.setAltitude(_transectsPathHeightInfo.last().rgHeight.last() + altitude);
     } else {
         transectPoint.setAltitude(altitude);
+    }
+    if (surveyEdgeIndicator) {
+        // Use to indicate survey edge
+        transectPoint.setAltitude(-transectPoint.altitude());
     }
     _transectPoints[_transectPoints.count() - 1] = QVariant::fromValue(transectPoint);
 }

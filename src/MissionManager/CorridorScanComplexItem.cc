@@ -380,9 +380,11 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
                 // Extend the transect ends for turnaround
                 double azimuth = transect[0].azimuthTo(transect[1]);
                 extensionCoord = transect[0].atDistanceAndAzimuth(-_turnAroundDistanceFact.rawValue().toDouble(), azimuth);
+                extensionCoord.setAltitude(qQNaN());
                 transect.prepend(extensionCoord);
                 azimuth = transect.last().azimuthTo(transect[transect.count() - 2]);
                 extensionCoord = transect.last().atDistanceAndAzimuth(-_turnAroundDistanceFact.rawValue().toDouble(), azimuth);
+                extensionCoord.setAltitude(qQNaN());
                 transect.append(extensionCoord);
             }
 
