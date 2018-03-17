@@ -34,5 +34,32 @@
     "shortDescription": "Refly the pattern at a 90 degree angle",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "TerrainAdjustTolerance",
+    "shortDescription": "TerrainAdjustTolerance",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     10
+},
+{
+    "name":             "TerrainAdjustMaxClimbRate",
+    "shortDescription": "TerrainAdjustMaxClimbRate",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m/s",
+    "defaultValue":     0
+},
+{
+    "name":             "TerrainAdjustMaxDescentRate",
+    "shortDescription": "TerrainAdjustMaxDescentRate",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m/s",
+    "defaultValue":     0
 }
 ]

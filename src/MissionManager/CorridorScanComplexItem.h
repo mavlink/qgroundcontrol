@@ -36,17 +36,18 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-
-    int         lastSequenceNumber  (void) const final;
-    bool        load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    QString     mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
+    int     lastSequenceNumber  (void) const final;
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    QString mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
 
     // Overrides from TransectStyleComplexItem
+    void    save                (QJsonArray&  planItems) final;
+    bool    specifiesCoordinate (void) const final;
+    void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void    applyNewAltitude    (double newAltitude) final;
 
-    void        save                (QJsonArray&  planItems) final;
-    bool        specifiesCoordinate (void) const final;
-    void        appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void        applyNewAltitude    (double newAltitude) final;
+    // Overrides from VisualMissionionItem
+    bool    readyForSave        (void) const;
 
     static const char* jsonComplexItemTypeValue;
 
