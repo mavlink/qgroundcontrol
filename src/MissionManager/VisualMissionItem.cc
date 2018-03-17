@@ -180,10 +180,10 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
     }
 }
 
-void VisualMissionItem::_terrainDataReceived(bool success, QList<float> altitudes)
+void VisualMissionItem::_terrainDataReceived(bool success, QList<double> heights)
 {
     if (success) {
-        _terrainAltitude = altitudes[0];
+        _terrainAltitude = heights[0];
         emit terrainAltitudeChanged(_terrainAltitude);
         sender()->deleteLater();
     }
