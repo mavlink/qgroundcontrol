@@ -34,11 +34,8 @@ protected:
     //  @param urlQuery Query to send
     void _sendQuery(const QString& path, const QUrlQuery& urlQuery);
 
-    virtual void _getNetworkReplyFailed     (void) = 0;                                 ///< QNetworkManager::get failed to return QNetworkReplay object
-    virtual void _requestFailed             (QNetworkReply::NetworkError error) = 0;    ///< QNetworkReply::finished returned error
-    virtual void _requestJsonParseFailed    (const QString& errorString) = 0;           ///< Parsing of returned json failed
-    virtual void _requestAirmapStatusFailed (const QString& status) = 0;                ///< AirMap status was not "success"
-    virtual void _requestSucess             (const QJsonValue& dataJsonValue) = 0;      ///< Successful reqest, data returned
+    // Called when the request to the server fails or succeeds
+    virtual void _terrainData(bool success, const QJsonValue& dataJsonValue) = 0;
 
 private slots:
     void _requestFinished(void);
@@ -57,11 +54,8 @@ public:
     void addQuery(TerrainAtCoordinateQuery* terrainAtCoordinateQuery, const QList<QGeoCoordinate>& coordinates);
 
 protected:
-    void _getNetworkReplyFailed     (void) final;
-    void _requestFailed             (QNetworkReply::NetworkError error) final;
-    void _requestJsonParseFailed    (const QString& errorString) final;
-    void _requestAirmapStatusFailed (const QString& status) final;
-    void _requestSucess             (const QJsonValue& dataJsonValue) final;
+    // Overrides from TerrainQuery
+    void _terrainData(bool success, const QJsonValue& dataJsonValue) final;
 
 private slots:
     void _sendNextBatch         (void);
@@ -102,9 +96,9 @@ class TerrainAtCoordinateQuery : public QObject
 public:
     TerrainAtCoordinateQuery(QObject* parent = NULL);
 
-     /// Async terrain query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
-     /// is emitted.
-     ///    @param coordinates to query
+    /// Async terrain query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
+    /// is emitted.
+    ///     @param coordinates to query
     void requestData(const QList<QGeoCoordinate>& coordinates);
 
     // Internal method
@@ -121,9 +115,9 @@ class TerrainPathQuery : public TerrainQuery
 public:
     TerrainPathQuery(QObject* parent = NULL);
 
-     /// Async terrain query for terrain heights between two lat/lon coordinates. When the query is done, the terrainData() signal
-     /// is emitted.
-     ///    @param coordinates to query
+    /// Async terrain query for terrain heights between two lat/lon coordinates. When the query is done, the terrainData() signal
+    /// is emitted.
+    ///     @param coordinates to query
     void requestData(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord);
 
     typedef struct {
@@ -137,11 +131,8 @@ signals:
     void terrainData(bool success, const PathHeightInfo_t& pathHeightInfo);
 
 protected:
-    void _getNetworkReplyFailed     (void) final;
-    void _requestFailed             (QNetworkReply::NetworkError error) final;
-    void _requestJsonParseFailed    (const QString& errorString) final;
-    void _requestAirmapStatusFailed (const QString& status) final;
-    void _requestSucess             (const QJsonValue& dataJsonValue) final;
+    // Overrides from TerrainQuery
+    void _terrainData(bool success, const QJsonValue& dataJsonValue) final;
 };
 
 Q_DECLARE_METATYPE(TerrainPathQuery::PathHeightInfo_t)
@@ -153,9 +144,9 @@ class TerrainPolyPathQuery : public QObject
 public:
     TerrainPolyPathQuery(QObject* parent = NULL);
 
-     /// Async terrain query for terrain heights for the paths between each specified QGeoCoordinate.
-     /// When the query is done, the terrainData() signal is emitted.
-     ///    @param polyPath List of QGeoCoordinate
+    /// Async terrain query for terrain heights for the paths between each specified QGeoCoordinate.
+    /// When the query is done, the terrainData() signal is emitted.
+    ///     @param polyPath List of QGeoCoordinate
     void requestData(const QVariantList& polyPath);
     void requestData(const QList<QGeoCoordinate>& polyPath);
 
@@ -171,5 +162,33 @@ private:
     QList<QGeoCoordinate>                       _rgCoords;
     QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;
     TerrainPathQuery                            _pathQuery;
+};
+
+
+class TerrainCarpetQuery : public TerrainQuery
+{
+    Q_OBJECT
+
+public:
+    TerrainCarpetQuery(QObject* parent = NULL);
+
+    /// Async terrain query for terrain information bounded by the specifed corners.
+    /// When the query is done, the terrainData() signal is emitted.
+    ///     @param swCoord South-West bound of rectangular area to query
+    ///     @param neCoord North-East bound of rectangular area to query
+    ///     @param statsOnly true: Return only stats, no carpet data
+    void requestData(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly);
+
+signals:
+    /// Signalled when terrain data comes back from server
+    void terrainData(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
+
+
+protected:
+    // Overrides from TerrainQuery
+    void _terrainData(bool success, const QJsonValue& dataJsonValue) final;
+
+private:
+    bool _statsOnly;
 };
 
