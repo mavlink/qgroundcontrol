@@ -26,29 +26,44 @@ const char* TransectStyleComplexItem::turnAroundDistanceMultiRotorName =    "Tur
 const char* TransectStyleComplexItem::cameraTriggerInTurnAroundName =       "CameraTriggerInTurnAround";
 const char* TransectStyleComplexItem::hoverAndCaptureName =                 "HoverAndCapture";
 const char* TransectStyleComplexItem::refly90DegreesName =                  "Refly90Degrees";
+const char* TransectStyleComplexItem::terrainAdjustToleranceName =          "TerrainAdjustTolerance";
+const char* TransectStyleComplexItem::terrainAdjustMaxClimbRateName =       "TerrainAdjustMaxClimbRate";
+const char* TransectStyleComplexItem::terrainAdjustMaxDescentRateName =     "TerrainAdjustMaxDescentRate";
 
 const char* TransectStyleComplexItem::_jsonTransectStyleComplexItemKey =    "TransectStyleComplexItem";
 const char* TransectStyleComplexItem::_jsonCameraCalcKey =                  "CameraCalc";
 const char* TransectStyleComplexItem::_jsonTransectPointsKey =              "TransectPoints";
 const char* TransectStyleComplexItem::_jsonItemsKey =                       "Items";
 
+const int       TransectStyleComplexItem::_terrainQueryTimeoutMsecs =   500;
+const double    TransectStyleComplexItem::_surveyEdgeIndicator =        -10;
+
 TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString settingsGroup, QObject* parent)
-    : ComplexMissionItem            (vehicle, parent)
-    , _settingsGroup                (settingsGroup)
-    , _sequenceNumber               (0)
-    , _dirty                        (false)
-    , _ignoreRecalc                 (false)
-    , _complexDistance              (0)
-    , _cameraShots                  (0)
-    , _cameraMinTriggerInterval     (0)
-    , _cameraCalc                   (vehicle)
-    , _loadedMissionItemsParent     (NULL)
-    , _metaDataMap                  (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
-    , _turnAroundDistanceFact       (_settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
-    , _cameraTriggerInTurnAroundFact(_settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
-    , _hoverAndCaptureFact          (_settingsGroup, _metaDataMap[hoverAndCaptureName])
-    , _refly90DegreesFact           (_settingsGroup, _metaDataMap[refly90DegreesName])
+    : ComplexMissionItem                (vehicle, parent)
+    , _settingsGroup                    (settingsGroup)
+    , _sequenceNumber                   (0)
+    , _dirty                            (false)
+    , _terrainPolyPathQuery             (NULL)
+    , _ignoreRecalc                     (false)
+    , _complexDistance                  (0)
+    , _cameraShots                      (0)
+    , _cameraMinTriggerInterval         (0)
+    , _cameraCalc                       (vehicle)
+    , _followTerrain                    (false)
+    , _loadedMissionItemsParent         (NULL)
+    , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
+    , _turnAroundDistanceFact           (_settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
+    , _cameraTriggerInTurnAroundFact    (_settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
+    , _hoverAndCaptureFact              (_settingsGroup, _metaDataMap[hoverAndCaptureName])
+    , _refly90DegreesFact               (_settingsGroup, _metaDataMap[refly90DegreesName])
+    , _terrainAdjustToleranceFact       (_settingsGroup, _metaDataMap[terrainAdjustToleranceName])
+    , _terrainAdjustMaxClimbRateFact    (_settingsGroup, _metaDataMap[terrainAdjustMaxClimbRateName])
+    , _terrainAdjustMaxDescentRateFact  (_settingsGroup, _metaDataMap[terrainAdjustMaxDescentRateName])
 {
+    _terrainQueryTimer.setInterval(_terrainQueryTimeoutMsecs);
+    _terrainQueryTimer.setSingleShot(true);
+    connect(&_terrainQueryTimer, &QTimer::timeout, this, &TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo);
+
     connect(&_turnAroundDistanceFact,                   &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(&_hoverAndCaptureFact,                      &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
     connect(&_refly90DegreesFact,                       &Fact::valueChanged,            this, &TransectStyleComplexItem::_rebuildTransects);
@@ -302,4 +317,94 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 {
     _rebuildTransectsPhase1();
     _rebuildTransectsPhase2();
+}
+
+void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
+{
+    _transectsPathHeightInfo.clear();
+    if (_terrainPolyPathQuery) {
+        // Toss previous query
+        _terrainPolyPathQuery->deleteLater();
+        _terrainPolyPathQuery = NULL;
+    }
+
+    if (_transectPoints.count() > 1) {
+        // We don't actually send the query until this timer times out. This way we only send
+        // the laset request if we get a bunch in a row.
+        _terrainQueryTimer.start();
+    }
+}
+
+void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
+{
+    if (_transectPoints.count() > 1) {
+        _terrainPolyPathQuery = new TerrainPolyPathQuery(this);
+        connect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainData, this, &TransectStyleComplexItem::_polyPathTerrainData);
+        _terrainPolyPathQuery->requestData(_transectPoints);
+    }
+}
+
+void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo)
+{
+    if (success) {
+        _transectsPathHeightInfo = rgPathHeightInfo;
+    } else {
+        _transectsPathHeightInfo.clear();
+    }
+}
+
+bool TransectStyleComplexItem::readyForSave(void) const
+{
+    // Make sure we have the terrain data we need
+    return _transectPoints.count() > 1 ? _transectsPathHeightInfo.count() : false;
+}
+
+void TransectStyleComplexItem::_adjustTransectPointsForTerrain(void)
+{
+    if (_followTerrain && !readyForSave()) {
+        qCWarning(TransectStyleComplexItemLog) << "_adjustTransectPointsForTerrain called when terrain data not ready";
+        qgcApp()->showMessage(tr("INTERNAL ERROR: TransectStyleComplexItem::_adjustTransectPointsForTerrain called when terrain data not ready. Plan will be incorrect."));
+        return;
+    }
+
+    double altitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
+
+    for (int i=0; i<_transectPoints.count() - 1; i++) {
+        QGeoCoordinate transectPoint = _transectPoints[i].value<QGeoCoordinate>();
+
+        bool surveyEdgeIndicator = transectPoint.altitude() == _surveyEdgeIndicator;
+        if (_followTerrain) {
+            transectPoint.setAltitude(_transectsPathHeightInfo[i].rgHeight[0] + altitude);
+        } else {
+            transectPoint.setAltitude(altitude);
+        }
+        if (surveyEdgeIndicator) {
+            // Use to indicate survey edge
+            transectPoint.setAltitude(-transectPoint.altitude());
+        }
+
+        _transectPoints[i] = QVariant::fromValue(transectPoint);
+    }
+
+    // Take care of last point
+    QGeoCoordinate transectPoint = _transectPoints.last().value<QGeoCoordinate>();
+    bool surveyEdgeIndicator = transectPoint.altitude() == _surveyEdgeIndicator;
+    if (_followTerrain){
+        transectPoint.setAltitude(_transectsPathHeightInfo.last().rgHeight.last() + altitude);
+    } else {
+        transectPoint.setAltitude(altitude);
+    }
+    if (surveyEdgeIndicator) {
+        // Use to indicate survey edge
+        transectPoint.setAltitude(-transectPoint.altitude());
+    }
+    _transectPoints[_transectPoints.count() - 1] = QVariant::fromValue(transectPoint);
+}
+
+void TransectStyleComplexItem::setFollowTerrain(bool followTerrain)
+{
+    if (followTerrain != _followTerrain) {
+        _followTerrain = followTerrain;
+        emit followTerrainChanged(followTerrain);
+    }
 }

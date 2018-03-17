@@ -126,17 +126,50 @@ public:
      ///    @param coordinates to query
     void requestData(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord);
 
+    typedef struct {
+        double          latStep;    ///< Amount of latitudinal distance between each returned height
+        double          lonStep;    ///< Amount of longitudinal distance between each returned height
+        QList<double>   rgHeight;   ///< Terrain heights along path
+    } PathHeightInfo_t;
+
+signals:
+    /// Signalled when terrain data comes back from server
+    void terrainData(bool success, const PathHeightInfo_t& pathHeightInfo);
+
 protected:
     void _getNetworkReplyFailed     (void) final;
     void _requestFailed             (QNetworkReply::NetworkError error) final;
     void _requestJsonParseFailed    (const QString& errorString) final;
     void _requestAirmapStatusFailed (const QString& status) final;
     void _requestSucess             (const QJsonValue& dataJsonValue) final;
+};
+
+Q_DECLARE_METATYPE(TerrainPathQuery::PathHeightInfo_t)
+
+class TerrainPolyPathQuery : public QObject
+{
+    Q_OBJECT
+
+public:
+    TerrainPolyPathQuery(QObject* parent = NULL);
+
+     /// Async terrain query for terrain heights for the paths between each specified QGeoCoordinate.
+     /// When the query is done, the terrainData() signal is emitted.
+     ///    @param polyPath List of QGeoCoordinate
+    void requestData(const QVariantList& polyPath);
+    void requestData(const QList<QGeoCoordinate>& polyPath);
 
 signals:
     /// Signalled when terrain data comes back from server
-    ///     @param latStep Amount of latitudinal distance between each returned height
-    ///     @param lonStep Amount of longitudinal distance between each returned height
-    ///     @param altitudes Altitudes along specified path
-    void terrainData(bool success, double latStep, double lonStep, QList<double> altitudes);
+    void terrainData(bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
+
+private slots:
+    void _terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo);
+
+private:
+    int                                         _curIndex;
+    QList<QGeoCoordinate>                       _rgCoords;
+    QList<TerrainPathQuery::PathHeightInfo_t>   _rgPathHeightInfo;
+    TerrainPathQuery                            _pathQuery;
 };
+
