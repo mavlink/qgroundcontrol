@@ -411,7 +411,6 @@ void TransectStyleComplexItem::_adjustTransectPointsForTerrain(void)
 
     qDebug() << _transectPoints.count() << _transectsPathHeightInfo.count();
     for (int i=0; i<_transectPoints.count() - 1; i++) {
-        qDebug() << _transectsPathHeightInfo[i].heights.count();
         QGeoCoordinate transectPoint = _transectPoints[i].value<QGeoCoordinate>();
 
         bool surveyEdgeIndicator = transectPoint.altitude() == _surveyEdgeIndicator;
