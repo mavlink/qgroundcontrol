@@ -183,6 +183,7 @@ protected:
     static const char* _jsonTransectStyleComplexItemKey;
     static const char* _jsonTransectPointsKey;
     static const char* _jsonItemsKey;
+    static const char* _jsonFollowTerrainKey;
 
     static const int _terrainQueryTimeoutMsecs;
     static const double _surveyEdgeIndicator;   ///< Altitude value in _transectPoints which indicates survey entry
@@ -191,4 +192,8 @@ private slots:
     void _rebuildTransects                      (void);
     void _reallyQueryTransectsPathHeightInfo    (void);
 
+private:
+    void    _addInterstitialTransectsForTerrain (void);
+    double  _altitudeBetweenCoords              (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
+    int     _maxPathHeight                      (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
 };
