@@ -236,9 +236,11 @@ Item {
             }
         }
         onFirmwareCustomVersionChanged: {
-            if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
-                if(rootLoader.sourceComponent !== initialSettingsDialog) {
-                    rootLoader.sourceComponent = updateDialog
+            if(_activeVehicle && !_activeVehicle.armed) {
+                if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
+                    if(rootLoader.sourceComponent !== initialSettingsDialog) {
+                        rootLoader.sourceComponent = updateDialog
+                    }
                 }
             }
         }
@@ -254,12 +256,14 @@ Item {
         }
         onParameterReadyVehicleAvailableChanged: {
             if(QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable) {
-                //-- Check for first run
-                if(TyphoonHQuickInterface.firstRun) {
-                    rootLoader.sourceComponent = initialSettingsDialog
-                //-- Check if we should update
-                } else if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
-                    rootLoader.sourceComponent = updateDialog
+                if(_activeVehicle && !_activeVehicle.armed) {
+                    //-- Check for first run
+                    if(TyphoonHQuickInterface.firstRun) {
+                        rootLoader.sourceComponent = initialSettingsDialog
+                    //-- Check if we should update
+                    } else if(TyphoonHQuickInterface.shouldWeShowUpdate()) {
+                        rootLoader.sourceComponent = updateDialog
+                    }
                 }
             }
         }
