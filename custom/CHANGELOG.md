@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.11 - Mar 19 2018
+
+*   Handle camera settings when no microSD card is loaded. Only a subset of options are enabled and the title is just "Settings" (as opposed to "Video Settings" and "Photo Settings"). Now, instead of having all options, only those that affect what you see are enabled. Options that only affect what gets recorded and doesn't affect what you see on the screen are now disabled when no memory card is loaded.
+
 ### V1.3.10 - Mar 15 2018
 
 *   Fix KML file extensions on load/save
