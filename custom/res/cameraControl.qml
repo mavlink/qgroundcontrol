@@ -60,15 +60,15 @@ Rectangle {
     property bool _isCamera:                _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var  _camera:                  _isCamera ? _dynamicCameras.cameras.get(0) : null // Single camera support for the time being
     property bool _communicationLost:       _activeVehicle ? _activeVehicle.connectionLost : false
-    property bool _emptySD:                 _camera && _camera.storageTotal === 0
-    property bool _cameraVideoMode:         !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_VIDEO)
-    property bool _cameraPhotoMode:         !_communicationLost && (_emptySD ? false : _camera && (_camera.cameraMode  === QGCCameraControl.CAM_MODE_PHOTO || _camera.cameraMode === QGCCameraControl.CAM_MODE_SURVEY))
-    property bool _cameraPhotoIdle:         !_communicationLost && (_emptySD ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
-    property bool _cameraElapsedMode:       !_communicationLost && (_emptySD ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE)
+    property bool _noSdCard:                _camera && _camera.storageTotal === 0
+    property bool _cameraVideoMode:         !_communicationLost && (_noSdCard ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_VIDEO)
+    property bool _cameraPhotoMode:         !_communicationLost && (_noSdCard ? false : _camera && (_camera.cameraMode  === QGCCameraControl.CAM_MODE_PHOTO || _camera.cameraMode === QGCCameraControl.CAM_MODE_SURVEY))
+    property bool _cameraPhotoIdle:         !_communicationLost && (_noSdCard ? false : _camera && _camera.photoStatus  === QGCCameraControl.PHOTO_CAPTURE_IDLE)
+    property bool _cameraElapsedMode:       !_communicationLost && (_noSdCard ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE)
     property bool _cameraModeUndefined:     !_cameraPhotoMode && !_cameraVideoMode
     property bool _recordingVideo:          _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool _isThermal:               TyphoonHQuickInterface.thermalImagePresent && TyphoonHQuickInterface.videoReceiver
-    property bool _settingsEnabled:         !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
+    property bool _settingsEnabled:         !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
 
     property real   _mediaWidth:            128
     property real   _mediaHeight:           72
@@ -217,7 +217,7 @@ Rectangle {
             }
             MouseArea {
                 anchors.fill:   parent
-                enabled:        !_emptySD
+                enabled:        !_noSdCard
                 onClicked: {
                     mainWindow.enableToolbar()
                     rootLoader.sourceComponent = null
@@ -368,7 +368,7 @@ Rectangle {
                 }
                 QGCLabel {
                     id:                 cameraSettingsLabel
-                    text:               _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings")
+                    text:               _noSdCard ? qsTr("Settings") : (_cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"))
                     font.family:        ScreenTools.demiboldFontFamily
                     font.pointSize:     ScreenTools.mediumFontPointSize
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
@@ -501,22 +501,76 @@ Rectangle {
                                 Column {
                                     id:                 repCol
                                     spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                    property var _fact: _camera.getFact(modelData)
+                                    function enabledWithNoSD() {
+                                        //-- If we have an SD card loaded, everything is enabled
+                                        if(!_noSdCard)
+                                            return true
+                                        //-- Only these are enabled if no SD card is loaded
+                                        if(_fact) {
+                                           if(_fact.name === "CAM_EV")
+                                               return true;
+                                           if(_fact.name === "CAM_EXPMODE")
+                                               return true;
+                                           if(_fact.name === "CAM_ISO")
+                                               return true;
+                                           if(_fact.name === "CAM_METERING")
+                                               return true;
+                                           if(_fact.name === "CAM_SHUTTERSPD")
+                                               return true;
+                                           if(_fact.name === "CAM_WBMODE")
+                                               return true;
+                                           if(_fact.name === "CAM_CUSTOMWB")
+                                               return true;
+                                           //-- Below are all only valid for CGOET/E10T
+                                           if(!_isThermal)
+                                               return false
+                                           if(_fact.name === "CAM_IRPALETTE")
+                                               return true;
+                                           if(_fact.name === "CAM_IRLOCKST")
+                                               return true;
+                                           if(_fact.name === "CAM_IRATMO")
+                                               return true;
+                                           if(_fact.name === "CAM_IRFFCMODE")
+                                               return true;
+                                           if(_fact.name === "CAM_IRATMO")
+                                               return true;
+                                           if(_fact.name === "CAM_IREMISS")
+                                               return true;
+                                           if(_fact.name === "CAM_CONVRATIO")
+                                               return true;
+                                           if(_fact.name === "CAM_IRATMOTEMP")
+                                               return true;
+                                           if(_fact.name === "CAM_IRTEMPRENA")
+                                               return true;
+                                           if(_fact.name === "CAM_CONVRATIO")
+                                               return true;
+                                           if(_fact.name === "CAM_CONVRATIO")
+                                               return true;
+                                           if(_fact.name === "CAM_IRTEMPMAX")
+                                               return true;
+                                           if(_fact.name === "CAM_IRTEMPMIN")
+                                               return true;
+                                        }
+                                        return false
+                                    }
                                     Row {
+                                        visible:        parent.enabledWithNoSD()
+                                        height:         visible ? undefined : 0
                                         spacing:        ScreenTools.defaultFontPixelWidth
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        property var    _fact:      _camera.getFact(modelData)
-                                        property bool   _isBool:    _fact.typeIsBool
-                                        property bool   _isCombo:   !_isBool && _fact.enumStrings.length > 0
-                                        property bool   _isSlider:  _fact && !isNaN(_fact.increment)
-                                        property bool   _isEdit:    !_isBool && !_isSlider && _fact.enumStrings.length < 1
+                                        property bool   _isBool:    parent._fact.typeIsBool
+                                        property bool   _isCombo:   !_isBool && parent._fact.enumStrings.length > 0
+                                        property bool   _isSlider:  parent._fact && !isNaN(parent._fact.increment)
+                                        property bool   _isEdit:    !_isBool && !_isSlider && parent._fact.enumStrings.length < 1
                                         QGCLabel {
-                                            text:       parent._fact.shortDescription
+                                            text:       parent.parent._fact.shortDescription
                                             width:      _labelFieldWidth
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                         FactComboBox {
                                             width:      parent._isCombo ? _editFieldWidth : 0
-                                            fact:       parent._fact
+                                            fact:       parent.parent._fact
                                             indexModel: false
                                             visible:    parent._isCombo
                                             anchors.verticalCenter: parent.verticalCenter
@@ -524,30 +578,30 @@ Rectangle {
                                         QGCButton {
                                             visible:    parent._isEdit
                                             width:      parent._isEdit ? _editFieldWidth : 0
-                                            text:       parent._fact.valueString
+                                            text:       parent.parent._fact.valueString
                                             onClicked: {
-                                                showEditFact(parent._fact)
+                                                showEditFact(parent.parent._fact)
                                             }
                                         }
                                         YSlider {
                                             width:          parent._isSlider ? _editFieldWidth : 0
-                                            maximumValue:   parent._fact.max
-                                            minimumValue:   parent._fact.min
-                                            stepSize:       parent._fact.increment
+                                            maximumValue:   parent.parent._fact.max
+                                            minimumValue:   parent.parent._fact.min
+                                            stepSize:       parent.parent._fact.increment
                                             visible:        parent._isSlider
                                             updateValueWhileDragging:   false
                                             anchors.verticalCenter:     parent.verticalCenter
                                             Component.onCompleted: {
-                                                value = parent._fact.value
+                                                value = parent.parent._fact.value
                                             }
                                             onValueChanged: {
-                                                parent._fact.value = value
+                                                parent.parent._fact.value = value
                                             }
                                         }
                                         OnOffSwitch {
                                             width:      parent._isBool ? _editFieldWidth : 0
-                                            checked:    parent._fact ? parent._fact.value : false
-                                            onClicked:  parent._fact.value = checked ? 1 : 0
+                                            checked:    parent.parent._fact ? parent.parent._fact.value : false
+                                            onClicked:  parent.parent._fact.value = checked ? 1 : 0
                                             visible:    parent._isBool
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
@@ -556,6 +610,7 @@ Rectangle {
                                         color:      qgcPal.button
                                         height:     1
                                         width:      cameraSettingsCol.width
+                                        visible:    parent.enabledWithNoSD()
                                     }
                                 }
                             }
@@ -565,7 +620,7 @@ Rectangle {
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _cameraPhotoMode
+                            visible:        _cameraPhotoMode && !_noSdCard
                             property var photoModes: [qsTr("Single"), qsTr("Time Lapse")]
                             QGCLabel {
                                 text:       qsTr("Photo Mode")
@@ -583,14 +638,14 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _cameraPhotoMode
+                            visible:    _cameraPhotoMode && !_noSdCard
                         }
                         //-------------------------------------------
                         //-- Time Lapse Interval
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
-                            visible:        _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                            visible:        _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE && !_noSdCard
                             QGCLabel {
                                 text:       qsTr("Photo Interval (seconds)")
                                 width:      _labelFieldWidth
@@ -613,7 +668,7 @@ Rectangle {
                             color:      qgcPal.button
                             height:     1
                             width:      cameraSettingsCol.width
-                            visible:    _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+                            visible:    _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE && !_noSdCard
                         }
                         //-------------------------------------------
                         //-- Screen Grid
@@ -688,6 +743,7 @@ Rectangle {
                         //-------------------------------------------
                         //-- Format SD Card
                         Row {
+                            visible:        !_noSdCard
                             spacing:        ScreenTools.defaultFontPixelWidth
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
@@ -697,7 +753,7 @@ Rectangle {
                             }
                             QGCButton {
                                 text:       qsTr("Format")
-                                enabled:    !_emptySD && !_recordingVideo
+                                enabled:    !_noSdCard && !_recordingVideo
                                 onClicked:  formatPrompt.open()
                                 width:      _editFieldWidth
                                 anchors.verticalCenter: parent.verticalCenter
@@ -719,6 +775,7 @@ Rectangle {
                         }
                         Rectangle {
                             color:      qgcPal.button
+                            visible:    !_noSdCard
                             height:     1
                             width:      cameraSettingsCol.width
                         }
