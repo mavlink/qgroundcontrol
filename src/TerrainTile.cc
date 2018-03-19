@@ -111,11 +111,17 @@ QGeoCoordinate TerrainTile::centerCoordinate(void) const
     return _southWest.atDistanceAndAzimuth(_southWest.distanceTo(_northEast) / 2.0, _southWest.azimuthTo(_northEast));
 }
 
-QByteArray TerrainTile::serialize(QJsonDocument document)
+QByteArray TerrainTile::serialize(QByteArray input)
 {
+    QJsonParseError parseError;
+    QJsonDocument document = QJsonDocument::fromJson(input, &parseError);
+    if (parseError.error != QJsonParseError::NoError) {
+        QByteArray emptyArray;
+        return emptyArray;
+    }
+
     QByteArray byteArray;
-    QIODevice::OpenMode writeonly = QIODevice::WriteOnly;
-    QDataStream stream(&byteArray, writeonly);
+    QDataStream stream(&byteArray, QIODevice::WriteOnly);
     if (!document.isObject()) {
         qCDebug(TerrainTileLog) << "Terrain tile json doc is no object";
         QByteArray emptyArray;

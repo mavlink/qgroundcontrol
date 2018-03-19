@@ -89,7 +89,7 @@ public:
     *
     * @return serialized data
     */
-    static QByteArray serialize(QJsonDocument document);
+    static QByteArray serialize(QByteArray input);
 
 private:
     inline int _latToDataIndex(double latitude) const;
@@ -98,11 +98,11 @@ private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile
 
-    int               _minElevation;                                  /// Minimum elevation in tile
-    int               _maxElevation;                                  /// Maximum elevation in tile
-    double            _avgElevation;                                  /// Average elevation of the tile
+    int               _minElevation;                                    /// Minimum elevation in tile
+    int               _maxElevation;                                    /// Maximum elevation in tile
+    double            _avgElevation;                                    /// Average elevation of the tile
 
-    double**             _data;                                          /// 2D elevation data array
+    double**            _data;                                          /// 2D elevation data array
     int                 _gridSizeLat;                                   /// data grid size in latitude direction
     int                 _gridSizeLon;                                   /// data grid size in longitude direction
     bool                _isValid;                                       /// data loaded is valid
