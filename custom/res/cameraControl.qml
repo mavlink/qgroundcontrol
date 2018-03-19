@@ -368,7 +368,7 @@ Rectangle {
                 }
                 QGCLabel {
                     id:                 cameraSettingsLabel
-                    text:               _noSdCard ? qsTr("Settings") : (_cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"))
+                    text:               _noSdCard ? qsTr("Settings") : (_cameraVideoMode ? qsTr("Video Settings") : qsTr("Photo Settings"))
                     font.family:        ScreenTools.demiboldFontFamily
                     font.pointSize:     ScreenTools.mediumFontPointSize
                     anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
