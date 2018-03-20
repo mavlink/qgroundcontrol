@@ -125,10 +125,10 @@ TerrainTile::TerrainTile(QJsonDocument document)
             _gridSizeLon = row.count();
             qCDebug(TerrainTileLog) << "Received tile has size in longitued direction: " << row.count();
             if (_gridSizeLon > 0) {
-                _data = new float*[_gridSizeLat];
+                _data = new double*[_gridSizeLat];
             }
             for (int k = 0; k < _gridSizeLat; k++) {
-                _data[k] = new float[_gridSizeLon];
+                _data[k] = new double[_gridSizeLon];
             }
         }
         if (row.count() < _gridSizeLon) {
@@ -154,7 +154,7 @@ bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
     return ret;
 }
 
-float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
+double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;

@@ -47,28 +47,28 @@ public:
     * @param coordinate
     * @return elevation
     */
-    float elevation(const QGeoCoordinate& coordinate) const;
+    double elevation(const QGeoCoordinate& coordinate) const;
 
     /**
     * Accessor for the minimum elevation of the tile
     *
     * @return minimum elevation
     */
-    float minElevation(void) const { return _minElevation; }
+    double minElevation(void) const { return _minElevation; }
 
     /**
     * Accessor for the maximum elevation of the tile
     *
     * @return maximum elevation
     */
-    float maxElevation(void) const { return _maxElevation; }
+    double maxElevation(void) const { return _maxElevation; }
 
     /**
     * Accessor for the average elevation of the tile
     *
     * @return average elevation
     */
-    float avgElevation(void) const { return _avgElevation; }
+    double avgElevation(void) const { return _avgElevation; }
 
     /**
     * Accessor for the center coordinate
@@ -84,11 +84,11 @@ private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile
 
-    float               _minElevation;                                  /// Minimum elevation in tile
-    float               _maxElevation;                                  /// Maximum elevation in tile
-    float               _avgElevation;                                  /// Average elevation of the tile
+    double              _minElevation;                                  /// Minimum elevation in tile
+    double              _maxElevation;                                  /// Maximum elevation in tile
+    double              _avgElevation;                                  /// Average elevation of the tile
 
-    float**             _data;                                          /// 2D elevation data array
+    double**            _data;                                          /// 2D elevation data array
     int                 _gridSizeLat;                                   /// data grid size in latitude direction
     int                 _gridSizeLon;                                   /// data grid size in longitude direction
     bool                _isValid;                                       /// data loaded is valid

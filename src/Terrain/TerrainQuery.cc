@@ -229,12 +229,10 @@ TerrainOfflineAirMapQuery::TerrainOfflineAirMapQuery(QObject* parent)
 void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
 {
     if (coordinates.length() == 0) {
-        return false;
+        return;
     }
 
-    _tileBatchManager->addQuery(this, coordinates);
-
-    return false;
+    _terrainTileManager->addCoordinateQuery(this, coordinates);
 }
 
 void TerrainOfflineAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
@@ -249,7 +247,7 @@ void TerrainOfflineAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoo
 
 void TerrainOfflineAirMapQuery::_signalCoordinateHeights(bool success, QList<double> heights)
 {
-    emit coordinateHeights(success, heights)
+    emit coordinateHeights(success, heights);
 }
 
 void TerrainOfflineAirMapQuery::_signalPathHeights(bool success, double latStep, double lonStep, const QList<double>& heights)
@@ -267,10 +265,10 @@ TerrainTileManager::TerrainTileManager(void)
 
 }
 
-void TerrainTileManager::addQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates)
+void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates)
 {
     if (coordinates.length() > 0) {
-        QList<float> altitudes;
+        QList<double> altitudes;
 
         if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
             QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, coordinates, QueryMode::QueryModeCoordinates };
@@ -279,11 +277,11 @@ void TerrainTileManager::addQuery(TerrainOfflineAirMapQuery* terrainQueryInterfa
         }
 
         qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
-        terrainQueryInterface->_signalTerrainData(coordinates.count() == altitudes.count(), altitudes);
+        terrainQueryInterface->_signalCoordinateHeights(coordinates.count() == altitudes.count(), altitudes);
     }
 }
 
-bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<float>& altitudes)
+bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes)
 {
     foreach (const QGeoCoordinate& coordinate, coordinates) {
         QString tileHash = _getTileHash(coordinate);
@@ -322,7 +320,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
 
 void TerrainTileManager::_tileFailed(void)
 {
-    QList<float>    noAltitudes;
+    QList<double>    noAltitudes;
 
     foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
         if (requestInfo.queryMode == QueryMode::QueryModeCoordinates) {
@@ -393,7 +391,7 @@ void TerrainTileManager::_fetchedTile()
 
     // now try to query the data again
     for (int i = _requestQueue.count() - 1; i >= 0; i--) {
-        QList<float> altitudes;
+        QList<double> altitudes;
         if (_getAltitudesForCoordinates(_requestQueue[i].coordinates, altitudes)) {
             if (_requestQueue[i].queryMode == QueryMode::QueryModeCoordinates) {
                 _requestQueue[i].terrainQueryInterface->_signalCoordinateHeights(_requestQueue[i].coordinates.count() == altitudes.count(), altitudes);

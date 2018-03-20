@@ -114,18 +114,12 @@ class TerrainTileManager : public QObject {
 public:
     TerrainTileManager(void);
 
-    void addQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
+    void addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
 
 private slots:
     void _fetchedTile       (void);                             /// slot to handle fetched elevation tiles
 
 private:
-    typedef struct {
-        TerrainOfflineAirMapQuery*  terrainQueryInterface;
-        QList<QGeoCoordinate>       coordinates;
-        QueryMode                   queryMode;
-    } QueuedRequestInfo_t;
-
     enum class State {
         Idle,
         Downloading,
@@ -137,8 +131,14 @@ private:
         QueryModeCarpet
     };
 
+    typedef struct {
+        TerrainOfflineAirMapQuery*  terrainQueryInterface;
+        QList<QGeoCoordinate>       coordinates;
+        QueryMode                   queryMode;
+    } QueuedRequestInfo_t;
+
     void _tileFailed(void);
-    bool _getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<float>& altitudes);
+    bool _getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes);
     QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
 
     QList<QueuedRequestInfo_t>  _requestQueue;
