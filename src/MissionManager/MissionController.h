@@ -63,8 +63,6 @@ public:
         double  cruiseAmpsTotal;        ///< Total cruise amps used
         int     batteryChangePoint;     ///< -1 for not supported, 0 for not needed
         int     batteriesRequired;      ///< -1 for not supported
-
-        _MissionFlightStatus_t(void);
     } MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
