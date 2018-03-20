@@ -36,7 +36,6 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-    int     lastSequenceNumber  (void) const final;
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
 
@@ -56,8 +55,7 @@ public:
 
 private slots:
     void _polylineDirtyChanged      (bool dirty);
-    void _polylineCountChanged      (int count);
-    void _rebuildCorridor           (void);
+    void _rebuildCorridorPolygon    (void);
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
@@ -65,7 +63,6 @@ private slots:
 
 private:
     int _transectCount              (void) const;
-    void _rebuildCorridorPolygon    (void);
     void _buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent);
     void _appendLoadedMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent);
 

@@ -24,7 +24,12 @@ void CorridorScanComplexItemTest::init(void)
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _corridorItem = new CorridorScanComplexItem(_offlineVehicle, this);
-//    _corridorItem->setTurnaroundDist(0);  // Unit test written for no turnaround distance
+
+    // vehicleSpeed need for terrain calcs
+    MissionController::MissionFlightStatus_t missionFlightStatus;
+    missionFlightStatus.vehicleSpeed = 5;
+    _corridorItem->setMissionFlightStatus(missionFlightStatus);
+
     _setPolyline();
     _corridorItem->setDirty(false);
 
@@ -130,10 +135,27 @@ void CorridorScanComplexItemTest::_testEntryLocation(void)
 }
 #endif
 
+void CorridorScanComplexItemTest::_waitForReadyForSave(void)
+{
+    int loops = 0;
+    while (loops++ < 8) {
+        if (_corridorItem->readyForSave()) {
+            return;
+        }
+        QTest::qWait(500);
+    }
+    QVERIFY(false);
+}
+
 void CorridorScanComplexItemTest::_testItemCount(void)
 {
     QList<MissionItem*> items;
 
+    _corridorItem->turnAroundDistance()->setRawValue(0);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(true);
+    _corridorItem->appendMissionItems(items, this);
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
+    items.clear();
 
     _corridorItem->turnAroundDistance()->setRawValue(0);
     _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
@@ -141,7 +163,7 @@ void CorridorScanComplexItemTest::_testItemCount(void)
     QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
     items.clear();
 
-    _corridorItem->turnAroundDistance()->setRawValue(0);
+    _corridorItem->turnAroundDistance()->setRawValue(20);
     _corridorItem->cameraTriggerInTurnAround()->setRawValue(true);
     _corridorItem->appendMissionItems(items, this);
     QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
@@ -153,11 +175,38 @@ void CorridorScanComplexItemTest::_testItemCount(void)
     QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
     items.clear();
 
-    _corridorItem->turnAroundDistance()->setRawValue(20);
+#if 0
+    // Terrain queries seem to take random amount of time so these don't work 100%
+    _corridorItem->setFollowTerrain(true);
+
+    _corridorItem->turnAroundDistance()->setRawValue(0);
     _corridorItem->cameraTriggerInTurnAround()->setRawValue(true);
+    _waitForReadyForSave();
     _corridorItem->appendMissionItems(items, this);
     QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
     items.clear();
+
+    _corridorItem->turnAroundDistance()->setRawValue(0);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _waitForReadyForSave();
+    _corridorItem->appendMissionItems(items, this);
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
+    items.clear();
+
+    _corridorItem->turnAroundDistance()->setRawValue(20);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(true);
+    _waitForReadyForSave();
+    _corridorItem->appendMissionItems(items, this);
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
+    items.clear();
+
+    _corridorItem->turnAroundDistance()->setRawValue(20);
+    _corridorItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _waitForReadyForSave();
+    _corridorItem->appendMissionItems(items, this);
+    QCOMPARE(items.count() - 1, _corridorItem->lastSequenceNumber());
+    items.clear();
+#endif
 }
 
 void CorridorScanComplexItemTest::_testPathChanges(void)

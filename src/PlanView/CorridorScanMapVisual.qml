@@ -119,7 +119,7 @@ Item {
         MapPolyline {
             line.color: "white"
             line.width: 2
-            path:       _missionItem.transectPoints
+            path:       _missionItem.visualTransectPoints
         }
     }
 }
