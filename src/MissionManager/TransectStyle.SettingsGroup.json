@@ -37,7 +37,7 @@
 },
 {
     "name":             "TerrainAdjustTolerance",
-    "shortDescription": "TerrainAdjustTolerance",
+    "shortDescription": "If adjacent terrain waypoints are within this tolerence they will be removed.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
@@ -46,7 +46,7 @@
 },
 {
     "name":             "TerrainAdjustMaxClimbRate",
-    "shortDescription": "TerrainAdjustMaxClimbRate",
+    "shortDescription": "The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
@@ -55,7 +55,7 @@
 },
 {
     "name":             "TerrainAdjustMaxDescentRate",
-    "shortDescription": "TerrainAdjustMaxDescentRate",
+    "shortDescription": "The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
     "type":             "double",
     "decimalPlaces":    2,
     "min":              0,
