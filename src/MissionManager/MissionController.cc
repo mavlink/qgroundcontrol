@@ -277,7 +277,7 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
         return;
     }
 
-    float altitude = missionJson[_jsonPlannedHomePositionKey].toArray()[2].toDouble();
+    float homeAltitude = missionJson[_jsonPlannedHomePositionKey].toArray()[2].toDouble();
 
     QString coord;
     QStringList coords;
@@ -292,11 +292,12 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
                 qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
 
         if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
+            double amslAltitude = item->param7() + (item->frame() == MAV_FRAME_GLOBAL ? 0 : homeAltitude);
             coord = QString::number(item->param6(),'f',7) \
                     + "," \
                     + QString::number(item->param5(),'f',7) \
                     + "," \
-                    + QString::number(item->param7() + altitude,'f',2);
+                    + QString::number(amslAltitude,'f',2);
             coords.append(coord);
         }
     }
