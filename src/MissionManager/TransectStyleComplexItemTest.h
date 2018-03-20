@@ -87,7 +87,6 @@ public:
     TransectStyleItem(Vehicle* vehicle, QObject* parent = NULL);
 
     // Overrides from ComplexMissionItem
-    int     lastSequenceNumber  (void) const final { return _sequenceNumber; }
     QString mapVisualQML        (void) const final { return QString(); }
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final { Q_UNUSED(complexObject); Q_UNUSED(sequenceNumber); Q_UNUSED(errorString); return false; }
 

@@ -2006,3 +2006,11 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
         emit currentPlanViewItemChanged();
     }
 }
+
+MissionController::MissionFlightStatus_t::_MissionFlightStatus_t(void)
+    : cruiseSpeed   (qQNaN())
+    , hoverSpeed    (qQNaN())
+    , vehicleSpeed  (qQNaN())
+{
+
+}
