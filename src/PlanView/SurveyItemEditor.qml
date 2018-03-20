@@ -658,13 +658,13 @@ Rectangle {
             columnSpacing:  ScreenTools.defaultFontPixelWidth
             visible:        statsHeader.checked
 
-            QGCLabel { text: qsTr("Survey area") }
+            QGCLabel { text: qsTr("Survey Area") }
             QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }
 
-            QGCLabel { text: qsTr("Photo count") }
+            QGCLabel { text: qsTr("Photo Count") }
             QGCLabel { text: missionItem.cameraShots }
 
-            QGCLabel { text: qsTr("Photo interval") }
+            QGCLabel { text: qsTr("Photo Interval") }
             QGCLabel {
                 text: {
                     var timeVal = missionItem.timeBetweenShots
@@ -674,6 +674,9 @@ Rectangle {
                     return timeVal.toFixed(1) + " " + qsTr("secs")
                 }
             }
+
+            QGCLabel { text: qsTr("Trigger Distance") }
+            QGCLabel { text: missionItem.cameraTriggerDistance.valueString  + " " + QGroundControl.appSettingsDistanceUnitsString }
         }
     }
 
