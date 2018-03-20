@@ -80,8 +80,8 @@ void TerrainAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, con
 void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQuery)
 {
     QUrl url(QStringLiteral("https://api.airmap.com/elevation/v1/ele") + path);
-    url.setQuery(urlQuery);
     qCDebug(TerrainQueryLog) << "_sendQuery" << url;
+    url.setQuery(urlQuery);
 
     QNetworkRequest request(url);
 
@@ -133,7 +133,7 @@ void TerrainAirMapQuery::_requestFinished(void)
 
     // Send back data
     const QJsonValue& jsonData = rootObject["data"];
-    qCDebug(TerrainQueryLog) << "_requestFinished" << jsonData;
+    qCDebug(TerrainQueryLog) << "_requestFinished sucess";
     switch (_queryMode) {
     case QueryModeCoordinates:
         emit _parseCoordinateData(jsonData);
@@ -227,7 +227,6 @@ TerrainAtCoordinateBatchManager::TerrainAtCoordinateBatchManager(void)
 void TerrainAtCoordinateBatchManager::addQuery(TerrainAtCoordinateQuery* terrainAtCoordinateQuery, const QList<QGeoCoordinate>& coordinates)
 {
     if (coordinates.length() > 0) {
-        qCDebug(TerrainQueryLog) << "addQuery: TerrainAtCoordinateQuery:coordinates.count" << terrainAtCoordinateQuery << coordinates.count();
         connect(terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
         QueuedRequestInfo_t queuedRequestInfo = { terrainAtCoordinateQuery, coordinates };
         _requestQueue.append(queuedRequestInfo);
@@ -255,14 +254,18 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
 
     // Convert coordinates to point strings for json query
     QList<QGeoCoordinate> coords;
+    int requestQueueAdded = 0;
     foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
         SentRequestInfo_t sentRequestInfo = { requestInfo.terrainAtCoordinateQuery, false, requestInfo.coordinates.count() };
-        qCDebug(TerrainQueryLog) << "Building request: coordinate count" << requestInfo.coordinates.count();
         _sentRequests.append(sentRequestInfo);
-
         coords += requestInfo.coordinates;
+        requestQueueAdded++;
+        if (coords.count() > 50) {
+            break;
+        }
     }
-    _requestQueue.clear();
+    qCDebug(TerrainQueryLog) << "Built request: coordinate count" << coords.count();
+    _requestQueue = _requestQueue.mid(requestQueueAdded);
 
     _terrainQuery.requestCoordinateHeights(coords);
     _state = State::Downloading;

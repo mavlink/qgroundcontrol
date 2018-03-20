@@ -38,15 +38,7 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     , _lastLatTerrainQuery      (0)
     , _lastLonTerrainQuery      (0)
 {
-
-    // Don't get terrain altitude information for submarines or boards
-    if (_vehicle->vehicleType() != MAV_TYPE_SUBMARINE && _vehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
-        _updateTerrainTimer.setInterval(500);
-        _updateTerrainTimer.setSingleShot(true);
-        connect(&_updateTerrainTimer, &QTimer::timeout, this, &VisualMissionItem::_reallyUpdateTerrainAltitude);
-
-        connect(this, &VisualMissionItem::coordinateChanged, this, &VisualMissionItem::_updateTerrainAltitude);
-    }
+    _commonInit();
 }
 
 VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* parent)
@@ -63,8 +55,17 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* pa
 {
     *this = other;
 
+    _commonInit();
+}
+
+void VisualMissionItem::_commonInit(void)
+{
     // Don't get terrain altitude information for submarines or boats
     if (_vehicle->vehicleType() != MAV_TYPE_SUBMARINE && _vehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
+        _updateTerrainTimer.setInterval(500);
+        _updateTerrainTimer.setSingleShot(true);
+        connect(&_updateTerrainTimer, &QTimer::timeout, this, &VisualMissionItem::_reallyUpdateTerrainAltitude);
+
         connect(this, &VisualMissionItem::coordinateChanged, this, &VisualMissionItem::_updateTerrainAltitude);
     }
 }

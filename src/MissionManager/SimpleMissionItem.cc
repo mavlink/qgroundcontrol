@@ -125,6 +125,9 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const Miss
     if (editMode) {
         _rebuildFacts();
     }
+
+    // Signal coordinate changed to kick off terrain query
+    emit coordinateChanged(coordinate());
 }
 
 SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* parent)

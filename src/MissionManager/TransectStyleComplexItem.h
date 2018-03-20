@@ -39,7 +39,7 @@ public:
     Q_PROPERTY(double           coveredArea                 READ coveredArea                                        NOTIFY coveredAreaChanged)
     Q_PROPERTY(double           cameraMinTriggerInterval    READ cameraMinTriggerInterval                           NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(bool             hoverAndCaptureAllowed      READ hoverAndCaptureAllowed                             CONSTANT)
-    Q_PROPERTY(QVariantList     transectPoints              READ transectPoints                                     NOTIFY transectPointsChanged)
+    Q_PROPERTY(QVariantList     visualTransectPoints        READ visualTransectPoints                               NOTIFY visualTransectPointsChanged)
 
     Q_PROPERTY(bool             followTerrain               READ followTerrain              WRITE setFollowTerrain  NOTIFY followTerrainChanged)
     Q_PROPERTY(Fact*            terrainAdjustTolerance      READ terrainAdjustTolerance                             CONSTANT)
@@ -48,7 +48,7 @@ public:
 
     QGCMapPolygon*  surveyAreaPolygon   (void) { return &_surveyAreaPolygon; }
     CameraCalc*     cameraCalc          (void) { return &_cameraCalc; }
-    QVariantList    transectPoints      (void) { return _transectPoints; }
+    QVariantList    visualTransectPoints(void) { return _visualTransectPoints; }
 
     Fact* turnAroundDistance            (void) { return &_turnAroundDistanceFact; }
     Fact* cameraTriggerInTurnAround     (void) { return &_cameraTriggerInTurnAroundFact; }
@@ -69,7 +69,7 @@ public:
 
     // Overrides from ComplexMissionItem
 
-    int             lastSequenceNumber  (void) const override = 0;
+    int             lastSequenceNumber  (void) const final;
     QString         mapVisualQML        (void) const override = 0;
     bool            load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) override = 0;
 
@@ -120,19 +120,19 @@ signals:
     void cameraShotsChanged             (void);
     void timeBetweenShotsChanged        (void);
     void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
-    void transectPointsChanged          (void);
+    void visualTransectPointsChanged    (void);
     void coveredAreaChanged             (void);
     void followTerrainChanged           (bool followTerrain);
 
 protected slots:
-    virtual void _rebuildTransectsPhase1    (void) = 0;
-    virtual void _rebuildTransectsPhase2    (void) = 0;
+    virtual void _rebuildTransectsPhase1    (void) = 0; ///< Rebuilds the _transects array
+    virtual void _rebuildTransectsPhase2    (void) = 0; ///< Adjust values associated with _transects array
 
     void _setDirty                          (void);
     void _setIfDirty                        (bool dirty);
     void _updateCoordinateAltitudes         (void);
-    void _signalLastSequenceNumberChanged   (void);
     void _polyPathTerrainData               (bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo);
+    void _rebuildTransects                  (void);
 
 protected:
     void    _save                           (QJsonObject& saveObject);
@@ -142,8 +142,6 @@ protected:
     double  _triggerDistance                (void) const;
     bool    _hasTurnaround                  (void) const;
     double  _turnaroundDistance             (void) const;
-    void    _queryTransectsPathHeightInfo   (void);
-    void    _adjustTransectPointsForTerrain (void);
 
     QString         _settingsGroup;
     int             _sequenceNumber;
@@ -152,10 +150,23 @@ protected:
     QGeoCoordinate  _exitCoordinate;
     QGCMapPolygon   _surveyAreaPolygon;
 
-    QVariantList                                _transectPoints;
-    QList<TerrainPathQuery::PathHeightInfo_t>   _transectsPathHeightInfo;
-    TerrainPolyPathQuery*                       _terrainPolyPathQuery;
-    QTimer                                      _terrainQueryTimer;
+    enum CoordType {
+        CoordTypeInterior,
+        CoordTypeInteriorTerrainAdded,
+        CoordTypeSurveyEdge,
+        CoordTypeTurnaround
+    };
+
+    typedef struct {
+        QGeoCoordinate  coord;
+        CoordType       coordType;
+    } CoordInfo_t;
+
+    QVariantList                                        _visualTransectPoints;
+    QList<QList<CoordInfo_t>>                           _transects;
+    QList<QList<TerrainPathQuery::PathHeightInfo_t>>    _transectsPathHeightInfo;
+    TerrainPolyPathQuery*                               _terrainPolyPathQuery;
+    QTimer                                              _terrainQueryTimer;
 
     bool            _ignoreRecalc;
     double          _complexDistance;
@@ -186,14 +197,16 @@ protected:
     static const char* _jsonFollowTerrainKey;
 
     static const int _terrainQueryTimeoutMsecs;
-    static const double _surveyEdgeIndicator;   ///< Altitude value in _transectPoints which indicates survey entry
 
 private slots:
-    void _rebuildTransects                      (void);
-    void _reallyQueryTransectsPathHeightInfo    (void);
+    void _reallyQueryTransectsPathHeightInfo(void);
 
 private:
-    void    _addInterstitialTransectsForTerrain (void);
-    double  _altitudeBetweenCoords              (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
-    int     _maxPathHeight                      (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
+    void    _queryTransectsPathHeightInfo   (void);
+    void    _adjustTransectsForTerrain      (void);
+    void    _addInterstitialTerrainPoints   (QList<CoordInfo_t>& transect, const QList<TerrainPathQuery::PathHeightInfo_t>& transectPathHeightInfo);
+    void    _adjustForMaxRates              (QList<CoordInfo_t>& transect);
+    void    _adjustForTolerance             (QList<CoordInfo_t>& transect);
+    double  _altitudeBetweenCoords          (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord, double percentTowardsTo);
+    int     _maxPathHeight                  (const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo, int fromIndex, int toIndex, double& maxHeight);
 };
