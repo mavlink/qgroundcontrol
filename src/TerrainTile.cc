@@ -55,9 +55,18 @@ TerrainTile::TerrainTile(QByteArray byteArray)
 {
     QDataStream stream(byteArray);
 
-    stream >> _southWest
-            >> _northEast
-            >> _minElevation
+    double lat,lon;
+    stream >> lat
+            >> lon;
+    _southWest.setLatitude(lat);
+    _southWest.setLongitude(lon);
+    stream >> lat
+            >> lon;
+    _northEast.setLatitude(lat);
+    _northEast.setLongitude(lon);
+
+
+    stream >> _minElevation
             >> _maxElevation
             >> _avgElevation
             >> _gridSizeLat
@@ -175,8 +184,10 @@ QByteArray TerrainTile::serialize(QByteArray input)
         QByteArray emptyArray;
         return emptyArray;
     }
-    stream << QGeoCoordinate(swArray[0].toDouble(), swArray[1].toDouble());
-    stream << QGeoCoordinate(neArray[0].toDouble(), neArray[1].toDouble());
+    stream << swArray[0].toDouble();
+    stream << swArray[1].toDouble();
+    stream << neArray[0].toDouble();
+    stream << neArray[1].toDouble();
 
     // Stats
     const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
