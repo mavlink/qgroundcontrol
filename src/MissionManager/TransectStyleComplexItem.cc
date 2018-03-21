@@ -32,7 +32,7 @@ const char* TransectStyleComplexItem::terrainAdjustMaxDescentRateName =     "Ter
 
 const char* TransectStyleComplexItem::_jsonTransectStyleComplexItemKey =    "TransectStyleComplexItem";
 const char* TransectStyleComplexItem::_jsonCameraCalcKey =                  "CameraCalc";
-const char* TransectStyleComplexItem::_jsonTransectPointsKey =              "TransectPoints";
+const char* TransectStyleComplexItem::_jsonVisualTransectPointsKey =        "VisualTransectPoints";
 const char* TransectStyleComplexItem::_jsonItemsKey =                       "Items";
 const char* TransectStyleComplexItem::_jsonFollowTerrainKey =               "FollowTerrain";
 
@@ -150,7 +150,7 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
 
     // Save transects polyline
     JsonHelper::saveGeoCoordinateArray(_visualTransectPoints, false /* writeAltitude */, transectPointsJson);
-    innerObject[_jsonTransectPointsKey] = transectPointsJson;
+    innerObject[_jsonVisualTransectPointsKey] = transectPointsJson;
 
     // Save the interal mission items
     QJsonArray  missionItemsJsonArray;
@@ -205,7 +205,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
         { hoverAndCaptureName,              QJsonValue::Bool,   true },
         { refly90DegreesName,               QJsonValue::Bool,   true },
         { _jsonCameraCalcKey,               QJsonValue::Object, true },
-        { _jsonTransectPointsKey,           QJsonValue::Array,  true },
+        { _jsonVisualTransectPointsKey,           QJsonValue::Array,  true },
         { _jsonItemsKey,                    QJsonValue::Array,  true },
         { _jsonFollowTerrainKey,            QJsonValue::Bool,   true },
     };
@@ -213,13 +213,12 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
         return false;
     }
 
-#if 0
-    // FIXME
-    // Load transect points
-    if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonTransectPointsKey], false /* altitudeRequired */, _transectPoints, errorString)) {
+    // Load visual transect points
+    if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
         return false;
     }
-#endif
+    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+    _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
 
     // Load generated mission items
     _loadedMissionItemsParent = new QObject(this);
@@ -339,6 +338,10 @@ bool TransectStyleComplexItem::hoverAndCaptureAllowed(void) const
 
 void TransectStyleComplexItem::_rebuildTransects(void)
 {
+    if (_ignoreRecalc) {
+        return;
+    }
+
     _rebuildTransectsPhase1();
 
     _queryTransectsPathHeightInfo();
@@ -351,6 +354,11 @@ void TransectStyleComplexItem::_rebuildTransects(void)
         }
     }
     emit visualTransectPointsChanged();
+
+    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+    _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
+    emit coordinateChanged(_coordinate);
+    emit exitCoordinateChanged(_exitCoordinate);
 
     _rebuildTransectsPhase2();
 
@@ -654,20 +662,26 @@ void TransectStyleComplexItem::setFollowTerrain(bool followTerrain)
 
 int TransectStyleComplexItem::lastSequenceNumber(void) const
 {
-    int itemCount = 0;
-
-    foreach (const QList<CoordInfo_t>& rgCoordInfo, _transects) {
-        itemCount += rgCoordInfo.count();
-    }
-
-    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-        // Only one camera start and on camera stop
-        itemCount += 2;
+    if (_loadedMissionItems.count()) {
+        // We have stored mission items, just use those
+        return _sequenceNumber + _loadedMissionItems.count() - 1;
     } else {
-        // Each transect will have a camera start and stop in it
-        itemCount += _transects.count() * 2;
-    }
+        // We have to determine from transects
+        int itemCount = 0;
 
-    return _sequenceNumber + itemCount - 1;
+        foreach (const QList<CoordInfo_t>& rgCoordInfo, _transects) {
+            itemCount += rgCoordInfo.count();
+        }
+
+        if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+            // Only one camera start and on camera stop
+            itemCount += 2;
+        } else {
+            // Each transect will have a camera start and stop in it
+            itemCount += _transects.count() * 2;
+        }
+
+        return _sequenceNumber + itemCount - 1;
+    }
 }
 
