@@ -101,13 +101,13 @@ private:
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile
 
-    int               _minElevation;                                    /// Minimum elevation in tile
-    int               _maxElevation;                                    /// Maximum elevation in tile
-    double            _avgElevation;                                    /// Average elevation of the tile
+    int16_t             _minElevation;                                  /// Minimum elevation in tile
+    int16_t             _maxElevation;                                  /// Maximum elevation in tile
+    float               _avgElevation;                                  /// Average elevation of the tile
 
-    double**            _data;                                          /// 2D elevation data array
-    int                 _gridSizeLat;                                   /// data grid size in latitude direction
-    int                 _gridSizeLon;                                   /// data grid size in longitude direction
+    int16_t**           _data;                                          /// 2D elevation data array
+    int16_t             _gridSizeLat;                                   /// data grid size in latitude direction
+    int16_t             _gridSizeLon;                                   /// data grid size in longitude direction
     bool                _isValid;                                       /// data loaded is valid
 
     // Json keys

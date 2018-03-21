@@ -398,6 +398,8 @@ void TerrainTileManager::_fetchedTile()
     // parse received data and insert into hash table
     QByteArray responseBytes = reply->mapImageData();
 
+    qWarning() << "Received some bytes of terrain data: " << responseBytes.size();
+
     TerrainTile* terrainTile = new TerrainTile(responseBytes);
     if (terrainTile->isValid()) {
         _tilesMutex.lock();
