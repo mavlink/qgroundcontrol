@@ -77,6 +77,9 @@ public:
     */
     QGeoCoordinate centerCoordinate(void) const;
 
+    /// Approximate spacing of the elevation data measurement points
+    static constexpr double terrainAltitudeSpacing = 30.0;
+
 private:
     inline int _latToDataIndex(double latitude) const;
     inline int _lonToDataIndex(double longitude) const;

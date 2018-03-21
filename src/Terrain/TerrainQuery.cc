@@ -237,12 +237,16 @@ void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordin
 
 void TerrainOfflineAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
 {
-    // TODO
+    _terrainTileManager->addPathQuery(this, fromCoord, toCoord);
 }
 
 void TerrainOfflineAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
 {
     // TODO
+    Q_UNUSED(swCoord);
+    Q_UNUSED(neCoord);
+    Q_UNUSED(statsOnly);
+    qWarning() << "Carpet queries are currently not supported from offline air map data";
 }
 
 void TerrainOfflineAirMapQuery::_signalCoordinateHeights(bool success, QList<double> heights)
@@ -252,12 +256,12 @@ void TerrainOfflineAirMapQuery::_signalCoordinateHeights(bool success, QList<dou
 
 void TerrainOfflineAirMapQuery::_signalPathHeights(bool success, double latStep, double lonStep, const QList<double>& heights)
 {
-    // TODO
+    emit pathHeights(success, latStep, lonStep, heights);
 }
 
 void TerrainOfflineAirMapQuery::_signalCarpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet)
 {
-    // TODO
+    emit carpetHeights(success, minHeight, maxHeight, carpet);
 }
 
 TerrainTileManager::TerrainTileManager(void)
@@ -271,7 +275,7 @@ void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQu
         QList<double> altitudes;
 
         if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
-            QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, coordinates, QueryMode::QueryModeCoordinates };
+            QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModeCoordinates, coordinates };
             _requestQueue.append(queuedRequestInfo);
             return;
         }
@@ -279,6 +283,35 @@ void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQu
         qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
         terrainQueryInterface->_signalCoordinateHeights(coordinates.count() == altitudes.count(), altitudes);
     }
+}
+
+void TerrainTileManager::addPathQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate &startPoint, const QGeoCoordinate &endPoint)
+{
+    QList<QGeoCoordinate> coordinates;
+    double lat = startPoint.latitude();
+    double lon = startPoint.longitude();
+    double latDiff = endPoint.latitude() - lat;
+    double lonDiff = endPoint.longitude() - lon;
+    double steps = ceil(endPoint.distanceTo(startPoint) / TerrainTile::terrainAltitudeSpacing);
+    for (double i = 0.0; i <= steps; i = i + 1) {
+        coordinates.append(QGeoCoordinate(lat + latDiff * i / steps, lon + lonDiff * i / steps));
+    }
+
+    QList<double> altitudes;
+    if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
+        QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModePath, coordinates };
+        _requestQueue.append(queuedRequestInfo);
+        return;
+    }
+
+    qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
+    double stepLat = 0;
+    double stepLon = 0;
+    if (coordinates.count() > 1) {
+        stepLat = coordinates[1].latitude() - coordinates[0].latitude();
+        stepLon = coordinates[1].longitude() - coordinates[0].longitude();
+    }
+    terrainQueryInterface->_signalPathHeights(coordinates.count() == altitudes.count(), stepLat, stepLon, altitudes);
 }
 
 bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes)
@@ -457,8 +490,8 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
     }
     _requestQueue.clear();
 
-    _terrainQuery.requestCoordinateHeights(coords);
     _state = State::Downloading;
+    _terrainQuery.requestCoordinateHeights(coords);
 }
 
 void TerrainAtCoordinateBatchManager::_batchFailed(void)
