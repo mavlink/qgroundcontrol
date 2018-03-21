@@ -55,31 +55,38 @@ TerrainTile::TerrainTile(QByteArray byteArray)
 {
     QDataStream stream(byteArray);
 
-    double lat,lon;
+    float lat,lon;
     stream >> lat
-            >> lon;
+           >> lon;
     _southWest.setLatitude(lat);
     _southWest.setLongitude(lon);
     stream >> lat
-            >> lon;
+           >> lon;
     _northEast.setLatitude(lat);
     _northEast.setLongitude(lon);
 
 
     stream >> _minElevation
-            >> _maxElevation
-            >> _avgElevation
-            >> _gridSizeLat
-            >> _gridSizeLon;
+           >> _maxElevation
+           >> _avgElevation
+           >> _gridSizeLat
+           >> _gridSizeLon;
+
+    qCDebug(TerrainTileLog) << "Loading terrain tile: " << _southWest << " - " << _northEast;
+    qCDebug(TerrainTileLog) << "min:max:avg:sizeLat:sizeLon" << _minElevation << _maxElevation << _avgElevation << _gridSizeLat << _gridSizeLon;
 
     for (int i = 0; i < _gridSizeLat; i++) {
         if (i == 0) {
-            _data = new double*[_gridSizeLat];
+            _data = new int16_t*[_gridSizeLat];
             for (int k = 0; k < _gridSizeLat; k++) {
-                _data[k] = new double[_gridSizeLon];
+                _data[k] = new int16_t[_gridSizeLon];
             }
         }
         for (int j = 0; j < _gridSizeLon; j++) {
+            if (stream.atEnd()) {
+                qWarning() << "Terrain tile binary data does not contain all data";
+                return;
+            }
             stream >> _data[i][j];
         }
     }
@@ -108,7 +115,7 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         int indexLat = _latToDataIndex(coordinate.latitude());
         int indexLon = _lonToDataIndex(coordinate.longitude());
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
-        return _data[indexLat][indexLon];
+        return static_cast<double>(_data[indexLat][indexLon]);
     } else {
         qCDebug(TerrainTileLog) << "Asking for elevation, but no valid data.";
         return -1.0;
@@ -141,7 +148,7 @@ QByteArray TerrainTile::serialize(QByteArray input)
     QString errorString;
     QList<JsonHelper::KeyValidateInfo> rootVersionKeyInfoList = {
         { _jsonStatusKey, QJsonValue::String, true },
-        { _jsonDataKey, QJsonValue::Object, true },
+        { _jsonDataKey,   QJsonValue::Object, true },
     };
     if (!JsonHelper::validateKeys(rootObject, rootVersionKeyInfoList, errorString)) {
         qCDebug(TerrainTileLog) << "Error in reading json: " << errorString;
@@ -157,7 +164,7 @@ QByteArray TerrainTile::serialize(QByteArray input)
     const QJsonObject& dataObject = rootObject[_jsonDataKey].toObject();
     QList<JsonHelper::KeyValidateInfo> dataVersionKeyInfoList = {
         { _jsonBoundsKey, QJsonValue::Object, true },
-        { _jsonStatsKey, QJsonValue::Object, true },
+        { _jsonStatsKey,  QJsonValue::Object, true },
         { _jsonCarpetKey, QJsonValue::Array, true },
     };
     if (!JsonHelper::validateKeys(dataObject, dataVersionKeyInfoList, errorString)) {
@@ -184,16 +191,16 @@ QByteArray TerrainTile::serialize(QByteArray input)
         QByteArray emptyArray;
         return emptyArray;
     }
-    stream << swArray[0].toDouble();
-    stream << swArray[1].toDouble();
-    stream << neArray[0].toDouble();
-    stream << neArray[1].toDouble();
+    stream << static_cast<float>(swArray[0].toDouble());
+    stream << static_cast<float>(swArray[1].toDouble());
+    stream << static_cast<float>(neArray[0].toDouble());
+    stream << static_cast<float>(neArray[1].toDouble());
 
     // Stats
     const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
     QList<JsonHelper::KeyValidateInfo> statsVersionKeyInfoList = {
-        { _jsonMaxElevationKey, QJsonValue::Double, true },
         { _jsonMinElevationKey, QJsonValue::Double, true },
+        { _jsonMaxElevationKey, QJsonValue::Double, true },
         { _jsonAvgElevationKey, QJsonValue::Double, true },
     };
     if (!JsonHelper::validateKeys(statsObject, statsVersionKeyInfoList, errorString)) {
@@ -201,21 +208,21 @@ QByteArray TerrainTile::serialize(QByteArray input)
         QByteArray emptyArray;
         return emptyArray;
     }
-    stream << statsObject[_jsonMaxElevationKey].toInt();
-    stream << statsObject[_jsonMinElevationKey].toInt();
-    stream << statsObject[_jsonAvgElevationKey].toDouble();
+    stream << static_cast<int16_t>(statsObject[_jsonMinElevationKey].toInt());
+    stream << static_cast<int16_t>(statsObject[_jsonMaxElevationKey].toInt());
+    stream << static_cast<float>(statsObject[_jsonAvgElevationKey].toDouble());
 
     // Carpet
     const QJsonArray& carpetArray = dataObject[_jsonCarpetKey].toArray();
     int gridSizeLat = carpetArray.count();
-    stream << gridSizeLat;
+    stream << static_cast<int16_t>(gridSizeLat);
     int gridSizeLon = 0;
     qCDebug(TerrainTileLog) << "Received tile has size in latitude direction: " << carpetArray.count();
     for (int i = 0; i < gridSizeLat; i++) {
         const QJsonArray& row = carpetArray[i].toArray();
         if (i == 0) {
             gridSizeLon = row.count();
-            stream << gridSizeLon;
+            stream << static_cast<int16_t>(gridSizeLon);
             qCDebug(TerrainTileLog) << "Received tile has size in longitued direction: " << row.count();
         }
         if (row.count() < gridSizeLon) {
@@ -224,7 +231,7 @@ QByteArray TerrainTile::serialize(QByteArray input)
             return emptyArray;
         }
         for (int j = 0; j < gridSizeLon; j++) {
-            stream << row[j].toDouble();
+            stream << static_cast<int16_t>(row[j].toDouble());
         }
     }
 

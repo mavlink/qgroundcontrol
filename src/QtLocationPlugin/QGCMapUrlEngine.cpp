@@ -36,7 +36,6 @@
 static const unsigned char pngSignature[]   = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
 static const unsigned char jpegSignature[]  = {0xFF, 0xD8, 0xFF, 0x00};
 static const unsigned char gifSignature[]   = {0x47, 0x49, 0x46, 0x38, 0x00};
-static const unsigned char jsonSignature[]  = {0x7B, 0x22, 0x00}; // two characters '{"'
 
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()
@@ -86,8 +85,6 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
             format = "jpg";
         else if (image.startsWith(reinterpret_cast<const char*>(gifSignature)))
             format = "gif";
-        else if (image.startsWith(reinterpret_cast<const char*>(jsonSignature)))
-            format = "json";
         else {
             switch (type) {
                 case GoogleMap:
@@ -126,7 +123,7 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                     format = "jpg";
                     break;
                 case AirmapElevation:
-                    format = "json";
+                    format = "bin";
                     break;
                 default:
                     qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
@@ -563,7 +560,7 @@ UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
 #define AVERAGE_MAPBOX_SAT_MAP      15739
 #define AVERAGE_MAPBOX_STREET_MAP   5648
 #define AVERAGE_TILE_SIZE           13652
-#define AVERAGE_AIRMAP_ELEV_SIZE    5360
+#define AVERAGE_AIRMAP_ELEV_SIZE    2786
 
 //-----------------------------------------------------------------------------
 quint32

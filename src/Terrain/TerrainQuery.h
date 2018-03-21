@@ -87,7 +87,7 @@ private:
     bool                    _carpetStatsOnly;
 };
 
-/// AirMap online implementation of terrain queries
+/// AirMap offline cachable implementation of terrain queries
 class TerrainOfflineAirMapQuery : public TerrainQueryInterface {
     Q_OBJECT
 
@@ -99,12 +99,10 @@ public:
     void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
     void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
 
-    // Internal method
+    // Internal methods
     void _signalCoordinateHeights(bool success, QList<double> heights);
     void _signalPathHeights(bool success, double latStep, double lonStep, const QList<double>& heights);
     void _signalCarpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
-
-    bool                    _carpetStatsOnly;
 };
 
 /// Used internally by TerrainOfflineAirMapQuery to manage terrain tiles
