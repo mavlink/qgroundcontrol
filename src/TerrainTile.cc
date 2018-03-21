@@ -100,7 +100,7 @@ bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
     return ret;
 }
 
-float TerrainTile::elevation(const QGeoCoordinate& coordinate) const
+double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;

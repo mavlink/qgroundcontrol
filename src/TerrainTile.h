@@ -54,28 +54,28 @@ public:
     * @param coordinate
     * @return elevation
     */
-    float elevation(const QGeoCoordinate& coordinate) const;
+    double elevation(const QGeoCoordinate& coordinate) const;
 
     /**
     * Accessor for the minimum elevation of the tile
     *
     * @return minimum elevation
     */
-    float minElevation(void) const { return _minElevation; }
+    double minElevation(void) const { return _minElevation; }
 
     /**
     * Accessor for the maximum elevation of the tile
     *
     * @return maximum elevation
     */
-    float maxElevation(void) const { return _maxElevation; }
+    double maxElevation(void) const { return _maxElevation; }
 
     /**
     * Accessor for the average elevation of the tile
     *
     * @return average elevation
     */
-    float avgElevation(void) const { return _avgElevation; }
+    double avgElevation(void) const { return _avgElevation; }
 
     /**
     * Accessor for the center coordinate
@@ -90,6 +90,9 @@ public:
     * @return serialized data
     */
     static QByteArray serialize(QByteArray input);
+
+    /// Approximate spacing of the elevation data measurement points
+    static constexpr double terrainAltitudeSpacing = 30.0;
 
 private:
     inline int _latToDataIndex(double latitude) const;
