@@ -11,7 +11,6 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
-#include <QElapsedTimer>
 
 #include "FactGroup.h"
 #include "LinkInterface.h"
