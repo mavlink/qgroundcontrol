@@ -416,6 +416,11 @@ void PlanMasterController::removeAll(void)
     _missionController.removeAll();
     _geoFenceController.removeAll();
     _rallyPointController.removeAll();
+    if (_offline) {
+        _missionController.setDirty(false);
+        _geoFenceController.setDirty(false);
+        _rallyPointController.setDirty(false);
+    }
 }
 
 void PlanMasterController::removeAllFromVehicle(void)
