@@ -500,7 +500,7 @@ int TransectStyleComplexItem::_maxPathHeight(const TerrainPathQuery::PathHeightI
 void TransectStyleComplexItem::_adjustForMaxRates(QList<CoordInfo_t>& transect)
 {
     double maxClimbRate = _terrainAdjustMaxClimbRateFact.rawValue().toDouble();
-    double maxDescentRate = -_terrainAdjustMaxDescentRateFact.rawValue().toDouble();
+    double maxDescentRate = _terrainAdjustMaxDescentRateFact.rawValue().toDouble();
     double flightSpeed = _missionFlightStatus.vehicleSpeed;
 
     if (qIsNaN(flightSpeed) || (maxClimbRate == 0 && maxDescentRate == 0)) {
@@ -510,55 +510,60 @@ void TransectStyleComplexItem::_adjustForMaxRates(QList<CoordInfo_t>& transect)
         return;
     }
 
-    // Adjust climb rates
-    bool climbRateAdjusted;
-    do {
-        //qDebug() << "climbrate pass";
-        climbRateAdjusted = false;
-        for (int i=0; i<transect.count() - 1; i++) {
-            QGeoCoordinate& fromCoord = transect[i].coord;
-            QGeoCoordinate& toCoord = transect[i+1].coord;
+    if (maxClimbRate > 0) {
+        // Adjust climb rates
+        bool climbRateAdjusted;
+        do {
+            //qDebug() << "climbrate pass";
+            climbRateAdjusted = false;
+            for (int i=0; i<transect.count() - 1; i++) {
+                QGeoCoordinate& fromCoord = transect[i].coord;
+                QGeoCoordinate& toCoord = transect[i+1].coord;
 
-            double altDifference = toCoord.altitude() - fromCoord.altitude();
-            double distance = fromCoord.distanceTo(toCoord);
-            double seconds = distance / flightSpeed;
-            double climbRate = altDifference / seconds;
+                double altDifference = toCoord.altitude() - fromCoord.altitude();
+                double distance = fromCoord.distanceTo(toCoord);
+                double seconds = distance / flightSpeed;
+                double climbRate = altDifference / seconds;
 
-            //qDebug() << QString("Index:%1 altDifference:%2 distance:%3 seconds:%4 climbRate:%5").arg(i).arg(altDifference).arg(distance).arg(seconds).arg(climbRate);
+                //qDebug() << QString("Index:%1 altDifference:%2 distance:%3 seconds:%4 climbRate:%5").arg(i).arg(altDifference).arg(distance).arg(seconds).arg(climbRate);
 
-            if (climbRate > 0 && climbRate - maxClimbRate > 0.1) {
-                double maxAltitudeDelta = maxClimbRate * seconds;
-                fromCoord.setAltitude(toCoord.altitude() - maxAltitudeDelta);
-                //qDebug() << "Adjusting";
-                climbRateAdjusted = true;
+                if (climbRate > 0 && climbRate - maxClimbRate > 0.1) {
+                    double maxAltitudeDelta = maxClimbRate * seconds;
+                    fromCoord.setAltitude(toCoord.altitude() - maxAltitudeDelta);
+                    //qDebug() << "Adjusting";
+                    climbRateAdjusted = true;
+                }
             }
-        }
-    } while (climbRateAdjusted);
+        } while (climbRateAdjusted);
+    }
 
-    // Adjust descent rates
-    bool descentRateAdjusted;
-    do {
-        //qDebug() << "descent rate pass";
-        descentRateAdjusted = false;
-        for (int i=1; i<transect.count(); i++) {
-            QGeoCoordinate& fromCoord = transect[i-1].coord;
-            QGeoCoordinate& toCoord = transect[i].coord;
+    if (maxDescentRate > 0) {
+        // Adjust descent rates
+        bool descentRateAdjusted;
+        maxDescentRate = -maxDescentRate;
+        do {
+            //qDebug() << "descent rate pass";
+            descentRateAdjusted = false;
+            for (int i=1; i<transect.count(); i++) {
+                QGeoCoordinate& fromCoord = transect[i-1].coord;
+                QGeoCoordinate& toCoord = transect[i].coord;
 
-            double altDifference = toCoord.altitude() - fromCoord.altitude();
-            double distance = fromCoord.distanceTo(toCoord);
-            double seconds = distance / flightSpeed;
-            double descentRate = altDifference / seconds;
+                double altDifference = toCoord.altitude() - fromCoord.altitude();
+                double distance = fromCoord.distanceTo(toCoord);
+                double seconds = distance / flightSpeed;
+                double descentRate = altDifference / seconds;
 
-            //qDebug() << QString("Index:%1 altDifference:%2 distance:%3 seconds:%4 descentRate:%5").arg(i).arg(altDifference).arg(distance).arg(seconds).arg(descentRate);
+                //qDebug() << QString("Index:%1 altDifference:%2 distance:%3 seconds:%4 descentRate:%5").arg(i).arg(altDifference).arg(distance).arg(seconds).arg(descentRate);
 
-            if (descentRate < 0 && descentRate - maxDescentRate < -0.1) {
-                double maxAltitudeDelta = maxDescentRate * seconds;
-                toCoord.setAltitude(fromCoord.altitude() + maxAltitudeDelta);
-                //qDebug() << "Adjusting";
-                descentRateAdjusted = true;
+                if (descentRate < 0 && descentRate - maxDescentRate < -0.1) {
+                    double maxAltitudeDelta = maxDescentRate * seconds;
+                    toCoord.setAltitude(fromCoord.altitude() + maxAltitudeDelta);
+                    //qDebug() << "Adjusting";
+                    descentRateAdjusted = true;
+                }
             }
-        }
-    } while (descentRateAdjusted);
+        } while (descentRateAdjusted);
+    }
 }
 
 void TransectStyleComplexItem::_adjustForTolerance(QList<CoordInfo_t>& transect)
