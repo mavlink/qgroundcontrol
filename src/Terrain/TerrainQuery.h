@@ -114,7 +114,8 @@ class TerrainTileManager : public QObject {
 public:
     TerrainTileManager(void);
 
-    void addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
+    void addCoordinateQuery (TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
+    void addPathQuery       (TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate& startPoint, const QGeoCoordinate& endPoint);
 
 private slots:
     void _fetchedTile       (void);                             /// slot to handle fetched elevation tiles
@@ -133,8 +134,8 @@ private:
 
     typedef struct {
         TerrainOfflineAirMapQuery*  terrainQueryInterface;
-        QList<QGeoCoordinate>       coordinates;
         QueryMode                   queryMode;
+        QList<QGeoCoordinate>       coordinates;
     } QueuedRequestInfo_t;
 
     void _tileFailed(void);
