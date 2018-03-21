@@ -69,8 +69,7 @@ private:
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
 
-    bool            _ignoreRecalc;
-    int             _entryPoint;
+    int                             _entryPoint;
 
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;

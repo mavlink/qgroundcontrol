@@ -134,7 +134,7 @@ Rectangle {
         SectionHeader {
             id:         terrainHeader
             text:       qsTr("Terrain")
-            checked:    false
+            checked:    missionItem.followTerrain
         }
 
         ColumnLayout {
