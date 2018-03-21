@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.13 - Mar 21 2018
+
+*   Show trigger distance in Survey/Structure Scan stats
+
 ### V1.3.12 - Mar 19 2018
 
 *   Make certain update dialog is not shown when vehicle is armed.

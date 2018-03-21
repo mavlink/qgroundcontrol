@@ -105,8 +105,8 @@ private:
     void _showPlanFromManagerVehicle(void);
 
     MultiVehicleManager*    _multiVehicleMgr;
-    Vehicle*                _controllerVehicle;
-    Vehicle*                _managerVehicle;
+    Vehicle*                _controllerVehicle; ///< Offline controller vehicle
+    Vehicle*                _managerVehicle;    ///< Either active vehicle or _controllerVehicle if none
     bool                    _editMode;
     bool                    _offline;
     MissionController       _missionController;
