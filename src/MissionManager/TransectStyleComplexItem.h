@@ -192,7 +192,7 @@ protected:
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonTransectStyleComplexItemKey;
-    static const char* _jsonTransectPointsKey;
+    static const char* _jsonVisualTransectPointsKey;
     static const char* _jsonItemsKey;
     static const char* _jsonFollowTerrainKey;
 
