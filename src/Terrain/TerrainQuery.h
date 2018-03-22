@@ -188,7 +188,7 @@ private:
     State                       _state = State::Idle;
     const int                   _batchTimeout = 500;
     QTimer                      _batchTimer;
-    TerrainAirMapQuery          _terrainQuery;
+    TerrainOfflineAirMapQuery   _terrainQuery;
 };
 
 /// NOTE: TerrainAtCoordinateQuery is not thread safe. All instances/calls to ElevationProvider must be on main thread.
@@ -236,7 +236,7 @@ private slots:
     void _pathHeights(bool success, double latStep, double lonStep, const QList<double>& heights);
 
 private:
-    TerrainAirMapQuery _terrainQuery;
+    TerrainOfflineAirMapQuery _terrainQuery;
 };
 
 Q_DECLARE_METATYPE(TerrainPathQuery::PathHeightInfo_t)
