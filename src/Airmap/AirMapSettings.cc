@@ -21,8 +21,6 @@ DECLARE_SETTINGGROUP(AirMap)
     INIT_SETTINGFACT(password);
     INIT_SETTINGFACT(enableAirMap);
     INIT_SETTINGFACT(enableTelemetry);
-    INIT_SETTINGFACT(loginEmail);
-    INIT_SETTINGFACT(loginPassword);
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AirMapSettings>("QGroundControl.SettingsManager", 1, 0, "AirMapSettings", "Reference only");
 }
@@ -33,5 +31,3 @@ DECLARE_SETTINGSFACT(AirMapSettings, userName)
 DECLARE_SETTINGSFACT(AirMapSettings, password)
 DECLARE_SETTINGSFACT(AirMapSettings, enableAirMap)
 DECLARE_SETTINGSFACT(AirMapSettings, enableTelemetry)
-DECLARE_SETTINGSFACT(AirMapSettings, loginEmail)
-DECLARE_SETTINGSFACT(AirMapSettings, loginPassword)

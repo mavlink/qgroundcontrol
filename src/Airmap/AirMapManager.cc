@@ -27,6 +27,11 @@
 
 #include <airmap/authenticator.h>
 
+//-- Hardwired API key
+#if defined(QGC_AIRMAP_KEY_AVAILABLE)
+#include "Airmap_api_key.h"
+#endif
+
 using namespace airmap;
 
 QGC_LOGGING_CATEGORY(AirMapManagerLog, "AirMapManagerLog")
@@ -81,10 +86,21 @@ AirMapManager::_settingsChanged()
     AirMapSettings* ap = _toolbox->settingsManager()->airMapSettings();
     AirMapSharedState::Settings settings;
     settings.apiKey = ap->apiKey()->rawValueString();
+#if defined(QGC_AIRMAP_KEY_AVAILABLE)
+    bool apiKeyChanged = settings.apiKey != _shared.settings().apiKey || settings.apiKey.isEmpty();
+#else
     bool apiKeyChanged = settings.apiKey != _shared.settings().apiKey;
+#endif
     settings.clientID = ap->clientID()->rawValueString();
     settings.userName = ap->userName()->rawValueString();
     settings.password = ap->password()->rawValueString();
+    //-- If we have a hardwired key (and no custom key), set it.
+#if defined(QGC_AIRMAP_KEY_AVAILABLE)
+    if(settings.apiKey.isEmpty() || settings.clientID.isEmpty()) {
+        settings.apiKey     = kAirmapAPIKey;
+        settings.clientID   = kAirmapClientID;
+    }
+#endif
     _shared.setSettings(settings);
     //-- Need to re-create the client if the API key changed
     if (_shared.client() && apiKeyChanged) {
