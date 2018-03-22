@@ -130,6 +130,11 @@ public:
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
     virtual int  lastSequenceNumber (void) const = 0;
 
+    /// Specifies whether the item has all the data it needs such that it can be saved. Currently the only
+    /// case where this returns false is if it has not determined terrain values yet.
+    /// @return true: Ready to save, false: Still waiting on information
+    virtual bool readyForSave(void) const { return true; }
+
     /// Save the item(s) in Json format
     ///     @param missionItems Current set of mission items, new items should be appended to the end
     virtual void save(QJsonArray&  missionItems) = 0;
@@ -206,9 +211,11 @@ protected:
 private slots:
     void _updateTerrainAltitude (void);
     void _reallyUpdateTerrainAltitude (void);
-    void _terrainDataReceived   (bool success, QList<float> altitudes);
+    void _terrainDataReceived   (bool success, QList<double> heights);
 
 private:
+    void _commonInit(void);
+
     QTimer _updateTerrainTimer;
     double _lastLatTerrainQuery;
     double _lastLonTerrainQuery;

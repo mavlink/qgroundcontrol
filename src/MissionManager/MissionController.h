@@ -42,7 +42,7 @@ public:
     MissionController(PlanMasterController* masterController, QObject* parent = NULL);
     ~MissionController();
 
-    typedef struct {
+    typedef struct _MissionFlightStatus_t {
         double  maxTelemetryDistance;
         double  totalDistance;
         double  totalTime;
@@ -119,6 +119,10 @@ public:
     /// Sets a new current mission item (PlanView).
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     Q_INVOKABLE void setCurrentPlanViewIndex(int sequenceNumber, bool force);
+
+    /// Determines if the mission has all data needed to be saved or sent to the vehicle. Currently the only case where this
+    /// would return false is when it is still waiting on terrain data to determine correct altitudes.
+    bool readyForSaveSend(void) const;
 
     /// Sends the mission items to the specified vehicle
     static void sendItemsToVehicle(Vehicle* vehicle, QmlObjectListModel* visualMissionItems);
@@ -226,7 +230,7 @@ private:
     void _setupActiveVehicle(Vehicle* activeVehicle, bool forceLoadFromVehicle);
     void _calcPrevWaypointValues(double homeAlt, VisualMissionItem* currentItem, VisualMissionItem* prevItem, double* azimuth, double* distance, double* altDifference);
     static double _calcDistanceToHome(VisualMissionItem* currentItem, VisualMissionItem* homeItem);
-    bool _findPreviousAltitude(int newIndex, double* prevAltitude, MAV_FRAME* prevFrame);
+    bool _findPreviousAltitude(int newIndex, double* prevAltitude, int* prevAltitudeMode);
     static double _normalizeLat(double lat);
     static double _normalizeLon(double lon);
     void _addMissionSettings(QmlObjectListModel* visualItems, bool addToCenter);

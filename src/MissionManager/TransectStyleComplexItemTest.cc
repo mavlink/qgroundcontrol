@@ -31,7 +31,7 @@ void TransectStyleComplexItemTest::init(void)
     _rgSignals[cameraShotsChangedIndex] =               SIGNAL(cameraShotsChanged());
     _rgSignals[timeBetweenShotsChangedIndex] =          SIGNAL(timeBetweenShotsChanged());
     _rgSignals[cameraMinTriggerIntervalChangedIndex] =  SIGNAL(cameraMinTriggerIntervalChanged(double));
-    _rgSignals[transectPointsChangedIndex] =            SIGNAL(transectPointsChanged());
+    _rgSignals[visualTransectPointsChangedIndex] =      SIGNAL(visualTransectPointsChanged());
     _rgSignals[coveredAreaChangedIndex] =               SIGNAL(coveredAreaChanged());
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
     _rgSignals[complexDistanceChangedIndex] =           SIGNAL(complexDistanceChanged());
@@ -174,7 +174,12 @@ TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
 
 }
 
-void TransectStyleItem::_rebuildTransects(void)
+void TransectStyleItem::_rebuildTransectsPhase1(void)
 {
     rebuildTransectsCalled = true;
+}
+
+void TransectStyleItem::_rebuildTransectsPhase2(void)
+{
+
 }

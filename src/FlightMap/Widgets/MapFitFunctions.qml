@@ -90,10 +90,6 @@ Item {
     }
 
     function addMissionItemCoordsForFit(coordList) {
-        var homePosition = fitHomePosition()
-        if (homePosition.isValid) {
-            coordList.push(homePosition)
-        }
         for (var i=1; i<_missionController.visualItems.count; i++) {
             var missionItem = _missionController.visualItems.get(i)
             if (missionItem.specifiesCoordinate && !missionItem.isStandaloneCoordinate) {

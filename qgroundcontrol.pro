@@ -346,6 +346,7 @@ INCLUDEPATH += \
     src/QtLocationPlugin \
     src/QtLocationPlugin/QMLControl \
     src/Settings \
+    src/Terrain \
     src/VehicleSetup \
     src/ViewWidgets \
     src/Audio \
@@ -587,7 +588,7 @@ HEADERS += \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
-    src/Terrain.h \
+    src/Terrain/TerrainQuery.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
@@ -781,7 +782,7 @@ SOURCES += \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
-    src/Terrain.cc \
+    src/Terrain/TerrainQuery.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \

@@ -181,24 +181,7 @@ VideoEnabled {
 } else {
     LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
         message("Skipping support for video streaming (GStreamer libraries not installed)")
-        MacBuild {
-            message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/osx/")
-            message("  Select the devel package and install it (gstreamer-1.0-devel-1.x.x-x86_64.pkg)")
-            message("  It will be installed in /Libraries/Frameworks")
-        }
-        LinuxBuild {
-            message("  You can install it using apt-get")
-            message("  sudo apt-get install gstreamer1.0*")
-        }
-        WindowsBuild {
-            message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/windows/")
-            message("  Select the devel AND runtime packages and install them (x86, not the 64-Bit)")
-            message("  It will be installed in C:/gstreamer. You need to update you PATH to point to the bin directory.")
-        }
-        AndroidBuild {
-            message("  You can download it from http://gstreamer.freedesktop.org/data/pkg/android/")
-            message("  Uncompress the archive into the qgc root source directory (same directory where qgroundcontrol.pro is found.")
-        }
+        message("Installation instructions here: https://github.com/mavlink/qgroundcontrol/blob/master/src/VideoStreaming/README.md")
     } else {
         message("Skipping support for video streaming (Unsupported platform)")
     }

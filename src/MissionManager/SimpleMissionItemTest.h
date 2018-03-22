@@ -31,11 +31,12 @@ private slots:
     void _testSpeedSectionDirty(void);
     void _testCameraSection(void);
     void _testSpeedSection(void);
+    void _testAltitudePropogation(void);
 
 private:
     enum {
         commandChangedIndex = 0,
-        frameChangedIndex,
+        altitudeModeChangedIndex,
         friendlyEditAllowedChangedIndex,
         headingDegreesChangedIndex,
         rawEditChangedIndex,
@@ -47,7 +48,7 @@ private:
 
     enum {
         commandChangedMask =                        1 << commandChangedIndex,
-        frameChangedMask =                          1 << frameChangedIndex,
+        altitudeModeChangedMask =                  1 << altitudeModeChangedIndex,
         friendlyEditAllowedChangedMask =            1 << friendlyEditAllowedChangedIndex,
         headingDegreesChangedMask =                 1 << headingDegreesChangedIndex,
         rawEditChangedMask =                        1 << rawEditChangedIndex,
@@ -70,9 +71,10 @@ private:
     } FactValue_t;
     
     typedef struct {
-        size_t              cFactValues;
-        const FactValue_t*  rgFactValues;
-        bool                relativeAltCheckbox;
+        size_t                          cFactValues;
+        const FactValue_t*              rgFactValues;
+        double                          altValue;
+        SimpleMissionItem::AltitudeMode altMode;
     } ItemExpected_t;
 
     SimpleMissionItem*  _simpleItem;
