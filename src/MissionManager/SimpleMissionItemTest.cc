@@ -15,43 +15,37 @@
 
 const SimpleMissionItemTest::ItemInfo_t SimpleMissionItemTest::_rgItemInfo[] = {
     { MAV_CMD_NAV_WAYPOINT,     MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_LOITER_UNLIM, MAV_FRAME_GLOBAL },
     { MAV_CMD_NAV_LOITER_TURNS, MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { MAV_CMD_NAV_LOITER_TIME,  MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_LOITER_TIME,  MAV_FRAME_GLOBAL },
     { MAV_CMD_NAV_LAND,         MAV_FRAME_GLOBAL_RELATIVE_ALT },
-    { MAV_CMD_NAV_TAKEOFF,      MAV_FRAME_GLOBAL_RELATIVE_ALT },
+    { MAV_CMD_NAV_TAKEOFF,      MAV_FRAME_GLOBAL },
     { MAV_CMD_DO_JUMP,          MAV_FRAME_MISSION },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesWaypoint[] = {
-    { "Altitude",   70.1234567 },
     { "Hold",       10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterUnlim[] = {
-    { "Altitude",   70.1234567 },
     { "Radius",     30.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterTurns[] = {
-    { "Altitude",   70.1234567 },
     { "Radius",     30.1234567 },
     { "Turns",      10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLoiterTime[] = {
-    { "Altitude",   70.1234567 },
     { "Radius",     30.1234567 },
     { "Hold",       10.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesLand[] = {
-    { "Altitude",   70.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesTakeoff[] = {
     { "Pitch",      10.1234567 },
-    { "Altitude",   70.1234567 },
 };
 
 const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesDoJump[] = {
@@ -60,13 +54,14 @@ const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesDoJ
 };
 
 const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpected[] = {
-    { sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint)/sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint[0]),             SimpleMissionItemTest::_rgFactValuesWaypoint,       true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLand)/sizeof(SimpleMissionItemTest::_rgFactValuesLand[0]),                     SimpleMissionItemTest::_rgFactValuesLand,           true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        true },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         false },
+    // Text field facts count                                                                                                   Fact Values                                         Altitude    Altitude Mode
+    { sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint)/sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint[0]),             SimpleMissionItemTest::_rgFactValuesWaypoint,       70.1234567, SimpleMissionItem::AltitudeRelative },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    70.1234567, SimpleMissionItem::AltitudeRelative },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLand)/sizeof(SimpleMissionItemTest::_rgFactValuesLand[0]),                     SimpleMissionItemTest::_rgFactValuesLand,           70.1234567, SimpleMissionItem::AltitudeRelative },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         qQNaN(),    SimpleMissionItem::AltitudeRelative },
 };
 
 SimpleMissionItemTest::SimpleMissionItemTest(void)
@@ -80,12 +75,12 @@ void SimpleMissionItemTest::init(void)
     VisualMissionItemTest::init();
 
     rgSimpleItemSignals[commandChangedIndex] =                          SIGNAL(commandChanged(int));
-    rgSimpleItemSignals[frameChangedIndex] =                            SIGNAL(frameChanged(int));
+    rgSimpleItemSignals[altitudeModeChangedIndex] =                     SIGNAL(altitudeModeChanged());
     rgSimpleItemSignals[friendlyEditAllowedChangedIndex] =              SIGNAL(friendlyEditAllowedChanged(bool));
     rgSimpleItemSignals[headingDegreesChangedIndex] =                   SIGNAL(headingDegreesChanged(double));
     rgSimpleItemSignals[rawEditChangedIndex] =                          SIGNAL(rawEditChanged(bool));
-    rgSimpleItemSignals[cameraSectionChangedIndex] =                    SIGNAL(rawEditChanged(bool));
-    rgSimpleItemSignals[speedSectionChangedIndex] =                     SIGNAL(rawEditChanged(bool));
+    rgSimpleItemSignals[cameraSectionChangedIndex] =                    SIGNAL(cameraSectionChanged(QObject*));
+    rgSimpleItemSignals[speedSectionChangedIndex] =                     SIGNAL(speedSectionChanged(QObject*));
     rgSimpleItemSignals[coordinateHasRelativeAltitudeChangedIndex] =    SIGNAL(coordinateHasRelativeAltitudeChanged(bool));
 
     MissionItem missionItem(1,              // sequence number
@@ -164,8 +159,10 @@ void SimpleMissionItemTest::_testEditorFacts(void)
         }
         QCOMPARE(factCount, expected->cFactValues);
 
-        int expectedCount = expected->relativeAltCheckbox ? 1 : 0;
-        QCOMPARE(simpleMissionItem.checkboxFacts()->count(), expectedCount);
+        if (!qIsNaN(expected->altValue)) {
+            QCOMPARE(simpleMissionItem.altitudeMode(), expected->altMode);
+            QCOMPARE(simpleMissionItem.altitude()->rawValue().toDouble(), expected->altValue);
+        }
     }
 
     delete vehicle;
@@ -228,18 +225,8 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
     _spyVisualItem->clearAllSignals();
 
-    // Check frameChanged signalling. Calling setFrame should signal:
-    //      frameChanged
-    //      dirtyChanged
-    //      friendlyEditAllowedChanged - this signal is not very smart on when it gets sent
-    //      coordinateHasRelativeAltitudeChanged
-
-    missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    QVERIFY(_spyVisualItem->checkNoSignals());
-    QVERIFY(_spySimpleItem->checkNoSignals());
-
-    missionItem.setFrame(MAV_FRAME_GLOBAL);
-    QVERIFY(_spySimpleItem->checkOnlySignalByMask(frameChangedMask | dirtyChangedMask | friendlyEditAllowedChangedMask | coordinateHasRelativeAltitudeChangedMask));
+    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == SimpleMissionItem::AltitudeRelative ? SimpleMissionItem::AltitudeAMSL : SimpleMissionItem::AltitudeRelative);
+    QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | friendlyEditAllowedChangedMask | altitudeModeChangedMask | coordinateHasRelativeAltitudeChangedMask));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
 
@@ -319,4 +306,19 @@ void SimpleMissionItemTest::_testSpeedSection(void)
     QCOMPARE(_simpleItem->specifiedFlightSpeed(), flightSpeed);
     QCOMPARE(_spyVisualItem->checkSignalsByMask(specifiedFlightSpeedChangedMask), true);
     QCOMPARE(_simpleItem->dirty(), true);
+}
+
+void SimpleMissionItemTest::_testAltitudePropogation(void)
+{
+    // Make sure that changes to altitude propogate to param 7 of the mission item
+
+    _simpleItem->setAltitudeMode(SimpleMissionItem::AltitudeRelative);
+    _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
+    QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
+    QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
+
+    _simpleItem->setAltitudeMode(SimpleMissionItem::AltitudeAMSL);
+    _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
+    QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
+    QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);
 }

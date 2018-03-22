@@ -174,7 +174,7 @@ FlightMap {
     }
 
     MapFitFunctions {
-        id:                         mapFitFunctions
+        id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        _flightMap
         usePlannedHomePosition:     false
         planMasterController:       _planMasterController

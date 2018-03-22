@@ -36,6 +36,7 @@ private slots:
 
 private:
     void _setPolyline(void);
+    void _waitForReadyForSave(void);
 
     enum {
         corridorPolygonPathChangedIndex = 0,

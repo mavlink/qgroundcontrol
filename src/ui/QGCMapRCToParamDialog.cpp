@@ -43,7 +43,7 @@ QGCMapRCToParamDialog::QGCMapRCToParamDialog(QString param_id, UASInterface *mav
 
     ui->paramIdLabel->setText(param_id);
 
-    connect(paramFact, &Fact::valueChanged, this, &QGCMapRCToParamDialog::_parameterUpdated);
+    connect(paramFact, &Fact::vehicleUpdated, this, &QGCMapRCToParamDialog::_parameterUpdated);
     vehicle->parameterManager()->refreshParameter(FactSystem::defaultComponentId, param_id);
 }
 

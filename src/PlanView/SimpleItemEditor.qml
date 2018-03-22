@@ -17,6 +17,9 @@ Rectangle {
     color:  qgcPal.windowShadeDark
     radius: _radius
 
+    property bool _specifiesAltitude:   missionItem.specifiesAltitude
+    property bool _altModeIsTerrain:    missionItem.altitudeMode === 2
+
     Column {
         id:                 valuesColumn
         anchors.margins:    _margin
@@ -68,8 +71,26 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             flow:           GridLayout.TopToBottom
-            rows:           missionItem.textFieldFacts.count + missionItem.nanFacts.count + (missionItem.speedSection.available ? 1 : 0)
+            rows:           missionItem.textFieldFacts.count +
+                            missionItem.nanFacts.count +
+                            (missionItem.speedSection.available ? 1 : 0) +
+                            (_specifiesAltitude ? 1 : 0) +
+                            (_altModeIsTerrain ? 1 : 0)
             columns:        2
+
+            QGCComboBox {
+                id:                 altCombo
+                model:              [ qsTr("Alt (Rel)"), qsTr("AMSL"), qsTr("Above Terrain") ]
+                currentIndex:       missionItem.altitudeMode
+                Layout.fillWidth:   true
+                onActivated:        missionItem.altitudeMode = index
+                visible:            _specifiesAltitude
+            }
+
+            QGCLabel {
+                text:       qsTr("Actual AMSL Alt")
+                visible:    _altModeIsTerrain
+            }
 
             Repeater {
                 model: missionItem.textFieldFacts
@@ -95,6 +116,19 @@ Rectangle {
                 visible:    missionItem.speedSection.available
             }
 
+
+            FactTextField {
+                showUnits:          true
+                fact:               missionItem.altitude
+                Layout.fillWidth:   true
+                visible:            _specifiesAltitude
+            }
+
+            FactLabel {
+                fact:       missionItem.amslAltAboveTerrain
+                visible:    _altModeIsTerrain
+            }
+
             Repeater {
                 model: missionItem.textFieldFacts
 
@@ -102,6 +136,7 @@ Rectangle {
                     showUnits:          true
                     fact:               object
                     Layout.fillWidth:   true
+                    enabled:            !object.readOnly
                 }
             }
 
@@ -121,15 +156,6 @@ Rectangle {
                 Layout.fillWidth:   true
                 enabled:            flightSpeedCheckbox.checked
                 visible:            missionItem.speedSection.available
-            }
-        }
-
-        Repeater {
-            model: missionItem.checkboxFacts
-
-            FactCheckBox {
-                text:   object.name
-                fact:   object
             }
         }
 

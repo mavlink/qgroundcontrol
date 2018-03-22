@@ -100,7 +100,7 @@ QGCView {
     property bool _firstLoadComplete:           false
 
     MapFitFunctions {
-        id:                         mapFitFunctions
+        id:                         mapFitFunctions  // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        editorMap
         usePlannedHomePosition:     true
         planMasterController:       _planMasterController
@@ -196,7 +196,15 @@ QGCView {
             _missionController.setCurrentPlanViewIndex(0, true)
         }
 
+        function waitingOnDataMessage() {
+            _qgcView.showMessage(qsTr("Unable to Save/Upload"), qsTr("Plan is waiting on terrain data from server for correct altitude values."), StandardButton.Ok)
+        }
+
         function upload() {
+            if (!readyForSaveSend()) {
+                waitingOnDataMessage()
+                return
+            }
             if (_activeVehicle && _activeVehicle.armed && _activeVehicle.flightMode === _activeVehicle.missionFlightMode) {
                 _qgcView.showDialog(activeMissionUploadDialogComponent, qsTr("Plan Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Cancel)
             } else {
@@ -208,14 +216,22 @@ QGCView {
             fileDialog.title =          qsTr("Select Plan File")
             fileDialog.selectExisting = true
             fileDialog.nameFilters =    masterController.loadNameFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
+            fileDialog.fileExtension2 = QGroundControl.settingsManager.appSettings.missionFileExtension
             fileDialog.openForLoad()
         }
 
         function saveToSelectedFile() {
+            if (!readyForSaveSend()) {
+                waitingOnDataMessage()
+                return
+            }
             fileDialog.title =          qsTr("Save Plan")
             fileDialog.plan =           true
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveNameFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
+            fileDialog.fileExtension2 = QGroundControl.settingsManager.appSettings.missionFileExtension
             fileDialog.openForSave()
         }
 
@@ -224,10 +240,16 @@ QGCView {
         }
 
         function saveKmlToSelectedFile() {
+            if (!readyForSaveSend()) {
+                waitingOnDataMessage()
+                return
+            }
             fileDialog.title =          qsTr("Save KML")
             fileDialog.plan =           false
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveKmlFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.kmlFileExtension
+            fileDialog.fileExtension2 = ""
             fileDialog.openForSave()
         }
     }
@@ -274,8 +296,6 @@ QGCView {
         qgcView:        _qgcView
         property bool plan: true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        fileExtension:  QGroundControl.settingsManager.appSettings.planFileExtension
-        fileExtension2: QGroundControl.settingsManager.appSettings.missionFileExtension
 
         onAcceptedForSave: {
             plan ? masterController.saveToFile(file) : masterController.saveToKml(file)

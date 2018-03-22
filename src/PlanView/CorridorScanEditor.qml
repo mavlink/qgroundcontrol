@@ -57,6 +57,11 @@ Rectangle {
         spacing:            _margin
 
         QGCLabel {
+            text: "WIP: Careful!"
+            color:  qgcPal.warningText
+        }
+
+        QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
             text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
@@ -124,6 +129,59 @@ Rectangle {
         QGCButton {
             text:       qsTr("Rotate Entry Point")
             onClicked:  missionItem.rotateEntryPoint()
+        }
+
+        SectionHeader {
+            id:         terrainHeader
+            text:       qsTr("Terrain")
+            checked:    missionItem.followTerrain
+        }
+
+        ColumnLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        _margin
+            visible:        terrainHeader.checked
+
+            QGCCheckBox {
+                id:         followsTerrainCheckBox
+                text:       qsTr("Vehicle follows terrain")
+                checked:    missionItem.followTerrain
+                onClicked:  missionItem.followTerrain = checked
+            }
+
+            GridLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                columnSpacing:  _margin
+                rowSpacing:     _margin
+                columns:        2
+                visible:        followsTerrainCheckBox.checked
+
+                QGCLabel {
+                    text: "WIP: Careful!"
+                    color:  qgcPal.warningText
+                    Layout.columnSpan: 2
+                }
+
+                QGCLabel { text: qsTr("Tolerance") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustTolerance
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Max Climb Rate") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustMaxClimbRate
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Max Descent Rate") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustMaxDescentRate
+                    Layout.fillWidth:   true
+                }
+            }
         }
 
         SectionHeader {

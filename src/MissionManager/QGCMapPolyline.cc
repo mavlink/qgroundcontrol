@@ -358,13 +358,13 @@ bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
         return false;
     }
 
-    QDomNodeList rgNodes = doc.elementsByTagName("Polygon");
+    QDomNodeList rgNodes = doc.elementsByTagName("LineString");
     if (rgNodes.count() == 0) {
-        qgcApp()->showMessage(tr("Unable to find Polygon node in KML"));
+        qgcApp()->showMessage(tr("Unable to find LineString node in KML"));
         return false;
     }
 
-    QDomNode coordinatesNode = rgNodes.item(0).namedItem("outerBoundaryIs").namedItem("LinearRing").namedItem("coordinates");
+    QDomNode coordinatesNode = rgNodes.item(0).namedItem("coordinates");
     if (coordinatesNode.isNull()) {
         qgcApp()->showMessage(tr("Internal error: Unable to find coordinates node in KML"));
         return false;
@@ -386,29 +386,8 @@ bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
         rgCoords.append(coord);
     }
 
-    // Determine winding, reverse if needed
-    double sum = 0;
-    for (int i=0; i<rgCoords.count(); i++) {
-        QGeoCoordinate coord1 = rgCoords[i];
-        QGeoCoordinate coord2 = (i == rgCoords.count() - 1) ? rgCoords[0] : rgCoords[i+1];
-
-        sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
-    }
-    bool reverse = sum < 0.0;
-
-    if (reverse) {
-        QList<QGeoCoordinate> rgReversed;
-
-        for (int i=0; i<rgCoords.count(); i++) {
-            rgReversed.prepend(rgCoords[i]);
-        }
-        rgCoords = rgReversed;
-    }
-
     clear();
-    for (int i=0; i<rgCoords.count(); i++) {
-        appendVertex(rgCoords[i]);
-    }
+    appendVertices(rgCoords);
 
     return true;
 }
@@ -437,4 +416,16 @@ double QGCMapPolyline::length(void) const
     }
 
     return length;
+}
+
+void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
+{
+    QList<QObject*> objects;
+
+    foreach (const QGeoCoordinate& coordinate, coordinates) {
+        objects.append(new QGCQGeoCoordinate(coordinate, this));
+        _polylinePath.append(QVariant::fromValue(coordinate));
+    }
+    _polylineModel.append(objects);
+    emit pathChanged();
 }
