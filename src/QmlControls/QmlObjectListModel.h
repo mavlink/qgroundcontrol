@@ -31,50 +31,50 @@ public:
 
     // Property accessors
     
-    int count(void) const;
-    
-    bool dirty(void) const { return _dirty; }
-    void setDirty(bool dirty);
-    
-    void append(QObject* object);
-    void append(QList<QObject*> objects);
-    QObjectList swapObjectList(const QObjectList& newlist);
-    void clear(void);
-    QObject* removeAt(int i);
-    QObject* removeOne(QObject* object) { return removeAt(indexOf(object)); }
-    void insert(int i, QObject* object);
-    void insert(int i, QList<QObject*> objects);
-    QObject* operator[](int i);
-    const QObject* operator[](int i) const;
-    bool contains(QObject* object) { return _objectList.indexOf(object) != -1; }
-    int indexOf(QObject* object) { return _objectList.indexOf(object); }
-    template<class T> T value(int index) { return qobject_cast<T>(_objectList[index]); }
+    int         count               () const;
+    bool        dirty               () const { return _dirty; }
+    void        setDirty            (bool dirty);
+    void        append              (QObject* object);
+    void        append              (QList<QObject*> objects);
+    QObjectList swapObjectList      (const QObjectList& newlist);
+    void        clear               ();
+    QObject*    removeAt            (int i);
+    QObject*    removeOne           (QObject* object) { return removeAt(indexOf(object)); }
+    void        insert              (int i, QObject* object);
+    void        insert              (int i, QList<QObject*> objects);
+    bool        contains            (QObject* object) { return _objectList.indexOf(object) != -1; }
+    int         indexOf             (QObject* object) { return _objectList.indexOf(object); }
+
+    QObject*    operator[]          (int i);
+    const QObject* operator[]       (int i) const;
+    template<class T> T value       (int index) { return qobject_cast<T>(_objectList[index]); }
+    QList<QObject*>* objectList     () { return &_objectList; }
 
     /// Calls deleteLater on all items and this itself.
-    void deleteListAndContents  (void);
+    void deleteListAndContents      ();
 
     /// Clears the list and calls deleteLater on each entry
-    void clearAndDeleteContents (void);
+    void clearAndDeleteContents     ();
 
-    void beginReset             () { beginResetModel(); }
-    void endReset               () { endResetModel();   }
+    void beginReset                 () { beginResetModel(); }
+    void endReset                   () { endResetModel();   }
 
 signals:
-    void countChanged           (int count);
-    void dirtyChanged           (bool dirtyChanged);
+    void countChanged               (int count);
+    void dirtyChanged               (bool dirtyChanged);
     
 private slots:
-    void _childDirtyChanged     (bool dirty);
+    void _childDirtyChanged         (bool dirty);
     
 private:
     // Overrides from QAbstractListModel
-    int	rowCount(const QModelIndex & parent = QModelIndex()) const override;
-    QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    int         rowCount    (const QModelIndex & parent = QModelIndex()) const override;
+    QVariant    data        (const QModelIndex & index, int role = Qt::DisplayRole) const override;
+    bool        insertRows  (int position, int rows, const QModelIndex &index = QModelIndex()) override;
+    bool        removeRows  (int position, int rows, const QModelIndex &index = QModelIndex()) override;
+    bool        setData     (const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
     QHash<int, QByteArray> roleNames(void) const override;
-    bool insertRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
-    bool removeRows(int position, int rows, const QModelIndex &index = QModelIndex()) override;
-    bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) override;
-	
+
 private:
     QList<QObject*> _objectList;
     

@@ -25,7 +25,5 @@ public:
     DEFINE_SETTINGFACT(password)
     DEFINE_SETTINGFACT(enableAirMap)
     DEFINE_SETTINGFACT(enableTelemetry)
-    DEFINE_SETTINGFACT(loginEmail)
-    DEFINE_SETTINGFACT(loginPassword)
 
 };

@@ -128,7 +128,7 @@ const QObject* QmlObjectListModel::operator[](int index) const
     return _objectList[index];
 }
 
-void QmlObjectListModel::clear(void)
+void QmlObjectListModel::clear()
 {
     while (rowCount()) {
         removeAt(0);
@@ -218,7 +218,7 @@ QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
     return oldlist;
 }
 
-int QmlObjectListModel::count(void) const
+int QmlObjectListModel::count() const
 {
     return rowCount();
 }
@@ -247,7 +247,7 @@ void QmlObjectListModel::_childDirtyChanged(bool dirty)
     emit dirtyChanged(_dirty);
 }
 
-void QmlObjectListModel::deleteListAndContents(void)
+void QmlObjectListModel::deleteListAndContents()
 {
     for (int i=0; i<_objectList.count(); i++) {
         _objectList[i]->deleteLater();
@@ -255,7 +255,7 @@ void QmlObjectListModel::deleteListAndContents(void)
     deleteLater();
 }
 
-void QmlObjectListModel::clearAndDeleteContents(void)
+void QmlObjectListModel::clearAndDeleteContents()
 {
     beginResetModel();
     for (int i=0; i<_objectList.count(); i++) {

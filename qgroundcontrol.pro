@@ -1137,6 +1137,13 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         src/Airmap/AirMapVehicleManager.cc \
         src/Airmap/AirMapWeatherInfoManager.cc \
 
+    #-- Do we have an API key?
+    exists(src/Airmap/Airmap_api_key.h) {
+        HEADERS += \
+            src/Airmap/Airmap_api_key.h
+        DEFINES += QGC_AIRMAP_KEY_AVAILABLE
+    }
+
 } else {
     #-- Dummies
     INCLUDEPATH += \

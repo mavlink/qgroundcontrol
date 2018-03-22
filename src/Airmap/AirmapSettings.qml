@@ -122,21 +122,21 @@ QGCView {
                         columns:            2
                         rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
                         anchors.centerIn:   parent
-                        QGCLabel { text: qsTr("Email:") }
+                        QGCLabel        { text: qsTr("User Name:") }
                         FactTextField {
-                            fact:           _loginEmailFact
+                            fact:           _usernameFact
                             width:          _editFieldWidth
                             enabled:        _airMapEnabled
-                            visible:        _loginEmailFact.visible
-                            property Fact _loginEmailFact: QGroundControl.settingsManager.airMapSettings.loginEmail
+                            visible:        _usernameFact.visible
+                            property Fact _usernameFact: QGroundControl.settingsManager.airMapSettings.userName
                         }
                         QGCLabel { text: qsTr("Password:") }
                         FactTextField {
-                            fact:           _loginPasswordFact
+                            fact:           _passwordFact
                             width:          _editFieldWidth
                             enabled:        _airMapEnabled
-                            visible:        _loginPasswordFact.visible
-                            property Fact _loginPasswordFact: QGroundControl.settingsManager.airMapSettings.loginPassword
+                            visible:        _passwordFact.visible
+                            property Fact _passwordFact: QGroundControl.settingsManager.airMapSettings.password
                         }
                         Item {
                             width:  1
@@ -144,20 +144,20 @@ QGCView {
                             Layout.columnSpan: 2
                         }
                         QGCLabel {
-                            text:   qsTr("Forgot Your AirMap Password?")
-                            Layout.alignment:  Qt.AlignHCenter
-                            Layout.columnSpan: 2
+                            text:               qsTr("Forgot Your AirMap Password?")
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.columnSpan:  2
                         }
                         Item {
                             width:  1
                             height: 1
-                            Layout.columnSpan: 2
+                            Layout.columnSpan:  2
                         }
                         QGCButton {
-                            text:   qsTr("Register for an AirMap Account")
-                            Layout.alignment:  Qt.AlignHCenter
-                            Layout.columnSpan: 2
-                            enabled:           _airMapEnabled
+                            text:               qsTr("Register for an AirMap Account")
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.columnSpan:  2
+                            enabled:            _airMapEnabled
                             onClicked: {
                                 Qt.openUrlExternally("https://www.airmap.com");
                             }
@@ -174,7 +174,7 @@ QGCView {
                     visible:                    QGroundControl.settingsManager.appSettings.visible
                     QGCLabel {
                         id:             profileLabel
-                        text:           qsTr("Pilot Profile")
+                        text:           qsTr("Pilot Profile (WIP)")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                 }
@@ -226,14 +226,25 @@ QGCView {
                         columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
                         rowSpacing:         ScreenTools.defaultFontPixelWidth  * 0.25
                         anchors.centerIn:   parent
-                        QGCLabel        { text: qsTr("API Key:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey;   width: _editFieldWidth; }
-                        QGCLabel        { text: qsTr("Client ID:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; width: _editFieldWidth; }
-                        QGCLabel        { text: qsTr("User Name:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.userName; width: _editFieldWidth; }
-                        QGCLabel        { text: qsTr("Password:") }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.password; width: _editFieldWidth; echoMode: TextInput.Password }
+                        QGCCheckBox {
+                            id:             hasPrivateKey
+                            text:           qsTr("Personal API Key")
+                            Layout.columnSpan:  2
+                            Component.onCompleted: {
+                                if(QGroundControl.settingsManager.airMapSettings.apiKey !== "")
+                                    checked = true
+                            }
+                        }
+                        Item {
+                            width:      1
+                            height:     1
+                            visible:    hasPrivateKey.checked
+                            Layout.columnSpan:  2
+                        }
+                        QGCLabel        { text: qsTr("API Key:"); visible: hasPrivateKey.checked; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey; width: _editFieldWidth * 2; visible: hasPrivateKey.checked; }
+                        QGCLabel        { text: qsTr("Client ID:"); visible: hasPrivateKey.checked; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; width: _editFieldWidth * 2; visible: hasPrivateKey.checked; }
                     }
                 }
                 //-----------------------------------------------------------------
