@@ -41,6 +41,8 @@
 
 #include "ui_MainWindow.h"
 
+#include "ASLCustomWidgets/EnergyBudget/EnergyBudget.h"
+
 #if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
     #include "Mouse6dofInput.h"
 #endif // QGC_MOUSE_ENABLED_WIN

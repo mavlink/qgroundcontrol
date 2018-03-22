@@ -68,7 +68,8 @@ enum DockWidgetTypes {
     CUSTOM_COMMAND,
     ONBOARD_FILES,
     HIL_CONFIG,
-    ANALYZE
+    ANALYZE,
+    ENERGY_BUDGET
 };
 
 static const char *rgDockWidgetNames[] = {
@@ -76,7 +77,8 @@ static const char *rgDockWidgetNames[] = {
     "Custom Command",
     "Onboard Files",
     "HIL Config",
-    "Analyze"
+    "Analyze",
+    "Energy Budget"
 };
 
 #define ARRAY_SIZE(ARRAY) (sizeof(ARRAY) / sizeof(ARRAY[0]))
@@ -349,6 +351,9 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
                 break;
             case ANALYZE:
                 widget = new Linecharts(widgetName, action, _mavLinkDecoderInstance(), this);
+                break;
+            case ENERGY_BUDGET:
+                widget = new EnergyBudget(widgetName, action, this);
                 break;
         }
         if(widget) {
