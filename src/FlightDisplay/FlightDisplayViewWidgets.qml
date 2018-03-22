@@ -135,7 +135,7 @@ Item {
             z:                          QGroundControl.zOrderTopMost
             color:                      mapPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
-            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure or disable the arming check via the Safety tab on the Vehicle Setup page."
+            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure."
         }
     }
 
