@@ -166,6 +166,14 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
 
     int version = complexObject[JsonHelper::jsonVersionKey].toInt();
     if (version == 1) {
+        QList<JsonHelper::KeyValidateInfo> v1KeyInfoList = {
+            { _jsonLoiterAltitudeRelativeKey,   QJsonValue::Bool,  true },
+            { _jsonLandingAltitudeRelativeKey,  QJsonValue::Bool,  true },
+        };
+        if (!JsonHelper::validateKeys(complexObject, v1KeyInfoList, errorString)) {
+            return false;
+        }
+
         bool loiterAltitudeRelative = complexObject[_jsonLoiterAltitudeRelativeKey].toBool();
         bool landingAltitudeRelative = complexObject[_jsonLandingAltitudeRelativeKey].toBool();
         if (loiterAltitudeRelative != landingAltitudeRelative) {
@@ -176,13 +184,19 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
         } else {
             _altitudesAreRelative = loiterAltitudeRelative;
         }
+        _valueSetIsDistance = true;
     } else if (version == 2) {
         QList<JsonHelper::KeyValidateInfo> v2KeyInfoList = {
             { _jsonAltitudesAreRelativeKey, QJsonValue::Bool,  true },
+            { _jsonValueSetIsDistanceKey,   QJsonValue::Bool,  true },
         };
         if (!JsonHelper::validateKeys(complexObject, v2KeyInfoList, errorString)) {
+            _ignoreRecalcSignals = false;
             return false;
         }
+
+        _altitudesAreRelative = complexObject[_jsonAltitudesAreRelativeKey].toBool();
+        _valueSetIsDistance = complexObject[_jsonValueSetIsDistanceKey].toBool();
     } else {
         errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
         _ignoreRecalcSignals = false;
@@ -204,7 +218,8 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
 
     _loiterRadiusFact.setRawValue(complexObject[_jsonLoiterRadiusKey].toDouble());
     _loiterClockwise = complexObject[_jsonLoiterClockwiseKey].toBool();
-    _altitudesAreRelative = complexObject[_jsonAltitudesAreRelativeKey].toBool();
+
+    _calcGlideSlope();
 
     _landingCoordSet = true;
 
@@ -327,6 +342,8 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, V
     complexItem->_landingCoordinate.setLatitude(missionItemLand.param5());
     complexItem->_landingCoordinate.setLongitude(missionItemLand.param6());
     complexItem->_landingAltitudeFact.setRawValue(missionItemLand.param7());
+
+    complexItem->_calcGlideSlope();
 
     complexItem->_landingCoordSet = true;
 
