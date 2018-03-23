@@ -44,12 +44,12 @@
     "defaultValue":     0.0
 },
 {
-    "name":             "DescentRate",
-    "shortDescription": "Descent rate between landing and loiter altitude.",
+    "name":             "GlideSlope",
+    "shortDescription": "The glide slope between the loiter and landing point.",
     "type":             "double",
-    "units":            "%",
+    "units":            "deg",
     "min":              0.1,
-    "max":              100,
+    "max":              90,
     "decimalPlaces":    1,
     "defaultValue":     12.0
 }
