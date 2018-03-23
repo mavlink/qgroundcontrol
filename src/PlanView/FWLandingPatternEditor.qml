@@ -108,7 +108,7 @@ Rectangle {
                 text:               qsTr("Glide Slope")
                 checked:            !missionItem.valueSetIsDistance
                 exclusiveGroup:     distanceGlideGroup
-                onClicked:          missionItem.valueSetIsDistance = checked
+                onClicked:          missionItem.valueSetIsDistance = !checked
                 Layout.fillWidth:   true
             }
 
