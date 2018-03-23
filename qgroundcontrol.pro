@@ -568,7 +568,6 @@ HEADERS += \
     src/QmlControls/AppMessages.h \
     src/QmlControls/CoordinateVector.h \
     src/QmlControls/EditPositionDialogController.h \
-    src/QmlControls/MavlinkQmlSingleton.h \
     src/QmlControls/ParameterEditorController.h \
     src/QmlControls/QGCFileDialogController.h \
     src/QmlControls/QGCImageProvider.h \

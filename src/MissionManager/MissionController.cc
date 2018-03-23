@@ -335,10 +335,10 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, this);
     newItem->setSequenceNumber(sequenceNumber);
     newItem->setCoordinate(coordinate);
-    newItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    newItem->setCommand(MAV_CMD_NAV_WAYPOINT);
     _initVisualItem(newItem);
     if (_visualItems->count() == 1) {
-        MavlinkQmlSingleton::Qml_MAV_CMD takeoffCmd = _controllerVehicle->vtol() ? MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF : MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF;
+        MAV_CMD takeoffCmd = _controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF;
         if (_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)takeoffCmd)) {
             newItem->setCommand(takeoffCmd);
         }
@@ -366,7 +366,7 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, this);
     newItem->setSequenceNumber(sequenceNumber);
-    newItem->setCommand((MavlinkQmlSingleton::Qml_MAV_CMD)(_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)MAV_CMD_DO_SET_ROI_LOCATION) ?
+    newItem->setCommand((MAV_CMD)(_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)MAV_CMD_DO_SET_ROI_LOCATION) ?
         MAV_CMD_DO_SET_ROI_LOCATION :
         MAV_CMD_DO_SET_ROI));
     _initVisualItem(newItem);
@@ -840,7 +840,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
         // Update sequence numbers in DO_JUMP commands to take into account added home position in index 0
         for (int i=1; i<visualItems->count(); i++) {
             SimpleMissionItem* item = qobject_cast<SimpleMissionItem*>(visualItems->get(i));
-            if (item && item->command() == MavlinkQmlSingleton::MAV_CMD_DO_JUMP) {
+            if (item && item->command() == MAV_CMD_DO_JUMP) {
                 item->missionItem().setParam1((int)item->missionItem().param1() + 1);
             }
         }
@@ -1297,7 +1297,7 @@ void MissionController::_recalcMissionFlightStatus()
         }
 
         // Link back to home if first item is takeoff and we have home position
-        if (firstCoordinateItem && simpleItem && (simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF || simpleItem->command() == MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF)) {
+        if (firstCoordinateItem && simpleItem && (simpleItem->command() == MAV_CMD_NAV_TAKEOFF || simpleItem->command() == MAV_CMD_NAV_VTOL_TAKEOFF)) {
             if (showHomePosition) {
                 linkStartToHome = true;
                 if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
@@ -1313,19 +1313,19 @@ void MissionController::_recalcMissionFlightStatus()
         // Update VTOL state
         if (simpleItem && _controllerVehicle->vtol()) {
             switch (simpleItem->command()) {
-            case MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF:
+            case MAV_CMD_NAV_TAKEOFF:
                 vtolInHover = false;
                 break;
-            case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_TAKEOFF:
+            case MAV_CMD_NAV_VTOL_TAKEOFF:
                 vtolInHover = true;
                 break;
-            case MavlinkQmlSingleton::MAV_CMD_NAV_LAND:
+            case MAV_CMD_NAV_LAND:
                 vtolInHover = false;
                 break;
-            case MavlinkQmlSingleton::MAV_CMD_NAV_VTOL_LAND:
+            case MAV_CMD_NAV_VTOL_LAND:
                 vtolInHover = true;
                 break;
-            case MavlinkQmlSingleton::MAV_CMD_DO_VTOL_TRANSITION:
+            case MAV_CMD_DO_VTOL_TRANSITION:
             {
                 int transitionState = simpleItem->missionItem().param1();
                 if (transitionState == MAV_VTOL_STATE_TRANSITION_TO_MC) {

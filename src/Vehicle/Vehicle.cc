@@ -1139,7 +1139,12 @@ void Vehicle::_handleWind(mavlink_message_t& message)
     mavlink_wind_t wind;
     mavlink_msg_wind_decode(&message, &wind);
 
-    _windFactGroup.direction()->setRawValue(wind.direction);
+    // We don't want negative wind angles
+    float direction = wind.direction;
+    if (direction < 0) {
+        direction += 360;
+    }
+    _windFactGroup.direction()->setRawValue(direction);
     _windFactGroup.speed()->setRawValue(wind.speed);
     _windFactGroup.verticalSpeed()->setRawValue(wind.speed_z);
 }

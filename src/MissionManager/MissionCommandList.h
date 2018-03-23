@@ -14,7 +14,6 @@
 #include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
-#include "MavlinkQmlSingleton.h"
 
 #include <QObject>
 #include <QString>
