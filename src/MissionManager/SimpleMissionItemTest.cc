@@ -236,11 +236,11 @@ void SimpleMissionItemTest::_testSignals(void)
     //      dirtyChanged
     //      coordinateChanged - since altitude will be set back to default
 
-    _simpleItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_WAYPOINT);
+    _simpleItem->setCommand(MAV_CMD_NAV_WAYPOINT);
     QVERIFY(_spyVisualItem->checkNoSignals());
     QVERIFY(_spySimpleItem->checkNoSignals());
 
-    _simpleItem->setCommand(MavlinkQmlSingleton::MAV_CMD_NAV_LOITER_TIME);
+    _simpleItem->setCommand(MAV_CMD_NAV_LOITER_TIME);
     QVERIFY(_spySimpleItem->checkSignalsByMask(commandChangedMask));
     QVERIFY(_spyVisualItem->checkSignalsByMask(commandNameChangedMask | dirtyChangedMask | coordinateChangedMask));
 }
