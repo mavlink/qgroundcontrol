@@ -132,7 +132,7 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
     QVERIFY(settingsItem);
     QVERIFY(simpleItem);
 
-    QCOMPARE(simpleItem->command(), MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
+    QCOMPARE((MAV_CMD)simpleItem->command(), MAV_CMD_NAV_TAKEOFF);
     QCOMPARE(simpleItem->childItems()->count(), 0);
 
     // If the first item added specifies a coordinate, then planned home position will be set

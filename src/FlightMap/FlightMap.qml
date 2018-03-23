@@ -19,7 +19,6 @@ import QGroundControl.FlightMap             1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.Vehicle               1.0
-import QGroundControl.Mavlink               1.0
 import QGroundControl.QGCPositionManager    1.0
 
 Map {
