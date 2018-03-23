@@ -67,7 +67,6 @@ enum DockWidgetTypes {
     MAVLINK_INSPECTOR,
     CUSTOM_COMMAND,
     ONBOARD_FILES,
-    DEPRECATED_WIDGET,
     HIL_CONFIG,
     ANALYZE
 };
@@ -76,7 +75,6 @@ static const char *rgDockWidgetNames[] = {
     "MAVLink Inspector",
     "Custom Command",
     "Onboard Files",
-    "Deprecated Widget",
     "HIL Config",
     "Analyze"
 };
