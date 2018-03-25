@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.14 - Mar 25 2018
+
+*   Disbale actions if RC bind fails
+
 ### V1.3.13 - Mar 21 2018
 
 *   Show trigger distance in Survey/Structure Scan stats
