@@ -135,6 +135,7 @@ class TyphoonHOptions : public QGCOptions
 {
 public:
     TyphoonHOptions(TyphoonHPlugin* plugin, QObject* parent = NULL);
+
     bool        combineSettingsAndSetup     () { return true; }
 #if defined(__android__)
     double      toolbarHeightMultiplier     () { return 1.25; }
@@ -159,6 +160,7 @@ public:
     bool        guidedBarShowOrbit             () const final { return false; }
     bool        missionWaypointsOnly           () const final { return true;  }
     bool        multiVehicleEnabled            () const final { return false; }
+    bool        guidedActionsRequireRCRSSI     () const final { return true; }
 
 #if defined(__planner__)
     //-- TODO: Desktop Planner is a native QML build. We don't yet have a
