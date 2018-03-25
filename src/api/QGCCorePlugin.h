@@ -21,8 +21,6 @@
 ///     @brief Core Plugin Interface for QGroundControl
 ///     @author Gus Grubba <mavlink@grubba.com>
 
-// Work In Progress
-
 class QGCApplication;
 class QGCOptions;
 class QGCSettings;
@@ -33,6 +31,7 @@ class QQmlApplicationEngine;
 class Vehicle;
 class LinkInterface;
 class QmlObjectListModel;
+
 class QGCCorePlugin : public QGCTool
 {
     Q_OBJECT
