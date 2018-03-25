@@ -371,7 +371,7 @@ QGeoCoordinate QGCMapPolygon::vertexCoordinate(int vertex) const
     if (vertex >= 0 && vertex < _polygonPath.count()) {
         return _polygonPath[vertex].value<QGeoCoordinate>();
     } else {
-        qWarning() << "QGCMapPolygon::vertexCoordinate bad vertex requested";
+        qWarning() << "QGCMapPolygon::vertexCoordinate bad vertex requested:count" << vertex << _polygonPath.count();
         return QGeoCoordinate();
     }
 }
@@ -529,6 +529,10 @@ bool QGCMapPolygon::loadKMLFile(const QString& kmlFile)
 double QGCMapPolygon::area(void) const
 {
     // https://www.mathopenref.com/coordpolygonarea2.html
+
+    if (_polygonPath.count() < 3) {
+        return 0;
+    }
 
     double coveredArea = 0.0;
     QList<QPointF> nedVertices = nedPolygon();
