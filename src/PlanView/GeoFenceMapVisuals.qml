@@ -84,7 +84,7 @@ Item {
 
     Component.onDestruction: {
         _breachReturnPointComponent.destroy()
-        _paramCircleFenceComponent.destory()
+        _paramCircleFenceComponent.destroy()
         _mouseAreaComponent.destroy()
     }
 
