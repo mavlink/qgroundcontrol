@@ -32,7 +32,6 @@ Item {
     property int    borderWidth:        0
     property color  borderColor:        "black"
 
-    property var    _gqcView:                   ggcView
     property var    _polygonComponent
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
@@ -173,7 +172,7 @@ Item {
 
     QGCFileDialog {
         id:             kmlLoadDialog
-        qgcView:        _qgcView
+        qgcView:        _root.qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select KML File")
         selectExisting: true
