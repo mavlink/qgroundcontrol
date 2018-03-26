@@ -1,5 +1,9 @@
 ## DataPilot Release Changelog
 
+### V1.3.15 - Mar 26 2018
+
+*   Revert inverted gimbal yaw indicator
+
 ### V1.3.14 - Mar 25 2018
 
 *   Disbale actions if RC bind fails
