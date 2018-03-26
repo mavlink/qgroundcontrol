@@ -44,7 +44,7 @@ public:
     Q_PROPERTY(Fact*            altitude                READ altitude                                           CONSTANT)                           ///< Altitude as specified by altitudeMode. Not necessarily true mission item altitude
     Q_PROPERTY(AltitudeMode     altitudeMode            READ altitudeMode           WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
-    Q_PROPERTY(MavlinkQmlSingleton::Qml_MAV_CMD command READ command                WRITE setCommand            NOTIFY commandChanged)
+    Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
 
     /// Optional sections
     Q_PROPERTY(QObject*         speedSection            READ speedSection                                       NOTIFY speedSectionChanged)
@@ -65,7 +65,7 @@ public:
     // Property accesors
     
     QString         category            (void) const;
-    MavlinkQmlSingleton::Qml_MAV_CMD command(void) const { return (MavlinkQmlSingleton::Qml_MAV_CMD)_missionItem._commandFact.cookedValue().toInt(); }
+    int             command(void) const { return _missionItem._commandFact.cookedValue().toInt(); }
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
     bool            specifiesAltitude   (void) const;
@@ -85,7 +85,7 @@ public:
     
     void setCommandByIndex(int index);
 
-    void setCommand(MavlinkQmlSingleton::Qml_MAV_CMD command);
+    void setCommand(int command);
 
     void setAltDifference   (double altDifference);
     void setAltPercent      (double altPercent);

@@ -4255,13 +4255,19 @@ default 1.5 turns per second</short_desc>
       <increment>5</increment>
       <scope>modules/mc_att_control</scope>
     </parameter>
+    <parameter default="0" name="MC_AIRMODE" type="INT32">
+      <short_desc>Multicopter air-mode</short_desc>
+      <long_desc>The air-mode enables the mixer to increase the total thrust of the multirotor in order to keep attitude and rate control even at low and high throttle. This function should be disabled during tuning as it will help the controller to diverge if the closed-loop is unstable.</long_desc>
+      <boolean />
+      <scope>modules/mc_att_control</scope>
+    </parameter>
     <parameter default="0" name="MC_BAT_SCALE_EN" type="INT32">
       <short_desc>Battery power level scaler</short_desc>
       <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The copter should constantly behave as if it was fully charged with reduced max acceleration at lower battery percentages. i.e. if hover is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
       <boolean />
       <scope>modules/mc_att_control</scope>
     </parameter>
-    <parameter default="30." name="MC_DTERM_CUTOFF" type="FLOAT">
+    <parameter default="0." name="MC_DTERM_CUTOFF" type="FLOAT">
       <short_desc>Cutoff frequency for the low pass filter on the D-term in the rate controller</short_desc>
       <long_desc>The D-term uses the derivative of the rate and thus is the most susceptible to noise. Therefore, using a D-term filter allows to decrease the driver-level filtering, which leads to reduced control latency and permits to increase the P gains. A value of 0 disables the filter.</long_desc>
       <min>0</min>
@@ -9524,11 +9530,6 @@ tailsitter, tiltrotor: main throttle</short_desc>
       <increment>1</increment>
       <scope>modules/vtol_att_control</scope>
     </parameter>
-    <parameter default="0" name="VT_OPT_RECOV_EN" type="INT32">
-      <short_desc>Optimal recovery strategy for pitch-weak tailsitters</short_desc>
-      <boolean />
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
     <parameter default="3.0" name="VT_PSHER_RMP_DT" type="FLOAT">
       <short_desc>Defines the time window during which the pusher throttle will be ramped up linearly to VT_F_TRANS_THR during a transition
 to fixed wing mode. Zero or negative values will produce an instant throttle rise to VT_F_TRANS_THR</short_desc>
@@ -9609,6 +9610,51 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <decimal>3</decimal>
       <increment>0.01</increment>
       <scope>modules/vtol_att_control</scope>
+    </parameter>
+  </group>
+  <group name="Wind Estimator">
+    <parameter default="1" name="WEST_BETA_GATE" type="INT32">
+      <short_desc>Gate size for true sideslip fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1</min>
+      <max>5</max>
+      <unit>SD</unit>
+      <scope>modules/wind_estimator</scope>
+    </parameter>
+    <parameter default="0.3" name="WEST_BETA_NOISE" type="FLOAT">
+      <short_desc>Wind estimator sideslip measurement noise</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>rad</unit>
+      <scope>modules/wind_estimator</scope>
+    </parameter>
+    <parameter default="0.0001" name="WEST_SC_P_NOISE" type="FLOAT">
+      <short_desc>Wind estimator true airspeed scale process noise</short_desc>
+      <min>0</min>
+      <max>0.1</max>
+      <scope>modules/wind_estimator</scope>
+    </parameter>
+    <parameter default="3" name="WEST_TAS_GATE" type="INT32">
+      <short_desc>Gate size for true airspeed fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1</min>
+      <max>5</max>
+      <unit>SD</unit>
+      <scope>modules/wind_estimator</scope>
+    </parameter>
+    <parameter default="1.4" name="WEST_TAS_NOISE" type="FLOAT">
+      <short_desc>Wind estimator true airspeed measurement noise</short_desc>
+      <min>0</min>
+      <max>4</max>
+      <unit>m/s</unit>
+      <scope>modules/wind_estimator</scope>
+    </parameter>
+    <parameter default="0.1" name="WEST_W_P_NOISE" type="FLOAT">
+      <short_desc>Wind estimator wind process noise</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>m/s/s</unit>
+      <scope>modules/wind_estimator</scope>
     </parameter>
   </group>
   <group name="Miscellaneous">

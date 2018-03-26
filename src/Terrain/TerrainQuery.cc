@@ -104,7 +104,7 @@ void TerrainAirMapQuery::_requestFinished(void)
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     if (reply->error() != QNetworkReply::NoError) {
-        qCDebug(TerrainQueryLog) << "_requestFinished error:" << reply->error();
+        qCDebug(TerrainQueryLog) << "_requestFinished error:data" << reply->error() << reply->readAll();
         reply->deleteLater();
         _requestFailed();
         return;
