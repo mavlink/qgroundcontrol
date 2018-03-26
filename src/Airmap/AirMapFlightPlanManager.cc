@@ -435,7 +435,7 @@ AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rules
                                     break;
                                 case AirspaceRuleFeature::Float:
                                     //-- Sanity check for floats
-                                    if(isfinite(feature->value().toFloat())) {
+                                    if(std::isfinite(feature->value().toFloat())) {
                                         features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toFloat());
                                     }
                                     break;
