@@ -410,7 +410,7 @@ Item {
                 width:          _buttonWidth
                 text:           qsTr("Airspeed")
                 visible:        (controller.vehicle.fixedWing || controller.vehicle.vtol) &&
-                                controller.getParameterFact(-1, "FW_ARSP_MODE").value === false &&
+                                controller.getParameterFact(-1, "FW_ARSP_MODE").value === 0 &&
                                 controller.getParameterFact(-1, "CBRK_AIRSPD_CHK").value !== 162128 &&
                                 QGroundControl.corePlugin.options.showSensorCalibrationAirspeed &&
                                 showSensorCalibrationAirspeed
