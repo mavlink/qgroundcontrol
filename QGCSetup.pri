@@ -165,6 +165,11 @@ LinuxBuild {
     # QT_INSTALL_QML
     QMAKE_POST_LINK += && $$QMAKE_COPY --dereference --recursive $$[QT_INSTALL_QML] $$DESTDIR/Qt/
 
+    # Airmap
+    contains (DEFINES, QGC_AIRMAP_ENABLED) {
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$PWD/libs/airmapd/linux/Qt.5.9/libairmap-qt.so.0.0.1 $$DESTDIR/Qt/libs/
+    }
+
     # QGroundControl start script
     QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
     QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol.desktop $$DESTDIR
