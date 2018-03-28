@@ -59,26 +59,41 @@ Item {
                 id:                     commPortCombo
                 anchors.verticalCenter: parent.verticalCenter
                 width:                  _secondColumn
-                model:                  QGroundControl.linkManager.serialPortStrings
                 visible:                QGroundControl.linkManager.serialPortStrings.length > 0
+
                 onActivated: {
                     if (index != -1) {
-                        subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
+                        if (index >= QGroundControl.linkManager.serialPortStrings.length) {
+                            // This item was adding at the end, must use added text as name
+                            subEditConfig.portName = commPortCombo.textAt(index)
+                        } else {
+                            subEditConfig.portName = QGroundControl.linkManager.serialPorts[index]
+                        }
                     }
                 }
                 Component.onCompleted: {
-                    if(subEditConfig != null) {
-                        if(subEditConfig.portDisplayName === "" && QGroundControl.linkManager.serialPorts.length > 0)
+                    var index
+                    var serialPorts = [ ]
+
+                    for (var i=0; i<QGroundControl.linkManager.serialPortStrings.length; i++) {
+                        serialPorts.push(QGroundControl.linkManager.serialPortStrings[i])
+                    }
+
+                    if (subEditConfig != null) {
+                        if (subEditConfig.portDisplayName === "" && QGroundControl.linkManager.serialPorts.length > 0) {
                             subEditConfig.portName = QGroundControl.linkManager.serialPorts[0]
-                        var index = commPortCombo.find(subEditConfig.portDisplayName)
+                        }
+                        index = serialPorts.indexOf(subEditConfig.portDisplayName)
                         if (index === -1) {
-                            console.warn(qsTr("Serial Port not present"), subEditConfig.portName)
-                        } else {
-                            commPortCombo.currentIndex = index
+                            serialPorts.push(subEditConfig.portName)
+                            index = serialPorts.indexOf(subEditConfig.portName)
                         }
                     } else {
-                        commPortCombo.currentIndex = 0
+                        index = 0
                     }
+
+                    commPortCombo.model = serialPorts
+                    commPortCombo.currentIndex = index
                 }
             }
         }
