@@ -37,7 +37,8 @@ class VehicleComponent : public QObject
     Q_PROPERTY(QUrl     setupSource             READ setupSource            NOTIFY setupSourceChanged)
     Q_PROPERTY(QUrl     summaryQmlSource        READ summaryQmlSource       CONSTANT)
     Q_PROPERTY(bool     allowSetupWhileArmed    READ allowSetupWhileArmed   CONSTANT)
-    
+    Q_PROPERTY(bool     allowSetupWhileFlying   READ allowSetupWhileFlying  CONSTANT)
+
 public:
     VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     ~VehicleComponent();
@@ -51,8 +52,11 @@ public:
     virtual QUrl summaryQmlSource(void) const = 0;
 
     // @return true: Setup panel can be shown while vehicle is armed
-    virtual bool allowSetupWhileArmed(void) const;
+    virtual bool allowSetupWhileArmed(void) const { return false; } // Defaults to false
     
+    // @return true: Setup panel can be shown while vehicle is flying (and armed)
+    virtual bool allowSetupWhileFlying(void) const { return false; } // Defaults to false
+
     virtual void addSummaryQmlComponent(QQmlContext* context, QQuickItem* parent);
     
     /// @brief Returns an list of parameter names for which a change should cause the setupCompleteChanged
