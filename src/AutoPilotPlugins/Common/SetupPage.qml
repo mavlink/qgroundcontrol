@@ -23,7 +23,7 @@ import QGroundControl.Controllers   1.0
 QGCView {
     id:             setupView
     viewPanel:      setupPanel
-    enabled:        !_shouldDisableWhenArmed
+    enabled:        !_disableDueToArmed && !_disableDueToFlying
 
     property alias  pageComponent:      pageLoader.sourceComponent
     property string pageName:           vehicleComponent ? vehicleComponent.name : ""
@@ -31,12 +31,15 @@ QGCView {
     property real   availableWidth:     width - pageLoader.x
     property real   availableHeight:    height - pageLoader.y
 
-    property bool _vehicleArmed:         QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.armed : false
-    property bool _shouldDisableWhenArmed: _vehicleArmed ? (vehicleComponent ? !vehicleComponent.allowSetupWhileArmed : false) : false
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed : false
+    property bool   _vehicleFlying:         _activeVehicle ? _activeVehicle.flying : false
+    property bool   _disableDueToArmed:     vehicleComponent ? (!vehicleComponent.allowSetupWhileArmed && _vehicleArmed) : false
+    property bool   _disableDueToFlying:    vehicleComponent ? (!vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false
+    property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
 
     property real _margins:             ScreenTools.defaultFontPixelHeight * 0.5
     property string _pageTitle:         qsTr("%1 Setup").arg(pageName)
-
 
     QGCPalette { id: qgcPal; colorGroupEnabled: setupPanel.enabled }
 
@@ -57,7 +60,7 @@ QGCView {
 
                 QGCLabel {
                     font.pointSize: ScreenTools.largeFontPointSize
-                    text:           _shouldDisableWhenArmed ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is armed)") + "</font>" : _pageTitle
+                    text:           !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
                     visible:        !ScreenTools.isShortScreen
                 }
 
@@ -78,7 +81,7 @@ QGCView {
             // Overlay to display when vehicle is armed and this setup page needs
             // to be disabled
             Rectangle {
-                visible:            _shouldDisableWhenArmed
+                visible:            !setupView.enabled
                 anchors.fill:       pageLoader
                 color:              "black"
                 opacity:            0.5
