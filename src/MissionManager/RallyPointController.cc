@@ -300,10 +300,8 @@ bool RallyPointController::showPlanFromManagerVehicle (void)
             qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: syncInProgress wait for signal";
             return true;
         } else {
-            // Fake a _loadComplete with the current items
-            qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: sync complete simulate signal";
+            qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: sync complete";
             _itemsRequested = true;
-            _managerLoadComplete(_rallyPointManager->points());
             return false;
         }
     }
