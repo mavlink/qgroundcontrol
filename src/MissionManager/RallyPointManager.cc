@@ -17,7 +17,6 @@ RallyPointManager::RallyPointManager(Vehicle* vehicle)
     : QObject(vehicle)
     , _vehicle(vehicle)
     , _planManager              (vehicle, MAV_MISSION_TYPE_RALLY)
-//    , _firstParamLoadComplete   (false)
 {
     connect(&_planManager, &PlanManager::inProgressChanged,         this, &RallyPointManager::inProgressChanged);
     connect(&_planManager, &PlanManager::error,                     this, &RallyPointManager::error);
