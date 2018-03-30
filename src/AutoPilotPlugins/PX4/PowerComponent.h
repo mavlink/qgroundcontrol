@@ -25,7 +25,7 @@ public:
     PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Overrides from VehicleComponent
-    virtual QStringList setupCompleteChangedTriggerList(void) const;
+    virtual QStringList setupCompleteChangedTriggerList(void) const override;
     
     // Overrides from VehicleComponent
     QString name                    (void) const override;
