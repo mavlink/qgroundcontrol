@@ -70,8 +70,8 @@ signals:
 
 protected:
     PlanMasterController*   _masterController;
-    Vehicle*                _controllerVehicle;
-    Vehicle*                _managerVehicle;
+    Vehicle*                _controllerVehicle; ///< Offline controller vehicle
+    Vehicle*                _managerVehicle;    ///< Either active vehicle or _controllerVehicle if none
     bool                    _editMode;
 };
 
