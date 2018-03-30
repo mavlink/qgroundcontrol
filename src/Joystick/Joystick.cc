@@ -65,7 +65,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _exponential(0)
     , _accumulator(false)
     , _deadband(false)
-    , _circleCorrection(false)
+    , _circleCorrection(true)
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
