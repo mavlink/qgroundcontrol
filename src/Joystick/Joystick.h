@@ -61,7 +61,6 @@ public:
     Q_PROPERTY(QString name READ name CONSTANT)
 
     Q_PROPERTY(bool calibrated MEMBER _calibrated NOTIFY calibratedChanged)
-    Q_PROPERTY(bool outputEnabled MEMBER _outputEnabled WRITE setOutputEnabled NOTIFY outputEnabledChanged)
 
     Q_PROPERTY(int totalButtonCount  READ totalButtonCount    CONSTANT)
     Q_PROPERTY(int axisCount    READ axisCount      CONSTANT)
@@ -129,11 +128,9 @@ public:
 
     /// Set the current calibration mode
     void setCalibrationMode(bool calibrating);
-    void setOutputEnabled(bool enabled);
 
 signals:
     void calibratedChanged(bool calibrated);
-    void outputEnabledChanged(bool enabled);
 
     // The raw signals are only meant for use by calibration
     void rawAxisValueChanged(int index, int value);
@@ -202,7 +199,6 @@ protected:
 
     static int          _transmitterMode;
     bool                _calibrationMode;
-    bool                _outputEnabled;
 
     int*                _rgAxisValues;
     Calibration_t*      _rgCalibration;
