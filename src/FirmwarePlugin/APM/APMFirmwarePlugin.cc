@@ -990,26 +990,13 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
             }
         }
     } else {
-        // Copter will not automatically start a mission from the ground so we have to command it to takeoff first
-        if (_guidedModeTakeoff(vehicle, qQNaN())) {
-            double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
-
-            // Wait for vehicle to get off ground before switching to auto (10 seconds)
-            bool didTakeoff = false;
-            for (int i=0; i<100; i++) {
-                if (vehicle->altitudeRelative()->rawValue().toDouble() >= currentAlt + 1.0) {
-                    didTakeoff = true;
-                    break;
-                }
-                QGC::SLEEP::msleep(100);
-                qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
-            }
-
-            if (!didTakeoff) {
-                qgcApp()->showMessage(tr("Unable to start mission. Vehicle takeoff failed."));
-                return;
-            }
+        // Copter will automatically start a mission from the ground if you change to Auto and do a START+MIS
+        if (!_setFlightModeAndValidate(vehicle, "Auto")) {
+            qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
+            return;
         }
+
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
 
     // Final step is to go into Auto
