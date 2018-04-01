@@ -4267,7 +4267,7 @@ default 1.5 turns per second</short_desc>
       <boolean />
       <scope>modules/mc_att_control</scope>
     </parameter>
-    <parameter default="0." name="MC_DTERM_CUTOFF" type="FLOAT">
+    <parameter default="30." name="MC_DTERM_CUTOFF" type="FLOAT">
       <short_desc>Cutoff frequency for the low pass filter on the D-term in the rate controller</short_desc>
       <long_desc>The D-term uses the derivative of the rate and thus is the most susceptible to noise. Therefore, using a D-term filter allows to decrease the driver-level filtering, which leads to reduced control latency and permits to increase the P gains. A value of 0 disables the filter.</long_desc>
       <min>0</min>
