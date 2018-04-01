@@ -951,7 +951,6 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
         return false;
     }
 
-    // FIXME: Is this needed?
     if (!_armVehicleAndValidate(vehicle)) {
         qgcApp()->showMessage(tr("Unable to takeoff: Vehicle failed to arm."));
         return false;
@@ -966,13 +965,34 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
     return true;
 }
 
-// FIXME: Review for a better way to do this
 void APMFirmwarePlugin::startMission(Vehicle* vehicle)
 {
-    double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
+    if (vehicle->flying()) {
+        // Vehicle already in the air, we just need to switch to auto
+        if (!_setFlightModeAndValidate(vehicle, "Auto")) {
+            qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+        }
+        return;
+    }
 
-    if (!vehicle->flying()) {
+    if (vehicle->fixedWing()) {
+        // Fixed wing will automatically start a mission if you switch to Auto while armed
+        if (!vehicle->armed()) {
+            // First switch to flight mode we can arm from
+            if (!_setFlightModeAndValidate(vehicle, "Guided")) {
+                qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
+                return;
+            }
+
+            if (!_armVehicleAndValidate(vehicle)) {
+                qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
+                return;
+            }
+        }
+    } else {
+        // Copter will not automatically start a mission from the ground so we have to command it to takeoff first
         if (_guidedModeTakeoff(vehicle, qQNaN())) {
+            double currentAlt = vehicle->altitudeRelative()->rawValue().toDouble();
 
             // Wait for vehicle to get off ground before switching to auto (10 seconds)
             bool didTakeoff = false;
@@ -989,13 +1009,12 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
                 qgcApp()->showMessage(tr("Unable to start mission. Vehicle takeoff failed."));
                 return;
             }
-        } else {
-            return;
         }
     }
 
-    if (!_setFlightModeAndValidate(vehicle, missionFlightMode())) {
-        qgcApp()->showMessage(tr("Unable to start mission. Vehicle failed to change to auto."));
+    // Final step is to go into Auto
+    if (!_setFlightModeAndValidate(vehicle, "Auto")) {
+        qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
         return;
     }
 }
