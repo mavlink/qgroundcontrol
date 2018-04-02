@@ -10,6 +10,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
@@ -30,6 +31,8 @@ QGCView {
     property string pageDescription:    vehicleComponent ? vehicleComponent.description : ""
     property real   availableWidth:     width - pageLoader.x
     property real   availableHeight:    height - pageLoader.y
+    property bool   showAdvanced:       false
+    property alias  advanced:           advancedCheckBox.checked
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed : false
@@ -53,31 +56,45 @@ QGCView {
             contentHeight:  pageLoader.y + pageLoader.item.height
             clip:           true
 
-            Column {
-                id:                 headingColumn
-                width:              setupPanel.width
+            RowLayout {
+                id:                 headingRow
+                anchors.left:       parent.left
+                anchors.right:      parent.right
                 spacing:            _margins
+                layoutDirection:    Qt.RightToLeft
 
-                QGCLabel {
-                    font.pointSize: ScreenTools.largeFontPointSize
-                    text:           !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
-                    visible:        !ScreenTools.isShortScreen
+                QGCCheckBox {
+                    id:         advancedCheckBox
+                    text:       qsTr("Advanced")
+                    visible:    showAdvanced
                 }
 
-                QGCLabel {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    wrapMode:       Text.WordWrap
-                    text:           pageDescription
-                    visible:        !ScreenTools.isShortScreen
+                Column {
+                    spacing:            _margins
+                    Layout.fillWidth:   true
+
+                    QGCLabel {
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        text:           !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
+                        visible:        !ScreenTools.isShortScreen
+                    }
+
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           pageDescription
+                        visible:        !ScreenTools.isShortScreen
+                    }
                 }
             }
 
             Loader {
                 id:                 pageLoader
                 anchors.topMargin:  _margins
-                anchors.top:        headingColumn.bottom
+                anchors.top:        headingRow.bottom
             }
+
             // Overlay to display when vehicle is armed and this setup page needs
             // to be disabled
             Rectangle {

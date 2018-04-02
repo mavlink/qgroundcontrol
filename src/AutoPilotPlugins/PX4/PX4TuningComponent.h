@@ -32,6 +32,7 @@ public:
     QUrl setupSource(void) const final;
     QUrl summaryQmlSource(void) const final;
     bool allowSetupWhileArmed(void) const final { return true; }
+    bool allowSetupWhileFlying(void) const final { return true; }
 
 private:
     const QString   _name;
