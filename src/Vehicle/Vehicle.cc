@@ -1319,6 +1319,20 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     }
 
     _batteryFactGroup.cellCount()->setRawValue(cellCount);
+
+    //-- Time remaining in seconds (0 means not supported)
+    _batteryFactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
+    //-- Battery charge state (0 means not supported)
+    if(bat_status.charge_state <= MAV_BATTERY_CHARGE_STATE_UNHEALTHY) {
+        _batteryFactGroup.chargeState()->setRawValue(bat_status.charge_state);
+    } else {
+        _batteryFactGroup.chargeState()->setRawValue(0);
+    }
+    //-- TODO: Somewhere, actions would be taken based on this chargeState:
+    //   MAV_BATTERY_CHARGE_STATE_CRITICAL:     Battery state is critical, return / abort immediately
+    //   MAV_BATTERY_CHARGE_STATE_EMERGENCY:    Battery state is too low for ordinary abortion, fastest possible emergency stop preventing damage
+    //   MAV_BATTERY_CHARGE_STATE_FAILED:       Battery failed, damage unavoidable
+    //   MAV_BATTERY_CHARGE_STATE_UNHEALTHY:    Battery is diagnosed to be broken or an error occurred, usage is discouraged / prohibited
 }
 
 void Vehicle::_setHomePosition(QGeoCoordinate& homeCoord)
@@ -3247,6 +3261,8 @@ const char* VehicleBatteryFactGroup::_currentFactName =                     "cur
 const char* VehicleBatteryFactGroup::_temperatureFactName =                 "temperature";
 const char* VehicleBatteryFactGroup::_cellCountFactName =                   "cellCount";
 const char* VehicleBatteryFactGroup::_instantPowerFactName =                "instantPower";
+const char* VehicleBatteryFactGroup::_timeRemainingFactName =               "timeRemaining";
+const char* VehicleBatteryFactGroup::_chargeStateFactName =                 "chargeState";
 
 const char* VehicleBatteryFactGroup::_settingsGroup =                       "Vehicle.battery";
 
@@ -3267,6 +3283,8 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     , _temperatureFact              (0, _temperatureFactName,               FactMetaData::valueTypeDouble)
     , _cellCountFact                (0, _cellCountFactName,                 FactMetaData::valueTypeInt32)
     , _instantPowerFact             (0, _instantPowerFactName,              FactMetaData::valueTypeFloat)
+    , _timeRemainingFact            (0, _timeRemainingFactName,             FactMetaData::valueTypeInt32)
+    , _chargeStateFact              (0, _chargeStateFactName,               FactMetaData::valueTypeUint8)
 {
     _addFact(&_voltageFact,                 _voltageFactName);
     _addFact(&_percentRemainingFact,        _percentRemainingFactName);
@@ -3275,6 +3293,8 @@ VehicleBatteryFactGroup::VehicleBatteryFactGroup(QObject* parent)
     _addFact(&_temperatureFact,             _temperatureFactName);
     _addFact(&_cellCountFact,               _cellCountFactName);
     _addFact(&_instantPowerFact,            _instantPowerFactName);
+    _addFact(&_timeRemainingFact,           _timeRemainingFactName);
+    _addFact(&_chargeStateFact,             _chargeStateFactName);
 
     // Start out as not available
     _voltageFact.setRawValue            (_voltageUnavailable);
