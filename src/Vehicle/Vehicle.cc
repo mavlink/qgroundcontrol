@@ -10,6 +10,7 @@
 #include <QTime>
 #include <QDateTime>
 #include <QLocale>
+#include <QQuaternion>
 
 #include "Vehicle.h"
 #include "MAVLinkProtocol.h"
@@ -54,6 +55,9 @@ const char* Vehicle::_joystickEnabledSettingsKey =  "JoystickEnabled";
 const char* Vehicle::_rollFactName =                "roll";
 const char* Vehicle::_pitchFactName =               "pitch";
 const char* Vehicle::_headingFactName =             "heading";
+const char* Vehicle::_rollRateFactName =             "rollRate";
+const char* Vehicle::_pitchRateFactName =           "pitchRate";
+const char* Vehicle::_yawRateFactName =             "yawRate";
 const char* Vehicle::_airSpeedFactName =            "airSpeed";
 const char* Vehicle::_groundSpeedFactName =         "groundSpeed";
 const char* Vehicle::_climbRateFactName =           "climbRate";
@@ -166,6 +170,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
+    , _rollRateFact         (0, _rollRateFactName,          FactMetaData::valueTypeDouble)
+    , _pitchRateFact        (0, _pitchRateFactName,         FactMetaData::valueTypeDouble)
+    , _yawRateFact          (0, _yawRateFactName,           FactMetaData::valueTypeDouble)
     , _groundSpeedFact      (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
     , _airSpeedFact         (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
     , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
@@ -353,6 +360,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
+    , _rollRateFact         (0, _rollRateFactName,          FactMetaData::valueTypeDouble)
+    , _pitchRateFact        (0, _pitchRateFactName,         FactMetaData::valueTypeDouble)
+    , _yawRateFact          (0, _yawRateFactName,           FactMetaData::valueTypeDouble)
     , _groundSpeedFact      (0, _groundSpeedFactName,       FactMetaData::valueTypeDouble)
     , _airSpeedFact         (0, _airSpeedFactName,          FactMetaData::valueTypeDouble)
     , _climbRateFact        (0, _climbRateFactName,         FactMetaData::valueTypeDouble)
@@ -413,6 +423,9 @@ void Vehicle::_commonInit(void)
     _addFact(&_rollFact,                _rollFactName);
     _addFact(&_pitchFact,               _pitchFactName);
     _addFact(&_headingFact,             _headingFactName);
+    _addFact(&_rollRateFact,            _rollRateFactName);
+    _addFact(&_pitchRateFact,           _pitchRateFactName);
+    _addFact(&_yawRateFact,             _yawRateFactName);
     _addFact(&_groundSpeedFact,         _groundSpeedFactName);
     _addFact(&_airSpeedFact,            _airSpeedFactName);
     _addFact(&_climbRateFact,           _climbRateFactName);
@@ -696,6 +709,12 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
+    case MAVLINK_MSG_ID_ATTITUDE:
+        _handleAttitude(message);
+        break;
+    case MAVLINK_MSG_ID_ATTITUDE_TARGET:
+        _handleAttitudeTarget(message);
+        break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
@@ -758,6 +777,35 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _airSpeedFact.setRawValue(qIsNaN(vfrHud.airspeed) ? 0 : vfrHud.airspeed);
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
+}
+
+void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
+{
+    mavlink_attitude_target_t attitudeTarget;
+
+    mavlink_msg_attitude_target_decode(&message, &attitudeTarget);
+
+    float roll, pitch, yaw;
+    mavlink_quaternion_to_euler(attitudeTarget.q, &roll, &pitch, &yaw);
+
+    _setpointFactGroup.roll()->setRawValue(roll);
+    _setpointFactGroup.pitch()->setRawValue(pitch);
+    _setpointFactGroup.yaw()->setRawValue(yaw);
+
+    _setpointFactGroup.rollRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_roll_rate));
+    _setpointFactGroup.pitchRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_pitch_rate));
+    _setpointFactGroup.yawRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_yaw_rate));
+}
+
+void Vehicle::_handleAttitude(mavlink_message_t& message)
+{
+    mavlink_attitude_t attitude;
+
+    mavlink_msg_attitude_decode(&message, &attitude);
+
+    rollRate()->setRawValue(qRadiansToDegrees(attitude.rollspeed));
+    pitchRate()->setRawValue(qRadiansToDegrees(attitude.pitchspeed));
+    yawRate()->setRawValue(qRadiansToDegrees(attitude.yawspeed));
 }
 
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
@@ -869,18 +917,6 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
         { HL_FAILURE_FLAG_3D_ACCEL,                 MAV_SYS_STATUS_SENSOR_3D_ACCEL },
         { HL_FAILURE_FLAG_3D_GYRO,                  MAV_SYS_STATUS_SENSOR_3D_GYRO },
         { HL_FAILURE_FLAG_3D_MAG,                   MAV_SYS_STATUS_SENSOR_3D_MAG },
-#if 0
-        // FIXME: These don't currently map to existing sensor health bits. Support needs to be added to show them
-        // on health page of instrument panel as well.
-        { HL_FAILURE_FLAG_TERRAIN=64, /* Terrain subsystem failure. | */
-        { HL_FAILURE_FLAG_BATTERY=128, /* Battery failure/critical low battery. | */
-        { HL_FAILURE_FLAG_RC_RECEIVER=256, /* RC receiver failure/no rc connection. | */
-        { HL_FAILURE_FLAG_OFFBOARD_LINK=512, /* Offboard link failure. | */
-        { HL_FAILURE_FLAG_ENGINE=1024, /* Engine failure. | */
-        { HL_FAILURE_FLAG_GEOFENCE=2048, /* Geofence violation. | */
-        { HL_FAILURE_FLAG_ESTIMATOR=4096, /* Estimator failure, for example measurement rejection or large variances. | */
-        { HL_FAILURE_FLAG_MISSION=8192, /* Mission failure. | */
-#endif
     };
 
     // Map from MAV_FAILURE bits to standard SYS_STATUS message handling
@@ -3217,7 +3253,6 @@ VehicleVibrationFactGroup::VehicleVibrationFactGroup(QObject* parent)
     _zAxisFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
 
-
 const char* VehicleTemperatureFactGroup::_temperature1FactName =      "temperature1";
 const char* VehicleTemperatureFactGroup::_temperature2FactName =      "temperature2";
 const char* VehicleTemperatureFactGroup::_temperature3FactName =      "temperature3";
@@ -3260,4 +3295,36 @@ void VehicleClockFactGroup::_updateAllValues(void)
     _currentDateFact.setRawValue(QDateTime::currentDateTime().toString(QLocale::system().dateFormat(QLocale::ShortFormat)));
 
     FactGroup::_updateAllValues();
+}
+
+const char* VehicleSetpointFactGroup::_rollFactName =       "roll";
+const char* VehicleSetpointFactGroup::_pitchFactName =      "pitch";
+const char* VehicleSetpointFactGroup::_yawFactName =        "yaw";
+const char* VehicleSetpointFactGroup::_rollRateFactName =   "rollRate";
+const char* VehicleSetpointFactGroup::_pitchRateFactName =  "pitchRate";
+const char* VehicleSetpointFactGroup::_yawRateFactName =    "yawRate";
+
+VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
+    : FactGroup     (1000, ":/json/Vehicle/SetpointFact.json", parent)
+    , _rollFact     (0, _rollFactName,      FactMetaData::valueTypeDouble)
+    , _pitchFact    (0, _pitchFactName,     FactMetaData::valueTypeDouble)
+    , _yawFact      (0, _yawFactName,       FactMetaData::valueTypeDouble)
+    , _rollRateFact (0, _rollRateFactName,  FactMetaData::valueTypeDouble)
+    , _pitchRateFact(0, _pitchRateFactName, FactMetaData::valueTypeDouble)
+    , _yawRateFact  (0, _yawRateFactName,   FactMetaData::valueTypeDouble)
+{
+    _addFact(&_rollFact,        _rollFactName);
+    _addFact(&_pitchFact,       _pitchFactName);
+    _addFact(&_yawFact,         _yawFactName);
+    _addFact(&_rollRateFact,    _rollRateFactName);
+    _addFact(&_pitchRateFact,   _pitchRateFactName);
+    _addFact(&_yawRateFact,     _yawRateFactName);
+
+    // Start out as not available "--.--"
+    _rollFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _pitchFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _yawFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rollRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _pitchRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _yawRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }

@@ -224,6 +224,7 @@
         <file alias="Vehicle/ClockFact.json">src/Vehicle/ClockFact.json</file>
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
         <file alias="Vehicle/GPSRTKFact.json">src/Vehicle/GPSRTKFact.json</file>
+		<file alias="Vehicle/SetpointFact.json">src/Vehicle/SetpointFact.json</file>
         <file alias="Vehicle/SubmarineFact.json">src/Vehicle/SubmarineFact.json</file>
         <file alias="Vehicle/TemperatureFact.json">src/Vehicle/TemperatureFact.json</file>
         <file alias="Vehicle/VehicleFact.json">src/Vehicle/VehicleFact.json</file>
