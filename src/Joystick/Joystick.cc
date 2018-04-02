@@ -445,7 +445,7 @@ void Joystick::run(void)
             }
         }
 
-        if (_outputEnabled && _calibrated) {
+        if (_activeVehicle->joystickEnabled() && !_calibrationMode && _calibrated) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
@@ -798,18 +798,8 @@ void Joystick::setCalibrationMode(bool calibrating)
     else if (_pollingStartedForCalibration) {
         stopPolling();
     }
-    if (calibrating){
-        setOutputEnabled(false); //Disable the joystick output before calibrating
-    }
-    else if (!calibrating && _calibrated){
-        setOutputEnabled(true); //Enable joystick output after calibration
-    }
 }
 
-void Joystick::setOutputEnabled(bool enabled){
-    _outputEnabled = enabled;
-    emit outputEnabledChanged(_outputEnabled);
-}
 
 void Joystick::_buttonAction(const QString& action)
 {

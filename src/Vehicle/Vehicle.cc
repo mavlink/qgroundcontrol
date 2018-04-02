@@ -1823,6 +1823,7 @@ void Vehicle::_loadSettings(void)
     // Joystick enabled is a global setting so first make sure there are any joysticks connected
     if (_toolbox->joystickManager()->joysticks().count()) {
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
+        _startJoystick(true);
     }
 }
 
@@ -1875,7 +1876,6 @@ bool Vehicle::joystickEnabled(void)
 void Vehicle::setJoystickEnabled(bool enabled)
 {
     _joystickEnabled = enabled;
-    _startJoystick(_joystickEnabled);
     _saveSettings();
     emit joystickEnabledChanged(_joystickEnabled);
 }
@@ -1885,9 +1885,7 @@ void Vehicle::_startJoystick(bool start)
     Joystick* joystick = _joystickManager->activeJoystick();
     if (joystick) {
         if (start) {
-            if (_joystickEnabled) {
-                joystick->startPolling(this);
-            }
+            joystick->startPolling(this);
         } else {
             joystick->stopPolling();
         }
@@ -1903,6 +1901,7 @@ void Vehicle::setActive(bool active)
 {
     if (_active != active) {
         _active = active;
+        _startJoystick(false);
         emit activeChanged(_active);
     }
 }
