@@ -64,6 +64,7 @@ public:
     void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
 
 private slots:
+    void _requestError(QNetworkReply::NetworkError code);
     void _requestFinished(void);
 
 private:

@@ -97,6 +97,17 @@ void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQue
     }
 
     connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
+    connect(networkReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &TerrainAirMapQuery::_requestError);
+}
+
+void TerrainAirMapQuery::_requestError(QNetworkReply::NetworkError code)
+{
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+
+    if (code != QNetworkReply::NoError) {
+        qCDebug(TerrainQueryLog) << "_requestError error:url:data" << reply->error() << reply->url() << reply->readAll();
+        return;
+    }
 }
 
 void TerrainAirMapQuery::_requestFinished(void)
@@ -104,7 +115,7 @@ void TerrainAirMapQuery::_requestFinished(void)
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     if (reply->error() != QNetworkReply::NoError) {
-        qCDebug(TerrainQueryLog) << "_requestFinished error:data" << reply->error() << reply->readAll();
+        qCDebug(TerrainQueryLog) << "_requestFinished error:url:data" << reply->error() << reply->url() << reply->readAll();
         reply->deleteLater();
         _requestFailed();
         return;
@@ -133,7 +144,7 @@ void TerrainAirMapQuery::_requestFinished(void)
 
     // Send back data
     const QJsonValue& jsonData = rootObject["data"];
-    qCDebug(TerrainQueryLog) << "_requestFinished sucess";
+    qCDebug(TerrainQueryLog) << "_requestFinished success";
     switch (_queryMode) {
     case QueryModeCoordinates:
         emit _parseCoordinateData(jsonData);
