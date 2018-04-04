@@ -10,6 +10,7 @@
 #include "TerrainQuery.h"
 #include "QGCMapEngine.h"
 #include "QGeoMapReplyQGC.h"
+#include "QGCApplication.h"
 
 #include <QUrl>
 #include <QUrlQuery>
@@ -36,6 +37,11 @@ TerrainAirMapQuery::TerrainAirMapQuery(QObject* parent)
 
 void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
 {
+    if (qgcApp()->runningUnitTests()) {
+        emit coordinateHeights(false, QList<double>());
+        return;
+    }
+
     QString points;
     foreach (const QGeoCoordinate& coord, coordinates) {
             points += QString::number(coord.latitude(), 'f', 10) + ","
@@ -52,6 +58,11 @@ void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& c
 
 void TerrainAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
 {
+    if (qgcApp()->runningUnitTests()) {
+        emit pathHeights(false, qQNaN(), qQNaN(), QList<double>());
+        return;
+    }
+
     QString points;
     points += QString::number(fromCoord.latitude(), 'f', 10) + ","
             + QString::number(fromCoord.longitude(), 'f', 10) + ",";
@@ -67,6 +78,11 @@ void TerrainAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, con
 
 void TerrainAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
 {
+    if (qgcApp()->runningUnitTests()) {
+        emit carpetHeights(false, qQNaN(), qQNaN(), QList<QList<double>>());
+        return;
+    }
+
     QString points;
     points += QString::number(swCoord.latitude(), 'f', 10) + ","
             + QString::number(swCoord.longitude(), 'f', 10) + ",";
@@ -102,6 +118,17 @@ void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQue
     }
 
     connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
+    connect(networkReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &TerrainAirMapQuery::_requestError);
+}
+
+void TerrainAirMapQuery::_requestError(QNetworkReply::NetworkError code)
+{
+    QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
+
+    if (code != QNetworkReply::NoError) {
+        qCDebug(TerrainQueryLog) << "_requestError error:url:data" << reply->error() << reply->url() << reply->readAll();
+        return;
+    }
 }
 
 void TerrainAirMapQuery::_requestFinished(void)
@@ -109,7 +136,7 @@ void TerrainAirMapQuery::_requestFinished(void)
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     if (reply->error() != QNetworkReply::NoError) {
-        qCDebug(TerrainQueryLog) << "_requestFinished error:data" << reply->error() << reply->readAll();
+        qCDebug(TerrainQueryLog) << "_requestFinished error:url:data" << reply->error() << reply->url() << reply->readAll();
         reply->deleteLater();
         _requestFailed();
         return;
@@ -138,7 +165,7 @@ void TerrainAirMapQuery::_requestFinished(void)
 
     // Send back data
     const QJsonValue& jsonData = rootObject["data"];
-    qCDebug(TerrainQueryLog) << "_requestFinished sucess";
+    qCDebug(TerrainQueryLog) << "_requestFinished success";
     switch (_queryMode) {
     case QueryModeCoordinates:
         emit _parseCoordinateData(jsonData);
@@ -229,6 +256,11 @@ TerrainOfflineAirMapQuery::TerrainOfflineAirMapQuery(QObject* parent)
 
 void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
 {
+    if (qgcApp()->runningUnitTests()) {
+        emit coordinateHeights(false, QList<double>());
+        return;
+    }
+
     if (coordinates.length() == 0) {
         return;
     }
@@ -238,11 +270,21 @@ void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordin
 
 void TerrainOfflineAirMapQuery::requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord)
 {
+    if (qgcApp()->runningUnitTests()) {
+        emit pathHeights(false, qQNaN(), qQNaN(), QList<double>());
+        return;
+    }
+
     _terrainTileManager->addPathQuery(this, fromCoord, toCoord);
 }
 
 void TerrainOfflineAirMapQuery::requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly)
 {
+    if (qgcApp()->runningUnitTests()) {
+        emit carpetHeights(false, qQNaN(), qQNaN(), QList<QList<double>>());
+        return;
+    }
+
     // TODO
     Q_UNUSED(swCoord);
     Q_UNUSED(neCoord);
