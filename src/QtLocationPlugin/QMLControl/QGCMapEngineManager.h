@@ -50,6 +50,7 @@ public:
     Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
     Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
+    Q_PROPERTY(bool                 fetchElevation  READ    fetchElevation  WRITE   setFetchElevation   NOTIFY  fetchElevationChanged)
     //-- Disk Space in MB
     Q_PROPERTY(quint32              freeDiskSpace   READ    freeDiskSpace   NOTIFY  freeDiskSpaceChanged)
     Q_PROPERTY(quint32              diskSpace       READ    diskSpace       CONSTANT)
@@ -88,6 +89,7 @@ public:
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();
     QString                         errorMessage            () { return _errorMessage; }
+    bool                            fetchElevation          () { return _fetchElevation; }
     quint64                         freeDiskSpace           () { return _freeDiskSpace; }
     quint64                         diskSpace               () { return _diskSpace; }
     int                             selectedCount           ();
@@ -100,6 +102,7 @@ public:
     void                            setImportReplace        (bool replace) { _importReplace = replace; emit importReplaceChanged(); }
     void                            setImportAction         (ImportAction action)  {_importAction = action; emit importActionChanged(); }
     void                            setErrorMessage         (const QString& error) { _errorMessage = error; emit errorMessageChanged(); }
+    void                            setFetchElevation       (bool fetchElevation) { _fetchElevation = fetchElevation; emit fetchElevationChanged(); }
 
     // Override from QGCTool
     void setToolbox(QGCToolbox *toolbox);
@@ -115,6 +118,7 @@ signals:
     void maxMemCacheChanged     ();
     void maxDiskCacheChanged    ();
     void errorMessageChanged    ();
+    void fetchElevationChanged  ();
     void freeDiskSpaceChanged   ();
     void selectedCountChanged   ();
     void actionProgressChanged  ();
@@ -149,6 +153,7 @@ private:
     quint32     _diskSpace;
     QmlObjectListModel _tileSets;
     QString     _errorMessage;
+    bool        _fetchElevation;
     int         _actionProgress;
     ImportAction _importAction;
     bool        _importReplace;
