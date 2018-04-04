@@ -47,7 +47,7 @@ m_cellToPropPath(m_scene->addPath(QPainterPath())),
 m_batToPropPath(m_scene->addPath(QPainterPath())),
 m_chargePowerText(m_scene->addText(QString("N/A"))),
 m_cellPowerText(m_scene->addText(QString("N/A"))),
-m_BckpBatText(m_scene->addText(QString("Backup Battery in use!!!"))),
+m_BckpBatText(m_scene->addText(QString("Critical: On backup battery!!!"))),
 m_cellUsePowerText(m_scene->addText(QString("N/A"))),
 m_batUsePowerText(m_scene->addText(QString("N/A"))),
 m_SystemPowerText(m_scene->addText(QString("N/A"))),
@@ -141,9 +141,9 @@ void EnergyBudget::buildGraphicsImage()
 	m_cellUsePowerText->setFont(QFont("Helvetica", penWidth*1.2));
     m_SystemPowerText->setPos(propRect.x() + 2*penWidth, propRect.y() + propRect.height());
     m_SystemPowerText->setFont(QFont("Helvetica", penWidth*1.2));
-	m_BckpBatText->setPos(propRect.x(), propRect.y());
-	m_BckpBatText->setFont(QFont("Helvetica", penWidth * 2));
-	m_BckpBatText->setVisible(false);
+    m_BckpBatText->setPos(propRect.x()-1.5*penWidth, propRect.y()-2*penWidth);
+    m_BckpBatText->setFont(QFont("Helvetica", penWidth*1.2));
+    m_BckpBatText->setVisible(false);
 
     // set the right textcolor
     styleChanged(qgcApp()->toolbox()->settingsManager()->appSettings()->indoorPalette()->rawValue().toBool());
@@ -244,8 +244,8 @@ void EnergyBudget::updateBatMon(uint8_t compid, uint16_t volt, int16_t current, 
     ui->BatteryHealthLED->setColor(QColor(Qt::green));
     ui->bat1StatusFlags->setStyleSheet("QLabel { background-color : green;}");
     if(failure==1) {
-        ui->BatteryHealthLED->setColor(QColor(Qt::yellow));
-        ui->bat1StatusFlags->setStyleSheet("QLabel { background-color : yellow;}");
+        ui->BatteryHealthLED->setColor(QColor(239, 163, 0));
+        ui->bat1StatusFlags->setStyleSheet("QLabel { background-color : rgb(239, 163, 0);}");
     } else if (failure==2) {
         ui->BatteryHealthLED->setColor(QColor(Qt::red));
         ui->bat1StatusFlags->setStyleSheet("QLabel { background-color : red;}");
@@ -648,8 +648,8 @@ void EnergyBudget::styleChanged(bool darkStyle)
 void EnergyBudget::MPPTTimerTimeout(void)
 {
     m_cellPower = m_SystemPower - m_chargePower - m_batUsePower;
-	ui->mppt1VLabel->setText(QString("--"));
-	ui->mppt1ALabel->setText(QString("--"));
+    ui->mppt1VLabel->setText(QString("N/A"));
+    ui->mppt1ALabel->setText(QString("N/A"));
 }
 
 void EnergyBudget::onThrustChanged(Vehicle* vehicle, double thrust)
