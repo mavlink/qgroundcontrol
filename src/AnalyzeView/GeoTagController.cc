@@ -259,6 +259,11 @@ void GeoTagWorker::run(void)
     int maxIndex = std::min(_imageIndices.count(), _triggerIndices.count());
     maxIndex = std::min(maxIndex, _imageList.count());
     for(int i = 0; i < maxIndex; i++) {
+        int imageIndex = _imageIndices[i];
+        if (imageIndex >= _imageList.count()) {
+            emit error(tr("Geotagging failed. Image requested not present."));
+            return;
+        }
         QFile fileRead(_imageList.at(_imageIndices[i]).absoluteFilePath());
         if (!fileRead.open(QIODevice::ReadOnly)) {
             emit error(tr("Geotagging failed. Couldn't open an image."));
