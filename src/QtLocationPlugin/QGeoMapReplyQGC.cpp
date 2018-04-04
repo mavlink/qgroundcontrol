@@ -51,6 +51,7 @@
 #include <QtLocation/private/qgeotilespec_p.h>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QFile>
+#include "TerrainTile.h"
 
 int QGeoTiledMapReplyQGC::_requestCount = 0;
 
@@ -104,6 +105,7 @@ QGeoTiledMapReplyQGC::abort()
     _timer.stop();
     if (_reply)
         _reply->abort();
+    emit aborted();
 }
 
 //-----------------------------------------------------------------------------
@@ -112,14 +114,27 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
 {
     _timer.stop();
     if (!_reply) {
+        emit aborted();
         return;
     }
     if (_reply->error() != QNetworkReply::NoError) {
+        emit aborted();
         return;
     }
     QByteArray a = _reply->readAll();
-    setMapImageData(a);
     QString format = getQGCMapEngine()->urlFactory()->getImageFormat((UrlFactory::MapType)tileSpec().mapId(), a);
+
+    // convert "a" to binary in case we have elevation data
+    if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
+
+        a = TerrainTile::serialize(a);
+        if (a.isEmpty()) {
+            emit aborted();
+            return;
+        }
+
+    }
+    setMapImageData(a);
     if(!format.isEmpty()) {
         setMapImageFormat(format);
         getQGCMapEngine()->cacheTile((UrlFactory::MapType)tileSpec().mapId(), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
@@ -195,4 +210,5 @@ QGeoTiledMapReplyQGC::timeout()
     if(_reply) {
         _reply->abort();
     }
+    emit aborted();
 }
