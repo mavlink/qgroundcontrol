@@ -77,6 +77,7 @@ public:
     Q_PROPERTY(bool accumulator READ accumulator WRITE setAccumulator NOTIFY accumulatorChanged)
     Q_PROPERTY(bool requiresCalibration READ requiresCalibration CONSTANT)
     Q_PROPERTY(bool circleCorrection READ circleCorrection WRITE setCircleCorrection NOTIFY circleCorrectionChanged)
+    Q_PROPERTY(float frequency READ frequency WRITE setFrequency NOTIFY frequencyChanged)
 
     // Property accessors
 
@@ -129,6 +130,9 @@ public:
     /// Set the current calibration mode
     void setCalibrationMode(bool calibrating);
 
+    float frequency();
+    void setFrequency(float val);
+
 signals:
     void calibratedChanged(bool calibrated);
 
@@ -159,6 +163,8 @@ signals:
     void manualControl(float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
 
     void buttonActionTriggered(int action);
+
+    void frequencyChanged();
 
 protected:
     void    _setDefaultCalibration(void);
@@ -216,6 +222,7 @@ protected:
     bool                _accumulator;
     bool                _deadband;
     bool                _circleCorrection;
+    float               _frequency;
 
     Vehicle*            _activeVehicle;
     bool                _pollingStartedForCalibration;
@@ -233,6 +240,7 @@ private:
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
     static const char* _circleCorrectionSettingsKey;
+    static const char* _frequencySettingsKey;
     static const char* _txModeSettingsKey;
     static const char* _fixedWingTXModeSettingsKey;
     static const char* _multiRotorTXModeSettingsKey;
