@@ -40,6 +40,35 @@ Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
 class Vehicle;
 
+class VehicleDistanceSensorFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleDistanceSensorFactGroup(QObject* parent = NULL);
+
+    Q_PROPERTY(Fact* rotationNone   READ rotationNone   CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw90  READ rotationYaw90  CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw180 READ rotationYaw180 CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw270 READ rotationYaw270 CONSTANT)
+
+    Fact* rotationNone      (void) { return &_rotationNoneFact; }
+    Fact* rotationYaw90     (void) { return &_rotationYaw90Fact; }
+    Fact* rotationYaw180    (void) { return &_rotationYaw180Fact; }
+    Fact* rotationYaw270    (void) { return &_rotationYaw270Fact; }
+
+    static const char* _rotationNoneFactName;
+    static const char* _rotationYaw90FactName;
+    static const char* _rotationYaw180FactName;
+    static const char* _rotationYaw270FactName;
+
+private:
+    Fact _rotationNoneFact;
+    Fact _rotationYaw90Fact;
+    Fact _rotationYaw180Fact;
+    Fact _rotationYaw270Fact;
+};
+
 class VehicleSetpointFactGroup : public FactGroup
 {
     Q_OBJECT
@@ -700,13 +729,14 @@ public:
     Fact* distanceToHome    (void) { return &_distanceToHomeFact; }
     Fact* hobbs             (void) { return &_hobbsFact; }
 
-    FactGroup* gpsFactGroup         (void) { return &_gpsFactGroup; }
-    FactGroup* batteryFactGroup     (void) { return &_batteryFactGroup; }
-    FactGroup* windFactGroup        (void) { return &_windFactGroup; }
-    FactGroup* vibrationFactGroup   (void) { return &_vibrationFactGroup; }
-    FactGroup* temperatureFactGroup (void) { return &_temperatureFactGroup; }
-    FactGroup* clockFactGroup       (void) { return &_clockFactGroup; }
-    FactGroup* setpointFactGroup    (void) { return &_setpointFactGroup; }
+    FactGroup* gpsFactGroup             (void) { return &_gpsFactGroup; }
+    FactGroup* batteryFactGroup         (void) { return &_batteryFactGroup; }
+    FactGroup* windFactGroup            (void) { return &_windFactGroup; }
+    FactGroup* vibrationFactGroup       (void) { return &_vibrationFactGroup; }
+    FactGroup* temperatureFactGroup     (void) { return &_temperatureFactGroup; }
+    FactGroup* clockFactGroup           (void) { return &_clockFactGroup; }
+    FactGroup* setpointFactGroup        (void) { return &_setpointFactGroup; }
+    FactGroup* distanceSensorFactGroup  (void) { return &_distanceSensorFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -963,6 +993,7 @@ private:
     void _handleHighLatency2(mavlink_message_t& message);
     void _handleAttitude(mavlink_message_t& message);
     void _handleAttitudeTarget(mavlink_message_t& message);
+    void _handleDistanceSensor(mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1168,13 +1199,14 @@ private:
     Fact _distanceToHomeFact;
     Fact _hobbsFact;
 
-    VehicleGPSFactGroup         _gpsFactGroup;
-    VehicleBatteryFactGroup     _batteryFactGroup;
-    VehicleWindFactGroup        _windFactGroup;
-    VehicleVibrationFactGroup   _vibrationFactGroup;
-    VehicleTemperatureFactGroup _temperatureFactGroup;
-    VehicleClockFactGroup       _clockFactGroup;
-    VehicleSetpointFactGroup    _setpointFactGroup;
+    VehicleGPSFactGroup             _gpsFactGroup;
+    VehicleBatteryFactGroup         _batteryFactGroup;
+    VehicleWindFactGroup            _windFactGroup;
+    VehicleVibrationFactGroup       _vibrationFactGroup;
+    VehicleTemperatureFactGroup     _temperatureFactGroup;
+    VehicleClockFactGroup           _clockFactGroup;
+    VehicleSetpointFactGroup        _setpointFactGroup;
+    VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -1198,6 +1230,7 @@ private:
     static const char* _vibrationFactGroupName;
     static const char* _temperatureFactGroupName;
     static const char* _clockFactGroupName;
+    static const char* _distanceSensorFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 

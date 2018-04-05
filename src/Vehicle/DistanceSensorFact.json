@@ -1,0 +1,30 @@
+[
+{
+    "name":             "rotationNone",
+    "shortDescription": "Forward",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw90",
+    "shortDescription": "Right",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw180",
+    "shortDescription": "Rear",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw270",
+    "shortDescription": "Left",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+}
+]
