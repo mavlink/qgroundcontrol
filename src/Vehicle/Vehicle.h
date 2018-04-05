@@ -987,6 +987,8 @@ private:
     void _startPlanRequest(void);
     void _setupAutoDisarmSignalling(void);
     void _setCapabilities(uint64_t capabilityBits);
+    void _updateArmed(bool armed);
+    bool _apmArmingNotRequired(void);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
