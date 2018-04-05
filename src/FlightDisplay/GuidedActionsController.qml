@@ -66,7 +66,7 @@ Item {
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
     readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the current location.")
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
-    readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position.")
+    readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position, adjusting altitude up or down as needed.")
     readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
     readonly property string vtolTransitionFwdMessage:          qsTr("Transition VTOL to fixed wing flight.")
     readonly property string vtolTransitionMRMessage:           qsTr("Transition VTOL to multi-rotor flight.")
@@ -295,6 +295,8 @@ Item {
             confirmDialog.title = pauseTitle
             confirmDialog.message = pauseMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showPause })
+            altitudeSlider.reset()
+            altitudeSlider.visible = true
             break;
         case actionMVPause:
             confirmDialog.title = pauseTitle
@@ -376,6 +378,7 @@ Item {
             break
         case actionPause:
             _activeVehicle.pauseVehicle()
+            _activeVehicle.guidedModeChangeAltitude(actionData)
             break
         case actionMVPause:
             rgVehicle = QGroundControl.multiVehicleManager.vehicles
