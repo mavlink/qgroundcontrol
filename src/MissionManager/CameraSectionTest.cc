@@ -931,6 +931,14 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
     QCOMPARE(visualItems.count(), 1);
     QCOMPARE(_cameraSection->settingsSpecified(), false);
     visualItems.clear();
+
+    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
+    invalidSimpleItem.missionItem().setParam2(VIDEO_CAPTURE_STATUS_INTERVAL + 1);    // must be VIDEO_CAPTURE_STATUS_INTERVAL
+    visualItems.append(&invalidSimpleItem);
+    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
+    QCOMPARE(visualItems.count(), 1);
+    QCOMPARE(_cameraSection->settingsSpecified(), false);
+    visualItems.clear();
 }
 
 void CameraSectionTest::_testScanForStopImageSection(void)
