@@ -240,6 +240,7 @@ AndroidBuild || iOSBuild {
     QT += \
         printsupport \
         serialport \
+        charts \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
