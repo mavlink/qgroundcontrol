@@ -102,6 +102,7 @@ LinuxBuild {
 
     # QT_INSTALL_LIBS
     QT_LIB_LIST = \
+        libQt5Charts.so.5 \
         libQt5Core.so.5 \
         libQt5DBus.so.5 \
         libQt5Gui.so.5 \
