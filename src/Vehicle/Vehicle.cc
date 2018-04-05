@@ -1186,6 +1186,13 @@ void Vehicle::_handleWind(mavlink_message_t& message)
 }
 #endif
 
+bool Vehicle::_apmArmingNotRequired(void)
+{
+    QString armingRequireParam("ARMING_REQUIRE");
+    return _parameterManager->parameterExists(FactSystem::defaultComponentId, armingRequireParam) &&
+            _parameterManager->getParameter(FactSystem::defaultComponentId, armingRequireParam)->rawValue().toInt() == 0;
+}
+
 void Vehicle::_handleSysStatus(mavlink_message_t& message)
 {
     mavlink_sys_status_t sysStatus;
@@ -1217,6 +1224,13 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
     _onboardControlSensorsEnabled = sysStatus.onboard_control_sensors_enabled;
     _onboardControlSensorsHealth = sysStatus.onboard_control_sensors_health;
+
+    // ArduPilot firmare has a strange case when ARMING_REQUIRE=0. This means the vehicle is always armed but the motors are not
+    // really powered up until the safety button is pressed. Because of this we can't depend on the heartbeat to tell us the true
+    // armed (and dangerous) state. We must instead rely on SYS_STATUS telling us that the motors are enabled.
+    if (apmFirmware() && _apmArmingNotRequired()) {
+        _updateArmed(_onboardControlSensorsEnabled & MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS);
+    }
 
     uint32_t newSensorsUnhealthy = _onboardControlSensorsEnabled & ~_onboardControlSensorsHealth;
     if (newSensorsUnhealthy != _onboardControlSensorsUnhealthy) {
@@ -1274,20 +1288,10 @@ void Vehicle::_handleHomePosition(mavlink_message_t& message)
     _setHomePosition(newHomePosition);
 }
 
-void Vehicle::_handleHeartbeat(mavlink_message_t& message)
+void Vehicle::_updateArmed(bool armed)
 {
-    if (message.compid != _defaultComponentId) {
-        return;
-    }
-
-    mavlink_heartbeat_t heartbeat;
-
-    mavlink_msg_heartbeat_decode(&message, &heartbeat);
-
-    bool newArmed = heartbeat.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
-
-    if (_armed != newArmed) {
-        _armed = newArmed;
+    if (_armed != armed) {
+        _armed = armed;
         emit armedChanged(_armed);
 
         // We are transitioning to the armed state, begin tracking trajectory points for the map
@@ -1302,6 +1306,32 @@ void Vehicle::_handleHeartbeat(mavlink_message_t& message)
                 qgcApp()->toolbox()->videoManager()->videoReceiver()->stop();
             }
         }
+    }
+}
+
+void Vehicle::_handleHeartbeat(mavlink_message_t& message)
+{
+    if (message.compid != _defaultComponentId) {
+        return;
+    }
+
+    mavlink_heartbeat_t heartbeat;
+
+    mavlink_msg_heartbeat_decode(&message, &heartbeat);
+
+    bool newArmed = heartbeat.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
+
+    // ArduPilot firmare has a strange case when ARMING_REQUIRE=0. This means the vehicle is always armed but the motors are not
+    // really powered up until the safety button is pressed. Because of this we can't depend on the heartbeat to tell us the true
+    // armed (and dangerous) state. We must instead rely on SYS_STATUS telling us that the motors are enabled.
+    if (apmFirmware()) {
+        if (!_apmArmingNotRequired() || !(_onboardControlSensorsPresent & MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS)) {
+            // If ARMING_REQUIRE!=0 or we haven't seen motor output status yet we use the hearbeat info for armed
+            _updateArmed(newArmed);
+        }
+    } else {
+        // Non-ArduPilot always updates from armed state in heartbeat
+        _updateArmed(newArmed);
     }
 
     if (heartbeat.base_mode != _base_mode || heartbeat.custom_mode != _custom_mode) {
