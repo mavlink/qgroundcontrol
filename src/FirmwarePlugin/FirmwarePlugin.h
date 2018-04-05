@@ -79,7 +79,8 @@ public:
     ///         free when no longer needed.
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
 
-    /// Returns the list of available flight modes
+    /// Returns the list of available flight modes. Flight modes can be different in normal/advanced ui mode.
+    /// Call will be made again if advanced mode changes.
     virtual QStringList flightModes(Vehicle* vehicle) {
         Q_UNUSED(vehicle);
         return QStringList();
