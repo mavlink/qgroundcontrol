@@ -1032,7 +1032,7 @@
             "description":  "Start video capture.",
             "category":     "Camera",
             "param2": {
-                "label":            "Status Interval",
+                "label":            "Status Frequency",
                 "default":          0.2,
                 "units":            "Hz",
                 "decimalPlaces":    2
