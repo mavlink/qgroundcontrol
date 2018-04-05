@@ -1034,6 +1034,7 @@
             "param2": {
                 "label":            "Status Interval",
                 "default":          0.2,
+                "units":            "Hz",
                 "decimalPlaces":    2
             }
         },
