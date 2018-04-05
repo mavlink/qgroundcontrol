@@ -535,6 +535,24 @@ SetupPage {
                                 width:      parent.width
                                 spacing:    ScreenTools.defaultFontPixelWidth
                                 visible:    advancedSettings.checked
+                                QGCLabel {
+                                    text:       qsTr("Message frequency (Hz):")
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                QGCTextField {
+                                    text:       _activeJoystick.frequency
+                                    validator:  DoubleValidator { bottom: 0.25; top: 100.0; }
+                                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                    onEditingFinished: {
+                                        _activeJoystick.frequency = parseFloat(text)
+                                    }
+                                }
+                            }
+
+                            Row {
+                                width:      parent.width
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    advancedSettings.checked
                                 QGCCheckBox {
                                     id:         joystickCircleCorrection
                                     checked:    _activeVehicle.joystickMode != 0
