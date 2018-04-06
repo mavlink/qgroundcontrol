@@ -154,7 +154,7 @@ public slots:
 private slots:
     virtual void _writeBytes(const QByteArray) = 0;
 
-    void _bytesReceivedTimeout(void);
+    void _heartbeatReceivedTimeout(void);
 
     
 signals:
@@ -298,8 +298,8 @@ private:
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
 
-    static const int    _bytesReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
-    QTimer*             _bytesReceivedTimer;
+    static const int    _heartbeatReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
+    QTimer*             _heartbeatReceivedTimer;
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;
