@@ -71,6 +71,8 @@ public:
 
     bool idSet(void) { return _idSet; }
     void setIdSet(bool idSet) { _idSet = idSet; }
+    uint8_t id(void) { return _id; }
+    void setId(uint8_t id) { _id = id; }
 
     static const char* _rotationNoneFactName;
     static const char* _rotationYaw45FactName;

@@ -797,10 +797,10 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
 
     if (!_distanceSensorFactGroup.idSet()) {
         _distanceSensorFactGroup.setIdSet(true);
-        _id = distanceSensor.id;
+        _distanceSensorFactGroup.setId(distanceSensor.id);
     }
 
-    if (_id != distanceSensor.id) {
+    if (_distanceSensorFactGroup.id() != distanceSensor.id) {
         // We can only handle a single sensor reporting
         return;
     }
