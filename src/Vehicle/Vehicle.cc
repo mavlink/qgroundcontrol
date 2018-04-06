@@ -68,12 +68,13 @@ const char* Vehicle::_flightTimeFactName =          "flightTime";
 const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
 const char* Vehicle::_hobbsFactName =               "hobbs";
 
-const char* Vehicle::_gpsFactGroupName =        "gps";
-const char* Vehicle::_batteryFactGroupName =    "battery";
-const char* Vehicle::_windFactGroupName =       "wind";
-const char* Vehicle::_vibrationFactGroupName =  "vibration";
-const char* Vehicle::_temperatureFactGroupName = "temperature";
-const char* Vehicle::_clockFactGroupName =      "clock";
+const char* Vehicle::_gpsFactGroupName =            "gps";
+const char* Vehicle::_batteryFactGroupName =        "battery";
+const char* Vehicle::_windFactGroupName =           "wind";
+const char* Vehicle::_vibrationFactGroupName =      "vibration";
+const char* Vehicle::_temperatureFactGroupName =    "temperature";
+const char* Vehicle::_clockFactGroupName =          "clock";
+const char* Vehicle::_distanceSensorFactGroupName = "distanceSensor";
 
 Vehicle::Vehicle(LinkInterface*             link,
                  int                        vehicleId,
@@ -188,6 +189,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _vibrationFactGroup(this)
     , _temperatureFactGroup(this)
     , _clockFactGroup(this)
+    , _distanceSensorFactGroup(this)
 {
     _addLink(link);
 
@@ -377,6 +379,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _clockFactGroup(this)
+    , _distanceSensorFactGroup(this)
 {
     _commonInit();
     _firmwarePlugin->initializeVehicle(this);
@@ -441,12 +444,13 @@ void Vehicle::_commonInit(void)
     _hobbsFact.setRawValue(QVariant(QString("0000:00:00")));
     _addFact(&_hobbsFact,               _hobbsFactName);
 
-    _addFactGroup(&_gpsFactGroup,       _gpsFactGroupName);
-    _addFactGroup(&_batteryFactGroup,   _batteryFactGroupName);
-    _addFactGroup(&_windFactGroup,      _windFactGroupName);
-    _addFactGroup(&_vibrationFactGroup, _vibrationFactGroupName);
-    _addFactGroup(&_temperatureFactGroup, _temperatureFactGroupName);
-    _addFactGroup(&_clockFactGroup,     _clockFactGroupName);
+    _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
+    _addFactGroup(&_batteryFactGroup,           _batteryFactGroupName);
+    _addFactGroup(&_windFactGroup,              _windFactGroupName);
+    _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
+    _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
+    _addFactGroup(&_clockFactGroup,             _clockFactGroupName);
+    _addFactGroup(&_distanceSensorFactGroup,    _distanceSensorFactGroupName);
 
     // Add firmware-specific fact groups, if provided
     QMap<QString, FactGroup*>* fwFactGroups = _firmwarePlugin->factGroups();
@@ -718,6 +722,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_ATTITUDE_TARGET:
         _handleAttitudeTarget(message);
         break;
+    case MAVLINK_MSG_ID_DISTANCE_SENSOR:
+        _handleDistanceSensor(message);
+        break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
@@ -780,6 +787,49 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _airSpeedFact.setRawValue(qIsNaN(vfrHud.airspeed) ? 0 : vfrHud.airspeed);
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
+}
+
+void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
+{
+    mavlink_distance_sensor_t distanceSensor;
+
+    mavlink_msg_distance_sensor_decode(&message, &distanceSensor);\
+
+    if (!_distanceSensorFactGroup.idSet()) {
+        _distanceSensorFactGroup.setIdSet(true);
+        _id = distanceSensor.id;
+    }
+
+    if (_id != distanceSensor.id) {
+        // We can only handle a single sensor reporting
+        return;
+    }
+
+    struct orientation2Fact_s {
+        MAV_SENSOR_ORIENTATION  orientation;
+        Fact*                   fact;
+    };
+
+    orientation2Fact_s rgOrientation2Fact[] =
+    {
+        { MAV_SENSOR_ROTATION_NONE,         _distanceSensorFactGroup.rotationNone() },
+        { MAV_SENSOR_ROTATION_YAW_45,       _distanceSensorFactGroup.rotationYaw45() },
+        { MAV_SENSOR_ROTATION_YAW_90,       _distanceSensorFactGroup.rotationYaw90() },
+        { MAV_SENSOR_ROTATION_YAW_135,      _distanceSensorFactGroup.rotationYaw135() },
+        { MAV_SENSOR_ROTATION_YAW_180,      _distanceSensorFactGroup.rotationYaw180() },
+        { MAV_SENSOR_ROTATION_YAW_225,      _distanceSensorFactGroup.rotationYaw225() },
+        { MAV_SENSOR_ROTATION_YAW_270,      _distanceSensorFactGroup.rotationYaw270() },
+        { MAV_SENSOR_ROTATION_YAW_315,      _distanceSensorFactGroup.rotationYaw315() },
+        { MAV_SENSOR_ROTATION_PITCH_90,     _distanceSensorFactGroup.rotationPitch90() },
+        { MAV_SENSOR_ROTATION_PITCH_270,    _distanceSensorFactGroup.rotationPitch270() },
+    };
+
+    for (size_t i=0; i<sizeof(rgOrientation2Fact)/sizeof(rgOrientation2Fact[0]); i++) {
+        const orientation2Fact_s& orientation2Fact = rgOrientation2Fact[i];
+        if (orientation2Fact.orientation == distanceSensor.orientation) {
+            orientation2Fact.fact->setRawValue(distanceSensor.current_distance / 100.0); // cm to meters
+        }
+    }
 }
 
 void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
@@ -3359,4 +3409,53 @@ VehicleSetpointFactGroup::VehicleSetpointFactGroup(QObject* parent)
     _rollRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _pitchRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
     _yawRateFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+}
+
+const char* VehicleDistanceSensorFactGroup::_rotationNoneFactName =     "rotationNone";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw45FactName =    "rotationYaw45";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw90FactName =    "rotationYaw90";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw135FactName =   "rotationYaw135";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw180FactName =   "rotationYaw180";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw225FactName =   "rotationYaw225";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw270FactName =   "rotationYaw270";
+const char* VehicleDistanceSensorFactGroup::_rotationYaw315FactName =   "rotationYaw315";
+const char* VehicleDistanceSensorFactGroup::_rotationPitch90FactName =  "rotationPitch90";
+const char* VehicleDistanceSensorFactGroup::_rotationPitch270FactName = "rotationPitch270";
+
+VehicleDistanceSensorFactGroup::VehicleDistanceSensorFactGroup(QObject* parent)
+    : FactGroup             (1000, ":/json/Vehicle/DistanceSensorFact.json", parent)
+    , _rotationNoneFact     (0, _rotationNoneFactName,      FactMetaData::valueTypeDouble)
+    , _rotationYaw45Fact    (0, _rotationYaw45FactName,     FactMetaData::valueTypeDouble)
+    , _rotationYaw90Fact    (0, _rotationYaw90FactName,     FactMetaData::valueTypeDouble)
+    , _rotationYaw135Fact   (0, _rotationYaw135FactName,    FactMetaData::valueTypeDouble)
+    , _rotationYaw180Fact   (0, _rotationYaw180FactName,    FactMetaData::valueTypeDouble)
+    , _rotationYaw225Fact   (0, _rotationYaw225FactName,    FactMetaData::valueTypeDouble)
+    , _rotationYaw270Fact   (0, _rotationYaw270FactName,    FactMetaData::valueTypeDouble)
+    , _rotationYaw315Fact   (0, _rotationYaw315FactName,    FactMetaData::valueTypeDouble)
+    , _rotationPitch90Fact  (0, _rotationPitch90FactName,   FactMetaData::valueTypeDouble)
+    , _rotationPitch270Fact (0, _rotationPitch270FactName,  FactMetaData::valueTypeDouble)
+    , _idSet                (false)
+    , _id                   (0)
+{
+    _addFact(&_rotationNoneFact,        _rotationNoneFactName);
+    _addFact(&_rotationYaw45Fact,       _rotationYaw45FactName);
+    _addFact(&_rotationYaw90Fact,       _rotationYaw90FactName);
+    _addFact(&_rotationYaw135Fact,      _rotationYaw135FactName);
+    _addFact(&_rotationYaw180Fact,      _rotationYaw180FactName);
+    _addFact(&_rotationYaw225Fact,      _rotationYaw225FactName);
+    _addFact(&_rotationYaw270Fact,      _rotationYaw270FactName);
+    _addFact(&_rotationYaw315Fact,      _rotationYaw315FactName);
+    _addFact(&_rotationPitch90Fact,     _rotationPitch90FactName);
+    _addFact(&_rotationPitch270Fact,    _rotationPitch270FactName);
+
+    // Start out as not available "--.--"
+    _rotationNoneFact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationYaw45Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationYaw135Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationYaw90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationYaw180Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationYaw225Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationYaw270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationPitch90Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
+    _rotationPitch270Fact.setRawValue(std::numeric_limits<float>::quiet_NaN());
 }
