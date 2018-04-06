@@ -788,9 +788,9 @@ void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
     float roll, pitch, yaw;
     mavlink_quaternion_to_euler(attitudeTarget.q, &roll, &pitch, &yaw);
 
-    _setpointFactGroup.roll()->setRawValue(roll);
-    _setpointFactGroup.pitch()->setRawValue(pitch);
-    _setpointFactGroup.yaw()->setRawValue(yaw);
+    _setpointFactGroup.roll()->setRawValue(qRadiansToDegrees(roll));
+    _setpointFactGroup.pitch()->setRawValue(qRadiansToDegrees(pitch));
+    _setpointFactGroup.yaw()->setRawValue(qRadiansToDegrees(yaw));
 
     _setpointFactGroup.rollRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_roll_rate));
     _setpointFactGroup.pitchRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_pitch_rate));
