@@ -47,26 +47,56 @@ class VehicleDistanceSensorFactGroup : public FactGroup
 public:
     VehicleDistanceSensorFactGroup(QObject* parent = NULL);
 
-    Q_PROPERTY(Fact* rotationNone   READ rotationNone   CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw90  READ rotationYaw90  CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw180 READ rotationYaw180 CONSTANT)
-    Q_PROPERTY(Fact* rotationYaw270 READ rotationYaw270 CONSTANT)
+    Q_PROPERTY(Fact* rotationNone       READ rotationNone       CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw45      READ rotationYaw45      CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw90      READ rotationYaw90      CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw135     READ rotationYaw135     CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw180     READ rotationYaw180     CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw225     READ rotationYaw225     CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw270     READ rotationYaw270     CONSTANT)
+    Q_PROPERTY(Fact* rotationYaw315     READ rotationYaw315     CONSTANT)
+    Q_PROPERTY(Fact* rotationPitch90    READ rotationPitch90    CONSTANT)
+    Q_PROPERTY(Fact* rotationPitch270   READ rotationPitch270   CONSTANT)
 
     Fact* rotationNone      (void) { return &_rotationNoneFact; }
+    Fact* rotationYaw45     (void) { return &_rotationYaw45Fact; }
     Fact* rotationYaw90     (void) { return &_rotationYaw90Fact; }
+    Fact* rotationYaw135    (void) { return &_rotationYaw90Fact; }
     Fact* rotationYaw180    (void) { return &_rotationYaw180Fact; }
+    Fact* rotationYaw225    (void) { return &_rotationYaw180Fact; }
     Fact* rotationYaw270    (void) { return &_rotationYaw270Fact; }
+    Fact* rotationYaw315    (void) { return &_rotationYaw315Fact; }
+    Fact* rotationPitch90   (void) { return &_rotationPitch90Fact; }
+    Fact* rotationPitch270  (void) { return &_rotationPitch270Fact; }
+
+    bool idSet(void) { return _idSet; }
+    void setIdSet(bool idSet) { _idSet = idSet; }
 
     static const char* _rotationNoneFactName;
+    static const char* _rotationYaw45FactName;
     static const char* _rotationYaw90FactName;
+    static const char* _rotationYaw135FactName;
     static const char* _rotationYaw180FactName;
+    static const char* _rotationYaw225FactName;
     static const char* _rotationYaw270FactName;
+    static const char* _rotationYaw315FactName;
+    static const char* _rotationPitch90FactName;
+    static const char* _rotationPitch270FactName;
 
 private:
     Fact _rotationNoneFact;
+    Fact _rotationYaw45Fact;
     Fact _rotationYaw90Fact;
+    Fact _rotationYaw135Fact;
     Fact _rotationYaw180Fact;
+    Fact _rotationYaw225Fact;
     Fact _rotationYaw270Fact;
+    Fact _rotationYaw315Fact;
+    Fact _rotationPitch90Fact;
+    Fact _rotationPitch270Fact;
+
+    bool    _idSet; // true: _id is set to seen sensor id
+    uint8_t _id;    // The id for the sensor being tracked. Current support for only a single sensor.
 };
 
 class VehicleSetpointFactGroup : public FactGroup
