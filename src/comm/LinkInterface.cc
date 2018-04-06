@@ -28,7 +28,7 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     , _active                   (false)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
-    , _bytesReceivedTimer(NULL)
+    , _heartbeatReceivedTimer(NULL)
 {
     _config->setLink(this);
 
@@ -161,8 +161,7 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     _mavlinkChannel = channel;
 }
 
-
-void LinkInterface::_bytesReceivedTimeout()
+void LinkInterface::_heartbeatReceivedTimeout()
 {
     if (_active && !_highLatency) {
         setActive(false);
@@ -170,21 +169,21 @@ void LinkInterface::_bytesReceivedTimeout()
 }
 
 void LinkInterface::timerStart() {
-    if (_bytesReceivedTimer) {
-        _bytesReceivedTimer->start();
+    if (_heartbeatReceivedTimer) {
+        _heartbeatReceivedTimer->start();
     } else {
-        _bytesReceivedTimer = new QTimer();
-        _bytesReceivedTimer->setInterval(_bytesReceivedTimeoutMSecs);
-        _bytesReceivedTimer->setSingleShot(true);
-        _bytesReceivedTimer->start();
-        QObject::connect(_bytesReceivedTimer, &QTimer::timeout, this, &LinkInterface::_bytesReceivedTimeout);
+        _heartbeatReceivedTimer = new QTimer();
+        _heartbeatReceivedTimer->setInterval(_heartbeatReceivedTimeoutMSecs);
+        _heartbeatReceivedTimer->setSingleShot(true);
+        _heartbeatReceivedTimer->start();
+        QObject::connect(_heartbeatReceivedTimer, &QTimer::timeout, this, &LinkInterface::_heartbeatReceivedTimeout);
     }
 }
 
 void LinkInterface::timerStop() {
-    if (_bytesReceivedTimer) {
-        _bytesReceivedTimer->stop();
-        QObject::disconnect(_bytesReceivedTimer, &QTimer::timeout, this, &LinkInterface::_bytesReceivedTimeout);
-        delete _bytesReceivedTimer;
+    if (_heartbeatReceivedTimer) {
+        _heartbeatReceivedTimer->stop();
+        QObject::disconnect(_heartbeatReceivedTimer, &QTimer::timeout, this, &LinkInterface::_heartbeatReceivedTimeout);
+        delete _heartbeatReceivedTimer;
     }
 }

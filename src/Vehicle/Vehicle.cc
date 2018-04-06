@@ -2490,6 +2490,7 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active)
         }
     } else {
         qgcApp()->showMessage((tr("communication to auxiliary link %2 %3")).arg(link->getName()).arg(active ? "regained" : "lost"));
+        _updatePriorityLink(false, true);
     }
 }
 

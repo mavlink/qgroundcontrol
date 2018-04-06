@@ -80,6 +80,8 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
     _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
     _mavlinkProtocol = _toolbox->mavlinkProtocol();
 
+    connect(_mavlinkProtocol, &MAVLinkProtocol::vehicleHeartbeatInfo, this, &LinkManager::_heartbeatReceived);
+
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
 
@@ -195,7 +197,6 @@ void LinkManager::_addLink(LinkInterface* link)
 
     connect(link, &LinkInterface::communicationError,   _app,               &QGCApplication::criticalMessageBoxOnMainThread);
     connect(link, &LinkInterface::bytesReceived,        _mavlinkProtocol,   &MAVLinkProtocol::receiveBytes);
-    connect(link, &LinkInterface::bytesReceived,        this,               &LinkManager::_bytesReceived);
 
     _mavlinkProtocol->resetMetadataForLink(link);
     _mavlinkProtocol->setVersion(_mavlinkProtocol->getCurrentVersion());
@@ -1005,8 +1006,11 @@ void LinkManager::_freeMavlinkChannel(int channel)
     _mavlinkChannelsUsedBitMask &= ~(1 << channel);
 }
 
-void LinkManager::_bytesReceived(LinkInterface *link, QByteArray bytes) {
-    Q_UNUSED(bytes);
+void LinkManager::_heartbeatReceived(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType) {
+    Q_UNUSED(vehicleId);
+    Q_UNUSED(componentId);
+    Q_UNUSED(vehicleFirmwareType);
+    Q_UNUSED(vehicleType);
 
     link->timerStart();
 
