@@ -222,6 +222,7 @@
         <file alias="USBBoardInfo.json">src/comm/USBBoardInfo.json</file>
         <file alias="Vehicle/BatteryFact.json">src/Vehicle/BatteryFact.json</file>
         <file alias="Vehicle/ClockFact.json">src/Vehicle/ClockFact.json</file>
+		<file alias="Vehicle/DistanceSensorFact.json">src/Vehicle/DistanceSensorFact.json</file>
         <file alias="Vehicle/GPSFact.json">src/Vehicle/GPSFact.json</file>
         <file alias="Vehicle/GPSRTKFact.json">src/Vehicle/GPSRTKFact.json</file>
 		<file alias="Vehicle/SetpointFact.json">src/Vehicle/SetpointFact.json</file>
