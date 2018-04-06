@@ -105,6 +105,7 @@ void FactGroup::_addFact(Fact* fact, const QString& name)
         fact->setMetaData(_nameToFactMetaDataMap[name]);
     }
     _nameToFactMap[name] = fact;
+    _factNames.append(name);
 }
 
 void FactGroup::_addFactGroup(FactGroup* factGroup, const QString& name)
