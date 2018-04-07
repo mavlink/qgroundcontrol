@@ -34,7 +34,7 @@ QGCView {
         "So make sure to test your changes thoroughly before using them in flight.</p>" +
         "<p>Click 'Load Custom Qml file' to provide your custom qml file.</p>" +
         "<p>Click 'Reset' to reset to none.</p>" +
-        "<p>Example usage: http://https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</p>"
+        "<p>Example usage: <a href='https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html'>https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</a></p>"
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -87,15 +87,18 @@ QGCView {
                     }
                 }
             }
-
-            QGCLabel {
-                id:                 textOutput
+            ScrollView {
+                id: scrollContainer
                 anchors.fill:       loader
-                wrapMode:           Text.WordWrap
-                textFormat:         Text.RichText
-                visible:            !loader.visible
+                contentItem: QGCLabel {
+                    id:                 textOutput
+                    width:              scrollContainer.width - _margins*2
+                    wrapMode:           Text.WordWrap
+                    textFormat:         Text.RichText
+                    visible:            !loader.visible
+                    onLinkActivated:    Qt.openUrlExternally(link)
+                }
             }
-
             Row {
                 id:                 buttonRow
                 spacing:            ScreenTools.defaultFontPixelWidth
@@ -115,6 +118,7 @@ QGCView {
                     onClicked:  controller.clearQmlFile()
                 }
             }
+
         }
-	}
+    }
 }
