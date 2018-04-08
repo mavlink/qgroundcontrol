@@ -117,8 +117,9 @@ signals:
     void errorMessageChanged            (QString errorMessage);
 
 private slots:
-    void _workerProgressChanged(double progress);
-    void _workerError(QString errorMsg);
+    void _workerProgressChanged (double progress);
+    void _workerError           (QString errorMsg);
+    void _setErrorMessage       (const QString& error);
 
 private:
     QString             _errorMessage;
