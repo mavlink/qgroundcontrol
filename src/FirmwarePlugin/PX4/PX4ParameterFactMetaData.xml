@@ -4619,6 +4619,17 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <increment>1</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
+    <parameter default="0" name="MPC_FLT_TSK" type="INT32">
+      <short_desc>Flag to test flight tasks instead of legacy functionality
+Temporary Parameter during the transition to flight tasks</short_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>modules/mc_pos_control</scope>
+      <values>
+        <value code="0">Legacy Functionality</value>
+        <value code="1">Test flight tasks</value>
+      </values>
+    </parameter>
     <parameter default="0.1" name="MPC_HOLD_DZ" type="FLOAT">
       <short_desc>Deadzone of sticks where position hold is enabled</short_desc>
       <min>0.0</min>
@@ -8267,7 +8278,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       </values>
     </parameter>
     <parameter default="0" name="SENS_EN_MB12XX" type="INT32">
-      <short_desc>Maxbotix Soanr (mb12xx)</short_desc>
+      <short_desc>Maxbotix Sonar (mb12xx)</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
       <scope>drivers/distance_sensor/mb12xx</scope>
@@ -8326,7 +8337,8 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
         <value code="0">Disabled</value>
         <value code="1">Autodetect</value>
         <value code="2">TROne</value>
-        <value code="3">TREvo</value>
+        <value code="3">TREvo60m</value>
+        <value code="4">TREvo600Hz</value>
       </values>
     </parameter>
     <parameter default="6" name="SENS_FLOW_ROT" type="INT32">
