@@ -11,7 +11,6 @@
 
 #include <QObject>
 #include <QGeoCoordinate>
-#include <QElapsedTimer>
 
 #include "FactGroup.h"
 #include "LinkInterface.h"
@@ -994,6 +993,7 @@ private slots:
     void _updateDistanceToHome(void);
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
+    void _sendQGCTimeToVehicle(void);
 
 private:
     bool _containsLink(LinkInterface* link);

@@ -2255,10 +2255,32 @@ void Vehicle::_rallyPointLoadComplete(void)
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
+    // Try to set current unix time to the vehicle
+    _sendQGCTimeToVehicle();
+    // Send time twice, more likely to get to the vehicle on a noisy link
+    _sendQGCTimeToVehicle();
     if (parametersReady) {
         _setupAutoDisarmSignalling();
         _startPlanRequest();
     }
+}
+
+void Vehicle::_sendQGCTimeToVehicle(void)
+{
+    mavlink_message_t       msg;
+    mavlink_system_time_t   cmd;
+
+    // Timestamp of the master clock in microseconds since UNIX epoch.
+    cmd.time_unix_usec = QDateTime::currentDateTime().currentMSecsSinceEpoch()*1000;
+    // Timestamp of the component clock since boot time in milliseconds (Not necessary).
+    cmd.time_boot_ms = 0;
+    mavlink_msg_system_time_encode_chan(_mavlink->getSystemId(),
+                                    _mavlink->getComponentId(),
+                                    priorityLink()->mavlinkChannel(),
+                                    &msg,
+                                    &cmd);
+
+    sendMessageOnLink(priorityLink(), msg);
 }
 
 void Vehicle::disconnectInactiveVehicle(void)
