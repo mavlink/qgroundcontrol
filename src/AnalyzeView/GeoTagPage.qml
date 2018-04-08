@@ -124,8 +124,9 @@ AnalyzePage {
             }
 
             QGCButton {
-                text: geoController.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
-                width:      ScreenTools.defaultFontPixelWidth * 30
+                text:   geoController.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
+                width:  ScreenTools.defaultFontPixelWidth * 30
+
                 onClicked: {
                     if (geoController.inProgress) {
                         geoController.cancelTagging()
