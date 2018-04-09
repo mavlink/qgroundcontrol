@@ -87,12 +87,13 @@ QGCView {
                     }
                 }
             }
-            ScrollView {
-                id: scrollContainer
+            QGCFlickable {
+                id: container
                 anchors.fill:       loader
-                contentItem: QGCLabel {
+                contentHeight:      textOutput.height
+                QGCLabel {
                     id:                 textOutput
-                    width:              scrollContainer.width - _margins*2
+                    width:              container.width
                     wrapMode:           Text.WordWrap
                     textFormat:         Text.RichText
                     visible:            !loader.visible
