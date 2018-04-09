@@ -114,6 +114,10 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         // Get the index at resolution of 1 arc second
         int indexLat = _latToDataIndex(coordinate.latitude());
         int indexLon = _lonToDataIndex(coordinate.longitude());
+        if (indexLat == -1 || indexLon == -1) {
+            qCWarning(TerrainTileLog) << "Internal error indexLat:indexLon == -1" << indexLat << indexLon;
+            return -1.0;
+        }
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
         return static_cast<double>(_data[indexLat][indexLon]);
     } else {
