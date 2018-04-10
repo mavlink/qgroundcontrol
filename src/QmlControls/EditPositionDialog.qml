@@ -112,6 +112,17 @@ QGCViewDialog {
                     reject()
                 }
             }
+
+            QGCButton {
+                anchors.right:  parent.right
+                text:           qsTr("Set From Vehicle Position")
+                visible:        QGroundControl.multiVehicleManager.activeVehicle && QGroundControl.multiVehicleManager.activeVehicle.coordinate.isValid
+
+                onClicked: {
+                    controller.setFromVehicle()
+                    reject()
+                }
+            }
         } // Column
     } // QGCFlickable
 } // QGCViewDialog
