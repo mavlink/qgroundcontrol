@@ -8,3 +8,4 @@ FactPanel           1.0 FactPanel.qml
 FactTextField       1.0 FactTextField.qml
 FactTextFieldGrid   1.0 FactTextFieldGrid.qml
 FactTextFieldRow    1.0 FactTextFieldRow.qml
+FactValueSlider     1.0 FactValueSlider.qml
