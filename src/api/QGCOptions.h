@@ -84,14 +84,12 @@ public:
     virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
     virtual bool    multiVehicleEnabled             () const { return true; }   ///< false: multi vehicle support is disabled
     virtual bool    guidedActionsRequireRCRSSI      () const { return false; }  ///< true: Guided actions will be disabled is there is no RC RSSI
-
-#if defined(__mobile__)
-    virtual bool    showOfflineMapExport            () const { return false; }
-    virtual bool    showOfflineMapImport            () const { return false; }
-    virtual bool    useMobileFileDialog             () const { return true;}
-#else
     virtual bool    showOfflineMapExport            () const { return true; }
     virtual bool    showOfflineMapImport            () const { return true; }
+
+#if defined(__mobile__)
+    virtual bool    useMobileFileDialog             () const { return true;}
+#else
     virtual bool    useMobileFileDialog             () const { return false;}
 #endif
 

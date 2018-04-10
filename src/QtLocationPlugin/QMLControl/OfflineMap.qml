@@ -213,6 +213,31 @@ QGCView {
         }
     }
 
+    QGCFileDialog {
+        id:             fileDialog
+        qgcView:        offlineMapView
+        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
+        nameFilters:    ["Tile Sets (*.qgctiledb)"]
+        fileExtension:  "qgctiledb"
+
+        onAcceptedForSave: {
+            if (QGroundControl.mapEngineManager.exportSets(file)) {
+                rootLoader.sourceComponent = exportToDiskProgress
+            } else {
+                showList()
+            }
+            close()
+        }
+
+        onAcceptedForLoad: {
+            if(!QGroundControl.mapEngineManager.importSets(file)) {
+                showList();
+                mainWindow.enableToolbar()
+            }
+            close()
+        }
+    }
+
     MessageDialog {
         id:         errorDialog
         visible:    false
@@ -1044,10 +1069,9 @@ QGCView {
                 width:          _bigButtonSize
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
-                    showList();
-                    if(QGroundControl.mapEngineManager.exportSets()) {
-                        rootLoader.sourceComponent = exportToDiskProgress
-                    }
+                    fileDialog.title = qsTr("Export Tile Set")
+                    fileDialog.selectExisting = false
+                    fileDialog.openForSave()
                 }
             }
             QGCButton {
@@ -1200,11 +1224,10 @@ QGCView {
                             text:           qsTr("Import")
                             width:          _bigButtonSize * 1.25
                             onClicked: {
-                                if(!QGroundControl.mapEngineManager.importSets()) {
-                                    showList();
-                                    mainWindow.enableToolbar()
-                                    rootLoader.sourceComponent = null
-                                }
+                                rootLoader.sourceComponent = null
+                                fileDialog.title = qsTr("Import Tile Set")
+                                fileDialog.selectExisting = true
+                                fileDialog.openForLoad()
                             }
                         }
                         QGCButton {
