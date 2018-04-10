@@ -91,6 +91,7 @@ QGCView {
                 id: container
                 anchors.fill:       loader
                 contentHeight:      textOutput.height
+                flickableDirection: QGCFlickable.VerticalFlick
                 QGCLabel {
                     id:                 textOutput
                     width:              container.width
