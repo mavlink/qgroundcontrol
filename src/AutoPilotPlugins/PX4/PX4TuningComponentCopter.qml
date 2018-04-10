@@ -32,6 +32,11 @@ SetupPage {
                 showAdvanced = !ScreenTools.isMobile
             }
 
+            FactPanelController {
+                id:         controller
+                factPanel:  tuningPage.viewPanel
+            }
+
             // Standard tuning page
             FactSliderPanel {
                 width:          availableWidth
@@ -236,11 +241,6 @@ SetupPage {
                     on_CurrentTuneTypeChanged: {
                         saveTuningParamValues()
                         resetGraphs()
-                    }
-
-                    FactPanelController {
-                        id:         controller
-                        factPanel:  tuningPage.viewPanel
                     }
 
                     ExclusiveGroup {
