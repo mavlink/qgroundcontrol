@@ -176,12 +176,14 @@ int main(int argc, char *argv[])
 
     bool stressUnitTests = false;       // Stress test unit tests
     bool quietWindowsAsserts = false;   // Don't let asserts pop dialog boxes
+    bool logOutput = false;             // true: Log Qt debug output to file
 
     QString unitTestOptions;
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",             &runUnitTests,          &unitTestOptions },
         { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
         { "--no-windows-assert-ui", &quietWindowsAsserts,   NULL },
+        { "--log-output",           &logOutput,             NULL },
         // Add additional command line option flags here
     };
 
@@ -206,7 +208,7 @@ int main(int argc, char *argv[])
 #endif
 #endif // QT_DEBUG
 
-    QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
+    QGCApplication* app = new QGCApplication(argc, argv, logOutput, runUnitTests);
     Q_CHECK_PTR(app);
 
 #ifdef Q_OS_LINUX
