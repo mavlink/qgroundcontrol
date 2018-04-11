@@ -27,24 +27,6 @@ SetupPage {
             sliderModel: ListModel {
 
                 ListElement {
-                    title:          qsTr("Hover Roll sensitivity")
-                    description:    qsTr("Slide to the left to make roll control during hover faster and more accurate. Slide to the right if roll oscillates or is too twitchy.")
-                    param:          "MC_ROLL_TC"
-                    min:            0.15
-                    max:            0.25
-                    step:           0.01
-                }
-
-                ListElement {
-                    title:          qsTr("Hover Pitch sensitivity")
-                    description:    qsTr("Slide to the left to make pitch control during hover faster and more accurate. Slide to the right if pitch oscillates or is too twitchy.")
-                    param:          "MC_PITCH_TC"
-                    min:            0.15
-                    max:            0.25
-                    step:           0.01
-                }
-
-                ListElement {
                     title:          qsTr("Plane Roll sensitivity")
                     description:    qsTr("Slide to the left to make roll control faster and more accurate. Slide to the right if roll oscillates or is too twitchy.")
                     param:          "FW_R_TC"
