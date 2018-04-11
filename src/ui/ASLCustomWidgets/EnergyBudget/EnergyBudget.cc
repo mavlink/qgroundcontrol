@@ -578,8 +578,8 @@ QString EnergyBudget::convertMPPTStatus(uint8_t bit)
 
 QString EnergyBudget::convertPowerboardStatus(uint8_t statusbit)
 {
-    if (statusbit & 0x0008) {
-        int FaultyServoChannel= (statusbit & 0x0001)*1 + (statusbit & 0x0002)*2 + (statusbit & 0x0004)*4;
+    if (statusbit & 1<<3) {
+        uint8_t FaultyServoChannel= (statusbit & 1<<0)*1 + ((statusbit & 1<<1) > 1)*2 + ((statusbit & 1<<2) > 1)*4 + 1;
         return QString("Servo "+QString::number(FaultyServoChannel)+" faulty");
     } else if(statusbit & 0x0020) {
         return "On backup power";
