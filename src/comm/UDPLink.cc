@@ -136,36 +136,35 @@ void UDPLink::removeHost(const QString& host)
 
 void UDPLink::_writeBytes(const QByteArray data)
 {
-    if (!_socket)
-        return;
-
-    QStringList goneHosts;
-    // Send to all connected systems
-    QString host;
-    int port;
-    if(_udpConfig->firstHost(host, port)) {
-        do {
-            QHostAddress currentHost(host);
-            if(_socket->writeDatagram(data, currentHost, (quint16)port) < 0) {
-                // This host is gone. Add to list to be removed
-                // We should keep track of hosts that were manually added (static) and
-                // hosts that were added because we heard from them (dynamic). Only
-                // dynamic hosts should be removed and even then, after a few tries, not
-                // the first failure. In the mean time, we don't remove anything.
-                if(REMOVE_GONE_HOSTS) {
-                    goneHosts.append(host);
+    if (_socket) {
+        QStringList goneHosts;
+        // Send to all connected systems
+        QString host;
+        int port;
+        if(_udpConfig->firstHost(host, port)) {
+            do {
+                QHostAddress currentHost(host);
+                if(_socket->writeDatagram(data, currentHost, (quint16)port) < 0) {
+                    // This host is gone. Add to list to be removed
+                    // We should keep track of hosts that were manually added (static) and
+                    // hosts that were added because we heard from them (dynamic). Only
+                    // dynamic hosts should be removed and even then, after a few tries, not
+                    // the first failure. In the mean time, we don't remove anything.
+                    if(REMOVE_GONE_HOSTS) {
+                        goneHosts.append(host);
+                    }
+                } else {
+                    // Only log rate if data actually got sent. Not sure about this as
+                    // "host not there" takes time too regardless of size of data. In fact,
+                    // 1 byte or "UDP frame size" bytes are the same as that's the data
+                    // unit sent by UDP.
+                    _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
                 }
-            } else {
-                // Only log rate if data actually got sent. Not sure about this as
-                // "host not there" takes time too regardless of size of data. In fact,
-                // 1 byte or "UDP frame size" bytes are the same as that's the data
-                // unit sent by UDP.
-                _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
+            } while (_udpConfig->nextHost(host, port));
+            //-- Remove hosts that are no longer there
+            foreach (const QString& ghost, goneHosts) {
+                _udpConfig->removeHost(ghost);
             }
-        } while (_udpConfig->nextHost(host, port));
-        //-- Remove hosts that are no longer there
-        foreach (const QString& ghost, goneHosts) {
-            _udpConfig->removeHost(ghost);
         }
     }
 }
@@ -175,30 +174,31 @@ void UDPLink::_writeBytes(const QByteArray data)
  **/
 void UDPLink::readBytes()
 {
-    QByteArray databuffer;
-    while (_socket->hasPendingDatagrams())
-    {
-        QByteArray datagram;
-        datagram.resize(_socket->pendingDatagramSize());
-        QHostAddress sender;
-        quint16 senderPort;
-        _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-        databuffer.append(datagram);
-        //-- Wait a bit before sending it over
-        if(databuffer.size() > 10 * 1024) {
-            emit bytesReceived(this, databuffer);
-            databuffer.clear();
+    if (_socket) {
+        QByteArray databuffer;
+        while (_socket->hasPendingDatagrams()) {
+            QByteArray datagram;
+            datagram.resize(_socket->pendingDatagramSize());
+            QHostAddress sender;
+            quint16 senderPort;
+            _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+            databuffer.append(datagram);
+            //-- Wait a bit before sending it over
+            if(databuffer.size() > 10 * 1024) {
+                emit bytesReceived(this, databuffer);
+                databuffer.clear();
+            }
+            _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
+            // TODO This doesn't validade the sender. Anything sending UDP packets to this port gets
+            // added to the list and will start receiving datagrams from here. Even a port scanner
+            // would trigger this.
+            // Add host to broadcast list if not yet present, or update its port
+            _udpConfig->addHost(sender.toString(), (int)senderPort);
         }
-        _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
-        // TODO This doesn't validade the sender. Anything sending UDP packets to this port gets
-        // added to the list and will start receiving datagrams from here. Even a port scanner
-        // would trigger this.
-        // Add host to broadcast list if not yet present, or update its port
-        _udpConfig->addHost(sender.toString(), (int)senderPort);
-    }
-    //-- Send whatever is left
-    if(databuffer.size()) {
-        emit bytesReceived(this, databuffer);
+        //-- Send whatever is left
+        if(databuffer.size()) {
+            emit bytesReceived(this, databuffer);
+        }
     }
 }
 
@@ -246,7 +246,7 @@ bool UDPLink::_hardwareConnect()
         _socket = NULL;
     }
     QHostAddress host = QHostAddress::AnyIPv4;
-    _socket = new QUdpSocket();
+    _socket = new QUdpSocket(this);
     _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _udpConfig->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
