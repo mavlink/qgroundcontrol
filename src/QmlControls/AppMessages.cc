@@ -92,25 +92,23 @@ void AppLogModel::threadsafeLog(const QString message)
     insertRows(line, 1);
     setData(index(line), message, Qt::DisplayRole);
 
-    if (qgcApp()->logOutput()) {
-        if (_logFile.fileName().isEmpty()) {
-            QGCToolbox* toolbox = qgcApp()->toolbox();
-            // Be careful of toolbox not being open yet
-            if (toolbox) {
-                QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath();
-                QDir saveDir(saveDirPath);
-                QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
+    if (_logFile.fileName().isEmpty() && qgcApp()->logOutput()) {
+        QGCToolbox* toolbox = qgcApp()->toolbox();
+        // Be careful of toolbox not being open yet
+        if (toolbox) {
+            QString saveDirPath = qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath();
+            QDir saveDir(saveDirPath);
+            QString saveFilePath = saveDir.absoluteFilePath(QStringLiteral("QGCConsole.log"));
 
-                _logFile.setFileName(saveFilePath);
-                if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-                    qgcApp()->showMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
-                }
+            _logFile.setFileName(saveFilePath);
+            if (!_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                qgcApp()->showMessage(tr("Open console log output file failed %1 : %2").arg(_logFile.fileName()).arg(_logFile.errorString()));
             }
         }
+    }
 
-        if (_logFile.isOpen()) {
-            QTextStream out(&_logFile);
-            out << message << "\n";
-        }
+    if (_logFile.isOpen()) {
+        QTextStream out(&_logFile);
+        out << message << "\n";
     }
 }
