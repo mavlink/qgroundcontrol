@@ -60,7 +60,7 @@ class QGCApplication : public
     Q_OBJECT
 
 public:
-    QGCApplication(int &argc, char* argv[], bool logOutput, bool unitTesting);
+    QGCApplication(int &argc, char* argv[], bool unitTesting);
     ~QGCApplication();
 
     /// @brief Sets the persistent flag to delete all settings the next time QGroundControl is started.
