@@ -138,31 +138,22 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
-/**
- * @brief Constructor for the main application.
- *
- * This constructor initializes and starts the whole application. It takes standard
- * command-line parameters
- *
- * @param argc The number of command-line parameters
- * @param argv The string array of parameters
- **/
-
-QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
+QGCApplication::QGCApplication(int &argc, char* argv[], bool logOutput, bool unitTesting)
 #ifdef __mobile__
-    : QGuiApplication(argc, argv)
-    , _qmlAppEngine(NULL)
-    #else
-    : QApplication(argc, argv)
-    #endif
-    , _runningUnitTests(unitTesting)
-    , _fakeMobile(false)
-    , _settingsUpgraded(false)
-    #ifdef QT_DEBUG
-    , _testHighDPI(false)
-    #endif
-    , _toolbox(NULL)
-    , _bluetoothAvailable(false)
+    : QGuiApplication       (argc, argv)
+    , _qmlAppEngine         (NULL)
+#else
+    : QApplication          (argc, argv)
+#endif
+    , _runningUnitTests     (unitTesting)
+    , _logOutput            (logOutput)
+    , _fakeMobile           (false)
+    , _settingsUpgraded     (false)
+#ifdef QT_DEBUG
+    , _testHighDPI          (false)
+#endif
+    , _toolbox              (NULL)
+    , _bluetoothAvailable   (false)
 {
     _app = this;
 
