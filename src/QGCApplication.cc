@@ -335,6 +335,7 @@ void QGCApplication::_shutdown(void)
 QGCApplication::~QGCApplication()
 {
     // Place shutdown code in _shutdown
+    _app = NULL;
 }
 
 void QGCApplication::_initCommon(void)
