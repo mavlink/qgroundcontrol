@@ -78,11 +78,11 @@ void TCPLink::_writeBytes(const QByteArray data)
 #ifdef TCPLINK_READWRITE_DEBUG
     _writeDebugBytes(data);
 #endif
-    if (!_socket)
-        return;
 
-    _socket->write(data);
-    _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
+    if (_socket) {
+        _socket->write(data);
+        _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
+    }
 }
 
 /**
@@ -93,17 +93,19 @@ void TCPLink::_writeBytes(const QByteArray data)
  **/
 void TCPLink::readBytes()
 {
-    qint64 byteCount = _socket->bytesAvailable();
-    if (byteCount)
-    {
-        QByteArray buffer;
-        buffer.resize(byteCount);
-        _socket->read(buffer.data(), buffer.size());
-        emit bytesReceived(this, buffer);
-        _logInputDataRate(byteCount, QDateTime::currentMSecsSinceEpoch());
+    if (_socket) {
+        qint64 byteCount = _socket->bytesAvailable();
+        if (byteCount)
+        {
+            QByteArray buffer;
+            buffer.resize(byteCount);
+            _socket->read(buffer.data(), buffer.size());
+            emit bytesReceived(this, buffer);
+            _logInputDataRate(byteCount, QDateTime::currentMSecsSinceEpoch());
 #ifdef TCPLINK_READWRITE_DEBUG
-        writeDebugBytes(buffer.data(), buffer.size());
+            writeDebugBytes(buffer.data(), buffer.size());
 #endif
+        }
     }
 }
 
@@ -118,9 +120,9 @@ void TCPLink::_disconnect(void)
     wait();
     if (_socket) {
         _socketIsConnected = false;
-        _socket->deleteLater(); // Make sure delete happens on correct thread
         _socket->disconnectFromHost(); // Disconnect tcp
         _socket->waitForDisconnected();        
+        _socket->deleteLater(); // Make sure delete happens on correct thread
         _socket = NULL;
         emit disconnected();
     }
