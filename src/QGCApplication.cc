@@ -138,7 +138,7 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
-QGCApplication::QGCApplication(int &argc, char* argv[], bool logOutput, bool unitTesting)
+QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     : QGuiApplication       (argc, argv)
     , _qmlAppEngine         (NULL)
@@ -146,7 +146,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool logOutput, bool uni
     : QApplication          (argc, argv)
 #endif
     , _runningUnitTests     (unitTesting)
-    , _logOutput            (logOutput)
+    , _logOutput            (false)
     , _fakeMobile           (false)
     , _settingsUpgraded     (false)
 #ifdef QT_DEBUG
@@ -216,6 +216,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool logOutput, bool uni
         { "--clear-settings",   &fClearSettingsOptions, NULL },
         { "--logging",          &logging,               &loggingOptions },
         { "--fake-mobile",      &_fakeMobile,           NULL },
+        { "--log-output",       &_logOutput,            NULL },
     #ifdef QT_DEBUG
         { "--test-high-dpi",    &_testHighDPI,          NULL },
     #endif
