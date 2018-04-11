@@ -92,7 +92,8 @@ void AppLogModel::threadsafeLog(const QString message)
     insertRows(line, 1);
     setData(index(line), message, Qt::DisplayRole);
 
-    if (_logFile.fileName().isEmpty() && qgcApp()->logOutput()) {
+    if (qgcApp() && qgcApp()->logOutput() && _logFile.fileName().isEmpty()) {
+        qDebug() << _logFile.fileName().isEmpty() << qgcApp()->logOutput();
         QGCToolbox* toolbox = qgcApp()->toolbox();
         // Be careful of toolbox not being open yet
         if (toolbox) {
@@ -110,5 +111,6 @@ void AppLogModel::threadsafeLog(const QString message)
     if (_logFile.isOpen()) {
         QTextStream out(&_logFile);
         out << message << "\n";
+        _logFile.flush();
     }
 }
