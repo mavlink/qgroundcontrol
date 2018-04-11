@@ -813,7 +813,7 @@ void FirmwareUpgradeController::_determinePX4StableVersion(void)
     QGCFileDownload* downloader = new QGCFileDownload(this);
     connect(downloader, &QGCFileDownload::downloadFinished, this, &FirmwareUpgradeController::_px4ReleasesGithubDownloadFinished);
     connect(downloader, &QGCFileDownload::error, this, &FirmwareUpgradeController::_px4ReleasesGithubDownloadError);
-    downloader->download(QStringLiteral("https://api.github.com/repos/PX4/Firmware/releases"));
+    downloader->download(QStringLiteral("http://api.github.com/repos/PX4/Firmware/releases"));
 }
 
 void FirmwareUpgradeController::_px4ReleasesGithubDownloadFinished(QString remoteFile, QString localFile)

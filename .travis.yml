@@ -200,7 +200,12 @@ before_deploy:
   - cd ${TRAVIS_BUILD_DIR}
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "installer" ]]; then
         ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package;
+        curl --upload-file ${SHADOW_BUILD_DIR}/release/package/QGroundControl.AppImage https://transfer.sh/QGroundControl.AppImage;
     fi
+
+  - if [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "installer" ]]; then
+        curl --upload-file ${SHADOW_BUILD_DIR}/release/package/QGroundControl.dmg https://transfer.sh/QGroundControl.dmg;
+   fi
 
 deploy:
   # deploy installers to s3 builds/ if on a branch

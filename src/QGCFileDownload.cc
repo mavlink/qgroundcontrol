@@ -76,6 +76,7 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
     networkRequest.setAttribute(QNetworkRequest::User, localFile);
 
     QNetworkReply* networkReply = get(networkRequest);
+    networkReply->ignoreSslErrors();
     if (!networkReply) {
         qWarning() << "QNetworkAccessManager::get failed";
         return false;
