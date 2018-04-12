@@ -6,41 +6,34 @@
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
+import QtQuick 2.3
+import QtQuick.Controls 1.2
+import QtQuick.Controls.Styles 1.4
+import QtQuick.Dialogs 1.2
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-
-import QGroundControl               1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.ScreenTools   1.0
+import QGroundControl 1.0
+import QGroundControl.Palette 1.0
+import QGroundControl.Controls 1.0
+import QGroundControl.Controllers 1.0
+import QGroundControl.ScreenTools 1.0
 
 QGCView {
-    id:         qgcView
-    viewPanel:  panel
+    id: qgcView
+    viewPanel: panel
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle : null
-    property real   _margins:       ScreenTools.defaultFontPixelHeight
+    property var _activeVehicle: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle : null
+    property real _margins: ScreenTools.defaultFontPixelHeight
     property string _noVehicleText: qsTr("No vehicle connected")
-    property string _assignQmlFile: "<p>" +
-        "You can create your own commands and parameter editing user interface in this widget. " +
-        "You do this by providing your own Qml file. " +
-        "This support is a work in progress and the details may change somewhat in the future. " +
-        "By using this feature you are connecting directly to the internals of QGroundControl. " +
-        "Doing so incorrectly may cause instability both in QGroundControl and/or your vehicle. " +
-        "So make sure to test your changes thoroughly before using them in flight.</p>" +
-        "<p>Click 'Load Custom Qml file' to provide your custom qml file.</p>" +
-        "<p>Click 'Reset' to reset to none.</p>" +
-        "<p>Example usage: <a href='https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html'>https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</a></p>"
+    property string _assignQmlFile: "<p>" + "You can create your own commands and parameter editing user interface in this widget. " + "You do this by providing your own Qml file. " + "This support is a work in progress and the details may change somewhat in the future. " + "By using this feature you are connecting directly to the internals of QGroundControl. " + "Doing so incorrectly may cause instability both in QGroundControl and/or your vehicle. " + "So make sure to test your changes thoroughly before using them in flight.</p>" + "<p>Click 'Load Custom Qml file' to provide your custom qml file.</p>" + "<p>Click 'Reset' to reset to none.</p>" + "<p>Example usage: <a href='https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html'>https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</a></p>"
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    QGCPalette {
+        id: qgcPal
+        colorGroupEnabled: enabled
+    }
 
     CustomCommandWidgetController {
-        id:         controller
-        factPanel:  panel
+        id: controller
+        factPanel: panel
 
         onCustomQmlFileChanged: _updateLoader()
     }
@@ -63,21 +56,21 @@ QGCView {
     }
 
     QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
+        id: panel
+        anchors.fill: parent
 
         Rectangle {
-            anchors.fill:   parent
-            color:          qgcPal.window
+            anchors.fill: parent
+            color: qgcPal.window
 
             Loader {
-                id:                 loader
-                anchors.margins:    _margins
-                anchors.left:       parent.left
-                anchors.right:      parent.right
-                anchors.top:        parent.top
-                anchors.bottom:     buttonRow.top
-                visible:            false
+                id: loader
+                anchors.margins: _margins
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: buttonRow.top
+                visible: false
 
                 onStatusChanged: {
                     if (loader.status == Loader.Error) {
@@ -89,38 +82,37 @@ QGCView {
             }
             QGCFlickable {
                 id: container
-                anchors.fill:       loader
-                contentHeight:      textOutput.height
+                anchors.fill: loader
+                contentHeight: textOutput.height
                 flickableDirection: QGCFlickable.VerticalFlick
+                visible: !loader.visible
                 QGCLabel {
-                    id:                 textOutput
-                    width:              container.width
-                    wrapMode:           Text.WordWrap
-                    textFormat:         Text.RichText
-                    visible:            !loader.visible
-                    onLinkActivated:    Qt.openUrlExternally(link)
+                    id: textOutput
+                    width: container.width
+                    wrapMode: Text.WordWrap
+                    textFormat: Text.RichText
+                    onLinkActivated: Qt.openUrlExternally(link)
                 }
             }
             Row {
-                id:                 buttonRow
-                spacing:            ScreenTools.defaultFontPixelWidth
-                anchors.margins:    _margins
-                anchors.bottom:     parent.bottom
+                id: buttonRow
+                spacing: ScreenTools.defaultFontPixelWidth
+                anchors.margins: _margins
+                anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 QGCButton {
-                    text:       qsTr("Load Custom Qml file...")
-                    width:      ScreenTools.defaultFontPixelWidth * 22
-                    onClicked:  controller.selectQmlFile()
+                    text: qsTr("Load Custom Qml file...")
+                    width: ScreenTools.defaultFontPixelWidth * 22
+                    onClicked: controller.selectQmlFile()
                 }
 
                 QGCButton {
-                    text:       qsTr("Reset")
-                    width:      ScreenTools.defaultFontPixelWidth * 22
-                    onClicked:  controller.clearQmlFile()
+                    text: qsTr("Reset")
+                    width: ScreenTools.defaultFontPixelWidth * 22
+                    onClicked: controller.clearQmlFile()
                 }
             }
-
         }
     }
 }
