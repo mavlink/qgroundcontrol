@@ -92,12 +92,12 @@ QGCView {
                 anchors.fill:       loader
                 contentHeight:      textOutput.height
                 flickableDirection: QGCFlickable.VerticalFlick
+                visible:            !loader.visible
                 QGCLabel {
                     id:                 textOutput
                     width:              container.width
                     wrapMode:           Text.WordWrap
                     textFormat:         Text.RichText
-                    visible:            !loader.visible
                     onLinkActivated:    Qt.openUrlExternally(link)
                 }
             }
