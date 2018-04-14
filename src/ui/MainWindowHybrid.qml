@@ -22,12 +22,7 @@ Item {
     }
 
     function attemptWindowClose() {
-        try {
-            mainWindowInner.item.attemptWindowClose()
-        }
-        finally {
-            controller.reallyClose()
-        }
+        mainWindowInner.item.attemptWindowClose()
     }
 
     function showMessage(message) {
