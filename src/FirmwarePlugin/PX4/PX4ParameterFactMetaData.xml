@@ -834,6 +834,22 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
         <value code="12">Follow Me</value>
       </values>
     </parameter>
+    <parameter default="120" name="COM_HLDL_LOSS_T" type="INT32">
+      <short_desc>High Latency Datalink loss time threshold</short_desc>
+      <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
+      <min>60</min>
+      <max>3600</max>
+      <unit>s</unit>
+      <scope>modules/commander</scope>
+    </parameter>
+    <parameter default="0" name="COM_HLDL_REG_T" type="INT32">
+      <short_desc>High Latency Datalink regain time threshold</short_desc>
+      <long_desc>After a data link loss: after this this amount of seconds with a healthy datalink the 'datalink loss' flag is set back to false</long_desc>
+      <min>0</min>
+      <max>60</max>
+      <unit>s</unit>
+      <scope>modules/commander</scope>
+    </parameter>
     <parameter default="5.0" name="COM_HOME_H_T" type="FLOAT">
       <short_desc>Home set horizontal threshold</short_desc>
       <long_desc>The home position will be set if the estimated positioning accuracy is below the threshold.</long_desc>
@@ -3181,11 +3197,26 @@ but also ignore less noise</short_desc>
     </parameter>
   </group>
   <group name="Iridium SBD">
-    <parameter default="10" name="ISBD_READINT" type="INT32">
-      <short_desc>Satellite radio read interval</short_desc>
+    <parameter default="0" name="ISBD_READ_INT" type="INT32">
+      <short_desc>Satellite radio read interval. Only required to be nonzero if data is not sent using a ring call</short_desc>
+      <min>0</min>
+      <max>5000</max>
+      <unit>s</unit>
+      <scope>drivers/telemetry/iridiumsbd</scope>
+    </parameter>
+    <parameter default="60" name="ISBD_SBD_TIMEOUT" type="INT32">
+      <short_desc>Iridium SBD session timeout</short_desc>
       <min>0</min>
       <max>300</max>
       <unit>s</unit>
+      <scope>drivers/telemetry/iridiumsbd</scope>
+    </parameter>
+    <parameter default="0" name="ISBD_STACK_TIME" type="INT32">
+      <short_desc>Time [ms] the Iridium driver will wait for additional mavlink messages to combine them into one SBD message
+Value 0 turns the functionality off</short_desc>
+      <min>0</min>
+      <max>500</max>
+      <unit>ms</unit>
       <scope>drivers/telemetry/iridiumsbd</scope>
     </parameter>
   </group>
