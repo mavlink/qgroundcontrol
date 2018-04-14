@@ -11,7 +11,7 @@ pipeline {
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux'
+              image 'mavlink/qgc-build-linux:2018-04-14'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -34,7 +34,7 @@ pipeline {
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux'
+              image 'mavlink/qgc-build-linux:2018-04-14'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
