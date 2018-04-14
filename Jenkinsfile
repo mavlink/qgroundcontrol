@@ -3,6 +3,7 @@ pipeline {
   stages {
     stage('build') {
       parallel {
+
         stage('Linux Debug') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
@@ -26,6 +27,7 @@ pipeline {
             sh 'ccache -s'
           }
         }
+
         stage('Linux Release') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
@@ -49,6 +51,7 @@ pipeline {
             sh 'ccache -s'
           }
         }
+
         stage('OSX Debug') {
           agent {
             node {
@@ -71,6 +74,7 @@ pipeline {
             sh 'ccache -s'
           }
         }
+
         stage('OSX Release') {
           agent {
             node {
@@ -79,7 +83,7 @@ pipeline {
           }
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
-            QGC_CONFIG = 'release'
+            QGC_CONFIG = 'installer'
             QMAKE_VER = "5.9.3/clang_64/bin/qmake"
           }
           steps {
@@ -91,14 +95,23 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`sysctl -n hw.ncpu`'
             sh 'ccache -s'
+            archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true, onlyIfSuccessful: true)
           }
         }
+
       }
     }
   }
+
   environment {
     CCACHE_CPP2 = '1'
     CCACHE_DIR = '/tmp/ccache'
     QT_FATAL_WARNINGS = '1'
   }
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10', artifactDaysToKeepStr: '30'))
+    timeout(time: 60, unit: 'MINUTES')
+  }
+
 }
