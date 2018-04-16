@@ -132,7 +132,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         }
         emit terrainDone(a, QNetworkReply::NoError);
     } else {
-        //-- This is a map tile. Process and ache it if valid.
+        //-- This is a map tile. Process and cache it if valid.
         setMapImageData(a);
         if(!format.isEmpty()) {
             setMapImageFormat(format);
@@ -225,9 +225,6 @@ QGeoTiledMapReplyQGC::timeout()
 {
     if(_reply) {
         _reply->abort();
-    }
-    if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
-        emit terrainDone(QByteArray(), QNetworkReply::TimeoutError);
     }
     emit aborted();
 }
