@@ -177,11 +177,7 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
     }
 
     if (cameraFeedback.count() == 0) {
-<<<<<<< HEAD
-        qWarning() << "Could not detect camera_capture packets in ULog";
-=======
         errorMessage = tr("Could not detect camera_capture packets in ULog");
->>>>>>> b4f4085c6733b934358b00389d734600eab87bf7
         return false;
     }
 
