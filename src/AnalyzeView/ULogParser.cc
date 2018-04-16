@@ -86,11 +86,13 @@ bool ULogParser::parseFieldFormat(QString& fields)
     return false;
 }
 
-bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback)
+bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage)
 {
+    errorMessage.clear();
+
     //verify it's an ULog file
     if(!log.contains(_ULogMagic)) {
-        qWarning() << "Could not detect ULog file header magic";
+        errorMessage = tr("Could not detect ULog file header magic");
         return false;
     }
 
@@ -175,7 +177,11 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
     }
 
     if (cameraFeedback.count() == 0) {
+<<<<<<< HEAD
         qWarning() << "Could not detect camera_capture packets in ULog";
+=======
+        errorMessage = tr("Could not detect camera_capture packets in ULog");
+>>>>>>> b4f4085c6733b934358b00389d734600eab87bf7
         return false;
     }
 
