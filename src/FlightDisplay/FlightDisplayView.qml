@@ -504,8 +504,8 @@ QGCView {
             z:                  _panel.z + 4
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
-            buttonEnabled:      [ _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+            buttonVisible:      [ QGroundControl.settingsManager.appSettings.useChecklist.rawValue, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
+            buttonEnabled:      [ QGroundControl.settingsManager.appSettings.useChecklist.rawValue, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property bool _anySmartShotAvailable: _guidedController.showOrbit
@@ -551,6 +551,11 @@ QGCView {
             ]
 
             model: [
+                {
+                    name:               "Checklist",
+                    iconSource:         "/qmlimages/check.svg",
+                    dropPanelComponent: checklistDropPanel
+                },
                 {
                     name:       _guidedController.takeoffTitle,
                     iconSource: "/res/takeoff.svg",
@@ -677,4 +682,292 @@ QGCView {
             visible:            false
         }
     }
-}
+
+    Component {
+        id: checklistDropPanel
+
+        Rectangle {
+            id:       checklist
+            width:    mainColumn.width + (ScreenTools.defaultFontPixelWidth * 4)
+            height:   (headerColumn.height+mainColumn.height) * 1.07
+            color:    qgcPal.windowShade
+            radius:   20
+            enabled:  QGroundControl.multiVehicleManager.vehicles.count > 0;
+
+            onBatPercentRemainingChanged: {if(_initialized) buttonBattery.updateItem();}
+            onGpsLockChanged: {buttonSensors.updateItem();}
+
+            // Connections
+            Connections {
+                target: _activeVehicle
+                onUnhealthySensorsChanged: checklist.onUnhealthySensorsChanged();
+            }
+            Connections {
+                target: QGroundControl.multiVehicleManager
+                onActiveVehicleChanged: checklist.onActiveVehicleChanged();
+                onActiveVehicleAvailableChanged: {}
+            }
+            Connections {
+                target: QGroundControl.settingsManager.appSettings.audioMuted
+                onValueChanged: buttonSoundOutput.updateItem(); //TODO(philippoe): We are binding to a signal which is explicitly marked as "only for QT internal use" here.
+            }
+            Component.onCompleted: {
+                if(QGroundControl.multiVehicleManager.vehicles.count > 0) {
+                    onActiveVehicleChanged();
+                    _initialized=true;
+                }
+            }
+
+            function updateVehicleDependentItems() {
+                buttonSensors.updateItem();
+                buttonBattery.updateItem();
+                buttonRC.updateItem();
+                buttonEstimator.updateItem();
+            }
+            function onActiveVehicleChanged() {
+                buttonSoundOutput.updateItem();     // Just updated here for initialization once we connect to a vehicle
+                onUnhealthySensorsChanged();        // The health states could all have changed - need to update them.
+            }
+            function onUnhealthySensorsChanged() {
+                var unhealthySensorsStr = _activeVehicle.unhealthySensors;
+
+                // Set to healthy per default
+                for(var i=0;i<32;i++) _healthFlags[i]=true;
+
+                for(i=0;i<unhealthySensorsStr.length;i++) { // TODO (philippoe): This is terrible, having this data available in the form of a bitfield would be much better than a string list!
+                    switch(unhealthySensorsStr[i]) {
+                    case "Gyro":                    _healthFlags[0]=false; break;
+                    case "Accelerometer":           _healthFlags[1]=false; break;
+                    case "Magnetometer":            _healthFlags[2]=false; break;
+                    case "Absolute pressure":       _healthFlags[3]=false; break;
+                    case "Differential pressure":   _healthFlags[4]=false; break;
+                    case "GPS":                     _healthFlags[5]=false; break;
+                    case "Optical flow":            _healthFlags[6]=false; break;
+                    case "Computer vision position":_healthFlags[7]=false; break;
+                    case "Laser based position":    _healthFlags[8]=false; break;
+                    case "External ground truth":   _healthFlags[9]=false; break;
+                    case "Angular rate control":    _healthFlags[10]=false; break;
+                    case "Attitude stabilization":  _healthFlags[11]=false; break;
+                    case "Yaw position":            _healthFlags[12]=false; break;
+                    case "Z/altitude control":      _healthFlags[13]=false; break;
+                    case "X/Y position control":    _healthFlags[14]=false; break;
+                    case "Motor outputs / control": _healthFlags[15]=false; break;
+                    case "RC receiver":             _healthFlags[16]=false; break;
+                    case "Gyro 2":                  _healthFlags[17]=false; break;
+                    case "Accelerometer 2":         _healthFlags[18]=false; break;
+                    case "Magnetometer 2":          _healthFlags[19]=false; break;
+                    case "GeoFence":                _healthFlags[20]=false; break;
+                    case "AHRS":                    _healthFlags[21]=false; break;
+                    case "Terrain":                 _healthFlags[22]=false; break;
+                    case "Motors reversed":         _healthFlags[23]=false; break;
+                    case "Logging":                 _healthFlags[24]=false; break;
+                    case "Battery":                 _healthFlags[25]=false; break;
+                    default:
+                    }
+                }
+                updateVehicleDependentItems();
+            }
+
+            Column {
+                id:         headerColumn
+                x:          2*ScreenTools.defaultFontPixelWidth
+                y:          2*ScreenTools.defaultFontPixelWidth
+                width:      320
+                spacing:    8
+
+                // Header/title of checklist
+                QGCLabel {anchors.horizontalCenter:   parent.horizontalCenter ; font.pointSize: ScreenTools.mediumFontPointSize ; text: _activeVehicle ? qsTr("Pre-flight checklist")+" (MAV ID:"+_activeVehicle.id+")" : qsTr("Pre-flight checklist (awaiting vehicle...)");}
+                Rectangle {anchors.left:parent.left ; anchors.right:parent.right ; height:1 ; color:qgcPal.text}
+            }
+
+            Column {
+                id:         mainColumn
+                x:          2*ScreenTools.defaultFontPixelWidth
+                anchors.top:headerColumn.bottom
+                anchors.topMargin:ScreenTools.defaultFontPixelWidth
+                width:      320
+                spacing:    6
+                enabled : QGroundControl.multiVehicleManager.vehicles.count > 0;
+                opacity : 0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0);
+
+                // Checklist items: Standard
+                QGCCheckListItem {
+                    id: buttonHardware
+                    name: "Hardware"
+                    defaulttext: "Props mounted? Wings secured? Tail secured?"
+                }
+
+                QGCCheckListItem {
+                     id: buttonBattery
+                     name: "Battery"
+                     pendingtext: "Healthy & charged > 40%. Battery connector firmly plugged?"
+                     function updateItem() {
+                         if (!_activeVehicle) {
+                             _state = 0;
+                         } else {
+                             if (checklist._healthFlags[25] && batPercentRemaining>=40.0) _state = 1+3*(_nrClicked>0);
+                             else {
+                                 if(!checklist._healthFlags[25]) buttonBattery.failuretext="Not healthy. Check console.";
+                                 else if(batPercentRemaining<40.0) buttonBattery.failuretext="Low (below 40%). Please recharge.";
+                                 buttonBattery._state = 3;
+                             }
+                         }
+                     }
+                }
+
+                QGCCheckListItem {
+                     id: buttonSensors
+                     name: "Sensors"
+                     function updateItem() {
+                         if (!_activeVehicle) {
+                             _state = 0;
+                         } else {
+                             if(checklist._healthFlags[0] &&
+                                     checklist._healthFlags[1] &&
+                                     checklist._healthFlags[2] &&
+                                     checklist._healthFlags[3] &&
+                                     checklist._healthFlags[4] &&
+                                     checklist._healthFlags[5]) {
+                                 if(!gpsLock) {
+                                     buttonSensors.pendingtext="Pending. Waiting for GPS lock.";
+                                     buttonSensors._state=1;
+                                 } else {
+                                     _state = 4; // All OK
+                                 }
+                             } else {
+                                 if(!checklist._healthFlags[0]) failuretext="Failure. Gyroscope issues. Check console.";
+                                 else if(!checklist._healthFlags[1]) failuretext="Failure. Accelerometer issues. Check console.";
+                                 else if(!checklist._healthFlags[2]) failuretext="Failure. Magnetometer issues. Check console.";
+                                 else if(!checklist._healthFlags[3]) failuretext="Failure. Barometer issues. Check console.";
+                                 else if(!checklist._healthFlags[4]) failuretext="Failure. Airspeed sensor issues. Check console.";
+                                 else if(!checklist._healthFlags[5]) failuretext="Failure. No valid or low quality GPS signal. Check console.";
+                                 _state = 3;
+                             }
+                         }
+                     }
+                }
+               QGCCheckListItem {
+                    id: buttonRC
+                    name: "Radio Control"
+                    pendingtext: "Receiving signal. Perform range test & confirm."
+                    failuretext: "No signal or invalid autopilot-RC config. Check RC and console."
+                    function updateItem() {
+                        if (!_activeVehicle) {
+                            _state = 0;
+                        } else {
+                            if (_healthFlags[16]) {_state = 1+3*(_nrClicked>0);}
+                            else {_state = 3;}
+                        }
+                    }
+               }
+
+               QGCCheckListItem {
+                    id: buttonEstimator
+                    name: "Global position estimate"
+                    function updateItem() {
+                        if (!_activeVehicle) {
+                            _state = 0;
+                        } else {
+                            if (_healthFlags[21]) {_state = 4;}
+                            else {_state = 3;}
+                        }
+                    }
+               }
+
+               // Arming header
+               //Rectangle {anchors.left:parent.left ; anchors.right:parent.right ; height:1 ; color:qgcPal.text}
+               QGCLabel {anchors.horizontalCenter:parent.horizontalCenter ; text:qsTr("<i>Please arm the vehicle here.</i>")}
+               //Rectangle {anchors.left:parent.left ; anchors.right:parent.right ; height:1 ; color:qgcPal.text}
+
+              QGCCheckListItem {
+                   id: buttonActuators
+                   name: "Actuators"
+                   group: 1
+                   defaulttext: "Move all control surfaces. Did they work properly?"
+              }
+
+              QGCCheckListItem {
+                   id: buttonMotors
+                   name: "Motors"
+                   group: 1
+                   defaulttext: "Propellers free? Then throttle up gently. Working properly?"
+              }
+
+              QGCCheckListItem {
+                   id: buttonMission
+                   name: "Mission"
+                   group: 1
+                   defaulttext: "Please confirm mission is valid (waypoints valid, no terrain collision)."
+              }
+
+              QGCCheckListItem {
+                   id: buttonSoundOutput
+                   name: "Sound output"
+                   group: 1
+                   pendingtext: "QGC audio output enabled. System audio output enabled, too?"
+                   failuretext: "Failure, QGC audio output is disabled. Please enable it under application settings->general to hear audio warnings!"
+                   function updateItem() {
+                       if (!_activeVehicle) {
+                           _state = 0;
+                       } else {
+                           if (QGroundControl.settingsManager.appSettings.audioMuted.rawValue) {_state = 3;_nrClicked=0;}
+                           else {_state = 1+3*(_nrClicked>0);}
+                       }
+                   }
+              }
+
+              // Directly before launch header
+              //Rectangle {anchors.left:parent.left ; anchors.right:parent.right ; height:1 ; color:qgcPal.text}
+              QGCLabel {anchors.horizontalCenter:parent.horizontalCenter ; text:qsTr("<i>Last preparations before launch</i>") ; opacity : 0.2+0.8*(_checkState >= 2);}
+              //Rectangle {anchors.left:parent.left ; anchors.right:parent.right ; height:1 ; color:qgcPal.text}
+
+              QGCCheckListItem {
+                   id: buttonPayload
+                   name: "Payload"
+                   group: 2
+                   defaulttext: "Configured and started?"
+                   pendingtext: "Payload lid closed?"
+              }
+
+              QGCCheckListItem {
+                   id: buttonWeather
+                   name: "Wind & weather"
+                   group: 2
+                   defaulttext: "OK for your platform?"
+                   pendingtext: "Launching into the wind?"
+              }
+
+              QGCCheckListItem {
+                   id: buttonFlightAreaFree
+                   name: "Flight area"
+                   group: 2
+                   defaulttext: "Launch area and path free of obstacles/people?"
+              }
+
+            } // Column
+
+            property bool _initialized:false
+            property var _healthFlags: []
+            property int _checkState: _activeVehicle ? (_activeVehicle.armed ? 1 + (buttonActuators._state + buttonMotors._state + buttonMission._state + buttonSoundOutput._state) / 4 / 4 : 0) : 0 ; // Shows progress of checks inside the checklist - unlocks next check steps in groups
+            property bool gpsLock: _activeVehicle ? _activeVehicle.gps.lock.rawValue>=3 : 0
+            property var batPercentRemaining: _activeVehicle ? _activeVehicle.battery.getFact("percentRemaining").value : 0
+
+            // TODO: Having access to MAVLINK enums (or at least QML consts) would be much cleaner than the code below
+            property int subsystem_type_gyro : 1
+            property int subsystem_type_acc : 2
+            property int subsystem_type_mag : 4
+            property int subsystem_type_abspressure : 8
+            property int subsystem_type_diffpressure : 16
+            property int subsystem_type_gps : 32
+            property int subsystem_type_positioncontrol : 16384
+            property int subsystem_type_motorcontrol : 32768
+            property int subsystem_type_rcreceiver : 65536
+            property int subsystem_type_ahrs : 2097152
+            property int subsystem_type_terrain : 4194304
+            property int subsystem_type_reversemotor : 8388608
+            property int subsystem_type_logging : 16777216
+            property int subsystem_type_sensorbattery : 33554432
+            property int subsystem_type_rangefinder : 67108864
+        } //Rectangle
+    } //Component
+} //QGC View
