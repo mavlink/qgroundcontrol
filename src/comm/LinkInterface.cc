@@ -10,6 +10,28 @@
 #include "LinkInterface.h"
 #include "QGCApplication.h"
 
+bool LinkInterface::active() const
+{
+    for( int i=0; i<_heartbeatTimerList.count(); ++i ) {
+        if (_heartbeatTimerList[i]->getActive()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool LinkInterface::active(int vehicle_id) const
+{
+    for( int i=0; i<_heartbeatTimerList.count(); ++i ) {
+        if (_heartbeatTimerList[i]->getVehicleID() == vehicle_id) {
+            return _heartbeatTimerList[i]->getActive();
+        }
+    }
+
+    return false;
+}
+
 /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
 /// set into the link when it is added to LinkManager
 uint8_t LinkInterface::mavlinkChannel(void) const
@@ -25,10 +47,8 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     , _config                   (config)
     , _highLatency              (config->isHighLatency())
     , _mavlinkChannelSet        (false)
-    , _active                   (false)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
-    , _heartbeatReceivedTimer(NULL)
 {
     _config->setLink(this);
 
@@ -161,29 +181,34 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     _mavlinkChannel = channel;
 }
 
-void LinkInterface::_heartbeatReceivedTimeout()
+void LinkInterface::_activeChanged(bool active, int vehicle_id)
 {
-    if (_active && !_highLatency) {
-        setActive(false);
-    }
+    emit activeChanged(this, active, vehicle_id);
 }
 
-void LinkInterface::timerStart() {
-    if (_heartbeatReceivedTimer) {
-        _heartbeatReceivedTimer->start();
+void LinkInterface::timerStart(int vehicle_id) {
+    int timer_index{-1};
+    for( int i=0; i<_heartbeatTimerList.count(); ++i ) {
+        if (_heartbeatTimerList[i]->getVehicleID() == vehicle_id) {
+            timer_index = i;
+            break;
+        }
+    }
+
+    if (timer_index != -1) {
+        _heartbeatTimerList[timer_index]->restartTimer();
     } else {
-        _heartbeatReceivedTimer = new QTimer();
-        _heartbeatReceivedTimer->setInterval(_heartbeatReceivedTimeoutMSecs);
-        _heartbeatReceivedTimer->setSingleShot(true);
-        _heartbeatReceivedTimer->start();
-        QObject::connect(_heartbeatReceivedTimer, &QTimer::timeout, this, &LinkInterface::_heartbeatReceivedTimeout);
+        _heartbeatTimerList.append(new HeartbeatTimer(vehicle_id, _highLatency));
+        QObject::connect(_heartbeatTimerList.last(), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
     }
 }
 
 void LinkInterface::timerStop() {
-    if (_heartbeatReceivedTimer) {
-        _heartbeatReceivedTimer->stop();
-        QObject::disconnect(_heartbeatReceivedTimer, &QTimer::timeout, this, &LinkInterface::_heartbeatReceivedTimeout);
-        delete _heartbeatReceivedTimer;
+    for(int i=0; i<_heartbeatTimerList.count(); ++i ) {
+        QObject::disconnect(_heartbeatTimerList[i], &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        delete _heartbeatTimerList[i];
+        _heartbeatTimerList[i] = nullptr;
     }
+
+    _heartbeatTimerList.clear();
 }

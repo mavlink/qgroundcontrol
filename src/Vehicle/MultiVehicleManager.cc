@@ -138,9 +138,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
         setActiveVehicle(vehicle);
     }
 
-    // Mark link as active
-    link->setActive(true);
-
 #if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 1) {
         //-- Once a vehicle is connected, keep screen from going off

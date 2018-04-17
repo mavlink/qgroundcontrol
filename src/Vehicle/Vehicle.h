@@ -1099,7 +1099,7 @@ private:
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
     void _mapTrajectoryStart(void);
     void _mapTrajectoryStop(void);
-    void _linkActiveChanged(LinkInterface* link, bool active);
+    void _linkActiveChanged(LinkInterface* link, bool active, int vehicleID);
     void _say(const QString& text);
     QString _vehicleIdSpeech(void);
     void _handleMavlinkLoggingData(mavlink_message_t& message);
