@@ -188,18 +188,15 @@ QGCCacheWorker::run()
             //-- Wait a bit before shutting things down
             _waitmutex.lock();
             int timeout = 5000;
-            if(!_waitc.wait(&_waitmutex, timeout))
-            {
-                _waitmutex.unlock();
-                _mutex.lock();
-                //-- If nothing to do, close db and leave thread
-                if(!_taskQueue.count()) {
-                    _mutex.unlock();
-                    break;
-                }
-                _mutex.unlock();
-            }
+            _waitc.wait(&_waitmutex, timeout);
             _waitmutex.unlock();
+            _mutex.lock();
+            //-- If nothing to do, close db and leave thread
+            if(!_taskQueue.count()) {
+                _mutex.unlock();
+                break;
+            }
+            _mutex.unlock();
         }
     }
     if(_db) {
