@@ -193,6 +193,10 @@ void UDPLink::_writeDataGram(const QByteArray data, const UDPCLient* target)
  **/
 void UDPLink::readBytes()
 {
+    if (_socket) {
+        return;
+    }
+
     QByteArray databuffer;
     while (_socket->hasPendingDatagrams())
     {
@@ -272,7 +276,7 @@ bool UDPLink::_hardwareConnect()
         _socket = NULL;
     }
     QHostAddress host = QHostAddress::AnyIPv4;
-    _socket = new QUdpSocket();
+    _socket = new QUdpSocket(this);
     _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _udpConfig->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {
