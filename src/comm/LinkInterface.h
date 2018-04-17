@@ -21,6 +21,7 @@
 
 #include "QGCMAVLink.h"
 #include "LinkConfiguration.h"
+#include "HeartbeatTimer.h"
 
 class LinkManager;
 
@@ -37,16 +38,16 @@ class LinkInterface : public QThread
     friend class LinkManager;
 
 public:    
-    ~LinkInterface() {
-        _config->setLink(NULL);
+    virtual ~LinkInterface() {
         timerStop();
+        _config->setLink(NULL);
     }
 
-    Q_PROPERTY(bool active      READ active         WRITE setActive         NOTIFY activeChanged)
+    Q_PROPERTY(bool active      READ active                                 NOTIFY activeChanged)
 
     // Property accessors
-    bool active(void)           { return _active; }
-    void setActive(bool active) { _active = active; emit activeChanged(this, active); }
+    bool active() const;
+    bool active(int vehicle_id) const;
 
     LinkConfiguration* getLinkConfiguration(void) { return _config.data(); }
 
@@ -154,12 +155,11 @@ public slots:
 private slots:
     virtual void _writeBytes(const QByteArray) = 0;
 
-    void _heartbeatReceivedTimeout(void);
-
+    void _activeChanged(bool active, int vehicle_id);
     
 signals:
     void autoconnectChanged(bool autoconnect);
-    void activeChanged(LinkInterface* link, bool active);
+    void activeChanged(LinkInterface* link, bool active, int vehicle_id);
     void _invokeWriteBytes(QByteArray);
     void highLatencyChanged(bool highLatency);
 
@@ -264,7 +264,7 @@ private:
      *
      * Allocate the timer if it does not exist yet and start it.
      */
-    void timerStart();
+    void timerStart(int vehicle_id);
 
     /**
      * @brief timerStop
@@ -294,12 +294,10 @@ private:
     
     mutable QMutex _dataRateMutex; // Mutex for accessing the data rate member variables
 
-    bool _active;                       ///< true: link is actively receiving mavlink messages
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
 
-    static const int    _heartbeatReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
-    QTimer*             _heartbeatReceivedTimer;
+    QList<HeartbeatTimer*> _heartbeatTimerList;
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;

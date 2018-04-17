@@ -174,7 +174,7 @@ LinkInterface* LinkManager::createConnectedLink(const QString& name)
 void LinkManager::_addLink(LinkInterface* link)
 {
     if (thread() != QThread::currentThread()) {
-        qWarning() << "_deleteLink called from incorrect thread";
+        qWarning() << "_addLink called from incorrect thread";
         return;
     }
 
@@ -1007,14 +1007,9 @@ void LinkManager::_freeMavlinkChannel(int channel)
 }
 
 void LinkManager::_heartbeatReceived(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType) {
-    Q_UNUSED(vehicleId);
     Q_UNUSED(componentId);
     Q_UNUSED(vehicleFirmwareType);
     Q_UNUSED(vehicleType);
 
-    link->timerStart();
-
-    if (!link->active()) {
-        link->setActive(true);
-    }
+    link->timerStart(vehicleId);
 }
