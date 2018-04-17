@@ -64,7 +64,7 @@ Item {
         }
         if (visible) {
             visible = false
-            _dropDownComponent = undefined
+            //_dropDownComponent = undefined //TODO (philippoe) such that drop down component state is not deleted - check with don gagne whether this is necessary
             toolStrip.uncheckAll()
         }
     }
