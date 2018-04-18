@@ -61,6 +61,9 @@ public:
     ~QGeoTiledMapReplyQGC();
     void abort();
 
+signals:
+    void terrainDone            (QByteArray responseBytes, QNetworkReply::NetworkError error);
+
 private slots:
     void networkReplyFinished   ();
     void networkReplyError      (QNetworkReply::NetworkError error);

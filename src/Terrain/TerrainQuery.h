@@ -62,20 +62,20 @@ public:
     TerrainAirMapQuery(QObject* parent = NULL);
 
     // Overrides from TerrainQueryInterface
-    void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) final;
-    void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
-    void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
+    void requestCoordinateHeights   (const QList<QGeoCoordinate>& coordinates) final;
+    void requestPathHeights         (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
+    void requestCarpetHeights       (const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
 
 private slots:
-    void _requestError(QNetworkReply::NetworkError code);
-    void _requestFinished(void);
+    void _requestError              (QNetworkReply::NetworkError code);
+    void _requestFinished           ();
 
 private:
-    void _sendQuery             (const QString& path, const QUrlQuery& urlQuery);
-    void _requestFailed         (void);
-    void _parseCoordinateData   (const QJsonValue& coordinateJson);
-    void _parsePathData         (const QJsonValue& pathJson);
-    void _parseCarpetData       (const QJsonValue& carpetJson);
+    void _sendQuery                 (const QString& path, const QUrlQuery& urlQuery);
+    void _requestFailed             (void);
+    void _parseCoordinateData       (const QJsonValue& coordinateJson);
+    void _parsePathData             (const QJsonValue& pathJson);
+    void _parseCarpetData           (const QJsonValue& carpetJson);
 
     enum QueryMode {
         QueryModeCoordinates,
@@ -117,7 +117,7 @@ public:
     void addPathQuery       (TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate& startPoint, const QGeoCoordinate& endPoint);
 
 private slots:
-    void _fetchedTile       (void);                             /// slot to handle fetched elevation tiles
+    void _terrainDone       (QByteArray responseBytes, QNetworkReply::NetworkError error);
 
 private:
     enum class State {

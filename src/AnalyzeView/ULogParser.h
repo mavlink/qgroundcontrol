@@ -3,6 +3,7 @@
 
 #include <QGeoCoordinate>
 #include <QDebug>
+#include <QCoreApplication>
 
 #include "GeoTagController.h"
 
@@ -10,10 +11,14 @@
 
 class ULogParser
 {
+    Q_DECLARE_TR_FUNCTIONS(ULogParser)
+
 public:
     ULogParser();
     ~ULogParser();
-    bool getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback);
+
+    /// @return true: failed, errorMessage set
+    bool getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage);
 
 private:
 

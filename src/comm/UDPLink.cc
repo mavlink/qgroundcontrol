@@ -68,27 +68,6 @@ static QString get_ip_address(const QString& address)
     return QString("");
 }
 
-static bool is_ip_local(const QHostAddress& add)
-{
-    // In simulation and testing setups the vehicle and the GCS can be
-    // running on the same host. This leads to packets arriving through
-    // the local network or the loopback adapter, which makes it look
-    // like the vehicle is connected through two different links,
-    // complicating routing.
-    //
-    // We detect this case and force all traffic to a simulated instance
-    // onto the local loopback interface.
-    // Run through all IPv4 interfaces and check if their canonical
-    // IP address in string representation matches the source IP address
-    foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
-        if (address == add) {
-            // This is a local address of the same host
-            return true;
-        }
-    }
-    return false;
-}
-
 static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& address, quint16 port)
 {
     foreach(UDPCLient* target, list) {
@@ -111,6 +90,9 @@ UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
 {
     if (!_udpConfig) {
         qWarning() << "Internal error";
+    }
+    foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
+        _localAddress.append(QHostAddress(address));
     }
     moveToThread(this);
 }
@@ -158,10 +140,36 @@ QString UDPLink::getName() const
     return _udpConfig->name();
 }
 
+bool UDPLink::_isIpLocal(const QHostAddress& add)
+{
+    // In simulation and testing setups the vehicle and the GCS can be
+    // running on the same host. This leads to packets arriving through
+    // the local network or the loopback adapter, which makes it look
+    // like the vehicle is connected through two different links,
+    // complicating routing.
+    //
+    // We detect this case and force all traffic to a simulated instance
+    // onto the local loopback interface.
+    // Run through all IPv4 interfaces and check if their canonical
+    // IP address in string representation matches the source IP address
+    //
+    // On Windows, this is a very expensive call only Redmond would know
+    // why. As such, we make it once and keep the list locally. If a new
+    // interface shows up after we start, it won't be on this list.
+    foreach (const QHostAddress &address, _localAddress) {
+        if (address == add) {
+            // This is a local address of the same host
+            return true;
+        }
+    }
+    return false;
+}
+
 void UDPLink::_writeBytes(const QByteArray data)
 {
-    if (!_socket)
+    if (!_socket) {
         return;
+    }
     // Send to all manually targeted systems
     foreach(UDPCLient* target, _udpConfig->targetHosts()) {
         // Skip it if it's part of the session clients below
@@ -177,6 +185,7 @@ void UDPLink::_writeBytes(const QByteArray data)
 
 void UDPLink::_writeDataGram(const QByteArray data, const UDPCLient* target)
 {
+    //qDebug() << "UDP Out" << target->address << target->port;
     if(_socket->writeDatagram(data, target->address, target->port) < 0) {
         qWarning() << "Error writing to" << target->address << target->port;
     } else {
@@ -193,6 +202,9 @@ void UDPLink::_writeDataGram(const QByteArray data, const UDPCLient* target)
  **/
 void UDPLink::readBytes()
 {
+    if (!_socket) {
+        return;
+    }
     QByteArray databuffer;
     while (_socket->hasPendingDatagrams())
     {
@@ -200,6 +212,7 @@ void UDPLink::readBytes()
         datagram.resize(_socket->pendingDatagramSize());
         QHostAddress sender;
         quint16 senderPort;
+        //-- Note: This call is broken in Qt 5.9.3 on Windows. It always returns a blank sender and 0 for the port.
         _socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
         databuffer.append(datagram);
         //-- Wait a bit before sending it over
@@ -213,7 +226,7 @@ void UDPLink::readBytes()
         // would trigger this.
         // Add host to broadcast list if not yet present, or update its port
         QHostAddress asender = sender;
-        if(is_ip_local(sender)) {
+        if(_isIpLocal(sender)) {
             asender = QHostAddress(QString("127.0.0.1"));
         }
         if(!contains_target(_sessionTargets, asender, senderPort)) {
@@ -272,7 +285,7 @@ bool UDPLink::_hardwareConnect()
         _socket = NULL;
     }
     QHostAddress host = QHostAddress::AnyIPv4;
-    _socket = new QUdpSocket();
+    _socket = new QUdpSocket(this);
     _socket->setProxy(QNetworkProxy::NoProxy);
     _connectState = _socket->bind(host, _udpConfig->localPort(), QAbstractSocket::ReuseAddressHint | QUdpSocket::ShareAddress);
     if (_connectState) {

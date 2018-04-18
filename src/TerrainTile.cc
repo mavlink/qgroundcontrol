@@ -56,21 +56,57 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     QDataStream stream(byteArray);
 
     float lat,lon;
-    stream >> lat
-           >> lon;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> lat;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> lon;
     _southWest.setLatitude(lat);
     _southWest.setLongitude(lon);
-    stream >> lat
-           >> lon;
+
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> lat;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> lon;
     _northEast.setLatitude(lat);
     _northEast.setLongitude(lon);
 
-
-    stream >> _minElevation
-           >> _maxElevation
-           >> _avgElevation
-           >> _gridSizeLat
-           >> _gridSizeLon;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> _minElevation;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> _maxElevation;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> _avgElevation;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> _gridSizeLat;
+    if (stream.atEnd()) {
+        qWarning() << "Terrain tile binary data does not contain all data";
+        return;
+    }
+    stream >> _gridSizeLon;
 
     qCDebug(TerrainTileLog) << "Loading terrain tile: " << _southWest << " - " << _northEast;
     qCDebug(TerrainTileLog) << "min:max:avg:sizeLat:sizeLon" << _minElevation << _maxElevation << _avgElevation << _gridSizeLat << _gridSizeLon;
