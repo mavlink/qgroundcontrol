@@ -870,11 +870,11 @@ void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
 
     if (gpsRawInt.fix_type >= GPS_FIX_TYPE_3D_FIX) {
         if (!_globalPositionIntMessageAvailable) {
-            //-- Set these here and emit a single signal instead of 3 for the same variable (_coordinate)
-            _coordinate.setLatitude(gpsRawInt.lat  / (double)1E7);
-            _coordinate.setLongitude(gpsRawInt.lon / (double)1E7);
-            _coordinate.setAltitude(gpsRawInt.alt  / 1000.0);
-            emit coordinateChanged(_coordinate);
+            QGeoCoordinate newPosition(gpsRawInt.lat  / (double)1E7, gpsRawInt.lon / (double)1E7, gpsRawInt.alt  / 1000.0);
+            if (newPosition != _coordinate) {
+                _coordinate = newPosition;
+                emit coordinateChanged(_coordinate);
+            }
             _altitudeAMSLFact.setRawValue(gpsRawInt.alt / 1000.0);
         }
     }
@@ -903,11 +903,11 @@ void Vehicle::_handleGlobalPositionInt(mavlink_message_t& message)
     }
 
     _globalPositionIntMessageAvailable = true;
-    //-- Set these here and emit a single signal instead of 3 for the same variable (_coordinate)
-    _coordinate.setLatitude(globalPositionInt.lat  / (double)1E7);
-    _coordinate.setLongitude(globalPositionInt.lon / (double)1E7);
-    _coordinate.setAltitude(globalPositionInt.alt  / 1000.0);
-    emit coordinateChanged(_coordinate);
+    QGeoCoordinate newPosition(globalPositionInt.lat  / (double)1E7, globalPositionInt.lon / (double)1E7, globalPositionInt.alt  / 1000.0);
+    if (newPosition != _coordinate) {
+        _coordinate = newPosition;
+        emit coordinateChanged(_coordinate);
+    }
 }
 
 void Vehicle::_handleHighLatency2(mavlink_message_t& message)
