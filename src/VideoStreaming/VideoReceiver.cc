@@ -218,6 +218,7 @@ VideoReceiver::start()
         return;
     }
 #if defined(QGC_GST_STREAMING)
+    _stop = false;
     qCDebug(VideoReceiverLog) << "start()";
 
     if (_uri.isEmpty()) {
@@ -433,6 +434,7 @@ void
 VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
+    _stop = true;
     qCDebug(VideoReceiverLog) << "stop()";
     if(!_streaming) {
         _shutdownPipeline();
@@ -870,9 +872,11 @@ VideoReceiver::_updateTimer()
             }
             if(elapsed > (time_t)timeout && _videoSurface) {
                 stop();
+                // We want to start it back again with _updateTimer
+                _stop = false;
             }
         } else {
-            if(!running() && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
+            if(!_stop && !running() && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
                 start();
             }
         }
