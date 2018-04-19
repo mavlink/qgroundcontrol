@@ -32,6 +32,11 @@ SetupPage {
                 showAdvanced = !ScreenTools.isMobile
             }
 
+            FactPanelController {
+                id:         controller
+                factPanel:  tuningPage.viewPanel
+            }
+
             // Standard tuning page
             FactSliderPanel {
                 width:          availableWidth
@@ -123,6 +128,7 @@ SetupPage {
                     property real   _valueRateSetpoint
 
                     readonly property int _tickSeparation:      5
+                    readonly property int _maxTickSections:     10
                     readonly property int _tuneListRollIndex:   0
                     readonly property int _tuneListPitchIndex:  1
                     readonly property int _tuneListYawIndex:    2
@@ -237,11 +243,6 @@ SetupPage {
                         resetGraphs()
                     }
 
-                    FactPanelController {
-                        id:         controller
-                        factPanel:  tuningPage.viewPanel
-                    }
-
                     ExclusiveGroup {
                         id: tuneTypeRadios
                     }
@@ -267,7 +268,7 @@ SetupPage {
                         min:        0
                         max:        10
                         titleText:  "deg"
-                        tickCount:  ((max - min) / _tickSeparation) + 1
+                        tickCount:  Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
                     }
 
                     ValueAxis {
@@ -275,12 +276,12 @@ SetupPage {
                         min:        0
                         max:        10
                         titleText:  "deg/s"
-                        tickCount:  ((max - min) / _tickSeparation) + 1
+                        tickCount:  Math.min(((max - min) / _tickSeparation), _maxTickSections) + 1
                     }
 
                     Timer {
                         id:         dataTimer
-                        interval:   50
+                        interval:   10
                         running:    false
                         repeat:     true
 
@@ -308,6 +309,8 @@ SetupPage {
                             adjustYAxisMax(_valueRateYAxis, _valueRateSetpoint)
 
                             _msecs += interval
+                            /*
+                              Testing with just start/stop for now. No time limit.
                             if (valueSeries.count > _maxPointCount) {
                                 valueSeries.remove(0)
                                 valueSetpointSeries.remove(0)
@@ -316,6 +319,7 @@ SetupPage {
                                 valueXAxis.min = valueSeries.at(0).x
                                 valueRateXAxis.min = valueSeries.at(0).x
                             }
+                            */
                         }
 
                         property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle

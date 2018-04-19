@@ -374,8 +374,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
                 spec.setZoom(1);
                 spec.setMapId(UrlFactory::AirmapElevation);
                 QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
-                connect(reply, &QGeoTiledMapReplyQGC::finished, this, &TerrainTileManager::_fetchedTile);
-                connect(reply, &QGeoTiledMapReplyQGC::aborted, this, &TerrainTileManager::_fetchedTile);
+                connect(reply, &QGeoTiledMapReplyQGC::terrainDone, this, &TerrainTileManager::_terrainDone);
                 _state = State::Downloading;
             }
             _tilesMutex.unlock();
@@ -406,7 +405,7 @@ void TerrainTileManager::_tileFailed(void)
     _requestQueue.clear();
 }
 
-void TerrainTileManager::_fetchedTile()
+void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::NetworkError error)
 {
     QGeoTiledMapReplyQGC* reply = qobject_cast<QGeoTiledMapReplyQGC*>(QObject::sender());
     _state = State::Idle;
@@ -421,25 +420,18 @@ void TerrainTileManager::_fetchedTile()
     QString hash = QGCMapEngine::getTileHash(UrlFactory::AirmapElevation, spec.x(), spec.y(), spec.zoom());
 
     // handle potential errors
-    if (reply->error() != QGeoTiledMapReply::NoError) {
-        if (reply->error() == QGeoTiledMapReply::CommunicationError) {
-            qCDebug(TerrainQueryLog) << "Elevation tile fetching returned communication error. " << reply->errorString();
-        } else {
-            qCDebug(TerrainQueryLog) << "Elevation tile fetching returned error. " << reply->errorString();
-        }
+    if (error != QNetworkReply::NoError) {
+        qCDebug(TerrainQueryLog) << "Elevation tile fetching returned error (" << error << ")";
         _tileFailed();
         reply->deleteLater();
         return;
     }
-    if (!reply->isFinished()) {
-        qCDebug(TerrainQueryLog) << "Error in fetching elevation tile. Not finished. " << reply->errorString();
+    if (responseBytes.isEmpty()) {
+        qCDebug(TerrainQueryLog) << "Error in fetching elevation tile. Empty response.";
         _tileFailed();
         reply->deleteLater();
         return;
     }
-
-    // parse received data and insert into hash table
-    QByteArray responseBytes = reply->mapImageData();
 
     qWarning() << "Received some bytes of terrain data: " << responseBytes.size();
 
@@ -595,6 +587,7 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<dou
     int currentIndex = 0;
     foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
         if (!sentRequestInfo.queryObjectDestroyed) {
+            qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_coordinateHeights returned TerrainCoordinateQuery:count" <<  sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
             disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
             QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
             sentRequestInfo.terrainAtCoordinateQuery->_signalTerrainData(true, requestAltitudes);
