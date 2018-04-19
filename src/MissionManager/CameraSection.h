@@ -14,6 +14,8 @@
 #include "MissionItem.h"
 #include "Fact.h"
 
+#define VIDEO_CAPTURE_STATUS_INTERVAL 0.2   //-- Send capture status every 5 seconds
+
 class CameraSection : public Section
 {
     Q_OBJECT

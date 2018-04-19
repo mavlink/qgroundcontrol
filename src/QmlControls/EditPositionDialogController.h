@@ -42,6 +42,7 @@ public:
     Q_INVOKABLE void initValues(void);
     Q_INVOKABLE void setFromGeo(void);
     Q_INVOKABLE void setFromUTM(void);
+    Q_INVOKABLE void setFromVehicle(void);
 
 signals:
     void coordinateChanged(QGeoCoordinate coordinate);

@@ -973,6 +973,11 @@ QString FactMetaData::appSettingsAreaUnitsString(void)
     }
 }
 
+double FactMetaData::cookedIncrement(void) const
+{
+    return _rawTranslator(this->increment()).toDouble();
+}
+
 int FactMetaData::decimalPlaces(void) const
 {
     int actualDecimalPlaces = defaultDecimalPlaces;

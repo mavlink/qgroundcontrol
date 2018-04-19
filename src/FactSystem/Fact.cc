@@ -643,6 +643,16 @@ double Fact::increment(void) const
     return std::numeric_limits<double>::quiet_NaN();
 }
 
+double Fact::cookedIncrement(void) const
+{
+    if (_metaData) {
+        return _metaData->cookedIncrement();
+    } else {
+        qWarning() << kMissingMetadata << name();
+    }
+    return std::numeric_limits<double>::quiet_NaN();
+}
+
 bool Fact::hasControl(void) const
 {
     if (_metaData) {

@@ -101,6 +101,7 @@ protected:
     QString _missionFlightMode;
     QString _rtlFlightMode;
     QString _landingFlightMode;
+    QString _preclandFlightMode;
     QString _rtgsFlightMode;
     QString _followMeFlightMode;
     QString _simpleFlightMode;

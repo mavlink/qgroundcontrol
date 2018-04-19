@@ -70,7 +70,7 @@ void CameraSectionTest::init(void)
                                                              MAV_CMD_VIDEO_START_CAPTURE,
                                                              MAV_FRAME_MISSION,
                                                              0,                             // Reserved (Set to 0)
-                                                             0,                             // No CAMERA_CAPTURE_STATUS streaming
+                                                             VIDEO_CAPTURE_STATUS_INTERVAL, // CAMERA_CAPTURE_STATUS (default to every 5 seconds)
                                                              NAN, NAN, NAN, NAN, NAN,       // param 3-7 reserved
                                                              true,                          // autocontinue
                                                              false),                        // isCurrentItem
@@ -896,13 +896,6 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
     QCOMPARE(_cameraSection->settingsSpecified(), false);
     visualItems.clear();
 
-    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
-    invalidSimpleItem.missionItem().setParam2(10);    // must be 0
-    visualItems.append(&invalidSimpleItem);
-    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
-    QCOMPARE(visualItems.count(), 1);
-    QCOMPARE(_cameraSection->settingsSpecified(), false);
-    visualItems.clear();
 }
 
 void CameraSectionTest::_testScanForStopVideoSection(void)
@@ -933,6 +926,14 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
 
     SimpleMissionItem invalidSimpleItem(_offlineVehicle, true /* editMode */, _validStopVideoItem->missionItem());
     invalidSimpleItem.missionItem().setParam1(10);    // must be  0
+    visualItems.append(&invalidSimpleItem);
+    QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
+    QCOMPARE(visualItems.count(), 1);
+    QCOMPARE(_cameraSection->settingsSpecified(), false);
+    visualItems.clear();
+
+    invalidSimpleItem.missionItem() = _validStartVideoItem->missionItem();
+    invalidSimpleItem.missionItem().setParam2(VIDEO_CAPTURE_STATUS_INTERVAL + 1);    // must be VIDEO_CAPTURE_STATUS_INTERVAL
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
     QCOMPARE(visualItems.count(), 1);
