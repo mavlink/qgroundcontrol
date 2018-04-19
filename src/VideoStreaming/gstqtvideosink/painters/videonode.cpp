@@ -52,18 +52,14 @@ void VideoNode::setMaterialTypeSolidBlack()
 
 void VideoNode::setCurrentFrame(GstBuffer* buffer)
 {
-    if (m_materialType != MaterialTypeVideo) {
-        return;
-    }
+    Q_ASSERT (m_materialType == MaterialTypeVideo);
     static_cast<VideoMaterial*>(material())->setCurrentFrame(buffer);
     markDirty(DirtyMaterial);
 }
 
 void VideoNode::updateColors(int brightness, int contrast, int hue, int saturation)
 {
-    if (m_materialType != MaterialTypeVideo) {
-        return;
-    }
+    Q_ASSERT (m_materialType == MaterialTypeVideo);
     static_cast<VideoMaterial*>(material())->updateColors(brightness, contrast, hue, saturation);
     markDirty(DirtyMaterial);
 }
