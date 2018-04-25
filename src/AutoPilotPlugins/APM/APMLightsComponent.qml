@@ -132,17 +132,29 @@ SetupPage {
 
             ListModel {
                 id: lightsOutModel
+                // It appears that QGCComboBox can't handle models that don't have a initial item
+                // after onModelChanged
                 ListElement { text: qsTr("Disabled"); value: 0 }
-                ListElement { text: qsTr("Channel 5"); value: 5 }
-                ListElement { text: qsTr("Channel 6"); value: 6 }
-                ListElement { text: qsTr("Channel 7"); value: 7 }
-                ListElement { text: qsTr("Channel 8"); value: 8 }
-                ListElement { text: qsTr("Channel 9"); value: 9 }
-                ListElement { text: qsTr("Channel 10"); value: 10 }
-                ListElement { text: qsTr("Channel 11"); value: 11 }
-                ListElement { text: qsTr("Channel 12"); value: 12 }
-                ListElement { text: qsTr("Channel 13"); value: 13 }
-                ListElement { text: qsTr("Channel 14"); value: 14 }
+
+                function update(number) {
+                    // Not enough channels
+                    if(number < 6) {
+                        return
+                    }
+                    for(var i = 5; i <= number; i++) {
+                        var text = qsTr("Channel ") + i
+                        append({"text": text, "value": i})
+                    }
+                }
+
+                Component.onCompleted: {
+                    // Number of main outputs
+                    var baseValue = 8
+                    // Extra outputs
+                    // http://ardupilot.org/copter/docs/parameters.html#brd-pwm-count-auxiliary-pin-config
+                    var brd_pwm_count_value = controller.getParameterFact(-1, "BRD_PWM_COUNT").value
+                    update(8 + (brd_pwm_count_value == 7 ? 3 : brd_pwm_count_value))
+                }
             }
 
             Component {
