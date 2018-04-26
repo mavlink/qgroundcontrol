@@ -87,6 +87,17 @@ bool QGCFileDownload::download(const QString& remoteFile, bool redirect)
     connect(networkReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             this, &QGCFileDownload::_downloadError);
 
+    connect(networkReply, &QNetworkReply::sslErrors, this, [](const QList<QSslError> &sslErrors) {
+        for (const auto &error : sslErrors) {
+            qWarning() << "SSL error: " << error.errorString();
+
+            const auto &certificate = error.certificate();
+            if(!certificate.isNull()) {
+                qWarning() << "SSL Certificate problem: " << certificate.toText();
+            }
+        }
+    });
+
     return true;
 }
 
