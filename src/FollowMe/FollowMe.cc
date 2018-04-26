@@ -19,37 +19,48 @@
 
 FollowMe::FollowMe(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox), estimatation_capabilities(0)
+    , _manualControl(false)
 {
     memset(&_motionReport, 0, sizeof(motionReport_s));
     runTime.start();
-
     _gcsMotionReportTimer.setSingleShot(false);
     connect(&_gcsMotionReportTimer, &QTimer::timeout, this, &FollowMe::_sendGCSMotionReport);
 }
 
 void FollowMe::followMeHandleManager(const QString&)
 {
-    QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
-
-    for (int i=0; i< vehicles.count(); i++) {
-        Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if (vehicle->px4Firmware() && vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
-            _enable();
-            return;
+    if(!_manualControl) {
+        QmlObjectListModel & vehicles = *_toolbox->multiVehicleManager()->vehicles();
+        for (int i=0; i< vehicles.count(); i++) {
+            Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
+            if (vehicle->px4Firmware() && vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
+                _enable(_toolbox->qgcPositionManager()->updateInterval());
+                return;
+            }
         }
+        _disable();
     }
+}
 
+void FollowMe::manualEnable(int interval)
+{
+    _manualControl = true;
+    _enable(interval);
+}
+
+void FollowMe::manualDisable()
+{
+    _manualControl = false;
     _disable();
 }
 
-void FollowMe::_enable()
+void FollowMe::_enable(int interval)
 {
     connect(_toolbox->qgcPositionManager(),
             SIGNAL(positionInfoUpdated(QGeoPositionInfo)),
             this,
             SLOT(_setGPSLocation(QGeoPositionInfo)));
-
-    _gcsMotionReportTimer.setInterval(_toolbox->qgcPositionManager()->updateInterval());
+    _gcsMotionReportTimer.setInterval(interval);
     _gcsMotionReportTimer.start();
 }
 
@@ -59,7 +70,6 @@ void FollowMe::_disable()
                SIGNAL(positionInfoUpdated(QGeoPositionInfo)),
                this,
                SLOT(_setGPSLocation(QGeoPositionInfo)));
-
     _gcsMotionReportTimer.stop();
 }
 
@@ -133,7 +143,7 @@ void FollowMe::_sendGCSMotionReport(void)
 
     for (int i=0; i< vehicles.count(); i++) {
         Vehicle* vehicle = qobject_cast<Vehicle*>(vehicles[i]);
-        if(vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
+        if(_manualControl || vehicle->flightMode().compare(FirmwarePlugin::px4FollowMeFlightMode, Qt::CaseInsensitive) == 0) {
             mavlink_message_t message;
             mavlink_msg_follow_target_encode_chan(mavlinkProtocol->getSystemId(),
                                                   mavlinkProtocol->getComponentId(),

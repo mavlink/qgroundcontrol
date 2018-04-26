@@ -29,6 +29,9 @@ class FollowMe : public QGCTool
 public:
     FollowMe(QGCApplication* app, QGCToolbox* toolbox);
 
+    void    manualEnable    (int interval);
+    void    manualDisable   ();
+
 public slots:
     void followMeHandleManager(const QString&);
 
@@ -65,8 +68,10 @@ private:
 
     uint8_t estimatation_capabilities;
 
-    void _disable();
-    void _enable();
+    void    _disable    ();
+    void    _enable     (int interval);
 
-    double _degreesToRadian(double deg);
+    double  _degreesToRadian(double deg);
+
+    bool    _manualControl;
 };
