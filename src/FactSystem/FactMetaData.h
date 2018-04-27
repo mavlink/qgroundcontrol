@@ -216,7 +216,7 @@ private:
     };
 
     struct AppSettingsTranslation_s {
-        const char*     rawUnits;
+        QString     rawUnits;
         const char*     cookedUnits;
         UnitTypes       unitType;
         uint32_t        unitOption;
@@ -265,7 +265,7 @@ private:
     } constants;
 
     struct BuiltInTranslation_s {
-        const char* rawUnits;
+        QString rawUnits;
         const char* cookedUnits;
         Translator  rawTranslator;
         Translator  cookedTranslator;
