@@ -1271,6 +1271,7 @@ private:
     int _lastAnnouncedLowBatteryPercent;
 
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
+    bool _priorityLinkCommanded;
 
     // FactGroup facts
 
