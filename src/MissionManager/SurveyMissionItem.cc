@@ -814,14 +814,15 @@ void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
             QPointF secondPoint;
             double currentMaxDistance = 0;
 
-            for (int i=0; i<intersections.count(); i++) {
-                for (int j=0; j<intersections.count(); j++) {
-                    QLineF lineTest(intersections[i], intersections[j]);
-\
+            // i is already used earlier for lineList counter
+            for (int k=0; k<intersections.count(); k++) {
+                // since length is scalar, comparing this list can be done in forwarding-manner
+                for (int l=k+1; l<intersections.count(); l++) {
+                    QLineF lineTest(intersections[k], intersections[l]);
                     double newMaxDistance = lineTest.length();
                     if (newMaxDistance > currentMaxDistance) {
-                        firstPoint = intersections[i];
-                        secondPoint = intersections[j];
+                        firstPoint = intersections[k];
+                        secondPoint = intersections[l];
                         currentMaxDistance = newMaxDistance;
                     }
                 }
