@@ -20,11 +20,14 @@ const char* SensorsComponent::_airspeedBreakerParam =   "CBRK_AIRSPD_CHK";
 const char* SensorsComponent::_airspeedDisabledParam =  "FW_ARSP_MODE";
 const char* SensorsComponent::_airspeedCalParam =       "SENS_DPRES_OFF";
 
+const char* SensorsComponent::_magDisabledParam =  "ATT_W_MAG";
+const char* SensorsComponent::_magCalParam =  "CAL_MAG0_ID";
+
 SensorsComponent::SensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :
     VehicleComponent(vehicle, autopilot, parent),
     _name(tr("Sensors"))
 {
-    _deviceIds << QStringLiteral("CAL_MAG0_ID") << QStringLiteral("CAL_GYRO0_ID") << QStringLiteral("CAL_ACC0_ID");
+    _deviceIds << QStringLiteral("CAL_GYRO0_ID") << QStringLiteral("CAL_ACC0_ID");
 }
 
 QString SensorsComponent::name(void) const
@@ -54,6 +57,10 @@ bool SensorsComponent::setupComplete(void) const
             return false;
         }
     }
+    if (_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _magDisabledParam)->rawValue().toInt() != 0 &&
+            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _magCalParam)->rawValue().toFloat() == 0.0f) {
+        return false;
+    }
 
     if (_vehicle->fixedWing() || _vehicle->vtol()) {
         if (!_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _airspeedDisabledParam)->rawValue().toBool() &&
@@ -70,7 +77,7 @@ QStringList SensorsComponent::setupCompleteChangedTriggerList(void) const
 {
     QStringList triggers;
     
-    triggers << _deviceIds;
+    triggers << _deviceIds << _magCalParam << _magDisabledParam;
     if (_vehicle->fixedWing() || _vehicle->vtol()) {
         triggers << _airspeedCalParam << _airspeedBreakerParam;
     }
