@@ -220,6 +220,7 @@ void SimpleMissionItem::_setupMetaData(void)
     if (!_altitudeMetaData) {
         _altitudeMetaData = new FactMetaData(FactMetaData::valueTypeDouble);
         _altitudeMetaData->setRawUnits("m");
+        _altitudeMetaData->setRawIncrement(1);
         _altitudeMetaData->setDecimalPlaces(2);
 
         enumStrings.clear();
@@ -259,6 +260,7 @@ void SimpleMissionItem::_setupMetaData(void)
     _missionItem._commandFact.setMetaData(_commandMetaData);
     _missionItem._frameFact.setMetaData(_frameMetaData);
     _altitudeFact.setMetaData(_altitudeMetaData);
+    _amslAltAboveTerrainFact.setMetaData(_altitudeMetaData);
 }
 
 SimpleMissionItem::~SimpleMissionItem()
@@ -659,6 +661,7 @@ void SimpleMissionItem::_altitudeChanged(void)
     }
 
     if (_altitudeMode == AltitudeAboveTerrain) {
+        _amslAltAboveTerrainFact.setRawValue(qQNaN());
         _terrainAltChanged();
     } else {
         _missionItem._param7Fact.setRawValue(_altitudeFact.rawValue());
