@@ -107,8 +107,6 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
     
     beginRemoveRows(QModelIndex(), position, position + rows - 1);
     for (int row=0; row<rows; row++) {
-        // FIXME: Need to figure our correct memory management for here
-        //_objectList[position]->deleteLater();
         _objectList.removeAt(position);
     }
     endRemoveRows();
