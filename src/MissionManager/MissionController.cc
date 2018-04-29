@@ -462,7 +462,7 @@ void MissionController::removeMissionItem(int index)
         // Determine if the mission still has another survey style item in it
         bool foundSurvey = false;
         for (int i=1; i<_visualItems->count(); i++) {
-            if (_visualItems->value<SurveyMissionItem*>(i) || _visualItems->value<CorridorScanComplexItem*>(index)) {
+            if (_visualItems->value<SurveyMissionItem*>(i) || _visualItems->value<CorridorScanComplexItem*>(i)) {
                 foundSurvey = true;
                 break;
             }
