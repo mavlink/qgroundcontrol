@@ -18,6 +18,7 @@
         { "vendorID": 9900, "productID": 64,        "boardClass": "Pixhawk",    "name": "TAP V1" },
         { "vendorID": 9900, "productID": 65,        "boardClass": "Pixhawk",    "name": "ASC V1" },
         { "vendorID": 9900, "productID": 22,        "boardClass": "Pixhawk",    "name": "Crazyflie 2" },
+        { "vendorID": 9900, "productID": 1,         "boardClass": "Pixhawk",    "name": "Omnibus F4 SD" },
 
         { "vendorID": 9900, "productID": 21,        "boardClass": "PX4 Flow",   "name": "PX4 Flow" },
 
@@ -53,6 +54,7 @@
         { "regExp": "^PX4 FMU",             "boardClass": "Pixhawk" },
         { "regExp": "^PX4 Crazyflie v2.0",  "boardClass": "Pixhawk" },
         { "regExp": "^Crazyflie BL",        "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 OmnibusF4SD",     "boardClass": "Pixhawk" },
         { "regExp": "PX4.*Flow",            "boardClass": "PX4 Flow" },
         { "regExp": "^FT231X USB UART$",    "boardClass": "SiK Radio" },
         { "regExp": "USB UART$",            "boardClass": "SiK Radio",  "androidOnly": true, "comment": "Very broad fallback, too dangerous for non-android" }
