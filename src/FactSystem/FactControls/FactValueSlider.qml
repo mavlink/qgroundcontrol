@@ -1,5 +1,6 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
+import QtQuick.Dialogs  1.2
 
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
@@ -11,9 +12,9 @@ Rectangle {
     width:  _totalSlots * _itemWidth
     color:  qgcPal.textField
 
-    property Fact   fact:           undefined
-    property int    digitCount:     4           ///< The number of digits to show for each value
-    property int    incrementSlots: 1           ///< The number of visible slots to left/right of center value
+    property Fact   fact:               undefined
+    property int    digitCount:         4           ///< The number of digits to show for each value
+    property int    incrementSlots:     1           ///< The number of visible slots to left/right of center value
 
     property int    _totalDigitCount:       digitCount + 1 + fact.units.length
     property real   _margins:               (ScreenTools.implicitTextFieldHeight - ScreenTools.defaultFontPixelHeight) / 2
@@ -32,6 +33,8 @@ Rectangle {
     property int    _prevIncrementSlots:    incrementSlots
     property int    _nextIncrementSlots:    incrementSlots
     property int    _selectionWidth:        3
+    property var    _model:                 fact.valueSliderModel()
+    property var    _fact:                  fact
 
     QGCPalette { id: qgcPal; colorGroupEnabled: parent.enabled }
     QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
@@ -46,30 +49,22 @@ Rectangle {
         _nextIncrementSlots = _totalSlots - _currentRelativeIndex - 1
     }
 
-    Component.onCompleted: {
-        var currentValue = _value
-        _valueModel = [ _value.toFixed(_decimalPlaces) ]
-
-        var addCount = 0
-        var minValue = fact.min
-        currentValue -= _increment
-        while (currentValue >= minValue) {
-            _valueModel.unshift(currentValue.toFixed(_decimalPlaces))
-            currentValue -= _increment
-            addCount++
-        }
-
-        var maxValue = fact.max
-        currentValue = _value + _increment
-        while (currentValue <= maxValue) {
-            _valueModel.push(currentValue.toFixed(_decimalPlaces))
-            currentValue += _increment
-        }
-
-        _currentIndex = addCount
-        valueListView.model = _valueModel
+    function reset() {
+        valueListView.positionViewAtIndex(0, ListView.Beginning)
+        _currentIndex = _model.resetInitialValue()
         valueListView.positionViewAtIndex(_currentIndex, ListView.Center)
         recalcRelativeIndex()
+    }
+
+    Component.onCompleted: valueListView.maximumFlickVelocity = valueListView.maximumFlickVelocity / 2
+
+    Component {
+        id: editDialogComponent
+
+        ParameterEditorDialog {
+            fact:           _fact
+            onValueChanged: reset()
+        }
     }
 
     QGCListView {
@@ -78,29 +73,39 @@ Rectangle {
         orientation:    ListView.Horizontal
         snapMode:       ListView.SnapToItem
         clip:           true
+        model:          _model
+
+        Component.onCompleted: reset()
 
         delegate: QGCLabel {
             width:                  _itemWidth
             height:                 _itemHeight
             verticalAlignment:      Text.AlignVCenter
             horizontalAlignment:    Text.AlignHCenter
-            text:                   modelData + " " + _units
+            text:                   value + " " + _units
             color:                  qgcPal.textFieldText
 
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                    _currentIndex = index
-                    valueListView.positionViewAtIndex(_currentIndex, ListView.Center)
-                    recalcRelativeIndex()
-                    fact.value = valueListView.model[_currentIndex]
+                    valueListView.focus = true
+                    if (_currentIndex === index) {
+                        qgcView.showDialog(editDialogComponent, qsTr("Value Details"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                    } else {
+                        _currentIndex = index
+                        valueListView.positionViewAtIndex(_currentIndex, ListView.Center)
+                        recalcRelativeIndex()
+                        fact.value = value
+                    }
                 }
             }
         }
 
+        onMovementStarted: valueListView.focus = true
+
         onMovementEnded: {
             _currentIndex = firstVisibleIndex() + _currentRelativeIndex
-            fact.value = model[_currentIndex]
+            fact.value = _model.valueAtModelIndex(_currentIndex)
         }
     }
 
