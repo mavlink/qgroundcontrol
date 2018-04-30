@@ -79,10 +79,11 @@ Rectangle {
         }
 
         Rectangle {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            height:                 altColumn.y + altColumn.height + _margin
-            color:                  qgcPal.windowShade
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            height:         altColumn.y + altColumn.height + _margin
+            color:          qgcPal.windowShade
+            visible:        _specifiesAltitude
 
             Column {
                 id:                 altColumn
@@ -108,7 +109,6 @@ Rectangle {
                     fact:           missionItem.altitude
                     digitCount:     3
                     incrementSlots: 1
-                    visible:        _specifiesAltitude
                 }
 
                 RowLayout {
