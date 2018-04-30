@@ -76,7 +76,7 @@ Rectangle {
         anchors.verticalCenter: commandPicker.verticalCenter
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
-        text:                   missionItem.homePosition ? "H" : missionItem.sequenceNumber
+        text:                   missionItem.homePosition ? "P" : missionItem.sequenceNumber
         color:                  _outerTextColor
     }
 

@@ -22,7 +22,7 @@ void MissionSettingsTest::init(void)
 {
     VisualMissionItemTest::init();
 
-    _settingsItem = new MissionSettingsItem(_offlineVehicle, this);
+    _settingsItem = new MissionSettingsItem(_offlineVehicle, true /* planView */, this);
 }
 
 void MissionSettingsTest::cleanup(void)
