@@ -57,7 +57,7 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
 
     connect(this,               &MissionSettingsItem::terrainAltitudeChanged,           this, &MissionSettingsItem::_setHomeAltFromTerrain);
 
-    connect(&_plannedHomePositionAltitudeFact,  &Fact::valueChanged,                    this, &MissionSettingsItem::_updateAltitudeInCoordinate);
+    connect(&_plannedHomePositionAltitudeFact,  &Fact::rawValueChanged,                 this, &MissionSettingsItem::_updateAltitudeInCoordinate);
 
     connect(&_cameraSection,    &CameraSection::dirtyChanged,   this, &MissionSettingsItem::_sectionDirtyChanged);
     connect(&_speedSection,     &SpeedSection::dirtyChanged,    this, &MissionSettingsItem::_sectionDirtyChanged);
