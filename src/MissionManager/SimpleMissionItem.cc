@@ -80,6 +80,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
 
     setDefaultsForCommand();
     _rebuildFacts();
+
+    setDirty(false);
 }
 
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent)
@@ -140,6 +142,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const Miss
 
     // Signal coordinate changed to kick off terrain query
     emit coordinateChanged(coordinate());
+
+    setDirty(false);
 }
 
 SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* parent)
@@ -169,8 +173,8 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* pa
     _setupMetaData();
     _connectSignals();
     _updateOptionalSections();
-
     _rebuildFacts();
+    setDirty(false);
 }
 
 void SimpleMissionItem::_connectSignals(void)
