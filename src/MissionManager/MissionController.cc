@@ -640,7 +640,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     if (!JsonHelper::loadGeoCoordinate(json[_jsonPlannedHomePositionKey], true /* altitudeRequired */, homeCoordinate, errorString)) {
         return false;
     }
-    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _editMode, visualItems);
     settingsItem->setCoordinate(homeCoordinate);
     visualItems->insert(0, settingsItem);
     qCDebug(MissionControllerLog) << "plannedHomePosition" << homeCoordinate;
@@ -724,7 +724,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 visualItems->append(corridorItem);
             } else if (complexItemType == MissionSettingsItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Mission Settings: nextSequenceNumber" << nextSequenceNumber;
-                MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
+                MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _editMode, visualItems);
                 if (!settingsItem->load(itemObject, nextSequenceNumber++, errorString)) {
                     return false;
                 }
@@ -1717,7 +1717,7 @@ double MissionController::_normalizeLon(double lon)
 /// Add the Mission Settings complex item to the front of the items
 void MissionController::_addMissionSettings(QmlObjectListModel* visualItems, bool addToCenter)
 {
-    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, visualItems);
+    MissionSettingsItem* settingsItem = new MissionSettingsItem(_controllerVehicle, _editMode, visualItems);
 
     qCDebug(MissionControllerLog) << "_addMissionSettings addToCenter" << addToCenter;
 
