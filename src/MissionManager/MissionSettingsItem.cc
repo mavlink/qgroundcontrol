@@ -27,8 +27,9 @@ const char* MissionSettingsItem::_plannedHomePositionAltitudeName = "PlannedHome
 
 QMap<QString, FactMetaData*> MissionSettingsItem::_metaDataMap;
 
-MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, QObject* parent)
+MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, bool planView, QObject* parent)
     : ComplexMissionItem                (vehicle, parent)
+    , _planView                         (planView)
     , _plannedHomePositionAltitudeFact  (0, _plannedHomePositionAltitudeName,   FactMetaData::valueTypeDouble)
     , _plannedHomePositionFromVehicle   (false)
     , _missionEndRTL                    (false)
@@ -298,4 +299,9 @@ void MissionSettingsItem::_setHomeAltFromTerrain(double terrainAltitude)
     if (!_plannedHomePositionFromVehicle) {
         _plannedHomePositionAltitudeFact.setRawValue(terrainAltitude);
     }
+}
+
+QString MissionSettingsItem::abbreviation(void) const
+{
+    return _planView ? tr("Planned Home") : tr("H");
 }
