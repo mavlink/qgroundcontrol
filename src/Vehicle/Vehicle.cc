@@ -494,6 +494,7 @@ void Vehicle::prepareDelete()
 void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
 {
     _firmwareType = static_cast<MAV_AUTOPILOT>(value.toInt());
+    _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     emit firmwareTypeChanged();
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         _capabilityBits = 0;
@@ -2450,6 +2451,11 @@ bool Vehicle::supportsJSButton(void) const
 bool Vehicle::supportsMotorInterference(void) const
 {
     return _firmwarePlugin->supportsMotorInterference();
+}
+
+bool Vehicle::supportsTerrainFrame(void) const
+{
+    return _firmwarePlugin->supportsTerrainFrame();
 }
 
 QString Vehicle::vehicleTypeName() const {

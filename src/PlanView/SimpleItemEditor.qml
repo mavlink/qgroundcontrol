@@ -17,9 +17,14 @@ Rectangle {
     color:  qgcPal.windowShadeDark
     radius: _radius
 
-    property bool _specifiesAltitude:   missionItem.specifiesAltitude
-    property bool _altModeIsTerrain:    missionItem.altitudeMode === 2
-    property real _margin:              ScreenTools.defaultFontPixelHeight / 2
+    property bool _specifiesAltitude:       missionItem.specifiesAltitude
+    property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
+    property bool _supportsTerrainFrame:    missionItem
+
+    readonly property int _altModeRelative:     0
+    readonly property int _altModeAbsolute:     1
+    readonly property int _altModeAboveTerrain: 2
+    readonly property int _altModeTerrainFrame: 3
 
     ExclusiveGroup {
         id: altRadios
@@ -93,9 +98,10 @@ Rectangle {
                 }
 
                 RowLayout {
-                    QGCRadioButton { text: qsTr("Rel"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: 0 }
-                    QGCRadioButton { text: qsTr("Abs"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: 1 }
-                    QGCRadioButton { text: qsTr("AGL"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: 2 }
+                    QGCRadioButton { text: qsTr("Rel"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: _altModeRelative }
+                    QGCRadioButton { text: qsTr("Abs"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: _altModeAbsolute }
+                    QGCRadioButton { text: qsTr("AGL"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: _altModeAboveTerrain }
+                    QGCRadioButton { text: qsTr("TerrF"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; visible: missionItem.supportsTerrainFrame; readonly property int value: _altModeTerrainFrame }
                 }
 
                 FactValueSlider {
@@ -107,16 +113,21 @@ Rectangle {
 
                 RowLayout {
                     spacing: _margin
+                    visible: missionItem.altitudeMode === _altModeAboveTerrain
 
                     QGCLabel {
                         text:           qsTr("Calculated Abs Alt")
                         font.pointSize: ScreenTools.smallFontPointSize
-                        visible:        _altModeIsTerrain
                     }
                     QGCLabel {
                         text:       missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
-                        visible:    _altModeIsTerrain
                     }
+                }
+
+                QGCLabel {
+                    text:           qsTr("Using terrain reference frame")
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    visible:        missionItem.altitudeMode === _altModeTerrainFrame
                 }
             }
         }

@@ -80,12 +80,6 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
 
     setDefaultsForCommand();
     _rebuildFacts();
-
-    connect(&_missionItem, &MissionItem::specifiedFlightSpeedChanged, this, &SimpleMissionItem::specifiedFlightSpeedChanged);
-
-    connect(this, &SimpleMissionItem::sequenceNumberChanged,        this, &SimpleMissionItem::lastSequenceNumberChanged);
-    connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_setDirty);
-    connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 }
 
 SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent)
@@ -98,7 +92,6 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const Miss
     , _cameraSection            (NULL)
     , _commandTree              (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact     (0,         "Command:",             FactMetaData::valueTypeUint32)
-    , _altitudeMode             (missionItem.relativeAltitude() ? AltitudeRelative : AltitudeAMSL)
     , _altitudeFact             (0,         "Altitude",             FactMetaData::valueTypeDouble)
     , _amslAltAboveTerrainFact  (0,         "Alt above terrain",    FactMetaData::valueTypeDouble)
     , _param1MetaData           (FactMetaData::valueTypeDouble)
@@ -111,6 +104,25 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const Miss
     , _syncingHeadingDegreesAndParam4           (false)
 {
     _editorQml = QStringLiteral("qrc:/qml/SimpleItemEditor.qml");
+
+    struct MavFrame2AltMode_s {
+        MAV_FRAME       mavFrame;
+        AltitudeMode    altMode;
+    };
+
+    const struct MavFrame2AltMode_s rgMavFrame2AltMode[] = {
+        { MAV_FRAME_GLOBAL_TERRAIN_ALT,     AltitudeTerrainFrame },
+        { MAV_FRAME_GLOBAL,                 AltitudeAbsolute },
+        { MAV_FRAME_GLOBAL_RELATIVE_ALT,    AltitudeRelative },
+    };
+    _altitudeMode = AltitudeRelative;
+    for (size_t i=0; i<sizeof(rgMavFrame2AltMode)/sizeof(rgMavFrame2AltMode[0]); i++) {
+        const MavFrame2AltMode_s& pMavFrame2AltMode = rgMavFrame2AltMode[i];
+        if (pMavFrame2AltMode.mavFrame == missionItem.frame()) {
+            _altitudeMode = pMavFrame2AltMode.altMode;
+            break;
+        }
+    }
 
     _isCurrentItem = missionItem.isCurrentItem();
     _altitudeFact.setRawValue(specifiesCoordinate() ? _missionItem._param7Fact.rawValue() : qQNaN());
@@ -176,11 +188,13 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem,              &MissionItem::sequenceNumberChanged,    this, &SimpleMissionItem::_setDirty);
     connect(this,                       &SimpleMissionItem::altitudeModeChanged,this, &SimpleMissionItem::_setDirty);
 
-    // These changes may need to trigger terrain queries
     connect(&_altitudeFact,             &Fact::valueChanged,                    this, &SimpleMissionItem::_altitudeChanged);
     connect(this,                       &SimpleMissionItem::altitudeModeChanged,this, &SimpleMissionItem::_altitudeModeChanged);
-
     connect(this,                       &SimpleMissionItem::terrainAltitudeChanged,this, &SimpleMissionItem::_terrainAltChanged);
+
+    connect(this, &SimpleMissionItem::sequenceNumberChanged,        this, &SimpleMissionItem::lastSequenceNumberChanged);
+    connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_setDirty);
+    connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 
     // These are coordinate parameters, they must emit coordinateChanged signal
     connect(&_missionItem._param5Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
@@ -208,8 +222,12 @@ void SimpleMissionItem::_connectSignals(void)
     // These fact signals must alway signal out through SimpleMissionItem signals
     connect(&_missionItem._commandFact,     &Fact::valueChanged, this, &SimpleMissionItem::_sendCommandChanged);
 
-    // Sequence number is kept in mission iteem, so we need to propagate signal up as well
-    connect(&_missionItem, &MissionItem::sequenceNumberChanged, this, &SimpleMissionItem::sequenceNumberChanged);
+    // Propogate signals from MissionItem up to SimpleMissionItem
+    connect(&_missionItem, &MissionItem::sequenceNumberChanged,         this, &SimpleMissionItem::sequenceNumberChanged);
+    connect(&_missionItem, &MissionItem::specifiedFlightSpeedChanged,   this, &SimpleMissionItem::specifiedFlightSpeedChanged);
+
+    // Firmware type change can affect supportsTerrainFrame
+    connect(_vehicle, &Vehicle::firmwareTypeChanged, this, &SimpleMissionItem::supportsTerrainFrameChanged);
 }
 
 void SimpleMissionItem::_setupMetaData(void)
@@ -295,7 +313,7 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
     bool success;
     if ((success = _missionItem.load(loadStream))) {
         if (specifiesCoordinate()) {
-            _altitudeMode = _missionItem.relativeAltitude() ? AltitudeRelative : AltitudeAMSL;
+            _altitudeMode = _missionItem.relativeAltitude() ? AltitudeRelative : AltitudeAbsolute;
             _altitudeFact.setRawValue(_missionItem._param7Fact.rawValue());
             _amslAltAboveTerrainFact.setRawValue(qQNaN());
         }
@@ -325,7 +343,7 @@ bool SimpleMissionItem::load(const QJsonObject& json, int sequenceNumber, QStrin
             _altitudeFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
             _amslAltAboveTerrainFact.setRawValue(JsonHelper::possibleNaNJsonValue(json[_jsonAltitudeKey]));
         } else {
-            _altitudeMode = _missionItem.relativeAltitude() ? AltitudeRelative : AltitudeAMSL;
+            _altitudeMode = _missionItem.relativeAltitude() ? AltitudeRelative : AltitudeAbsolute;
             _altitudeFact.setRawValue(_missionItem._param7Fact.rawValue());
             _amslAltAboveTerrainFact.setRawValue(qQNaN());
         }
@@ -585,6 +603,8 @@ bool SimpleMissionItem::friendlyEditAllowed(void) const
                 return true;
                 break;
 
+            case MAV_FRAME_GLOBAL_TERRAIN_ALT:
+                return supportsTerrainFrame();
             default:
                 return false;
             }
@@ -636,21 +656,27 @@ void SimpleMissionItem::_sendCoordinateChanged(void)
 void SimpleMissionItem::_altitudeModeChanged(void)
 {
     switch (_altitudeMode) {
+    case AltitudeTerrainFrame:
+        _missionItem.setFrame(MAV_FRAME_GLOBAL_TERRAIN_ALT);
+        break;
     case AltitudeAboveTerrain:
-        // Terrain altitudes are AMSL
+        // Terrain altitudes are Absolute
         _missionItem.setFrame(MAV_FRAME_GLOBAL);
-        // Clear any old values
+        // Clear any old calculated values
         _missionItem._param7Fact.setRawValue(qQNaN());
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
-        _altitudeChanged();
         break;
-    case AltitudeAMSL:
+    case AltitudeAbsolute:
         _missionItem.setFrame(MAV_FRAME_GLOBAL);
         break;
     case AltitudeRelative:
         _missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         break;
     }
+
+    // We always call _altitudeChanged to make sure that param7 is always setup correctly on mode change
+    _altitudeChanged();
+
     emit coordinateHasRelativeAltitudeChanged(_altitudeMode == AltitudeRelative);
 }
 
