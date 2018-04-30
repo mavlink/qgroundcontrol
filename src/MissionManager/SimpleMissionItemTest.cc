@@ -53,11 +53,11 @@ const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesDoJ
 const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpected[] = {
     // Text field facts count                                                                                                   Fact Values                                         Altitude    Altitude Mode
     { sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint)/sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint[0]),             SimpleMissionItemTest::_rgFactValuesWaypoint,       70.1234567, SimpleMissionItem::AltitudeRelative },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    70.1234567, SimpleMissionItem::AltitudeAbsolute },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    70.1234567, SimpleMissionItem::AltitudeRelative },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     70.1234567, SimpleMissionItem::AltitudeAbsolute },
     { 0,                                                                                                                        NULL,                                               70.1234567, SimpleMissionItem::AltitudeRelative },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        70.1234567, SimpleMissionItem::AltitudeAbsolute },
     { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         qQNaN(),    SimpleMissionItem::AltitudeRelative },
 };
 
@@ -222,7 +222,7 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
     _spyVisualItem->clearAllSignals();
 
-    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == SimpleMissionItem::AltitudeRelative ? SimpleMissionItem::AltitudeAMSL : SimpleMissionItem::AltitudeRelative);
+    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == SimpleMissionItem::AltitudeRelative ? SimpleMissionItem::AltitudeAbsolute : SimpleMissionItem::AltitudeRelative);
     QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | friendlyEditAllowedChangedMask | altitudeModeChangedMask | coordinateHasRelativeAltitudeChangedMask));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
@@ -314,7 +314,7 @@ void SimpleMissionItemTest::_testAltitudePropogation(void)
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
-    _simpleItem->setAltitudeMode(SimpleMissionItem::AltitudeAMSL);
+    _simpleItem->setAltitudeMode(SimpleMissionItem::AltitudeAbsolute);
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);

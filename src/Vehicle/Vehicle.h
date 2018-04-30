@@ -457,6 +457,7 @@ public:
     Q_PROPERTY(QString              hobbsMeter              READ hobbsMeter                                             NOTIFY hobbsMeterChanged)
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
+    Q_PROPERTY(bool                 supportsTerrainFrame    READ supportsTerrainFrame                                   NOTIFY firmwareTypeChanged)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -665,11 +666,12 @@ public:
     bool rover(void) const;
     bool sub(void) const;
 
-    bool supportsThrottleModeCenterZero(void) const;
-    bool supportsNegativeThrust(void) const;
-    bool supportsRadio(void) const;
-    bool supportsJSButton(void) const;
-    bool supportsMotorInterference(void) const;
+    bool supportsThrottleModeCenterZero (void) const;
+    bool supportsNegativeThrust         (void) const;
+    bool supportsRadio                  (void) const;
+    bool supportsJSButton               (void) const;
+    bool supportsMotorInterference      (void) const;
+    bool supportsTerrainFrame           (void) const;
 
     void setGuidedMode(bool guidedMode);
 
