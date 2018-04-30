@@ -19,6 +19,12 @@ Rectangle {
 
     property bool _specifiesAltitude:   missionItem.specifiesAltitude
     property bool _altModeIsTerrain:    missionItem.altitudeMode === 2
+    property real _margin:              ScreenTools.defaultFontPixelHeight / 2
+
+    ExclusiveGroup {
+        id: altRadios
+        onCurrentChanged: missionItem.altitudeMode = current.value
+    }
 
     Column {
         id:                 valuesColumn
@@ -67,30 +73,62 @@ Rectangle {
             }
         }
 
+        Rectangle {
+            anchors.left:           parent.left
+            anchors.right:          parent.right
+            height:                 altColumn.y + altColumn.height + _margin
+            color:                  qgcPal.windowShade
+
+            Column {
+                id:                 altColumn
+                anchors.margins:    _margin
+                anchors.top:        parent.top
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                spacing:            _margin
+
+                QGCLabel {
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    text:           qsTr("Altitude")
+                }
+
+                RowLayout {
+                    QGCRadioButton { text: qsTr("Rel"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: 0 }
+                    QGCRadioButton { text: qsTr("Abs"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: 1 }
+                    QGCRadioButton { text: qsTr("AGL"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: 2 }
+                }
+
+                FactValueSlider {
+                    fact:           missionItem.altitude
+                    digitCount:     3
+                    incrementSlots: 1
+                    visible:        _specifiesAltitude
+                }
+
+                RowLayout {
+                    spacing: _margin
+
+                    QGCLabel {
+                        text:           qsTr("Calculated Abs Alt")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        visible:        _altModeIsTerrain
+                    }
+                    QGCLabel {
+                        text:       missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
+                        visible:    _altModeIsTerrain
+                    }
+                }
+            }
+        }
+
         GridLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
             flow:           GridLayout.TopToBottom
             rows:           missionItem.textFieldFacts.count +
                             missionItem.nanFacts.count +
-                            (missionItem.speedSection.available ? 1 : 0) +
-                            (_specifiesAltitude ? 1 : 0) +
-                            (_altModeIsTerrain ? 1 : 0)
+                            (missionItem.speedSection.available ? 1 : 0)
             columns:        2
-
-            QGCComboBox {
-                id:                 altCombo
-                model:              [ qsTr("Alt (Rel)"), qsTr("AMSL"), qsTr("Above Terrain") ]
-                currentIndex:       missionItem.altitudeMode
-                Layout.fillWidth:   true
-                onActivated:        missionItem.altitudeMode = index
-                visible:            _specifiesAltitude
-            }
-
-            QGCLabel {
-                text:       qsTr("Actual AMSL Alt")
-                visible:    _altModeIsTerrain
-            }
 
             Repeater {
                 model: missionItem.textFieldFacts
@@ -116,18 +154,6 @@ Rectangle {
                 visible:    missionItem.speedSection.available
             }
 
-
-            FactTextField {
-                showUnits:          true
-                fact:               missionItem.altitude
-                Layout.fillWidth:   true
-                visible:            _specifiesAltitude
-            }
-
-            FactLabel {
-                fact:       missionItem.amslAltAboveTerrain
-                visible:    _altModeIsTerrain
-            }
 
             Repeater {
                 model: missionItem.textFieldFacts
