@@ -41,6 +41,7 @@ QGCView {
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
+    property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
 
     readonly property real _internalWidthRatio:          0.8
@@ -242,6 +243,23 @@ QGCView {
                                         mapTypes.model = _mapType.enumStrings
                                     }
                                 }
+                            }
+                        }
+                        //-----------------------------------------------------------------
+                        //-- Follow Target
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _followTarget.visible
+                            QGCLabel {
+                                text:               qsTr("Stream GCS Position:")
+                                width:              _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                width:      _editFieldWidth
+                                fact:       _followTarget
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
                             }
                         }
                         //-----------------------------------------------------------------
