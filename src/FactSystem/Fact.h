@@ -20,6 +20,9 @@
 #include <QString>
 #include <QVariant>
 #include <QDebug>
+#include <QAbstractListModel>
+
+class FactValueSliderListModel;
 
 /// @brief A Fact is used to hold a single value within the system.
 class Fact : public QObject
@@ -115,7 +118,7 @@ public:
     bool            valueEqualsDefault      (void) const;
     bool            rebootRequired          (void) const;
     QString         enumOrValueString       (void);         // This is not const, since an unknown value can modify the enum lists
-    double          increment               (void) const;
+    double          rawIncrement            (void) const;
     double          cookedIncrement         (void) const;
     bool            typeIsString            (void) const { return type() == FactMetaData::valueTypeString; }
     bool            typeIsBool              (void) const { return type() == FactMetaData::valueTypeBool; }
@@ -123,6 +126,8 @@ public:
     bool            readOnly                (void) const;
     bool            writeOnly               (void) const;
     bool            volatileValue           (void) const;
+
+    Q_INVOKABLE FactValueSliderListModel* valueSliderModel(void);
 
     /// Returns the values as a string with full 18 digit precision if float/double.
     QString rawValueStringFullPrecision(void) const;
@@ -193,6 +198,7 @@ protected:
     FactMetaData*               _metaData;
     bool                        _sendValueChangedSignals;
     bool                        _deferredValueChangeSignal;
+    FactValueSliderListModel*   _valueSliderModel;
 };
 
 #endif

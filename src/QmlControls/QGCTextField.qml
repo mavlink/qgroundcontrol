@@ -7,7 +7,10 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 TextField {
-    id: root
+    id:                 root
+    textColor:          qgcPal.textFieldText
+    implicitHeight:     ScreenTools.implicitTextFieldHeight
+    activeFocusOnPress: true
 
     property bool   showUnits:  false
     property bool   showHelp:   false
@@ -17,22 +20,21 @@ TextField {
 
     property real _helpLayoutWidth: 0
 
-    Component.onCompleted: {
-        if (typeof qgcTextFieldforwardKeysTo !== 'undefined') {
-            root.Keys.forwardTo = [qgcTextFieldforwardKeysTo]
-        }
-    }
+    Component.onCompleted: selectAllIfActiveFocus()
+    onActiveFocusChanged: selectAllIfActiveFocus()
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
-    textColor:          qgcPal.textFieldText
-
-    implicitHeight: ScreenTools.implicitTextFieldHeight
 
     onEditingFinished: {
         if (ScreenTools.isMobile) {
             // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
             focus = false
+        }
+    }
+
+    function selectAllIfActiveFocus() {
+        if (activeFocus) {
+            selectAll()
         }
     }
 
@@ -59,7 +61,7 @@ TextField {
 
             Rectangle {
                 anchors.fill:           parent
-                border.color:           control.activeFocus ? "#47b" : "#999"
+                border.color:           root.activeFocus ? "#47b" : "#999"
                 color:                  qgcPal.textField
             }
 
@@ -113,11 +115,5 @@ TextField {
         }
 
         padding.right: control._helpLayoutWidth //control.showUnits ? unitsLabelWidthGenerator.width : control.__contentHeight * 0.333
-    }
-
-    onActiveFocusChanged: {
-        if (activeFocus) {
-            selectAll()
-        }
     }
 }

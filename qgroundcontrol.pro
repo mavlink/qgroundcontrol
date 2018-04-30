@@ -1057,7 +1057,7 @@ HEADERS += \
     src/FactSystem/FactGroup.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
-    src/FactSystem/FactValidator.h \
+    src/FactSystem/FactValueSliderListModel.h \
     src/FactSystem/ParameterManager.h \
     src/FactSystem/SettingsFact.h \
 
@@ -1067,7 +1067,7 @@ SOURCES += \
     src/FactSystem/FactGroup.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \
-    src/FactSystem/FactValidator.cc \
+    src/FactSystem/FactValueSliderListModel.cc \
     src/FactSystem/ParameterManager.cc \
     src/FactSystem/SettingsFact.cc \
 
