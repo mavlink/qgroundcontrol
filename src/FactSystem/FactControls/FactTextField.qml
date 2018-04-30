@@ -20,16 +20,11 @@ QGCTextField {
 
     property string _validateString
 
-    // At this point all Facts are numeric
     inputMethodHints: ((fact && fact.typeIsString) || ScreenTools.isiOS) ?
                           Qt.ImhNone :                // iOS numeric keyboard has no done button, we can't use it
                           Qt.ImhFormattedNumbersOnly  // Forces use of virtual numeric keyboard
 
     onEditingFinished: {
-        if (ScreenTools.isMobile) {
-            // Toss focus on mobile after Done on virtual keyboard. Prevent strange interactions.
-            focus = false
-        }
         if (typeof qgcView !== 'undefined' && qgcView) {
             var errorString = fact.validate(text, false /* convertOnly */)
             if (errorString === "") {

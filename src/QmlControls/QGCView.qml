@@ -68,6 +68,7 @@ FactPanel {
                                                       "viewPanel":          viewPanel
                                                   })
         dialog.setupDialogButtons(buttons)
+        dialog.focus = true
         viewPanel.enabled = false
     }
 

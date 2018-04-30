@@ -78,6 +78,7 @@ const char* FactMetaData::_defaultValueJsonKey =        "defaultValue";
 const char* FactMetaData::_mobileDefaultValueJsonKey =  "mobileDefaultValue";
 const char* FactMetaData::_minJsonKey =                 "min";
 const char* FactMetaData::_maxJsonKey =                 "max";
+const char* FactMetaData::_incrementJsonKey =           "increment";
 const char* FactMetaData::_hasControlJsonKey =          "control";
 
 FactMetaData::FactMetaData(QObject* parent)
@@ -93,7 +94,7 @@ FactMetaData::FactMetaData(QObject* parent)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
     , _rebootRequired       (false)
-    , _increment            (std::numeric_limits<double>::quiet_NaN())
+    , _rawIncrement         (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
     , _writeOnly            (false)
@@ -116,7 +117,7 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
     , _rebootRequired       (false)
-    , _increment            (std::numeric_limits<double>::quiet_NaN())
+    , _rawIncrement         (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
     , _writeOnly            (false)
@@ -146,7 +147,7 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
     , _rebootRequired       (false)
-    , _increment            (std::numeric_limits<double>::quiet_NaN())
+    , _rawIncrement         (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
     , _writeOnly            (false)
@@ -180,7 +181,7 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _rawTranslator          = other._rawTranslator;
     _cookedTranslator       = other._cookedTranslator;
     _rebootRequired         = other._rebootRequired;
-    _increment              = other._increment;
+    _rawIncrement           = other._rawIncrement;
     _hasControl             = other._hasControl;
     _readOnly               = other._readOnly;
     _writeOnly              = other._writeOnly;
@@ -975,7 +976,7 @@ QString FactMetaData::appSettingsAreaUnitsString(void)
 
 double FactMetaData::cookedIncrement(void) const
 {
-    return _rawTranslator(this->increment()).toDouble();
+    return _rawTranslator(this->rawIncrement()).toDouble();
 }
 
 int FactMetaData::decimalPlaces(void) const
@@ -984,7 +985,7 @@ int FactMetaData::decimalPlaces(void) const
     int incrementDecimalPlaces = unknownDecimalPlaces;
 
     // First determine decimal places from increment
-    double increment = _rawTranslator(this->increment()).toDouble();
+    double increment = _rawTranslator(this->rawIncrement()).toDouble();
     if (!qIsNaN(increment)) {
         double integralPart;
 
@@ -1029,12 +1030,18 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
         return new FactMetaData(valueTypeUint32, metaDataParent);
     }
 
-    // Validate key types
-    QStringList             keys;
-    QList<QJsonValue::Type> types;
-    keys << _nameJsonKey << _decimalPlacesJsonKey << _typeJsonKey << _shortDescriptionJsonKey << _longDescriptionJsonKey << _unitsJsonKey << _minJsonKey << _maxJsonKey << _hasControlJsonKey;
-    types << QJsonValue::String << QJsonValue::Double << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::String << QJsonValue::Double << QJsonValue::Double << QJsonValue::Bool;
-    if (!JsonHelper::validateKeyTypes(json, keys, types, errorString)) {
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { _nameJsonKey,             QJsonValue::String, true },
+        { _typeJsonKey,             QJsonValue::String, true },
+        { _shortDescriptionJsonKey, QJsonValue::String, false },
+        { _longDescriptionJsonKey,  QJsonValue::String, false },
+        { _unitsJsonKey,            QJsonValue::String, false },
+        { _decimalPlacesJsonKey,    QJsonValue::Double, false },
+        { _minJsonKey,              QJsonValue::Double, false },
+        { _maxJsonKey,              QJsonValue::Double, false },
+        { _hasControlJsonKey,       QJsonValue::Bool,   false },
+    };
+    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         qWarning() << errorString;
         return new FactMetaData(valueTypeUint32, metaDataParent);
     }
@@ -1094,6 +1101,20 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
             metaData->setRawDefaultValue(typedValue);
         } else {
             qWarning() << "Invalid default value, name:" << metaData->name()
+                       << " type:" << metaData->type()
+                       << " value:" << initialValue
+                       << " error:" << errorString;
+        }
+    }
+
+    if (json.contains(_incrementJsonKey)) {
+        QVariant typedValue;
+        QString errorString;
+        QVariant initialValue = json[_incrementJsonKey].toVariant();
+        if (metaData->convertAndValidateRaw(initialValue, true /* convertOnly */, typedValue, errorString)) {
+            metaData->setRawIncrement(typedValue.toDouble());
+        } else {
+            qWarning() << "Invalid increment value, name:" << metaData->name()
                        << " type:" << metaData->type()
                        << " value:" << initialValue
                        << " error:" << errorString;
