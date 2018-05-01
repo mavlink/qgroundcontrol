@@ -726,6 +726,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_DISTANCE_SENSOR:
         _handleDistanceSensor(message);
         break;
+    case MAVLINK_MSG_ID_PING:
+        _handlePing(link, message);
+        break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
@@ -1375,6 +1378,23 @@ void Vehicle::_updateArmed(bool armed)
             }
         }
     }
+}
+
+void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
+{
+    mavlink_ping_t      ping;
+    mavlink_message_t   msg;
+
+    mavlink_msg_ping_decode(&message, &ping);
+    mavlink_msg_ping_pack_chan(_mavlink->getSystemId(),
+                               _mavlink->getComponentId(),
+                               priorityLink()->mavlinkChannel(),
+                               &msg,
+                               ping.time_usec,
+                               ping.seq,
+                               message.sysid,
+                               message.compid);
+    sendMessageOnLink(link, msg);
 }
 
 void Vehicle::_handleHeartbeat(mavlink_message_t& message)
