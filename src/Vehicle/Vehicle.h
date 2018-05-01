@@ -1010,6 +1010,7 @@ private:
     void _loadSettings(void);
     void _saveSettings(void);
     void _startJoystick(bool start);
+    void _handlePing(LinkInterface* link, mavlink_message_t& message);
     void _handleHomePosition(mavlink_message_t& message);
     void _handleHeartbeat(mavlink_message_t& message);
     void _handleRadioStatus(mavlink_message_t& message);
