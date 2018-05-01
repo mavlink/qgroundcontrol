@@ -7,17 +7,17 @@
  *
  ****************************************************************************/
 
-#include "SurveyMissionItemTest.h"
+#include "SurveyComplexItemTest.h"
 #include "QGCApplication.h"
 
-SurveyMissionItemTest::SurveyMissionItemTest(void)
+SurveyComplexItemTest::SurveyComplexItemTest(void)
     : _offlineVehicle(NULL)
 {
     _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<
                    QGeoCoordinate(47.633619320000001, -122.08811074) << QGeoCoordinate(47.633189139999999, -122.08900124);
 }
 
-void SurveyMissionItemTest::init(void)
+void SurveyComplexItemTest::init(void)
 {
     UnitTest::init();
 
@@ -32,7 +32,7 @@ void SurveyMissionItemTest::init(void)
     _rgSurveySignals[dirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _surveyItem = new SurveyMissionItem(_offlineVehicle, this);
+    _surveyItem = new SurveyComplexItem(_offlineVehicle, this);
     _surveyItem->setTurnaroundDist(0);  // Unit test written for no turnaround distance
     _surveyItem->setDirty(false);
     _mapPolygon = _surveyItem->mapPolygon();
@@ -46,14 +46,14 @@ void SurveyMissionItemTest::init(void)
     QCOMPARE(_multiSpy->init(_surveyItem, _rgSurveySignals, _cSurveySignals), true);
 }
 
-void SurveyMissionItemTest::cleanup(void)
+void SurveyComplexItemTest::cleanup(void)
 {
     delete _surveyItem;
     delete _offlineVehicle;
     delete _multiSpy;
 }
 
-void SurveyMissionItemTest::_testDirty(void)
+void SurveyComplexItemTest::_testDirty(void)
 {
     QVERIFY(!_surveyItem->dirty());
     _surveyItem->setDirty(false);
@@ -110,7 +110,7 @@ void SurveyMissionItemTest::_testDirty(void)
     rgFacts.clear();
 }
 
-void SurveyMissionItemTest::_testCameraValueChanged(void)
+void SurveyComplexItemTest::_testCameraValueChanged(void)
 {
     // These facts should trigger cameraValueChanged when changed
     QList<Fact*> rgFacts;
@@ -145,7 +145,7 @@ void SurveyMissionItemTest::_testCameraValueChanged(void)
     rgFacts.clear();
 }
 
-void SurveyMissionItemTest::_testCameraTrigger(void)
+void SurveyComplexItemTest::_testCameraTrigger(void)
 {
 #if 0
     QCOMPARE(_surveyItem->property("cameraTrigger").toBool(), true);
@@ -182,7 +182,7 @@ void SurveyMissionItemTest::_testCameraTrigger(void)
 }
 
 // Clamp expected grid angle from 0<->180. We don't care about opposite angles like 90/270
-double SurveyMissionItemTest::_clampGridAngle180(double gridAngle)
+double SurveyComplexItemTest::_clampGridAngle180(double gridAngle)
 {
     if (gridAngle >= 0.0) {
         if (gridAngle == 360.0) {
@@ -200,7 +200,7 @@ double SurveyMissionItemTest::_clampGridAngle180(double gridAngle)
     return gridAngle;
 }
 
-void SurveyMissionItemTest::_setPolygon(void)
+void SurveyComplexItemTest::_setPolygon(void)
 {
     for (int i=0; i<_polyPoints.count(); i++) {
         QGeoCoordinate& vertex = _polyPoints[i];
@@ -208,7 +208,7 @@ void SurveyMissionItemTest::_setPolygon(void)
     }
 }
 
-void SurveyMissionItemTest::_testGridAngle(void)
+void SurveyComplexItemTest::_testGridAngle(void)
 {
     _setPolygon();
 
@@ -224,7 +224,7 @@ void SurveyMissionItemTest::_testGridAngle(void)
     }
 }
 
-void SurveyMissionItemTest::_testEntryLocation(void)
+void SurveyComplexItemTest::_testEntryLocation(void)
 {
     _setPolygon();
 
@@ -233,10 +233,10 @@ void SurveyMissionItemTest::_testEntryLocation(void)
 
         QList<QGeoCoordinate> rgSeenEntryCoords;
         QList<int> rgEntryLocation;
-        rgEntryLocation << SurveyMissionItem::EntryLocationTopLeft
-                        << SurveyMissionItem::EntryLocationTopRight
-                        << SurveyMissionItem::EntryLocationBottomLeft
-                        << SurveyMissionItem::EntryLocationBottomRight;
+        rgEntryLocation << SurveyComplexItem::EntryLocationTopLeft
+                        << SurveyComplexItem::EntryLocationTopRight
+                        << SurveyComplexItem::EntryLocationBottomLeft
+                        << SurveyComplexItem::EntryLocationBottomRight;
 
         // Validate that each entry location is unique
         for (int i=0; i<rgEntryLocation.count(); i++) {
@@ -251,7 +251,7 @@ void SurveyMissionItemTest::_testEntryLocation(void)
 }
 
 
-void SurveyMissionItemTest::_testItemCount(void)
+void SurveyComplexItemTest::_testItemCount(void)
 {
     QList<MissionItem*> items;
 

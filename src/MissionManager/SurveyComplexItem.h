@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef SurveyMissionItem_H
-#define SurveyMissionItem_H
+#pragma once
 
 #include "ComplexMissionItem.h"
 #include "MissionItem.h"
@@ -17,14 +15,14 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapPolygon.h"
 
-Q_DECLARE_LOGGING_CATEGORY(SurveyMissionItemLog)
+Q_DECLARE_LOGGING_CATEGORY(SurveyComplexItemLog)
 
-class SurveyMissionItem : public ComplexMissionItem
+class SurveyComplexItem : public ComplexMissionItem
 {
     Q_OBJECT
 
 public:
-    SurveyMissionItem(Vehicle* vehicle, QObject* parent = NULL);
+    SurveyComplexItem(Vehicle* vehicle, QObject* parent = NULL);
 
     Q_PROPERTY(Fact*                gridAltitude                READ gridAltitude                   CONSTANT)
     Q_PROPERTY(Fact*                gridAltitudeRelative        READ gridAltitudeRelative           CONSTANT)
@@ -297,5 +295,3 @@ private:
 
     static const int _hoverAndCaptureDelaySeconds = 4;
 };
-
-#endif

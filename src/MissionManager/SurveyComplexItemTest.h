@@ -7,24 +7,22 @@
  *
  ****************************************************************************/
 
-
-#ifndef SurveyMissionItemTest_H
-#define SurveyMissionItemTest_H
+#pragma once
 
 #include "UnitTest.h"
 #include "TCPLink.h"
 #include "MultiSignalSpy.h"
-#include "SurveyMissionItem.h"
+#include "SurveyComplexItem.h"
 
 #include <QGeoCoordinate>
 
-/// Unit test for SurveyMissionItem
-class SurveyMissionItemTest : public UnitTest
+/// Unit test for SurveyComplexItem
+class SurveyComplexItemTest : public UnitTest
 {
     Q_OBJECT
     
 public:
-    SurveyMissionItemTest(void);
+    SurveyComplexItemTest(void);
 
 protected:
     void init(void) final;
@@ -72,9 +70,7 @@ private:
 
     Vehicle*                _offlineVehicle;
     MultiSignalSpy*         _multiSpy;
-    SurveyMissionItem*      _surveyItem;
+    SurveyComplexItem*      _surveyItem;
     QGCMapPolygon*          _mapPolygon;
     QList<QGeoCoordinate>   _polyPoints;
 };
-
-#endif

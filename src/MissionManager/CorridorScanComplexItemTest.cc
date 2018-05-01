@@ -117,10 +117,10 @@ void CorridorScanComplexItemTest::_testEntryLocation(void)
 
         QList<QGeoCoordinate> rgSeenEntryCoords;
         QList<int> rgEntryLocation;
-        rgEntryLocation << SurveyMissionItem::EntryLocationTopLeft
-                        << SurveyMissionItem::EntryLocationTopRight
-                        << SurveyMissionItem::EntryLocationBottomLeft
-                        << SurveyMissionItem::EntryLocationBottomRight;
+        rgEntryLocation << SurveyComplexItem::EntryLocationTopLeft
+                        << SurveyComplexItem::EntryLocationTopRight
+                        << SurveyComplexItem::EntryLocationBottomLeft
+                        << SurveyComplexItem::EntryLocationBottomRight;
 
         // Validate that each entry location is unique
         for (int i=0; i<rgEntryLocation.count(); i++) {
