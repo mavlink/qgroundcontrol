@@ -16,7 +16,7 @@
 #include "FirmwarePlugin.h"
 #include "QGCApplication.h"
 #include "SimpleMissionItem.h"
-#include "SurveyMissionItem.h"
+#include "SurveyComplexItem.h"
 #include "FixedWingLandingComplexItem.h"
 #include "StructureScanComplexItem.h"
 #include "CorridorScanComplexItem.h"
@@ -394,7 +394,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
 
     int sequenceNumber = _nextSequenceNumber();
     if (itemName == _surveyMissionItemName) {
-        newItem = new SurveyMissionItem(_controllerVehicle, _visualItems);
+        newItem = new SurveyComplexItem(_controllerVehicle, _visualItems);
         newItem->setCoordinate(mapCenterCoordinate);
         surveyStyleItem = true;
     } else if (itemName == _fwLandingMissionItemName) {
@@ -452,7 +452,7 @@ void MissionController::removeMissionItem(int index)
         return;
     }
 
-    bool removeSurveyStyle = _visualItems->value<SurveyMissionItem*>(index) || _visualItems->value<CorridorScanComplexItem*>(index);
+    bool removeSurveyStyle = _visualItems->value<SurveyComplexItem*>(index) || _visualItems->value<CorridorScanComplexItem*>(index);
     VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->removeAt(index));
 
     _deinitVisualItem(item);
@@ -462,7 +462,7 @@ void MissionController::removeMissionItem(int index)
         // Determine if the mission still has another survey style item in it
         bool foundSurvey = false;
         for (int i=1; i<_visualItems->count(); i++) {
-            if (_visualItems->value<SurveyMissionItem*>(i) || _visualItems->value<CorridorScanComplexItem*>(i)) {
+            if (_visualItems->value<SurveyComplexItem*>(i) || _visualItems->value<CorridorScanComplexItem*>(i)) {
                 foundSurvey = true;
                 break;
             }
@@ -519,7 +519,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
     }
 
     // Read complex items
-    QList<SurveyMissionItem*> surveyItems;
+    QList<SurveyComplexItem*> surveyItems;
     QJsonArray complexArray(json[_jsonComplexItemsKey].toArray());
     qCDebug(MissionControllerLog) << "Json load: complex item count" << complexArray.count();
     for (int i=0; i<complexArray.count(); i++) {
@@ -530,7 +530,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             return false;
         }
 
-        SurveyMissionItem* item = new SurveyMissionItem(_controllerVehicle, visualItems);
+        SurveyComplexItem* item = new SurveyComplexItem(_controllerVehicle, visualItems);
         const QJsonObject itemObject = itemValue.toObject();
         if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
             surveyItems.append(item);
@@ -552,7 +552,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
 
         // If there is a complex item that should be next in sequence add it in
         if (nextComplexItemIndex < surveyItems.count()) {
-            SurveyMissionItem* complexItem = surveyItems[nextComplexItemIndex];
+            SurveyComplexItem* complexItem = surveyItems[nextComplexItemIndex];
 
             if (complexItem->sequenceNumber() == nextSequenceNumber) {
                 qCDebug(MissionControllerLog) << "Json load: injecting complex item expectedSequence:actualSequence:" << nextSequenceNumber << complexItem->sequenceNumber();
@@ -686,9 +686,9 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
             }
             QString complexItemType = itemObject[ComplexMissionItem::jsonComplexItemTypeKey].toString();
 
-            if (complexItemType == SurveyMissionItem::jsonComplexItemTypeValue) {
+            if (complexItemType == SurveyComplexItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Survey: nextSequenceNumber" << nextSequenceNumber;
-                SurveyMissionItem* surveyItem = new SurveyMissionItem(_controllerVehicle, visualItems);
+                SurveyComplexItem* surveyItem = new SurveyComplexItem(_controllerVehicle, visualItems);
                 if (!surveyItem->load(itemObject, nextSequenceNumber++, errorString)) {
                     return false;
                 }
