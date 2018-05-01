@@ -115,6 +115,8 @@ public:
 
     int defaultJoystickTXMode(void) final { return 3; }
 
+    void initializeStreamRates(Vehicle* vehicle) override final;
+
     bool supportsThrottleModeCenterZero(void) final;
 
     bool supportsRadio(void) final;
