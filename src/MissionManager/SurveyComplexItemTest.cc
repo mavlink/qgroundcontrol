@@ -21,21 +21,18 @@ void SurveyComplexItemTest::init(void)
 {
     UnitTest::init();
 
-    _rgSurveySignals[gridPointsChangedIndex] =              SIGNAL(gridPointsChanged());
-    _rgSurveySignals[cameraShotsChangedIndex] =             SIGNAL(cameraShotsChanged(int));
-    _rgSurveySignals[coveredAreaChangedIndex] =             SIGNAL(coveredAreaChanged(double));
-    _rgSurveySignals[cameraValueChangedIndex] =             SIGNAL(cameraValueChanged());
-    _rgSurveySignals[gridTypeChangedIndex] =                SIGNAL(gridTypeChanged(QString));
-    _rgSurveySignals[timeBetweenShotsChangedIndex] =        SIGNAL(timeBetweenShotsChanged());
-    _rgSurveySignals[cameraOrientationFixedChangedIndex] =  SIGNAL(cameraOrientationFixedChanged(bool));
-    _rgSurveySignals[refly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
-    _rgSurveySignals[dirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
+    _rgSurveySignals[surveyVisualTransectPointsChangedIndex] =    SIGNAL(visualTransectPointsChanged());
+    _rgSurveySignals[surveyCameraShotsChangedIndex] =             SIGNAL(cameraShotsChanged());
+    _rgSurveySignals[surveyCoveredAreaChangedIndex] =             SIGNAL(coveredAreaChanged());
+    _rgSurveySignals[surveyTimeBetweenShotsChangedIndex] =        SIGNAL(timeBetweenShotsChanged());
+    _rgSurveySignals[surveyRefly90DegreesChangedIndex] =          SIGNAL(refly90DegreesChanged(bool));
+    _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _surveyItem = new SurveyComplexItem(_offlineVehicle, this);
-    _surveyItem->setTurnaroundDist(0);  // Unit test written for no turnaround distance
+    _surveyItem->turnAroundDistance()->setRawValue(0);  // Unit test written for no turnaround distance
     _surveyItem->setDirty(false);
-    _mapPolygon = _surveyItem->mapPolygon();
+    _mapPolygon = _surveyItem->surveyAreaPolygon();
 
     // It's important to check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -62,20 +59,19 @@ void SurveyComplexItemTest::_testDirty(void)
 
     _surveyItem->setDirty(true);
     QVERIFY(_surveyItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_multiSpy->checkOnlySignalByMask(surveyDirtyChangedMask));
+    QVERIFY(_multiSpy->pullBoolFromSignalIndex(surveyDirtyChangedIndex));
     _multiSpy->clearAllSignals();
 
     _surveyItem->setDirty(false);
     QVERIFY(!_surveyItem->dirty());
-    QVERIFY(_multiSpy->checkOnlySignalByMask(dirtyChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+    QVERIFY(_multiSpy->checkOnlySignalByMask(surveyDirtyChangedMask));
+    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(surveyDirtyChangedIndex));
     _multiSpy->clearAllSignals();
 
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
-    rgFacts << _surveyItem->gridAltitude() << _surveyItem->gridAngle() << _surveyItem->gridSpacing() << _surveyItem->turnaroundDist() << _surveyItem->cameraTriggerDistance() <<
-               _surveyItem->gridAltitudeRelative() << _surveyItem->cameraTriggerInTurnaround() << _surveyItem->hoverAndCapture();
+    rgFacts << _surveyItem->gridAngle() << _surveyItem->gridEntryLocation();
     foreach(Fact* fact, rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_surveyItem->dirty());
@@ -84,101 +80,12 @@ void SurveyComplexItemTest::_testDirty(void)
         } else {
             fact->setRawValue(fact->rawValue().toDouble() + 1);
         }
-        QVERIFY(_multiSpy->checkSignalByMask(dirtyChangedMask));
-        QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
+        QVERIFY(_multiSpy->checkSignalByMask(surveyDirtyChangedMask));
+        QVERIFY(_multiSpy->pullBoolFromSignalIndex(surveyDirtyChangedIndex));
         _surveyItem->setDirty(false);
         _multiSpy->clearAllSignals();
     }
     rgFacts.clear();
-
-    // These facts should not change dirty bit
-    rgFacts << _surveyItem->groundResolution() << _surveyItem->frontalOverlap() << _surveyItem->sideOverlap() << _surveyItem->cameraSensorWidth() << _surveyItem->cameraSensorHeight() <<
-               _surveyItem->cameraResolutionWidth() << _surveyItem->cameraResolutionHeight() << _surveyItem->cameraFocalLength() << _surveyItem->cameraOrientationLandscape() <<
-               _surveyItem->fixedValueIsAltitude() << _surveyItem->camera() << _surveyItem->manualGrid();
-    foreach(Fact* fact, rgFacts) {
-        qDebug() << fact->name();
-        QVERIFY(!_surveyItem->dirty());
-        if (fact->typeIsBool()) {
-            fact->setRawValue(!fact->rawValue().toBool());
-        } else {
-            fact->setRawValue(fact->rawValue().toDouble() + 1);
-        }
-        QVERIFY(_multiSpy->checkNoSignalByMask(dirtyChangedMask));
-        QVERIFY(!_surveyItem->dirty());
-        _multiSpy->clearAllSignals();
-    }
-    rgFacts.clear();
-}
-
-void SurveyComplexItemTest::_testCameraValueChanged(void)
-{
-    // These facts should trigger cameraValueChanged when changed
-    QList<Fact*> rgFacts;
-    rgFacts << _surveyItem->groundResolution() << _surveyItem->frontalOverlap() << _surveyItem->sideOverlap() << _surveyItem->cameraSensorWidth() << _surveyItem->cameraSensorHeight() <<
-               _surveyItem->cameraResolutionWidth() << _surveyItem->cameraResolutionHeight() << _surveyItem->cameraFocalLength() << _surveyItem->cameraOrientationLandscape();
-    foreach(Fact* fact, rgFacts) {
-        qDebug() << fact->name();
-        if (fact->typeIsBool()) {
-            fact->setRawValue(!fact->rawValue().toBool());
-        } else {
-            fact->setRawValue(fact->rawValue().toDouble() + 1);
-        }
-        QVERIFY(_multiSpy->checkSignalByMask(cameraValueChangedMask));
-        _multiSpy->clearAllSignals();
-    }
-    rgFacts.clear();
-
-    // These facts should not trigger cameraValueChanged
-    rgFacts << _surveyItem->gridAltitude() << _surveyItem->gridAngle() << _surveyItem->gridSpacing() << _surveyItem->turnaroundDist() << _surveyItem->cameraTriggerDistance() <<
-               _surveyItem->gridAltitudeRelative() << _surveyItem->cameraTriggerInTurnaround() << _surveyItem->hoverAndCapture() <<
-               _surveyItem->fixedValueIsAltitude() << _surveyItem->camera() << _surveyItem->manualGrid();
-    foreach(Fact* fact, rgFacts) {
-        qDebug() << fact->name();
-        if (fact->typeIsBool()) {
-            fact->setRawValue(!fact->rawValue().toBool());
-        } else {
-            fact->setRawValue(fact->rawValue().toDouble() + 1);
-        }
-        QVERIFY(_multiSpy->checkNoSignalByMask(cameraValueChangedMask));
-        _multiSpy->clearAllSignals();
-    }
-    rgFacts.clear();
-}
-
-void SurveyComplexItemTest::_testCameraTrigger(void)
-{
-#if 0
-    QCOMPARE(_surveyItem->property("cameraTrigger").toBool(), true);
-
-    // Set up a grid
-
-    for (int i=0; i<3; i++) {
-        _mapPolygon->appendVertex(_polyPoints[i]);
-    }
-
-    _surveyItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    int lastSeq = _surveyItem->lastSequenceNumber();
-    QVERIFY(lastSeq > 0);
-
-    // Turning off camera triggering should remove two camera trigger mission items, this should trigger:
-    //      lastSequenceNumberChanged
-    //      dirtyChanged
-
-    _surveyItem->setProperty("cameraTrigger", false);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq - 2);
-
-    _surveyItem->setDirty(false);
-    _multiSpy->clearAllSignals();
-
-    // Turn on camera triggering and make sure things go back to previous count
-
-    _surveyItem->setProperty("cameraTrigger", true);
-    QVERIFY(_multiSpy->checkOnlySignalByMask(lastSequenceNumberChangedMask | dirtyChangedMask | cameraTriggerChangedMask));
-    QCOMPARE(_multiSpy->pullIntFromSignalIndex(lastSequenceNumberChangedIndex), lastSeq);
-#endif
 }
 
 // Clamp expected grid angle from 0<->180. We don't care about opposite angles like 90/270
@@ -215,7 +122,7 @@ void SurveyComplexItemTest::_testGridAngle(void)
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
 
-        QVariantList gridPoints = _surveyItem->gridPoints();
+        QVariantList gridPoints = _surveyItem->visualTransectPoints();
         QGeoCoordinate firstTransectEntry = gridPoints[0].value<QGeoCoordinate>();
         QGeoCoordinate firstTransectExit = gridPoints[1].value<QGeoCoordinate>();
         double azimuth = firstTransectEntry.azimuthTo(firstTransectExit);
@@ -258,30 +165,30 @@ void SurveyComplexItemTest::_testItemCount(void)
     _setPolygon();
 
     _surveyItem->hoverAndCapture()->setRawValue(false);
-    _surveyItem->cameraTriggerInTurnaround()->setRawValue(false);
-    _surveyItem->setRefly90Degrees(false);
+    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _surveyItem->refly90Degrees()->setRawValue(false);
     _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
     items.clear();
 
     _surveyItem->hoverAndCapture()->setRawValue(false);
-    _surveyItem->cameraTriggerInTurnaround()->setRawValue(true);
-    _surveyItem->setRefly90Degrees(false);
+    _surveyItem->cameraTriggerInTurnAround()->setRawValue(true);
+    _surveyItem->refly90Degrees()->setRawValue(false);
     _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
     items.clear();
 
     _surveyItem->hoverAndCapture()->setRawValue(true);
-    _surveyItem->cameraTriggerInTurnaround()->setRawValue(false);
-    _surveyItem->setRefly90Degrees(false);
+    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _surveyItem->refly90Degrees()->setRawValue(false);
     _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
     items.clear();
 
     _surveyItem->hoverAndCapture()->setRawValue(true);
-    _surveyItem->cameraTriggerInTurnaround()->setRawValue(false);
-    _surveyItem->setRefly90Degrees(true);
+    _surveyItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _surveyItem->refly90Degrees()->setRawValue(true);
     _surveyItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _surveyItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _surveyItem->lastSequenceNumber());
     items.clear();
 }

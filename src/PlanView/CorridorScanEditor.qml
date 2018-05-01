@@ -13,7 +13,6 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
 
-// Editor for Survery mission items
 Rectangle {
     id:         _root
     height:     visible ? (editorColumn.height + (_margin * 2)) : 0
@@ -55,11 +54,6 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         spacing:            _margin
-
-        QGCLabel {
-            text: "WIP: Careful!"
-            color:  qgcPal.warningText
-        }
 
         QGCLabel {
             anchors.left:   parent.left
@@ -115,7 +109,7 @@ Rectangle {
                 anchors.left:       parent.left
                 text:               qsTr("Relative altitude")
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
-                enabled:            missionItem.cameraCalc.isManualCamera
+                enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
                 Layout.columnSpan:  2
                 onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
 
@@ -157,12 +151,6 @@ Rectangle {
                 rowSpacing:     _margin
                 columns:        2
                 visible:        followsTerrainCheckBox.checked
-
-                QGCLabel {
-                    text: "WIP: Careful!"
-                    color:  qgcPal.warningText
-                    Layout.columnSpan: 2
-                }
 
                 QGCLabel { text: qsTr("Tolerance") }
                 FactTextField {

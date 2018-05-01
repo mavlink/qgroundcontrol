@@ -265,25 +265,21 @@ bool MissionController::_convertToMissionItems(QmlObjectListModel* visualMission
 
 void MissionController::convertToKMLDocument(QDomDocument& document)
 {
-    QJsonObject missionJson;
-    QmlObjectListModel* visualItems = new QmlObjectListModel();
-    QList<MissionItem*> missionItems;
-    QString error;
-    save(missionJson);
-    _loadItemsFromJson(missionJson, visualItems, error);
-    _convertToMissionItems(visualItems, missionItems, this);
+    QObject*            deleteParent = new QObject();
+    QList<MissionItem*> rgMissionItems;
 
-    if (missionItems.count() == 0) {
+    _convertToMissionItems(_visualItems, rgMissionItems, deleteParent);
+    if (rgMissionItems.count() == 0) {
         return;
     }
 
-    float homeAltitude = missionJson[_jsonPlannedHomePositionKey].toArray()[2].toDouble();
+    const double homePositionAltitude = _settingsItem->coordinate().altitude();
 
     QString coord;
     QStringList coords;
     // Drop home position
     bool dropPoint = true;
-    for(const auto& item : missionItems) {
+    for(const auto& item : rgMissionItems) {
         if(dropPoint) {
             dropPoint = false;
             continue;
@@ -292,7 +288,7 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
                 qgcApp()->toolbox()->missionCommandTree()->getUIInfo(_controllerVehicle, item->command());
 
         if (uiInfo && uiInfo->specifiesCoordinate() && !uiInfo->isStandaloneCoordinate()) {
-            double amslAltitude = item->param7() + (item->frame() == MAV_FRAME_GLOBAL ? 0 : homeAltitude);
+            double amslAltitude = item->param7() + (item->frame() == MAV_FRAME_GLOBAL ? 0 : homePositionAltitude);
             coord = QString::number(item->param6(),'f',7) \
                     + "," \
                     + QString::number(item->param5(),'f',7) \
@@ -301,6 +297,9 @@ void MissionController::convertToKMLDocument(QDomDocument& document)
             coords.append(coord);
         }
     }
+
+    deleteParent->deleteLater();
+
     Kml kml;
     kml.points(coords);
     kml.save(document);

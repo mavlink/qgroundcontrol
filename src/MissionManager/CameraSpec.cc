@@ -121,8 +121,8 @@ bool CameraSpec::load(const QJsonObject& json, QString& errorString)
 
     _sensorWidthFact.setRawValue        (json[_sensorWidthName].toDouble());
     _sensorHeightFact.setRawValue       (json[_sensorHeightName].toDouble());
-    _imageWidthFact.setRawValue         (json[_imageWidthName].toDouble());
-    _imageHeightFact.setRawValue        (json[_imageHeightName].toDouble());
+    _imageWidthFact.setRawValue         (json[_imageWidthName].toInt());
+    _imageHeightFact.setRawValue        (json[_imageHeightName].toInt());
     _focalLengthFact.setRawValue        (json[_focalLengthName].toDouble());
     _landscapeFact.setRawValue          (json[_landscapeName].toBool());
     _fixedOrientationFact.setRawValue   (json[_fixedOrientationName].toBool());

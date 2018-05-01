@@ -101,8 +101,13 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::coveredAreaChanged);
 
-    connect(this,               &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
-    connect(this,               &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::coordinateHasRelativeAltitudeChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+
+    connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
+    connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
+
+    connect(this,                                       &TransectStyleComplexItem::followTerrainChanged, this, &TransectStyleComplexItem::_followTerrainChanged);
 }
 
 void TransectStyleComplexItem::_setCameraShots(int cameraShots)
@@ -611,7 +616,7 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
 {
     QList<CoordInfo_t> adjustedTransect;
 
-    adjustedTransect.append(transect.first());
+    double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
 
     for (int i=0; i<transect.count() - 1; i++) {
         CoordInfo_t fromCoordInfo = transect[i];
@@ -621,10 +626,13 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
         double distance = fromCoordInfo.coord.distanceTo(toCoordInfo.coord);
 
         const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo = transectPathHeightInfo[i];
-        double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
 
         fromCoordInfo.coord.setAltitude(pathHeightInfo.heights.first() + requestedAltitude);
         toCoordInfo.coord.setAltitude(pathHeightInfo.heights.last() + requestedAltitude);
+
+        if (i == 0) {
+            adjustedTransect.append(fromCoordInfo);
+        }
 
         int cHeights = pathHeightInfo.heights.count();
         for (int pathHeightIndex=1; pathHeightIndex<cHeights - 1; pathHeightIndex++) {
@@ -641,6 +649,11 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
 
         adjustedTransect.append(toCoordInfo);
     }
+
+    CoordInfo_t lastCoordInfo = transect.last();
+    const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo = transectPathHeightInfo.last();
+    lastCoordInfo.coord.setAltitude(pathHeightInfo.heights.last() + requestedAltitude);
+    adjustedTransect.append(lastCoordInfo);
 
 #if 0
     qDebug() << "_addInterstitialTerrainPoints";
@@ -685,3 +698,21 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
     }
 }
 
+bool TransectStyleComplexItem::coordinateHasRelativeAltitude(void) const
+{
+    return _cameraCalc.distanceToSurfaceRelative();
+}
+
+bool TransectStyleComplexItem::exitCoordinateHasRelativeAltitude(void) const
+{
+    return coordinateHasRelativeAltitude();
+}
+
+void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
+{
+    if (followTerrain) {
+        _cameraCalc.setDistanceToSurfaceRelative(false);
+        _refly90DegreesFact.setRawValue(false);
+        _hoverAndCaptureFact.setRawValue(false);
+    }
+}
