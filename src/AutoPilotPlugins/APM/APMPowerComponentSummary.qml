@@ -31,12 +31,12 @@ FactPanel {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery monitor:")
+            labelText: qsTr("Battery monitor")
             valueText: battMonitor.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery capacity:")
+            labelText: qsTr("Battery capacity")
             valueText: battCapacity.valueString + " " + battCapacity.units
         }
     }

@@ -36,17 +36,17 @@ FactPanel {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery Full:")
+            labelText: qsTr("Battery Full")
             valueText: batVChargedFact ? batVChargedFact.valueString + " " + batVChargedFact.units : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery Empty:")
+            labelText: qsTr("Battery Empty")
             valueText: batVEmptyFact ? batVEmptyFact.valueString + " " + batVEmptyFact.units : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Number of Cells:")
+            labelText: qsTr("Number of Cells")
             valueText: batCellsFact ? batCellsFact.valueString : ""
         }
     }
