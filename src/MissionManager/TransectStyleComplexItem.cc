@@ -101,8 +101,13 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString set
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::pathChanged,    this, &TransectStyleComplexItem::coveredAreaChanged);
 
-    connect(this,               &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
-    connect(this,               &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::coordinateHasRelativeAltitudeChanged);
+    connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+
+    connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
+    connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
+
+    connect(this,                                       &TransectStyleComplexItem::followTerrainChanged, this, &TransectStyleComplexItem::_followTerrainChanged);
 }
 
 void TransectStyleComplexItem::_setCameraShots(int cameraShots)
@@ -693,3 +698,21 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
     }
 }
 
+bool TransectStyleComplexItem::coordinateHasRelativeAltitude(void) const
+{
+    return _cameraCalc.distanceToSurfaceRelative();
+}
+
+bool TransectStyleComplexItem::exitCoordinateHasRelativeAltitude(void) const
+{
+    return coordinateHasRelativeAltitude();
+}
+
+void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
+{
+    if (followTerrain) {
+        _cameraCalc.setDistanceToSurfaceRelative(false);
+        _refly90DegreesFact.setRawValue(false);
+        _hoverAndCaptureFact.setRawValue(false);
+    }
+}

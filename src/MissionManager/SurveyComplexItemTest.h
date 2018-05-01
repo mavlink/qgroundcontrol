@@ -30,42 +30,37 @@ protected:
     
 private slots:
     void _testDirty(void);
-    void _testCameraValueChanged(void);
-    void _testCameraTrigger(void);
     void _testGridAngle(void);
     void _testEntryLocation(void);
     void _testItemCount(void);
 
 private:
+
     double _clampGridAngle180(double gridAngle);
     void _setPolygon(void);
 
+    // SurveyComplexItem signals
+
     enum {
-        gridPointsChangedIndex = 0,
-        cameraShotsChangedIndex,
-        coveredAreaChangedIndex,
-        cameraValueChangedIndex,
-        gridTypeChangedIndex,
-        timeBetweenShotsChangedIndex,
-        cameraOrientationFixedChangedIndex,
-        refly90DegreesChangedIndex,
-        dirtyChangedIndex,
-        maxSignalIndex
+        surveyVisualTransectPointsChangedIndex = 0,
+        surveyCameraShotsChangedIndex,
+        surveyCoveredAreaChangedIndex,
+        surveyTimeBetweenShotsChangedIndex,
+        surveyRefly90DegreesChangedIndex,
+        surveyDirtyChangedIndex,
+        surveyMaxSignalIndex
     };
 
     enum {
-        gridPointsChangedMask =             1 << gridPointsChangedIndex,
-        cameraShotsChangedMask =            1 << cameraShotsChangedIndex,
-        coveredAreaChangedMask =            1 << coveredAreaChangedIndex,
-        cameraValueChangedMask =            1 << cameraValueChangedIndex,
-        gridTypeChangedMask =               1 << gridTypeChangedIndex,
-        timeBetweenShotsChangedMask =       1 << timeBetweenShotsChangedIndex,
-        cameraOrientationFixedChangedMask = 1 << cameraOrientationFixedChangedIndex,
-        refly90DegreesChangedMask =         1 << refly90DegreesChangedIndex,
-        dirtyChangedMask =                  1 << dirtyChangedIndex
+        surveyVisualTransectPointsChangedMask = 1 << surveyVisualTransectPointsChangedIndex,
+        surveyCameraShotsChangedMask =          1 << surveyCameraShotsChangedIndex,
+        surveyCoveredAreaChangedMask =          1 << surveyCoveredAreaChangedIndex,
+        surveyTimeBetweenShotsChangedMask =     1 << surveyTimeBetweenShotsChangedIndex,
+        surveyRefly90DegreesChangedMask =       1 << surveyRefly90DegreesChangedIndex,
+        surveyDirtyChangedMask =                1 << surveyDirtyChangedIndex
     };
 
-    static const size_t _cSurveySignals = maxSignalIndex;
+    static const size_t _cSurveySignals = surveyMaxSignalIndex;
     const char*         _rgSurveySignals[_cSurveySignals];
 
     Vehicle*                _offlineVehicle;
