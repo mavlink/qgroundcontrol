@@ -25,7 +25,7 @@
 #include "QGCLoggingCategory.h"
 #include "QmlObjectListModel.h"
 
-class SurveyMissionItem;
+class SurveyComplexItem;
 class SimpleMissionItem;
 class MissionController;
 #ifdef UNITTEST_BUILD
@@ -151,7 +151,7 @@ private:
     static const char*  _jsonParam3Key;
     static const char*  _jsonParam4Key;
 
-    friend class SurveyMissionItem;
+    friend class SurveyComplexItem;
     friend class SimpleMissionItem;
     friend class MissionController;
 #ifdef UNITTEST_BUILD

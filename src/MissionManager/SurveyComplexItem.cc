@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-#include "SurveyMissionItem.h"
+#include "SurveyComplexItem.h"
 #include "JsonHelper.h"
 #include "MissionController.h"
 #include "QGCGeo.h"
@@ -19,61 +19,61 @@
 
 #include <QPolygonF>
 
-QGC_LOGGING_CATEGORY(SurveyMissionItemLog, "SurveyMissionItemLog")
+QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
 
-const char* SurveyMissionItem::jsonComplexItemTypeValue =           "survey";
+const char* SurveyComplexItem::jsonComplexItemTypeValue =           "survey";
 
-const char* SurveyMissionItem::_jsonGridObjectKey =                 "grid";
-const char* SurveyMissionItem::_jsonGridAltitudeKey =               "altitude";
-const char* SurveyMissionItem::_jsonGridAltitudeRelativeKey =       "relativeAltitude";
-const char* SurveyMissionItem::_jsonGridAngleKey =                  "angle";
-const char* SurveyMissionItem::_jsonGridSpacingKey =                "spacing";
-const char* SurveyMissionItem::_jsonGridEntryLocationKey =          "entryLocation";
-const char* SurveyMissionItem::_jsonTurnaroundDistKey =             "turnAroundDistance";
-const char* SurveyMissionItem::_jsonCameraTriggerDistanceKey =      "cameraTriggerDistance";
-const char* SurveyMissionItem::_jsonCameraTriggerInTurnaroundKey =  "cameraTriggerInTurnaround";
-const char* SurveyMissionItem::_jsonHoverAndCaptureKey =            "hoverAndCapture";
-const char* SurveyMissionItem::_jsonGroundResolutionKey =           "groundResolution";
-const char* SurveyMissionItem::_jsonFrontalOverlapKey =             "imageFrontalOverlap";
-const char* SurveyMissionItem::_jsonSideOverlapKey =                "imageSideOverlap";
-const char* SurveyMissionItem::_jsonCameraSensorWidthKey =          "sensorWidth";
-const char* SurveyMissionItem::_jsonCameraSensorHeightKey =         "sensorHeight";
-const char* SurveyMissionItem::_jsonCameraResolutionWidthKey =      "resolutionWidth";
-const char* SurveyMissionItem::_jsonCameraResolutionHeightKey =     "resolutionHeight";
-const char* SurveyMissionItem::_jsonCameraFocalLengthKey =          "focalLength";
-const char* SurveyMissionItem::_jsonCameraMinTriggerIntervalKey =   "minTriggerInterval";
-const char* SurveyMissionItem::_jsonCameraObjectKey =               "camera";
-const char* SurveyMissionItem::_jsonCameraNameKey =                 "name";
-const char* SurveyMissionItem::_jsonManualGridKey =                 "manualGrid";
-const char* SurveyMissionItem::_jsonCameraOrientationLandscapeKey = "orientationLandscape";
-const char* SurveyMissionItem::_jsonFixedValueIsAltitudeKey =       "fixedValueIsAltitude";
-const char* SurveyMissionItem::_jsonRefly90DegreesKey =             "refly90Degrees";
+const char* SurveyComplexItem::_jsonGridObjectKey =                 "grid";
+const char* SurveyComplexItem::_jsonGridAltitudeKey =               "altitude";
+const char* SurveyComplexItem::_jsonGridAltitudeRelativeKey =       "relativeAltitude";
+const char* SurveyComplexItem::_jsonGridAngleKey =                  "angle";
+const char* SurveyComplexItem::_jsonGridSpacingKey =                "spacing";
+const char* SurveyComplexItem::_jsonGridEntryLocationKey =          "entryLocation";
+const char* SurveyComplexItem::_jsonTurnaroundDistKey =             "turnAroundDistance";
+const char* SurveyComplexItem::_jsonCameraTriggerDistanceKey =      "cameraTriggerDistance";
+const char* SurveyComplexItem::_jsonCameraTriggerInTurnaroundKey =  "cameraTriggerInTurnaround";
+const char* SurveyComplexItem::_jsonHoverAndCaptureKey =            "hoverAndCapture";
+const char* SurveyComplexItem::_jsonGroundResolutionKey =           "groundResolution";
+const char* SurveyComplexItem::_jsonFrontalOverlapKey =             "imageFrontalOverlap";
+const char* SurveyComplexItem::_jsonSideOverlapKey =                "imageSideOverlap";
+const char* SurveyComplexItem::_jsonCameraSensorWidthKey =          "sensorWidth";
+const char* SurveyComplexItem::_jsonCameraSensorHeightKey =         "sensorHeight";
+const char* SurveyComplexItem::_jsonCameraResolutionWidthKey =      "resolutionWidth";
+const char* SurveyComplexItem::_jsonCameraResolutionHeightKey =     "resolutionHeight";
+const char* SurveyComplexItem::_jsonCameraFocalLengthKey =          "focalLength";
+const char* SurveyComplexItem::_jsonCameraMinTriggerIntervalKey =   "minTriggerInterval";
+const char* SurveyComplexItem::_jsonCameraObjectKey =               "camera";
+const char* SurveyComplexItem::_jsonCameraNameKey =                 "name";
+const char* SurveyComplexItem::_jsonManualGridKey =                 "manualGrid";
+const char* SurveyComplexItem::_jsonCameraOrientationLandscapeKey = "orientationLandscape";
+const char* SurveyComplexItem::_jsonFixedValueIsAltitudeKey =       "fixedValueIsAltitude";
+const char* SurveyComplexItem::_jsonRefly90DegreesKey =             "refly90Degrees";
 
-const char* SurveyMissionItem::settingsGroup =                  "Survey";
-const char* SurveyMissionItem::manualGridName =                 "ManualGrid";
-const char* SurveyMissionItem::gridAltitudeName =               "GridAltitude";
-const char* SurveyMissionItem::gridAltitudeRelativeName =       "GridAltitudeRelative";
-const char* SurveyMissionItem::gridAngleName =                  "GridAngle";
-const char* SurveyMissionItem::gridSpacingName =                "GridSpacing";
-const char* SurveyMissionItem::gridEntryLocationName =          "GridEntryLocation";
-const char* SurveyMissionItem::turnaroundDistName =             "TurnaroundDist";
-const char* SurveyMissionItem::cameraTriggerDistanceName =      "CameraTriggerDistance";
-const char* SurveyMissionItem::cameraTriggerInTurnaroundName =  "CameraTriggerInTurnaround";
-const char* SurveyMissionItem::hoverAndCaptureName =            "HoverAndCapture";
-const char* SurveyMissionItem::groundResolutionName =           "GroundResolution";
-const char* SurveyMissionItem::frontalOverlapName =             "FrontalOverlap";
-const char* SurveyMissionItem::sideOverlapName =                "SideOverlap";
-const char* SurveyMissionItem::cameraSensorWidthName =          "CameraSensorWidth";
-const char* SurveyMissionItem::cameraSensorHeightName =         "CameraSensorHeight";
-const char* SurveyMissionItem::cameraResolutionWidthName =      "CameraResolutionWidth";
-const char* SurveyMissionItem::cameraResolutionHeightName =     "CameraResolutionHeight";
-const char* SurveyMissionItem::cameraFocalLengthName =          "CameraFocalLength";
-const char* SurveyMissionItem::cameraTriggerName =              "CameraTrigger";
-const char* SurveyMissionItem::cameraOrientationLandscapeName = "CameraOrientationLandscape";
-const char* SurveyMissionItem::fixedValueIsAltitudeName =       "FixedValueIsAltitude";
-const char* SurveyMissionItem::cameraName =                     "Camera";
+const char* SurveyComplexItem::settingsGroup =                  "Survey";
+const char* SurveyComplexItem::manualGridName =                 "ManualGrid";
+const char* SurveyComplexItem::gridAltitudeName =               "GridAltitude";
+const char* SurveyComplexItem::gridAltitudeRelativeName =       "GridAltitudeRelative";
+const char* SurveyComplexItem::gridAngleName =                  "GridAngle";
+const char* SurveyComplexItem::gridSpacingName =                "GridSpacing";
+const char* SurveyComplexItem::gridEntryLocationName =          "GridEntryLocation";
+const char* SurveyComplexItem::turnaroundDistName =             "TurnaroundDist";
+const char* SurveyComplexItem::cameraTriggerDistanceName =      "CameraTriggerDistance";
+const char* SurveyComplexItem::cameraTriggerInTurnaroundName =  "CameraTriggerInTurnaround";
+const char* SurveyComplexItem::hoverAndCaptureName =            "HoverAndCapture";
+const char* SurveyComplexItem::groundResolutionName =           "GroundResolution";
+const char* SurveyComplexItem::frontalOverlapName =             "FrontalOverlap";
+const char* SurveyComplexItem::sideOverlapName =                "SideOverlap";
+const char* SurveyComplexItem::cameraSensorWidthName =          "CameraSensorWidth";
+const char* SurveyComplexItem::cameraSensorHeightName =         "CameraSensorHeight";
+const char* SurveyComplexItem::cameraResolutionWidthName =      "CameraResolutionWidth";
+const char* SurveyComplexItem::cameraResolutionHeightName =     "CameraResolutionHeight";
+const char* SurveyComplexItem::cameraFocalLengthName =          "CameraFocalLength";
+const char* SurveyComplexItem::cameraTriggerName =              "CameraTrigger";
+const char* SurveyComplexItem::cameraOrientationLandscapeName = "CameraOrientationLandscape";
+const char* SurveyComplexItem::fixedValueIsAltitudeName =       "FixedValueIsAltitude";
+const char* SurveyComplexItem::cameraName =                     "Camera";
 
-SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
+SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, QObject* parent)
     : ComplexMissionItem(vehicle, parent)
     , _sequenceNumber(0)
     , _dirty(false)
@@ -125,37 +125,37 @@ SurveyMissionItem::SurveyMissionItem(Vehicle* vehicle, QObject* parent)
         _gridAltitudeFact.setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
     }
 
-    connect(&_gridSpacingFact,                  &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_gridAngleFact,                    &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_gridEntryLocationFact,            &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_turnaroundDistFact,               &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_cameraTriggerDistanceFact,        &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_cameraTriggerInTurnaroundFact,    &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(&_hoverAndCaptureFact,              &Fact::valueChanged,                        this, &SurveyMissionItem::_generateGrid);
-    connect(this,                               &SurveyMissionItem::refly90DegreesChanged,  this, &SurveyMissionItem::_generateGrid);
+    connect(&_gridSpacingFact,                  &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(&_gridAngleFact,                    &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(&_gridEntryLocationFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(&_turnaroundDistFact,               &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(&_cameraTriggerDistanceFact,        &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(&_cameraTriggerInTurnaroundFact,    &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(&_hoverAndCaptureFact,              &Fact::valueChanged,                        this, &SurveyComplexItem::_generateGrid);
+    connect(this,                               &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_generateGrid);
 
-    connect(&_gridAltitudeFact,                 &Fact::valueChanged, this, &SurveyMissionItem::_updateCoordinateAltitude);
+    connect(&_gridAltitudeFact,                 &Fact::valueChanged, this, &SurveyComplexItem::_updateCoordinateAltitude);
 
-    connect(&_gridAltitudeRelativeFact,         &Fact::valueChanged, this, &SurveyMissionItem::_setDirty);
+    connect(&_gridAltitudeRelativeFact,         &Fact::valueChanged, this, &SurveyComplexItem::_setDirty);
 
     // Signal to Qml when camera value changes so it can recalc
-    connect(&_groundResolutionFact,             &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_frontalOverlapFact,               &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_sideOverlapFact,                  &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_cameraSensorWidthFact,            &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_cameraSensorHeightFact,           &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_cameraResolutionWidthFact,        &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_cameraResolutionHeightFact,       &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_cameraFocalLengthFact,            &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
-    connect(&_cameraOrientationLandscapeFact,   &Fact::valueChanged, this, &SurveyMissionItem::_cameraValueChanged);
+    connect(&_groundResolutionFact,             &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_frontalOverlapFact,               &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_sideOverlapFact,                  &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_cameraSensorWidthFact,            &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_cameraSensorHeightFact,           &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_cameraResolutionWidthFact,        &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_cameraResolutionHeightFact,       &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_cameraFocalLengthFact,            &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
+    connect(&_cameraOrientationLandscapeFact,   &Fact::valueChanged, this, &SurveyComplexItem::_cameraValueChanged);
 
-    connect(&_cameraTriggerDistanceFact, &Fact::valueChanged, this, &SurveyMissionItem::timeBetweenShotsChanged);
+    connect(&_cameraTriggerDistanceFact, &Fact::valueChanged, this, &SurveyComplexItem::timeBetweenShotsChanged);
 
-    connect(&_mapPolygon, &QGCMapPolygon::dirtyChanged, this, &SurveyMissionItem::_polygonDirtyChanged);
-    connect(&_mapPolygon, &QGCMapPolygon::pathChanged,  this, &SurveyMissionItem::_generateGrid);
+    connect(&_mapPolygon, &QGCMapPolygon::dirtyChanged, this, &SurveyComplexItem::_polygonDirtyChanged);
+    connect(&_mapPolygon, &QGCMapPolygon::pathChanged,  this, &SurveyComplexItem::_generateGrid);
 }
 
-void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
+void SurveyComplexItem::_setSurveyDistance(double surveyDistance)
 {
     if (!qFuzzyCompare(_surveyDistance, surveyDistance)) {
         _surveyDistance = surveyDistance;
@@ -163,7 +163,7 @@ void SurveyMissionItem::_setSurveyDistance(double surveyDistance)
     }
 }
 
-void SurveyMissionItem::_setCameraShots(int cameraShots)
+void SurveyComplexItem::_setCameraShots(int cameraShots)
 {
     if (_cameraShots != cameraShots) {
         _cameraShots = cameraShots;
@@ -171,7 +171,7 @@ void SurveyMissionItem::_setCameraShots(int cameraShots)
     }
 }
 
-void SurveyMissionItem::_setCoveredArea(double coveredArea)
+void SurveyComplexItem::_setCoveredArea(double coveredArea)
 {
     if (!qFuzzyCompare(_coveredArea, coveredArea)) {
         _coveredArea = coveredArea;
@@ -179,7 +179,7 @@ void SurveyMissionItem::_setCoveredArea(double coveredArea)
     }
 }
 
-void SurveyMissionItem::_clearInternal(void)
+void SurveyComplexItem::_clearInternal(void)
 {
     // Bug workaround
     while (_simpleGridPoints.count() > 1) {
@@ -197,12 +197,12 @@ void SurveyMissionItem::_clearInternal(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
-int SurveyMissionItem::lastSequenceNumber(void) const
+int SurveyComplexItem::lastSequenceNumber(void) const
 {
     return _sequenceNumber + _missionCommandCount;
 }
 
-void SurveyMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
+void SurveyComplexItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_coordinate != coordinate) {
         _coordinate = coordinate;
@@ -210,7 +210,7 @@ void SurveyMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
     }
 }
 
-void SurveyMissionItem::setDirty(bool dirty)
+void SurveyComplexItem::setDirty(bool dirty)
 {
     if (_dirty != dirty) {
         _dirty = dirty;
@@ -218,7 +218,7 @@ void SurveyMissionItem::setDirty(bool dirty)
     }
 }
 
-void SurveyMissionItem::save(QJsonArray&  missionItems)
+void SurveyComplexItem::save(QJsonArray&  missionItems)
 {
     QJsonObject saveObject;
 
@@ -265,7 +265,7 @@ void SurveyMissionItem::save(QJsonArray&  missionItems)
     missionItems.append(saveObject);
 }
 
-void SurveyMissionItem::setSequenceNumber(int sequenceNumber)
+void SurveyComplexItem::setSequenceNumber(int sequenceNumber)
 {
     if (_sequenceNumber != sequenceNumber) {
         _sequenceNumber = sequenceNumber;
@@ -274,7 +274,7 @@ void SurveyMissionItem::setSequenceNumber(int sequenceNumber)
     }
 }
 
-bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
+bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
 {
     QJsonObject v2Object = complexObject;
 
@@ -424,7 +424,7 @@ bool SurveyMissionItem::load(const QJsonObject& complexObject, int sequenceNumbe
     return true;
 }
 
-double SurveyMissionItem::greatestDistanceTo(const QGeoCoordinate &other) const
+double SurveyComplexItem::greatestDistanceTo(const QGeoCoordinate &other) const
 {
     double greatestDistance = 0.0;
     for (int i=0; i<_simpleGridPoints.count(); i++) {
@@ -437,7 +437,7 @@ double SurveyMissionItem::greatestDistanceTo(const QGeoCoordinate &other) const
     return greatestDistance;
 }
 
-void SurveyMissionItem::_setExitCoordinate(const QGeoCoordinate& coordinate)
+void SurveyComplexItem::_setExitCoordinate(const QGeoCoordinate& coordinate)
 {
     if (_exitCoordinate != coordinate) {
         _exitCoordinate = coordinate;
@@ -445,7 +445,7 @@ void SurveyMissionItem::_setExitCoordinate(const QGeoCoordinate& coordinate)
     }
 }
 
-bool SurveyMissionItem::specifiesCoordinate(void) const
+bool SurveyComplexItem::specifiesCoordinate(void) const
 {
     return _mapPolygon.count() > 2;
 }
@@ -455,7 +455,7 @@ void _calcCameraShots()
 
 }
 
-void SurveyMissionItem::_convertTransectToGeo(const QList<QList<QPointF>>& transectSegmentsNED, const QGeoCoordinate& tangentOrigin, QList<QList<QGeoCoordinate>>& transectSegmentsGeo)
+void SurveyComplexItem::_convertTransectToGeo(const QList<QList<QPointF>>& transectSegmentsNED, const QGeoCoordinate& tangentOrigin, QList<QList<QGeoCoordinate>>& transectSegmentsGeo)
 {
     transectSegmentsGeo.clear();
 
@@ -474,7 +474,7 @@ void SurveyMissionItem::_convertTransectToGeo(const QList<QList<QPointF>>& trans
 }
 
 /// Reverse the order of the transects. First transect becomes last and so forth.
-void SurveyMissionItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects)
+void SurveyComplexItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& transects)
 {
     QList<QList<QGeoCoordinate>> rgReversedTransects;
     for (int i=transects.count() - 1; i>=0; i--) {
@@ -484,7 +484,7 @@ void SurveyMissionItem::_reverseTransectOrder(QList<QList<QGeoCoordinate>>& tran
 }
 
 /// Reverse the order of all points withing each transect, First point becomes last and so forth.
-void SurveyMissionItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects)
+void SurveyComplexItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinate>>& transects)
 {
     for (int i=0; i<transects.count(); i++) {
         QList<QGeoCoordinate> rgReversedCoords;
@@ -500,7 +500,7 @@ void SurveyMissionItem::_reverseInternalTransectPoints(QList<QList<QGeoCoordinat
 /// and the first point within that transect is the shortest distance to the specified coordinate.
 ///     @param distanceCoord Coordinate to measure distance against
 ///     @param transects Transects to test and reorder
-void SurveyMissionItem::_optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects)
+void SurveyComplexItem::_optimizeTransectsForShortestDistance(const QGeoCoordinate& distanceCoord, QList<QList<QGeoCoordinate>>& transects)
 {
     double rgTransectDistance[4];
     rgTransectDistance[0] = transects.first().first().distanceTo(distanceCoord);
@@ -527,9 +527,9 @@ void SurveyMissionItem::_optimizeTransectsForShortestDistance(const QGeoCoordina
     }
 }
 
-void SurveyMissionItem::_appendGridPointsFromTransects(QList<QList<QGeoCoordinate>>& rgTransectSegments)
+void SurveyComplexItem::_appendGridPointsFromTransects(QList<QList<QGeoCoordinate>>& rgTransectSegments)
 {
-    qCDebug(SurveyMissionItemLog) << "Entry point _appendGridPointsFromTransects" << rgTransectSegments.first().first();
+    qCDebug(SurveyComplexItemLog) << "Entry point _appendGridPointsFromTransects" << rgTransectSegments.first().first();
 
     for (int i=0; i<rgTransectSegments.count(); i++) {
         _simpleGridPoints.append(QVariant::fromValue(rgTransectSegments[i].first()));
@@ -537,17 +537,17 @@ void SurveyMissionItem::_appendGridPointsFromTransects(QList<QList<QGeoCoordinat
     }
 }
 
-qreal SurveyMissionItem::_ccw(QPointF pt1, QPointF pt2, QPointF pt3)
+qreal SurveyComplexItem::_ccw(QPointF pt1, QPointF pt2, QPointF pt3)
 {
     return (pt2.x()-pt1.x())*(pt3.y()-pt1.y()) - (pt2.y()-pt1.y())*(pt3.x()-pt1.x());
 }
 
-qreal SurveyMissionItem::_dp(QPointF pt1, QPointF pt2)
+qreal SurveyComplexItem::_dp(QPointF pt1, QPointF pt2)
 {
     return (pt2.x()-pt1.x())/qSqrt((pt2.x()-pt1.x())*(pt2.x()-pt1.x()) + (pt2.y()-pt1.y())*(pt2.y()-pt1.y()));
 }
 
-void SurveyMissionItem::_swapPoints(QList<QPointF>& points, int index1, int index2)
+void SurveyComplexItem::_swapPoints(QList<QPointF>& points, int index1, int index2)
 {
     QPointF temp = points[index1];
     points[index1] = points[index2];
@@ -555,14 +555,14 @@ void SurveyMissionItem::_swapPoints(QList<QPointF>& points, int index1, int inde
 }
 
 /// Returns true if the current grid angle generates north/south oriented transects
-bool SurveyMissionItem::_gridAngleIsNorthSouthTransects()
+bool SurveyComplexItem::_gridAngleIsNorthSouthTransects()
 {
     // Grid angle ranges from -360<->360
     double gridAngle = qAbs(_gridAngleFact.rawValue().toDouble());
     return gridAngle < 45.0 || (gridAngle > 360.0 - 45.0) || (gridAngle > 90.0 + 45.0 && gridAngle < 270.0 - 45.0);
 }
 
-void SurveyMissionItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects)
+void SurveyComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoordinate>>& transects)
 {
     if (transects.count() == 0) {
         return;
@@ -580,18 +580,18 @@ void SurveyMissionItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
     }
 
     if (reversePoints) {
-        qCDebug(SurveyMissionItemLog) << "Reverse Points";
+        qCDebug(SurveyComplexItemLog) << "Reverse Points";
         _reverseInternalTransectPoints(transects);
     }
     if (reverseTransects) {
-        qCDebug(SurveyMissionItemLog) << "Reverse Transects";
+        qCDebug(SurveyComplexItemLog) << "Reverse Transects";
         _reverseTransectOrder(transects);
     }
 
-    qCDebug(SurveyMissionItemLog) << "Modified entry point" << transects.first().first();
+    qCDebug(SurveyComplexItemLog) << "Modified entry point" << transects.first().first();
 }
 
-int SurveyMissionItem::_calcMissionCommandCount(QList<QList<QGeoCoordinate>>& transectSegments)
+int SurveyComplexItem::_calcMissionCommandCount(QList<QList<QGeoCoordinate>>& transectSegments)
 {
     int missionCommandCount= 0;
     for (int i=0; i<transectSegments.count(); i++) {
@@ -613,7 +613,7 @@ int SurveyMissionItem::_calcMissionCommandCount(QList<QList<QGeoCoordinate>>& tr
 
     return missionCommandCount;
 }
-void SurveyMissionItem::_generateGrid(void)
+void SurveyComplexItem::_generateGrid(void)
 {
     if (_ignoreRecalc) {
         return;
@@ -634,7 +634,7 @@ void SurveyMissionItem::_generateGrid(void)
 
     // Convert polygon to NED
     QGeoCoordinate tangentOrigin = _mapPolygon.pathModel().value<QGCQGeoCoordinate*>(0)->coordinate();
-    qCDebug(SurveyMissionItemLog) << "Convert polygon to NED - tangentOrigin" << tangentOrigin;
+    qCDebug(SurveyComplexItemLog) << "Convert polygon to NED - tangentOrigin" << tangentOrigin;
     for (int i=0; i<_mapPolygon.count(); i++) {
         double y, x, down;
         QGeoCoordinate vertex = _mapPolygon.pathModel().value<QGCQGeoCoordinate*>(i)->coordinate();
@@ -645,7 +645,7 @@ void SurveyMissionItem::_generateGrid(void)
             convertGeoToNed(vertex, tangentOrigin, &y, &x, &down);
         }
         polygonPoints += QPointF(x, y);
-        qCDebug(SurveyMissionItemLog) << "vertex:x:y" << vertex << polygonPoints.last().x() << polygonPoints.last().y();
+        qCDebug(SurveyComplexItemLog) << "vertex:x:y" << vertex << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
     double coveredArea = 0.0;
@@ -713,7 +713,7 @@ void SurveyMissionItem::_generateGrid(void)
     setDirty(true);
 }
 
-void SurveyMissionItem::_updateCoordinateAltitude(void)
+void SurveyComplexItem::_updateCoordinateAltitude(void)
 {
     _coordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
     _exitCoordinate.setAltitude(_gridAltitudeFact.rawValue().toDouble());
@@ -722,7 +722,7 @@ void SurveyMissionItem::_updateCoordinateAltitude(void)
     setDirty(true);
 }
 
-QPointF SurveyMissionItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
+QPointF SurveyComplexItem::_rotatePoint(const QPointF& point, const QPointF& origin, double angle)
 {
     QPointF rotated;
     double radians = (M_PI / 180.0) * -angle;
@@ -733,7 +733,7 @@ QPointF SurveyMissionItem::_rotatePoint(const QPointF& point, const QPointF& ori
     return rotated;
 }
 
-void SurveyMissionItem::_intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines)
+void SurveyComplexItem::_intersectLinesWithRect(const QList<QLineF>& lineList, const QRectF& boundRect, QList<QLineF>& resultLines)
 {
     QLineF topLine      (boundRect.topLeft(),       boundRect.topRight());
     QLineF bottomLine   (boundRect.bottomLeft(),    boundRect.bottomRight());
@@ -790,7 +790,7 @@ void SurveyMissionItem::_intersectLinesWithRect(const QList<QLineF>& lineList, c
     }
 }
 
-void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
+void SurveyComplexItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList, const QPolygonF& polygon, QList<QLineF>& resultLines)
 {
     resultLines.clear();
 
@@ -833,7 +833,7 @@ void SurveyMissionItem::_intersectLinesWithPolygon(const QList<QLineF>& lineList
 }
 
 /// Adjust the line segments such that they are all going the same direction with respect to going from P1->P2
-void SurveyMissionItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
+void SurveyComplexItem::_adjustLineDirection(const QList<QLineF>& lineList, QList<QLineF>& resultLines)
 {
     qreal firstAngle = 0;
     for (int i=0; i<lineList.count(); i++) {
@@ -855,7 +855,7 @@ void SurveyMissionItem::_adjustLineDirection(const QList<QLineF>& lineList, QLis
     }
 }
 
-double SurveyMissionItem::_clampGridAngle90(double gridAngle)
+double SurveyComplexItem::_clampGridAngle90(double gridAngle)
 {
     // Clamp grid angle to -90<->90. This prevents transects from being rotated to a reversed order.
     if (gridAngle > 90.0) {
@@ -866,7 +866,7 @@ double SurveyMissionItem::_clampGridAngle90(double gridAngle)
     return gridAngle;
 }
 
-int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QList<QList<QPointF>>& transectSegments, bool refly)
+int SurveyComplexItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QList<QList<QPointF>>& transectSegments, bool refly)
 {
     int cameraShots = 0;
 
@@ -875,24 +875,24 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
 
     gridAngle = _clampGridAngle90(gridAngle);
     gridAngle += refly ? 90 : 0;
-    qCDebug(SurveyMissionItemLog) << "Clamped grid angle" << gridAngle;
+    qCDebug(SurveyComplexItemLog) << "Clamped grid angle" << gridAngle;
 
-    qCDebug(SurveyMissionItemLog) << "SurveyMissionItem::_gridGenerator gridSpacing:gridAngle:refly" << gridSpacing << gridAngle << refly;
+    qCDebug(SurveyComplexItemLog) << "SurveyComplexItem::_gridGenerator gridSpacing:gridAngle:refly" << gridSpacing << gridAngle << refly;
 
     transectSegments.clear();
 
     // Convert polygon to bounding rect
 
-    qCDebug(SurveyMissionItemLog) << "Polygon";
+    qCDebug(SurveyComplexItemLog) << "Polygon";
     QPolygonF polygon;
     for (int i=0; i<polygonPoints.count(); i++) {
-        qCDebug(SurveyMissionItemLog) << polygonPoints[i];
+        qCDebug(SurveyComplexItemLog) << polygonPoints[i];
         polygon << polygonPoints[i];
     }
     polygon << polygonPoints[0];
     QRectF boundingRect = polygon.boundingRect();
     QPointF boundingCenter = boundingRect.center();
-    qCDebug(SurveyMissionItemLog) << "Bounding rect" << boundingRect.topLeft().x() << boundingRect.topLeft().y() << boundingRect.bottomRight().x() << boundingRect.bottomRight().y();
+    qCDebug(SurveyComplexItemLog) << "Bounding rect" << boundingRect.topLeft().x() << boundingRect.topLeft().y() << boundingRect.bottomRight().x() << boundingRect.bottomRight().y();
 
     // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
     // bounding box to guarantee intersection.
@@ -979,7 +979,7 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
         if (_triggerCamera() && _hoverAndCaptureEnabled()) {
             if (_triggerDistance() < transectLine.length()) {
                 int innerPoints = floor(transectLine.length() / _triggerDistance());
-                qCDebug(SurveyMissionItemLog) << "innerPoints" << innerPoints;
+                qCDebug(SurveyComplexItemLog) << "innerPoints" << innerPoints;
                 float transectPositionIncrement = _triggerDistance() / transectLine.length();
                 for (int i=0; i<innerPoints; i++) {
                     transectPoints.append(transectLine.pointAt(transectPositionIncrement * (i + 1)));
@@ -1000,12 +1000,12 @@ int SurveyMissionItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QLis
     return cameraShots;
 }
 
-int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int seqNum, QGeoCoordinate& coord, CameraTriggerCode cameraTrigger, QObject* missionItemParent)
+int SurveyComplexItem::_appendWaypointToMission(QList<MissionItem*>& items, int seqNum, QGeoCoordinate& coord, CameraTriggerCode cameraTrigger, QObject* missionItemParent)
 {
     double  altitude =          _gridAltitudeFact.rawValue().toDouble();
     bool    altitudeRelative =  _gridAltitudeRelativeFact.rawValue().toBool();
 
-    qCDebug(SurveyMissionItemLog) << "_appendWaypointToMission seq:trigger" << seqNum << (cameraTrigger != CameraTriggerNone);
+    qCDebug(SurveyComplexItemLog) << "_appendWaypointToMission seq:trigger" << seqNum << (cameraTrigger != CameraTriggerNone);
 
     MissionItem* item = new MissionItem(seqNum++,
                                         MAV_CMD_NAV_WAYPOINT,
@@ -1068,7 +1068,7 @@ int SurveyMissionItem::_appendWaypointToMission(QList<MissionItem*>& items, int 
     return seqNum;
 }
 
-bool SurveyMissionItem::_nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord)
+bool SurveyComplexItem::_nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord)
 {
     if (pointIndex > transectPoints.count()) {
         qWarning() << "Bad grid generation";
@@ -1086,11 +1086,11 @@ bool SurveyMissionItem::_nextTransectCoord(const QList<QGeoCoordinate>& transect
 ///     @param hasRefly true: misison has a refly section
 ///     @param buildRefly: true: build the refly section, false: build the first section
 /// @return false: Generation failed
-bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly)
+bool SurveyComplexItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QObject* missionItemParent, int& seqNum, bool hasRefly, bool buildRefly)
 {
     bool firstWaypointTrigger = false;
 
-    qCDebug(SurveyMissionItemLog) << QStringLiteral("hasTurnaround(%1) triggerCamera(%2) hoverAndCapture(%3) imagesEverywhere(%4) hasRefly(%5) buildRefly(%6) ").arg(_hasTurnaround()).arg(_triggerCamera()).arg(_hoverAndCaptureEnabled()).arg(_imagesEverywhere()).arg(hasRefly).arg(buildRefly);
+    qCDebug(SurveyComplexItemLog) << QStringLiteral("hasTurnaround(%1) triggerCamera(%2) hoverAndCapture(%3) imagesEverywhere(%4) hasRefly(%5) buildRefly(%6) ").arg(_hasTurnaround()).arg(_triggerCamera()).arg(_hoverAndCaptureEnabled()).arg(_imagesEverywhere()).arg(hasRefly).arg(buildRefly);
 
     QList<QList<QGeoCoordinate>>& transectSegments = buildRefly ? _reflyTransectSegments : _transectSegments;
 
@@ -1104,7 +1104,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
         CameraTriggerCode cameraTrigger;
         const QList<QGeoCoordinate>& segment = transectSegments[segmentIndex];
 
-        qCDebug(SurveyMissionItemLog) << "segment.count" << segment.count();
+        qCDebug(SurveyComplexItemLog) << "segment.count" << segment.count();
 
         if (_hasTurnaround()) {
             // Add entry turnaround point
@@ -1130,7 +1130,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
         // Add internal hover and capture points
         if (_hoverAndCaptureEnabled()) {
             int lastHoverAndCaptureIndex = segment.count() - 1 - (_hasTurnaround() ? 1 : 0);
-            qCDebug(SurveyMissionItemLog) << "lastHoverAndCaptureIndex" << lastHoverAndCaptureIndex;
+            qCDebug(SurveyComplexItemLog) << "lastHoverAndCaptureIndex" << lastHoverAndCaptureIndex;
             for (; pointIndex < lastHoverAndCaptureIndex; pointIndex++) {
                 if (!_nextTransectCoord(segment, pointIndex, coord)) {
                     return false;
@@ -1154,7 +1154,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
             seqNum = _appendWaypointToMission(items, seqNum, coord, CameraTriggerNone, missionItemParent);
         }
 
-        qCDebug(SurveyMissionItemLog) << "last PointIndex" << pointIndex;
+        qCDebug(SurveyComplexItemLog) << "last PointIndex" << pointIndex;
     }
 
     if (((hasRefly && buildRefly) || !hasRefly) && _imagesEverywhere()) {
@@ -1173,7 +1173,7 @@ bool SurveyMissionItem::_appendMissionItemsWorker(QList<MissionItem*>& items, QO
     return true;
 }
 
-void SurveyMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
+void SurveyComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
     int seqNum = _sequenceNumber;
 
@@ -1186,22 +1186,22 @@ void SurveyMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* 
     }
 }
 
-int SurveyMissionItem::cameraShots(void) const
+int SurveyComplexItem::cameraShots(void) const
 {
     return _triggerCamera() ? _cameraShots : 0;
 }
 
-void SurveyMissionItem::_cameraValueChanged(void)
+void SurveyComplexItem::_cameraValueChanged(void)
 {
     emit cameraValueChanged();
 }
 
-double SurveyMissionItem::timeBetweenShots(void) const
+double SurveyComplexItem::timeBetweenShots(void) const
 {
     return _cruiseSpeed == 0 ? 0 : _triggerDistance() / _cruiseSpeed;
 }
 
-void SurveyMissionItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
+void SurveyComplexItem::setMissionFlightStatus(MissionController::MissionFlightStatus_t& missionFlightStatus)
 {
     ComplexMissionItem::setMissionFlightStatus(missionFlightStatus);
     if (!qFuzzyCompare(_cruiseSpeed, missionFlightStatus.vehicleSpeed)) {
@@ -1210,52 +1210,52 @@ void SurveyMissionItem::setMissionFlightStatus(MissionController::MissionFlightS
     }
 }
 
-void SurveyMissionItem::_setDirty(void)
+void SurveyComplexItem::_setDirty(void)
 {
     setDirty(true);
 }
 
-bool SurveyMissionItem::hoverAndCaptureAllowed(void) const
+bool SurveyComplexItem::hoverAndCaptureAllowed(void) const
 {
     return _vehicle->multiRotor() || _vehicle->vtol();
 }
 
-double SurveyMissionItem::_triggerDistance(void) const {
+double SurveyComplexItem::_triggerDistance(void) const {
     return _cameraTriggerDistanceFact.rawValue().toDouble();
 }
 
-bool SurveyMissionItem::_triggerCamera(void) const
+bool SurveyComplexItem::_triggerCamera(void) const
 {
     return _triggerDistance() > 0;
 }
 
-bool SurveyMissionItem::_imagesEverywhere(void) const
+bool SurveyComplexItem::_imagesEverywhere(void) const
 {
     return _triggerCamera() && _cameraTriggerInTurnaroundFact.rawValue().toBool();
 }
 
-bool SurveyMissionItem::_hoverAndCaptureEnabled(void) const
+bool SurveyComplexItem::_hoverAndCaptureEnabled(void) const
 {
     return hoverAndCaptureAllowed() && !_imagesEverywhere() && _triggerCamera() && _hoverAndCaptureFact.rawValue().toBool();
 }
 
-bool SurveyMissionItem::_hasTurnaround(void) const
+bool SurveyComplexItem::_hasTurnaround(void) const
 {
     return _turnaroundDistance() > 0;
 }
 
-double SurveyMissionItem::_turnaroundDistance(void) const
+double SurveyComplexItem::_turnaroundDistance(void) const
 {
     return _turnaroundDistFact.rawValue().toDouble();
 }
 
-void SurveyMissionItem::applyNewAltitude(double newAltitude)
+void SurveyComplexItem::applyNewAltitude(double newAltitude)
 {
     _fixedValueIsAltitudeFact.setRawValue(true);
     _gridAltitudeFact.setRawValue(newAltitude);
 }
 
-void SurveyMissionItem::setRefly90Degrees(bool refly90Degrees)
+void SurveyComplexItem::setRefly90Degrees(bool refly90Degrees)
 {
     if (refly90Degrees != _refly90Degrees) {
         _refly90Degrees = refly90Degrees;
@@ -1263,7 +1263,7 @@ void SurveyMissionItem::setRefly90Degrees(bool refly90Degrees)
     }
 }
 
-void SurveyMissionItem::_polygonDirtyChanged(bool dirty)
+void SurveyComplexItem::_polygonDirtyChanged(bool dirty)
 {
     if (dirty) {
         setDirty(true);
