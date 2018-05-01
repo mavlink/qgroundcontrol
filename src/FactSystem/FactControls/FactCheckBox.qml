@@ -18,5 +18,5 @@ QGCCheckBox {
 
     text: qsTr("Label")
 
-    onClicked: fact.value == checked ? checkedValue : uncheckedValue
+    onClicked: fact.value = (checked ? checkedValue : uncheckedValue)
 }
