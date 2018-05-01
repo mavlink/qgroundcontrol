@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 #include "SectionTest.h"
-#include "SurveyMissionItem.h"
+#include "SurveyComplexItem.h"
 
 SectionTest::SectionTest(void)
     : _simpleItem(NULL)
@@ -83,7 +83,7 @@ void SectionTest::_commonScanTest(Section* section)
     waypointVisualItems.append(&simpleItem);
 
     QmlObjectListModel complexVisualItems;
-    SurveyMissionItem surveyItem(_offlineVehicle);
+    SurveyComplexItem surveyItem(_offlineVehicle);
     complexVisualItems.append(&surveyItem);
 
     // This tests the common cases which should not lead to scan succeess
