@@ -25,36 +25,36 @@ FactPanel {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText: qsTr("Trigger interface:")
+            labelText: qsTr("Trigger interface")
             valueText: _camTriggerInterface ? _camTriggerInterface.enumStringValue : ""
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Trigger mode:")
+            labelText: qsTr("Trigger mode")
             valueText: _camTriggerMode ? _camTriggerMode.enumStringValue : ""
         }
 
         VehicleSummaryRow {
             visible:    _timeInterval && _camTriggerMode.value === 2
-            labelText:  qsTr("Time interval:")
+            labelText:  qsTr("Time interval")
             valueText:  _timeInterval ? _timeInterval.value : ""
         }
 
         VehicleSummaryRow {
             visible:    _distanceInterval && _camTriggerMode.value === 3
-            labelText:  qsTr("Distance interval:")
+            labelText:  qsTr("Distance interval")
             valueText:  _distanceInterval ? _distanceInterval.value : ""
         }
 
         VehicleSummaryRow {
             visible:    _auxPins
-            labelText:  qsTr("AUX pins:")
+            labelText:  qsTr("AUX pins")
             valueText:  _auxPins ? _auxPins.value : ""
         }
 
         VehicleSummaryRow {
             visible:    _camTriggerPol
-            labelText:  qsTr("AUX pin polarity:")
+            labelText:  qsTr("AUX pin polarity")
             valueText:  _camTriggerPol ? (_camTriggerPol.value ? "High (3.3V)" : "Low (0V)") : ""
         }
 
