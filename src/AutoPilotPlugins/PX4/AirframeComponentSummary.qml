@@ -23,20 +23,20 @@ FactPanel {
     Column {
         anchors.fill:       parent
         VehicleSummaryRow {
-            labelText: qsTr("System ID:")
+            labelText: qsTr("System ID")
             valueText: sysIdFact ? sysIdFact.valueString : ""
         }
         VehicleSummaryRow {
-            labelText: qsTr("Airframe type:")
+            labelText: qsTr("Airframe type")
             valueText: autoStartSet ? controller.currentAirframeType : qsTr("Setup required")
         }
         VehicleSummaryRow {
-            labelText: qsTr("Vehicle:")
+            labelText: qsTr("Vehicle")
             valueText: autoStartSet ? controller.currentVehicleName : qsTr("Setup required")
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Firmware Version:")
+            labelText: qsTr("Firmware Version")
             valueText: activeVehicle.firmwareMajorVersion === -1 ? qsTr("Unknown") : activeVehicle.firmwareMajorVersion + "." + activeVehicle.firmwareMinorVersion + "." + activeVehicle.firmwarePatchVersion + activeVehicle.firmwareVersionTypeString
         }
     }
