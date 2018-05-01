@@ -87,9 +87,6 @@ public:
     bool            isSimpleItem            (void) const final { return false; }
     bool            isStandaloneCoordinate  (void) const final { return false; }
     bool            specifiesAltitudeOnly   (void) const final { return false; }
-    QString         commandDescription      (void) const final { return tr("Corridor Scan"); }
-    QString         commandName             (void) const final { return tr("Corridor Scan"); }
-    QString         abbreviation            (void) const final { return "S"; }
     QGeoCoordinate  coordinate              (void) const final { return _coordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _exitCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
@@ -98,9 +95,12 @@ public:
     double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
     bool            readyForSave            (void) const override;
+    QString         commandDescription      (void) const override { return tr("Transect"); }
+    QString         commandName             (void) const override { return tr("Transect"); }
+    QString         abbreviation            (void) const override { return tr("T"); }
 
-    bool coordinateHasRelativeAltitude      (void) const final { return true /*_altitudeRelative*/; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return true /*_altitudeRelative*/; }
+    bool coordinateHasRelativeAltitude      (void) const final;
+    bool exitCoordinateHasRelativeAltitude  (void) const final;
     bool exitCoordinateSameAsEntry          (void) const final { return false; }
 
     void            setDirty                (bool dirty) final;
@@ -200,6 +200,7 @@ protected:
 
 private slots:
     void _reallyQueryTransectsPathHeightInfo(void);
+    void _followTerrainChanged              (bool followTerrain);
 
 private:
     void    _queryTransectsPathHeightInfo   (void);
