@@ -705,19 +705,17 @@ void SimpleMissionItem::_terrainAltChanged(void)
         return;
     }
 
-    if (!qIsNaN(_amslAltAboveTerrainFact.rawValue().toDouble())) {
-        // We already have terrain values set. Don't do it again to prevent dirty bit changing.
-        return;
-    }
-
     if (qIsNaN(terrainAltitude())) {
         // Set NaNs to signal we are waiting on terrain data
         _missionItem._param7Fact.setRawValue(qQNaN());
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
     } else {
-        double aboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
-        _missionItem._param7Fact.setRawValue(aboveTerrain);
-        _amslAltAboveTerrainFact.setRawValue(aboveTerrain);
+        double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
+        double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
+        if (qIsNaN(oldAboveTerrain) || !qFuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
+            _missionItem._param7Fact.setRawValue(newAboveTerrain);
+            _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
+        }
     }
 }
 
