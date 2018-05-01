@@ -15,7 +15,6 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapPolyline.h"
 #include "QGCMapPolygon.h"
-#include "CameraCalc.h"
 
 Q_DECLARE_LOGGING_CATEGORY(CorridorScanComplexItemLog)
 
@@ -26,7 +25,6 @@ class CorridorScanComplexItem : public TransectStyleComplexItem
 public:
     CorridorScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
 
-    Q_PROPERTY(CameraCalc*      cameraCalc          READ cameraCalc         CONSTANT)
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)
 
@@ -46,6 +44,9 @@ public:
     void    applyNewAltitude    (double newAltitude) final;
 
     // Overrides from VisualMissionionItem
+    QString commandDescription  (void) const final { return tr("Corridor Scan"); }
+    QString commandName         (void) const final { return tr("Corridor Scan"); }
+    QString abbreviation        (void) const final { return tr("C"); }
     bool    readyForSave        (void) const;
 
     static const char* jsonComplexItemTypeValue;

@@ -64,10 +64,6 @@ void CorridorScanComplexItem::save(QJsonArray&  planItems)
     saveObject[corridorWidthName] =                             _corridorWidthFact.rawValue().toDouble();
     saveObject[_jsonEntryPointKey] =                            _entryPoint;
 
-    QJsonObject cameraCalcObject;
-    _cameraCalc.save(cameraCalcObject);
-    saveObject[_jsonCameraCalcKey] = cameraCalcObject;
-
     _corridorPolyline.saveToJson(saveObject);
 
     planItems.append(saveObject);
