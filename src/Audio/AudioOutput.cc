@@ -135,12 +135,12 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     }
 
     // Convert real number with decimal point
-    re.setPattern(QStringLiteral("([0-9]*)(\\.)([0-9]*)"));
+    re.setPattern(QStringLiteral("([0-9]+)(\\.)([0-9]+)"));
     reMatch = re.match(result);
     while (reMatch.hasMatch()) {
         if (!reMatch.captured(2).isNull()) {
             // There is a decimal point
-            result.replace(reMatch.capturedStart(2), reMatch.capturedEnd(2) - reMatch.capturedStart(2), tr(" point"));
+            result.replace(reMatch.capturedStart(2), reMatch.capturedEnd(2) - reMatch.capturedStart(2), tr(" point "));
         }
         reMatch = re.match(result);
     }
