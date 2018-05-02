@@ -812,8 +812,17 @@
      </item>
      <item row="7" column="0">
       <widget class="QLabel" name="mpptPowerLabel">
+       <property name="toolTip">
+        <string>This is the solar module power as indicated by the MPPT's internal sensors. This value can be unreliable especially for low power.</string>
+       </property>
+       <property name="statusTip">
+        <string>This is the solar module power as indicated by the MPPT's internal sensors. This value can be unreliable especially for low power.</string>
+       </property>
+       <property name="whatsThis">
+        <string>This is the solar module power as indicated by the MPPT's internal sensors. This value can be unreliable especially for low power.</string>
+       </property>
        <property name="text">
-        <string>Power:</string>
+        <string>Power (int. sensor):</string>
        </property>
       </widget>
      </item>
@@ -833,6 +842,15 @@
      </item>
      <item row="7" column="1">
       <widget class="QLabel" name="mppt1PowerLabel">
+       <property name="toolTip">
+        <string>This is the solar module power as indicated by the MPPT's internal sensors. This value can be unreliable especially for low power.</string>
+       </property>
+       <property name="statusTip">
+        <string>This is the solar module power as indicated by the MPPT's internal sensors. This value can be unreliable especially for low power.</string>
+       </property>
+       <property name="whatsThis">
+        <string>This is the solar module power as indicated by the MPPT's internal sensors. This value can be unreliable especially for low power.</string>
+       </property>
        <property name="text">
         <string>N/A</string>
        </property>
@@ -906,6 +924,41 @@
       <widget class="QLabel" name="mpptPwmLabel">
        <property name="text">
         <string>PWM:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="mpptPowerRecalcLabel">
+       <property name="toolTip">
+        <string>This is the solar module power as measured externally, i.e. recalculated from the overall system power minus the battery power. This value is reliable.</string>
+       </property>
+       <property name="statusTip">
+        <string>This is the solar module power as measured externally, i.e. recalculated from the overall system power minus the battery power. This value is reliable.</string>
+       </property>
+       <property name="whatsThis">
+        <string>This is the solar module power as measured externally, i.e. recalculated from the overall system power minus the battery power. This value is reliable.</string>
+       </property>
+       <property name="text">
+        <string>Power (ext. sensor)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLabel" name="mppt1PowerRecalcLabel">
+       <property name="toolTip">
+        <string>This is the solar module power as measured externally, i.e. recalculated from the overall system power minus the battery power. This value is reliable.</string>
+       </property>
+       <property name="statusTip">
+        <string>This is the solar module power as measured externally, i.e. recalculated from the overall system power minus the battery power. This value is reliable.</string>
+       </property>
+       <property name="whatsThis">
+        <string>This is the solar module power as measured externally, i.e. recalculated from the overall system power minus the battery power. This value is reliable.</string>
+       </property>
+       <property name="text">
+        <string>N/A</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
