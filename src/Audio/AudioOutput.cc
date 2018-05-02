@@ -73,6 +73,7 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     QString match;
     QString newNumber;
     QString result = string;
+
     //-- Look for codified terms
     if(result.contains("ERR ", Qt::CaseInsensitive)) {
         result.replace("ERR ", "error ", Qt::CaseInsensitive);
@@ -118,6 +119,9 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     if(result.contains(" ADSB ", Qt::CaseInsensitive)) {
         result.replace(" ADSB ", " Hey Dee Ess Bee ", Qt::CaseInsensitive);
     }
+    if(result.contains(" EKF ", Qt::CaseInsensitive)) {
+        result.replace(" EKF ", " Eee Kay Eff ", Qt::CaseInsensitive);
+    }
 
     // Convert negative numbers
     QRegularExpression re(QStringLiteral("(-)[0-9]*\\.?[0-9]"));
@@ -125,9 +129,18 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     while (reMatch.hasMatch()) {
         if (!reMatch.captured(1).isNull()) {
             // There is a negative prefix
-            qDebug() << "negative" << reMatch.captured(1) << reMatch.capturedStart(1) << reMatch.capturedEnd(1);
             result.replace(reMatch.capturedStart(1), reMatch.capturedEnd(1) - reMatch.capturedStart(1), tr(" negative "));
-            qDebug() << result;
+        }
+        reMatch = re.match(result);
+    }
+
+    // Convert real number with decimal point
+    re.setPattern(QStringLiteral("([0-9]*)(\\.)([0-9]*)"));
+    reMatch = re.match(result);
+    while (reMatch.hasMatch()) {
+        if (!reMatch.captured(2).isNull()) {
+            // There is a decimal point
+            result.replace(reMatch.capturedStart(2), reMatch.capturedEnd(2) - reMatch.capturedStart(2), tr(" point"));
         }
         reMatch = re.match(result);
     }
@@ -138,9 +151,7 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     while (reMatch.hasMatch()) {
         if (!reMatch.captured(1).isNull()) {
             // There is a meter postfix
-            qDebug() << "meters" << reMatch.captured(1) << reMatch.capturedStart(1) << reMatch.capturedEnd(1);
             result.replace(reMatch.capturedStart(1), reMatch.capturedEnd(1) - reMatch.capturedStart(1), tr(" meters"));
-            qDebug() << result;
         }
         reMatch = re.match(result);
     }
