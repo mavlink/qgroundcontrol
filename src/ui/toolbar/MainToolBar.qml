@@ -206,12 +206,60 @@ Rectangle {
         }
     }
 
-    // Progress bar
+    // Small parameter download progress bar
     Rectangle {
-        id:             progressBar
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
         width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          qgcPal.colorGreen
+        visible:        !largeProgressBar.visible
+    }
+
+    // Large parameter download progress bar
+    Rectangle {
+        id:             largeProgressBar
+        anchors.bottom: parent.bottom
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        height:         parent.height
+        color:          qgcPal.window
+        visible:        _showLargeProgress
+
+        property bool _showFullHeight:          false
+        property bool _initialDownloadComplete: _activeVehicle ? _activeVehicle.parameterManager.parametersReady : true
+        property bool _userHide:                false
+        property bool _showLargeProgress:       !_initialDownloadComplete && !_userHide && qgcPal.globalTheme === QGCPalette.Light
+
+        Connections {
+            target:                 QGroundControl.multiVehicleManager
+            onActiveVehicleChanged: largeProgressBar._userHide = false
+        }
+
+        Rectangle {
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
+            color:          qgcPal.colorGreen
+        }
+
+        QGCLabel {
+            anchors.centerIn:   parent
+            text:               qsTr("Downloading Parameters")
+            font.pointSize:     ScreenTools.largeFontPointSize
+        }
+
+        QGCLabel {
+            anchors.margins:    _margin
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            text:               qsTr("Click anywhere to hide")
+
+            property real _margin: ScreenTools.defaultFontPixelWidth / 2
+        }
+
+        MouseArea {
+            anchors.fill:   parent
+            onClicked:      largeProgressBar._userHide = true
+        }
     }
 }
