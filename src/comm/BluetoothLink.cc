@@ -244,8 +244,8 @@ BluetoothConfiguration::BluetoothConfiguration(const QString& name)
 BluetoothConfiguration::BluetoothConfiguration(BluetoothConfiguration* source)
     : LinkConfiguration(source)
     , _deviceDiscover(NULL)
+    , _device(source->device())
 {
-    _device = source->device();
 }
 
 BluetoothConfiguration::~BluetoothConfiguration()
