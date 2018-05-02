@@ -140,9 +140,7 @@ Item {
 
         onWaitingForCancelChanged: {
             if (controller.waitingForCancel) {
-                showMessage(qsTr("Calibration Cancel"), qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds."), 0)
-            } else {
-                hideDialog()
+                showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), qgcView.showDialogDefaultWidth, 0)
             }
         }
     }
@@ -151,6 +149,24 @@ Item {
         var usingUDP = controller.usingUDPLink()
         if (usingUDP && !_wifiReliableForCalibration) {
             showMessage(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead."), StandardButton.Ok)
+        }
+    }
+
+    Component {
+        id: waitForCancelDialogComponent
+
+        QGCViewMessage {
+            message: qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds.")
+
+            Connections {
+                target: controller
+
+                onWaitingForCancelChanged: {
+                    if (!controller.waitingForCancel) {
+                        hideDialog()
+                    }
+                }
+            }
         }
     }
 
