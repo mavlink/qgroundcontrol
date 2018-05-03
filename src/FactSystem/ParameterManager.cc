@@ -86,7 +86,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
         _waitingForDefaultComponent = false;
         emit parametersReadyChanged(_parametersReady);
         emit missingParametersChanged(_missingParameters);
-    } else {
+    } else if (!_logReplay){
         refreshAllParameters();
     }
 }
@@ -358,7 +358,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
     // Update param cache. The param cache is only used on PX4 Firmware since ArduPilot and Solo have volatile params
     // which invalidate the cache. The Solo also streams param updates in flight for things like gimbal values
     // which in turn causes a perf problem with all the param cache updates.
-    if (_vehicle->px4Firmware()) {
+    if (!_logReplay && _vehicle->px4Firmware()) {
         if (_prevWaitingReadParamIndexCount + _prevWaitingReadParamNameCount != 0 && readWaitingParamCount == 0) {
             // All reads just finished, update the cache
             _writeLocalParamCache(vehicleId, componentId);
@@ -604,6 +604,10 @@ bool ParameterManager::_fillIndexBatchQueue(bool waitingParamTimeout)
 
 void ParameterManager::_waitingParamTimeout(void)
 {
+    if (_logReplay) {
+        return;
+    }
+
     bool paramsRequested = false;
     const int maxBatchSize = 10;
     int batchCount = 0;
