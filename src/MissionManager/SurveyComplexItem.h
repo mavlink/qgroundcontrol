@@ -101,6 +101,7 @@ private:
     bool _hoverAndCaptureEnabled(void) const;
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     bool _loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
+    void _rebuildTransectsPhase1Worker(bool refly);
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

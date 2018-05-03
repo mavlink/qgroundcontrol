@@ -1137,6 +1137,14 @@ bool SurveyComplexItem::_hoverAndCaptureEnabled(void) const
 
 void SurveyComplexItem::_rebuildTransectsPhase1(void)
 {
+    _rebuildTransectsPhase1Worker(false /* refly */);
+    if (_refly90DegreesFact.rawValue().toBool()) {
+        _rebuildTransectsPhase1Worker(true /* refly */);
+    }
+}
+
+void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
+{
     if (_ignoreRecalc) {
         return;
     }
@@ -1148,14 +1156,15 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
         _loadedMissionItemsParent = NULL;
     }
 
-    _transects.clear();
-    _transectsPathHeightInfo.clear();
+    // First pass will clear old transect data, refly will append to existing data
+    if (!refly) {
+        _transects.clear();
+        _transectsPathHeightInfo.clear();
+    }
 
     if (_surveyAreaPolygon.count() < 3) {
         return;
     }
-
-    QList<QList<QPointF>>   transectSegments;
 
     // Convert polygon to NED
 
@@ -1177,12 +1186,11 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
 
     // Generate transects
 
-    bool refly = _refly90DegreesFact.rawValue().toBool();
     double gridAngle = _gridAngleFact.rawValue().toDouble();
     double gridSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
 
     gridAngle = _clampGridAngle90(gridAngle);
-    //gridAngle += refly ? 90 : 0;
+    gridAngle += refly ? 90 : 0;
     qCDebug(SurveyComplexItemLog) << "_rebuildTransectsPhase1 Clamped grid angle" << gridAngle;
 
     qCDebug(SurveyComplexItemLog) << "_rebuildTransectsPhase1 gridSpacing:gridAngle:refly" << gridSpacing << gridAngle << refly;
@@ -1265,7 +1273,29 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
 
     _adjustTransectsToEntryPointLocation(transects);
 
-    // Convert to CoordInfo transects
+    if (refly) {
+        _optimizeTransectsForShortestDistance(_transects.last().last().coord, transects);
+    }
+
+    // Adjust to lawnmower pattern
+    bool reverseVertices = false;
+    for (int i=0; i<transects.count(); i++) {
+        // We must reverse the vertices for every other transect in order to make a lawnmower pattern
+        QList<QGeoCoordinate> transectVertices = transects[i];
+        if (reverseVertices) {
+            reverseVertices = false;
+            QList<QGeoCoordinate> reversedVertices;
+            for (int j=transectVertices.count()-1; j>=0; j--) {
+                reversedVertices.append(transectVertices[j]);
+            }
+            transectVertices = reversedVertices;
+        } else {
+            reverseVertices = true;
+        }
+        transects[i] = transectVertices;
+    }
+
+    // Convert to CoordInfo transects and append to _transects
     foreach (const QList<QGeoCoordinate>& transect, transects) {
         QGeoCoordinate                                  coord;
         QList<TransectStyleComplexItem::CoordInfo_t>    coordInfoTransect;
@@ -1297,183 +1327,33 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
 
         _transects.append(coordInfoTransect);
     }
-
-    // Adjust to lawnmower pattern
-    bool reverseVertices = false;
-    for (int i=0; i<_transects.count(); i++) {
-        // We must reverse the vertices for every other transect in order to make a lawnmower pattern
-        QList<TransectStyleComplexItem::CoordInfo_t> transectVertices = _transects[i];
-        if (reverseVertices) {
-            reverseVertices = false;
-            QList<TransectStyleComplexItem::CoordInfo_t> reversedVertices;
-            for (int j=transectVertices.count()-1; j>=0; j--) {
-                reversedVertices.append(transectVertices[j]);
-            }
-            transectVertices = reversedVertices;
-        } else {
-            reverseVertices = true;
-        }
-        _transects[i] = transectVertices;
-    }
-
-#if 0
-    CorridorScan code
-
-            if (_ignoreRecalc) {
-        return;
-    }
-
-    // If the transects are getting rebuilt then any previsouly loaded mission items are now invalid
-    if (_loadedMissionItemsParent) {
-        _loadedMissionItems.clear();
-        _loadedMissionItemsParent->deleteLater();
-        _loadedMissionItemsParent = NULL;
-    }
-
-    _transects.clear();
-    _transectsPathHeightInfo.clear();
-
-    double transectSpacing = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
-    double fullWidth = _corridorWidthFact.rawValue().toDouble();
-    double halfWidth = fullWidth / 2.0;
-    int transectCount = _transectCount();
-    double normalizedTransectPosition = transectSpacing / 2.0;
-
-    if (_corridorPolyline.count() >= 2) {
-        // First build up the transects all going the same direction
-        //qDebug() << "_rebuildTransectsPhase1";
-        for (int i=0; i<transectCount; i++) {
-            //qDebug() << "start transect";
-            double offsetDistance;
-            if (transectCount == 1) {
-                // Single transect is flown over scan line
-                offsetDistance = 0;
-            } else {
-                // Convert from normalized to absolute transect offset distance
-                offsetDistance = halfWidth - normalizedTransectPosition;
-            }
-
-            // Turn transect into CoordInfo transect
-            QList<TransectStyleComplexItem::CoordInfo_t> transect;
-            QList<QGeoCoordinate> transectCoords = _corridorPolyline.offsetPolyline(offsetDistance);
-            for (int j=1; j<transectCoords.count() - 1; j++) {
-                TransectStyleComplexItem::CoordInfo_t coordInfo = { transectCoords[j], CoordTypeInterior };
-                transect.append(coordInfo);
-            }
-            TransectStyleComplexItem::CoordInfo_t coordInfo = { transectCoords.first(), CoordTypeSurveyEdge };
-            transect.prepend(coordInfo);
-            coordInfo = { transectCoords.last(), CoordTypeSurveyEdge };
-            transect.append(coordInfo);
-
-            // Extend the transect ends for turnaround
-            if (_hasTurnaround()) {
-                QGeoCoordinate turnaroundCoord;
-                double turnAroundDistance = _turnAroundDistanceFact.rawValue().toDouble();
-
-                double azimuth = transectCoords[0].azimuthTo(transectCoords[1]);
-                turnaroundCoord = transectCoords[0].atDistanceAndAzimuth(-turnAroundDistance, azimuth);
-                turnaroundCoord.setAltitude(qQNaN());
-                TransectStyleComplexItem::CoordInfo_t coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-                transect.prepend(coordInfo);
-
-                azimuth = transectCoords.last().azimuthTo(transectCoords[transectCoords.count() - 2]);
-                turnaroundCoord = transectCoords.last().atDistanceAndAzimuth(-turnAroundDistance, azimuth);
-                turnaroundCoord.setAltitude(qQNaN());
-                coordInfo = { turnaroundCoord, CoordTypeTurnaround };
-                transect.append(coordInfo);
-            }
-
-#if 0
-            qDebug() << "transect debug";
-            foreach (const TransectStyleComplexItem::CoordInfo_t& coordInfo, transect) {
-                qDebug() << coordInfo.coordType;
-            }
-#endif
-
-            _transects.append(transect);
-            normalizedTransectPosition += transectSpacing;
-        }
-
-        // Now deal with fixing up the entry point:
-        //  0: Leave alone
-        //  1: Start at same end, opposite side of center
-        //  2: Start at opposite end, same side
-        //  3: Start at opposite end, opposite side
-
-        bool reverseTransects = false;
-        bool reverseVertices = false;
-        switch (_entryPoint) {
-        case 0:
-            reverseTransects = false;
-            reverseVertices = false;
-            break;
-        case 1:
-            reverseTransects = true;
-            reverseVertices = false;
-            break;
-        case 2:
-            reverseTransects = false;
-            reverseVertices = true;
-            break;
-        case 3:
-            reverseTransects = true;
-            reverseVertices = true;
-            break;
-        }
-        if (reverseTransects) {
-            QList<QList<TransectStyleComplexItem::CoordInfo_t>> reversedTransects;
-            foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
-                reversedTransects.prepend(transect);
-            }
-            _transects = reversedTransects;
-        }
-        if (reverseVertices) {
-            for (int i=0; i<_transects.count(); i++) {
-                QList<TransectStyleComplexItem::CoordInfo_t> reversedVertices;
-                foreach (const TransectStyleComplexItem::CoordInfo_t& vertex, _transects[i]) {
-                    reversedVertices.prepend(vertex);
-                }
-                _transects[i] = reversedVertices;
-            }
-        }
-
-        // Adjust to lawnmower pattern
-        reverseVertices = false;
-        for (int i=0; i<_transects.count(); i++) {
-            // We must reverse the vertices for every other transect in order to make a lawnmower pattern
-            QList<TransectStyleComplexItem::CoordInfo_t> transectVertices = _transects[i];
-            if (reverseVertices) {
-                reverseVertices = false;
-                QList<TransectStyleComplexItem::CoordInfo_t> reversedVertices;
-                for (int j=transectVertices.count()-1; j>=0; j--) {
-                    reversedVertices.append(transectVertices[j]);
-                }
-                transectVertices = reversedVertices;
-            } else {
-                reverseVertices = true;
-            }
-            _transects[i] = transectVertices;
-        }
-    }
-#endif
 }
 
 void SurveyComplexItem::_rebuildTransectsPhase2(void)
 {
     // Calculate distance flown for complex item
     _complexDistance = 0;
-    for (int i=0; i<_visualTransectPoints.count() - 2; i++) {
+    for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
-#if 0
+    double triggerDistance = _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble();
     if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-        _cameraShots = qCeil(_complexDistance / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+        _cameraShots = qCeil(_complexDistance / triggerDistance);
     } else {
-        int singleTransectImageCount = qCeil(_corridorPolyline.length() / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
-        _cameraShots = singleTransectImageCount * _transectCount();
+        _cameraShots = 0;
+        foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
+            QGeoCoordinate firstCameraCoord, lastCameraCoord;
+            if (_hasTurnaround()) {
+                firstCameraCoord = transect[1].coord;
+                lastCameraCoord = transect[transect.count() - 2].coord;
+            } else {
+                firstCameraCoord = transect.first().coord;
+                lastCameraCoord = transect.last().coord;
+            }
+            _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance);
+        }
     }
-#endif
 
     _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
     _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();

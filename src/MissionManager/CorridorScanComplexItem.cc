@@ -456,7 +456,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
 {
     // Calculate distance flown for complex item
     _complexDistance = 0;
-    for (int i=0; i<_visualTransectPoints.count() - 2; i++) {
+    for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
