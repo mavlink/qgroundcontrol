@@ -221,7 +221,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>0</decimal>
       <increment>50</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="-1.0" name="BAT_CNT_V_CURR" type="FLOAT">
       <short_desc>Scaling from ADC counts to volt on the ADC input (battery current)</short_desc>
@@ -244,7 +244,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="0.05" name="BAT_EMERGEN_THR" type="FLOAT">
       <short_desc>Emergency threshold</short_desc>
@@ -255,7 +255,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="0.15" name="BAT_LOW_THR" type="FLOAT">
       <short_desc>Low threshold</short_desc>
@@ -266,14 +266,14 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="0" name="BAT_N_CELLS" type="INT32">
       <short_desc>Number of cells</short_desc>
       <long_desc>Defines the number of cells the attached battery consists of.</long_desc>
       <unit>S</unit>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
       <values>
         <value code="0">Unconfigured</value>
         <value code="2">2S Battery</value>
@@ -300,7 +300,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <max>0.2</max>
       <unit>Ohms</unit>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="0" name="BAT_SOURCE" type="INT32">
       <short_desc>Battery monitoring source</short_desc>
@@ -320,7 +320,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="-1.0" name="BAT_V_DIV" type="FLOAT">
       <short_desc>Battery voltage divider (V divider)</short_desc>
@@ -335,7 +335,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="0.3" name="BAT_V_LOAD_DROP" type="FLOAT">
       <short_desc>Voltage drop per cell on full throttle</short_desc>
@@ -346,7 +346,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/battery</scope>
     </parameter>
     <parameter default="0.0" name="BAT_V_OFFS_CURR" type="FLOAT">
       <short_desc>Offset in volt as seen by the ADC input of the current sensor</short_desc>
@@ -895,8 +895,22 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     <parameter default="1" name="COM_POS_FS_DELAY" type="INT32">
       <short_desc>Loss of position failsafe activation delay</short_desc>
       <long_desc>This sets number of seconds that the position checks need to be failed before the failsafe will activate. The default value has been optimised for rotary wing applications. For fixed wing applications, a larger value between 5 and 10 should be used.</long_desc>
+      <min>1</min>
+      <max>100</max>
       <unit>sec</unit>
       <reboot_required>true</reboot_required>
+      <scope>modules/commander</scope>
+    </parameter>
+    <parameter default="5" name="COM_POS_FS_EPH" type="FLOAT">
+      <short_desc>Horizontal position error threshold</short_desc>
+      <long_desc>This is the horizontal position error (EPV) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
+      <unit>m</unit>
+      <scope>modules/commander</scope>
+    </parameter>
+    <parameter default="10" name="COM_POS_FS_EPV" type="FLOAT">
+      <short_desc>Vertical position error threshold</short_desc>
+      <long_desc>This is the vertical position error (EPV) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
+      <unit>m</unit>
       <scope>modules/commander</scope>
     </parameter>
     <parameter default="10" name="COM_POS_FS_GAIN" type="INT32">
@@ -908,6 +922,8 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     <parameter default="30" name="COM_POS_FS_PROB" type="INT32">
       <short_desc>Loss of position probation delay at takeoff</short_desc>
       <long_desc>The probation delay is the number of seconds that the EKF innovation checks need to pass for the position to be declared good after it has been declared bad. The probation delay will be reset to this parameter value when takeoff is detected. After takeoff, if position checks are passing, the probation delay will reduce by one second for every lapsed second of valid position down to a minimum of 1 second. If position checks are failing, the probation delay will increase by COM_POS_FS_GAIN seconds for every lapsed second up to a maximum of 100 seconds. The default value has been optimised for rotary wing applications. For fixed wing applications, a value of 1 should be used.</long_desc>
+      <min>1</min>
+      <max>100</max>
       <unit>sec</unit>
       <reboot_required>true</reboot_required>
       <scope>modules/commander</scope>
@@ -954,6 +970,12 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <unit>%</unit>
       <decimal>0</decimal>
       <increment>0.05</increment>
+      <scope>modules/commander</scope>
+    </parameter>
+    <parameter default="1" name="COM_VEL_FS_EVH" type="FLOAT">
+      <short_desc>Horizontal velocity error threshold</short_desc>
+      <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
+      <unit>m</unit>
       <scope>modules/commander</scope>
     </parameter>
   </group>
@@ -1611,6 +1633,13 @@ Baro and Magnetometer data will be averaged before downsampling, other data will
       <max>50.0</max>
       <unit>m</unit>
       <decimal>1</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="5000000" name="EKF2_NOAID_TOUT" type="INT32">
+      <short_desc>Maximum lapsed time from last fusion of measurements that constrain velocity drift before the EKF will report the horizontal nav solution as invalid</short_desc>
+      <min>500000</min>
+      <max>10000000</max>
+      <unit>uSec</unit>
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="5" name="EKF2_OF_DELAY" type="FLOAT">
@@ -4239,9 +4268,16 @@ if required by the gimbal (only in AUX output mode)</short_desc>
   </group>
   <group name="Multicopter Attitude Control">
     <parameter default="0.69" name="MC_ACRO_EXPO" type="FLOAT">
-      <short_desc>Acro Expo factor
-applied to input of all axis: roll, pitch, yaw</short_desc>
-      <long_desc>0 Purely linear input curve 1 Purely cubic input curve</long_desc>
+      <short_desc>Acro mode Expo factor for Roll and Pitch</short_desc>
+      <long_desc>Exponential factor for tuning the input curve shape. 0 Purely linear input curve 1 Purely cubic input curve</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <scope>modules/mc_att_control</scope>
+    </parameter>
+    <parameter default="0.69" name="MC_ACRO_EXPO_Y" type="FLOAT">
+      <short_desc>Acro mode Expo factor for Yaw</short_desc>
+      <long_desc>Exponential factor for tuning the input curve shape. 0 Purely linear input curve 1 Purely cubic input curve</long_desc>
       <min>0</min>
       <max>1</max>
       <decimal>2</decimal>
@@ -4251,7 +4287,7 @@ applied to input of all axis: roll, pitch, yaw</short_desc>
       <short_desc>Max acro pitch rate
 default: 2 turns per second</short_desc>
       <min>0.0</min>
-      <max>1000.0</max>
+      <max>1800.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>5</increment>
@@ -4261,16 +4297,23 @@ default: 2 turns per second</short_desc>
       <short_desc>Max acro roll rate
 default: 2 turns per second</short_desc>
       <min>0.0</min>
-      <max>1000.0</max>
+      <max>1800.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>5</increment>
       <scope>modules/mc_att_control</scope>
     </parameter>
     <parameter default="0.7" name="MC_ACRO_SUPEXPO" type="FLOAT">
-      <short_desc>Acro SuperExpo factor
-applied to input of all axis: roll, pitch, yaw</short_desc>
-      <long_desc>0 Pure Expo function 0.7 resonable shape enhancement for intuitive stick feel 0.95 very strong bent input curve only near maxima have effect</long_desc>
+      <short_desc>Acro mode SuperExpo factor for Roll and Pitch</short_desc>
+      <long_desc>SuperExpo factor for refining the input curve shape tuned using MC_ACRO_EXPO. 0 Pure Expo function 0.7 resonable shape enhancement for intuitive stick feel 0.95 very strong bent input curve only near maxima have effect</long_desc>
+      <min>0</min>
+      <max>0.95</max>
+      <decimal>2</decimal>
+      <scope>modules/mc_att_control</scope>
+    </parameter>
+    <parameter default="0.7" name="MC_ACRO_SUPEXPOY" type="FLOAT">
+      <short_desc>Acro mode SuperExpo factor for Yaw</short_desc>
+      <long_desc>SuperExpo factor for refining the input curve shape tuned using MC_ACRO_EXPO_Y. 0 Pure Expo function 0.7 resonable shape enhancement for intuitive stick feel 0.95 very strong bent input curve only near maxima have effect</long_desc>
       <min>0</min>
       <max>0.95</max>
       <decimal>2</decimal>
@@ -4280,7 +4323,7 @@ applied to input of all axis: roll, pitch, yaw</short_desc>
       <short_desc>Max acro yaw rate
 default 1.5 turns per second</short_desc>
       <min>0.0</min>
-      <max>1000.0</max>
+      <max>1800.0</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <increment>5</increment>
@@ -4732,9 +4775,9 @@ towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
       <decimal>1</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0.9" name="MPC_MANTHR_MAX" type="FLOAT">
+    <parameter default="1.0" name="MPC_MANTHR_MAX" type="FLOAT">
       <short_desc>Maximum manual thrust</short_desc>
-      <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
+      <long_desc>Limit max allowed thrust for Manual mode.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -4744,7 +4787,7 @@ towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
     </parameter>
     <parameter default="0.08" name="MPC_MANTHR_MIN" type="FLOAT">
       <short_desc>Minimum manual thrust</short_desc>
-      <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust.</long_desc>
+      <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust. With MC_AIRMODE set to 1, this can safely be set to 0.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -4778,11 +4821,11 @@ towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
       <increment>0.01</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0.9" name="MPC_THR_MAX" type="FLOAT">
+    <parameter default="1.0" name="MPC_THR_MAX" type="FLOAT">
       <short_desc>Maximum thrust in auto thrust control</short_desc>
-      <long_desc>Limit max allowed thrust. Setting a value of one can put the system into actuator saturation as no spread between the motors is possible any more. A value of 0.8 - 0.9 is recommended.</long_desc>
+      <long_desc>Limit max allowed thrust</long_desc>
       <min>0.0</min>
-      <max>0.95</max>
+      <max>1.0</max>
       <unit>norm</unit>
       <decimal>2</decimal>
       <increment>0.01</increment>
@@ -9471,7 +9514,7 @@ to accelerate forward if necessary</short_desc>
     </parameter>
     <parameter default="0.0" name="VT_FW_ALT_ERR" type="FLOAT">
       <short_desc>Adaptive QuadChute</short_desc>
-      <long_desc>Maximum negative altitude error, when in fixed wing the altitude drops below this copared to the altitude setpoint the vehicle will transition back to MC mode and enter failsafe RTL</long_desc>
+      <long_desc>Maximum negative altitude error for fixed wing flight. If the altitude drops below this value below the altitude setpoint the vehicle will transition back to MC mode and enter failsafe RTL.</long_desc>
       <min>0.0</min>
       <max>200.0</max>
       <scope>modules/vtol_att_control</scope>
