@@ -184,7 +184,7 @@ void UAS::receiveMessage(mavlink_message_t message)
     // Only accept messages from this system (condition 1)
     // and only then if a) attitudeStamped is disabled OR b) attitudeStamped is enabled
     // and we already got one attitude packet
-    if (message.sysid == uasId && (!attitudeStamped || (attitudeStamped && (lastAttitude != 0)) || message.msgid == MAVLINK_MSG_ID_ATTITUDE))
+    if (message.sysid == uasId && (!attitudeStamped || lastAttitude != 0 || message.msgid == MAVLINK_MSG_ID_ATTITUDE))
     {
         QString uasState;
         QString stateDescription;
