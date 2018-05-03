@@ -7,9 +7,7 @@
  *
  ****************************************************************************/
 
-
-#ifndef ParameterManager_H
-#define ParameterManager_H
+#pragma once
 
 #include <QObject>
 #include <QMap>
@@ -25,33 +23,26 @@
 #include "QGCMAVLink.h"
 #include "Vehicle.h"
 
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose1Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerVerbose2Log)
 Q_DECLARE_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog)
 
-/// Connects to Parameter Manager to load/update Facts
 class ParameterManager : public QObject
 {
     Q_OBJECT
     
 public:
     /// @param uas Uas which this set of facts is associated with
-    ParameterManager(Vehicle* vehicle);
-    ~ParameterManager();
+    ParameterManager    (Vehicle* vehicle);
+    ~ParameterManager   ();
 
-    /// true: Parameters are ready for use
-    Q_PROPERTY(bool parametersReady READ parametersReady NOTIFY parametersReadyChanged)
-    bool parametersReady(void) { return _parametersReady; }
+    Q_PROPERTY(bool     parametersReady     READ parametersReady    NOTIFY parametersReadyChanged)      ///< true: Parameters are ready for use
+    Q_PROPERTY(bool     missingParameters   READ missingParameters  NOTIFY missingParametersChanged)    ///< true: Parameters are missing from firmware response, false: all parameters received from firmware
+    Q_PROPERTY(double   loadProgress        READ loadProgress       NOTIFY loadProgressChanged)
 
-    /// true: Parameters are missing from firmware response, false: all parameters received from firmware
-    Q_PROPERTY(bool missingParameters READ missingParameters NOTIFY missingParametersChanged)
-    bool missingParameters(void) { return _missingParameters; }
-
-    Q_PROPERTY(double loadProgress READ loadProgress NOTIFY loadProgressChanged)
-    double loadProgress(void) const { return _loadProgress; }
+    bool parametersReady    (void) const { return _parametersReady; }
+    bool missingParameters  (void) const { return _missingParameters; }
+    double loadProgress     (void) const { return _loadProgress; }
 
     /// @return Directory of parameter caches
     static QDir parameterCacheDir();
@@ -59,7 +50,6 @@ public:
     /// @return Location of parameter cache file
     static QString parameterCacheFile(int vehicleId, int componentId);
     
-
     /// Re-request the full set of parameters from the autopilot
     void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
 
@@ -217,5 +207,3 @@ private:
     static const char* _jsonParamNameKey;
     static const char* _jsonParamValueKey;
 };
-
-#endif
