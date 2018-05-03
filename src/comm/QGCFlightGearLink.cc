@@ -544,15 +544,9 @@ bool QGCFlightGearLink::parseUIArguments(QString uiArgs, QStringList& argList)
         } else if (chr == '\"') {
             // Flip the state of being in a quoted string. Note that we specifically do not add the
             // quote to the string. This replicates standards command line parsing behaviour.
-            if (chr == '\"') {
-                inQuotedString = !inQuotedString;
-            }
+            inQuotedString = !inQuotedString;
             previousSpace = false;
         } else {
-            // Flip the state of being in a quoted string
-            if (chr == '\"') {
-                inQuotedString = !inQuotedString;
-            }
             previousSpace = false;
             currentArg += chr;
         }
