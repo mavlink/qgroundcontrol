@@ -114,6 +114,7 @@ private:
     bool                _streaming;
     bool                _starting;
     bool                _stopping;
+    bool                _stop;
     Sink*               _sink;
     GstElement*         _tee;
 

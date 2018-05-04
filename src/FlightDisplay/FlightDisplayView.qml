@@ -212,7 +212,23 @@ QGCView {
             _flightVideo.state = "unpopup"
             videoWindow.visible = false
         }
+    }
 
+    /* This timer will startVideo again after the popup window appears and is loaded.
+     * Such approach was the only one to avoid a crash for windows users
+     */
+    Timer {
+      id: videoPopUpTimer
+      interval: 2000;
+      running: false;
+      repeat: false
+      onTriggered: {
+          // If state is popup, the next one will be popup-finished
+          if (_flightVideo.state ==  "popup") {
+            _flightVideo.state = "popup-finished"
+          }
+          QGroundControl.videoManager.startVideo()
+      }
     }
 
     QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
@@ -270,6 +286,20 @@ QGCView {
             anchors.left:   _panel.left
             anchors.bottom: _panel.bottom
             visible:        QGroundControl.videoManager.hasVideo && (!_mainIsMap || _isPipVisible)
+
+            onParentChanged: {
+                /* If video comes back from popup
+                 * correct anchors.
+                 * Such thing is not possible with ParentChange.
+                 */
+                if(parent == _panel) {
+                    // Do anchors again after popup
+                    anchors.left =       _panel.left
+                    anchors.bottom =     _panel.bottom
+                    anchors.margins =    ScreenTools.defaultFontPixelHeight
+                }
+            }
+
             states: [
                 State {
                     name:   "pipMode"
@@ -296,15 +326,12 @@ QGCView {
                 State {
                     name: "popup"
                     StateChangeScript {
-                        script: QGroundControl.videoManager.stopVideo()
-                    }
-                    ParentChange {
-                        target: _flightVideo
-                        parent: videoItem
-                        x: 0
-                        y: 0
-                        width: videoWindow.width
-                        height: videoWindow.height
+                        script: {
+                            // Stop video, restart it again with Timer
+                            // Avoiding crashs if ParentChange is not yet done
+                            QGroundControl.videoManager.stopVideo()
+                            videoPopUpTimer.running = true
+                        }
                     }
                     PropertyChanges {
                         target: _flightVideoPipControl
@@ -312,19 +339,27 @@ QGCView {
                     }
                 },
                 State {
+                    name: "popup-finished"
+                    ParentChange {
+                        target: _flightVideo
+                        parent: videoItem
+                        x: 0
+                        y: 0
+                        width: videoItem.width
+                        height: videoItem.height
+                    }
+                },
+                State {
                     name: "unpopup"
                     StateChangeScript {
-                        script: QGroundControl.videoManager.stopVideo()
+                        script: {
+                            QGroundControl.videoManager.stopVideo()
+                            videoPopUpTimer.running = true
+                        }
                     }
                     ParentChange {
                         target: _flightVideo
                         parent: _panel
-                    }
-                    PropertyChanges {
-                        target: _flightVideo
-                        anchors.left:       _panel.left
-                        anchors.bottom:     _panel.bottom
-                        anchors.margins:    ScreenTools.defaultFontPixelHeight
                     }
                     PropertyChanges {
                         target: _flightVideoPipControl
