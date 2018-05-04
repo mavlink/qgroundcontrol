@@ -33,8 +33,8 @@ class VisualMissionItem : public QObject
     Q_OBJECT
 
 public:
-    VisualMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-    VisualMissionItem(const VisualMissionItem& other, QObject* parent = NULL);
+    VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent);
 
     ~VisualMissionItem();
 
@@ -189,6 +189,7 @@ signals:
 
 protected:
     Vehicle*    _vehicle;
+    bool        _flyView;
     bool        _isCurrentItem;
     bool        _dirty;
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator

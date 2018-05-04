@@ -38,8 +38,8 @@ const char* TransectStyleComplexItem::_jsonFollowTerrainKey =               "Fol
 
 const int   TransectStyleComplexItem::_terrainQueryTimeoutMsecs =           1000;
 
-TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, QString settingsGroup, QObject* parent)
-    : ComplexMissionItem                (vehicle, parent)
+TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyView, QString settingsGroup, QObject* parent)
+    : ComplexMissionItem                (vehicle, flyView, parent)
     , _settingsGroup                    (settingsGroup)
     , _sequenceNumber                   (0)
     , _dirty                            (false)

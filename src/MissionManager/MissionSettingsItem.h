@@ -24,7 +24,7 @@ class MissionSettingsItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    MissionSettingsItem(Vehicle* vehicle, bool planView, QObject* parent = NULL);
+    MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
     Q_PROPERTY(bool     missionEndRTL               READ missionEndRTL                  WRITE setMissionEndRTL  NOTIFY missionEndRTLChanged)
@@ -101,7 +101,6 @@ private slots:
     void _setHomeAltFromTerrain                 (double terrainAltitude);
 
 private:
-    bool            _planView;
     QGeoCoordinate  _plannedHomePositionCoordinate;     // Does not include altitude
     Fact            _plannedHomePositionAltitudeFact;
     bool            _plannedHomePositionFromVehicle;

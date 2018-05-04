@@ -134,7 +134,7 @@ void SpeedSectionTest::_checkAvailable(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    SimpleMissionItem* item = new SimpleMissionItem(_offlineVehicle, true /* editMode */, missionItem);
+    SimpleMissionItem* item = new SimpleMissionItem(_offlineVehicle, false /* flyView */, missionItem, this);
     QVERIFY(item->speedSection());
     QCOMPARE(item->speedSection()->available(), false);
 }
@@ -193,7 +193,7 @@ void SpeedSectionTest::_testScanForSection(void)
 
     double flightSpeed = 10.123456;
     MissionItem validSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _offlineVehicle->multiRotor() ? 1 : 0, flightSpeed, -1, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleItem(_offlineVehicle, true /* editMode */, validSpeedItem);
+    SimpleMissionItem simpleItem(_offlineVehicle, false /* flyView */, validSpeedItem, NULL);
     MissionItem& simpleMissionItem = simpleItem.missionItem();
     visualItems.append(&simpleItem);
     scanIndex = 0;
@@ -263,9 +263,8 @@ void SpeedSectionTest::_testScanForSection(void)
     scanIndex = 0;
 
     // Valid item in wrong position
-    QmlObjectListModel waypointVisualItems;
     MissionItem waypointMissionItem(0, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleWaypointItem(_offlineVehicle, true /* editMode */, waypointMissionItem);
+    SimpleMissionItem simpleWaypointItem(_offlineVehicle, false /* flyView */, waypointMissionItem, NULL);
     simpleMissionItem = validSpeedItem;
     visualItems.append(&simpleWaypointItem);
     visualItems.append(&simpleMissionItem);

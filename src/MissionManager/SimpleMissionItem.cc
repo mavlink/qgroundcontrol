@@ -51,8 +51,8 @@ static const struct EnumInfo_s _rgMavFrameInfo[] = {
 { "MAV_FRAME_GLOBAL_TERRAIN_ALT_INT",   MAV_FRAME_GLOBAL_TERRAIN_ALT_INT },
 };
 
-SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
-    : VisualMissionItem                 (vehicle, parent)
+SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
+    : VisualMissionItem                 (vehicle, flyView, parent)
     , _rawEdit                          (false)
     , _dirty                            (false)
     , _ignoreDirtyChangeSignals         (false)
@@ -84,8 +84,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, QObject* parent)
     setDirty(false);
 }
 
-SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent)
-    : VisualMissionItem         (vehicle, parent)
+SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, const MissionItem& missionItem, QObject* parent)
+    : VisualMissionItem         (vehicle, flyView, parent)
     , _missionItem              (missionItem)
     , _rawEdit                  (false)
     , _dirty                    (false)
@@ -130,13 +130,13 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const Miss
     _altitudeFact.setRawValue(specifiesCoordinate() ? _missionItem._param7Fact.rawValue() : qQNaN());
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
 
-    // In !editMode we skip some of the intialization to save memory
-    if (editMode) {
+    // In flyView we skip some of the intialization to save memory
+    if (!_flyView) {
         _setupMetaData();
     }
     _connectSignals();
     _updateOptionalSections();
-    if (editMode) {
+    if (!_flyView) {
         _rebuildFacts();
     }
 
@@ -146,8 +146,8 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool editMode, const Miss
     setDirty(false);
 }
 
-SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, QObject* parent)
-    : VisualMissionItem         (other, parent)
+SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent)
+    : VisualMissionItem         (other, flyView, parent)
     , _missionItem              (other._vehicle)
     , _rawEdit                  (false)
     , _dirty                    (false)
