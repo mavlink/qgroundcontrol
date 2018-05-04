@@ -109,7 +109,7 @@ QGCView {
 
     PlanMasterController {
         id:                     masterController
-        Component.onCompleted:  start(false /* editMode */)
+        Component.onCompleted:  start(true /* flyView */)
     }
 
     Connections {

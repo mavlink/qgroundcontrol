@@ -25,7 +25,7 @@ class StructureScanComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    StructureScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    StructureScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
     Q_PROPERTY(Fact*            altitude                    READ altitude                                                   CONSTANT)

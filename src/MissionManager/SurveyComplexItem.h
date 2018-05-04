@@ -21,7 +21,7 @@ class SurveyComplexItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    SurveyComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(Fact*    gridAngle           READ gridAngle                                  CONSTANT)
     Q_PROPERTY(Fact*    gridEntryLocation   READ gridEntryLocation                          CONSTANT)

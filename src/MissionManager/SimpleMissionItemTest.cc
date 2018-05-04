@@ -92,7 +92,7 @@ void SimpleMissionItemTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_offlineVehicle, true /* editMode */, missionItem);
+    _simpleItem = new SimpleMissionItem(_offlineVehicle, false /* flyView */, missionItem, this);
 
     // It's important top check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -131,7 +131,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                                 70.1234567,
                                 true,           // autoContinue
                                 false);         // isCurrentItem
-        SimpleMissionItem simpleMissionItem(vehicle, true /* editMode */, missionItem);
+        SimpleMissionItem simpleMissionItem(vehicle, false /* flyView */, missionItem, NULL);
 
         // Validate that the fact values are correctly returned
 
@@ -167,7 +167,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
 
 void SimpleMissionItemTest::_testDefaultValues(void)
 {
-    SimpleMissionItem item(_offlineVehicle);
+    SimpleMissionItem item(_offlineVehicle, false /* flyView */, NULL);
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
