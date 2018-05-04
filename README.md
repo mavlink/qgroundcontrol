@@ -72,6 +72,7 @@ A Vagrantfile is provided to build QGroundControl using the [Vagrant](https://ww
 * Parallel builds: For non Windows builds, you can use the '-j#' option to run parellel builds.
 * Location of built files: Individual build file results can be found in the `build_debug` or `build_release` directories. The built executable can be found in the `debug` or `release` directory.
 * If you get this error when running qgroundcontrol: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version 'GLIBCXX_3.4.20' not found. You need to either update to the latest gcc, or install the latest libstdc++.6 using: sudo apt-get install libstdc++6.
+* Unit tests: To run unit tests it's necessary to build in `debug` mode with `UNITTEST_BUILD` definition. After that it's necessary to copy `deploy/qgroundcontrol-start.sh` script in `debug` directory before running `qgroundcontrol-start.sh --unittests`.
 
 ## Additional functionality
 QGroundControl has functionality that is dependent on the operating system and libraries installed by the user. The following sections describe these features, their dependencies, and how to disable/alter them during the build process. These features can be forcibly enabled/disabled by specifying additional values to qmake. 
