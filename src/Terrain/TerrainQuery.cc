@@ -25,6 +25,7 @@
 #include <cmath>
 
 QGC_LOGGING_CATEGORY(TerrainQueryLog, "TerrainQueryLog")
+QGC_LOGGING_CATEGORY(TerrainQueryVerboseLog, "TerrainQueryVerboseLog")
 
 Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _TerrainAtCoordinateBatchManager)
 Q_GLOBAL_STATIC(TerrainTileManager, _terrainTileManager)
@@ -464,7 +465,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 QString TerrainTileManager::_getTileHash(const QGeoCoordinate& coordinate)
 {
     QString ret = QGCMapEngine::getTileHash(UrlFactory::AirmapElevation, QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1);
-    qCDebug(TerrainQueryLog) << "Computing unique tile hash for " << coordinate << ret;
+    qCDebug(TerrainQueryVerboseLog) << "Computing unique tile hash for " << coordinate << ret;
 
     return ret;
 }
@@ -495,6 +496,7 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
 
     if (_state != State::Idle) {
         // Waiting for last download the complete, wait some more
+        qCDebug(TerrainQueryLog) << "_sendNextBatch restarting timer";
         _batchTimer.start();
         return;
     }
@@ -517,8 +519,8 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
             break;
         }
     }
-    qCDebug(TerrainQueryLog) << "Built request: coordinate count" << coords.count();
     _requestQueue = _requestQueue.mid(requestQueueAdded);
+    qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_sendNextBatch - batch count:request queue count" << coords.count() << _requestQueue.count();
 
     _state = State::Downloading;
     _terrainQuery.requestCoordinateHeights(coords);
@@ -579,6 +581,8 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<dou
 {
     _state = State::Idle;
 
+    qCDebug(TerrainQueryLog) << "_coordinateHeights success:count" << success << heights.count();
+
     if (!success) {
         _batchFailed();
         return;
@@ -587,7 +591,7 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<dou
     int currentIndex = 0;
     foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
         if (!sentRequestInfo.queryObjectDestroyed) {
-            qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_coordinateHeights returned TerrainCoordinateQuery:count" <<  sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
+            qCDebug(TerrainQueryVerboseLog) << "TerrainAtCoordinateBatchManager::_coordinateHeights returned TerrainCoordinateQuery:count" <<  sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
             disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
             QList<double> requestAltitudes = heights.mid(currentIndex, sentRequestInfo.cCoord);
             sentRequestInfo.terrainAtCoordinateQuery->_signalTerrainData(true, requestAltitudes);
@@ -595,6 +599,10 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<dou
         }
     }
     _sentRequests.clear();
+
+    if (_requestQueue.count()) {
+        _batchTimer.start();
+    }
 }
 
 TerrainAtCoordinateQuery::TerrainAtCoordinateQuery(QObject* parent)

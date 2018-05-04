@@ -349,7 +349,23 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 
     _rebuildTransectsPhase1();
 
-    _queryTransectsPathHeightInfo();
+    if (_followTerrain) {
+        // Query the terrain data. Once available terrain heights will be calculated
+        _queryTransectsPathHeightInfo();
+    } else {
+        // Not following terrain, just add requested altitude to coords
+        double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
+
+        for (int i=0; i<_transects.count(); i++) {
+            QList<CoordInfo_t>& transect = _transects[i];
+
+            for (int j=0; j<transect.count(); j++) {
+                QGeoCoordinate& coord = transect[j].coord;
+
+                coord.setAltitude(requestedAltitude);
+            }
+        }
+    }
 
     // Generate the visuals transect representation
     _visualTransectPoints.clear();
@@ -455,19 +471,6 @@ void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
         }
 
         emit lastSequenceNumberChanged(lastSequenceNumber());
-    } else {
-        // Not following terrain show just add requested altitude to coords
-        double requestedAltitude = _cameraCalc.distanceToSurface()->rawValue().toDouble();
-
-        for (int i=0; i<_transects.count(); i++) {
-            QList<CoordInfo_t>& transect = _transects[i];
-
-            for (int j=0; j<transect.count(); j++) {
-                QGeoCoordinate& coord = transect[j].coord;
-
-                coord.setAltitude(requestedAltitude);
-            }
-        }
     }
 }
 
