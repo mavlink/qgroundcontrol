@@ -108,7 +108,7 @@ class ArduSubFirmwarePlugin : public APMFirmwarePlugin
 public:
     ArduSubFirmwarePlugin(void);
 
-    QList<MAV_CMD> supportedMissionCommands(void);
+    QList<MAV_CMD> supportedMissionCommands(void) final;
 
     // Overrides from FirmwarePlugin
     int manualControlReservedButtonCount(void) final;
