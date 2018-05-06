@@ -157,7 +157,7 @@ QGCView {
         id: masterController
 
         Component.onCompleted: {
-            start(true /* editMode */)
+            start(false /* flyView */)
             _missionController.setCurrentPlanViewIndex(0, true)
         }
 

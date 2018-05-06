@@ -168,7 +168,7 @@ void TransectStyleComplexItemTest::_adjustSurveAreaPolygon(void)
 }
 
 TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, QStringLiteral("UnitTestTransect"), parent)
+    : TransectStyleComplexItem  (vehicle, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
     , rebuildTransectsCalled    (false)
 {
 

@@ -192,7 +192,7 @@ void RallyPointController::_managerLoadComplete(const QList<QGeoCoordinate> rgPo
 {
     // Fly view always reloads on _loadComplete
     // Plan view only reloads on _loadComplete if specifically requested
-    if (!_editMode || _itemsRequested) {
+    if (_flyView || _itemsRequested) {
         _points.clearAndDeleteContents();
         QObjectList pointList;
         for (int i=0; i<rgPoints.count(); i++) {
@@ -209,7 +209,7 @@ void RallyPointController::_managerLoadComplete(const QList<QGeoCoordinate> rgPo
 void RallyPointController::_managerSendComplete(bool error)
 {
     // Fly view always reloads after send
-    if (!error && _editMode) {
+    if (!error && !_flyView) {
         showPlanFromManagerVehicle();
     }
 }
@@ -286,7 +286,7 @@ void RallyPointController::_updateContainsItems(void)
 
 bool RallyPointController::showPlanFromManagerVehicle (void)
 {
-    qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle _editMode" << _editMode;
+    qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
         qCWarning(RallyPointControllerLog) << "RallyPointController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error

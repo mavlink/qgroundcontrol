@@ -27,8 +27,8 @@ const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
 
 const char* CorridorScanComplexItem::jsonComplexItemTypeValue = "CorridorScan";
 
-CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, settingsGroup, parent)
+CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
+    : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _entryPoint               (0)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])

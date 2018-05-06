@@ -58,8 +58,8 @@ const char* SurveyComplexItem::_jsonV3FixedValueIsAltitudeKey =         "fixedVa
 const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90Degrees";
 
 
-SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, settingsGroup, parent)
+SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
+    : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
     , _gridEntryLocationFact    (settingsGroup, _metaDataMap[gridEntryLocationName])

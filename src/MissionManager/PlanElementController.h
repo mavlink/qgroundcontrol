@@ -33,8 +33,7 @@ public:
     Q_PROPERTY(bool dirty           READ dirty          WRITE setDirty  NOTIFY dirtyChanged)            ///< true: unsaved/sent changes are present, false: no changes since last save/send
 
     /// Should be called immediately upon Component.onCompleted.
-    ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
-    virtual void start(bool editMode);
+    virtual void start(bool flyView);
 
     virtual void save                       (QJsonObject& json) = 0;
     virtual bool load                       (const QJsonObject& json, QString& errorString) = 0;
@@ -72,7 +71,7 @@ protected:
     PlanMasterController*   _masterController;
     Vehicle*                _controllerVehicle; ///< Offline controller vehicle
     Vehicle*                _managerVehicle;    ///< Either active vehicle or _controllerVehicle if none
-    bool                    _editMode;
+    bool                    _flyView;
 };
 
 #endif

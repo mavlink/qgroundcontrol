@@ -46,8 +46,7 @@ public:
     Q_PROPERTY(QStringList  saveKmlFilters      READ saveKmlFilters                     CONSTANT)                       ///< File filter list saving KML files
 
     /// Should be called immediately upon Component.onCompleted.
-    ///     @param editMode true: controller being used in Plan view, false: controller being used in Fly view
-    Q_INVOKABLE void start(bool editMode);
+    Q_INVOKABLE void start(bool flyView);
 
     /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
     Q_INVOKABLE void startStaticActiveVehicle(Vehicle* vehicle);
@@ -111,7 +110,7 @@ private:
     MultiVehicleManager*    _multiVehicleMgr;
     Vehicle*                _controllerVehicle; ///< Offline controller vehicle
     Vehicle*                _managerVehicle;    ///< Either active vehicle or _controllerVehicle if none
-    bool                    _editMode;
+    bool                    _flyView;
     bool                    _offline;
     MissionController       _missionController;
     GeoFenceController      _geoFenceController;

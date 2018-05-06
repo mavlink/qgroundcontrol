@@ -31,8 +31,8 @@ const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =        "altitud
 
 QMap<QString, FactMetaData*> StructureScanComplexItem::_metaDataMap;
 
-StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* parent)
-    : ComplexMissionItem        (vehicle, parent)
+StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
+    : ComplexMissionItem        (vehicle, flyView, parent)
     , _sequenceNumber           (0)
     , _dirty                    (false)
     , _altitudeRelative         (true)

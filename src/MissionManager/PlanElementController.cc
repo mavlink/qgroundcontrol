@@ -15,11 +15,11 @@
 #include "AppSettings.h"
 
 PlanElementController::PlanElementController(PlanMasterController* masterController, QObject* parent)
-    : QObject(parent)
-    , _masterController(masterController)
+    : QObject           (parent)
+    , _masterController (masterController)
     , _controllerVehicle(masterController->controllerVehicle())
-    , _managerVehicle(masterController->managerVehicle())
-    , _editMode(false)
+    , _managerVehicle   (masterController->managerVehicle())
+    , _flyView          (false)
 {
 
 }
@@ -29,9 +29,9 @@ PlanElementController::~PlanElementController()
 
 }
 
-void PlanElementController::start(bool editMode)
+void PlanElementController::start(bool flyView)
 {
-    _editMode = editMode;
+    _flyView = flyView;
 }
 
 void PlanElementController::managerVehicleChanged(Vehicle* managerVehicle)

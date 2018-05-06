@@ -23,7 +23,7 @@ class CorridorScanComplexItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    CorridorScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    CorridorScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)

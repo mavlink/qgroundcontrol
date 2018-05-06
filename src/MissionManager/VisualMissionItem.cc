@@ -21,9 +21,10 @@ const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
 const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
 
-VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
+VisualMissionItem::VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
     : QObject                   (parent)
     , _vehicle                  (vehicle)
+    , _flyView                  (flyView)
     , _isCurrentItem            (false)
     , _dirty                    (false)
     , _homePositionSpecialCase  (false)
@@ -41,9 +42,10 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     _commonInit();
 }
 
-VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* parent)
+VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent)
     : QObject                   (parent)
     , _vehicle                  (NULL)
+    , _flyView                  (flyView)
     , _isCurrentItem            (false)
     , _dirty                    (false)
     , _homePositionSpecialCase  (false)
@@ -161,7 +163,7 @@ void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
 
 void VisualMissionItem::_updateTerrainAltitude(void)
 {
-    if (coordinate().isValid()) {
+    if (!_flyView && coordinate().isValid()) {
         // We use a timer so that any additional requests before the timer fires result in only a single request
         _updateTerrainTimer.start();
     }
