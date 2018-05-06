@@ -54,11 +54,11 @@ GeoFenceController::~GeoFenceController()
 
 }
 
-void GeoFenceController::start(bool editMode)
+void GeoFenceController::start(bool flyView)
 {
-    qCDebug(GeoFenceControllerLog) << "start editMode" << editMode;
+    qCDebug(GeoFenceControllerLog) << "start flyView" << flyView;
 
-    PlanElementController::start(editMode);
+    PlanElementController::start(flyView);
     _init();
 }
 
@@ -269,7 +269,7 @@ void GeoFenceController::_managerLoadComplete(void)
 {
     // Fly view always reloads on _loadComplete
     // Plan view only reloads on _loadComplete if specifically requested
-    if (!_editMode || _itemsRequested) {
+    if (_flyView || _itemsRequested) {
         _setReturnPointFromManager(_geoFenceManager->breachReturnPoint());
         _setFenceFromManager(_geoFenceManager->polygons(), _geoFenceManager->circles());
         setDirty(false);
@@ -282,7 +282,7 @@ void GeoFenceController::_managerLoadComplete(void)
 void GeoFenceController::_managerSendComplete(bool error)
 {
     // Fly view always reloads on manager sendComplete
-    if (!error && !_editMode) {
+    if (!error && _flyView) {
         showPlanFromManagerVehicle();
     }
 }
@@ -307,7 +307,7 @@ void GeoFenceController::_updateContainsItems(void)
 
 bool GeoFenceController::showPlanFromManagerVehicle(void)
 {
-    qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle" << _editMode;
+    qCDebug(GeoFenceControllerLog) << "showPlanFromManagerVehicle _flyView" << _flyView;
     if (_masterController->offline()) {
         qCWarning(GeoFenceControllerLog) << "GeoFenceController::showPlanFromManagerVehicle called while offline";
         return true;    // stops further propagation of showPlanFromManagerVehicle due to error
