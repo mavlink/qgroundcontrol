@@ -366,6 +366,10 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                     supportedMinorNumber = 4;
                     break;
                 case MAV_TYPE_QUADROTOR:
+                    // Start TCP video handshake with ARTOO in case it's a Solo
+                    qDebug() << "Trying to request Solo Video";
+                    _soloVideoHandshake(vehicle);
+                    break;
                 case MAV_TYPE_COAXIAL:
                 case MAV_TYPE_HELICOPTER:
                 case MAV_TYPE_SUBMARINE:
