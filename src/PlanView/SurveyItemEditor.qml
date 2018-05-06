@@ -63,7 +63,9 @@ Rectangle {
                 }
             }
         }
-        recalcFromCameraValues()
+        if (gridTypeCombo.currentIndex >= _gridTypeCustomCamera) {
+            recalcFromCameraValues()
+        }
     }
 
     function recalcFromCameraValues() {
