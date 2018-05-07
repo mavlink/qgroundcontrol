@@ -375,6 +375,37 @@ public:
 
     ~Vehicle();
 
+    /// Sensor bits from sensors*Bits properties
+    enum MavlinkSysStatus {
+        SysStatusSensor3dGyro =                 MAV_SYS_STATUS_SENSOR_3D_GYRO,
+        SysStatusSensor3dAccel =                MAV_SYS_STATUS_SENSOR_3D_ACCEL,
+        SysStatusSensor3dMag =                  MAV_SYS_STATUS_SENSOR_3D_MAG,
+        SysStatusSensorAsolutePressure =        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,
+        SysStatusSensorDifferentialPressure =   MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,
+        SysStatusSensorGPS =                    MAV_SYS_STATUS_SENSOR_GPS,
+        SysStatusSensorOpticalFlow =            MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,
+        SysStatusSensorVisionPosition =         MAV_SYS_STATUS_SENSOR_VISION_POSITION,
+        SysStatusSensorLaserPosition =          MAV_SYS_STATUS_SENSOR_LASER_POSITION,
+        SysStatusSensorExternalGroundTruth =    MAV_SYS_STATUS_SENSOR_EXTERNAL_GROUND_TRUTH,
+        SysStatusSensorAngularRateControl =     MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL,
+        SysStatusSensorAttitudeStabilization =  MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION,
+        SysStatusSensorYawPosition =            MAV_SYS_STATUS_SENSOR_YAW_POSITION,
+        SysStatusSensorZAltitudeControl =       MAV_SYS_STATUS_SENSOR_Z_ALTITUDE_CONTROL,
+        SysStatusSensorXYPositionControl =      MAV_SYS_STATUS_SENSOR_XY_POSITION_CONTROL,
+        SysStatusSensorMotorOutputs =           MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS,
+        SysStatusSensorRCReceiver =             MAV_SYS_STATUS_SENSOR_RC_RECEIVER,
+        SysStatusSensor3dGyro2 =                MAV_SYS_STATUS_SENSOR_3D_GYRO2,
+        SysStatusSensor3dAccel2 =               MAV_SYS_STATUS_SENSOR_3D_ACCEL2,
+        SysStatusSensor3dMag2 =                 MAV_SYS_STATUS_SENSOR_3D_MAG2,
+        SysStatusSensorGeoFence =               MAV_SYS_STATUS_GEOFENCE,
+        SysStatusSensorAHRS =                   MAV_SYS_STATUS_AHRS,
+        SysStatusSensorTerrain =                MAV_SYS_STATUS_TERRAIN,
+        SysStatusSensorReverseMotor =           MAV_SYS_STATUS_REVERSE_MOTOR,
+        SysStatusSensorLogging =                MAV_SYS_STATUS_LOGGING,
+        SysStatusSensorBattery =                MAV_SYS_STATUS_SENSOR_BATTERY,
+    };
+    Q_ENUM(MavlinkSysStatus)
+
     Q_PROPERTY(int                  id                      READ id                                                     CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
@@ -432,6 +463,9 @@ public:
     Q_PROPERTY(QString              brandImageIndoor        READ brandImageIndoor                                       NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QString              brandImageOutdoor       READ brandImageOutdoor                                      NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QStringList          unhealthySensors        READ unhealthySensors                                       NOTIFY unhealthySensorsChanged)
+    Q_PROPERTY(int                  sensorsPresentBits      READ sensorsPresentBits                                     NOTIFY sensorsPresentBitsChanged)
+    Q_PROPERTY(int                  sensorsEnabledBits      READ sensorsEnabledBits                                     NOTIFY sensorsEnabledBitsChanged)
+    Q_PROPERTY(int                  sensorsHealthBits       READ sensorsHealthBits                                      NOTIFY sensorsHealthBitsChanged)
     Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
     Q_PROPERTY(QString              pauseFlightMode         READ pauseFlightMode                                        CONSTANT)
     Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
@@ -732,6 +766,9 @@ public:
     QString         brandImageIndoor        () const;
     QString         brandImageOutdoor       () const;
     QStringList     unhealthySensors        () const;
+    int             sensorsPresentBits      () const { return _onboardControlSensorsPresent; }
+    int             sensorsEnabledBits      () const { return _onboardControlSensorsEnabled; }
+    int             sensorsHealthBits       () const { return _onboardControlSensorsHealth; }
     QString         missionFlightMode       () const;
     QString         pauseFlightMode         () const;
     QString         rtlFlightMode           () const;
@@ -931,6 +968,9 @@ signals:
     void telemetryRNoiseChanged     (int value);
     void autoDisarmChanged          (void);
     void flightModesChanged         (void);
+    void sensorsPresentBitsChanged  (int sensorsPresentBits);
+    void sensorsEnabledBitsChanged  (int sensorsEnabledBits);
+    void sensorsHealthBitsChanged   (int sensorsHealthBits);
 
     void firmwareVersionChanged(void);
     void firmwareCustomVersionChanged(void);

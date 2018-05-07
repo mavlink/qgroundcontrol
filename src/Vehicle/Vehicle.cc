@@ -1278,9 +1278,18 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
         _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
     }
 
-    _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
-    _onboardControlSensorsEnabled = sysStatus.onboard_control_sensors_enabled;
-    _onboardControlSensorsHealth = sysStatus.onboard_control_sensors_health;
+    if (_onboardControlSensorsPresent != sysStatus.onboard_control_sensors_present) {
+        _onboardControlSensorsPresent = sysStatus.onboard_control_sensors_present;
+        emit sensorsPresentBitsChanged(_onboardControlSensorsPresent);
+    }
+    if (_onboardControlSensorsEnabled != sysStatus.onboard_control_sensors_enabled) {
+        _onboardControlSensorsEnabled = sysStatus.onboard_control_sensors_enabled;
+        emit sensorsEnabledBitsChanged(_onboardControlSensorsEnabled);
+    }
+    if (_onboardControlSensorsHealth != sysStatus.onboard_control_sensors_health) {
+        _onboardControlSensorsHealth = sysStatus.onboard_control_sensors_health;
+        emit sensorsHealthBitsChanged(_onboardControlSensorsHealth);
+    }
 
     // ArduPilot firmare has a strange case when ARMING_REQUIRE=0. This means the vehicle is always armed but the motors are not
     // really powered up until the safety button is pressed. Because of this we can't depend on the heartbeat to tell us the true
