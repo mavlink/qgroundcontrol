@@ -366,6 +366,8 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                     supportedMinorNumber = 4;
                     break;
                 case MAV_TYPE_QUADROTOR:
+                    // Start TCP video handshake with ARTOO in case it's a Solo running ArduPilot firmware
+                    _soloVideoHandshake(vehicle, false /* originalSoloFirmware */);
                 case MAV_TYPE_COAXIAL:
                 case MAV_TYPE_HELICOPTER:
                 case MAV_TYPE_SUBMARINE:
@@ -420,7 +422,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
         _setInfoSeverity(message);
 
         // Start TCP video handshake with ARTOO
-        _soloVideoHandshake(vehicle);
+        _soloVideoHandshake(vehicle, true /* originalSoloFirmware */);
     } else if (messageText.contains(APM_FRAME_REXP)) {
         // We need to parse the Frame: message in order to determine whether the motors are coaxial or not
         QRegExp frameTypeRegex("^Frame: (\\S*)");
@@ -750,14 +752,16 @@ bool APMFirmwarePlugin::isGuidedMode(const Vehicle* vehicle) const
     return vehicle->flightMode() == "Guided";
 }
 
-void APMFirmwarePlugin::_soloVideoHandshake(Vehicle* vehicle)
+void APMFirmwarePlugin::_soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware)
 {
     Q_UNUSED(vehicle);
 
     QTcpSocket* socket = new QTcpSocket();
 
     socket->connectToHost(_artooIP, _artooVideoHandshakePort);
-    QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &APMFirmwarePlugin::_artooSocketError);
+    if (originalSoloFirmware) {
+        QObject::connect(socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &APMFirmwarePlugin::_artooSocketError);
+    }
 }
 
 void APMFirmwarePlugin::_artooSocketError(QAbstractSocket::SocketError socketError)
