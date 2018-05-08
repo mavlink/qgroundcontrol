@@ -380,7 +380,7 @@ public:
         SysStatusSensor3dGyro =                 MAV_SYS_STATUS_SENSOR_3D_GYRO,
         SysStatusSensor3dAccel =                MAV_SYS_STATUS_SENSOR_3D_ACCEL,
         SysStatusSensor3dMag =                  MAV_SYS_STATUS_SENSOR_3D_MAG,
-        SysStatusSensorAsolutePressure =        MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,
+        SysStatusSensorAbsolutePressure =       MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE,
         SysStatusSensorDifferentialPressure =   MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE,
         SysStatusSensorGPS =                    MAV_SYS_STATUS_SENSOR_GPS,
         SysStatusSensorOpticalFlow =            MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW,
