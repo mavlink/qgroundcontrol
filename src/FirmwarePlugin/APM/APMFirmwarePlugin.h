@@ -125,7 +125,7 @@ private:
     bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
-    void _soloVideoHandshake(Vehicle* vehicle);    
+    void _soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware);
     bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
 
     // Any instance data here must be global to all vehicles
