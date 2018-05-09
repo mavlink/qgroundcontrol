@@ -39,7 +39,10 @@ auterionQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 class AuterionOptions : public QGCOptions
 {
 public:
-    AuterionOptions(AuterionPlugin* plugin, QObject* parent = NULL);
+    AuterionOptions(AuterionPlugin*, QObject* parent = NULL)
+        : QGCOptions(parent)
+    {
+    }
     bool        wifiReliableForCalibration      () const final { return true; }
 };
 
