@@ -145,7 +145,6 @@ public:
     APMFirmwarePluginInstanceData(QObject* parent = NULL);
 
     bool                    textSeverityAdjustmentNeeded;
-    QMap<QString, QTime>    noisyPrearmMap;
 };
 
 #endif

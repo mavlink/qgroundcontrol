@@ -164,9 +164,6 @@ protected:
     QColor color;
 
 signals:
-    /** @brief A text message from the system has been received */
-    void textMessageReceived(int uasid, int componentid, int severity, QString text);
-
     /**
      * @brief Update the error count of a device
      *

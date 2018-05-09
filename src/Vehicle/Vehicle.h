@@ -904,6 +904,7 @@ signals:
     void capabilityBitsChanged(uint64_t capabilityBits);
     void toolBarIndicatorsChanged(void);
     void highLatencyLinkChanged(bool highLatencyLink);
+    void textMessageReceived(int uasid, int componentid, int severity, QString text);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -1037,6 +1038,7 @@ private:
     void _handleAttitude(mavlink_message_t& message);
     void _handleAttitudeTarget(mavlink_message_t& message);
     void _handleDistanceSensor(mavlink_message_t& message);
+    void _handleStatusText(mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1223,6 +1225,8 @@ private:
     int _lastAnnouncedLowBatteryPercent;
 
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
+
+    QMap<QString, QTime> _noisySpokenPrearmMap; ///< Used to prevent PreArm messages from being spoken too often
 
     // FactGroup facts
 

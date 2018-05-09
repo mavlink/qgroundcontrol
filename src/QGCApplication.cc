@@ -646,8 +646,8 @@ QObject* QGCApplication::_rootQmlObject()
 
 void QGCApplication::showMessage(const QString& message)
 {
-    // Special case hack for ArduPilot prearm messages. These show up in the center of the map, so no need for popup.
-    if (message.contains("PreArm:")) {
+    // PreArm messages are handled by Vehicle and shown in Map
+    if (message.contains("PreArm")) {
         return;
     }
 
