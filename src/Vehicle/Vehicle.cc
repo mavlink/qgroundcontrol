@@ -714,6 +714,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_DISTANCE_SENSOR:
         _handleDistanceSensor(message);
         break;
+    case MAVLINK_MSG_ID_STATUSTEXT:
+        _handleStatusText(message);
+        break;
+
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
         break;
@@ -769,6 +773,39 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
     if (feedback.capture_result == 1) {
         _cameraTriggerPoints.append(new QGCQGeoCoordinate(imageCoordinate, this));
     }
+}
+
+void Vehicle::_handleStatusText(mavlink_message_t& message)
+{
+    QByteArray b;
+
+    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
+    mavlink_msg_statustext_get_text(&message, b.data());
+    b[b.length()-1] = '\0';
+    QString messageText = QString(b);
+
+    bool skipSpoken = false;
+    if (messageText.startsWith(QStringLiteral("PreArm"))) {
+        // Limit repeated PreArm message to once every 10 seconds
+        if (_noisySpokenPrearmMap.contains(messageText) && _noisySpokenPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
+            skipSpoken = true;
+        } else {
+            _noisySpokenPrearmMap[messageText] = QTime::currentTime();
+            setPrearmError(messageText);
+        }
+    }
+
+
+    // If the message is NOTIFY or higher severity, or starts with a '#',
+    // then read it aloud.
+    int severity = mavlink_msg_statustext_get_severity(&message);
+    if (messageText.startsWith("#") || severity <= MAV_SEVERITY_NOTICE) {
+        messageText.remove("#");
+        if (!skipSpoken) {
+            qgcApp()->toolbox()->audioOutput()->say(messageText);
+        }
+    }
+    emit textMessageReceived(id(), message.compid, severity, messageText);
 }
 
 void Vehicle::_handleVfrHud(mavlink_message_t& message)

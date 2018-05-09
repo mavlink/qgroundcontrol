@@ -434,17 +434,6 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
         }
     }
 
-    if (messageText.startsWith("PreArm")) {
-        // ArduPilot PreArm messages can come across very frequently especially on Solo, which seems to send them once a second.
-        // Filter them out if they come too quickly.
-        if (instanceData->noisyPrearmMap.contains(messageText) && instanceData->noisyPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
-            return false;
-        }
-        instanceData->noisyPrearmMap[messageText] = QTime::currentTime();
-
-        vehicle->setPrearmError(messageText);
-    }
-
     return true;
 }
 
