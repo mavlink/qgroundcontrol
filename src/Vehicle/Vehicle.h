@@ -466,6 +466,7 @@ public:
     Q_PROPERTY(int                  sensorsPresentBits      READ sensorsPresentBits                                     NOTIFY sensorsPresentBitsChanged)
     Q_PROPERTY(int                  sensorsEnabledBits      READ sensorsEnabledBits                                     NOTIFY sensorsEnabledBitsChanged)
     Q_PROPERTY(int                  sensorsHealthBits       READ sensorsHealthBits                                      NOTIFY sensorsHealthBitsChanged)
+    Q_PROPERTY(int                  sensorsUnhealthyBits    READ sensorsUnhealthyBits                                   NOTIFY sensorsUnhealthyBitsChanged) ///< Combination of enabled and health
     Q_PROPERTY(QString              missionFlightMode       READ missionFlightMode                                      CONSTANT)
     Q_PROPERTY(QString              pauseFlightMode         READ pauseFlightMode                                        CONSTANT)
     Q_PROPERTY(QString              rtlFlightMode           READ rtlFlightMode                                          CONSTANT)
@@ -769,6 +770,7 @@ public:
     int             sensorsPresentBits      () const { return _onboardControlSensorsPresent; }
     int             sensorsEnabledBits      () const { return _onboardControlSensorsEnabled; }
     int             sensorsHealthBits       () const { return _onboardControlSensorsHealth; }
+    int             sensorsUnhealthyBits    () const { return _onboardControlSensorsUnhealthy; }
     QString         missionFlightMode       () const;
     QString         pauseFlightMode         () const;
     QString         rtlFlightMode           () const;
@@ -971,6 +973,7 @@ signals:
     void sensorsPresentBitsChanged  (int sensorsPresentBits);
     void sensorsEnabledBitsChanged  (int sensorsEnabledBits);
     void sensorsHealthBitsChanged   (int sensorsHealthBits);
+    void sensorsUnhealthyBitsChanged(int sensorsUnhealthyBits);
 
     void firmwareVersionChanged(void);
     void firmwareCustomVersionChanged(void);

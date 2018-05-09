@@ -1302,6 +1302,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     if (newSensorsUnhealthy != _onboardControlSensorsUnhealthy) {
         _onboardControlSensorsUnhealthy = newSensorsUnhealthy;
         emit unhealthySensorsChanged();
+        emit sensorsUnhealthyBitsChanged(_onboardControlSensorsUnhealthy);
     }
 }
 
