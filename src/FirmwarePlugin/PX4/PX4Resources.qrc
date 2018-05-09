@@ -1,0 +1,40 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="AirframeComponent.qml">../../AutoPilotPlugins/PX4/AirframeComponent.qml</file>
+        <file alias="AirframeComponentSummary.qml">../../AutoPilotPlugins/PX4/AirframeComponentSummary.qml</file>
+        <file alias="CameraComponent.qml">../../AutoPilotPlugins/PX4/CameraComponent.qml</file>
+        <file alias="CameraComponentSummary.qml">../../AutoPilotPlugins/PX4/CameraComponentSummary.qml</file>
+        <file alias="FlightModesComponentSummary.qml">../../AutoPilotPlugins/PX4/FlightModesComponentSummary.qml</file>
+        <file alias="PowerComponent.qml">../../AutoPilotPlugins/PX4/PowerComponent.qml</file>
+        <file alias="PowerComponentSummary.qml">../../AutoPilotPlugins/PX4/PowerComponentSummary.qml</file>
+        <file alias="PX4AdvancedFlightModes.qml">../../AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml</file>
+        <file alias="PX4FlightModes.qml">../../AutoPilotPlugins/PX4/PX4FlightModes.qml</file>
+        <file alias="PX4RadioComponentSummary.qml">../../AutoPilotPlugins/PX4/PX4RadioComponentSummary.qml</file>
+        <file alias="PX4SimpleFlightModes.qml">../../AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml</file>
+        <file alias="PX4TuningComponentCopter.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentCopter.qml</file>
+        <file alias="PX4TuningComponentPlane.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentPlane.qml</file>
+        <file alias="PX4TuningComponentVTOL.qml">../../AutoPilotPlugins/PX4/PX4TuningComponentVTOL.qml</file>
+        <file alias="SafetyComponent.qml">../../AutoPilotPlugins/PX4/SafetyComponent.qml</file>
+        <file alias="SafetyComponentSummary.qml">../../AutoPilotPlugins/PX4/SafetyComponentSummary.qml</file>
+        <file alias="SensorsComponent.qml">../../AutoPilotPlugins/PX4/SensorsComponent.qml</file>
+        <file alias="SensorsComponentSummary.qml">../../AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
+        <file alias="SensorsComponentSummaryFixedWing.qml">../../AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
+        <file alias="SensorsSetup.qml">../../AutoPilotPlugins/PX4/SensorsSetup.qml</file>
+        <file alias="QGroundControl/PX4/qmldir">QGroundControl.PX4.qmldir</file>
+    </qresource>
+    <qresource prefix="/json">
+        <file alias="PX4/MavCmdInfoCommon.json">MavCmdInfoCommon.json</file>
+        <file alias="PX4/MavCmdInfoFixedWing.json">MavCmdInfoFixedWing.json</file>
+        <file alias="PX4/MavCmdInfoMultiRotor.json">MavCmdInfoMultiRotor.json</file>
+        <file alias="PX4/MavCmdInfoRover.json">MavCmdInfoRover.json</file>
+        <file alias="PX4/MavCmdInfoSub.json">MavCmdInfoSub.json</file>
+        <file alias="PX4/MavCmdInfoVTOL.json">MavCmdInfoVTOL.json</file>
+    </qresource>
+    <qresource prefix="/AutoPilotPlugins/PX4">
+        <file alias="AirframeFactMetaData.xml">../../AutoPilotPlugins/PX4/AirframeFactMetaData.xml</file>
+    </qresource>
+    <qresource prefix="/FirmwarePlugin/PX4">
+        <file alias="PX4ParameterFactMetaData.xml">PX4ParameterFactMetaData.xml</file>
+        <file alias="PX4.OfflineEditing.params">V1.4.OfflineEditing.params</file>
+    </qresource>
+</RCC>

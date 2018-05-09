@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<airframes>
+  <version>1</version>
+  <airframe_group image="AirframeQuadRotorPlus.png" name="Plus Style: Quad, Hexa, Octo, Heli" id="0">
+      <airframe name="3DR Aero M" file="3DR_AERO_M.param"/>
+      <airframe name="3DR Aero RTF" file="3DR_Aero_RTF.param"/>
+      <airframe name="3DR Rover" file="3DR_Rover.param"/>
+      <airframe name="3DR Tarot" file="3DR_Tarot.bgsc"/>
+      <airframe name="Parrot Bebop" file="Parrot_Bebop.param"/>
+      <airframe name="Storm32" file="SToRM32-MAVLink.param"/>
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorX.png" name="X Style, Y6A Style: Quad, Hexa, Octo, X8, Tri, Y6A" id="1">
+      <airframe name="3DR X8-M RTF" file="3DR_X8-M_RTF.param"/>
+      <airframe name="3DR Y6A" file="3DR_Y6A_RTF.param"/>
+      <airframe name="3DR X8+ RTF" file="3DR_X8+_RTF.param"/>
+      <airframe name="3DR QUAD X4 RTF" file="3DR_QUAD_X4_RTF.param"/>
+      <airframe name="3DR X8" file="3DR_X8_RTF.param"/>
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorH.png" name="V (3DR Iris)" id="2">
+      <airframe name="Iris with GoPro" file="Iris with Front Mount Go Pro.param"/>
+      <airframe name="Iris with Tarot" file="Iris with Tarot Gimbal.param"/>
+      <airframe name="3DR Iris+" file="3DR_Iris+.param"/>
+      <airframe name="Iris" file="Iris.param"/>
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorH.png" name="V Tail" id="4">
+  </airframe_group>
+  <airframe_group image="AirframeQuadRotorH.png" name="A Tail" id="5">
+  </airframe_group>
+  <airframe_group name="H: X and H differ in prop rotation" id="3">
+  </airframe_group>
+  <airframe_group name="Y6B Frame (3DR TriCopter): Y6B and Y6A differ in prop rotation" id="10">
+      <airframe name="3DR Y6B" file="3DR_Y6B_RTF.param"/>
+  </airframe_group>
+<airframes>

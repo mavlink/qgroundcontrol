@@ -1,0 +1,15 @@
+
+name: qgroundcontrol
+version: '3.2+git'
+summary: Cross-platform ground control station for drones 
+description: |
+  QGroundControl provides full flight control and configuration for ArduPilot or PX4 Pro powered vehicles. The goal for QGroundControl is improved ease of use for new users as well as high end feature support for experienced users. 
+
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  my-part:
+    # See 'snapcraft plugins'
+    plugin: nil

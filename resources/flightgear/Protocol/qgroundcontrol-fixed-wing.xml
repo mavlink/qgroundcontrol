@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+ <generic>
+
+  <output>
+   <line_separator>newline</line_separator>
+   <var_separator>tab</var_separator>
+
+   <chunk>
+    <name>time (sec)</name>
+    <type>float</type>
+    <format>%.4f</format>
+    <node>/sim/time/elapsed-sec</node>
+   </chunk>
+
+   <!-- Position -->
+   <chunk>
+    <name>latitude-deg</name>
+    <type>double</type>
+    <format>%.18f</format>
+    <node>/position/latitude-deg</node>
+   </chunk>
+
+   <chunk>
+    <name>longitude-deg</name>
+    <type>double</type>
+    <format>%.18f</format>
+    <node>/position/longitude-deg</node>
+   </chunk>
+
+   <chunk>
+    <name>altitiude (m)</name>
+    <type>double</type>
+    <format>%.5f</format>
+    <node>/position/altitude-ft</node>
+    <factor>0.3048</factor>                  <!-- feet to meter -->
+   </chunk>
+
+   <!-- Orientation -->
+
+   <chunk>
+    <name>roll angle</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/orientation/roll-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <chunk>
+    <name>pitch angle (rad)</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/orientation/pitch-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <chunk>
+    <name>yaw angle</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/orientation/heading-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <chunk>
+    <name>roll rate ("p" rad/sec)</name>
+    <type>float</type>
+    <format>%.6f</format>
+    <node>/fdm/jsbsim/velocities/pi-rad_sec</node>
+   </chunk>
+
+   <chunk>
+    <name>pitch rate ("q" rad/sec)</name>
+    <type>float</type>
+    <format>%.6f</format>
+    <node>/fdm/jsbsim/velocities/qi-rad_sec</node>
+   </chunk>
+
+   <chunk>
+    <name>yaw rate ("r" rad/sec)</name>
+    <type>float</type>
+    <format>%.6f</format>
+    <node>/fdm/jsbsim/velocities/ri-rad_sec</node>
+   </chunk>
+
+   <chunk>
+    <name>X accel (body axis) (mps)</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/accelerations/pilot/x-accel-fps_sec</node>
+    <factor>0.3048</factor>  <!-- feet to meter -->
+   </chunk>
+
+   <chunk>
+    <name>Y accel (body axis) (mps)</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/accelerations/pilot/y-accel-fps_sec</node>
+    <factor>0.3048</factor>  <!-- feet to meter -->
+   </chunk>
+
+   <chunk>
+    <name>Z accel (body axis) (mps)</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/accelerations/pilot/z-accel-fps_sec</node>
+    <factor>0.3048</factor>  <!-- feet to meter -->
+   </chunk>
+
+   <!-- Velocities -->
+
+   <chunk>
+    <name>Velocity North ("vn" mps)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/velocities/speed-north-fps</node>
+    <factor>0.3048</factor>                  <!-- fps to mps -->
+   </chunk>
+
+   <chunk>
+    <name>Velocity East ("ve" mps)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/velocities/speed-east-fps</node>
+    <factor>0.3048</factor>                  <!-- fps to mps -->
+   </chunk>
+
+   <chunk>
+    <name>Velocity Down ("vd" mps)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/velocities/speed-down-fps</node>
+    <factor>0.3048</factor>                  <!-- fps to mps -->
+   </chunk>
+
+   <chunk>
+     <name>airspeed-mps</name>
+     <type>float</type>
+     <format>%.8f</format>
+     <node>/velocities/airspeed-kt</node>
+     <factor>0.514444444444444</factor>      <!-- knots to mps -->
+   </chunk>
+
+   <!-- Magnetometer -->
+   <chunk>
+    <name>Magnetic Variation (rad)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/magnetic-variation-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <chunk>
+    <name>Magnetic Dip (rad)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/magnetic-dip-deg</node>
+    <factor>0.01745329251994329576</factor>  <!-- degrees to radians -->
+   </chunk>
+
+   <!-- Temperature -->
+   <chunk>
+    <name>Temperature (deg C)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/temperature-degc</node>
+    <factor>1</factor>
+   </chunk>
+
+   <!-- Pressure -->
+   <chunk>
+    <name>Pressure (hPa)</name>
+    <type>float</type>
+    <format>%.8f</format>
+    <node>/environment/pressure-inhg</node>
+    <factor>33.86389</factor>                  <!-- inhg to hpa -->
+   </chunk>
+
+   <!-- Altitude AGL -->
+   <chunk>
+    <name>Altitude AGL (m)</name>
+    <type>float</type>
+    <format>%.5f</format>
+    <node>/position/altitude-agl-ft</node>
+    <factor>0.3048</factor>  <!-- feet to meter -->
+   </chunk>
+
+  </output>
+
+  <input>
+   <line_separator>newline</line_separator>
+   <var_separator>tab</var_separator>
+
+   <!-- Controls -->
+   <chunk>
+    <name>aileron</name>
+    <type>float</type>
+    <node>/controls/flight/aileron</node>
+   </chunk>
+
+   <chunk>
+    <name>elevator</name>
+    <type>float</type>
+    <node>/controls/flight/elevator</node>
+   </chunk>
+
+   <chunk>
+     <name>rudder</name>
+     <type>float</type>
+     <node>/controls/flight/rudder</node>
+   </chunk>
+
+   <chunk>
+    <name>running</name>
+    <type>bool</type>
+    <node>/engines/engine/running</node>
+   </chunk>
+
+   <chunk>
+    <name>throttle</name>
+    <type>float</type>
+    <node>/controls/engines/engine/throttle</node>
+   </chunk>
+
+
+ </input>
+
+ </generic>
+
+</PropertyList>

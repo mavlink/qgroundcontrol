@@ -1,0 +1,13 @@
+Source: qgroundcontrol
+Section: electronics
+Priority: optional
+Maintainer: Daniel Agar <daniel@agar.ca>
+Build-Depends: debhelper (>= 9), qt55tools, qt55base, qt55declarative, qt55serialport, qt55svg, qt55webkit, qt55quickcontrols, qt55xmlpatterns, qt55x11extras, qt55websockets, qt55sensors, qt55script, qt55quick1, qt55qbs, qt55multimedia, qt55location, qt55imageformats, qt55graphicaleffects, qt55creator, qt55connectivity, espeak, libespeak-dev, libudev-dev, libsdl1.2-dev
+Standards-Version: 3.9.5
+Homepage: https://github.com/mavlink/qgroundcontrol
+Vcs-Git: git://github.com/mavlink/qgroundcontrol.git
+
+Package: qgroundcontrol
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, espeak, libsdl1.2debian
+Description: Open Source Micro Air Vehicle Ground Control Station

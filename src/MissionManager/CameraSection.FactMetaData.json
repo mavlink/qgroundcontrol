@@ -1,0 +1,58 @@
+[
+{
+    "name":             "CameraAction",
+    "shortDescription": "Specify whether the camera should take photos or video",
+    "type":             "uint32",
+    "enumStrings":      "No change,Take photo,Take photos (time),Take photos (distance),Stop taking photos,Start recording video,Stop recording video",
+    "enumValues":       "0,6,1,2,3,4,5",
+    "defaultValue":     0
+},
+{
+    "name":             "CameraPhotoIntervalDistance",
+    "shortDescription": "Specify the distance between each photo",
+    "type":             "double",
+    "units":            "m",
+    "min":              0.1,
+    "decimalPlaces":    1,
+    "defaultValue":     1
+},
+{
+    "name":             "CameraPhotoIntervalTime",
+    "shortDescription": "Specify the time between each photo",
+    "type":             "uint32",
+    "units":            "secs",
+    "min":              1,
+    "decimalPlaces":    0,
+    "defaultValue":     10
+},
+{
+    "name":             "GimbalPitch",
+    "shortDescription": "Gimbal pitch rotation.",
+    "type":             "double",
+    "units":            "gimbal-degrees",
+    "min":              -90,
+    "max":              0,
+    "increment":        5,
+    "decimalPlaces":    0,
+    "defaultValue":     0
+},
+{
+    "name":             "GimbalYaw",
+    "shortDescription": "Gimbal yaw rotation.",
+    "type":             "double",
+    "units":            "deg",
+    "min":              -180.0,
+    "max":              180.0,
+    "increment":        5,
+    "decimalPlaces":    0,
+    "defaultValue":     0
+},
+{
+    "name":             "CameraMode",
+    "shortDescription": "Specify whether the camera should switch to Photo, Video or Survey mode",
+    "type":             "uint32",
+    "enumStrings":      "Photo,Video,Survey",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
+}
+]

@@ -1,0 +1,8 @@
+{
+    "comment":  "Any Firmware, VTOL",
+
+    "version": 1,
+
+    "mavCmdInfo": [
+    ]
+}

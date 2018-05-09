@@ -1,0 +1,62 @@
+[
+{
+    "name":             "ValueSetIsDistance",
+    "shortDescription": "Value specified is distance to surface.",
+    "type":             "bool",
+    "defaultValue":     1
+},
+{
+    "name":             "DistanceToSurface",
+    "shortDescription": "Distance vehicle is away from surface.",
+    "type":             "double",
+    "min":              0.1,
+    "units":            "m",
+    "decimalPlaces":    2,
+    "defaultValue":     10.0
+},
+{
+    "name":             "ImageDensity",
+    "shortDescription": "Image desity at surface.",
+    "type":             "double",
+    "min":              0,
+    "units":            "cm/px",
+    "decimalPlaces":    1,
+    "defaultValue":     25
+},
+{
+    "name":             "FrontalOverlap",
+    "shortDescription": "Amount of overlap between images in the forward facing direction.",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "min":              0,
+    "max":              85,
+    "units":            "%",
+    "defaultValue":     70
+},
+{
+    "name":             "SideOverlap",
+    "shortDescription": "Amount of overlap between images in the side facing direction.",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "min":              0,
+    "max":              85,
+    "units":            "%",
+    "defaultValue":     70
+},
+{
+    "name":             "AdjustedFootprintFrontal",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+},
+{
+    "name":             "AdjustedFootprintSide",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     25
+}
+]

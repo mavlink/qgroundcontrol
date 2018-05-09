@@ -1,0 +1,112 @@
+[
+{
+    "name":             "VideoSource",
+    "shortDescription": "Video source",
+    "longDescription":  "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoUDPPort",
+    "shortDescription": "Video UDP Port",
+    "longDescription":  "UDP port to bind to for video stream.",
+    "type":             "uint16",
+    "min":              1025,
+    "defaultValue":     5600
+},
+{
+    "name":             "VideoRTSPUrl",
+    "shortDescription": "Video RTSP Url",
+    "longDescription":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoTCPUrl",
+    "shortDescription": "Video TCP Url",
+    "longDescription":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoSavePath",
+    "shortDescription": "Video save directory",
+    "longDescription":  "Directory to save videos to.",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "VideoAspectRatio",
+    "shortDescription": "Video Aspect Ratio",
+    "longDescription":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+    "type":             "float",
+    "decimalPlaces":    6,
+    "defaultValue":     1.777777
+},
+{
+    "name":             "VideoGridLines",
+    "shortDescription": "Video Grid Lines",
+    "longDescription":  "Displays a grid overlaid over the video view.",
+    "type":             "uint32",
+    "enumStrings":      "Hide,Show",
+    "enumValues":       "1,0",
+    "defaultValue":     0
+},
+{
+    "name":             "ShowRecControl",
+    "shortDescription": "Show Video Record Control",
+    "longDescription":  "Show recording control in the UI.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "RecordingFormat",
+    "shortDescription": "Video Recording Format",
+    "longDescription":  "Video recording file format.",
+    "type":             "uint32",
+    "enumStrings":      "mkv,mov,mp4",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
+},
+{
+    "name":             "MaxVideoSize",
+    "shortDescription": "Max Video Storage Usage",
+    "longDescription":  "Maximum amount of disk space used by video recording.",
+    "type":             "uint32",
+    "min":              100,
+    "units":            "MB",
+    "defaultValue":     10240,
+    "mobileDefaultValue":   2048
+},
+{
+    "name":             "EnableStorageLimit",
+    "shortDescription": "Enable/Disable Limits on Storage Usage",
+    "longDescription":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
+    "type":             "bool",
+    "defaultValue":     false,
+    "mobileDefaultValue":   true
+},
+{
+    "name":             "RtspTimeout",
+    "shortDescription": "RTSP Video Timeout",
+    "longDescription":  "How long to wait before assuming RTSP link is gone.",
+    "type":             "uint32",
+    "min":              1,
+    "units":            "s",
+    "defaultValue":     2
+},
+{
+    "name":             "StreamEnabled",
+    "shortDescription": "Video Stream Enabled",
+    "longDescription":  "Start/Stop Video Stream.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "DisableWhenDisarmed",
+    "shortDescription": "Video Stream Disnabled When Armed",
+    "longDescription":  "Disable Video Stream when disarmed.",
+    "type":             "bool",
+    "defaultValue":     false
+}
+]

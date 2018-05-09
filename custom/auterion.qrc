@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/res">
+        <file alias="QGCLogoFull">res/images/auterion_icon.png</file>
+    </qresource>
+    <qresource prefix="/auterion/img">
+        <file alias="auterion_icon.png">res/images/auterion_icon.png</file>
+        <file alias="auterion_logo.png">res/images/auterion_logo.png</file>
+    </qresource>
+</RCC>

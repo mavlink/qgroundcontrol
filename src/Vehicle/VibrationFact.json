@@ -1,0 +1,35 @@
+[
+{
+    "name":             "xAxis",
+    "shortDescription": "Vibe xAxis",
+    "type":             "double",
+    "decimalPlaces":    1
+},
+{
+    "name":             "yAxis",
+    "shortDescription": "Vibe yAxis",
+    "type":             "double",
+    "decimalPlaces":    1
+},
+{
+    "name":             "zAxis",
+    "shortDescription": "Vibe zAxis",
+    "type":             "double",
+    "decimalPlaces":    1
+},
+{
+    "name":             "clipCount1",
+    "shortDescription": "Clip Count (1)",
+    "type":             "uint32"
+},
+{
+    "name":             "clipCount2",
+    "shortDescription": "Clip Count (2)",
+    "type":             "uint32"
+},
+{
+    "name":             "clipCount3",
+    "shortDescription": "Clip Count (3)",
+    "type":             "uint32"
+}
+]

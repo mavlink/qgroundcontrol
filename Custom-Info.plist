@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist SYSTEM "file://localhost/System/Library/DTDs/PropertyList.dtd">
+<plist version="0.9">
+<dict>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>CFBundleIconFile</key>
+	<string>macx.icns</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleVersion</key>
+        <string>###</string>
+	<key>CFBundleShortVersionString</key>
+        <string>#.#.#</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleExecutable</key>
+	<string>@EXECUTABLE@</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.qgroundcontrol.qgroundcontrol</string>
+	<key>NOTE</key>
+	<string>Open source ground control app provided by QGroundControl dev team</string>
+</dict>
+</plist>

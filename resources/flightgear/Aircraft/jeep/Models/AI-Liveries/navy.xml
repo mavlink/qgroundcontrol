@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+<sim>
+    <model>
+        <livery>
+            <name type="string">US Navy blue</name>
+
+            <texture>Liveries/jeep-1a.png</texture>
+						<texture-roof>Liveries/softroof-a.png</texture-roof>
+        </livery>
+    </model>
+</sim>
+</PropertyList>

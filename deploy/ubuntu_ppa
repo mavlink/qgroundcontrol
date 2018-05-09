@@ -1,0 +1,25 @@
+#! /bin/bash
+
+tmpdir=`mktemp -d`
+long_version=`git describe --always --tags`
+short_version=`git describe --always --tags | cut -d "-" -f 1,2`
+
+version=${long_version:1}
+dir_version=${short_version:1}
+echo $version
+
+debchange -v ${version} --distribution trusty --package qgroundcontrol --create --empty
+
+rsync -a --delete --exclude={build-release,release,Makefile\*} . ${tmpdir}/qgroundcontrol-${dir_version}/
+
+cd ${tmpdir}
+tar pczf qgroundcontrol_${dir_version}.orig.tar.gz qgroundcontrol-${dir_version}
+
+cd ${tmpdir}/qgroundcontrol-${dir_version}/
+debuild -S -uc -us
+
+# build locally
+debuild --prepend-path=/usr/lib/ccache -uc -us -sa -B -i -I -j4
+
+# upload to launchpad
+#dput -f ppa:qgroundcontrol/ppa ${tmpdir}/qgroundcontrol_${version}_source.changes

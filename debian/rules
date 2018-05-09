@@ -1,0 +1,12 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+export QT_SELECT := qt5
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+%:
+	dh $@ 
+
+override_dh_auto_configure:
+	/opt/qt55/bin/qmake -r qgroundcontrol.pro CONFIG+=installer CONFIG+=WarningsAsErrorsOn

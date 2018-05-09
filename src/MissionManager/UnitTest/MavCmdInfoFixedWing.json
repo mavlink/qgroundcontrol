@@ -1,0 +1,50 @@
+{
+    "comment":  "Any Firmware, Fixed Wing (unit test)",
+
+    "version": 1,
+
+    "mavCmdInfo": [
+        {
+            "comment":              "Override testing",
+            "id":                   4,
+            "description":          "override fw 4",
+            "specifiesCoordinate":  false,
+            "standaloneCoordinate": false,
+            "friendlyEdit":         true,
+            "category":             "override fw 4",
+            "paramRemove":          "2,4,6",
+            "param1": {
+                "label":            "override fw 4 1",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "override fw 4 1"
+            },
+            "param3": {
+                "label":            "override fw 4 3",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "override fw 4 3"
+            },
+            "param5": {
+                "label":            "override fw 4 5",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "override fw 4 5"
+            },
+            "param7": {
+                "label":            "override fw 4 7",
+                "default":          1.0,
+                "decimalPlaces":    1,
+                "enumStrings":      "1,2",
+                "enumValues":       "1,2",
+                "units":            "override fw 4 7"
+            }
+        }
+    ]
+}

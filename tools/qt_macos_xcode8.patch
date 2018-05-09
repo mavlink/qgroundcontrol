@@ -1,0 +1,12 @@
+diff -Naur /Volumes/BootCopy/Applications/Qt/5.5/clang_64/mkspecs/features/mac/default_pre.prf mkspecs/features/mac/default_pre.prf
+--- /Volumes/BootCopy/Applications/Qt/5.5/clang_64/mkspecs/features/mac/default_pre.prf	2015-10-12 19:40:39.000000000 -0400
++++ mkspecs/features/mac/default_pre.prf	2016-09-18 19:54:02.000000000 -0400
+@@ -12,7 +12,7 @@
+         error("Xcode is not installed in $${QMAKE_XCODE_DEVELOPER_PATH}. Please use xcode-select to choose Xcode installation path.")
+ 
+     # Make sure Xcode is set up properly
+-    isEmpty($$list($$system("/usr/bin/xcrun -find xcrun 2>/dev/null"))): \
++    isEmpty($$list($$system("/usr/bin/xcrun -find xcodebuild 2>/dev/null"))): \
+         error("Xcode not set up properly. You may need to confirm the license agreement by running /usr/bin/xcodebuild.")
+ }
+ 

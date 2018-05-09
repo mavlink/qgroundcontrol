@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+
+ <path>yardstik.ac</path>
+ <offsets>
+   <z-m>0.0</z-m>
+   <pitch-deg>0.2</pitch-deg>
+ </offsets>
+
+ <animation>
+  <type>rotate</type>
+  <object-name>elevator</object-name>
+  <object-name>elevatorattach</object-name>
+  <property>controls/flight/elevator</property>
+  <factor>15</factor>
+  <offset-deg>0</offset-deg>   
+  <center>
+   <x-m>1.0</x-m>
+   <y-m>0.0</y-m>
+   <z-m>0.04</z-m>
+  </center>
+  <axis>
+   <x> 0.0</x>
+   <y>1</y>
+   <z>0.0</z>
+  </axis>
+ </animation>
+
+ <animation>
+  <type>rotate</type>
+  <object-name>elevatorservo</object-name>   
+  <property>controls/flight/elevator</property>
+  <factor>15</factor>
+  <offset-deg>0</offset-deg>   
+  <center>
+   <x-m>0.3</x-m>
+   <y-m>0.01</y-m>
+   <z-m>0.11</z-m>
+  </center>
+  <axis>
+   <x> 0.0</x>
+   <y>1</y>
+   <z>0.0</z>
+  </axis>
+ </animation>
+
+
+ <animation>
+  <type>rotate</type>
+  <object-name>rudder</object-name>
+  <object-name>rudderattach</object-name>
+  <property>controls/flight/rudder</property>
+  <factor>15</factor>
+  <offset-deg>0</offset-deg>   
+  <center>
+   <x-m>1.01</x-m>
+   <y-m>0.0</y-m>
+   <z-m>0.17</z-m>
+  </center>
+  <axis>
+   <x>0.0</x>
+   <y> 0.0</y>
+   <z>1.0</z>
+  </axis>
+ </animation>
+
+ <animation>
+  <type>rotate</type>
+  <object-name>rudderservo</object-name>   
+  <property>controls/flight/rudder</property>
+  <factor>-15</factor>
+  <offset-deg>0</offset-deg>   
+  <center>
+   <x-m>0.3</x-m>
+   <y-m>-0.1</y-m>
+   <z-m>0.10</z-m>
+  </center>
+  <axis>
+   <x>0.0</x>
+   <y> 1.0</y>
+   <z>0.0</z>
+  </axis>
+ </animation>
+
+
+ <animation>
+  <type>spin</type>
+  <object-name>prop2</object-name>
+  <property>engines/engine/n1</property>
+  <factor>-30</factor>   
+  <center>
+   <x-m>0.002</x-m>
+   <y-m>-0.001</y-m>
+   <z-m>0.19</z-m>
+  </center>
+  <axis>
+   <x>1</x>
+   <y>0</y>
+   <z>0</z>
+  </axis>
+ </animation>
+
+
+  
+</PropertyList>

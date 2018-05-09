@@ -1,0 +1,5 @@
+        <file alias="apm.png">resources/firmware/apm.png</file>
+        <file alias="APM/BrandImage">src/FirmwarePlugin/APM/APMBrandImage.png</file>
+        <file alias="APM/BrandImageSub">src/FirmwarePlugin/APM/APMBrandImageSub.png</file>
+        <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
+        <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>

@@ -1,0 +1,65 @@
+[
+{
+    "name":             "TurnAroundDistance",
+    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turn around.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     30
+},
+{
+    "name":             "TurnAroundDistanceMultiRotor",
+    "shortDescription": "Amount of additional distance to add outside the survey area for vehicle turn around.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     10
+},
+{
+    "name":             "CameraTriggerInTurnAround",
+    "shortDescription": "Camera continues taking images in turn arounds.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "HoverAndCapture",
+    "shortDescription": "Stop and Hover at each image point before taking image",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "Refly90Degrees",
+    "shortDescription": "Refly the pattern at a 90 degree angle",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "TerrainAdjustTolerance",
+    "shortDescription": "If adjacent terrain waypoints are within this tolerence they will be removed.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m",
+    "defaultValue":     10
+},
+{
+    "name":             "TerrainAdjustMaxClimbRate",
+    "shortDescription": "The maximum climb rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m/s",
+    "defaultValue":     0
+},
+{
+    "name":             "TerrainAdjustMaxDescentRate",
+    "shortDescription": "The maximum descent rate from one waypoint to another when adjusting for terrain. Set to 0 for no max.",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "min":              0,
+    "units":            "m/s",
+    "defaultValue":     0
+}
+]

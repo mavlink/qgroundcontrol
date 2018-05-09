@@ -1,0 +1,21 @@
+[
+{
+    "name":             "Latitude",
+    "shortDescription": "Latitude of rally point position",
+    "type":             "double",
+    "decimalPlaces":    7
+},
+{
+    "name":             "Longitude",
+    "shortDescription": "Longitude of rally point position",
+    "type":             "double",
+    "decimalPlaces":    7
+},
+{
+    "name":             "Altitude",
+    "shortDescription": "Altitude of rally point position (home relative)",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+}
+]

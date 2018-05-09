@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<mavlinkcamera>
+    <definition version="1">
+        <model>SD II</model>
+        <vendor>Super Dupper Industries</vendor>
+    </definition>
+    <parameters>
+        <parameter name="CAM_MODE" type="uint32" default="1">
+            <description>Camera Mode</description>
+            <options>
+                <option name="Photo" value="0">
+                    <!-- This tells us when Camera Mode is set to Photo mode, the following parameters should be ignored (hidden from UI or disabled)-->
+                    <exclusions>
+                        <exclude>CAM_VIDRES</exclude>
+                        <exclude>CAM_VIDFMT</exclude>
+                        <exclude>CAM_AUDIOREC</exclude>
+                    </exclusions>
+                </option>
+                <option name="Video" value="1">
+                    <exclusions>
+                        <exclude>CAM_PHOTOFMT</exclude>
+                        <exclude>CAM_PHOTOQUAL</exclude>
+                        <exclude>CAM_PHOTORES</exclude>
+                    </exclusions>
+                    <parameterranges>
+                       <!-- This tells us when Camera Mode is set to Video mode, the CAM_ISO parameter has only a subset of its normal options. -->
+                        <parameterrange parameter="CAM_ISO">
+                            <roption name="100" value="100" />
+                            <roption name="200" value="200" />
+                            <roption name="400" value="400" />
+                            <roption name="800" value="800" />
+                            <roption name="1600" value="1600" />
+                            <roption name="3200" value="3200" />
+                        </parameterrange>
+                    </parameterranges>
+                </option>
+            </options>
+        </parameter>
+        <parameter name="CAM_WBMODE" type="uint32" default="0">
+            <description>White Balance Mode</description>
+            <options>
+                <option name="Auto" value="0" />
+                <option name="Sunny" value="1" />
+                <option name="Cloudy" value="2" />
+                <option name="Fluorescent" value="3" />
+                <option name="Incandescent" value="4" />
+                <option name="Sunset" value="5" />
+            </options>
+        </parameter>
+        <parameter name="CAM_EXPMODE" type="uint32" default="0">
+            <description>Exposure Mode</description>
+            <options default="0">
+                <option name="Auto" value="0">
+                    <exclusions>
+                        <exclude>CAM_ISO</exclude>
+                        <exclude>CAM_SHUTTERSPD</exclude>
+                        <exclude>CAM_APERTURE</exclude>
+                    </exclusions>
+                </option>
+                <option name="Manual" value="1">
+                    <exclusions>
+                        <exclude>CAM_EV</exclude>
+                    </exclusions>
+                </option>
+            </options>
+        </parameter>
+        <parameter name="CAM_APERTURE" type="uint32" default="0">
+            <description>Aperture</description>
+            <options>
+                <option name="1.8" value="0" />
+                <option name="2.0" value="1" />
+                <option name="2.4" value="2" />
+                <option name="4" value="3" />
+                <option name="5.6" value="4" />
+                <option name="8" value="5" />
+                <option name="11" value="6" />
+                <option name="16" value="7" />
+                <option name="22" value="8" />
+            </options>
+        </parameter>
+        <parameter name="CAM_SHUTTERSPD" type="float" default="0.016666">
+            <description>Shutter Speed</description>
+            <options>
+                <option name="4" value="4" />
+                <option name="3" value="3" />
+                <option name="2" value="2" />
+                <option name="1" value="1" />
+                <option name="1/4" value="0.25" />
+                <option name="1/8" value="0.125" />
+                <option name="1/15" value="0.066666" />
+                <option name="1/30" value="0.033333" />
+                <option name="1/60" value="0.016666" />
+                <option name="1/125" value="0.008" />
+                <option name="1/250" value="0.004" />
+                <option name="1/500" value="0.002" />
+                <option name="1/1000" value="0.001" />
+            </options>
+        </parameter>
+        <parameter name="CAM_ISO" type="uint32" default="100">
+            <description>ISO</description>
+            <options>
+                <option name="100" value="100" />
+                <option name="200" value="200" />
+                <option name="400" value="400" />
+                <option name="800" value="800" />
+                <option name="1600" value="1600" />
+                <option name="3200" value="3200" />
+                <option name="6400" value="6400" />
+            </options>
+        </parameter>
+        <parameter name="CAM_EV" type="float" default="0">
+            <description>Exposure Compensation</description>
+            <options>
+                <option name="-2" value="-2" />
+                <option name="-1.5" value="-1.5" />
+                <option name="-1" value="-1" />
+                <option name="-0.5" value="-0.5" />
+                <option name="0" value="0" />
+                <option name="+0.5" value="0.5" />
+                <option name="+1" value="1" />
+                <option name="+1.5" value="1.5" />
+                <option name="+2" value="2" />
+            </options>
+        </parameter>
+        <parameter name="CAM_VIDRES" type="uint32" default="0">
+            <description>Video Resolution</description>
+            <options>
+                <option name="3840x2160 30P" value="0">
+                    <parameterranges>
+                        <!-- When Camera Mode is Video and Exposure Mode is Manual, Shutter Speed cannot be slower than the frame rate -->
+                        <parameterrange parameter="CAM_SHUTTERSPD" condition="CAM_MODE=1 AND CAM_EXPMODE=1">
+                            <roption name="1/30" value="0.033333" />
+                            <roption name="1/60" value="0.016666" />
+                            <roption name="1/125" value="0.008" />
+                            <roption name="1/250" value="0.004" />
+                            <roption name="1/500" value="0.002" />
+                            <roption name="1/1000" value="0.001" />
+                        </parameterrange>
+                    </parameterranges>
+                </option>
+                <option name="3840x2160 24P" value="1">
+                    <parameterranges>
+                        <parameterrange parameter="CAM_SHUTTERSPD" condition="CAM_MODE=1 AND CAM_EXPMODE=1">
+                            <roption name="1/30" value="0.033333" />
+                            <roption name="1/60" value="0.016666" />
+                            <roption name="1/125" value="0.008" />
+                            <roption name="1/250" value="0.004" />
+                            <roption name="1/500" value="0.002" />
+                            <roption name="1/1000" value="0.001" />
+                        </parameterrange>
+                    </parameterranges>
+                </option>
+                <option name="1920x1080 60P" value="2">
+                    <parameterranges>
+                        <parameterrange parameter="CAM_SHUTTERSPD" condition="CAM_MODE=1 AND CAM_EXPMODE=1">
+                            <roption name="1/60" value="0.016666" />
+                            <roption name="1/125" value="0.008" />
+                            <roption name="1/250" value="0.004" />
+                            <roption name="1/500" value="0.002" />
+                            <roption name="1/1000" value="0.001" />
+                        </parameterrange>
+                    </parameterranges>
+                </option>
+                <option name="1920x1080 30P" value="3">
+                    <parameterranges>
+                        <parameterrange parameter="CAM_SHUTTERSPD" condition="CAM_MODE=1 AND CAM_EXPMODE=1">
+                            <roption name="1/30" value="0.033333" />
+                            <roption name="1/60" value="0.016666" />
+                            <roption name="1/125" value="0.008" />
+                            <roption name="1/250" value="0.004" />
+                            <roption name="1/500" value="0.002" />
+                            <roption name="1/1000" value="0.001" />
+                        </parameterrange>
+                    </parameterranges>
+                </option>
+                <option name="1920x1080 24P" value="4">
+                    <parameterranges>
+                        <parameterrange parameter="CAM_SHUTTERSPD" condition="CAM_MODE=1 AND CAM_EXPMODE=1">
+                            <roption name="1/30" value="0.033333" />
+                            <roption name="1/60" value="0.016666" />
+                            <roption name="1/125" value="0.008" />
+                            <roption name="1/250" value="0.004" />
+                            <roption name="1/500" value="0.002" />
+                            <roption name="1/1000" value="0.001" />
+                        </parameterrange>
+                    </parameterranges>
+                </option>
+            </options>
+        </parameter>
+        <parameter name="CAM_VIDFMT" type="uint32" default="0">
+            <description>Video Format</description>
+            <options>
+                <option name="h.264" value="0" />
+                <option name="HEVC" value="1" />
+            </options>
+        </parameter>
+        <parameter name="CAM_AUDIOREC" type="bool" default="0">
+            <description>Record Audio</description>
+        </parameter>
+        <parameter name="CAM_METERING" type="uint32" default="0">
+            <description>Metering Mode</description>
+            <options>
+                <option name="Average" value="0" />
+                <option name="Center" value="1" />
+                <option name="Spot" value="2" />
+            </options>
+        </parameter>
+        <parameter name="CAM_COLORMODE" type="uint32" default="1">
+            <description>Color Mode</description>
+            <options>
+                <option name="Neutral" value="0" />
+                <option name="Enhanced" value="1" />
+                <option name="Unprocessed" value="2" />
+                <option name="Black &amp; White" value="3" />
+            </options>
+        </parameter>
+        <parameter name="CAM_PHOTORES" type="uint32" default="0">
+            <description>Photo Resolution</description>
+            <options>
+                <option name="Large" value="0" />
+                <option name="Medium" value="1" />
+                <option name="Small" value="2" />
+            </options>
+        </parameter>
+        <parameter name="CAM_PHOTOFMT" type="uint32" default="0">
+            <description>Image Format</description>
+            <options>
+                <option name="Jpeg" value="0" />
+                <option name="Raw" value="1">
+                    <exclusions>
+                        <exclude>CAM_PHOTOQUAL</exclude>
+                        <exclude>CAM_PHOTORES</exclude>
+                    </exclusions>
+                </option>
+                <option name="Jpeg+Raw" value="2" />
+            </options>
+        </parameter>
+        <parameter name="CAM_PHOTOQUAL" type="uint32" default="1">
+            <description>Image Quality</description>
+            <options>
+                <option name="Fine" value="0" />
+                <option name="Medium" value="1" />
+                <option name="Low" value="2" />
+            </options>
+        </parameter>
+    </parameters>
+    <!-- Video Streams (Optional. If not present, the standard MAVLink video stream discovery will be used instead) -->
+    <videostreams>
+        <!-- If exclusive is 0, all streams run at the same time. The layer defines the order. -->
+        <!-- If exclusive is 1, the user will select one of the availabe streams and only that one is shown. -->
+        <videostream exclusive="0" layer="0">
+            <description>Visible Light</description>
+            <url>rtsp://192.168.92.1:1525/live</url>
+        </videostream>
+        <videostream exclusive="0" layer="1">
+            <description>Thermal Imaging</description>
+            <url>rtsp://192.168.92.1:4525/live</url>
+        </videostream>
+    </videostreams>
+    <localization>
+        <!-- If no appropriate locale is found, the original (above) will be used -->
+        <!-- At runtime, the code will go through every "description" and "option name" looking for "original" and replace it with "translated" -->
+        <locale name="pt_BR"> 
+            <strings original="Aperture" translated="Abertura" />
+            <strings original="Auto" translated="Automático" />
+            <strings original="Average" translated="Média" />
+            <strings original="Black &amp; White" translated="Preto e Branco" />
+            <strings original="Camera Mode" translated="Modo de Operação" />
+            <strings original="Center" translated="Centro" />
+            <strings original="Cloudy" translated="Nublado" />
+            <strings original="Color Mode" translated="Processo de Cor" />
+            <strings original="Enhanced" translated="Realçado" />
+            <strings original="Exposure Compensation" translated="Compensação de Exposição" />
+            <strings original="Exposure Mode" translated="Modo de Exposição" />
+            <strings original="Fine" translated="Fino" />
+            <strings original="Fluorescent" translated="Fluorescente" />
+            <strings original="Image Format" translated="Formato de Imagem" />
+            <strings original="Image Quality" translated="Qualidade de Imagem" />
+            <strings original="Incandescent" translated="Incandescente" />
+            <strings original="Large" translated="Grande" />
+            <strings original="Low" translated="Baixa" />
+            <strings original="Manual" translated="Manual" />
+            <strings original="Medium" translated="Média" />
+            <strings original="Metering Mode" translated="Modo de Fotogrametria" />
+            <strings original="Neutral" translated="Neutro" />
+            <strings original="Photo Resolution" translated="Resolução de Foto" />
+            <strings original="Photo" translated="Foto" />
+            <strings original="Record Audio" translated="Gravar Áudio" />
+            <strings original="Shutter Priority" translated="Prioridade de Exposição" />
+            <strings original="Shutter Speed" translated="Velocidade" />
+            <strings original="Small" translated="Pequena" />
+            <strings original="Sunny" translated="Ensolarado" />
+            <strings original="Sunset" translated="Por do Sol" />
+            <strings original="Unprocessed" translated="Não Processado" />
+            <strings original="Video Format" translated="Format de Vídeo" />
+            <strings original="Video Resolution" translated="Resolução de Video" />
+            <strings original="Video" translated="Vídeo" />
+            <strings original="White Balance Mode" translated="Modo de Balanço Cromático" />
+        </locale>
+    </localization>
+</mavlinkcamera>

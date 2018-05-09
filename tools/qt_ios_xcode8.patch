@@ -1,0 +1,27 @@
+diff -Naur /Volumes/BootCopy/Applications/Qt/5.5/ios/mkspecs/features/mac/default_pre.prf mkspecs/features/mac/default_pre.prf
+--- /Volumes/BootCopy/Applications/Qt/5.5/ios/mkspecs/features/mac/default_pre.prf	2015-10-12 18:59:25.000000000 -0400
++++ mkspecs/features/mac/default_pre.prf	2016-09-18 19:53:59.000000000 -0400
+@@ -12,7 +12,7 @@
+         error("Xcode is not installed in $${QMAKE_XCODE_DEVELOPER_PATH}. Please use xcode-select to choose Xcode installation path.")
+ 
+     # Make sure Xcode is set up properly
+-    isEmpty($$list($$system("/usr/bin/xcrun -find xcrun 2>/dev/null"))): \
++    isEmpty($$list($$system("/usr/bin/xcrun -find xcodebuild 2>/dev/null"))): \
+         error("Xcode not set up properly. You may need to confirm the license agreement by running /usr/bin/xcodebuild.")
+ }
+ 
+diff -Naur /Volumes/BootCopy/Applications/Qt/5.5/ios/mkspecs/macx-ios-clang/features/sdk.prf mkspecs/macx-ios-clang/features/sdk.prf
+--- /Volumes/BootCopy/Applications/Qt/5.5/ios/mkspecs/macx-ios-clang/features/sdk.prf	2015-10-12 18:59:26.000000000 -0400
++++ mkspecs/macx-ios-clang/features/sdk.prf	2016-09-18 19:53:57.000000000 -0400
+@@ -11,8 +11,9 @@
+ 
+ load(sdk)
+ 
+-lessThan(QMAKE_MAC_SDK_VERSION, "8.0"): \
+-    error("Current $$QMAKE_MAC_SDK SDK version ($$QMAKE_MAC_SDK_VERSION) is too old. Please upgrade Xcode.")
++#-- This is a string compare and "10.0" is less then "8.0"
++#lessThan(QMAKE_MAC_SDK_VERSION, "8.0"): \
++#    error("Current $$QMAKE_MAC_SDK SDK version ($$QMAKE_MAC_SDK_VERSION) is too old. Please upgrade Xcode.")
+ 
+ macx-xcode {
+     sdk_path_iphoneos.name = "QMAKE_MAC_SDK_PATH[sdk=iphoneos*]"

@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+
+
+<PropertyList>
+
+ <sim>
+
+  <description> GPA amphibious Jeep</description>
+  <author>Detlef Faber</author>
+  <status>alpha</status>
+  <flight-model>yasim</flight-model>
+  <aero>gpa-yasim</aero>
+
+
+  <virtual-cockpit archive="y">true</virtual-cockpit>
+  <allow-toggle-cockpit archive="y">true</allow-toggle-cockpit>
+
+  <sound>
+   <path>Aircraft/Generic/generic-sound.xml</path>
+  </sound>
+
+  <model>
+   <path>Aircraft/jeep/Models/GPA.xml</path>
+   <crew>
+     <pilot>
+       <visible type="int">1</visible>
+     </pilot>
+   </crew>
+  </model> 
+	<walker>
+		<outside type="bool">false</outside>
+		<walking type="bool">false</walking>
+		<speed type="double">0.000006</speed>
+		<latitude-deg type="double">0.0</latitude-deg>
+		<longitude-deg type="double">0.0</longitude-deg>
+		<altitude-ft type="double">0.0</altitude-ft>
+		<heading-deg type="double">0.0</heading-deg>
+		<pitch-deg type="double">0.0</pitch-deg>
+		<roll-deg type="double">0.0</roll-deg>
+	</walker>
+  <chase-distance-m type="double" archive="y">-14.0</chase-distance-m>
+  <view n="0">
+   <internal archive="y">true</internal>
+   <config>
+    <x-offset-m archive="y" type="double">-0.35</x-offset-m>
+    <y-offset-m archive="y" type="double">1.5</y-offset-m>
+    <z-offset-m archive="y" type="double">2.295</z-offset-m>
+    <pitch-offset-deg>-15.0</pitch-offset-deg>
+   </config>
+  </view>
+
+  <view n="1">
+   <config>
+    <target-z-offset-m archive="y" type="double">1.6</target-z-offset-m>
+   </config>
+  </view>
+
+  <view n="2">
+   <config>
+    <target-z-offset-m archive="y" type="double">1.6</target-z-offset-m>
+   </config>
+  </view>
+
+  <view n="3">
+   <config>
+    <target-z-offset-m archive="y" type="double">1.6</target-z-offset-m>
+   </config>
+  </view>
+
+  <view n="4">
+   <config>
+    <target-z-offset-m archive="y" type="double">1.6</target-z-offset-m>
+   </config>
+  </view>
+
+  <view n="5">
+   <config>
+    <target-z-offset-m archive="y" type="double">1.6</target-z-offset-m>
+   </config>
+  </view>
+
+  <view n="6">
+   <config>
+    <target-z-offset-m archive="y" type="double">1.6</target-z-offset-m>
+   </config>
+  </view>
+
+  <view n="100">
+    <name>Walk View</name>
+    <type>lookfrom</type>
+    <config>
+      <eye-lat-deg-path>sim/walker/latitude-deg</eye-lat-deg-path>
+      <eye-lon-deg-path>sim/walker/longitude-deg</eye-lon-deg-path>
+      <eye-alt-ft-path>sim/walker/altitude-ft</eye-alt-ft-path>
+      <eye-heading-deg-path>sim/walker/heading-deg</eye-heading-deg-path>
+      <eye-roll-deg-path>sim/walker/roll-deg</eye-roll-deg-path>
+      <eye-pitch-deg-path>sim/walker/pitch-deg</eye-pitch-deg-path>
+
+
+      <ground-level-nearplane-m type="double">10.0</ground-level-nearplane-m>
+      <default-field-of-view-deg type="double">55.0</default-field-of-view-deg>
+
+     <x-offset-m archive="y" type="double">0.35</x-offset-m>
+     <y-offset-m archive="y" type="double">1.5</y-offset-m>
+     <z-offset-m archive="y" type="double">2.295</z-offset-m>
+
+    </config>
+  </view>
+
+
+  <hud>
+   <enable3d>false</enable3d>
+  </hud>
+
+  <help>
+    <key>
+      <name>,</name>
+      <desc>Brakes</desc>
+    </key>
+    <key>
+      <name>.</name>
+      <desc>Accelerator</desc>
+    </key>
+    <key>
+      <name>o</name>
+      <desc>Walker gets outside</desc>
+    </key>
+    <key>
+      <name>o</name>
+      <desc>Walker gets back in</desc>
+    </key>
+    <key>
+      <name>w</name>
+      <desc>Walk forward while in Walk View</desc>
+    </key>
+  </help>
+	<menubar>
+		<default>
+			<menu n="10">
+				<label>Jeep</label>
+					<enabled type="bool">true</enabled>
+					<item>
+						<label>tilt Windscreen forward</label>
+						<binding>
+          <command>property-toggle</command>
+          <property>/controls/gear/screen</property>
+						</binding>
+					</item>
+					<item>
+						<label>put Splashshield on</label>
+						<binding>
+          <command>property-toggle</command>
+          <property>/controls/gear/shield</property>
+						</binding>
+					</item>
+			</menu>
+		</default>
+	</menubar>
+ </sim>
+
+ <engines>
+  <engine>
+   <rpm type="double">700</rpm>
+  </engine>
+ </engines>
+ <controls>
+   <engines>
+      <engine n="0">
+        <magnetos>3</magnetos>
+      </engine>
+   </engines>
+	<gear>
+		<screen type="bool">false</screen>
+		<roof type="bool">false</roof>
+	</gear>
+ </controls>
+<input>
+	<keyboard>
+        <key n="77"> 
+          <name>M</name>
+          <desc>engage Reverse</desc>
+          <binding> 
+            <command>property-assign</command>
+            <property>controls/engines/engine[0]/mixture</property>
+            <value type="double">0.0</value>
+          </binding>
+        </key>
+        <key n="109"> 
+          <name>m</name>
+          <desc>disengage Reverse</desc>
+          <binding> 
+            <command>property-assign</command>
+            <property>controls/engines/engine[0]/mixture</property>
+            <value type="double">1.0</value>
+          </binding>
+        </key>
+        <key n="111"> 
+          <name>o</name>
+          <desc>get Walker out</desc>
+          <binding> 
+            <command>nasal</command>
+          <script>walk.get_out();</script>
+          </binding>
+        </key>
+        <key n="79"> 
+          <name>O</name>
+          <desc>get Walker in</desc>
+          <binding> 
+            <command>nasal</command>
+          <script>walk.get_in();</script>
+          </binding>
+        </key>
+     		 <key n="119"> 
+      	  <name>w</name>
+     		   <desc>walk forward</desc>
+     	   <binding n="0"> 
+  			 <command>property-toggle</command>
+  			 <property>/sim/walker/walking</property>
+        </binding>
+				<mod-up>
+					<binding>
+			 		 <command>property-toggle</command>
+  				 <property>/sim/walker/walking</property>
+        </binding>
+				</mod-up>
+      </key>
+	</keyboard>
+</input>
+ <nasal>
+   <walk>
+     <file>Aircraft/jeep/Nasal/walk.nas</file>
+     <script>main_loop();</script>
+   </walk>
+ </nasal>
+</PropertyList>
+
+
+
+

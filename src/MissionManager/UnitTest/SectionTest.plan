@@ -1,0 +1,119 @@
+{
+    "fileType": "Plan",
+    "geoFence": {
+        "polygon": [
+        ],
+        "version": 1
+    },
+    "groundStation": "QGroundControl",
+    "mission": {
+        "cruiseSpeed": 15,
+        "firmwareType": 12,
+        "hoverSpeed": 5,
+        "items": [
+            {
+                "autoContinue": true,
+                "command": 22,
+                "coordinate": [
+                    47.63311996,
+                    -122.090763,
+                    20
+                ],
+                "doJumpId": 1,
+                "frame": 3,
+                "params": [
+                    0,
+                    0,
+                    0,
+                    null
+                ],
+                "type": "SimpleItem"
+            },
+            {
+                "autoContinue": true,
+                "command": 16,
+                "coordinate": [
+                    47.63369112,
+                    -122.08925023,
+                    20
+                ],
+                "doJumpId": 2,
+                "frame": 3,
+                "params": [
+                    0,
+                    0,
+                    0,
+                    null
+                ],
+                "type": "SimpleItem"
+            },
+            {
+                "autoContinue": true,
+                "command": 16,
+                "coordinate": [
+                    47.63345253,
+                    -122.08725467,
+                    20
+                ],
+                "doJumpId": 3,
+                "frame": 3,
+                "params": [
+                    0,
+                    0,
+                    0,
+                    null
+                ],
+                "type": "SimpleItem"
+            },
+            {
+                "autoContinue": true,
+                "command": 205,
+                "coordinate": [
+                    0,
+                    0,
+                    2
+                ],
+                "doJumpId": 4,
+                "frame": 2,
+                "params": [
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "type": "SimpleItem"
+            },
+            {
+                "autoContinue": true,
+                "command": 16,
+                "coordinate": [
+                    47.63261386,
+                    -122.08661094,
+                    20
+                ],
+                "doJumpId": 5,
+                "frame": 3,
+                "params": [
+                    0,
+                    0,
+                    0,
+                    null
+                ],
+                "type": "SimpleItem"
+            }
+        ],
+        "plannedHomePosition": [
+            47.633389756176875,
+            -122.09076300000001,
+            20
+        ],
+        "vehicleType": 2,
+        "version": 2
+    },
+    "rallyPoints": {
+        "points": [
+        ],
+        "version": 1
+    },
+    "version": 1
+}

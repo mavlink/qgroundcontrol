@@ -1,0 +1,45 @@
+[
+{
+    "name":             "camera tilt",
+    "shortDescription": "Camera Tilt",
+    "type":             "int16",
+    "units":            "%"
+},
+{
+    "name":             "tether turns",
+    "shortDescription": "Tether Turns",
+    "type":             "int16",
+    "units":            "clockwise"
+},
+{
+    "name":             "lights 1",
+    "shortDescription": "Lights 1 level",
+    "type":             "int16",
+    "units":            "%"
+},
+{
+    "name":             "lights 2",
+    "shortDescription": "Lights 2 level",
+    "type":             "int16",
+    "units":            "%"
+},
+{
+    "name":             "pilot gain",
+    "shortDescription": "Pilot Gain",
+    "type":             "int16",
+    "units":            "%"
+},
+{
+    "name":             "input hold",
+    "shortDescription": "Input Hold",
+    "type":             "int16",
+    "enumStrings":      "Disabled,Enabled",
+    "enumValues":       "0,1"
+},
+{    "name":             "rangefinder distance",
+    "shortDescription": "Rangefinder",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "units":            "meters"
+}
+]

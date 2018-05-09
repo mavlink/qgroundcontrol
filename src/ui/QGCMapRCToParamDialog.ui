@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCMapRCToParamDialog</class>
+ <widget class="QDialog" name="QGCMapRCToParamDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>358</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QFormLayout" name="formLayout">
+     <property name="fieldGrowthPolicy">
+      <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label1">
+       <property name="text">
+        <string>Bind</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="rcParamChannelInfoLabel">
+       <property name="text">
+        <string>Parameter Tuning ID</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="rcParamChannelComboBox">
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <property name="currentText">
+        <string>1</string>
+       </property>
+       <item>
+        <property name="text">
+         <string>1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>3</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="paramIdInfoLabel">
+       <property name="text">
+        <string>Parameter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLabel" name="paramIdLabel">
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label3">
+       <property name="text">
+        <string>with</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="scaleInfoLabel">
+       <property name="text">
+        <string>Scale (keep default)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QDoubleSpinBox" name="scaleDoubleSpinBox">
+       <property name="value">
+        <double>1.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="value0InfoLabel">
+       <property name="text">
+        <string>Center value</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QDoubleSpinBox" name="value0DoubleSpinBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="decimals">
+        <number>8</number>
+       </property>
+       <property name="minimum">
+        <double>-100000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>100000.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="minInfoLabel">
+       <property name="text">
+        <string>Minimum Value</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QDoubleSpinBox" name="minValueDoubleSpinBox">
+       <property name="decimals">
+        <number>8</number>
+       </property>
+       <property name="minimum">
+        <double>-100000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>100000.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="maxInfoLabel">
+       <property name="text">
+        <string>Maximum Value</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QDoubleSpinBox" name="maxValueDoubleSpinBox">
+       <property name="decimals">
+        <number>8</number>
+       </property>
+       <property name="minimum">
+        <double>-10000.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>100000.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="value">
+        <double>10.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QLabel" name="infoLabel">
+       <property name="text">
+        <string>Waiting for parameter refresh,,,</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QLabel" name="label2">
+       <property name="text">
+        <string>Tuning IDs can be mapped to channels in the RC settings</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>QGCMapRCToParamDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>QGCMapRCToParamDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

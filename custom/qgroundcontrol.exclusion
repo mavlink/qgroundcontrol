@@ -1,0 +1,3 @@
+        <file alias="APMArduCopterMockLink.params">src/comm/APMArduCopterMockLink.params</file>
+        <file alias="APMArduPlaneMockLink.params">src/comm/APMArduPlaneMockLink.params</file>
+        <file alias="APMArduSubMockLink.params">src/comm/APMArduSubMockLink.params</file>

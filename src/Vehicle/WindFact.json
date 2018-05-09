@@ -1,0 +1,24 @@
+[
+{
+    "name":             "direction",
+    "shortDescription": "Wind Direction",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "speed",
+    "shortDescription": "Wind Spd",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+},
+{
+    "name":             "verticalSpeed",
+    "shortDescription": "Wind Spd (vert)",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m/s"
+}
+]
+

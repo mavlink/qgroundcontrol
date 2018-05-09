@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!-- Calculated from http://brantuas.com/ezcalc/dma1.asp using a Speed 400 motor, 5.5x4.5 prop and 8 KAN 950 cells -->
+
+<electric_engine name="ElecMot400">
+  <power unit="WATTS">  70.0 </power>
+</electric_engine>

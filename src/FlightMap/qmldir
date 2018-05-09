@@ -1,0 +1,29 @@
+Module QGroundControl.FlightMap
+
+# Main view controls
+FlightMap           1.0 FlightMap.qml
+QGCVideoBackground  1.0 QGCVideoBackground.qml
+
+# Widgets
+CenterMapDropButton     1.0 CenterMapDropButton.qml
+CenterMapDropPanel      1.0 CenterMapDropPanel.qml
+CompassRing             1.0 CompassRing.qml
+InstrumentSwipeView     1.0 InstrumentSwipeView.qml
+MapFitFunctions         1.0 MapFitFunctions.qml
+MapScale                1.0 MapScale.qml
+QGCArtificialHorizon    1.0 QGCArtificialHorizon.qml
+QGCAttitudeHUD          1.0 QGCAttitudeHUD.qml
+QGCAttitudeWidget       1.0 QGCAttitudeWidget.qml
+QGCCompassWidget        1.0 QGCCompassWidget.qml
+QGCPitchIndicator       1.0 QGCPitchIndicator.qml
+
+# Map items
+CameraTriggerIndicator      1.0 CameraTriggerIndicator.qml
+CustomMapItems              1.0 CustomMapItems.qml
+MissionItemIndicator        1.0 MissionItemIndicator.qml
+MissionItemIndicatorDrag    1.0 MissionItemIndicatorDrag.qml
+MissionItemView             1.0 MissionItemView.qml
+MissionLineView             1.0 MissionLineView.qml
+PlanMapItems                1.0 PlanMapItems.qml
+PolygonEditor               1.0 PolygonEditor.qml
+VehicleMapItem              1.0 VehicleMapItem.qml
