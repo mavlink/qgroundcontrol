@@ -111,9 +111,14 @@ private:
     bool                _itemsRequested;
     Fact*               _px4ParamCircularFenceFact;
 
+    static const char* _px4ParamCircularFence;
+
+    static const int _jsonCurrentVersion = 1;
+
     static const char* _jsonFileTypeValue;
     static const char* _jsonBreachReturnKey;
-    static const char* _px4ParamCircularFence;
+    static const char* _jsonPolygonsKey;
+    static const char* _jsonCirclesKey;
 };
 
 #endif

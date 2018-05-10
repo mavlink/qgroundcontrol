@@ -28,8 +28,8 @@ Item {
     property bool   planView:               false   ///< true: visuals showing in plan view
     property var    homePosition
 
-    property var    _breachReturnPointComponent
-    property var    _mouseAreaComponent
+    //property var    _breachReturnPointComponent
+    //property var    _mouseAreaComponent
     property var    _paramCircleFenceComponent
     property var    _polygons:                  myGeoFenceController.polygons
     property var    _circles:                   myGeoFenceController.circles
@@ -75,17 +75,17 @@ Item {
     }
 
     Component.onCompleted: {
-        _breachReturnPointComponent = breachReturnPointComponent.createObject(map)
-        map.addMapItem(_breachReturnPointComponent)
+        //_breachReturnPointComponent = breachReturnPointComponent.createObject(map)
+        //map.addMapItem(_breachReturnPointComponent)
+        //_mouseAreaComponent = mouseAreaComponent.createObject(map)
         _paramCircleFenceComponent = paramCircleFenceComponent.createObject(map)
         map.addMapItem(_paramCircleFenceComponent)
-        _mouseAreaComponent = mouseAreaComponent.createObject(map)
     }
 
     Component.onDestruction: {
-        _breachReturnPointComponent.destroy()
+        //_breachReturnPointComponent.destroy()
+        //_mouseAreaComponent.destroy()
         _paramCircleFenceComponent.destroy()
-        _mouseAreaComponent.destroy()
     }
 
     // Mouse area to capture breach return point coordinate
