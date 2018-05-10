@@ -918,7 +918,7 @@ void SimpleMissionItem::applyNewAltitude(double newAltitude)
             // Leave alone
             break;
         default:
-            _missionItem.setParam7(newAltitude);
+            _altitudeFact.setRawValue(newAltitude);
             break;
         }
     }
