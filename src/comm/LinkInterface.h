@@ -39,7 +39,7 @@ class LinkInterface : public QThread
 
 public:    
     virtual ~LinkInterface() {
-        timerStop();
+        stopHeartbeatTimer();
         _config->setLink(NULL);
     }
 
@@ -260,18 +260,19 @@ private:
     void _setMavlinkChannel(uint8_t channel);
     
     /**
-     * @brief timerStart
+     * @brief startHeartbeatTimer
      *
-     * Allocate the timer if it does not exist yet and start it.
+     * Start/restart the heartbeat timer for the specific vehicle.
+     * If no timer exists an instance is allocated.
      */
-    void timerStart(int vehicle_id);
+    void startHeartbeatTimer(int vehicle_id);
 
     /**
-     * @brief timerStop
+     * @brief stopHeartbeatTimer
      *
-     * Stop and deallocate the timer if it exists.
+     * Stop and deallocate the heartbeat timers for all vehicles if any exists.
      */
-    void timerStop();
+    void stopHeartbeatTimer();
 
     bool _mavlinkChannelSet;    ///< true: _mavlinkChannel has been set
     uint8_t _mavlinkChannel;    ///< mavlink channel to use for this link, as used by mavlink_parse_char
@@ -297,7 +298,7 @@ private:
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
 
-    QList<HeartbeatTimer*> _heartbeatTimerList;
+    QMap<int /* vehicle id */, HeartbeatTimer*> _heartbeatTimers;
 };
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;
