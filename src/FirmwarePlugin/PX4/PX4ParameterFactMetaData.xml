@@ -527,7 +527,7 @@ Set to 2 to use heading from motion capture</short_desc>
   </group>
   <group name="Commander">
     <parameter default="256010" name="COM_ARM_AUTH" type="INT32">
-      <short_desc>Arm authorization parameters, this uint32_t will be splitted between starting from the LSB:
+      <short_desc>Arm authorization parameters, this uint32_t will be split between starting from the LSB:
 - 8bits to authorizer system id
 - 16bits to authentication method parameter, this will be used to store a timeout for the first 2 methods but can be used to another parameter for other new authentication methods.
 - 7bits to authentication method
@@ -878,9 +878,9 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <scope>modules/commander</scope>
       <values>
         <value code="0">Warning</value>
-        <value code="1">Return to land</value>
-        <value code="2">Land at current position</value>
-        <value code="3">Return to land at critically low level, land at current position if reaching dangerously low levels</value>
+        <value code="1">Return mode</value>
+        <value code="2">Land mode</value>
+        <value code="3">Return mode at critically low level, Land mode at current position if reaching dangerously low levels</value>
       </values>
     </parameter>
     <parameter default="0.0" name="COM_OF_LOSS_T" type="FLOAT">
@@ -3171,9 +3171,9 @@ but also ignore less noise</short_desc>
       <values>
         <value code="0">None</value>
         <value code="1">Warning</value>
-        <value code="2">Loiter</value>
-        <value code="3">Return to Land</value>
-        <value code="4">Flight terminate</value>
+        <value code="2">Hold mode</value>
+        <value code="3">Return mode</value>
+        <value code="4">Terminate</value>
       </values>
     </parameter>
     <parameter default="0" name="GF_ALTMODE" type="INT32">
@@ -3883,9 +3883,9 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
       <scope>modules/commander</scope>
       <values>
-        <value code="0">Land at current position</value>
-        <value code="1">Loiter</value>
-        <value code="2">Return to Land</value>
+        <value code="0">Land mode</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Return mode</value>
       </values>
     </parameter>
     <parameter default="0" name="COM_OBL_RC_ACT" type="INT32">
@@ -3893,21 +3893,21 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
       <scope>modules/commander</scope>
       <values>
-        <value code="0">Position control</value>
-        <value code="1">Altitude control</value>
+        <value code="0">Position mode</value>
+        <value code="1">Altitude mode</value>
         <value code="2">Manual</value>
-        <value code="3">Return to Land</value>
-        <value code="4">Land at current position</value>
-        <value code="5">Loiter</value>
+        <value code="3">Return mode</value>
+        <value code="4">Land mode</value>
+        <value code="5">Hold mode</value>
       </values>
     </parameter>
     <parameter default="0" name="COM_POSCTL_NAVL" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
-      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequte for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
+      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
       <scope>modules/commander</scope>
       <values>
-        <value code="0">Assume use of remote control after fallback. Switch to ALTCTL if a height estimate is available, else switch to MANUAL.</value>
-        <value code="1">Assume no use of remote control after fallback. Switch to DESCEND if a height estimate is available, else switch to TERMINATION.</value>
+        <value code="0">Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
+        <value code="1">Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
       </values>
     </parameter>
     <parameter default="0" name="COM_TAKEOFF_ACT" type="INT32">
@@ -4029,9 +4029,9 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <scope>modules/navigator</scope>
       <values>
         <value code="0">Disabled</value>
-        <value code="1">Loiter</value>
-        <value code="2">Return to Land</value>
-        <value code="3">Land at current position</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Return mode</value>
+        <value code="3">Land mode</value>
         <value code="4">Data Link Auto Recovery (CASA Outback Challenge rules)</value>
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
@@ -4054,7 +4054,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
     <parameter default="50.0" name="NAV_LOITER_RAD" type="FLOAT">
       <short_desc>Loiter radius (FW only)</short_desc>
-      <long_desc>Default value of loiter radius for missions, loiter, RTL, etc. (fixedwing only).</long_desc>
+      <long_desc>Default value of loiter radius for missions, Hold mode, Return mode, etc. (fixedwing only).</long_desc>
       <min>25</min>
       <max>1000</max>
       <unit>m</unit>
@@ -4078,9 +4078,9 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <scope>modules/navigator</scope>
       <values>
         <value code="0">Disabled</value>
-        <value code="1">Loiter</value>
-        <value code="2">Return to Land</value>
-        <value code="3">Land at current position</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Return mode</value>
+        <value code="3">Land mode</value>
         <value code="4">RC Auto Recovery (CASA Outback Challenge rules)</value>
         <value code="5">Terminate</value>
         <value code="6">Lockdown</value>
@@ -4102,8 +4102,8 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <values>
         <value code="0">Disabled</value>
         <value code="1">Warn only</value>
-        <value code="2">Return to Land</value>
-        <value code="3">Land immediately</value>
+        <value code="2">Return mode</value>
+        <value code="3">Land mode</value>
       </values>
     </parameter>
     <parameter default="0" name="VT_WV_LND_EN" type="INT32">
@@ -7454,9 +7454,9 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
   </group>
-  <group name="Return To Land">
+  <group name="Return Mode">
     <parameter default="30" name="RTL_DESCEND_ALT" type="FLOAT">
-      <short_desc>RTL loiter altitude</short_desc>
+      <short_desc>Return mode loiter altitude</short_desc>
       <long_desc>Stay at this altitude above home position after RTL descending. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
       <min>2</min>
       <max>100</max>
@@ -7466,23 +7466,14 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/navigator</scope>
     </parameter>
     <parameter default="-1.0" name="RTL_LAND_DELAY" type="FLOAT">
-      <short_desc>RTL delay</short_desc>
-      <long_desc>Delay after descend before landing in RTL mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
+      <short_desc>Return mode delay</short_desc>
+      <long_desc>Delay after descend before landing in Return mode. If set to -1 the system will not land but loiter at RTL_DESCEND_ALT.</long_desc>
       <min>-1</min>
       <max>300</max>
       <unit>s</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
       <scope>modules/navigator</scope>
-    </parameter>
-    <parameter default="0" name="RTL_LAND_TYPE" type="INT32">
-      <short_desc>RTL land location</short_desc>
-      <long_desc>Land at the home location or planned mission landing</long_desc>
-      <scope>modules/navigator</scope>
-      <values>
-        <value code="0">Home Position</value>
-        <value code="1">Planned Landing (Mission)</value>
-      </values>
     </parameter>
     <parameter default="5.0" name="RTL_MIN_DIST" type="FLOAT">
       <short_desc>Minimum distance to trigger rising to a safe altitude</short_desc>
@@ -7503,6 +7494,17 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
       <scope>modules/navigator</scope>
+    </parameter>
+  </group>
+  <group name="Return To Land">
+    <parameter default="0" name="RTL_LAND_TYPE" type="INT32">
+      <short_desc>RTL land location</short_desc>
+      <long_desc>Land at the home location or planned mission landing</long_desc>
+      <scope>modules/navigator</scope>
+      <values>
+        <value code="0">Home Position</value>
+        <value code="1">Planned Landing (Mission)</value>
+      </values>
     </parameter>
   </group>
   <group name="Runway Takeoff">
