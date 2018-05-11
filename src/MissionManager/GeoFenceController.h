@@ -113,7 +113,7 @@ private:
 
     static const char* _px4ParamCircularFence;
 
-    static const int _jsonCurrentVersion = 1;
+    static const int _jsonCurrentVersion = 2;
 
     static const char* _jsonFileTypeValue;
     static const char* _jsonBreachReturnKey;

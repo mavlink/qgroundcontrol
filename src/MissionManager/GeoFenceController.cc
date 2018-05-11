@@ -119,7 +119,14 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
 
 bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 {
+    removeAll();
+
     errorString.clear();
+
+    if (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1) {
+        // We just ignore old version 1 data
+        return true;
+    }
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
