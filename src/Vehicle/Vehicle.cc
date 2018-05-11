@@ -1611,9 +1611,9 @@ void Vehicle::_addLink(LinkInterface* link)
         qCDebug(VehicleLog) << "_addLink:" << QString("%1").arg((ulong)link, 0, 16);
         _links += link;
         if (_links.count() <= 1) {
-            _updatePriorityLink(true, false);
+            _updatePriorityLink(true /* updateActive */, false /* sendCommand */);
         } else {
-            _updatePriorityLink(true, true);
+            _updatePriorityLink(true /* updateActive */, true /* sendCommand */);
         }
 
         connect(_toolbox->linkManager(), &LinkManager::linkInactive, this, &Vehicle::_linkInactiveOrDeleted);
@@ -1633,7 +1633,7 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
         _priorityLink.clear();
     }
 
-    _updatePriorityLink(true, true);
+    _updatePriorityLink(true /* updateActive */, true /* sendCommand */);
 
     if (_links.count() == 0 && !_allLinksInactiveSent) {
         qCDebug(VehicleLog) << "All links inactive";
@@ -2480,7 +2480,7 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
             // communication to priority link regained
             _connectionLost = false;
             emit connectionLostChanged(false);
-            qgcApp()->showMessage((tr("%1 communication to priority link %2 regained")).arg(_vehicleIdSpeech()).arg(link->getName()));
+            qgcApp()->showMessage((tr("%1 communication to %2 link %3 regained")).arg(_vehicleIdSpeech()).arg((_links.count() > 1) ? "priority" : "").arg(link->getName()));
 
             if (_priorityLink->highLatency()) {
                 _setMaxProtoVersion(100);
@@ -2494,9 +2494,9 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
 
         } else if (!active && !_connectionLost) {
             // communication to priority link lost
-            qgcApp()->showMessage((tr("%1 communication to priority link %2 lost")).arg(_vehicleIdSpeech()).arg(link->getName()));
+            qgcApp()->showMessage((tr("%1 communication to %2 link %3 lost")).arg(_vehicleIdSpeech()).arg((_links.count() > 1) ? "priority" : "").arg(link->getName()));
 
-            _updatePriorityLink(false, true);
+            _updatePriorityLink(false /* updateActive */, true /* sendCommand */);
 
             if (link == _priorityLink) {
                 _say(QString(tr("%1 communication lost")).arg(_vehicleIdSpeech()));
@@ -2520,7 +2520,7 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
         }
     } else {
         qgcApp()->showMessage((tr("%1 communication to auxiliary link %2 %3")).arg(_vehicleIdSpeech()).arg(link->getName()).arg(active ? "regained" : "lost"));
-        _updatePriorityLink(false, true);
+        _updatePriorityLink(false /* updateActive */, true /* sendCommand */);
     }
 }
 
@@ -3408,17 +3408,10 @@ void Vehicle::_updateHighLatencyLink(bool sendCommand)
         emit highLatencyLinkChanged(_highLatencyLink);
 
         if (sendCommand) {
-            if (_highLatencyLink) {
-                sendMavCommand(defaultComponentId(),
-                               MAV_CMD_CONTROL_HIGH_LATENCY,
-                               true,
-                               1.0f); // request start transmitting over high latency telemetry
-            } else {
-                sendMavCommand(defaultComponentId(),
-                               MAV_CMD_CONTROL_HIGH_LATENCY,
-                               true,
-                               0.0f); // request stop transmitting over high latency telemetry
-            }
+            sendMavCommand(defaultComponentId(),
+                           MAV_CMD_CONTROL_HIGH_LATENCY,
+                           true,
+                           _highLatencyLink ? 1.0f : 0.0f); // request start/stop transmitting over high latency telemetry
         }
     }
 }

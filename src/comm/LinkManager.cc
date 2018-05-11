@@ -1011,5 +1011,5 @@ void LinkManager::_heartbeatReceived(LinkInterface* link, int vehicleId, int com
     Q_UNUSED(vehicleFirmwareType);
     Q_UNUSED(vehicleType);
 
-    link->timerStart(vehicleId);
+    link->startHeartbeatTimer(vehicleId);
 }

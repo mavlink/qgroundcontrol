@@ -12,8 +12,10 @@
 
 bool LinkInterface::active() const
 {
-    for( int i=0; i<_heartbeatTimerList.count(); ++i ) {
-        if (_heartbeatTimerList[i]->getActive()) {
+    QMapIterator<int /* vehicle id */, HeartbeatTimer*> iter(_heartbeatTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        if (iter.value()->getActive()) {
             return true;
         }
     }
@@ -23,13 +25,11 @@ bool LinkInterface::active() const
 
 bool LinkInterface::active(int vehicle_id) const
 {
-    for( int i=0; i<_heartbeatTimerList.count(); ++i ) {
-        if (_heartbeatTimerList[i]->getVehicleID() == vehicle_id) {
-            return _heartbeatTimerList[i]->getActive();
-        }
+    if (_heartbeatTimers.contains(vehicle_id)) {
+        return _heartbeatTimers.value(vehicle_id)->getActive();
+    } else {
+        return false;
     }
-
-    return false;
 }
 
 /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
@@ -186,29 +186,23 @@ void LinkInterface::_activeChanged(bool active, int vehicle_id)
     emit activeChanged(this, active, vehicle_id);
 }
 
-void LinkInterface::timerStart(int vehicle_id) {
-    int timer_index{-1};
-    for( int i=0; i<_heartbeatTimerList.count(); ++i ) {
-        if (_heartbeatTimerList[i]->getVehicleID() == vehicle_id) {
-            timer_index = i;
-            break;
-        }
-    }
-
-    if (timer_index != -1) {
-        _heartbeatTimerList[timer_index]->restartTimer();
+void LinkInterface::startHeartbeatTimer(int vehicle_id) {
+    if (_heartbeatTimers.contains(vehicle_id)) {
+        _heartbeatTimers.value(vehicle_id)->restartTimer();
     } else {
-        _heartbeatTimerList.append(new HeartbeatTimer(vehicle_id, _highLatency));
-        QObject::connect(_heartbeatTimerList.last(), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        _heartbeatTimers.insert(vehicle_id, new HeartbeatTimer(vehicle_id, _highLatency));
+        QObject::connect(_heartbeatTimers.value(vehicle_id), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
     }
 }
 
-void LinkInterface::timerStop() {
-    for(int i=0; i<_heartbeatTimerList.count(); ++i ) {
-        QObject::disconnect(_heartbeatTimerList[i], &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
-        delete _heartbeatTimerList[i];
-        _heartbeatTimerList[i] = nullptr;
+void LinkInterface::stopHeartbeatTimer() {
+    QMapIterator<int /* vehicle id */, HeartbeatTimer*> iter(_heartbeatTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        QObject::disconnect(iter.value(), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        delete _heartbeatTimers[iter.key()];
+        _heartbeatTimers[iter.key()] = nullptr;
     }
 
-    _heartbeatTimerList.clear();
+    _heartbeatTimers.clear();
 }

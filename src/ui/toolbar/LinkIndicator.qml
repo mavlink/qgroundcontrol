@@ -59,10 +59,12 @@ Item {
             }
         }
         Component.onCompleted: priorityLinkSelector.updatelinkSelectionMenu()
+
         Connections {
             target:                 QGroundControl.multiVehicleManager
             onActiveVehicleChanged: priorityLinkSelector.updatelinkSelectionMenu()
         }
+
         Connections {
             target:                 _activeVehicle
             onLinkNamesChanged:     priorityLinkSelector.updatelinkSelectionMenu()
