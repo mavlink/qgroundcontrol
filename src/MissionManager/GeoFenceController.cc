@@ -34,6 +34,9 @@ QGC_LOGGING_CATEGORY(GeoFenceControllerLog, "GeoFenceControllerLog")
 
 const char* GeoFenceController::_jsonFileTypeValue =        "GeoFence";
 const char* GeoFenceController::_jsonBreachReturnKey =      "breachReturn";
+const char* GeoFenceController::_jsonPolygonsKey =          "polygons";
+const char* GeoFenceController::_jsonCirclesKey =           "circles";
+
 const char* GeoFenceController::_px4ParamCircularFence =    "GF_MAX_HOR_DIST";
 
 GeoFenceController::GeoFenceController(PlanMasterController* masterController, QObject* parent)
@@ -116,46 +119,84 @@ void GeoFenceController::managerVehicleChanged(Vehicle* managerVehicle)
 
 bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 {
-    Q_UNUSED(json);
-    Q_UNUSED(errorString);
+    removeAll();
 
-#if 0
-    QString errorStr;
-    QString errorMessage = tr("GeoFence: %1");
+    errorString.clear();
 
-    if (json.contains(_jsonBreachReturnKey) &&
-            !JsonHelper::loadGeoCoordinate(json[_jsonBreachReturnKey], false /* altitudeRequired */, _breachReturnPoint, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
+    if (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1) {
+        // We just ignore old version 1 data
+        return true;
+    }
+
+    QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+        { _jsonCirclesKey,              QJsonValue::Array,  true },
+        { _jsonPolygonsKey,             QJsonValue::Array,  true },
+    };
+    if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         return false;
     }
 
-    if (!_mapPolygon.loadFromJson(json, true, errorStr)) {
-        errorString = errorMessage.arg(errorStr);
+    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+        errorString = tr("GeoFence supports version %1").arg(_jsonCurrentVersion);
         return false;
     }
-    _mapPolygon.setDirty(false);
+
+    QJsonArray jsonPolygonArray = json[_jsonPolygonsKey].toArray();
+    foreach (const QJsonValue& jsonPolygonValue, jsonPolygonArray) {
+        if (jsonPolygonValue.type() != QJsonValue::Object) {
+            errorString = tr("GeoFence polygon not stored as object");
+            return false;
+        }
+
+        QGCFencePolygon* fencePolygon = new QGCFencePolygon(false /* inclusion */, this /* parent */);
+        if (!fencePolygon->loadFromJson(jsonPolygonValue.toObject(), true /* required */, errorString)) {
+            return false;
+        }
+        _polygons.append(fencePolygon);
+    }
+
+    QJsonArray jsonCircleArray = json[_jsonCirclesKey].toArray();
+    foreach (const QJsonValue& jsonCircleValue, jsonCircleArray) {
+        if (jsonCircleValue.type() != QJsonValue::Object) {
+            errorString = tr("GeoFence circle not stored as object");
+            return false;
+        }
+
+        QGCFenceCircle* fenceCircle = new QGCFenceCircle(this /* parent */);
+        if (!fenceCircle->loadFromJson(jsonCircleValue.toObject(), errorString)) {
+            return false;
+        }
+        _circles.append(fenceCircle);
+    }
+
     setDirty(false);
-
     _signalAll();
-#endif
 
     return true;
 }
 
-void  GeoFenceController::save(QJsonObject& json)
+void GeoFenceController::save(QJsonObject& json)
 {
-    Q_UNUSED(json);
-#if 0
-    json[JsonHelper::jsonVersionKey] = 1;
+    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
 
-    if (_breachReturnPoint.isValid()) {
-        QJsonValue jsonBreachReturn;
-        JsonHelper::saveGeoCoordinate(_breachReturnPoint, false /* writeAltitude */, jsonBreachReturn);
-        json[_jsonBreachReturnKey] = jsonBreachReturn;
+    QJsonArray jsonPolygonArray;
+    for (int i=0; i<_polygons.count(); i++) {
+        QJsonObject jsonPolygon;
+        QGCFencePolygon* fencePolygon = _polygons.value<QGCFencePolygon*>(i);
+        fencePolygon->saveToJson(jsonPolygon);
+        jsonPolygonArray.append(jsonPolygon);
     }
+    json[_jsonPolygonsKey] = jsonPolygonArray;
 
-    _mapPolygon.saveToJson(json);
-#endif
+    QJsonArray jsonCircleArray;
+    for (int i=0; i<_circles.count(); i++) {
+        QJsonObject jsonCircle;
+        QGCFenceCircle* fenceCircle = _circles.value<QGCFenceCircle*>(i);
+        fenceCircle->saveToJson(jsonCircle);
+        jsonCircleArray.append(jsonCircle);
+    }
+    json[_jsonCirclesKey] = jsonCircleArray;
 }
 
 void GeoFenceController::removeAll(void)
