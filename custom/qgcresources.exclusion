@@ -3,3 +3,4 @@
         <file alias="APM/BrandImageSub">src/FirmwarePlugin/APM/APMBrandImageSub.png</file>
         <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
         <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
+        <file alias="QGCLogoWhite">../resources/QGCLogoWhite.svg</file>

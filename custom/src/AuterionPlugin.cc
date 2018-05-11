@@ -77,12 +77,12 @@ AuterionPlugin::options()
 QString
 AuterionPlugin::brandImageIndoor(void) const
 {
-    return QStringLiteral("/auterion/img/auterion_logo.png");
+    return QStringLiteral("/auterion/img/void.png");
 }
 
 //-----------------------------------------------------------------------------
 QString
 AuterionPlugin::brandImageOutdoor(void) const
 {
-    return QStringLiteral("/auterion/img/auterion_logo.png");
+    return QStringLiteral("/auterion/img/void.png");
 }

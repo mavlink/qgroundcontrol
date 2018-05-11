@@ -1,9 +1,12 @@
 <RCC>
+    <qresource prefix="/qml">
+        <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/AuterionQGCToolBarButton.qml</file>
+    </qresource>
     <qresource prefix="/res">
-        <file alias="QGCLogoFull">res/images/auterion_icon.png</file>
+        <file alias="QGCLogoFull">res/images/toolbar_logo.svg</file>
+        <file alias="QGCLogoWhite">res/images/toolbar_logo.svg</file>
     </qresource>
     <qresource prefix="/auterion/img">
-        <file alias="auterion_icon.png">res/images/auterion_icon.png</file>
-        <file alias="auterion_logo.png">res/images/auterion_logo.png</file>
+        <file alias="void.png">res/images/void.png</file>
     </qresource>
 </RCC>
