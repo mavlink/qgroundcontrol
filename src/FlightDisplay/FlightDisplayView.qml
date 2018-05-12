@@ -696,17 +696,19 @@ QGCView {
             id:         checklistRect
             visible:    true
             width:      mainColumn.width + 3*ScreenTools.defaultFontPixelWidth
-            height:     mainColumn.height * 1.04
+            height:     mainColumn.height + ScreenTools.defaultFontPixelHeight
             color:      qgcPal.windowShade
             radius:     3
             enabled:    QGroundControl.multiVehicleManager.vehicles.count > 0;
 
             Column {
-                id:         mainColumn
-                x:          1.5*ScreenTools.defaultFontPixelWidth
-                y:          0.4*ScreenTools.defaultFontPixelWidth
-                width:      40*ScreenTools.defaultFontPixelWidth
-                spacing:    0.8*ScreenTools.defaultFontPixelWidth
+                id:                     mainColumn
+                width:                  40*ScreenTools.defaultFontPixelWidth
+                spacing:                0.8*ScreenTools.defaultFontPixelWidth
+                anchors.left:           parent.left
+                anchors.top:            parent.top
+                anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
+                anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
 
                 // Header/title of checklist
                 Item {
