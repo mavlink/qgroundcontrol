@@ -33,6 +33,7 @@ const char* AppSettings::indoorPaletteName =                            "StyleIs
 const char* AppSettings::showLargeCompassName =                         "ShowLargeCompass";
 const char* AppSettings::savePathName =                                 "SavePath";
 const char* AppSettings::autoLoadMissionsName =                         "AutoLoadMissions";
+const char* AppSettings::useChecklistName =                             "UseChecklist";
 const char* AppSettings::mapboxTokenName =                              "MapboxToken";
 const char* AppSettings::esriTokenName =                                "EsriToken";
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
@@ -75,6 +76,7 @@ AppSettings::AppSettings(QObject* parent)
     , _showLargeCompassFact                 (NULL)
     , _savePathFact                         (NULL)
     , _autoLoadMissionsFact                 (NULL)
+    , _useChecklistFact                     (NULL)
     , _mapboxTokenFact                      (NULL)
     , _esriTokenFact                        (NULL)
     , _defaultFirmwareTypeFact              (NULL)
@@ -218,6 +220,15 @@ Fact* AppSettings::audioMuted(void)
     }
 
     return _audioMutedFact;
+}
+
+Fact* AppSettings::useChecklist(void)
+{
+    if (!_useChecklistFact) {
+        _useChecklistFact = _createSettingsFact(useChecklistName);
+    }
+
+    return _useChecklistFact;
 }
 
 Fact* AppSettings::appFontPointSize(void)
