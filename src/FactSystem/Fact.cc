@@ -701,7 +701,6 @@ FactValueSliderListModel* Fact::valueSliderModel(void)
 {
     if (!_valueSliderModel) {
         _valueSliderModel = new FactValueSliderListModel(*this);
-        QQmlEngine::setObjectOwnership(_valueSliderModel, QQmlEngine::JavaScriptOwnership);
     }
     return _valueSliderModel;
 }

@@ -30,6 +30,7 @@ FactValueSliderListModel::FactValueSliderListModel(Fact& fact, QObject* parent)
     , _initialValueRounded      (0)
     , _increment                (0)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 FactValueSliderListModel::~FactValueSliderListModel()
