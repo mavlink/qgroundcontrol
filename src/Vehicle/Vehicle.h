@@ -10,6 +10,7 @@
 #pragma once
 
 #include <QObject>
+#include <QVariantList>
 #include <QGeoCoordinate>
 
 #include "FactGroup.h"
@@ -493,8 +494,8 @@ public:
     Q_PROPERTY(bool                 vtolInFwdFlight         READ vtolInFwdFlight        WRITE setVtolInFwdFlight        NOTIFY vtolInFwdFlightChanged)
     Q_PROPERTY(bool                 highLatencyLink         READ highLatencyLink                                        NOTIFY highLatencyLinkChanged)
     Q_PROPERTY(bool                 supportsTerrainFrame    READ supportsTerrainFrame                                   NOTIFY firmwareTypeChanged)
-    Q_PROPERTY(QStringList          linkNames               READ linkNames                                              NOTIFY linkNamesChanged)
     Q_PROPERTY(QString              priorityLinkName        READ priorityLinkName       WRITE setPriorityLinkByName     NOTIFY priorityLinkNameChanged)
+    Q_PROPERTY(QVariantList         links                   READ links                                                  NOTIFY linksChanged)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -503,7 +504,7 @@ public:
     Q_PROPERTY(bool guidedModeSupported     READ guidedModeSupported CONSTANT)                              ///< Guided mode commands are supported by this vehicle
     Q_PROPERTY(bool pauseVehicleSupported   READ pauseVehicleSupported CONSTANT)                            ///< Pause vehicle command is supported
     Q_PROPERTY(bool orbitModeSupported      READ orbitModeSupported CONSTANT)                               ///< Orbit mode is supported by this vehicle
-    Q_PROPERTY(bool takeoffVehicleSupported READ takeoffVehicleSupported CONSTANT)                          ///< Guided takeoff supported    
+    Q_PROPERTY(bool takeoffVehicleSupported READ takeoffVehicleSupported CONSTANT)                          ///< Guided takeoff supported
 
     Q_PROPERTY(ParameterManager* parameterManager READ parameterManager CONSTANT)
 
@@ -694,8 +695,8 @@ public:
     QString flightMode(void) const;
     void setFlightMode(const QString& flightMode);
 
-    QStringList linkNames(void) const;
     QString priorityLinkName(void) const;
+    QVariantList links(void) const;
     void setPriorityLinkByName(const QString& priorityLinkName);
 
     bool hilMode(void);
@@ -949,8 +950,9 @@ signals:
     void capabilityBitsChanged(uint64_t capabilityBits);
     void toolBarIndicatorsChanged(void);
     void highLatencyLinkChanged(bool highLatencyLink);
-    void linkNamesChanged(void);
     void priorityLinkNameChanged(const QString& priorityLinkName);
+    void linksChanged(void);
+    void linksPropertiesChanged(void);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();

@@ -47,7 +47,8 @@ public:
 
     // Property accessors
     bool active() const;
-    bool active(int vehicle_id) const;
+    Q_INVOKABLE bool link_active(int vehicle_id) const;
+    Q_INVOKABLE bool getHighLatency(void) const { return _highLatency; }
 
     LinkConfiguration* getLinkConfiguration(void) { return _config.data(); }
 
@@ -56,7 +57,7 @@ public:
     /**
      * @brief Get the human readable name of this link
      */
-    virtual QString getName() const = 0;
+    Q_INVOKABLE virtual QString getName() const = 0;
 
     virtual void requestReset() = 0;
 

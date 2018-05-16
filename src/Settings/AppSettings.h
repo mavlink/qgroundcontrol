@@ -38,7 +38,6 @@ public:
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
     Q_PROPERTY(Fact* useChecklist                       READ useChecklist                       CONSTANT)
-    Q_PROPERTY(Fact* advancedLinkSettings               READ advancedLinkSettings               CONSTANT)
     Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
     Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
@@ -78,7 +77,6 @@ public:
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
     Fact* useChecklist                      (void);
-    Fact* advancedLinkSettings              (void);
     Fact* mapboxToken                       (void);
     Fact* esriToken                         (void);
     Fact* defaultFirmwareType               (void);
@@ -115,7 +113,6 @@ public:
     static const char* savePathName;
     static const char* autoLoadMissionsName;
     static const char* useChecklistName;
-    static const char* advancedLinkSettingsName;
     static const char* mapboxTokenName;
     static const char* esriTokenName;
     static const char* defaultFirmwareTypeName;
@@ -167,7 +164,6 @@ private:
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
     SettingsFact* _useChecklistFact;
-    SettingsFact* _advancedLinkSettingsFact;
     SettingsFact* _mapboxTokenFact;
     SettingsFact* _esriTokenFact;
     SettingsFact* _defaultFirmwareTypeFact;

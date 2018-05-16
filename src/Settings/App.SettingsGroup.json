@@ -125,13 +125,6 @@
     "defaultValue":     false
 },
 {
-    "name":             "AdvancedLinkSettings",
-    "shortDescription": "Allow advanced link settings.",
-    "longDescription":  "Allow the user to pick the priority link and adding the high latency property to a link.",
-    "type":             "bool",
-    "defaultValue":     false
-},
-{
     "name":             "BaseDeviceFontPointSize",
     "shortDescription": "Application font size",
     "longDescription":  "The point size for the default font used.",

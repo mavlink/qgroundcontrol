@@ -23,7 +23,7 @@ bool LinkInterface::active() const
     return false;
 }
 
-bool LinkInterface::active(int vehicle_id) const
+bool LinkInterface::link_active(int vehicle_id) const
 {
     if (_heartbeatTimers.contains(vehicle_id)) {
         return _heartbeatTimers.value(vehicle_id)->getActive();
@@ -50,6 +50,8 @@ LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+
     _config->setLink(this);
 
     // Initialize everything for the data rate calculation buffers.
