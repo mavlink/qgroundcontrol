@@ -63,7 +63,7 @@ SetupPage {
                 }
 
                 ListElement {
-                    title:          qsTr("Hoever manual minimum throttle")
+                    title:          qsTr("Hover manual minimum throttle")
                     description:    qsTr("Slide to the left to start the motors with less idle power. Slide to the right if descending in manual flight becomes unstable.")
                     param:          "MPC_MANTHR_MIN"
                     min:            0
