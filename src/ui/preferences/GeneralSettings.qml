@@ -379,16 +379,6 @@ QGCView {
                         }
 
                         //-----------------------------------------------------------------
-                        //-- Advanced Link Settings
-                        FactCheckBox {
-                            text:       qsTr("Advanced Link Settings")
-                            fact:       _advancedLinkSettings
-                            visible:    _advancedLinkSettings.visible
-
-                            property Fact _advancedLinkSettings: QGroundControl.settingsManager.appSettings.advancedLinkSettings
-                        }
-
-                        //-----------------------------------------------------------------
                         //-- Save path
                         RowLayout {
                             spacing:    ScreenTools.defaultFontPixelWidth

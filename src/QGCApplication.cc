@@ -361,6 +361,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<ParameterManager>    ("QGroundControl.Vehicle",              1, 0, "ParameterManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraControl>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraControl",       "Reference only");
+    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl.Vehicle",              1, 0, "LinkInterface",          "Reference only");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",      1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");

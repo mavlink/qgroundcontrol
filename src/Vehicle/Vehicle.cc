@@ -1148,6 +1148,7 @@ void Vehicle::_handleCommandLong(mavlink_message_t& message)
                 if (sl && sl->getSerialConfig()->usbDirect()) {
                     qDebug() << "Disconnecting:" << _links.at(i)->getName();
                     qgcApp()->toolbox()->linkManager()->disconnectLink(_links.at(i));
+                    emit linksChanged();
                 }
             }
         }
@@ -1681,11 +1682,11 @@ void Vehicle::_sendMessageOnLink(LinkInterface* link, mavlink_message_t message)
 
 void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
 {
-    emit linkNamesChanged();
+    emit linksPropertiesChanged();
 
     // if the priority link is commanded and still active don't change anything
     if (_priorityLinkCommanded) {
-        if (_priorityLink.data()->active(_id)) {
+        if (_priorityLink.data()->link_active(_id)) {
             return;
         } else {
             _priorityLinkCommanded = false;
@@ -1704,7 +1705,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
     // Check for the existing priority link to still be valid
     for (int i=0; i<_links.count(); i++) {
         if (_priorityLink.data() == _links[i]) {
-            if (!_priorityLink.data()->highLatency() && _priorityLink->active(_id)) {
+            if (!_priorityLink.data()->highLatency() && _priorityLink->link_active(_id)) {
                 // Link is still valid. Continue to use it unless it is high latency. In that case we still look for a better
                 // link to use as priority link.
                 return;
@@ -1728,7 +1729,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
             if (config) {
                 SerialConfiguration* pSerialConfig = qobject_cast<SerialConfiguration*>(config);
                 if (pSerialConfig && pSerialConfig->usbDirect()) {
-                    if (_priorityLink.data() != link && link->active(_id)) {
+                    if (_priorityLink.data() != link && link->link_active(_id)) {
                         newPriorityLink = link;
                         break;
                     }
@@ -1743,7 +1744,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
         // Search for an active non-high latency link
         for (int i=0; i<_links.count(); i++) {
             LinkInterface* link = _links[i];
-            if (!link->highLatency() && link->active(_id)) {
+            if (!link->highLatency() && link->link_active(_id)) {
                 newPriorityLink = link;
                 break;
             }
@@ -1754,7 +1755,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
         // Search for an active high latency link
         for (int i=0; i<_links.count(); i++) {
             LinkInterface* link = _links[i];
-            if (link->highLatency() && link->active(_id)) {
+            if (link->highLatency() && link->link_active(_id)) {
                 newPriorityLink = link;
                 break;
             }
@@ -1776,7 +1777,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
 
         emit priorityLinkNameChanged(_priorityLink->getName());
         if (updateActive) {
-            _linkActiveChanged(_priorityLink.data(), _priorityLink->active(_id), _id);
+            _linkActiveChanged(_priorityLink.data(), _priorityLink->link_active(_id), _id);
         }
     }
 }
@@ -2120,16 +2121,6 @@ void Vehicle::setFlightMode(const QString& flightMode)
     }
 }
 
-QStringList Vehicle::linkNames(void) const
-{
-    QStringList names;
-
-    for (int i=0; i<_links.count(); i++) {
-        names += _links[i]->getName();
-    }
-    return names;
-}
-
 QString Vehicle::priorityLinkName(void) const
 {
     if (_priorityLink) {
@@ -2137,6 +2128,15 @@ QString Vehicle::priorityLinkName(void) const
     }
 
     return "none";
+}
+
+QVariantList Vehicle::links(void) const {
+    QVariantList ret;
+
+    foreach( const auto &item, _links )
+        ret << QVariant::fromValue(item);
+
+    return ret;
 }
 
 void Vehicle::setPriorityLinkByName(const QString& priorityLinkName)
@@ -2164,7 +2164,7 @@ void Vehicle::setPriorityLinkByName(const QString& priorityLinkName)
         _priorityLink = _toolbox->linkManager()->sharedLinkInterfacePointerForLink(newPriorityLink);
         _updateHighLatencyLink(true);
         emit priorityLinkNameChanged(_priorityLink->getName());
-        _linkActiveChanged(_priorityLink.data(), _priorityLink->active(_id), _id);
+        _linkActiveChanged(_priorityLink.data(), _priorityLink->link_active(_id), _id);
     }
 }
 
@@ -2412,7 +2412,6 @@ void Vehicle::disconnectInactiveVehicle(void)
 {
     // Vehicle is no longer communicating with us, disconnect all links
 
-
     LinkManager* linkMgr = _toolbox->linkManager();
     for (int i=0; i<_links.count(); i++) {
         // FIXME: This linkInUse check is a hack fix for multiple vehicles on the same link.
@@ -2421,6 +2420,7 @@ void Vehicle::disconnectInactiveVehicle(void)
             linkMgr->disconnectLink(_links[i]);
         }
     }
+    emit linksChanged();
 }
 
 void Vehicle::_imageReady(UASInterface*)
@@ -2475,6 +2475,8 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
         return;
     }
 
+    emit linksPropertiesChanged();
+
     if (link == _priorityLink) {
         if (active && _connectionLost) {
             // communication to priority link regained
@@ -2513,6 +2515,7 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
                         for (int i = 0; i < _links.length(); i++) {
                             _mavlink->resetMetadataForLink(_links.at(i));
                         }
+
                         disconnectInactiveVehicle();
                     }
                 }

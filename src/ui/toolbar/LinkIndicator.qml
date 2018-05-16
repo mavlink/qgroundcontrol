@@ -16,6 +16,7 @@ import QGroundControl.Controls              1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
+import QGroundControl.Vehicle               1.0
 
 //-------------------------------------------------------------------------
 //-- Link Indicator
@@ -25,6 +26,7 @@ Item {
     width:          priorityLinkSelector.width
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    property bool _visible: false
 
     QGCLabel {
         id:                     priorityLinkSelector
@@ -32,7 +34,7 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
-        visible:                QGroundControl.settingsManager.appSettings.advancedLinkSettings.rawValue
+        visible:                _visible
         Menu {
             id: linkSelectionMenu
         }
@@ -50,14 +52,24 @@ Item {
                     linkSelectionMenu.removeItem(linkSelectionMenuItems[i])
                 }
                 linkSelectionMenuItems.length = 0
+
                 // Add new items
-                for (var i = 0; i < _activeVehicle.linkNames.length; i++) {
-                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": _activeVehicle.linkNames[i] })
+                var has_hl = false;
+                var links = _activeVehicle.links
+                for (var i = 0; i < links.length; i++) {
+                    var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].link_active(_activeVehicle.id)})
                     linkSelectionMenuItems.push(menuItem)
                     linkSelectionMenu.insertItem(i, menuItem)
+
+                    if (links[i].getHighLatency()) {
+                        has_hl = true
+                    }
                 }
+
+                _visible = links.length > 1 && has_hl
             }
         }
+
         Component.onCompleted: priorityLinkSelector.updatelinkSelectionMenu()
 
         Connections {
@@ -67,8 +79,14 @@ Item {
 
         Connections {
             target:                 _activeVehicle
-            onLinkNamesChanged:     priorityLinkSelector.updatelinkSelectionMenu()
+            onLinksChanged:         priorityLinkSelector.updatelinkSelectionMenu()
         }
+
+        Connections {
+            target:                     _activeVehicle
+            onLinksPropertiesChanged:   priorityLinkSelector.updatelinkSelectionMenu()
+        }
+
         MouseArea {
             visible:        _activeVehicle
             anchors.fill:   parent
