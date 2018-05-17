@@ -155,6 +155,9 @@ Item {
                 x:  _dropMargin
                 y:  _dropMargin
 
+                onHeightChanged: 	_calcPositions()
+				onWidthChanged: 	_calcPositions()
+
                 property var dropPanel: _root
             }
         }

@@ -1,21 +1,28 @@
-import QtQuick                      2.3
-import QtQml.Models                 2.1
+import QtQuick          2.3
+import QtQuick.Layouts  1.2
 
 import QGroundControl               1.0
-import QGroundControl.FlightDisplay 1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 
-// This class stores the data and functions of the check list but NOT the GUI (which is handled somewhere else).
-Item {
+Rectangle {
+    width:      ScreenTools.defaultFontPixelWidth * _panelCharWidth
+    height:     mainColumn.y + mainColumn.height + _margins
+    color:      qgcPal.windowShade
+    radius:     3
+    enabled:    QGroundControl.multiVehicleManager.vehicles.count > 0;
+
+    property real _panelCharWidth:      40
+    property real _margins:             ScreenTools.defaultFontPixelWidth / 2
+    property real _checkListItemWidth:  width
+
     // Properties
     property int            unhealthySensors:       _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
     property bool           gpsLock:                _activeVehicle ? _activeVehicle.gps.lock.rawValue>=3 : 0
     property var            batPercentRemaining:    _activeVehicle ? _activeVehicle.battery.percentRemaining.value : 0
     property bool           audioMuted:             QGroundControl.settingsManager.appSettings.audioMuted.rawValue
-    property ObjectModel    checkListItems:         _checkListItems
     property var            _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property int            _checkState:            _activeVehicle ? (_activeVehicle.armed ? 1 + (buttonActuators._state + buttonMotors._state + buttonMission._state + buttonSoundOutput._state) / 4 / 4 : 0) : 0 ; // Shows progress of checks inside the checklist - unlocks next check steps in groups
 
@@ -59,15 +66,47 @@ Item {
         buttonFlightAreaFree.resetNrClicks();
     }
 
-    // Check list item data
-    ObjectModel {
-        id: _checkListItems
+    ColumnLayout {
+        id:                 mainColumn
+        anchors.margins:    _margins
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.top:        parent.top
+        spacing:            ScreenTools.defaultFontPixelHeight / 2
+
+        // Header/title of checklist
+        Row {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+
+            QGCLabel {
+                text:           qsTr("Pre-flight checklist") + _vehicleIdText
+                font.pointSize: ScreenTools.mediumFontPointSize
+                width:          parent.width - resetButton.width
+
+                property string _vehicleIdText: QGroundControl.multiVehicleManager.vehicles.count > 1 ? qsTr(" (Vehicle: %1)").arg(_activeVehicle.id) : ""
+            }
+            QGCButton {
+                id:         resetButton
+                width:      1.2 * ScreenTools.defaultFontPixelHeight
+                height:     1.2 * ScreenTools.defaultFontPixelHeight
+                opacity:    0.2 + (0.8 * (QGroundControl.multiVehicleManager.vehicles.count > 0))
+                tooltip:    qsTr("Reset the checklist (e.g. after a vehicle reboot)")
+
+                onClicked: checklist.resetNrClicks()
+
+                Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
+            }
+        }
+
+        Rectangle {width:parent.width ; height:1 ; color:qgcPal.text}
 
         // Standard check list items (group 0) - Available from the start
         QGCCheckListItem {
             id: buttonHardware
             name: "Hardware"
             defaulttext: "Props mounted? Wings secured? Tail secured?"
+            Layout.fillWidth: true
         }
         QGCCheckListItem {
              id: buttonBattery
@@ -202,5 +241,5 @@ Item {
            group: 2
            defaulttext: "Launch area and path free of obstacles/people?"
         }
-    } // Object Model
-}
+    } // Column
+} //Rectangle

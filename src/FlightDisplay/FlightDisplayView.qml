@@ -113,10 +113,6 @@ QGCView {
         Component.onCompleted:  start(true /* flyView */)
     }
 
-    CheckList {
-        id: checklist
-    }
-
     Connections {
         target:                     _missionController
         onResumeMissionReady:       guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
@@ -510,7 +506,7 @@ QGCView {
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
             buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
-            buttonEnabled:      [ _useChecklist, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+            buttonEnabled:      [ _activeVehicle && _useChecklist, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property bool _anySmartShotAvailable: _guidedController.showOrbit
@@ -688,60 +684,10 @@ QGCView {
         }
     }
 
-    //-- Checklist GUI
+    //-- PreFlight Checklist
     Component {
         id: checklistDropPanel
 
-        Rectangle {
-            id:         checklistRect
-            visible:    true
-            width:      mainColumn.width + 3*ScreenTools.defaultFontPixelWidth
-            height:     mainColumn.height + ScreenTools.defaultFontPixelHeight
-            color:      qgcPal.windowShade
-            radius:     3
-            enabled:    QGroundControl.multiVehicleManager.vehicles.count > 0;
-
-            Column {
-                id:                     mainColumn
-                width:                  40*ScreenTools.defaultFontPixelWidth
-                spacing:                0.8*ScreenTools.defaultFontPixelWidth
-                anchors.left:           parent.left
-                anchors.top:            parent.top
-                anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
-                anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
-
-                // Header/title of checklist
-                Item {
-                    width:  parent.width
-                    height: 1.75*ScreenTools.defaultFontPixelHeight
-
-                    QGCLabel {
-                        text:                   _activeVehicle ? qsTr("Pre-flight checklist")+" (MAV ID:"+_activeVehicle.id+")" : qsTr("Pre-flight checklist (no vehicle)")
-                        anchors.left:           parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.pointSize:         ScreenTools.mediumFontPointSize
-                    }
-                    QGCButton {
-                        width:                  1.2*ScreenTools.defaultFontPixelHeight
-                        height:                 1.2*ScreenTools.defaultFontPixelHeight
-                        anchors.right:          parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
-                        tooltip:                "Reset the checklist (e.g. after a vehicle reboot)"
-
-                        onClicked:              checklist.resetNrClicks()
-
-                        Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
-                    }
-                }
-
-                Rectangle {width:parent.width ; height:1 ; color:qgcPal.text}
-
-                // All check list items
-                Repeater {
-                    model: checklist.checkListItems
-                }
-            } // Column
-        } //Rectangle
+        PreFlightCheckList { }
     } //Component
 } //QGC View
