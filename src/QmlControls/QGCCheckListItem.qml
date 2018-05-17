@@ -17,9 +17,11 @@ QGCButton {
     property int    _nrClicked:     0
     property string _text:          qsTr(name)+ ": " + qsTr(defaulttext)
 
-    enabled : (_activeVehicle==null || _activeVehicle.connectionLost) ? false : checklist._checkState>=group
-    opacity : (_activeVehicle==null || _activeVehicle.connectionLost) ? 0.4 : 0.2+0.8*(checklist._checkState >= group);
-    width: 40*ScreenTools.defaultFontPixelWidth
+    anchors.left:   parent.left
+    anchors.right:  parent.right
+
+    enabled : (_activeVehicle==null || _activeVehicle.connectionLost) ? false : _checkState>=group
+    opacity : (_activeVehicle==null || _activeVehicle.connectionLost) ? 0.4 : 0.2+0.8*(_checkState >= group);
     style: ButtonStyle {
         background: Rectangle {color:_color; border.color: qgcPal.button; radius:3}
         label: Label {
