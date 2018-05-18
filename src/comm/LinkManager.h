@@ -204,6 +204,8 @@ private:
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
 #endif
 
+    void _heartbeatReceived(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
+
     bool    _configUpdateSuspended;                     ///< true: stop updating configuration list
     bool    _configurationsLoaded;                      ///< true: Link configurations have been loaded
     bool    _connectionsSuspended;                      ///< true: all new connections should not be allowed
