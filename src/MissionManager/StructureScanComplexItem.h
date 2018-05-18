@@ -92,6 +92,11 @@ public:
 
     static const char* jsonComplexItemTypeValue;
 
+    static const char* settingsGroup;
+    static const char* altitudeName;
+    static const char* structureHeightName;
+    static const char* layersName;
+
 signals:
     void cameraShotsChanged             (int cameraShots);
     void timeBetweenShotsChanged        (void);
@@ -115,6 +120,8 @@ private:
     void _setCameraShots(int cameraShots);
     double _triggerDistance(void) const;
 
+    QMap<QString, FactMetaData*> _metaDataMap;
+
     int             _sequenceNumber;
     bool            _dirty;
     QGCMapPolygon   _structurePolygon;
@@ -130,15 +137,10 @@ private:
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
 
-    static QMap<QString, FactMetaData*> _metaDataMap;
 
-    Fact    _altitudeFact;
-    Fact    _structureHeightFact;
-    Fact    _layersFact;
-
-    static const char* _altitudeFactName;
-    static const char* _structureHeightFactName;
-    static const char* _layersFactName;
+    SettingsFact    _altitudeFact;
+    SettingsFact    _structureHeightFact;
+    SettingsFact    _layersFact;
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonAltitudeRelativeKey;

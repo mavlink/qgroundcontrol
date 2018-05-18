@@ -38,11 +38,11 @@ Column {
             _cameraList.push(_vehicle.staticCameraList[i].name)
         }
         gridTypeCombo.model = _cameraList
-        var knownCameraIndex = gridTypeCombo.find(cameraCalc.cameraName)
+        var knownCameraIndex = gridTypeCombo.find(cameraCalc.cameraName.value)
         if (knownCameraIndex !== -1) {
             gridTypeCombo.currentIndex = knownCameraIndex
         } else {
-            console.log("Internal error: Known camera not found", cameraCalc.cameraName)
+            console.log("Internal error: Known camera not found", cameraCalc.cameraName.value)
             gridTypeCombo.currentIndex = _gridTypeCustomCamera
         }
     }
@@ -73,7 +73,7 @@ Column {
             anchors.right:  parent.right
             model:          _cameraList
             currentIndex:   -1
-            onActivated:    cameraCalc.cameraName = gridTypeCombo.textAt(index)
+            onActivated:    cameraCalc.cameraName.value = gridTypeCombo.textAt(index)
         } // QGCComboxBox
 
         // Camera based grid ui
@@ -81,7 +81,7 @@ Column {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        cameraCalc.cameraName !== cameraCalc.manualCameraName
+            visible:        !cameraCalc.isManualCamera
 
             Row {
                 spacing:                    _margin
@@ -111,7 +111,7 @@ Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
-                visible:        cameraCalc.cameraName === cameraCalc.customCameraName
+                visible:        cameraCalc.isCustomCamera
 
                 RowLayout {
                     anchors.left:   parent.left
@@ -282,7 +282,7 @@ Column {
             columnSpacing:  _margin
             rowSpacing:     _margin
             columns:        2
-            visible:        cameraCalc.cameraName === cameraCalc.manualCameraName
+            visible:        cameraCalc.isManualCamera
 
             QGCLabel { text: distanceToSurfaceLabel }
             FactTextField {
