@@ -257,7 +257,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraCalc.adjustedFootprintFrontal()->setRawValue (complexObject[_jsonV3CameraTriggerDistanceKey].toDouble());
 
     if (manualGrid) {
-        _cameraCalc.setCameraName(_cameraCalc.manualCameraName());
+        _cameraCalc.cameraName()->setRawValue(_cameraCalc.manualCameraName());
     } else {
         if (!complexObject.contains(_jsonV3CameraObjectKey)) {
             errorString = tr("%1 but %2 object is missing").arg("manualGrid = false").arg("camera");
@@ -292,7 +292,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
             return false;
         }
 
-        _cameraCalc.setCameraName                       (cameraObject[_jsonV3CameraNameKey].toString());
+        _cameraCalc.cameraName()->setRawValue           (cameraObject[_jsonV3CameraNameKey].toString());
         _cameraCalc.landscape()->setRawValue            (cameraObject[_jsonV3CameraOrientationLandscapeKey].toBool(true));
         _cameraCalc.frontalOverlap()->setRawValue       (cameraObject[_jsonV3FrontalOverlapKey].toInt());
         _cameraCalc.sideOverlap()->setRawValue          (cameraObject[_jsonV3SideOverlapKey].toInt());

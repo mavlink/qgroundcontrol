@@ -40,7 +40,6 @@ const int   TransectStyleComplexItem::_terrainQueryTimeoutMsecs =           1000
 
 TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyView, QString settingsGroup, QObject* parent)
     : ComplexMissionItem                (vehicle, flyView, parent)
-    , _settingsGroup                    (settingsGroup)
     , _sequenceNumber                   (0)
     , _dirty                            (false)
     , _terrainPolyPathQuery             (NULL)
@@ -48,17 +47,17 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyVie
     , _complexDistance                  (0)
     , _cameraShots                      (0)
     , _cameraMinTriggerInterval         (0)
-    , _cameraCalc                       (vehicle)
+    , _cameraCalc                       (vehicle, settingsGroup)
     , _followTerrain                    (false)
     , _loadedMissionItemsParent         (NULL)
     , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
-    , _turnAroundDistanceFact           (_settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
-    , _cameraTriggerInTurnAroundFact    (_settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
-    , _hoverAndCaptureFact              (_settingsGroup, _metaDataMap[hoverAndCaptureName])
-    , _refly90DegreesFact               (_settingsGroup, _metaDataMap[refly90DegreesName])
-    , _terrainAdjustToleranceFact       (_settingsGroup, _metaDataMap[terrainAdjustToleranceName])
-    , _terrainAdjustMaxClimbRateFact    (_settingsGroup, _metaDataMap[terrainAdjustMaxClimbRateName])
-    , _terrainAdjustMaxDescentRateFact  (_settingsGroup, _metaDataMap[terrainAdjustMaxDescentRateName])
+    , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
+    , _cameraTriggerInTurnAroundFact    (settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
+    , _hoverAndCaptureFact              (settingsGroup, _metaDataMap[hoverAndCaptureName])
+    , _refly90DegreesFact               (settingsGroup, _metaDataMap[refly90DegreesName])
+    , _terrainAdjustToleranceFact       (settingsGroup, _metaDataMap[terrainAdjustToleranceName])
+    , _terrainAdjustMaxClimbRateFact    (settingsGroup, _metaDataMap[terrainAdjustMaxClimbRateName])
+    , _terrainAdjustMaxDescentRateFact  (settingsGroup, _metaDataMap[terrainAdjustMaxDescentRateName])
 {
     _terrainQueryTimer.setInterval(_terrainQueryTimeoutMsecs);
     _terrainQueryTimer.setSingleShot(true);

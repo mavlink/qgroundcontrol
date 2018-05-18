@@ -35,6 +35,14 @@
     "defaultValue":     1
 },
 {
+    "name":             "StructureHeight",
+    "shortDescription": "Height of structure being scanned.",
+    "type":             "double",
+    "units":            "m",
+    "min":              1,
+    "defaultValue":     100
+},
+{
     "name":             "Layer distance",
     "shortDescription": "Distance between each layer.",
     "type":             "double",

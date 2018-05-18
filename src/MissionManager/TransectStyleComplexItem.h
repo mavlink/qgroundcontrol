@@ -143,7 +143,6 @@ protected:
     bool    _hasTurnaround                  (void) const;
     double  _turnaroundDistance             (void) const;
 
-    QString         _settingsGroup;
     int             _sequenceNumber;
     bool            _dirty;
     QGeoCoordinate  _coordinate;
