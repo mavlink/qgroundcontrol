@@ -22,12 +22,15 @@ import QGroundControl.Controllers       1.0
 
 Item {
     id: root
-    property double _ar:                QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
-    property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
-    property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
-    property bool   _connected:         _activeVehicle ? !_activeVehicle.connectionLost : false
+    property double _ar:                    QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property double _ar2:                   QGroundControl.settingsManager.videoSettings.secondaryAspectRatio.rawValue
+    property bool   _showGrid:              QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
+    property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
+    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property bool   _connected:             _activeVehicle ? !_activeVehicle.connectionLost : false
+    property double _secondaryHeightFactor: 0.8333
+    property bool   _secondaryIsPIP:        false
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
@@ -96,6 +99,39 @@ Item {
                 height: 1
                 y:      parent.height * 0.66
                 visible: _showGrid && !QGroundControl.videoManager.fullScreen
+            }
+        }
+        //-- Secondary Video
+        Item {
+            id:                 secondaryVideoItem
+            width:              _ar2 != 0.0 ? height * _ar2 : parent.width
+            height:             _secondaryIsPIP ? ScreenTools.defaultFontPixelHeight * 16 : parent.height * _secondaryHeightFactor
+            anchors.centerIn:   parent
+            visible:            true // QGroundControl.settingsManager.videoSettings.secondaryVideoEnabled.rawValue == true
+            function pipOrNot() {
+                if(_secondaryIsPIP) {
+                    anchors.centerIn    = undefined
+                    anchors.top         = parent.top
+                    anchors.topMargin   = ScreenTools.defaultFontPixelHeight * 7
+                    anchors.left        = parent.left
+                    anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 10
+                } else {
+                    anchors.top         = undefined
+                    anchors.topMargin   = undefined
+                    anchors.left        = undefined
+                    anchors.leftMargin  = undefined
+                    anchors.centerIn    = parent
+                }
+            }
+            onVisibleChanged: {
+                secondaryVideoItem.pipOrNot()
+            }
+            QGCVideoBackground {
+                id:             secondaryVideo
+                anchors.fill:   parent
+                receiver:       QGroundControl.videoManager.secondaryVideoReceiver
+                display:        QGroundControl.videoManager.secondaryVideoReceiver ? QGroundControl.videoManager.secondaryVideoReceiver.videoSurface : null
+                opacity:        _secondaryIsPIP ? 1 : 0.75
             }
         }
         MouseArea {

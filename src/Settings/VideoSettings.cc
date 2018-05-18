@@ -17,21 +17,24 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSettingsGroupName = "Video";
+const char* VideoSettings::videoSettingsGroupName   = "Video";
 
-const char* VideoSettings::videoSourceName =        "VideoSource";
-const char* VideoSettings::udpPortName =            "VideoUDPPort";
-const char* VideoSettings::rtspUrlName =            "VideoRTSPUrl";
-const char* VideoSettings::tcpUrlName =             "VideoTCPUrl";
-const char* VideoSettings::videoAspectRatioName =   "VideoAspectRatio";
-const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
-const char* VideoSettings::showRecControlName =     "ShowRecControl";
-const char* VideoSettings::recordingFormatName =    "RecordingFormat";
-const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
-const char* VideoSettings::enableStorageLimitName = "EnableStorageLimit";
-const char* VideoSettings::rtspTimeoutName =        "RtspTimeout";
-const char* VideoSettings::streamEnabledName =      "StreamEnabled";
-const char* VideoSettings::disableWhenDisarmedName ="DisableWhenDisarmed";
+const char* VideoSettings::videoSourceName          = "VideoSource";
+const char* VideoSettings::udpPortName              = "VideoUDPPort";
+const char* VideoSettings::rtspUrlName              = "VideoRTSPUrl";
+const char* VideoSettings::tcpUrlName               = "VideoTCPUrl";
+const char* VideoSettings::videoAspectRatioName     = "VideoAspectRatio";
+const char* VideoSettings::videoGridLinesName       = "VideoGridLines";
+const char* VideoSettings::showRecControlName       = "ShowRecControl";
+const char* VideoSettings::recordingFormatName      = "RecordingFormat";
+const char* VideoSettings::maxVideoSizeName         = "MaxVideoSize";
+const char* VideoSettings::enableStorageLimitName   = "EnableStorageLimit";
+const char* VideoSettings::rtspTimeoutName          = "RtspTimeout";
+const char* VideoSettings::streamEnabledName        = "StreamEnabled";
+const char* VideoSettings::disableWhenDisarmedName  = "DisableWhenDisarmed";
+const char* VideoSettings::secondaryVideoEnabledName= "SecondaryVideoEnabled";
+const char* VideoSettings::secondaryVideoURLName    = "SecondaryVideoURL";
+const char* VideoSettings::secondaryAspectRatioName = "SecondaryAspectRatio";
 
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
@@ -54,6 +57,9 @@ VideoSettings::VideoSettings(QObject* parent)
     , _rtspTimeoutFact(NULL)
     , _streamEnabledFact(NULL)
     , _disableWhenDisarmedFact(NULL)
+    , _secondaryVideoEnabledFact(NULL)
+    , _secondaryVideoURLFact(NULL)
+    , _secondaryAspectRatioFact(NULL)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -200,6 +206,30 @@ Fact* VideoSettings::disableWhenDisarmed(void)
         _disableWhenDisarmedFact = _createSettingsFact(disableWhenDisarmedName);
     }
     return _disableWhenDisarmedFact;
+}
+
+Fact* VideoSettings::secondaryVideoEnabled(void)
+{
+    if(!_secondaryVideoEnabledFact) {
+        _secondaryVideoEnabledFact = _createSettingsFact(secondaryVideoEnabledName);
+    }
+    return _secondaryVideoEnabledFact;
+}
+
+Fact* VideoSettings::secondaryVideoURL(void)
+{
+    if(!_secondaryVideoURLFact) {
+        _secondaryVideoURLFact = _createSettingsFact(secondaryVideoURLName);
+    }
+    return _secondaryVideoURLFact;
+}
+
+Fact* VideoSettings::secondaryAspectRatio(void)
+{
+    if (!_secondaryAspectRatioFact) {
+        _secondaryAspectRatioFact = _createSettingsFact(secondaryAspectRatioName);
+    }
+    return _secondaryAspectRatioFact;
 }
 
 bool VideoSettings::streamConfigured(void)

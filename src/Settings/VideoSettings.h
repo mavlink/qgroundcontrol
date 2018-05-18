@@ -32,6 +32,9 @@ public:
     Q_PROPERTY(Fact* rtspTimeout            READ rtspTimeout            CONSTANT)
     Q_PROPERTY(Fact* streamEnabled          READ streamEnabled          CONSTANT)
     Q_PROPERTY(Fact* disableWhenDisarmed    READ disableWhenDisarmed    CONSTANT)
+    Q_PROPERTY(Fact* secondaryVideoEnabled  READ secondaryVideoEnabled  CONSTANT)
+    Q_PROPERTY(Fact* secondaryVideoURL      READ secondaryVideoURL      CONSTANT)
+    Q_PROPERTY(Fact* secondaryAspectRatio   READ secondaryAspectRatio   CONSTANT)
     Q_PROPERTY(bool  streamConfigured       READ streamConfigured       NOTIFY streamConfiguredChanged)
 
     Fact* videoSource           (void);
@@ -47,6 +50,9 @@ public:
     Fact* rtspTimeout           (void);
     Fact* streamEnabled         (void);
     Fact* disableWhenDisarmed   (void);
+    Fact* secondaryVideoEnabled (void);
+    Fact* secondaryVideoURL     (void);
+    Fact* secondaryAspectRatio  (void);
     bool  streamConfigured      (void);
 
     static const char* videoSettingsGroupName;
@@ -64,6 +70,9 @@ public:
     static const char* rtspTimeoutName;
     static const char* streamEnabledName;
     static const char* disableWhenDisarmedName;
+    static const char* secondaryVideoEnabledName;
+    static const char* secondaryVideoURLName;
+    static const char* secondaryAspectRatioName;
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
@@ -91,6 +100,9 @@ private:
     SettingsFact* _rtspTimeoutFact;
     SettingsFact* _streamEnabledFact;
     SettingsFact* _disableWhenDisarmedFact;
+    SettingsFact* _secondaryVideoEnabledFact;
+    SettingsFact* _secondaryVideoURLFact;
+    SettingsFact* _secondaryAspectRatioFact;
 };
 
 #endif

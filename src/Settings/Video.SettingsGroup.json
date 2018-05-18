@@ -108,5 +108,27 @@
     "longDescription":  "Disable Video Stream when disarmed.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "SecondaryVideoEnabled",
+    "shortDescription": "Secondary RTSP Stream Enabled",
+    "longDescription":  "Secondary RTSP Stream Enabled.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "SecondaryVideoURL",
+    "shortDescription": "Secondary Video RTSP Url",
+    "longDescription":  "RTSP url address and port to bind to for secondary video stream. Example: rtsp://192.168.42.1:8554/live",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "SecondaryAspectRatio",
+    "shortDescription": "Secondary Video Aspect Ratio",
+    "longDescription":  "Secondary Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
+    "type":             "float",
+    "decimalPlaces":    6,
+    "defaultValue":     1.777777
 }
 ]

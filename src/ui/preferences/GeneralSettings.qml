@@ -696,10 +696,53 @@ QGCView {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.settingsManager.videoSettings.secondaryVideoEnabled.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 2
+                            QGCLabel {
+                                text:               qsTr("Secondary RTSP Stream:")
+                                width:              _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactCheckBox {
+                                text:                   ""
+                                fact:                   QGroundControl.settingsManager.videoSettings.secondaryVideoEnabled
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Row {
+                            id:         secondaryVideoURL
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    QGroundControl.settingsManager.videoSettings.secondaryVideoEnabled.visible && QGroundControl.videoManager.isGStreamer && videoSource.currentIndex === 2 && QGroundControl.settingsManager.videoSettings.secondaryVideoEnabled.rawValue == true
+                            QGCLabel {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text:               qsTr("Secondary RTSP URL:")
+                                width:              _labelWidth
+                            }
+                            FactTextField {
+                                width:              _editFieldWidth
+                                fact:               QGroundControl.settingsManager.videoSettings.secondaryVideoURL
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    secondaryVideoURL.visible && QGroundControl.settingsManager.videoSettings.secondaryAspectRatio.visible
+                            QGCLabel {
+                                text:               qsTr("Secondary Aspect Ratio:")
+                                width:              _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactTextField {
+                                width:              _editFieldWidth
+                                fact:               QGroundControl.settingsManager.videoSettings.secondaryAspectRatio
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
                     }
                 } // Video Source - Rectangle
                 //-----------------------------------------------------------------
-                //-- Video Source
+                //-- Video Recording
                 Item {
                     width:                      _panelWidth
                     height:                     videoRecLabel.height

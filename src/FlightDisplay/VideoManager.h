@@ -31,51 +31,55 @@ public:
     VideoManager    (QGCApplication* app, QGCToolbox* toolbox);
     ~VideoManager   ();
 
-    Q_PROPERTY(bool             hasVideo            READ    hasVideo                                    NOTIFY hasVideoChanged)
-    Q_PROPERTY(bool             isGStreamer         READ    isGStreamer                                 NOTIFY isGStreamerChanged)
-    Q_PROPERTY(QString          videoSourceID       READ    videoSourceID                               NOTIFY videoSourceIDChanged)
-    Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
-    Q_PROPERTY(bool             fullScreen          READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
-    Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver                               CONSTANT)
+    Q_PROPERTY(bool             hasVideo                READ    hasVideo                                    NOTIFY hasVideoChanged)
+    Q_PROPERTY(bool             isGStreamer             READ    isGStreamer                                 NOTIFY isGStreamerChanged)
+    Q_PROPERTY(QString          videoSourceID           READ    videoSourceID                               NOTIFY videoSourceIDChanged)
+    Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
+    Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
+    Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
+    Q_PROPERTY(VideoReceiver*   secondaryVideoReceiver  READ    secondaryVideoReceiver                      CONSTANT)
 
-    bool        hasVideo            ();
-    bool        isGStreamer         ();
-    bool        fullScreen          () { return _fullScreen; }
-    QString     videoSourceID       () { return _videoSourceID; }
+    bool        hasVideo                ();
+    bool        isGStreamer             ();
+    bool        fullScreen              () { return _fullScreen; }
+    QString     videoSourceID           () { return _videoSourceID; }
 
-    VideoReceiver*  videoReceiver   () { return _videoReceiver; }
+    VideoReceiver*  videoReceiver       () { return _videoReceiver; }
+    VideoReceiver*  secondaryVideoReceiver() { return _secondaryVideoReceiver; }
 
 #if defined(QGC_DISABLE_UVC)
-    bool        uvcEnabled          () { return false; }
+    bool        uvcEnabled              () { return false; }
 #else
-    bool        uvcEnabled          ();
+    bool        uvcEnabled              ();
 #endif
 
-    void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
+    void        setfullScreen           (bool f) { _fullScreen = f; emit fullScreenChanged(); }
 
     // Override from QGCTool
-    void        setToolbox          (QGCToolbox *toolbox);
+    void        setToolbox              (QGCToolbox *toolbox);
 
-    Q_INVOKABLE void startVideo() {_videoReceiver->start();};
-    Q_INVOKABLE void stopVideo() {_videoReceiver->stop();};
+    Q_INVOKABLE void startVideo         () {_videoReceiver->start(); }
+    Q_INVOKABLE void stopVideo          () {_videoReceiver->stop();  }
 
 signals:
-    void hasVideoChanged            ();
-    void isGStreamerChanged         ();
-    void videoSourceIDChanged       ();
-    void fullScreenChanged          ();
+    void hasVideoChanged                ();
+    void isGStreamerChanged             ();
+    void videoSourceIDChanged           ();
+    void fullScreenChanged              ();
 
 private slots:
-    void _videoSourceChanged        ();
-    void _udpPortChanged            ();
-    void _rtspUrlChanged            ();
-    void _tcpUrlChanged             ();
+    void _videoSourceChanged            ();
+    void _udpPortChanged                ();
+    void _rtspUrlChanged                ();
+    void _tcpUrlChanged                 ();
+    void _secondaryVideoChanged         ();
 
 private:
-    void _updateSettings            ();
-    void _restartVideo              ();
+    void _updateSettings                ();
+    void _restartVideo                  ();
 
     VideoReceiver*  _videoReceiver;
+    VideoReceiver*  _secondaryVideoReceiver;
     VideoSettings*  _videoSettings;
     QString         _videoSourceID;
     bool            _fullScreen;

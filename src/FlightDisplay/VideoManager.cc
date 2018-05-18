@@ -33,6 +33,7 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _videoReceiver(NULL)
+    , _secondaryVideoReceiver(NULL)
     , _videoSettings(NULL)
     , _fullScreen(false)
 {
@@ -44,6 +45,8 @@ VideoManager::~VideoManager()
     if(_videoReceiver) {
         delete _videoReceiver;
     }
+    if(_secondaryVideoReceiver)
+        delete _secondaryVideoReceiver;
 }
 
 //-----------------------------------------------------------------------------
@@ -57,11 +60,14 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    qmlRegisterUncreatableType<VideoSurface> ("QGroundControl",              1, 0, "VideoSurface", "Reference only");
    _videoSettings = toolbox->settingsManager()->videoSettings();
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-   connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
-   connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
-   connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
-   connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
-
+   connect(_videoSettings->videoSource(),           &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
+   connect(_videoSettings->udpPort(),               &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
+   connect(_videoSettings->rtspUrl(),               &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
+   connect(_videoSettings->tcpUrl(),                &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
+#if defined(QGC_GST_STREAMING)
+   connect(_videoSettings->secondaryVideoEnabled(), &Fact::rawValueChanged, this, &VideoManager::_secondaryVideoChanged);
+   connect(_videoSettings->secondaryVideoURL(),     &Fact::rawValueChanged, this, &VideoManager::_secondaryVideoChanged);
+#endif
 #if defined(QGC_GST_STREAMING)
 #ifndef QGC_DISABLE_UVC
    // If we are using a UVC camera setup the device name
@@ -79,11 +85,23 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
     _videoReceiver = new VideoReceiver(this);
+#if defined(QGC_GST_STREAMING)
+    _secondaryVideoReceiver = new VideoReceiver(this);
+#endif
     _updateSettings();
     if(isGStreamer()) {
         _videoReceiver->start();
+#if defined(QGC_GST_STREAMING)
+        if(_videoSettings->secondaryVideoEnabled()->rawValue().toBool() && !_videoSettings->secondaryVideoURL()->rawValue().toString().isEmpty()) {
+            _secondaryVideoReceiver->setUri(_videoSettings->secondaryVideoURL()->rawValue().toString());
+            _secondaryVideoReceiver->start();
+        }
+#endif
     } else {
         _videoReceiver->stop();
+#if defined(QGC_GST_STREAMING)
+        _secondaryVideoReceiver->stop();
+#endif
     }
 
 #endif
@@ -117,6 +135,21 @@ void
 VideoManager::_tcpUrlChanged()
 {
     _restartVideo();
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_secondaryVideoChanged()
+{
+#if defined(QGC_GST_STREAMING)
+    if(!_videoSettings || !_secondaryVideoReceiver)
+        return;
+    _secondaryVideoReceiver->stop();
+    if(_videoSettings->secondaryVideoEnabled()->rawValue().toBool() && !_videoSettings->secondaryVideoURL()->rawValue().toString().isEmpty()) {
+        _secondaryVideoReceiver->setUri(_videoSettings->secondaryVideoURL()->rawValue().toString());
+        _secondaryVideoReceiver->start();
+    }
+#endif
 }
 
 //-----------------------------------------------------------------------------
