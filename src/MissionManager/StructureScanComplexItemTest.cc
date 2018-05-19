@@ -92,7 +92,7 @@ void StructureScanComplexItemTest::_initItem(void)
         mapPolygon->appendVertex(vertex);
     }
 
-    _structureScanItem->cameraCalc()->setCameraName(CameraCalc::manualCameraName());
+    _structureScanItem->cameraCalc()->cameraName()->setRawValue(CameraCalc::manualCameraName());
     _structureScanItem->layers()->setCookedValue(2);
     _structureScanItem->setDirty(false);
 
@@ -109,7 +109,7 @@ void StructureScanComplexItemTest::_validateItem(StructureScanComplexItem* item)
         QCOMPARE(expectedVertex, actualVertex);
     }
 
-    QCOMPARE(_structureScanItem->cameraCalc()->cameraName() , CameraCalc::manualCameraName());
+    QVERIFY(_structureScanItem->cameraCalc()->isManualCamera());
     QCOMPARE(item->layers()->cookedValue().toInt(), 2);
 }
 
