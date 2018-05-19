@@ -363,9 +363,6 @@ protected:
     quint64 lastSendTimeOpticalFlow; ///< Last HIL Optical Flow message sent
 
 private:
-    void _say(const QString& text, int severity = 6);
-
-private:
     Vehicle*                _vehicle;
     FirmwarePluginManager*  _firmwarePluginManager;
 };
