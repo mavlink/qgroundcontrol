@@ -2702,7 +2702,6 @@ void Vehicle::guidedModeTakeoff(double altitudeRelative)
         qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    setGuidedMode(true);
     _firmwarePlugin->guidedModeTakeoff(this, altitudeRelative);
 }
 
