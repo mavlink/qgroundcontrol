@@ -23,7 +23,6 @@ void CameraCalcTest::init(void)
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _cameraCalc = new CameraCalc(_offlineVehicle, "CameraCalcUnitTest" /* settingsGroup */, this);
 
-    _rgSignals[cameraNameChangedIndex] =                SIGNAL(cameraNameChanged(QString));
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
     _rgSignals[imageFootprintSideChangedIndex] =        SIGNAL(imageFootprintSideChanged(double));
     _rgSignals[imageFootprintFrontalChangedIndex] =     SIGNAL(imageFootprintFrontalChanged(double));
