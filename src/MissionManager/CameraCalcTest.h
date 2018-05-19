@@ -31,8 +31,7 @@ private slots:
 
 private:
     enum {
-        cameraNameChangedIndex = 0,
-        dirtyChangedIndex,
+        dirtyChangedIndex = 0,
         imageFootprintSideChangedIndex,
         imageFootprintFrontalChangedIndex,
         distanceToSurfaceRelativeChangedIndex,
@@ -40,7 +39,6 @@ private:
     };
 
     enum {
-        cameraNameChangedMask =                 1 << cameraNameChangedIndex,
         dirtyChangedMask =                      1 << dirtyChangedIndex,
         imageFootprintSideChangedMask =         1 << imageFootprintSideChangedIndex,
         imageFootprintFrontalChangedMask =      1 << imageFootprintFrontalChangedIndex,
