@@ -26,6 +26,7 @@
 
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
+#include <gst/app/gstappsink.h>
 #endif
 
 Q_DECLARE_LOGGING_CATEGORY(VideoReceiverLog)
@@ -54,6 +55,10 @@ public:
     bool            streaming       () { return _streaming; }
     bool            starting        () { return _starting;  }
     bool            stopping        () { return _stopping;  }
+
+    QImage          lastSecFrameGray();
+    bool            lastSecFrameGray(QImage &frame);
+
 #endif
 
     VideoSurface*   videoSurface    () { return _videoSurface; }
@@ -76,6 +81,7 @@ signals:
     void msgErrorReceived           ();
     void msgEOSReceived             ();
     void msgStateChangedReceived    ();
+
 #endif
 
 public slots:
@@ -117,6 +123,8 @@ private:
     bool                _stop;
     Sink*               _sink;
     GstElement*         _tee;
+    GstBin*             _sampleBin;
+//    GstAppSink*         _appsink_gray;
 
     static gboolean             _onBusMessage           (GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack         (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);

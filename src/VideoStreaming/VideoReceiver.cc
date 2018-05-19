@@ -58,6 +58,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _stopping(false)
     , _sink(NULL)
     , _tee(NULL)
+    , _sampleBin(NULL)
     , _pipeline(NULL)
     , _pipelineStopRec(NULL)
     , _videoSink(NULL)
@@ -202,10 +203,15 @@ VideoReceiver::_timeout()
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
-//                                   +-->queue-->decoder-->_videosink
+//                                                            +-_sampleBin-+
+//                                                            |            |
+//                                                         +->+            |
+//                                                         |  |            |
+//                                                         |  +------------+
+//                                                         |
+//                                   +-->queue-->decoder-->decoded_tee-->_videosink
 //                                   |
 //    datasource-->demux-->parser-->tee
-//
 //                                   ^
 //                                   |
 //                                   +-Here we will later link elements for recording
@@ -255,6 +261,7 @@ VideoReceiver::start()
     GstElement*     parser      = NULL;
     GstElement*     queue       = NULL;
     GstElement*     decoder     = NULL;
+    GstElement*     decoded_tee = NULL;
     GstElement*     queue1      = NULL;
 
     do {
@@ -312,6 +319,20 @@ VideoReceiver::start()
             break;
         }
 
+        //make sampleBin
+        gchar sampleBinDescr[] =
+//                "videorate ! video/x-raw,framerate=1/1 ! "
+                "queue leaky=downstream max-size-buffers=60 silent=true ! "
+                "videoconvert ! video/x-raw,format=GRAY8 ! "
+                "appsink name=appsink_gray drop=true max-buffers=60"
+                ;
+        GError *sampleBinErr = NULL;
+        _sampleBin = GST_BIN(gst_parse_bin_from_description(sampleBinDescr, TRUE, &sampleBinErr));
+        if(sampleBinErr)  {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_parse_bin_from_description('sample bin')" << sampleBinErr->message;
+            break;
+        }
+
         if((queue = gst_element_factory_make("queue", NULL)) == NULL)  {
             // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
             //       We should compare gstreamer scripts to QGroundControl to determine the need
@@ -324,17 +345,22 @@ VideoReceiver::start()
             break;
         }
 
+        if ((decoded_tee = gst_element_factory_make("tee", "decoded-tee")) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tee')";
+            break;
+        }
+
         if ((queue1 = gst_element_factory_make("queue", NULL)) == NULL) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue') [1]";
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, NULL);
+        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, decoded_tee, queue1, _videoSink, GST_ELEMENT(_sampleBin), NULL);
         pipelineUp = true;
 
         if(isUdp) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, NULL)) {
+            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, decoded_tee, queue1, _videoSink, NULL)) {
                 qCritical() << "Unable to link UDP elements.";
                 break;
             }
@@ -343,20 +369,22 @@ VideoReceiver::start()
                 qCritical() << "Unable to link TCP dataSource to Demux.";
                 break;
             }
-            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, NULL)) {
+            if(!gst_element_link_many(parser, _tee, queue, decoder, decoded_tee, queue1, _videoSink, NULL)) {
                 qCritical() << "Unable to link TCP pipline to parser.";
                 break;
             }
             g_signal_connect(demux, "pad-added", G_CALLBACK(newPadCB), parser);
         } else {
             g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
-            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _videoSink, NULL)) {
+            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, decoded_tee, _videoSink, NULL)) {
                 qCritical() << "Unable to link RTSP elements.";
                 break;
             }
         }
 
-        dataSource = demux = parser = queue = decoder = queue1 = NULL;
+        gst_element_link_many(decoded_tee, GST_ELEMENT(_sampleBin), NULL);
+
+        dataSource = demux = parser = queue = decoder = decoded_tee = queue1 = NULL;
 
         GstBus* bus = NULL;
 
@@ -393,6 +421,11 @@ VideoReceiver::start()
                 decoder = NULL;
             }
 
+            if (decoded_tee != NULL) {
+                gst_object_unref(decoded_tee);
+                decoded_tee = NULL;
+            }
+
             if (parser != NULL) {
                 gst_object_unref(parser);
                 parser = NULL;
@@ -410,7 +443,12 @@ VideoReceiver::start()
 
             if (_tee != NULL) {
                 gst_object_unref(_tee);
-                dataSource = NULL;
+                _tee = NULL;
+            }
+
+            if (_sampleBin != NULL) {
+                gst_object_unref(_sampleBin);
+                _sampleBin = NULL;
             }
 
             if (queue != NULL) {
@@ -604,8 +642,13 @@ VideoReceiver::_cleanupOldVideos()
 
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
-//
-//                                   +-->queue-->decoder-->_videosink
+//                                                              +--_sampleBin--+
+//                                                              |              |
+//                                                          +-->+              |
+//                                                          |   |              |
+//                                                          |   +--------------+
+//                                                          |
+//                                   +-->queue-->decoder-->decoded_tee-->_videosink
 //                                   |
 //    datasource-->demux-->parser-->tee
 //                                   |
@@ -884,3 +927,64 @@ VideoReceiver::_updateTimer()
 #endif
 }
 
+QImage VideoReceiver::lastSecFrameGray() {
+    GstElement *appsink_gray = gst_bin_get_by_name(_sampleBin, "appsink_gray");
+    if(NULL == appsink_gray) {
+        qWarning() << "lastSecFrameGray" << "Couldn't get appsink";
+        return QImage();
+    }
+    GstSample* sample = gst_app_sink_pull_sample(GST_APP_SINK(appsink_gray));
+    if(NULL == sample) {
+        qWarning() << "lastSecFrameGray" << "Couldn't get sample";
+        gst_object_unref(appsink_gray);
+        return QImage();
+    }
+    GstCaps * caps = gst_sample_get_caps (sample);
+    GstStructure *capsStruct = gst_caps_get_structure(caps,0);
+    int width = 0, height = 0;
+    gst_structure_get_int(capsStruct, "width", &width);
+    gst_structure_get_int(capsStruct, "height", &height);
+
+    gst_sample_unref(sample);
+    gst_object_unref(appsink_gray);
+
+    if( 0 == width || 0 == height) {
+        return QImage();
+    }
+
+    QImage res(width, height, QImage::Format_Grayscale8);
+    bool ok = lastSecFrameGray(res);
+//    bool ok = true;
+    return ok ? res : QImage();
+}
+
+#if defined(QGC_GST_STREAMING)
+
+bool VideoReceiver::lastSecFrameGray(QImage &frame) {
+    GstElement *appsink_gray = gst_bin_get_by_name(_sampleBin, "appsink_gray");
+    if(NULL == appsink_gray) {
+        qWarning() << "lastSecFrameGray" << "Couldn't get appsink";
+        return false;
+    }
+    GstSample* sample = gst_app_sink_pull_sample(GST_APP_SINK(appsink_gray));
+    if(NULL == sample) {
+        qWarning() << "lastSecFrameGray" << "Couldn't get sample";
+        gst_object_unref(appsink_gray);
+        return false;
+    }
+
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
+    GstMapInfo map;
+    gst_buffer_map(buffer, &map, GST_MAP_READ);
+
+    memcpy(frame.scanLine(0), map.data, map.size);
+
+    gst_buffer_unmap (buffer, &map);
+
+    gst_sample_unref(sample);
+    gst_object_unref(appsink_gray);
+
+    return true;
+}
+
+#endif
