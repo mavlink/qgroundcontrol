@@ -1825,10 +1825,8 @@ void MissionController::setDirty(bool dirty)
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)
 {
-    if (!_flyView) {
-        // First we look for a Fixed Wing Landing Pattern which is at the end
-        FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, vehicle);
-    }
+    // First we look for a Fixed Wing Landing Pattern which is at the end
+    FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, vehicle);
 
     int scanIndex = 0;
     while (scanIndex < visualItems->count()) {
