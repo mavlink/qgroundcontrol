@@ -600,10 +600,10 @@ QGCView {
                 guidedActionsController.closeAll()
                 var action = model[index].action
                 if (action === -1) {
-                    if (index == 4) {
+                    if (index == 5) {
                         guidedActionList.model   = _actionModel
                         guidedActionList.visible = true
-                    } else if (index == 5) {
+                    } else if (index == 6) {
                         guidedActionList.model   = _smartShotModel
                         guidedActionList.visible = true
                     }
