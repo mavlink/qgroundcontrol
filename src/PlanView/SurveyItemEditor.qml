@@ -97,13 +97,10 @@ Rectangle {
                 Layout.fillWidth:       true
             }
 
-            QGCLabel {
-                text: qsTr("Entry")
-            }
-            FactComboBox {
-                fact:                   missionItem.gridEntryLocation
-                indexModel:             false
-                Layout.fillWidth:       true
+            QGCButton {
+                Layout.columnSpan:  2
+                text:               qsTr("Rotate Entry Point")
+                onClicked:          missionItem.rotateEntryPoint();
             }
 
             FactCheckBox {
