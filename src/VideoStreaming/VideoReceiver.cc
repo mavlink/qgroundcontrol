@@ -927,6 +927,8 @@ VideoReceiver::_updateTimer()
 #endif
 }
 
+#if defined(QGC_GST_STREAMING)
+
 QImage VideoReceiver::lastSecFrameGray() {
     GstElement *appsink_gray = gst_bin_get_by_name(_sampleBin, "appsink_gray");
     if(NULL == appsink_gray) {
@@ -957,8 +959,6 @@ QImage VideoReceiver::lastSecFrameGray() {
 //    bool ok = true;
     return ok ? res : QImage();
 }
-
-#if defined(QGC_GST_STREAMING)
 
 bool VideoReceiver::lastSecFrameGray(QImage &frame) {
     GstElement *appsink_gray = gst_bin_get_by_name(_sampleBin, "appsink_gray");
