@@ -1304,15 +1304,17 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     mavlink_battery_status_t bat_status;
     mavlink_msg_battery_status_decode(&message, &bat_status);
 
+    VehicleBatteryFactGroup& batteryFactGroup = bat_status.id == 0 ? _battery1FactGroup : _battery2FactGroup;
+
     if (bat_status.temperature == INT16_MAX) {
-        _battery1FactGroup.temperature()->setRawValue(VehicleBatteryFactGroup::_temperatureUnavailable);
+        batteryFactGroup.temperature()->setRawValue(VehicleBatteryFactGroup::_temperatureUnavailable);
     } else {
-        _battery1FactGroup.temperature()->setRawValue((double)bat_status.temperature / 100.0);
+        batteryFactGroup.temperature()->setRawValue((double)bat_status.temperature / 100.0);
     }
     if (bat_status.current_consumed == -1) {
-        _battery1FactGroup.mahConsumed()->setRawValue(VehicleBatteryFactGroup::_mahConsumedUnavailable);
+        batteryFactGroup.mahConsumed()->setRawValue(VehicleBatteryFactGroup::_mahConsumedUnavailable);
     } else {
-        _battery1FactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
+        batteryFactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
     }
 
     int cellCount = 0;
@@ -1325,15 +1327,15 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
         cellCount = -1;
     }
 
-    _battery1FactGroup.cellCount()->setRawValue(cellCount);
+    batteryFactGroup.cellCount()->setRawValue(cellCount);
 
     //-- Time remaining in seconds (0 means not supported)
-    _battery1FactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
+    batteryFactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
     //-- Battery charge state (0 means not supported)
     if(bat_status.charge_state <= MAV_BATTERY_CHARGE_STATE_UNHEALTHY) {
-        _battery1FactGroup.chargeState()->setRawValue(bat_status.charge_state);
+        batteryFactGroup.chargeState()->setRawValue(bat_status.charge_state);
     } else {
-        _battery1FactGroup.chargeState()->setRawValue(0);
+        batteryFactGroup.chargeState()->setRawValue(0);
     }
     //-- TODO: Somewhere, actions would be taken based on this chargeState:
     //   MAV_BATTERY_CHARGE_STATE_CRITICAL:     Battery state is critical, return / abort immediately
