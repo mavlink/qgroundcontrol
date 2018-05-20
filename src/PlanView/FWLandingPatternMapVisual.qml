@@ -97,11 +97,11 @@ Item {
     Component.onCompleted: {
         if (_missionItem.landingCoordSet) {
             showItemVisuals()
-            if (_missionItem.isCurrentItem) {
+            if (!_missionItem.flyView && _missionItem.isCurrentItem) {
                 showDragAreas()
             }
             _setFlightPath()
-        } else if (_missionItem.isCurrentItem) {
+        } else if (!_missionItem.flyView && _missionItem.isCurrentItem) {
             showMouseArea()
         }
     }
@@ -116,6 +116,9 @@ Item {
         target: _missionItem
 
         onIsCurrentItemChanged: {
+            if (_missionItem.flyView) {
+                return
+            }
             if (_missionItem.isCurrentItem) {
                 if (_missionItem.landingCoordSet) {
                     showDragAreas()
@@ -129,6 +132,9 @@ Item {
         }
 
         onLandingCoordSetChanged: {
+            if (_missionItem.flyView) {
+                return
+            }
             if (_missionItem.landingCoordSet) {
                 hideMouseArea()
                 showItemVisuals()
