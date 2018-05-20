@@ -27,7 +27,7 @@
 LinuxBuild {
     CONFIG += link_pkgconfig
     packagesExist(gstreamer-1.0) {
-        PKGCONFIG   += gstreamer-1.0  gstreamer-video-1.0
+        PKGCONFIG   += gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-1.0
         CONFIG      += VideoEnabled
     }
 } else:MacBuild {
@@ -52,7 +52,7 @@ LinuxBuild {
     exists($$GST_ROOT) {
         CONFIG      += VideoEnabled
 
-        LIBS        += -L$$GST_ROOT/lib -lgstreamer-1.0 -lgstvideo-1.0 -lgstbase-1.0
+        LIBS        += -L$$GST_ROOT/lib -lgstreamer-1.0 -lgstvideo-1.0 -lgstapp-1.0 -lgstapp-1.0 -lgstbase-1.0
         LIBS        += -lglib-2.0 -lintl -lgobject-2.0
 
         INCLUDEPATH += \
@@ -87,6 +87,7 @@ LinuxBuild {
         LIBS += -L$$GST_ROOT/lib/gstreamer-1.0/static \
             -lgstvideo-1.0 \
             -lgstcoreelements \
+            -lgstapp \
             -lgstudp \
             -lgstrtp \
             -lgstrtsp \
@@ -186,4 +187,8 @@ VideoEnabled {
         message("Skipping support for video streaming (Unsupported platform)")
     }
 }
+
+HEADERS +=
+
+SOURCES +=
 
