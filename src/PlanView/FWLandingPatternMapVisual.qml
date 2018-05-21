@@ -36,7 +36,8 @@ Item {
     readonly property int _flightPathIndex:     0
     readonly property int _loiterPointIndex:    1
     readonly property int _loiterRadiusIndex:   2
-    readonly property int _landPointIndex:      3
+    readonly property int _landingAreaIndex:    3
+    readonly property int _landPointIndex:      4
 
     function hideItemVisuals() {
         for (var i=0; i<_itemVisuals.length; i++) {
@@ -56,6 +57,9 @@ Item {
             itemVisual = loiterRadiusComponent.createObject(map)
             map.addMapItem(itemVisual)
             _itemVisuals[_loiterRadiusIndex] = itemVisual
+            itemVisual = landingAreaComponent.createObject(map)
+            map.addMapItem(itemVisual)
+            _itemVisuals[_landingAreaIndex] = itemVisual
             itemVisual = landPointComponent.createObject(map)
             map.addMapItem(itemVisual)
             _itemVisuals[_landPointIndex] = itemVisual
@@ -224,7 +228,6 @@ Item {
         }
     }
 
-    // Loiter radius visual
     Component {
         id: loiterRadiusComponent
 
@@ -238,7 +241,6 @@ Item {
         }
     }
 
-    // Land point
     Component {
         id: landPointComponent
 
@@ -255,6 +257,42 @@ Item {
                 checked:    _missionItem.isCurrentItem
 
                 onClicked: _root.clicked(_missionItem.sequenceNumber)
+            }
+        }
+    }
+
+    Component {
+        id: landingAreaComponent
+
+        MapPolygon {
+            z:              QGroundControl.zOrderMapItems
+            border.width:   1
+            border.color:   "black"
+            color:          "green"
+            opacity:        0.5
+
+            readonly property real landingWidth:    15
+            readonly property real landingLength:   100
+            readonly property real angleRadians:    Math.atan((landingWidth / 2) / (landingLength / 2))
+            readonly property real angleDegrees:    (angleRadians * (180 / Math.PI))
+            readonly property real hypotenuse:      (landingWidth / 2) / Math.sin(angleRadians)
+
+            property real landingAreaAngle: _missionItem.landingCoordinate.azimuthTo(_missionItem.loiterTangentCoordinate)
+
+            function calcPoly() {
+                path = [ ]
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle - angleDegrees))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle + angleDegrees))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle + (180 - angleDegrees)))
+                addCoordinate(_missionItem.landingCoordinate.atDistanceAndAzimuth(hypotenuse, landingAreaAngle - (180 - angleDegrees)))
+            }
+
+            Component.onCompleted: calcPoly()
+
+            Connections {
+                target: _missionItem
+                onLandingCoordinateChanged: calcPoly()
+                onLoiterTangentCoordinateChanged:  calcPoly()
             }
         }
     }
