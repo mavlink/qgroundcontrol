@@ -69,7 +69,8 @@ const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
 const char* Vehicle::_hobbsFactName =               "hobbs";
 
 const char* Vehicle::_gpsFactGroupName =            "gps";
-const char* Vehicle::_batteryFactGroupName =        "battery";
+const char* Vehicle::_battery1FactGroupName =       "battery";
+const char* Vehicle::_battery2FactGroupName =       "battery2";
 const char* Vehicle::_windFactGroupName =           "wind";
 const char* Vehicle::_vibrationFactGroupName =      "vibration";
 const char* Vehicle::_temperatureFactGroupName =    "temperature";
@@ -185,7 +186,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _gpsFactGroup(this)
-    , _batteryFactGroup(this)
+    , _battery1FactGroup(this)
+    , _battery2FactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _temperatureFactGroup(this)
@@ -370,7 +372,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _gpsFactGroup(this)
-    , _batteryFactGroup(this)
+    , _battery1FactGroup(this)
+    , _battery2FactGroup(this)
     , _windFactGroup(this)
     , _vibrationFactGroup(this)
     , _clockFactGroup(this)
@@ -440,7 +443,8 @@ void Vehicle::_commonInit(void)
     _addFact(&_hobbsFact,               _hobbsFactName);
 
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
-    _addFactGroup(&_batteryFactGroup,           _batteryFactGroupName);
+    _addFactGroup(&_battery1FactGroup,          _battery1FactGroupName);
+    _addFactGroup(&_battery2FactGroup,          _battery2FactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
     _addFactGroup(&_vibrationFactGroup,         _vibrationFactGroupName);
     _addFactGroup(&_temperatureFactGroup,       _temperatureFactGroupName);
@@ -940,7 +944,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
     _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
 
-    _batteryFactGroup.percentRemaining()->setRawValue(highLatency2.battery);
+    _battery1FactGroup.percentRemaining()->setRawValue(highLatency2.battery);
 
     _temperatureFactGroup.temperature1()->setRawValue(highLatency2.temperature_air);
 
@@ -1245,19 +1249,19 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     mavlink_msg_sys_status_decode(&message, &sysStatus);
 
     if (sysStatus.current_battery == -1) {
-        _batteryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
+        _battery1FactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
     } else {
         // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
-        _batteryFactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
+        _battery1FactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
     }
     if (sysStatus.voltage_battery == UINT16_MAX) {
-        _batteryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
+        _battery1FactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
     } else {
-        _batteryFactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
+        _battery1FactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
         // current_battery is 10 mA and voltage_battery is 1mV. (10/1e3 times 1/1e3 = 1/1e5)
-        _batteryFactGroup.instantPower()->setRawValue((float)(sysStatus.current_battery*sysStatus.voltage_battery)/(100000.0));
+        _battery1FactGroup.instantPower()->setRawValue((float)(sysStatus.current_battery*sysStatus.voltage_battery)/(100000.0));
     }
-    _batteryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
+    _battery1FactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
     if (sysStatus.battery_remaining > 0) {
         if (sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt() &&
@@ -1300,15 +1304,17 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     mavlink_battery_status_t bat_status;
     mavlink_msg_battery_status_decode(&message, &bat_status);
 
+    VehicleBatteryFactGroup& batteryFactGroup = bat_status.id == 0 ? _battery1FactGroup : _battery2FactGroup;
+
     if (bat_status.temperature == INT16_MAX) {
-        _batteryFactGroup.temperature()->setRawValue(VehicleBatteryFactGroup::_temperatureUnavailable);
+        batteryFactGroup.temperature()->setRawValue(VehicleBatteryFactGroup::_temperatureUnavailable);
     } else {
-        _batteryFactGroup.temperature()->setRawValue((double)bat_status.temperature / 100.0);
+        batteryFactGroup.temperature()->setRawValue((double)bat_status.temperature / 100.0);
     }
     if (bat_status.current_consumed == -1) {
-        _batteryFactGroup.mahConsumed()->setRawValue(VehicleBatteryFactGroup::_mahConsumedUnavailable);
+        batteryFactGroup.mahConsumed()->setRawValue(VehicleBatteryFactGroup::_mahConsumedUnavailable);
     } else {
-        _batteryFactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
+        batteryFactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
     }
 
     int cellCount = 0;
@@ -1321,15 +1327,15 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
         cellCount = -1;
     }
 
-    _batteryFactGroup.cellCount()->setRawValue(cellCount);
+    batteryFactGroup.cellCount()->setRawValue(cellCount);
 
     //-- Time remaining in seconds (0 means not supported)
-    _batteryFactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
+    batteryFactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
     //-- Battery charge state (0 means not supported)
     if(bat_status.charge_state <= MAV_BATTERY_CHARGE_STATE_UNHEALTHY) {
-        _batteryFactGroup.chargeState()->setRawValue(bat_status.charge_state);
+        batteryFactGroup.chargeState()->setRawValue(bat_status.charge_state);
     } else {
-        _batteryFactGroup.chargeState()->setRawValue(0);
+        batteryFactGroup.chargeState()->setRawValue(0);
     }
     //-- TODO: Somewhere, actions would be taken based on this chargeState:
     //   MAV_BATTERY_CHARGE_STATE_CRITICAL:     Battery state is critical, return / abort immediately

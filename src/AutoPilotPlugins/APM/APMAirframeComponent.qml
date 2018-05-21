@@ -83,10 +83,9 @@ SetupPage {
         id: newFramePageComponent
 
         Grid {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        _margins
-            columns:        2
+            width:      availableWidth
+            spacing:    _margins
+            columns:    2
 
             QGCLabel {
                 text: qsTr("Frame Class:")
