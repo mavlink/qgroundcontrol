@@ -68,6 +68,8 @@ CameraCalc::CameraCalc(Vehicle* vehicle, QString settingsGroup, QObject* parent)
     connect(landscape(),                &Fact::rawValueChanged, this, &CameraCalc::_recalcTriggerDistance);
 
     _cameraNameChanged();
+
+    setDirty(false);
 }
 
 void CameraCalc::setDirty(bool dirty)
