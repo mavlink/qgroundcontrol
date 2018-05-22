@@ -640,6 +640,7 @@
             "friendlyName":         "ROI to next waypoint" ,
             "description":          "Sets the region of interest to point towards the next waypoint with optional offsets.",
             "specifiesCoordinate":  false,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
             "category":             "Camera",
             "param5": {
