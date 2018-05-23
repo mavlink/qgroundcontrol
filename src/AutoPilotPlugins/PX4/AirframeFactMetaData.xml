@@ -329,6 +329,11 @@
       <maintainer>Michael Schaeuble</maintainer>
       <type>Quadrotor x</type>
     </airframe>
+    <airframe id="4014" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="S500">
+      <class>Copter</class>
+      <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
     <airframe id="4020" maintainer="Thomas Gubler &lt;thomas@px4.io&gt;" name="Hobbyking Micro PCB">
       <class>Copter</class>
       <maintainer>Thomas Gubler &lt;thomas@px4.io&gt;</maintainer>
