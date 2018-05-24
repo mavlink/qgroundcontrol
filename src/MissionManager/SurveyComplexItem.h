@@ -23,9 +23,11 @@ class SurveyComplexItem : public TransectStyleComplexItem
 public:
     SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
-    Q_PROPERTY(Fact* gridAngle READ gridAngle CONSTANT)
+    Q_PROPERTY(Fact* gridAngle              READ gridAngle              CONSTANT)
+    Q_PROPERTY(Fact* flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
 
-    Fact* gridAngle(void) { return &_gridAngleFact; }
+    Fact* gridAngle             (void) { return &_gridAngleFact; }
+    Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -59,6 +61,7 @@ public:
     static const char* settingsGroup;
     static const char* gridAngleName;
     static const char* gridEntryLocationName;
+    static const char* flyAlternateTransectsName;
 
     static const char* jsonV3ComplexItemTypeValue;
 
@@ -108,10 +111,12 @@ private:
     QMap<QString, FactMetaData*> _metaDataMap;
 
     SettingsFact    _gridAngleFact;
+    SettingsFact    _flyAlternateTransectsFact;
     int             _entryPoint;
 
     static const char* _jsonGridAngleKey;
     static const char* _jsonEntryPointKey;
+    static const char* _jsonFlyAlternateTransectsKey;
 
     static const char* _jsonV3GridObjectKey;
     static const char* _jsonV3GridAltitudeKey;
