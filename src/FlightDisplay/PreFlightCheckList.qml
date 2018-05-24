@@ -20,41 +20,10 @@ import QGroundControl.Vehicle       1.0
 // This class stores the data and functions of the check list but NOT the GUI (which is handled somewhere else).
 Item {
     // Properties
-    property int            unhealthySensors:       _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
-    property bool           gpsLock:                _activeVehicle ? _activeVehicle.gps.lock.rawValue>=3 : 0
-    property var            batPercentRemaining:    _activeVehicle ? _activeVehicle.battery.percentRemaining.value : 0
-    property bool           audioMuted:             QGroundControl.settingsManager.appSettings.audioMuted.rawValue
     property ObjectModel    checkListItems:         _checkListItems
     property var            _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property int            _checkState:            _activeVehicle ? (_activeVehicle.armed ? 1 + (buttonActuators.state + buttonMotors.state + buttonMission.state + buttonSoundOutput.state) / 4 / 4 : 0) : 0 ; // Shows progress of checks inside the checklist - unlocks next check steps in groups
 
-    // Connections
-    onBatPercentRemainingChanged:   buttonBattery.updateItem();
-    onGpsLockChanged:               buttonSensors.updateItem();
-    onAudioMutedChanged:            buttonSoundOutput.updateItem();
-    onUnhealthySensorsChanged:      updateVehicleDependentItems();
-
-    Connections {
-        target: QGroundControl.multiVehicleManager
-        onActiveVehicleChanged: onActiveVehicleChanged();
-    }
-    Component.onCompleted: {
-        if(QGroundControl.multiVehicleManager.vehicles.count > 0) {
-            onActiveVehicleChanged();
-        }
-    }
-
-    // Functions
-    function updateVehicleDependentItems() {
-        buttonSensors.updateItem();
-        buttonBattery.updateItem();
-        buttonRC.updateItem();
-        buttonEstimator.updateItem();
-    }
-    function onActiveVehicleChanged() {
-        buttonSoundOutput.updateItem();     // Just updated here for initialization once we connect to a vehicle
-        updateVehicleDependentItems();
-    }
     function resetNrClicks() {
         buttonHardware.resetNrClicks();
         buttonBattery.resetNrClicks();
@@ -78,88 +47,18 @@ Item {
             name: "Hardware"
             defaulttext: "Props mounted? Wings secured? Tail secured?"
         }
-        PreFlightCheckButton {
-             id: buttonBattery
-             name: "Battery"
-             pendingtext: "Healthy & charged > 40%. Battery connector firmly plugged?"
-             function updateItem() {
-                 if (!_activeVehicle) {
-                     state = statePassed
-                 } else {
-                     if (unhealthySensors & Vehicle.SysStatusSensorBattery) {
-                         failuretext = qsTr("Not healthy. Check console.")
-                         state = stateMajorIssue
-                     } else if (batPercentRemaining < 40.0) {
-                         failuretext = qsTr("Low (below 40%). Please recharge.")
-                         state = stateMajorIssue
-                     } else {
-                         state = _nrClicked > 0 ? statePassed : statePending
-                     }
-                 }
-             }
+        PreFlightBatteryCheck {
+             id:                buttonBattery
+             failureVoltage:    40
         }
-        PreFlightCheckButton {
+        PreFlightSensorsCheck {
              id: buttonSensors
-             name: "Sensors"
-             function updateItem() {
-                 if (!_activeVehicle) {
-                     state = statePassed
-                 } else {
-                     if(!(unhealthySensors & Vehicle.SysStatusSensor3dMag) &&
-                        !(unhealthySensors & Vehicle.SysStatusSensor3dAccel) &&
-                        !(unhealthySensors & Vehicle.SysStatusSensor3dGyro) &&
-                        !(unhealthySensors & Vehicle.SysStatusSensorAbsolutePressure) &&
-                        !(unhealthySensors & Vehicle.SysStatusSensorDifferentialPressure) &&
-                        !(unhealthySensors & Vehicle.SysStatusSensorGPS)) {
-                         if (!gpsLock) {
-                             pendingtext = qsTr("Pending. Waiting for GPS lock.")
-                             state = statePending
-                         } else {
-                             state = statePassed
-                         }
-                     } else {
-                         if(unhealthySensors & Vehicle.SysStatusSensor3dMag)                        failuretext="Failure. Magnetometer issues. Check console.";
-                         else if(unhealthySensors & Vehicle.SysStatusSensor3dAccel)                 failuretext="Failure. Accelerometer issues. Check console.";
-                         else if(unhealthySensors & Vehicle.SysStatusSensor3dGyro)                  failuretext="Failure. Gyroscope issues. Check console.";
-                         else if(unhealthySensors & Vehicle.SysStatusSensorAbsolutePressure)        failuretext="Failure. Barometer issues. Check console.";
-                         else if(unhealthySensors & Vehicle.SysStatusSensorDifferentialPressure)    failuretext="Failure. Airspeed sensor issues. Check console.";
-                         else if(unhealthySensors & Vehicle.SysStatusSensorGPS)                     failuretext="Failure. No valid or low quality GPS signal. Check console.";
-                         state = stateMajorIssue
-                     }
-                 }
-             }
         }
-        PreFlightCheckButton {
+        PreFlightRCCheck {
             id: buttonRC
-            name: "Radio Control"
-            pendingtext: "Receiving signal. Perform range test & confirm."
-            failuretext: "No signal or invalid autopilot-RC config. Check RC and console."
-            function updateItem() {
-                if (!_activeVehicle) {
-                    state = statePassed
-                } else {
-                    if (unhealthySensors & Vehicle.SysStatusSensorRCReceiver) {
-                        state = stateMajorIssue
-                    } else {
-                        state = _nrClicked > 0 ? statePassed : statePending
-                    }
-                }
-            }
         }
-        PreFlightCheckButton {
+        PreFlightAHRSCheck {
             id: buttonEstimator
-            name: "Global position estimate"
-            function updateItem() {
-                if (!_activeVehicle) {
-                    state = statePassed
-                } else {
-                    if (unhealthySensors & Vehicle.SysStatusSensorAHRS) {
-                        state = stateMajorIssue
-                    } else {
-                        state = statePassed
-                    }
-                }
-            }
         }
 
         // Check list item group 1 - Require arming
@@ -182,24 +81,9 @@ Item {
            group: 1
            defaulttext: "Please confirm mission is valid (waypoints valid, no terrain collision)."
         }
-        PreFlightCheckButton {
-           id: buttonSoundOutput
-           name: "Sound output"
-           group: 1
-           pendingtext: "QGC audio output enabled. System audio output enabled, too?"
-           failuretext: "Failure, QGC audio output is disabled. Please enable it under application settings->general to hear audio warnings!"
-           function updateItem() {
-               if (!_activeVehicle) {
-                   state = statePassed
-               } else {
-                   if (audioMuted) {
-                       state = stateMajorIssue
-                       _nrClicked = 0
-                   } else {
-                       state = _nrClicked > 0 ? statePassed : statePending
-                   }
-               }
-           }
+        PreFlightSoundCheck {
+           id:      buttonSoundOutput
+           group:   1
         }
 
         // Check list item group 2 - Final checks before launch
