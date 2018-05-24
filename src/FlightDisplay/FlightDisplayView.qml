@@ -113,8 +113,8 @@ QGCView {
         Component.onCompleted:  start(true /* flyView */)
     }
 
-    CheckList {
-        id: checklist
+    PreFlightCheckList {
+        id: preFlightCheckList
     }
 
     Connections {
@@ -729,7 +729,7 @@ QGCView {
                         opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
                         tooltip:                "Reset the checklist (e.g. after a vehicle reboot)"
 
-                        onClicked:              checklist.resetNrClicks()
+                        onClicked:              preFlightCheckList.resetNrClicks()
 
                         Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
                     }
@@ -739,7 +739,7 @@ QGCView {
 
                 // All check list items
                 Repeater {
-                    model: checklist.checkListItems
+                    model: preFlightCheckList.checkListItems
                 }
             } // Column
         } //Rectangle

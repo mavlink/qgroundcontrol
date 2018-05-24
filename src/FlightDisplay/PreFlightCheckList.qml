@@ -73,12 +73,12 @@ Item {
         id: _checkListItems
 
         // Standard check list items (group 0) - Available from the start
-        QGCCheckListItem {
+        PreFlightCheckButton {
             id: buttonHardware
             name: "Hardware"
             defaulttext: "Props mounted? Wings secured? Tail secured?"
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
              id: buttonBattery
              name: "Battery"
              pendingtext: "Healthy & charged > 40%. Battery connector firmly plugged?"
@@ -98,7 +98,7 @@ Item {
                  }
              }
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
              id: buttonSensors
              name: "Sensors"
              function updateItem() {
@@ -129,7 +129,7 @@ Item {
                  }
              }
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
             id: buttonRC
             name: "Radio Control"
             pendingtext: "Receiving signal. Perform range test & confirm."
@@ -146,7 +146,7 @@ Item {
                 }
             }
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
             id: buttonEstimator
             name: "Global position estimate"
             function updateItem() {
@@ -164,25 +164,25 @@ Item {
 
         // Check list item group 1 - Require arming
         QGCLabel {text:qsTr("<i>Please arm the vehicle here.</i>") ; opacity: 0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0) ; anchors.horizontalCenter:buttonHardware.horizontalCenter ; anchors.topMargin:40 ; anchors.bottomMargin:40;}
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonActuators
            name: "Actuators"
            group: 1
            defaulttext: "Move all control surfaces. Did they work properly?"
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonMotors
            name: "Motors"
            group: 1
            defaulttext: "Propellers free? Then throttle up gently. Working properly?"
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonMission
            name: "Mission"
            group: 1
            defaulttext: "Please confirm mission is valid (waypoints valid, no terrain collision)."
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonSoundOutput
            name: "Sound output"
            group: 1
@@ -204,21 +204,21 @@ Item {
 
         // Check list item group 2 - Final checks before launch
         QGCLabel {text:qsTr("<i>Last preparations before launch</i>") ; opacity : 0.2+0.8*(_checkState >= 2); anchors.horizontalCenter:buttonHardware.horizontalCenter}
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonPayload
            name: "Payload"
            group: 2
            defaulttext: "Configured and started?"
            pendingtext: "Payload lid closed?"
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonWeather
            name: "Wind & weather"
            group: 2
            defaulttext: "OK for your platform?"
            pendingtext: "Launching into the wind?"
         }
-        QGCCheckListItem {
+        PreFlightCheckButton {
            id: buttonFlightAreaFree
            name: "Flight area"
            group: 2
