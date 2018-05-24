@@ -120,6 +120,10 @@ Item {
     Item {
         id: dropDownItem
 
+        DeadMouseArea {
+            anchors.fill: parent
+        }
+
         Canvas {
             id:             arrowCanvas
             anchors.fill:   parent
@@ -161,5 +165,6 @@ Item {
                 property var dropPanel: _root
             }
         }
+
     } // Item - dropDownItem
 }
