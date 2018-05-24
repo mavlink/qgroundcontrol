@@ -45,7 +45,7 @@ Item {
         PreFlightCheckButton {
             id: buttonHardware
             name: "Hardware"
-            defaulttext: "Props mounted? Wings secured? Tail secured?"
+            defaultText: "Props mounted? Wings secured? Tail secured?"
         }
         PreFlightBatteryCheck {
              id:                buttonBattery
@@ -67,19 +67,19 @@ Item {
            id: buttonActuators
            name: "Actuators"
            group: 1
-           defaulttext: "Move all control surfaces. Did they work properly?"
+           defaultText: "Move all control surfaces. Did they work properly?"
         }
         PreFlightCheckButton {
            id: buttonMotors
            name: "Motors"
            group: 1
-           defaulttext: "Propellers free? Then throttle up gently. Working properly?"
+           defaultText: "Propellers free? Then throttle up gently. Working properly?"
         }
         PreFlightCheckButton {
            id: buttonMission
            name: "Mission"
            group: 1
-           defaulttext: "Please confirm mission is valid (waypoints valid, no terrain collision)."
+           defaultText: "Please confirm mission is valid (waypoints valid, no terrain collision)."
         }
         PreFlightSoundCheck {
            id:      buttonSoundOutput
@@ -92,21 +92,21 @@ Item {
            id: buttonPayload
            name: "Payload"
            group: 2
-           defaulttext: "Configured and started?"
-           pendingtext: "Payload lid closed?"
+           defaultText: "Configured and started?"
+           pendingText: "Payload lid closed?"
         }
         PreFlightCheckButton {
            id: buttonWeather
            name: "Wind & weather"
            group: 2
-           defaulttext: "OK for your platform?"
-           pendingtext: "Launching into the wind?"
+           defaultText: "OK for your platform?"
+           pendingText: "Launching into the wind?"
         }
         PreFlightCheckButton {
            id: buttonFlightAreaFree
            name: "Flight area"
            group: 2
-           defaulttext: "Launch area and path free of obstacles/people?"
+           defaultText: "Launch area and path free of obstacles/people?"
         }
     } // Object Model
 }

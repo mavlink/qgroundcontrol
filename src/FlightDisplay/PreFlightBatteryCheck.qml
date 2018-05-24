@@ -16,7 +16,7 @@ import QGroundControl.Vehicle   1.0
 // This class stores the data and functions of the check list but NOT the GUI (which is handled somewhere else).
 PreFlightCheckButton {
     name:           qsTr("Battery")
-    pendingtext:    qsTr("Healthy & charged > %1. Battery connector firmly plugged?").arg(failureVoltage)
+    pendingText:    qsTr("Healthy & charged > %1. Battery connector firmly plugged?").arg(failureVoltage)
 
     property int failureVoltage: 40
 
@@ -35,10 +35,10 @@ PreFlightCheckButton {
             state = stateNotChecked
         } else {
             if (_unhealthySensors & Vehicle.SysStatusSensorBattery) {
-                failuretext = qsTr("Not healthy. Check console.")
+                failureText = qsTr("Not healthy. Check console.")
                 state = stateMajorIssue
             } else if (_batPercentRemaining < failureVoltage) {
-                failuretext = qsTr("Low (below %1). Please recharge.").arg(failureVoltage)
+                failureText = qsTr("Low (below %1). Please recharge.").arg(failureVoltage)
                 state = stateMajorIssue
             } else {
                 state = _nrClicked > 0 ? statePassed : statePending

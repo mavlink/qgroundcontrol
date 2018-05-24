@@ -15,8 +15,8 @@ import QGroundControl.Vehicle   1.0
 
 PreFlightCheckButton {
     name:           qsTr("Sound output")
-    pendingtext:    qsTr("QGC audio output enabled. System audio output enabled, too?")
-    failuretext:    qsTr("Failure, QGC audio output is disabled. Please enable it under application settings->general to hear audio warnings!")
+    pendingText:    qsTr("QGC audio output enabled. System audio output enabled, too?")
+    failureText:    qsTr("Failure, QGC audio output is disabled. Please enable it under application settings->general to hear audio warnings!")
 
     property bool   _audioMuted:     QGroundControl.settingsManager.appSettings.audioMuted.rawValue
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
