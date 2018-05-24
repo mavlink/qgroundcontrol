@@ -130,6 +130,13 @@ Rectangle {
                 Layout.columnSpan:  2
             }
 
+            FactCheckBox {
+                text:               qsTr("Fly alternate transects")
+                fact:               missionItem.flyAlternateTransects
+                visible:            _vehicle.fixedWing
+                Layout.columnSpan:  2
+            }
+
             QGCCheckBox {
                 id:                 relAlt
                 anchors.left:       parent.left

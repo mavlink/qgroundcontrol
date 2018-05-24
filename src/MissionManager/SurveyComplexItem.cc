@@ -27,6 +27,7 @@ const char* SurveyComplexItem::jsonV3ComplexItemTypeValue = "survey";
 const char* SurveyComplexItem::settingsGroup =              "Survey";
 const char* SurveyComplexItem::gridAngleName =              "GridAngle";
 const char* SurveyComplexItem::gridEntryLocationName =      "GridEntryLocation";
+const char* SurveyComplexItem::flyAlternateTransectsName =  "FlyAlternateTransects";
 
 const char* SurveyComplexItem::_jsonGridAngleKey =          "angle";
 const char* SurveyComplexItem::_jsonEntryPointKey =         "entryLocation";
@@ -56,12 +57,13 @@ const char* SurveyComplexItem::_jsonV3ManualGridKey =                   "manualG
 const char* SurveyComplexItem::_jsonV3CameraOrientationLandscapeKey =   "orientationLandscape";
 const char* SurveyComplexItem::_jsonV3FixedValueIsAltitudeKey =         "fixedValueIsAltitude";
 const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90Degrees";
-
+const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
 
 SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
     : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
+    , _flyAlternateTransectsFact(settingsGroup, _metaDataMap[flyAlternateTransectsName])
     , _entryPoint               (EntryLocationTopLeft)
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
@@ -79,9 +81,11 @@ SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* pa
     }
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
+    connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_setDirty);
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
+    connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_rebuildTransects);
 
     // FIXME: Shouldn't these be in TransectStyleComplexItem? They are also in CorridorScanComplexItem constructur
@@ -99,6 +103,7 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[_jsonGridAngleKey] =                             _gridAngleFact.rawValue().toDouble();
+    saveObject[_jsonFlyAlternateTransectsKey] =                 _flyAlternateTransectsFact.rawValue().toBool();
     saveObject[_jsonEntryPointKey] =                            _entryPoint;
 
     // Polygon shape
@@ -152,8 +157,9 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
-        { _jsonEntryPointKey,                    QJsonValue::Double, true },
+        { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { _jsonGridAngleKey,                            QJsonValue::Double, true },
+        { _jsonFlyAlternateTransectsKey,                QJsonValue::Double, false },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
@@ -180,7 +186,9 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
         return false;
     }
 
-    _gridAngleFact.setRawValue(complexObject[_jsonGridAngleKey].toDouble());
+    _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
+    _flyAlternateTransectsFact.setRawValue  (complexObject[_jsonFlyAlternateTransectsKey].toBool(false));
+
     _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 
     _ignoreRecalc = false;
@@ -1272,6 +1280,21 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
 
     if (refly) {
         _optimizeTransectsForShortestDistance(_transects.last().last().coord, transects);
+    }
+
+    if (_flyAlternateTransectsFact.rawValue().toBool()) {
+        QList<QList<QGeoCoordinate>> alternatingTransects;
+        for (int i=0; i<transects.count(); i++) {
+            if (!(i & 1)) {
+                alternatingTransects.append(transects[i]);
+            }
+        }
+        for (int i=transects.count()-1; i>0; i--) {
+            if (i & 1) {
+                alternatingTransects.append(transects[i]);
+            }
+        }
+        transects = alternatingTransects;
     }
 
     // Adjust to lawnmower pattern
