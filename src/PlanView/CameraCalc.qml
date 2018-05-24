@@ -234,7 +234,7 @@ Column {
 
                 QGCRadioButton {
                     id:                     fixedImageDensityRadio
-                    text:                   qsTr("Image density")
+                    text:                   qsTr("Ground Res")
                     checked:                !cameraCalc.valueSetIsDistance.value
                     exclusiveGroup:         fixedValueGroup
                     onClicked:              cameraCalc.valueSetIsDistance.value = 0
