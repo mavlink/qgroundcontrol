@@ -1,3 +1,12 @@
+/****************************************************************************
+ *
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
+ ****************************************************************************/
+
 import QtQuick                      2.3
 import QtQml.Models                 2.1
 
@@ -17,7 +26,7 @@ Item {
     property bool           audioMuted:             QGroundControl.settingsManager.appSettings.audioMuted.rawValue
     property ObjectModel    checkListItems:         _checkListItems
     property var            _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property int            _checkState:            _activeVehicle ? (_activeVehicle.armed ? 1 + (buttonActuators._state + buttonMotors._state + buttonMission._state + buttonSoundOutput._state) / 4 / 4 : 0) : 0 ; // Shows progress of checks inside the checklist - unlocks next check steps in groups
+    property int            _checkState:            _activeVehicle ? (_activeVehicle.armed ? 1 + (buttonActuators.state + buttonMotors.state + buttonMission.state + buttonSoundOutput.state) / 4 / 4 : 0) : 0 ; // Shows progress of checks inside the checklist - unlocks next check steps in groups
 
     // Connections
     onBatPercentRemainingChanged:   buttonBattery.updateItem();
@@ -75,13 +84,16 @@ Item {
              pendingtext: "Healthy & charged > 40%. Battery connector firmly plugged?"
              function updateItem() {
                  if (!_activeVehicle) {
-                     _state = 0;
+                     state = statePassed
                  } else {
-                     if (!(unhealthySensors & Vehicle.SysStatusSensorBattery) && batPercentRemaining>=40.0) _state = 1+3*(_nrClicked>0);
-                     else {
-                         if(unhealthySensors & Vehicle.SysStatusSensorBattery) failuretext="Not healthy. Check console.";
-                         else if(batPercentRemaining<40.0) failuretext="Low (below 40%). Please recharge.";
-                         _state = 3;
+                     if (unhealthySensors & Vehicle.SysStatusSensorBattery) {
+                         failuretext = qsTr("Not healthy. Check console.")
+                         state = stateMajorIssue
+                     } else if (batPercentRemaining < 40.0) {
+                         failuretext = qsTr("Low (below 40%). Please recharge.")
+                         state = stateMajorIssue
+                     } else {
+                         state = _nrClicked > 0 ? statePassed : statePending
                      }
                  }
              }
@@ -91,7 +103,7 @@ Item {
              name: "Sensors"
              function updateItem() {
                  if (!_activeVehicle) {
-                     _state = 0;
+                     state = statePassed
                  } else {
                      if(!(unhealthySensors & Vehicle.SysStatusSensor3dMag) &&
                         !(unhealthySensors & Vehicle.SysStatusSensor3dAccel) &&
@@ -99,11 +111,11 @@ Item {
                         !(unhealthySensors & Vehicle.SysStatusSensorAbsolutePressure) &&
                         !(unhealthySensors & Vehicle.SysStatusSensorDifferentialPressure) &&
                         !(unhealthySensors & Vehicle.SysStatusSensorGPS)) {
-                         if(!gpsLock) {
-                             pendingtext="Pending. Waiting for GPS lock.";
-                             _state=1;
+                         if (!gpsLock) {
+                             pendingtext = qsTr("Pending. Waiting for GPS lock.")
+                             state = statePending
                          } else {
-                             _state = 4; // All OK
+                             state = statePassed
                          }
                      } else {
                          if(unhealthySensors & Vehicle.SysStatusSensor3dMag)                        failuretext="Failure. Magnetometer issues. Check console.";
@@ -112,7 +124,7 @@ Item {
                          else if(unhealthySensors & Vehicle.SysStatusSensorAbsolutePressure)        failuretext="Failure. Barometer issues. Check console.";
                          else if(unhealthySensors & Vehicle.SysStatusSensorDifferentialPressure)    failuretext="Failure. Airspeed sensor issues. Check console.";
                          else if(unhealthySensors & Vehicle.SysStatusSensorGPS)                     failuretext="Failure. No valid or low quality GPS signal. Check console.";
-                         _state = 3;
+                         state = stateMajorIssue
                      }
                  }
              }
@@ -124,10 +136,13 @@ Item {
             failuretext: "No signal or invalid autopilot-RC config. Check RC and console."
             function updateItem() {
                 if (!_activeVehicle) {
-                    _state = 0;
+                    state = statePassed
                 } else {
-                    if (unhealthySensors & Vehicle.SysStatusSensorRCReceiver) {_state = 3}
-                    else {_state = 1+3*(_nrClicked>0);}
+                    if (unhealthySensors & Vehicle.SysStatusSensorRCReceiver) {
+                        state = stateMajorIssue
+                    } else {
+                        state = _nrClicked > 0 ? statePassed : statePending
+                    }
                 }
             }
         }
@@ -136,10 +151,13 @@ Item {
             name: "Global position estimate"
             function updateItem() {
                 if (!_activeVehicle) {
-                    _state = 0;
+                    state = statePassed
                 } else {
-                    if (unhealthySensors & Vehicle.SysStatusSensorAHRS) {_state = 3;}
-                    else {_state = 4;}
+                    if (unhealthySensors & Vehicle.SysStatusSensorAHRS) {
+                        state = stateMajorIssue
+                    } else {
+                        state = statePassed
+                    }
                 }
             }
         }
@@ -172,10 +190,14 @@ Item {
            failuretext: "Failure, QGC audio output is disabled. Please enable it under application settings->general to hear audio warnings!"
            function updateItem() {
                if (!_activeVehicle) {
-                   _state = 0;
+                   state = statePassed
                } else {
-                   if (audioMuted) {_state = 3 ; _nrClicked=0;}
-                   else {_state = 1+3*(_nrClicked>0);}
+                   if (audioMuted) {
+                       state = stateMajorIssue
+                       _nrClicked = 0
+                   } else {
+                       state = _nrClicked > 0 ? statePassed : statePending
+                   }
                }
            }
         }
