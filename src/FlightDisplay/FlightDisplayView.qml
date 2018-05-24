@@ -716,7 +716,7 @@ QGCView {
                     height: 1.75*ScreenTools.defaultFontPixelHeight
 
                     QGCLabel {
-                        text:                   _activeVehicle ? qsTr("Pre-flight checklist")+" (MAV ID:"+_activeVehicle.id+")" : qsTr("Pre-flight checklist (no vehicle)")
+                        text:                   _activeVehicle ? qsTr("Pre-Flight Checklist") : qsTr("Pre-flight checklist (no vehicle)")
                         anchors.left:           parent.left
                         anchors.verticalCenter: parent.verticalCenter
                         font.pointSize:         ScreenTools.mediumFontPointSize
@@ -727,7 +727,7 @@ QGCView {
                         anchors.right:          parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
-                        tooltip:                "Reset the checklist (e.g. after a vehicle reboot)"
+                        tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
 
                         onClicked:              preFlightCheckList.resetNrClicks()
 

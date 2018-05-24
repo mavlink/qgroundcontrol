@@ -18,9 +18,9 @@ import QGroundControl.ScreenTools   1.0
 QGCButton {
     property string name:           ""
     property int    group:          0
-    property string defaulttext:    qsTr("Not checked yet")
-    property string pendingtext:    ""
-    property string failuretext:    qsTr("Failure. Check console.")
+    property string defaultText:    qsTr("Not checked yet")
+    property string pendingText:    ""
+    property string failureText:    qsTr("Failure. Check console.")
     property int    state:         stateNotChecked
 
     readonly property int stateNotChecked:  0
@@ -31,7 +31,7 @@ QGCButton {
 
     property var    _color:         qgcPal.button
     property int    _nrClicked:     0
-    property string _text:          name + ": " + defaulttext
+    property string _text:          name + ": " + defaultText
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
     enabled:    (!_activeVehicle || _activeVehicle.connectionLost) ? false : preFlightCheckList._checkState >= group
@@ -48,8 +48,8 @@ QGCButton {
         }
     }
 
-    onPendingtextChanged: { if (state === statePending) { getTextFromState(); getColorFromState(); } }
-    onFailuretextChanged: { if (state === stateMajorIssue) { getTextFromState(); getColorFromState(); } }
+    onPendingTextChanged: { if (state === statePending) { getTextFromState(); getColorFromState(); } }
+    onFailureTextChanged: { if (state === stateMajorIssue) { getTextFromState(); getColorFromState(); } }
     onStateChanged: { getTextFromState(); getColorFromState(); }
     onClicked: {
         if (state <= statePending) {
@@ -60,12 +60,12 @@ QGCButton {
 
     function updateItem() {
         // This is the default updateFunction. It assumes the item is a MANUAL check list item, i.e. one that
-        // only requires user clicks (one click if pendingtext="", two clicks otherwise) for completion.
+        // only requires user clicks (one click if pendingText="", two clicks otherwise) for completion.
 
         if (_nrClicked === 0) {
             state = stateNotChecked
         } else if (_nrClicked === 1) {
-            if (pendingtext.length === 0) {
+            if (pendingText.length === 0) {
                 state = statePassed
             } else {
                 state = statePending
@@ -80,13 +80,13 @@ QGCButton {
 
     function getTextFromState() {
         if (state === stateNotChecked) {
-            _text = qsTr(name) + ": " + qsTr(defaulttext)
+            _text = qsTr(name) + ": " + qsTr(defaultText)
         } else if (state === statePending) {
-            _text = "<b>"+qsTr(name)+"</b>" +": " + pendingtext
+            _text = "<b>"+qsTr(name)+"</b>" +": " + pendingText
         } else if (state === stateMinorIssue) {
             _text = "<b>"+qsTr(name)+"</b>" +": " + qsTr("Minor problem")
         } else if (state === stateMajorIssue) {
-            _text = "<b>"+qsTr(name)+"</b>" +": " + failuretext
+            _text = "<b>"+qsTr(name)+"</b>" +": " + failureText
         } else if (state === statePassed) {
             _text = "<b>"+qsTr(name)+"</b>" +": " + qsTr("OK")
         } else {
