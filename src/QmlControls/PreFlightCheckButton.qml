@@ -34,8 +34,8 @@ QGCButton {
     property string _text:          name + ": " + defaulttext
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    enabled:    (!_activeVehicle || _activeVehicle.connectionLost) ? false : checklist._checkState >= group
-    opacity:    (!_activeVehicle || _activeVehicle.connectionLost) ? 0.4 : 0.2 + (0.8 * (checklist._checkState >= group))
+    enabled:    (!_activeVehicle || _activeVehicle.connectionLost) ? false : preFlightCheckList._checkState >= group
+    opacity:    (!_activeVehicle || _activeVehicle.connectionLost) ? 0.4 : 0.2 + (0.8 * (preFlightCheckList._checkState >= group))
     width:      40 * ScreenTools.defaultFontPixelWidth
 
     style: ButtonStyle {
