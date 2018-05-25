@@ -157,11 +157,10 @@ Rectangle {
         columns:                3
 
         GridLayout {
-            anchors.verticalCenter: parent.verticalCenter
             columns:                8
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
-            Layout.alignment:       Qt.AlignHCenter
+            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Selected Waypoint")
@@ -212,11 +211,10 @@ Rectangle {
         }
 
         GridLayout {
-            anchors.verticalCenter: parent.verticalCenter
             columns:                5
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
-            Layout.alignment:       Qt.AlignHCenter
+            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
 
             QGCLabel {
                 text:               qsTr("Total Mission")
@@ -249,11 +247,10 @@ Rectangle {
         }
 
         GridLayout {
-            anchors.verticalCenter: parent.verticalCenter
             columns:                3
             rowSpacing:             _rowSpacing
             columnSpacing:          _labelToValueSpacing
-            Layout.alignment:       Qt.AlignHCenter
+            Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
             visible:                _batteryInfoAvailable
 
             QGCLabel {

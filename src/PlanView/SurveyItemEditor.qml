@@ -139,7 +139,7 @@ Rectangle {
 
             QGCCheckBox {
                 id:                 relAlt
-                anchors.left:       parent.left
+                Layout.alignment:   Qt.AlignLeft
                 text:               qsTr("Relative altitude")
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
                 enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
@@ -173,12 +173,11 @@ Rectangle {
             }
 
             GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        2
-                visible:        followsTerrainCheckBox.checked
+                Layout.fillWidth:   true
+                columnSpacing:      _margin
+                rowSpacing:         _margin
+                columns:            2
+                visible:            followsTerrainCheckBox.checked
 
                 QGCLabel { text: qsTr("Tolerance") }
                 FactTextField {

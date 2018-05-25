@@ -51,8 +51,7 @@ AnalyzePage {
 
             TableView {
                 id: tableView
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
+                Layout.fillHeight:  true
                 model:              logController.model
                 selectionMode:      SelectionMode.MultiSelection
                 Layout.fillWidth:   true
