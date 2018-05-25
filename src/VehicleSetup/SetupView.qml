@@ -210,8 +210,7 @@ Rectangle {
             spacing:    _defaultTextHeight / 2
 
             QGCLabel {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
+                Layout.fillWidth:       true
                 text:                   qsTr("Vehicle Setup")
                 wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter

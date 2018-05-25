@@ -193,9 +193,9 @@ QGCView {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.alignment:   Qt.AlignHCenter
                         text:               qsTr("Leave plan on vehicle")
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        onClicked:                  hideDialog()
+                        onClicked:          hideDialog()
                     }
                 }
             }

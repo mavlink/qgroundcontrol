@@ -385,11 +385,11 @@ QGCView {
                             visible:    _savePath.visible && !ScreenTools.isMobile
 
                             QGCLabel {
-                                anchors.baseline:   savePathBrowse.baseline
-                                text:               qsTr("File Save Path:")
+                                Layout.alignment:       Qt.AlignVCenter
+                                text:                   qsTr("File Save Path:")
                             }
                             QGCLabel {
-                                anchors.baseline:       savePathBrowse.baseline
+                                Layout.alignment:       Qt.AlignVCenter
                                 Layout.maximumWidth:    _panelWidth * 0.5
                                 elide:                  Text.ElideMiddle
                                 text:                   _savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value
