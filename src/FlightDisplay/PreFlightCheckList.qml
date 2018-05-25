@@ -24,17 +24,17 @@ Item {
     property var            _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property int            _checkState:            _activeVehicle ? (_activeVehicle.armed ? 1 + (buttonActuators.state + buttonMotors.state + buttonMission.state + buttonSoundOutput.state) / 4 / 4 : 0) : 0 ; // Shows progress of checks inside the checklist - unlocks next check steps in groups
 
-    function resetNrClicks() {
-        buttonHardware.resetNrClicks();
-        buttonBattery.resetNrClicks();
-        buttonRC.resetNrClicks();
-        buttonActuators.resetNrClicks();
-        buttonMotors.resetNrClicks();
-        buttonMission.resetNrClicks();
-        buttonSoundOutput.resetNrClicks();
-        buttonPayload.resetNrClicks();
-        buttonWeather.resetNrClicks();
-        buttonFlightAreaFree.resetNrClicks();
+    function reset() {
+        buttonHardware.reset();
+        buttonBattery.reset();
+        buttonRC.reset();
+        buttonActuators.reset();
+        buttonMotors.reset();
+        buttonMission.reset();
+        buttonSoundOutput.reset();
+        buttonPayload.reset();
+        buttonWeather.reset();
+        buttonFlightAreaFree.reset();
     }
 
     // Check list item data
@@ -43,9 +43,9 @@ Item {
 
         // Standard check list items (group 0) - Available from the start
         PreFlightCheckButton {
-            id: buttonHardware
-            name: "Hardware"
-            defaultText: "Props mounted? Wings secured? Tail secured?"
+            id:             buttonHardware
+            name:           qsTr("Hardware")
+            manualText:     qsTr("Props mounted? Wings secured? Tail secured?")
         }
         PreFlightBatteryCheck {
              id:                buttonBattery
@@ -64,22 +64,22 @@ Item {
         // Check list item group 1 - Require arming
         QGCLabel {text:qsTr("<i>Please arm the vehicle here.</i>") ; opacity: 0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0) ; anchors.horizontalCenter:buttonHardware.horizontalCenter ; anchors.topMargin:40 ; anchors.bottomMargin:40;}
         PreFlightCheckButton {
-           id: buttonActuators
-           name: "Actuators"
-           group: 1
-           defaultText: "Move all control surfaces. Did they work properly?"
+           id:              buttonActuators
+           name:            qsTr("Actuators")
+           group:           1
+           manualText:      qsTr("Move all control surfaces. Did they work properly?")
         }
         PreFlightCheckButton {
-           id: buttonMotors
-           name: "Motors"
-           group: 1
-           defaultText: "Propellers free? Then throttle up gently. Working properly?"
+           id:              buttonMotors
+           name:            qsTr("Motors")
+           group:           1
+           manualText:      qsTr("Propellers free? Then throttle up gently. Working properly?")
         }
         PreFlightCheckButton {
-           id: buttonMission
-           name: "Mission"
-           group: 1
-           defaultText: "Please confirm mission is valid (waypoints valid, no terrain collision)."
+           id:          buttonMission
+           name:        qsTr("Mission")
+           group:       1
+           manualText:  qsTr("Please confirm mission is valid (waypoints valid, no terrain collision).")
         }
         PreFlightSoundCheck {
            id:      buttonSoundOutput
@@ -89,24 +89,22 @@ Item {
         // Check list item group 2 - Final checks before launch
         QGCLabel {text:qsTr("<i>Last preparations before launch</i>") ; opacity : 0.2+0.8*(_checkState >= 2); anchors.horizontalCenter:buttonHardware.horizontalCenter}
         PreFlightCheckButton {
-           id: buttonPayload
-           name: "Payload"
-           group: 2
-           defaultText: "Configured and started?"
-           pendingText: "Payload lid closed?"
+           id:          buttonPayload
+           name:        qsTr("Payload")
+           group:       2
+           manualText:  qsTr("Configured and started? Payload lid closed?")
         }
         PreFlightCheckButton {
-           id: buttonWeather
-           name: "Wind & weather"
-           group: 2
-           defaultText: "OK for your platform?"
-           pendingText: "Launching into the wind?"
+           id:          buttonWeather
+           name:        "Wind & weather"
+           group:       2
+           manualText:  qsTr("OK for your platform? Lauching into the wind?")
         }
         PreFlightCheckButton {
-           id: buttonFlightAreaFree
-           name: "Flight area"
-           group: 2
-           defaultText: "Launch area and path free of obstacles/people?"
+           id:          buttonFlightAreaFree
+           name:        qsTr("Flight area")
+           group:       2
+           manualText:  qsTr("Launch area and path free of obstacles/people?")
         }
     } // Object Model
 }
