@@ -4,6 +4,6 @@ Name=QGroundControl
 GenericName=Ground Control Station
 Comment=UAS ground control station
 Icon=qgroundcontrol
-Exec=qgroundcontrol-start.sh
+Exec=QGroundControl
 Terminal=false
 Categories=Utility;
