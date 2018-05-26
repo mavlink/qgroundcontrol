@@ -369,7 +369,8 @@ Item {
                 width:          _buttonWidth
                 text:           qsTr("Compass")
                 indicatorGreen: cal_mag0_id.value !== 0
-                visible:        QGroundControl.corePlugin.options.showSensorCalibrationCompass && showSensorCalibrationCompass
+                visible:        controller.getParameterFact(-1, "ATT_W_MAG").value !== 0 &&
+                                QGroundControl.corePlugin.options.showSensorCalibrationCompass && showSensorCalibrationCompass
 
                 onClicked: {
                     preCalibrationDialogType = "compass"
