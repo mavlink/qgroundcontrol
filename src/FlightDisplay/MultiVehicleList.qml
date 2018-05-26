@@ -107,8 +107,7 @@ Item {
                 spacing:            _margin
 
                 RowLayout {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.left
+                    Layout.fillWidth:       true
 
                     QGCLabel {
                         Layout.alignment:   Qt.AlignTop
@@ -121,14 +120,14 @@ Item {
                         spacing:            _margin
 
                         FlightModeMenu {
-                            anchors.horizontalCenter:   parent.horizontalCenter
+                            Layout.alignment:           Qt.AlignHCenter
                             font.pointSize:             ScreenTools.largeFontPointSize
                             color:                      _textColor
                             activeVehicle:              _vehicle
                         }
 
                         QGCLabel {
-                            anchors.horizontalCenter:   parent.horizontalCenter
+                            Layout.alignment:           Qt.AlignHCenter
                             text:                       _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
                             color:                      _textColor
                         }

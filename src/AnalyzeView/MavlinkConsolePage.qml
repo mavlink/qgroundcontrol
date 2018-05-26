@@ -26,7 +26,7 @@ AnalyzePage {
     pageName:        qsTr("Mavlink Console")
     pageDescription: qsTr("Mavlink Console provides a connection to the vehicle's system shell.")
 
-    property bool loaded: false
+    property bool isLoaded: false
 
     Component {
         id: pageComponent
@@ -41,7 +41,7 @@ AnalyzePage {
 
                 onDataChanged: {
                     // Keep the view in sync if the button is checked
-                    if (loaded) {
+                    if (isLoaded) {
                         if (followTail.checked) {
                             listview.positionViewAtEnd();
                         }
@@ -69,11 +69,10 @@ AnalyzePage {
 
             QGCListView {
                 Component.onCompleted: {
-                    loaded = true
+                    isLoaded = true
                 }
                 Layout.fillHeight: true
-                anchors.left:      parent.left
-                anchors.right:     parent.right
+                Layout.fillWidth:  true
                 clip:              true
                 id:                listview
                 model:             conController
@@ -86,8 +85,7 @@ AnalyzePage {
             }
 
             RowLayout {
-                anchors.left:  parent.left
-                anchors.right: parent.right
+                Layout.fillWidth:   true
                 QGCTextField {
                     id:               command
                     Layout.fillWidth: true
@@ -114,7 +112,7 @@ AnalyzePage {
                     checked:   true
 
                     onCheckedChanged: {
-                        if (checked && loaded) {
+                        if (checked && isLoaded) {
                             listview.positionViewAtEnd();
                         }
                     }
