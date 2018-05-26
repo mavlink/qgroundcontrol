@@ -15,34 +15,17 @@ import QGroundControl.Vehicle   1.0
 
 // This class stores the data and functions of the check list but NOT the GUI (which is handled somewhere else).
 PreFlightCheckButton {
-    name:           qsTr("Battery")
-    pendingText:    qsTr("Healthy & charged > %1. Battery connector firmly plugged?").arg(failureVoltage)
+    name:                   qsTr("Battery")
+    manualText:             qsTr("Healthy & charged > %1. Battery connector firmly plugged?").arg(failureVoltage)
+    telemetryTextFailure:   _batUnHealthy ?
+                                qsTr("Not healthy. Check console.") :
+                                ("Low (below %1). Please recharge.").arg(failureVoltage)
 
     property int failureVoltage: 40
 
+    property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
     property int _unhealthySensors:     _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
     property var _batPercentRemaining:  _activeVehicle ? _activeVehicle.battery.percentRemaining.value : 0
-    property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-
-    on_BatPercentRemainingChanged:  updateItem()
-    on_UnhealthySensorsChanged:     updateItem()
-    on_ActiveVehicleChanged:        updateItem()
-
-    Component.onCompleted: updateItem()
-
-    function updateItem() {
-        if (!_activeVehicle) {
-            state = stateNotChecked
-        } else {
-            if (_unhealthySensors & Vehicle.SysStatusSensorBattery) {
-                failureText = qsTr("Not healthy. Check console.")
-                state = stateMajorIssue
-            } else if (_batPercentRemaining < failureVoltage) {
-                failureText = qsTr("Low (below %1). Please recharge.").arg(failureVoltage)
-                state = stateMajorIssue
-            } else {
-                state = _nrClicked > 0 ? statePassed : statePending
-            }
-        }
-    }
+    property bool _batUnHealthy:        _unhealthySensors & Vehicle.SysStatusSensorBattery
+    property bool _batLow:              _batPercentRemaining < failureVoltage
 }
