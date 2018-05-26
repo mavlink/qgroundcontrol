@@ -101,7 +101,7 @@ SetupPage {
                             columnSpacing:  _margins
                             rowSpacing:     _margins
                             columns:        2
-                            QGCLabel { text: qsTr("Battery low:") }
+                            QGCLabel { text: qsTr("Battery low action:") }
                             FactComboBox {
                                 fact:               _failsafeBattLowAct
                                 indexModel:         false
@@ -109,7 +109,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:       qsTr("Battery critical:")
+                                text:       qsTr("Battery critical action:")
                                 visible:    _failsafeBattCritActAvailable
                             }
                             FactComboBox {
@@ -173,7 +173,7 @@ SetupPage {
                             columns:        2
                             visible:        _batt2MonitorEnabled && _failsafeBatt2LowActAvailable
 
-                            QGCLabel { text: qsTr("Battery low:") }
+                            QGCLabel { text: qsTr("Battery low action:") }
                             FactComboBox {
                                 fact:               _failsafeBatt2LowAct
                                 indexModel:         false
@@ -181,7 +181,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:       qsTr("Battery critical:")
+                                text:       qsTr("Battery critical action:")
                             }
                             FactComboBox {
                                 fact:               _failsafeBatt2CritAct
