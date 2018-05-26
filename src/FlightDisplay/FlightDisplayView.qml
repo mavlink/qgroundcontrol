@@ -510,7 +510,7 @@ QGCView {
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
             buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
-            buttonEnabled:      [ _useChecklist, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+            buttonEnabled:      [ _useChecklist && _activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property bool _anySmartShotAvailable: _guidedController.showOrbit
@@ -729,7 +729,7 @@ QGCView {
                         opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
                         tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
 
-                        onClicked:              preFlightCheckList.resetNrClicks()
+                        onClicked:              preFlightCheckList.reset()
 
                         Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
                     }

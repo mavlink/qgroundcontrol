@@ -14,27 +14,11 @@ import QGroundControl.Controls  1.0
 import QGroundControl.Vehicle   1.0
 
 PreFlightCheckButton {
-    name:           qsTr("Radio Control")
-    pendingText:    qsTr("Receiving signal. Perform range test & confirm.")
-    failureText:    qsTr("No signal or invalid autopilot-RC config. Check RC and console.")
+    name:                   qsTr("Radio Control")
+    manualText:             qsTr("Receiving signal. Perform range test & confirm.")
+    telemetryTextFailure:   qsTr("No signal or invalid autopilot-RC config. Check RC and console.")
+    telemetryFailure:       _unhealthySensors & Vehicle.SysStatusSensorRCReceiver
 
-    property int _unhealthySensors: _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
     property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-
-    on_UnhealthySensorsChanged: updateItem()
-    on_ActiveVehicleChanged:    updateItem()
-
-    Component.onCompleted: updateItem()
-
-    function updateItem() {
-        if (!_activeVehicle) {
-            state = stateNotChecked
-        } else {
-            if (_unhealthySensors & Vehicle.SysStatusSensorRCReceiver) {
-                state = stateMajorIssue
-            } else {
-                state = _nrClicked > 0 ? statePassed : statePending
-            }
-        }
-    }
+    property int _unhealthySensors: _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
 }
