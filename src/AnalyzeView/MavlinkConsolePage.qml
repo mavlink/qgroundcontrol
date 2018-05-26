@@ -53,7 +53,7 @@ AnalyzePage {
                 id: delegateItem
                 Rectangle {
                     color:  qgcPal.windowShade
-                    height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
+                    height: Math.round(ScreenTools.defaultFontPixelHeight * 0.1 + field.height)
                     width:  listview.width
 
                     QGCLabel {
