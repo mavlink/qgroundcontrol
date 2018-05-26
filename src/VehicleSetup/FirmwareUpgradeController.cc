@@ -99,6 +99,7 @@ void FirmwareUpgradeController::flash(AutoPilotStackType_t stackType,
                                       FirmwareType_t firmwareType,
                                       FirmwareVehicleType_t vehicleType)
 {
+    qCDebug(FirmwareUpgradeLog) << "_flash stackType:firmwareType:vehicleType" << stackType << firmwareType << vehicleType;
     FirmwareIdentifier firmwareId = FirmwareIdentifier(stackType, firmwareType, vehicleType);
     if (_bootloaderFound) {
         _getFirmwareFile(firmwareId);
@@ -351,7 +352,8 @@ void FirmwareUpgradeController::_initFirmwareHash()
 
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
-        { PX4Flow, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
+        { PX4FlowPX4, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
+        { PX4FlowAPM, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flowAPM.px4" },
     };
 
     /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
