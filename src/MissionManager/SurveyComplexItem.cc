@@ -159,7 +159,7 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { _jsonGridAngleKey,                            QJsonValue::Double, true },
-        { _jsonFlyAlternateTransectsKey,                QJsonValue::Double, false },
+        { _jsonFlyAlternateTransectsKey,                QJsonValue::Bool,   false },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
