@@ -45,7 +45,7 @@ private:
     static const char* _airspeedBreakerParam;
     static const char* _airspeedCalParam;
 
-    static const char* _magDisabledParam;
+    static const char* _magEnabledParam;
     static const char* _magCalParam;
 };
 
