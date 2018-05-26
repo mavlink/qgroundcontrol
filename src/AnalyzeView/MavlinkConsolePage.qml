@@ -53,7 +53,7 @@ AnalyzePage {
                 id: delegateItem
                 Rectangle {
                     color:  qgcPal.windowShade
-                    height: Math.round(ScreenTools.defaultFontPixelHeight * 0.5 + field.height)
+                    height: Math.round(ScreenTools.defaultFontPixelHeight * 0.1 + field.height)
                     width:  listview.width
 
                     QGCLabel {
@@ -95,6 +95,15 @@ AnalyzePage {
                     onAccepted: {
                         conController.sendCommand(text)
                         text = ""
+                    }
+                    Keys.onPressed: {
+                        if (event.key == Qt.Key_Up) {
+                            text = conController.historyUp(text);
+                            event.accepted = true;
+                        } else if (event.key == Qt.Key_Down) {
+                            text = conController.historyDown(text);
+                            event.accepted = true;
+                        }
                     }
                 }
 
