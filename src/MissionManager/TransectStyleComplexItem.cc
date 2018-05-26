@@ -712,8 +712,8 @@ bool TransectStyleComplexItem::exitCoordinateHasRelativeAltitude(void) const
 
 void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
 {
+    _cameraCalc.setDistanceToSurfaceRelative(!followTerrain);
     if (followTerrain) {
-        _cameraCalc.setDistanceToSurfaceRelative(false);
         _refly90DegreesFact.setRawValue(false);
         _hoverAndCaptureFact.setRawValue(false);
     }
