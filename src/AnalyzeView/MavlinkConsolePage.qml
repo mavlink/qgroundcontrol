@@ -96,6 +96,15 @@ AnalyzePage {
                         conController.sendCommand(text)
                         text = ""
                     }
+                    Keys.onPressed: {
+                        if (event.key == Qt.Key_Up) {
+                            text = conController.historyUp(text);
+                            event.accepted = true;
+                        } else if (event.key == Qt.Key_Down) {
+                            text = conController.historyDown(text);
+                            event.accepted = true;
+                        }
+                    }
                 }
 
                 QGCButton {
