@@ -32,6 +32,7 @@ private slots:
     void _testDirty                     (void);
     void _testRebuildTransects          (void);
     void _testDistanceSignalling        (void);
+    void _testAltMode                   (void);
 
 private:
     void _setSurveyAreaPolygon  (void);
