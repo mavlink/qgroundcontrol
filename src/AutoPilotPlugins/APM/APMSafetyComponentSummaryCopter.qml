@@ -14,7 +14,7 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
-    property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
+    property Fact _failsafeBattLowAct:  controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT")
     property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
 
     property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
@@ -28,60 +28,14 @@ FactPanel {
 
     property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
-    property string _failsafeBattEnableText
-    property string _failsafeThrEnableText
+    property bool _failsafeBattCritActAvailable:    controller.parameterExists(-1, "BATT_FS_CRT_ACT")
+    property bool _failsafeBatt2LowActAvailable:    controller.parameterExists(-1, "BATT2_FS_LOW_ACT")
+    property bool _failsafeBatt2CritActAvailable:   controller.parameterExists(-1, "BATT2_FS_CRT_ACT")
 
-    Component.onCompleted: {
-        setFailsafeBattEnableText()
-        setFailsafeThrEnableText()
-    }
-
-    Connections {
-        target: _failsafeBattEnable
-
-        onValueChanged: setFailsafeBattEnableText()
-    }
-
-    Connections {
-        target: _failsafeThrEnable
-
-        onValueChanged: setFailsafeThrEnableText()
-    }
-
-    function setFailsafeThrEnableText() {
-        switch (_failsafeThrEnable.value) {
-        case 0:
-            _failsafeThrEnableText = qsTr("Disabled")
-            break
-        case 1:
-            _failsafeThrEnableText = qsTr("Always RTL")
-            break
-        case 2:
-            _failsafeThrEnableText = qsTr("Continue with Mission in Auto Mode")
-            break
-        case 3:
-            _failsafeThrEnableText = qsTr("Always Land")
-            break
-        default:
-            _failsafeThrEnableText = qsTr("Unknown")
-        }
-    }
-
-    function setFailsafeBattEnableText() {
-        switch (_failsafeBattEnable.value) {
-        case 0:
-            _failsafeBattEnableText = qsTr("Disabled")
-            break
-        case 1:
-            _failsafeBattEnableText = qsTr("Land")
-            break
-        case 2:
-            _failsafeBattEnableText = qsTr("Return to Launch")
-            break
-        default:
-            _failsafeThrEnableText = qsTr("Unknown")
-        }
-    }
+    property Fact _failsafeBattCritAct:             controller.getParameterFact(-1, "BATT_FS_CRT_ACT", false /* reportMissing */)
+    property Fact _batt2Monitor:                    controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
+    property Fact _failsafeBatt2LowAct:             controller.getParameterFact(-1, "BATT2_FS_LOW_ACT", false /* reportMissing */)
+    property Fact _failsafeBatt2CritAct:            controller.getParameterFact(-1, "BATT2_FS_CRT_ACT", false /* reportMissing */)
 
     Column {
         anchors.fill:       parent
@@ -93,12 +47,30 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText: qsTr("Throttle failsafe:")
-            valueText:  _failsafeThrEnableText
+            valueText:  _failsafeBattLowAct.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery failsafe:")
-            valueText:  _failsafeBattEnableText
+            labelText: qsTr("Batt low failsafe:")
+            valueText:  _failsafeBattLowAct.enumStringValue
+        }
+
+        VehicleSummaryRow {
+            labelText:  qsTr("Batt critical failsafe:")
+            valueText:  _failsafeBattCritActAvailable ? _failsafeBattCritAct.enumStringValue : ""
+            visible:    _failsafeBattCritActAvailable
+        }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Batt2 low failsafe:")
+            valueText:  _failsafeBatt2LowActAvailable ? _failsafeBatt2LowAct.enumStringValue : ""
+            visible:    _failsafeBatt2LowActAvailable
+        }
+
+        VehicleSummaryRow {
+            labelText: qsTr("Batt2 critical failsafe:")
+            valueText:  _failsafeBatt2CritActAvailable ? _failsafeBatt2CritAct.enumStringValue : ""
+            visible:    _failsafeBatt2CritActAvailable
         }
 
         VehicleSummaryRow {
