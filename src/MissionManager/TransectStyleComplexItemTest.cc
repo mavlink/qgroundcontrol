@@ -167,6 +167,30 @@ void TransectStyleComplexItemTest::_adjustSurveAreaPolygon(void)
     _transectStyleItem->surveyAreaPolygon()->adjustVertex(0, vertex);
 }
 
+void TransectStyleComplexItemTest::_testAltMode(void)
+{
+    // Default should be relative
+    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+
+    // Manual camera allows non-relative altitudes, validate that changing back to known
+    // camera switches back to relative
+    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->manualCameraName());
+    _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
+    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->customCameraName());
+    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+
+    // When you turn off terrain following mode make sure that the altitude mode changed back to relative altitudes
+    _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
+    _transectStyleItem->setFollowTerrain(true);
+
+    QVERIFY(!_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+    QVERIFY(_transectStyleItem->followTerrain());
+
+    _transectStyleItem->setFollowTerrain(false);
+    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+    QVERIFY(!_transectStyleItem->followTerrain());
+}
+
 TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
     : TransectStyleComplexItem  (vehicle, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
     , rebuildTransectsCalled    (false)
