@@ -1684,7 +1684,7 @@
 </param>
 <param humanName="Battery capacity" name="BATT2_CAPACITY" documentation="Capacity of the battery in mAh when full" user="Standard">
 <field name="Increment">50</field>
-<field name="Units">mA.h</field>
+<field name="Units">mAh</field>
 <field name="UnitText">milliampere hour</field>
 </param>
 <param humanName="Maximum allowed power (Watts)" name="BATT2_WATT_MAX" documentation="If battery wattage (voltage * current) exceeds this value then the system will reduce max throttle (THR_MAX, TKOFF_THR_MAX and THR_MIN for reverse thrust) to satisfy this limit. This helps limit high current to low C rated batteries regardless of battery voltage. The max throttle will slowly grow back to THR_MAX (or TKOFF_THR_MAX ) and THR_MIN if demanding the current max and under the watt max. Use 0 to disable." user="Advanced">
@@ -1713,7 +1713,7 @@
 </param>
 <param humanName="Low battery capacity" name="BATT2_LOW_MAH" documentation="Battery capacity at which the low battery failsafe is triggered. Set to 0 to disable battery remaining failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe specified by the BATT2_FS_LOW_ACT parameter." user="Standard">
 <field name="Increment">50</field>
-<field name="Units">mA.h</field>
+<field name="Units">mAh</field>
 <field name="UnitText">milliampere hour</field>
 </param>
 <param humanName="Critical battery voltage" name="BATT2_CRT_VOLT" documentation="Battery voltage that triggers a critical battery failsafe. Set to 0 to disable. If the battery voltage drops below this voltage continuously for more then the period specified by the BATT2_LOW_TIMER parameter then the vehicle will perform the failsafe specified by the BATT2_FS_CRT_ACT parameter." user="Standard">
@@ -1723,12 +1723,12 @@
 </param>
 <param humanName="Battery critical capacity" name="BATT2_CRT_MAH" documentation="Battery capacity at which the critical battery failsafe is triggered. Set to 0 to disable battery remaining failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe specified by the BATT2__FS_CRT_ACT parameter." user="Standard">
 <field name="Increment">50</field>
-<field name="Units">mA.h</field>
+<field name="Units">mAh</field>
 <field name="UnitText">milliampere hour</field>
 </param>
 <param humanName="Low battery failsafe action" name="BATT2_FS_LOW_ACT" documentation="What action the vehicle should perform if it hits a low battery failsafe" user="Standard">
 <values>
-<value code="0">Nothing</value>
+<value code="0">None</value>
 <value code="1">Land</value>
 <value code="2">RTL</value>
 <value code="3">SmartRTL</value>
@@ -1738,7 +1738,7 @@
 </param>
 <param humanName="Critical battery failsafe action" name="BATT2_FS_CRT_ACT" documentation="What action the vehicle should perform if it hits a critical battery failsafe" user="Standard">
 <values>
-<value code="0">Nothing</value>
+<value code="0">None</value>
 <value code="1">Land</value>
 <value code="2">RTL</value>
 <value code="3">SmartRTL</value>
@@ -1791,7 +1791,7 @@
 </param>
 <param humanName="Battery capacity" name="BATT_CAPACITY" documentation="Capacity of the battery in mAh when full" user="Standard">
 <field name="Increment">50</field>
-<field name="Units">mA.h</field>
+<field name="Units">mAh</field>
 <field name="UnitText">milliampere hour</field>
 </param>
 <param humanName="Maximum allowed power (Watts)" name="BATT_WATT_MAX" documentation="If battery wattage (voltage * current) exceeds this value then the system will reduce max throttle (THR_MAX, TKOFF_THR_MAX and THR_MIN for reverse thrust) to satisfy this limit. This helps limit high current to low C rated batteries regardless of battery voltage. The max throttle will slowly grow back to THR_MAX (or TKOFF_THR_MAX ) and THR_MIN if demanding the current max and under the watt max. Use 0 to disable." user="Advanced">
@@ -1820,7 +1820,7 @@
 </param>
 <param humanName="Low battery capacity" name="BATT_LOW_MAH" documentation="Battery capacity at which the low battery failsafe is triggered. Set to 0 to disable battery remaining failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe specified by the BATT_FS_LOW_ACT parameter." user="Standard">
 <field name="Increment">50</field>
-<field name="Units">mA.h</field>
+<field name="Units">mAh</field>
 <field name="UnitText">milliampere hour</field>
 </param>
 <param humanName="Critical battery voltage" name="BATT_CRT_VOLT" documentation="Battery voltage that triggers a critical battery failsafe. Set to 0 to disable. If the battery voltage drops below this voltage continuously for more then the period specified by the BATT_LOW_TIMER parameter then the vehicle will perform the failsafe specified by the BATT_FS_CRT_ACT parameter." user="Standard">
@@ -1830,12 +1830,12 @@
 </param>
 <param humanName="Battery critical capacity" name="BATT_CRT_MAH" documentation="Battery capacity at which the critical battery failsafe is triggered. Set to 0 to disable battery remaining failsafe. If the battery capacity drops below this level the vehicle will perform the failsafe specified by the BATT__FS_CRT_ACT parameter." user="Standard">
 <field name="Increment">50</field>
-<field name="Units">mA.h</field>
+<field name="Units">mAh</field>
 <field name="UnitText">milliampere hour</field>
 </param>
 <param humanName="Low battery failsafe action" name="BATT_FS_LOW_ACT" documentation="What action the vehicle should perform if it hits a low battery failsafe" user="Standard">
 <values>
-<value code="0">Nothing</value>
+<value code="0">None</value>
 <value code="1">Land</value>
 <value code="2">RTL</value>
 <value code="3">SmartRTL</value>
@@ -1845,7 +1845,7 @@
 </param>
 <param humanName="Critical battery failsafe action" name="BATT_FS_CRT_ACT" documentation="What action the vehicle should perform if it hits a critical battery failsafe" user="Standard">
 <values>
-<value code="0">Nothing</value>
+<value code="0">None</value>
 <value code="1">Land</value>
 <value code="2">RTL</value>
 <value code="3">SmartRTL</value>
