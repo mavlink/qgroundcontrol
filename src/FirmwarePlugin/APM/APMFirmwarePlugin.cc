@@ -791,6 +791,8 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
                 return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml");
             case 5:
                 return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
+            case 6:
+                return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
             default:
                 if (minorVersion < 3) {
                     return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml");
