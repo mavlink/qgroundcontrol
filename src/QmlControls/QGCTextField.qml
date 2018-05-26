@@ -77,7 +77,7 @@ TextField {
                 onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
 
                 Text {
-                    anchors.verticalCenter: parent.verticalCenter
+                    Layout.alignment:       Qt.AlignVCenter
                     text:                   control.unitsLabel
                     font.pointSize:         backgroundItem.showHelp ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
                     font.family:            ScreenTools.normalFontFamily
@@ -87,10 +87,9 @@ TextField {
                 }
 
                 Rectangle {
-                    anchors.margins:    2
-                    anchors.top:        parent.top
-                    anchors.bottom:     parent.bottom
-                    anchors.right:      parent.right
+                    Layout.margins:     2
+                    Layout.fillHeight:  true
+                    Layout.alignment:   Qt.AlignRight
                     width:              height * 0.75
                     color:              control.textColor
                     radius:             2
