@@ -42,13 +42,14 @@ uint8_t LinkInterface::mavlinkChannel(void) const
     return _mavlinkChannel;
 }
 // Links are only created by LinkManager so constructor is not public
-LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
+LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config, bool isPX4Flow)
     : QThread                   (0)
     , _config                   (config)
     , _highLatency              (config->isHighLatency())
     , _mavlinkChannelSet        (false)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
+    , _isPX4Flow                (isPX4Flow)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 
