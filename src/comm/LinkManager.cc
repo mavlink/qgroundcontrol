@@ -97,7 +97,7 @@ void LinkManager::createConnectedLink(LinkConfiguration* config)
     }
 }
 
-LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& config)
+LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& config, bool isPX4Flow)
 {
     if (!config) {
         qWarning() << "LinkManager::createConnectedLink called with NULL config";
@@ -111,7 +111,7 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
     {
         SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config.data());
         if (serialConfig) {
-            pLink = new SerialLink(config);
+            pLink = new SerialLink(config, isPX4Flow);
             if (serialConfig->usbDirect()) {
                 _activeLinkCheckList.append((SerialLink*)pLink);
                 if (!_activeLinkCheckTimer.isActive()) {
@@ -599,7 +599,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                     pSerialConfig->setDynamic(true);
                     pSerialConfig->setPortName(portInfo.systemLocation());
                     _sharedAutoconnectConfigurations.append(SharedLinkConfigurationPointer(pSerialConfig));
-                    createConnectedLink(_sharedAutoconnectConfigurations.last());
+                    createConnectedLink(_sharedAutoconnectConfigurations.last(), boardType == QGCSerialPortInfo::BoardTypePX4Flow);
                 }
             }
         }

@@ -353,7 +353,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4FlowPX4, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
-        { PX4FlowAPM, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flowAPM.px4" },
+        { PX4FlowAPM, StableFirmware, DefaultVehicleFirmware, "http://firmware.ardupilot.org/Tools/PX4Flow/px4flow-klt-06Dec2014.px4" },
     };
 
     /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////

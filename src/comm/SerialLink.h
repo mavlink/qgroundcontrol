@@ -169,7 +169,7 @@ private slots:
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
-    SerialLink(SharedLinkConfigurationPointer& config);
+    SerialLink(SharedLinkConfigurationPointer& config, bool isPX4Flow = false);
     ~SerialLink();
 
     // From LinkInterface
