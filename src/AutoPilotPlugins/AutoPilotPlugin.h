@@ -19,7 +19,6 @@
 #include "FactSystem.h"
 #include "Vehicle.h"
 
-class ParameterManager;
 class Vehicle;
 class FirmwarePlugin;
 

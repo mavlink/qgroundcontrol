@@ -21,14 +21,32 @@ WindowsBuild {
 # In the mean time, it’s possible to define a completely different dialect by defining the
 # location and name below.
 
+# check for user defined settings in user_config.pri if not already set as qmake argument
 isEmpty(MAVLINKPATH_REL) {
-    MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
+    exists(user_config.pri):infile(user_config.pri, MAVLINKPATH_REL) {
+        MAVLINKPATH_REL = $$fromfile(user_config.pri, MAVLINKPATH_REL)
+        message($$sprintf("Using user-supplied relativ mavlink path '%1' specified in user_config.pri", $$MAVLINKPATH_REL))
+    } else {
+        MAVLINKPATH_REL = libs/mavlink/include/mavlink/v2.0
+    }
 }
+
 isEmpty(MAVLINKPATH) {
-    MAVLINKPATH     = $$BASEDIR/$$MAVLINKPATH_REL
+    exists(user_config.pri):infile(user_config.pri, MAVLINKPATH) {
+        MAVLINKPATH     = $$fromfile(user_config.pri, MAVLINKPATH)
+        message($$sprintf("Using user-supplied mavlink path '%1' specified in user_config.pri", $$MAVLINKPATH))
+    } else {
+        MAVLINKPATH     = $$BASEDIR/$$MAVLINKPATH_REL
+    }
 }
+
 isEmpty(MAVLINK_CONF) {
-    MAVLINK_CONF    = ardupilotmega
+    exists(user_config.pri):infile(user_config.pri, MAVLINK_CONF) {
+        MAVLINK_CONF = $$fromfile(user_config.pri, MAVLINK_CONF)
+        message($$sprintf("Using user-supplied mavlink dialect '%1' specified in user_config.pri", $$MAVLINK_CONF))
+    } else {
+        MAVLINK_CONF = ardupilotmega
+    }
 }
 
 # If defined, all APM specific MAVLink messages are disabled

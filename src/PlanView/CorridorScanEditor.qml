@@ -13,7 +13,6 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
 
-// Editor for Survery mission items
 Rectangle {
     id:         _root
     height:     visible ? (editorColumn.height + (_margin * 2)) : 0
@@ -110,7 +109,8 @@ Rectangle {
                 anchors.left:       parent.left
                 text:               qsTr("Relative altitude")
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
-                enabled:            missionItem.cameraCalc.isManualCamera
+                enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
+                visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
                 Layout.columnSpan:  2
                 onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
 
@@ -127,20 +127,57 @@ Rectangle {
         }
 
         SectionHeader {
+            id:         terrainHeader
+            text:       qsTr("Terrain")
+            checked:    missionItem.followTerrain
+        }
+
+        ColumnLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        _margin
+            visible:        terrainHeader.checked
+
+            QGCCheckBox {
+                id:         followsTerrainCheckBox
+                text:       qsTr("Vehicle follows terrain")
+                checked:    missionItem.followTerrain
+                onClicked:  missionItem.followTerrain = checked
+            }
+
+            GridLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                columnSpacing:  _margin
+                rowSpacing:     _margin
+                columns:        2
+                visible:        followsTerrainCheckBox.checked
+
+                QGCLabel { text: qsTr("Tolerance") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustTolerance
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Max Climb Rate") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustMaxClimbRate
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Max Descent Rate") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustMaxDescentRate
+                    Layout.fillWidth:   true
+                }
+            }
+        }
+
+        SectionHeader {
             id:     statsHeader
             text:   qsTr("Statistics")
         }
 
-        Grid {
-            columns:        2
-            columnSpacing:  ScreenTools.defaultFontPixelWidth
-            visible:        statsHeader.checked
-
-            QGCLabel { text: qsTr("Photo count") }
-            QGCLabel { text: missionItem.cameraShots }
-
-            QGCLabel { text: qsTr("Photo interval") }
-            QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs") }
-        }
+        TransectStyleComplexItemStats { }
     } // Column
 } // Rectangle

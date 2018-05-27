@@ -52,28 +52,28 @@ Item {
             if(QGroundControl.corePlugin.options.instrumentWidget.source.toString().length) {
                 instrumentsLoader.source = QGroundControl.corePlugin.options.instrumentWidget.source
                 switch(QGroundControl.corePlugin.options.instrumentWidget.widgetPosition) {
+                case CustomInstrumentWidget.POS_TOP_LEFT:
+                    instrumentsLoader.state  = "topLeftMode"
+                    break;
+                case CustomInstrumentWidget.POS_BOTTOM_LEFT:
+                    instrumentsLoader.state  = "bottomLeftMode"
+                    break;
+                case CustomInstrumentWidget.POS_CENTER_LEFT:
+                    instrumentsLoader.state  = "centerLeftMode"
+                    break;
                 case CustomInstrumentWidget.POS_TOP_RIGHT:
-                    instrumentsLoader.state  = "topMode"
+                    instrumentsLoader.state  = "topRightMode"
                     break;
                 case CustomInstrumentWidget.POS_BOTTOM_RIGHT:
-                    instrumentsLoader.state  = "bottomMode"
+                    instrumentsLoader.state  = "bottomRightMode"
                     break;
                 case CustomInstrumentWidget.POS_CENTER_RIGHT:
                 default:
-                    instrumentsLoader.state  = "centerMode"
+                    instrumentsLoader.state  = "centerRightMode"
                     break;
                 }
             } else {
-                // Note: We currently show alternate instruments all the time. This is a trial change for daily builds.
-                // Leaving non-alternate code in for now in case the trial fails.
-                var useAlternateInstruments = true // QGroundControl.settingsManager.appSettings.virtualJoystick.value > 0 || ScreenTools.isTinyScreen
-                if(useAlternateInstruments) {
-                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
-                    instrumentsLoader.state  = "topMode"
-                } else {
-                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value === 1 ? "centerMode" : "topMode"
-                }
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
             }
         } else {
             instrumentsLoader.source = ""
@@ -127,7 +127,7 @@ Item {
             z:                          QGroundControl.zOrderTopMost
             color:                      mapPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
-            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure or disable the arming check via the Safety tab on the Vehicle Setup page."
+            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure."
         }
     }
 
@@ -141,30 +141,69 @@ Item {
         property real maxHeight:parent.height - (anchors.margins * 2)
         states: [
             State {
-                name:   "topMode"
+                name:   "topRightMode"
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.verticalCenter: undefined
                     anchors.bottom:         undefined
                     anchors.top:            _root ? _root.top : undefined
+                    anchors.right:          _root ? _root.right : undefined
+                    anchors.left:           undefined
                 }
             },
             State {
-                name:   "centerMode"
+                name:   "centerRightMode"
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.top:            undefined
                     anchors.bottom:         undefined
                     anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                    anchors.right:          _root ? _root.right : undefined
+                    anchors.left:           undefined
                 }
             },
             State {
-                name:   "bottomMode"
+                name:   "bottomRightMode"
                 AnchorChanges {
                     target:                 instrumentsLoader
                     anchors.top:            undefined
                     anchors.verticalCenter: undefined
                     anchors.bottom:         _root ? _root.bottom : undefined
+                    anchors.right:          _root ? _root.right : undefined
+                    anchors.left:           undefined
+                }
+            },
+            State {
+                name:   "topLeftMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         undefined
+                    anchors.top:            _root ? _root.top : undefined
+                    anchors.right:          undefined
+                    anchors.left:           _root ? _root.left : undefined
+                }
+            },
+            State {
+                name:   "centerLeftMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.bottom:         undefined
+                    anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                    anchors.right:          undefined
+                    anchors.left:           _root ? _root.left : undefined
+                }
+            },
+            State {
+                name:   "bottomLeftMode"
+                AnchorChanges {
+                    target:                 instrumentsLoader
+                    anchors.top:            undefined
+                    anchors.verticalCenter: undefined
+                    anchors.bottom:         _root ? _root.bottom : undefined
+                    anchors.right:          undefined
+                    anchors.left:           _root ? _root.left : undefined
                 }
             }
         ]

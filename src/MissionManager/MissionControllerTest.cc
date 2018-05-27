@@ -59,7 +59,7 @@ void MissionControllerTest::_initForFirmwareType(MAV_AUTOPILOT firmwareType)
     Q_CHECK_PTR(_multiSpyMissionController);
     QCOMPARE(_multiSpyMissionController->init(_missionController, _rgMissionControllerSignals, _cMissionControllerSignals), true);
 
-    _masterController->start(true /* editMode */);
+    _masterController->start(false /* flyView */);
 
     // All signals should some through on start
     QCOMPARE(_multiSpyMissionController->checkOnlySignalsByMask(visualItemsChangedSignalMask | waypointLinesChangedSignalMask), true);
@@ -132,7 +132,7 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
     QVERIFY(settingsItem);
     QVERIFY(simpleItem);
 
-    QCOMPARE(simpleItem->command(), MavlinkQmlSingleton::MAV_CMD_NAV_TAKEOFF);
+    QCOMPARE((MAV_CMD)simpleItem->command(), MAV_CMD_NAV_TAKEOFF);
     QCOMPARE(simpleItem->childItems()->count(), 0);
 
     // If the first item added specifies a coordinate, then planned home position will be set
@@ -166,7 +166,7 @@ void MissionControllerTest::_testOfflineToOnlineWorker(MAV_AUTOPILOT firmwareTyp
     // Start offline and add item
     _missionController = new MissionController();
     Q_CHECK_PTR(_missionController);
-    _missionController->start(true /* editMode */);
+    _missionController->start(false /* flyView */);
     _missionController->insertSimpleMissionItem(QGeoCoordinate(37.803784, -122.462276), _missionController->visualItems()->count());
 
     // Go online to empty vehicle

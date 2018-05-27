@@ -27,7 +27,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QLabel" name="logStatsLabel">
+    <widget class="QLabel" name="logCurrentTime">
      <property name="text">
       <string/>
      </property>
@@ -86,6 +86,13 @@
     <widget class="QLabel" name="logFileNameLabel">
      <property name="text">
       <string>No Flight Data selected..</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="logLengthTime">
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </item>

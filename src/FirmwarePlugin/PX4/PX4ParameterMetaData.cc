@@ -332,7 +332,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             QString text = xml.readElementText();
                             increment = text.toDouble(&ok);
                             if (ok) {
-                                metaData->setIncrement(increment);
+                                metaData->setRawIncrement(increment);
                             } else {
                                 qCWarning(PX4ParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << text;
                             }

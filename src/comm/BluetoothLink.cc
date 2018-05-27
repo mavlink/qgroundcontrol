@@ -75,30 +75,25 @@ QString BluetoothLink::getName() const
 
 void BluetoothLink::_writeBytes(const QByteArray bytes)
 {
-    if(_targetSocket)
-    {
-        if(_targetSocket->isWritable())
-        {
-            if(_targetSocket->write(bytes) > 0) {
-                _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
-            }
-            else
-                qWarning() << "Bluetooth write error";
+    if (_targetSocket) {
+        if(_targetSocket->write(bytes) > 0) {
+            _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
+        } else {
+            qWarning() << "Bluetooth write error";
         }
-        else
-            qWarning() << "Bluetooth not writable error";
     }
 }
 
 void BluetoothLink::readBytes()
 {
-    while (_targetSocket->bytesAvailable() > 0)
-    {
-        QByteArray datagram;
-        datagram.resize(_targetSocket->bytesAvailable());
-        _targetSocket->read(datagram.data(), datagram.size());
-        emit bytesReceived(this, datagram);
-        _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
+    if (_targetSocket) {
+        while (_targetSocket->bytesAvailable() > 0) {
+            QByteArray datagram;
+            datagram.resize(_targetSocket->bytesAvailable());
+            _targetSocket->read(datagram.data(), datagram.size());
+            emit bytesReceived(this, datagram);
+            _logInputDataRate(datagram.length(), QDateTime::currentMSecsSinceEpoch());
+        }
     }
 }
 
@@ -114,7 +109,7 @@ void BluetoothLink::_disconnect(void)
 #endif
     if(_targetSocket)
     {
-        delete _targetSocket;
+        _targetSocket->deleteLater();
         _targetSocket = NULL;
         emit disconnected();
     }
@@ -249,8 +244,8 @@ BluetoothConfiguration::BluetoothConfiguration(const QString& name)
 BluetoothConfiguration::BluetoothConfiguration(BluetoothConfiguration* source)
     : LinkConfiguration(source)
     , _deviceDiscover(NULL)
+    , _device(source->device())
 {
-    _device = source->device();
 }
 
 BluetoothConfiguration::~BluetoothConfiguration()

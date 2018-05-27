@@ -31,7 +31,7 @@ void TransectStyleComplexItemTest::init(void)
     _rgSignals[cameraShotsChangedIndex] =               SIGNAL(cameraShotsChanged());
     _rgSignals[timeBetweenShotsChangedIndex] =          SIGNAL(timeBetweenShotsChanged());
     _rgSignals[cameraMinTriggerIntervalChangedIndex] =  SIGNAL(cameraMinTriggerIntervalChanged(double));
-    _rgSignals[transectPointsChangedIndex] =            SIGNAL(transectPointsChanged());
+    _rgSignals[visualTransectPointsChangedIndex] =      SIGNAL(visualTransectPointsChanged());
     _rgSignals[coveredAreaChangedIndex] =               SIGNAL(coveredAreaChanged());
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
     _rgSignals[complexDistanceChangedIndex] =           SIGNAL(complexDistanceChanged());
@@ -167,14 +167,43 @@ void TransectStyleComplexItemTest::_adjustSurveAreaPolygon(void)
     _transectStyleItem->surveyAreaPolygon()->adjustVertex(0, vertex);
 }
 
+void TransectStyleComplexItemTest::_testAltMode(void)
+{
+    // Default should be relative
+    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+
+    // Manual camera allows non-relative altitudes, validate that changing back to known
+    // camera switches back to relative
+    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->manualCameraName());
+    _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
+    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->customCameraName());
+    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+
+    // When you turn off terrain following mode make sure that the altitude mode changed back to relative altitudes
+    _transectStyleItem->cameraCalc()->setDistanceToSurfaceRelative(false);
+    _transectStyleItem->setFollowTerrain(true);
+
+    QVERIFY(!_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+    QVERIFY(_transectStyleItem->followTerrain());
+
+    _transectStyleItem->setFollowTerrain(false);
+    QVERIFY(_transectStyleItem->cameraCalc()->distanceToSurfaceRelative());
+    QVERIFY(!_transectStyleItem->followTerrain());
+}
+
 TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, QStringLiteral("UnitTestTransect"), parent)
+    : TransectStyleComplexItem  (vehicle, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
     , rebuildTransectsCalled    (false)
 {
 
 }
 
-void TransectStyleItem::_rebuildTransects(void)
+void TransectStyleItem::_rebuildTransectsPhase1(void)
 {
     rebuildTransectsCalled = true;
+}
+
+void TransectStyleItem::_rebuildTransectsPhase2(void)
+{
+
 }

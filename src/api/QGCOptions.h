@@ -46,6 +46,8 @@ public:
     Q_PROPERTY(bool                     showOfflineMapImport            READ showOfflineMapImport           NOTIFY showOfflineMapImportChanged)
     Q_PROPERTY(bool                     useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
     Q_PROPERTY(bool                     showMissionStatus               READ showMissionStatus              CONSTANT)
+    Q_PROPERTY(bool                     guidedActionsRequireRCRSSI      READ guidedActionsRequireRCRSSI     CONSTANT)
+    Q_PROPERTY(bool                     showMissionAbsoluteAltitude     READ showMissionAbsoluteAltitude    NOTIFY showMissionAbsoluteAltitudeChanged)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -82,14 +84,14 @@ public:
     virtual bool    guidedBarShowOrbit              () const { return true; }
     virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
     virtual bool    multiVehicleEnabled             () const { return true; }   ///< false: multi vehicle support is disabled
-
-#if defined(__mobile__)
-    virtual bool    showOfflineMapExport            () const { return false; }
-    virtual bool    showOfflineMapImport            () const { return false; }
-    virtual bool    useMobileFileDialog             () const { return true;}
-#else
+    virtual bool    guidedActionsRequireRCRSSI      () const { return false; }  ///< true: Guided actions will be disabled is there is no RC RSSI
     virtual bool    showOfflineMapExport            () const { return true; }
     virtual bool    showOfflineMapImport            () const { return true; }
+    virtual bool    showMissionAbsoluteAltitude     () const { return true; }
+
+#if defined(__mobile__)
+    virtual bool    useMobileFileDialog             () const { return true;}
+#else
     virtual bool    useMobileFileDialog             () const { return false;}
 #endif
 
@@ -111,6 +113,7 @@ signals:
     void multiVehicleEnabledChanged             (bool multiVehicleEnabled);
     void showOfflineMapExportChanged            ();
     void showOfflineMapImportChanged            ();
+    void showMissionAbsoluteAltitudeChanged     ();
 
 private:
     CustomInstrumentWidget* _defaultInstrumentWidget;
@@ -123,16 +126,19 @@ class CustomInstrumentWidget : public QObject
 public:
     //-- Widget Position
     enum Pos {
-        POS_TOP_RIGHT           = 0,
-        POS_CENTER_RIGHT        = 1,
-        POS_BOTTOM_RIGHT        = 2,
+        POS_TOP_RIGHT,
+        POS_CENTER_RIGHT,
+        POS_BOTTOM_RIGHT,
+        POS_TOP_LEFT,
+        POS_CENTER_LEFT,
+        POS_BOTTOM_LEFT
     };
     Q_ENUMS(Pos)
     CustomInstrumentWidget(QObject* parent = NULL);
     Q_PROPERTY(QUrl     source  READ source CONSTANT)
     Q_PROPERTY(Pos      widgetPosition              READ widgetPosition             NOTIFY widgetPositionChanged)
     virtual QUrl        source                      () { return QUrl(); }
-    virtual Pos         widgetPosition              () { return POS_CENTER_RIGHT; }
+    virtual Pos         widgetPosition              () { return POS_TOP_RIGHT; }
 signals:
     void widgetPositionChanged  ();
 };

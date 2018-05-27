@@ -81,10 +81,9 @@ Rectangle {
         //---------------------------------------------
         // Toolbar Row
         Row {
-            id:             viewRow
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            spacing:        ScreenTools.defaultFontPixelWidth / 2
+            id:                 viewRow
+            Layout.fillHeight:  true
+            spacing:            ScreenTools.defaultFontPixelWidth / 2
 
             ExclusiveGroup { id: mainActionGroup }
 
@@ -153,7 +152,7 @@ Rectangle {
             width:                  ScreenTools.defaultFontPixelHeight * 8
             text:                   "Vehicle " + (_activeVehicle ? _activeVehicle.id : "None")
             visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment:       Qt.AlignVCenter
 
             menu: vehicleMenu
 
@@ -175,14 +174,15 @@ Rectangle {
             property var vehicleMenuItems: []
 
             function updateVehicleMenu() {
+                var i;
                 // Remove old menu items
-                for (var i = 0; i < vehicleMenuItems.length; i++) {
+                for (i = 0; i < vehicleMenuItems.length; i++) {
                     vehicleMenu.removeItem(vehicleMenuItems[i])
                 }
                 vehicleMenuItems.length = 0
 
                 // Add new items
-                for (var i=0; i<QGroundControl.multiVehicleManager.vehicles.count; i++) {
+                for (i = 0; i < QGroundControl.multiVehicleManager.vehicles.count; i++) {
                     var vehicle = QGroundControl.multiVehicleManager.vehicles.get(i)
                     var menuItem = vehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
                     vehicleMenuItems.push(menuItem)
@@ -199,19 +199,65 @@ Rectangle {
         }
 
         MainToolBarIndicators {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
             Layout.fillWidth:   true
+            Layout.fillHeight:  true
+            Layout.margins:     ScreenTools.defaultFontPixelHeight * 0.66
         }
     }
 
-    // Progress bar
+    // Small parameter download progress bar
     Rectangle {
-        id:             progressBar
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
         width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          qgcPal.colorGreen
+        visible:        !largeProgressBar.visible
+    }
+
+    // Large parameter download progress bar
+    Rectangle {
+        id:             largeProgressBar
+        anchors.bottom: parent.bottom
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        height:         parent.height
+        color:          qgcPal.window
+        visible:        _showLargeProgress
+
+        property bool _initialDownloadComplete: _activeVehicle ? _activeVehicle.parameterManager.parametersReady : true
+        property bool _userHide:                false
+        property bool _showLargeProgress:       !_initialDownloadComplete && !_userHide && qgcPal.globalTheme === QGCPalette.Light
+
+        Connections {
+            target:                 QGroundControl.multiVehicleManager
+            onActiveVehicleChanged: largeProgressBar._userHide = false
+        }
+
+        Rectangle {
+            anchors.top:    parent.top
+            anchors.bottom: parent.bottom
+            width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
+            color:          qgcPal.colorGreen
+        }
+
+        QGCLabel {
+            anchors.centerIn:   parent
+            text:               qsTr("Downloading Parameters")
+            font.pointSize:     ScreenTools.largeFontPointSize
+        }
+
+        QGCLabel {
+            anchors.margins:    _margin
+            anchors.right:      parent.right
+            anchors.bottom:     parent.bottom
+            text:               qsTr("Click anywhere to hide")
+
+            property real _margin: ScreenTools.defaultFontPixelWidth / 2
+        }
+
+        MouseArea {
+            anchors.fill:   parent
+            onClicked:      largeProgressBar._userHide = true
+        }
     }
 }

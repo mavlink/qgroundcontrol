@@ -212,10 +212,10 @@ Item {
         }
     }
 
-    function formatMessage(message) {
-        message = message.replace(new RegExp("<#E>", "g"), "color: #f95e5e; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#I>", "g"), "color: #f9b55e; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
-        message = message.replace(new RegExp("<#N>", "g"), "color: #ffffff; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+    function formatMessage(message) {        
+        message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#I>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
+        message = message.replace(new RegExp("<#N>", "g"), "color: " + qgcPal.text + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
         return message;
     }
 
@@ -400,22 +400,22 @@ Item {
     //-------------------------------------------------------------------------
     //-- System Message Area
     Rectangle {
-        id:                 messageArea
+        id:                         messageArea
+        width:                      mainWindow.width  * 0.5
+        height:                     mainWindow.height * 0.5
+        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.top:                parent.top
+        anchors.topMargin:          toolBar.height + ScreenTools.defaultFontPixelHeight
+        radius:                     ScreenTools.defaultFontPixelHeight * 0.5
+        color:                      qgcPal.window
+        border.color:               qgcPal.text
+        visible:                    false
+
         function close() {
             currentPopUp = null
             messageText.text    = ""
             messageArea.visible = false
         }
-        width:              mainWindow.width  * 0.5
-        height:             mainWindow.height * 0.5
-        color:              Qt.rgba(0,0,0,0.8)
-        visible:            false
-        radius:             ScreenTools.defaultFontPixelHeight * 0.5
-        border.color:       "#808080"
-        border.width:       2
-        anchors.horizontalCenter:   parent.horizontalCenter
-        anchors.top:                parent.top
-        anchors.topMargin:          toolBar.height + ScreenTools.defaultFontPixelHeight
         MouseArea {
             // This MouseArea prevents the Map below it from getting Mouse events. Without this
             // things like mousewheel will scroll the Flickable and then scroll the map as well.
@@ -435,11 +435,11 @@ Item {
                 id:             messageText
                 readOnly:       true
                 textFormat:     TextEdit.RichText
-                color:          "white"
+                color:          qgcPal.text
             }
         }
         //-- Dismiss System Message
-        Image {
+        QGCColoredImage {
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.top:        parent.top
             anchors.right:      parent.right
@@ -450,6 +450,7 @@ Item {
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
             smooth:             true
+            color:              qgcPal.text
             MouseArea {
                 anchors.fill:       parent
                 anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
@@ -459,7 +460,7 @@ Item {
             }
         }
         //-- Clear Messages
-        Image {
+        QGCColoredImage {
             anchors.bottom:     parent.bottom
             anchors.right:      parent.right
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
@@ -470,6 +471,7 @@ Item {
             fillMode:           Image.PreserveAspectFit
             mipmap:             true
             smooth:             true
+            color:              qgcPal.text
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {

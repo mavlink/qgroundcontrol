@@ -15,7 +15,6 @@
 #include "QGCLoggingCategory.h"
 #include "QGCMapPolyline.h"
 #include "QGCMapPolygon.h"
-#include "CameraCalc.h"
 
 Q_DECLARE_LOGGING_CATEGORY(CorridorScanComplexItemLog)
 
@@ -24,9 +23,8 @@ class CorridorScanComplexItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    CorridorScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    CorridorScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
-    Q_PROPERTY(CameraCalc*      cameraCalc          READ cameraCalc         CONSTANT)
     Q_PROPERTY(QGCMapPolyline*  corridorPolyline    READ corridorPolyline   CONSTANT)
     Q_PROPERTY(Fact*            corridorWidth       READ corridorWidth      CONSTANT)
 
@@ -36,17 +34,20 @@ public:
     Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
-
-    int         lastSequenceNumber  (void) const final;
-    bool        load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
-    QString     mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
+    bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
+    QString mapVisualQML        (void) const final { return QStringLiteral("CorridorScanMapVisual.qml"); }
 
     // Overrides from TransectStyleComplexItem
+    void    save                (QJsonArray&  planItems) final;
+    bool    specifiesCoordinate (void) const final;
+    void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
+    void    applyNewAltitude    (double newAltitude) final;
 
-    void        save                (QJsonArray&  missionItems) final;
-    bool        specifiesCoordinate (void) const final;
-    void        appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
-    void        applyNewAltitude    (double newAltitude) final;
+    // Overrides from VisualMissionionItem
+    QString commandDescription  (void) const final { return tr("Corridor Scan"); }
+    QString commandName         (void) const final { return tr("Corridor Scan"); }
+    QString abbreviation        (void) const final { return tr("C"); }
+    bool    readyForSave        (void) const;
 
     static const char* jsonComplexItemTypeValue;
 
@@ -54,26 +55,25 @@ public:
     static const char* corridorWidthName;
 
 private slots:
-    void _polylineDirtyChanged              (bool dirty);
-    void _polylineCountChanged              (int count);
-    void _rebuildCorridor                   (void);
+    void _polylineDirtyChanged      (bool dirty);
+    void _rebuildCorridorPolygon    (void);
 
     // Overrides from TransectStyleComplexItem
-    virtual void _rebuildTransects          (void) final;
+    void _rebuildTransectsPhase1    (void) final;
+    void _rebuildTransectsPhase2    (void) final;
 
 private:
-    int _transectCount          (void) const;
-    void _rebuildCorridorPolygon(void);
-
+    int _transectCount              (void) const;
+    void _buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent);
+    void _appendLoadedMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent);
 
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
 
-    bool            _ignoreRecalc;
-    int             _entryPoint;
+    int                             _entryPoint;
 
     QMap<QString, FactMetaData*>    _metaDataMap;
     SettingsFact                    _corridorWidthFact;
 
-    static const char* _entryPointName;
+    static const char* _jsonEntryPointKey;
 };

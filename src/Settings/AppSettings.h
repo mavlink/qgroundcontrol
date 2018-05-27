@@ -37,16 +37,19 @@ public:
     Q_PROPERTY(Fact* showLargeCompass                   READ showLargeCompass                   CONSTANT)
     Q_PROPERTY(Fact* savePath                           READ savePath                           CONSTANT)
     Q_PROPERTY(Fact* autoLoadMissions                   READ autoLoadMissions                   CONSTANT)
+    Q_PROPERTY(Fact* useChecklist                       READ useChecklist                       CONSTANT)
     Q_PROPERTY(Fact* mapboxToken                        READ mapboxToken                        CONSTANT)
     Q_PROPERTY(Fact* esriToken                          READ esriToken                          CONSTANT)
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
     Q_PROPERTY(Fact* gstDebug                           READ gstDebug                           CONSTANT)
+    Q_PROPERTY(Fact* followTarget                       READ followTarget                       CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString telemetrySavePath    READ telemetrySavePath  NOTIFY savePathsChanged)
     Q_PROPERTY(QString logSavePath          READ logSavePath        NOTIFY savePathsChanged)
     Q_PROPERTY(QString videoSavePath        READ videoSavePath      NOTIFY savePathsChanged)
+    Q_PROPERTY(QString crashSavePath        READ crashSavePath      NOTIFY savePathsChanged)
 
     Q_PROPERTY(QString planFileExtension        MEMBER planFileExtension        CONSTANT)
     Q_PROPERTY(QString missionFileExtension     MEMBER missionFileExtension     CONSTANT)
@@ -73,16 +76,19 @@ public:
     Fact* showLargeCompass                  (void);
     Fact* savePath                          (void);
     Fact* autoLoadMissions                  (void);
+    Fact* useChecklist                      (void);
     Fact* mapboxToken                       (void);
     Fact* esriToken                         (void);
     Fact* defaultFirmwareType               (void);
     Fact* gstDebug                          (void);
+    Fact* followTarget                      (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
     QString logSavePath         (void);
     QString videoSavePath         (void);
+    QString crashSavePath         (void);
 
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
@@ -106,10 +112,12 @@ public:
     static const char* showLargeCompassName;
     static const char* savePathName;
     static const char* autoLoadMissionsName;
+    static const char* useChecklistName;
     static const char* mapboxTokenName;
     static const char* esriTokenName;
     static const char* defaultFirmwareTypeName;
     static const char* gstDebugName;
+    static const char* followTargetName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -128,6 +136,7 @@ public:
     static const char* missionDirectory;
     static const char* logDirectory;
     static const char* videoDirectory;
+    static const char* crashDirectory;
 
 signals:
     void savePathsChanged(void);
@@ -154,10 +163,12 @@ private:
     SettingsFact* _showLargeCompassFact;
     SettingsFact* _savePathFact;
     SettingsFact* _autoLoadMissionsFact;
+    SettingsFact* _useChecklistFact;
     SettingsFact* _mapboxTokenFact;
     SettingsFact* _esriTokenFact;
     SettingsFact* _defaultFirmwareTypeFact;
     SettingsFact* _gstDebugFact;
+    SettingsFact* _followTargetFact;
 };
 
 #endif

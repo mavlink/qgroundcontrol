@@ -177,10 +177,11 @@ Item {
         title:          qsTr("Select KML File")
         selectExisting: true
         nameFilters:    [ qsTr("KML files (*.kml)") ]
-
+        fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
 
         onAcceptedForLoad: {
             mapPolygon.loadKMLFile(file)
+            mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
     }

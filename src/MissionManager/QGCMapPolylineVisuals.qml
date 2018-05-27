@@ -120,10 +120,25 @@ Item {
         selectExisting: true
         nameFilters:    [ qsTr("KML files (*.kml)") ]
 
-
         onAcceptedForLoad: {
             mapPolyline.loadKMLFile(file)
             close()
+        }
+    }
+
+    Menu {
+        id: menu
+
+        property int removeVertex
+
+        MenuItem {
+            text:           qsTr("Remove vertex" )
+            onTriggered:    mapPolyline.removeVertex(parent.removeVertex)
+        }
+
+        MenuItem {
+            text:           qsTr("Load KML...")
+            onTriggered:    kmlLoadDialog.openForLoad()
         }
     }
 
@@ -227,7 +242,15 @@ Item {
                 }
             }
 
-            onClicked: mapPolyline.removeVertex(polylineVertex)
+            onClicked: {
+                if (polylineVertex == 0) {
+                    menu.removeVertex = polylineVertex
+                    menu.popup()
+                } else {
+                    mapPolyline.removeVertex(polylineVertex)
+                }
+            }
+
         }
     }
 
@@ -249,6 +272,14 @@ Item {
                 radius:     width / 2
                 color:      "white"
                 opacity:    .90
+
+                QGCLabel {
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    anchors.verticalCenter:     parent.verticalCenter
+                    text:                       "..."
+                    color:                      "black"
+                    visible:                    polylineVertex == 0
+                }
             }
         }
     }

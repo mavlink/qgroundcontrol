@@ -28,10 +28,18 @@ Item {
     property bool   planView:               false   ///< true: visuals showing in plan view
     property var    homePosition
 
-    property var    _breachReturnPointComponent
-    property var    _mouseAreaComponent
+    //property var    _breachReturnPointComponent
+    //property var    _mouseAreaComponent
+    property var    _paramCircleFenceComponent
     property var    _polygons:                  myGeoFenceController.polygons
     property var    _circles:                   myGeoFenceController.circles
+    property color  _borderColor:               "orange"
+    property int    _borderWidthInclusion:      2
+    property int    _borderWidthExclusion:      0
+    property color  _interiorColorExclusion:    "orange"
+    property color  _interiorColorInclusion:    "transparent"
+    property real   _interiorOpacityExclusion:  0.2
+    property real   _interiorOpacityInclusion:  1
 
     function addPolygon(inclusionPolygon) {
         // Initial polygon is inset to take 2/3rds space
@@ -67,14 +75,17 @@ Item {
     }
 
     Component.onCompleted: {
-        _breachReturnPointComponent = breachReturnPointComponent.createObject(map)
-        map.addMapItem(_breachReturnPointComponent)
-        _mouseAreaComponent = mouseAreaComponent.createObject(map)
+        //_breachReturnPointComponent = breachReturnPointComponent.createObject(map)
+        //map.addMapItem(_breachReturnPointComponent)
+        //_mouseAreaComponent = mouseAreaComponent.createObject(map)
+        _paramCircleFenceComponent = paramCircleFenceComponent.createObject(map)
+        map.addMapItem(_paramCircleFenceComponent)
     }
 
     Component.onDestruction: {
-        _breachReturnPointComponent.destroy()
-        _mouseAreaComponent.destroy()
+        //_breachReturnPointComponent.destroy()
+        //_mouseAreaComponent.destroy()
+        _paramCircleFenceComponent.destroy()
     }
 
     // Mouse area to capture breach return point coordinate
@@ -94,10 +105,10 @@ Item {
         delegate : QGCMapPolygonVisuals {
             mapControl:         map
             mapPolygon:         object
-            borderWidth:        object.inclusion ? 2 : 0
-            borderColor:        "orange"
-            interiorColor:      object.inclusion ? "transparent" : "orange"
-            interiorOpacity:    object.inclusion ? 1: 0.2
+            borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
+            borderColor:        _borderColor
+            interiorColor:      object.inclusion ? _interiorColorInclusion : _interiorColorExclusion
+            interiorOpacity:    object.inclusion ? _interiorOpacityInclusion : _interiorOpacityExclusion
         }
     }
 
@@ -107,10 +118,29 @@ Item {
         delegate : QGCMapCircleVisuals {
             mapControl:         map
             mapCircle:          object
-            borderWidth:        object.inclusion ? 2 : 0
-            borderColor:        "orange"
-            interiorColor:      object.inclusion ? "transparent" : "orange"
-            interiorOpacity:    object.inclusion ? 1: 0.2
+            borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
+            borderColor:        _borderColor
+            interiorColor:      object.inclusion ? _interiorColorInclusion : _interiorColorExclusion
+            interiorOpacity:    object.inclusion ? _interiorOpacityInclusion : _interiorOpacityExclusion
+        }
+    }
+
+    // Circular geofence specified from parameter
+    Component {
+        id: paramCircleFenceComponent
+
+        MapCircle {
+            color:          _interiorColorInclusion
+            opacity:        _interiorOpacityInclusion
+            border.color:   _borderColor
+            border.width:   _borderWidthInclusion
+            center:         homePosition
+            radius:         _radius
+            visible:        homePosition.isValid && _radius > 0
+
+            property real _radius: myGeoFenceController.paramCircularFence
+
+            on_RadiusChanged: console.log("_radius", _radius, homePosition.isValid, homePosition)
         }
     }
 

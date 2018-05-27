@@ -32,6 +32,7 @@ QGCView {
     property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
     property var    _searchResults              ///< List of parameter names from search results
     property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
+    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
     ParameterEditorController {
         id:         controller;
@@ -104,6 +105,7 @@ QGCView {
                 }
                 MenuItem {
                     text:           qsTr("Reset all to defaults")
+                    visible:        !_activeVehicle.apmFirmware
                     onTriggered:    showDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
                 }
                 MenuSeparator { }
@@ -334,7 +336,7 @@ QGCView {
 
         QGCViewDialog {
             function accept() {
-                QGroundControl.multiVehicleManager.activeVehicle.rebootVehicle()
+                _activeVehicle.rebootVehicle()
                 hideDialog()
             }
 

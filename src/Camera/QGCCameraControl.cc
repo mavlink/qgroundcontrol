@@ -790,7 +790,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                     QVariant typedValue;
                     QString  errorString;
                     if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
-                        metaData->setIncrement(typedValue.toDouble());
+                        metaData->setRawIncrement(typedValue.toDouble());
                     } else {
                         qWarning() << "Invalid step value for" << factName
                                    << " type:"  << metaData->type()

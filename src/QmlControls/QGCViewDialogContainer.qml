@@ -15,9 +15,10 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
-Item {
-    id: _root
-    z:  5000
+FocusScope {
+    id:     _root
+    z:      5000
+    focus:  true
 
     property alias  dialogWidth:     _dialogPanel.width
     property alias  dialogTitle:     titleLabel.text
@@ -182,6 +183,7 @@ Item {
             anchors.top:        _spacer.bottom
             anchors.bottom:     parent.bottom
             sourceComponent:    _dialogComponent
+            focus:              true
 
             property bool acceptAllowed: _acceptButton.visible
             property bool rejectAllowed: _rejectButton.visible

@@ -120,6 +120,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "UseChecklist",
+    "shortDescription": "Use preflight checklist",
+    "longDescription":  "If this option is enabled the preflight checklist will be used.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "BaseDeviceFontPointSize",
     "shortDescription": "Application font size",
     "longDescription":  "The point size for the default font used.",
@@ -185,5 +192,13 @@
     "shortDescription": "Default firmware type for flashing",
     "type":             "uint32",
     "defaultValue":     12
+},
+{
+    "name":             "FollowTarget",
+    "shortDescription": "Stream GCS' coordinates to Autopilot",
+    "type":             "uint32",
+    "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
 }
 ]

@@ -34,6 +34,8 @@ Rectangle {
     property real _margin: ScreenTools.defaultFontPixelWidth / 2
     property real _spacer: ScreenTools.defaultFontPixelWidth / 2
 
+    ExclusiveGroup { id: distanceGlideGroup }
+
     Column {
         id:                 editorColumn
         anchors.margins:    _margin
@@ -58,17 +60,6 @@ Rectangle {
         Item { width: 1; height: _spacer }
 
         QGCCheckBox {
-            id:             loiterAltRelative
-            anchors.right:  parent.right
-            text:           qsTr("Altitude relative to home")
-            checked:        missionItem.loiterAltitudeRelative
-            onClicked:      missionItem.loiterAltitudeRelative = checked
-        }
-
-        Item { width: 1; height: _spacer }
-
-        QGCCheckBox {
-            anchors.left:   loiterAltRelative.left
             text:           qsTr("Loiter clockwise")
             checked:        missionItem.loiterClockwise
             onClicked:      missionItem.loiterClockwise = checked
@@ -98,53 +89,33 @@ Rectangle {
                 }
 
             QGCRadioButton {
-                id:                     useLandingDistance
-                text:                   qsTr("Landing dist")
-                checked:                !useFallRate.checked
-                onClicked: {
-                    useFallRate.checked = false
-                    missionItem.fallRate.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.landingDistance.value)
-                }
-                Layout.fillWidth:       true
+                id:                 specifyLandingDistance
+                text:               qsTr("Landing Dist")
+                checked:            missionItem.valueSetIsDistance
+                exclusiveGroup:     distanceGlideGroup
+                onClicked:          missionItem.valueSetIsDistance = checked
+                Layout.fillWidth:   true
             }
 
             FactTextField {
-                fact:                   missionItem.landingDistance
-                enabled:                useLandingDistance.checked
-                Layout.fillWidth:       true
+                fact:               missionItem.landingDistance
+                enabled:            specifyLandingDistance.checked
+                Layout.fillWidth:   true
             }
 
             QGCRadioButton {
-                id:                     useFallRate
-                text:                   qsTr("Descent rate")
-                checked:                !useLandingDistance.checked
-                onClicked: {
-                    useLandingDistance.checked = false
-                    missionItem.landingDistance.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.fallRate.value)
-                }
-                Layout.fillWidth:       true
+                id:                 specifyGlideSlope
+                text:               qsTr("Glide Slope")
+                checked:            !missionItem.valueSetIsDistance
+                exclusiveGroup:     distanceGlideGroup
+                onClicked:          missionItem.valueSetIsDistance = !checked
+                Layout.fillWidth:   true
             }
 
             FactTextField {
-                fact:                   missionItem.fallRate
-                enabled:                useFallRate.checked
-                Layout.fillWidth:       true
-            }
-
-            Connections {
-                target: missionItem.landingDistance
-
-                onValueChanged: {
-                    missionItem.fallRate.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.landingDistance.value)
-                }
-            }
-
-            Connections {
-                target: missionItem.fallRate
-
-                onValueChanged: {
-                    missionItem.landingDistance.value = parseFloat(missionItem.loiterAltitude.value)*100/parseFloat (missionItem.fallRate.value)
-                }
+                fact:               missionItem.glideSlope
+                enabled:            specifyGlideSlope.checked
+                Layout.fillWidth:   true
             }
         }
 
@@ -152,9 +123,9 @@ Rectangle {
 
         QGCCheckBox {
             anchors.right:  parent.right
-            text:           qsTr("Altitude relative to home")
-            checked:        missionItem.landingAltitudeRelative
-            onClicked:      missionItem.landingAltitudeRelative = checked
+            text:           qsTr("Altitudes relative to home")
+            checked:        missionItem.altitudesAreRelative
+            onClicked:      missionItem.altitudesAreRelative = checked
         }
     }
 

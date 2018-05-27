@@ -63,7 +63,9 @@ WindowsBuild {
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
         $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-        $$BASEDIR\\deploy\\libeay32.dll
+        $$BASEDIR\\deploy\\libeay32.dll \
+        $$BASEDIR_WIN\\deploy\\libssl32.dll \
+        $$BASEDIR_WIN\\deploy\\ssleay32.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
@@ -102,6 +104,7 @@ LinuxBuild {
 
     # QT_INSTALL_LIBS
     QT_LIB_LIST = \
+        libQt5Charts.so.5 \
         libQt5Core.so.5 \
         libQt5DBus.so.5 \
         libQt5Gui.so.5 \
