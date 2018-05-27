@@ -301,10 +301,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // gstreamer debug settings
     QString savePath, gstDebugLevel;
     if (settings.contains(AppSettings::savePathName)) {
-         savePath = settings.value("SavePath").toString() + "/Logs/gst"; // hardcode log path here, appsetting is not available yet
-         if (!QDir(savePath).exists()) {
-             QDir().mkdir(savePath);
-         }
+        //-- TODO: What is this hardcoded setting?
+        QString logRoot = settings.value("SavePath").toString();
+        //-- Do not try to create this stuff in the root directory!
+        if(!logRoot.isEmpty()) {
+             savePath = logRoot + "/Logs/gst"; // hardcode log path here, appsetting is not available yet
+             if (!QDir(savePath).exists()) {
+                 QDir().mkdir(savePath);
+             }
+        }
     }
     if (settings.contains(AppSettings::gstDebugName)) {
         gstDebugLevel = "*:" + settings.value("GstreamerDebugLevel").toString();
