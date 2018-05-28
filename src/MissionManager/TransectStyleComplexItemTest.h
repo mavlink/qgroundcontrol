@@ -29,10 +29,10 @@ protected:
     void cleanup(void) final;
     
 private slots:
-    void _testDirty                     (void);
-    void _testRebuildTransects          (void);
-    void _testDistanceSignalling        (void);
-    void _testAltMode                   (void);
+    void _testDirty             (void);
+    void _testRebuildTransects  (void);
+    void _testDistanceSignalling(void);
+    void _testAltMode           (void);
 
 private:
     void _setSurveyAreaPolygon  (void);
@@ -97,7 +97,8 @@ public:
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final { Q_UNUSED(items); Q_UNUSED(missionItemParent); }
     void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
 
-    bool rebuildTransectsCalled;
+    bool rebuildTransectsPhase1Called;
+    bool rebuildTransectsPhase2Called;
 
 private slots:
     // Overrides from TransectStyleComplexItem

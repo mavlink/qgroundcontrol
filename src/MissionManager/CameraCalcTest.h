@@ -27,7 +27,9 @@ protected:
     void cleanup(void) final;
     
 private slots:
-    void _testDirty(void);
+    void _testDirty             (void);
+    void _testAdjustedFootprint (void);
+    void _testAltDensityRecalc  (void);
 
 private:
     enum {

@@ -40,6 +40,7 @@ public:
     bool    specifiesCoordinate (void) const final { return true; }
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void    applyNewAltitude    (double newAltitude) final;
+    double  timeBetweenShots    (void) final;
 
     // Overrides from VisualMissionionItem
     QString commandDescription  (void) const final { return tr("Survey"); }

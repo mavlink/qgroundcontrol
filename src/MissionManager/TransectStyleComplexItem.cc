@@ -309,11 +309,6 @@ void TransectStyleComplexItem::applyNewAltitude(double newAltitude)
     //_altitudeFact.setRawValue(newAltitude);
 }
 
-double TransectStyleComplexItem::timeBetweenShots(void)
-{
-    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintSide()->rawValue().toDouble() / _cruiseSpeed;
-}
-
 void TransectStyleComplexItem::_updateCoordinateAltitudes(void)
 {
     emit coordinateChanged(coordinate());
@@ -383,6 +378,7 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     _rebuildTransectsPhase2();
 
     emit lastSequenceNumberChanged(lastSequenceNumber());
+    emit timeBetweenShotsChanged();
 }
 
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
