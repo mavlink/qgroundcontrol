@@ -15,7 +15,7 @@
 #include <QtQml>
 #include <QStandardPaths>
 
-const char* AppSettings::appSettingsGroupName =                         "App";
+const char* AppSettings::settingsGroup =                                "App";
 const char* AppSettings::offlineEditingFirmwareTypeSettingsName =       "OfflineEditingFirmwareType";
 const char* AppSettings::offlineEditingVehicleTypeSettingsName =        "OfflineEditingVehicleType";
 const char* AppSettings::offlineEditingCruiseSpeedSettingsName =        "OfflineEditingCruiseSpeed";
@@ -58,7 +58,7 @@ const char* AppSettings::videoDirectory =           "Video";
 const char* AppSettings::crashDirectory =           "CrashLogs";
 
 AppSettings::AppSettings(QObject* parent)
-    : SettingsGroup                         (appSettingsGroupName, QString() /* root settings group */, parent)
+    : SettingsGroup                         (settingsGroup, QString() /* root settings group */, parent)
     , _offlineEditingFirmwareTypeFact       (NULL)
     , _offlineEditingVehicleTypeFact        (NULL)
     , _offlineEditingCruiseSpeedFact        (NULL)
