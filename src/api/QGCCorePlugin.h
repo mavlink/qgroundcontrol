@@ -72,9 +72,10 @@ public:
     virtual bool overrideSettingsGroupVisibility(QString name);
 
     /// Allows the core plugin to override the setting meta data before the setting fact is created.
+    ///     @param settingsGroup - Settings group which contains this value
     ///     @param metaData - MetaData for setting fact
     /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
-    virtual bool adjustSettingMetaData(FactMetaData& metaData);
+    virtual bool adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData);
 
     /// Return the resource file which contains the brand image for for Indoor theme.
     virtual QString brandImageIndoor(void) const { return QString(); }
