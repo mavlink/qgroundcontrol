@@ -239,8 +239,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
     connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
-    if (_highLatencyLink) {
-        // High latency links don't request information
+    if (_highLatencyLink || link->isPX4Flow()) {
+        // These links don't request information
         _setMaxProtoVersion(100);
         _setCapabilities(0);
         _initialPlanRequestComplete = true;
