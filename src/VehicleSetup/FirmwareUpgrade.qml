@@ -170,16 +170,20 @@ SetupPage {
                         if (_singleFirmwareMode) {
                             controller.flashSingleFirmwareMode(controller.selectedFirmwareType)
                         } else {
-                            var stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
-                            if (px4Flow) {
-                                stack = FirmwareUpgradeController.PX4Flow
-                            }
-
+                            var stack
                             var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
-                            if (apmFlightStack.checked) {
-                                vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+
+                            if (px4Flow) {
+                                stack = px4FlowTypeSelectionCombo.model.get(px4FlowTypeSelectionCombo.currentIndex).stackType
+                                vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
+                            } else {
+                                stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
+                                if (apmFlightStack.checked) {
+                                    vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+                                }
                             }
+
                             controller.flash(stack, firmwareType, vehicleType)
                         }
                     }
@@ -211,6 +215,19 @@ SetupPage {
                         ListElement {
                             text:           qsTr("Custom firmware file...")
                             firmwareType:   FirmwareUpgradeController.CustomFirmware
+                        }
+                    }
+
+                    ListModel {
+                        id: px4FlowFirmwareList
+
+                        ListElement {
+                            text:           qsTr("PX4 Pro")
+                            stackType:   FirmwareUpgradeController.PX4FlowPX4
+                        }
+                        ListElement {
+                            text:           qsTr("ArduPilot")
+                            stackType:   FirmwareUpgradeController.PX4FlowAPM
                         }
                     }
 
@@ -249,7 +266,7 @@ SetupPage {
                             wrapMode:   Text.WordWrap
                             text:       _singleFirmwareMode ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
 
-                            readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. You can select from the following firmware:")
+                            readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:")
                             readonly property string _pixhawkLabel:          qsTr("Detected Pixhawk board. You can select from the following flight stacks:")
                             readonly property string _singleFirmwareLabel:   qsTr("Press Ok to upgrade your vehicle.")
                         }
@@ -301,8 +318,17 @@ SetupPage {
                             id:             vehicleTypeSelectionCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            visible:        apmFlightStack.checked
+                            visible:        !px4Flow && apmFlightStack.checked
                             model:          controller.apmAvailableVersions
+                        }
+
+                        QGCComboBox {
+                            id:             px4FlowTypeSelectionCombo
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            visible:        px4Flow
+                            model:          px4FlowFirmwareList
+                            currentIndex:   _defaultFirmwareIsPX4 ? 0 : 1
                         }
 
                         Row {
@@ -349,7 +375,7 @@ SetupPage {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             visible:        showFirmwareTypeSelection
-                            model:          _singleFirmwareMode ? singleFirmwareModeTypeList: (px4Flow ? px4FlowTypeList : firmwareTypeList)
+                            model:          _singleFirmwareMode ? singleFirmwareModeTypeList : (px4Flow ? px4FlowTypeList : firmwareTypeList)
                             currentIndex:   controller.selectedFirmwareType
 
                             onActivated: {

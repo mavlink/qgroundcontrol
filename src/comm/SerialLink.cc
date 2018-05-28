@@ -30,8 +30,8 @@ QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
 static QStringList kSupportedBaudRates;
 
-SerialLink::SerialLink(SharedLinkConfigurationPointer& config)
-    : LinkInterface(config)
+SerialLink::SerialLink(SharedLinkConfigurationPointer& config, bool isPX4Flow)
+    : LinkInterface(config, isPX4Flow)
     , _port(NULL)
     , _bytesRead(0)
     , _stopp(false)

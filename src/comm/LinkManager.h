@@ -104,7 +104,7 @@ public:
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     /// Link takes ownership of config.
-    LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config);
+    LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config, bool isPX4Flow = false);
 
     // This should only be used by Qml code
     Q_INVOKABLE void createConnectedLink(LinkConfiguration* config);

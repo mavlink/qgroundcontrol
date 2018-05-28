@@ -43,12 +43,15 @@ public:
         _config->setLink(NULL);
     }
 
-    Q_PROPERTY(bool active      READ active                                 NOTIFY activeChanged)
+    Q_PROPERTY(bool active      READ active     NOTIFY activeChanged)
+    Q_PROPERTY(bool isPX4Flow   READ isPX4Flow  CONSTANT)
+
+    Q_INVOKABLE bool link_active(int vehicle_id) const;
+    Q_INVOKABLE bool getHighLatency(void) const { return _highLatency; }
 
     // Property accessors
     bool active() const;
-    Q_INVOKABLE bool link_active(int vehicle_id) const;
-    Q_INVOKABLE bool getHighLatency(void) const { return _highLatency; }
+    bool isPX4Flow(void) const { return _isPX4Flow; }
 
     LinkConfiguration* getLinkConfiguration(void) { return _config.data(); }
 
@@ -201,7 +204,7 @@ signals:
 
 protected:
     // Links are only created by LinkManager so constructor is not public
-    LinkInterface(SharedLinkConfigurationPointer& config);
+    LinkInterface(SharedLinkConfigurationPointer& config, bool isPX4Flow = false);
 
     /// This function logs the send times and amounts of datas for input. Data is used for calculating
     /// the transmission rate.
@@ -298,6 +301,7 @@ private:
 
     bool _enableRateCollection;
     bool _decodedFirstMavlinkPacket;    ///< true: link has correctly decoded it's first mavlink packet
+    bool _isPX4Flow;
 
     QMap<int /* vehicle id */, HeartbeatTimer*> _heartbeatTimers;
 };
