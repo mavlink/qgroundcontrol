@@ -62,8 +62,6 @@ Fact::Fact(FactMetaData* metaData, QObject* parent)
     , _deferredValueChangeSignal(false)
     , _valueSliderModel         (NULL)
 {
-    // Allow core plugin a chance to override the default value
-    qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(*metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
 }
 
