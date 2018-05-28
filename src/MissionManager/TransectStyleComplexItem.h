@@ -59,11 +59,12 @@ public:
     Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxDescentRateFact; }
 
     int             cameraShots             (void) const { return _cameraShots; }
-    double          timeBetweenShots        (void);
     double          coveredArea             (void) const;
     double          cameraMinTriggerInterval(void) const { return _cameraMinTriggerInterval; }
     bool            hoverAndCaptureAllowed  (void) const;
     bool            followTerrain           (void) const { return _followTerrain; }
+
+    virtual double  timeBetweenShots        (void) { return 0; } // Most be overridden. Implementation here is needed for unit testing.
 
     void setFollowTerrain(bool followTerrain);
 

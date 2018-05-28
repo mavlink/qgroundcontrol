@@ -98,7 +98,8 @@ public:
     static bool doubleNaNCompare(double value1, double value2);
 
     /// Changes the Facts rawValue such that it emits a valueChanged signal.
-    void changeFactValue(Fact* fact);
+    ///     @param increment 0 use standard increment, other increment by specified amount if double value
+    void changeFactValue(Fact* fact, double increment = 0);
 
 protected slots:
     

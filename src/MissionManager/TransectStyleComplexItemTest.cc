@@ -25,6 +25,10 @@ void TransectStyleComplexItemTest::init(void)
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
     _transectStyleItem = new TransectStyleItem(_offlineVehicle, this);
+    _transectStyleItem->cameraTriggerInTurnAround()->setRawValue(false);
+    _transectStyleItem->cameraCalc()->cameraName()->setRawValue(_transectStyleItem->cameraCalc()->customCameraName());
+    _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
+    _transectStyleItem->cameraCalc()->distanceToSurface()->setRawValue(100);
     _setSurveyAreaPolygon();
     _transectStyleItem->setDirty(false);
 
@@ -107,36 +111,58 @@ void TransectStyleComplexItemTest::_setSurveyAreaPolygon(void)
 void TransectStyleComplexItemTest::_testRebuildTransects(void)
 {
     // Changing the survey polygon should trigger:
-    //  _rebuildTransects call
+    //  _rebuildTransects calls
     //  coveredAreaChanged signal
     //  lastSequenceNumberChanged signal
     _adjustSurveAreaPolygon();
-    QVERIFY(_transectStyleItem->rebuildTransectsCalled);
+    QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
+    QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
     QVERIFY(_multiSpy->checkSignalsByMask(coveredAreaChangedMask | lastSequenceNumberChangedMask));
-    _transectStyleItem->rebuildTransectsCalled = false;
+    _transectStyleItem->rebuildTransectsPhase1Called = false;
+    _transectStyleItem->rebuildTransectsPhase2Called = false;
     _transectStyleItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
     // Changes to these facts should trigger:
-    //  _rebuildTransects call
+    //  _rebuildTransects calls
     //  lastSequenceNumberChanged signal
     QList<Fact*> rgFacts;
     rgFacts << _transectStyleItem->turnAroundDistance()
             << _transectStyleItem->cameraTriggerInTurnAround()
             << _transectStyleItem->hoverAndCapture()
             << _transectStyleItem->refly90Degrees()
-            << _transectStyleItem->cameraCalc()->adjustedFootprintSide()
-            << _transectStyleItem->cameraCalc()->adjustedFootprintFrontal();
+            << _transectStyleItem->cameraCalc()->frontalOverlap()
+            << _transectStyleItem->cameraCalc()->sideOverlap();
     foreach(Fact* fact, rgFacts) {
         qDebug() << fact->name();
         changeFactValue(fact);
-        QVERIFY(_transectStyleItem->rebuildTransectsCalled);
+        QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
+        QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
         QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
         _transectStyleItem->setDirty(false);
         _multiSpy->clearAllSignals();
-        _transectStyleItem->rebuildTransectsCalled = false;
+        _transectStyleItem->rebuildTransectsPhase1Called = false;
+        _transectStyleItem->rebuildTransectsPhase2Called = false;
     }
     rgFacts.clear();
+
+    _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(false);
+    _transectStyleItem->rebuildTransectsPhase1Called = false;
+    _transectStyleItem->rebuildTransectsPhase2Called = false;
+    changeFactValue(_transectStyleItem->cameraCalc()->imageDensity());
+    QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
+    QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
+    QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
+    _multiSpy->clearAllSignals();
+
+    _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
+    _transectStyleItem->rebuildTransectsPhase1Called = false;
+    _transectStyleItem->rebuildTransectsPhase2Called = false;
+    changeFactValue(_transectStyleItem->cameraCalc()->distanceToSurface());
+    QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
+    QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
+    QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
+    _multiSpy->clearAllSignals();
 }
 
 void TransectStyleComplexItemTest::_testDistanceSignalling(void)
@@ -192,18 +218,19 @@ void TransectStyleComplexItemTest::_testAltMode(void)
 }
 
 TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
-    , rebuildTransectsCalled    (false)
+    : TransectStyleComplexItem      (vehicle, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
+    , rebuildTransectsPhase1Called  (false)
+    , rebuildTransectsPhase2Called  (false)
 {
 
 }
 
 void TransectStyleItem::_rebuildTransectsPhase1(void)
 {
-    rebuildTransectsCalled = true;
+    rebuildTransectsPhase1Called = true;
 }
 
 void TransectStyleItem::_rebuildTransectsPhase2(void)
 {
-
+    rebuildTransectsPhase2Called = true;
 }
