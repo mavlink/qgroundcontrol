@@ -93,6 +93,7 @@ public:
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
 
+    static const char* name;
     static const char* settingsGroup;
 
     static const char* offlineEditingFirmwareTypeSettingsName;

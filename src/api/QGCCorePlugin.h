@@ -67,12 +67,12 @@ public:
     virtual QGCOptions* options(void);
 
     /// Allows the core plugin to override the visibility for a settings group
-    ///     @param name - Setting group name
+    ///     @param name - SettingsGroup name
     /// @return true: Show settings ui, false: Hide settings ui
     virtual bool overrideSettingsGroupVisibility(QString name);
 
     /// Allows the core plugin to override the setting meta data before the setting fact is created.
-    ///     @param settingsGroup - Settings group which contains this value
+    ///     @param settingsGroup - QSettings group which contains this item
     ///     @param metaData - MetaData for setting fact
     /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
     virtual bool adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData);

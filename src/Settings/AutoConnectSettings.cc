@@ -13,7 +13,8 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* AutoConnectSettings::_settingsGroup =                       "LinkManager";
+const char* AutoConnectSettings::name =                                 "AutoConnect";
+const char* AutoConnectSettings::settingsGroup =                        "LinkManager";
 
 const char* AutoConnectSettings:: autoConnectUDPSettingsName =          "AutoconnectUDP";
 const char* AutoConnectSettings:: autoConnectPixhawkSettingsName =      "AutoconnectPixhawk";
@@ -27,10 +28,9 @@ const char* AutoConnectSettings:: udpListenPortName =                   "Autocon
 const char* AutoConnectSettings:: udpTargetHostIPName =                 "AutoconnectUDPTargetHostIP";
 const char* AutoConnectSettings:: udpTargetHostPortName =               "AutoconnectUDPTargetHostPort";
 
-const char* AutoConnectSettings::autoConnectSettingsGroupName = "AutoConnect";
 
 AutoConnectSettings::AutoConnectSettings(QObject* parent)
-    : SettingsGroup             (autoConnectSettingsGroupName, _settingsGroup, parent)
+    : SettingsGroup             (name, settingsGroup, parent)
     , _autoConnectUDPFact       (NULL)
     , _autoConnectPixhawkFact   (NULL)
     , _autoConnectSiKRadioFact  (NULL)
