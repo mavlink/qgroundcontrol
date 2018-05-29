@@ -56,7 +56,7 @@ SetupPage {
             readonly property int _defaultFimwareTypeAPM:   3
 
             property var    _defaultFirmwareFact:   QGroundControl.settingsManager.appSettings.defaultFirmwareType
-            property bool   _defaultFirmwareIsPX4:  _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4
+            property bool   _defaultFirmwareIsPX4:  true
 
             property string firmwareWarningMessage
             property bool   controllerCompleted:      false
@@ -134,6 +134,7 @@ SetupPage {
                     // We can only start the board search when the Qml and Controller are completely done loading
                     controller.startBoardSearch()
                 }
+                _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
 
             Component {
@@ -160,7 +161,8 @@ SetupPage {
                         } else {
                             versionString = controller.px4StableVersion
                         }
-                        px4FlightStack.text = qsTr("PX4 Flight Stack ") + versionString
+                        px4FlightStackRadio1.text = qsTr("PX4 Flight Stack ") + versionString
+                        px4FlightStackRadio2.text = qsTr("PX4 Flight Stack ") + versionString
                     }
 
                     Component.onCompleted: updatePX4VersionDisplay()
@@ -282,19 +284,16 @@ SetupPage {
                             firmwareVersionCombo.currentIndex = 0
                         }
 
-                        Component.onCompleted: {
-                            if (_defaultFirmwareIsPX4) {
-                                px4FlightStack.checked = true
-                            } else {
-                                apmFlightStack.checked = true
-                            }
-                        }
+                        // The following craziness of three radio buttons to represent two radio buttons is so that the
+                        // order can be changed such that the default firmware button is always on the top
 
                         QGCRadioButton {
-                            id:             px4FlightStack
-                            exclusiveGroup: firmwareGroup
+                            id:             px4FlightStackRadio1
+                            exclusiveGroup: _defaultFirmwareIsPX4 ? firmwareGroup : null
                             text:           qsTr("PX4 Flight Stack ")
-                            visible:        !_singleFirmwareMode && !px4Flow
+                            textBold:       _defaultFirmwareIsPX4
+                            checked:        _defaultFirmwareIsPX4
+                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -306,10 +305,24 @@ SetupPage {
                             id:             apmFlightStack
                             exclusiveGroup: firmwareGroup
                             text:           qsTr("ArduPilot Flight Stack")
+                            textBold:       !_defaultFirmwareIsPX4
+                            checked:        !_defaultFirmwareIsPX4
                             visible:        !_singleFirmwareMode && !px4Flow
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
+                                parent.firmwareVersionChanged(firmwareTypeList)
+                            }
+                        }
+
+                        QGCRadioButton {
+                            id:             px4FlightStackRadio2
+                            exclusiveGroup: _defaultFirmwareIsPX4 ? null : firmwareGroup
+                            text:           qsTr("PX4 Flight Stack ")
+                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
+
+                            onClicked: {
+                                _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
                                 parent.firmwareVersionChanged(firmwareTypeList)
                             }
                         }

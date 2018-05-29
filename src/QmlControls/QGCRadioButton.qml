@@ -9,6 +9,7 @@ RadioButton {
     property var    color:          qgcPal.text    ///< Text color
     property int    textStyle:      Text.Normal
     property color  textStyleColor: qgcPal.text
+    property bool   textBold:       false
     property var    qgcPal:         QGCPalette { colorGroupEnabled: enabled }
 
     style: RadioButtonStyle {
@@ -35,6 +36,7 @@ RadioButton {
                 text:               control.text
                 font.pointSize:     ScreenTools.defaultFontPointSize
                 font.family:        ScreenTools.normalFontFamily
+                font.bold:          control.textBold
                 antialiasing:       true
                 color:              control.color
                 style:              control.textStyle
