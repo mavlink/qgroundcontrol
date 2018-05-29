@@ -43,7 +43,8 @@ public:
     Fact* udpTargetHostIP       (void);
     Fact* udpTargetHostPort     (void);
 
-    static const char* autoConnectSettingsGroupName;
+    static const char* name;
+    static const char* settingsGroup;
 
     static const char* autoConnectUDPSettingsName;
     static const char* autoConnectPixhawkSettingsName;
@@ -69,8 +70,6 @@ private:
     SettingsFact* _udpListenPortFact;
     SettingsFact* _udpTargetHostIPFact;
     SettingsFact* _udpTargetHostPortFact;
-
-    static const char* _settingsGroup;
 };
 
 #endif
