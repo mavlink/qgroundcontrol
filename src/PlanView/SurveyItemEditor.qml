@@ -133,7 +133,7 @@ Rectangle {
             FactCheckBox {
                 text:               qsTr("Fly alternate transects")
                 fact:               missionItem.flyAlternateTransects
-                visible:            _vehicle.fixedWing
+                visible:            _vehicle.fixedWing || _vehicle.vtol
                 Layout.columnSpan:  2
             }
 
