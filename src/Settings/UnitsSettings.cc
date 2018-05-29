@@ -12,14 +12,16 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* UnitsSettings::unitsSettingsGroupName =     "Units";
-const char* UnitsSettings::distanceUnitsSettingsName =  "DistanceUnits";
-const char* UnitsSettings::areaUnitsSettingsName =      "AreaUnits";
-const char* UnitsSettings::speedUnitsSettingsName =     "SpeedUnits";
-const char* UnitsSettings::temperatureUnitsSettingsName = "TemperatureUnits";
+const char* UnitsSettings::name =                           "Units";
+const char* UnitsSettings::settingsGroup =                  ""; // settings are in root group
+
+const char* UnitsSettings::distanceUnitsSettingsName =      "DistanceUnits";
+const char* UnitsSettings::areaUnitsSettingsName =          "AreaUnits";
+const char* UnitsSettings::speedUnitsSettingsName =         "SpeedUnits";
+const char* UnitsSettings::temperatureUnitsSettingsName =   "TemperatureUnits";
 
 UnitsSettings::UnitsSettings(QObject* parent)
-    : SettingsGroup(unitsSettingsGroupName, QString() /* root settings group */, parent)
+    : SettingsGroup(name, settingsGroup, parent)
     , _distanceUnitsFact(NULL)
     , _areaUnitsFact(NULL)
     , _speedUnitsFact(NULL)
