@@ -46,7 +46,7 @@ Fact* UnitsSettings::distanceUnits(void)
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(DistanceUnitsMeters);
 
-        _distanceUnitsFact = new SettingsFact(QString() /* no settings group */, metaData, this);
+        _distanceUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
 
     }
 
@@ -69,7 +69,7 @@ Fact* UnitsSettings::areaUnits(void)
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(AreaUnitsSquareMeters);
 
-        _areaUnitsFact = new SettingsFact(QString() /* no settings group */, metaData, this);
+        _areaUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
 
     return _areaUnitsFact;
@@ -91,7 +91,7 @@ Fact* UnitsSettings::speedUnits(void)
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(SpeedUnitsMetersPerSecond);
 
-        _speedUnitsFact = new SettingsFact(QString() /* no settings group */, metaData, this);
+        _speedUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
 
     return _speedUnitsFact;
@@ -112,7 +112,7 @@ Fact* UnitsSettings::temperatureUnits(void)
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(TemperatureUnitsCelsius);
 
-        _temperatureUnitsFact = new SettingsFact(QString() /* no settings group */, metaData, this);
+        _temperatureUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
 
     return _temperatureUnitsFact;
