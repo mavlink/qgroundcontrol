@@ -51,9 +51,10 @@ FocusScope {
 
                 QGCColoredImage {
                     id:                     image
+                    anchors.right:          parent.right
+                    anchors.verticalCenter: parent.verticalCenter
                     width:                  label.height / 2
                     height:                 width
-                    Layout.alignment:       Qt.AlignRight | Qt.AlignVCenter
                     source:                 "/qmlimages/arrow-down.png"
                     color:                  qgcPal.text
                     visible:                !_root.checked
