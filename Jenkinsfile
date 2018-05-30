@@ -1,6 +1,7 @@
 pipeline {
   agent none
   stages {
+
     stage('build') {
       parallel {
 
@@ -127,10 +128,9 @@ pipeline {
             sh 'git clean -ff -x -d .'
           }
         }
-
-      }
-    }
-  }
+      } // parallel
+    } // stage('build')
+  } // stages
 
   environment {
     CCACHE_CPP2 = '1'
@@ -142,5 +142,4 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '10', artifactDaysToKeepStr: '30'))
     timeout(time: 60, unit: 'MINUTES')
   }
-
 }
