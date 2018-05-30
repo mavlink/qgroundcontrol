@@ -73,10 +73,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
     attitudeStamped(false),
     lastAttitude(0),
 
-    roll(0.0),
-    pitch(0.0),
-    yaw(0.0),
-
     imagePackets(0),    // We must initialize to 0, otherwise extended data packets maybe incorrectly thought to be images
 
     blockHomePositionChanges(false),
@@ -133,7 +129,6 @@ UAS::UAS(MAVLinkProtocol* protocol, Vehicle* vehicle, FirmwarePluginManager * fi
 
 #ifndef __mobile__
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, &fileManager, &FileManager::receiveMessage);
-    color = UASInterface::getNextColor();
 #endif
 
 }

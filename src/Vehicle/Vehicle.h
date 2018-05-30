@@ -556,8 +556,6 @@ public:
     /// @return -1: reserver all buttons, >0 number of buttons to reserve
     Q_PROPERTY(int manualControlReservedButtonCount READ manualControlReservedButtonCount CONSTANT)
 
-    Q_INVOKABLE QString     getMavIconColor();
-
     // Called when the message drop-down is invoked to clear current count
     Q_INVOKABLE void        resetMessages();
 

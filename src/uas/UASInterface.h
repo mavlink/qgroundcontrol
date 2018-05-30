@@ -45,61 +45,11 @@ public:
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
 
-    virtual double getRoll() const = 0;
-    virtual double getPitch() const = 0;
-    virtual double getYaw() const = 0;
-
 #ifndef __mobile__
     virtual FileManager* getFileManager() = 0;
 #endif
 
-    /**
-     * @brief Get the color for this UAS
-     *
-     * This static function holds a color map that allows to draw a new color for each robot
-     *
-     * @return The next color in the color map. The map holds 20 colors and starts from the beginning
-     *         if the colors are exceeded.
-     */
-#if !defined(__mobile__)
-    static QColor getNextColor() {
-        /* Create color map */
-        static QList<QColor> colors = QList<QColor>()
-        << QColor(231,72,28)
-        << QColor(104,64,240)
-        << QColor(203,254,121)
-        << QColor(161,252,116)
-                << QColor(232,33,47)
-        << QColor(116,251,110)
-        << QColor(234,38,107)
-        << QColor(104,250,138)
-                << QColor(235,43,165)
-        << QColor(98,248,176)
-        << QColor(236,48,221)
-        << QColor(92,247,217)
-                << QColor(200,54,238)
-        << QColor(87,231,246)
-        << QColor(151,59,239)
-        << QColor(81,183,244)
-                << QColor(75,133,243)
-        << QColor(242,255,128)
-        << QColor(230,126,23);
-
-        static int nextColor = -1;
-        if(nextColor == 18){//if at the end of the list
-            nextColor = -1;//go back to the beginning
-        }
-        nextColor++;
-        return colors[nextColor];//return the next color
-   }
-#endif
-
     virtual QMap<int, QString> getComponents() = 0;
-
-    QColor getColor()
-    {
-        return color;
-    }
 
     enum StartCalibrationType {
         StartCalibrationRadio,
@@ -159,9 +109,6 @@ public slots:
 
     /** @brief Send command to disable all bindings/maps between RC and parameters */
     virtual void unsetRCToParameterMap() = 0;
-
-protected:
-    QColor color;
 
 signals:
     /** @brief A text message from the system has been received */
