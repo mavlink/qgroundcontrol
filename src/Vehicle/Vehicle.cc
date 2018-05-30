@@ -1838,19 +1838,6 @@ bool Vehicle::xConfigMotors(void)
     return _firmwarePlugin->multiRotorXConfig(this);
 }
 
-/*
- * Internal
- */
-
-QString Vehicle::getMavIconColor()
-{
-    // TODO: Not using because not only the colors are ghastly, it doesn't respect dark/light palette
-    if(_mav)
-        return _mav->getColor().name();
-    else
-        return QString("black");
-}
-
 QString Vehicle::formatedMessages()
 {
     QString messages;

@@ -60,46 +60,9 @@ public:
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
 
-    Q_PROPERTY(double   roll                    READ getRoll                WRITE setRoll               NOTIFY rollChanged)
-    Q_PROPERTY(double   pitch                   READ getPitch               WRITE setPitch              NOTIFY pitchChanged)
-    Q_PROPERTY(double   yaw                     READ getYaw                 WRITE setYaw                NOTIFY yawChanged)
-
-    /// Vehicle is about to go away
-    void shutdownVehicle(void);
-
-    void setRoll(double val)
-    {
-        roll = val;
-        emit rollChanged(val,"roll");
-    }
-
-    double getRoll() const
-    {
-        return roll;
-    }
-
-    void setPitch(double val)
-    {
-        pitch = val;
-        emit pitchChanged(val,"pitch");
-    }
-
-    double getPitch() const
-    {
-        return pitch;
-    }
-
-    void setYaw(double val)
-    {
-        yaw = val;
-        emit yawChanged(val,"yaw");
-    }
-
-    double getYaw() const
-    {
-        return yaw;
-    }
-
+	/// Vehicle is about to go away
+	void shutdownVehicle(void);
+	
     // Setters for HIL noise variance
     void setXaccVar(float var){
         xacc_var = var;
@@ -196,9 +159,6 @@ protected: //COMMENTS FOR TEST UNIT
     bool attitudeKnown;             ///< True if attitude was received, false else
     bool attitudeStamped;           ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
     quint64 lastAttitude;           ///< Timestamp of last attitude measurement
-    double roll;
-    double pitch;
-    double yaw;
 
     // dongfang: This looks like a candidate for being moved off to a separate class.
     /// IMAGING
