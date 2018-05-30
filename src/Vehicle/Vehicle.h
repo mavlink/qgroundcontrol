@@ -1041,10 +1041,6 @@ private slots:
 
     void _handleTextMessage                 (int newCount);
     void _handletextMessageReceived         (UASMessage* message);
-    /** @brief Attitude from main autopilot / system state */
-    void _updateAttitude                    (UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
-    /** @brief Attitude from one specific component / redundant autopilot */
-    void _updateAttitude                    (UASInterface* uas, int component, double roll, double pitch, double yaw, quint64 timestamp);
     /** @brief A new camera image has arrived */
     void _imageReady                        (UASInterface* uas);
     void _prearmErrorTimeout(void);
@@ -1089,7 +1085,7 @@ private:
     void _handleScaledPressure2(mavlink_message_t& message);
     void _handleScaledPressure3(mavlink_message_t& message);
     void _handleHighLatency2(mavlink_message_t& message);
-    void _handleAttitude(mavlink_message_t& message);
+    void _handleAttitudeQuaternion(mavlink_message_t& message);
     void _handleAttitudeTarget(mavlink_message_t& message);
     void _handleDistanceSensor(mavlink_message_t& message);
     // ArduPilot dialect messages

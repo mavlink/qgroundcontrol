@@ -213,8 +213,6 @@ signals:
      */
     void batteryChanged(UASInterface* uas, double voltage, double current, double percent, int seconds);
     void statusChanged(UASInterface* uas, QString status);
-    void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
-    void attitudeChanged(UASInterface*, int component, double roll, double pitch, double yaw, quint64 usec);
 
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
