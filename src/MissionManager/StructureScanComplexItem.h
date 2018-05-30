@@ -34,7 +34,6 @@ public:
     Q_PROPERTY(bool             altitudeRelative            READ altitudeRelative           WRITE setAltitudeRelative       NOTIFY altitudeRelativeChanged)
     Q_PROPERTY(int              cameraShots                 READ cameraShots                                                NOTIFY cameraShotsChanged)
     Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots                                           NOTIFY timeBetweenShotsChanged)
-    Q_PROPERTY(double           cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval                                NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon                                           CONSTANT)
     Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                                              CONSTANT)
 
@@ -100,7 +99,6 @@ public:
 signals:
     void cameraShotsChanged             (int cameraShots);
     void timeBetweenShotsChanged        (void);
-    void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void altitudeRelativeChanged        (bool altitudeRelative);
 
 private slots:
@@ -133,7 +131,6 @@ private:
     double          _scanDistance;
     int             _cameraShots;
     double          _timeBetweenShots;
-    double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
 
