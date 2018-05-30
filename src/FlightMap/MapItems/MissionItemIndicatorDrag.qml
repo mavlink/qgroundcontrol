@@ -29,6 +29,7 @@ Rectangle {
     property var itemCoordinate ///< Coordinate we are updating during drag
 
     signal clicked
+    signal doubleClicked
     signal dragStart
     signal dragStop
 
@@ -74,6 +75,11 @@ Rectangle {
         onClicked: {
             focus = true
             itemDragger.clicked()
+        }
+
+        onDoubleClicked: {
+            focus = true
+            itemDragger.doubleClicked()
         }
 
         property bool dragActive: drag.active

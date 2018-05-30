@@ -128,10 +128,10 @@ Item {
 
     Menu {
         id: menu
-
         property int removeVertex
 
         MenuItem {
+            id:             removeVertexItem
             text:           qsTr("Remove vertex" )
             onTriggered:    mapPolyline.removeVertex(parent.removeVertex)
         }
@@ -139,6 +139,10 @@ Item {
         MenuItem {
             text:           qsTr("Load KML...")
             onTriggered:    kmlLoadDialog.openForLoad()
+        }
+
+        function resetMenu() {
+            removeVertexItem.visible = mapPolyline.count > 2
         }
     }
 
@@ -167,7 +171,7 @@ Item {
                 width:          ScreenTools.defaultFontPixelHeight * 1.5
                 height:         width
                 radius:         width / 2
-                border.color:      "white"
+                border.color:   "white"
                 color:          "transparent"
                 opacity:        .50
                 z:              _zorderSplitHandle
@@ -243,10 +247,13 @@ Item {
             }
 
             onClicked: {
-                if (polylineVertex == 0) {
-                    menu.removeVertex = polylineVertex
-                    menu.popup()
-                } else {
+                menu.resetMenu()
+                menu.removeVertex = polylineVertex
+                menu.popup()
+            }
+
+            onDoubleClicked: {
+                if (polylineVertex != 0) {
                     mapPolyline.removeVertex(polylineVertex)
                 }
             }
@@ -271,15 +278,7 @@ Item {
                 height:     width
                 radius:     width / 2
                 color:      "white"
-                opacity:    .90
-
-                QGCLabel {
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    anchors.verticalCenter:     parent.verticalCenter
-                    text:                       "..."
-                    color:                      "black"
-                    visible:                    polylineVertex == 0
-                }
+                opacity:    0.9
             }
         }
     }
