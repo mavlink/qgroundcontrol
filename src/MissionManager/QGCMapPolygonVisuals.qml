@@ -291,7 +291,7 @@ Item {
                 }
             }
 
-            onClicked: mapPolygon.removeVertex(polygonVertex)
+            onDoubleClicked: mapPolygon.removeVertex(polygonVertex)
         }
     }
 
