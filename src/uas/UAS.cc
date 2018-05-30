@@ -275,112 +275,11 @@ void UAS::receiveMessage(mavlink_message_t message)
             emit valueChanged(uasId, name.arg("drop_rate_comm"), "%", state.drop_rate_comm/100.0f, time);
         }
             break;
-        case MAVLINK_MSG_ID_ATTITUDE:
-        {
-            mavlink_attitude_t attitude;
-            mavlink_msg_attitude_decode(&message, &attitude);
-            quint64 time = getUnixReferenceTime(attitude.time_boot_ms);
-
-            emit attitudeChanged(this, message.compid, QGC::limitAngleToPMPIf(attitude.roll), QGC::limitAngleToPMPIf(attitude.pitch), QGC::limitAngleToPMPIf(attitude.yaw), time);
-
-            if (!wrongComponent)
-            {
-                lastAttitude = time;
-                setRoll(QGC::limitAngleToPMPIf(attitude.roll));
-                setPitch(QGC::limitAngleToPMPIf(attitude.pitch));
-                setYaw(QGC::limitAngleToPMPIf(attitude.yaw));
-
-                attitudeKnown = true;
-                emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-            }
-        }
-            break;
-        case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
-        {
-            mavlink_attitude_quaternion_t attitude;
-            mavlink_msg_attitude_quaternion_decode(&message, &attitude);
-            quint64 time = getUnixReferenceTime(attitude.time_boot_ms);
-
-            double a = attitude.q1;
-            double b = attitude.q2;
-            double c = attitude.q3;
-            double d = attitude.q4;
-
-            double aSq = a * a;
-            double bSq = b * b;
-            double cSq = c * c;
-            double dSq = d * d;
-            float dcm[3][3];
-            dcm[0][0] = aSq + bSq - cSq - dSq;
-            dcm[0][1] = 2.0 * (b * c - a * d);
-            dcm[0][2] = 2.0 * (a * c + b * d);
-            dcm[1][0] = 2.0 * (b * c + a * d);
-            dcm[1][1] = aSq - bSq + cSq - dSq;
-            dcm[1][2] = 2.0 * (c * d - a * b);
-            dcm[2][0] = 2.0 * (b * d - a * c);
-            dcm[2][1] = 2.0 * (a * b + c * d);
-            dcm[2][2] = aSq - bSq - cSq + dSq;
-
-            float phi, theta, psi;
-            theta = asin(-dcm[2][0]);
-
-            if (fabs(theta - M_PI_2) < 1.0e-3f) {
-                phi = 0.0f;
-                psi = (atan2(dcm[1][2] - dcm[0][1],
-                        dcm[0][2] + dcm[1][1]) + phi);
-
-            } else if (fabs(theta + M_PI_2) < 1.0e-3f) {
-                phi = 0.0f;
-                psi = atan2f(dcm[1][2] - dcm[0][1],
-                          dcm[0][2] + dcm[1][1] - phi);
-
-            } else {
-                phi = atan2f(dcm[2][1], dcm[2][2]);
-                psi = atan2f(dcm[1][0], dcm[0][0]);
-            }
-
-            emit attitudeChanged(this, message.compid, QGC::limitAngleToPMPIf(phi),
-                                 QGC::limitAngleToPMPIf(theta),
-                                 QGC::limitAngleToPMPIf(psi), time);
-
-            if (!wrongComponent)
-            {
-                lastAttitude = time;
-                setRoll(QGC::limitAngleToPMPIf(phi));
-                setPitch(QGC::limitAngleToPMPIf(theta));
-                setYaw(QGC::limitAngleToPMPIf(psi));
-
-                attitudeKnown = true;
-                emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-            }
-        }
-            break;
         case MAVLINK_MSG_ID_HIL_CONTROLS:
         {
             mavlink_hil_controls_t hil;
             mavlink_msg_hil_controls_decode(&message, &hil);
             emit hilControlsChanged(hil.time_usec, hil.roll_ailerons, hil.pitch_elevator, hil.yaw_rudder, hil.throttle, hil.mode, hil.nav_mode);
-        }
-            break;
-        case MAVLINK_MSG_ID_VFR_HUD:
-        {
-            mavlink_vfr_hud_t hud;
-            mavlink_msg_vfr_hud_decode(&message, &hud);
-            quint64 time = getUnixTime();
-
-            if (!attitudeKnown)
-            {
-                setYaw(QGC::limitAngleToPMPId((((double)hud.heading)/180.0)*M_PI));
-                emit attitudeChanged(this, getRoll(), getPitch(), getYaw(), time);
-            }
-        }
-            break;
-        case MAVLINK_MSG_ID_GLOBAL_VISION_POSITION_ESTIMATE:
-        {
-            mavlink_global_vision_position_estimate_t pos;
-            mavlink_msg_global_vision_position_estimate_decode(&message, &pos);
-            quint64 time = getUnixTime(pos.usec);
-            emit attitudeChanged(this, message.compid, pos.roll, pos.pitch, pos.yaw, time);
         }
             break;
 

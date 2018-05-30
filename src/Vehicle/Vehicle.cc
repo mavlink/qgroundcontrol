@@ -235,9 +235,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Listen for system messages
     connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageCountChanged,  this, &Vehicle::_handleTextMessage);
     connect(_toolbox->uasMessageHandler(), &UASMessageHandler::textMessageReceived,      this, &Vehicle::_handletextMessageReceived);
-    // Now connect the new UAS
-    connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,double,double,double,quint64)),              this, SLOT(_updateAttitude(UASInterface*, double, double, double, quint64)));
-    connect(_mav, SIGNAL(attitudeChanged                    (UASInterface*,int,double,double,double,quint64)),          this, SLOT(_updateAttitude(UASInterface*,int,double, double, double, quint64)));
 
     if (_highLatencyLink || link->isPX4Flow()) {
         // These links don't request information
@@ -709,8 +706,8 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
-    case MAVLINK_MSG_ID_ATTITUDE:
-        _handleAttitude(message);
+    case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
+        _handleAttitudeQuaternion(message);
         break;
     case MAVLINK_MSG_ID_ATTITUDE_TARGET:
         _handleAttitudeTarget(message);
@@ -846,15 +843,37 @@ void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
     _setpointFactGroup.yawRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_yaw_rate));
 }
 
-void Vehicle::_handleAttitude(mavlink_message_t& message)
+void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
 {
-    mavlink_attitude_t attitude;
+    mavlink_attitude_quaternion_t attitudeQuaternion;
 
-    mavlink_msg_attitude_decode(&message, &attitude);
+    mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);
 
-    rollRate()->setRawValue(qRadiansToDegrees(attitude.rollspeed));
-    pitchRate()->setRawValue(qRadiansToDegrees(attitude.pitchspeed));
-    yawRate()->setRawValue(qRadiansToDegrees(attitude.yawspeed));
+    float roll, pitch, yaw;
+    float q[] = { attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4 };
+    mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
+
+    roll = QGC::limitAngleToPMPIf(roll);
+    pitch = QGC::limitAngleToPMPIf(pitch);
+    yaw = QGC::limitAngleToPMPIf(yaw);
+
+    roll = qRadiansToDegrees(roll);
+    pitch = qRadiansToDegrees(pitch);
+    yaw = qRadiansToDegrees(yaw);
+
+    if (yaw < 0.0) {
+        yaw += 360.0;
+    }
+    // truncate to integer so widget never displays 360
+    yaw = trunc(yaw);
+
+    _rollFact.setRawValue(roll);
+    _pitchFact.setRawValue(pitch);
+    _headingFact.setRawValue(yaw);
+
+    rollRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.rollspeed));
+    pitchRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.pitchspeed));
+    yawRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.yawspeed));
 }
 
 void Vehicle::_handleGpsRawInt(mavlink_message_t& message)
@@ -1786,33 +1805,6 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
             _linkActiveChanged(_priorityLink.data(), _priorityLink->link_active(_id), _id);
         }
     }
-}
-
-void Vehicle::_updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64)
-{
-    if (qIsInf(roll)) {
-        _rollFact.setRawValue(0);
-    } else {
-        _rollFact.setRawValue(roll * (180.0 / M_PI));
-    }
-    if (qIsInf(pitch)) {
-        _pitchFact.setRawValue(0);
-    } else {
-        _pitchFact.setRawValue(pitch * (180.0 / M_PI));
-    }
-    if (qIsInf(yaw)) {
-        _headingFact.setRawValue(0);
-    } else {
-        yaw = yaw * (180.0 / M_PI);
-        if (yaw < 0.0) yaw += 360.0;
-        // truncate to integer so widget never displays 360
-        _headingFact.setRawValue(trunc(yaw));
-    }
-}
-
-void Vehicle::_updateAttitude(UASInterface* uas, int, double roll, double pitch, double yaw, quint64 timestamp)
-{
-    _updateAttitude(uas, roll, pitch, yaw, timestamp);
 }
 
 int Vehicle::motorCount(void)
