@@ -42,7 +42,6 @@ private:
         // These signals are from TransectStyleComplexItem
         cameraShotsChangedIndex = 0,
         timeBetweenShotsChangedIndex,
-        cameraMinTriggerIntervalChangedIndex,
         visualTransectPointsChangedIndex,
         coveredAreaChangedIndex,
         // These signals are from ComplexItem
@@ -59,7 +58,6 @@ private:
         // These signals are from TransectStyleComplexItem
         cameraShotsChangedMask =                1 << cameraShotsChangedIndex,
         timeBetweenShotsChangedMask =           1 << timeBetweenShotsChangedIndex,
-        cameraMinTriggerIntervalChangedMask =   1 << cameraMinTriggerIntervalChangedIndex,
         visualTransectPointsChangedMask =       1 << visualTransectPointsChangedIndex,
         coveredAreaChangedMask =                1 << coveredAreaChangedIndex,
         // These signals are from ComplexItem

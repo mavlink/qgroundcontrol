@@ -34,7 +34,6 @@ void TransectStyleComplexItemTest::init(void)
 
     _rgSignals[cameraShotsChangedIndex] =               SIGNAL(cameraShotsChanged());
     _rgSignals[timeBetweenShotsChangedIndex] =          SIGNAL(timeBetweenShotsChanged());
-    _rgSignals[cameraMinTriggerIntervalChangedIndex] =  SIGNAL(cameraMinTriggerIntervalChanged(double));
     _rgSignals[visualTransectPointsChangedIndex] =      SIGNAL(visualTransectPointsChanged());
     _rgSignals[coveredAreaChangedIndex] =               SIGNAL(coveredAreaChanged());
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
