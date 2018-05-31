@@ -128,21 +128,27 @@ Item {
 
     Menu {
         id: menu
-        property int removeVertex
+        property int _removeVertexIndex
+
+        function popUpWithIndex(curIndex) {
+            _removeVertexIndex = curIndex
+            removeVertexItem.visible = mapPolyline.count > 2
+            menu.popup()
+        }
 
         MenuItem {
             id:             removeVertexItem
             text:           qsTr("Remove vertex" )
-            onTriggered:    mapPolyline.removeVertex(parent.removeVertex)
+            onTriggered:    mapPolyline.removeVertex(menu._removeVertexIndex)
+        }
+
+        MenuSeparator {
+            visible:        removeVertexItem.visible
         }
 
         MenuItem {
             text:           qsTr("Load KML...")
             onTriggered:    kmlLoadDialog.openForLoad()
-        }
-
-        function resetMenu() {
-            removeVertexItem.visible = mapPolyline.count > 2
         }
     }
 
@@ -247,15 +253,7 @@ Item {
             }
 
             onClicked: {
-                menu.resetMenu()
-                menu.removeVertex = polylineVertex
-                menu.popup()
-            }
-
-            onDoubleClicked: {
-                if (polylineVertex != 0) {
-                    mapPolyline.removeVertex(polylineVertex)
-                }
+                menu.popUpWithIndex(polylineVertex)
             }
 
         }
@@ -273,12 +271,13 @@ Item {
             property int polylineVertex
 
             sourceItem: Rectangle {
-                id:         dragHandle
-                width:      ScreenTools.defaultFontPixelHeight * 1.5
-                height:     width
-                radius:     width / 2
-                color:      "white"
-                opacity:    0.9
+                id:             dragHandle
+                width:          ScreenTools.defaultFontPixelHeight * 1.5
+                height:         width
+                radius:         width * 0.5
+                color:          Qt.rgba(1,1,1,0.8)
+                border.color:   Qt.rgba(0,0,0,0.25)
+                border.width:   1
             }
         }
     }
