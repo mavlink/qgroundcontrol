@@ -46,7 +46,6 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyVie
     , _ignoreRecalc                     (false)
     , _complexDistance                  (0)
     , _cameraShots                      (0)
-    , _cameraMinTriggerInterval         (0)
     , _cameraCalc                       (vehicle, settingsGroup)
     , _followTerrain                    (false)
     , _loadedMissionItemsParent         (NULL)

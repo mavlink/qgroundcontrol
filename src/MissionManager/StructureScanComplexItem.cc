@@ -40,7 +40,6 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     , _ignoreRecalc             (false)
     , _scanDistance             (0.0)
     , _cameraShots              (0)
-    , _cameraMinTriggerInterval (0)
     , _cameraCalc               (vehicle, settingsGroup)
     , _altitudeFact             (settingsGroup, _metaDataMap[altitudeName])
     , _structureHeightFact      (settingsGroup, _metaDataMap[structureHeightName])
