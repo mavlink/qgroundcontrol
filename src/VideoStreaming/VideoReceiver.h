@@ -58,6 +58,8 @@ public:
 
     QImage          lastSecFrameGray();
     bool            lastSecFrameGray(QImage &frame);
+    QImage          lastSecFrameColor();
+    bool            lastSecFrameColor(QImage &frame);
 
 #endif
 
@@ -81,6 +83,7 @@ signals:
     void msgErrorReceived           ();
     void msgEOSReceived             ();
     void msgStateChangedReceived    ();
+    void irCamInfoReceived          (QByteArray&);
 
 #endif
 
@@ -123,9 +126,12 @@ private:
     bool                _stop;
     Sink*               _sink;
     GstElement*         _tee;
-    GstBin*             _sampleBin;
+    GstElement*         _sampleBin;
 //    GstAppSink*         _appsink_gray;
+    GstElement*         _irCamInfoBin;
 
+
+    static void                 _onIrCamNewSample       (GstElement* ir_cam_sink, gpointer user_data);
     static gboolean             _onBusMessage           (GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack         (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn    _keyframeWatch          (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
