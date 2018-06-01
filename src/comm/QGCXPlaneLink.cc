@@ -1064,7 +1064,7 @@ void QGCXPlaneLink::setRandomPosition()
                         _vehicle->altitudeAMSL()->rawValue().toDouble() + offAlt,
                         _vehicle->roll()->rawValue().toDouble(),
                         _vehicle->pitch()->rawValue().toDouble(),
-                        _vehicle->uas()->getYaw());
+                        _vehicle->heading()->rawValue().toDouble());
 }
 
 void QGCXPlaneLink::setRandomAttitude()

@@ -66,12 +66,11 @@ void SurveyComplexItemTest::_testDirty(void)
     _surveyItem->setDirty(false);
     QVERIFY(!_surveyItem->dirty());
     QVERIFY(_multiSpy->checkOnlySignalByMask(surveyDirtyChangedMask));
-    QVERIFY(!_multiSpy->pullBoolFromSignalIndex(surveyDirtyChangedIndex));
     _multiSpy->clearAllSignals();
 
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
-    rgFacts << _surveyItem->gridAngle() << _surveyItem->gridEntryLocation();
+    rgFacts << _surveyItem->gridAngle() << _surveyItem->flyAlternateTransects();
     foreach(Fact* fact, rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_surveyItem->dirty());
@@ -138,21 +137,15 @@ void SurveyComplexItemTest::_testEntryLocation(void)
     for (double gridAngle=-360.0; gridAngle<=360.0; gridAngle++) {
         _surveyItem->gridAngle()->setRawValue(gridAngle);
 
-        QList<QGeoCoordinate> rgSeenEntryCoords;
-        QList<int> rgEntryLocation;
-        rgEntryLocation << SurveyComplexItem::EntryLocationTopLeft
-                        << SurveyComplexItem::EntryLocationTopRight
-                        << SurveyComplexItem::EntryLocationBottomLeft
-                        << SurveyComplexItem::EntryLocationBottomRight;
-
         // Validate that each entry location is unique
-        for (int i=0; i<rgEntryLocation.count(); i++) {
-            int entryLocation = rgEntryLocation[i];
-
-            _surveyItem->gridEntryLocation()->setRawValue(entryLocation);
+        QList<QGeoCoordinate> rgSeenEntryCoords;
+        for (int rotateCount=0; rotateCount<3; rotateCount++) {
+            _surveyItem->rotateEntryPoint();
             QVERIFY(!rgSeenEntryCoords.contains(_surveyItem->coordinate()));
             rgSeenEntryCoords << _surveyItem->coordinate();
         }
+
+        _surveyItem->rotateEntryPoint();    // Rotate back for first entry point
         rgSeenEntryCoords.clear();
     }
 }

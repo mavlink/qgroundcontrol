@@ -30,6 +30,7 @@ FactValueSliderListModel::FactValueSliderListModel(Fact& fact, QObject* parent)
     , _initialValueRounded      (0)
     , _increment                (0)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 FactValueSliderListModel::~FactValueSliderListModel()
@@ -38,10 +39,12 @@ FactValueSliderListModel::~FactValueSliderListModel()
 
 int FactValueSliderListModel::resetInitialValue(void)
 {
-    // Remove any old rows
-    beginRemoveRows(QModelIndex(), 0, _cValues - 1);
-    _cValues = 0;
-    endRemoveRows();
+    if (_cValues > 0) {
+        // Remove any old rows
+        beginRemoveRows(QModelIndex(), 0, _cValues - 1);
+        _cValues = 0;
+        endRemoveRows();
+    }
 
     _initialValue = _fact.cookedValue().toDouble();
     _initialValueRounded = qRound(_initialValue);

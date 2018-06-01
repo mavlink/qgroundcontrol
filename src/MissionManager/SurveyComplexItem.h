@@ -23,11 +23,13 @@ class SurveyComplexItem : public TransectStyleComplexItem
 public:
     SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
-    Q_PROPERTY(Fact*    gridAngle           READ gridAngle                                  CONSTANT)
-    Q_PROPERTY(Fact*    gridEntryLocation   READ gridEntryLocation                          CONSTANT)
+    Q_PROPERTY(Fact* gridAngle              READ gridAngle              CONSTANT)
+    Q_PROPERTY(Fact* flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
 
-    Fact*   gridAngle           (void) { return &_gridAngleFact; }
-    Fact*   gridEntryLocation   (void) { return &_gridEntryLocationFact; }
+    Fact* gridAngle             (void) { return &_gridAngleFact; }
+    Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
+
+    Q_INVOKABLE void rotateEntryPoint(void);
 
     // Overrides from ComplexMissionItem
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
@@ -38,6 +40,7 @@ public:
     bool    specifiesCoordinate (void) const final { return true; }
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void    applyNewAltitude    (double newAltitude) final;
+    double  timeBetweenShots    (void) final;
 
     // Overrides from VisualMissionionItem
     QString commandDescription  (void) const final { return tr("Survey"); }
@@ -47,16 +50,19 @@ public:
 
     // Must match json spec for GridEntryLocation
     enum EntryLocation {
-        EntryLocationTopLeft,
+        EntryLocationFirst,
+        EntryLocationTopLeft = EntryLocationFirst,
         EntryLocationTopRight,
         EntryLocationBottomLeft,
         EntryLocationBottomRight,
+        EntryLocationLast = EntryLocationBottomRight
     };
 
     static const char* jsonComplexItemTypeValue;
     static const char* settingsGroup;
     static const char* gridAngleName;
     static const char* gridEntryLocationName;
+    static const char* flyAlternateTransectsName;
 
     static const char* jsonV3ComplexItemTypeValue;
 
@@ -106,17 +112,19 @@ private:
     QMap<QString, FactMetaData*> _metaDataMap;
 
     SettingsFact    _gridAngleFact;
-    SettingsFact    _gridEntryLocationFact;
+    SettingsFact    _flyAlternateTransectsFact;
+    int             _entryPoint;
 
     static const char* _jsonGridAngleKey;
-    static const char* _jsonGridEntryLocationKey;
+    static const char* _jsonEntryPointKey;
+    static const char* _jsonFlyAlternateTransectsKey;
 
     static const char* _jsonV3GridObjectKey;
     static const char* _jsonV3GridAltitudeKey;
     static const char* _jsonV3GridAltitudeRelativeKey;
     static const char* _jsonV3GridAngleKey;
     static const char* _jsonV3GridSpacingKey;
-    static const char* _jsonV3GridEntryLocationKey;
+    static const char* _jsonV3EntryPointKey;
     static const char* _jsonV3TurnaroundDistKey;
     static const char* _jsonV3CameraTriggerDistanceKey;
     static const char* _jsonV3CameraTriggerInTurnaroundKey;

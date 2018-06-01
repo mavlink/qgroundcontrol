@@ -27,16 +27,17 @@ const char* SurveyComplexItem::jsonV3ComplexItemTypeValue = "survey";
 const char* SurveyComplexItem::settingsGroup =              "Survey";
 const char* SurveyComplexItem::gridAngleName =              "GridAngle";
 const char* SurveyComplexItem::gridEntryLocationName =      "GridEntryLocation";
+const char* SurveyComplexItem::flyAlternateTransectsName =  "FlyAlternateTransects";
 
 const char* SurveyComplexItem::_jsonGridAngleKey =          "angle";
-const char* SurveyComplexItem::_jsonGridEntryLocationKey =  "entryLocation";
+const char* SurveyComplexItem::_jsonEntryPointKey =         "entryLocation";
 
 const char* SurveyComplexItem::_jsonV3GridObjectKey =                   "grid";
 const char* SurveyComplexItem::_jsonV3GridAltitudeKey =                 "altitude";
 const char* SurveyComplexItem::_jsonV3GridAltitudeRelativeKey =         "relativeAltitude";
 const char* SurveyComplexItem::_jsonV3GridAngleKey =                    "angle";
 const char* SurveyComplexItem::_jsonV3GridSpacingKey =                  "spacing";
-const char* SurveyComplexItem::_jsonV3GridEntryLocationKey =            "entryLocation";
+const char* SurveyComplexItem::_jsonV3EntryPointKey =                   "entryLocation";
 const char* SurveyComplexItem::_jsonV3TurnaroundDistKey =               "turnAroundDistance";
 const char* SurveyComplexItem::_jsonV3CameraTriggerDistanceKey =        "cameraTriggerDistance";
 const char* SurveyComplexItem::_jsonV3CameraTriggerInTurnaroundKey =    "cameraTriggerInTurnaround";
@@ -56,13 +57,14 @@ const char* SurveyComplexItem::_jsonV3ManualGridKey =                   "manualG
 const char* SurveyComplexItem::_jsonV3CameraOrientationLandscapeKey =   "orientationLandscape";
 const char* SurveyComplexItem::_jsonV3FixedValueIsAltitudeKey =         "fixedValueIsAltitude";
 const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90Degrees";
-
+const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
 
 SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
     : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
-    , _gridEntryLocationFact    (settingsGroup, _metaDataMap[gridEntryLocationName])
+    , _flyAlternateTransectsFact(settingsGroup, _metaDataMap[flyAlternateTransectsName])
+    , _entryPoint               (EntryLocationTopLeft)
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
 
@@ -79,11 +81,11 @@ SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* pa
     }
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
-    connect(&_gridEntryLocationFact,    &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
+    connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_setDirty);
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
-    connect(&_gridEntryLocationFact,    &Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
+    connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_rebuildTransects);
 
     // FIXME: Shouldn't these be in TransectStyleComplexItem? They are also in CorridorScanComplexItem constructur
@@ -101,7 +103,8 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[_jsonGridAngleKey] =                             _gridAngleFact.rawValue().toDouble();
-    saveObject[_jsonGridEntryLocationKey] =                     _gridEntryLocationFact.rawValue().toInt();
+    saveObject[_jsonFlyAlternateTransectsKey] =                 _flyAlternateTransectsFact.rawValue().toBool();
+    saveObject[_jsonEntryPointKey] =                            _entryPoint;
 
     // Polygon shape
     _surveyAreaPolygon.saveToJson(saveObject);
@@ -154,8 +157,9 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
-        { _jsonGridEntryLocationKey,                    QJsonValue::Double, true },
+        { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { _jsonGridAngleKey,                            QJsonValue::Double, true },
+        { _jsonFlyAlternateTransectsKey,                QJsonValue::Bool,   false },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
@@ -182,8 +186,10 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
         return false;
     }
 
-    _gridAngleFact.setRawValue(complexObject[_jsonGridAngleKey].toDouble());
-    _gridEntryLocationFact.setRawValue(complexObject[_jsonGridEntryLocationKey].toInt());
+    _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
+    _flyAlternateTransectsFact.setRawValue  (complexObject[_jsonFlyAlternateTransectsKey].toBool(false));
+
+    _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 
     _ignoreRecalc = false;
 
@@ -234,7 +240,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
         { _jsonV3GridAltitudeRelativeKey,   QJsonValue::Bool,   true },
         { _jsonV3GridAngleKey,              QJsonValue::Double, true },
         { _jsonV3GridSpacingKey,            QJsonValue::Double, true },
-        { _jsonV3GridEntryLocationKey,      QJsonValue::Double, false },
+        { _jsonEntryPointKey,      QJsonValue::Double, false },
         { _jsonV3TurnaroundDistKey,         QJsonValue::Double, true },
     };
     QJsonObject gridObject = complexObject[_jsonV3GridObjectKey].toObject();
@@ -246,10 +252,10 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _gridAngleFact.setRawValue          (gridObject[_jsonV3GridAngleKey].toDouble());
     _turnAroundDistanceFact.setRawValue (gridObject[_jsonV3TurnaroundDistKey].toDouble());
 
-    if (gridObject.contains(_jsonV3GridEntryLocationKey)) {
-        _gridEntryLocationFact.setRawValue(gridObject[_jsonV3GridEntryLocationKey].toDouble());
+    if (gridObject.contains(_jsonEntryPointKey)) {
+        _entryPoint = gridObject[_jsonEntryPointKey].toDouble();
     } else {
-        _gridEntryLocationFact.setRawValue(_gridEntryLocationFact.rawDefaultValue());
+        _entryPoint = EntryLocationTopRight;
     }
 
     _cameraCalc.distanceToSurface()->setRawValue        (gridObject[_jsonV3GridAltitudeKey].toDouble());
@@ -257,7 +263,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _cameraCalc.adjustedFootprintFrontal()->setRawValue (complexObject[_jsonV3CameraTriggerDistanceKey].toDouble());
 
     if (manualGrid) {
-        _cameraCalc.setCameraName(_cameraCalc.manualCameraName());
+        _cameraCalc.cameraName()->setRawValue(_cameraCalc.manualCameraName());
     } else {
         if (!complexObject.contains(_jsonV3CameraObjectKey)) {
             errorString = tr("%1 but %2 object is missing").arg("manualGrid = false").arg("camera");
@@ -292,7 +298,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
             return false;
         }
 
-        _cameraCalc.setCameraName                       (cameraObject[_jsonV3CameraNameKey].toString());
+        _cameraCalc.cameraName()->setRawValue           (cameraObject[_jsonV3CameraNameKey].toString());
         _cameraCalc.landscape()->setRawValue            (cameraObject[_jsonV3CameraOrientationLandscapeKey].toBool(true));
         _cameraCalc.frontalOverlap()->setRawValue       (cameraObject[_jsonV3FrontalOverlapKey].toInt());
         _cameraCalc.sideOverlap()->setRawValue          (cameraObject[_jsonV3SideOverlapKey].toInt());
@@ -408,14 +414,13 @@ void SurveyComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
         return;
     }
 
-    int entryLocation = _gridEntryLocationFact.rawValue().toInt();
     bool reversePoints = false;
     bool reverseTransects = false;
 
-    if (entryLocation == EntryLocationBottomLeft || entryLocation == EntryLocationBottomRight) {
+    if (_entryPoint == EntryLocationBottomLeft || _entryPoint == EntryLocationBottomRight) {
         reversePoints = true;
     }
-    if (entryLocation == EntryLocationTopRight || entryLocation == EntryLocationBottomRight) {
+    if (_entryPoint == EntryLocationTopRight || _entryPoint == EntryLocationBottomRight) {
         reverseTransects = true;
     }
 
@@ -428,7 +433,7 @@ void SurveyComplexItem::_adjustTransectsToEntryPointLocation(QList<QList<QGeoCoo
         _reverseTransectOrder(transects);
     }
 
-    qCDebug(SurveyComplexItemLog) << "_adjustTransectsToEntryPointLocation Modified entry point:entryLocation" << transects.first().first() << entryLocation;
+    qCDebug(SurveyComplexItemLog) << "_adjustTransectsToEntryPointLocation Modified entry point:entryLocation" << transects.first().first() << _entryPoint;
 }
 
 #if 0
@@ -1277,6 +1282,21 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
         _optimizeTransectsForShortestDistance(_transects.last().last().coord, transects);
     }
 
+    if (_flyAlternateTransectsFact.rawValue().toBool()) {
+        QList<QList<QGeoCoordinate>> alternatingTransects;
+        for (int i=0; i<transects.count(); i++) {
+            if (!(i & 1)) {
+                alternatingTransects.append(transects[i]);
+            }
+        }
+        for (int i=transects.count()-1; i>0; i--) {
+            if (i & 1) {
+                alternatingTransects.append(transects[i]);
+            }
+        }
+        transects = alternatingTransects;
+    }
+
     // Adjust to lawnmower pattern
     bool reverseVertices = false;
     for (int i=0; i<transects.count(); i++) {
@@ -1401,4 +1421,21 @@ void SurveyComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& items, QO
     }
 }
 
+void SurveyComplexItem::rotateEntryPoint(void)
+{
+    if (_entryPoint == EntryLocationLast) {
+        _entryPoint = EntryLocationFirst;
+    } else {
+        _entryPoint++;
+    }
+
+    _rebuildTransects();
+
+    setDirty(true);
+}
+
+double SurveyComplexItem::timeBetweenShots(void)
+{
+    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / _cruiseSpeed;
+}
 

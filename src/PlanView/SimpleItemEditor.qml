@@ -4,6 +4,7 @@ import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
 import QtQuick.Layouts          1.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.Controls      1.0
@@ -28,7 +29,10 @@ Rectangle {
 
     ExclusiveGroup {
         id: altRadios
-        onCurrentChanged: missionItem.altitudeMode = current.value
+        onCurrentChanged: {
+            altModeLabel.text = Qt.binding(function() { return current.helpText })
+            missionItem.altitudeMode = current.altModeValue
+        }
     }
 
     Column {
@@ -99,10 +103,40 @@ Rectangle {
                 }
 
                 RowLayout {
-                    QGCRadioButton { text: qsTr("Rel"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: _altModeRelative }
-                    QGCRadioButton { text: qsTr("Abs"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: _altModeAbsolute }
-                    QGCRadioButton { text: qsTr("AGL"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; readonly property int value: _altModeAboveTerrain }
-                    QGCRadioButton { text: qsTr("TerrF"); exclusiveGroup: altRadios; checked: missionItem.altitudeMode === value; visible: missionItem.supportsTerrainFrame; readonly property int value: _altModeTerrainFrame }
+                    QGCRadioButton {
+                        text:           qsTr("Rel")
+                        exclusiveGroup: altRadios
+                        checked:        missionItem.altitudeMode === altModeValue
+
+                        readonly property int       altModeValue:   _altModeRelative
+                        readonly property string    helpText:       qsTr("Relative to home altitude")
+					}
+                    QGCRadioButton {
+                        text:           qsTr("Abs")
+                        exclusiveGroup: altRadios
+                        checked:        missionItem.altitudeMode === altModeValue
+                        visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || missionItem.altitudeMode === altModeValue
+
+                        readonly property int       altModeValue:   _altModeAbsolute
+                        readonly property string    helpText:       qsTr("Absolute WGS84")
+                    }
+                    QGCRadioButton {
+                        text:           qsTr("AGL")
+                        exclusiveGroup: altRadios
+                        checked:        missionItem.altitudeMode === altModeValue
+
+                        readonly property int   altModeValue: _altModeAboveTerrain
+                        property string         helpText:     qsTr("Calculated from terrain data\nAbs Alt ") + missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
+                    }
+                    QGCRadioButton {
+                        text:           qsTr("TerrF")
+                        exclusiveGroup: altRadios
+                        checked:        missionItem.altitudeMode === altModeValue
+                        visible:        missionItem.supportsTerrainFrame || missionItem.altitudeMode === altModeValue
+
+                        readonly property int       altModeValue:   _altModeTerrainFrame
+                        readonly property string    helpText:       qsTr("Using terrain reference frame")
+                    }
                 }
 
                 FactValueSlider {
@@ -111,23 +145,12 @@ Rectangle {
                     incrementSlots: 1
                 }
 
-                RowLayout {
-                    spacing: _margin
-                    visible: missionItem.altitudeMode === _altModeAboveTerrain
-
-                    QGCLabel {
-                        text:           qsTr("Calculated Abs Alt")
-                        font.pointSize: ScreenTools.smallFontPointSize
-                    }
-                    QGCLabel {
-                        text:       missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
-                    }
-                }
-
                 QGCLabel {
-                    text:           qsTr("Using terrain reference frame")
+                    id:             altModeLabel
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
                     font.pointSize: ScreenTools.smallFontPointSize
-                    visible:        missionItem.altitudeMode === _altModeTerrainFrame
                 }
             }
         }

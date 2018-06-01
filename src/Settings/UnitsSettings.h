@@ -61,7 +61,8 @@ public:
     Fact* speedUnits                        (void);
     Fact* temperatureUnits                  (void);
 
-    static const char* unitsSettingsGroupName;
+    static const char* name;
+    static const char* settingsGroup;
 
     static const char* distanceUnitsSettingsName;
     static const char* areaUnitsSettingsName;

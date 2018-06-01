@@ -1343,12 +1343,6 @@ void MissionController::_recalcMissionFlightStatus()
         _addCommandTimeDelay(simpleItem, vtolInHover);
 
         if (item->specifiesCoordinate()) {
-            // Update vehicle yaw assuming direction to next waypoint
-            if (item != lastCoordinateItem) {
-                _missionFlightStatus.vehicleYaw = lastCoordinateItem->exitCoordinate().azimuthTo(item->coordinate());
-                lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
-            }
-
             // Keep track of the min/max altitude for all waypoints so we can show altitudes as a percentage
 
             double absoluteAltitude = item->coordinate().altitude();
@@ -1366,6 +1360,13 @@ void MissionController::_recalcMissionFlightStatus()
 
             if (!item->isStandaloneCoordinate()) {
                 firstCoordinateItem = false;
+
+                // Update vehicle yaw assuming direction to next waypoint
+                if (item != lastCoordinateItem) {
+                    _missionFlightStatus.vehicleYaw = lastCoordinateItem->exitCoordinate().azimuthTo(item->coordinate());
+                    lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
+                }
+
                 if (lastCoordinateItem != _settingsItem || linkStartToHome) {
                     // This is a subsequent waypoint or we are forcing the first waypoint back to home
                     double azimuth, distance, altDifference;
@@ -1395,9 +1396,9 @@ void MissionController::_recalcMissionFlightStatus()
                 }
 
                 item->setMissionFlightStatus(_missionFlightStatus);
-            }
 
-            lastCoordinateItem = item;
+                lastCoordinateItem = item;
+            }
         }
     }
     lastCoordinateItem->setMissionVehicleYaw(_missionFlightStatus.vehicleYaw);
@@ -1825,10 +1826,8 @@ void MissionController::setDirty(bool dirty)
 
 void MissionController::_scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle)
 {
-    if (!_flyView) {
-        // First we look for a Fixed Wing Landing Pattern which is at the end
-        FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, vehicle);
-    }
+    // First we look for a Fixed Wing Landing Pattern which is at the end
+    FixedWingLandingComplexItem::scanForItem(visualItems, _flyView, vehicle);
 
     int scanIndex = 0;
     while (scanIndex < visualItems->count()) {

@@ -112,7 +112,7 @@ Item {
 
     property bool guidedUIVisible:      guidedActionConfirm.visible || guidedActionList.visible
 
-    property bool   _guidedActionsEnabled:  (QGroundControl.corePlugin.options.guidedActionsRequireRCRSSI && _activeVehicle) ? _rcRSSIAvailable : _activeVehicle
+    property bool   _guidedActionsEnabled:  (!ScreenTools.isDebug && QGroundControl.corePlugin.options.guidedActionsRequireRCRSSI && _activeVehicle) ? _rcRSSIAvailable : _activeVehicle
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property string _flightMode:            _activeVehicle ? _activeVehicle.flightMode : ""
     property bool   _missionAvailable:      missionController.containsItems
@@ -131,45 +131,51 @@ Item {
     property bool   _vehicleWasFlying:      false
     property bool   _rcRSSIAvailable:       _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI < 255 : false
 
-    /*
     //Handy code for debugging state problems
-    property bool __guidedModeSupported: _activeVehicle ? _activeVehicle.guidedModeSupported : false
+    property bool __debugGuidedStates:      false
+    property bool __guidedModeSupported:    _activeVehicle ? _activeVehicle.guidedModeSupported : false
     property bool __pauseVehicleSupported: _activeVehicle ? _activeVehicle.pauseVehicleSupported : false
-    property bool __flightMode: _flightMode
+    property bool __flightMode:             _flightMode
 
     function _outputState() {
-        //console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleInRTLMode(%5) pauseVehicleSupported(%6) _vehiclePaused(%7) _flightMode(%8)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode))
+        if (__debugGuidedStates) {
+            console.log(qsTr("_activeVehicle(%1) _vehicleArmed(%2) guidedModeSupported(%3) _vehicleFlying(%4) _vehicleInRTLMode(%5) pauseVehicleSupported(%6) _vehiclePaused(%7) _flightMode(%8)").arg(_activeVehicle ? 1 : 0).arg(_vehicleArmed ? 1 : 0).arg(__guidedModeSupported ? 1 : 0).arg(_vehicleFlying ? 1 : 0).arg(_vehicleInRTLMode ? 1 : 0).arg(__pauseVehicleSupported ? 1 : 0).arg(_vehiclePaused ? 1 : 0).arg(_flightMode))
+        }
     }
 
-    Component.onCompleted: _outputState()
-    on_ActiveVehicleChanged: _outputState()
-    on_VehicleArmedChanged: _outputState()
-    on_VehicleInRTLModeChanged: _outputState()
-    on_VehiclePausedChanged: _outputState()
-    on__FlightModeChanged: _outputState()
-    on__GuidedModeSupportedChanged: _outputState()
-    on__PauseVehicleSupportedChanged: _outputState()
+    Component.onCompleted:              _outputState()
+    on_ActiveVehicleChanged:            _outputState()
+    on_VehicleArmedChanged:             _outputState()
+    on_VehicleInRTLModeChanged:         _outputState()
+    on_VehiclePausedChanged:            _outputState()
+    on__FlightModeChanged:              _outputState()
+    on__GuidedModeSupportedChanged:     _outputState()
+    on__PauseVehicleSupportedChanged:   _outputState()
 
-    on_CurrentMissionIndexChanged: console.log("_currentMissionIndex", _currentMissionIndex)
-    on_ResumeMissionIndexChanged: console.log("_resumeMissionIndex", _resumeMissionIndex)
+    on_CurrentMissionIndexChanged:      console.log("_currentMissionIndex", _currentMissionIndex)
+    on_ResumeMissionIndexChanged:       console.log("_resumeMissionIndex", _resumeMissionIndex)
     onShowResumeMissionChanged: {
-        console.log("showResumeMission", showResumeMission)
+        if (__debugGuidedStates) {
+            console.log("showResumeMission", showResumeMission)
+        }
         _outputState()
     }
     onShowStartMissionChanged: {
-        console.log("showStartMission", showStartMission)
+        if (__debugGuidedStates) {
+            console.log("showStartMission", showStartMission)
+        }
         _outputState()
     }
     onShowContinueMissionChanged: {
-        console.log("showContinueMission", showContinueMission)
+        if (__debugGuidedStates) {
+            console.log("showContinueMission", showContinueMission)
+        }
         _outputState()
     }
-
     // End of hack
-    */
 
     on_VehicleFlyingChanged: {
-        //_outputState()
+        _outputState()
         if (!_vehicleFlying) {
             // We use _vehicleWasFLying to help trigger Resume Mission only if the vehicle actually flew and came back down.
             // Otherwise it may trigger during the Start Mission sequence due to signal ordering or armed and resume mission index.

@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                           NOTIFY specifiedGimbalPitchChanged)                 ///< Gimbal pitch, NaN for not specified
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                               NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                              NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
+    Q_PROPERTY(bool             flyView                             READ flyView                                                        CONSTANT)
 
     // The following properties are calculated/set by the MissionController recalc methods
 
@@ -87,6 +88,7 @@ public:
     double distance         (void) const { return _distance; }
     bool   isCurrentItem    (void) const { return _isCurrentItem; }
     double terrainAltitude  (void) const { return _terrainAltitude; }
+    bool   flyView          (void) const { return _flyView; }
 
     QmlObjectListModel* childItems(void) { return &_childItems; }
 
