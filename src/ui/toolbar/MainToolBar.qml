@@ -81,10 +81,9 @@ Rectangle {
         //---------------------------------------------
         // Toolbar Row
         Row {
-            id:             viewRow
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            spacing:        ScreenTools.defaultFontPixelWidth / 2
+            id:                 viewRow
+            Layout.fillHeight:  true
+            spacing:            ScreenTools.defaultFontPixelWidth / 2
 
             ExclusiveGroup { id: mainActionGroup }
 
@@ -153,7 +152,7 @@ Rectangle {
             width:                  ScreenTools.defaultFontPixelHeight * 8
             text:                   "Vehicle " + (_activeVehicle ? _activeVehicle.id : "None")
             visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
-            anchors.verticalCenter: parent.verticalCenter
+            Layout.alignment:       Qt.AlignVCenter
 
             menu: vehicleMenu
 
@@ -175,14 +174,15 @@ Rectangle {
             property var vehicleMenuItems: []
 
             function updateVehicleMenu() {
+                var i;
                 // Remove old menu items
-                for (var i = 0; i < vehicleMenuItems.length; i++) {
+                for (i = 0; i < vehicleMenuItems.length; i++) {
                     vehicleMenu.removeItem(vehicleMenuItems[i])
                 }
                 vehicleMenuItems.length = 0
 
                 // Add new items
-                for (var i=0; i<QGroundControl.multiVehicleManager.vehicles.count; i++) {
+                for (i = 0; i < QGroundControl.multiVehicleManager.vehicles.count; i++) {
                     var vehicle = QGroundControl.multiVehicleManager.vehicles.get(i)
                     var menuItem = vehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
                     vehicleMenuItems.push(menuItem)
@@ -199,10 +199,9 @@ Rectangle {
         }
 
         MainToolBarIndicators {
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
             Layout.fillWidth:   true
+            Layout.fillHeight:  true
+            Layout.margins:     ScreenTools.defaultFontPixelHeight * 0.66
         }
     }
 
@@ -225,7 +224,6 @@ Rectangle {
         color:          qgcPal.window
         visible:        _showLargeProgress
 
-        property bool _showFullHeight:          false
         property bool _initialDownloadComplete: _activeVehicle ? _activeVehicle.parameterManager.parametersReady : true
         property bool _userHide:                false
         property bool _showLargeProgress:       !_initialDownloadComplete && !_userHide && qgcPal.globalTheme === QGCPalette.Light

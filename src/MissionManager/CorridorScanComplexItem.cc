@@ -480,3 +480,8 @@ bool CorridorScanComplexItem::readyForSave(void) const
 {
     return TransectStyleComplexItem::readyForSave();
 }
+
+double CorridorScanComplexItem::timeBetweenShots(void)
+{
+    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / _cruiseSpeed;
+}

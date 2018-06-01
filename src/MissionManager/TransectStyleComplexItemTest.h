@@ -29,9 +29,10 @@ protected:
     void cleanup(void) final;
     
 private slots:
-    void _testDirty                     (void);
-    void _testRebuildTransects          (void);
-    void _testDistanceSignalling        (void);
+    void _testDirty             (void);
+    void _testRebuildTransects  (void);
+    void _testDistanceSignalling(void);
+    void _testAltMode           (void);
 
 private:
     void _setSurveyAreaPolygon  (void);
@@ -41,7 +42,6 @@ private:
         // These signals are from TransectStyleComplexItem
         cameraShotsChangedIndex = 0,
         timeBetweenShotsChangedIndex,
-        cameraMinTriggerIntervalChangedIndex,
         visualTransectPointsChangedIndex,
         coveredAreaChangedIndex,
         // These signals are from ComplexItem
@@ -58,7 +58,6 @@ private:
         // These signals are from TransectStyleComplexItem
         cameraShotsChangedMask =                1 << cameraShotsChangedIndex,
         timeBetweenShotsChangedMask =           1 << timeBetweenShotsChangedIndex,
-        cameraMinTriggerIntervalChangedMask =   1 << cameraMinTriggerIntervalChangedIndex,
         visualTransectPointsChangedMask =       1 << visualTransectPointsChangedIndex,
         coveredAreaChangedMask =                1 << coveredAreaChangedIndex,
         // These signals are from ComplexItem
@@ -96,7 +95,8 @@ public:
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final { Q_UNUSED(items); Q_UNUSED(missionItemParent); }
     void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
 
-    bool rebuildTransectsCalled;
+    bool rebuildTransectsPhase1Called;
+    bool rebuildTransectsPhase2Called;
 
 private slots:
     // Overrides from TransectStyleComplexItem

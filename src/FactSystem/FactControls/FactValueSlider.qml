@@ -56,14 +56,21 @@ Rectangle {
         recalcRelativeIndex()
     }
 
-    Component.onCompleted: valueListView.maximumFlickVelocity = valueListView.maximumFlickVelocity / 2
+    Component.onCompleted: {
+        valueListView.maximumFlickVelocity = valueListView.maximumFlickVelocity / 2
+        reset()
+    }
+
+    Connections {
+        target:         _fact
+        onValueChanged: reset()
+    }
 
     Component {
         id: editDialogComponent
 
         ParameterEditorDialog {
             fact:           _fact
-            onValueChanged: reset()
         }
     }
 
@@ -74,8 +81,6 @@ Rectangle {
         snapMode:       ListView.SnapToItem
         clip:           true
         model:          _model
-
-        Component.onCompleted: reset()
 
         delegate: QGCLabel {
             width:                  _itemWidth

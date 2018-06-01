@@ -47,23 +47,29 @@ void QGCFencePolygon::_setDirty(void)
 
 void QGCFencePolygon::saveToJson(QJsonObject& json)
 {
-    QGCMapPolygon::saveToJson(json);
-
+    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
+    QGCMapPolygon::saveToJson(json);
 }
 
 bool QGCFencePolygon::loadFromJson(const QJsonObject& json, bool required, QString& errorString)
 {
-    if (!QGCMapPolygon::loadFromJson(json, required, errorString)) {
-        return false;
-    }
-
     errorString.clear();
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { _jsonInclusionKey, QJsonValue::Bool, true },
+        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+        { _jsonInclusionKey,            QJsonValue::Bool,   true },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+        return false;
+    }
+
+    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+        errorString = tr("GeoFence Polygon only supports version %1").arg(_jsonCurrentVersion);
+        return false;
+    }
+
+    if (!QGCMapPolygon::loadFromJson(json, required, errorString)) {
         return false;
     }
 

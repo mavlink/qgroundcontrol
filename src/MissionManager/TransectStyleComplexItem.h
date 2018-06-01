@@ -37,7 +37,6 @@ public:
     Q_PROPERTY(int              cameraShots                 READ cameraShots                                        NOTIFY cameraShotsChanged)
     Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots                                   NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(double           coveredArea                 READ coveredArea                                        NOTIFY coveredAreaChanged)
-    Q_PROPERTY(double           cameraMinTriggerInterval    READ cameraMinTriggerInterval                           NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(bool             hoverAndCaptureAllowed      READ hoverAndCaptureAllowed                             CONSTANT)
     Q_PROPERTY(QVariantList     visualTransectPoints        READ visualTransectPoints                               NOTIFY visualTransectPointsChanged)
 
@@ -59,11 +58,11 @@ public:
     Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxDescentRateFact; }
 
     int             cameraShots             (void) const { return _cameraShots; }
-    double          timeBetweenShots        (void);
     double          coveredArea             (void) const;
-    double          cameraMinTriggerInterval(void) const { return _cameraMinTriggerInterval; }
     bool            hoverAndCaptureAllowed  (void) const;
     bool            followTerrain           (void) const { return _followTerrain; }
+
+    virtual double  timeBetweenShots        (void) { return 0; } // Most be overridden. Implementation here is needed for unit testing.
 
     void setFollowTerrain(bool followTerrain);
 
@@ -119,7 +118,6 @@ public:
 signals:
     void cameraShotsChanged             (void);
     void timeBetweenShotsChanged        (void);
-    void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void visualTransectPointsChanged    (void);
     void coveredAreaChanged             (void);
     void followTerrainChanged           (bool followTerrain);
@@ -143,7 +141,6 @@ protected:
     bool    _hasTurnaround                  (void) const;
     double  _turnaroundDistance             (void) const;
 
-    QString         _settingsGroup;
     int             _sequenceNumber;
     bool            _dirty;
     QGeoCoordinate  _coordinate;
@@ -172,7 +169,6 @@ protected:
     double          _complexDistance;
     int             _cameraShots;
     double          _timeBetweenShots;
-    double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
     bool            _followTerrain;

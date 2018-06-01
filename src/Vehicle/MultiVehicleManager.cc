@@ -74,6 +74,14 @@ void MultiVehicleManager::setToolbox(QGCToolbox *toolbox)
 
 void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType)
 {
+    // Special case PX4 Flow since depending on firmware it can have different settings. We force to the PX4 Firmware settings.
+    if (link->isPX4Flow()) {
+        vehicleId = 81;
+        componentId = 50;//MAV_COMP_ID_AUTOPILOT1;
+        vehicleFirmwareType = MAV_AUTOPILOT_GENERIC;
+        vehicleType = 0;
+    }
+
     if (componentId != MAV_COMP_ID_AUTOPILOT1) {
         // Special case for PX4 Flow
         if (vehicleId != 81 || componentId != 50) {
@@ -137,9 +145,6 @@ void MultiVehicleManager::_vehicleHeartbeatInfo(LinkInterface* link, int vehicle
     } else {
         setActiveVehicle(vehicle);
     }
-
-    // Mark link as active
-    link->setActive(true);
 
 #if defined (__ios__) || defined(__android__)
     if(_vehicles.count() == 1) {

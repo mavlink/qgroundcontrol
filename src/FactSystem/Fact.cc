@@ -62,8 +62,6 @@ Fact::Fact(FactMetaData* metaData, QObject* parent)
     , _deferredValueChangeSignal(false)
     , _valueSliderModel         (NULL)
 {
-    // Allow core plugin a chance to override the default value
-    qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(*metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
 }
 
@@ -701,7 +699,6 @@ FactValueSliderListModel* Fact::valueSliderModel(void)
 {
     if (!_valueSliderModel) {
         _valueSliderModel = new FactValueSliderListModel(*this);
-        QQmlEngine::setObjectOwnership(_valueSliderModel, QQmlEngine::JavaScriptOwnership);
     }
     return _valueSliderModel;
 }

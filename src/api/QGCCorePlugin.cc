@@ -190,8 +190,13 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
     return true;
 }
 
-bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
+bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
+    if (settingsGroup != AppSettings::settingsGroup) {
+        // All changes refer to AppSettings
+        return true;
+    }
+
     //-- Default Palette
     if (metaData.name() == AppSettings::indoorPaletteName) {
         QVariant outdoorPalette;

@@ -11,12 +11,12 @@ if [ ! -d ${QT_DIRECTORY} ]; then
 	exit 1
 fi
 
-QT_FULL_VERSION=5.9.3
-QT_BASE_VERSION=5.9
+QT_FULL_VERSION=5.11.0
+QT_BASE_VERSION=5.11
 
 QT_BUILD_TYPE=$2
 if [ ! -d ${QT_DIRECTORY}/${QT_FULL_VERSION}/${QT_BUILD_TYPE} ]; then
-	echo 'Qt build type directory not found. Specify example: clang_62'
+        echo 'Qt build type directory not found. Specify example: clang_64'
     exit 1
 fi
 

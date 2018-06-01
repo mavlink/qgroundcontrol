@@ -32,7 +32,9 @@ OfflineMapButton        1.0 OfflineMapButton.qml
 PageView                1.0 PageView.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
+PIDTuning               1.0 PIDTuning.qml
 PlanToolBar             1.0 PlanToolBar.qml
+PreFlightCheckButton    1.0 PreFlightCheckButton.qml
 QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml

@@ -1,6 +1,7 @@
 pipeline {
-  agent any
+  agent none
   stages {
+
     stage('build') {
       parallel {
 
@@ -25,7 +26,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -50,7 +55,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -75,7 +84,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -99,7 +112,11 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`sysctl -n hw.ncpu`'
             sh 'ccache -s'
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
 
@@ -123,14 +140,19 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`sysctl -n hw.ncpu`'
             sh 'ccache -s'
-            archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true, onlyIfSuccessful: true)
-            sh 'git clean -ff -x -d .'
+          }
+          post {
+            success {
+              archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+            }
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
           }
         }
-
-      }
-    }
-  }
+      } // parallel
+    } // stage('build')
+  } // stages
 
   environment {
     CCACHE_CPP2 = '1'
@@ -142,5 +164,4 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr: '10', artifactDaysToKeepStr: '30'))
     timeout(time: 60, unit: 'MINUTES')
   }
-
 }

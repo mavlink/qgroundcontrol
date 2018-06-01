@@ -17,6 +17,7 @@ import QtPositioning            5.3
 import QtMultimedia             5.5
 import QtQuick.Layouts          1.2
 import QtQuick.Window           2.2
+import QtQml.Models             2.1
 
 import QGroundControl               1.0
 import QGroundControl.FlightDisplay 1.0
@@ -46,12 +47,12 @@ QGCView {
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
+    property bool   _useChecklist:          QGroundControl.settingsManager.appSettings.useChecklist.rawValue
     property real   _savedZoomLevel:        0
     property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:               flightView.width * 0.2
     property alias  _guidedController:      guidedActionsController
     property alias  _altitudeSlider:        altitudeSlider
-
 
     readonly property var       _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -110,6 +111,10 @@ QGCView {
     PlanMasterController {
         id:                     masterController
         Component.onCompleted:  start(true /* flyView */)
+    }
+
+    PreFlightCheckList {
+        id: preFlightCheckList
     }
 
     Connections {
@@ -188,9 +193,9 @@ QGCView {
 
                     QGCButton {
                         Layout.fillWidth:   true
+                        Layout.alignment:   Qt.AlignHCenter
                         text:               qsTr("Leave plan on vehicle")
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                        onClicked:                  hideDialog()
+                        onClicked:          hideDialog()
                     }
                 }
             }
@@ -504,8 +509,8 @@ QGCView {
             z:                  _panel.z + 4
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
-            buttonEnabled:      [ _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+            buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
+            buttonEnabled:      [ _useChecklist && _activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property bool _anySmartShotAvailable: _guidedController.showOrbit
@@ -552,6 +557,11 @@ QGCView {
 
             model: [
                 {
+                    name:               "Checklist",
+                    iconSource:         "/qmlimages/check.svg",
+                    dropPanelComponent: checklistDropPanel
+                },
+                {
                     name:       _guidedController.takeoffTitle,
                     iconSource: "/res/takeoff.svg",
                     action:     _guidedController.actionTakeoff
@@ -590,10 +600,10 @@ QGCView {
                 guidedActionsController.closeAll()
                 var action = model[index].action
                 if (action === -1) {
-                    if (index == 4) {
+                    if (index == 5) {
                         guidedActionList.model   = _actionModel
                         guidedActionList.visible = true
-                    } else if (index == 5) {
+                    } else if (index == 6) {
                         guidedActionList.model   = _smartShotModel
                         guidedActionList.visible = true
                     }
@@ -677,4 +687,61 @@ QGCView {
             visible:            false
         }
     }
-}
+
+    //-- Checklist GUI
+    Component {
+        id: checklistDropPanel
+
+        Rectangle {
+            id:         checklistRect
+            visible:    true
+            width:      mainColumn.width + 3*ScreenTools.defaultFontPixelWidth
+            height:     mainColumn.height + ScreenTools.defaultFontPixelHeight
+            color:      qgcPal.windowShade
+            radius:     3
+            enabled:    QGroundControl.multiVehicleManager.vehicles.count > 0;
+
+            Column {
+                id:                     mainColumn
+                width:                  40*ScreenTools.defaultFontPixelWidth
+                spacing:                0.8*ScreenTools.defaultFontPixelWidth
+                anchors.left:           parent.left
+                anchors.top:            parent.top
+                anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
+                anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
+
+                // Header/title of checklist
+                Item {
+                    width:  parent.width
+                    height: 1.75*ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        text:                   _activeVehicle ? qsTr("Pre-Flight Checklist") : qsTr("Pre-flight checklist (no vehicle)")
+                        anchors.left:           parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.pointSize:         ScreenTools.mediumFontPointSize
+                    }
+                    QGCButton {
+                        width:                  1.2*ScreenTools.defaultFontPixelHeight
+                        height:                 1.2*ScreenTools.defaultFontPixelHeight
+                        anchors.right:          parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
+                        tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
+
+                        onClicked:              preFlightCheckList.reset()
+
+                        Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
+                    }
+                }
+
+                Rectangle {width:parent.width ; height:1 ; color:qgcPal.text}
+
+                // All check list items
+                Repeater {
+                    model: preFlightCheckList.checkListItems
+                }
+            } // Column
+        } //Rectangle
+    } //Component
+} //QGC View

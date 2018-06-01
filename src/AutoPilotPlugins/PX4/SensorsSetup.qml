@@ -365,11 +365,12 @@ Item {
             spacing:    ScreenTools.defaultFontPixelHeight / 2
 
             IndicatorButton {
+                property bool 	_hasMag: controller.parameterExists(-1, "SYS_HAS_MAG") ? controller.getParameterFact(-1, "SYS_HAS_MAG").value !== 0 : true
                 id:             compassButton
                 width:          _buttonWidth
                 text:           qsTr("Compass")
                 indicatorGreen: cal_mag0_id.value !== 0
-                visible:        QGroundControl.corePlugin.options.showSensorCalibrationCompass && showSensorCalibrationCompass
+                visible:        _hasMag && QGroundControl.corePlugin.options.showSensorCalibrationCompass && showSensorCalibrationCompass
 
                 onClicked: {
                     preCalibrationDialogType = "compass"
