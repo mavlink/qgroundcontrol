@@ -20,15 +20,15 @@ AUTERION_QGC_VERSION = $${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${
 DEFINES -= GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
 DEFINES += GIT_VERSION=\"\\\"$$AUTERION_QGC_VERSION\\\"\"
 
-message(AuterionQGC Version: $${AUTERION_QGC_VERSION})
+message(Auterion GS Version: $${AUTERION_QGC_VERSION})
 
 DEFINES += CUSTOMHEADER=\"\\\"AuterionPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=AuterionPlugin
 
 CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY
 
-TARGET   = AuterionQGC
-DEFINES += QGC_APPLICATION_NAME=\"\\\"AuterionQGC\\\"\"
+TARGET   = AuterionGS
+DEFINES += QGC_APPLICATION_NAME=\"\\\"AuterionGS\\\"\"
 
 DEFINES += QGC_ORG_NAME=\"\\\"auterion.com\\\"\"
 DEFINES += QGC_ORG_DOMAIN=\"\\\"com.auterion\\\"\"
@@ -36,11 +36,11 @@ DEFINES += QGC_ORG_DOMAIN=\"\\\"com.auterion\\\"\"
 RESOURCES += \
     $$QGCROOT/custom/auterion.qrc
 
-QGC_APP_NAME        = "AuterionQGC"
+QGC_APP_NAME        = "Auterion GS"
 QGC_ORG_NAME        = "Auterion"
 QGC_ORG_DOMAIN      = "com.auterion"
-QGC_APP_DESCRIPTION = "Auterion Ground Control"
-QGC_APP_COPYRIGHT   = "Copyright (C) 2017 Auterion. All rights reserved."
+QGC_APP_DESCRIPTION = "Auterion Ground Station"
+QGC_APP_COPYRIGHT   = "Copyright (C) 2018 Auterion. All rights reserved."
 
 MacBuild {
     QMAKE_INFO_PLIST    = $$PWD/macOS/Info.plist

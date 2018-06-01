@@ -86,3 +86,14 @@ AuterionPlugin::brandImageOutdoor(void) const
 {
     return QStringLiteral("/auterion/img/void.png");
 }
+
+//-----------------------------------------------------------------------------
+bool
+AuterionPlugin::overrideSettingsGroupVisibility(QString name)
+{
+    if (name == BrandImageSettings::name) {
+        return false;
+    }
+    return true;
+}
+

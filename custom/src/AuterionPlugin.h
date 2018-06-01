@@ -29,6 +29,8 @@ public:
     QString         brandImageIndoor                () const final;
     QString         brandImageOutdoor               () const final;
 
+    bool            overrideSettingsGroupVisibility (QString name) final;
+
     // Overrides from QGCTool
     void            setToolbox                      (QGCToolbox* toolbox);
 
