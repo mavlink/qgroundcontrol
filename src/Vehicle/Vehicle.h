@@ -1083,6 +1083,8 @@ private:
     void _handleScaledPressure2(mavlink_message_t& message);
     void _handleScaledPressure3(mavlink_message_t& message);
     void _handleHighLatency2(mavlink_message_t& message);
+    void _handleAttitudeWorker(double rollRadians, double pitchRadians, double yawRadians);
+    void _handleAttitude(mavlink_message_t& message);
     void _handleAttitudeQuaternion(mavlink_message_t& message);
     void _handleAttitudeTarget(mavlink_message_t& message);
     void _handleDistanceSensor(mavlink_message_t& message);
@@ -1173,6 +1175,7 @@ private:
     bool            _vehicleCapabilitiesKnown;
     uint64_t        _capabilityBits;
     bool            _highLatencyLink;
+    bool            _receivingAttitudeQuaternion;
 
     QGCCameraManager* _cameras;
 
