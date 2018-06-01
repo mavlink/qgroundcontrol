@@ -39,13 +39,16 @@ SetupPage {
             property real _hoverTuneMax:    _throttleMidExists ? 800 : 1
             property real _hoverTuneStep:   _throttleMidExists ? 10 : 0.01
 
-            property Fact _rcFeel:          controller.getParameterFact(-1, "RC_FEEL_RP")
-            property Fact _rateRollP:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
-            property Fact _rateRollI:       controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
-            property Fact _ratePitchP:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
-            property Fact _ratePitchI:      controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
-            property Fact _rateClimbP:      controller.getParameterFact(-1, "ACCEL_Z_P")
-            property Fact _rateClimbI:      controller.getParameterFact(-1, "ACCEL_Z_I")
+            property bool _rcFeelAvailable:     controller.parameterExists(-1, "RC_FEEL")
+            property bool _atcInputTCAvailable: controller.parameterExists(-1, "ATC_INPUT_TC")
+            property Fact _rcFeel:              controller.getParameterFact(-1, "RC_FEEL", false)
+            property Fact _atcInputTC:          controller.getParameterFact(-1, "ATC_INPUT_TC", false)
+            property Fact _rateRollP:           controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
+            property Fact _rateRollI:           controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
+            property Fact _ratePitchP:          controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
+            property Fact _ratePitchI:          controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
+            property Fact _rateClimbP:          controller.getParameterFact(-1, "r.PSC_ACCZ_P")
+            property Fact _rateClimbI:          controller.getParameterFact(-1, "r.PSC_ACCZ_I")
 
             property Fact _ch7Opt:  controller.getParameterFact(-1, "CH7_OPT")
             property Fact _ch8Opt:  controller.getParameterFact(-1, "CH8_OPT")
@@ -78,7 +81,12 @@ SetupPage {
                 throttleHover.value = _hoverTuneParam.value
                 rollPitch.value = _rateRollP.value
                 climb.value = _rateClimbP.value
-                rcFeel.value = _rcFeel.value
+                if (_rcFeelAvailable) {
+                    rcFeel.value = _rcFeel.value
+                }
+                if (_atcInputTCAvailable) {
+                    atcInputTC.value = _atcInputTC.value
+                }
                 _loadComplete = true
 
                 calcAutoTuneChannel()
@@ -240,6 +248,7 @@ SetupPage {
                     Column {
                         anchors.left:   parent.left
                         anchors.right:  parent.right
+                        visible:        _rcFeelAvailable
 
                         QGCLabel {
                             text:       qsTr("RC Roll/Pitch Feel")
@@ -262,6 +271,37 @@ SetupPage {
                             onValueChanged: {
                                 if (_loadComplete) {
                                     _rcFeel.value = value
+                                }
+                            }
+                        }
+                    }
+
+                    Column {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        visible:        _atcInputTCAvailable
+
+                        QGCLabel {
+                            text:       qsTr("RC Roll/Pitch Feel")
+                            font.family: ScreenTools.demiboldFontFamily
+                        }
+
+                        QGCLabel {
+                            text: qsTr("Slide to the left for soft control, slide to the right for crisp control")
+                        }
+
+                        Slider {
+                            id:                 atcInputTC
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            minimumValue:       _atcInputTC.min
+                            maximumValue:       _atcInputTC.max
+                            stepSize:           _atcInputTC.increment
+                            tickmarksEnabled:   true
+
+                            onValueChanged: {
+                                if (_loadComplete) {
+                                    _atcInputTC.value = value
                                 }
                             }
                         }
