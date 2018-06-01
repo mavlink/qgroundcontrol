@@ -484,7 +484,7 @@ QStringList PlanMasterController::saveNameFilters(void) const
     return filters;
 }
 
-QStringList PlanMasterController::saveKmlFilters(void) const
+QStringList PlanMasterController::fileKmlFilters(void) const
 {
     QStringList filters;
 

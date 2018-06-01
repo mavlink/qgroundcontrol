@@ -389,24 +389,47 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
 int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i)
 {
     ComplexMissionItem* newItem;
-    bool surveyStyleItem = false;
 
     int sequenceNumber = _nextSequenceNumber();
     if (itemName == _surveyMissionItemName) {
-        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, _visualItems);
+        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
         newItem->setCoordinate(mapCenterCoordinate);
-        surveyStyleItem = true;
     } else if (itemName == _fwLandingMissionItemName) {
-        newItem = new FixedWingLandingComplexItem(_controllerVehicle, _flyView, _visualItems);
+        newItem = new FixedWingLandingComplexItem(_controllerVehicle, _flyView, _visualItems /* parent */);
     } else if (itemName == _structureScanMissionItemName) {
-        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, _visualItems);
+        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
     } else if (itemName == _corridorScanMissionItemName) {
-        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, _visualItems);
-        surveyStyleItem = true;
+        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
         return sequenceNumber;
     }
+
+    return _insertComplexMissionItemWorker(newItem, i);
+}
+
+int MissionController::insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i)
+{
+    ComplexMissionItem* newItem;
+
+    if (itemName == _surveyMissionItemName) {
+        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+    } else if (itemName == _structureScanMissionItemName) {
+        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+    } else if (itemName == _corridorScanMissionItemName) {
+        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+    } else {
+        qWarning() << "Internal error: Unknown complex item:" << itemName;
+        return _nextSequenceNumber();
+    }
+
+    return _insertComplexMissionItemWorker(newItem, i);
+}
+
+int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i)
+{
+    int sequenceNumber = _nextSequenceNumber();
+    bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) || qobject_cast<CorridorScanComplexItem*>(complexItem);
 
     if (surveyStyleItem) {
         bool rollSupported = false;
@@ -434,14 +457,18 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         }
     }
 
-    newItem->setSequenceNumber(sequenceNumber);
-    _initVisualItem(newItem);
+    complexItem->setSequenceNumber(sequenceNumber);
+    _initVisualItem(complexItem);
 
-    _visualItems->insert(i, newItem);
+    if (i == -1) {
+        _visualItems->append(complexItem);
+    } else {
+        _visualItems->insert(i, complexItem);
+    }
 
     _recalcAll();
 
-    return newItem->sequenceNumber();
+    return complexItem->sequenceNumber();
 }
 
 void MissionController::removeMissionItem(int index)
@@ -529,7 +556,7 @@ bool MissionController::_loadJsonMissionFileV1(const QJsonObject& json, QmlObjec
             return false;
         }
 
-        SurveyComplexItem* item = new SurveyComplexItem(_controllerVehicle, _flyView, visualItems);
+        SurveyComplexItem* item = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, visualItems /* parent */);
         const QJsonObject itemObject = itemValue.toObject();
         if (item->load(itemObject, itemObject["id"].toInt(), errorString)) {
             surveyItems.append(item);
@@ -687,7 +714,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
             if (complexItemType == SurveyComplexItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Survey: nextSequenceNumber" << nextSequenceNumber;
-                SurveyComplexItem* surveyItem = new SurveyComplexItem(_controllerVehicle, _flyView, visualItems);
+                SurveyComplexItem* surveyItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, visualItems);
                 if (!surveyItem->load(itemObject, nextSequenceNumber++, errorString)) {
                     return false;
                 }
@@ -705,7 +732,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 visualItems->append(landingItem);
             } else if (complexItemType == StructureScanComplexItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Structure Scan: nextSequenceNumber" << nextSequenceNumber;
-                StructureScanComplexItem* structureItem = new StructureScanComplexItem(_controllerVehicle, _flyView, visualItems);
+                StructureScanComplexItem* structureItem = new StructureScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, visualItems);
                 if (!structureItem->load(itemObject, nextSequenceNumber++, errorString)) {
                     return false;
                 }
@@ -714,7 +741,7 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
                 visualItems->append(structureItem);
             } else if (complexItemType == CorridorScanComplexItem::jsonComplexItemTypeValue) {
                 qCDebug(MissionControllerLog) << "Loading Corridor Scan: nextSequenceNumber" << nextSequenceNumber;
-                CorridorScanComplexItem* corridorItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, visualItems);
+                CorridorScanComplexItem* corridorItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, visualItems);
                 if (!corridorItem->load(itemObject, nextSequenceNumber++, errorString)) {
                     return false;
                 }

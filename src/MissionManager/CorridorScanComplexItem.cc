@@ -27,7 +27,7 @@ const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
 
 const char* CorridorScanComplexItem::jsonComplexItemTypeValue = "CorridorScan";
 
-CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
+CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
     : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _entryPoint               (0)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
@@ -50,6 +50,12 @@ CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView,
 
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
     connect(&_corridorWidthFact,    &Fact::valueChanged,            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
+
+    if (!kmlFile.isEmpty()) {
+        _corridorPolyline.loadKMLFile(kmlFile);
+        _corridorPolyline.setDirty(false);
+    }
+    setDirty(false);
 }
 
 void CorridorScanComplexItem::save(QJsonArray&  planItems)
