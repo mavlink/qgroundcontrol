@@ -22,6 +22,13 @@ DEFINES += GIT_VERSION=\"\\\"$$AUTERION_QGC_VERSION\\\"\"
 
 message(Auterion GS Version: $${AUTERION_QGC_VERSION})
 
+#   Disable APM support
+
+MAVLINK_CONF = common
+CONFIG  += QGC_DISABLE_APM_MAVLINK
+
+#   Branding
+
 DEFINES += CUSTOMHEADER=\"\\\"AuterionPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=AuterionPlugin
 
