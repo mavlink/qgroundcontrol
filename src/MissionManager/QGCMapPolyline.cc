@@ -12,6 +12,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
+#include "KMLFileHelper.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
@@ -338,52 +339,11 @@ QList<QGeoCoordinate> QGCMapPolyline::offsetPolyline(double distance)
 
 bool QGCMapPolyline::loadKMLFile(const QString& kmlFile)
 {
-    QFile file(kmlFile);
-
-    if (!file.exists()) {
-        qgcApp()->showMessage(tr("File not found: %1").arg(kmlFile));
-        return false;
-    }
-
-    if (!file.open(QIODevice::ReadOnly)) {
-        qgcApp()->showMessage(tr("Unable to open file: %1 error: $%2").arg(kmlFile).arg(file.errorString()));
-        return false;
-    }
-
-    QDomDocument doc;
-    QString errorMessage;
-    int errorLine;
-    if (!doc.setContent(&file, &errorMessage, &errorLine)) {
-        qgcApp()->showMessage(tr("Unable to parse KML file: %1 error: %2 line: %3").arg(kmlFile).arg(errorMessage).arg(errorLine));
-        return false;
-    }
-
-    QDomNodeList rgNodes = doc.elementsByTagName("LineString");
-    if (rgNodes.count() == 0) {
-        qgcApp()->showMessage(tr("Unable to find LineString node in KML"));
-        return false;
-    }
-
-    QDomNode coordinatesNode = rgNodes.item(0).namedItem("coordinates");
-    if (coordinatesNode.isNull()) {
-        qgcApp()->showMessage(tr("Internal error: Unable to find coordinates node in KML"));
-        return false;
-    }
-
-    QString coordinatesString = coordinatesNode.toElement().text().simplified();
-    QStringList rgCoordinateStrings = coordinatesString.split(" ");
-
+    QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    for (int i=0; i<rgCoordinateStrings.count()-1; i++) {
-        QString coordinateString = rgCoordinateStrings[i];
-
-        QStringList rgValueStrings = coordinateString.split(",");
-
-        QGeoCoordinate coord;
-        coord.setLongitude(rgValueStrings[0].toDouble());
-        coord.setLatitude(rgValueStrings[1].toDouble());
-
-        rgCoords.append(coord);
+    if (!KMLFileHelper::loadPolylineFromFile(kmlFile, rgCoords, errorString)) {
+        qgcApp()->showMessage(errorString);
+        return false;
     }
 
     clear();

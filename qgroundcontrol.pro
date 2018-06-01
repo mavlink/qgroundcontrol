@@ -515,6 +515,7 @@ HEADERS += \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/JsonHelper.h \
+    src/KMLFileHelper.h \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/CameraCalc.h \
@@ -711,6 +712,7 @@ SOURCES += \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
+    src/KMLFileHelper.cc \
     src/LogCompressor.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/CameraSection.cc \

@@ -25,7 +25,10 @@ class StructureScanComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    StructureScanComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    /// @param vehicle Vehicle which this is being contructed for
+    /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
+    /// @param kmlFile Polygon comes from this file, empty for default polygon
+    StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent);
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
     Q_PROPERTY(Fact*            altitude                    READ altitude                                                   CONSTANT)

@@ -24,7 +24,7 @@ void StructureScanComplexItemTest::init(void)
     _rgSignals[dirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _structureScanItem = new StructureScanComplexItem(_offlineVehicle, false /* flyView */, this);
+    _structureScanItem = new StructureScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     _structureScanItem->setDirty(false);
 
     _multiSpy = new MultiSignalSpy();
@@ -121,7 +121,7 @@ void StructureScanComplexItemTest::_testSaveLoad(void)
     _structureScanItem->save(items);
 
     QString errorString;
-    StructureScanComplexItem* newItem = new StructureScanComplexItem(_offlineVehicle, false /* flyView */, this);
+    StructureScanComplexItem* newItem = new StructureScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     QVERIFY(newItem->load(items[0].toObject(), 10, errorString));
     QVERIFY(errorString.isEmpty());
     _validateItem(newItem);

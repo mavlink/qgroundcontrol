@@ -106,6 +106,8 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyVie
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
 
     connect(this,                                       &TransectStyleComplexItem::followTerrainChanged, this, &TransectStyleComplexItem::_followTerrainChanged);
+
+    setDirty(false);
 }
 
 void TransectStyleComplexItem::_setCameraShots(int cameraShots)
