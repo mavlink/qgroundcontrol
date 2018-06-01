@@ -48,6 +48,7 @@ public:
     Q_PROPERTY(bool                     showMissionStatus               READ showMissionStatus              CONSTANT)
     Q_PROPERTY(bool                     guidedActionsRequireRCRSSI      READ guidedActionsRequireRCRSSI     CONSTANT)
     Q_PROPERTY(bool                     showMissionAbsoluteAltitude     READ showMissionAbsoluteAltitude    NOTIFY showMissionAbsoluteAltitudeChanged)
+    Q_PROPERTY(bool                     showSimpleMissionStart          READ showSimpleMissionStart         NOTIFY showSimpleMissionStartChanged)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -88,6 +89,7 @@ public:
     virtual bool    showOfflineMapExport            () const { return true; }
     virtual bool    showOfflineMapImport            () const { return true; }
     virtual bool    showMissionAbsoluteAltitude     () const { return true; }
+    virtual bool    showSimpleMissionStart          () const { return false; }
 
 #if defined(__mobile__)
     virtual bool    useMobileFileDialog             () const { return true;}
@@ -114,6 +116,7 @@ signals:
     void showOfflineMapExportChanged            ();
     void showOfflineMapImportChanged            ();
     void showMissionAbsoluteAltitudeChanged     ();
+    void showSimpleMissionStartChanged          ();
 
 private:
     CustomInstrumentWidget* _defaultInstrumentWidget;
