@@ -134,6 +134,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _vehicleCapabilitiesKnown(false)
     , _capabilityBits(0)
     , _highLatencyLink(false)
+    , _receivingAttitudeQuaternion(false)
     , _cameras(NULL)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -318,6 +319,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _vehicleCapabilitiesKnown(true)
     , _capabilityBits(_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _highLatencyLink(false)
+    , _receivingAttitudeQuaternion(false)
     , _cameras(NULL)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -706,6 +708,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_HIGH_LATENCY2:
         _handleHighLatency2(message);
         break;
+    case MAVLINK_MSG_ID_ATTITUDE:
+        _handleAttitude(message);
+        break;
     case MAVLINK_MSG_ID_ATTITUDE_QUATERNION:
         _handleAttitudeQuaternion(message);
         break;
@@ -843,19 +848,13 @@ void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
     _setpointFactGroup.yawRate()->setRawValue(qRadiansToDegrees(attitudeTarget.body_yaw_rate));
 }
 
-void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
+void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, double yawRadians)
 {
-    mavlink_attitude_quaternion_t attitudeQuaternion;
+    double roll, pitch, yaw;
 
-    mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);
-
-    float roll, pitch, yaw;
-    float q[] = { attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4 };
-    mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
-
-    roll = QGC::limitAngleToPMPIf(roll);
-    pitch = QGC::limitAngleToPMPIf(pitch);
-    yaw = QGC::limitAngleToPMPIf(yaw);
+    roll = QGC::limitAngleToPMPIf(rollRadians);
+    pitch = QGC::limitAngleToPMPIf(pitchRadians);
+    yaw = QGC::limitAngleToPMPIf(yawRadians);
 
     roll = qRadiansToDegrees(roll);
     pitch = qRadiansToDegrees(pitch);
@@ -870,6 +869,32 @@ void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
     _rollFact.setRawValue(roll);
     _pitchFact.setRawValue(pitch);
     _headingFact.setRawValue(yaw);
+}
+
+void Vehicle::_handleAttitude(mavlink_message_t& message)
+{
+    if (_receivingAttitudeQuaternion) {
+        return;
+    }
+
+    mavlink_attitude_t attitude;
+    mavlink_msg_attitude_decode(&message, &attitude);
+
+    _handleAttitudeWorker(attitude.roll, attitude.pitch, attitude.yaw);
+}
+
+void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
+{
+    _receivingAttitudeQuaternion = true;
+
+    mavlink_attitude_quaternion_t attitudeQuaternion;
+    mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);
+
+    float roll, pitch, yaw;
+    float q[] = { attitudeQuaternion.q1, attitudeQuaternion.q2, attitudeQuaternion.q3, attitudeQuaternion.q4 };
+    mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
+
+    _handleAttitudeWorker(roll, pitch, yaw);
 
     rollRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.rollspeed));
     pitchRate()->setRawValue(qRadiansToDegrees(attitudeQuaternion.pitchspeed));
