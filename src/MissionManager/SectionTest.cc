@@ -83,7 +83,7 @@ void SectionTest::_commonScanTest(Section* section)
     waypointVisualItems.append(&simpleItem);
 
     QmlObjectListModel complexVisualItems;
-    SurveyComplexItem surveyItem(_offlineVehicle, false /* fly View */, this);
+    SurveyComplexItem surveyItem(_offlineVehicle, false /* fly View */, QString() /* kmlFile */, this /* parent */);
     complexVisualItems.append(&surveyItem);
 
     // This tests the common cases which should not lead to scan succeess

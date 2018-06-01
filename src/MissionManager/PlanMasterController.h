@@ -43,7 +43,7 @@ public:
     ///< kml file extension for missions
     Q_PROPERTY(QStringList  loadNameFilters     READ loadNameFilters                    CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList  saveNameFilters     READ saveNameFilters                    CONSTANT)                       ///< File filter list saving plan files
-    Q_PROPERTY(QStringList  saveKmlFilters      READ saveKmlFilters                     CONSTANT)                       ///< File filter list saving KML files
+    Q_PROPERTY(QStringList  fileKmlFilters      READ fileKmlFilters                     CONSTANT)                       ///< File filter list for load/save KML files
 
     /// Should be called immediately upon Component.onCompleted.
     Q_INVOKABLE void start(bool flyView);
@@ -81,7 +81,7 @@ public:
     QString     kmlFileExtension(void) const;
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
-    QStringList saveKmlFilters  (void) const;
+    QStringList fileKmlFilters  (void) const;
 
     QJsonDocument saveToJson    ();
 
