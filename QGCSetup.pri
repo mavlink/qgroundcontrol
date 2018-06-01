@@ -110,7 +110,6 @@ LinuxBuild {
         libQt5Gui.so.5 \
         libQt5Location.so.5 \
         libQt5Multimedia.so.5 \
-        libQt5MultimediaQuick_p.so.5 \
         libQt5Network.so.5 \
         libQt5OpenGL.so.5 \
         libQt5Positioning.so.5 \
