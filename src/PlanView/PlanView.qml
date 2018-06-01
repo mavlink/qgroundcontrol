@@ -24,6 +24,7 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controllers   1.0
+import QGroundControl.KMLFileHelper 1.0
 
 /// Mission Editor
 
@@ -74,6 +75,11 @@ QGCView {
 
     function insertComplexMissionItem(complexItemName, coordinate, index) {
         var sequenceNumber = _missionController.insertComplexMissionItem(complexItemName, coordinate, index)
+        _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
+    }
+
+    function insertComplexMissionItemFromKML(complexItemName, kmlFile, index) {
+        var sequenceNumber = _missionController.insertComplexMissionItemFromKML(complexItemName, kmlFile, index)
         _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
     }
 
@@ -192,7 +198,7 @@ QGCView {
                 return
             }
             fileDialog.title =          qsTr("Save Plan")
-            fileDialog.plan =           true
+            fileDialog.planFiles =      true
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveNameFilters
             fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
@@ -204,15 +210,25 @@ QGCView {
             mapFitFunctions.fitMapViewportToMissionItems()
         }
 
+        function loadKmlFromSelectedFile() {
+            fileDialog.title =          qsTr("Load KML")
+            fileDialog.planFiles =      false
+            fileDialog.selectExisting = true
+            fileDialog.nameFilters =    masterController.fileKmlFilters
+            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.kmlFileExtension
+            fileDialog.fileExtension2 = ""
+            fileDialog.openForLoad()
+        }
+
         function saveKmlToSelectedFile() {
             if (!readyForSaveSend()) {
                 waitingOnDataMessage()
                 return
             }
             fileDialog.title =          qsTr("Save KML")
-            fileDialog.plan =           false
+            fileDialog.planFiles =      false
             fileDialog.selectExisting = false
-            fileDialog.nameFilters =    masterController.saveKmlFilters
+            fileDialog.nameFilters =    masterController.fileKmlFilters
             fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.kmlFileExtension
             fileDialog.fileExtension2 = ""
             fileDialog.openForSave()
@@ -259,19 +275,93 @@ QGCView {
     QGCFileDialog {
         id:             fileDialog
         qgcView:        _qgcView
-        property bool plan: true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
 
+        property bool planFiles: true    ///< true: working with plan files, false: working with kml file
+
         onAcceptedForSave: {
-            plan ? masterController.saveToFile(file) : masterController.saveToKml(file)
+            if (planFiles) {
+                masterController.saveToFile(file)
+            } else {
+                masterController.saveToKml(file)
+            }
             close()
         }
 
         onAcceptedForLoad: {
-            masterController.loadFromFile(file)
-            masterController.fitViewportToItems()
-            _missionController.setCurrentPlanViewIndex(0, true)
+            if (planFiles) {
+                masterController.loadFromFile(file)
+                masterController.fitViewportToItems()
+                _missionController.setCurrentPlanViewIndex(0, true)
+            } else {
+                var retList = KMLFileHelper.determineFileContents(file)
+                if (retList[0] == KMLFileHelper.Error) {
+                    _qgcView.showMessage("Error", retList[1], StandardButton.Ok)
+                } else if (retList[0] == KMLFileHelper.Polygon) {
+                    kmlPolygonSelectDialogKMLFile = file
+                    _qgcView.showDialog(kmlPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                } else if (retList[0] == KMLFileHelper.Polyline) {
+                    insertComplexMissionItemFromKML(_missionController.corridorScanComplexItemName, file, -1)
+                }
+            }
             close()
+        }
+    }
+
+    property string kmlPolygonSelectDialogKMLFile
+    Component {
+        id: kmlPolygonSelectDialog
+
+        QGCViewDialog {
+            property var editVehicle: _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+
+            function accept() {
+                var complexItemName
+                if (surveyRadio.checked) {
+                    complexItemName = _missionController.surveyComplexItemName
+                } else {
+                    complexItemName = _missionController.structureScanComplexItemName
+                }
+                insertComplexMissionItemFromKML(complexItemName, kmlPolygonSelectDialogKMLFile, -1)
+                hideDialog()
+            }
+
+            Component.onCompleted: {
+                if (editVehicle.fixedWing) {
+                    // Only Survey available
+                    accept()
+                }
+            }
+
+            ExclusiveGroup {
+                id: radioGroup
+            }
+
+            Column {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           qsTr("What would you like to create from the polygon specified by the KML file?")
+                }
+
+                QGCRadioButton {
+                    id:             surveyRadio
+                    text:           qsTr("Survey")
+                    checked:        true
+                    exclusiveGroup: radioGroup
+                }
+
+                QGCRadioButton {
+                    text:           qsTr("Structure Scan")
+                    exclusiveGroup: radioGroup
+                    visible:        !editVehicle.fixedWing
+                }
+            }
         }
     }
 
@@ -808,7 +898,7 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:               qsTr("Save To File...")
+                    text:               qsTr("Save Plan...")
                     Layout.fillWidth:   true
                     enabled:            !masterController.syncInProgress
                     onClicked: {
@@ -818,7 +908,7 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:               qsTr("Load From File...")
+                    text:               qsTr("Load Plan...")
                     Layout.fillWidth:   true
                     enabled:            !masterController.syncInProgress
                     onClicked: {
@@ -832,13 +922,15 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:               qsTr("Remove All")
+                    text:               qsTr("Load KML...")
                     Layout.fillWidth:   true
-                    onClicked:  {
+                    enabled:            !masterController.syncInProgress
+                    onClicked: {
                         dropPanel.hide()
-                        _qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                        masterController.loadKmlFromSelectedFile()
                     }
                 }
+
 
                 QGCButton {
                     text:               qsTr("Save KML...")
@@ -852,6 +944,15 @@ QGCView {
                         }
                         dropPanel.hide()
                         masterController.saveKmlToSelectedFile()
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Remove All")
+                    Layout.fillWidth:   true
+                    onClicked:  {
+                        dropPanel.hide()
+                        _qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
                 }
             }
