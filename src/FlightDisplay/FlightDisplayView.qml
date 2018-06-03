@@ -112,8 +112,8 @@ QGCView {
         Component.onCompleted:  start(true /* flyView */)
     }
 
-    PreFlightCheckList {
-        id: preFlightCheckList
+    PreFlightCheckModel {
+        id: preFlightCheckModel
     }
 
     Connections {
@@ -691,56 +691,8 @@ QGCView {
     Component {
         id: checklistDropPanel
 
-        Rectangle {
-            id:         checklistRect
-            visible:    true
-            width:      mainColumn.width + 3*ScreenTools.defaultFontPixelWidth
-            height:     mainColumn.height + ScreenTools.defaultFontPixelHeight
-            color:      qgcPal.windowShade
-            radius:     3
-            enabled:    QGroundControl.multiVehicleManager.vehicles.count > 0;
-
-            Column {
-                id:                     mainColumn
-                width:                  40*ScreenTools.defaultFontPixelWidth
-                spacing:                0.8*ScreenTools.defaultFontPixelWidth
-                anchors.left:           parent.left
-                anchors.top:            parent.top
-                anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
-                anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
-
-                // Header/title of checklist
-                Item {
-                    width:  parent.width
-                    height: 1.75*ScreenTools.defaultFontPixelHeight
-
-                    QGCLabel {
-                        text:                   _activeVehicle ? qsTr("Pre-Flight Checklist") : qsTr("Pre-flight checklist (no vehicle)")
-                        anchors.left:           parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        font.pointSize:         ScreenTools.mediumFontPointSize
-                    }
-                    QGCButton {
-                        width:                  1.2*ScreenTools.defaultFontPixelHeight
-                        height:                 1.2*ScreenTools.defaultFontPixelHeight
-                        anchors.right:          parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
-                        tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
-
-                        onClicked:              preFlightCheckList.reset()
-
-                        Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
-                    }
-                }
-
-                Rectangle {width:parent.width ; height:1 ; color:qgcPal.text}
-
-                // All check list items
-                Repeater {
-                    model: preFlightCheckList.checkListItems
-                }
-            } // Column
-        } //Rectangle
+        PreFlightCheckList {
+            model: preFlightCheckModel
+        }
     } //Component
 } //QGC View
