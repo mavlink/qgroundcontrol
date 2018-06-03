@@ -22,11 +22,19 @@ Item {
     }
 
     function attemptWindowClose() {
-        mainWindowInner.item.attemptWindowClose()
+        if(!mainWindowInner.item) {
+            controller.reallyClose()
+        } else {
+            mainWindowInner.item.attemptWindowClose()
+        }
     }
 
     function showMessage(message) {
-        mainWindowInner.item.showMessage(message)
+        if(mainWindowInner.item) {
+            mainWindowInner.item.showMessage(message)
+        } else {
+            console.log(message)
+        }
     }
 
     Loader {
