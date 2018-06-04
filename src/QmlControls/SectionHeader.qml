@@ -24,7 +24,7 @@ FocusScope {
             exclusiveGroup.bindCheckable(_root)
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
     QGCMouseArea {
         anchors.fill: parent
