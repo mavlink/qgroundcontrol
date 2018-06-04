@@ -584,7 +584,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
         bool    ok;
         increment = rawMetaData->incrementSize.toDouble(&ok);
         if (ok) {
-            metaData->setIncrement(increment);
+            metaData->setRawIncrement(increment);
         } else {
             qCDebug(APMParameterMetaDataLog) << "Invalid value for increment, name:" << metaData->name() << " increment:" << rawMetaData->incrementSize;
         }

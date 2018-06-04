@@ -31,7 +31,8 @@ public:
     Fact* vehicleMinimumAltitude    (void);
     Fact* vehicleMaximumAltitude    (void);
 
-    static const char* guidedSettingsGroupName;
+    static const char* name;
+    static const char* settingsGroup;
 
     static const char* fixedWingMinimumAltitudeName;
     static const char* fixedWingMaximumAltitudeName;

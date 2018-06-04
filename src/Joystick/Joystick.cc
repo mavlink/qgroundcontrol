@@ -26,6 +26,7 @@ const char* Joystick::_exponentialSettingsKey =         "Exponential";
 const char* Joystick::_accumulatorSettingsKey =         "Accumulator";
 const char* Joystick::_deadbandSettingsKey =            "Deadband";
 const char* Joystick::_circleCorrectionSettingsKey =    "Circle_Correction";
+const char* Joystick::_frequencySettingsKey =           "Frequency";
 const char* Joystick::_txModeSettingsKey =              NULL;
 const char* Joystick::_fixedWingTXModeSettingsKey =     "TXMode_FixedWing";
 const char* Joystick::_multiRotorTXModeSettingsKey =    "TXMode_MultiRotor";
@@ -65,7 +66,8 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _exponential(0)
     , _accumulator(false)
     , _deadband(false)
-    , _circleCorrection(false)
+    , _circleCorrection(true)
+    , _frequency(25.0f)
     , _activeVehicle(NULL)
     , _pollingStartedForCalibration(false)
     , _multiVehicleManager(multiVehicleManager)
@@ -127,6 +129,7 @@ void Joystick::_setDefaultCalibration(void) {
     _accumulator = false;
     _deadband = false;
     _circleCorrection = false;
+    _frequency = 25.0f;
     _throttleMode = ThrottleModeCenterZero;
     _calibrated = true;
 
@@ -192,6 +195,7 @@ void Joystick::_loadSettings(void)
     _accumulator = settings.value(_accumulatorSettingsKey, false).toBool();
     _deadband = settings.value(_deadbandSettingsKey, false).toBool();
     _circleCorrection = settings.value(_circleCorrectionSettingsKey, false).toBool();
+    _frequency = settings.value(_frequencySettingsKey, 25.0f).toFloat();
 
     _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
     badSettings |= !convertOk;
@@ -269,6 +273,7 @@ void Joystick::_saveSettings(void)
     settings.setValue(_accumulatorSettingsKey, _accumulator);
     settings.setValue(_deadbandSettingsKey, _deadband);
     settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
+    settings.setValue(_frequencySettingsKey, _frequency);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
 
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _circleCorrection << _transmitterMode;
@@ -445,7 +450,7 @@ void Joystick::run(void)
             }
         }
 
-        if (_outputEnabled && _calibrated) {
+        if (_activeVehicle->joystickEnabled() && !_calibrationMode && _calibrated) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 
@@ -542,8 +547,9 @@ void Joystick::run(void)
             emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
 
-        // Sleep, update rate of joystick is approx. 25 Hz (1000 ms / 25 = 40 ms)
-        QGC::SLEEP::msleep(40);
+        // Sleep. Update rate of joystick is by default 25 Hz
+        int mswait = (int)(1000.0f / _frequency);
+        QGC::SLEEP::msleep(mswait);
     }
 
     _close();
@@ -787,6 +793,21 @@ void Joystick::setCircleCorrection(bool circleCorrection)
     emit circleCorrectionChanged(_circleCorrection);
 }
 
+float Joystick::frequency()
+{
+    return _frequency;
+}
+
+void Joystick::setFrequency(float val)
+{
+    //-- Arbitrary limits
+    if(val < 0.25f)  val = 0.25f;
+    if(val > 100.0f) val = 100.0f;
+    _frequency = val;
+    _saveSettings();
+    emit frequencyChanged();
+}
+
 void Joystick::setCalibrationMode(bool calibrating)
 {
     _calibrationMode = calibrating;
@@ -798,18 +819,8 @@ void Joystick::setCalibrationMode(bool calibrating)
     else if (_pollingStartedForCalibration) {
         stopPolling();
     }
-    if (calibrating){
-        setOutputEnabled(false); //Disable the joystick output before calibrating
-    }
-    else if (!calibrating && _calibrated){
-        setOutputEnabled(true); //Enable joystick output after calibration
-    }
 }
 
-void Joystick::setOutputEnabled(bool enabled){
-    _outputEnabled = enabled;
-    emit outputEnabledChanged(_outputEnabled);
-}
 
 void Joystick::_buttonAction(const QString& action)
 {

@@ -70,8 +70,7 @@ void GeoTagController::startTagging(void)
 
     QDir imageDirectory = QDir(_worker.imageDirectory());
     if(!imageDirectory.exists()) {
-        _errorMessage = tr("Cannot find the image directory");
-        emit errorMessageChanged(_errorMessage);
+        _setErrorMessage(tr("Cannot find the image directory"));
         return;
     }
     if(_worker.saveDirectory() == "") {
@@ -83,23 +82,20 @@ void GeoTagController::startTagging(void)
             msgBox.setWindowModality(Qt::ApplicationModal);
             msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
             if (msgBox.exec() == QMessageBox::Cancel) {
-                _errorMessage = tr("Images have already been tagged");
-                emit errorMessageChanged(_errorMessage);
+                _setErrorMessage(tr("Images have already been tagged"));
                 return;
             }
             QDir oldTaggedFolder = QDir(_worker.imageDirectory() + "/TAGGED");
             oldTaggedFolder.removeRecursively();
             if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
-                _errorMessage = tr("Couldn't replace the previously tagged images");
-                emit errorMessageChanged(_errorMessage);
+                _setErrorMessage(tr("Couldn't replace the previously tagged images"));
                 return;
             }
         }
     } else {
         QDir saveDirectory = QDir(_worker.saveDirectory());
         if(!saveDirectory.exists()) {
-            _errorMessage = tr("Cannot find the save directory");
-            emit errorMessageChanged(_errorMessage);
+            _setErrorMessage(tr("Cannot find the save directory"));
             return;
         }
         saveDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
@@ -115,15 +111,13 @@ void GeoTagController::startTagging(void)
             msgBox.setWindowModality(Qt::ApplicationModal);
             msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
             if (msgBox.exec() == QMessageBox::Cancel) {
-                _errorMessage = tr("Save folder not empty");
-                emit errorMessageChanged(_errorMessage);
+                _setErrorMessage(tr("Save folder not empty"));
                 return;
             }
             foreach(QString dirFile, imageList)
             {
                 if(!saveDirectory.remove(dirFile)) {
-                    _errorMessage = tr("Couldn't replace the existing images");
-                    emit errorMessageChanged(_errorMessage);
+                    _setErrorMessage(tr("Couldn't replace the existing images"));
                     return;
                 }
             }
@@ -142,6 +136,13 @@ void GeoTagController::_workerError(QString errorMessage)
 {
     _errorMessage = errorMessage;
     emit errorMessageChanged(errorMessage);
+}
+
+
+void GeoTagController::_setErrorMessage(const QString& error)
+{
+    _errorMessage = error;
+    emit errorMessageChanged(error);
 }
 
 GeoTagWorker::GeoTagWorker(void)
@@ -210,9 +211,10 @@ void GeoTagWorker::run(void)
     // Instantiate appropriate parser
     _triggerList.clear();
     bool parseComplete = false;
-    if(isULog) {
+    QString errorString;
+    if (isULog) {
         ULogParser parser;
-        parseComplete = parser.getTagsFromLog(log, _triggerList);
+        parseComplete = parser.getTagsFromLog(log, _triggerList, errorString);
 
     } else {
         PX4LogParser parser;
@@ -227,7 +229,8 @@ void GeoTagWorker::run(void)
             return;
         } else {
             qCDebug(GeotaggingLog) << "Log parsing failed";
-            emit error(tr("Log parsing failed - tagging cancelled"));
+            errorString = tr("%1 - tagging cancelled").arg(errorString.isEmpty() ? tr("Log parsing failed") : errorString);
+            emit error(errorString);
             return;
         }
     }
@@ -259,6 +262,11 @@ void GeoTagWorker::run(void)
     int maxIndex = std::min(_imageIndices.count(), _triggerIndices.count());
     maxIndex = std::min(maxIndex, _imageList.count());
     for(int i = 0; i < maxIndex; i++) {
+        int imageIndex = _imageIndices[i];
+        if (imageIndex >= _imageList.count()) {
+            emit error(tr("Geotagging failed. Image requested not present."));
+            return;
+        }
         QFile fileRead(_imageList.at(_imageIndices[i]).absoluteFilePath());
         if (!fileRead.open(QIODevice::ReadOnly)) {
             emit error(tr("Geotagging failed. Couldn't open an image."));

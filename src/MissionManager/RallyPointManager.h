@@ -14,8 +14,10 @@
 #include <QGeoCoordinate>
 
 #include "QGCLoggingCategory.h"
+#include "PlanManager.h"
 
 class Vehicle;
+class PlanManager;
 
 Q_DECLARE_LOGGING_CATEGORY(RallyPointManagerLog)
 
@@ -66,10 +68,14 @@ signals:
     void removeAllComplete  (bool error);
     void sendComplete       (bool error);
 
+private slots:
+    void _planManagerLoadComplete   (bool removeAllRequested);
+
 protected:
     void _sendError(ErrorCode_t errorCode, const QString& errorMsg);
 
     Vehicle*                _vehicle;
+    PlanManager             _planManager;
     QList<QGeoCoordinate>   _rgPoints;
 };
 

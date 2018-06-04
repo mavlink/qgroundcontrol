@@ -27,6 +27,7 @@ class MissionSettingsItem;
 class AppSettings;
 class MissionManager;
 class SimpleMissionItem;
+class ComplexMissionItem;
 class QDomDocument;
 
 Q_DECLARE_LOGGING_CATEGORY(MissionControllerLog)
@@ -92,6 +93,10 @@ public:
     Q_PROPERTY(int                  batteriesRequired       READ batteriesRequired          NOTIFY batteriesRequiredChanged)
     Q_PROPERTY(QGCGeoBoundingCube*  travelBoundingCube      READ travelBoundingCube         NOTIFY missionBoundingCubeChanged)
 
+    Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
+    Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
+    Q_PROPERTY(QString              structureScanComplexItemName    READ structureScanComplexItemName   CONSTANT)
+
     Q_INVOKABLE void removeMissionItem(int index);
 
     /// Add a new simple mission item to the list
@@ -110,6 +115,12 @@ public:
     ///     @param i: index to insert at
     /// @return Sequence number for new item
     Q_INVOKABLE int insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i);
+
+    /// Add a new complex mission item to the list
+    ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param i: index to insert at, -1 for end
+    /// @return Sequence number for new item
+    Q_INVOKABLE int insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
@@ -135,7 +146,7 @@ public:
 
     // Overrides from PlanElementController
     bool supported                  (void) const final { return true; }
-    void start                      (bool editMode) final;
+    void start                      (bool flyView) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
@@ -154,13 +165,16 @@ public:
 
     // Property accessors
 
-    QmlObjectListModel* visualItems             (void) { return _visualItems; }
-    QmlObjectListModel* waypointLines           (void) { return &_waypointLines; }
-    QVariantList        waypointPath            (void) { return _waypointPath; }
-    QStringList         complexMissionItemNames (void) const;
-    QGeoCoordinate      plannedHomePosition     (void) const;
-    VisualMissionItem*  currentPlanViewItem     (void) const;
-    double              progressPct             (void) const { return _progressPct; }
+    QmlObjectListModel* visualItems                 (void) { return _visualItems; }
+    QmlObjectListModel* waypointLines               (void) { return &_waypointLines; }
+    QVariantList        waypointPath                (void) { return _waypointPath; }
+    QStringList         complexMissionItemNames     (void) const;
+    QGeoCoordinate      plannedHomePosition         (void) const;
+    VisualMissionItem*  currentPlanViewItem         (void) const;
+    double              progressPct                 (void) const { return _progressPct; }
+    QString             surveyComplexItemName       (void) const { return _surveyMissionItemName; }
+    QString             corridorScanComplexItemName (void) const { return _corridorScanMissionItemName; }
+    QString             structureScanComplexItemName(void) const { return _structureScanMissionItemName; }
 
     int currentMissionIndex         (void) const;
     int resumeMissionIndex          (void) const;
@@ -251,6 +265,7 @@ private:
     void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
     void _addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
+    int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i);
 
 private:
     MissionManager*         _missionManager;

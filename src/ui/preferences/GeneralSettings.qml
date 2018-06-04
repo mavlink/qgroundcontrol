@@ -12,7 +12,6 @@ import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
-import QtMultimedia             5.5
 import QtQuick.Layouts          1.2
 
 import QGroundControl                       1.0
@@ -41,6 +40,7 @@ QGCView {
     property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
+    property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
 
     readonly property real _internalWidthRatio:          0.8
@@ -245,6 +245,23 @@ QGCView {
                             }
                         }
                         //-----------------------------------------------------------------
+                        //-- Follow Target
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth
+                            visible:    _followTarget.visible
+                            QGCLabel {
+                                text:               qsTr("Stream GCS Position:")
+                                width:              _labelWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            FactComboBox {
+                                width:      _editFieldWidth
+                                fact:       _followTarget
+                                indexModel: false
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        //-----------------------------------------------------------------
                         //-- Audio preferences
                         FactCheckBox {
                             text:       qsTr("Mute all audio output")
@@ -367,11 +384,11 @@ QGCView {
                             visible:    _savePath.visible && !ScreenTools.isMobile
 
                             QGCLabel {
-                                anchors.baseline:   savePathBrowse.baseline
-                                text:               qsTr("File Save Path:")
+                                Layout.alignment:       Qt.AlignVCenter
+                                text:                   qsTr("File Save Path:")
                             }
                             QGCLabel {
-                                anchors.baseline:       savePathBrowse.baseline
+                                Layout.alignment:       Qt.AlignVCenter
                                 Layout.maximumWidth:    _panelWidth * 0.5
                                 elide:                  Text.ElideMiddle
                                 text:                   _savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value
@@ -392,6 +409,16 @@ QGCView {
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
                             }
+                        }
+
+                        //-----------------------------------------------------------------
+                        //-- Checklist Settings
+                        FactCheckBox {
+                            text:       qsTr("Use preflight checklist")
+                            fact:       _useChecklist
+                            visible:    _useChecklist.visible
+
+                            property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
                         }
                     }
                 }

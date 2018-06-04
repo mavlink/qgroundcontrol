@@ -23,7 +23,7 @@ void CorridorScanComplexItemTest::init(void)
     UnitTest::init();
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _corridorItem = new CorridorScanComplexItem(_offlineVehicle, this);
+    _corridorItem = new CorridorScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
 
     // vehicleSpeed need for terrain calcs
     MissionController::MissionFlightStatus_t missionFlightStatus;
@@ -117,10 +117,10 @@ void CorridorScanComplexItemTest::_testEntryLocation(void)
 
         QList<QGeoCoordinate> rgSeenEntryCoords;
         QList<int> rgEntryLocation;
-        rgEntryLocation << SurveyMissionItem::EntryLocationTopLeft
-                        << SurveyMissionItem::EntryLocationTopRight
-                        << SurveyMissionItem::EntryLocationBottomLeft
-                        << SurveyMissionItem::EntryLocationBottomRight;
+        rgEntryLocation << SurveyComplexItem::EntryLocationTopLeft
+                        << SurveyComplexItem::EntryLocationTopRight
+                        << SurveyComplexItem::EntryLocationBottomLeft
+                        << SurveyComplexItem::EntryLocationBottomRight;
 
         // Validate that each entry location is unique
         for (int i=0; i<rgEntryLocation.count(); i++) {

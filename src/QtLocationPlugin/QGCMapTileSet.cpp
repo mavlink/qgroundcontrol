@@ -19,6 +19,7 @@
 #include "QGCMapEngine.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapEngineManager.h"
+#include "TerrainTile.h"
 
 #include <QSettings>
 #include <math.h>
@@ -282,6 +283,9 @@ QGCCachedTileSet::_networkReplyFinished()
         qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
         QByteArray image = reply->readAll();
         UrlFactory::MapType type = getQGCMapEngine()->hashToType(hash);
+        if (type == UrlFactory::MapType::AirmapElevation) {
+            image = TerrainTile::serialize(image);
+        }
         QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
         if(!format.isEmpty()) {
             //-- Cache tile

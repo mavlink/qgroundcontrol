@@ -255,7 +255,7 @@ FlightMap {
         myGeoFenceController:   _geoFenceController
         interactive:            false
         planView:               false
-        homePosition:           _activeVehicle && _activeVehicle.homePosition.isValid ? _activeVehicle.homePosition : undefined
+        homePosition:           _activeVehicle && _activeVehicle.homePosition.isValid ? _activeVehicle.homePosition :  QtPositioning.coordinate()
     }
 
     // Rally points on map

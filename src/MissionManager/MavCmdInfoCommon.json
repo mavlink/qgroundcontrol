@@ -640,6 +640,7 @@
             "friendlyName":         "ROI to next waypoint" ,
             "description":          "Sets the region of interest to point towards the next waypoint with optional offsets.",
             "specifiesCoordinate":  false,
+            "standaloneCoordinate": true,
             "friendlyEdit":         true,
             "category":             "Camera",
             "param5": {
@@ -1005,11 +1006,6 @@
             "friendlyName": "Start image capture" ,
             "description":  "Start taking one or more photos.",
             "category":     "Camera",
-            "param1": {
-                "label":            "Reserved",
-                "default":          0,
-                "decimalPlaces":    0
-            },
             "param2": {
                 "label":            "Interval",
                 "default":          0,
@@ -1027,12 +1023,7 @@
             "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE",
             "friendlyName": "Stop image capture",
             "description":  "Stop taking photos.",
-            "category":     "Camera",
-            "param1": {
-                "label":            "Reserved",
-                "default":          0,
-                "decimalPlaces":    0
-            }
+            "category":     "Camera"
         },
         { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "Trigger control" },
         {
@@ -1041,10 +1032,11 @@
             "friendlyName": "Start video capture",
             "description":  "Start video capture.",
             "category":     "Camera",
-            "param1": {
-                "label":            "Reserved",
-                "default":          0,
-                "decimalPlaces":    0
+            "param2": {
+                "label":            "Status Frequency",
+                "default":          0.2,
+                "units":            "Hz",
+                "decimalPlaces":    2
             }
         },
         {
@@ -1052,12 +1044,7 @@
             "rawName":      "MAV_CMD_VIDEO_STOP_CAPTURE",
             "friendlyName": "Stop video capture",
             "description":  "Stop video capture.",
-            "category":     "Camera",
-            "param1": {
-                "label":            "Reserved",
-                "default":          0,
-                "decimalPlaces":    0
-            }
+            "category":     "Camera"
         },
         { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "Create panorama" },
         {

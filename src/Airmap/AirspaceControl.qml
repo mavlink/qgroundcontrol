@@ -288,7 +288,7 @@ Item {
                                     height:                 width
                                     radius:                 2
                                     color:                  _colorGray
-                                    anchors.verticalCenter: parent.verticalCenter
+                                    Layout.alignment:       Qt.AlignVCenter
                                     QGCColoredImage {
                                         id:                 pencilIcon
                                         width:              height

@@ -23,16 +23,17 @@ class SimpleMissionItem : public VisualMissionItem
     Q_OBJECT
     
 public:
-    SimpleMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-    SimpleMissionItem(Vehicle* vehicle, bool editMode, const MissionItem& missionItem, QObject* parent = NULL);
-    SimpleMissionItem(const SimpleMissionItem& other, QObject* parent = NULL);
+    SimpleMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    SimpleMissionItem(Vehicle* vehicle, bool flyView, const MissionItem& missionItem, QObject* parent);
+    SimpleMissionItem(const SimpleMissionItem& other, bool flyView, QObject* parent);
 
     ~SimpleMissionItem();
 
     enum AltitudeMode {
-        AltitudeRelative,
-        AltitudeAMSL,
-        AltitudeAboveTerrain
+        AltitudeRelative,       // MAV_FRAME_GLOBAL_RELATIVE_ALT
+        AltitudeAbsolute,       // MAV_FRAME_GLOBAL
+        AltitudeAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
+        AltitudeTerrainFrame    // MAV_FRAME_GLOBAL_TERRAIN_ALT
     };
 
     Q_ENUM(AltitudeMode)
@@ -45,6 +46,7 @@ public:
     Q_PROPERTY(AltitudeMode     altitudeMode            READ altitudeMode           WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
     Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
+    Q_PROPERTY(bool             supportsTerrainFrame    READ supportsTerrainFrame                               NOTIFY supportsTerrainFrameChanged)
 
     /// Optional sections
     Q_PROPERTY(QObject*         speedSection            READ speedSection                                       NOTIFY speedSectionChanged)
@@ -72,6 +74,7 @@ public:
     AltitudeMode    altitudeMode        (void) const { return _altitudeMode; }
     Fact*           altitude            (void) { return &_altitudeFact; }
     Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
+    bool            supportsTerrainFrame(void) const { return _vehicle->supportsTerrainFrame(); }
 
     CameraSection*  cameraSection       (void) { return _cameraSection; }
     SpeedSection*   speedSection        (void) { return _speedSection; }
@@ -141,6 +144,7 @@ signals:
     void cameraSectionChanged       (QObject* cameraSection);
     void speedSectionChanged        (QObject* cameraSection);
     void altitudeModeChanged        (void);
+    void supportsTerrainFrameChanged(void);
 
 private slots:
     void _setDirty                      (void);

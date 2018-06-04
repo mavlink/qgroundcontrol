@@ -27,22 +27,22 @@ FactPanel {
 
         VehicleSummaryRow {
             visible:    _mountTypeExists
-            labelText:  qsTr("Gimbal type:")
+            labelText:  qsTr("Gimbal type")
             valueText:  _mountTypeValue
         }
 
         VehicleSummaryRow {
-            labelText:  qsTr("Tilt input channel:")
+            labelText:  qsTr("Tilt input channel")
             valueText:  _mountRCInTilt.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText:  qsTr("Pan input channel:")
+            labelText:  qsTr("Pan input channel")
             valueText:  _mountRCInPan.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText:  qsTr("Roll input channel:")
+            labelText:  qsTr("Roll input channel")
             valueText:  _mountRCInRoll.enumStringValue
         }
     }

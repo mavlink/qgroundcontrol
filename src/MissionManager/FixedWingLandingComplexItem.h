@@ -22,7 +22,7 @@ class FixedWingLandingComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    FixedWingLandingComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    FixedWingLandingComplexItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(Fact*            loiterAltitude          READ    loiterAltitude                                          CONSTANT)
     Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                            CONSTANT)
@@ -52,7 +52,7 @@ public:
     void setLoiterCoordinate        (const QGeoCoordinate& coordinate);
 
     /// Scans the loaded items for a landing pattern complex item
-    static bool scanForItem(QmlObjectListModel* visualItems, Vehicle* vehicle);
+    static bool scanForItem(QmlObjectListModel* visualItems, bool flyView, Vehicle* vehicle);
 
     // Overrides from ComplexMissionItem
 

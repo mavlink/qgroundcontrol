@@ -1,5 +1,11 @@
 [
 {
+    "name":             "CameraName",
+    "shortDescription": "Camera name.",
+    "type":             "string",
+    "defaultValue":     "Manual (no camera specs)"
+},
+{
     "name":             "ValueSetIsDistance",
     "shortDescription": "Value specified is distance to surface.",
     "type":             "bool",

@@ -13,7 +13,6 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
 
-// Editor for Survery mission items
 Rectangle {
     id:         _root
     height:     visible ? (editorColumn.height + (_margin * 2)) : 0
@@ -25,9 +24,10 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
-    property var    _vehicle:       QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
+    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
+    property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -57,18 +57,14 @@ Rectangle {
         spacing:            _margin
 
         QGCLabel {
-            text: "WIP: Careful!"
-            color:  qgcPal.warningText
-        }
-
-        QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
+            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
-            visible:        missionItem.cameraShots > 0 && missionItem.cameraMinTriggerInterval !== 0 && missionItem.cameraMinTriggerInterval > missionItem.timeBetweenShots
+            visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
         }
+
 
         CameraCalc {
             cameraCalc:             missionItem.cameraCalc
@@ -112,10 +108,11 @@ Rectangle {
 
             QGCCheckBox {
                 id:                 relAlt
-                anchors.left:       parent.left
                 text:               qsTr("Relative altitude")
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
-                enabled:            missionItem.cameraCalc.isManualCamera
+                enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
+                visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
+                Layout.alignment:   Qt.AlignLeft
                 Layout.columnSpan:  2
                 onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
 
@@ -151,18 +148,11 @@ Rectangle {
             }
 
             GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        2
-                visible:        followsTerrainCheckBox.checked
-
-                QGCLabel {
-                    text: "WIP: Careful!"
-                    color:  qgcPal.warningText
-                    Layout.columnSpan: 2
-                }
+                Layout.fillWidth:   true
+                columnSpacing:      _margin
+                rowSpacing:         _margin
+                columns:            2
+                visible:            followsTerrainCheckBox.checked
 
                 QGCLabel { text: qsTr("Tolerance") }
                 FactTextField {

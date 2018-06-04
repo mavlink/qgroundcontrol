@@ -309,6 +309,7 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app, QGCToolbox* toolbox)
     , _deleteAfterUpload(false)
     , _windSpeed(-1)
     , _publicLog(false)
+    , _logginDenied(false)
 {
     //-- Get saved settings
     QSettings settings;
@@ -613,7 +614,7 @@ MAVLinkLogManager::cancelUpload()
 void
 MAVLinkLogManager::startLogging()
 {
-    if(_vehicle && _vehicle->px4Firmware()) {
+    if(_vehicle && _vehicle->px4Firmware() && !_logginDenied) {
         if(_createNewLog()) {
             _vehicle->startMavlinkLog();
             _logRunning = true;
@@ -847,6 +848,8 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     // Connect new system
     if(vehicle && vehicle->px4Firmware()) {
         _vehicle = vehicle;
+        //-- Reset logging denied flag as well
+        _logginDenied = false;
         connect(_vehicle, &Vehicle::armedChanged,       this, &MAVLinkLogManager::_armedChanged);
         connect(_vehicle, &Vehicle::mavlinkLogData,     this, &MAVLinkLogManager::_mavlinkLogData);
         connect(_vehicle, &Vehicle::mavCommandResult,   this, &MAVLinkLogManager::_mavCommandResult);
@@ -888,7 +891,12 @@ MAVLinkLogManager::_mavCommandResult(int vehicleId, int component, int command, 
                 qCWarning(MAVLinkLogManagerLog) << "Stop MAVLink log command failed.";
             } else {
                 //-- Could not start logging for some reason.
-                qCWarning(MAVLinkLogManagerLog) << "Start MAVLink log command failed.";
+                if(result == MAV_RESULT_DENIED) {
+                    _logginDenied = true;
+                    qCWarning(MAVLinkLogManagerLog) << "Start MAVLink log command denied.";
+                } else {
+                    qCWarning(MAVLinkLogManagerLog) << "Start MAVLink log command failed.";
+                }
                 _discardLog();
             }
         }

@@ -114,11 +114,13 @@ private:
     bool                _streaming;
     bool                _starting;
     bool                _stopping;
+    bool                _stop;
     Sink*               _sink;
     GstElement*         _tee;
 
     static gboolean             _onBusMessage           (GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack         (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
+    static GstPadProbeReturn    _keyframeWatch          (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     void                        _detachRecordingBranch  (GstPadProbeInfo* info);
     void                        _shutdownRecordingBranch();
     void                        _shutdownPipeline       ();

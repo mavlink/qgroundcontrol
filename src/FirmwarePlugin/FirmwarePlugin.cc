@@ -150,6 +150,12 @@ bool FirmwarePlugin::supportsJSButton(void)
     return false;
 }
 
+bool FirmwarePlugin::supportsTerrainFrame(void) const
+{
+    // Generic firmware supports this since we don't know
+    return true;
+}
+
 bool FirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);
@@ -338,6 +344,7 @@ const QVariantList &FirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/VTOLModeIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSRTKIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/LinkIndicator.qml")));
     }
     return _toolBarIndicatorList;
 }

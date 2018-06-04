@@ -121,14 +121,14 @@ SetupPage {
                         }
 
                         QGCLabel {
-                            anchors.baseline:   camTrigCombo.baseline
+                            Layout.alignment:   Qt.AlignVCenter
                             text:               qsTr("Trigger mode")
                         }
                         FactComboBox {
-                            id:                 camTrigCombo
                             fact:               _camTriggerMode
                             indexModel:         false
                             enabled:            !_rebooting
+                            Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
                             onActivated: {
                                 applyAndRestart.visible = true
@@ -136,14 +136,14 @@ SetupPage {
                         }
 
                         QGCLabel {
-                            anchors.baseline:   camInterfaceCombo.baseline
+                            Layout.alignment:   Qt.AlignVCenter
                             text:               qsTr("Trigger interface")
                         }
                         FactComboBox {
-                            id:                 camInterfaceCombo
                             fact:               _camTriggerInterface
                             indexModel:         false
                             enabled:            !_rebooting && (_camTriggerInterface ? true : false)
+                            Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
                             onActivated: {
                                 applyAndRestart.visible = true
@@ -152,7 +152,7 @@ SetupPage {
 
                         QGCLabel {
                             text:               qsTr("Time Interval")
-                            anchors.baseline:   timeIntervalField.baseline
+                            Layout.alignment:   Qt.AlignVCenter
                             color:              qgcPal.text
                             visible:            timeIntervalField.visible
                         }
@@ -161,12 +161,13 @@ SetupPage {
                             fact:               controller.getParameterFact(-1, "TRIG_INTERVAL", false)
                             showUnits:          true
                             Layout.minimumWidth: _editFieldWidth
+                            Layout.alignment:   Qt.AlignVCenter
                             visible:            _camTriggerMode.value === 2
                         }
 
                         QGCLabel {
                             text:               qsTr("Distance Interval")
-                            anchors.baseline:   trigDistField.baseline
+                            Layout.alignment:   Qt.AlignVCenter
                             color:              qgcPal.text
                             visible:            trigDistField.visible
                         }
@@ -174,6 +175,7 @@ SetupPage {
                             id:                 trigDistField
                             fact:               controller.getParameterFact(-1, "TRIG_DISTANCE", false)
                             showUnits:          true
+                            Layout.alignment:   Qt.AlignVCenter
                             Layout.minimumWidth: _editFieldWidth
                             visible:            _camTriggerMode.value === 3
                         }
@@ -199,8 +201,8 @@ SetupPage {
                             }
 
                             Row {
-                                spacing:                    _margins
-                                anchors.horizontalCenter:   parent.horizontalCenter
+                                spacing:                _margins
+                                Layout.alignment:       Qt.AlignHCenter
 
                                 GridLayout {
                                     rows: 2

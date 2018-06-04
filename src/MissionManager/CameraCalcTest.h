@@ -27,12 +27,13 @@ protected:
     void cleanup(void) final;
     
 private slots:
-    void _testDirty(void);
+    void _testDirty             (void);
+    void _testAdjustedFootprint (void);
+    void _testAltDensityRecalc  (void);
 
 private:
     enum {
-        cameraNameChangedIndex = 0,
-        dirtyChangedIndex,
+        dirtyChangedIndex = 0,
         imageFootprintSideChangedIndex,
         imageFootprintFrontalChangedIndex,
         distanceToSurfaceRelativeChangedIndex,
@@ -40,7 +41,6 @@ private:
     };
 
     enum {
-        cameraNameChangedMask =                 1 << cameraNameChangedIndex,
         dirtyChangedMask =                      1 << dirtyChangedIndex,
         imageFootprintSideChangedMask =         1 << imageFootprintSideChangedIndex,
         imageFootprintFrontalChangedMask =      1 << imageFootprintFrontalChangedIndex,

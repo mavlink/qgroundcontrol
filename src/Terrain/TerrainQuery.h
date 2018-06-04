@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "TerrainTile.h"
+#include "QGCMapEngineData.h"
 #include "QGCLoggingCategory.h"
 
 #include <QObject>
@@ -16,8 +18,10 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTimer>
+#include <QtLocation/private/qgeotiledmapreply_p.h>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainQueryLog)
+Q_DECLARE_LOGGING_CATEGORY(TerrainQueryVerboseLog)
 
 class TerrainAtCoordinateQuery;
 
@@ -59,19 +63,20 @@ public:
     TerrainAirMapQuery(QObject* parent = NULL);
 
     // Overrides from TerrainQueryInterface
-    void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) final;
-    void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
-    void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
+    void requestCoordinateHeights   (const QList<QGeoCoordinate>& coordinates) final;
+    void requestPathHeights         (const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
+    void requestCarpetHeights       (const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
 
 private slots:
-    void _requestFinished(void);
+    void _requestError              (QNetworkReply::NetworkError code);
+    void _requestFinished           ();
 
 private:
-    void _sendQuery             (const QString& path, const QUrlQuery& urlQuery);
-    void _requestFailed         (void);
-    void _parseCoordinateData   (const QJsonValue& coordinateJson);
-    void _parsePathData         (const QJsonValue& pathJson);
-    void _parseCarpetData       (const QJsonValue& carpetJson);
+    void _sendQuery                 (const QString& path, const QUrlQuery& urlQuery);
+    void _requestFailed             (void);
+    void _parseCoordinateData       (const QJsonValue& coordinateJson);
+    void _parsePathData             (const QJsonValue& pathJson);
+    void _parseCarpetData           (const QJsonValue& carpetJson);
 
     enum QueryMode {
         QueryModeCoordinates,
@@ -82,6 +87,67 @@ private:
     QNetworkAccessManager   _networkManager;
     QueryMode               _queryMode;
     bool                    _carpetStatsOnly;
+};
+
+/// AirMap offline cachable implementation of terrain queries
+class TerrainOfflineAirMapQuery : public TerrainQueryInterface {
+    Q_OBJECT
+
+public:
+    TerrainOfflineAirMapQuery(QObject* parent = NULL);
+
+    // Overrides from TerrainQueryInterface
+    void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) final;
+    void requestPathHeights(const QGeoCoordinate& fromCoord, const QGeoCoordinate& toCoord) final;
+    void requestCarpetHeights(const QGeoCoordinate& swCoord, const QGeoCoordinate& neCoord, bool statsOnly) final;
+
+    // Internal methods
+    void _signalCoordinateHeights(bool success, QList<double> heights);
+    void _signalPathHeights(bool success, double latStep, double lonStep, const QList<double>& heights);
+    void _signalCarpetHeights(bool success, double minHeight, double maxHeight, const QList<QList<double>>& carpet);
+};
+
+/// Used internally by TerrainOfflineAirMapQuery to manage terrain tiles
+class TerrainTileManager : public QObject {
+    Q_OBJECT
+
+public:
+    TerrainTileManager(void);
+
+    void addCoordinateQuery (TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
+    void addPathQuery       (TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate& startPoint, const QGeoCoordinate& endPoint);
+
+private slots:
+    void _terrainDone       (QByteArray responseBytes, QNetworkReply::NetworkError error);
+
+private:
+    enum class State {
+        Idle,
+        Downloading,
+    };
+
+    enum QueryMode {
+        QueryModeCoordinates,
+        QueryModePath,
+        QueryModeCarpet
+    };
+
+    typedef struct {
+        TerrainOfflineAirMapQuery*  terrainQueryInterface;
+        QueryMode                   queryMode;
+        QList<QGeoCoordinate>       coordinates;
+    } QueuedRequestInfo_t;
+
+    void _tileFailed(void);
+    bool _getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes);
+    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
+
+    QList<QueuedRequestInfo_t>  _requestQueue;
+    State                       _state = State::Idle;
+    QNetworkAccessManager       _networkManager;
+
+    QMutex                      _tilesMutex;
+    QHash<QString, TerrainTile> _tiles;
 };
 
 /// Used internally by TerrainAtCoordinateQuery to batch coordinate requests together
@@ -124,7 +190,7 @@ private:
     State                       _state = State::Idle;
     const int                   _batchTimeout = 500;
     QTimer                      _batchTimer;
-    TerrainAirMapQuery          _terrainQuery;
+    TerrainOfflineAirMapQuery   _terrainQuery;
 };
 
 /// NOTE: TerrainAtCoordinateQuery is not thread safe. All instances/calls to ElevationProvider must be on main thread.
@@ -172,7 +238,7 @@ private slots:
     void _pathHeights(bool success, double latStep, double lonStep, const QList<double>& heights);
 
 private:
-    TerrainAirMapQuery _terrainQuery;
+    TerrainOfflineAirMapQuery _terrainQuery;
 };
 
 Q_DECLARE_METATYPE(TerrainPathQuery::PathHeightInfo_t)

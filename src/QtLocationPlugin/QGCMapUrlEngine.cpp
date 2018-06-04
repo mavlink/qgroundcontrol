@@ -122,6 +122,9 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case BingHybrid:
                     format = "jpg";
                     break;
+                case AirmapElevation:
+                    format = "bin";
+                    break;
                 default:
                     qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
                     break;
@@ -182,6 +185,10 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
                 request.setRawHeader("User-Token", token);
             }
             return request;
+
+        case AirmapElevation:
+            request.setRawHeader("Referrer", "https://api.airmap.com/");
+            break;
 
         default:
             break;
@@ -262,7 +269,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
 #endif
     case StatkartTopo:
     {
-        return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo2&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);
+        return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);
     }
     break;
     case EniroTopo:
@@ -401,6 +408,14 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
             server += QString("/%1/%2/%3.jpg80?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
             return server;
         }
+    }
+    break;
+    case AirmapElevation:
+    {
+        return QString("https://api.airmap.com/elevation/v1/ele/carpet?points=%1,%2,%3,%4").arg(static_cast<double>(y)*QGCMapEngine::srtm1TileSize - 90.0).arg(
+                                                                                                static_cast<double>(x)*QGCMapEngine::srtm1TileSize - 180.0).arg(
+                                                                                                static_cast<double>(y + 1)*QGCMapEngine::srtm1TileSize - 90.0).arg(
+                                                                                                static_cast<double>(x + 1)*QGCMapEngine::srtm1TileSize - 180.0);
     }
     break;
 
@@ -545,6 +560,7 @@ UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
 #define AVERAGE_MAPBOX_SAT_MAP      15739
 #define AVERAGE_MAPBOX_STREET_MAP   5648
 #define AVERAGE_TILE_SIZE           13652
+#define AVERAGE_AIRMAP_ELEV_SIZE    2786
 
 //-----------------------------------------------------------------------------
 quint32
@@ -568,6 +584,8 @@ UrlFactory::averageSizeForType(MapType type)
     case MapboxStreetsBasic:
     case MapboxRunBikeHike:
         return AVERAGE_MAPBOX_STREET_MAP;
+    case AirmapElevation:
+        return AVERAGE_AIRMAP_ELEV_SIZE;
     case GoogleLabels:
     case MapboxDark:
     case MapboxLight:

@@ -367,7 +367,9 @@ void LogReplayLink::_readNextLogEntry(void)
             quint64 currentTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
             timeToNextExecutionMSecs = desiredPacedTimeMSecs - currentTimeMSecs;
         }
-        
+
+        emit currentLogTimeSecs((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000000);
+
         // And schedule the next execution of this function.
         _readTickTimer.start(timeToNextExecutionMSecs);
     }

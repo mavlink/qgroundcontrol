@@ -33,7 +33,7 @@ Canvas {
     property real   _gimbalRadians:     degreesToRadians(vehicleYaw + gimbalYaw - 90)
     property real   _labelMargin:       2
     property real   _labelRadius:       _indicatorRadius + _labelMargin
-    property string _label:             index === 0 ? "" : label
+    property string _label:             label.length > 1 ? label : ""
     property string _index:             index === 0 || index === -1 ? label.charAt(0) : index
 
     onColorChanged:         requestPaint()
