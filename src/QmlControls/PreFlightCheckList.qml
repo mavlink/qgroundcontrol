@@ -36,18 +36,18 @@ Rectangle {
 
     Component.onCompleted: reset()
 
-    Column {
-        id:                     mainColumn
-        width:                  40*ScreenTools.defaultFontPixelWidth
-        spacing:                0.8*ScreenTools.defaultFontPixelWidth
-        anchors.left:           parent.left
-        anchors.top:            parent.top
-        anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
-        anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
+    // We delay the updates when a group passes so the user can see all items green for a moment prior to hiding
+    Timer {
+        id:         delayedGroupPassed
+        interval:   750
 
-        function groupPassedChanged(index) {
+        property int index
+
+        onTriggered: {
+            var group = checkListRepeater.itemAt(index)
+            group._checked = false
             if (index + 1 < checkListRepeater.count) {
-                var group = checkListRepeater.itemAt(index + 1)
+                group = checkListRepeater.itemAt(index + 1)
                 group.enabled = true
                 group._checked = true
             }
@@ -58,6 +58,21 @@ Rectangle {
                 }
             }
             _passed = true
+        }
+    }
+
+    Column {
+        id:                     mainColumn
+        width:                  40*ScreenTools.defaultFontPixelWidth
+        spacing:                0.8*ScreenTools.defaultFontPixelWidth
+        anchors.left:           parent.left
+        anchors.top:            parent.top
+        anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
+        anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
+
+        function groupPassedChanged(index) {
+            delayedGroupPassed.index = index
+            delayedGroupPassed.restart()
         }
 
         // Header/title of checklist
