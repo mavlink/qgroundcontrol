@@ -15,8 +15,9 @@ import QGroundControl               1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
-/// The PreFlightCheckButtons supports creating a button which the user then has to verify/click to confirm a check.
-/// It also supports failing the check based on values from within the system: telemetry or QGC app values.
+/// The PreFlightCheckButton supports creating a button which the user then has to verify/click to confirm a check.
+/// It also supports failing the check based on values from within the system: telemetry or QGC app values. These
+/// controls are normally placed within a PreFlightCheckGroup.
 ///
 /// Two types of checks may be included on the button:
 ///     Manual - This is simply a check which the user must verify and confirm. It is not based on any system state.
@@ -62,8 +63,6 @@ QGCButton {
     property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
     property bool   _allowTelemetryFailureOverride:  telemetryTextOverride !== ""
 
-    enabled:    preFlightCheckList._checkState >= group
-    opacity:    0.2 + (0.8 * (preFlightCheckList._checkState >= group))
     width:      40 * ScreenTools.defaultFontPixelWidth
 
     style: ButtonStyle {
@@ -77,7 +76,6 @@ QGCButton {
         background: Rectangle {
             color:          qgcPal.button
             border.color:   qgcPal.button;
-            radius:         3
 
             Rectangle {
                 color:          _color
@@ -121,8 +119,17 @@ QGCButton {
         }
     }
 
+    onPassedChanged: callButtonPassedChanged()
+    onParentChanged: callButtonPassedChanged()
+
+    function callButtonPassedChanged() {
+        if (typeof parent.buttonPassedChanged === "function") {
+            parent.buttonPassedChanged()
+        }
+    }
+
     function reset() {
-        _manualState = manualText === "" ? statePass : _statePending
+        _manualState = manualText === "" ? _statePassed : _statePending
         if (telemetryFailure) {
             _telemetryState = _allowTelemetryFailureOverride ? _statePending : _stateFailed
         } else {
