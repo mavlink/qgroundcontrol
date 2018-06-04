@@ -84,6 +84,9 @@
 #include "CameraCalc.h"
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
+#include "FactValueSliderListModel.h"
+#include "KMLFileHelper.h"
+
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
@@ -138,31 +141,27 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
-/**
- * @brief Constructor for the main application.
- *
- * This constructor initializes and starts the whole application. It takes standard
- * command-line parameters
- *
- * @param argc The number of command-line parameters
- * @param argv The string array of parameters
- **/
+static QObject* kmlFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
+{
+    return new KMLFileHelper;
+}
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
-    : QGuiApplication(argc, argv)
-    , _qmlAppEngine(NULL)
-    #else
-    : QApplication(argc, argv)
-    #endif
-    , _runningUnitTests(unitTesting)
-    , _fakeMobile(false)
-    , _settingsUpgraded(false)
-    #ifdef QT_DEBUG
-    , _testHighDPI(false)
-    #endif
-    , _toolbox(NULL)
-    , _bluetoothAvailable(false)
+    : QGuiApplication       (argc, argv)
+    , _qmlAppEngine         (NULL)
+#else
+    : QApplication          (argc, argv)
+#endif
+    , _runningUnitTests     (unitTesting)
+    , _logOutput            (false)
+    , _fakeMobile           (false)
+    , _settingsUpgraded     (false)
+#ifdef QT_DEBUG
+    , _testHighDPI          (false)
+#endif
+    , _toolbox              (NULL)
+    , _bluetoothAvailable   (false)
 {
     _app = this;
 
@@ -225,6 +224,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         { "--clear-settings",   &fClearSettingsOptions, NULL },
         { "--logging",          &logging,               &loggingOptions },
         { "--fake-mobile",      &_fakeMobile,           NULL },
+        { "--log-output",       &_logOutput,            NULL },
     #ifdef QT_DEBUG
         { "--test-high-dpi",    &_testHighDPI,          NULL },
     #endif
@@ -343,6 +343,7 @@ void QGCApplication::_shutdown(void)
 QGCApplication::~QGCApplication()
 {
     // Place shutdown code in _shutdown
+    _app = NULL;
 }
 
 void QGCApplication::_initCommon(void)
@@ -367,6 +368,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<ParameterManager>    ("QGroundControl.Vehicle",              1, 0, "ParameterManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraManager>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraManager",       "Reference only");
     qmlRegisterUncreatableType<QGCCameraControl>    ("QGroundControl.Vehicle",              1, 0, "QGCCameraControl",       "Reference only");
+    qmlRegisterUncreatableType<LinkInterface>       ("QGroundControl.Vehicle",              1, 0, "LinkInterface",          "Reference only");
     qmlRegisterUncreatableType<JoystickManager>     ("QGroundControl.JoystickManager",      1, 0, "JoystickManager",        "Reference only");
     qmlRegisterUncreatableType<Joystick>            ("QGroundControl.JoystickManager",      1, 0, "Joystick",               "Reference only");
     qmlRegisterUncreatableType<QGCPositionManager>  ("QGroundControl.QGCPositionManager",   1, 0, "QGCPositionManager",     "Reference only");
@@ -375,6 +377,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<GeoFenceController>  ("QGroundControl.Controllers",          1, 0, "GeoFenceController",     "Reference only");
     qmlRegisterUncreatableType<RallyPointController>("QGroundControl.Controllers",          1, 0, "RallyPointController",   "Reference only");
     qmlRegisterUncreatableType<VisualMissionItem>   ("QGroundControl.Controllers",          1, 0, "VisualMissionItem",      "Reference only");
+    qmlRegisterUncreatableType<FactValueSliderListModel>("QGroundControl.FactControls",     1, 0, "FactValueSliderListModel","Reference only");
 
     qmlRegisterType<QGCGeoBoundingCube>             ("QGroundControl",                      1, 0, "QGCGeoBoundingCube");
 
@@ -400,6 +403,7 @@ void QGCApplication::_initCommon(void)
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
+    qmlRegisterSingletonType<KMLFileHelper>             ("QGroundControl.KMLFileHelper",            1, 0, "KMLFileHelper",          kmlFileHelperSingletonFactory);
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)

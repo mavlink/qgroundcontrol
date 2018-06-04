@@ -79,7 +79,8 @@ public:
     ///         free when no longer needed.
     virtual QList<VehicleComponent*> componentsForVehicle(AutoPilotPlugin* vehicle);
 
-    /// Returns the list of available flight modes
+    /// Returns the list of available flight modes. Flight modes can be different in normal/advanced ui mode.
+    /// Call will be made again if advanced mode changes.
     virtual QStringList flightModes(Vehicle* vehicle) {
         Q_UNUSED(vehicle);
         return QStringList();
@@ -178,6 +179,9 @@ public:
     /// Returns true if the firmware supports calibrating motor interference offsets for the compass
     /// (CompassMot). Default is true.
     virtual bool supportsMotorInterference(void);
+
+    /// Returns true if the firmware supports MAV_FRAME_GLOBAL_TERRAIN_ALT
+    virtual bool supportsTerrainFrame(void) const;
 
     /// Called before any mavlink message is processed by Vehicle such that the firmwre plugin
     /// can adjust any message characteristics. This is handy to adjust or differences in mavlink

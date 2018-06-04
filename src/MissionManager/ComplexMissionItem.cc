@@ -11,8 +11,8 @@
 
 const char* ComplexMissionItem::jsonComplexItemTypeKey = "complexItemType";
 
-ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, QObject* parent)
-    : VisualMissionItem(vehicle, parent)
+ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
+    : VisualMissionItem(vehicle, flyView, parent)
 {
 
 }

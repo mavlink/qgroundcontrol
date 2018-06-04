@@ -40,7 +40,8 @@ public:
         typedef enum {
             AutoPilotStackPX4,
             AutoPilotStackAPM,
-            PX4Flow,
+            PX4FlowPX4,
+            PX4FlowAPM,
             ThreeDRRadio,
             SingleFirmwareMode
         } AutoPilotStackType_t;

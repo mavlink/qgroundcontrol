@@ -15,14 +15,16 @@
 #include <QtQml>
 #include <QStandardPaths>
 
-const char* GuidedSettings::guidedSettingsGroupName =       "Guided";
+const char* GuidedSettings::name =                          "Guided";
+const char* GuidedSettings::settingsGroup =                 ""; // settings are in root group
+
 const char* GuidedSettings::fixedWingMinimumAltitudeName =  "FixedWingMinimumAltitude";
 const char* GuidedSettings::fixedWingMaximumAltitudeName =  "FixedWingMaximumAltitude";
 const char* GuidedSettings::vehicleMinimumAltitudeName =    "VehicleMinimumAltitude";
 const char* GuidedSettings::vehicleMaximumAltitudeName =    "VehicleMaximumAltitude";
 
 GuidedSettings::GuidedSettings(QObject* parent)
-    : SettingsGroup(guidedSettingsGroupName, QString() /* root settings group */, parent)
+    : SettingsGroup(name, settingsGroup, parent)
     , _fixedWingMinimumAltitudeFact (NULL)
     , _fixedWingMaximumAltitudeFact (NULL)
     , _vehicleMinimumAltitudeFact   (NULL)

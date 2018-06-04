@@ -10,6 +10,7 @@
 #pragma once
 
 #include "CameraSpec.h"
+#include "SettingsFact.h"
 
 class Vehicle;
 
@@ -18,12 +19,13 @@ class CameraCalc : public CameraSpec
     Q_OBJECT
 
 public:
-    CameraCalc(Vehicle* vehicle, QObject* parent = NULL);
+    CameraCalc(Vehicle* vehicle, QString settingsGroup, QObject* parent = NULL);
 
-    Q_PROPERTY(QString          cameraName                  READ cameraName WRITE setCameraName                                 NOTIFY cameraNameChanged)
     Q_PROPERTY(QString          customCameraName            READ customCameraName                                               CONSTANT)                                   ///< Camera name for custom camera setting
     Q_PROPERTY(QString          manualCameraName            READ manualCameraName                                               CONSTANT)                                   ///< Camera name for manual camera setting
-    Q_PROPERTY(bool             isManualCamera              READ isManualCamera                                                 NOTIFY cameraNameChanged)                   ///< true: using manual camera
+    Q_PROPERTY(bool             isManualCamera              READ isManualCamera                                                 NOTIFY isManualCameraChanged)
+    Q_PROPERTY(bool             isCustomCamera              READ isCustomCamera                                                 NOTIFY isCustomCameraChanged)
+    Q_PROPERTY(Fact*            cameraName                  READ cameraName                                                     CONSTANT)
     Q_PROPERTY(Fact*            valueSetIsDistance          READ valueSetIsDistance                                             CONSTANT)                                   ///< true: distance specified, resolution calculated
     Q_PROPERTY(Fact*            distanceToSurface           READ distanceToSurface                                              CONSTANT)                                   ///< Distance to surface for image foot print calculation
     Q_PROPERTY(Fact*            imageDensity                READ imageDensity                                                   CONSTANT)                                   ///< Image density on surface (cm/px)
@@ -39,9 +41,8 @@ public:
 
     static QString customCameraName(void);
     static QString manualCameraName(void);
-    QString cameraName(void) const { return _cameraName; }
-    void setCameraName(QString cameraName);
 
+    Fact* cameraName                (void) { return &_cameraNameFact; }
     Fact* valueSetIsDistance        (void) { return &_valueSetIsDistanceFact; }
     Fact* distanceToSurface         (void) { return &_distanceToSurfaceFact; }
     Fact* imageDensity              (void) { return &_imageDensityFact; }
@@ -59,7 +60,8 @@ public:
     const Fact* adjustedFootprintFrontal    (void) const { return &_adjustedFootprintFrontalFact; }
 
     bool    dirty                       (void) const { return _dirty; }
-    bool    isManualCamera              (void) { return cameraName() == manualCameraName(); }
+    bool    isManualCamera              (void) const { return _cameraNameFact.rawValue().toString() == manualCameraName(); }
+    bool    isCustomCamera              (void) const { return _cameraNameFact.rawValue().toString() == customCameraName(); }
     double  imageFootprintSide          (void) const { return _imageFootprintSide; }
     double  imageFootprintFrontal       (void) const { return _imageFootprintFrontal; }
     bool    distanceToSurfaceRelative   (void) const { return _distanceToSurfaceRelative; }
@@ -70,49 +72,51 @@ public:
     void save(QJsonObject& json) const;
     bool load(const QJsonObject& json, QString& errorString);
 
+    static const char* cameraNameName;
+    static const char* valueSetIsDistanceName;
+    static const char* distanceToSurfaceName;
+    static const char* distanceToSurfaceRelativeName;
+    static const char* imageDensityName;
+    static const char* frontalOverlapName;
+    static const char* sideOverlapName;
+    static const char* adjustedFootprintSideName;
+    static const char* adjustedFootprintFrontalName;
+
 signals:
-    void cameraNameChanged                  (QString cameraName);
     void dirtyChanged                       (bool dirty);
     void imageFootprintSideChanged          (double imageFootprintSide);
     void imageFootprintFrontalChanged       (double imageFootprintFrontal);
     void distanceToSurfaceRelativeChanged   (bool distanceToSurfaceRelative);
+    void isManualCameraChanged              (void);
+    void isCustomCameraChanged              (void);
 
 private slots:
     void _recalcTriggerDistance             (void);
     void _adjustDistanceToSurfaceRelative   (void);
     void _setDirty                          (void);
+    void _cameraNameChanged                 (void);
 
 private:
     Vehicle*        _vehicle;
     bool            _dirty;
-    QString         _cameraName;
     bool            _disableRecalc;
     bool            _distanceToSurfaceRelative;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    Fact _valueSetIsDistanceFact;
-    Fact _distanceToSurfaceFact;
-    Fact _imageDensityFact;
-    Fact _frontalOverlapFact;
-    Fact _sideOverlapFact;
-    Fact _adjustedFootprintSideFact;
-    Fact _adjustedFootprintFrontalFact;
+    SettingsFact _cameraNameFact;
+    SettingsFact _valueSetIsDistanceFact;
+    SettingsFact _distanceToSurfaceFact;
+    SettingsFact _imageDensityFact;
+    SettingsFact _frontalOverlapFact;
+    SettingsFact _sideOverlapFact;
+    SettingsFact _adjustedFootprintSideFact;
+    SettingsFact _adjustedFootprintFrontalFact;
 
     double _imageFootprintSide;
     double _imageFootprintFrontal;
 
     QVariantList _knownCameraList;
-
-    static const char* _valueSetIsDistanceName;
-    static const char* _distanceToSurfaceName;
-    static const char* _distanceToSurfaceRelativeName;
-    static const char* _imageDensityName;
-    static const char* _frontalOverlapName;
-    static const char* _sideOverlapName;
-    static const char* _adjustedFootprintSideName;
-    static const char* _adjustedFootprintFrontalName;
-    static const char* _jsonCameraNameKey;
 
     // The following are deprecated usage and only included in order to convert older formats
 

@@ -711,7 +711,7 @@ QString PlanManager::_ackTypeToString(AckType_t ackType)
 
 QString PlanManager::_lastMissionReqestString(MAV_MISSION_RESULT result)
 {
-    if (_lastMissionRequest != -1 && _lastMissionRequest >= 0 && _lastMissionRequest < _writeMissionItems.count()) {
+    if (_lastMissionRequest >= 0 && _lastMissionRequest < _writeMissionItems.count()) {
         MissionItem* item = _writeMissionItems[_lastMissionRequest];
 
         switch (result) {

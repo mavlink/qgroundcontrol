@@ -13,8 +13,6 @@
 
 #include "AutoPilotPlugin.h"
 #include "QGCApplication.h"
-#include "ParameterManager.h"
-#include "UAS.h"
 #include "FirmwarePlugin.h"
 
 AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -28,7 +26,7 @@ AutoPilotPlugin::AutoPilotPlugin(Vehicle* vehicle, QObject* parent)
 
 AutoPilotPlugin::~AutoPilotPlugin()
 {
-    
+
 }
 
 void AutoPilotPlugin::_recalcSetupComplete(void)

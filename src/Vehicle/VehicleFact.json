@@ -21,6 +21,27 @@
     "units":            "deg"
 },
 {
+    "name":             "rollRate",
+    "shortDescription": "Roll Rate",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg/s"
+},
+{
+    "name":             "pitchRate",
+    "shortDescription": "Pitch Rate",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg/s"
+},
+{
+    "name":             "yawRate",
+    "shortDescription": "Yaw Rate",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg/s"
+},
+{
     "name":             "groundSpeed",
     "shortDescription": "Ground Speed",
     "type":             "double",

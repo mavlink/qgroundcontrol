@@ -69,8 +69,11 @@ public:
     /// @brief Clears the persistent flag to delete all settings the next time QGroundControl is started.
     void clearDeleteAllSettingsNextBoot(void);
 
-    /// @brief Returns truee if unit test are being run
+    /// @brief Returns true if unit tests are being run
     bool runningUnitTests(void) { return _runningUnitTests; }
+
+    /// @brief Returns true if Qt debug output should be logged to a file
+    bool logOutput(void) { return _logOutput; }
 
     /// Used to report a missing Parameter. Warning will be displayed to user. Method may be called
     /// multiple times.
@@ -158,6 +161,7 @@ private:
 #endif
 
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
+    bool _logOutput;        ///< true: Log Qt debug output to file
 
     static const char*  _darkStyleFile;
     static const char*  _lightStyleFile;

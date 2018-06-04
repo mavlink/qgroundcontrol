@@ -20,19 +20,19 @@ SettingsFact::SettingsFact(QObject* parent)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-SettingsFact::SettingsFact(QString settingGroup, FactMetaData* metaData, QObject* parent)
-    : Fact(0, metaData->name(), metaData->type(), parent)
-    , _settingGroup(settingGroup)
-    , _visible(true)
+SettingsFact::SettingsFact(QString settingsGroup, FactMetaData* metaData, QObject* parent)
+    : Fact          (0, metaData->name(), metaData->type(), parent)
+    , _settingsGroup(settingsGroup)
+    , _visible      (true)
 {
     QSettings settings;
 
-    if (!_settingGroup.isEmpty()) {
-        settings.beginGroup(_settingGroup);
+    if (!_settingsGroup.isEmpty()) {
+        settings.beginGroup(_settingsGroup);
     }
 
     // Allow core plugin a chance to override the default value
-    _visible = qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(*metaData);
+    _visible = qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData);
 
     QVariant rawDefaultValue = metaData->rawDefaultValue();
@@ -60,7 +60,7 @@ const SettingsFact& SettingsFact::operator=(const SettingsFact& other)
 {
     Fact::operator=(other);
     
-    _settingGroup = other._settingGroup;
+    _settingsGroup = other._settingsGroup;
 
     return *this;
 }
@@ -69,8 +69,8 @@ void SettingsFact::_rawValueChanged(QVariant value)
 {
     QSettings settings;
 
-    if (!_settingGroup.isEmpty()) {
-        settings.beginGroup(_settingGroup);
+    if (!_settingsGroup.isEmpty()) {
+        settings.beginGroup(_settingsGroup);
     }
 
     settings.setValue(_name, value);

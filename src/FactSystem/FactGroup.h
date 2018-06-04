@@ -38,7 +38,7 @@ public:
     /// @return FactGroup for specified name, NULL if not found
     Q_INVOKABLE FactGroup* getFactGroup(const QString& name);
 
-    QStringList factNames(void) const { return _nameToFactMap.keys(); }
+    QStringList factNames(void) const { return _factNames; }
     QStringList factGroupNames(void) const { return _nameToFactGroupMap.keys(); }
 
 protected:
@@ -59,7 +59,7 @@ protected:
     QMap<QString, Fact*>            _nameToFactMap;
     QMap<QString, FactGroup*>       _nameToFactGroupMap;
     QMap<QString, FactMetaData*>    _nameToFactMetaDataMap;
-
+    QStringList                     _factNames;
 };
 
 #endif

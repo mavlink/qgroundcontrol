@@ -17,8 +17,6 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.ScreenTools   1.0
 
 FactPanel {
-    property var qgcTextFieldforwardKeysTo: this    ///< Causes all QGCTextFields to forward keys here if they have focus
-
     property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
     property real defaultTextHeight:    ScreenTools.defaultFontPixelHeight
 

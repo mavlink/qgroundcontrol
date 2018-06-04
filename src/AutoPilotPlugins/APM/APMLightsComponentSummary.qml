@@ -89,12 +89,12 @@ FactPanel {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText:  qsTr("Lights Output 1:")
+            labelText:  qsTr("Lights Output 1")
             valueText:  lightsOutModel.get(lightsLoader.lights1OutIndex).text
         }
 
         VehicleSummaryRow {
-            labelText:  qsTr("Lights Output 2:")
+            labelText:  qsTr("Lights Output 2")
             valueText:  lightsOutModel.get(lightsLoader.lights2OutIndex).text
         }
     }

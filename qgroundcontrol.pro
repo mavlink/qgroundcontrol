@@ -240,6 +240,7 @@ AndroidBuild || iOSBuild {
     QT += \
         printsupport \
         serialport \
+        charts \
 }
 
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
@@ -392,12 +393,14 @@ HEADERS += \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
+    src/comm/HeartbeatTimer.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
     src/api/QmlComponentInfo.cc \
+    src/comm/HeartbeatTimer.cc
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
@@ -432,7 +435,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/MissionManager/SimpleMissionItemTest.h \
         src/MissionManager/SpeedSectionTest.h \
         src/MissionManager/StructureScanComplexItemTest.h \
-        src/MissionManager/SurveyMissionItemTest.h \
+        src/MissionManager/SurveyComplexItemTest.h \
         src/MissionManager/TransectStyleComplexItemTest.h \
         src/MissionManager/VisualMissionItemTest.h \
         src/qgcunittest/FileDialogTest.h \
@@ -473,7 +476,7 @@ DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin {
         src/MissionManager/SimpleMissionItemTest.cc \
         src/MissionManager/SpeedSectionTest.cc \
         src/MissionManager/StructureScanComplexItemTest.cc \
-        src/MissionManager/SurveyMissionItemTest.cc \
+        src/MissionManager/SurveyComplexItemTest.cc \
         src/MissionManager/TransectStyleComplexItemTest.cc \
         src/MissionManager/VisualMissionItemTest.cc \
         src/qgcunittest/FileDialogTest.cc \
@@ -512,6 +515,7 @@ HEADERS += \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
     src/JsonHelper.h \
+    src/KMLFileHelper.h \
     src/LogCompressor.h \
     src/MG.h \
     src/MissionManager/CameraCalc.h \
@@ -545,7 +549,7 @@ HEADERS += \
     src/MissionManager/Section.h \
     src/MissionManager/SpeedSection.h \
     src/MissionManager/StructureScanComplexItem.h \
-    src/MissionManager/SurveyMissionItem.h \
+    src/MissionManager/SurveyComplexItem.h \
     src/MissionManager/TransectStyleComplexItem.h \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
@@ -588,6 +592,7 @@ HEADERS += \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
     src/Terrain/TerrainQuery.h \
+    src/TerrainTile.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
@@ -709,6 +714,7 @@ SOURCES += \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
+    src/KMLFileHelper.cc \
     src/LogCompressor.cc \
     src/MissionManager/CameraCalc.cc \
     src/MissionManager/CameraSection.cc \
@@ -740,7 +746,7 @@ SOURCES += \
     src/MissionManager/SimpleMissionItem.cc \
     src/MissionManager/SpeedSection.cc \
     src/MissionManager/StructureScanComplexItem.cc \
-    src/MissionManager/SurveyMissionItem.cc \
+    src/MissionManager/SurveyComplexItem.cc \
     src/MissionManager/TransectStyleComplexItem.cc \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \
@@ -782,6 +788,7 @@ SOURCES += \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
     src/Terrain/TerrainQuery.cc \
+    src/TerrainTile.cc\
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
@@ -1057,7 +1064,7 @@ HEADERS += \
     src/FactSystem/FactGroup.h \
     src/FactSystem/FactMetaData.h \
     src/FactSystem/FactSystem.h \
-    src/FactSystem/FactValidator.h \
+    src/FactSystem/FactValueSliderListModel.h \
     src/FactSystem/ParameterManager.h \
     src/FactSystem/SettingsFact.h \
 
@@ -1067,7 +1074,7 @@ SOURCES += \
     src/FactSystem/FactGroup.cc \
     src/FactSystem/FactMetaData.cc \
     src/FactSystem/FactSystem.cc \
-    src/FactSystem/FactValidator.cc \
+    src/FactSystem/FactValueSliderListModel.cc \
     src/FactSystem/ParameterManager.cc \
     src/FactSystem/SettingsFact.cc \
 

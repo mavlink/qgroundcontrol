@@ -74,6 +74,8 @@ private:
     QObject*            _currentRallyPoint;
     bool                _itemsRequested;
 
+    static const int _jsonCurrentVersion = 2;
+
     static const char* _jsonFileTypeValue;
     static const char* _jsonPointsKey;
 };

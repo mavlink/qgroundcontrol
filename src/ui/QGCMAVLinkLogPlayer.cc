@@ -15,10 +15,11 @@
 #include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 
-QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(QWidget *parent) :
-    QWidget(parent),
-    _replayLink(NULL),
-    _ui(new Ui::QGCMAVLinkLogPlayer)
+QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(QWidget *parent)
+    : QWidget           (parent)
+    , _replayLink       (NULL)
+    , _lastCurrentTime  (0)
+    , _ui               (new Ui::QGCMAVLinkLogPlayer)
 {
     _ui->setupUi(this);
     _ui->horizontalLayout->setAlignment(Qt::AlignTop);
@@ -81,8 +82,6 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
         return;
     }
 
-    LinkInterface* createConnectedLink(LinkConfiguration* config);
-
     LogReplayLinkConfiguration* linkConfig = new LogReplayLinkConfiguration(QString("Log Replay"));
     linkConfig->setLogFilename(logFilename);
     linkConfig->setName(linkConfig->logFilenameShort());
@@ -92,11 +91,12 @@ void QGCMAVLinkLogPlayer::_selectLogFileForPlayback(void)
     SharedLinkConfigurationPointer sharedConfig = linkMgr->addConfiguration(linkConfig);
     _replayLink = (LogReplayLink*)qgcApp()->toolbox()->linkManager()->createConnectedLink(sharedConfig);
 
-    connect(_replayLink, &LogReplayLink::logFileStats, this, &QGCMAVLinkLogPlayer::_logFileStats);
-    connect(_replayLink, &LogReplayLink::playbackStarted, this, &QGCMAVLinkLogPlayer::_playbackStarted);
-    connect(_replayLink, &LogReplayLink::playbackPaused, this, &QGCMAVLinkLogPlayer::_playbackPaused);
-    connect(_replayLink, &LogReplayLink::playbackPercentCompleteChanged, this, &QGCMAVLinkLogPlayer::_playbackPercentCompleteChanged);
-    connect(_replayLink, &LogReplayLink::disconnected, this, &QGCMAVLinkLogPlayer::_replayLinkDisconnected);
+    connect(_replayLink, &LogReplayLink::logFileStats,                      this, &QGCMAVLinkLogPlayer::_logFileStats);
+    connect(_replayLink, &LogReplayLink::playbackStarted,                   this, &QGCMAVLinkLogPlayer::_playbackStarted);
+    connect(_replayLink, &LogReplayLink::playbackPaused,                    this, &QGCMAVLinkLogPlayer::_playbackPaused);
+    connect(_replayLink, &LogReplayLink::playbackPercentCompleteChanged,    this, &QGCMAVLinkLogPlayer::_playbackPercentCompleteChanged);
+    connect(_replayLink, &LogReplayLink::currentLogTimeSecs,                this, &QGCMAVLinkLogPlayer::_setCurrentLogTime);
+    connect(_replayLink, &LogReplayLink::disconnected,                      this, &QGCMAVLinkLogPlayer::_replayLinkDisconnected);
 
     _ui->positionSlider->setValue(0);
 #if 0
@@ -133,7 +133,7 @@ void QGCMAVLinkLogPlayer::_logFileStats(bool    logTimestamped,         ///< tru
 
     _logDurationSeconds = logDurationSeconds;
 
-    _ui->logStatsLabel->setText(_secondsToHMS(logDurationSeconds));
+    _ui->logLengthTime->setText(_secondsToHMS(logDurationSeconds));
 }
 
 /// Signalled from LogReplayLink when replay starts
@@ -207,4 +207,12 @@ void QGCMAVLinkLogPlayer::_replayLinkDisconnected(void)
 {
     _enablePlaybackControls(false);
     _replayLink = NULL;
+}
+
+void QGCMAVLinkLogPlayer::_setCurrentLogTime(int secs)
+{
+    if (secs != _lastCurrentTime) {
+        _lastCurrentTime = secs;
+        _ui->logCurrentTime->setText(_secondsToHMS(secs));
+    }
 }

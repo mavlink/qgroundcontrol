@@ -54,23 +54,29 @@ void QGCFenceCircle::_setDirty(void)
 
 void QGCFenceCircle::saveToJson(QJsonObject& json)
 {
-    QGCMapCircle::saveToJson(json);
-
+    json[JsonHelper::jsonVersionKey] = _jsonCurrentVersion;
     json[_jsonInclusionKey] = _inclusion;
+    QGCMapCircle::saveToJson(json);
 }
 
 bool QGCFenceCircle::loadFromJson(const QJsonObject& json, QString& errorString)
 {
-    if (!QGCMapCircle::loadFromJson(json, errorString)) {
-        return false;
-    }
-
     errorString.clear();
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { _jsonInclusionKey, QJsonValue::Bool, true },
+        { JsonHelper::jsonVersionKey,   QJsonValue::Double, true },
+        { _jsonInclusionKey,            QJsonValue::Bool,   true },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
+        return false;
+    }
+
+    if (json[JsonHelper::jsonVersionKey].toInt() != _jsonCurrentVersion) {
+        errorString = tr("GeoFence Circle only supports version %1").arg(_jsonCurrentVersion);
+        return false;
+    }
+
+    if (!QGCMapCircle::loadFromJson(json, errorString)) {
         return false;
     }
 

@@ -104,7 +104,7 @@ public:
 
     /// Creates, connects (and adds) a link  based on the given configuration instance.
     /// Link takes ownership of config.
-    LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config);
+    LinkInterface* createConnectedLink(SharedLinkConfigurationPointer& config, bool isPX4Flow = false);
 
     // This should only be used by Qml code
     Q_INVOKABLE void createConnectedLink(LinkConfiguration* config);
@@ -203,6 +203,8 @@ private:
 #ifndef NO_SERIAL_LINK
     SerialConfiguration* _autoconnectConfigurationsContainsPort(const QString& portName);
 #endif
+
+    void _heartbeatReceived(LinkInterface* link, int vehicleId, int componentId, int vehicleFirmwareType, int vehicleType);
 
     bool    _configUpdateSuspended;                     ///< true: stop updating configuration list
     bool    _configurationsLoaded;                      ///< true: Link configurations have been loaded

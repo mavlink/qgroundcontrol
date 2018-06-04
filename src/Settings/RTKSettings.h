@@ -24,7 +24,8 @@ public:
     Fact* surveyInAccuracyLimit         (void);
     Fact* surveyInMinObservationDuration(void);
 
-    static const char* RTKSettingsGroupName;
+    static const char* name;
+    static const char* settingsGroup;
 
     static const char* surveyInAccuracyLimitName;
     static const char* surveyInMinObservationDurationName;

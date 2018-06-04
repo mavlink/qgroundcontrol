@@ -366,13 +366,14 @@ SetupPage {
                                 id:         enabledCheckBox
                                 enabled:    _activeJoystick ? _activeJoystick.calibrated : false
                                 text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
-
-                                onClicked:  _activeJoystick.outputEnabled = checked
+                                onClicked:  _activeVehicle.joystickEnabled = checked
+                                Component.onCompleted: checked = _activeVehicle.joystickEnabled
 
                                 Connections {
-                                    target: _activeJoystick
-                                    onOutputEnabledChanged: {
-                                        enabledCheckBox.checked=enabled
+                                    target: _activeVehicle
+
+                                    onJoystickEnabledChanged: {
+                                        enabledCheckBox.checked = _activeVehicle.joystickEnabled
                                     }
                                 }
 
@@ -527,6 +528,24 @@ SetupPage {
                                     model:          _activeVehicle.joystickModes
 
                                     onActivated: _activeVehicle.joystickMode = index
+                                }
+                            }
+
+                            Row {
+                                width:      parent.width
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    advancedSettings.checked
+                                QGCLabel {
+                                    text:       qsTr("Message frequency (Hz):")
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                QGCTextField {
+                                    text:       _activeJoystick.frequency
+                                    validator:  DoubleValidator { bottom: 0.25; top: 100.0; }
+                                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                    onEditingFinished: {
+                                        _activeJoystick.frequency = parseFloat(text)
+                                    }
                                 }
                             }
 

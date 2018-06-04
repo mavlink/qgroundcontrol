@@ -94,6 +94,7 @@ signals:
     void playbackAtEnd(void);
     void playbackError(void);
     void playbackPercentCompleteChanged(int percentComplete);
+    void currentLogTimeSecs(int secs);
 
     // Internal signals
     void _playOnThread(void);

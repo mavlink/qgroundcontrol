@@ -1,6 +1,9 @@
 buildscript {
+
     repositories {
-        jcenter()
+        maven  {
+            url "http://repo1.maven.org/maven2"
+        }
     }
 
     dependencies {
@@ -49,6 +52,10 @@ android {
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
        }
+    }
+
+    aaptOptions {
+        cruncherEnabled = false
     }
 
     lintOptions {

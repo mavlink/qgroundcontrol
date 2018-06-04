@@ -348,9 +348,9 @@ SetupPage {
                 } // QGCGroupBox - Battery settings
 
                 QGCGroupBox {
-                    anchors.left:   batteryGroup.left
-                    anchors.right:  batteryGroup.right
-                    title:          qsTr("ESC PWM Minimum and Maximum Calibration")
+                    Layout.maximumWidth:    batteryGroup.width
+                    Layout.fillWidth:       true
+                    title:                  qsTr("ESC PWM Minimum and Maximum Calibration")
 
                     ColumnLayout {
                         anchors.left:   parent.left
@@ -383,10 +383,10 @@ SetupPage {
                 }
 
                 QGCGroupBox {
-                    anchors.left:   batteryGroup.left
-                    anchors.right:  batteryGroup.right
-                    title:          qsTr("UAVCAN Bus Configuration")
-                    visible:        showUAVCAN.checked
+                    Layout.maximumWidth:    batteryGroup.width
+                    Layout.fillWidth:       true
+                    title:                  qsTr("UAVCAN Bus Configuration")
+                    visible:                showUAVCAN.checked
 
                     Row {
                         id:         uavCanConfigRow
@@ -407,10 +407,10 @@ SetupPage {
                 }
 
                 QGCGroupBox {
-                    anchors.left:   batteryGroup.left
-                    anchors.right:  batteryGroup.right
-                    title:          qsTr("UAVCAN Motor Index and Direction Assignment")
-                    visible:        showUAVCAN.checked
+                    Layout.maximumWidth:    batteryGroup.width
+                    Layout.fillWidth:       true
+                    title:                  qsTr("UAVCAN Motor Index and Direction Assignment")
+                    visible:                showUAVCAN.checked
 
                     ColumnLayout {
                         anchors.left:   parent.left
@@ -456,10 +456,10 @@ SetupPage {
                 }
 
                 QGCGroupBox {
-                    anchors.left:   batteryGroup.left
-                    anchors.right:  batteryGroup.right
-                    title:          qsTr("Advanced Power Settings")
-                    visible:        showAdvanced.checked
+                    Layout.maximumWidth:    batteryGroup.width
+                    Layout.fillWidth:       true
+                    title:                  qsTr("Advanced Power Settings")
+                    visible:                showAdvanced.checked
 
                     ColumnLayout {
                         anchors.left:   parent.left
@@ -487,7 +487,7 @@ SetupPage {
                             text:               qsTr("Batteries show less voltage at high throttle. Enter the difference in Volts between idle throttle and full ") +
                                                 qsTr("throttle, divided by the number of battery cells. Leave at the default if unsure. ") +
                                                 highlightPrefix + qsTr("If this value is set too high, the battery might be deep discharged and damaged.") + highlightSuffix
-                            Layout.fillWidth:   true
+                            Layout.maximumWidth: ScreenTools.defaultFontPixelWidth * 60
                         }
 
                         Row {

@@ -213,6 +213,31 @@ QGCView {
         }
     }
 
+    QGCFileDialog {
+        id:             fileDialog
+        qgcView:        offlineMapView
+        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
+        nameFilters:    ["Tile Sets (*.qgctiledb)"]
+        fileExtension:  "qgctiledb"
+
+        onAcceptedForSave: {
+            if (QGroundControl.mapEngineManager.exportSets(file)) {
+                rootLoader.sourceComponent = exportToDiskProgress
+            } else {
+                showList()
+            }
+            close()
+        }
+
+        onAcceptedForLoad: {
+            if(!QGroundControl.mapEngineManager.importSets(file)) {
+                showList();
+                mainWindow.enableToolbar()
+            }
+            close()
+        }
+    }
+
     MessageDialog {
         id:         errorDialog
         visible:    false
@@ -433,7 +458,7 @@ QGCView {
                     Row {
                         spacing:    ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
-                        visible:    !_defaultSet
+                        visible:    !_defaultSet && mapType !== "Airmap Elevation Data"
                         QGCLabel {  text: qsTr("Zoom Levels:"); width: infoView._labelWidth; }
                         QGCLabel {  text: offlineMapView._currentSelection ? (offlineMapView._currentSelection.minZoom + " - " + offlineMapView._currentSelection.maxZoom) : ""; horizontalAlignment: Text.AlignRight; width: infoView._valueWidth; }
                     }
@@ -728,6 +753,16 @@ QGCView {
                                 } else {
                                     mapCombo.currentIndex = index
                                 }
+                            }
+                        }
+                        QGCCheckBox {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            text:           qsTr("Fetch elevation data")
+                            checked:        QGroundControl.mapEngineManager.fetchElevation
+                            onClicked: {
+                                QGroundControl.mapEngineManager.fetchElevation = checked
+                                handleChanges()
                             }
                         }
                     }
@@ -1034,10 +1069,9 @@ QGCView {
                 width:          _bigButtonSize
                 enabled:        QGroundControl.mapEngineManager.selectedCount > 0
                 onClicked: {
-                    showList();
-                    if(QGroundControl.mapEngineManager.exportSets()) {
-                        rootLoader.sourceComponent = exportToDiskProgress
-                    }
+                    fileDialog.title = qsTr("Export Tile Set")
+                    fileDialog.selectExisting = false
+                    fileDialog.openForSave()
                 }
             }
             QGCButton {
@@ -1190,11 +1224,10 @@ QGCView {
                             text:           qsTr("Import")
                             width:          _bigButtonSize * 1.25
                             onClicked: {
-                                if(!QGroundControl.mapEngineManager.importSets()) {
-                                    showList();
-                                    mainWindow.enableToolbar()
-                                    rootLoader.sourceComponent = null
-                                }
+                                rootLoader.sourceComponent = null
+                                fileDialog.title = qsTr("Import Tile Set")
+                                fileDialog.selectExisting = true
+                                fileDialog.openForLoad()
                             }
                         }
                         QGCButton {

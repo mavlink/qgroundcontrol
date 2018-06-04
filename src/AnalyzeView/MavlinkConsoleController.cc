@@ -33,10 +33,23 @@ MavlinkConsoleController::~MavlinkConsoleController()
 void
 MavlinkConsoleController::sendCommand(QString command)
 {
+    _history.append(command);
     command.append("\n");
     _sendSerialData(qPrintable(command));
     _cursor_home_pos = -1;
     _cursor = rowCount();
+}
+
+QString
+MavlinkConsoleController::historyUp(const QString& current)
+{
+    return _history.up(current);
+}
+
+QString
+MavlinkConsoleController::historyDown(const QString& current)
+{
+    return _history.down(current);
 }
 
 void
@@ -191,4 +204,44 @@ MavlinkConsoleController::writeLine(int line, const QByteArray &text)
     }
     auto idx = index(line);
     setData(idx, data(idx, Qt::DisplayRole).toString() + text);
+}
+
+void MavlinkConsoleController::CommandHistory::append(const QString& command)
+{
+    if (command.length() > 0) {
+
+        // do not append duplicates
+        if (_history.length() == 0 || _history.last() != command) {
+
+            if (_history.length() >= maxHistoryLength) {
+                _history.removeFirst();
+            }
+            _history.append(command);
+        }
+    }
+    _index = _history.length();
+}
+
+QString MavlinkConsoleController::CommandHistory::up(const QString& current)
+{
+    if (_index <= 0)
+        return current;
+
+    --_index;
+    if (_index < _history.length()) {
+        return _history[_index];
+    }
+    return "";
+}
+
+QString MavlinkConsoleController::CommandHistory::down(const QString& current)
+{
+    if (_index >= _history.length())
+        return current;
+
+    ++_index;
+    if (_index < _history.length()) {
+        return _history[_index];
+    }
+    return "";
 }

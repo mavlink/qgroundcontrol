@@ -120,6 +120,10 @@ Item {
     Item {
         id: dropDownItem
 
+        DeadMouseArea {
+            anchors.fill: parent
+        }
+
         Canvas {
             id:             arrowCanvas
             anchors.fill:   parent
@@ -155,8 +159,12 @@ Item {
                 x:  _dropMargin
                 y:  _dropMargin
 
+                onHeightChanged:    _calcPositions()
+                onWidthChanged:     _calcPositions()
+
                 property var dropPanel: _root
             }
         }
+
     } // Item - dropDownItem
 }
