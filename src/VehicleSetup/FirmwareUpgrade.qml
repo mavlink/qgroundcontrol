@@ -354,7 +354,7 @@ SetupPage {
                         Row {
                             width:      parent.width
                             spacing:    ScreenTools.defaultFontPixelWidth / 2
-                            visible:    !px4Flow
+                            visible:    !px4Flow && false //===> Needs to come from elsewhere defining if we're to enable Beta/Dev options
 
                             Rectangle {
                                 height:     1
@@ -366,7 +366,7 @@ SetupPage {
                             QGCCheckBox {
                                 id:         _advanced
                                 text:       qsTr("Advanced settings")
-                                checked:    px4Flow ? true : false
+                                checked:    false // px4Flow ? true : false
 
                                 onClicked: {
                                     firmwareVersionCombo.currentIndex = 0

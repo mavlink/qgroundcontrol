@@ -194,24 +194,30 @@ void FirmwareUpgradeController::_initFirmwareHash()
     //////////////////////////////////// PX4FMUV5 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV5FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "https://d1w1f26ur6nple.cloudfront.net/Firmware/stable/px4fmu-v5_default.px4"},
+    #if 0
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v5_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v5_default.px4"},
+    #endif
         { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
     };
 
     //////////////////////////////////// PX4FMUV4PRO firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV4PROFirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "https://d1w1f26ur6nple.cloudfront.net/Firmware/stable/px4fmu-v4pro_default.px4"},
+    #if 0
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v4pro_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v4pro_default.px4"},
+    #endif
         { SingleFirmwareMode,StableFirmware,    DefaultVehicleFirmware, _singleFirmwareURL},
     };
 
     //////////////////////////////////// PX4FMUV4 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV4FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "https://d1w1f26ur6nple.cloudfront.net/Firmware/stable/px4fmu-v4_default.px4"},
+    #if 0
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v4_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v4_default.px4"},
+    #endif
     #if !defined(NO_ARDUPILOT_DIALECT)
         { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v4.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v4.px4"},
@@ -232,8 +238,10 @@ void FirmwareUpgradeController::_initFirmwareHash()
     //////////////////////////////////// PX4FMUV3 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV3FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "https://d1w1f26ur6nple.cloudfront.net/Firmware/stable/px4fmu-v3_default.px4"},
+    #if 0
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v3_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v3_default.px4"},
+    #endif
     #if !defined(NO_ARDUPILOT_DIALECT)
         { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v3.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v3.px4"},
@@ -257,8 +265,10 @@ void FirmwareUpgradeController::_initFirmwareHash()
     //////////////////////////////////// PX4FMUV2 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FMV2FirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "https://d1w1f26ur6nple.cloudfront.net/Firmware/stable/px4fmu-v2_default.px4"},
+    #if 0
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/px4fmu-v2_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/px4fmu-v2_default.px4"},
+    #endif
     #if !defined(NO_ARDUPILOT_DIALECT)
         { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v2.px4"},
