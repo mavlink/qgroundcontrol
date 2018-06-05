@@ -132,7 +132,7 @@ Rectangle {
                         text:           qsTr("TerrF")
                         exclusiveGroup: altRadios
                         checked:        missionItem.altitudeMode === altModeValue
-                        visible:        missionItem.supportsTerrainFrame || missionItem.altitudeMode === altModeValue
+                        visible:        missionItem.altitudeMode === altModeValue
 
                         readonly property int       altModeValue:   _altModeTerrainFrame
                         readonly property string    helpText:       qsTr("Using terrain reference frame")
