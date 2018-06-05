@@ -6,6 +6,7 @@
         <file alias="APMCameraComponentSummary.qml">../../AutoPilotPlugins/APM/APMCameraComponentSummary.qml</file>
         <file alias="APMFlightModesComponent.qml">../../AutoPilotPlugins/APM/APMFlightModesComponent.qml</file>
         <file alias="APMFlightModesComponentSummary.qml">../../AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml</file>
+        <file alias="APMHeliComponent.qml">../../AutoPilotPlugins/APM/APMHeliComponent.qml</file>
         <file alias="APMLightsComponent.qml">../../AutoPilotPlugins/APM/APMLightsComponent.qml</file>
         <file alias="APMLightsComponentSummary.qml">../../AutoPilotPlugins/APM/APMLightsComponentSummary.qml</file>
         <file alias="APMSubFrameComponent.qml">../../AutoPilotPlugins/APM/APMSubFrameComponent.qml</file>
