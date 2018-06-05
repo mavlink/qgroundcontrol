@@ -183,9 +183,13 @@ SetupPage {
                                 }
                                 vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
                             } else {
-                                stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
-                                if (apmFlightStack.checked) {
-                                    vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+                                if(QGroundControl.hasAPMSupport) {
+                                    stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
+                                    if (apmFlightStack.checked) {
+                                        vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+                                    }
+                                } else {
+                                    stack = FirmwareUpgradeController.AutoPilotStackPX4
                                 }
                             }
 
