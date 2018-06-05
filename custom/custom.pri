@@ -90,3 +90,38 @@ equals(QT_MAJOR_VERSION, 5) {
         }
     }
 }
+
+#-------------------------------------------------------------------------------------
+# Android
+
+AndroidBuild {
+    CONFIG += DISABLE_BUILTIN_ANDROID
+    ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
+    include($$QGCROOT/libs/qtandroidserialport/src/qtandroidserialport.pri)
+    message("Adding Custom Serial Java Classes")
+    QT += androidextras
+    ANDROID_PACKAGE_SOURCE_DIR = $$QGCROOT/custom/android
+    OTHER_FILES += \
+        $$QGCROOT/custom/android/AndroidManifest.xml \
+        $$QGCROOT/custom/android/res/xml/device_filter.xml \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/CdcAcmSerialDriver.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/CommonUsbSerialDriver.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/Cp2102SerialDriver.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/FtdiSerialDriver.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/ProlificSerialDriver.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/UsbId.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/UsbSerialDriver.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
+        $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
+        $$QGCROOT/custom/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
+        $$QGCROOT/custom/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java
+
+    DISTFILES += \
+        $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.jar \
+        $$QGCROOT/custom/android/gradlew \
+        $$QGCROOT/custom/android/res/values/libs.xml \
+        $$QGCROOT/custom/android/build.gradle \
+        $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.properties \
+        $$QGCROOT/custom/android/gradlew.bat
+}
+
