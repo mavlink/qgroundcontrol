@@ -15,24 +15,18 @@ import QGroundControl.Vehicle   1.0
 
 PreFlightCheckButton {
     name:               qsTr("Sensors")
-    telemetryFailure:   (_unhealthySensors & _allCheckedSensors) || !_gpsLock || _satCountFailure
-
-    property int failureSatCount: -1    ///< -1 indicates no sat count check
+    telemetryFailure:   _unhealthySensors & _allCheckedSensors
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property int    _unhealthySensors:  _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
-    property bool   _gpsLock:           _activeVehicle ? _activeVehicle.gps.lock.rawValue >= 3 : 0
-    property int    _satCount:          _activeVehicle ? _activeVehicle.gps.count.rawValue : 0
-    property bool   _satCountFailure:   failureSatCount !== -1 && _satCount <= failureSatCount
     property int    _allCheckedSensors: Vehicle.SysStatusSensor3dMag |
                                         Vehicle.SysStatusSensor3dAccel |
                                         Vehicle.SysStatusSensor3dGyro |
                                         Vehicle.SysStatusSensorAbsolutePressure |
                                         Vehicle.SysStatusSensorDifferentialPressure |
-                                        Vehicle.SysStatusSensorGPS
+                                        Vehicle.SysStatusSensorGPS |
+                                        Vehicle.SysStatusSensorAHRS
 
-    on_GpsLockChanged:          updateTelemetryTextFailure()
-    on_SatCountFailureChanged:  updateTelemetryTextFailure()
     on_UnhealthySensorsChanged: updateTelemetryTextFailure()
 
     Component.onCompleted: updateTelemetryTextFailure()
@@ -44,11 +38,8 @@ PreFlightCheckButton {
             else if(_unhealthySensors & Vehicle.SysStatusSensor3dGyro)                  telemetryTextFailure = qsTr("Failure. Gyroscope issues. Check console.")
             else if(_unhealthySensors & Vehicle.SysStatusSensorAbsolutePressure)        telemetryTextFailure = qsTr("Failure. Barometer issues. Check console.")
             else if(_unhealthySensors & Vehicle.SysStatusSensorDifferentialPressure)    telemetryTextFailure = qsTr("Failure. Airspeed sensor issues. Check console.")
-            else if(_unhealthySensors & Vehicle.SysStatusSensorGPS)                     telemetryTextFailure = qsTr("Failure. No valid or low quality GPS signal. Check console.")
-        } else if (!_gpsLock) {
-            telemetryTextFailure = qsTr("Pending. Waiting for GPS lock.")
-        } else if (_satCountFailure) {
-            telemetryTextFailure = qsTr("Pending. Waiting for Sat Count > %1.").arg(failureSatCount)
+            else if(_unhealthySensors & Vehicle.SysStatusSensorAHRS)                    telemetryTextFailure = qsTr("Failure. AHRS issues. Check console.")
+            else if(_unhealthySensors & Vehicle.SysStatusSensorGPS)                     telemetryTextFailure = qsTr("Failure. GPS issues. Check console.")
         }
     }
 }

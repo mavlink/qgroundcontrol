@@ -59,7 +59,7 @@ const char* SurveyComplexItem::_jsonV3FixedValueIsAltitudeKey =         "fixedVa
 const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90Degrees";
 const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
 
-SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
+SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
     : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
@@ -91,6 +91,12 @@ SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, QObject* pa
     // FIXME: Shouldn't these be in TransectStyleComplexItem? They are also in CorridorScanComplexItem constructur
     connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+
+    if (!kmlFile.isEmpty()) {
+        _surveyAreaPolygon.loadKMLFile(kmlFile);
+        _surveyAreaPolygon.setDirty(false);
+    }
+    setDirty(false);
 }
 
 void SurveyComplexItem::save(QJsonArray&  planItems)

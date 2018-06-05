@@ -665,6 +665,8 @@ void TerrainPolyPathQuery::requestData(const QVariantList& polyPath)
 
 void TerrainPolyPathQuery::requestData(const QList<QGeoCoordinate>& polyPath)
 {
+    qCDebug(TerrainQueryLog) << "TerrainPolyPathQuery::requestData count" << polyPath.count();
+
     // Kick off first request
     _rgCoords = polyPath;
     _curIndex = 0;
@@ -673,6 +675,8 @@ void TerrainPolyPathQuery::requestData(const QList<QGeoCoordinate>& polyPath)
 
 void TerrainPolyPathQuery::_terrainDataReceived(bool success, const TerrainPathQuery::PathHeightInfo_t& pathHeightInfo)
 {
+    qCDebug(TerrainQueryLog) << "TerrainPolyPathQuery::_terrainDataReceived success:_curIndex" << success << _curIndex;
+
     if (!success) {
         _rgPathHeightInfo.clear();
         emit terrainData(false /* success */, _rgPathHeightInfo);
@@ -683,6 +687,7 @@ void TerrainPolyPathQuery::_terrainDataReceived(bool success, const TerrainPathQ
 
     if (++_curIndex >= _rgCoords.count() - 1) {
         // We've finished all requests
+        qCDebug(TerrainQueryLog) << "TerrainPolyPathQuery::_terrainDataReceived complete";
         emit terrainData(true /* success */, _rgPathHeightInfo);
     } else {
         _pathQuery.requestData(_rgCoords[_curIndex], _rgCoords[_curIndex+1]);

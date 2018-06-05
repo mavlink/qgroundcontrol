@@ -987,33 +987,25 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
         return;
     }
 
-    if (vehicle->fixedWing()) {
-        // Fixed wing will automatically start a mission if you switch to Auto while armed
-        if (!vehicle->armed()) {
-            // First switch to flight mode we can arm from
-            if (!_setFlightModeAndValidate(vehicle, "Guided")) {
-                qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
-                return;
-            }
-
-            if (!_armVehicleAndValidate(vehicle)) {
-                qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
-                return;
-            }
-        }
-    } else {
-        // Copter will automatically start a mission from the ground if you change to Auto and do a START+MIS
-        if (!_setFlightModeAndValidate(vehicle, "Auto")) {
+    if (!vehicle->armed()) {
+        // First switch to flight mode we can arm from
+        if (!_setFlightModeAndValidate(vehicle, "Guided")) {
             qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Guided mode."));
             return;
         }
 
-        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
+        if (!_armVehicleAndValidate(vehicle)) {
+            qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to arm."));
+            return;
+        }
     }
 
-    // Final step is to go into Auto
-    if (!_setFlightModeAndValidate(vehicle, "Auto")) {
-        qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
-        return;
+    if (vehicle->fixedWing()) {
+        if (!_setFlightModeAndValidate(vehicle, "Auto")) {
+            qgcApp()->showMessage(tr("Unable to start mission: Vehicle failed to change to Auto mode."));
+            return;
+        }
+    } else {
+        vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
 }
