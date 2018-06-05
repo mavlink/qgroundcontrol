@@ -29,7 +29,7 @@ void SurveyComplexItemTest::init(void)
     _rgSurveySignals[surveyDirtyChangedIndex] =                   SIGNAL(dirtyChanged(bool));
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _surveyItem = new SurveyComplexItem(_offlineVehicle, false /* flyView */, this);
+    _surveyItem = new SurveyComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     _surveyItem->turnAroundDistance()->setRawValue(0);  // Unit test written for no turnaround distance
     _surveyItem->setDirty(false);
     _mapPolygon = _surveyItem->surveyAreaPolygon();

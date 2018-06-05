@@ -23,7 +23,7 @@ void CorridorScanComplexItemTest::init(void)
     UnitTest::init();
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _corridorItem = new CorridorScanComplexItem(_offlineVehicle, false /* flyView */, this);
+    _corridorItem = new CorridorScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
 
     // vehicleSpeed need for terrain calcs
     MissionController::MissionFlightStatus_t missionFlightStatus;
