@@ -55,15 +55,15 @@ SetupPage {
             readonly property int _defaultFimwareTypePX4:   12
             readonly property int _defaultFimwareTypeAPM:   3
 
-            property var    _defaultFirmwareFact:   QGroundControl.settingsManager.appSettings.defaultFirmwareType
-            property bool   _defaultFirmwareIsPX4:  true
+            property var    _defaultFirmwareFact:       QGroundControl.settingsManager.appSettings.defaultFirmwareType
+            property bool   _defaultFirmwareIsPX4:      true
 
             property string firmwareWarningMessage
-            property bool   controllerCompleted:      false
-            property bool   initialBoardSearch:       true
+            property bool   controllerCompleted:        false
+            property bool   initialBoardSearch:         true
             property string firmwareName
 
-            property bool _singleFirmwareMode: QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
+            property bool _singleFirmwareMode:          QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
 
             function cancelFlash() {
                 statusTextArea.append(highlightPrefix + qsTr("Upgrade cancelled") + highlightSuffix)
@@ -175,14 +175,21 @@ SetupPage {
                             var stack
                             var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
-
                             if (px4Flow) {
-                                stack = px4FlowTypeSelectionCombo.model.get(px4FlowTypeSelectionCombo.currentIndex).stackType
+                                if(QGroundControl.hasAPMSupport) {
+                                    stack = px4FlowTypeSelectionCombo.model.get(px4FlowTypeSelectionCombo.currentIndex).stackType
+                                } else {
+                                    stack = FirmwareUpgradeController.PX4FlowPX4
+                                }
                                 vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
                             } else {
-                                stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
-                                if (apmFlightStack.checked) {
-                                    vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+                                if(QGroundControl.hasAPMSupport) {
+                                    stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
+                                    if (apmFlightStack.checked) {
+                                        vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+                                    }
+                                } else {
+                                    stack = FirmwareUpgradeController.AutoPilotStackPX4
                                 }
                             }
 
@@ -266,7 +273,7 @@ SetupPage {
                         QGCLabel {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
-                            text:       _singleFirmwareMode ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
+                            text:       (_singleFirmwareMode || !QGroundControl.hasAPMSupport) ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
 
                             readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:")
                             readonly property string _pixhawkLabel:          qsTr("Detected Pixhawk board. You can select from the following flight stacks:")
@@ -293,7 +300,7 @@ SetupPage {
                             text:           qsTr("PX4 Flight Stack ")
                             textBold:       _defaultFirmwareIsPX4
                             checked:        _defaultFirmwareIsPX4
-                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
+                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -307,7 +314,7 @@ SetupPage {
                             text:           qsTr("ArduPilot Flight Stack")
                             textBold:       !_defaultFirmwareIsPX4
                             checked:        !_defaultFirmwareIsPX4
-                            visible:        !_singleFirmwareMode && !px4Flow
+                            visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
@@ -319,7 +326,7 @@ SetupPage {
                             id:             px4FlightStackRadio2
                             exclusiveGroup: _defaultFirmwareIsPX4 ? null : firmwareGroup
                             text:           qsTr("PX4 Flight Stack ")
-                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
+                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -331,7 +338,7 @@ SetupPage {
                             id:             vehicleTypeSelectionCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            visible:        !px4Flow && apmFlightStack.checked
+                            visible:        !px4Flow && apmFlightStack.checked && QGroundControl.hasAPMSupport
                             model:          controller.apmAvailableVersions
                         }
 
@@ -339,7 +346,7 @@ SetupPage {
                             id:             px4FlowTypeSelectionCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            visible:        px4Flow
+                            visible:        px4Flow && QGroundControl.hasAPMSupport
                             model:          px4FlowFirmwareList
                             currentIndex:   _defaultFirmwareIsPX4 ? 0 : 1
                         }

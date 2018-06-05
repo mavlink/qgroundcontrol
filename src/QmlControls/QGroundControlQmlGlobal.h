@@ -68,6 +68,7 @@ public:
     // MavLink Protocol
     Q_PROPERTY(bool     isVersionCheckEnabled   READ isVersionCheckEnabled      WRITE setIsVersionCheckEnabled      NOTIFY isVersionCheckEnabledChanged)
     Q_PROPERTY(int      mavlinkSystemID         READ mavlinkSystemID            WRITE setMavlinkSystemID            NOTIFY mavlinkSystemIDChanged)
+    Q_PROPERTY(bool     hasAPMSupport           READ hasAPMSupport              CONSTANT)
 
     Q_PROPERTY(QGeoCoordinate flightMapPosition     READ flightMapPosition      WRITE setFlightMapPosition          NOTIFY flightMapPositionChanged)
     Q_PROPERTY(double         flightMapZoom         READ flightMapZoom          WRITE setFlightMapZoom              NOTIFY flightMapZoomChanged)
@@ -155,6 +156,11 @@ public:
 
     bool    isVersionCheckEnabled   () { return _toolbox->mavlinkProtocol()->versionCheckEnabled(); }
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
+#if defined(NO_ARDUPILOT_DIALECT)
+    bool    hasAPMSupport           () { return false; }
+#else
+    bool    hasAPMSupport           () { return true; }
+#endif
 
     int     supportedFirmwareCount  ();
     bool    skipSetupPage           () { return _skipSetupPage; }
