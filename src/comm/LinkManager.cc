@@ -121,6 +121,8 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
         }
     }
         break;
+#else
+    Q_UNUSED(isPX4Flow)
 #endif
     case LinkConfiguration::TypeUdp:
         pLink = new UDPLink(config);
