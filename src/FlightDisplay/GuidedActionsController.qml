@@ -32,7 +32,7 @@ Item {
     property var actionList
     property var altitudeSlider
 
-    readonly property string emergencyStopTitle:            qsTr("Emergency Stop")
+    readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
     readonly property string armTitle:                      qsTr("Arm")
     readonly property string disarmTitle:                   qsTr("Disarm")
     readonly property string rtlTitle:                      qsTr("RTL")
@@ -52,7 +52,7 @@ Item {
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")
     readonly property string disarmMessage:                     qsTr("Disarm the vehicle")
-    readonly property string emergencyStopMessage:              qsTr("WARNING: This will stop all motors. If vehicle is currently in air it will crash.")
+    readonly property string emergencyStopMessage:              qsTr("WARNING: THIS WILL STOP ALL MOTORS. IF VEHICLE IS CURRENTLY IN THE AIR IT WILL CRASH.")
     readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
     readonly property string startMissionMessage:               qsTr("Takeoff from ground and start the current mission.")
     readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint.")
