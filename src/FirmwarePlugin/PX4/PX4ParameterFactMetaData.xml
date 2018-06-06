@@ -5007,6 +5007,17 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
   </group>
   <group name="PWM Outputs">
+    <parameter default="0" name="MOT_ORDERING" type="INT32">
+      <short_desc>Motor Ordering</short_desc>
+      <long_desc>Determines the motor ordering. This can be used for example in combination with a 4-in-1 ESC that assumes a motor ordering which is different from PX4. ONLY supported for Quads. ONLY supported for fmu output (Pixracer or Omnibus F4). When changing this, make sure to test the motor response without props first.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <scope>drivers/px4fmu</scope>
+      <values>
+        <value code="0">PX4</value>
+        <value code="1">Betaflight / Cleanflight</value>
+      </values>
+    </parameter>
     <parameter default="0.0" name="MOT_SLEW_MAX" type="FLOAT">
       <short_desc>Minimum motor rise time (slew rate limit)</short_desc>
       <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in maximum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
@@ -7498,13 +7509,14 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
   </group>
   <group name="Return To Land">
-    <parameter default="0" name="RTL_LAND_TYPE" type="INT32">
-      <short_desc>RTL land location</short_desc>
-      <long_desc>Land at the home location or planned mission landing</long_desc>
+    <parameter default="0" name="RTL_TYPE" type="INT32">
+      <short_desc>Return type</short_desc>
+      <long_desc>Fly straight to the home location or planned mission landing and land there or use the planned mission to get to those points.</long_desc>
       <scope>modules/navigator</scope>
       <values>
-        <value code="0">Home Position</value>
-        <value code="1">Planned Landing (Mission)</value>
+        <value code="0">Return home via direct path</value>
+        <value code="1">Return to a planned mission landing, if available, via direct path, else return to home via direct path</value>
+        <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path</value>
       </values>
     </parameter>
   </group>
