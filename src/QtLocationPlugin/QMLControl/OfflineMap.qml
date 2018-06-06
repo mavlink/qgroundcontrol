@@ -364,6 +364,7 @@ QGCView {
             allowVehicleLocationCenter: false
             gesture.flickDeceleration:  3000
             mapName:                    "OfflineMap"
+            qgcView:                    offlineMapView
 
             property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
 
