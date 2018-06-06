@@ -100,7 +100,13 @@ FlightMap {
 
     function recenterNeeded() {
         var vehiclePoint = flightMap.fromCoordinate(_activeVehicleCoordinate, false /* clipToViewport */)
-        var centerViewport = Qt.rect(0, 0, width, height)
+        var toolStripRightEdge = mapFromItem(toolStrip, toolStrip.x, 0).x + toolStrip.width
+        var instrumentsWidth = 0
+        if (QGroundControl.corePlugin.options.instrumentWidget.widgetPosition === CustomInstrumentWidget.POS_TOP_RIGHT) {
+            // Assume standard instruments
+            instrumentsWidth = flightDisplayViewWidgets.getPreferredInstrumentWidth()
+        }
+        var centerViewport = Qt.rect(toolStripRightEdge, 0, width - toolStripRightEdge - instrumentsWidth, height)
         return !pointInRect(vehiclePoint, centerViewport)
     }
 
