@@ -49,54 +49,54 @@ public:
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
-    bool            running         () { return _running;   }
-    bool            recording       () { return _recording; }
-    bool            streaming       () { return _streaming; }
-    bool            starting        () { return _starting;  }
-    bool            stopping        () { return _stopping;  }
+    virtual bool            running         () { return _running;   }
+    virtual bool            recording       () { return _recording; }
+    virtual bool            streaming       () { return _streaming; }
+    virtual bool            starting        () { return _starting;  }
+    virtual bool            stopping        () { return _stopping;  }
 #endif
 
-    VideoSurface*   videoSurface    () { return _videoSurface; }
-    bool            videoRunning    () { return _videoRunning; }
-    QString         imageFile       () { return _imageFile; }
-    QString         videoFile       () { return _videoFile; }
-    bool            showFullScreen  () { return _showFullScreen; }
+    virtual VideoSurface*   videoSurface    () { return _videoSurface; }
+    virtual bool            videoRunning    () { return _videoRunning; }
+    virtual QString         imageFile       () { return _imageFile; }
+    virtual QString         videoFile       () { return _videoFile; }
+    virtual bool            showFullScreen  () { return _showFullScreen; }
 
-    void            grabImage       (QString imageFile);
+    virtual void            grabImage       (QString imageFile);
 
-    void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
+    virtual void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
 
 signals:
-    void videoRunningChanged        ();
-    void imageFileChanged           ();
-    void videoFileChanged           ();
-    void showFullScreenChanged      ();
+    void videoRunningChanged                ();
+    void imageFileChanged                   ();
+    void videoFileChanged                   ();
+    void showFullScreenChanged              ();
 #if defined(QGC_GST_STREAMING)
-    void recordingChanged           ();
-    void msgErrorReceived           ();
-    void msgEOSReceived             ();
-    void msgStateChangedReceived    ();
+    void recordingChanged                   ();
+    void msgErrorReceived                   ();
+    void msgEOSReceived                     ();
+    void msgStateChangedReceived            ();
 #endif
 
 public slots:
-    void start                      ();
-    void stop                       ();
-    void setUri                     (const QString& uri);
-    void stopRecording              ();
-    void startRecording             (const QString& videoFile = QString());
+    virtual void start                      ();
+    virtual void stop                       ();
+    virtual void setUri                     (const QString& uri);
+    virtual void stopRecording              ();
+    virtual void startRecording             (const QString& videoFile = QString());
 
-private slots:
-    void _updateTimer               ();
+protected slots:
+    virtual void _updateTimer               ();
 #if defined(QGC_GST_STREAMING)
-    void _timeout                   ();
-    void _connected                 ();
-    void _socketError               (QAbstractSocket::SocketError socketError);
-    void _handleError               ();
-    void _handleEOS                 ();
-    void _handleStateChanged        ();
+    virtual void _timeout                   ();
+    virtual void _connected                 ();
+    virtual void _socketError               (QAbstractSocket::SocketError socketError);
+    virtual void _handleError               ();
+    virtual void _handleEOS                 ();
+    virtual void _handleStateChanged        ();
 #endif
 
-private:
+protected:
 #if defined(QGC_GST_STREAMING)
 
     typedef struct
@@ -121,11 +121,12 @@ private:
     static gboolean             _onBusMessage           (GstBus* bus, GstMessage* message, gpointer user_data);
     static GstPadProbeReturn    _unlinkCallBack         (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
     static GstPadProbeReturn    _keyframeWatch          (GstPad* pad, GstPadProbeInfo* info, gpointer user_data);
-    void                        _detachRecordingBranch  (GstPadProbeInfo* info);
-    void                        _shutdownRecordingBranch();
-    void                        _shutdownPipeline       ();
-    void                        _cleanupOldVideos       ();
-    void                        _setVideoSink           (GstElement* sink);
+
+    virtual void                _detachRecordingBranch  (GstPadProbeInfo* info);
+    virtual void                _shutdownRecordingBranch();
+    virtual void                _shutdownPipeline       ();
+    virtual void                _cleanupOldVideos       ();
+    virtual void                _setVideoSink           (GstElement* sink);
 
     GstElement*     _pipeline;
     GstElement*     _pipelineStopRec;
@@ -136,6 +137,7 @@ private:
     QTimer          _timer;
     QTcpSocket*     _socket;
     bool            _serverPresent;
+    int             _rtspTestInterval_ms;
 
 #endif
 
