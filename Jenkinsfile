@@ -101,7 +101,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.9.3/clang_64/bin/qmake"
+            QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
           steps {
             sh 'export'
@@ -129,7 +129,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'installer'
-            QMAKE_VER = "5.9.3/clang_64/bin/qmake"
+            QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
           steps {
             sh 'export'
