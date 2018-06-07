@@ -112,7 +112,7 @@ QGCView {
         Component.onCompleted:  start(true /* flyView */)
     }
 
-    PreFlightCheckModel {
+    BuiltInPreFlightCheckModel {
         id: preFlightCheckModel
     }
 
