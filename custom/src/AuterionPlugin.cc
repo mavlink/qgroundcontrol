@@ -10,6 +10,7 @@
 #include <QtPositioning/QGeoPositionInfoSource>
 
 #include "QGCSettings.h"
+#include "MAVLinkLogManager.h"
 
 #include "AuterionPlugin.h"
 #include "AuterionQuickInterface.h"
@@ -64,6 +65,10 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
 {
     QGCCorePlugin::setToolbox(toolbox);
     qmlRegisterSingletonType<AuterionQuickInterface>("AuterionQuickInterface", 1, 0, "AuterionQuickInterface", auterionQuickInterfaceSingletonFactory);
+    //-- Enable automatic logging
+    toolbox->mavlinkLogManager()->setEnableAutoStart(true);
+    toolbox->mavlinkLogManager()->setEnableAutoUpload(true);
+    toolbox->mavlinkLogManager()->setUploadURL("https://airlango.auterion.com/upload");
 }
 
 //-----------------------------------------------------------------------------
@@ -96,4 +101,3 @@ AuterionPlugin::overrideSettingsGroupVisibility(QString name)
     }
     return true;
 }
-
