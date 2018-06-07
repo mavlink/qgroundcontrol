@@ -34,7 +34,7 @@ FactPanel {
             model: 3
 
             VehicleSummaryRow {
-                labelText:  qsTr("Compass ") + (index + 1) + ":"
+                labelText:  qsTr("Compass ") + (index + 1) + ""
                 valueText:  sensorParams.rgCompassAvailable[index] ?
                                 (sensorParams.rgCompassCalibrated[index] ?
                                      (sensorParams.rgCompassPrimary[index] ? "Primary" : "Secondary") +
@@ -47,7 +47,7 @@ FactPanel {
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Accelerometer(s):")
+            labelText: qsTr("Accelerometer(s)")
             valueText: controller.accelSetupNeeded ? qsTr("Setup required") : qsTr("Ready")
         }
     }

@@ -10,6 +10,28 @@
 #include "LinkInterface.h"
 #include "QGCApplication.h"
 
+bool LinkInterface::active() const
+{
+    QMapIterator<int /* vehicle id */, HeartbeatTimer*> iter(_heartbeatTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        if (iter.value()->getActive()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool LinkInterface::link_active(int vehicle_id) const
+{
+    if (_heartbeatTimers.contains(vehicle_id)) {
+        return _heartbeatTimers.value(vehicle_id)->getActive();
+    } else {
+        return false;
+    }
+}
+
 /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
 /// set into the link when it is added to LinkManager
 uint8_t LinkInterface::mavlinkChannel(void) const
@@ -20,15 +42,17 @@ uint8_t LinkInterface::mavlinkChannel(void) const
     return _mavlinkChannel;
 }
 // Links are only created by LinkManager so constructor is not public
-LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
+LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config, bool isPX4Flow)
     : QThread                   (0)
     , _config                   (config)
     , _highLatency              (config->isHighLatency())
     , _mavlinkChannelSet        (false)
-    , _active                   (false)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
+    , _isPX4Flow                (isPX4Flow)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+
     _config->setLink(this);
 
     // Initialize everything for the data rate calculation buffers.
@@ -158,4 +182,30 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     }
     _mavlinkChannelSet = true;
     _mavlinkChannel = channel;
+}
+
+void LinkInterface::_activeChanged(bool active, int vehicle_id)
+{
+    emit activeChanged(this, active, vehicle_id);
+}
+
+void LinkInterface::startHeartbeatTimer(int vehicle_id) {
+    if (_heartbeatTimers.contains(vehicle_id)) {
+        _heartbeatTimers.value(vehicle_id)->restartTimer();
+    } else {
+        _heartbeatTimers.insert(vehicle_id, new HeartbeatTimer(vehicle_id, _highLatency));
+        QObject::connect(_heartbeatTimers.value(vehicle_id), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
+    }
+}
+
+void LinkInterface::stopHeartbeatTimer() {
+    QMapIterator<int /* vehicle id */, HeartbeatTimer*> iter(_heartbeatTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        QObject::disconnect(iter.value(), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        delete _heartbeatTimers[iter.key()];
+        _heartbeatTimers[iter.key()] = nullptr;
+    }
+
+    _heartbeatTimers.clear();
 }

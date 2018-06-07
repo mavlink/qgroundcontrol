@@ -15,6 +15,7 @@
 #include "SettingsManager.h"
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
+#include "VideoReceiver.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -190,8 +191,13 @@ bool QGCCorePlugin::overrideSettingsGroupVisibility(QString name)
     return true;
 }
 
-bool QGCCorePlugin::adjustSettingMetaData(FactMetaData& metaData)
+bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
+    if (settingsGroup != AppSettings::settingsGroup) {
+        // All changes refer to AppSettings
+        return true;
+    }
+
     //-- Default Palette
     if (metaData.name() == AppSettings::indoorPaletteName) {
         QVariant outdoorPalette;
@@ -280,4 +286,9 @@ bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlin
 QmlObjectListModel* QGCCorePlugin::customMapItems(void)
 {
     return &_p->_emptyCustomMapItems;
+}
+
+VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
+{
+    return new VideoReceiver(parent);
 }

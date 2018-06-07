@@ -12,12 +12,14 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* BrandImageSettings::brandImageSettingsGroupName =   "BrandImage";
-const char* BrandImageSettings::userBrandImageIndoorName =      "UserBrandImageIndoor";
-const char* BrandImageSettings::userBrandImageOutdoorName =     "UserBrandImageOutdoor";
+const char* BrandImageSettings::name =                      "BrandImage";
+const char* BrandImageSettings::settingsGroup =             ""; // settings are in root group
+
+const char* BrandImageSettings::userBrandImageIndoorName =  "UserBrandImageIndoor";
+const char* BrandImageSettings::userBrandImageOutdoorName = "UserBrandImageOutdoor";
 
 BrandImageSettings::BrandImageSettings(QObject* parent)
-    : SettingsGroup(brandImageSettingsGroupName, QString() /* root settings group */, parent)
+    : SettingsGroup(name, settingsGroup, parent)
     , _userBrandImageIndoorFact(NULL)
     , _userBrandImageOutdoorFact(NULL)
 {

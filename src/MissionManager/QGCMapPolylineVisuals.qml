@@ -120,10 +120,35 @@ Item {
         selectExisting: true
         nameFilters:    [ qsTr("KML files (*.kml)") ]
 
-
         onAcceptedForLoad: {
             mapPolyline.loadKMLFile(file)
             close()
+        }
+    }
+
+    Menu {
+        id: menu
+        property int _removeVertexIndex
+
+        function popUpWithIndex(curIndex) {
+            _removeVertexIndex = curIndex
+            removeVertexItem.visible = mapPolyline.count > 2
+            menu.popup()
+        }
+
+        MenuItem {
+            id:             removeVertexItem
+            text:           qsTr("Remove vertex" )
+            onTriggered:    mapPolyline.removeVertex(menu._removeVertexIndex)
+        }
+
+        MenuSeparator {
+            visible:        removeVertexItem.visible
+        }
+
+        MenuItem {
+            text:           qsTr("Load KML...")
+            onTriggered:    kmlLoadDialog.openForLoad()
         }
     }
 
@@ -152,7 +177,7 @@ Item {
                 width:          ScreenTools.defaultFontPixelHeight * 1.5
                 height:         width
                 radius:         width / 2
-                border.color:      "white"
+                border.color:   "white"
                 color:          "transparent"
                 opacity:        .50
                 z:              _zorderSplitHandle
@@ -227,7 +252,10 @@ Item {
                 }
             }
 
-            onClicked: mapPolyline.removeVertex(polylineVertex)
+            onClicked: {
+                menu.popUpWithIndex(polylineVertex)
+            }
+
         }
     }
 
@@ -243,12 +271,13 @@ Item {
             property int polylineVertex
 
             sourceItem: Rectangle {
-                id:         dragHandle
-                width:      ScreenTools.defaultFontPixelHeight * 1.5
-                height:     width
-                radius:     width / 2
-                color:      "white"
-                opacity:    .90
+                id:             dragHandle
+                width:          ScreenTools.defaultFontPixelHeight * 1.5
+                height:         width
+                radius:         width * 0.5
+                color:          Qt.rgba(1,1,1,0.8)
+                border.color:   Qt.rgba(0,0,0,0.25)
+                border.width:   1
             }
         }
     }

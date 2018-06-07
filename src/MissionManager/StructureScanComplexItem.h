@@ -25,18 +25,18 @@ class StructureScanComplexItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    StructureScanComplexItem(Vehicle* vehicle, QObject* parent = NULL);
+    /// @param vehicle Vehicle which this is being contructed for
+    /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
+    /// @param kmlFile Polygon comes from this file, empty for default polygon
+    StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent);
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
-    Q_PROPERTY(Fact*            gimbalPitch                 READ gimbalPitch                                                CONSTANT)
-    Q_PROPERTY(Fact*            gimbalYaw                   READ gimbalYaw                                                  CONSTANT)
     Q_PROPERTY(Fact*            altitude                    READ altitude                                                   CONSTANT)
     Q_PROPERTY(Fact*            structureHeight             READ structureHeight                                            CONSTANT)
     Q_PROPERTY(Fact*            layers                      READ layers                                                     CONSTANT)
     Q_PROPERTY(bool             altitudeRelative            READ altitudeRelative           WRITE setAltitudeRelative       NOTIFY altitudeRelativeChanged)
     Q_PROPERTY(int              cameraShots                 READ cameraShots                                                NOTIFY cameraShotsChanged)
     Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots                                           NOTIFY timeBetweenShotsChanged)
-    Q_PROPERTY(double           cameraMinTriggerInterval    MEMBER _cameraMinTriggerInterval                                NOTIFY cameraMinTriggerIntervalChanged)
     Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon                                           CONSTANT)
     Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                                              CONSTANT)
 
@@ -47,8 +47,6 @@ public:
 
     bool            altitudeRelative        (void) const { return _altitudeRelative; }
     int             cameraShots             (void) const;
-    Fact*           gimbalPitch             (void) { return &_gimbalPitchFact; }
-    Fact*           gimbalYaw               (void) { return &_gimbalYawFact; }
     double          timeBetweenShots        (void);
     QGCMapPolygon*  structurePolygon        (void) { return &_structurePolygon; }
     QGCMapPolygon*  flightPolygon           (void) { return &_flightPolygon; }
@@ -96,10 +94,14 @@ public:
 
     static const char* jsonComplexItemTypeValue;
 
+    static const char* settingsGroup;
+    static const char* altitudeName;
+    static const char* structureHeightName;
+    static const char* layersName;
+
 signals:
     void cameraShotsChanged             (int cameraShots);
     void timeBetweenShotsChanged        (void);
-    void cameraMinTriggerIntervalChanged(double cameraMinTriggerInterval);
     void altitudeRelativeChanged        (bool altitudeRelative);
 
 private slots:
@@ -111,7 +113,6 @@ private slots:
     void _updateCoordinateAltitudes (void);
     void _rebuildFlightPolygon      (void);
     void _recalcCameraShots         (void);
-    void _resetGimbal               (void);
     void _recalcLayerInfo           (void);
 
 private:
@@ -119,6 +120,8 @@ private:
     void _setScanDistance(double scanDistance);
     void _setCameraShots(int cameraShots);
     double _triggerDistance(void) const;
+
+    QMap<QString, FactMetaData*> _metaDataMap;
 
     int             _sequenceNumber;
     bool            _dirty;
@@ -131,23 +134,13 @@ private:
     double          _scanDistance;
     int             _cameraShots;
     double          _timeBetweenShots;
-    double          _cameraMinTriggerInterval;
     double          _cruiseSpeed;
     CameraCalc      _cameraCalc;
 
-    static QMap<QString, FactMetaData*> _metaDataMap;
 
-    Fact    _altitudeFact;
-    Fact    _structureHeightFact;
-    Fact    _layersFact;
-    Fact    _gimbalPitchFact;
-    Fact    _gimbalYawFact;
-
-    static const char* _altitudeFactName;
-    static const char* _structureHeightFactName;
-    static const char* _layersFactName;
-    static const char* _gimbalPitchFactName;
-    static const char* _gimbalYawFactName;
+    SettingsFact    _altitudeFact;
+    SettingsFact    _structureHeightFact;
+    SettingsFact    _layersFact;
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonAltitudeRelativeKey;

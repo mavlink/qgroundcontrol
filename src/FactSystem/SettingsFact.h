@@ -7,12 +7,7 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
-#ifndef SettingsFact_H
-#define SettingsFact_H
+#pragma once
 
 #include "Fact.h"
 
@@ -23,7 +18,7 @@ class SettingsFact : public Fact
     
 public:
     SettingsFact(QObject* parent = NULL);
-    SettingsFact(QString settingGroup, FactMetaData* metaData, QObject* parent = NULL);
+    SettingsFact(QString settingsGroup, FactMetaData* metaData, QObject* parent = NULL);
     SettingsFact(const SettingsFact& other, QObject* parent = NULL);
 
     const SettingsFact& operator=(const SettingsFact& other);
@@ -37,8 +32,6 @@ private slots:
     void _rawValueChanged(QVariant value);
 
 private:
-    QString _settingGroup;
+    QString _settingsGroup;
     bool    _visible;
 };
-
-#endif

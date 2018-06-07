@@ -106,7 +106,7 @@ public:
 
     static bool parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName = QString());
 
-    /// Returns NaN if the value is null, or it not the double value
+    /// Returns NaN if the value is null, or if not, the double value
     static double possibleNaNJsonValue(const QJsonValue& value);
 
     static const char* jsonVersionKey;

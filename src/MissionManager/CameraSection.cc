@@ -180,11 +180,11 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
             item = new MissionItem(nextSequenceNumber++,
                                    MAV_CMD_VIDEO_START_CAPTURE,
                                    MAV_FRAME_MISSION,
-                                   0,                           // Reserved (Set to 0)
-                                   0,                           // No CAMERA_CAPTURE_STATUS streaming
-                                   NAN, NAN, NAN, NAN, NAN,     // param 3-7 reserved
-                                   true,                        // autoContinue
-                                   false,                       // isCurrentItem
+                                   0,                               // Reserved (Set to 0)
+                                   VIDEO_CAPTURE_STATUS_INTERVAL,   // CAMERA_CAPTURE_STATUS (default to every 5 seconds)
+                                   NAN, NAN, NAN, NAN, NAN,         // param 3-7 reserved
+                                   true,                            // autoContinue
+                                   false,                           // isCurrentItem
                                    missionItemParent);
             break;
 
@@ -360,7 +360,7 @@ bool CameraSection::_scanTakeVideo(QmlObjectListModel* visualItems, int scanInde
     if (item) {
         MissionItem& missionItem = item->missionItem();
         if ((MAV_CMD)item->command() == MAV_CMD_VIDEO_START_CAPTURE) {
-            if (missionItem.param1() == 0 && missionItem.param2() == 0) {
+            if (missionItem.param1() == 0 && missionItem.param2() == VIDEO_CAPTURE_STATUS_INTERVAL) {
                 cameraAction()->setRawValue(TakeVideo);
                 visualItems->removeAt(scanIndex)->deleteLater();
                 return true;

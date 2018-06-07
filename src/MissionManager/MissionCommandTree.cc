@@ -239,6 +239,11 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
     QVariantList list;
     QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _availableCommands[baseFirmwareType][baseVehicleType];
     foreach (MAV_CMD command, commandMap.keys()) {
+        if (command == MAV_CMD_NAV_LAST) {
+            // MAV_CMD_NAV_LAST is used for Mission Settings item. Although we want to be able to get command info for it.
+            // The user should not be able to use it as a command.
+            continue;
+        }
         MissionCommandUIInfo* uiInfo = commandMap[command];
         if (uiInfo->category() == category || category == _allCommandsCategory) {
             list.append(QVariant::fromValue(uiInfo));

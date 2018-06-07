@@ -34,7 +34,7 @@
 /**
  * @file px4_custom_mode.h
  * PX4 custom flight modes
- * Copied from PX4 2017-07-08 - https://github.com/PX4/Firmware/blob/master/src/modules/commander/px4_custom_mode.h#L45
+ * Copied from PX4 2018-04-07 - https://github.com/PX4/Firmware/blob/master/src/modules/commander/px4_custom_mode.h#L45
  */
 
 #ifndef PX4_CUSTOM_MODE_H_
@@ -62,7 +62,8 @@ enum PX4_CUSTOM_SUB_MODE_AUTO {
 	PX4_CUSTOM_SUB_MODE_AUTO_RTL,
 	PX4_CUSTOM_SUB_MODE_AUTO_LAND,
 	PX4_CUSTOM_SUB_MODE_AUTO_RTGS,
-	PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET
+	PX4_CUSTOM_SUB_MODE_AUTO_FOLLOW_TARGET,
+	PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND
 };
 
 union px4_custom_mode {

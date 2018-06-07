@@ -1,0 +1,44 @@
+[
+{
+    "name":             "roll",
+    "shortDescription": "Roll Setpoint",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "pitch",
+    "shortDescription": "Pitch Setpoint",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "yaw",
+    "shortDescription": "Yaw Setpoint",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg"
+},
+{
+    "name":             "rollRate",
+    "shortDescription": "Roll Rate Setpoint",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg/s"
+},
+{
+    "name":             "pitchRate",
+    "shortDescription": "Pitch Rate Setpoint",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg/s"
+},
+{
+    "name":             "yawRate",
+    "shortDescription": "Yaw Rate Setpoint",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "deg/s"
+}
+]

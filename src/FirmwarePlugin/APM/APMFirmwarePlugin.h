@@ -92,6 +92,7 @@ public:
     int                 manualControlReservedButtonCount(void) override;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
     void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) override;
+    virtual void        initializeStreamRates           (Vehicle* vehicle);
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) override;
@@ -102,6 +103,7 @@ public:
     QObject*            loadParameterMetaData           (const QString& metaDataFile) override;
     QString             brandImageIndoor                (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/APM/BrandImage"); }
+    bool                supportsTerrainFrame            (void) const override { return true; }
 
 protected:
     /// All access to singleton is through stack specific implementation
@@ -123,7 +125,7 @@ private:
     bool _handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message);
     void _handleIncomingHeartbeat(Vehicle* vehicle, mavlink_message_t* message);
     void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
-    void _soloVideoHandshake(Vehicle* vehicle);    
+    void _soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware);
     bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
 
     // Any instance data here must be global to all vehicles

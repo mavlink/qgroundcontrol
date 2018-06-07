@@ -45,6 +45,7 @@ Vagrant.configure(2) do |config|
 
   $config_shell = <<-'SHELL'
      set -e
+     set -x
 
      export %{build_env}
      export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1))

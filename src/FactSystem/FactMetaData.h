@@ -111,7 +111,8 @@ public:
 
     /// Amount to increment value when used in controls such as spin button or slider with detents.
     /// NaN for no increment available.
-    double          increment               (void) const { return _increment; }
+    double          rawIncrement            (void) const { return _rawIncrement; }
+    double          cookedIncrement         (void) const;
 
     Translator      rawTranslator           (void) const { return _rawTranslator; }
     Translator      cookedTranslator        (void) const { return _cookedTranslator; }
@@ -135,7 +136,7 @@ public:
     void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
     void setRawUnits        (const QString& rawUnits);
     void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
-    void setIncrement       (double increment)                  { _increment = increment; }
+    void setRawIncrement    (double increment)                  { _rawIncrement = increment; }
     void setHasControl      (bool bValue)                       { _hasControl = bValue; }
     void setReadOnly        (bool bValue)                       { _readOnly = bValue; }
     void setWriteOnly       (bool bValue)                       { _writeOnly = bValue; }
@@ -215,7 +216,7 @@ private:
     };
 
     struct AppSettingsTranslation_s {
-        const char*     rawUnits;
+        QString     rawUnits;
         const char*     cookedUnits;
         UnitTypes       unitType;
         uint32_t        unitOption;
@@ -248,7 +249,7 @@ private:
     Translator      _rawTranslator;
     Translator      _cookedTranslator;
     bool            _rebootRequired;
-    double          _increment;
+    double          _rawIncrement;
     bool            _hasControl;
     bool            _readOnly;
     bool            _writeOnly;
@@ -264,7 +265,7 @@ private:
     } constants;
 
     struct BuiltInTranslation_s {
-        const char* rawUnits;
+        QString rawUnits;
         const char* cookedUnits;
         Translator  rawTranslator;
         Translator  cookedTranslator;
@@ -285,6 +286,7 @@ private:
     static const char*  _mobileDefaultValueJsonKey;
     static const char*  _minJsonKey;
     static const char*  _maxJsonKey;
+    static const char*  _incrementJsonKey;
     static const char* _hasControlJsonKey;
 };
 

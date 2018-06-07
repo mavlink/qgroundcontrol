@@ -13,7 +13,6 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
 
-// Editor for Survery mission items
 Rectangle {
     id:         _root
     height:     visible ? (editorColumn.height + (_margin * 2)) : 0
@@ -25,9 +24,10 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
-    property var    _vehicle:       QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
+    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
+    property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -59,11 +59,12 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
+            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
-            visible:        missionItem.cameraShots > 0 && missionItem.cameraMinTriggerInterval !== 0 && missionItem.cameraMinTriggerInterval > missionItem.timeBetweenShots
+            visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
         }
+
 
         CameraCalc {
             cameraCalc:             missionItem.cameraCalc
@@ -107,10 +108,11 @@ Rectangle {
 
             QGCCheckBox {
                 id:                 relAlt
-                anchors.left:       parent.left
                 text:               qsTr("Relative altitude")
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
-                enabled:            missionItem.cameraCalc.isManualCamera
+                enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
+                visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
+                Layout.alignment:   Qt.AlignLeft
                 Layout.columnSpan:  2
                 onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
 
@@ -127,20 +129,56 @@ Rectangle {
         }
 
         SectionHeader {
+            id:         terrainHeader
+            text:       qsTr("Terrain")
+            checked:    missionItem.followTerrain
+        }
+
+        ColumnLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        _margin
+            visible:        terrainHeader.checked
+
+            QGCCheckBox {
+                id:         followsTerrainCheckBox
+                text:       qsTr("Vehicle follows terrain")
+                checked:    missionItem.followTerrain
+                onClicked:  missionItem.followTerrain = checked
+            }
+
+            GridLayout {
+                Layout.fillWidth:   true
+                columnSpacing:      _margin
+                rowSpacing:         _margin
+                columns:            2
+                visible:            followsTerrainCheckBox.checked
+
+                QGCLabel { text: qsTr("Tolerance") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustTolerance
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Max Climb Rate") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustMaxClimbRate
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Max Descent Rate") }
+                FactTextField {
+                    fact:               missionItem.terrainAdjustMaxDescentRate
+                    Layout.fillWidth:   true
+                }
+            }
+        }
+
+        SectionHeader {
             id:     statsHeader
             text:   qsTr("Statistics")
         }
 
-        Grid {
-            columns:        2
-            columnSpacing:  ScreenTools.defaultFontPixelWidth
-            visible:        statsHeader.checked
-
-            QGCLabel { text: qsTr("Photo count") }
-            QGCLabel { text: missionItem.cameraShots }
-
-            QGCLabel { text: qsTr("Photo interval") }
-            QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs") }
-        }
+        TransectStyleComplexItemStats { }
     } // Column
 } // Rectangle

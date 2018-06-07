@@ -40,7 +40,8 @@ public:
         typedef enum {
             AutoPilotStackPX4,
             AutoPilotStackAPM,
-            PX4Flow,
+            PX4FlowPX4,
+            PX4FlowAPM,
             ThreeDRRadio,
             SingleFirmwareMode
         } AutoPilotStackType_t;
@@ -123,7 +124,7 @@ public:
                            FirmwareVehicleType_t vehicleType = DefaultVehicleFirmware );
 
     /// Called to flash when upgrade is running in singleFirmwareMode
-    Q_INVOKABLE void flashSingleFirmwareMode(void);
+    Q_INVOKABLE void flashSingleFirmwareMode(FirmwareType_t firmwareType);
 
     Q_INVOKABLE FirmwareVehicleType_t vehicleTypeFromVersionIndex(int index);
     

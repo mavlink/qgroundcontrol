@@ -25,9 +25,10 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
-    property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
-    property real   _fieldWidth:    ScreenTools.defaultFontPixelWidth * 10.5
-    property var    _vehicle:       QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
+    property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
+    property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+    property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -67,10 +68,10 @@ Rectangle {
         QGCLabel {
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(missionItem.cameraMinTriggerInterval.toFixed(1))
+            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
             wrapMode:       Text.WordWrap
             color:          qgcPal.warningText
-            visible:        missionItem.cameraShots > 0 && missionItem.cameraMinTriggerInterval !== 0 && missionItem.cameraMinTriggerInterval > missionItem.timeBetweenShots
+            visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
         }
 
         CameraCalc {
@@ -79,33 +80,6 @@ Rectangle {
             distanceToSurfaceLabel: qsTr("Scan Distance")
             frontalDistanceLabel:   qsTr("Layer Height")
             sideDistanceLabel:      qsTr("Trigger Distance")
-        }
-
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columnSpacing:  ScreenTools.defaultFontPixelWidth / 2
-            rowSpacing:     0
-            columns:        3
-            visible:        missionItem.cameraCalc.isManualCamera
-
-            Item { width: 1; height: 1 }
-            QGCLabel { text: qsTr("Pitch") }
-            QGCLabel { text: qsTr("Yaw") }
-
-            QGCLabel {
-                text:               qsTr("Gimbal")
-                Layout.fillWidth:   true
-            }
-            FactTextField {
-                fact:           missionItem.gimbalPitch
-                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-            }
-
-            FactTextField {
-                fact:           missionItem.gimbalYaw
-                implicitWidth:  ScreenTools.defaultFontPixelWidth * 9
-            }
         }
 
         SectionHeader {
@@ -186,6 +160,9 @@ Rectangle {
 
             QGCLabel { text: qsTr("Photo interval") }
             QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs") }
+
+            QGCLabel { text: qsTr("Trigger Distance") }
+            QGCLabel { text: missionItem.cameraCalc.adjustedFootprintSide.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
         }
     } // Column
 } // Rectangle

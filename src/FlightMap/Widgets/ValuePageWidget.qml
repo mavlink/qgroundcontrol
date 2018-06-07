@@ -134,7 +134,7 @@ Column {
 
             QGCFlickable {
                 anchors.fill:       parent
-                contentHeight:      _loader.y + _loader.height
+                contentHeight:      column.height
                 flickableDirection: Flickable.VerticalFlick
                 clip:               true
 
@@ -169,13 +169,26 @@ Column {
                     }
 
                     Loader {
-                        id:                 _loader
                         anchors.left:       parent.left
                         anchors.right:      parent.right
                         sourceComponent:    factGroupList
 
                         property var    factGroup:     _activeVehicle
-                        property string factGroupName: "Vehicle"
+                        property string factGroupName: qsTr("Vehicle")
+                    }
+
+                    Repeater {
+                        model: _activeVehicle.factGroupNames
+
+                        Loader {
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            sourceComponent:    factGroupList
+
+                            property var    factGroup:     _activeVehicle.getFactGroup(modelData)
+                            property string factGroupName: modelData
+                        }
+
                     }
                 }
             }
@@ -190,89 +203,90 @@ Column {
         // property string factGroupName
 
         Column {
-            id:         _root
             spacing:    _margins
 
-            QGCLabel {
-                width:      parent.width
-                wrapMode:   Text.WordWrap
-                text:       factGroup ? factGroupName : qsTr("Vehicle must be connected to assign values.")
+            SectionHeader {
+                id:             header
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           factGroupName.charAt(0).toUpperCase() + factGroupName.slice(1)
+                checked:        false
             }
 
-            Repeater {
-                model: factGroup ? factGroup.factNames : 0
+            Column {
+                spacing:    _margins
+                visible:    header.checked
 
-                RowLayout {
-                    spacing: _margins
+                Repeater {
+                    model: factGroup ? factGroup.factNames : 0
 
-                    property string propertyName: factGroupName + "." + modelData
+                    RowLayout {
+                        spacing: _margins
 
-                    function removeFromList(list, value) {
-                        var newList = []
-                        for (var i=0; i<list.length; i++) {
-                            if (list[i] !== value) {
-                                newList.push(list[i])
+                        property string propertyName: factGroupName + "." + modelData
+
+                        function removeFromList(list, value) {
+                            var newList = []
+                            for (var i=0; i<list.length; i++) {
+                                if (list[i] !== value) {
+                                    newList.push(list[i])
+                                }
                             }
+                            return newList
                         }
-                        return newList
-                    }
 
-                    function addToList(list, value) {
-                        var found = false
-                        for (var i=0; i<list.length; i++) {
-                            if (list[i] === value) {
-                                found = true
-                                break
+                        function addToList(list, value) {
+                            var found = false
+                            for (var i=0; i<list.length; i++) {
+                                if (list[i] === value) {
+                                    found = true
+                                    break
+                                }
                             }
+                            if (!found) {
+                                list.push(value)
+                            }
+                            return list
                         }
-                        if (!found) {
-                            list.push(value)
-                        }
-                        return list
-                    }
 
-                    function updateValues() {
-                        if (_addCheckBox.checked) {
-                            if (_largeCheckBox.checked) {
-                                controller.largeValues = addToList(controller.largeValues, propertyName)
-                                controller.smallValues = removeFromList(controller.smallValues, propertyName)
+                        function updateValues() {
+                            if (_addCheckBox.checked) {
+                                if (_largeCheckBox.checked) {
+                                    controller.largeValues = addToList(controller.largeValues, propertyName)
+                                    controller.smallValues = removeFromList(controller.smallValues, propertyName)
+                                } else {
+                                    controller.smallValues = addToList(controller.smallValues, propertyName)
+                                    controller.largeValues = removeFromList(controller.largeValues, propertyName)
+                                }
                             } else {
-                                controller.smallValues = addToList(controller.smallValues, propertyName)
                                 controller.largeValues = removeFromList(controller.largeValues, propertyName)
+                                controller.smallValues = removeFromList(controller.smallValues, propertyName)
                             }
-                        } else {
-                            controller.largeValues = removeFromList(controller.largeValues, propertyName)
-                            controller.smallValues = removeFromList(controller.smallValues, propertyName)
+                        }
+
+                        QGCCheckBox {
+                            id:                     _addCheckBox
+                            text:                   factGroup.getFact(modelData).shortDescription
+                            checked:                listContains(controller.smallValues, propertyName) || _largeCheckBox.checked
+                            onClicked:              updateValues()
+                            Layout.fillWidth:       true
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 20
+
+                            Component.onCompleted: {
+                                if (checked) {
+                                    header.checked = true
+                                }
+                            }
+                        }
+
+                        QGCCheckBox {
+                            id:                     _largeCheckBox
+                            text:                   qsTr("Large")
+                            checked:                listContains(controller.largeValues, propertyName)
+                            enabled:                _addCheckBox.checked
+                            onClicked:              updateValues()
                         }
                     }
-
-                    QGCCheckBox {
-                        id:                     _addCheckBox
-                        text:                   factGroup.getFact(modelData).shortDescription
-                        checked:                listContains(controller.smallValues, propertyName) || _largeCheckBox.checked
-                        onClicked:              updateValues()
-                        Layout.fillWidth:       true
-                        Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth * 20
-                    }
-
-                    QGCCheckBox {
-                        id:                     _largeCheckBox
-                        text:                   qsTr("Large")
-                        checked:                listContains(controller.largeValues, propertyName)
-                        enabled:                _addCheckBox.checked
-                        onClicked:              updateValues()
-                    }
-                }
-            }
-
-            Item { height: 1; width: 1 }
-
-            Repeater {
-                model: factGroup ? factGroup.factGroupNames : 0
-                Loader {
-                    sourceComponent: factGroupList
-                    property var    factGroup:      _root ? _root.parent.factGroup.getFactGroup(modelData) : undefined
-                    property string factGroupName:  _root ? _root.parent.factGroupName + "." + modelData : ""
                 }
             }
         }

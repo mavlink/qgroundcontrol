@@ -524,11 +524,14 @@ bool UnitTest::doubleNaNCompare(double value1, double value2)
     }
 }
 
-void UnitTest::changeFactValue(Fact* fact)
+void UnitTest::changeFactValue(Fact* fact,double increment)
 {
     if (fact->typeIsBool()) {
         fact->setRawValue(!fact->rawValue().toBool());
     } else {
-        fact->setRawValue(fact->rawValue().toDouble() + 1);
+        if (increment == 0) {
+            increment = 1;
+        }
+        fact->setRawValue(fact->rawValue().toDouble() + increment);
     }
 }

@@ -27,13 +27,12 @@ class MavlinkConsoleController : public QStringListModel
 
 public:
     MavlinkConsoleController();
-    ~MavlinkConsoleController();
+    virtual ~MavlinkConsoleController();
 
-public slots:
-    void sendCommand(QString command);
+    Q_INVOKABLE void sendCommand(QString command);
 
-signals:
-    void cursorChanged(int);
+    Q_INVOKABLE QString historyUp(const QString& current);
+    Q_INVOKABLE QString historyDown(const QString& current);
 
 private slots:
     void _setActiveVehicle  (Vehicle* vehicle);
@@ -44,10 +43,23 @@ private:
     void _sendSerialData(QByteArray, bool close = false);
     void writeLine(int line, const QByteArray &text);
 
+    class CommandHistory
+    {
+    public:
+        void append(const QString& command);
+        QString up(const QString& current);
+        QString down(const QString& current);
+    private:
+        static constexpr int maxHistoryLength = 100;
+        QList<QString> _history;
+        int _index = 0;
+    };
+
     int           _cursor_home_pos;
     int           _cursor;
     QByteArray    _incoming_buffer;
     Vehicle*      _vehicle;
     QList<QMetaObject::Connection> _uas_connections;
+    CommandHistory _history;
 
 };

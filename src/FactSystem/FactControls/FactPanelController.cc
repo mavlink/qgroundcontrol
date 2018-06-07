@@ -88,6 +88,8 @@ void FactPanelController::_reportMissingParameter(int componentId, const QString
 
     QString missingParam = QString("%1:%2").arg(componentId).arg(name);
 
+    qCWarning(FactPanelControllerLog) << "Missing parameter:" << missingParam;
+
     // If missing parameters a reported from the constructor of a derived class we
     // will not have access to _factPanel yet. Just record list of missing facts
     // in that case instead of notify. Once _factPanel is available they will be

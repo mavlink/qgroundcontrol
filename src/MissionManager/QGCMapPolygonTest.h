@@ -14,7 +14,6 @@
 #include "QGCMapPolygon.h"
 #include "QmlObjectListModel.h"
 
-/// Unit test for SurveyMissionItem
 class QGCMapPolygonTest : public UnitTest
 {
     Q_OBJECT
