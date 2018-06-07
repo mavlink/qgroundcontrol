@@ -111,11 +111,11 @@ bool QGCMapCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     }
 
     QGeoCoordinate center;
-    if (!JsonHelper::loadGeoCoordinate(json[_jsonCenterKey], false /* altitudeRequired */, center, errorString)) {
+    if (!JsonHelper::loadGeoCoordinate(circleObject[_jsonCenterKey], false /* altitudeRequired */, center, errorString)) {
         return false;
     }
     setCenter(center);
-    _radius.setRawValue(json[_jsonRadiusKey].toDouble());
+    _radius.setRawValue(circleObject[_jsonRadiusKey].toDouble());
 
     return true;
 }

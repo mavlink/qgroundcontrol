@@ -17,7 +17,8 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSettingsGroupName = "Video";
+const char* VideoSettings::name =                   "Video";
+const char* VideoSettings::settingsGroup =          ""; // settings are in root group
 
 const char* VideoSettings::videoSourceName =        "VideoSource";
 const char* VideoSettings::udpPortName =            "VideoUDPPort";
@@ -40,7 +41,7 @@ const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
 const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
 
 VideoSettings::VideoSettings(QObject* parent)
-    : SettingsGroup(videoSettingsGroupName, QString() /* root settings group */, parent)
+    : SettingsGroup(name, settingsGroup, parent)
     , _videoSourceFact(NULL)
     , _udpPortFact(NULL)
     , _tcpUrlFact(NULL)

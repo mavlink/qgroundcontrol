@@ -18,7 +18,7 @@ AudioOutputTest::AudioOutputTest(void)
 void AudioOutputTest::_testSpokenReplacements(void)
 {
     QString result = AudioOutput::fixTextMessageForAudio(QStringLiteral("-10.5m, -10.5m. -10.5 m"));
-    QCOMPARE(result, QStringLiteral(" negative 10.5 meters,  negative 10.5 meters.  negative 10.5  meters"));
+    QCOMPARE(result, QStringLiteral(" negative 10 point 5 meters,  negative 10 point 5 meters.  negative 10 point 5  meters"));
     result = AudioOutput::fixTextMessageForAudio(QStringLiteral("-10m -10 m"));
     QCOMPARE(result, QStringLiteral(" negative 10 meters  negative 10  meters"));
     result = AudioOutput::fixTextMessageForAudio(QStringLiteral("foo -10m -10 m bar"));

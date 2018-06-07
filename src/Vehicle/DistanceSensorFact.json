@@ -1,0 +1,72 @@
+[
+{
+    "name":             "rotationNone",
+    "shortDescription": "Forward",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw45",
+    "shortDescription": "Forward/Right",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw90",
+    "shortDescription": "Right",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw135",
+    "shortDescription": "Rear/Right",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw180",
+    "shortDescription": "Rear",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw225",
+    "shortDescription": "Rear/Left",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw270",
+    "shortDescription": "Left",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationYaw315",
+    "shortDescription": "Forward/Left",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationPitch90",
+    "shortDescription": "Up",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+},
+{
+    "name":             "rotationPitch270",
+    "shortDescription": "Down",
+    "type":             "double",
+    "decimalPlaces":    2,
+    "units":            "m"
+}
+]

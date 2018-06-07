@@ -18,7 +18,6 @@
 
 #include "QGCMAVLink.h"
 #include "QGC.h"
-#include "MavlinkQmlSingleton.h"
 #include "QmlObjectListModel.h"
 #include "Fact.h"
 #include "QGCLoggingCategory.h"
@@ -34,8 +33,8 @@ class VisualMissionItem : public QObject
     Q_OBJECT
 
 public:
-    VisualMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-    VisualMissionItem(const VisualMissionItem& other, QObject* parent = NULL);
+    VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent);
 
     ~VisualMissionItem();
 
@@ -43,7 +42,7 @@ public:
 
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                   CONSTANT)                                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate         NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
-    Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                NOTIFY terrainAltitudeChanged)            ///< The altitude of terrain at the coordinate position, NaN if not known
+    Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
     Q_PROPERTY(bool             coordinateHasRelativeAltitude       READ coordinateHasRelativeAltitude                                  NOTIFY coordinateHasRelativeAltitudeChanged)        ///< true: coordinate.latitude is relative to home altitude
     Q_PROPERTY(QGeoCoordinate   exitCoordinate                      READ exitCoordinate                                                 NOTIFY exitCoordinateChanged)                       ///< This is the exit point for a waypoint line coming out of the item.
     Q_PROPERTY(bool             exitCoordinateHasRelativeAltitude   READ exitCoordinateHasRelativeAltitude                              NOTIFY exitCoordinateHasRelativeAltitudeChanged)    ///< true: coordinate.latitude is relative to home altitude
@@ -67,6 +66,7 @@ public:
     Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                           NOTIFY specifiedGimbalPitchChanged)                 ///< Gimbal pitch, NaN for not specified
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                               NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                              NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
+    Q_PROPERTY(bool             flyView                             READ flyView                                                        CONSTANT)
 
     // The following properties are calculated/set by the MissionController recalc methods
 
@@ -88,6 +88,7 @@ public:
     double distance         (void) const { return _distance; }
     bool   isCurrentItem    (void) const { return _isCurrentItem; }
     double terrainAltitude  (void) const { return _terrainAltitude; }
+    bool   flyView          (void) const { return _flyView; }
 
     QmlObjectListModel* childItems(void) { return &_childItems; }
 
@@ -129,6 +130,11 @@ public:
     virtual void setCoordinate      (const QGeoCoordinate& coordinate) = 0;
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
     virtual int  lastSequenceNumber (void) const = 0;
+
+    /// Specifies whether the item has all the data it needs such that it can be saved. Currently the only
+    /// case where this returns false is if it has not determined terrain values yet.
+    /// @return true: Ready to save, false: Still waiting on information
+    virtual bool readyForSave(void) const { return true; }
 
     /// Save the item(s) in Json format
     ///     @param missionItems Current set of mission items, new items should be appended to the end
@@ -185,6 +191,7 @@ signals:
 
 protected:
     Vehicle*    _vehicle;
+    bool        _flyView;
     bool        _isCurrentItem;
     bool        _dirty;
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator
@@ -206,9 +213,11 @@ protected:
 private slots:
     void _updateTerrainAltitude (void);
     void _reallyUpdateTerrainAltitude (void);
-    void _terrainDataReceived   (bool success, QList<float> altitudes);
+    void _terrainDataReceived   (bool success, QList<double> heights);
 
 private:
+    void _commonInit(void);
+
     QTimer _updateTerrainTimer;
     double _lastLatTerrainQuery;
     double _lastLonTerrainQuery;

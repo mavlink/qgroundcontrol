@@ -15,15 +15,16 @@
 #include "FirmwarePluginManager.h"
 #include "QGCApplication.h"
 #include "JsonHelper.h"
-#include "Terrain.h"
+#include "TerrainQuery.h"
 
 const char* VisualMissionItem::jsonTypeKey =                "type";
 const char* VisualMissionItem::jsonTypeSimpleItemValue =    "SimpleItem";
 const char* VisualMissionItem::jsonTypeComplexItemValue =   "ComplexItem";
 
-VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
+VisualMissionItem::VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
     : QObject                   (parent)
     , _vehicle                  (vehicle)
+    , _flyView                  (flyView)
     , _isCurrentItem            (false)
     , _dirty                    (false)
     , _homePositionSpecialCase  (false)
@@ -38,20 +39,13 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, QObject* parent)
     , _lastLatTerrainQuery      (0)
     , _lastLonTerrainQuery      (0)
 {
-
-    // Don't get terrain altitude information for submarines or boards
-    if (_vehicle->vehicleType() != MAV_TYPE_SUBMARINE && _vehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
-        _updateTerrainTimer.setInterval(500);
-        _updateTerrainTimer.setSingleShot(true);
-        connect(&_updateTerrainTimer, &QTimer::timeout, this, &VisualMissionItem::_reallyUpdateTerrainAltitude);
-
-        connect(this, &VisualMissionItem::coordinateChanged, this, &VisualMissionItem::_updateTerrainAltitude);
-    }
+    _commonInit();
 }
 
-VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* parent)
+VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent)
     : QObject                   (parent)
     , _vehicle                  (NULL)
+    , _flyView                  (flyView)
     , _isCurrentItem            (false)
     , _dirty                    (false)
     , _homePositionSpecialCase  (false)
@@ -63,8 +57,17 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, QObject* pa
 {
     *this = other;
 
+    _commonInit();
+}
+
+void VisualMissionItem::_commonInit(void)
+{
     // Don't get terrain altitude information for submarines or boats
     if (_vehicle->vehicleType() != MAV_TYPE_SUBMARINE && _vehicle->vehicleType() != MAV_TYPE_SURFACE_BOAT) {
+        _updateTerrainTimer.setInterval(500);
+        _updateTerrainTimer.setSingleShot(true);
+        connect(&_updateTerrainTimer, &QTimer::timeout, this, &VisualMissionItem::_reallyUpdateTerrainAltitude);
+
         connect(this, &VisualMissionItem::coordinateChanged, this, &VisualMissionItem::_updateTerrainAltitude);
     }
 }
@@ -160,7 +163,7 @@ void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
 
 void VisualMissionItem::_updateTerrainAltitude(void)
 {
-    if (coordinate().isValid()) {
+    if (!_flyView && coordinate().isValid()) {
         // We use a timer so that any additional requests before the timer fires result in only a single request
         _updateTerrainTimer.start();
     }
@@ -172,18 +175,18 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
     if (coord.isValid() && (qIsNaN(_terrainAltitude) || !qFuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || qFuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
-        ElevationProvider* terrain = new ElevationProvider(this);
-        connect(terrain, &ElevationProvider::terrainData, this, &VisualMissionItem::_terrainDataReceived);
+        TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
+        connect(terrain, &TerrainAtCoordinateQuery::terrainData, this, &VisualMissionItem::_terrainDataReceived);
         QList<QGeoCoordinate> rgCoord;
         rgCoord.append(coordinate());
-        terrain->queryTerrainData(rgCoord);
+        terrain->requestData(rgCoord);
     }
 }
 
-void VisualMissionItem::_terrainDataReceived(bool success, QList<float> altitudes)
+void VisualMissionItem::_terrainDataReceived(bool success, QList<double> heights)
 {
     if (success) {
-        _terrainAltitude = altitudes[0];
+        _terrainAltitude = heights[0];
         emit terrainAltitudeChanged(_terrainAltitude);
         sender()->deleteLater();
     }

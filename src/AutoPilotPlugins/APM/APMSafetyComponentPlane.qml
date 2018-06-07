@@ -34,8 +34,8 @@ SetupPage {
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
-            property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
+            property Fact _failsafeBattMah:     controller.getParameterFact(-1, "r.BATT_LOW_MAH")
+            property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "r.BATT_LOW_VOLT")
             property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "THR_FAILSAFE")
             property Fact _failsafeThrValue:    controller.getParameterFact(-1, "THR_FS_VALUE")
             property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABL")

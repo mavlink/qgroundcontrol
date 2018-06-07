@@ -19,7 +19,7 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 //-------------------------------------------------------------------------
-//-- GPS Indicator
+//-- Message Indicator
 Item {
     width:          height
     anchors.top:    parent.top

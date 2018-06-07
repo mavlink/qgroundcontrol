@@ -32,6 +32,7 @@
     "units":            "gimbal-degrees",
     "min":              -90,
     "max":              0,
+    "increment":        5,
     "decimalPlaces":    0,
     "defaultValue":     0
 },
@@ -42,6 +43,7 @@
     "units":            "deg",
     "min":              -180.0,
     "max":              180.0,
+    "increment":        5,
     "decimalPlaces":    0,
     "defaultValue":     0
 },

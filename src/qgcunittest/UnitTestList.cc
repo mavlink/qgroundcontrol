@@ -20,7 +20,7 @@
 #include "MessageBoxTest.h"
 #include "MissionItemTest.h"
 #include "SimpleMissionItemTest.h"
-#include "SurveyMissionItemTest.h"
+#include "SurveyComplexItemTest.h"
 #include "MissionControllerTest.h"
 #include "MissionManagerTest.h"
 #include "RadioConfigTest.h"
@@ -63,7 +63,7 @@ UT_REGISTER_TEST(ParameterManagerTest)
 UT_REGISTER_TEST(MissionCommandTreeTest)
 UT_REGISTER_TEST(LogDownloadTest)
 UT_REGISTER_TEST(SendMavCommandTest)
-UT_REGISTER_TEST(SurveyMissionItemTest)
+UT_REGISTER_TEST(SurveyComplexItemTest)
 UT_REGISTER_TEST(CameraSectionTest)
 UT_REGISTER_TEST(SpeedSectionTest)
 UT_REGISTER_TEST(PlanMasterControllerTest)

@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "SensorsComponentController.h"
 #include "QGCMAVLink.h"
 #include "UAS.h"
@@ -22,46 +18,48 @@
 
 QGC_LOGGING_CATEGORY(SensorsComponentControllerLog, "SensorsComponentControllerLog")
 
-SensorsComponentController::SensorsComponentController(void) :
-    _statusLog(NULL),
-    _progressBar(NULL),
-    _compassButton(NULL),
-    _gyroButton(NULL),
-    _accelButton(NULL),
-    _airspeedButton(NULL),
-    _levelButton(NULL),
-    _cancelButton(NULL),
-    _setOrientationsButton(NULL),
-    _showOrientationCalArea(false),
-    _gyroCalInProgress(false),
-    _magCalInProgress(false),
-    _accelCalInProgress(false),
-    _orientationCalDownSideDone(false),
-    _orientationCalUpsideDownSideDone(false),
-    _orientationCalLeftSideDone(false),
-    _orientationCalRightSideDone(false),
-    _orientationCalNoseDownSideDone(false),
-    _orientationCalTailDownSideDone(false),
-    _orientationCalDownSideVisible(false),
-    _orientationCalUpsideDownSideVisible(false),
-    _orientationCalLeftSideVisible(false),
-    _orientationCalRightSideVisible(false),
-    _orientationCalNoseDownSideVisible(false),
-    _orientationCalTailDownSideVisible(false),
-    _orientationCalDownSideInProgress(false),
-    _orientationCalUpsideDownSideInProgress(false),
-    _orientationCalLeftSideInProgress(false),
-    _orientationCalRightSideInProgress(false),
-    _orientationCalNoseDownSideInProgress(false),
-    _orientationCalTailDownSideInProgress(false),
-    _orientationCalDownSideRotate(false),
-    _orientationCalUpsideDownSideRotate(false),
-    _orientationCalLeftSideRotate(false),
-    _orientationCalRightSideRotate(false),
-    _orientationCalNoseDownSideRotate(false),
-    _orientationCalTailDownSideRotate(false),
-    _unknownFirmwareVersion(false),
-    _waitingForCancel(false)
+SensorsComponentController::SensorsComponentController(void)
+    : _statusLog                                (NULL)
+    , _progressBar                              (NULL)
+    , _compassButton                            (NULL)
+    , _gyroButton                               (NULL)
+    , _accelButton                              (NULL)
+    , _airspeedButton                           (NULL)
+    , _levelButton                              (NULL)
+    , _cancelButton                             (NULL)
+    , _setOrientationsButton                    (NULL)
+    , _showOrientationCalArea                   (false)
+    , _gyroCalInProgress                        (false)
+    , _magCalInProgress                         (false)
+    , _accelCalInProgress                       (false)
+    , _airspeedCalInProgress                    (false)
+    , _levelCalInProgress                       (false)
+    , _orientationCalDownSideDone               (false)
+    , _orientationCalUpsideDownSideDone         (false)
+    , _orientationCalLeftSideDone               (false)
+    , _orientationCalRightSideDone              (false)
+    , _orientationCalNoseDownSideDone           (false)
+    , _orientationCalTailDownSideDone           (false)
+    , _orientationCalDownSideVisible            (false)
+    , _orientationCalUpsideDownSideVisible      (false)
+    , _orientationCalLeftSideVisible            (false)
+    , _orientationCalRightSideVisible           (false)
+    , _orientationCalNoseDownSideVisible        (false)
+    , _orientationCalTailDownSideVisible        (false)
+    , _orientationCalDownSideInProgress         (false)
+    , _orientationCalUpsideDownSideInProgress   (false)
+    , _orientationCalLeftSideInProgress         (false)
+    , _orientationCalRightSideInProgress        (false)
+    , _orientationCalNoseDownSideInProgress     (false)
+    , _orientationCalTailDownSideInProgress     (false)
+    , _orientationCalDownSideRotate             (false)
+    , _orientationCalUpsideDownSideRotate       (false)
+    , _orientationCalLeftSideRotate             (false)
+    , _orientationCalRightSideRotate            (false)
+    , _orientationCalNoseDownSideRotate         (false)
+    , _orientationCalTailDownSideRotate         (false)
+    , _unknownFirmwareVersion                   (false)
+    , _waitingForCancel                         (false)
 {
 }
 
@@ -165,7 +163,9 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
     switch (code) {
         case StopCalibrationSuccess:
             _orientationCalAreaHelpText->setProperty("text", tr("Calibration complete"));
-            emit resetStatusTextArea();
+            if (!_airspeedCalInProgress && !_levelCalInProgress) {
+                emit resetStatusTextArea();
+            }
             if (_magCalInProgress) {
                 emit setCompassRotations();
             }
@@ -186,6 +186,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
     _magCalInProgress = false;
     _accelCalInProgress = false;
     _gyroCalInProgress = false;
+    _airspeedCalInProgress = false;
 }
 
 void SensorsComponentController::calibrateGyro(void)
@@ -336,6 +337,10 @@ void SensorsComponentController::_handleUASTextMessage(int uasId, int compId, in
             emit orientationCalSidesVisibleChanged();
             emit orientationCalSidesInProgressChanged();
             _updateAndEmitShowOrientationCalArea(true);
+        } else if (text == "airspeed") {
+            _airspeedCalInProgress = true;
+        } else if (text == "level") {
+            _levelCalInProgress = true;
         }
         return;
     }

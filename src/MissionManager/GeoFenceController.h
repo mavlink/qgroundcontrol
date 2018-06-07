@@ -34,6 +34,9 @@ public:
     Q_PROPERTY(QmlObjectListModel*  circles             READ circles                                        CONSTANT)
     Q_PROPERTY(QGeoCoordinate       breachReturnPoint   READ breachReturnPoint  WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
 
+    // Hack to expose PX4 circular fence controlled by GF_MAX_HOR_DIST
+    Q_PROPERTY(double               paramCircularFence  READ paramCircularFence                             NOTIFY paramCircularFenceChanged)
+
     /// Add a new inclusion polygon to the fence
     ///     @param topLeft - Top left coordinate or map viewport
     ///     @param topLeft - Bottom right left coordinate or map viewport
@@ -55,8 +58,11 @@ public:
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
 
+    double paramCircularFence(void);
+
+    // Overrides from PlanElementController
     bool supported                  (void) const final;
-    void start                      (bool editMode) final;
+    void start                      (bool flyView) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
@@ -80,17 +86,18 @@ signals:
     void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
     void editorQmlChanged               (QString editorQml);
     void loadComplete                   (void);
+    void paramCircularFenceChanged      (void);
 
 private slots:
-    void _polygonDirtyChanged(bool dirty);
-    void _setDirty(void);
-    void _setFenceFromManager(const QList<QGCFencePolygon>& polygons,
-                              const QList<QGCFenceCircle>&  circles);
-    void _setReturnPointFromManager(QGeoCoordinate breachReturnPoint);
-    void _managerLoadComplete(void);
-    void _updateContainsItems(void);
-    void _managerSendComplete(bool error);
-    void _managerRemoveAllComplete(bool error);
+    void _polygonDirtyChanged       (bool dirty);
+    void _setDirty                  (void);
+    void _setFenceFromManager       (const QList<QGCFencePolygon>& polygons, const QList<QGCFenceCircle>&  circles);
+    void _setReturnPointFromManager (QGeoCoordinate breachReturnPoint);
+    void _managerLoadComplete       (void);
+    void _updateContainsItems       (void);
+    void _managerSendComplete       (bool error);
+    void _managerRemoveAllComplete  (bool error);
+    void _parametersReady           (void);
 
 private:
     void _init(void);
@@ -102,9 +109,16 @@ private:
     QmlObjectListModel  _circles;
     QGeoCoordinate      _breachReturnPoint;
     bool                _itemsRequested;
+    Fact*               _px4ParamCircularFenceFact;
+
+    static const char* _px4ParamCircularFence;
+
+    static const int _jsonCurrentVersion = 2;
 
     static const char* _jsonFileTypeValue;
     static const char* _jsonBreachReturnKey;
+    static const char* _jsonPolygonsKey;
+    static const char* _jsonCirclesKey;
 };
 
 #endif

@@ -73,15 +73,7 @@ Item {
                     break;
                 }
             } else {
-                // Note: We currently show alternate instruments all the time. This is a trial change for daily builds.
-                // Leaving non-alternate code in for now in case the trial fails.
-                var useAlternateInstruments = true//QGroundControl.settingsManager.appSettings.virtualJoystick.value || ScreenTools.isTinyScreen
-                if(useAlternateInstruments) {
-                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
-                } else {
-                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
-                    instrumentsLoader.state  = QGroundControl.settingsManager.appSettings.showLargeCompass.value === 1 ? "centerRightMode" : "topRightMode"
-                }
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
             }
         } else {
             instrumentsLoader.source = ""
@@ -135,7 +127,7 @@ Item {
             z:                          QGroundControl.zOrderTopMost
             color:                      mapPal.text
             font.pointSize:             ScreenTools.largeFontPointSize
-            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure or disable the arming check via the Safety tab on the Vehicle Setup page."
+            text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure."
         }
     }
 

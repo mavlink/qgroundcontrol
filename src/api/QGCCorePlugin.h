@@ -21,8 +21,6 @@
 ///     @brief Core Plugin Interface for QGroundControl
 ///     @author Gus Grubba <mavlink@grubba.com>
 
-// Work In Progress
-
 class QGCApplication;
 class QGCOptions;
 class QGCSettings;
@@ -33,6 +31,8 @@ class QQmlApplicationEngine;
 class Vehicle;
 class LinkInterface;
 class QmlObjectListModel;
+class VideoReceiver;
+
 class QGCCorePlugin : public QGCTool
 {
     Q_OBJECT
@@ -68,14 +68,15 @@ public:
     virtual QGCOptions* options(void);
 
     /// Allows the core plugin to override the visibility for a settings group
-    ///     @param name - Setting group name
+    ///     @param name - SettingsGroup name
     /// @return true: Show settings ui, false: Hide settings ui
     virtual bool overrideSettingsGroupVisibility(QString name);
 
     /// Allows the core plugin to override the setting meta data before the setting fact is created.
+    ///     @param settingsGroup - QSettings group which contains this item
     ///     @param metaData - MetaData for setting fact
     /// @return true: Setting should be visible in ui, false: Setting should not be shown in ui
-    virtual bool adjustSettingMetaData(FactMetaData& metaData);
+    virtual bool adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData);
 
     /// Return the resource file which contains the brand image for for Indoor theme.
     virtual QString brandImageIndoor(void) const { return QString(); }
@@ -97,6 +98,9 @@ public:
 
     /// Allows the plugin to override the creation of the root (native) window.
     virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
+
+    /// Allows the plugin to override the creation of VideoReceiver.
+    virtual VideoReceiver* createVideoReceiver(QObject* parent);
 
     /// Allows the plugin to see all mavlink traffic to a vehicle
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message

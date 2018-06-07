@@ -30,8 +30,8 @@ QGC_LOGGING_CATEGORY(SerialLinkLog, "SerialLinkLog")
 
 static QStringList kSupportedBaudRates;
 
-SerialLink::SerialLink(SharedLinkConfigurationPointer& config)
-    : LinkInterface(config)
+SerialLink::SerialLink(SharedLinkConfigurationPointer& config, bool isPX4Flow)
+    : LinkInterface(config, isPX4Flow)
     , _port(NULL)
     , _bytesRead(0)
     , _stopp(false)
@@ -57,10 +57,6 @@ void SerialLink::requestReset()
 SerialLink::~SerialLink()
 {
     _disconnect();
-    if (_port) {
-        delete _port;
-    }
-    _port = NULL;
 }
 
 bool SerialLink::_isBootloader()
@@ -92,6 +88,7 @@ void SerialLink::_writeBytes(const QByteArray data)
         _port->write(data);
     } else {
         // Error occurred
+        qWarning() << "Serial port not writeable";
         _emitLinkError(tr("Could not send data - link %1 is disconnected!").arg(getName()));
     }
 }
@@ -105,7 +102,7 @@ void SerialLink::_disconnect(void)
 {
     if (_port) {
         _port->close();
-        delete _port;
+        _port->deleteLater();
         _port = NULL;
     }
 
@@ -199,7 +196,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         }
     }
 
-    _port = new QSerialPort(_serialConfig->portName());
+    _port = new QSerialPort(_serialConfig->portName(), this);
 
     QObject::connect(_port, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
                      this, &SerialLink::linkError);
@@ -261,12 +258,18 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
 
 void SerialLink::_readBytes(void)
 {
-    qint64 byteCount = _port->bytesAvailable();
-    if (byteCount) {
-        QByteArray buffer;
-        buffer.resize(byteCount);
-        _port->read(buffer.data(), buffer.size());
-        emit bytesReceived(this, buffer);
+    if (_port && _port->isOpen()) {
+        qint64 byteCount = _port->bytesAvailable();
+        if (byteCount) {
+            QByteArray buffer;
+            buffer.resize(byteCount);
+            _port->read(buffer.data(), buffer.size());
+            emit bytesReceived(this, buffer);
+        }
+    } else {
+        // Error occurred
+        qWarning() << "Serial port not readable";
+        _emitLinkError(tr("Could not read data - link %1 is disconnected!").arg(getName()));
     }
 }
 
@@ -306,7 +309,7 @@ bool SerialLink::isConnected() const
 
 QString SerialLink::getName() const
 {
-    return _serialConfig->portName();
+    return _serialConfig->name();
 }
 
 /**

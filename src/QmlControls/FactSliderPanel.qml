@@ -41,18 +41,6 @@ Column {
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
 
-    Component.onCompleted: {
-        // Qml Sliders have a strange behavior in which they first set Slider::value to some internal
-        // setting and then set Slider::value to the bound properties value. If you have an onValueChanged
-        // handler which updates your property with the new value, this first value change will trash
-        // your bound values. In order to work around this we don't set the values into the Sliders until
-        // after Qml load is done. We also don't track value changes until Qml load completes.
-        for (var i=0; i<sliderModel.count; i++) {
-            sliderRepeater.itemAt(i).sliderValue = controller.getParameterFact(-1, sliderModel.get(i).param).value
-        }
-        _loadComplete = true
-    }
-
     Column {
         id:                 sliderOuterColumn
         anchors.left:       parent.left
@@ -70,18 +58,23 @@ Column {
                 height:             sliderColumn.y + sliderColumn.height + _margins
                 color:              palette.windowShade
 
-                property alias sliderValue: slider.value
-
                 Column {
                     id:                 sliderColumn
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.right:      parent.right
                     anchors.top:        sliderRect.top
+                    spacing:            _margins
 
                     QGCLabel {
                         text:           title
                         font.family:    ScreenTools.demiboldFontFamily
+                    }
+
+                    FactValueSlider {
+                        digitCount:     fact.maxString.length
+                        incrementSlots: 3
+                        fact:           controller.getParameterFact(-1, param)
                     }
 
                     QGCLabel {
@@ -90,34 +83,6 @@ Column {
                         anchors.right:  parent.right
                         wrapMode:       Text.WordWrap
                     }
-
-                    Slider {
-                        id:                 slider
-                        anchors.left:       parent.left
-                        anchors.right:      parent.right
-                        minimumValue:       min
-                        maximumValue:       max
-                        stepSize:           isNaN(fact.increment) ? step : fact.increment
-                        tickmarksEnabled:   true
-                        activeFocusOnPress: true
-
-                        property Fact fact: controller.getParameterFact(-1, param)
-
-                        onValueChanged: {
-                            if (_loadComplete) {
-                                fact.value = value
-                            }
-                        }
-
-                        // Block wheel events
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.NoButton
-                            onWheel: {
-                                wheel.accepted = true
-                            }
-                        }
-                    } // Slider
                 } // Column
             } // Rectangle
         } // Repeater

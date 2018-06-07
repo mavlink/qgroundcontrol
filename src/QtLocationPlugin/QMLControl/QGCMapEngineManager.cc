@@ -41,6 +41,7 @@ QGCMapEngineManager::QGCMapEngineManager(QGCApplication* app, QGCToolbox* toolbo
     , _setID(UINT64_MAX)
     , _freeDiskSpace(0)
     , _diskSpace(0)
+    , _fetchElevation(true)
     , _actionProgress(0)
     , _importAction(ActionNone)
     , _importReplace(false)
@@ -80,6 +81,10 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
     _totalSet.clear();
     for(int z = minZoom; z <= maxZoom; z++) {
         QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapType);
+        _totalSet += set;
+    }
+    if (_fetchElevation) {
+        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, UrlFactory::AirmapElevation);
         _totalSet += set;
     }
     emit tileX0Changed();
@@ -149,6 +154,26 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setTotalTileSize(_totalSet.tileSize);
         set->setTotalTileCount(_totalSet.tileCount);
         set->setType(QGCMapEngine::getTypeFromName(mapType));
+        QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
+        //-- Create Tile Set (it will also create a list of tiles to download)
+        connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
+        connect(task, &QGCMapTask::error, this, &QGCMapEngineManager::taskError);
+        getQGCMapEngine()->addTask(task);
+    } else {
+        qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
+    }
+    if (mapType != "Airmap Elevation Data" && _fetchElevation) {
+        QGCCachedTileSet* set = new QGCCachedTileSet(name + " Elevation");
+        set->setMapTypeStr("Airmap Elevation Data");
+        set->setTopleftLat(_topleftLat);
+        set->setTopleftLon(_topleftLon);
+        set->setBottomRightLat(_bottomRightLat);
+        set->setBottomRightLon(_bottomRightLon);
+        set->setMinZoom(1);
+        set->setMaxZoom(1);
+        set->setTotalTileSize(_totalSet.tileSize);
+        set->setTotalTileCount(_totalSet.tileCount);
+        set->setType(QGCMapEngine::getTypeFromName("Airmap Elevation Data"));
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);

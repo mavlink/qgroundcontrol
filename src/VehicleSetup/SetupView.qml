@@ -210,8 +210,7 @@ Rectangle {
             spacing:    _defaultTextHeight / 2
 
             QGCLabel {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
+                Layout.fillWidth:       true
                 text:                   qsTr("Vehicle Setup")
                 wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter
@@ -259,7 +258,7 @@ Rectangle {
             SubMenuButton {
                 id:                 px4FlowButton
                 exclusiveGroup:     setupButtonGroup
-                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.genericFirmware : false
+                visible:            QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle.priorityLink.isPX4Flow : false
                 setupIndicator:     false
                 text:               qsTr("PX4Flow")
                 Layout.fillWidth:   true

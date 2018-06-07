@@ -24,20 +24,37 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
-    property Fact battCapacity: controller.getParameterFact(-1, "BATT_CAPACITY")
-    property Fact battMonitor:  controller.getParameterFact(-1, "BATT_MONITOR")
+    property bool _batt2MonitorAvailable:   controller.parameterExists(-1, "BATT2_MONITOR")
+    property bool _batt2CapacityAvailable:  controller.parameterExists(-1, "BATT2_CAPACITY")
+
+    property Fact _battCapacity:            controller.getParameterFact(-1, "BATT_CAPACITY")
+    property Fact _batt2Capacity:           controller.getParameterFact(-1, "BATT2_CAPACITY", false /* reportMissing */)
+    property Fact _battMonitor:             controller.getParameterFact(-1, "BATT_MONITOR")
+    property Fact _batt2Monitor:            controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
 
     Column {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery monitor:")
-            valueText: battMonitor.enumStringValue
+            labelText: qsTr("Battery monitor")
+            valueText: _battMonitor.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery capacity:")
-            valueText: battCapacity.valueString + " " + battCapacity.units
+            labelText: qsTr("Battery capacity")
+            valueText: _battCapacity.valueString + " " + _battCapacity.units
+        }
+
+        VehicleSummaryRow {
+            labelText:  qsTr("Battery2 monitor")
+            valueText:  _batt2MonitorAvailable ? _batt2Monitor.enumStringValue : ""
+            visible:    _batt2MonitorAvailable
+        }
+
+        VehicleSummaryRow {
+            labelText:  qsTr("Battery2 capacity")
+            valueText:  _batt2CapacityAvailable ? _batt2Capacity.valueString + " " + _battCapacity.units : ""
+            visible:    _batt2CapacityAvailable
         }
     }
 }

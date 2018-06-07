@@ -32,7 +32,12 @@ OfflineMapButton        1.0 OfflineMapButton.qml
 PageView                1.0 PageView.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
+PIDTuning               1.0 PIDTuning.qml
 PlanToolBar             1.0 PlanToolBar.qml
+PreFlightCheckButton    1.0 PreFlightCheckButton.qml
+PreFlightCheckGroup     1.0 PreFlightCheckGroup.qml
+PreFlightCheckList      1.0 PreFlightCheckList.qml
+PreFlightCheckModel     1.0 PreFlightCheckModel.qml
 QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml
@@ -71,6 +76,7 @@ SimpleItemMapVisuals    1.0 SimpleItemMapVisuals.qml
 SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml
 SurveyMapVisuals        1.0 SurveyMapVisuals.qml
+TransectStyleComplexItemStats 1.0 TransectStyleComplexItemStats.qml
 ToolStrip               1.0 ToolStrip.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml

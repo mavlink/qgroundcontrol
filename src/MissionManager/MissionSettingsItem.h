@@ -24,7 +24,7 @@ class MissionSettingsItem : public ComplexMissionItem
     Q_OBJECT
 
 public:
-    MissionSettingsItem(Vehicle* vehicle, QObject* parent = NULL);
+    MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject* parent);
 
     Q_PROPERTY(Fact*    plannedHomePositionAltitude READ plannedHomePositionAltitude                            CONSTANT)
     Q_PROPERTY(bool     missionEndRTL               READ missionEndRTL                  WRITE setMissionEndRTL  NOTIFY missionEndRTLChanged)
@@ -68,7 +68,7 @@ public:
     bool            specifiesAltitudeOnly   (void) const final { return false; }
     QString         commandDescription      (void) const final { return "Mission Start"; }
     QString         commandName             (void) const final { return "Mission Start"; }
-    QString         abbreviation            (void) const final { return "H"; }
+    QString         abbreviation            (void) const final;
     QGeoCoordinate  coordinate              (void) const final { return _plannedHomePositionCoordinate; }
     QGeoCoordinate  exitCoordinate          (void) const final { return _plannedHomePositionCoordinate; }
     int             sequenceNumber          (void) const final { return _sequenceNumber; }
@@ -107,9 +107,8 @@ private:
     bool            _missionEndRTL;
     CameraSection   _cameraSection;
     SpeedSection    _speedSection;
-
-    int     _sequenceNumber;
-    bool    _dirty;
+    int             _sequenceNumber;
+    bool            _dirty;
 
     static QMap<QString, FactMetaData*> _metaDataMap;
 
