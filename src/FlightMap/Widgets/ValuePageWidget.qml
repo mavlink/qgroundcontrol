@@ -174,7 +174,7 @@ Column {
                         sourceComponent:    factGroupList
 
                         property var    factGroup:     _activeVehicle
-                        property string factGroupName: qsTr("Vehicle")
+                        property string factGroupName: "Vehicle"
                     }
 
                     Repeater {
