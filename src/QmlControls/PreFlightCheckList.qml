@@ -25,16 +25,30 @@ Rectangle {
 
     property bool _passed: false
 
-    function reset() {
-        for (var i=0; i<model.count; i++) {
-            var group = model.get(i)
-            group.reset()
-            group.enabled = i === 0
-            group._checked = i === 0
+    // We delay the updates when a group passes so the user can see all items green for a moment prior to hiding
+    Timer {
+        id:         delayedGroupPassed
+        interval:   750
+
+        property int index
+
+        onTriggered: {
+            var group = checkListRepeater.itemAt(index)
+            group._checked = false
+            if (index + 1 < checkListRepeater.count) {
+                group = checkListRepeater.itemAt(index + 1)
+                group.enabled = true
+                group._checked = true
+            }
+            for (var i=0; i<checkListRepeater.count; i++) {
+                if (!checkListRepeater.itemAt(i).passed) {
+                    _passed = false
+                    return
+                }
+            }
+            _passed = true
         }
     }
-
-    Component.onCompleted: reset()
 
     Column {
         id:                     mainColumn
@@ -46,18 +60,8 @@ Rectangle {
         anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
 
         function groupPassedChanged(index) {
-            if (index + 1 < checkListRepeater.count) {
-                var group = checkListRepeater.itemAt(index + 1)
-                group.enabled = true
-                group._checked = true
-            }
-            for (var i=0; i<checkListRepeater.count; i++) {
-                if (!checkListRepeater.itemAt(i).passed) {
-                    _passed = false
-                    return
-                }
-            }
-            _passed = true
+            delayedGroupPassed.index = index
+            delayedGroupPassed.restart()
         }
 
         // Header/title of checklist
@@ -79,7 +83,7 @@ Rectangle {
                 opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
                 tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
 
-                onClicked: reset()
+                onClicked: model.reset()
 
                 Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
             }

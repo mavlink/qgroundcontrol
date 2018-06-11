@@ -9,11 +9,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.9.2/android_armv7/bin/qmake"
+            QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-android:2018-04-14'
+              image 'mavlink/qgc-build-android:2018-06-08'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -38,11 +38,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.9.2/gcc_64/bin/qmake"
+            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2018-04-14'
+              image 'mavlink/qgc-build-linux:2018-06-08'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -67,11 +67,11 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
-            QMAKE_VER = "5.9.2/gcc_64/bin/qmake"
+            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
           }
           agent {
             docker {
-              image 'mavlink/qgc-build-linux:2018-04-14'
+              image 'mavlink/qgc-build-linux:2018-06-08'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -101,7 +101,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'debug'
-            QMAKE_VER = "5.9.3/clang_64/bin/qmake"
+            QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
           steps {
             sh 'export'
@@ -129,7 +129,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'installer'
-            QMAKE_VER = "5.9.3/clang_64/bin/qmake"
+            QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
           steps {
             sh 'export'
@@ -150,6 +150,7 @@ pipeline {
             }
           }
         }
+
       } // parallel
     } // stage('build')
   } // stages

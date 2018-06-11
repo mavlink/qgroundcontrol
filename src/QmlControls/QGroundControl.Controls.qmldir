@@ -37,6 +37,7 @@ PlanToolBar             1.0 PlanToolBar.qml
 PreFlightCheckButton    1.0 PreFlightCheckButton.qml
 PreFlightCheckGroup     1.0 PreFlightCheckGroup.qml
 PreFlightCheckList      1.0 PreFlightCheckList.qml
+PreFlightCheckModel     1.0 PreFlightCheckModel.qml
 QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml
