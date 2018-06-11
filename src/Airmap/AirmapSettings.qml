@@ -136,6 +136,7 @@ QGCView {
                             width:          _editFieldWidth
                             enabled:        _airMapEnabled
                             visible:        _passwordFact.visible
+                            echoMode:       TextInput.Password
                             property Fact _passwordFact: QGroundControl.settingsManager.airMapSettings.password
                         }
                         Item {
