@@ -311,7 +311,7 @@ QGCCameraControl::takePhoto()
     }
     if(capturesPhotos()) {
         _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                                         // Target component
+            _compID,                                                    // Target component
             MAV_CMD_IMAGE_START_CAPTURE,                                // Command id
             false,                                                      // ShowError
             0,                                                          // Reserved (Set to 0)
@@ -339,7 +339,7 @@ QGCCameraControl::stopTakePhoto()
     }
     if(capturesPhotos()) {
         _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                                         // Target component
+            _compID,                                                    // Target component
             MAV_CMD_IMAGE_STOP_CAPTURE,                                 // Command id
             false,                                                      // ShowError
             0);                                                         // Reserved (Set to 0)
@@ -361,7 +361,7 @@ QGCCameraControl::startVideo()
     }
     if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
         _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                         // Target component
+            _compID,                                    // Target component
             MAV_CMD_VIDEO_START_CAPTURE,                // Command id
             true,                                       // ShowError
             0,                                          // Reserved (Set to 0)
@@ -378,7 +378,7 @@ QGCCameraControl::stopVideo()
     qCDebug(CameraControlLog) << "stopVideo()";
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _vehicle->sendMavCommand(
-            MAV_COMP_ID_CAMERA,                         // Target component
+            _compID,                                    // Target component
             MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
             true,                                       // ShowError
             0);                                         // Reserved (Set to 0)
@@ -399,7 +399,7 @@ QGCCameraControl::setVideoMode()
             MAV_CMD_SET_CAMERA_MODE,                // Command id
             true,                                   // ShowError
             0,                                      // Reserved (Set to 0)
-            CAM_MODE_VIDEO);                     // Camera mode (0: photo, 1: video)
+            CAM_MODE_VIDEO);                        // Camera mode (0: photo, 1: video)
         _setCameraMode(CAM_MODE_VIDEO);
     }
 }

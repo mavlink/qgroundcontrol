@@ -15,7 +15,7 @@ Item {
     visible:    false
 
     property var    qgcView
-    property string folder
+    property string folder              // Due to Qt bug with file url parsing this must be an absolute path
     property var    nameFilters
     property string fileExtension       // Primary file extension to search for
     property string fileExtension2: ""  // Secondary file extension to search for
@@ -75,7 +75,7 @@ Item {
     // the FileDialog fallback mechanism on android 5.9 builds.
     HackFileDialog {
         id:             fullFileDialog
-        folder:         "file://" + _root.folder
+        folder:         "file:///" + _root.folder
         nameFilters:    _root.nameFilters ? _root.nameFilters : []
         title:          _root.title
         selectExisting: _root.selectExisting

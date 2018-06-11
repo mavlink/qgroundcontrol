@@ -15,6 +15,7 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
     : _vehicle(vehicle)
     , _vehicleReadyState(false)
     , _currentTask(0)
+    , _currentCamera(0)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
@@ -25,6 +26,16 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
 //-----------------------------------------------------------------------------
 QGCCameraManager::~QGCCameraManager()
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::setCurrentCamera(int sel)
+{
+    if(sel != _currentCamera && sel >= 0 && sel < _cameras.count()) {
+        _currentCamera = sel;
+        emit currentCameraChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -121,7 +132,9 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
         if(pCamera) {
             QQmlEngine::setObjectOwnership(pCamera, QQmlEngine::CppOwnership);
             _cameras.append(pCamera);
+            _cameraLabels << pCamera->modelName();
             emit camerasChanged();
+            emit cameraLabelsChanged();
         }
     }
 }

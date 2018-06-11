@@ -175,7 +175,7 @@ Item {
     MessageDialog {
         id:                 activeConnectionsCloseDialog
         title:              qsTr("%1 close").arg(QGroundControl.appName)
-        text:               qsTr("There are still active connections to vehicles. Do you want to disconnect these before closing?")
+        text:               qsTr("There are still active connections to vehicles. Are you sure you want to exit?")
         standardButtons:    StandardButton.Yes | StandardButton.Cancel
         modality:           Qt.ApplicationModal
         visible:            false
