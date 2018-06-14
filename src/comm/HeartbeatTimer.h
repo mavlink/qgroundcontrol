@@ -36,6 +36,13 @@ public:
      */
     HeartbeatTimer(int vehicle_id, bool high_latency);
 
+    /**
+     * @brief init
+     *
+     * Starts the timer and emits the signal that the link is active for this vehicle ID
+     */
+    void init();
+
     ~HeartbeatTimer();
 
     /**

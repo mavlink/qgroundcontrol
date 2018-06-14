@@ -195,6 +195,7 @@ void LinkInterface::startHeartbeatTimer(int vehicle_id) {
     } else {
         _heartbeatTimers.insert(vehicle_id, new HeartbeatTimer(vehicle_id, _highLatency));
         QObject::connect(_heartbeatTimers.value(vehicle_id), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        _heartbeatTimers.value(vehicle_id)->init();
     }
 }
 
