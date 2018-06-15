@@ -17,7 +17,11 @@ HeartbeatTimer::HeartbeatTimer(int vehicle_id, bool high_latency) :
     _vehicleID(vehicle_id),
     _high_latency(high_latency)
 {
-    if (!high_latency) {
+}
+
+void HeartbeatTimer::init()
+{
+    if (!_high_latency) {
         _timer->setInterval(_heartbeatReceivedTimeoutMSecs);
         _timer->setSingleShot(true);
         _timer->start();
@@ -26,7 +30,9 @@ HeartbeatTimer::HeartbeatTimer(int vehicle_id, bool high_latency) :
     QObject::connect(_timer, &QTimer::timeout, this, &HeartbeatTimer::timerTimeout);
 }
 
-HeartbeatTimer::~HeartbeatTimer() {
+
+HeartbeatTimer::~HeartbeatTimer()
+{
     if (_timer) {
         QObject::disconnect(_timer, &QTimer::timeout, this, &HeartbeatTimer::timerTimeout);
         _timer->stop();
