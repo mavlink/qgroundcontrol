@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-set +e
+#set +e
 
 if [[ $# -eq 0 ]]; then
 	echo 'create_linux_appimage.sh QGC_SRC_DIR QGC_RELEASE_DIR'
