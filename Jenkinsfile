@@ -151,6 +151,34 @@ pipeline {
           }
         }
 
+        stage('iOS Release') {
+          agent {
+            node {
+              label 'mac'
+            }
+          }
+          environment {
+            CCACHE_BASEDIR = "${env.WORKSPACE}"
+            QGC_CONFIG = 'release'
+            QMAKE_VER = "5.11.0/macx-ios-clang/bin/qmake"
+          }
+          steps {
+            sh 'export'
+            sh 'ccache -z'
+            sh 'git submodule deinit -f .'
+            sh 'git clean -ff -x -d .'
+            sh 'git submodule update --init --recursive --force'
+            sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+            sh 'cd build; xcodebuild -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=$JOBS -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]});'
+            sh 'ccache -s'
+          }
+          post {
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
+          }
+        }
+
       } // parallel
     } // stage('build')
   } // stages
