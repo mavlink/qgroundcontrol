@@ -56,7 +56,6 @@ iOSBuild {
             error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
         }
         QT               += qml-private
-        CONFIG           += qtquickcompiler
         QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
         OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
     } else {
@@ -203,6 +202,7 @@ LinuxBuild {
 CONFIG += qt \
     thread \
     c++11 \
+    qtquickcompiler \
 
 contains(DEFINES, ENABLE_VERBOSE_OUTPUT) {
     message("Enable verbose compiler output (manual override from command line)")
