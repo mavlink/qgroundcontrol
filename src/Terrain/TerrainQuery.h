@@ -69,7 +69,8 @@ public:
 
 private slots:
     void _requestError              (QNetworkReply::NetworkError code);
-    void _requestFinished           ();
+    void _requestFinished           (void);
+    void _sslErrors                 (const QList<QSslError> &errors);
 
 private:
     void _sendQuery                 (const QString& path, const QUrlQuery& urlQuery);
