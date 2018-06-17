@@ -22,17 +22,17 @@
 QGC_LOGGING_CATEGORY(PlanManagerLog, "PlanManagerLog")
 
 PlanManager::PlanManager(Vehicle* vehicle, MAV_MISSION_TYPE planType)
-    : _vehicle(vehicle)
-    , _planType(planType)
-    , _dedicatedLink(NULL)
-    , _ackTimeoutTimer(NULL)
-    , _expectedAck(AckNone)
-    , _transactionInProgress(TransactionNone)
-    , _resumeMission(false)
-    , _lastMissionRequest(-1)
-    , _missionItemCountToRead(-1)
-    , _currentMissionIndex(-1)
-    , _lastCurrentIndex(-1)
+    : _vehicle                  (vehicle)
+    , _planType                 (planType)
+    , _dedicatedLink            (NULL)
+    , _ackTimeoutTimer          (NULL)
+    , _expectedAck              (AckNone)
+    , _transactionInProgress    (TransactionNone)
+    , _resumeMission            (false)
+    , _lastMissionRequest       (-1)
+    , _missionItemCountToRead   (-1)
+    , _currentMissionIndex      (-1)
+    , _lastCurrentIndex         (-1)
 {
     _ackTimeoutTimer = new QTimer(this);
     _ackTimeoutTimer->setSingleShot(true);
@@ -59,9 +59,8 @@ void PlanManager::_writeMissionItemsWorker(void)
         _itemIndicesToWrite << i;
     }
 
-    _transactionInProgress = TransactionWrite;
     _retryCount = 0;
-    emit inProgressChanged(true);
+    _setTransactionInProgress(TransactionWrite);
     _connectToMavlink();
     _writeMissionCount();
 }
@@ -137,8 +136,7 @@ void PlanManager::loadFromVehicle(void)
     }
 
     _retryCount = 0;
-    _transactionInProgress = TransactionRead;
-    emit inProgressChanged(true);
+    _setTransactionInProgress(TransactionRead);
     _connectToMavlink();
     _requestList();
 }
@@ -822,12 +820,7 @@ void PlanManager::_finishTransaction(bool success, bool apmGuidedItemWrite)
 
     // First thing we do is clear the transaction. This way inProgesss is off when we signal transaction complete.
     TransactionType_t currentTransactionType = _transactionInProgress;
-    _transactionInProgress = TransactionNone;
-    if (currentTransactionType != TransactionNone) {
-        _transactionInProgress = TransactionNone;
-        qCDebug(PlanManagerLog) << QStringLiteral("inProgressChanged %1").arg(_planTypeString());
-        emit inProgressChanged(false);
-    }
+    _setTransactionInProgress(TransactionNone);
 
     switch (currentTransactionType) {
     case TransactionRead:
@@ -920,9 +913,8 @@ void PlanManager::removeAll(void)
         emit lastCurrentIndexChanged(-1);
     }
 
-    _transactionInProgress = TransactionRemoveAll;
     _retryCount = 0;
-    emit inProgressChanged(true);
+    _setTransactionInProgress(TransactionRemoveAll);
 
     _removeAllWorker();
 }
@@ -968,5 +960,14 @@ QString PlanManager::_planTypeString(void)
     default:
         qWarning() << "Unknown plan type" << _planType;
         return QStringLiteral("T:Unknown");
+    }
+}
+
+void PlanManager::_setTransactionInProgress(TransactionType_t type)
+{
+    if (_transactionInProgress  != type) {
+        qCDebug(PlanManagerLog) << "_setTransactionInProgress" << _planTypeString() << type;
+        _transactionInProgress = type;
+        emit inProgressChanged(inProgress());
     }
 }

@@ -34,7 +34,7 @@ public:
     Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController   CONSTANT)
 
     Q_PROPERTY(Vehicle*     controllerVehicle   MEMBER _controllerVehicle               CONSTANT)
-    Q_PROPERTY(bool         offline             READ offline                            NOTIFY offlineEditingChanged)   ///< true: controller is not connected to an active vehicle
+    Q_PROPERTY(bool         offline             READ offline                            NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
     Q_PROPERTY(bool         containsItems       READ containsItems                      NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool         syncInProgress      READ syncInProgress                     NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
     Q_PROPERTY(bool         dirty               READ dirty              WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
@@ -74,7 +74,7 @@ public:
 
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
-    bool        syncInProgress  (void) const { return _syncInProgress; }
+    bool        syncInProgress  (void) const;
     bool        dirty           (void) const;
     void        setDirty        (bool dirty);
     QString     fileExtension   (void) const;
@@ -90,10 +90,9 @@ public:
 
 signals:
     void containsItemsChanged   (bool containsItems);
-    void syncInProgressChanged  (bool syncInProgress);
+    void syncInProgressChanged  (void);
     void dirtyChanged           (bool dirty);
-    void vehicleChanged         (Vehicle* vehicle);
-    void offlineEditingChanged  (bool offlineEditing);
+    void offlineChanged  		(bool offlineEditing);
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
@@ -119,7 +118,6 @@ private:
     bool                    _loadRallyPoints;
     bool                    _sendGeoFence;
     bool                    _sendRallyPoints;
-    bool                    _syncInProgress;
 
     static const int    _planFileVersion;
     static const char*  _planFileType;
