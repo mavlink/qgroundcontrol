@@ -63,7 +63,6 @@ signals:
     void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (bool syncInProgress);
     void dirtyChanged           (bool dirty);
-    void vehicleChanged         (Vehicle* vehicle);
     void sendComplete           (void);
     void removeAllComplete      (void);
 
