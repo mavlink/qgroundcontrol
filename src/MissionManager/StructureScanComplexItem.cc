@@ -116,11 +116,16 @@ void StructureScanComplexItem::_polygonCountChanged(int count)
 
 int StructureScanComplexItem::lastSequenceNumber(void) const
 {
-    return _sequenceNumber +
-            (_layersFact.rawValue().toInt() *
-             ((_flightPolygon.count() + 1) +    // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
-              2)) +                             // Camera trigger start/stop for each layer
-            2;                                  // ROI_WPNEXT_OFFSET and ROI_NONE commands
+    // Each structure layer contains:
+    //  1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
+    //  Two commands for camera trigger start/stop
+    int layerItemCount = _flightPolygon.count() + 1 + 2;
+
+    int multiLayerItemCount = layerItemCount * _layersFact.rawValue().toInt();
+
+    int itemCount = multiLayerItemCount + 2;    // +2 for ROI_WPNEXT_OFFSET and ROI_NONE commands
+
+    return _sequenceNumber + itemCount - 1;
 }
 
 void StructureScanComplexItem::setDirty(bool dirty)
