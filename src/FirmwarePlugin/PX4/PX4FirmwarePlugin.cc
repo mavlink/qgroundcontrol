@@ -232,7 +232,7 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
 {
     int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor() || vehicle->vtol()) {
-        available |= TakeoffVehicleCapability;
+        available |= TakeoffVehicleCapability | OrbitModeCapability;
     }
 
     return (capabilities & available) == capabilities;
@@ -362,24 +362,6 @@ void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
 void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
 {
     _setFlightModeAndValidate(vehicle, _landingFlightMode);
-}
-
-void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
-{
-    if (!isGuidedMode(vehicle)) {
-        setGuidedMode(vehicle, true);
-    }
-
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            MAV_CMD_SET_GUIDED_SUBMODE_CIRCLE,
-                            true,   // show error if fails
-                            radius,
-                            velocity,
-                            altitude,
-                            NAN,
-                            centerCoord.isValid() ? centerCoord.latitude()  : NAN,
-                            centerCoord.isValid() ? centerCoord.longitude() : NAN,
-                            centerCoord.isValid() ? centerCoord.altitude()  : NAN);
 }
 
 void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
