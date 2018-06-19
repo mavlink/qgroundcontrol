@@ -930,7 +930,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Save")
                     Layout.fillWidth:   true
-                    enabled:            !masterController.syncInProgress
+                    enabled:            !masterController.syncInProgress && masterController.currentPlanFile !== ""
                     onClicked: {
                         dropPanel.hide()
                         if(masterController.currentPlanFile !== "") {
@@ -944,7 +944,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Save As...")
                     Layout.fillWidth:   true
-                    enabled:            !masterController.syncInProgress
+                    enabled:            !masterController.syncInProgress && _visualItems.count > 1
                     onClicked: {
                         dropPanel.hide()
                         masterController.saveToSelectedFile()
@@ -965,7 +965,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Save KML...")
                     Layout.fillWidth:   true
-                    enabled:            !masterController.syncInProgress
+                    enabled:            !masterController.syncInProgress && _visualItems.count > 1
                     onClicked: {
                         // First point does not count
                         if (_visualItems.count < 2) {
