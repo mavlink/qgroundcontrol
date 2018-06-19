@@ -17,11 +17,13 @@
 #include <QNetworkRequest>
 #include <QNetworkProxy>
 #include <QNetworkReply>
+#include <QSslConfiguration>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QTimer>
 #include <QtLocation/private/qgeotilespec_p.h>
+
 #include <cmath>
 
 QGC_LOGGING_CATEGORY(TerrainQueryLog, "TerrainQueryLog")
@@ -33,7 +35,7 @@ Q_GLOBAL_STATIC(TerrainTileManager, _terrainTileManager)
 TerrainAirMapQuery::TerrainAirMapQuery(QObject* parent)
     : TerrainQueryInterface(parent)
 {
-
+    qCDebug(TerrainQueryVerboseLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
 }
 
 void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
@@ -107,18 +109,24 @@ void TerrainAirMapQuery::_sendQuery(const QString& path, const QUrlQuery& urlQue
 
     QNetworkRequest request(url);
 
+    QSslConfiguration sslConf = request.sslConfiguration();
+    sslConf.setPeerVerifyMode(QSslSocket::VerifyNone);
+    request.setSslConfiguration(sslConf);
+
     QNetworkProxy tProxy;
     tProxy.setType(QNetworkProxy::DefaultProxy);
     _networkManager.setProxy(tProxy);
 
     QNetworkReply* networkReply = _networkManager.get(request);
     if (!networkReply) {
-        qCDebug(TerrainQueryLog) << "QNetworkManager::Get did not return QNetworkReply";
+        qCWarning(TerrainQueryLog) << "QNetworkManager::Get did not return QNetworkReply";
         _requestFailed();
         return;
     }
+    networkReply->ignoreSslErrors();
 
     connect(networkReply, &QNetworkReply::finished, this, &TerrainAirMapQuery::_requestFinished);
+    connect(networkReply, &QNetworkReply::sslErrors, this, &TerrainAirMapQuery::_sslErrors);
     connect(networkReply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &TerrainAirMapQuery::_requestError);
 }
 
@@ -127,8 +135,20 @@ void TerrainAirMapQuery::_requestError(QNetworkReply::NetworkError code)
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     if (code != QNetworkReply::NoError) {
-        qCDebug(TerrainQueryLog) << "_requestError error:url:data" << reply->error() << reply->url() << reply->readAll();
+        qCWarning(TerrainQueryLog) << "_requestError error:url:data" << reply->error() << reply->url() << reply->readAll();
         return;
+    }
+}
+
+void TerrainAirMapQuery::_sslErrors(const QList<QSslError> &errors)
+{
+    for (const auto &error : errors) {
+        qCWarning(TerrainQueryLog) << "SSL error: " << error.errorString();
+
+        const auto &certificate = error.certificate();
+        if (!certificate.isNull()) {
+            qCWarning(TerrainQueryLog) << "SSL Certificate problem: " << certificate.toText();
+        }
     }
 }
 
@@ -137,7 +157,7 @@ void TerrainAirMapQuery::_requestFinished(void)
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
 
     if (reply->error() != QNetworkReply::NoError) {
-        qCDebug(TerrainQueryLog) << "_requestFinished error:url:data" << reply->error() << reply->url() << reply->readAll();
+        qCWarning(TerrainQueryLog) << "_requestFinished error:url:data" << reply->error() << reply->url() << reply->readAll();
         reply->deleteLater();
         _requestFailed();
         return;
@@ -150,7 +170,7 @@ void TerrainAirMapQuery::_requestFinished(void)
     QJsonParseError parseError;
     QJsonDocument responseJson = QJsonDocument::fromJson(responseBytes, &parseError);
     if (parseError.error != QJsonParseError::NoError) {
-        qCDebug(TerrainQueryLog) << "_requestFinished unable to parse json:" << parseError.errorString();
+        qCWarning(TerrainQueryLog) << "_requestFinished unable to parse json:" << parseError.errorString();
         _requestFailed();
         return;
     }
@@ -159,7 +179,7 @@ void TerrainAirMapQuery::_requestFinished(void)
     QJsonObject rootObject = responseJson.object();
     QString status = rootObject["status"].toString();
     if (status != "success") {
-        qCDebug(TerrainQueryLog) << "_requestFinished status != success:" << status;
+        qCWarning(TerrainQueryLog) << "_requestFinished status != success:" << status;
         _requestFailed();
         return;
     }
@@ -252,7 +272,7 @@ void TerrainAirMapQuery::_parseCarpetData(const QJsonValue& carpetJson)
 TerrainOfflineAirMapQuery::TerrainOfflineAirMapQuery(QObject* parent)
     : TerrainQueryInterface(parent)
 {
-
+    qCDebug(TerrainQueryVerboseLog) << "supportsSsl" << QSslSocket::supportsSsl() << "sslLibraryBuildVersionString" << QSslSocket::sslLibraryBuildVersionString();
 }
 
 void TerrainOfflineAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates)
@@ -385,7 +405,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
             if (_tiles[tileHash].isIn(coordinate)) {
                 altitudes.push_back(_tiles[tileHash].elevation(coordinate));
             } else {
-                qCDebug(TerrainQueryLog) << "Error: coordinate not in tile region";
+                qCWarning(TerrainQueryLog) << "Error: coordinate not in tile region";
                 altitudes.push_back(-1.0);
             }
         }
@@ -412,7 +432,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
     _state = State::Idle;
 
     if (!reply) {
-        qCDebug(TerrainQueryLog) << "Elevation tile fetched but invalid reply data type.";
+        qCWarning(TerrainQueryLog) << "Elevation tile fetched but invalid reply data type.";
         return;
     }
 
@@ -422,13 +442,13 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
     // handle potential errors
     if (error != QNetworkReply::NoError) {
-        qCDebug(TerrainQueryLog) << "Elevation tile fetching returned error (" << error << ")";
+        qCWarning(TerrainQueryLog) << "Elevation tile fetching returned error (" << error << ")";
         _tileFailed();
         reply->deleteLater();
         return;
     }
     if (responseBytes.isEmpty()) {
-        qCDebug(TerrainQueryLog) << "Error in fetching elevation tile. Empty response.";
+        qCWarning(TerrainQueryLog) << "Error in fetching elevation tile. Empty response.";
         _tileFailed();
         reply->deleteLater();
         return;
@@ -446,7 +466,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
         }
         _tilesMutex.unlock();
     } else {
-        qCDebug(TerrainQueryLog) << "Received invalid tile";
+        qCWarning(TerrainQueryLog) << "Received invalid tile";
     }
     reply->deleteLater();
 
