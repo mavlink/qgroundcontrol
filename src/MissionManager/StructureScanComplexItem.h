@@ -107,13 +107,13 @@ signals:
 private slots:
     void _setDirty(void);
     void _polygonDirtyChanged       (bool dirty);
-    void _polygonCountChanged       (int count);
     void _flightPathChanged         (void);
     void _clearInternal             (void);
     void _updateCoordinateAltitudes (void);
     void _rebuildFlightPolygon      (void);
     void _recalcCameraShots         (void);
     void _recalcLayerInfo           (void);
+    void _updateLastSequenceNumber  (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
