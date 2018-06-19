@@ -112,7 +112,15 @@ Item {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
-            onItemCoordinateChanged:    mapCircle.center = itemCoordinate
+            onItemCoordinateChanged: mapCircle.center = itemCoordinate
+        }
+    }
+
+    Component {
+        id: radiusDragAreaComponent
+
+        MissionItemIndicatorDrag {
+            onItemCoordinateChanged: mapCircle.radius.rawValue = mapCircle.center.distanceTo(itemCoordinate)
         }
     }
 
@@ -120,19 +128,38 @@ Item {
         id: centerDragHandleComponent
 
         Item {
-            property var dragHandle
-            property var dragArea
+            property var centerDragHandle
+            property var centerDragArea
+            property var radiusDragHandle
+            property var radiusDragArea
+            property var radiusDragCoord:       QtPositioning.coordinate()
+            property var circleCenterCoord:     mapCircle.center
+            property real circleRadius:         mapCircle.radius.rawValue
+
+            function calcRadiusDragCoord() {
+                radiusDragCoord = mapCircle.center.atDistanceAndAzimuth(circleRadius, 90)
+            }
+
+            onCircleCenterCoordChanged: calcRadiusDragCoord()
+            onCircleRadiusChanged:      calcRadiusDragCoord()
 
             Component.onCompleted: {
-                dragHandle = dragHandleComponent.createObject(mapControl)
-                dragHandle.coordinate = Qt.binding(function() { return mapCircle.center })
-                mapControl.addMapItem(dragHandle)
-                dragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": dragHandle, "itemCoordinate": mapCircle.center })
+                calcRadiusDragCoord()
+                radiusDragHandle = dragHandleComponent.createObject(mapControl)
+                radiusDragHandle.coordinate = Qt.binding(function() { return radiusDragCoord })
+                mapControl.addMapItem(radiusDragHandle)
+                radiusDragArea = radiusDragAreaComponent.createObject(mapControl, { "itemIndicator": radiusDragHandle, "itemCoordinate": radiusDragCoord })
+                centerDragHandle = dragHandleComponent.createObject(mapControl)
+                centerDragHandle.coordinate = Qt.binding(function() { return circleCenterCoord })
+                mapControl.addMapItem(centerDragHandle)
+                centerDragArea = centerDragAreaComponent.createObject(mapControl, { "itemIndicator": centerDragHandle, "itemCoordinate": circleCenterCoord })
             }
 
             Component.onDestruction: {
-                dragHandle.destroy()
-                dragArea.destroy()
+                centerDragHandle.destroy()
+                centerDragArea.destroy()
+                radiusDragHandle.destroy()
+                radiusDragArea.destroy()
             }
         }
     }
