@@ -63,8 +63,10 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
-    connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_polygonCountChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
+
+    connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
+    connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
@@ -108,19 +110,23 @@ void StructureScanComplexItem::_clearInternal(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
-void StructureScanComplexItem::_polygonCountChanged(int count)
+void StructureScanComplexItem::_updateLastSequenceNumber(void)
 {
-    Q_UNUSED(count);
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
 int StructureScanComplexItem::lastSequenceNumber(void) const
 {
-    return _sequenceNumber +
-            (_layersFact.rawValue().toInt() *
-             ((_flightPolygon.count() + 1) +    // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
-              2)) +                             // Camera trigger start/stop for each layer
-            2;                                  // ROI_WPNEXT_OFFSET and ROI_NONE commands
+    // Each structure layer contains:
+    //  1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
+    //  Two commands for camera trigger start/stop
+    int layerItemCount = _flightPolygon.count() + 1 + 2;
+
+    int multiLayerItemCount = layerItemCount * _layersFact.rawValue().toInt();
+
+    int itemCount = multiLayerItemCount + 2;    // +2 for ROI_WPNEXT_OFFSET and ROI_NONE commands
+
+    return _sequenceNumber + itemCount - 1;
 }
 
 void StructureScanComplexItem::setDirty(bool dirty)
