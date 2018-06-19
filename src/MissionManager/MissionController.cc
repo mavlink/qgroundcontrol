@@ -56,20 +56,21 @@ const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 const int   MissionController::_missionFileVersion =            2;
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
-    : PlanElementController(masterController, parent)
-    , _missionManager(_managerVehicle->missionManager())
-    , _visualItems(NULL)
-    , _settingsItem(NULL)
-    , _firstItemsFromVehicle(false)
-    , _itemsRequested(false)
-    , _surveyMissionItemName(tr("Survey"))
-    , _fwLandingMissionItemName(tr("Fixed Wing Landing"))
-    , _structureScanMissionItemName(tr("Structure Scan"))
-    , _corridorScanMissionItemName(tr("Corridor Scan"))
-    , _appSettings(qgcApp()->toolbox()->settingsManager()->appSettings())
-    , _progressPct(0)
-    , _currentPlanViewIndex(-1)
-    , _currentPlanViewItem(NULL)
+    : PlanElementController         (masterController, parent)
+    , _missionManager               (_managerVehicle->missionManager())
+    , _visualItems                  (NULL)
+    , _settingsItem                 (NULL)
+    , _firstItemsFromVehicle        (false)
+    , _itemsRequested               (false)
+    , _inRecalcSequence             (false)
+    , _surveyMissionItemName        (tr("Survey"))
+    , _fwLandingMissionItemName     (tr("Fixed Wing Landing"))
+    , _structureScanMissionItemName (tr("Structure Scan"))
+    , _corridorScanMissionItemName  (tr("Corridor Scan"))
+    , _appSettings                  (qgcApp()->toolbox()->settingsManager()->appSettings())
+    , _progressPct                  (0)
+    , _currentPlanViewIndex         (-1)
+    , _currentPlanViewItem          (NULL)
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
@@ -146,17 +147,17 @@ void MissionController::_init(void)
 // Called when new mission items have completed downloading from Vehicle
 void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllRequested)
 {
-    qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle";
+    qCDebug(MissionControllerLog) << "_newMissionItemsAvailableFromVehicle flyView:count" << _flyView << _missionManager->missionItems().count();
 
     // Fly view always reloads on _loadComplete
     // Plan view only reloads on _loadComplete if specifically requested
-    if (_flyView || removeAllRequested || _itemsRequested) {
+    if (_flyView || removeAllRequested || _itemsRequested || _visualItems->count() <= 1) {
         // Fly Mode (accept if):
         //      - Always accepts new items from the vehicle so Fly view is kept up to date
         // Edit Mode (accept if):
-        //      - Either a load from vehicle was manually requested or
+        //      - Remove all was requested from Fly view (clear mission on flight end)
+        //      - A load from vehicle was manually requested
         //      - The initial automatic load from a vehicle completed and the current editor is empty
-        //      - Remove all way requested from Fly view (clear mission on flight end)
 
         QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
         const QList<MissionItem*>& newMissionItems = _missionManager->missionItems();
@@ -1490,15 +1491,21 @@ void MissionController::_recalcMissionFlightStatus()
 // This will update the sequence numbers to be sequential starting from 0
 void MissionController::_recalcSequence(void)
 {
+    if (_inRecalcSequence) {
+        // Don't let this call recurse due to signalling
+        return;
+    }
+
     // Setup ascending sequence numbers for all visual items
 
+    _inRecalcSequence = true;
     int sequenceNumber = 0;
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-
         item->setSequenceNumber(sequenceNumber);
         sequenceNumber = item->lastSequenceNumber() + 1;
-    }
+    }    
+    _inRecalcSequence = false;
 }
 
 // This will update the child item hierarchy

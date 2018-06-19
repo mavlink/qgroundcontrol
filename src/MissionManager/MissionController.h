@@ -276,6 +276,7 @@ private:
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
+    bool                    _inRecalcSequence;
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;

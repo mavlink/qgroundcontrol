@@ -1005,7 +1005,6 @@ QGCView {
                 text:           qsTr("Export")
                 width:          _buttonSize
                 visible:        QGroundControl.corePlugin.options.showOfflineMapExport
-                enabled:        QGroundControl.mapEngineManager.tileSets.count > 1
                 onClicked:      showExport()
             }
             QGCButton {
@@ -1041,8 +1040,13 @@ QGCView {
                     delegate: QGCCheckBox {
                         text:           object.name
                         checked:        object.selected
-                        onClicked: {
-                            object.selected = checked
+                        onClicked:      object.selected = checked
+                        Connections {
+                            // This connection should theoretically not be needed since the `checked: object.selected` binding should work.
+                            // But for some reason when the user clicks the check box taht binding breaks. Which in turns causes
+                            // Select All/None to update the internal state but check box visible state is out of sync
+                            target:             object
+                            onSelectedChanged:  checked = object.selected
                         }
                     }
                 }

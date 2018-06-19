@@ -2494,7 +2494,7 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
-    if ( !_joystickEnabled ) {
+    if ( !_joystickEnabled && !_highLatencyLink) {
         _uas->setExternalControlSetpoint(roll, pitch, yaw, thrust, 0, JoystickModeRC);
     }
 }
