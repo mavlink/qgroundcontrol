@@ -2751,13 +2751,30 @@ void Vehicle::guidedModeChangeAltitude(double altitudeChange)
     _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange);
 }
 
-void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
+void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)
 {
     if (!orbitModeSupported()) {
         qgcApp()->showMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
         return;
     }
-    _firmwarePlugin->guidedModeOrbit(this, centerCoord, radius, velocity, altitude);
+
+    double lat, lon, alt;
+    if (centerCoord.isValid()) {
+        lat = lon = alt = qQNaN();
+    } else {
+        lat = centerCoord.latitude();
+        lon = centerCoord.longitude();
+        alt = amslAltitude;
+    }
+
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_DO_ORBIT,
+                   true,            // show error if fails
+                   radius,
+                   qQNaN(),         // Use default velocity
+                   0,               // Vehicle points to center
+                   qQNaN(),         // reserved
+                   lat, lon, alt);
 }
 
 void Vehicle::pauseVehicle(void)

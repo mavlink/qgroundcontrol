@@ -49,7 +49,7 @@ FlightMap {
     property var    _rallyPointController:      _planMasterController.rallyPointController
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
-    property var    _gotoHereCoordinate:        QtPositioning.coordinate()
+    property var    _guidedLocationCoordinate:  QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
 
     property bool   _disableVehicleTracking:    false
@@ -264,21 +264,6 @@ FlightMap {
         }
     }
 
-    // GoTo here waypoint
-    MapQuickItem {
-        coordinate:     _gotoHereCoordinate
-        visible:        _activeVehicle && _activeVehicle.guidedModeSupported && _gotoHereCoordinate.isValid
-        z:              QGroundControl.zOrderMapItems
-        anchorPoint.x:  sourceItem.anchorPointX
-        anchorPoint.y:  sourceItem.anchorPointY
-
-        sourceItem: MissionItemIndexLabel {
-            checked:    true
-            index:      -1
-            label:      qsTr("Goto here", "Goto here waypoint")
-        }
-    }    
-
     // Camera trigger points
     MapItemView {
         model: _activeVehicle ? _activeVehicle.cameraTriggerPoints : 0
@@ -289,14 +274,64 @@ FlightMap {
         }
     }
 
+    // Guided action location
+    MapQuickItem {
+        id:             guidedLocationItem
+        coordinate:     _guidedLocationCoordinate
+        visible:        _activeVehicle && _activeVehicle.guidedModeSupported && _guidedLocationCoordinate.isValid
+        z:              QGroundControl.zOrderMapItems
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+
+        property bool gotoLocation: true    ///< true: Used for go to location, false: used for orbit
+
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      guidedLocationItem.gotoLocation ? qsTr("Goto here", "Goto here waypoint") : qsTr("Orbit here", "Orbit here waypoint")
+        }
+    }    
+
     // Handle guided mode clicks
     MouseArea {
         anchors.fill: parent
 
+        Menu {
+            id: clickMenu
+
+            MenuItem {
+                text:           qsTr("Go to location")
+                visible:        guidedActionsController.showGotoLocation
+
+                onTriggered: {
+                    guidedLocationItem.gotoLocation = true
+                    guidedActionsController.confirmAction(guidedActionsController.actionGoto, _guidedLocationCoordinate)
+                }
+            }
+
+            MenuItem {
+                text:           qsTr("Orbit at location")
+                visible:        guidedActionsController.showOrbit
+                onTriggered: {
+                    guidedLocationItem.gotoLocation = false
+                    guidedActionsController.confirmAction(guidedActionsController.actionOrbit, _guidedLocationCoordinate)
+                }
+            }
+        }
+
         onClicked: {
-            if (guidedActionsController.showGotoLocation && !guidedActionsController.guidedUIVisible) {
-                _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-                guidedActionsController.confirmAction(guidedActionsController.actionGoto, _gotoHereCoordinate)
+            if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit)) {
+                return
+            }
+            _guidedLocationCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            if (guidedActionsController.showGotoLocation && guidedActionsController.showOrbit) {
+                clickMenu.popup()
+            } else if (guidedActionsController.showGotoLocation) {
+                guidedLocationItem.gotoLocation = true
+                guidedActionsController.confirmAction(guidedActionsController.actionGoto, _guidedLocationCoordinate)
+            } else if (guidedActionsController.showOrbit) {
+                guidedLocationItem.gotoLocation = false
+                guidedActionsController.confirmAction(guidedActionsController.actionOrbit, _guidedLocationCoordinate)
             }
         }
     }
