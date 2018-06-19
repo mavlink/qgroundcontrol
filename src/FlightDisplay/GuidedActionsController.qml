@@ -152,8 +152,16 @@ Item {
     on__GuidedModeSupportedChanged:     _outputState()
     on__PauseVehicleSupportedChanged:   _outputState()
 
-    on_CurrentMissionIndexChanged:      console.log("_currentMissionIndex", _currentMissionIndex)
-    on_ResumeMissionIndexChanged:       console.log("_resumeMissionIndex", _resumeMissionIndex)
+    on_CurrentMissionIndexChanged: {
+        if (__debugGuidedStates) {
+            console.log("_currentMissionIndex", _currentMissionIndex)
+        }
+    }
+    on_ResumeMissionIndexChanged: {
+        if (__debugGuidedStates) {
+            console.log("_resumeMissionIndex", _resumeMissionIndex)
+        }
+    }
     onShowResumeMissionChanged: {
         if (__debugGuidedStates) {
             console.log("showResumeMission", showResumeMission)
