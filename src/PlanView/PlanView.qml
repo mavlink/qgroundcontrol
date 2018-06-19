@@ -524,36 +524,36 @@ QGCView {
                 color:              qgcPal.window
                 title:              qsTr("Plan")
                 z:                  QGroundControl.zOrderWidgets
-                showAlternateIcon:  [ false, false, false, masterController.dirty, false, false, false ]
-                rotateImage:        [ false, false, false, masterController.syncInProgress, false, false, false ]
-                animateImage:       [ false, false, false, masterController.dirty, false, false, false ]
-                buttonEnabled:      [ true, true, true, !masterController.syncInProgress, true, true, true ]
-                buttonVisible:      [ true, _waypointsOnlyMode, true, true, true, _showZoom, _showZoom ]
+                showAlternateIcon:  [ masterController.dirty, false, false, false, false, false, false ]
+                rotateImage:        [ masterController.syncInProgress, false, false, false, false, false, false ]
+                animateImage:       [ masterController.dirty, false, false, false, false, false, false ]
+                buttonEnabled:      [ !masterController.syncInProgress, true, true, true, true, true, true ]
+                buttonVisible:      [ true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y
 
                 property bool _showZoom: !ScreenTools.isMobile
 
                 model: [
                     {
-                        name:       "Waypoint",
-                        iconSource: "/qmlimages/MapAddMission.svg",
-                        toggle:     true
+                        name:                   "File",
+                        iconSource:             "/qmlimages/MapSync.svg",
+                        alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
+                        dropPanelComponent:     syncDropPanel
                     },
                     {
-                        name:       "ROI",
-                        iconSource: "/qmlimages/MapAddMission.svg",
-                        toggle:     true
+                        name:                   "Waypoint",
+                        iconSource:             "/qmlimages/MapAddMission.svg",
+                        toggle:                 true
+                    },
+                    {
+                        name:                   "ROI",
+                        iconSource:             "/qmlimages/MapAddMission.svg",
+                        toggle:                 true
                     },
                     {
                         name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : "Pattern",
                         iconSource:         "/qmlimages/MapDrawShape.svg",
                         dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
-                    },
-                    {
-                        name:                   "Sync",
-                        iconSource:             "/qmlimages/MapSync.svg",
-                        alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
-                        dropPanelComponent:     syncDropPanel
                     },
                     {
                         name:               "Center",
@@ -802,7 +802,7 @@ QGCView {
     Component {
         id: removeAllPromptDialog
         QGCViewMessage {
-            message: qsTr("Are you sure you want to remove all items? ") +
+            message: qsTr("Are you sure you want to remove all items and create a new plan? ") +
                      (_planMasterController.offline ? "" : qsTr("This will also remove all items from the vehicle."))
             function accept() {
                 if (_planMasterController.offline) {
@@ -863,8 +863,11 @@ QGCView {
                 width:      sendSaveGrid.width
                 wrapMode:   Text.WordWrap
                 text:       masterController.dirty ?
-                                qsTr("You have unsaved changes. You should upload to your vehicle, or save to a file:") :
-                                qsTr("Sync:")
+                                (_activeVehicle ?
+                                     qsTr("You have unsaved changes. You should upload to your vehicle, or save to a file:") :
+                                     qsTr("You have unsaved changes.")
+                                ) :
+                                qsTr("Plan File:")
             }
 
             GridLayout {
@@ -878,6 +881,7 @@ QGCView {
                     text:               qsTr("Upload")
                     Layout.fillWidth:   true
                     enabled:            !masterController.offline && !masterController.syncInProgress
+                    visible:            _activeVehicle
                     onClicked: {
                         dropPanel.hide()
                         masterController.upload()
@@ -888,6 +892,7 @@ QGCView {
                     text:               qsTr("Download")
                     Layout.fillWidth:   true
                     enabled:            !masterController.offline && !masterController.syncInProgress
+                    visible:            _activeVehicle
                     onClicked: {
                         dropPanel.hide()
                         if (masterController.dirty) {
@@ -899,17 +904,17 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:               qsTr("Save Plan...")
+                    text:               qsTr("New...")
                     Layout.fillWidth:   true
-                    enabled:            !masterController.syncInProgress
-                    onClicked: {
+                    enabled:            _visualItems.count > 1
+                    onClicked:  {
                         dropPanel.hide()
-                        masterController.saveToSelectedFile()
+                        _qgcView.showDialog(removeAllPromptDialog, qsTr("New Plan"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                     }
                 }
 
                 QGCButton {
-                    text:               qsTr("Load Plan...")
+                    text:               qsTr("Open...")
                     Layout.fillWidth:   true
                     enabled:            !masterController.syncInProgress
                     onClicked: {
@@ -919,6 +924,30 @@ QGCView {
                         } else {
                             masterController.loadFromSelectedFile()
                         }
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Save")
+                    Layout.fillWidth:   true
+                    enabled:            !masterController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        if(masterController.currentPlanFile !== "") {
+                            masterController.saveToCurrent()
+                        } else {
+                            masterController.saveToSelectedFile()
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Save As...")
+                    Layout.fillWidth:   true
+                    enabled:            !masterController.syncInProgress
+                    onClicked: {
+                        dropPanel.hide()
+                        masterController.saveToSelectedFile()
                     }
                 }
 
@@ -938,7 +967,7 @@ QGCView {
                     Layout.fillWidth:   true
                     enabled:            !masterController.syncInProgress
                     onClicked: {
-                        // First point do not count
+                        // First point does not count
                         if (_visualItems.count < 2) {
                             _qgcView.showDialog(noItemForKML, qsTr("KML"), _qgcView.showDialogDefaultWidth, StandardButton.Cancel)
                             return
@@ -948,14 +977,6 @@ QGCView {
                     }
                 }
 
-                QGCButton {
-                    text:               qsTr("Remove All")
-                    Layout.fillWidth:   true
-                    onClicked:  {
-                        dropPanel.hide()
-                        _qgcView.showDialog(removeAllPromptDialog, qsTr("Remove all"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
-                    }
-                }
             }
         }
     }
