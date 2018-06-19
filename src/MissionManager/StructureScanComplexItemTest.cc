@@ -134,6 +134,6 @@ void StructureScanComplexItemTest::_testItemCount(void)
 
     _initItem();
     _structureScanItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _structureScanItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _structureScanItem->lastSequenceNumber());
 
 }
