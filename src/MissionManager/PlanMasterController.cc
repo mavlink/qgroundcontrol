@@ -133,11 +133,6 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         connect(_managerVehicle->rallyPointManager(),   &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
     }
 
-    if (newOffline != _offline) {
-        _offline = newOffline;
-        emit offlineEditingChanged(newOffline);
-    }
-
     _missionController.managerVehicleChanged(_managerVehicle);
     _geoFenceController.managerVehicleChanged(_managerVehicle);
     _rallyPointController.managerVehicleChanged(_managerVehicle);
