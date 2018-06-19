@@ -63,8 +63,10 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
-    connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_polygonCountChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
+
+    connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
+    connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
@@ -108,9 +110,8 @@ void StructureScanComplexItem::_clearInternal(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
-void StructureScanComplexItem::_polygonCountChanged(int count)
+void StructureScanComplexItem::_updateLastSequenceNumber(void)
 {
-    Q_UNUSED(count);
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
