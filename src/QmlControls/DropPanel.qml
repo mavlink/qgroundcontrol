@@ -162,8 +162,6 @@ Item {
 
             Loader {
                 id: panelLoader
-                x:  _dropMargin
-                y:  _dropMargin
 
                 onHeightChanged:    _calcPositions()
                 onWidthChanged:     _calcPositions()
