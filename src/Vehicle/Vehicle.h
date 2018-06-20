@@ -840,6 +840,7 @@ public:
     ///     @param showError true: Display error to user if command failed, false:  no error shown
     /// Signals: mavCommandResult on success or failure
     void sendMavCommand(int component, MAV_CMD command, bool showError, float param1 = 0.0f, float param2 = 0.0f, float param3 = 0.0f, float param4 = 0.0f, float param5 = 0.0f, float param6 = 0.0f, float param7 = 0.0f);
+    void sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
 
     /// Same as sendMavCommand but available from Qml.
     Q_INVOKABLE void sendCommand(int component, int command, bool showError, double param1 = 0.0f, double param2 = 0.0f, double param3 = 0.0f, double param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, double param7 = 0.0f)
@@ -1179,10 +1180,12 @@ private:
     QGCCameraManager* _cameras;
 
     typedef struct {
-        int     component;
-        MAV_CMD command;
-        float   rgParam[7];
-        bool    showError;
+        int         component;
+        bool        commandInt; // true: use COMMAND_INT, false: use COMMAND_LONG
+        MAV_CMD     command;
+        MAV_FRAME   frame;
+        double      rgParam[7];
+        bool        showError;
     } MavCommandQueueEntry_t;
 
     QList<MavCommandQueueEntry_t>   _mavCommandQueue;
