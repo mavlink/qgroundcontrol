@@ -212,6 +212,17 @@ void MissionController::loadFromVehicle(void)
     }
 }
 
+void MissionController::_warnIfTerrainFrameUsed(void)
+{
+    for (int i=1; i<_visualItems->count(); i++) {
+        SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(_visualItems->get(i));
+        if (simpleItem && simpleItem->altitudeMode() == SimpleMissionItem::AltitudeTerrainFrame) {
+            qgcApp()->showMessage(tr("Warning: You are using MAV_FRAME_GLOBAL_TERRAIN_ALT in a mission. %1 does not support sending terrain tiles to vehicle.").arg(qgcApp()->applicationName()));
+            break;
+        }
+    }
+}
+
 void MissionController::sendToVehicle(void)
 {
     if (_masterController->offline()) {
@@ -220,6 +231,7 @@ void MissionController::sendToVehicle(void)
         qCWarning(MissionControllerLog) << "MissionControllerLog::sendToVehicle called while syncInProgress";
     } else {
         qCDebug(MissionControllerLog) << "MissionControllerLog::sendToVehicle";
+        _warnIfTerrainFrameUsed();
         if (_visualItems->count() == 1) {
             // This prevents us from sending a possibly bogus home position to the vehicle
             QmlObjectListModel emptyModel;
