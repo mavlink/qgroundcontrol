@@ -31,6 +31,7 @@ Item {
     property var confirmDialog
     property var actionList
     property var altitudeSlider
+    property var orbitMapCircle
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
     readonly property string armTitle:                      qsTr("Arm")
@@ -388,7 +389,8 @@ Item {
             _activeVehicle.setCurrentMissionSequence(actionData)
             break
         case actionOrbit:
-            _activeVehicle.guidedModeOrbit(actionData, 10 /* Hacked fixed radius */, _activeVehicle.altitudeAMSL + actionAltitudeChange)
+            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius, _activeVehicle.altitudeAMSL + actionAltitudeChange)
+            orbitMapCircle.hide()
             break
         case actionLandAbort:
             _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
