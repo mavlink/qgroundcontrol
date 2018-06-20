@@ -116,12 +116,6 @@ install:
         ;
     fi
 
-  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
-        sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
-        ;
-    fi
-
   - if [ "${SPEC}" = "macx-clang" ]; then
         export QT_DIR=Qt5.11-clang_64/5.11.0/clang_64 &&
         export QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins &&
