@@ -151,6 +151,9 @@ public:
     /// Adjust the altitude of the item if appropriate to the new altitude.
     virtual void applyNewAltitude(double newAltitude) = 0;
 
+    /// @return Amount of additional time delay in seconds needed to fly this item
+    virtual double additionalTimeDelay(void) const = 0;
+
     double  missionGimbalYaw    (void) const { return _missionGimbalYaw; }
     double  missionVehicleYaw   (void) const { return _missionVehicleYaw; }
     void    setMissionVehicleYaw(double vehicleYaw);
@@ -184,6 +187,7 @@ signals:
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);
     void terrainAltitudeChanged         (double terrainAltitude);
+    void additionalTimeDelayChanged     (void);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);

@@ -27,9 +27,6 @@ public:
     /// Signals complexDistanceChanged
     virtual double complexDistance(void) const = 0;
 
-    /// @return Amount of additional time delay in seconds needed to fly the complex item
-    virtual double additionalTimeDelay(void) const { return 0; }
-
     /// Load the complex mission item from Json
     ///     @param complexObject Complex mission item json object
     ///     @param sequenceNumber Sequence number for first MISSION_ITEM in survey
@@ -46,10 +43,13 @@ public:
     /// This mission item attribute specifies the type of the complex item.
     static const char* jsonComplexItemTypeKey;
 
+    // Overrides from VisualMissionItem
+    double additionalTimeDelay(void) const final { return 0; }
+
+
 signals:
     void complexDistanceChanged     (void);
     void greatestDistanceToChanged  (void);
-    void additionalTimeDelayChanged (void);
 };
 
 #endif
