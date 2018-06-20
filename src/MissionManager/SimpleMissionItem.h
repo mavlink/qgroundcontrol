@@ -122,6 +122,7 @@ public:
     void            applyNewAltitude        (double newAltitude) final;
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
     bool            readyForSave            (void) const final;
+    double          additionalTimeDelay     (void) const final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return coordinateHasRelativeAltitude(); }
@@ -147,17 +148,18 @@ signals:
     void supportsTerrainFrameChanged(void);
 
 private slots:
-    void _setDirty                      (void);
-    void _sectionDirtyChanged           (bool dirty);
-    void _sendCommandChanged            (void);
-    void _sendCoordinateChanged         (void);
-    void _sendFriendlyEditAllowedChanged(void);
-    void _altitudeChanged               (void);
-    void _altitudeModeChanged           (void);
-    void _terrainAltChanged             (void);
-    void _updateLastSequenceNumber      (void);
-    void _rebuildFacts                  (void);
-    void _rebuildTextFieldFacts         (void);
+    void _setDirty                          (void);
+    void _sectionDirtyChanged               (bool dirty);
+    void _sendCommandChanged                (void);
+    void _sendCoordinateChanged             (void);
+    void _sendFriendlyEditAllowedChanged    (void);
+    void _altitudeChanged                   (void);
+    void _altitudeModeChanged               (void);
+    void _terrainAltChanged                 (void);
+    void _updateLastSequenceNumber          (void);
+    void _rebuildFacts                      (void);
+    void _rebuildTextFieldFacts             (void);
+    void _possibleAdditionalTimeDelayChanged(void);
 
 private:
     void _connectSignals        (void);
