@@ -257,6 +257,7 @@ private:
     void _addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
     int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i);
+    void _warnIfTerrainFrameUsed(void);
 
 private:
     MissionManager*         _missionManager;
