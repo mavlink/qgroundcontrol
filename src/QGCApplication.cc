@@ -76,6 +76,7 @@
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
 #include "QGCMapPolygon.h"
+#include "QGCMapCircle.h"
 #include "ParameterManager.h"
 #include "SettingsManager.h"
 #include "QGCCorePlugin.h"
@@ -389,6 +390,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<LogDownloadController>          ("QGroundControl.Controllers", 1, 0, "LogDownloadController");
     qmlRegisterType<SyslinkComponentController>     ("QGroundControl.Controllers", 1, 0, "SyslinkComponentController");
     qmlRegisterType<EditPositionDialogController>   ("QGroundControl.Controllers", 1, 0, "EditPositionDialogController");
+    qmlRegisterType<QGCMapCircle>                   ("QGroundControl.FlightMap",   1, 0, "QGCMapCircle");
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           ("QGroundControl.Controllers", 1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  ("QGroundControl.Controllers", 1, 0, "CustomCommandWidgetController");
