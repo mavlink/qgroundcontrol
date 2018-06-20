@@ -49,7 +49,6 @@ FlightMap {
     property var    _rallyPointController:      _planMasterController.rallyPointController
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
-    property var    _gotoHereCoordinate:        QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
 
     property bool   _disableVehicleTracking:    false
@@ -264,21 +263,6 @@ FlightMap {
         }
     }
 
-    // GoTo here waypoint
-    MapQuickItem {
-        coordinate:     _gotoHereCoordinate
-        visible:        _activeVehicle && _activeVehicle.guidedModeSupported && _gotoHereCoordinate.isValid
-        z:              QGroundControl.zOrderMapItems
-        anchorPoint.x:  sourceItem.anchorPointX
-        anchorPoint.y:  sourceItem.anchorPointY
-
-        sourceItem: MissionItemIndexLabel {
-            checked:    true
-            index:      -1
-            label:      qsTr("Goto here", "Goto here waypoint")
-        }
-    }    
-
     // Camera trigger points
     MapItemView {
         model: _activeVehicle ? _activeVehicle.cameraTriggerPoints : 0
@@ -289,14 +273,107 @@ FlightMap {
         }
     }
 
+    MapQuickItem {
+        id:             gotoLocationItem
+        visible:        false
+        z:              QGroundControl.zOrderMapItems
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("Goto here", "Goto here waypoint")
+        }
+
+        function show(coord) {
+            gotoLocationItem.coordinate = coord
+            gotoLocationItem.visible = true
+        }
+
+        function hide() {
+            gotoLocationItem.visible = false
+        }
+    }
+
+    QGCMapCircleVisuals {
+        id:         orbitMapCircle
+        mapControl: parent
+        mapCircle:  _mapCircle
+        visible:    false
+
+        property alias center:  _mapCircle.center
+        property real radius:   defaultRadius
+
+        readonly property real defaultRadius: 30
+
+        function show(coord) {
+            orbitMapCircle.radius = defaultRadius
+            orbitMapCircle.center = coord
+            orbitMapCircle.visible = true
+        }
+
+        function hide() {
+            orbitMapCircle.visible = false
+        }
+
+        Component.onCompleted: guidedActionsController.orbitMapCircle = orbitMapCircle
+
+        QGCMapCircle {
+            id:                 _mapCircle
+            interactive:        true
+            radius.rawValue:    orbitMapCircle.radius
+        }
+    }
+
     // Handle guided mode clicks
     MouseArea {
         anchors.fill: parent
 
+        Menu {
+            id: clickMenu
+
+            property var coord
+
+            MenuItem {
+                text:           qsTr("Go to location")
+                visible:        guidedActionsController.showGotoLocation
+
+                onTriggered: {
+                    gotoLocationItem.show(clickMenu.coord)
+                    orbitMapCircle.hide()
+                    guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickMenu.coord)
+                }
+            }
+
+            MenuItem {
+                text:           qsTr("Orbit at location")
+                visible:        guidedActionsController.showOrbit
+
+                onTriggered: {
+                    orbitMapCircle.show(clickMenu.coord)
+                    gotoLocationItem.hide()
+                    guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickMenu.coord)
+                }
+            }
+        }
+
         onClicked: {
-            if (guidedActionsController.showGotoLocation && !guidedActionsController.guidedUIVisible) {
-                _gotoHereCoordinate = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-                guidedActionsController.confirmAction(guidedActionsController.actionGoto, _gotoHereCoordinate)
+            if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit)) {
+                return
+            }            
+            orbitMapCircle.hide()
+            gotoLocationItem.hide()
+            var clickCoord = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
+            if (guidedActionsController.showGotoLocation && guidedActionsController.showOrbit) {
+                clickMenu.coord = clickCoord
+                clickMenu.popup()
+            } else if (guidedActionsController.showGotoLocation) {
+                _guidedLocationCoordinate = clickCoord
+                guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickCoord)
+            } else if (guidedActionsController.showOrbit) {
+                orbitMapCircle.show(clickCoord)
+                guidedActionsController.confirmAction(guidedActionsController.actionOrbit, clickCoord)
             }
         }
     }
