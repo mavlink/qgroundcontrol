@@ -27,52 +27,60 @@ Item {
     property bool   interactive:        mapCircle.interactive   /// true: user can manipulate polygon
     property color  interiorColor:      "transparent"
     property real   interiorOpacity:    1
-    property int    borderWidth:        0
-    property color  borderColor:        "black"
+    property int    borderWidth:        2
+    property color  borderColor:        "orange"
 
     property var _circleComponent
-    property var _centerDragHandleComponent
+    property var _dragHandlesComponent
 
     function addVisuals() {
-        _circleComponent = circleComponent.createObject(mapControl)
-        mapControl.addMapItem(_circleComponent)
+        if (!_circleComponent) {
+            _circleComponent = circleComponent.createObject(mapControl)
+            mapControl.addMapItem(_circleComponent)
+        }
     }
 
     function removeVisuals() {
-        _circleComponent.destroy()
-    }
-
-    function addHandles() {
-        if (!_centerDragHandleComponent) {
-            _centerDragHandleComponent = centerDragHandleComponent.createObject(mapControl)
+        if (_circleComponent) {
+            _circleComponent.destroy()
+            _circleComponent = undefined
         }
     }
 
-    function removeHandles() {
-        if (_centerDragHandleComponent) {
-            _centerDragHandleComponent.destroy()
-            _centerDragHandleComponent = undefined
+    function addDragHandles() {
+        if (!_dragHandlesComponent) {
+            _dragHandlesComponent = dragHandlesComponent.createObject(mapControl)
         }
     }
 
-    onInteractiveChanged: {
-        if (interactive) {
-            addHandles()
+    function removeDragHandles() {
+        if (_dragHandlesComponent) {
+            _dragHandlesComponent.destroy()
+            _dragHandlesComponent = undefined
+        }
+    }
+
+    function updateInternalComponents() {
+        if (visible) {
+            addVisuals()
+            if (interactive) {
+                addDragHandles()
+            } else {
+                removeDragHandles()
+            }
         } else {
-            removeHandles()
+            removeVisuals()
+            removeDragHandles()
         }
     }
 
-    Component.onCompleted: {
-        addVisuals()
-        if (interactive) {
-            addHandles()
-        }
-    }
+    Component.onCompleted:  updateInternalComponents()
+    onInteractiveChanged:   updateInternalComponents()
+    onVisibleChanged:       updateInternalComponents()
 
     Component.onDestruction: {
         removeVisuals()
-        removeHandles()
+        removeDragHandles()
     }
 
     Component {
@@ -112,6 +120,8 @@ Item {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
+            mapControl: _root.mapControl
+
             onItemCoordinateChanged: mapCircle.center = itemCoordinate
         }
     }
@@ -120,12 +130,14 @@ Item {
         id: radiusDragAreaComponent
 
         MissionItemIndicatorDrag {
+            mapControl: _root.mapControl
+
             onItemCoordinateChanged: mapCircle.radius.rawValue = mapCircle.center.distanceTo(itemCoordinate)
         }
     }
 
     Component {
-        id: centerDragHandleComponent
+        id: dragHandlesComponent
 
         Item {
             property var centerDragHandle
