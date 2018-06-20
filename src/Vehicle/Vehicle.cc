@@ -2978,7 +2978,6 @@ void Vehicle::_sendMavCommandAgain(void)
                                             &msg,
                                             &cmd);
     } else {
-        mavlink_message_t       msg;
         mavlink_command_long_t  cmd;
 
         memset(&cmd, 0, sizeof(cmd));
