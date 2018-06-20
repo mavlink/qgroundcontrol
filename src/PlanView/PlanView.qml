@@ -878,32 +878,6 @@ QGCView {
                 columnSpacing:      ScreenTools.defaultFontPixelWidth
 
                 QGCButton {
-                    text:               qsTr("Upload")
-                    Layout.fillWidth:   true
-                    enabled:            !masterController.offline && !masterController.syncInProgress
-                    visible:            _activeVehicle
-                    onClicked: {
-                        dropPanel.hide()
-                        masterController.upload()
-                    }
-                }
-
-                QGCButton {
-                    text:               qsTr("Download")
-                    Layout.fillWidth:   true
-                    enabled:            !masterController.offline && !masterController.syncInProgress
-                    visible:            _activeVehicle
-                    onClicked: {
-                        dropPanel.hide()
-                        if (masterController.dirty) {
-                            _qgcView.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
-                        } else {
-                            masterController.loadFromVehicle()
-                        }
-                    }
-                }
-
-                QGCButton {
                     text:               qsTr("New...")
                     Layout.fillWidth:   true
                     enabled:            _visualItems.count > 1
@@ -974,6 +948,54 @@ QGCView {
                         }
                         dropPanel.hide()
                         masterController.saveKmlToSelectedFile()
+                    }
+                }
+
+                Rectangle {
+                    width:              parent.width * 0.8
+                    height:             1
+                    color:              qgcPal.text
+                    opacity:            0.5
+                    visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
+                    Layout.fillWidth:   true
+                    Layout.columnSpan:  2
+                }
+
+                QGCButton {
+                    text:               qsTr("Upload")
+                    Layout.fillWidth:   true
+                    enabled:            !masterController.offline && !masterController.syncInProgress && _visualItems.count > 1
+                    visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
+                    onClicked: {
+                        dropPanel.hide()
+                        masterController.upload()
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Download")
+                    Layout.fillWidth:   true
+                    enabled:            !masterController.offline && !masterController.syncInProgress
+                    visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
+                    onClicked: {
+                        dropPanel.hide()
+                        if (masterController.dirty) {
+                            _qgcView.showDialog(syncLoadFromVehicleOverwrite, columnHolder._overwriteText, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
+                        } else {
+                            masterController.loadFromVehicle()
+                        }
+                    }
+                }
+
+                QGCButton {
+                    text:               qsTr("Clear Vehicle Mission")
+                    Layout.fillWidth:   true
+                    Layout.columnSpan:  2
+                    enabled:            !masterController.offline && !masterController.syncInProgress
+                    visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
+                    onClicked: {
+                        dropPanel.hide()
+                        masterController.removeAllFromVehicle()
                     }
                 }
 
