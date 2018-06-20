@@ -815,6 +815,17 @@ QGCView {
         }
     }
 
+    Component {
+        id: clearVehicleMissionDialog
+        QGCViewMessage {
+            message: qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?")
+            function accept() {
+                masterController.removeAllFromVehicle()
+                hideDialog()
+            }
+        }
+    }
+
     //- ToolStrip DropPanel Components
 
     Component {
@@ -995,7 +1006,7 @@ QGCView {
                     visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
                     onClicked: {
                         dropPanel.hide()
-                        masterController.removeAllFromVehicle()
+                        _qgcView.showDialog(clearVehicleMissionDialog, text, _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.Cancel)
                     }
                 }
 
