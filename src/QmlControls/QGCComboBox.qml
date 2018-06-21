@@ -21,6 +21,8 @@ Button {
     property var    _qgcPal:            QGCPalette { colorGroupEnabled: enabled }
     property int    _horizontalPadding: ScreenTools.defaultFontPixelWidth
     property int    _verticalPadding:   Math.round(ScreenTools.defaultFontPixelHeight / 2)
+    property real   _dropImageWidth:    ScreenTools.defaultFontPixelHeight / 2
+    property real   _dropImageMargin:   _dropImageWidth / 2
     property var    __popup:            popup
 
     signal activated(int index)
@@ -44,10 +46,10 @@ Button {
 
             QGCColoredImage {
                 id:                     image
-                width:                  ScreenTools.defaultFontPixelHeight / 2
-                height:                 width
+                width:                  _dropImageWidth
+                height:                 _dropImageWidth
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.rightMargin:    width / 2
+                anchors.rightMargin:    _dropImageMargin
                 anchors.right:          parent.right
                 source:                 "/qmlimages/arrow-down.png"
                 color:                  control._qgcPal.buttonText
@@ -56,7 +58,7 @@ Button {
 
         /*! This defines the label of the button.  */
         label: Item {
-            implicitWidth:  text.implicitWidth
+            implicitWidth:  text.implicitWidth + _dropImageWidth
             implicitHeight: text.implicitHeight
             baselineOffset: text.y + text.baselineOffset
 
