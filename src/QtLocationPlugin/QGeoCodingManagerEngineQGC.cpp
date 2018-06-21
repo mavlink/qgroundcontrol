@@ -125,7 +125,7 @@ QGeoCodeReply *QGeoCodingManagerEngineQGC::geocode(const QString &address, int l
 
     QGeoCodeReplyQGC *geocodeReply = new QGeoCodeReplyQGC(reply);
 
-    connect(geocodeReply, SIGNAL(finished()), this, SLOT(replyFinished()));
+    connect(geocodeReply, &QGeoCodeReply::finished, this, &QGeoCodingManagerEngineQGC::replyFinished);
     connect(geocodeReply, SIGNAL(error(QGeoCodeReply::Error,QString)),
             this, SLOT(replyError(QGeoCodeReply::Error,QString)));
 
@@ -156,7 +156,7 @@ QGeoCodeReply *QGeoCodingManagerEngineQGC::reverseGeocode(const QGeoCoordinate &
 
     QGeoCodeReplyQGC *geocodeReply = new QGeoCodeReplyQGC(reply);
 
-    connect(geocodeReply, SIGNAL(finished()), this, SLOT(replyFinished()));
+    connect(geocodeReply, &QGeoCodeReply::finished, this, &QGeoCodingManagerEngineQGC::replyFinished);
     connect(geocodeReply, SIGNAL(error(QGeoCodeReply::Error,QString)),
             this, SLOT(replyError(QGeoCodeReply::Error,QString)));
 
