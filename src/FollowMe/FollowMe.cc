@@ -84,9 +84,9 @@ void FollowMe::_settingsChanged()
 void FollowMe::_enable()
 {
     connect(_toolbox->qgcPositionManager(),
-            SIGNAL(positionInfoUpdated(QGeoPositionInfo)),
+            &QGCPositionManager::positionInfoUpdated,
             this,
-            SLOT(_setGPSLocation(QGeoPositionInfo)));
+            &FollowMe::_setGPSLocation);
     _gcsMotionReportTimer.setInterval(_toolbox->qgcPositionManager()->updateInterval());
     _gcsMotionReportTimer.start();
 }
@@ -94,9 +94,9 @@ void FollowMe::_enable()
 void FollowMe::_disable()
 {
     disconnect(_toolbox->qgcPositionManager(),
-               SIGNAL(positionInfoUpdated(QGeoPositionInfo)),
+               &QGCPositionManager::positionInfoUpdated,
                this,
-               SLOT(_setGPSLocation(QGeoPositionInfo)));
+               &FollowMe::_setGPSLocation);
     _gcsMotionReportTimer.stop();
 }
 

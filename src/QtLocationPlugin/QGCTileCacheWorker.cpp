@@ -30,8 +30,8 @@
 #include "time.h"
 
 const char* kDefaultSet = "Default Tile Set";
-const QString kSession          = QLatin1String("QGeoTileWorkerSession");
-const QString kExportSession    = QLatin1String("QGeoTileExportSession");
+const QString kSession          = QStringLiteral("QGeoTileWorkerSession");
+const QString kExportSession    = QStringLiteral("QGeoTileExportSession");
 
 QGC_LOGGING_CATEGORY(QGCTileCacheLog, "QGCTileCacheLog")
 
