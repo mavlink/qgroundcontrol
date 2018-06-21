@@ -214,10 +214,9 @@ SetupPage {
                 QGCLabel { text: qsTr("Battery monitor:") }
 
                 FactComboBox {
-                    id:                     monitorCombo
-                    Layout.minimumWidth:    _fieldWidth
-                    fact:                   battMonitor
-                    indexModel:             false
+                    id:         monitorCombo
+                    fact:       battMonitor
+                    indexModel: false
                 }
 
                 QGCLabel {
