@@ -104,7 +104,7 @@ install:
         ;
     fi
 
-  - if [[ "${SPEC}" = "macx-clang" && "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
+  - if [[ "${SPEC}" = "macx-clang" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2 &&
         sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
         ;
