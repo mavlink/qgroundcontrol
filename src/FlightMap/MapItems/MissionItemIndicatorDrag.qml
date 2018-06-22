@@ -25,6 +25,7 @@ Rectangle {
     z:              QGroundControl.zOrderMapItems + 1    // Above item icons
 
     // Properties which must be specific by consumer
+    property var mapControl     ///< Map control which contains this item
     property var itemIndicator  ///< The mission item indicator to drag around
     property var itemCoordinate ///< Coordinate we are updating during drag
 
@@ -51,7 +52,7 @@ Rectangle {
     function liveDrag() {
         if (!itemDragger._preventCoordinateBindingLoop && itemDrag.drag.active) {
             var point = Qt.point(itemDragger.x + _touchMarginHorizontal + itemIndicator.anchorPoint.x, itemDragger.y + _touchMarginVertical + itemIndicator.anchorPoint.y)
-            var coordinate = map.toCoordinate(point, false /* clipToViewPort */)
+            var coordinate = mapControl.toCoordinate(point, false /* clipToViewPort */)
             itemDragger._preventCoordinateBindingLoop = true
             coordinate.altitude = itemCoordinate.altitude
             itemCoordinate = coordinate

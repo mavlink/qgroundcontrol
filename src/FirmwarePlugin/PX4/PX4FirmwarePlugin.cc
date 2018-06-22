@@ -232,7 +232,7 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
 {
     int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor() || vehicle->vtol()) {
-        available |= TakeoffVehicleCapability;
+        available |= TakeoffVehicleCapability | OrbitModeCapability;
     }
 
     return (capabilities & available) == capabilities;
@@ -364,24 +364,6 @@ void PX4FirmwarePlugin::guidedModeLand(Vehicle* vehicle)
     _setFlightModeAndValidate(vehicle, _landingFlightMode);
 }
 
-void PX4FirmwarePlugin::guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
-{
-    if (!isGuidedMode(vehicle)) {
-        setGuidedMode(vehicle, true);
-    }
-
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            MAV_CMD_SET_GUIDED_SUBMODE_CIRCLE,
-                            true,   // show error if fails
-                            radius,
-                            velocity,
-                            altitude,
-                            NAN,
-                            centerCoord.isValid() ? centerCoord.latitude()  : NAN,
-                            centerCoord.isValid() ? centerCoord.longitude() : NAN,
-                            centerCoord.isValid() ? centerCoord.altitude()  : NAN);
-}
-
 void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int command, int result, bool noReponseFromVehicle)
 {
     Q_UNUSED(vehicleId);
@@ -446,16 +428,30 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
         return;
     }
 
-    vehicle->sendMavCommand(vehicle->defaultComponentId(),
-                            MAV_CMD_DO_REPOSITION,
-                            true,   // show error is fails
-                            -1.0f,
-                            MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
-                            0.0f,
-                            NAN,
-                            gotoCoord.latitude(),
-                            gotoCoord.longitude(),
-                            vehicle->altitudeAMSL()->rawValue().toFloat());
+    if (vehicle->capabilityBits() && MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        vehicle->sendMavCommandInt(vehicle->defaultComponentId(),
+                                   MAV_CMD_DO_REPOSITION,
+                                   MAV_FRAME_GLOBAL,
+                                   true,   // show error is fails
+                                   -1.0f,
+                                   MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
+                                   0.0f,
+                                   NAN,
+                                   gotoCoord.latitude(),
+                                   gotoCoord.longitude(),
+                                   vehicle->altitudeAMSL()->rawValue().toFloat());
+    } else {
+        vehicle->sendMavCommand(vehicle->defaultComponentId(),
+                                MAV_CMD_DO_REPOSITION,
+                                true,   // show error is fails
+                                -1.0f,
+                                MAV_DO_REPOSITION_FLAGS_CHANGE_MODE,
+                                0.0f,
+                                NAN,
+                                gotoCoord.latitude(),
+                                gotoCoord.longitude(),
+                                vehicle->altitudeAMSL()->rawValue().toFloat());
+    }
 }
 
 void PX4FirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)

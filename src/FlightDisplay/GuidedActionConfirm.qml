@@ -100,12 +100,13 @@ Rectangle {
 
             onAccept: {
                 _root.visible = false
+                var altitudeChange = 0
                 if (altitudeSlider.visible) {
-                    _root.actionData = altitudeSlider.getValue()
+                    altitudeChange = altitudeSlider.getAltitudeChangeValue()
                     altitudeSlider.visible = false
                 }
                 hideTrigger = false
-                guidedController.executeAction(_root.action, _root.actionData)
+                guidedController.executeAction(_root.action, _root.actionData, altitudeChange)
             }
 
             onReject: {

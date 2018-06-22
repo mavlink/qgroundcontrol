@@ -130,7 +130,7 @@ void TCPLinkTest::_connectSucceed_test(void)
     
     // We emit this signal such that it will be queued and run on the TCPLink thread. This in turn
     // allows the TCPLink object to pump the bytes through.
-    connect(this, SIGNAL(waitForBytesWritten(int)), _link, SLOT(waitForBytesWritten(int)));
+    connect(this, &TCPLinkTest::waitForBytesWritten, _link, &TCPLink::waitForBytesWritten);
     emit waitForBytesWritten(1000);
 
     // Check for loopback, both from signal received and actual bytes returned
