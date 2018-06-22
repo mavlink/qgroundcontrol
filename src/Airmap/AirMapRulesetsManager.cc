@@ -34,7 +34,9 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
         _value = settings.value(name(), false);
         break;;
     case RuleSet::Feature::Type::floating_point:
-        _value = settings.value(name(), 0.0f);
+        //_value = settings.value(name(), 0.0f);
+        //-- Default to 1 for now
+        _value = settings.value(name(), 1.0f);
         break;;
     case RuleSet::Feature::Type::string:
         _value = settings.value(name(), QString());
