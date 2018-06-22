@@ -110,7 +110,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _currentMessageType(MessageNone)
     , _updateCount(0)
     , _rcRSSI(255)
-    , _rcRSSIstore(255)
+    , _rcRSSIstore(255.)
     , _autoDisconnect(false)
     , _flying(false)
     , _landing(false)
@@ -303,7 +303,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _currentMessageType(MessageNone)
     , _updateCount(0)
     , _rcRSSI(255)
-    , _rcRSSIstore(255)
+    , _rcRSSIstore(255.)
     , _autoDisconnect(false)
     , _flying(false)
     , _landing(false)
@@ -2447,10 +2447,18 @@ void Vehicle::_imageReady(UASInterface*)
 
 void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
 {
-    if (_rcRSSIstore < 0 || _rcRSSIstore > 100) {
-        _rcRSSIstore = rssi;
+    //-- 0 <= rssi <= 100 - 255 means "invalid/unknown"
+    if(rssi > 100) { // Anything over 100 doesn't make sense
+        if(_rcRSSI != 255) {
+            _rcRSSI = 255;
+            emit rcRSSIChanged(_rcRSSI);
+        }
+        return;
     }
-
+    //-- Initialize it
+    if(_rcRSSIstore == 255.) {
+        _rcRSSIstore = (double)rssi;
+    }
     // Low pass to git rid of jitter
     _rcRSSIstore = (_rcRSSIstore * 0.9f) + ((float)rssi * 0.1);
     uint8_t filteredRSSI = (uint8_t)ceil(_rcRSSIstore);
