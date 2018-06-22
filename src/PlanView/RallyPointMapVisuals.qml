@@ -44,6 +44,7 @@ Item {
         id: dragAreaComponent
 
         MissionItemIndicatorDrag {
+            mapControl:     _root.map
             itemCoordinate: rallyPointObject.coordinate
             visible:        rallyPointObject === myRallyPointController.currentRallyPoint
 
