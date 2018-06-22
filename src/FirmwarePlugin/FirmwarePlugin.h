@@ -136,10 +136,6 @@ public:
     /// Command the vehicle to start the mission
     virtual void startMission(Vehicle* vehicle);
 
-    /// Command vehicle to orbit given center point
-    ///     @param centerCoord Center Coordinates
-    virtual void guidedModeOrbit(Vehicle* vehicle, const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude);
-
     /// Command vehicle to move to specified location (altitude is included and relative)
     virtual void guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord);
 

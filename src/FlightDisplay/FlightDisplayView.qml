@@ -509,11 +509,10 @@ QGCView {
             z:                  _panel.z + 4
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true, _guidedController.smartShotsAvailable ]
-            buttonEnabled:      [ _useChecklist && _activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable, _anySmartShotAvailable ]
+            buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
+            buttonEnabled:      [ _useChecklist && _activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
-            property bool _anySmartShotAvailable: _guidedController.showOrbit
             property var _actionModel: [
                 {
                     title:      _guidedController.startMissionTitle,
@@ -544,14 +543,6 @@ QGCView {
                     text:       _guidedController.landAbortMessage,
                     action:     _guidedController.actionLandAbort,
                     visible:    _guidedController.showLandAbort
-                }
-            ]
-            property var _smartShotModel: [
-                {
-                    title:      _guidedController.orbitTitle,
-                    text:       _guidedController.orbitMessage,
-                    action:     _guidedController.actionOrbit,
-                    visible:    _guidedController.showOrbit
                 }
             ]
 
@@ -585,28 +576,15 @@ QGCView {
                     name:       qsTr("Action"),
                     iconSource: "/res/action.svg",
                     action:     -1
-                },
-                /*
-                  No firmware support any smart shots yet
-                {
-                    name:       qsTr("Smart"),
-                    iconSource: "/qmlimages/MapCenter.svg",
-                    action:     -1
-                },
-                */
+                }
             ]
 
             onClicked: {
                 guidedActionsController.closeAll()
                 var action = model[index].action
                 if (action === -1) {
-                    if (index == 5) {
-                        guidedActionList.model   = _actionModel
-                        guidedActionList.visible = true
-                    } else if (index == 6) {
-                        guidedActionList.model   = _smartShotModel
-                        guidedActionList.visible = true
-                    }
+                    guidedActionList.model   = _actionModel
+                    guidedActionList.visible = true
                 } else {
                     _guidedController.confirmAction(action)
                 }

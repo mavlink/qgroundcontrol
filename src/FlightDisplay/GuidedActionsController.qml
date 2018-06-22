@@ -31,6 +31,7 @@ Item {
     property var confirmDialog
     property var actionList
     property var altitudeSlider
+    property var orbitMapCircle
 
     readonly property string emergencyStopTitle:            qsTr("EMERGENCY STOP")
     readonly property string armTitle:                      qsTr("Arm")
@@ -62,9 +63,9 @@ Item {
     readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
     readonly property string rtlMessage:                        qsTr("Return to the home position of the vehicle.")
     readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
-    readonly property string gotoMessage:                       qsTr("Move the vehicle to the location clicked on the map.")
+    readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
-    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the current location.")
+    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location. Warning: WORK IN PROGRESS!")
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position, adjusting altitude up or down as needed.")
     readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")
@@ -103,7 +104,7 @@ Item {
     property bool showContinueMission:  _guidedActionsEnabled && _missionAvailable && !_missionActive && _vehicleFlying && (_currentMissionIndex < missionController.visualItems.count - 1)
     property bool showPause:            _guidedActionsEnabled && _vehicleArmed && _activeVehicle.pauseVehicleSupported && _vehicleFlying && !_vehiclePaused
     property bool showChangeAlt:        _guidedActionsEnabled && _vehicleFlying && _activeVehicle.guidedModeSupported && _vehicleArmed && !_missionActive
-    property bool showOrbit:            _guidedActionsEnabled && !_hideOrbit && _vehicleFlying && _activeVehicle.orbitModeSupported && _vehicleArmed && !_missionActive
+    property bool showOrbit:            _guidedActionsEnabled && !_hideOrbit && _vehicleFlying && _activeVehicle.orbitModeSupported && !_missionActive
     property bool showLandAbort:        _guidedActionsEnabled && _vehicleFlying && _activeVehicle.fixedWing && _vehicleLanding
     property bool showGotoLocation:     _guidedActionsEnabled && _vehicleFlying
 
@@ -152,8 +153,16 @@ Item {
     on__GuidedModeSupportedChanged:     _outputState()
     on__PauseVehicleSupportedChanged:   _outputState()
 
-    on_CurrentMissionIndexChanged:      console.log("_currentMissionIndex", _currentMissionIndex)
-    on_ResumeMissionIndexChanged:       console.log("_resumeMissionIndex", _resumeMissionIndex)
+    on_CurrentMissionIndexChanged: {
+        if (__debugGuidedStates) {
+            console.log("_currentMissionIndex", _currentMissionIndex)
+        }
+    }
+    on_ResumeMissionIndexChanged: {
+        if (__debugGuidedStates) {
+            console.log("_resumeMissionIndex", _resumeMissionIndex)
+        }
+    }
     onShowResumeMissionChanged: {
         if (__debugGuidedStates) {
             console.log("showResumeMission", showResumeMission)
@@ -182,7 +191,8 @@ Item {
             _vehicleWasFlying = true
         }
     }
-    property var    _actionData
+
+    property var _actionData
 
     on_FlightModeChanged: {
         _vehiclePaused =        _activeVehicle ? _flightMode === _activeVehicle.pauseFlightMode : false
@@ -291,6 +301,8 @@ Item {
             confirmDialog.title = orbitTitle
             confirmDialog.message = orbitMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showOrbit })
+            altitudeSlider.reset()
+            altitudeSlider.visible = true
             break;
         case actionLandAbort:
             confirmDialog.title = landAbortTitle
@@ -327,7 +339,7 @@ Item {
     }
 
     // Executes the specified action
-    function executeAction(actionCode, actionData) {
+    function executeAction(actionCode, actionData, actionAltitudeChange) {
         var i;
         var rgVehicle;
         switch (actionCode) {
@@ -338,7 +350,7 @@ Item {
             _activeVehicle.guidedModeLand()
             break
         case actionTakeoff:
-            _activeVehicle.guidedModeTakeoff(actionData)
+            _activeVehicle.guidedModeTakeoff(actionAltitudeChange)
             break
         case actionResumeMission:
         case actionResumeMissionUploadFail:
@@ -368,7 +380,7 @@ Item {
             _activeVehicle.emergencyStop()
             break
         case actionChangeAlt:
-            _activeVehicle.guidedModeChangeAltitude(actionData)
+            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange)
             break
         case actionGoto:
             _activeVehicle.guidedModeGotoLocation(actionData)
@@ -377,14 +389,15 @@ Item {
             _activeVehicle.setCurrentMissionSequence(actionData)
             break
         case actionOrbit:
-            _activeVehicle.guidedModeOrbit()
+            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius, _activeVehicle.altitudeAMSL + actionAltitudeChange)
+            orbitMapCircle.hide()
             break
         case actionLandAbort:
             _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
             break
         case actionPause:
             _activeVehicle.pauseVehicle()
-            _activeVehicle.guidedModeChangeAltitude(actionData)
+            _activeVehicle.guidedModeChangeAltitude(actionAltitudeChange)
             break
         case actionMVPause:
             rgVehicle = QGroundControl.multiVehicleManager.vehicles

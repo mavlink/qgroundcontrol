@@ -1091,6 +1091,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
 
     qCDebug(VehicleLog) << QString("Vehicle %1 Mavlink 2.0").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MAVLINK2 ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_ITEM_INT").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_INT ? supports : doesNotSupport);
+    qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_COMMAND_INT").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_COMMAND_INT ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 GeoFence").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 RallyPoints").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY ? supports : doesNotSupport);
 }
@@ -2780,13 +2781,42 @@ void Vehicle::guidedModeChangeAltitude(double altitudeChange)
     _firmwarePlugin->guidedModeChangeAltitude(this, altitudeChange);
 }
 
-void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double velocity, double altitude)
+void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, double amslAltitude)
 {
     if (!orbitModeSupported()) {
         qgcApp()->showMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
         return;
     }
-    _firmwarePlugin->guidedModeOrbit(this, centerCoord, radius, velocity, altitude);
+
+    double lat, lon, alt;
+    if (centerCoord.isValid()) {
+        lat = lon = alt = qQNaN();
+    } else {
+        lat = centerCoord.latitude();
+        lon = centerCoord.longitude();
+        alt = amslAltitude;
+    }
+
+    if (capabilityBits() && MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+        sendMavCommandInt(defaultComponentId(),
+                          MAV_CMD_DO_ORBIT,
+                          MAV_FRAME_GLOBAL,
+                          true,            // show error if fails
+                          radius,
+                          qQNaN(),         // Use default velocity
+                          0,               // Vehicle points to center
+                          qQNaN(),         // reserved
+                          lat, lon, alt);
+    } else {
+        sendMavCommand(defaultComponentId(),
+                          MAV_CMD_DO_ORBIT,
+                          true,            // show error if fails
+                          radius,
+                          qQNaN(),         // Use default velocity
+                          0,               // Vehicle points to center
+                          qQNaN(),         // reserved
+                          lat, lon, alt);
+    }
 }
 
 void Vehicle::pauseVehicle(void)
@@ -2845,8 +2875,34 @@ void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, flo
 {
     MavCommandQueueEntry_t entry;
 
+    entry.commandInt = false;
     entry.component = component;
     entry.command = command;
+    entry.showError = showError;
+    entry.rgParam[0] = param1;
+    entry.rgParam[1] = param2;
+    entry.rgParam[2] = param3;
+    entry.rgParam[3] = param4;
+    entry.rgParam[4] = param5;
+    entry.rgParam[5] = param6;
+    entry.rgParam[6] = param7;
+
+    _mavCommandQueue.append(entry);
+
+    if (_mavCommandQueue.count() == 1) {
+        _mavCommandRetryCount = 0;
+        _sendMavCommandAgain();
+    }
+}
+
+void Vehicle::sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7)
+{
+    MavCommandQueueEntry_t entry;
+
+    entry.commandInt = true;
+    entry.component = component;
+    entry.command = command;
+    entry.frame = frame;
     entry.showError = showError;
     entry.rgParam[0] = param1;
     entry.rgParam[1] = param2;
@@ -2930,25 +2986,47 @@ void Vehicle::_sendMavCommandAgain(void)
     _mavCommandAckTimer.start();
 
     mavlink_message_t       msg;
-    mavlink_command_long_t  cmd;
+    if (queuedCommand.commandInt) {
+        mavlink_command_int_t  cmd;
 
-    memset(&cmd, 0, sizeof(cmd));
-    cmd.command = queuedCommand.command;
-    cmd.confirmation = 0;
-    cmd.param1 = queuedCommand.rgParam[0];
-    cmd.param2 = queuedCommand.rgParam[1];
-    cmd.param3 = queuedCommand.rgParam[2];
-    cmd.param4 = queuedCommand.rgParam[3];
-    cmd.param5 = queuedCommand.rgParam[4];
-    cmd.param6 = queuedCommand.rgParam[5];
-    cmd.param7 = queuedCommand.rgParam[6];
-    cmd.target_system = _id;
-    cmd.target_component = queuedCommand.component;
-    mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
-                                         _mavlink->getComponentId(),
-                                         priorityLink()->mavlinkChannel(),
-                                         &msg,
-                                         &cmd);
+        memset(&cmd, 0, sizeof(cmd));
+        cmd.target_system =     _id;
+        cmd.target_component =  queuedCommand.component;
+        cmd.command =           queuedCommand.command;
+        cmd.frame =             queuedCommand.frame;
+        cmd.param1 =            queuedCommand.rgParam[0];
+        cmd.param2 =            queuedCommand.rgParam[1];
+        cmd.param3 =            queuedCommand.rgParam[2];
+        cmd.param4 =            queuedCommand.rgParam[3];
+        cmd.x =                 queuedCommand.rgParam[4] * qPow(10.0, 7.0);
+        cmd.y =                 queuedCommand.rgParam[5] * qPow(10.0, 7.0);
+        cmd.z =                 queuedCommand.rgParam[6];
+        mavlink_msg_command_int_encode_chan(_mavlink->getSystemId(),
+                                            _mavlink->getComponentId(),
+                                            priorityLink()->mavlinkChannel(),
+                                            &msg,
+                                            &cmd);
+    } else {
+        mavlink_command_long_t  cmd;
+
+        memset(&cmd, 0, sizeof(cmd));
+        cmd.target_system =     _id;
+        cmd.target_component =  queuedCommand.component;
+        cmd.command =           queuedCommand.command;
+        cmd.confirmation =      0;
+        cmd.param1 =            queuedCommand.rgParam[0];
+        cmd.param2 =            queuedCommand.rgParam[1];
+        cmd.param3 =            queuedCommand.rgParam[2];
+        cmd.param4 =            queuedCommand.rgParam[3];
+        cmd.param5 =            queuedCommand.rgParam[4];
+        cmd.param6 =            queuedCommand.rgParam[5];
+        cmd.param7 =            queuedCommand.rgParam[6];
+        mavlink_msg_command_long_encode_chan(_mavlink->getSystemId(),
+                                             _mavlink->getComponentId(),
+                                             priorityLink()->mavlinkChannel(),
+                                             &msg,
+                                             &cmd);
+    }
 
     sendMessageOnLink(priorityLink(), msg);
 }
