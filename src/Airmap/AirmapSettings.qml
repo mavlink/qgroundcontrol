@@ -312,11 +312,11 @@ QGCView {
                 anchors.fill: parent
                 TableView {
                     id:                 tableView
-                    anchors.top:        parent.top
-                    anchors.bottom:     parent.bottom
                     model:              _flightList
                     selectionMode:      SelectionMode.SingleSelection
+                    Layout.alignment:   Qt.AlignVCenter
                     Layout.fillWidth:   true
+                    Layout.fillHeight:  true
                     onCurrentRowChanged: {
                         var o = _flightList.get(tableView.currentRow)
                         if(o) {

@@ -31,6 +31,7 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
     settings.beginGroup(kAirMapFeatureGroup);
     switch(_feature.type) {
     case RuleSet::Feature::Type::boolean:
+        //-- For boolean, we have 3 states: 0 - false, 1 - true and 2 - not set
         _value = settings.value(name(), 2);
         break;;
     case RuleSet::Feature::Type::floating_point:
@@ -43,6 +44,14 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
         break;
     }
     settings.endGroup();
+}
+
+//-----------------------------------------------------------------------------
+QVariant
+AirMapRuleFeature::value()
+{
+    //qCDebug(AirMapManagerLog) << "Value of" << name() << "==>" << _value << type();
+    return _value;
 }
 
 //-----------------------------------------------------------------------------
@@ -100,6 +109,25 @@ AirMapRuleFeature::measurement()
 void
 AirMapRuleFeature::setValue(const QVariant val)
 {
+    switch(_feature.type) {
+    case RuleSet::Feature::Type::boolean:
+        if(val.toInt() != 0 && val.toInt() != 1) {
+            return;
+        }
+        break;
+    case RuleSet::Feature::Type::floating_point:
+        if(!std::isfinite(val.toDouble())) {
+            return;
+        }
+        break;;
+    case RuleSet::Feature::Type::string:
+        if(val.toString().isEmpty()) {
+            return;
+        }
+        break;;
+    default:
+        return;
+    }
     _value = val;
     //-- Make value persistent
     QSettings settings;

@@ -56,10 +56,12 @@ Rectangle {
             QGCCheckBox {
                 id:             checkBox
                 text:           ""
-                checked:        feature.value && feature.value < 2 ? feature.value : false
                 onClicked:      feature.value = checked
                 anchors.left:   parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                Component.onCompleted: {
+                    checked = feature.value && feature.value < 2 ? feature.value : false
+                }
             }
             QGCLabel {
                 id:             label

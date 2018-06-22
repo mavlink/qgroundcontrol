@@ -39,7 +39,7 @@ public:
     Measurement     measurement     () override;
     QString         name            () override { return QString::fromStdString(_feature.name);  }
     QString         description     () override { return QString::fromStdString(_feature.description);  }
-    QVariant        value           () override { return _value; }
+    QVariant        value           () override;
     void            setValue        (const QVariant val) override;
 private:
     airmap::RuleSet::Feature _feature;

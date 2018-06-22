@@ -16,6 +16,7 @@
 AirspaceVehicleManager::AirspaceVehicleManager(const Vehicle& vehicle)
     : _vehicle(vehicle)
 {
+    qCDebug(AirspaceManagementLog) << "Instatiating AirspaceVehicleManager";
     connect(&_vehicle, &Vehicle::armedChanged,           this, &AirspaceVehicleManager::_vehicleArmedChanged);
     connect(&_vehicle, &Vehicle::mavlinkMessageReceived, this, &AirspaceVehicleManager::vehicleMavlinkMessageReceived);
 }
@@ -23,9 +24,11 @@ AirspaceVehicleManager::AirspaceVehicleManager(const Vehicle& vehicle)
 void AirspaceVehicleManager::_vehicleArmedChanged(bool armed)
 {
     if (armed) {
+        qCDebug(AirspaceManagementLog) << "Starting telemetry";
         startTelemetryStream();
         _vehicleWasInMissionMode = _vehicle.flightMode() == _vehicle.missionFlightMode();
     } else {
+        qCDebug(AirspaceManagementLog) << "Stopping telemetry";
         stopTelemetryStream();
         // end the flight if we were in mission mode during arming or disarming
         // TODO: needs to be improved. for instance if we do RTL and then want to continue the mission...
