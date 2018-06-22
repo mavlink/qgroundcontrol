@@ -90,6 +90,7 @@ public:
     AirspaceFlightModel*flightList          () override { return &_flightList; }
     bool                loadingFlightList   () override { return _loadingFlightList; }
     QString             flightPlanID        () {return QString::fromStdString(_flightPlan.id); }
+    QString             flightID            () {return _flightId; }
 
     void                updateFlightPlan    () override;
     void                submitFlightPlan    () override;
@@ -107,13 +108,15 @@ private slots:
     void _missionChanged                    ();
     void _endFlight                         ();
     void _uploadFlightPlan                  ();
-    void _updateFlightPlan                  ();
+    void _updateFlightPlanOnTimer           ();
     void _loadFlightList                    ();
 
 private:
     void _createFlightPlan                  ();
     bool _collectFlightDtata                ();
-    void _updateRulesAndFeatures            (std::vector<airmap::RuleSet::Id>& rulesets, std::unordered_map<std::string, airmap::RuleSet::Feature::Value>& features);
+    void _updateFlightPlan                  (bool interactive = false);
+    bool _findBriefFeature                  (const QString& name);
+    void _updateRulesAndFeatures            (std::vector<airmap::RuleSet::Id>& rulesets, std::unordered_map<std::string, airmap::RuleSet::Feature::Value>& features, bool updateFeatures = false);
 
 private:
     enum class State {

@@ -254,7 +254,7 @@ AirMapFlightPlanManager::updateFlightPlan()
     }
     _flightPermitStatus = AirspaceFlightPlanProvider::PermitPending;
     emit flightPermitStatusChanged();
-    _updateFlightPlan();
+    _updateFlightPlan(true);
 }
 
 //-----------------------------------------------------------------------------
@@ -373,9 +373,6 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "Flight Start:" << flightStartTime().toString();
     qCDebug(AirMapManagerLog) << "Flight End:  " << flightEndTime().toString();
 
-    //-- Not Yet
-    //return;
-
     if (_pilotID == "") {
         //-- Need to get the pilot id before uploading the flight plan
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
@@ -413,7 +410,7 @@ AirMapFlightPlanManager::_createFlightPlan()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rulesets, std::unordered_map<std::string, RuleSet::Feature::Value>& features)
+AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rulesets, std::unordered_map<std::string, RuleSet::Feature::Value>& features, bool updateFeatures)
 {
     AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
     if(pRulesMgr) {
@@ -422,34 +419,42 @@ AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rules
             //-- If this ruleset is selected
             if(ruleSet && ruleSet->selected()) {
                 rulesets.push_back(ruleSet->id().toStdString());
-                //-- Features within each rule
-                for(int r = 0; r < ruleSet->rules()->count(); r++) {
-                    AirMapRule* rule = qobject_cast<AirMapRule*>(ruleSet->rules()->get(r));
-                    if(rule) {
-                        for(int f = 0; f < rule->features()->count(); f++) {
-                            AirMapRuleFeature* feature = qobject_cast<AirMapRuleFeature*>(rule->features()->get(f));
-                            if(feature && feature->value().isValid()) {
-                                switch(feature->type()) {
-                                case AirspaceRuleFeature::Boolean:
-                                    //-- Skip not set responses (feature->value is initialized to "2")
-                                    if(feature->value().toInt() == 0 || feature->value().toInt() == 1) {
-                                        features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toBool());
+                //-- Features within each rule (only when updating)
+                if(updateFeatures) {
+                    for(int r = 0; r < ruleSet->rules()->count(); r++) {
+                        AirMapRule* rule = qobject_cast<AirMapRule*>(ruleSet->rules()->get(r));
+                        if(rule) {
+                            for(int f = 0; f < rule->features()->count(); f++) {
+                                AirMapRuleFeature* feature = qobject_cast<AirMapRuleFeature*>(rule->features()->get(f));
+                                if(features.find(feature->name().toStdString()) != features.end()) {
+                                    qCDebug(AirMapManagerLog) << "Removing duplicate:" << feature->name();
+                                    continue;
+                                }
+                                if(feature && feature->value().isValid()) {
+                                    switch(feature->type()) {
+                                    case AirspaceRuleFeature::Boolean:
+                                        if(feature->value().toInt() == 0 || feature->value().toInt() == 1) {
+                                            features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toBool());
+                                        } else {
+                                            //-- If not set, default to false
+                                            features[feature->name().toStdString()] = RuleSet::Feature::Value(false);
+                                        }
+                                        break;
+                                    case AirspaceRuleFeature::Float:
+                                        //-- Sanity check for floats
+                                        if(std::isfinite(feature->value().toFloat())) {
+                                            features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toFloat());
+                                        }
+                                        break;
+                                    case AirspaceRuleFeature::String:
+                                        //-- Skip empty responses
+                                        if(!feature->value().toString().isEmpty()) {
+                                            features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toString().toStdString());
+                                        }
+                                        break;
+                                    default:
+                                        qCWarning(AirMapManagerLog) << "Unknown type for feature" << feature->name();
                                     }
-                                    break;
-                                case AirspaceRuleFeature::Float:
-                                    //-- Sanity check for floats
-                                    if(std::isfinite(feature->value().toFloat())) {
-                                        features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toFloat());
-                                    }
-                                    break;
-                                case AirspaceRuleFeature::String:
-                                    //-- Skip empty responses
-                                    if(!feature->value().toString().isEmpty()) {
-                                        features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toString().toStdString());
-                                    }
-                                    break;
-                                default:
-                                    qCWarning(AirMapManagerLog) << "Unknown type for feature" << feature->name();
                                 }
                             }
                         }
@@ -516,15 +521,19 @@ AirMapFlightPlanManager::_uploadFlightPlan()
 
 //-----------------------------------------------------------------------------
 void
-AirMapFlightPlanManager::_updateFlightPlan()
+AirMapFlightPlanManager::_updateFlightPlanOnTimer()
 {
-    //-- TODO: This is broken as the parameters for updating the plan have
-    //   little to do with those used when creating it.
+    _updateFlightPlan(false);
+}
 
+//-----------------------------------------------------------------------------
+void
+AirMapFlightPlanManager::_updateFlightPlan(bool interactive)
+{
     qCDebug(AirMapManagerLog) << "Updating flight plan. State:" << (int)_state;
 
     if(_state != State::Idle) {
-        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_updateFlightPlan);
+        QTimer::singleShot(100, this, &AirMapFlightPlanManager::_updateFlightPlanOnTimer);
         return;
     }
     //-- Get flight data
@@ -546,7 +555,8 @@ AirMapFlightPlanManager::_updateFlightPlan()
     //-- Rules & Features
     _flightPlan.rulesets.clear();
     _flightPlan.features.clear();
-    _updateRulesAndFeatures(_flightPlan.rulesets, _flightPlan.features);
+    //-- If interactive, we collect features otherwise we don't
+    _updateRulesAndFeatures(_flightPlan.rulesets, _flightPlan.features, interactive);
     //-- Geometry: polygon
     Geometry::Polygon polygon;
     for (const auto& qcoord : _flight.coords) {
@@ -598,6 +608,19 @@ rules_sort(QObject* a, QObject* b)
     AirMapRule* bb = qobject_cast<AirMapRule*>(b);
     if(!aa || !bb) return false;
     return (int)aa->status() > (int)bb->status();
+}
+
+//-----------------------------------------------------------------------------
+bool
+AirMapFlightPlanManager::_findBriefFeature(const QString& name)
+{
+    for(int i = 0; i < _briefFeatures.count(); i++ ) {
+        AirMapRuleFeature* feature = qobject_cast<AirMapRuleFeature*>(_briefFeatures.get(i));
+        if (feature && feature->name() == name) {
+            return true;
+        }
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -657,8 +680,12 @@ AirMapFlightPlanManager::_pollBriefing()
                         AirMapRuleFeature* pFeature = new AirMapRuleFeature(feature, this);
                         pRule->_features.append(pFeature);
                         if(rule.status == RuleSet::Rule::Status::missing_info) {
-                            _briefFeatures.append(pFeature);
-                            qCDebug(AirMapManagerLog) << "Adding briefing feature" << pFeature->name() << pFeature->description() << pFeature->type();
+                            if(!_findBriefFeature(pFeature->name())) {
+                                _briefFeatures.append(pFeature);
+                                qCDebug(AirMapManagerLog) << "Adding briefing feature" << pFeature->name() << pFeature->description() << pFeature->type();
+                            } else {
+                                qCDebug(AirMapManagerLog) << "Skipping briefing feature duplicate" << pFeature->name() << pFeature->description() << pFeature->type();
+                            }
                         }
                     }
                     pRuleSet->_rules.append(pRule);

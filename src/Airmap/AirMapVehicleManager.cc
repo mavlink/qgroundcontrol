@@ -7,9 +7,12 @@
  *
  ****************************************************************************/
 
+#include "AirspaceFlightPlanProvider.h"
+#include "AirMapFlightPlanManager.h"
 #include "AirMapVehicleManager.h"
 #include "AirMapManager.h"
 
+#include "QGCApplication.h"
 #include "Vehicle.h"
 
 //-----------------------------------------------------------------------------
@@ -30,9 +33,13 @@ AirMapVehicleManager::AirMapVehicleManager(AirMapSharedState& shared, const Vehi
 void
 AirMapVehicleManager::startTelemetryStream()
 {
-    if (!_flightManager.flightID().isEmpty()) {
-        //-- TODO: This will start telemetry using the current flight ID in memory
-        _telemetry.startTelemetryStream(_flightManager.flightID());
+    AirMapFlightPlanManager* planMgr = (AirMapFlightPlanManager*)qgcApp()->toolbox()->airspaceManager()->flightPlan();
+    if (!planMgr->flightID().isEmpty()) {
+        //-- TODO: This will start telemetry using the current flight ID in memory (current flight in AirMapFlightPlanManager)
+        qCDebug(AirMapManagerLog) << "AirMap telemetry stream enabled";
+        _telemetry.startTelemetryStream(planMgr->flightID());
+    } else {
+        qCDebug(AirMapManagerLog) << "AirMap telemetry stream not possible (No Flight ID)";
     }
 }
 
@@ -54,8 +61,9 @@ AirMapVehicleManager::isTelemetryStreaming()
 void
 AirMapVehicleManager::endFlight()
 {
-    if (!_flightManager.flightID().isEmpty()) {
-        _flightManager.endFlight(_flightManager.flightID());
+    AirMapFlightPlanManager* planMgr = (AirMapFlightPlanManager*)qgcApp()->toolbox()->airspaceManager()->flightPlan();
+    if (!planMgr->flightID().isEmpty()) {
+        _flightManager.endFlight(planMgr->flightID());
     }
     _trafficMonitor.stop();
 }

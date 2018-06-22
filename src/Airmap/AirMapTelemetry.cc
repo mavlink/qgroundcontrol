@@ -84,6 +84,7 @@ AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
         globalPosition.vz / 100.f
     };
 
+    //qCDebug(AirMapManagerLog) << "Telemetry:" << globalPosition.lat / 1e7 << globalPosition.lon / 1e7;
     Flight flight;
     flight.id = _flightID.toStdString();
     _shared.client()->telemetry().submit_updates(flight, _key,
