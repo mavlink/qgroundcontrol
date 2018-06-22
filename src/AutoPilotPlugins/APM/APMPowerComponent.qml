@@ -36,15 +36,65 @@ SetupPage {
             width:      availableWidth
             spacing:    _margins
 
-            property bool _batt2ParamsAvailable:    controller.parameterExists(-1, "BATT2_FS_LOW_ACT")
-            property bool _batt2MonitorAvailable:   controller.parameterExists(-1, "BATT2_MONITOR")
+            property Fact _batt1Monitor:            controller.getParameterFact(-1, "BATT_MONITOR")
             property Fact _batt2Monitor:            controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
+            property bool _batt2MonitorAvailable:   controller.parameterExists(-1, "BATT2_MONITOR")
+            property bool _batt1MonitorEnabled:     _batt1Monitor.rawValue !== 0
+            property bool _batt2MonitorEnabled:     _batt2MonitorAvailable && _batt2Monitor.rawValue !== 0
+            property bool _batt1ParamsAvailable:    controller.parameterExists(-1, "BATT_CAPACITY")
+            property bool _batt2ParamsAvailable:    controller.parameterExists(-1, "BATT2_CAPACITY")
+
+            property string _restartRequired: qsTr("Requires vehicle reboot")
 
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 
-            // Battery 1 settings
+            // Battery1 Monitor settings only - used when only monitor param is available
             Column {
                 spacing: _margins / 2
+                visible: !_batt1MonitorEnabled || !_batt1ParamsAvailable
+
+                QGCLabel {
+                    text:       qsTr("Battery 1")
+                    font.family: ScreenTools.demiboldFontFamily
+                }
+
+                Rectangle {
+                    width:  batt1Column.x + batt1Column.width + _margins
+                    height: batt1Column.y + batt1Column.height + _margins
+                    color:  ggcPal.windowShade
+
+                    ColumnLayout {
+                        id:                 batt1Column
+                        anchors.margins:    _margins
+                        anchors.top:        parent.top
+                        anchors.left:       parent.left
+                        spacing:            ScreenTools.defaultFontPixelWidth
+
+                        RowLayout {
+                            id:                 batt1MonitorRow
+                            spacing:            ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel { text: qsTr("Battery1 monitor:") }
+                            FactComboBox {
+                                id:         monitor1Combo
+                                fact:       _batt1Monitor
+                                indexModel: false
+                            }
+                        }
+
+                        QGCLabel {
+                            text:       _restartRequired
+                            visible:    _batt1MonitorEnabled && !_batt1ParamsAvailable
+                        }
+                    }
+                }
+            }
+
+            // Battery 1 settings
+            Column {
+                id:         _batt1FullSettings
+                spacing:    _margins / 2
+                visible:    _batt1MonitorEnabled && _batt1ParamsAvailable
 
                 QGCLabel {
                     text:       qsTr("Battery 1")
@@ -61,25 +111,25 @@ SetupPage {
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
-                        sourceComponent:    powerSetupComponent
+                        sourceComponent:    _batt1FullSettings.visible ? powerSetupComponent : undefined
 
-                        property Fact armVoltMin:       controller.getParameterFact(-1, "r.ARMING_VOLT_MIN")
-                        property Fact battAmpPerVolt:   controller.getParameterFact(-1, "r.BATT_AMP_PERVLT")
-                        property Fact battCapacity:     controller.getParameterFact(-1, "BATT_CAPACITY")
-                        property Fact battCurrPin:      controller.getParameterFact(-1, "BATT_CURR_PIN")
-                        property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR")
-                        property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT")
-                        property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN")
+                        property Fact armVoltMin:       controller.getParameterFact(-1, "r.ARMING_VOLT_MIN", false /* reportMissing */)
+                        property Fact battAmpPerVolt:   controller.getParameterFact(-1, "r.BATT_AMP_PERVLT", false /* reportMissing */)
+                        property Fact battCapacity:     controller.getParameterFact(-1, "BATT_CAPACITY", false /* reportMissing */)
+                        property Fact battCurrPin:      controller.getParameterFact(-1, "BATT_CURR_PIN", false /* reportMissing */)
+                        property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR", false /* reportMissing */)
+                        property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT", false /* reportMissing */)
+                        property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN", false /* reportMissing */)
                         property Fact vehicleVoltage:   controller.vehicle.battery.voltage
                         property Fact vehicleCurrent:   controller.vehicle.battery.current
                     }
                 }
             }
 
-            // Batter2 Monitor settings only - used when only monitor param is available
+            // Battery2 Monitor settings only - used when only monitor param is available
             Column {
                 spacing: _margins / 2
-                visible: _batt2MonitorAvailable && !_batt2ParamsAvailable
+                visible: !_batt2MonitorEnabled || !_batt2ParamsAvailable
 
                 QGCLabel {
                     text:       qsTr("Battery 2")
@@ -87,23 +137,32 @@ SetupPage {
                 }
 
                 Rectangle {
-                    width:  batt2MonitorRow.x + batt2MonitorRow.width + _margins
-                    height: batt2MonitorRow.y + batt2MonitorRow.height + _margins
+                    width:  batt2Column.x + batt2Column.width + _margins
+                    height: batt2Column.y + batt2Column.height + _margins
                     color:  ggcPal.windowShade
 
-                    RowLayout {
-                        id:                 batt2MonitorRow
+                    ColumnLayout {
+                        id:                 batt2Column
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
                         spacing:            ScreenTools.defaultFontPixelWidth
-                        visible:            _batt2MonitorAvailable && !_batt2ParamsAvailable
 
-                        QGCLabel { text: qsTr("Battery2 monitor:") }
-                        FactComboBox {
-                            id:         monitorCombo
-                            fact:       _batt2Monitor
-                            indexModel: false
+                        RowLayout {
+                            id:                 batt2MonitorRow
+                            spacing:            ScreenTools.defaultFontPixelWidth
+
+                            QGCLabel { text: qsTr("Battery2 monitor:") }
+                            FactComboBox {
+                                id:         monitor2Combo
+                                fact:       _batt2Monitor
+                                indexModel: false
+                            }
+                        }
+
+                        QGCLabel {
+                            text:       _restartRequired
+                            visible:    _batt2MonitorEnabled && !_batt2ParamsAvailable
                         }
                     }
                 }
@@ -111,8 +170,9 @@ SetupPage {
 
             // Battery 2 settings - Used when full params are available
             Column {
-                spacing: _margins / 2
-                visible: _batt2ParamsAvailable
+                id:         batt2FullSettings
+                spacing:    _margins / 2
+                visible:    _batt2MonitorEnabled && _batt2ParamsAvailable
 
                 QGCLabel {
                     text:       qsTr("Battery 2")
@@ -129,7 +189,7 @@ SetupPage {
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
-                        sourceComponent:    _batt2ParamsAvailable ? powerSetupComponent : undefined
+                        sourceComponent:    batt2FullSettings.visible ? powerSetupComponent : undefined
 
                         property Fact armVoltMin:       controller.getParameterFact(-1, "r.ARMING_VOLT2_MIN", false /* reportMissing */)
                         property Fact battAmpPerVolt:   controller.getParameterFact(-1, "r.BATT2_AMP_PERVLT", false /* reportMissing */)
