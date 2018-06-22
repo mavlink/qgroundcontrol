@@ -63,10 +63,11 @@ AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
     AirspaceManager::setToolbox(toolbox);
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
-    connect(ap->apiKey(),    &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
-    connect(ap->clientID(),  &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
-    connect(ap->userName(),  &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
-    connect(ap->password(),  &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->usePersonalApiKey(),&Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->apiKey(),           &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->clientID(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->userName(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->password(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     _settingsChanged();
 }
 
@@ -94,9 +95,9 @@ AirMapManager::_settingsChanged()
     settings.clientID = ap->clientID()->rawValueString();
     settings.userName = ap->userName()->rawValueString();
     settings.password = ap->password()->rawValueString();
-    //-- If we have a hardwired key (and no custom key), set it.
+    //-- If we have a hardwired key (and no custom key is present or enabled), set it.
 #if defined(QGC_AIRMAP_KEY_AVAILABLE)
-    if(settings.apiKey.isEmpty() || settings.clientID.isEmpty()) {
+    if(!ap->usePersonalApiKey()->rawValue().toBool() && (settings.apiKey.isEmpty() || settings.clientID.isEmpty())) {
         settings.apiKey     = kAirmapAPIKey;
         settings.clientID   = kAirmapClientID;
     }
@@ -123,6 +124,10 @@ AirMapManager::_settingsChanged()
                         QString::fromStdString(result.error().message()), description);
             }
         });
+    } else {
+        if(settings.apiKey == "") {
+            qCDebug(AirMapManagerLog) << "No API key for AirMap";
+        }
     }
 }
 

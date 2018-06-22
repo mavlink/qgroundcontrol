@@ -230,10 +230,10 @@ QGCView {
                         QGCCheckBox {
                             id:             hasPrivateKey
                             text:           qsTr("Personal API Key")
+                            onClicked:      QGroundControl.settingsManager.airMapSettings.usePersonalApiKey = checked
                             Layout.columnSpan:  2
                             Component.onCompleted: {
-                                if(QGroundControl.settingsManager.airMapSettings.apiKey !== "")
-                                    checked = true
+                                checked = QGroundControl.settingsManager.airMapSettings.usePersonalApiKey
                             }
                         }
                         Item {

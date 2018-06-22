@@ -1,5 +1,11 @@
 [
 {
+    "name":             "usePersonalApiKey",
+    "shortDescription": "Use Personal AirMap API Key",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "apiKey",
     "shortDescription": "AirMap API Key",
     "type":             "string",
