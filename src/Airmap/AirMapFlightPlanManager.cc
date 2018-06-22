@@ -431,7 +431,10 @@ AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rules
                             if(feature && feature->value().isValid()) {
                                 switch(feature->type()) {
                                 case AirspaceRuleFeature::Boolean:
-                                    features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toBool());
+                                    //-- Skip not set responses (feature->value is initialized to "2")
+                                    if(feature->value().toInt() == 0 || feature->value().toInt() == 1) {
+                                        features[feature->name().toStdString()] = RuleSet::Feature::Value(feature->value().toBool());
+                                    }
                                     break;
                                 case AirspaceRuleFeature::Float:
                                     //-- Sanity check for floats
