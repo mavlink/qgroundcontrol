@@ -19,6 +19,7 @@ public:
 
     DEFINE_SETTINGGROUP(AirMap)
 
+    DEFINE_SETTINGFACT(usePersonalApiKey)
     DEFINE_SETTINGFACT(apiKey)
     DEFINE_SETTINGFACT(clientID)
     DEFINE_SETTINGFACT(userName)

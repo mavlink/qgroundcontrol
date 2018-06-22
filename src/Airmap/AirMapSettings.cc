@@ -15,6 +15,7 @@
 
 DECLARE_SETTINGGROUP(AirMap)
 {
+    INIT_SETTINGFACT(usePersonalApiKey);
     INIT_SETTINGFACT(apiKey);
     INIT_SETTINGFACT(clientID);
     INIT_SETTINGFACT(userName);
@@ -25,6 +26,7 @@ DECLARE_SETTINGGROUP(AirMap)
     qmlRegisterUncreatableType<AirMapSettings>("QGroundControl.SettingsManager", 1, 0, "AirMapSettings", "Reference only");
 }
 
+DECLARE_SETTINGSFACT(AirMapSettings, usePersonalApiKey)
 DECLARE_SETTINGSFACT(AirMapSettings, apiKey)
 DECLARE_SETTINGSFACT(AirMapSettings, clientID)
 DECLARE_SETTINGSFACT(AirMapSettings, userName)
