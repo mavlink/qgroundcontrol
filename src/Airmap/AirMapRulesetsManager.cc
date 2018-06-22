@@ -31,12 +31,10 @@ AirMapRuleFeature::AirMapRuleFeature(airmap::RuleSet::Feature feature, QObject* 
     settings.beginGroup(kAirMapFeatureGroup);
     switch(_feature.type) {
     case RuleSet::Feature::Type::boolean:
-        _value = settings.value(name(), false);
+        _value = settings.value(name(), 2);
         break;;
     case RuleSet::Feature::Type::floating_point:
-        //_value = settings.value(name(), 0.0f);
-        //-- Default to 1 for now
-        _value = settings.value(name(), 1.0f);
+        _value = settings.value(name(), NAN);
         break;;
     case RuleSet::Feature::Type::string:
         _value = settings.value(name(), QString());
