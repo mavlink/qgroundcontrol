@@ -733,6 +733,7 @@ void SimpleMissionItem::setDefaultsForCommand(void)
 {
     // We set these global defaults first, then if there are param defaults they will get reset
     _altitudeMode = AltitudeRelative;
+    emit altitudeModeChanged();
     double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
     _altitudeFact.setRawValue(defaultAlt);
     _missionItem._param7Fact.setRawValue(defaultAlt);
@@ -760,6 +761,7 @@ void SimpleMissionItem::setDefaultsForCommand(void)
 
     case MAV_CMD_NAV_LAND:
     case MAV_CMD_NAV_VTOL_LAND:
+        _altitudeFact.setRawValue(0);
         _missionItem.setParam7(0);
         break;
     default:
