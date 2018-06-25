@@ -2135,7 +2135,7 @@ void Vehicle::setFlightMode(const QString& flightMode)
 QString Vehicle::priorityLinkName(void) const
 {
     if (_priorityLink) {
-      return _priorityLink->getName();
+        return _priorityLink->getName();
     }
 
     return "none";
@@ -2411,10 +2411,10 @@ void Vehicle::_sendQGCTimeToVehicle(void)
     // Timestamp of the component clock since boot time in milliseconds (Not necessary).
     cmd.time_boot_ms = 0;
     mavlink_msg_system_time_encode_chan(_mavlink->getSystemId(),
-                                    _mavlink->getComponentId(),
-                                    priorityLink()->mavlinkChannel(),
-                                    &msg,
-                                    &cmd);
+                                        _mavlink->getComponentId(),
+                                        priorityLink()->mavlinkChannel(),
+                                        &msg,
+                                        &cmd);
 
     sendMessageOnLink(priorityLink(), msg);
 }
@@ -2488,12 +2488,15 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
 
     emit linksPropertiesChanged();
 
+    bool communicationLost = false;
+    bool communicationRegained = false;
+
     if (link == _priorityLink) {
         if (active && _connectionLost) {
             // communication to priority link regained
             _connectionLost = false;
+            communicationRegained = true;
             emit connectionLostChanged(false);
-            qgcApp()->showMessage((tr("%1 communication to %2 link %3 regained")).arg(_vehicleIdSpeech()).arg((_links.count() > 1) ? "priority" : "").arg(link->getName()));
 
             if (_priorityLink->highLatency()) {
                 _setMaxProtoVersion(100);
@@ -2504,37 +2507,52 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
                                false,                                   // No error shown if fails
                                1);                                     // Request protocol version
             }
-
         } else if (!active && !_connectionLost) {
-            // communication to priority link lost
-            qgcApp()->showMessage((tr("%1 communication to %2 link %3 lost")).arg(_vehicleIdSpeech()).arg((_links.count() > 1) ? "priority" : "").arg(link->getName()));
+            if (_connectionLostEnabled) {
+                _connectionLost = true;
+                communicationLost = true;
+                _heardFrom = false;
+                _maxProtoVersion = 0;
+                emit connectionLostChanged(true);
 
-            _updatePriorityLink(false /* updateActive */, true /* sendCommand */);
-
-            if (link == _priorityLink) {
-                _say(QString(tr("%1 communication lost")).arg(_vehicleIdSpeech()));
-                qgcApp()->showMessage((tr("%1 communication lost")).arg(_vehicleIdSpeech()));
-
-                if (_connectionLostEnabled) {
-                    _connectionLost = true;
-                    _heardFrom = false;
-                    _maxProtoVersion = 0;
-                    emit connectionLostChanged(true);
-
-                    if (_autoDisconnect) {
-                        // Reset link state
-                        for (int i = 0; i < _links.length(); i++) {
-                            _mavlink->resetMetadataForLink(_links.at(i));
-                        }
-
-                        disconnectInactiveVehicle();
+                if (_autoDisconnect) {
+                    // Reset link state
+                    for (int i = 0; i < _links.length(); i++) {
+                        _mavlink->resetMetadataForLink(_links.at(i));
                     }
+
+                    disconnectInactiveVehicle();
                 }
             }
         }
     } else {
         qgcApp()->showMessage((tr("%1 communication to auxiliary link %2 %3")).arg(_vehicleIdSpeech()).arg(link->getName()).arg(active ? "regained" : "lost"));
         _updatePriorityLink(false /* updateActive */, true /* sendCommand */);
+    }
+
+    QString commSpeech;
+    bool multiVehicle = _toolbox->multiVehicleManager()->vehicles()->count() > 1;
+    if (communicationRegained) {
+        commSpeech = tr("Communication regained");
+        if (_links.count() > 1) {
+            qgcApp()->showMessage(tr("Communication regained to vehicle %1 on %2 link %3").arg(_id).arg(_links.count() > 1 ? tr("priority") : tr("auxiliary")).arg(link->getName()));
+        } else if (multiVehicle) {
+            qgcApp()->showMessage(tr("Communication regained to vehicle %1").arg(_id));
+        }
+    }
+    if (communicationLost) {
+        commSpeech = tr("Communication lost");
+        if (_links.count() > 1) {
+            qgcApp()->showMessage(tr("Communication lost to vehicle %1 on %2 link %3").arg(_id).arg(_links.count() > 1 ? tr("priority") : tr("auxiliary")).arg(link->getName()));
+        } else if (multiVehicle) {
+            qgcApp()->showMessage(tr("Communication lost to vehicle %1").arg(_id));
+        }
+    }
+    if (multiVehicle && (communicationLost || communicationRegained)) {
+        commSpeech.append(tr(" to vehicle %1").arg(_id));
+    }
+    if (!commSpeech.isEmpty()) {
+        _say(commSpeech);
     }
 }
 
@@ -2780,13 +2798,13 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                           lat, lon, alt);
     } else {
         sendMavCommand(defaultComponentId(),
-                          MAV_CMD_DO_ORBIT,
-                          true,            // show error if fails
-                          radius,
-                          qQNaN(),         // Use default velocity
-                          0,               // Vehicle points to center
-                          qQNaN(),         // reserved
-                          lat, lon, alt);
+                       MAV_CMD_DO_ORBIT,
+                       true,            // show error if fails
+                       radius,
+                       qQNaN(),         // Use default velocity
+                       0,               // Vehicle points to center
+                       qQNaN(),         // reserved
+                       lat, lon, alt);
     }
 }
 
