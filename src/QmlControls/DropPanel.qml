@@ -71,11 +71,11 @@ Item {
     }
 
     function _calcPositions() {
-        var panelComponentWidth = panelLoader.item.width
+        var panelComponentWidth  = panelLoader.item.width
         var panelComponentHeight = panelLoader.item.height
 
-        dropDownItem.width = panelComponentWidth + _dropMarginX2 + _arrowPointWidth
-        dropDownItem.height = panelComponentHeight + _dropMarginX2
+        dropDownItem.width  = panelComponentWidth  + (_dropMarginX2 * 2) + _arrowPointWidth
+        dropDownItem.height = panelComponentHeight + (_dropMarginX2 * 2)
 
         dropDownItem.x = _dropEdgeTopPoint.x + _dropMargin
         dropDownItem.y = _dropEdgeTopPoint.y -(dropDownItem.height / 2) + radius

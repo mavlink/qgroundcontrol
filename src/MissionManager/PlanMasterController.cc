@@ -280,6 +280,7 @@ void PlanMasterController::loadFromFile(const QString& filename)
         return;
     }
 
+    QFileInfo fileInfo(filename);
     QFile file(filename);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -288,8 +289,8 @@ void PlanMasterController::loadFromFile(const QString& filename)
         return;
     }
 
-    QString fileExtension(".%1");
-    if (filename.endsWith(fileExtension.arg(AppSettings::planFileExtension))) {
+    bool success = false;
+    if(fileInfo.suffix() == AppSettings::planFileExtension) {
         QJsonDocument   jsonDoc;
         QByteArray      bytes = file.readAll();
 
@@ -319,17 +320,31 @@ void PlanMasterController::loadFromFile(const QString& filename)
                 !_geoFenceController.load(json[_jsonGeoFenceObjectKey].toObject(), errorString) ||
                 !_rallyPointController.load(json[_jsonRallyPointsObjectKey].toObject(), errorString)) {
             qgcApp()->showMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
         }
-    } else if (filename.endsWith(fileExtension.arg(AppSettings::missionFileExtension))) {
+    } else if (fileInfo.suffix() == AppSettings::missionFileExtension) {
         if (!_missionController.loadJsonFile(file, errorString)) {
             qgcApp()->showMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
         }
-    } else if (filename.endsWith(fileExtension.arg(AppSettings::waypointsFileExtension)) ||
-               filename.endsWith(fileExtension.arg(QStringLiteral("txt")))) {
+    } else if (fileInfo.suffix() == AppSettings::waypointsFileExtension || fileInfo.suffix() == QStringLiteral("txt")) {
         if (!_missionController.loadTextFile(file, errorString)) {
             qgcApp()->showMessage(errorMessage.arg(errorString));
+        } else {
+            success = true;
         }
+    } else {
+        //-- TODO: What then?
     }
+
+    if(success){
+        _currentPlanFile.sprintf("%s/%s.%s", fileInfo.path().toLocal8Bit().data(), fileInfo.completeBaseName().toLocal8Bit().data(), AppSettings::planFileExtension);
+    } else {
+        _currentPlanFile.clear();
+    }
+    emit currentPlanFileChanged();
 
     if (!offline()) {
         setDirty(true);
@@ -352,6 +367,14 @@ QJsonDocument PlanMasterController::saveToJson()
     return QJsonDocument(planJson);
 }
 
+void
+PlanMasterController::saveToCurrent()
+{
+    if(!_currentPlanFile.isEmpty()) {
+        saveToFile(_currentPlanFile);
+    }
+}
+
 void PlanMasterController::saveToFile(const QString& filename)
 {
     if (filename.isEmpty()) {
@@ -367,9 +390,15 @@ void PlanMasterController::saveToFile(const QString& filename)
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qgcApp()->showMessage(tr("Plan save error %1 : %2").arg(filename).arg(file.errorString()));
+        _currentPlanFile.clear();
+        emit currentPlanFileChanged();
     } else {
         QJsonDocument saveDoc = saveToJson();
         file.write(saveDoc.toJson());
+        if(_currentPlanFile != planFilename) {
+            _currentPlanFile = planFilename;
+            emit currentPlanFileChanged();
+        }
     }
 
     // Only clear dirty bit if we are offline
@@ -411,6 +440,8 @@ void PlanMasterController::removeAll(void)
         _missionController.setDirty(false);
         _geoFenceController.setDirty(false);
         _rallyPointController.setDirty(false);
+        _currentPlanFile.clear();
+        emit currentPlanFileChanged();
     }
 }
 
