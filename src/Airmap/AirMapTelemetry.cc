@@ -67,6 +67,12 @@ AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
     if (!isTelemetryStreaming()) {
         return;
     }
+    // rate-limit updates to 5 Hz
+    if (!_timerLastSent.hasExpired(200)) {
+        return;
+    }
+    _timerLastSent.restart();
+
     mavlink_global_position_int_t globalPosition;
     mavlink_msg_global_position_int_decode(&message, &globalPosition);
     Telemetry::Position position{
@@ -123,6 +129,7 @@ AirMapTelemetry::startTelemetryStream(const QString& flightID)
                     QString::fromStdString(result.error().message()), description);
         }
     });
+    _timerLastSent.start();
 }
 
 //-----------------------------------------------------------------------------
