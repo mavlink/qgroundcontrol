@@ -15,6 +15,7 @@
 #include <QGCMAVLink.h>
 
 #include <QObject>
+#include <QElapsedTimer>
 
 /// Class to send telemetry data to AirMap
 class AirMapTelemetry : public QObject, public LifetimeChecker
@@ -51,5 +52,6 @@ private:
     std::string             _key; ///< key for AES encryption (16 bytes)
     QString                 _flightID;
     float                   _lastHdop = 1.f;
+    QElapsedTimer           _timerLastSent;
 };
 
