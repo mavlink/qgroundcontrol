@@ -43,6 +43,8 @@ SetupPage {
             property bool _batt2MonitorEnabled:     _batt2MonitorAvailable && _batt2Monitor.rawValue !== 0
             property bool _batt1ParamsAvailable:    controller.parameterExists(-1, "BATT_CAPACITY")
             property bool _batt2ParamsAvailable:    controller.parameterExists(-1, "BATT2_CAPACITY")
+            property bool _showBatt1Reboot:         _batt1MonitorEnabled && !_batt1ParamsAvailable
+            property bool _showBatt2Reboot:         _batt2MonitorEnabled && !_batt2ParamsAvailable
 
             property string _restartRequired: qsTr("Requires vehicle reboot")
 
@@ -84,7 +86,13 @@ SetupPage {
 
                         QGCLabel {
                             text:       _restartRequired
-                            visible:    _batt1MonitorEnabled && !_batt1ParamsAvailable
+                            visible:    _showBatt1Reboot
+                        }
+
+                        QGCButton {
+                            text:       qsTr("Reboot vehicle")
+                            visible:    _showBatt1Reboot
+                            onClicked:  controller.vehicle.rebootVehicle()
                         }
                     }
                 }
@@ -162,7 +170,13 @@ SetupPage {
 
                         QGCLabel {
                             text:       _restartRequired
-                            visible:    _batt2MonitorEnabled && !_batt2ParamsAvailable
+                            visible:    _showBatt2Reboot
+                        }
+
+                        QGCButton {
+                            text:       qsTr("Reboot vehicle")
+                            visible:    _showBatt2Reboot
+                            onClicked:  controller.vehicle.rebootVehicle()
                         }
                     }
                 }
