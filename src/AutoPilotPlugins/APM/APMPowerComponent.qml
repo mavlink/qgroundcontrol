@@ -369,8 +369,14 @@ SetupPage {
 
                 QGCButton {
                     text:       qsTr("Calculate")
-                    onClicked:  showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), qgcView.showDialogDefaultWidth, StandardButton.Close)
                     visible:    _showAdvanced
+
+                    onClicked: {
+                        _calcVoltageDlgVehicleVoltage = vehicleVoltage
+                        _calcVoltageDlgBattVoltMultParam = battVoltMult
+                        showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                    }
+
                 }
 
                 QGCLabel {
@@ -395,8 +401,13 @@ SetupPage {
 
                 QGCButton {
                     text:       qsTr("Calculate")
-                    onClicked:  showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), qgcView.showDialogDefaultWidth, StandardButton.Close)
                     visible:    _showAdvanced
+
+                    onClicked: {
+                        _calcAmpsPerVoltDlgVehicleCurrent = vehicleCurrent
+                        _calcAmpsPerVoltDlgBattAmpPerVoltParam = battAmpPerVolt
+                        showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                    }
                 }
 
                 QGCLabel {
@@ -410,6 +421,10 @@ SetupPage {
             } // GridLayout
         } // Column
     } // Component - powerSetupComponent
+
+    // Must be set prior to use of calcVoltageMultiplierDlgComponent
+    property Fact _calcVoltageDlgVehicleVoltage
+    property Fact _calcVoltageDlgBattVoltMultParam
 
     Component {
         id: calcVoltageMultiplierDlgComponent
@@ -444,10 +459,10 @@ SetupPage {
                         QGCTextField { id: measuredVoltage }
 
                         QGCLabel { text: qsTr("Vehicle voltage:") }
-                        QGCLabel { text: vehicleVoltage.valueString }
+                        FactLabel { fact: _calcVoltageDlgVehicleVoltage }
 
                         QGCLabel { text: qsTr("Voltage multiplier:") }
-                        FactLabel { fact: battVoltMult }
+                        FactLabel { fact: _calcVoltageDlgBattVoltMultParam }
                     }
 
                     QGCButton {
@@ -458,9 +473,9 @@ SetupPage {
                             if (measuredVoltageValue == 0 || isNaN(measuredVoltageValue)) {
                                 return
                             }
-                            var newVoltageMultiplier = (measuredVoltageValue * battVoltMult.value) / vehicleVoltage.value
+                            var newVoltageMultiplier = (measuredVoltageValue * _calcVoltageDlgBattVoltMultParam.value) / _calcVoltageDlgVehicleVoltage.value
                             if (newVoltageMultiplier > 0) {
-                                battVoltMult.value = newVoltageMultiplier
+                                _calcVoltageDlgBattVoltMultParam.value = newVoltageMultiplier
                             }
                         }
                     }
@@ -468,6 +483,10 @@ SetupPage {
             } // QGCFlickable
         } // QGCViewDialog
     } // Component - calcVoltageMultiplierDlgComponent
+
+    // Must be set prior to use of calcAmpsPerVoltDlgComponent
+    property Fact _calcAmpsPerVoltDlgVehicleCurrent
+    property Fact _calcAmpsPerVoltDlgBattAmpPerVoltParam
 
     Component {
         id: calcAmpsPerVoltDlgComponent
@@ -502,10 +521,10 @@ SetupPage {
                         QGCTextField { id: measuredCurrent }
 
                         QGCLabel { text: qsTr("Vehicle current:") }
-                        QGCLabel { text: vehicleCurrent.valueString }
+                        FactLabel { fact: _calcAmpsPerVoltDlgVehicleCurrent }
 
                         QGCLabel { text: qsTr("Amps per volt:") }
-                        FactLabel { fact: battAmpPerVolt }
+                        FactLabel { fact: _calcAmpsPerVoltDlgBattAmpPerVoltParam }
                     }
 
                     QGCButton {
@@ -516,9 +535,9 @@ SetupPage {
                             if (measuredCurrentValue == 0) {
                                 return
                             }
-                            var newAmpsPerVolt = (measuredCurrentValue * battAmpPerVolt.value) / vehicleCurrent.value
+                            var newAmpsPerVolt = (measuredCurrentValue * _calcAmpsPerVoltDlgBattAmpPerVoltParam.value) / _calcAmpsPerVoltDlgVehicleCurrent.value
                             if (newAmpsPerVolt != 0) {
-                                battAmpPerVolt.value = newAmpsPerVolt
+                                _calcAmpsPerVoltDlgBattAmpPerVoltParam.value = newAmpsPerVolt
                             }
                         }
                     }
