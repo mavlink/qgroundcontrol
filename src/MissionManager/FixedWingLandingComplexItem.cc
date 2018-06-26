@@ -18,6 +18,7 @@
 
 QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexItemLog")
 
+const char* FixedWingLandingComplexItem::settingsGroup =            "FixedWingLanding";
 const char* FixedWingLandingComplexItem::jsonComplexItemTypeValue = "fwLandingPattern";
 
 const char* FixedWingLandingComplexItem::loiterToLandDistanceName = "LandingDistance";
@@ -46,12 +47,12 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     , _landingCoordSet          (false)
     , _ignoreRecalcSignals      (false)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))
-    , _landingDistanceFact      (_metaDataMap[loiterToLandDistanceName])
-    , _loiterAltitudeFact       (_metaDataMap[loiterAltitudeName])
-    , _loiterRadiusFact         (_metaDataMap[loiterRadiusName])
-    , _landingHeadingFact       (_metaDataMap[landingHeadingName])
-    , _landingAltitudeFact      (_metaDataMap[landingAltitudeName])
-    , _glideSlopeFact           (_metaDataMap[glideSlopeName])
+    , _landingDistanceFact      (settingsGroup, _metaDataMap[loiterToLandDistanceName])
+    , _loiterAltitudeFact       (settingsGroup, _metaDataMap[loiterAltitudeName])
+    , _loiterRadiusFact         (settingsGroup, _metaDataMap[loiterRadiusName])
+    , _landingHeadingFact       (settingsGroup, _metaDataMap[landingHeadingName])
+    , _landingAltitudeFact      (settingsGroup, _metaDataMap[landingAltitudeName])
+    , _glideSlopeFact           (settingsGroup, _metaDataMap[glideSlopeName])
     , _loiterClockwise          (true)
     , _altitudesAreRelative     (true)
     , _valueSetIsDistance       (true)
