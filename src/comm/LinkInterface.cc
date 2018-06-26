@@ -12,7 +12,7 @@
 
 bool LinkInterface::active() const
 {
-    QMapIterator<int /* vehicle id */, HeartbeatTimer*> iter(_heartbeatTimers);
+    QMapIterator<int /* vehicle id */, MavlinkMessagesTimer*> iter(_mavlinkMessagesTimers);
     while (iter.hasNext()) {
         iter.next();
         if (iter.value()->getActive()) {
@@ -25,8 +25,8 @@ bool LinkInterface::active() const
 
 bool LinkInterface::link_active(int vehicle_id) const
 {
-    if (_heartbeatTimers.contains(vehicle_id)) {
-        return _heartbeatTimers.value(vehicle_id)->getActive();
+    if (_mavlinkMessagesTimers.contains(vehicle_id)) {
+        return _mavlinkMessagesTimers.value(vehicle_id)->getActive();
     } else {
         return false;
     }
@@ -189,24 +189,24 @@ void LinkInterface::_activeChanged(bool active, int vehicle_id)
     emit activeChanged(this, active, vehicle_id);
 }
 
-void LinkInterface::startHeartbeatTimer(int vehicle_id) {
-    if (_heartbeatTimers.contains(vehicle_id)) {
-        _heartbeatTimers.value(vehicle_id)->restartTimer();
+void LinkInterface::startMavlinkMessagesTimer(int vehicle_id) {
+    if (_mavlinkMessagesTimers.contains(vehicle_id)) {
+        _mavlinkMessagesTimers.value(vehicle_id)->restartTimer();
     } else {
-        _heartbeatTimers.insert(vehicle_id, new HeartbeatTimer(vehicle_id, _highLatency));
-        QObject::connect(_heartbeatTimers.value(vehicle_id), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
-        _heartbeatTimers.value(vehicle_id)->init();
+        _mavlinkMessagesTimers.insert(vehicle_id, new MavlinkMessagesTimer(vehicle_id, _highLatency));
+        QObject::connect(_mavlinkMessagesTimers.value(vehicle_id), &MavlinkMessagesTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        _mavlinkMessagesTimers.value(vehicle_id)->init();
     }
 }
 
-void LinkInterface::stopHeartbeatTimer() {
-    QMapIterator<int /* vehicle id */, HeartbeatTimer*> iter(_heartbeatTimers);
+void LinkInterface::stopMavlinkMessagesTimer() {
+    QMapIterator<int /* vehicle id */, MavlinkMessagesTimer*> iter(_mavlinkMessagesTimers);
     while (iter.hasNext()) {
         iter.next();
-        QObject::disconnect(iter.value(), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
-        _heartbeatTimers[iter.key()]->deleteLater();
-        _heartbeatTimers[iter.key()] = nullptr;
+        QObject::disconnect(iter.value(), &MavlinkMessagesTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        _mavlinkMessagesTimers[iter.key()]->deleteLater();
+        _mavlinkMessagesTimers[iter.key()] = nullptr;
     }
 
-    _heartbeatTimers.clear();
+    _mavlinkMessagesTimers.clear();
 }
