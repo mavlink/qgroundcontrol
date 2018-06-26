@@ -1784,7 +1784,6 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
                         newPriorityLink = link;
                         break;
                     }
-                    return;
                 }
             }
         }
