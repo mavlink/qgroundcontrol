@@ -369,7 +369,7 @@ FlightMap {
                 clickMenu.coord = clickCoord
                 clickMenu.popup()
             } else if (guidedActionsController.showGotoLocation) {
-                _guidedLocationCoordinate = clickCoord
+                gotoLocationItem.show(clickCoord)
                 guidedActionsController.confirmAction(guidedActionsController.actionGoto, clickCoord)
             } else if (guidedActionsController.showOrbit) {
                 orbitMapCircle.show(clickCoord)
