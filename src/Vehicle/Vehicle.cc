@@ -2508,7 +2508,10 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
                                1);                                     // Request protocol version
             }
         } else if (!active && !_connectionLost) {
-            if (_connectionLostEnabled) {
+            _updatePriorityLink(false /* updateActive */, false /* sendCommand */);
+
+            // check if another active link has been found
+            if (link == _priorityLink) {
                 _connectionLost = true;
                 communicationLost = true;
                 _heardFrom = false;
