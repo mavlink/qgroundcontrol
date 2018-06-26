@@ -46,23 +46,103 @@ SetupPage {
             property Fact _failsafeBatt2LowAct:             controller.getParameterFact(-1, "BATT2_FS_LOW_ACT", false /* reportMissing */)
             property Fact _failsafeBatt1CritAct:            controller.getParameterFact(-1, "BATT_FS_CRT_ACT", false /* reportMissing */)
             property Fact _failsafeBatt2CritAct:            controller.getParameterFact(-1, "BATT2_FS_CRT_ACT", false /* reportMissing */)
-            property Fact _failsafeBatt1Mah:                controller.getParameterFact(-1, "BATT_LOW_MAH", false /* reportMissing */)
-            property Fact _failsafeBatt2Mah:                controller.getParameterFact(-1, "BATT2_LOW_MAH", false /* reportMissing */)
-            property Fact _failsafeBatt1Voltage:            controller.getParameterFact(-1, "BATT_LOW_VOLT", false /* reportMissing */)
-            property Fact _failsafeBatt2Voltage:            controller.getParameterFact(-1, "BATT2_LOW_VOLT", false /* reportMissing */)
+            property Fact _failsafeBatt1LowMah:             controller.getParameterFact(-1, "BATT_LOW_MAH", false /* reportMissing */)
+            property Fact _failsafeBatt2LowMah:             controller.getParameterFact(-1, "BATT2_LOW_MAH", false /* reportMissing */)
+            property Fact _failsafeBatt1CritMah:            controller.getParameterFact(-1, "BATT_CRT_MAH", false /* reportMissing */)
+            property Fact _failsafeBatt2CritMah:            controller.getParameterFact(-1, "BATT2_CRT_MAH", false /* reportMissing */)
+            property Fact _failsafeBatt1LowVoltage:         controller.getParameterFact(-1, "BATT_LOW_VOLT", false /* reportMissing */)
+            property Fact _failsafeBatt2LowVoltage:         controller.getParameterFact(-1, "BATT2_LOW_VOLT", false /* reportMissing */)
+            property Fact _failsafeBatt1CritVoltage:        controller.getParameterFact(-1, "BATT_CRT_VOLT", false /* reportMissing */)
+            property Fact _failsafeBatt2CritVoltage:        controller.getParameterFact(-1, "BATT2_CRT_VOLT", false /* reportMissing */)
 
             property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
             property real _margins:     ScreenTools.defaultFontPixelHeight
             property bool _showIcon:    !ScreenTools.isTinyScreen
 
+            property string _restartRequired: qsTr("Requires vehicle reboot")
+
             ExclusiveGroup { id: fenceActionRadioGroup }
             ExclusiveGroup { id: landLoiterRadioGroup }
             ExclusiveGroup { id: returnAltRadioGroup }
 
+            Component {
+                id: batteryFailsafeComponent
+
+                Column {
+                    spacing: _margins
+
+                    GridLayout {
+                        id:             gridLayout
+                        columnSpacing:  _margins
+                        rowSpacing:     _margins
+                        columns:        2
+                        QGCLabel { text: qsTr("Low action:") }
+                        FactComboBox {
+                            fact:               failsafeBattLowAct
+                            indexModel:         false
+                            Layout.fillWidth:   true
+                        }
+
+                        QGCLabel { text: qsTr("Critical action:") }
+                        FactComboBox {
+                            fact:               failsafeBattCritAct
+                            indexModel:         false
+                            Layout.fillWidth:   true
+                        }
+
+                        QGCLabel { text: qsTr("Low voltage threshold:") }
+                        FactTextField {
+                            fact:               failsafeBattLowVoltage
+                            showUnits:          true
+                            Layout.fillWidth:   true
+                        }
+
+
+                        QGCLabel { text: qsTr("Critical voltage threshold:") }
+                        FactTextField {
+                            fact:               failsafeBattCritVoltage
+                            showUnits:          true
+                            Layout.fillWidth:   true
+                        }
+
+                        QGCLabel { text: qsTr("Low mAh threshold:") }
+                        FactTextField {
+                            fact:               failsafeBattLowMah
+                            showUnits:          true
+                            Layout.fillWidth:   true
+                        }
+
+                        QGCLabel { text: qsTr("Critical mAh threshold:") }
+                        FactTextField {
+                            fact:               failsafeBattCritMah
+                            showUnits:          true
+                            Layout.fillWidth:   true
+                        }
+                    } // GridLayout
+                } // Column
+            }
+
+            Component {
+                id: restartRequiredComponent
+
+                ColumnLayout {
+                    spacing: ScreenTools.defaultFontPixelWidth
+
+                    QGCLabel {
+                        text: _restartRequired
+                    }
+
+                    QGCButton {
+                        text:       qsTr("Reboot vehicle")
+                        onClicked:  controller.vehicle.rebootVehicle()
+                    }
+                }
+            }
+
             Column {
                 spacing: _margins / 2
-                visible: _batt1MonitorEnabled && _batt1ParamsAvailable
+                visible: _batt1MonitorEnabled
 
                 QGCLabel {
                     text:       qsTr("Battery1 Failsafe Triggers")
@@ -70,67 +150,33 @@ SetupPage {
                 }
 
                 Rectangle {
-                    width:  batteryFailsafeColumn.x + batteryFailsafeColumn.width + _margins
-                    height: batteryFailsafeColumn.y + batteryFailsafeColumn.height + _margins
+                    width:  battery1FailsafeLoader.x + battery1FailsafeLoader.width + _margins
+                    height: battery1FailsafeLoader.y + battery1FailsafeLoader.height + _margins
                     color:  ggcPal.windowShade
 
-                    Column {
-                        id:                 batteryFailsafeColumn
+                    Loader {
+                        id:                 battery1FailsafeLoader
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
-                        spacing:            _margins
+                        sourceComponent:    _batt1ParamsAvailable ? batteryFailsafeComponent : restartRequiredComponent
 
-                        GridLayout {
-                            id:             gridLayout
-                            columnSpacing:  _margins
-                            rowSpacing:     _margins
-                            columns:        2
-                            QGCLabel { text: qsTr("Battery low action:") }
-                            FactComboBox {
-                                fact:               _failsafeBatt1LowAct
-                                indexModel:         false
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCLabel {
-                                text:       qsTr("Battery critical action:")
-                            }
-                            FactComboBox {
-                                fact:               _failsafeBatt1CritAct
-                                indexModel:         false
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCCheckBox {
-                                text:      qsTr("Voltage threshold:")
-                                checked:   _failsafeBatt1Voltage.value != 0
-                                onClicked: _failsafeBatt1Voltage.value = checked ? 10.5 : 0
-                            }
-                            FactTextField {
-                                fact:               _failsafeBatt1Voltage
-                                showUnits:          true
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCCheckBox {
-                                text:       qsTr("MAH threshold:")
-                                checked:    _failsafeBatt1Mah.value != 0
-                                onClicked:  _failsafeBatt1Mah.value = checked ? 600 : 0
-                            }
-                            FactTextField {
-                                fact:               _failsafeBatt1Mah
-                                showUnits:          true
-                                Layout.fillWidth:   true
-                            }
-                        } // GridLayout
-                    } // Column
+                        property Fact battMonitor:              _batt1Monitor
+                        property bool battParamsAvailable:      _batt1ParamsAvailable
+                        property Fact failsafeBattLowAct:       _failsafeBatt1LowAct
+                        property Fact failsafeBattCritAct:      _failsafeBatt1CritAct
+                        property Fact failsafeBattLowMah:       _failsafeBatt1LowMah
+                        property Fact failsafeBattCritMah:      _failsafeBatt1CritMah
+                        property Fact failsafeBattLowVoltage:   _failsafeBatt1LowVoltage
+                        property Fact failsafeBattCritVoltage:  _failsafeBatt1CritVoltage
+                    }
                 } // Rectangle
             } // Column - Battery Failsafe Settings
 
+
             Column {
                 spacing: _margins / 2
-                visible:    _batt2MonitorEnabled && _batt2ParamsAvailable
+                visible: _batt2MonitorEnabled
 
                 QGCLabel {
                     text:       qsTr("Battery2 Failsafe Triggers")
@@ -138,65 +184,28 @@ SetupPage {
                 }
 
                 Rectangle {
-                    id:     failsafeSettings
-                    width:  battery2FailsafeColumn.x + battery2FailsafeColumn.width + _margins
-                    height: battery2FailsafeColumn.y + battery2FailsafeColumn.height + _margins
+                    width:  battery2FailsafeLoader.x + battery2FailsafeLoader.width + _margins
+                    height: battery2FailsafeLoader.y + battery2FailsafeLoader.height + _margins
                     color:  ggcPal.windowShade
 
-                    Column {
-                        id:                 battery2FailsafeColumn
+                    Loader {
+                        id:                 battery2FailsafeLoader
                         anchors.margins:    _margins
                         anchors.top:        parent.top
                         anchors.left:       parent.left
-                        spacing:            _margins
+                        sourceComponent:    _batt2ParamsAvailable ? batteryFailsafeComponent : restartRequiredComponent
 
-                        GridLayout {
-                            columnSpacing:  _margins
-                            rowSpacing:     _margins
-                            columns:        2
-                            visible:        _batt2MonitorEnabled && _failsafeBatt2LowActAvailable
-
-                            QGCLabel { text: qsTr("Battery low action:") }
-                            FactComboBox {
-                                fact:               _failsafeBatt2LowAct
-                                indexModel:         false
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCLabel {
-                                text:       qsTr("Battery critical action:")
-                            }
-                            FactComboBox {
-                                fact:               _failsafeBatt2CritAct
-                                indexModel:         false
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCCheckBox {
-                                text:      qsTr("Voltage threshold:")
-                                checked:   _failsafeBatt2Voltage.value != 0
-                                onClicked: _failsafeBatt2Voltage.value = checked ? 10.5 : 0
-                            }
-                            FactTextField {
-                                fact:               _failsafeBatt2Voltage
-                                showUnits:          true
-                                Layout.fillWidth:   true
-                            }
-
-                            QGCCheckBox {
-                                text:       qsTr("MAH threshold:")
-                                checked:    _failsafeBatt2Mah.value != 0
-                                onClicked:  _failsafeBatt2Mah.value = checked ? 600 : 0
-                            }
-                            FactTextField {
-                                fact:               _failsafeBatt2Mah
-                                showUnits:          true
-                                Layout.fillWidth:   true
-                            }
-                        } // GridLayout
-                    } // Column
+                        property Fact battMonitor:              _batt2Monitor
+                        property bool battParamsAvailable:      _batt2ParamsAvailable
+                        property Fact failsafeBattLowAct:       _failsafeBatt2LowAct
+                        property Fact failsafeBattCritAct:      _failsafeBatt2CritAct
+                        property Fact failsafeBattLowMah:       _failsafeBatt2LowMah
+                        property Fact failsafeBattCritMah:      _failsafeBatt2CritMah
+                        property Fact failsafeBattLowVoltage:   _failsafeBatt2LowVoltage
+                        property Fact failsafeBattCritVoltage:  _failsafeBatt2CritVoltage
+                    }
                 } // Rectangle
-            } // Column - Battery2 Failsafe Settings
+            } // Column - Battery Failsafe Settings
 
             Component {
                 id: planeGeneralFS
