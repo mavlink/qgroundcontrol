@@ -572,15 +572,15 @@ QGCView {
 
                 onClicked: {
                     switch (index) {
-                    case 0:
+                    case 1:
                         _addWaypointOnClick = checked
                         _addROIOnClick = false
                         break
-                    case 1:
+                    case 2:
                         _addROIOnClick = checked
                         _addWaypointOnClick = false
                         break
-                    case 2:
+                    case 3:
                         if (_singleComplexItem) {
                             addComplexItem(_missionController.complexMissionItemNames[0])
                         }
