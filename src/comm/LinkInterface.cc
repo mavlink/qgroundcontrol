@@ -204,7 +204,7 @@ void LinkInterface::stopHeartbeatTimer() {
     while (iter.hasNext()) {
         iter.next();
         QObject::disconnect(iter.value(), &HeartbeatTimer::activeChanged, this, &LinkInterface::_activeChanged);
-        delete _heartbeatTimers[iter.key()];
+        _heartbeatTimers[iter.key()]->deleteLater();
         _heartbeatTimers[iter.key()] = nullptr;
     }
 
