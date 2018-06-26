@@ -2780,15 +2780,6 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
         return;
     }
 
-    double lat, lon, alt;
-    if (centerCoord.isValid()) {
-        lat = lon = alt = qQNaN();
-    } else {
-        lat = centerCoord.latitude();
-        lon = centerCoord.longitude();
-        alt = amslAltitude;
-    }
-
     if (capabilityBits() && MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
         sendMavCommandInt(defaultComponentId(),
                           MAV_CMD_DO_ORBIT,
@@ -2798,7 +2789,7 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                           qQNaN(),         // Use default velocity
                           0,               // Vehicle points to center
                           qQNaN(),         // reserved
-                          lat, lon, alt);
+                          centerCoord.latitude(), centerCoord.longitude(), amslAltitude);
     } else {
         sendMavCommand(defaultComponentId(),
                        MAV_CMD_DO_ORBIT,
@@ -2807,7 +2798,7 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
                        qQNaN(),         // Use default velocity
                        0,               // Vehicle points to center
                        qQNaN(),         // reserved
-                       lat, lon, alt);
+                       centerCoord.latitude(), centerCoord.longitude(), amslAltitude);
     }
 }
 
