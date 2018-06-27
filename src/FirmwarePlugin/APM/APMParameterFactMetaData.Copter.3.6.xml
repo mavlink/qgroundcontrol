@@ -3919,7 +3919,10 @@
 <field name="UnitText">PWM in microseconds</field>
 </param>
 <param humanName="Collective Control Direction" name="H_COL_CTRL_DIR" documentation="Collective Control Direction - 0 for Normal. 1 for Reversed" user="Standard">
-<field name="Values">0: Normal, 1: Reversed</field>
+<values>
+<value code="0">Normal</value>
+<value code="1">Reversed</value>
+</values>
 </param>
 <param humanName="Servo 1 Position" name="H_SV1_POS" documentation="Angular location of swash servo #1" user="Standard">
 <field name="Range">-180 180</field>
