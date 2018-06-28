@@ -532,6 +532,10 @@ void QGCXPlaneLink::updateActuatorControls(quint64 time, quint64 flags, float ct
             p.f[6] = ctl_3;
             p.f[7] = ctl_3;
             writeBytesSafe((const char*)&p, sizeof(p));
+
+            /* Send flap signals, assuming that they are mapped to channel 5 (ctl_4) */
+            sendDataRef("sim/flightmodel/controls/flaprqst", ctl_4);
+            sendDataRef("sim/flightmodel/controls/flap2rqst", ctl_4);
             break;
         }
 
@@ -1064,7 +1068,7 @@ void QGCXPlaneLink::setRandomPosition()
                         _vehicle->altitudeAMSL()->rawValue().toDouble() + offAlt,
                         _vehicle->roll()->rawValue().toDouble(),
                         _vehicle->pitch()->rawValue().toDouble(),
-                        _vehicle->uas()->getYaw());
+                        _vehicle->heading()->rawValue().toDouble());
 }
 
 void QGCXPlaneLink::setRandomAttitude()

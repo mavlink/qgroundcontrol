@@ -31,10 +31,10 @@ public:
     Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
 
 protected:
-    SettingsFact* _createSettingsFact(const QString& name);
+    SettingsFact* _createSettingsFact(const QString& factName);
 
-    QString _name;
-    QString _settingsGroup;
+    QString _name;              ///< Name for group. Used to generate name for loaded json meta data file.
+    QString _settingsGroup;     ///< QSettings group which contains these settings. empty for settings in root
     bool    _visible;
 
     QMap<QString, FactMetaData*> _nameToMetaDataMap;

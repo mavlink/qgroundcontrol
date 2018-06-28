@@ -21,18 +21,18 @@
 
 QGC_LOGGING_CATEGORY(StructureScanComplexItemLog, "StructureScanComplexItemLog")
 
-const char* StructureScanComplexItem::_altitudeFactName =               "Altitude";
-const char* StructureScanComplexItem::_structureHeightFactName =        "StructureHeight";
-const char* StructureScanComplexItem::_layersFactName =                 "Layers";
+const char* StructureScanComplexItem::settingsGroup =               "StructureScan";
+const char* StructureScanComplexItem::altitudeName =                "Altitude";
+const char* StructureScanComplexItem::structureHeightName =         "StructureHeight";
+const char* StructureScanComplexItem::layersName =                  "Layers";
 
-const char* StructureScanComplexItem::jsonComplexItemTypeValue =        "StructureScan";
-const char* StructureScanComplexItem::_jsonCameraCalcKey =              "CameraCalc";
-const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =        "altitudeRelative";
+const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureScan";
+const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
+const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =    "altitudeRelative";
 
-QMap<QString, FactMetaData*> StructureScanComplexItem::_metaDataMap;
-
-StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* parent)
-    : ComplexMissionItem        (vehicle, parent)
+StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
+    : ComplexMissionItem        (vehicle, flyView, parent)
+    , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
     , _dirty                    (false)
     , _altitudeRelative         (true)
@@ -40,22 +40,12 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     , _ignoreRecalc             (false)
     , _scanDistance             (0.0)
     , _cameraShots              (0)
-    , _cameraMinTriggerInterval (0)
-    , _cameraCalc               (vehicle)
-    , _altitudeFact             (0, _altitudeFactName,              FactMetaData::valueTypeDouble)
-    , _layersFact               (0, _layersFactName,                FactMetaData::valueTypeUint32)
+    , _cameraCalc               (vehicle, settingsGroup)
+    , _altitudeFact             (settingsGroup, _metaDataMap[altitudeName])
+    , _structureHeightFact      (settingsGroup, _metaDataMap[structureHeightName])
+    , _layersFact               (settingsGroup, _metaDataMap[layersName])
 {
     _editorQml = "qrc:/qml/StructureScanEditor.qml";
-
-    if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), NULL /* QObject parent */);
-    }
-
-    _altitudeFact.setMetaData   (_metaDataMap[_altitudeFactName]);
-    _layersFact.setMetaData     (_metaDataMap[_layersFactName]);
-
-    _altitudeFact.setRawValue   (_altitudeFact.rawDefaultValue());
-    _layersFact.setRawValue     (_layersFact.rawDefaultValue());
 
     _altitudeFact.setRawValue(qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue());
 
@@ -73,8 +63,10 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(&_altitudeFact, &Fact::valueChanged, this, &StructureScanComplexItem::_updateCoordinateAltitudes);
 
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
-    connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_polygonCountChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
+
+    connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
+    connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
 
     connect(&_flightPolygon,    &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_flightPathChanged);
 
@@ -85,6 +77,13 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, QObject* pa
     connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcCameraShots);
 
     _recalcLayerInfo();
+
+    if (!kmlFile.isEmpty()) {
+        _structurePolygon.loadKMLFile(kmlFile);
+        _structurePolygon.setDirty(false);
+    }
+
+    setDirty(false);
 }
 
 void StructureScanComplexItem::_setScanDistance(double scanDistance)
@@ -111,19 +110,23 @@ void StructureScanComplexItem::_clearInternal(void)
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
-void StructureScanComplexItem::_polygonCountChanged(int count)
+void StructureScanComplexItem::_updateLastSequenceNumber(void)
 {
-    Q_UNUSED(count);
     emit lastSequenceNumberChanged(lastSequenceNumber());
 }
 
 int StructureScanComplexItem::lastSequenceNumber(void) const
 {
-    return _sequenceNumber +
-            (_layersFact.rawValue().toInt() *
-             ((_flightPolygon.count() + 1) +    // 1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
-              2)) +                             // Camera trigger start/stop for each layer
-            2;                                  // ROI_WPNEXT_OFFSET and ROI_NONE commands
+    // Each structure layer contains:
+    //  1 waypoint for each polygon vertex + 1 to go back to first polygon vertex for each layer
+    //  Two commands for camera trigger start/stop
+    int layerItemCount = _flightPolygon.count() + 1 + 2;
+
+    int multiLayerItemCount = layerItemCount * _layersFact.rawValue().toInt();
+
+    int itemCount = multiLayerItemCount + 2;    // +2 for ROI_WPNEXT_OFFSET and ROI_NONE commands
+
+    return _sequenceNumber + itemCount - 1;
 }
 
 void StructureScanComplexItem::setDirty(bool dirty)
@@ -143,10 +146,10 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
 
-    saveObject[_altitudeFactName] =             _altitudeFact.rawValue().toDouble();
-    saveObject[_structureHeightFactName] =      _structureHeightFact.rawValue().toDouble();
-    saveObject[_jsonAltitudeRelativeKey] =      _altitudeRelative;
-    saveObject[_layersFactName] =               _layersFact.rawValue().toDouble();
+    saveObject[altitudeName] =              _altitudeFact.rawValue().toDouble();
+    saveObject[structureHeightName] =      _structureHeightFact.rawValue().toDouble();
+    saveObject[_jsonAltitudeRelativeKey] =   _altitudeRelative;
+    saveObject[layersName] =                _layersFact.rawValue().toDouble();
 
     QJsonObject cameraCalcObject;
     _cameraCalc.save(cameraCalcObject);
@@ -173,10 +176,10 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
         { ComplexMissionItem::jsonComplexItemTypeKey,   QJsonValue::String, true },
         { QGCMapPolygon::jsonPolygonKey,                QJsonValue::Array,  true },
-        { _altitudeFactName,                            QJsonValue::Double, true },
-        { _structureHeightFactName,                     QJsonValue::Double, true },
+        { altitudeName,                                 QJsonValue::Double, true },
+        { structureHeightName,                          QJsonValue::Double, true },
         { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   true },
-        { _layersFactName,                              QJsonValue::Double, true },
+        { layersName,                                   QJsonValue::Double, true },
         { _jsonCameraCalcKey,                           QJsonValue::Object, true },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
@@ -205,8 +208,8 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         return false;
     }
 
-    _altitudeFact.setRawValue   (complexObject[_altitudeFactName].toDouble());
-    _layersFact.setRawValue     (complexObject[_layersFactName].toDouble());
+    _altitudeFact.setRawValue   (complexObject[altitudeName].toDouble());
+    _layersFact.setRawValue     (complexObject[layersName].toDouble());
     _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
 
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {

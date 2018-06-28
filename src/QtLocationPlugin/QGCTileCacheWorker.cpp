@@ -30,8 +30,8 @@
 #include "time.h"
 
 const char* kDefaultSet = "Default Tile Set";
-const QString kSession          = QLatin1String("QGeoTileWorkerSession");
-const QString kExportSession    = QLatin1String("QGeoTileExportSession");
+const QString kSession          = QStringLiteral("QGeoTileWorkerSession");
+const QString kExportSession    = QStringLiteral("QGeoTileExportSession");
 
 QGC_LOGGING_CATEGORY(QGCTileCacheLog, "QGCTileCacheLog")
 
@@ -188,18 +188,15 @@ QGCCacheWorker::run()
             //-- Wait a bit before shutting things down
             _waitmutex.lock();
             int timeout = 5000;
-            if(!_waitc.wait(&_waitmutex, timeout))
-            {
-                _waitmutex.unlock();
-                _mutex.lock();
-                //-- If nothing to do, close db and leave thread
-                if(!_taskQueue.count()) {
-                    _mutex.unlock();
-                    break;
-                }
-                _mutex.unlock();
-            }
+            _waitc.wait(&_waitmutex, timeout);
             _waitmutex.unlock();
+            _mutex.lock();
+            //-- If nothing to do, close db and leave thread
+            if(!_taskQueue.count()) {
+                _mutex.unlock();
+                break;
+            }
+            _mutex.unlock();
         }
     }
     if(_db) {
@@ -1094,15 +1091,40 @@ QGCCacheWorker::_createDB(QSqlDatabase* db, bool createDefault)
 void
 QGCCacheWorker::_testInternet()
 {
+    /*
+        To test if you have Internet connection, the code tests a connection to
+        8.8.8.8:53 (google DNS). It appears that some routers are now blocking TCP
+        connections to port 53. So instead, we use a TCP connection to "github.com"
+        (80). On exit, if the look up for “github.com” is under way, a call to abort
+        the lookup is made. This abort call on Android has no effect, and the code
+        blocks for a full minute. So to work around the issue, we continue a direct
+        TCP connection to 8.8.8.8:53 on Android and do the lookup/connect on the
+        other platforms.
+    */
+#if defined(__android__)
+    QTcpSocket socket;
+    socket.connectToHost("8.8.8.8", 53);
+    if (socket.waitForConnected(2000)) {
+        qCDebug(QGCTileCacheLog) << "Yes Internet Access";
+        emit internetStatus(true);
+        return;
+    }
+    qWarning() << "No Internet Access";
+    emit internetStatus(false);
+#else
     if(!_hostLookupID) {
         _hostLookupID = QHostInfo::lookupHost("www.github.com", this, SLOT(_lookupReady(QHostInfo)));
     }
+#endif
 }
 
 //-----------------------------------------------------------------------------
 void
 QGCCacheWorker::_lookupReady(QHostInfo info)
 {
+#if defined(__android__)
+    Q_UNUSED(info);
+#else
     _hostLookupID = 0;
     if(info.error() == QHostInfo::NoError && info.addresses().size()) {
         QTcpSocket socket;
@@ -1118,4 +1140,5 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
     }
     qWarning() << "No Internet Access";
     emit internetStatus(false);
+#endif
 }

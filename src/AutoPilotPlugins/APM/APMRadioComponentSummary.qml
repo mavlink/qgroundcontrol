@@ -23,22 +23,22 @@ FactPanel {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText: qsTr("Roll:")
+            labelText: qsTr("Roll")
             valueText: mapRollFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapRollFact.valueString)
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Pitch:")
+            labelText: qsTr("Pitch")
             valueText: mapPitchFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapPitchFact.valueString)
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Yaw:")
+            labelText: qsTr("Yaw")
             valueText: mapYawFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapYawFact.valueString)
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Throttle:")
+            labelText: qsTr("Throttle")
             valueText: mapThrottleFact.value == 0 ? qsTr("Setup required") : qsTr("Channel %1").arg(mapThrottleFact.valueString)
         }
     }

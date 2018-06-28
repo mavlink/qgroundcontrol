@@ -11,6 +11,7 @@
 import QtQuick              2.3
 import QtQuick.Controls     1.2
 import QtGraphicalEffects   1.0
+import QtQuick.Layouts      1.2
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
@@ -34,12 +35,26 @@ SetupPage {
 
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 
-            property Fact _failsafeGCSEnable:   controller.getParameterFact(-1, "FS_GCS_ENABLE")
-            property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
-            property Fact _failsafeBattMah:     controller.getParameterFact(-1, "FS_BATT_MAH")
-            property Fact _failsafeBattVoltage: controller.getParameterFact(-1, "FS_BATT_VOLTAGE")
-            property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
-            property Fact _failsafeThrValue:    controller.getParameterFact(-1, "FS_THR_VALUE")
+            property Fact _failsafeGCSEnable:               controller.getParameterFact(-1, "FS_GCS_ENABLE")
+            property Fact _failsafeBattLowAct:              controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT", false /* reportMissing */)
+            property Fact _failsafeBattMah:                 controller.getParameterFact(-1, "r.BATT_LOW_MAH", false /* reportMissing */)
+            property Fact _failsafeBattVoltage:             controller.getParameterFact(-1, "r.BATT_LOW_VOLT", false /* reportMissing */)
+            property Fact _failsafeThrEnable:               controller.getParameterFact(-1, "FS_THR_ENABLE")
+            property Fact _failsafeThrValue:                controller.getParameterFact(-1, "FS_THR_VALUE")
+
+            property Fact _batt1Monitor:                    controller.getParameterFact(-1, "BATT_MONITOR")
+            property Fact _batt2Monitor:                    controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
+            property bool _batt2MonitorAvailable:           controller.parameterExists(-1, "BATT2_MONITOR")
+            property bool _batt1MonitorEnabled:             _batt2MonitorAvailable ? _batt2Monitor.rawValue !== 0 : false
+            property bool _batt2MonitorEnabled:             _batt2MonitorAvailable ? _batt2Monitor.rawValue !== 0 : false
+            property bool _batt1ParamsAvailable:            controller.parameterExists(-1, "BATT_CAPACITY")
+            property bool _batt2ParamsAvailable:            controller.parameterExists(-1, "BATT2_CAPACITY")
+
+            property Fact _failsafeBattCritAct:             controller.getParameterFact(-1, "BATT_FS_CRT_ACT", false /* reportMissing */)
+            property Fact _failsafeBatt2LowAct:             controller.getParameterFact(-1, "BATT2_FS_LOW_ACT", false /* reportMissing */)
+            property Fact _failsafeBatt2CritAct:            controller.getParameterFact(-1, "BATT2_FS_CRT_ACT", false /* reportMissing */)
+            property Fact _failsafeBatt2Mah:                controller.getParameterFact(-1, "BATT2_LOW_MAH", false /* reportMissing */)
+            property Fact _failsafeBatt2Voltage:            controller.getParameterFact(-1, "BATT2_LOW_VOLT", false /* reportMissing */)
 
             property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
             property Fact _fenceAltMax: controller.getParameterFact(-1, "FENCE_ALT_MAX")
@@ -64,137 +79,196 @@ SetupPage {
 
             Column {
                 spacing: _margins / 2
+                visible: _batt1MonitorEnabled && _batt1ParamsAvailable
 
                 QGCLabel {
-                    id:         failsafeLabel
-                    text:       qsTr("Failsafe Triggers")
+                    text:       qsTr("Battery1 Failsafe Triggers")
+                    font.family: ScreenTools.demiboldFontFamily
+                }
+
+                Rectangle {
+                    width:  batteryFailsafeColumn.x + batteryFailsafeColumn.width + _margins
+                    height: batteryFailsafeColumn.y + batteryFailsafeColumn.height + _margins
+                    color:  ggcPal.windowShade
+
+                    Column {
+                        id:                 batteryFailsafeColumn
+                        anchors.margins:    _margins
+                        anchors.top:        parent.top
+                        anchors.left:       parent.left
+                        spacing:            _margins
+
+                        GridLayout {
+                            id:             gridLayout
+                            columnSpacing:  _margins
+                            rowSpacing:     _margins
+                            columns:        2
+                            QGCLabel { text: qsTr("Battery low action:") }
+                            FactComboBox {
+                                fact:               _failsafeBattLowAct
+                                indexModel:         false
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCLabel {
+                                text:       qsTr("Battery critical action:")
+                                visible:    _failsafeBattCritActAvailable
+                            }
+                            FactComboBox {
+                                fact:               _failsafeBattCritAct
+                                visible:            _failsafeBattCritActAvailable
+                                indexModel:         false
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCCheckBox {
+                                text:      qsTr("Voltage threshold:")
+                                checked:   _failsafeBattVoltage.value != 0
+                                onClicked: _failsafeBattVoltage.value = checked ? 10.5 : 0
+                            }
+                            FactTextField {
+                                fact:               _failsafeBattVoltage
+                                showUnits:          true
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCCheckBox {
+                                text:       qsTr("MAH threshold:")
+                                checked:    _failsafeBattMah.value != 0
+                                onClicked:  _failsafeBattMah.value = checked ? 600 : 0
+                            }
+                            FactTextField {
+                                fact:               _failsafeBattMah
+                                showUnits:          true
+                                Layout.fillWidth:   true
+                            }
+                        } // GridLayout
+                    } // Column
+                } // Rectangle
+            } // Column - Battery Failsafe Settings
+
+            Column {
+                spacing: _margins / 2
+                visible:    _batt2MonitorEnabled && _batt2ParamsAvailable
+
+                QGCLabel {
+                    text:       qsTr("Battery2 Failsafe Triggers")
                     font.family: ScreenTools.demiboldFontFamily
                 }
 
                 Rectangle {
                     id:     failsafeSettings
-                    width:  throttleEnableCombo.x + throttleEnableCombo.width + _margins
-                    height: mahField.y + mahField.height + _margins
+                    width:  battery2FailsafeColumn.x + battery2FailsafeColumn.width + _margins
+                    height: battery2FailsafeColumn.y + battery2FailsafeColumn.height + _margins
                     color:  ggcPal.windowShade
 
-                    QGCLabel {
-                        id:                 gcsEnableLabel
+                    Column {
+                        id:                 battery2FailsafeColumn
                         anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.baseline:   gcsEnableCombo.baseline
-                        text:               qsTr("Ground Station failsafe:")
-                    }
-
-                    FactComboBox {
-                        id:                 gcsEnableCombo
-                        anchors.topMargin:  _margins
-                        anchors.leftMargin: _margins
-                        anchors.left:       gcsEnableLabel.right
                         anchors.top:        parent.top
-                        width:              voltageField.width
-                        fact:               _failsafeGCSEnable
-                        indexModel:         false
-                    }
-
-                    QGCLabel {
-                        id:                 throttleEnableLabel
-                        anchors.margins:    _margins
                         anchors.left:       parent.left
-                        anchors.baseline:   throttleEnableCombo.baseline
-                        text:               qsTr("Throttle failsafe:")
-                    }
+                        spacing:            _margins
 
-                    QGCComboBox {
-                        id:                 throttleEnableCombo
-                        anchors.topMargin:  _margins
-                        anchors.left:       gcsEnableCombo.left
-                        anchors.top:        gcsEnableCombo.bottom
-                        width:              voltageField.width
-                        model:              [qsTr("Disabled"), qsTr("Always RTL"),
-                            qsTr("Continue with Mission in Auto Mode"), qsTr("Always Land")]
-                        currentIndex:       _failsafeThrEnable.value
+                        GridLayout {
+                            columnSpacing:  _margins
+                            rowSpacing:     _margins
+                            columns:        2
+                            visible:        _batt2MonitorEnabled && _failsafeBatt2LowActAvailable
 
-                        onActivated: _failsafeThrEnable.value = index
-                    }
+                            QGCLabel { text: qsTr("Battery low action:") }
+                            FactComboBox {
+                                fact:               _failsafeBatt2LowAct
+                                indexModel:         false
+                                Layout.fillWidth:   true
+                            }
 
-                    QGCLabel {
-                        id:                 throttlePWMLabel
+                            QGCLabel {
+                                text:       qsTr("Battery critical action:")
+                            }
+                            FactComboBox {
+                                fact:               _failsafeBatt2CritAct
+                                indexModel:         false
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCCheckBox {
+                                text:      qsTr("Voltage threshold:")
+                                checked:   _failsafeBatt2Voltage.value != 0
+                                onClicked: _failsafeBatt2Voltage.value = checked ? 10.5 : 0
+                            }
+                            FactTextField {
+                                fact:               _failsafeBatt2Voltage
+                                showUnits:          true
+                                Layout.fillWidth:   true
+                            }
+
+                            QGCCheckBox {
+                                text:       qsTr("MAH threshold:")
+                                checked:    _failsafeBatt2Mah.value != 0
+                                onClicked:  _failsafeBatt2Mah.value = checked ? 600 : 0
+                            }
+                            FactTextField {
+                                fact:               _failsafeBatt2Mah
+                                showUnits:          true
+                                Layout.fillWidth:   true
+                            }
+                        } // GridLayout
+                    } // Column
+                } // Rectangle
+            } // Column - Battery2 Failsafe Settings
+
+            Column {
+                spacing: _margins / 2
+
+                QGCLabel {
+                    text:       qsTr("General Failsafe Triggers")
+                    font.family: ScreenTools.demiboldFontFamily
+                }
+
+                Rectangle {
+                    width:  generalFailsafeColumn.x + generalFailsafeColumn.width + _margins
+                    height: generalFailsafeColumn.y + generalFailsafeColumn.height + _margins
+                    color:  ggcPal.windowShade
+
+                    Column {
+                        id:                 generalFailsafeColumn
                         anchors.margins:    _margins
+                        anchors.top:        parent.top
                         anchors.left:       parent.left
-                        anchors.baseline:   throttlePWMField.baseline
-                        text:               qsTr("PWM threshold:")
-                    }
+                        spacing:            _margins
 
-                    FactTextField {
-                        id:                 throttlePWMField
-                        anchors.topMargin:  _margins / 2
-                        anchors.left:       gcsEnableCombo.left
-                        anchors.top:        throttleEnableCombo.bottom
-                        fact:               _failsafeThrValue
-                        showUnits:          true
-                    }
+                        GridLayout {
+                            columnSpacing:  _margins
+                            rowSpacing:     _margins
+                            columns:        2
 
-                    QGCLabel {
-                        id:                 batteryEnableLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.baseline:   batteryEnableCombo.baseline
-                        text:               qsTr("Battery failsafe:")
-                    }
+                            QGCLabel { text: qsTr("Ground Station failsafe:") }
+                            FactComboBox {
+                                fact:               _failsafeGCSEnable
+                                indexModel:         false
+                                Layout.fillWidth:   true
+                            }
 
-                    QGCComboBox {
-                        id:                 batteryEnableCombo
-                        anchors.topMargin:  _margins
-                        anchors.left:       gcsEnableCombo.left
-                        anchors.top:        throttlePWMField.bottom
-                        width:              voltageField.width
-                        model:              [qsTr("Disabled"), qsTr("Land"), qsTr("Return to Launch")]
-                        currentIndex:       _failsafeBattEnable.value
+                            QGCLabel { text: qsTr("Throttle failsafe:") }
+                            QGCComboBox {
+                                model:              [qsTr("Disabled"), qsTr("Always RTL"),
+                                    qsTr("Continue with Mission in Auto Mode"), qsTr("Always Land")]
+                                currentIndex:       _failsafeThrEnable.value
+                                Layout.fillWidth:   true
 
-                        onActivated: _failsafeBattEnable.value = index
-                    }
+                                onActivated: _failsafeThrEnable.value = index
+                            }
 
-                    QGCCheckBox {
-                        id:                 voltageLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.baseline:   voltageField.baseline
-                        text:               qsTr("Voltage threshold:")
-                        checked:            _failsafeBattVoltage.value != 0
-
-                        onClicked: _failsafeBattVoltage.value = checked ? 10.5 : 0
-                    }
-
-                    FactTextField {
-                        id:                 voltageField
-                        anchors.topMargin:  _margins / 2
-                        anchors.left:       gcsEnableCombo.left
-                        anchors.top:        batteryEnableCombo.bottom
-                        fact:               _failsafeBattVoltage
-                        showUnits:          true
-                    }
-
-                    QGCCheckBox {
-                        id:                 mahLabel
-                        anchors.margins:    _margins
-                        anchors.left:       parent.left
-                        anchors.baseline:   mahField.baseline
-                        text:               qsTr("MAH threshold:")
-                        checked:            _failsafeBattMah.value != 0
-
-                        onClicked: _failsafeBattMah.value = checked ? 600 : 0
-                    }
-
-                    FactTextField {
-                        id:                 mahField
-                        anchors.topMargin:  _margins / 2
-                        anchors.left:       gcsEnableCombo.left
-                        anchors.top:        voltageField.bottom
-                        fact:               _failsafeBattMah
-                        showUnits:          true
-                    }
+                            QGCLabel { text: qsTr("PWM threshold:") }
+                            FactTextField {
+                                fact:               _failsafeThrValue
+                                showUnits:          true
+                                Layout.fillWidth:   true
+                            }
+                        } // GridLayout
+                    } // Column
                 } // Rectangle - Failsafe Settings
-            } // Column - Failsafe Settings
+            } // Column - General Failsafe Settings
 
             Column {
                 spacing: _margins / 2

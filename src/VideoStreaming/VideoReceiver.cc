@@ -63,6 +63,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoSink(NULL)
     , _socket(NULL)
     , _serverPresent(false)
+    , _rtspTestInterval_ms(5000)
 #endif
     , _videoSurface(NULL)
     , _videoRunning(false)
@@ -164,9 +165,9 @@ VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
     Q_UNUSED(socketError);
     _socket->deleteLater();
     _socket = NULL;
-    //-- Try again in 5 seconds
+    //-- Try again in a while
     if(_videoSettings->streamEnabled()->rawValue().toBool()) {
-        _timer.start(5000);
+        _timer.start(_rtspTestInterval_ms);
     }
 }
 #endif
@@ -194,7 +195,7 @@ VideoReceiver::_timeout()
         connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
         connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
         _socket->connectToHost(url.host(), url.port());
-        _timer.start(5000);
+        _timer.start(_rtspTestInterval_ms);
     }
 }
 #endif
@@ -218,6 +219,7 @@ VideoReceiver::start()
         return;
     }
 #if defined(QGC_GST_STREAMING)
+    _stop = false;
     qCDebug(VideoReceiverLog) << "start()";
 
     if (_uri.isEmpty()) {
@@ -433,6 +435,7 @@ void
 VideoReceiver::stop()
 {
 #if defined(QGC_GST_STREAMING)
+    _stop = true;
     qCDebug(VideoReceiverLog) << "stop()";
     if(!_streaming) {
         _shutdownPipeline();
@@ -674,6 +677,14 @@ VideoReceiver::startRecording(const QString &videoFile)
     gst_element_sync_state_with_parent(_sink->mux);
     gst_element_sync_state_with_parent(_sink->filesink);
 
+    // Install a probe on the recording branch to drop buffers until we hit our first keyframe
+    // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
+    // This will ensure the first frame is a keyframe at t=0, and decoding can begin immediately on playback
+    GstPad* probepad = gst_element_get_static_pad(_sink->queue, "src");
+    gst_pad_add_probe(probepad, (GstPadProbeType)(GST_PAD_PROBE_TYPE_BUFFER /* | GST_PAD_PROBE_TYPE_BLOCK */), _keyframeWatch, this, NULL); // to drop the buffer or to block the buffer?
+    gst_object_unref(probepad);
+
+    // Link the recording branch to the pipeline
     GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
     gst_pad_link(_sink->teepad, sinkpad);
     gst_object_unref(sinkpad);
@@ -803,6 +814,33 @@ VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user
 #endif
 
 //-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
+GstPadProbeReturn
+VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
+{
+    Q_UNUSED(pad);
+    if(info != NULL && user_data != NULL) {
+        GstBuffer* buf = gst_pad_probe_info_get_buffer(info);
+        if(GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT)) { // wait for a keyframe
+            return GST_PAD_PROBE_DROP;
+        } else {
+            VideoReceiver* pThis = (VideoReceiver*)user_data;
+            // reset the clock
+            GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(pThis->_pipeline));
+            GstClockTime time = gst_clock_get_time(clock);
+            gst_object_unref(clock);
+            gst_element_set_base_time(pThis->_pipeline, time); // offset pipeline timestamps to start at zero again
+            buf->dts = 0; // The offset will not apply to this current buffer, our first frame, timestamp is zero
+            buf->pts = 0;
+            qCDebug(VideoReceiverLog) << "Got keyframe, stop dropping buffers";
+        }
+    }
+
+    return GST_PAD_PROBE_REMOVE;
+}
+#endif
+
+//-----------------------------------------------------------------------------
 void
 VideoReceiver::_updateTimer()
 {
@@ -835,9 +873,11 @@ VideoReceiver::_updateTimer()
             }
             if(elapsed > (time_t)timeout && _videoSurface) {
                 stop();
+                // We want to start it back again with _updateTimer
+                _stop = false;
             }
         } else {
-            if(!running() && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
+            if(!_stop && !running() && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
                 start();
             }
         }

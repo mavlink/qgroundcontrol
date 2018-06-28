@@ -9,4 +9,10 @@ GuidedActionsController     1.0 GuidedActionsController.qml
 GuidedActionList            1.0 GuidedActionList.qml
 GuidedAltitudeSlider        1.0 GuidedAltitudeSlider.qml
 MultiVehicleList            1.0 MultiVehicleList.qml
+PreFlightBatteryCheck       1.0 PreFlightBatteryCheck.qml
+BuiltInPreFlightCheckModel  1.0 BuiltInPreFlightCheckModel.qml
+PreFlightGPSCheck           1.0 PreFlightGPSCheck.qml
+PreFlightRCCheck            1.0 PreFlightRCCheck.qml
+PreFlightSensorsHealthCheck 1.0 PreFlightSensorsHealthCheck.qml
+PreFlightSoundCheck         1.0 PreFlightSoundCheck.qml
 

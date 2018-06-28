@@ -128,12 +128,22 @@ Item {
 
     Menu {
         id: menu
+        property int _removeVertexIndex
 
-        property int removeVertex
+        function popUpWithIndex(curIndex) {
+            _removeVertexIndex = curIndex
+            removeVertexItem.visible = mapPolyline.count > 2
+            menu.popup()
+        }
 
         MenuItem {
+            id:             removeVertexItem
             text:           qsTr("Remove vertex" )
-            onTriggered:    mapPolyline.removeVertex(parent.removeVertex)
+            onTriggered:    mapPolyline.removeVertex(menu._removeVertexIndex)
+        }
+
+        MenuSeparator {
+            visible:        removeVertexItem.visible
         }
 
         MenuItem {
@@ -167,7 +177,7 @@ Item {
                 width:          ScreenTools.defaultFontPixelHeight * 1.5
                 height:         width
                 radius:         width / 2
-                border.color:      "white"
+                border.color:   "white"
                 color:          "transparent"
                 opacity:        .50
                 z:              _zorderSplitHandle
@@ -226,6 +236,7 @@ Item {
         id: dragAreaComponent
 
         MissionItemIndicatorDrag {
+            mapControl: _root.mapControl
             id:         dragArea
             z:          _zorderDragHandle
 
@@ -243,12 +254,7 @@ Item {
             }
 
             onClicked: {
-                if (polylineVertex == 0) {
-                    menu.removeVertex = polylineVertex
-                    menu.popup()
-                } else {
-                    mapPolyline.removeVertex(polylineVertex)
-                }
+                menu.popUpWithIndex(polylineVertex)
             }
 
         }
@@ -266,20 +272,13 @@ Item {
             property int polylineVertex
 
             sourceItem: Rectangle {
-                id:         dragHandle
-                width:      ScreenTools.defaultFontPixelHeight * 1.5
-                height:     width
-                radius:     width / 2
-                color:      "white"
-                opacity:    .90
-
-                QGCLabel {
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    anchors.verticalCenter:     parent.verticalCenter
-                    text:                       "..."
-                    color:                      "black"
-                    visible:                    polylineVertex == 0
-                }
+                id:             dragHandle
+                width:          ScreenTools.defaultFontPixelHeight * 1.5
+                height:         width
+                radius:         width * 0.5
+                color:          Qt.rgba(1,1,1,0.8)
+                border.color:   Qt.rgba(0,0,0,0.25)
+                border.width:   1
             }
         }
     }

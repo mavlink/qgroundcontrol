@@ -62,7 +62,7 @@ public:
 
     // Overrides from PlanElementController
     bool supported                  (void) const final;
-    void start                      (bool editMode) final;
+    void start                      (bool flyView) final;
     void save                       (QJsonObject& json) final;
     bool load                       (const QJsonObject& json, QString& errorString) final;
     void loadFromVehicle            (void) final;
@@ -111,9 +111,14 @@ private:
     bool                _itemsRequested;
     Fact*               _px4ParamCircularFenceFact;
 
+    static const char* _px4ParamCircularFence;
+
+    static const int _jsonCurrentVersion = 2;
+
     static const char* _jsonFileTypeValue;
     static const char* _jsonBreachReturnKey;
-    static const char* _px4ParamCircularFence;
+    static const char* _jsonPolygonsKey;
+    static const char* _jsonCirclesKey;
 };
 
 #endif

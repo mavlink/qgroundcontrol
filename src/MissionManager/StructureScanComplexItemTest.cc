@@ -24,7 +24,7 @@ void StructureScanComplexItemTest::init(void)
     _rgSignals[dirtyChangedIndex] = SIGNAL(dirtyChanged(bool));
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _structureScanItem = new StructureScanComplexItem(_offlineVehicle, this);
+    _structureScanItem = new StructureScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     _structureScanItem->setDirty(false);
 
     _multiSpy = new MultiSignalSpy();
@@ -92,7 +92,7 @@ void StructureScanComplexItemTest::_initItem(void)
         mapPolygon->appendVertex(vertex);
     }
 
-    _structureScanItem->cameraCalc()->setCameraName(CameraCalc::manualCameraName());
+    _structureScanItem->cameraCalc()->cameraName()->setRawValue(CameraCalc::manualCameraName());
     _structureScanItem->layers()->setCookedValue(2);
     _structureScanItem->setDirty(false);
 
@@ -109,7 +109,7 @@ void StructureScanComplexItemTest::_validateItem(StructureScanComplexItem* item)
         QCOMPARE(expectedVertex, actualVertex);
     }
 
-    QCOMPARE(_structureScanItem->cameraCalc()->cameraName() , CameraCalc::manualCameraName());
+    QVERIFY(_structureScanItem->cameraCalc()->isManualCamera());
     QCOMPARE(item->layers()->cookedValue().toInt(), 2);
 }
 
@@ -121,7 +121,7 @@ void StructureScanComplexItemTest::_testSaveLoad(void)
     _structureScanItem->save(items);
 
     QString errorString;
-    StructureScanComplexItem* newItem = new StructureScanComplexItem(_offlineVehicle, this);
+    StructureScanComplexItem* newItem = new StructureScanComplexItem(_offlineVehicle, false /* flyView */, QString() /* kmlFile */, this /* parent */);
     QVERIFY(newItem->load(items[0].toObject(), 10, errorString));
     QVERIFY(errorString.isEmpty());
     _validateItem(newItem);
@@ -134,6 +134,6 @@ void StructureScanComplexItemTest::_testItemCount(void)
 
     _initItem();
     _structureScanItem->appendMissionItems(items, this);
-    QCOMPARE(items.count(), _structureScanItem->lastSequenceNumber());
+    QCOMPARE(items.count() - 1, _structureScanItem->lastSequenceNumber());
 
 }

@@ -18,6 +18,7 @@
 
 QGC_LOGGING_CATEGORY(FixedWingLandingComplexItemLog, "FixedWingLandingComplexItemLog")
 
+const char* FixedWingLandingComplexItem::settingsGroup =            "FixedWingLanding";
 const char* FixedWingLandingComplexItem::jsonComplexItemTypeValue = "fwLandingPattern";
 
 const char* FixedWingLandingComplexItem::loiterToLandDistanceName = "LandingDistance";
@@ -39,19 +40,19 @@ const char* FixedWingLandingComplexItem::_jsonFallRateKey =                 "fal
 const char* FixedWingLandingComplexItem::_jsonLandingAltitudeRelativeKey =  "landAltitudeRelative";
 const char* FixedWingLandingComplexItem::_jsonLoiterAltitudeRelativeKey =   "loiterAltitudeRelative";
 
-FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, QObject* parent)
-    : ComplexMissionItem        (vehicle, parent)
+FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool flyView, QObject* parent)
+    : ComplexMissionItem        (vehicle, flyView, parent)
     , _sequenceNumber           (0)
     , _dirty                    (false)
     , _landingCoordSet          (false)
     , _ignoreRecalcSignals      (false)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/FWLandingPattern.FactMetaData.json"), this))
-    , _landingDistanceFact      (_metaDataMap[loiterToLandDistanceName])
-    , _loiterAltitudeFact       (_metaDataMap[loiterAltitudeName])
-    , _loiterRadiusFact         (_metaDataMap[loiterRadiusName])
-    , _landingHeadingFact       (_metaDataMap[landingHeadingName])
-    , _landingAltitudeFact      (_metaDataMap[landingAltitudeName])
-    , _glideSlopeFact           (_metaDataMap[glideSlopeName])
+    , _landingDistanceFact      (settingsGroup, _metaDataMap[loiterToLandDistanceName])
+    , _loiterAltitudeFact       (settingsGroup, _metaDataMap[loiterAltitudeName])
+    , _loiterRadiusFact         (settingsGroup, _metaDataMap[loiterRadiusName])
+    , _landingHeadingFact       (settingsGroup, _metaDataMap[landingHeadingName])
+    , _landingAltitudeFact      (settingsGroup, _metaDataMap[landingAltitudeName])
+    , _glideSlopeFact           (settingsGroup, _metaDataMap[glideSlopeName])
     , _loiterClockwise          (true)
     , _altitudesAreRelative     (true)
     , _valueSetIsDistance       (true)
@@ -283,7 +284,7 @@ void FixedWingLandingComplexItem::appendMissionItems(QList<MissionItem*>& items,
     items.append(item);
 }
 
-bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, Vehicle* vehicle)
+bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, bool flyView, Vehicle* vehicle)
 {
     qCDebug(FixedWingLandingComplexItemLog) << "FixedWingLandingComplexItem::scanForItem count" << visualItems->count();
 
@@ -322,13 +323,13 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, V
     }
     MissionItem& missionItemDoLandStart = item->missionItem();
     if (missionItemDoLandStart.command() != MAV_CMD_DO_LAND_START ||
-            missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0|| missionItemDoLandStart.param5() != 0|| missionItemDoLandStart.param6() != 0|| missionItemDoLandStart.param6() != 0) {
+            missionItemDoLandStart.param1() != 0 || missionItemDoLandStart.param2() != 0 || missionItemDoLandStart.param3() != 0 || missionItemDoLandStart.param4() != 0|| missionItemDoLandStart.param5() != 0|| missionItemDoLandStart.param6() != 0) {
         return false;
     }
 
     // We made it this far so we do have a Fixed Wing Landing Pattern item at the end of the mission
 
-    FixedWingLandingComplexItem* complexItem = new FixedWingLandingComplexItem(vehicle, visualItems);
+    FixedWingLandingComplexItem* complexItem = new FixedWingLandingComplexItem(vehicle, flyView, visualItems);
 
     complexItem->_ignoreRecalcSignals = true;
 

@@ -21,14 +21,14 @@ public:
     APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
     
     // Overrides from VehicleComponent
-    QStringList setupCompleteChangedTriggerList(void) const override;
+    QStringList setupCompleteChangedTriggerList(void) const override { return QStringList(); }
     
     // Virtuals from VehicleComponent
     QString name                    (void) const override;
     QString description             (void) const override;
     QString iconResource            (void) const override;
-    bool    requiresSetup           (void) const override;
-    bool    setupComplete           (void) const override;
+    bool    requiresSetup           (void) const override { return false; }
+    bool    setupComplete           (void) const override { return true; }
     QUrl    setupSource             (void) const override;
     QUrl    summaryQmlSource        (void) const override;
     bool    allowSetupWhileArmed    (void) const override { return true; }

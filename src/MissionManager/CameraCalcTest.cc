@@ -21,9 +21,10 @@ void CameraCalcTest::init(void)
     UnitTest::init();
 
     _offlineVehicle = new Vehicle(MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, qgcApp()->toolbox()->firmwarePluginManager(), this);
-    _cameraCalc = new CameraCalc(_offlineVehicle, this);
+    _cameraCalc = new CameraCalc(_offlineVehicle, "CameraCalcUnitTest" /* settingsGroup */, this);
+    _cameraCalc->cameraName()->setRawValue(_cameraCalc->customCameraName());
+    _cameraCalc->setDirty(false);
 
-    _rgSignals[cameraNameChangedIndex] =                SIGNAL(cameraNameChanged(QString));
     _rgSignals[dirtyChangedIndex] =                     SIGNAL(dirtyChanged(bool));
     _rgSignals[imageFootprintSideChangedIndex] =        SIGNAL(imageFootprintSideChanged(double));
     _rgSignals[imageFootprintFrontalChangedIndex] =     SIGNAL(imageFootprintFrontalChanged(double));
@@ -81,11 +82,52 @@ void CameraCalcTest::_testDirty(void)
     }
     rgFacts.clear();
 
-    _cameraCalc->setCameraName(_cameraCalc->customCameraName());
-    QVERIFY(_cameraCalc->dirty());
-    _multiSpy->clearAllSignals();
 
     _cameraCalc->setDistanceToSurfaceRelative(!_cameraCalc->distanceToSurfaceRelative());
     QVERIFY(_cameraCalc->dirty());
     _multiSpy->clearAllSignals();
+
+    _cameraCalc->cameraName()->setRawValue(_cameraCalc->manualCameraName());
+    QVERIFY(_cameraCalc->dirty());
+    _multiSpy->clearAllSignals();
+}
+
+void CameraCalcTest::_testAdjustedFootprint(void)
+{
+    double adjustedFootprintFrontal = _cameraCalc->adjustedFootprintFrontal()->rawValue().toDouble();
+    double adjustedFootprintSide = _cameraCalc->adjustedFootprintSide()->rawValue().toDouble();
+    _cameraCalc->valueSetIsDistance()->setRawValue(true);
+    changeFactValue(_cameraCalc->distanceToSurface());
+    QVERIFY(adjustedFootprintFrontal != _cameraCalc->adjustedFootprintFrontal()->rawValue().toDouble());
+    QVERIFY(adjustedFootprintSide != _cameraCalc->adjustedFootprintSide()->rawValue().toDouble());
+
+    adjustedFootprintFrontal = _cameraCalc->adjustedFootprintFrontal()->rawValue().toDouble();
+    adjustedFootprintSide = _cameraCalc->adjustedFootprintSide()->rawValue().toDouble();
+    _cameraCalc->valueSetIsDistance()->setRawValue(false);
+    changeFactValue(_cameraCalc->imageDensity());
+    QVERIFY(adjustedFootprintFrontal != _cameraCalc->adjustedFootprintFrontal()->rawValue().toDouble());
+    QVERIFY(adjustedFootprintSide != _cameraCalc->adjustedFootprintSide()->rawValue().toDouble());
+
+    adjustedFootprintFrontal = _cameraCalc->adjustedFootprintFrontal()->rawValue().toDouble();
+    _cameraCalc->valueSetIsDistance()->setRawValue(true);
+    changeFactValue(_cameraCalc->frontalOverlap());
+    QVERIFY(adjustedFootprintFrontal != _cameraCalc->adjustedFootprintFrontal()->rawValue().toDouble());
+
+    adjustedFootprintSide = _cameraCalc->adjustedFootprintSide()->rawValue().toDouble();
+    _cameraCalc->valueSetIsDistance()->setRawValue(false);
+    changeFactValue(_cameraCalc->sideOverlap());
+    QVERIFY(adjustedFootprintSide != _cameraCalc->adjustedFootprintSide()->rawValue().toDouble());
+}
+
+void CameraCalcTest::_testAltDensityRecalc(void)
+{
+    _cameraCalc->valueSetIsDistance()->setRawValue(true);
+    double imageDensity = _cameraCalc->imageDensity()->rawValue().toDouble();
+    _cameraCalc->distanceToSurface()->setRawValue(_cameraCalc->distanceToSurface()->rawValue().toDouble() + 1);
+    QVERIFY(imageDensity != _cameraCalc->imageDensity()->rawValue().toDouble());
+
+    _cameraCalc->valueSetIsDistance()->setRawValue(false);
+    double distanceToSurface = _cameraCalc->distanceToSurface()->rawValue().toDouble();
+    _cameraCalc->imageDensity()->setRawValue(_cameraCalc->imageDensity()->rawValue().toDouble() + 1);
+    QVERIFY(distanceToSurface != _cameraCalc->distanceToSurface()->rawValue().toDouble());
 }

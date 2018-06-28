@@ -27,8 +27,8 @@ const char* CorridorScanComplexItem::_jsonEntryPointKey =       "EntryPoint";
 
 const char* CorridorScanComplexItem::jsonComplexItemTypeValue = "CorridorScan";
 
-CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, QObject* parent)
-    : TransectStyleComplexItem  (vehicle, settingsGroup, parent)
+CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
+    : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _entryPoint               (0)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CorridorScan.SettingsGroup.json"), this))
     , _corridorWidthFact        (settingsGroup, _metaDataMap[corridorWidthName])
@@ -50,6 +50,12 @@ CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, QObject* pare
 
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
     connect(&_corridorWidthFact,    &Fact::valueChanged,            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
+
+    if (!kmlFile.isEmpty()) {
+        _corridorPolyline.loadKMLFile(kmlFile);
+        _corridorPolyline.setDirty(false);
+    }
+    setDirty(false);
 }
 
 void CorridorScanComplexItem::save(QJsonArray&  planItems)
@@ -63,10 +69,6 @@ void CorridorScanComplexItem::save(QJsonArray&  planItems)
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[corridorWidthName] =                             _corridorWidthFact.rawValue().toDouble();
     saveObject[_jsonEntryPointKey] =                            _entryPoint;
-
-    QJsonObject cameraCalcObject;
-    _cameraCalc.save(cameraCalcObject);
-    saveObject[_jsonCameraCalcKey] = cameraCalcObject;
 
     _corridorPolyline.saveToJson(saveObject);
 
@@ -460,7 +462,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
 {
     // Calculate distance flown for complex item
     _complexDistance = 0;
-    for (int i=0; i<_visualTransectPoints.count() - 2; i++) {
+    for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
@@ -483,4 +485,9 @@ void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
 bool CorridorScanComplexItem::readyForSave(void) const
 {
     return TransectStyleComplexItem::readyForSave();
+}
+
+double CorridorScanComplexItem::timeBetweenShots(void)
+{
+    return _cruiseSpeed == 0 ? 0 : _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / _cruiseSpeed;
 }

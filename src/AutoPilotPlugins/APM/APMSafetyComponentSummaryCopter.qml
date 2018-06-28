@@ -14,91 +14,63 @@ FactPanel {
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }
 
-    property Fact _failsafeBattEnable:  controller.getParameterFact(-1, "FS_BATT_ENABLE")
-    property Fact _failsafeThrEnable:   controller.getParameterFact(-1, "FS_THR_ENABLE")
+    property Fact _failsafeThrEnable:       controller.getParameterFact(-1, "FS_THR_ENABLE")
 
-    property Fact _fenceAction: controller.getParameterFact(-1, "FENCE_ACTION")
-    property Fact _fenceEnable: controller.getParameterFact(-1, "FENCE_ENABLE")
-    property Fact _fenceType:   controller.getParameterFact(-1, "FENCE_TYPE")
+    property Fact _fenceAction:             controller.getParameterFact(-1, "FENCE_ACTION")
+    property Fact _fenceEnable:             controller.getParameterFact(-1, "FENCE_ENABLE")
+    property Fact _fenceType:               controller.getParameterFact(-1, "FENCE_TYPE")
 
-    property Fact _rtlAltFact:      controller.getParameterFact(-1, "RTL_ALT")
-    property Fact _rtlLoitTimeFact: controller.getParameterFact(-1, "RTL_LOIT_TIME")
-    property Fact _rtlAltFinalFact: controller.getParameterFact(-1, "RTL_ALT_FINAL")
-    property Fact _landSpeedFact:   controller.getParameterFact(-1, "LAND_SPEED")
+    property Fact _rtlAltFact:              controller.getParameterFact(-1, "RTL_ALT")
 
-    property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
+    property Fact _armingCheck:             controller.getParameterFact(-1, "ARMING_CHECK")
 
-    property string _failsafeBattEnableText
-    property string _failsafeThrEnableText
+    property Fact _batt1Monitor:            controller.getParameterFact(-1, "BATT_MONITOR")
+    property Fact _batt2Monitor:            controller.getParameterFact(-1, "BATT2_MONITOR", false /* reportMissing */)
+    property bool _batt2MonitorAvailable:   controller.parameterExists(-1, "BATT2_MONITOR")
+    property bool _batt1MonitorEnabled:     _batt1Monitor.rawValue !== 0
+    property bool _batt2MonitorEnabled:     _batt2MonitorAvailable && _batt2Monitor.rawValue !== 0
 
-    Component.onCompleted: {
-        setFailsafeBattEnableText()
-        setFailsafeThrEnableText()
-    }
-
-    Connections {
-        target: _failsafeBattEnable
-
-        onValueChanged: setFailsafeBattEnableText()
-    }
-
-    Connections {
-        target: _failsafeThrEnable
-
-        onValueChanged: setFailsafeThrEnableText()
-    }
-
-    function setFailsafeThrEnableText() {
-        switch (_failsafeThrEnable.value) {
-        case 0:
-            _failsafeThrEnableText = qsTr("Disabled")
-            break
-        case 1:
-            _failsafeThrEnableText = qsTr("Always RTL")
-            break
-        case 2:
-            _failsafeThrEnableText = qsTr("Continue with Mission in Auto Mode")
-            break
-        case 3:
-            _failsafeThrEnableText = qsTr("Always Land")
-            break
-        default:
-            _failsafeThrEnableText = qsTr("Unknown")
-        }
-    }
-
-    function setFailsafeBattEnableText() {
-        switch (_failsafeBattEnable.value) {
-        case 0:
-            _failsafeBattEnableText = qsTr("Disabled")
-            break
-        case 1:
-            _failsafeBattEnableText = qsTr("Land")
-            break
-        case 2:
-            _failsafeBattEnableText = qsTr("Return to Launch")
-            break
-        default:
-            _failsafeThrEnableText = qsTr("Unknown")
-        }
-    }
+    property Fact _batt1FSLowAct:           controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT", false /* reportMissing */)
+    property Fact _batt1FSCritAct:          controller.getParameterFact(-1, "BATT_FS_CRT_ACT", false /* reportMissing */)
+    property Fact _batt2FSLowAct:           controller.getParameterFact(-1, "BATT2_FS_LOW_ACT", false /* reportMissing */)
+    property Fact _batt2FSCritAct:          controller.getParameterFact(-1, "BATT2_FS_CRT_ACT", false /* reportMissing */)
+    property bool _batt1FSCritActAvailable: controller.parameterExists(-1, "BATT_FS_CRT_ACT")
 
     Column {
         anchors.fill:       parent
 
         VehicleSummaryRow {
             labelText: qsTr("Arming Checks:")
-            valueText:  _armingCheck.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
+            valueText: _armingCheck.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
         }
 
         VehicleSummaryRow {
             labelText: qsTr("Throttle failsafe:")
-            valueText:  _failsafeThrEnableText
+            valueText: _failsafeThrEnable.enumStringValue
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("Battery failsafe:")
-            valueText:  _failsafeBattEnableText
+            labelText:  qsTr("Batt1 low failsafe:")
+            valueText:  _batt1MonitorEnabled ? _batt1FSLowAct.enumStringValue : ""
+            visible:    _batt1MonitorEnabled
+        }
+
+        VehicleSummaryRow {
+            labelText:  qsTr("Batt1 critical failsafe:")
+            valueText:  _batt1FSCritActAvailable ? _batt1FSCritAct.enumStringValue : ""
+            visible:    _batt1FSCritActAvailable
+        }
+
+        VehicleSummaryRow {
+            labelText:  qsTr("Batt2 low failsafe:")
+            valueText:  _batt2MonitorEnabled ? _batt2FSLowAct.enumStringValue : ""
+            visible:    _batt2MonitorEnabled
+        }
+
+        VehicleSummaryRow {
+            labelText:  qsTr("Batt2 critical failsafe:")
+            valueText:  _batt2MonitorEnabled ? _batt2FSCritAct.enumStringValue : ""
+            visible:    _batt2MonitorEnabled
         }
 
         VehicleSummaryRow {
@@ -121,21 +93,6 @@ FactPanel {
         VehicleSummaryRow {
             labelText: qsTr("RTL min alt:")
             valueText: _rtlAltFact.value == 0 ? qsTr("current") : _rtlAltFact.valueString + " " + _rtlAltFact.units
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("RTL loiter time:")
-            valueText: _rtlLoitTimeFact.valueString + " " + _rtlLoitTimeFact.units
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("RTL final alt:")
-            valueText: _rtlAltFinalFact.value == 0 ? qsTr("Land") : _rtlAltFinalFact.valueString + " " + _rtlAltFinalFact.units
-        }
-
-        VehicleSummaryRow {
-            labelText: qsTr("Descent speed:")
-            valueText: _landSpeedFact.valueString + " " + _landSpeedFact.units
         }
     }
 }

@@ -53,11 +53,11 @@ const SimpleMissionItemTest::FactValue_t SimpleMissionItemTest::_rgFactValuesDoJ
 const SimpleMissionItemTest::ItemExpected_t SimpleMissionItemTest::_rgItemExpected[] = {
     // Text field facts count                                                                                                   Fact Values                                         Altitude    Altitude Mode
     { sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint)/sizeof(SimpleMissionItemTest::_rgFactValuesWaypoint[0]),             SimpleMissionItemTest::_rgFactValuesWaypoint,       70.1234567, SimpleMissionItem::AltitudeRelative },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterUnlim[0]),       SimpleMissionItemTest::_rgFactValuesLoiterUnlim,    70.1234567, SimpleMissionItem::AltitudeAbsolute },
     { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTurns[0]),       SimpleMissionItemTest::_rgFactValuesLoiterTurns,    70.1234567, SimpleMissionItem::AltitudeRelative },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime)/sizeof(SimpleMissionItemTest::_rgFactValuesLoiterTime[0]),         SimpleMissionItemTest::_rgFactValuesLoiterTime,     70.1234567, SimpleMissionItem::AltitudeAbsolute },
     { 0,                                                                                                                        NULL,                                               70.1234567, SimpleMissionItem::AltitudeRelative },
-    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        70.1234567, SimpleMissionItem::AltitudeAMSL },
+    { sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff)/sizeof(SimpleMissionItemTest::_rgFactValuesTakeoff[0]),               SimpleMissionItemTest::_rgFactValuesTakeoff,        70.1234567, SimpleMissionItem::AltitudeAbsolute },
     { sizeof(SimpleMissionItemTest::_rgFactValuesDoJump)/sizeof(SimpleMissionItemTest::_rgFactValuesDoJump[0]),                 SimpleMissionItemTest::_rgFactValuesDoJump,         qQNaN(),    SimpleMissionItem::AltitudeRelative },
 };
 
@@ -92,7 +92,7 @@ void SimpleMissionItemTest::init(void)
                             70.1234567,
                             true,           // autoContinue
                             false);         // isCurrentItem
-    _simpleItem = new SimpleMissionItem(_offlineVehicle, true /* editMode */, missionItem);
+    _simpleItem = new SimpleMissionItem(_offlineVehicle, false /* flyView */, missionItem, this);
 
     // It's important top check that the right signals are emitted at the right time since that drives ui change.
     // It's also important to check that things are not being over-signalled when they should not be, since that can lead
@@ -131,7 +131,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
                                 70.1234567,
                                 true,           // autoContinue
                                 false);         // isCurrentItem
-        SimpleMissionItem simpleMissionItem(vehicle, true /* editMode */, missionItem);
+        SimpleMissionItem simpleMissionItem(vehicle, false /* flyView */, missionItem, NULL);
 
         // Validate that the fact values are correctly returned
 
@@ -167,7 +167,7 @@ void SimpleMissionItemTest::_testEditorFacts(void)
 
 void SimpleMissionItemTest::_testDefaultValues(void)
 {
-    SimpleMissionItem item(_offlineVehicle);
+    SimpleMissionItem item(_offlineVehicle, false /* flyView */, NULL);
 
     item.missionItem().setCommand(MAV_CMD_NAV_WAYPOINT);
     item.missionItem().setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
@@ -222,7 +222,7 @@ void SimpleMissionItemTest::_testSignals(void)
     QVERIFY(_spyVisualItem->checkOnlySignalByMask(dirtyChangedMask));
     _spyVisualItem->clearAllSignals();
 
-    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == SimpleMissionItem::AltitudeRelative ? SimpleMissionItem::AltitudeAMSL : SimpleMissionItem::AltitudeRelative);
+    _simpleItem->setAltitudeMode(_simpleItem->altitudeMode() == SimpleMissionItem::AltitudeRelative ? SimpleMissionItem::AltitudeAbsolute : SimpleMissionItem::AltitudeRelative);
     QVERIFY(_spySimpleItem->checkOnlySignalByMask(dirtyChangedMask | friendlyEditAllowedChangedMask | altitudeModeChangedMask | coordinateHasRelativeAltitudeChangedMask));
     _spySimpleItem->clearAllSignals();
     _spyVisualItem->clearAllSignals();
@@ -314,7 +314,7 @@ void SimpleMissionItemTest::_testAltitudePropogation(void)
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL_RELATIVE_ALT);
 
-    _simpleItem->setAltitudeMode(SimpleMissionItem::AltitudeAMSL);
+    _simpleItem->setAltitudeMode(SimpleMissionItem::AltitudeAbsolute);
     _simpleItem->altitude()->setRawValue(_simpleItem->altitude()->rawValue().toDouble() + 1);
     QCOMPARE(_simpleItem->altitude()->rawValue().toDouble(), _simpleItem->missionItem().param7());
     QCOMPARE(_simpleItem->missionItem().frame(), MAV_FRAME_GLOBAL);

@@ -72,8 +72,8 @@
     "type":             "double",
     "defaultValue":     50.0,
     "min":              0.0,
-    "units":            "meters",
-    "decimalPlaces":    2
+    "units":            "m",
+    "decimalPlaces":    1
 },
 {
     "name":             "PromptFLightDataSave",
@@ -114,6 +114,13 @@
     "name":             "AutoLoadMissions",
     "shortDescription": "AutoLoad mission on vehicle connect",
     "longDescription":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "UseChecklist",
+    "shortDescription": "Use preflight checklist",
+    "longDescription":  "If this option is enabled the preflight checklist will be used.",
     "type":             "bool",
     "defaultValue":     false
 },
@@ -183,5 +190,13 @@
     "shortDescription": "Default firmware type for flashing",
     "type":             "uint32",
     "defaultValue":     12
+},
+{
+    "name":             "FollowTarget",
+    "shortDescription": "Stream GCS' coordinates to Autopilot",
+    "type":             "uint32",
+    "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
 }
 ]

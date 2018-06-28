@@ -10,6 +10,28 @@
 #include "LinkInterface.h"
 #include "QGCApplication.h"
 
+bool LinkInterface::active() const
+{
+    QMapIterator<int /* vehicle id */, MavlinkMessagesTimer*> iter(_mavlinkMessagesTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        if (iter.value()->getActive()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool LinkInterface::link_active(int vehicle_id) const
+{
+    if (_mavlinkMessagesTimers.contains(vehicle_id)) {
+        return _mavlinkMessagesTimers.value(vehicle_id)->getActive();
+    } else {
+        return false;
+    }
+}
+
 /// mavlink channel to use for this link, as used by mavlink_parse_char. The mavlink channel is only
 /// set into the link when it is added to LinkManager
 uint8_t LinkInterface::mavlinkChannel(void) const
@@ -20,15 +42,17 @@ uint8_t LinkInterface::mavlinkChannel(void) const
     return _mavlinkChannel;
 }
 // Links are only created by LinkManager so constructor is not public
-LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config)
+LinkInterface::LinkInterface(SharedLinkConfigurationPointer& config, bool isPX4Flow)
     : QThread                   (0)
     , _config                   (config)
     , _highLatency              (config->isHighLatency())
     , _mavlinkChannelSet        (false)
-    , _active                   (false)
     , _enableRateCollection     (false)
     , _decodedFirstMavlinkPacket(false)
+    , _isPX4Flow                (isPX4Flow)
 {
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
+
     _config->setLink(this);
 
     // Initialize everything for the data rate calculation buffers.
@@ -158,4 +182,31 @@ void LinkInterface::_setMavlinkChannel(uint8_t channel)
     }
     _mavlinkChannelSet = true;
     _mavlinkChannel = channel;
+}
+
+void LinkInterface::_activeChanged(bool active, int vehicle_id)
+{
+    emit activeChanged(this, active, vehicle_id);
+}
+
+void LinkInterface::startMavlinkMessagesTimer(int vehicle_id) {
+    if (_mavlinkMessagesTimers.contains(vehicle_id)) {
+        _mavlinkMessagesTimers.value(vehicle_id)->restartTimer();
+    } else {
+        _mavlinkMessagesTimers.insert(vehicle_id, new MavlinkMessagesTimer(vehicle_id, _highLatency));
+        QObject::connect(_mavlinkMessagesTimers.value(vehicle_id), &MavlinkMessagesTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        _mavlinkMessagesTimers.value(vehicle_id)->init();
+    }
+}
+
+void LinkInterface::stopMavlinkMessagesTimer() {
+    QMapIterator<int /* vehicle id */, MavlinkMessagesTimer*> iter(_mavlinkMessagesTimers);
+    while (iter.hasNext()) {
+        iter.next();
+        QObject::disconnect(iter.value(), &MavlinkMessagesTimer::activeChanged, this, &LinkInterface::_activeChanged);
+        _mavlinkMessagesTimers[iter.key()]->deleteLater();
+        _mavlinkMessagesTimers[iter.key()] = nullptr;
+    }
+
+    _mavlinkMessagesTimers.clear();
 }

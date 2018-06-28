@@ -25,7 +25,8 @@ public:
     Fact* userBrandImageIndoor      (void);
     Fact* userBrandImageOutdoor     (void);
 
-    static const char* brandImageSettingsGroupName;
+    static const char* name;
+    static const char* settingsGroup;
 
     static const char* userBrandImageIndoorName;
     static const char* userBrandImageOutdoorName;

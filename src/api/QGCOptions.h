@@ -47,6 +47,9 @@ public:
     Q_PROPERTY(bool                     useMobileFileDialog             READ useMobileFileDialog            CONSTANT)
     Q_PROPERTY(bool                     showMissionStatus               READ showMissionStatus              CONSTANT)
     Q_PROPERTY(bool                     guidedActionsRequireRCRSSI      READ guidedActionsRequireRCRSSI     CONSTANT)
+    Q_PROPERTY(bool                     showMissionAbsoluteAltitude     READ showMissionAbsoluteAltitude    NOTIFY showMissionAbsoluteAltitudeChanged)
+    Q_PROPERTY(bool                     showSimpleMissionStart          READ showSimpleMissionStart         NOTIFY showSimpleMissionStartChanged)
+    Q_PROPERTY(bool                     disableVehicleConnection        READ disableVehicleConnection       CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -84,14 +87,15 @@ public:
     virtual bool    missionWaypointsOnly            () const { return false; }  ///< true: Only allow waypoints and complex items in Plan
     virtual bool    multiVehicleEnabled             () const { return true; }   ///< false: multi vehicle support is disabled
     virtual bool    guidedActionsRequireRCRSSI      () const { return false; }  ///< true: Guided actions will be disabled is there is no RC RSSI
-
-#if defined(__mobile__)
-    virtual bool    showOfflineMapExport            () const { return false; }
-    virtual bool    showOfflineMapImport            () const { return false; }
-    virtual bool    useMobileFileDialog             () const { return true;}
-#else
     virtual bool    showOfflineMapExport            () const { return true; }
     virtual bool    showOfflineMapImport            () const { return true; }
+    virtual bool    showMissionAbsoluteAltitude     () const { return true; }
+    virtual bool    showSimpleMissionStart          () const { return false; }
+    virtual bool    disableVehicleConnection        () const { return false; }  ///< true: vehicle connection is disabled
+
+#if defined(__mobile__)
+    virtual bool    useMobileFileDialog             () const { return true;}
+#else
     virtual bool    useMobileFileDialog             () const { return false;}
 #endif
 
@@ -113,6 +117,8 @@ signals:
     void multiVehicleEnabledChanged             (bool multiVehicleEnabled);
     void showOfflineMapExportChanged            ();
     void showOfflineMapImportChanged            ();
+    void showMissionAbsoluteAltitudeChanged     ();
+    void showSimpleMissionStartChanged          ();
 
 private:
     CustomInstrumentWidget* _defaultInstrumentWidget;

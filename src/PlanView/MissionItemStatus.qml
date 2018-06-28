@@ -72,9 +72,10 @@ Rectangle {
             width:      display ? (indicator.width + spacing)  : 0
             visible:    display
 
-            property real availableHeight:  height - indicator.height
-            property bool showTerrain:      !isNaN(object.terrainPercent)
-            property real _terrainPercent:  showTerrain ? object.terrainPercent : 0
+            property real availableHeight:      height - indicator.height
+            property bool _coordValid:          object.coordinate.isValid
+            property bool _terrainAvailable:    !isNaN(object.terrainPercent)
+            property real _terrainPercent:      _terrainAvailable ? object.terrainPercent : 1
 
             readonly property bool display: object.specifiesCoordinate && !object.isStandaloneCoordinate
             readonly property real spacing: ScreenTools.defaultFontPixelWidth * ScreenTools.smallFontPointRatio
@@ -83,9 +84,9 @@ Rectangle {
                 anchors.bottom:             parent.bottom
                 anchors.horizontalCenter:   parent.horizontalCenter
                 width:                      indicator.width
-                height:                     Math.max(availableHeight * _terrainPercent, 1)
-                color:                      _terrainPercent > object.altPercent ? "red": qgcPal.text
-                visible:                    !isNaN(object.terrainPercent)
+                height:                     _terrainAvailable ? Math.max(availableHeight * _terrainPercent, 1) : parent.height
+                color:                      _terrainAvailable ? (_terrainPercent > object.altPercent ? "red": qgcPal.text) : "yellow"
+                visible:                    _coordValid
             }
 
             MissionItemIndexLabel {

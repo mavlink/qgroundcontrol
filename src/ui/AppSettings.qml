@@ -58,8 +58,7 @@ Rectangle {
             property real _maxButtonWidth: 0
 
             QGCLabel {
-                anchors.left:           parent.left
-                anchors.right:          parent.right
+                Layout.fillWidth:       true
                 text:                   qsTr("Application Settings")
                 wrapMode:               Text.WordWrap
                 horizontalAlignment:    Text.AlignHCenter

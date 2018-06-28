@@ -92,6 +92,12 @@ stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
 
 #define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
+stQGeoTileCacheQGCMapTypes kElevationTypes[] = {
+    {"Airmap Elevation Data", UrlFactory::AirmapElevation}
+};
+
+#define NUM_ELEVMAPS (sizeof(kElevationTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
+
 static const char* kMaxDiskCacheKey = "MaxDiskCache";
 static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
@@ -105,6 +111,9 @@ getQGCMapEngine()
         kMapEngine = new QGCMapEngine();
     return kMapEngine;
 }
+
+//-----------------------------------------------------------------------------
+const double QGCMapEngine::srtm1TileSize = 0.01;
 
 //-----------------------------------------------------------------------------
 void
@@ -178,13 +187,13 @@ QGCMapEngine::_wipeOldCaches()
 #ifdef __mobile__
     oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache55");
 #else
-    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache55");
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/QGCMapCache55");
 #endif
     _checkWipeDirectory(oldCacheDir);
 #ifdef __mobile__
     oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache100");
 #else
-    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache100");
+    oldCacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/QGCMapCache100");
 #endif
     _checkWipeDirectory(oldCacheDir);
 }
@@ -199,11 +208,11 @@ QGCMapEngine::init()
 #ifdef __mobile__
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)      + QLatin1String("/QGCMapCache" CACHE_PATH_VERSION);
 #else
-    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QLatin1String("/QGCMapCache" CACHE_PATH_VERSION);
+    QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + QStringLiteral("/QGCMapCache" CACHE_PATH_VERSION);
 #endif
     if(!QDir::root().mkpath(cacheDir)) {
         qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
-        cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
+        cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
         if(!QDir::root().mkpath(cacheDir)) {
             qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
             cacheDir.clear();
@@ -297,10 +306,17 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
     if(zoom <  1) zoom = 1;
     if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
     QGCTileSet set;
-    set.tileX0 = long2tileX(topleftLon,     zoom);
-    set.tileY0 = lat2tileY(topleftLat,      zoom);
-    set.tileX1 = long2tileX(bottomRightLon, zoom);
-    set.tileY1 = lat2tileY(bottomRightLat,  zoom);
+    if (mapType != UrlFactory::AirmapElevation) {
+        set.tileX0 = long2tileX(topleftLon,     zoom);
+        set.tileY0 = lat2tileY(topleftLat,      zoom);
+        set.tileX1 = long2tileX(bottomRightLon, zoom);
+        set.tileY1 = lat2tileY(bottomRightLat,  zoom);
+    } else {
+        set.tileX0 = long2elevationTileX(topleftLon,        zoom);
+        set.tileY0 = lat2elevationTileY(bottomRightLat,     zoom);
+        set.tileX1 = long2elevationTileX(bottomRightLon,    zoom);
+        set.tileY1 = lat2elevationTileY(topleftLat,         zoom);
+    }
     set.tileCount = (quint64)((quint64)set.tileX1 - (quint64)set.tileX0 + 1) * (quint64)((quint64)set.tileY1 - (quint64)set.tileY0 + 1);
     set.tileSize  = UrlFactory::averageSizeForType(mapType) * set.tileCount;
     return set;
@@ -321,6 +337,22 @@ QGCMapEngine::lat2tileY(double lat, int z)
 }
 
 //-----------------------------------------------------------------------------
+int
+QGCMapEngine::long2elevationTileX(double lon, int z)
+{
+    Q_UNUSED(z);
+    return (int)(floor((lon + 180.0) / srtm1TileSize));
+}
+
+//-----------------------------------------------------------------------------
+int
+QGCMapEngine::lat2elevationTileY(double lat, int z)
+{
+    Q_UNUSED(z);
+    return (int)(floor((lat + 90.0) / srtm1TileSize));
+}
+
+//-----------------------------------------------------------------------------
 UrlFactory::MapType
 QGCMapEngine::getTypeFromName(const QString& name)
 {
@@ -336,6 +368,10 @@ QGCMapEngine::getTypeFromName(const QString& name)
     for(i = 0; i < NUM_ESRIMAPS; i++) {
         if(name.compare(kEsriTypes[i].name, Qt::CaseInsensitive) == 0)
             return kEsriTypes[i].type;
+    }
+    for(i = 0; i < NUM_ELEVMAPS; i++) {
+        if(name.compare(kElevationTypes[i].name, Qt::CaseInsensitive) == 0)
+            return kElevationTypes[i].type;
     }
     return UrlFactory::Invalid;
 }
@@ -471,6 +507,7 @@ QGCMapEngine::concurrentDownloads(UrlFactory::MapType type)
     case UrlFactory::EsriWorldStreet:
     case UrlFactory::EsriWorldSatellite:
     case UrlFactory::EsriTerrain:
+    case UrlFactory::AirmapElevation:
         return 12;
     /*
     case UrlFactory::MapQuestMap:

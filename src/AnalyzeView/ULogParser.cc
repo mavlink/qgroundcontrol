@@ -57,7 +57,7 @@ QString ULogParser::extractArraySize(QString &typeNameFull, int &arraySize)
         return typeNameFull;
     }
 
-    arraySize = typeNameFull.mid(startPos + 1, endPos - startPos - 1).toInt();
+    arraySize = typeNameFull.midRef(startPos + 1, endPos - startPos - 1).toInt();
     return typeNameFull.mid(0, startPos);
 }
 
@@ -86,11 +86,13 @@ bool ULogParser::parseFieldFormat(QString& fields)
     return false;
 }
 
-bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback)
+bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedbackPacket>& cameraFeedback, QString& errorMessage)
 {
+    errorMessage.clear();
+
     //verify it's an ULog file
     if(!log.contains(_ULogMagic)) {
-        qWarning() << "Could not detect ULog file header magic";
+        errorMessage = tr("Could not detect ULog file header magic");
         return false;
     }
 
@@ -139,15 +141,10 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
             case (int)ULogMessageType::DATA:
             {
-                if (!geotagFound) {
-                    qWarning() << "Could not detect geotag packets in ULog";
-                    return false;
-                }
-
                 uint16_t msgID = -1;
                 memcpy(&msgID, log.data() + index + ULOG_MSG_HEADER_LEN, 2);
 
-                if(msgID == _cameraCaptureMsgID) {
+                if (geotagFound && msgID == _cameraCaptureMsgID) {
 
                     // Completely dynamic parsing, so that changing/reordering the message format will not break the parser
                     GeoTagWorker::cameraFeedbackPacket feedback;
@@ -177,6 +174,11 @@ bool ULogParser::getTagsFromLog(QByteArray& log, QList<GeoTagWorker::cameraFeedb
 
         index += (3 + header.msgSize);
 
+    }
+
+    if (cameraFeedback.count() == 0) {
+        errorMessage = tr("Could not detect camera_capture packets in ULog");
+        return false;
     }
 
     return true;

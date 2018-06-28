@@ -8,14 +8,13 @@ import QGroundControl.Controls 1.0
 
 QGCCheckBox {
     property Fact fact: Fact { }
-
+    property variant checkedValue:   1
+    property variant uncheckedValue: 0
     checkedState: fact ?
                       (fact.typeIsBool ?
                            (fact.value === false ? Qt.Unchecked : Qt.Checked) :
                            (fact.value === 0 ? Qt.Unchecked : Qt.Checked)) :
                       Qt.Unchecked
 
-    text: qsTr("Label")
-
-    onClicked: fact.value = checked ? 1 : 0
+    onClicked: fact.value = (checked ? checkedValue : uncheckedValue)
 }

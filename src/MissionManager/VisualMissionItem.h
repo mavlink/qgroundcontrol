@@ -33,8 +33,8 @@ class VisualMissionItem : public QObject
     Q_OBJECT
 
 public:
-    VisualMissionItem(Vehicle* vehicle, QObject* parent = NULL);
-    VisualMissionItem(const VisualMissionItem& other, QObject* parent = NULL);
+    VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* parent);
+    VisualMissionItem(const VisualMissionItem& other, bool flyView, QObject* parent);
 
     ~VisualMissionItem();
 
@@ -66,6 +66,7 @@ public:
     Q_PROPERTY(double           specifiedGimbalPitch                READ specifiedGimbalPitch                                           NOTIFY specifiedGimbalPitchChanged)                 ///< Gimbal pitch, NaN for not specified
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                               NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                              NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
+    Q_PROPERTY(bool             flyView                             READ flyView                                                        CONSTANT)
 
     // The following properties are calculated/set by the MissionController recalc methods
 
@@ -87,6 +88,7 @@ public:
     double distance         (void) const { return _distance; }
     bool   isCurrentItem    (void) const { return _isCurrentItem; }
     double terrainAltitude  (void) const { return _terrainAltitude; }
+    bool   flyView          (void) const { return _flyView; }
 
     QmlObjectListModel* childItems(void) { return &_childItems; }
 
@@ -149,6 +151,9 @@ public:
     /// Adjust the altitude of the item if appropriate to the new altitude.
     virtual void applyNewAltitude(double newAltitude) = 0;
 
+    /// @return Amount of additional time delay in seconds needed to fly this item
+    virtual double additionalTimeDelay(void) const = 0;
+
     double  missionGimbalYaw    (void) const { return _missionGimbalYaw; }
     double  missionVehicleYaw   (void) const { return _missionVehicleYaw; }
     void    setMissionVehicleYaw(double vehicleYaw);
@@ -182,6 +187,7 @@ signals:
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);
     void terrainAltitudeChanged         (double terrainAltitude);
+    void additionalTimeDelayChanged     (void);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);
@@ -189,6 +195,7 @@ signals:
 
 protected:
     Vehicle*    _vehicle;
+    bool        _flyView;
     bool        _isCurrentItem;
     bool        _dirty;
     bool        _homePositionSpecialCase;   ///< true: This item is being used as a ui home position indicator

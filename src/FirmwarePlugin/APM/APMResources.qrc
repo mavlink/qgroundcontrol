@@ -6,6 +6,7 @@
         <file alias="APMCameraComponentSummary.qml">../../AutoPilotPlugins/APM/APMCameraComponentSummary.qml</file>
         <file alias="APMFlightModesComponent.qml">../../AutoPilotPlugins/APM/APMFlightModesComponent.qml</file>
         <file alias="APMFlightModesComponentSummary.qml">../../AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml</file>
+        <file alias="APMHeliComponent.qml">../../AutoPilotPlugins/APM/APMHeliComponent.qml</file>
         <file alias="APMLightsComponent.qml">../../AutoPilotPlugins/APM/APMLightsComponent.qml</file>
         <file alias="APMLightsComponentSummary.qml">../../AutoPilotPlugins/APM/APMLightsComponentSummary.qml</file>
         <file alias="APMSubFrameComponent.qml">../../AutoPilotPlugins/APM/APMSubFrameComponent.qml</file>
@@ -14,13 +15,9 @@
         <file alias="APMPowerComponent.qml">../../AutoPilotPlugins/APM/APMPowerComponent.qml</file>
         <file alias="APMPowerComponentSummary.qml">../../AutoPilotPlugins/APM/APMPowerComponentSummary.qml</file>
         <file alias="APMRadioComponentSummary.qml">../../AutoPilotPlugins/APM/APMRadioComponentSummary.qml</file>
-        <file alias="APMSafetyComponentCopter.qml">../../AutoPilotPlugins/APM/APMSafetyComponentCopter.qml</file>
-        <file alias="APMSafetyComponentPlane.qml">../../AutoPilotPlugins/APM/APMSafetyComponentPlane.qml</file>
-        <file alias="APMSafetyComponentRover.qml">../../AutoPilotPlugins/APM/APMSafetyComponentRover.qml</file>
+        <file alias="APMSafetyComponent.qml">../../AutoPilotPlugins/APM/APMSafetyComponent.qml</file>
         <file alias="APMSafetyComponentSub.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSub.qml</file>
-        <file alias="APMSafetyComponentSummaryCopter.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml</file>
-        <file alias="APMSafetyComponentSummaryPlane.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml</file>
-        <file alias="APMSafetyComponentSummaryRover.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml</file>
+        <file alias="APMSafetyComponentSummary.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummary.qml</file>
         <file alias="APMSafetyComponentSummarySub.qml">../../AutoPilotPlugins/APM/APMSafetyComponentSummarySub.qml</file>
         <file alias="APMSensorsComponent.qml">../../AutoPilotPlugins/APM/APMSensorsComponent.qml</file>
         <file alias="APMSensorsComponentSummary.qml">../../AutoPilotPlugins/APM/APMSensorsComponentSummary.qml</file>
@@ -47,8 +44,10 @@
         <file alias="APMParameterFactMetaData.Copter.3.3.xml">APMParameterFactMetaData.Copter.3.3.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.4.xml">APMParameterFactMetaData.Copter.3.4.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.5.xml">APMParameterFactMetaData.Copter.3.5.xml</file>
+        <file alias="APMParameterFactMetaData.Copter.3.6.xml">APMParameterFactMetaData.Copter.3.6.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.0.xml">APMParameterFactMetaData.Rover.3.0.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.2.xml">APMParameterFactMetaData.Rover.3.2.xml</file>
+		<file alias="APMParameterFactMetaData.Rover.3.4.xml">APMParameterFactMetaData.Rover.3.4.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.4.xml">APMParameterFactMetaData.Sub.3.4.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.5.xml">APMParameterFactMetaData.Sub.3.5.xml</file>
         <file alias="Copter.OfflineEditing.params">Copter3.5.OfflineEditing.params</file>

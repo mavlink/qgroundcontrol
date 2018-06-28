@@ -80,6 +80,8 @@ void LinkManager::setToolbox(QGCToolbox *toolbox)
     _autoConnectSettings = toolbox->settingsManager()->autoConnectSettings();
     _mavlinkProtocol = _toolbox->mavlinkProtocol();
 
+    connect(_mavlinkProtocol, &MAVLinkProtocol::messageReceived, this, &LinkManager::_mavlinkMessageReceived);
+
     connect(&_portListTimer, &QTimer::timeout, this, &LinkManager::_updateAutoConnectLinks);
     _portListTimer.start(_autoconnectUpdateTimerMSecs); // timeout must be long enough to get past bootloader on second pass
 
@@ -95,7 +97,7 @@ void LinkManager::createConnectedLink(LinkConfiguration* config)
     }
 }
 
-LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& config)
+LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& config, bool isPX4Flow)
 {
     if (!config) {
         qWarning() << "LinkManager::createConnectedLink called with NULL config";
@@ -109,7 +111,7 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
     {
         SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config.data());
         if (serialConfig) {
-            pLink = new SerialLink(config);
+            pLink = new SerialLink(config, isPX4Flow);
             if (serialConfig->usbDirect()) {
                 _activeLinkCheckList.append((SerialLink*)pLink);
                 if (!_activeLinkCheckTimer.isActive()) {
@@ -119,6 +121,8 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
         }
     }
         break;
+#else
+    Q_UNUSED(isPX4Flow)
 #endif
     case LinkConfiguration::TypeUdp:
         pLink = new UDPLink(config);
@@ -172,7 +176,7 @@ LinkInterface* LinkManager::createConnectedLink(const QString& name)
 void LinkManager::_addLink(LinkInterface* link)
 {
     if (thread() != QThread::currentThread()) {
-        qWarning() << "_deleteLink called from incorrect thread";
+        qWarning() << "_addLink called from incorrect thread";
         return;
     }
 
@@ -338,6 +342,7 @@ void LinkManager::saveLinkConfigurationList()
                 settings.setValue(root + "/name", linkConfig->name());
                 settings.setValue(root + "/type", linkConfig->type());
                 settings.setValue(root + "/auto", linkConfig->isAutoConnect());
+                settings.setValue(root + "/high_latency", linkConfig->isHighLatency());
                 // Have the instance save its own values
                 linkConfig->saveSettings(settings, root);
             }
@@ -369,6 +374,7 @@ void LinkManager::loadLinkConfigurationList()
                         if(!name.isEmpty()) {
                             LinkConfiguration* pLink = NULL;
                             bool autoConnect = settings.value(root + "/auto").toBool();
+                            bool highLatency = settings.value(root + "/high_latency").toBool();
                             switch((LinkConfiguration::LinkType)type) {
 #ifndef NO_SERIAL_LINK
                             case LinkConfiguration::TypeSerial:
@@ -403,6 +409,7 @@ void LinkManager::loadLinkConfigurationList()
                             if(pLink) {
                                 //-- Have the instance load its own values
                                 pLink->setAutoConnect(autoConnect);
+                                pLink->setHighLatency(highLatency);
                                 pLink->loadSettings(settings, root);
                                 addConfiguration(pLink);
                                 linksChanged = true;
@@ -594,7 +601,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                     pSerialConfig->setDynamic(true);
                     pSerialConfig->setPortName(portInfo.systemLocation());
                     _sharedAutoconnectConfigurations.append(SharedLinkConfigurationPointer(pSerialConfig));
-                    createConnectedLink(_sharedAutoconnectConfigurations.last());
+                    createConnectedLink(_sharedAutoconnectConfigurations.last(), boardType == QGCSerialPortInfo::BoardTypePX4Flow);
                 }
             }
         }
@@ -999,4 +1006,8 @@ int LinkManager::_reserveMavlinkChannel(void)
 void LinkManager::_freeMavlinkChannel(int channel)
 {
     _mavlinkChannelsUsedBitMask &= ~(1 << channel);
+}
+
+void LinkManager::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message) {
+    link->startMavlinkMessagesTimer(message.sysid);
 }

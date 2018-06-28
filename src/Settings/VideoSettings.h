@@ -49,7 +49,8 @@ public:
     Fact* disableWhenDisarmed   (void);
     bool  streamConfigured      (void);
 
-    static const char* videoSettingsGroupName;
+    static const char* name;
+    static const char* settingsGroup;
 
     static const char* videoSourceName;
     static const char* udpPortName;

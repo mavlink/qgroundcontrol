@@ -12,12 +12,14 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* RTKSettings::RTKSettingsGroupName =                 "RTK";
+const char* RTKSettings::name =                                 "RTK";
+const char* RTKSettings::settingsGroup =                        "RTK";
+
 const char* RTKSettings::surveyInAccuracyLimitName =            "SurveyInAccuracyLimit";
 const char* RTKSettings::surveyInMinObservationDurationName =   "SurveyInMinObservationDuration";
 
 RTKSettings::RTKSettings(QObject* parent)
-    : SettingsGroup(RTKSettingsGroupName, QString(RTKSettingsGroupName), parent)
+    : SettingsGroup(name, settingsGroup, parent)
     , _surveyInAccuracyLimitFact(NULL)
     , _surveyInMinObservationDurationFact(NULL)
 {
