@@ -382,6 +382,7 @@ FORMS += \
     src/ui/QGCUASFileView.ui \
     src/ui/QGCUASFileViewMulti.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
+    src/ui/ASLCustomWidgets/EnergyBudget/EnergyBudget.ui \
 }
 
 #
@@ -684,6 +685,8 @@ HEADERS += \
     src/ui/linechart/ScrollZoomer.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
+    src/ui/ASLCustomWidgets/EnergyBudget/EnergyBudget.h \
+    src/ui/ASLCustomWidgets/EnergyBudget/LED.h \
 }
 
 iOSBuild {
@@ -859,6 +862,8 @@ SOURCES += \
     src/ui/linechart/ScrollZoomer.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
+    src/ui/ASLCustomWidgets/EnergyBudget/EnergyBudget.cc \
+    src/ui/ASLCustomWidgets/EnergyBudget/LED.cc \
 }
 
 # Palette test widget in debug builds

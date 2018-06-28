@@ -46,7 +46,7 @@
         <file alias="Airframe/HelicopterCoaxial">src/AutoPilotPlugins/Common/Images/HelicopterCoaxial.svg</file>
         <file alias="wifi.svg">src/AutoPilotPlugins/Common/Images/wifi.svg</file>
         <file alias="arrow-down.png">src/QmlControls/arrow-down.png</file>
-		<file alias="camera.svg">resources/camera.svg</file>
+        <file alias="camera.svg">resources/camera.svg</file>
         <file alias="camera_photo.svg">src/Camera/images/camera_photo.svg</file>
         <file alias="camera_video.svg">src/Camera/images/camera_video.svg</file>
         <file alias="check.png">src/QmlControls/check.png</file>
@@ -171,6 +171,9 @@
         <file alias="APM/BrandImageSub">src/FirmwarePlugin/APM/APMBrandImageSub.png</file>
         <file alias="PX4/BrandImage">src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
         <file alias="subVehicleArrowOpaque.png">src/FlightMap/Images/sub.png</file>
+        <file alias="EnergyBudget/Battery">src/ui/ASLCustomWidgets/EnergyBudget/images/Battery.png</file>
+        <file alias="EnergyBudget/Plane">src/ui/ASLCustomWidgets/EnergyBudget/images/plane.png</file>
+        <file alias="EnergyBudget/Solarcell">src/ui/ASLCustomWidgets/EnergyBudget/images/solarcell.png</file>
         <file alias="check.svg">resources/check.svg</file>
     </qresource>
     <qresource prefix="/res">

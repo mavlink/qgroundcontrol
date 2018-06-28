@@ -39,6 +39,7 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#include "ASLCustomWidgets/EnergyBudget/EnergyBudget.h"
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -741,6 +742,20 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleWind(message);
         break;
 #endif
+
+        // ASLUAV dialect messages
+        case MAVLINK_MSG_ID_SENS_POWER_BOARD:
+            _handleSensPowerBoard(message);
+            break;
+        case MAVLINK_MSG_ID_SENS_MPPT:
+            _handleSensMppt(message);
+            break;
+        case MAVLINK_MSG_ID_SENS_BATMON:
+            _handleSensBatmon(message);
+            break;
+        case MAVLINK_MSG_ID_SENSORPOD_STATUS:
+            _handleSensorpodStatus(message);
+            break;
     }
 
     // This must be emitted after the vehicle processes the message. This way the vehicle state is up to date when anyone else
@@ -785,6 +800,7 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _airSpeedFact.setRawValue(qIsNaN(vfrHud.airspeed) ? 0 : vfrHud.airspeed);
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
+    emit thrustChanged(this, vfrHud.throttle/100.0);
 }
 
 void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
@@ -1280,6 +1296,34 @@ void Vehicle::_handleWind(mavlink_message_t& message)
     _windFactGroup.verticalSpeed()->setRawValue(wind.speed_z);
 }
 #endif
+
+void Vehicle::_handleSensPowerBoard(mavlink_message_t &message)
+{
+  mavlink_sens_power_board_t data;
+  mavlink_msg_sens_power_board_decode(&message, &data);
+  emit SensPowerBoardChanged(data.timestamp, data.pwr_brd_status, data.pwr_brd_led_status, data.pwr_brd_system_volt, data.pwr_brd_servo_volt, data.pwr_brd_digital_volt, data.pwr_brd_mot_l_amp, data.pwr_brd_mot_r_amp, data.pwr_brd_analog_amp, data.pwr_brd_digital_amp, data.pwr_brd_ext_amp, data.pwr_brd_aux_amp);
+}
+
+void Vehicle::_handleSensMppt(mavlink_message_t& message)
+{
+  mavlink_sens_mppt_t data;
+  mavlink_msg_sens_mppt_decode(&message, &data);
+  emit MPPTDataChanged(data.mppt1_volt, data.mppt1_amp, data.mppt1_pwm, data.mppt1_status, data.mppt2_volt, data.mppt2_amp, data.mppt2_pwm, data.mppt2_status, data.mppt3_volt, data.mppt3_amp, data.mppt3_pwm, data.mppt3_status);
+}
+
+void Vehicle::_handleSensBatmon(mavlink_message_t& message)
+{
+  mavlink_sens_batmon_t data;
+  mavlink_msg_sens_batmon_decode(&message, &data);
+  emit BatMonDataChanged(message.compid, data.voltage, data.current, data.SoC, data.temperature, data.batterystatus, data.safetystatus, data.operationstatus, data.cellvoltage1, data.cellvoltage2, data.cellvoltage3, data.cellvoltage4, data.cellvoltage5, data.cellvoltage6);
+}
+
+void Vehicle::_handleSensorpodStatus(mavlink_message_t& message)
+{
+  mavlink_sensorpod_status_t data;
+  mavlink_msg_sensorpod_status_decode(&message, &data);
+  emit SensorpodStatusChanged(data.visensor_rate_1, data.visensor_rate_2, data.visensor_rate_3, data.visensor_rate_4, data.recording_nodes_count,data.cpu_temp, data.free_space);
+}
 
 bool Vehicle::_apmArmingNotRequired(void)
 {
