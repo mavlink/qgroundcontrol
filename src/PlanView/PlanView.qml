@@ -535,37 +535,37 @@ QGCView {
 
                 model: [
                     {
-                        name:                   "File",
+                        name:                   qsTr("File"),
                         iconSource:             "/qmlimages/MapSync.svg",
                         alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
                         dropPanelComponent:     syncDropPanel
                     },
                     {
-                        name:                   "Waypoint",
+                        name:                   qsTr("Waypoint"),
                         iconSource:             "/qmlimages/MapAddMission.svg",
                         toggle:                 true
                     },
                     {
-                        name:                   "ROI",
+                        name:                   qsTr("ROI"),
                         iconSource:             "/qmlimages/MapAddMission.svg",
                         toggle:                 true
                     },
                     {
-                        name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : "Pattern",
+                        name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern"),
                         iconSource:         "/qmlimages/MapDrawShape.svg",
                         dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
                     },
                     {
-                        name:               "Center",
+                        name:               qsTr("Center"),
                         iconSource:         "/qmlimages/MapCenter.svg",
                         dropPanelComponent: centerMapDropPanel
                     },
                     {
-                        name:               "In",
+                        name:               qsTr("In"),
                         iconSource:         "/qmlimages/ZoomPlus.svg"
                     },
                     {
-                        name:               "Out",
+                        name:               qsTr("Out"),
                         iconSource:         "/qmlimages/ZoomMinus.svg"
                     }
                 ]
