@@ -85,7 +85,7 @@ Rectangle {
                 anchors.horizontalCenter:   parent.horizontalCenter
                 width:                      indicator.width
                 height:                     _terrainAvailable ? Math.max(availableHeight * _terrainPercent, 1) : parent.height
-                color:                      _terrainAvailable ? (_terrainPercent > object.altPercent ? "red": qgcPal.text) : "yellow"
+                color:                      _terrainAvailable ? (object.terrainCollision ? "red": qgcPal.text) : "yellow"
                 visible:                    _coordValid
             }
 
