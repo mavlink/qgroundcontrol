@@ -412,7 +412,7 @@ void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 
     if (transectPoints.count() > 1) {
         _terrainPolyPathQuery = new TerrainPolyPathQuery(this);
-        connect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainData, this, &TransectStyleComplexItem::_polyPathTerrainData);
+        connect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
         _terrainPolyPathQuery->requestData(transectPoints);
     }
 }
