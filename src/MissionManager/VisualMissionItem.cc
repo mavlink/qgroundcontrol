@@ -186,7 +186,7 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
         TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
-        connect(terrain, &TerrainAtCoordinateQuery::terrainData, this, &VisualMissionItem::_terrainDataReceived);
+        connect(terrain, &TerrainAtCoordinateQuery::terrainDataReceived, this, &VisualMissionItem::_terrainDataReceived);
         QList<QGeoCoordinate> rgCoord;
         rgCoord.append(coordinate());
         terrain->requestData(rgCoord);
