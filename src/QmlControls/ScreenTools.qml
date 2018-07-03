@@ -131,6 +131,7 @@ Item {
             minTouchPixels      = defaultFontPixelHeight * 3
         }
         toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
+        toolbarHeight           = toolbarHeight * QGroundControl.corePlugin.options.toolbarHeightMultiplier
     }
 
     Text {
