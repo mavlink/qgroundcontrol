@@ -53,12 +53,15 @@ Item {
     readonly property real mediumFontPointRatio:     1.25
     readonly property real largeFontPointRatio:      1.5
 
+    property real realPixelDensity:  QGroundControl.corePlugin.options.devicePixelDensity != 0 ? QGroundControl.corePlugin.options.devicePixelDensity : Screen.pixelDensity
+    property real realPixelRatio:    QGroundControl.corePlugin.options.devicePixelRatio   != 0 ? QGroundControl.corePlugin.options.devicePixelRatio   : Screen.devicePixelRatio
+
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS
     property bool isMobile:         ScreenToolsController.isMobile
     property bool isWindows:        ScreenToolsController.isWindows
     property bool isDebug:          ScreenToolsController.isDebug
-    property bool isTinyScreen:     (Screen.width / Screen.pixelDensity) < 120 // 120mm
+    property bool isTinyScreen:     (Screen.width / realPixelDensity) < 120 // 120mm
     property bool isShortScreen:    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
     property bool isHugeScreen:     Screen.width >= 1920*2
 
@@ -91,6 +94,14 @@ Item {
         }
     }
 
+    onRealPixelDensityChanged: {
+        _setBasePointSize(defaultFontPointSize)
+    }
+
+    onRealPixelRatioChanged: {
+        _setBasePointSize(defaultFontPointSize)
+    }
+
     function printScreenStats() {
         console.log('ScreenTools: Screen.width: ' + Screen.width + ' Screen.height: ' + Screen.height + ' Screen.pixelDensity: ' + Screen.pixelDensity)
     }
@@ -114,13 +125,11 @@ Item {
         smallFontPointSize      = defaultFontPointSize  * _screenTools.smallFontPointRatio
         mediumFontPointSize     = defaultFontPointSize  * _screenTools.mediumFontPointRatio
         largeFontPointSize      = defaultFontPointSize  * _screenTools.largeFontPointRatio
-        minTouchPixels          = Math.round(minTouchMillimeters * Screen.pixelDensity)
+        minTouchPixels          = Math.round(minTouchMillimeters * realPixelDensity * realPixelRatio)
         if (minTouchPixels / Screen.height > 0.15) {
-            // If using physical sizing takes up too much o fthe vertical real estate fall back to font based sizing
+            // If using physical sizing takes up too much of the vertical real estate fall back to font based sizing
             minTouchPixels      = defaultFontPixelHeight * 3
         }
-
-        //console.log(minTouchPixels / Screen.height)
         toolbarHeight           = isMobile ? minTouchPixels : defaultFontPixelHeight * 3
     }
 
@@ -151,7 +160,7 @@ Item {
                         } else {
                             baseSize = 14;
                         }
-                    } else if((Screen.width / Screen.pixelDensity) < 120) {
+                    } else if((Screen.width / realPixelDensity) < 120) {
                         baseSize = 11;
                     // Other Android
                     } else {
