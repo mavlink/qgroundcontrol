@@ -405,6 +405,7 @@ void UDPConfiguration::_copyFrom(LinkConfiguration *source)
             if(!contains_target(_targetHosts, target->address, target->port)) {
                 UDPCLient* newTarget = new UDPCLient(target);
                 _targetHosts.append(newTarget);
+                _updateHostList();
             }
         }
     } else {
