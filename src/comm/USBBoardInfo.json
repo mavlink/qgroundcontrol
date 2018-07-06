@@ -19,14 +19,15 @@
         { "vendorID": 9900, "productID": 65,        "boardClass": "Pixhawk",    "name": "ASC V1" },
         { "vendorID": 9900, "productID": 22,        "boardClass": "Pixhawk",    "name": "Crazyflie 2" },
         { "vendorID": 9900, "productID": 1,         "boardClass": "Pixhawk",    "name": "Omnibus F4 SD" },
+        { "vendorID": 8137, "productID": 28,        "boardClass": "Pixhawk",    "name": "PX4 NXPHlite v3.x" },
 
         { "vendorID": 9900, "productID": 21,        "boardClass": "PX4 Flow",   "name": "PX4 Flow" },
 
         { "vendorID": 1027, "productID": 24597,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio" },
         { "vendorID": 1027, "productID": 24577,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio on FTDI" },
-        { "vendorID": 4292, "productID": 60000,    "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
+        { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
 
-        { "vendorID": 5446, "productID": 424,        "boardClass": "RTK GPS",    "name": "RTK GPS",              "comment": "Ublox RTK GPS" },
+        { "vendorID": 5446, "productID": 424,       "boardClass": "RTK GPS",    "name": "RTK GPS",              "comment": "Ublox RTK GPS" },
 
         { "vendorID": 8352, "productID": 16732,     "boardClass": "OpenPilot",  "name": "OpenPilot OPLink" },
         { "vendorID": 8352, "productID": 16733,     "boardClass": "OpenPilot",  "name": "OpenPilot CC3D" },
@@ -35,8 +36,8 @@
     ],
 
     "boardFallback": [
-        { "regExp": "^PX4 FMU v5.x$",   "boardClass": "Pixhawk" },
-        { "regExp": "^PX4 BL FMU v5.x$","boardClass": "Pixhawk" },
+        { "regExp": "^PX4 FMU v5.x$",       "boardClass": "Pixhawk" },
+        { "regExp": "^PX4 BL FMU v5.x$",    "boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v4.x PRO$",   "boardClass": "Pixhawk" },
         { "regExp": "^PX4 BL FMU v4.x PRO$","boardClass": "Pixhawk" },
         { "regExp": "^PX4 FMU v4.x$",       "boardClass": "Pixhawk" },
