@@ -185,6 +185,7 @@ QGCView {
 
         function loadFromSelectedFile() {
             fileDialog.title =          qsTr("Select Plan File")
+            fileDialog.planFiles =      true
             fileDialog.selectExisting = true
             fileDialog.nameFilters =    masterController.loadNameFilters
             fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
