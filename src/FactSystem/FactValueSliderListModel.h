@@ -22,9 +22,17 @@ public:
     FactValueSliderListModel(Fact& fact, QObject* parent = NULL);
     ~FactValueSliderListModel();
 
+    /// The initial value of the Fact at the meta data specified decimal place precision
+    Q_PROPERTY(double initialValueAtPrecision READ initialValueAtPrecision NOTIFY initialValueAtPrecisionChanged)
+
+    double initialValueAtPrecision(void);
+
     Q_INVOKABLE int resetInitialValue(void);
     Q_INVOKABLE double valueAtModelIndex(int index);
     Q_INVOKABLE int valueIndexAtModelIndex(int index);
+
+signals:
+    void initialValueAtPrecisionChanged(void);
 
 private:
     // Overrides from QAbstractListModel
