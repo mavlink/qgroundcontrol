@@ -212,6 +212,7 @@ private:
     QHash<FirmwareIdentifier, QString> _rgTAPV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgASCV1Firmware;
     QHash<FirmwareIdentifier, QString> _rgCrazyflie2Firmware;
+    QHash<FirmwareIdentifier, QString> _rgNXPHliteV3Firmware;
     QHash<FirmwareIdentifier, QString> _rgPX4FLowFirmware;
     QHash<FirmwareIdentifier, QString> _rg3DRRadioFirmware;
 

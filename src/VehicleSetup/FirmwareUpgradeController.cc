@@ -481,6 +481,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         return &_rgASCV1Firmware;
     case Bootloader::boardIDCrazyflie2:
         return &_rgCrazyflie2Firmware;
+    case Bootloader::boardIDNXPHliteV3:
+        return &_rgNXPHliteV3Firmware;
     case Bootloader::boardID3DRRadio:
         return &_rg3DRRadioFirmware;
     default:
