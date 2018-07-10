@@ -83,52 +83,42 @@ Rectangle {
         }
     }
 
-    Rectangle {
-        id: header
-        anchors.left:     parent.left
-        anchors.right:    parent.right
-        anchors.top:      parent.top
-        height:           themeChoice.height * 2
-        color:            palette.window
-        QGCLabel {
-            id: titleWindow
-            text: qsTr("Window Color")
-            anchors.left:           parent.left
-            anchors.leftMargin:     20
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        Row {
-            id:                     themeChoice
-            anchors.left:          titleWindow.right
-            anchors.leftMargin:    20
-            anchors.verticalCenter: parent.verticalCenter
-            spacing:                20
-            ExclusiveGroup { id: themeGroup }
-            QGCRadioButton {
-                text: qsTr("Light")
-                checked: palette.globalTheme === QGCPalette.Light
-                exclusiveGroup: themeGroup
-                onClicked: { palette.globalTheme = QGCPalette.Light }
-            }
-            QGCRadioButton {
-                text: qsTr("Dark")
-                checked: palette.globalTheme === QGCPalette.Dark
-                exclusiveGroup: themeGroup
-                onClicked: { palette.globalTheme = QGCPalette.Dark }
-            }
-        }
-    }
-
     QGCFlickable {
-        anchors.top:     header.bottom
-        anchors.bottom:  parent.bottom
-        anchors.left:    parent.left
-        anchors.right:   parent.right
-        contentHeight:   contentColumn.height
-        contentWidth:    contentColumn.width
-
+        anchors.fill: parent
+        contentHeight: contentColumn.height
+        contentWidth: contentColumn.width
         Column {
             id: contentColumn
+            Rectangle {
+                width:  parent.width
+                height: themeChoice.height * 2
+                color:  palette.window
+                QGCLabel {
+                    text: qsTr("Window Color")
+                    anchors.left:           parent.left
+                    anchors.leftMargin:     20
+                }
+                Row {
+                    id: themeChoice
+                    anchors.centerIn: parent
+                    anchors.margins: 20
+                    spacing:         20
+                    ExclusiveGroup { id: themeGroup }
+                    QGCRadioButton {
+                        text: qsTr("Light")
+                        checked: palette.globalTheme === QGCPalette.Light
+                        exclusiveGroup: themeGroup
+                        onClicked: { palette.globalTheme = QGCPalette.Light }
+                    }
+                    QGCRadioButton {
+                        text: qsTr("Dark")
+                        checked: palette.globalTheme === QGCPalette.Dark
+                        exclusiveGroup: themeGroup
+                        onClicked: { palette.globalTheme = QGCPalette.Dark }
+                    }
+                }
+            }
+
             Row {
                 spacing: 30
 
@@ -885,11 +875,15 @@ Rectangle {
                             property string text: ""
                         }
                         Text {
+                            width: 100
+                            height: 20
                             color: "black"
                             horizontalAlignment: Text.AlignHCenter
                             text: qsTr("Enabled")
                         }
                         Text {
+                            width: 100
+                            height: 20
                             color: "black"
                             horizontalAlignment: Text.AlignHCenter
                             text: qsTr("Disabled")
@@ -901,9 +895,13 @@ Rectangle {
                             property string text: "QGCLabel"
                         }
                         QGCLabel {
+                            width: 100
+                            height: 20
                             text: qsTr("Label")
                         }
                         QGCLabel {
+                            width: 100
+                            height: 20
                             text: qsTr("Label")
                             enabled: false
                         }
@@ -914,9 +912,13 @@ Rectangle {
                             property string text: "QGCButton"
                         }
                         QGCButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Button")
                         }
                         QGCButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Button")
                             enabled: false
                         }
@@ -927,10 +929,14 @@ Rectangle {
                             property string text: "QGCButton(primary)"
                         }
                         QGCButton {
+                            width: 100
+                            height: 20
                             primary: true
                             text: qsTr("Button")
                         }
                         QGCButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Button")
                             primary: true
                             enabled: false
@@ -954,10 +960,14 @@ Rectangle {
                             }
                         }
                         QGCButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Button")
                             menu: buttonMenu
                         }
                         QGCButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Button")
                             enabled: false
                             menu: buttonMenu
@@ -969,9 +979,13 @@ Rectangle {
                             property string text: "QGCRadioButton"
                         }
                         QGCRadioButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Radio")
                         }
                         QGCRadioButton {
+                            width: 100
+                            height: 20
                             text: qsTr("Radio")
                             enabled: false
                         }
@@ -982,9 +996,13 @@ Rectangle {
                             property string text: "QGCCheckBox"
                         }
                         QGCCheckBox {
+                            width: 100
+                            height: 20
                             text: qsTr("Check Box")
                         }
                         QGCCheckBox {
+                            width: 100
+                            height: 20
                             text: qsTr("Check Box")
                             enabled: false
                         }
@@ -995,9 +1013,13 @@ Rectangle {
                             property string text: "QGCTextField"
                         }
                         QGCTextField {
+                            width: 100
+                            height: 20
                             text: "QGCTextField"
                         }
                         QGCTextField {
+                            width: 100
+                            height: 20
                             text: "QGCTextField"
                             enabled: false
                         }
@@ -1008,9 +1030,13 @@ Rectangle {
                             property string text: "QGCComboBox"
                         }
                         QGCComboBox {
+                            width: 100
+                            height: 20
                             model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
                         }
                         QGCComboBox {
+                            width: 100
+                            height: 20
                             model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
                             enabled: false
                         }
@@ -1021,9 +1047,13 @@ Rectangle {
                             property string text: "SubMenuButton"
                         }
                         SubMenuButton {
+                            width: 100
+                            height: 100
                             text: qsTr("SUB MENU")
                         }
                         SubMenuButton {
+                            width: 100
+                            height: 100
                             text: qsTr("SUB MENU")
                             enabled: false
                         }
@@ -1065,8 +1095,6 @@ Rectangle {
                     sourceComponent: arbBox
                 }
             }
-
         }
-
     }
 }
