@@ -154,15 +154,15 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else {
     AIRMAPD_PATH = $$PWD/libs/airmapd
     MacBuild|iOSBuild {
-        exists($${AIRMAPD_PATH}/macOS/Qt.5.9) {
+        exists($${AIRMAPD_PATH}/macOS/Qt.5.11.0) {
             message("Including support for AirMap for macOS")
-            LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.9 -lairmap-qt
+            LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.11.0 -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
     } else:LinuxBuild {
-        exists($${AIRMAPD_PATH}/linux/Qt.5.9) {
+        exists($${AIRMAPD_PATH}/linux/Qt.5.11.0) {
             message("Including support for AirMap for Linux")
-            LIBS += -L$${AIRMAPD_PATH}/linux/Qt.5.9 -lairmap-qt
+            LIBS += -L$${AIRMAPD_PATH}/linux/Qt.5.11.0 -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
     } else {
