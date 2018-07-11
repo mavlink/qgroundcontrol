@@ -153,28 +153,23 @@ contains (DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
     AIRMAPD_PATH = $$PWD/libs/airmapd
-    # Temporary until we get rid of boost
-    exists($${AIRMAPD_PATH}/include/boost) {
-        MacBuild|iOSBuild {
-            exists($${AIRMAPD_PATH}/macOS/Qt.5.9) {
-                message("Including support for AirMap for macOS")
-                LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.9 -lairmap-qt
-                DEFINES += QGC_AIRMAP_ENABLED
-            }
-        } else:LinuxBuild {
-            exists($${AIRMAPD_PATH}/linux/Qt.5.9) {
-                message("Including support for AirMap for Linux")
-                LIBS += -L$${AIRMAPD_PATH}/linux/Qt.5.9 -lairmap-qt
-                DEFINES += QGC_AIRMAP_ENABLED
-            }
-        } else {
-            message("Skipping support for Airmap (unsupported platform)")
+    MacBuild|iOSBuild {
+        exists($${AIRMAPD_PATH}/macOS/Qt.5.9) {
+            message("Including support for AirMap for macOS")
+            LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.9 -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
         }
-        contains (DEFINES, QGC_AIRMAP_ENABLED) {
-            INCLUDEPATH += \
-                $${AIRMAPD_PATH}/include
+    } else:LinuxBuild {
+        exists($${AIRMAPD_PATH}/linux/Qt.5.9) {
+            message("Including support for AirMap for Linux")
+            LIBS += -L$${AIRMAPD_PATH}/linux/Qt.5.9 -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
         }
     } else {
-        message("Missing boost for AirMap. Excluding AirMap support")
+        message("Skipping support for Airmap (unsupported platform)")
+    }
+    contains (DEFINES, QGC_AIRMAP_ENABLED) {
+        INCLUDEPATH += \
+            $${AIRMAPD_PATH}/include
     }
 }
