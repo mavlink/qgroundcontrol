@@ -71,36 +71,35 @@ TextField {
                 anchors.bottom:         parent.bottom
                 anchors.rightMargin:    backgroundItem.showHelp ? 0 : control.__contentHeight * 0.333
                 anchors.right:          parent.right
-                spacing:                4
+                spacing:                ScreenTools.defaultFontPixelWidth / 4
 
                 Component.onCompleted:  control._helpLayoutWidth = unitsHelpLayout.width
                 onWidthChanged:         control._helpLayoutWidth = unitsHelpLayout.width
 
                 Text {
-                    Layout.alignment:       Qt.AlignVCenter
-                    text:                   control.unitsLabel
-                    font.pointSize:         backgroundItem.showHelp ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
-                    font.family:            ScreenTools.normalFontFamily
-                    antialiasing:           true
-                    color:                  control.textColor
-                    visible:                control.showUnits
+                    Layout.alignment:   Qt.AlignVCenter
+                    text:               control.unitsLabel
+                    font.pointSize:     backgroundItem.showHelp ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                    font.family:        ScreenTools.normalFontFamily
+                    antialiasing:       true
+                    color:              control.textColor
+                    visible:            control.showUnits
                 }
 
                 Rectangle {
                     Layout.margins:     2
+                    Layout.leftMargin:  0
+                    Layout.rightMargin: 1
                     Layout.fillHeight:  true
-                    Layout.alignment:   Qt.AlignRight
-                    width:              height * 0.75
+                    width:              helpLabel.contentWidth * 3
                     color:              control.textColor
-                    radius:             2
                     visible:            backgroundItem.showHelp
 
                     QGCLabel {
-                        anchors.fill:           parent
-                        verticalAlignment:      Text.AlignVCenter
-                        horizontalAlignment:    Text.AlignHCenter
-                        color:                  qgcPal.textField
-                        text:                   "?"
+                        id:                 helpLabel
+                        anchors.centerIn:   parent
+                        color:              qgcPal.textField
+                        text:               qsTr("?")
                     }
                 }
             }

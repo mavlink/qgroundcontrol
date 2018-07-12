@@ -7,11 +7,11 @@
  *
  ****************************************************************************/
 
-#include "HeartbeatTimer.h"
+#include "MavlinkMessagesTimer.h"
 
 #include <QDebug>
 
-HeartbeatTimer::HeartbeatTimer(int vehicle_id, bool high_latency) :
+MavlinkMessagesTimer::MavlinkMessagesTimer(int vehicle_id, bool high_latency) :
     _active(true),
     _timer(new QTimer),
     _vehicleID(vehicle_id),
@@ -19,22 +19,22 @@ HeartbeatTimer::HeartbeatTimer(int vehicle_id, bool high_latency) :
 {
 }
 
-void HeartbeatTimer::init()
+void MavlinkMessagesTimer::init()
 {
     if (!_high_latency) {
-        _timer->setInterval(_heartbeatReceivedTimeoutMSecs);
-        _timer->setSingleShot(true);
+        _timer->setInterval(_messageReceivedTimeoutMSecs);
+        _timer->setSingleShot(false);
         _timer->start();
     }
     emit activeChanged(true, _vehicleID);
-    QObject::connect(_timer, &QTimer::timeout, this, &HeartbeatTimer::timerTimeout);
+    QObject::connect(_timer, &QTimer::timeout, this, &MavlinkMessagesTimer::timerTimeout);
 }
 
 
-HeartbeatTimer::~HeartbeatTimer()
+MavlinkMessagesTimer::~MavlinkMessagesTimer()
 {
     if (_timer) {
-        QObject::disconnect(_timer, &QTimer::timeout, this, &HeartbeatTimer::timerTimeout);
+        QObject::disconnect(_timer, &QTimer::timeout, this, &MavlinkMessagesTimer::timerTimeout);
         _timer->stop();
         delete _timer;
         _timer = nullptr;
@@ -43,7 +43,7 @@ HeartbeatTimer::~HeartbeatTimer()
     emit activeChanged(false, _vehicleID);
 }
 
-void HeartbeatTimer::restartTimer()
+void MavlinkMessagesTimer::restartTimer()
 {
     if (!_active) {
         _active = true;
@@ -53,7 +53,7 @@ void HeartbeatTimer::restartTimer()
     _timer->start();
 }
 
-void HeartbeatTimer::timerTimeout()
+void MavlinkMessagesTimer::timerTimeout()
 {
     if (!_high_latency) {
         if (_active) {

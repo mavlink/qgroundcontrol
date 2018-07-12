@@ -439,7 +439,7 @@ void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 
     if (transectPoints.count() > 1) {
         _terrainPolyPathQuery = new TerrainPolyPathQuery(this);
-        connect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainData, this, &TransectStyleComplexItem::_polyPathTerrainData);
+        connect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
         _terrainPolyPathQuery->requestData(transectPoints);
     }
 }
@@ -709,15 +709,18 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
         int itemCount = 0;
 
         foreach (const QList<CoordInfo_t>& rgCoordInfo, _transects) {
-            itemCount += rgCoordInfo.count();
+            itemCount += rgCoordInfo.count() * (hoverAndCaptureEnabled() ? 2 : 1);
         }
 
-        if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-            // Only one camera start and on camera stop
-            itemCount += 2;
-        } else {
-            // Each transect will have a camera start and stop in it
-            itemCount += _transects.count() * 2;
+
+        if (!hoverAndCaptureEnabled()) {
+            if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+                // Only one camera start and on camera stop
+                itemCount += 2;
+            } else {
+                // Each transect will have a camera start and stop in it
+                itemCount += _transects.count() * 2;
+            }
         }
 
         return _sequenceNumber + itemCount - 1;
