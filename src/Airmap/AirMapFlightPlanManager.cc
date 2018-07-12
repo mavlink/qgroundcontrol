@@ -137,13 +137,13 @@ void
 AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
 {
     quint64 startt = start.toUTC().toMSecsSinceEpoch();
-    if(_flightPlan.start_time != airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)startt})) {
+    if(_flightPlan.start_time != airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)startt))) {
         //-- Can't start in the past
         if(start < QDateTime::currentDateTime()) {
             start = QDateTime::currentDateTime().addSecs(5 * 60);
             startt = start.toUTC().toMSecsSinceEpoch();
         }
-        _flightPlan.start_time = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)startt});
+        _flightPlan.start_time = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)startt));
         emit flightStartTimeChanged();
     }
 }
@@ -153,13 +153,13 @@ void
 AirMapFlightPlanManager::setFlightEndTime(QDateTime end)
 {
     quint64 endt = end.toUTC().toMSecsSinceEpoch();
-    if(_flightPlan.end_time != airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)endt})) {
+    if(_flightPlan.end_time != airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)endt))) {
         //-- End has to be after start
         if(end < flightStartTime()) {
             end = flightStartTime().addSecs(30 * 60);
             endt = end.toUTC().toMSecsSinceEpoch();
         }
-        _flightPlan.end_time = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)endt});
+        _flightPlan.end_time = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)endt));
         emit flightEndTimeChanged();
     }
 }
@@ -488,8 +488,8 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         params.pilot.id     = _pilotID.toStdString();
         quint64 start       = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
         quint64 end         = start + 60 * 30 * 1000;
-        params.start_time   = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
-        params.end_time     = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
+        params.start_time   = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)start));
+        params.end_time     = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)end));
         //-- Rules & Features
         _updateRulesAndFeatures(params.rulesets, params.features);
         //-- Geometry: polygon
@@ -856,8 +856,8 @@ AirMapFlightPlanManager::_loadFlightList()
         params.authorization = login_token.toStdString();
         quint64 start   = _rangeStart.toUTC().toMSecsSinceEpoch();
         quint64 end     = _rangeEnd.toUTC().toMSecsSinceEpoch();
-        params.start_after  = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)start});
-        params.start_before = airmap::from_milliseconds_since_epoch(airmap::Milliseconds{(long long)end});
+        params.start_after  = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)start));
+        params.start_before = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)end));
         params.limit    = 250;
         params.pilot_id = _pilotID.toStdString();
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {

@@ -11,6 +11,7 @@
 #include "AirspaceRestriction.h"
 #include "AirMapManager.h"
 
+#include <cmath>
 #include <QTimer>
 
 #include "airmap/airspaces.h"
@@ -73,7 +74,7 @@ AirMapAdvisoryManager::_requestAdvisories()
     params.types     = Airspace::Type::all;
     params.weather   = false;
     double diagonal  = _lastROI.pointNW.distanceTo(_lastROI.pointSE);
-    params.buffer    = fmax(fmin(diagonal, 10000.0), 500.0);
+    params.buffer    = std::fmax(std::fmin(diagonal, 10000.0), 500.0);
     params.flight_date_time = Clock::universal_time();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->status().get_status_by_point(params, [this, isAlive](const Status::GetStatus::Result& result) {
