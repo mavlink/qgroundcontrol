@@ -7,34 +7,34 @@
  *
  ****************************************************************************/
 
-#ifndef _HEARTBEATTIMER_H_
-#define _HEARTBEATTIMER_H_
+#ifndef _MAVLINKMESSAGESTIMER_H_
+#define _MAVLINKMESSAGESTIMER_H_
 
 #include <QTimer>
 #include <QObject>
 
 /**
- * @brief The HeartbeatTimer class
+ * @brief The MavlinkMessagesTimer class
  *
- * Track the heartbeat for a single vehicle on one link.
- * As long as regular heartbeats are received the status is active. On the timer timeout
+ * Track the mavlink messages for a single vehicle on one link.
+ * As long as regular messages are received the status is active. On the timer timeout
  * status is set to inactive. On any status change the activeChanged signal is emitted.
  * If high_latency is true then active is always true.
  */
-class HeartbeatTimer : public QObject
+class MavlinkMessagesTimer : public QObject
 {
     Q_OBJECT
 
 public:
     /**
-     * @brief HeartbeatTimer
+     * @brief MavlinkMessagesTimer
      *
      * Constructor
      *
      * @param vehicle_id: The vehicle ID for which the heartbeat will be tracked.
      * @param high_latency: Indicates if the link is a high latency one.
      */
-    HeartbeatTimer(int vehicle_id, bool high_latency);
+    MavlinkMessagesTimer(int vehicle_id, bool high_latency);
 
     /**
      * @brief init
@@ -43,7 +43,7 @@ public:
      */
     void init();
 
-    ~HeartbeatTimer();
+    ~MavlinkMessagesTimer();
 
     /**
      * @brief getActive
@@ -68,7 +68,7 @@ signals:
     /**
      * @brief heartbeatTimeout
      *
-     * Emitted if no heartbeat is received over the specified time.
+     * Emitted if no mavlink message is received over the specified time.
      *
      * @param vehicle_id: The vehicle ID for which the heartbeat timed out.
      */
@@ -100,7 +100,7 @@ private:
     int _vehicleID = -1; // Vehicle ID for which the heartbeat is tracked.
     bool _high_latency = false; // Indicates if the link is a high latency link or not.
 
-    static const int    _heartbeatReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
+    static const int    _messageReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
 };
 
-#endif // _HEARTBEATTIMER_H_
+#endif // _MAVLINKMESSAGESTIMER_H_

@@ -28,7 +28,7 @@ QString APMHeliComponent::description(void) const
 
 QString APMHeliComponent::iconResource(void) const
 {
-    return QString();
+    return "/res/helicoptericon.svg";
 }
 
 bool APMHeliComponent::requiresSetup(void) const

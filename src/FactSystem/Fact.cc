@@ -51,7 +51,7 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
-Fact::Fact(FactMetaData* metaData, QObject* parent)
+Fact::Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent)
     : QObject(parent)
     , _name                     (metaData->name())
     , _componentId              (0)
@@ -62,6 +62,7 @@ Fact::Fact(FactMetaData* metaData, QObject* parent)
     , _deferredValueChangeSignal(false)
     , _valueSliderModel         (NULL)
 {
+    qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
 }
 

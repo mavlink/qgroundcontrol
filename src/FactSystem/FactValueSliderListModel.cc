@@ -53,14 +53,16 @@ int FactValueSliderListModel::resetInitialValue(void)
     } else {
         _increment = _fact.cookedIncrement();
     }
-    _cPrevValues = qMin((_initialValue - _fact.cookedMin().toDouble()), 1000.0) / _increment;
-    _cNextValues = qMin((_fact.cookedMax().toDouble() - _initialValue), 1000.0) / _increment;
+    _cPrevValues = qMin((_initialValue - _fact.cookedMin().toDouble()), 100.0) / _increment;
+    _cNextValues = qMin((_fact.cookedMax().toDouble() - _initialValue), 100.0) / _increment;
     _initialValueIndex = _cPrevValues;
 
     int totalValueCount = _cPrevValues + 1 + _cNextValues;
     beginInsertRows(QModelIndex(), 0, totalValueCount - 1);
     _cValues = totalValueCount;
     endInsertRows();
+
+    emit initialValueAtPrecisionChanged();
 
     return _initialValueIndex;
 }
@@ -125,4 +127,10 @@ double FactValueSliderListModel::valueAtModelIndex(int index)
 int FactValueSliderListModel::valueIndexAtModelIndex(int index)
 {
     return data(createIndex(index, 0), _valueIndexRole).toInt();
+}
+
+double FactValueSliderListModel::initialValueAtPrecision(void)
+{
+    double precision = qPow(10, _fact.decimalPlaces());
+    return qRound(_initialValue * precision) / precision;
 }

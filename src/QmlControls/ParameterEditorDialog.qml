@@ -129,9 +129,8 @@ QGCViewDialog {
                 }
 
                 QGCButton {
-                    anchors.baseline:   valueField.baseline
-                    visible:            _allowDefaultReset
-                    text:               qsTr("Reset to default")
+                    visible:    _allowDefaultReset
+                    text:       qsTr("Reset to default")
 
                     onClicked: {
                         fact.value = fact.defaultValue
