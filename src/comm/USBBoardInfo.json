@@ -27,7 +27,8 @@
         { "vendorID": 1027, "productID": 24577,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "3DR Radio on FTDI" },
         { "vendorID": 4292, "productID": 60000,     "boardClass": "SiK Radio",  "name": "SiK Radio",            "comment": "SILabs Radio" },
 
-        { "vendorID": 5446, "productID": 424,       "boardClass": "RTK GPS",    "name": "RTK GPS",              "comment": "Ublox RTK GPS" },
+        { "vendorID": 5446, "productID": 424,        "boardClass": "RTK GPS",    "name": "U-blox RTK GPS",               "comment": "U-blox RTK GPS" },
+        { "vendorID": 1317, "productID": 42151,      "boardClass": "RTK GPS",    "name": "Trimble RTK GPS",              "comment": "Trimble RTK GPS" },
 
         { "vendorID": 8352, "productID": 16732,     "boardClass": "OpenPilot",  "name": "OpenPilot OPLink" },
         { "vendorID": 8352, "productID": 16733,     "boardClass": "OpenPilot",  "name": "OpenPilot CC3D" },

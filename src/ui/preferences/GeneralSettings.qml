@@ -402,7 +402,7 @@ QGCView {
                             anchors.horizontalCenter:   parent.horizontalCenter
                             columns:                    2
 
-                            QGCLabel { text: qsTr("Survey in accuracy") }
+                            QGCLabel { text: qsTr("Survey in accuracy (U-blox only)") }
                             FactTextField {
                                 Layout.preferredWidth:  _valueFieldWidth
                                 fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
