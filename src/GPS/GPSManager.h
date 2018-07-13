@@ -28,7 +28,7 @@ public:
     GPSManager(QGCApplication* app, QGCToolbox* toolbox);
     ~GPSManager();
 
-    void connectGPS     (const QString& device);
+    void connectGPS     (const QString& device, const QString& gps_type);
     void disconnectGPS  (void);
     bool connected      (void) const { return _gpsProvider && _gpsProvider->isRunning(); }
 
