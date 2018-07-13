@@ -63,6 +63,7 @@ void GPSProvider::run()
         }
 
         gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+        baudrate = 0; // auto-configure
         gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000, _surveryInDurationSecs);
 
         if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
