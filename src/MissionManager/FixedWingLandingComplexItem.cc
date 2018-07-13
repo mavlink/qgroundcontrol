@@ -336,8 +336,7 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
     complexItem->_altitudesAreRelative = landPointFrame == MAV_FRAME_GLOBAL_RELATIVE_ALT;
     complexItem->_loiterRadiusFact.setRawValue(qAbs(missionItemLoiter.param2()));
     complexItem->_loiterClockwise = missionItemLoiter.param2() > 0;
-    complexItem->_loiterCoordinate.setLatitude(missionItemLoiter.param5());
-    complexItem->_loiterCoordinate.setLongitude(missionItemLoiter.param6());
+    complexItem->setLoiterCoordinate(QGeoCoordinate(missionItemLoiter.param5(), missionItemLoiter.param6()));
     complexItem->_loiterAltitudeFact.setRawValue(missionItemLoiter.param7());
 
     complexItem->_landingCoordinate.setLatitude(missionItemLand.param5());
