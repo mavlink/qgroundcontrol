@@ -26,13 +26,22 @@ GPSManager::~GPSManager()
     disconnectGPS();
 }
 
-void GPSManager::connectGPS(const QString& device)
+void GPSManager::connectGPS(const QString& device, const QString& gps_type)
 {
     RTKSettings* rtkSettings = qgcApp()->toolbox()->settingsManager()->rtkSettings();
 
+    GPSProvider::GPSType type;
+    if (gps_type.contains("trimble",  Qt::CaseInsensitive)) {
+        type = GPSProvider::GPSType::trimble;
+        qCDebug(RTKGPSLog) << "Connecting Trimble device";
+    } else {
+        type = GPSProvider::GPSType::u_blox;
+        qCDebug(RTKGPSLog) << "Connecting U-blox device";
+    }
+
     disconnectGPS();
     _requestGpsStop = false;
-    _gpsProvider = new GPSProvider(device, true, rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(), rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(), _requestGpsStop);
+    _gpsProvider = new GPSProvider(device, type, true, rtkSettings->surveyInAccuracyLimit()->rawValue().toDouble(), rtkSettings->surveyInMinObservationDuration()->rawValue().toInt(), _requestGpsStop);
     _gpsProvider->start();
 
     //create RTCM device
