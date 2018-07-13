@@ -586,7 +586,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                     if (_autoConnectSettings->autoConnectRTKGPS()->rawValue().toBool() && !_toolbox->gpsManager()->connected()) {
                         qCDebug(LinkManagerLog) << "RTK GPS auto-connected" << portInfo.portName().trimmed();
                         _autoConnectRTKPort = portInfo.systemLocation();
-                        _toolbox->gpsManager()->connectGPS(portInfo.systemLocation());
+                        _toolbox->gpsManager()->connectGPS(portInfo.systemLocation(), boardName);
                     }
                     break;
 #endif
