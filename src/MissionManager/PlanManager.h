@@ -71,7 +71,7 @@ public:
 
     // These values are public so the unit test can set appropriate signal wait times
     // When passively waiting for a mission process, use a longer timeout.
-    static const int _ackTimeoutMilliseconds = 1000;
+    static const int _ackTimeoutMilliseconds = 1500;
     // When actively retrying to request mission items, use a shorter timeout instead.
     static const int _retryTimeoutMilliseconds = 250;
     static const int _maxRetryCount = 5;
