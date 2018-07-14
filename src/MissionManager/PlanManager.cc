@@ -589,6 +589,14 @@ void PlanManager::_handleMissionAck(const mavlink_message_t& message)
         return;
     }
 
+    if (_vehicle->apmFirmware() && missionAck.type == MAV_MISSION_INVALID_SEQUENCE) {
+        // ArduPilot sends these Acks which can happen just due to noisy links causing duplicated requests being responded to.
+        // As far as I'm concerned this is incorrect protocol implementation but we need to deal with it anyway. So we just
+        // ignore it and if things really go haywire the timeouts will fire to fail the overall transaction.
+        qCDebug(PlanManagerLog) << QStringLiteral("_handleMissionAck ArduPilot sending possibly bogus MAV_MISSION_INVALID_SEQUENCE").arg(_planTypeString()) << _planType;
+        return;
+    }
+
     // Save the retry ack before calling _checkForExpectedAck since we'll need it to determine what
     // type of a protocol sequence we are in.
     AckType_t savedExpectedAck = _expectedAck;
