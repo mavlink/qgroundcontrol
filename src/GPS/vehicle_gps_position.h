@@ -63,6 +63,7 @@ struct vehicle_gps_position_s {
 	float vel_d_m_s;
 	float cog_rad;
 	int32_t timestamp_time_relative;
+	float heading;
 	uint8_t fix_type;
 	bool vel_ned_valid;
 	uint8_t satellites_used;
