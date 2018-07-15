@@ -69,9 +69,11 @@ Item {
                     QGCLabel {
                         // during survey-in show the current accuracy, after that show the final accuracy
                         text: QGroundControl.gpsRtk.valid.value ? qsTr("Accuracy:") : qsTr("Current Accuracy:")
+                        visible: QGroundControl.gpsRtk.currentAccuracy.value > 0
                         }
                     QGCLabel {
                         text: QGroundControl.gpsRtk.currentAccuracy.valueString + " " + QGroundControl.appSettingsDistanceUnitsString
+                        visible: QGroundControl.gpsRtk.currentAccuracy.value > 0
                         }
                     QGCLabel { text: qsTr("Satellites:") }
                     QGCLabel { text: QGroundControl.gpsRtk.numSatellites.value }
