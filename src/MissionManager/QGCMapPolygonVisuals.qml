@@ -38,6 +38,7 @@ Item {
     property var    _centerDragHandleComponent
     property bool   _circle:                    false
     property real   _circleRadius
+    property bool   _editCircleRadius:          false
 
     property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
     property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
@@ -224,7 +225,7 @@ Item {
         MenuItem {
             text:           qsTr("Set radius..." )
             visible:        _circle
-            onTriggered:    radiusDialog.visible = true
+            onTriggered:    _editCircleRadius = true
         }
 
         MenuItem {
@@ -460,18 +461,17 @@ Item {
 
             function setRadiusFromDialog() {
                 setCircleRadius(mapPolygon.center, radiusField.text)
-                radiusDialog.visible = false
+                _editCircleRadius = false
             }
 
             Rectangle {
-                id:                 radiusDialog
                 anchors.margins:    _margin
                 anchors.left:       parent.right
                 width:              radiusColumn.width + (_margin *2)
                 height:             radiusColumn.height + (_margin *2)
                 color:              qgcPal.window
                 border.color:       qgcPal.text
-                visible:            false
+                visible:            _editCircleRadius
 
                 Column {
                     id:                 radiusColumn
