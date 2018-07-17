@@ -231,7 +231,7 @@ Item {
         MenuItem {
             text:           qsTr("Edit position..." )
             enabled:        _circle
-            onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+            onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
         }
 
         MenuItem {
