@@ -10,16 +10,6 @@
     "defaultValue":     0
 },
 {
-    "name":             "GimbalYaw",
-    "shortDescription": "Gimbal yaw rotation.",
-    "type":             "double",
-    "units":            "deg",
-    "min":              -180.0,
-    "max":              180.0,
-    "decimalPlaces":    0,
-    "defaultValue":     90
-},
-{
     "name":             "Altitude",
     "shortDescription": "Altitude for the bottom layer of the structure scan.",
     "type":             "double",
@@ -41,32 +31,5 @@
     "units":            "m",
     "min":              1,
     "defaultValue":     100
-},
-{
-    "name":             "Layer distance",
-    "shortDescription": "Distance between each layer.",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "min":              0,
-    "units":            "m",
-    "defaultValue":     25
-},
-{
-    "name":             "Scan distance",
-    "shortDescription": "Scan distance away from structure.",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "min":              0,
-    "units":            "m",
-    "defaultValue":     25
-},
-{
-    "name":             "Trigger distance",
-    "shortDescription": "Distance between each triggering of the camera. 0 specifies not camera trigger.",
-    "type":             "double",
-    "decimalPlaces":    2,
-    "min":              0,
-    "units":            "m",
-    "defaultValue":     25
 }
 ]

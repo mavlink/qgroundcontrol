@@ -15,6 +15,7 @@
 #include "SettingsManager.h"
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
+#include "VideoReceiver.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -285,4 +286,9 @@ bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlin
 QmlObjectListModel* QGCCorePlugin::customMapItems(void)
 {
     return &_p->_emptyCustomMapItems;
+}
+
+VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
+{
+    return new VideoReceiver(parent);
 }

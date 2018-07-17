@@ -72,8 +72,8 @@
     "type":             "double",
     "defaultValue":     50.0,
     "min":              0.0,
-    "units":            "meters",
-    "decimalPlaces":    2
+    "units":            "m",
+    "decimalPlaces":    1
 },
 {
     "name":             "PromptFLightDataSave",

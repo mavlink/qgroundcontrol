@@ -30,20 +30,20 @@ QString APMSafetyComponent::name(void) const
 QString APMSafetyComponent::description(void) const
 {
     switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_SUBMARINE:
-            return tr("Safety Setup is used to setup failsafe actions, leak detection, and arming checks.");
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-        case MAV_TYPE_FIXED_WING:
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-        default:
-            return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
-            break;
+    case MAV_TYPE_SUBMARINE:
+        return tr("Safety Setup is used to setup failsafe actions, leak detection, and arming checks.");
+        break;
+    case MAV_TYPE_GROUND_ROVER:
+    case MAV_TYPE_FIXED_WING:
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+    default:
+        return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+        break;
     }
 }
 
@@ -73,26 +73,22 @@ QUrl APMSafetyComponent::setupSource(void) const
     QString qmlFile;
 
     switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_FIXED_WING:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentPlane.qml");
-            break;
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentCopter.qml");
-            break;
-        case MAV_TYPE_SUBMARINE:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSub.qml");
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentRover.qml");
-            break;
-        default:
-            qmlFile = QStringLiteral("qrc:/qml/APMNotSupported.qml");
-            break;
+    case MAV_TYPE_FIXED_WING:
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+    case MAV_TYPE_GROUND_ROVER:
+        qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponent.qml");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSub.qml");
+        break;
+    default:
+        qmlFile = QStringLiteral("qrc:/qml/APMNotSupported.qml");
+        break;
     }
 
     return QUrl::fromUserInput(qmlFile);
@@ -103,26 +99,22 @@ QUrl APMSafetyComponent::summaryQmlSource(void) const
     QString qmlFile;
 
     switch (_vehicle->vehicleType()) {
-        case MAV_TYPE_FIXED_WING:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummaryPlane.qml");
-            break;
-        case MAV_TYPE_QUADROTOR:
-        case MAV_TYPE_COAXIAL:
-        case MAV_TYPE_HELICOPTER:
-        case MAV_TYPE_HEXAROTOR:
-        case MAV_TYPE_OCTOROTOR:
-        case MAV_TYPE_TRICOPTER:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummaryCopter.qml");
-            break;
-        case MAV_TYPE_SUBMARINE:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummarySub.qml");
-            break;
-        case MAV_TYPE_GROUND_ROVER:
-            qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummaryRover.qml");
-            break;
-        default:
-            qmlFile = QStringLiteral("qrc:/qml/APMNotSupported.qml");
-            break;
+    case MAV_TYPE_FIXED_WING:
+    case MAV_TYPE_QUADROTOR:
+    case MAV_TYPE_COAXIAL:
+    case MAV_TYPE_HELICOPTER:
+    case MAV_TYPE_HEXAROTOR:
+    case MAV_TYPE_OCTOROTOR:
+    case MAV_TYPE_TRICOPTER:
+    case MAV_TYPE_GROUND_ROVER:
+        qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummary.qml");
+        break;
+    case MAV_TYPE_SUBMARINE:
+        qmlFile = QStringLiteral("qrc:/qml/APMSafetyComponentSummarySub.qml");
+        break;
+    default:
+        qmlFile = QStringLiteral("qrc:/qml/APMNotSupported.qml");
+        break;
     }
 
     return QUrl::fromUserInput(qmlFile);

@@ -31,6 +31,7 @@ class QQmlApplicationEngine;
 class Vehicle;
 class LinkInterface;
 class QmlObjectListModel;
+class VideoReceiver;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -97,6 +98,9 @@ public:
 
     /// Allows the plugin to override the creation of the root (native) window.
     virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
+
+    /// Allows the plugin to override the creation of VideoReceiver.
+    virtual VideoReceiver* createVideoReceiver(QObject* parent);
 
     /// Allows the plugin to see all mavlink traffic to a vehicle
     /// @return true: Allow vehicle to continue processing, false: Vehicle should not process message

@@ -28,27 +28,29 @@
 #include "APMLightsComponent.h"
 #include "APMSubFrameComponent.h"
 #include "ESP8266Component.h"
+#include "APMHeliComponent.h"
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
-    : AutoPilotPlugin(vehicle, parent)
+    : AutoPilotPlugin           (vehicle, parent)
     , _incorrectParameterVersion(false)
-    , _airframeComponent(NULL)
-    , _cameraComponent(NULL)
-    , _lightsComponent(NULL)
-    , _subFrameComponent(NULL)
-    , _flightModesComponent(NULL)
-    , _powerComponent(NULL)
+    , _airframeComponent        (NULL)
+    , _cameraComponent          (NULL)
+    , _lightsComponent          (NULL)
+    , _subFrameComponent        (NULL)
+    , _flightModesComponent     (NULL)
+    , _powerComponent           (NULL)
 #if 0
         // Temporarily removed, waiting for new command implementation
-    , _motorComponent(NULL)
+    , _motorComponent           (NULL)
 #endif
-    , _radioComponent(NULL)
-    , _safetyComponent(NULL)
-    , _sensorsComponent(NULL)
-    , _tuningComponent(NULL)
-    , _airframeFacts(new APMAirframeLoader(this, vehicle->uas(), this))
-    , _esp8266Component(NULL)
+    , _radioComponent           (NULL)
+    , _safetyComponent          (NULL)
+    , _sensorsComponent         (NULL)
+    , _tuningComponent          (NULL)
+    , _airframeFacts            (new APMAirframeLoader(this, vehicle->uas(), this))
+    , _esp8266Component         (NULL)
+    , _heliComponent            (NULL)
 {
     APMAirframeLoader::loadAirframeFactMetaData();
 }
@@ -100,6 +102,12 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent = new APMSafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+
+            if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) {
+                _heliComponent = new APMHeliComponent(_vehicle, this);
+                _heliComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_heliComponent));
+            }
 
             _tuningComponent = new APMTuningComponent(_vehicle, this);
             _tuningComponent->setupTriggerSignals();

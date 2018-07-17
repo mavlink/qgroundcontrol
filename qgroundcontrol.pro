@@ -56,7 +56,6 @@ iOSBuild {
             error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
         }
         QT               += qml-private
-        CONFIG           += qtquickcompiler
         QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
         OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
     } else {
@@ -203,6 +202,7 @@ LinuxBuild {
 CONFIG += qt \
     thread \
     c++11 \
+    qtquickcompiler \
 
 contains(DEFINES, ENABLE_VERBOSE_OUTPUT) {
     message("Enable verbose compiler output (manual override from command line)")
@@ -393,14 +393,14 @@ HEADERS += \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
-    src/comm/HeartbeatTimer.h
+    src/comm/MavlinkMessagesTimer.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
     src/api/QmlComponentInfo.cc \
-    src/comm/HeartbeatTimer.cc
+    src/comm/MavlinkMessagesTimer.cc
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
@@ -642,6 +642,8 @@ HEADERS += \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/MavlinkConsoleController.h \
     src/GPS/Drivers/src/gps_helper.h \
+    src/GPS/Drivers/src/rtcm.h \
+    src/GPS/Drivers/src/ashtech.h \
     src/GPS/Drivers/src/ubx.h \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
@@ -823,6 +825,8 @@ SOURCES += \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/MavlinkConsoleController.cc \
     src/GPS/Drivers/src/gps_helper.cpp \
+    src/GPS/Drivers/src/rtcm.cpp \
+    src/GPS/Drivers/src/ashtech.cpp \
     src/GPS/Drivers/src/ubx.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
@@ -948,6 +952,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMCompassCal.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
+        src/AutoPilotPlugins/APM/APMHeliComponent.h \
         src/AutoPilotPlugins/APM/APMLightsComponent.h \
         src/AutoPilotPlugins/APM/APMSubFrameComponent.h \
         src/AutoPilotPlugins/APM/APMPowerComponent.h \
@@ -973,6 +978,7 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMCompassCal.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
+        src/AutoPilotPlugins/APM/APMHeliComponent.cc \
         src/AutoPilotPlugins/APM/APMLightsComponent.cc \
         src/AutoPilotPlugins/APM/APMSubFrameComponent.cc \
         src/AutoPilotPlugins/APM/APMPowerComponent.cc \

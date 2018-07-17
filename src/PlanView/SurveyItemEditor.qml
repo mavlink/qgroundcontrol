@@ -112,7 +112,7 @@ Rectangle {
                 Layout.columnSpan:  2
                 onClicked: {
                     if (checked) {
-                        missionItem.cameraTriggerInTurnaround.rawValue = false
+                        missionItem.cameraTriggerInTurnAround.rawValue = false
                     }
                 }
             }

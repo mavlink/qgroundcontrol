@@ -27,6 +27,7 @@ class APMCameraComponent;
 class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
+class APMHeliComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -59,6 +60,7 @@ protected:
     APMTuningComponent*         _tuningComponent;
     APMAirframeLoader*          _airframeFacts;
     ESP8266Component*           _esp8266Component;
+    APMHeliComponent*           _heliComponent;
 
 private:
     QVariantList                _components;

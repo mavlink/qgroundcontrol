@@ -85,9 +85,9 @@ Rectangle {
                         }
 
                         QGCButton {
-                            id:                         actionButton
-                            anchors.horizontalCenter:   parent.horizontalCenter
-                            text:                       modelData.title
+                            id:                 actionButton
+                            text:               modelData.title
+                            Layout.alignment:   Qt.AlignCenter
 
                             onClicked: {
                                 _root.visible = false

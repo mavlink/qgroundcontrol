@@ -63,6 +63,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoSink(NULL)
     , _socket(NULL)
     , _serverPresent(false)
+    , _rtspTestInterval_ms(5000)
 #endif
     , _videoSurface(NULL)
     , _videoRunning(false)
@@ -164,9 +165,9 @@ VideoReceiver::_socketError(QAbstractSocket::SocketError socketError)
     Q_UNUSED(socketError);
     _socket->deleteLater();
     _socket = NULL;
-    //-- Try again in 5 seconds
+    //-- Try again in a while
     if(_videoSettings->streamEnabled()->rawValue().toBool()) {
-        _timer.start(5000);
+        _timer.start(_rtspTestInterval_ms);
     }
 }
 #endif
@@ -194,7 +195,7 @@ VideoReceiver::_timeout()
         connect(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &VideoReceiver::_socketError);
         connect(_socket, &QTcpSocket::connected, this, &VideoReceiver::_connected);
         _socket->connectToHost(url.host(), url.port());
-        _timer.start(5000);
+        _timer.start(_rtspTestInterval_ms);
     }
 }
 #endif

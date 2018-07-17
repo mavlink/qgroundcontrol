@@ -25,17 +25,6 @@ Rectangle {
 
     property bool _passed: false
 
-    function reset() {
-        for (var i=0; i<model.count; i++) {
-            var group = model.get(i)
-            group.reset()
-            group.enabled = i === 0
-            group._checked = i === 0
-        }
-    }
-
-    Component.onCompleted: reset()
-
     // We delay the updates when a group passes so the user can see all items green for a moment prior to hiding
     Timer {
         id:         delayedGroupPassed
@@ -94,7 +83,7 @@ Rectangle {
                 opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
                 tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
 
-                onClicked: reset()
+                onClicked: model.reset()
 
                 Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
             }

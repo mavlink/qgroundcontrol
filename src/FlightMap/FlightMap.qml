@@ -11,6 +11,7 @@ import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
 import QtPositioning    5.3
+import QtQuick.Dialogs  1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
@@ -40,6 +41,7 @@ Map {
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
     property bool   planView:                       false   ///< true: map being using for Plan view, items should be draggable
+    property var    qgcView
 
     readonly property real  maxZoomLevel: 20
 
@@ -59,6 +61,20 @@ Map {
             firstVehiclePositionReceived = true
             center = activeVehicleCoordinate
             zoomLevel = QGroundControl.flightMapInitialZoom
+        }
+    }
+
+    function centerToSpecifiedLocation() {
+        qgcView.showDialog(specifyMapPositionDialog, qsTr("Specify Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+
+    }
+
+    Component {
+        id: specifyMapPositionDialog
+
+        EditPositionDialog {
+            coordinate:             center
+            onCoordinateChanged:    center = coordinate
         }
     }
 

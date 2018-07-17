@@ -37,8 +37,8 @@ SetupPage {
             // Help text which is shown both in the status text area prior to pressing a cal button and in the
             // pre-calibration dialog.
 
-            readonly property string orientationHelpSet:    qsTr("If the orientation is in the direction of flight, select None.")
-            readonly property string orientationHelpCal:    qsTr("Before calibrating make sure orientation settings are correct. ") + orientationHelpSet
+            readonly property string orientationHelpSet:    qsTr("If mounted in the direction of flight, select None.")
+            readonly property string orientationHelpCal:    qsTr("Before calibrating make sure rotation settings are correct. ") + orientationHelpSet
             readonly property string compassRotationText:   qsTr("If the compass or GPS module is mounted in flight direction, leave the default value (None)")
 
             readonly property string compassHelp:   qsTr("For Compass calibration you will need to rotate your vehicle through a number of positions.")
@@ -137,10 +137,10 @@ SetupPage {
                 onCalibrationComplete: {
                     switch (calType) {
                     case APMSensorsComponentController.CalTypeAccel:
-                        showMessage(qsTr("Calibration complete"), qsTr("Accelerometer calibration complete."), StandardButton.Ok)
+                        showDialog(postCalibrationComponent, qsTr("Accelerometer calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOffboardCompass:
-                        showMessage(qsTr("Calibration complete"), qsTr("Compass calibration complete."), StandardButton.Ok)
+                        showDialog(postCalibrationComponent, qsTr("Compass calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOnboardCompass:
                         showDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
@@ -262,6 +262,36 @@ SetupPage {
                                             qsTr("- Red indicates a compass which should not be used.\n\n") +
                                             qsTr("YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.")
                         }
+
+                        QGCButton {
+                            text:       qsTr("Reboot Vehicle")
+                            onClicked:  controller.vehicle.reboot()
+                        }
+                    }
+                }
+            }
+
+            Component {
+                id: postCalibrationComponent
+
+                QGCViewDialog {
+                    Column {
+                        anchors.margins:    ScreenTools.defaultFontPixelWidth
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        spacing:            ScreenTools.defaultFontPixelHeight
+
+                        QGCLabel {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            wrapMode:       Text.WordWrap
+                            text:           qsTr("YOU MUST REBOOT YOUR VEHICLE AFTER EACH CALIBRATION.")
+                        }
+
+                        QGCButton {
+                            text:       qsTr("Reboot Vehicle")
+                            onClicked:  controller.vehicle.rebootVehicle()
+                        }
                     }
                 }
             }
@@ -343,7 +373,7 @@ SetupPage {
                             }
 
                             Column {
-                                QGCLabel { text: qsTr("Autopilot Orientation:") }
+                                QGCLabel { text: qsTr("Autopilot Rotation:") }
 
                                 FactComboBox {
                                     width:      rotationColumnWidth

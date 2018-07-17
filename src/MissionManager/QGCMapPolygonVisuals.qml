@@ -328,6 +328,7 @@ Item {
 
         MissionItemIndicatorDrag {
             id:         dragArea
+            mapControl: _root.mapControl
             z:          _zorderDragHandle
             visible:    !_circle
 
@@ -447,6 +448,7 @@ Item {
         id: centerDragAreaComponent
 
         MissionItemIndicatorDrag {
+            mapControl:                 _root.mapControl
             z:                          _zorderCenterHandle
             onItemCoordinateChanged:    mapPolygon.center = itemCoordinate
             onDragStart:                mapPolygon.centerDrag = true

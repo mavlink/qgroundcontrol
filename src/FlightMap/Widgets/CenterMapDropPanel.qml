@@ -63,6 +63,17 @@ ColumnLayout {
     }
 
     QGCButton {
+        text:               qsTr("Vehicle")
+        Layout.fillWidth:   true
+        enabled:            _activeVehicle && _activeVehicle.coordinate.isValid
+
+        onClicked: {
+            dropPanel.hide()
+            map.center = activeVehicle.coordinate
+        }
+    }
+
+    QGCButton {
         text:               qsTr("Current Location")
         Layout.fillWidth:   true
         enabled:            map.gcsPosition.isValid
@@ -74,13 +85,12 @@ ColumnLayout {
     }
 
     QGCButton {
-        text:               qsTr("Vehicle")
+        text:               qsTr("Specified Location")
         Layout.fillWidth:   true
-        enabled:            _activeVehicle && _activeVehicle.coordinate.isValid
 
         onClicked: {
             dropPanel.hide()
-            map.center = activeVehicle.coordinate
+            map.centerToSpecifiedLocation()
         }
     }
 } // Column

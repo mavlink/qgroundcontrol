@@ -91,6 +91,7 @@
 		<file alias="QGroundControl/Controls/PreFlightCheckButton.qml">src/QmlControls/PreFlightCheckButton.qml</file>
 		<file alias="QGroundControl/Controls/PreFlightCheckGroup.qml">src/QmlControls/PreFlightCheckGroup.qml</file>
 		<file alias="QGroundControl/Controls/PreFlightCheckList.qml">src/QmlControls/PreFlightCheckList.qml</file>
+		<file alias="QGroundControl/Controls/PreFlightCheckModel.qml">src/QmlControls/PreFlightCheckModel.qml</file>
         <file alias="QGroundControl/Controls/QGCButton.qml">src/QmlControls/QGCButton.qml</file>
         <file alias="QGroundControl/Controls/QGCCheckBox.qml">src/QmlControls/QGCCheckBox.qml</file>
         <file alias="QGroundControl/Controls/QGCColoredImage.qml">src/QmlControls/QGCColoredImage.qml</file>
@@ -155,7 +156,7 @@
         <file alias="QGroundControl/FlightDisplay/GuidedAltitudeSlider.qml">src/FlightDisplay/GuidedAltitudeSlider.qml</file>
         <file alias="QGroundControl/FlightDisplay/MultiVehicleList.qml">src/FlightDisplay/MultiVehicleList.qml</file>
 		<file alias="QGroundControl/FlightDisplay/PreFlightBatteryCheck.qml">src/FlightDisplay/PreFlightBatteryCheck.qml</file>
-		<file alias="QGroundControl/FlightDisplay/PreFlightCheckModel.qml">src/FlightDisplay/PreFlightCheckModel.qml</file>
+		<file alias="QGroundControl/FlightDisplay/BuiltInPreFlightCheckModel.qml">src/FlightDisplay/BuiltInPreFlightCheckModel.qml</file>
 		<file alias="QGroundControl/FlightDisplay/PreFlightGPSCheck.qml">src/FlightDisplay/PreFlightGPSCheck.qml</file>
 		<file alias="QGroundControl/FlightDisplay/PreFlightRCCheck.qml">src/FlightDisplay/PreFlightRCCheck.qml</file>
 		<file alias="QGroundControl/FlightDisplay/PreFlightSensorsHealthCheck.qml">src/FlightDisplay/PreFlightSensorsHealthCheck.qml</file>

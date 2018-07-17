@@ -30,7 +30,7 @@ void TCPLoopBackServer::run(void)
     _tcpServer = new QTcpServer(this);
     Q_CHECK_PTR(_tcpServer);
 
-    bool connected = QObject::connect(_tcpServer, SIGNAL(newConnection()), this, SLOT(_newConnection()));
+    bool connected = QObject::connect(_tcpServer, &QTcpServer::newConnection, this, &TCPLoopBackServer::_newConnection);
     Q_ASSERT(connected);
     Q_UNUSED(connected); // Fix initialized-but-not-referenced warning on release builds
 
@@ -45,7 +45,7 @@ void TCPLoopBackServer::_newConnection(void)
     Q_ASSERT(_tcpServer);
     _tcpSocket = _tcpServer->nextPendingConnection();
     Q_ASSERT(_tcpSocket);
-    bool connected = QObject::connect(_tcpSocket, SIGNAL(readyRead()), this, SLOT(_readBytes()));
+    bool connected = QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &TCPLoopBackServer::_readBytes);
     Q_ASSERT(connected);
     Q_UNUSED(connected); // Fix initialized-but-not-referenced warning on release builds
 }

@@ -74,6 +74,7 @@ public:
     static const int boardIDTAPV1 = 64;         ///< TAP V1 board, as from USB PID
     static const int boardIDASCV1 = 65;         ///< ASC V1 board, as from USB PID
     static const int boardIDCrazyflie2 = 12;    ///< Crazyflie 2.0 board, as from USB PID
+    static const int boardIDNXPHliteV3 = 28;    ///< NXPHliteV3 board, as from USB PID
 
     /// Simulated board id for V3 which is a V2 board which supports larger flash space
     /// IMPORTANT: Make sure this id does not conflict with any newly added real board ids

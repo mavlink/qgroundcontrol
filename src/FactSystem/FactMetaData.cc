@@ -918,7 +918,7 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDist
             continue;
         }
 
-        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->areaUnits()->rawValue().toUInt();
+        uint settingsUnits = qgcApp()->toolbox()->settingsManager()->unitsSettings()->distanceUnits()->rawValue().toUInt();
 
         if (pAppSettingsTranslation->unitType == UnitDistance
                 && pAppSettingsTranslation->unitOption == settingsUnits) {

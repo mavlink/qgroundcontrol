@@ -36,7 +36,7 @@ public:
 
     /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
     /// custom builds to override the metadata.
-    Fact(FactMetaData* metaData, QObject* parent = NULL);
+    Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent = NULL);
 
     const Fact& operator=(const Fact& other);
 

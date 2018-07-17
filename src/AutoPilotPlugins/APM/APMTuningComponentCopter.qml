@@ -32,13 +32,6 @@ SetupPage {
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            // Older firmwares use THR_MODE, newer use MOT_THST_HOVER
-            property bool _throttleMidExists: controller.parameterExists(-1, "THR_MID")
-            property Fact _hoverTuneParam:  controller.getParameterFact(-1, _throttleMidExists ? "THR_MID" : "MOT_THST_HOVER")
-            property real _hoverTuneMin:    _throttleMidExists ? 200 : 0
-            property real _hoverTuneMax:    _throttleMidExists ? 800 : 1
-            property real _hoverTuneStep:   _throttleMidExists ? 10 : 0.01
-
             property bool _rcFeelAvailable:     controller.parameterExists(-1, "RC_FEEL")
             property bool _atcInputTCAvailable: controller.parameterExists(-1, "ATC_INPUT_TC")
             property Fact _rcFeel:              controller.getParameterFact(-1, "RC_FEEL", false)
@@ -78,7 +71,6 @@ SetupPage {
                 // handler which updates your property with the new value, this first value change will trash
                 // your bound values. In order to work around this we don't set the values into the Sliders until
                 // after Qml load is done. We also don't track value changes until Qml load completes.
-                throttleHover.value = _hoverTuneParam.value
                 rollPitch.value = _rateRollP.value
                 climb.value = _rateClimbP.value
                 if (_rcFeelAvailable) {
@@ -149,36 +141,6 @@ SetupPage {
                     anchors.right:      parent.right
                     anchors.top:        parent.top
                     spacing:            _margins
-
-                    Column {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-
-                        QGCLabel {
-                            text:       qsTr("Throttle Hover")
-                            font.family: ScreenTools.demiboldFontFamily
-                        }
-
-                        QGCLabel {
-                            text: qsTr("How much throttle is needed to maintain a steady hover")
-                        }
-
-                        Slider {
-                            id:                 throttleHover
-                            anchors.left:       parent.left
-                            anchors.right:      parent.right
-                            minimumValue:       _hoverTuneMin
-                            maximumValue:       _hoverTuneMax
-                            stepSize:           _hoverTuneStep
-                            tickmarksEnabled:   true
-
-                            onValueChanged: {
-                                if (_loadComplete) {
-                                    _hoverTuneParam.value = value
-                                }
-                            }
-                        }
-                    }
 
                     Column {
                         anchors.left:   parent.left
