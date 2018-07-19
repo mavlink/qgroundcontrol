@@ -142,6 +142,12 @@ Item {
             onTriggered:    mapPolyline.removeVertex(menu._removeVertexIndex)
         }
 
+        MenuItem {
+            id:             editVertexItem
+            text:           qsTr("Edit position..." )
+            onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        }
+
         MenuSeparator {
             visible:        removeVertexItem.visible
         }
@@ -149,6 +155,14 @@ Item {
         MenuItem {
             text:           qsTr("Load KML...")
             onTriggered:    kmlLoadDialog.openForLoad()
+        }
+    }
+
+    Component {
+        id: editPositionDialog
+        EditPositionDialog {
+            coordinate:  mapPolyline.vertexCoordinate(menu._removeVertexIndex)
+            onCoordinateChanged:  mapPolyline.adjustVertex(menu._removeVertexIndex,coordinate)
         }
     }
 
