@@ -37,7 +37,7 @@ QGCView {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
-    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
+    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 20
     property real _buttonWidth:                 ScreenTools.defaultFontPixelWidth * 18
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
     property Fact _enableAirMapFact:            QGroundControl.settingsManager.airMapSettings.enableAirMap
@@ -99,6 +99,47 @@ QGCView {
                     }
                 }
                 //-----------------------------------------------------------------
+                //-- Connection Status
+                Item {
+                    width:                      _panelWidth
+                    height:                     statusLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.appSettings.visible && _airMapEnabled
+                    QGCLabel {
+                        id:                     statusLabel
+                        text:                   qsTr("Connection Status")
+                        font.family:            ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     statusCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    visible:                    QGroundControl.settingsManager.appSettings.visible && _airMapEnabled
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    Column {
+                        id:                     statusCol
+                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                        width:                  parent.width
+                        anchors.centerIn:       parent
+                        QGCLabel {
+                            text:                       QGroundControl.airspaceManager.connected ? qsTr("Connected") : qsTr("Not Connected")
+                            color:                      QGroundControl.airspaceManager.connected ? qgcPal.colorGreen : qgcPal.colorRed
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                        }
+                        QGCLabel {
+                            text:                       QGroundControl.airspaceManager.connectStatus
+                            visible:                    QGroundControl.airspaceManager.connectStatus != ""
+                            wrapMode:                   Text.WordWrap
+                            horizontalAlignment:        Text.AlignHCenter
+                            width:                      parent.width * 0.8
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
                 //-- Login / Registration
                 Item {
                     width:                      _panelWidth
@@ -128,6 +169,8 @@ QGCView {
                             width:          _editFieldWidth
                             enabled:        _airMapEnabled
                             visible:        _usernameFact.visible
+                            Layout.fillWidth:    true
+                            Layout.minimumWidth: _editFieldWidth
                             property Fact _usernameFact: QGroundControl.settingsManager.airMapSettings.userName
                         }
                         QGCLabel { text: qsTr("Password:") }
@@ -137,6 +180,8 @@ QGCView {
                             enabled:        _airMapEnabled
                             visible:        _passwordFact.visible
                             echoMode:       TextInput.Password
+                            Layout.fillWidth:    true
+                            Layout.minimumWidth: _editFieldWidth
                             property Fact _passwordFact: QGroundControl.settingsManager.airMapSettings.password
                         }
                         Item {
@@ -168,11 +213,12 @@ QGCView {
                 //-----------------------------------------------------------------
                 //-- Pilot Profile
                 Item {
+                    //-- Disabled for now
                     width:                      _panelWidth
                     height:                     profileLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    QGroundControl.settingsManager.appSettings.visible
+                    visible:                    false // QGroundControl.settingsManager.appSettings.visible
                     QGCLabel {
                         id:             profileLabel
                         text:           qsTr("Pilot Profile (WIP)")
@@ -180,9 +226,11 @@ QGCView {
                     }
                 }
                 Rectangle {
+                    //-- Disabled for now
                     height:                     profileGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade
+                    visible:                    false // QGroundControl.settingsManager.appSettings.visible
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     GridLayout {
@@ -208,11 +256,11 @@ QGCView {
                     height:                     licenseLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    QGroundControl.settingsManager.appSettings.visible
+                    visible:                    QGroundControl.settingsManager.airMapSettings.usePersonalApiKey.visible
                     QGCLabel {
-                        id:             licenseLabel
-                        text:           qsTr("License")
-                        font.family:    ScreenTools.demiboldFontFamily
+                        id:                     licenseLabel
+                        text:                   qsTr("License")
+                        font.family:            ScreenTools.demiboldFontFamily
                     }
                 }
                 Rectangle {
@@ -221,20 +269,18 @@ QGCView {
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    QGroundControl.settingsManager.airMapSettings.usePersonalApiKey.visible
                     GridLayout {
-                        id:                 licenseGrid
-                        columns:            2
-                        columnSpacing:      ScreenTools.defaultFontPixelHeight * 2
-                        rowSpacing:         ScreenTools.defaultFontPixelWidth  * 0.25
-                        anchors.centerIn:   parent
-                        QGCCheckBox {
-                            id:             hasPrivateKey
-                            text:           qsTr("Personal API Key")
-                            onClicked:      QGroundControl.settingsManager.airMapSettings.usePersonalApiKey = checked
+                        id:                     licenseGrid
+                        columns:                2
+                        columnSpacing:          ScreenTools.defaultFontPixelHeight * 2
+                        rowSpacing:             ScreenTools.defaultFontPixelWidth  * 0.25
+                        anchors.centerIn:       parent
+                        FactCheckBox {
+                            id:                 hasPrivateKey
+                            text:               qsTr("Personal API Key")
+                            fact:               QGroundControl.settingsManager.airMapSettings.usePersonalApiKey
                             Layout.columnSpan:  2
-                            Component.onCompleted: {
-                                checked = QGroundControl.settingsManager.airMapSettings.usePersonalApiKey
-                            }
                         }
                         Item {
                             width:      1
@@ -243,9 +289,9 @@ QGCView {
                             Layout.columnSpan:  2
                         }
                         QGCLabel        { text: qsTr("API Key:"); visible: hasPrivateKey.checked; }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey; width: _editFieldWidth * 2; visible: hasPrivateKey.checked; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.apiKey; width: _editFieldWidth * 2; visible: hasPrivateKey.checked; Layout.fillWidth: true; Layout.minimumWidth: _editFieldWidth * 2; }
                         QGCLabel        { text: qsTr("Client ID:"); visible: hasPrivateKey.checked; }
-                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; width: _editFieldWidth * 2; visible: hasPrivateKey.checked; }
+                        FactTextField   { fact: QGroundControl.settingsManager.airMapSettings.clientID; width: _editFieldWidth * 2; visible: hasPrivateKey.checked; Layout.fillWidth: true; Layout.minimumWidth: _editFieldWidth * 2;  }
                     }
                 }
                 //-----------------------------------------------------------------

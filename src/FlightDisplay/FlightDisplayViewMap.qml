@@ -51,7 +51,7 @@ FlightMap {
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
-    property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
+    property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
@@ -85,6 +85,10 @@ FlightMap {
             _disableVehicleTracking = true
             panRecenterTimer.restart()
         }
+    }
+
+    on_AirspaceEnabledChanged: {
+        updateAirspace()
     }
 
     function pointInRect(point, rect) {

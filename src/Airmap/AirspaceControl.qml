@@ -24,11 +24,11 @@ Item {
     property bool   planView:           true
 
     property color  _airspaceColor:     _validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray
-    property bool   _validRules:        QGroundControl.airspaceManager.ruleSets.valid
-    property bool   _validAdvisories:   QGroundControl.airspaceManager.advisories.valid
+    property bool   _validRules:        QGroundControl.airspaceManager.connected && QGroundControl.airspaceManager.ruleSets.valid
+    property bool   _validAdvisories:   QGroundControl.airspaceManager.connected && QGroundControl.airspaceManager.advisories.valid
     property color  _textColor:         qgcPal.text
-    property bool   _colapsed:          !QGroundControl.airspaceManager.airspaceVisible
-    property var    _flightPermit:      QGroundControl.airspaceManager.flightPlan.flightPermitStatus
+    property bool   _colapsed:          !QGroundControl.airspaceManager.airspaceVisible || !QGroundControl.airspaceManager.connected
+    property int    _flightPermit:      QGroundControl.airspaceManager.flightPlan.flightPermitStatus
     property bool   _dirty:             false
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
@@ -84,7 +84,7 @@ Item {
         id:         colapsedRect
         width:      parent.width
         height:     _colapsed ? colapsedRow.height + ScreenTools.defaultFontPixelHeight : 0
-        color:      _validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray
+        color:      QGroundControl.airspaceManager.connected ? (_validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray) : _colorGray
         radius:     _radius
         visible:    _colapsed
         Row {
@@ -121,8 +121,14 @@ Item {
             }
             AirspaceWeather {
                 iconHeight:             ScreenTools.defaultFontPixelHeight * 2
-                visible:                QGroundControl.airspaceManager.weatherInfo.valid
+                visible:                QGroundControl.airspaceManager.weatherInfo.valid && QGroundControl.airspaceManager.connected
                 contentColor:           _textColor
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QGCLabel {
+                text:                   qsTr("Not Connected")
+                color:                  qgcPal.text
+                visible:                !QGroundControl.airspaceManager.connected
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
@@ -133,12 +139,14 @@ Item {
             source:                 "qrc:/airmap/expand.svg"
             color:                  _textColor
             fillMode:               Image.PreserveAspectFit
+            visible:                QGroundControl.airspaceManager.connected
             anchors.right:          parent.right
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
         }
         MouseArea {
-            anchors.fill:   parent
+            anchors.fill:           parent
+            enabled:                QGroundControl.airspaceManager.connected
             onClicked:  {
                 QGroundControl.airspaceManager.airspaceVisible = true
             }

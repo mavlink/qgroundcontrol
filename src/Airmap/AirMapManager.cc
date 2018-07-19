@@ -42,9 +42,9 @@ AirMapManager::AirMapManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     _logger = std::make_shared<qt::Logger>();
     qt::register_types(); // TODO: still needed?
-    _logger->logging_category().setEnabled(QtDebugMsg,   false);
-    _logger->logging_category().setEnabled(QtInfoMsg,    false);
-    _logger->logging_category().setEnabled(QtWarningMsg, false);
+    _logger->logging_category().setEnabled(QtDebugMsg,   true);
+    _logger->logging_category().setEnabled(QtInfoMsg,    true);
+    _logger->logging_category().setEnabled(QtWarningMsg, true);
     _dispatchingLogger = std::make_shared<qt::DispatchingLogger>(_logger);
     connect(&_shared, &AirMapSharedState::error, this, &AirMapManager::_error);
 }
@@ -63,12 +63,20 @@ AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
     AirspaceManager::setToolbox(toolbox);
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
+    connect(ap->enableAirMap(),     &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->usePersonalApiKey(),&Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->apiKey(),           &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->clientID(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->userName(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->password(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     _settingsChanged();
+}
+
+//-----------------------------------------------------------------------------
+bool
+AirMapManager::connected() const
+{
+    return _shared.client() != NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -84,29 +92,41 @@ void
 AirMapManager::_settingsChanged()
 {
     qCDebug(AirMapManagerLog) << "AirMap settings changed";
+    _connectStatus.clear();
+    emit connectStatusChanged();
     AirMapSettings* ap = _toolbox->settingsManager()->airMapSettings();
+    //-- If we are disabled, there is nothing else to do.
+    if (!ap->enableAirMap()->rawValue().toBool()) {
+        if(_shared.client()) {
+            delete _shared.client();
+            _shared.setClient(nullptr);
+            emit connectedChanged();
+        }
+        return;
+    }
     AirMapSharedState::Settings settings;
-    settings.apiKey = ap->apiKey()->rawValueString();
+    if(ap->usePersonalApiKey()->rawValue().toBool()) {
+        settings.apiKey     = ap->apiKey()->rawValueString();
+        settings.clientID   = ap->clientID()->rawValueString();
+    }
+    settings.userName = ap->userName()->rawValueString();
+    settings.password = ap->password()->rawValueString();
+    //-- If we have a hardwired key (and no custom key is present), set it.
 #if defined(QGC_AIRMAP_KEY_AVAILABLE)
+    if(!ap->usePersonalApiKey()->rawValue().toBool()) {
+        settings.apiKey     = kAirmapAPIKey;
+        settings.clientID   = kAirmapClientID;
+    }
     bool apiKeyChanged = settings.apiKey != _shared.settings().apiKey || settings.apiKey.isEmpty();
 #else
     bool apiKeyChanged = settings.apiKey != _shared.settings().apiKey;
 #endif
-    settings.clientID = ap->clientID()->rawValueString();
-    settings.userName = ap->userName()->rawValueString();
-    settings.password = ap->password()->rawValueString();
-    //-- If we have a hardwired key (and no custom key is present or enabled), set it.
-#if defined(QGC_AIRMAP_KEY_AVAILABLE)
-    if(!ap->usePersonalApiKey()->rawValue().toBool() && (settings.apiKey.isEmpty() || settings.clientID.isEmpty())) {
-        settings.apiKey     = kAirmapAPIKey;
-        settings.clientID   = kAirmapClientID;
-    }
-#endif
     _shared.setSettings(settings);
     //-- Need to re-create the client if the API key changed
-    if (_shared.client() && apiKeyChanged) {
+    if ((_shared.client() && apiKeyChanged) || !ap->enableAirMap()->rawValue().toBool()) {
         delete _shared.client();
         _shared.setClient(nullptr);
+        emit connectedChanged();
     }
     if (!_shared.client() && settings.apiKey != "") {
         qCDebug(AirMapManagerLog) << "Creating AirMap client";
@@ -119,16 +139,28 @@ AirMapManager::_settingsChanged()
             if (result) {
                 qCDebug(AirMapManagerLog) << "Successfully created airmap::qt::Client instance";
                 _shared.setClient(result.value());
+                emit connectedChanged();
+                _connectStatus = tr("AirMap Enabled");
+                emit connectStatusChanged();
             } else {
                 qWarning("Failed to create airmap::qt::Client instance");
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
-                _error("Failed to create airmap::qt::Client instance",
-                        QString::fromStdString(result.error().message()), description);
+                QString error = QString::fromStdString(result.error().message());
+                _error(tr("Failed to create airmap::qt::Client instance"),
+                        error, description);
+                _connectStatus = error;
+                if(!description.isEmpty()) {
+                    _connectStatus += "\n";
+                    _connectStatus += description;
+                }
+                emit connectStatusChanged();
             }
         });
     } else {
         if(settings.apiKey == "") {
-            qCDebug(AirMapManagerLog) << "No API key for AirMap";
+            _connectStatus = tr("No API key for AirMap");
+            emit connectStatusChanged();
+            qCDebug(AirMapManagerLog) << _connectStatus;
         }
     }
 }

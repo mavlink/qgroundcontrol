@@ -47,7 +47,7 @@ QGCView {
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    property bool   _airspaceEnabled:                    QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
+    property bool   _airspaceEnabled:                    QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _planMasterController:              masterController
     property var    _missionController:                 _planMasterController.missionController
     property var    _geoFenceController:                _planMasterController.geoFenceController
@@ -115,6 +115,7 @@ QGCView {
         if(QGroundControl.airmapSupported) {
             if(_airspaceEnabled) {
                 planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
+                updateAirspace()
             } else {
                 planControlColapsed = false
             }
