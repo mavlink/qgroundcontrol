@@ -159,7 +159,8 @@ Item {
         id:  mouseAreaComponent
 
         MouseArea {
-            anchors.fill: map
+            anchors.fill:   map
+            z:              QGroundControl.zOrderMapItems + 1   // Over item indicators
 
             onClicked: {
                 var coordinate = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)

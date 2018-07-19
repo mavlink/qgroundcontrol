@@ -321,12 +321,11 @@ FlightMap {
         visible:    false
 
         property alias center:  _mapCircle.center
-        property real radius:   defaultRadius
 
         readonly property real defaultRadius: 30
 
         function show(coord) {
-            orbitMapCircle.radius = defaultRadius
+            _mapCircle.radius.rawValue = defaultRadius
             orbitMapCircle.center = coord
             orbitMapCircle.visible = true
         }
@@ -335,12 +334,16 @@ FlightMap {
             orbitMapCircle.visible = false
         }
 
+        function radius() {
+            return _mapCircle.radius.rawValue
+        }
+
         Component.onCompleted: guidedActionsController.orbitMapCircle = orbitMapCircle
 
         QGCMapCircle {
             id:                 _mapCircle
             interactive:        true
-            radius.rawValue:    orbitMapCircle.radius
+            radius.rawValue:    30
         }
     }
 

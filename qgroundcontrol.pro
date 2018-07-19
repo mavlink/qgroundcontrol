@@ -644,6 +644,8 @@ HEADERS += \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/MavlinkConsoleController.h \
     src/GPS/Drivers/src/gps_helper.h \
+    src/GPS/Drivers/src/rtcm.h \
+    src/GPS/Drivers/src/ashtech.h \
     src/GPS/Drivers/src/ubx.h \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
@@ -826,6 +828,8 @@ SOURCES += \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/MavlinkConsoleController.cc \
     src/GPS/Drivers/src/gps_helper.cpp \
+    src/GPS/Drivers/src/rtcm.cpp \
+    src/GPS/Drivers/src/ashtech.cpp \
     src/GPS/Drivers/src/ubx.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \

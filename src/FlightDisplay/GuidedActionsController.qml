@@ -130,7 +130,7 @@ Item {
     property bool   _hideEmergenyStop:      !QGroundControl.corePlugin.options.guidedBarShowEmergencyStop
     property bool   _hideOrbit:             !QGroundControl.corePlugin.options.guidedBarShowOrbit
     property bool   _vehicleWasFlying:      false
-    property bool   _rcRSSIAvailable:       _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI < 255 : false
+    property bool   _rcRSSIAvailable:       _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false
 
     //Handy code for debugging state problems
     property bool __debugGuidedStates:      false
@@ -389,7 +389,7 @@ Item {
             _activeVehicle.setCurrentMissionSequence(actionData)
             break
         case actionOrbit:
-            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius, _activeVehicle.altitudeAMSL.rawValue + actionAltitudeChange)
+            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius(), _activeVehicle.altitudeAMSL.rawValue + actionAltitudeChange)
             orbitMapCircle.hide()
             break
         case actionLandAbort:
