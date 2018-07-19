@@ -39,6 +39,8 @@ public:
 
     QString                         providerName                            () const override { return QString("AirMap"); }
     AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) override;
+    bool                            connected                               () const override;
+    QString                         connectStatus                           () const override { return _connectStatus; }
 
 protected:
     AirspaceRulesetsProvider*       _instantiateRulesetsProvider            () override;
@@ -52,6 +54,7 @@ private slots:
     void _settingsChanged   ();
 
 private:
+    QString                                         _connectStatus;
     AirMapSharedState                               _shared;
     std::shared_ptr<airmap::qt::Logger>             _logger;
     std::shared_ptr<airmap::qt::DispatchingLogger>  _dispatchingLogger;

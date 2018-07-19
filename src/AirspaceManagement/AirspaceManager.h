@@ -63,6 +63,8 @@ public:
     Q_PROPERTY(AirspaceRulesetsProvider*    ruleSets            READ ruleSets           CONSTANT)
     Q_PROPERTY(AirspaceRestrictionProvider* airspaces           READ airspaces          CONSTANT)
     Q_PROPERTY(AirspaceFlightPlanProvider*  flightPlan          READ flightPlan         CONSTANT)
+    Q_PROPERTY(bool                         connected           READ connected          NOTIFY connectedChanged)
+    Q_PROPERTY(QString                      connectStatus       READ connectStatus      NOTIFY connectStatusChanged)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
     Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView);
@@ -79,6 +81,8 @@ public:
 
     virtual bool                airspaceVisible () { return _airspaceVisible; }
     virtual void             setAirspaceVisible (bool set) { _airspaceVisible = set; emit airspaceVisibleChanged(); }
+    virtual bool                connected       () const = 0;
+    virtual QString             connectStatus   () const { return QString(); }
 
     /**
      * Factory method to create an AirspaceVehicleManager object
@@ -87,6 +91,8 @@ public:
 
 signals:
     void                airspaceVisibleChanged  ();
+    void                connectedChanged        ();
+    void                connectStatusChanged    ();
 
 protected:
     /**
