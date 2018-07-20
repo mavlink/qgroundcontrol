@@ -66,8 +66,6 @@ void QGCLoggingCategoryRegister::setFilterRulesFromSettings(const QString& comma
     }
     QString filterRules;
 
-    // Turn off bogus ssl warning
-    filterRules += "qt.network.ssl.warning=false\n";
     filterRules += "*Log.debug=false\n";
 
     // Set up filters defined in settings

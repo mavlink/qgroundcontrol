@@ -209,6 +209,17 @@ DropButton {
                 }
             }
 
+
+            QGCButton {
+                text:               qsTr("Specified Location")
+                Layout.fillWidth:   true
+
+                onClicked: {
+                    dropButton.hideDropDown()
+                    map.centerToSpecifiedLocation()
+                }
+            }
+
             QGCButton {
                 text:               qsTr("Vehicle")
                 Layout.fillWidth:   true

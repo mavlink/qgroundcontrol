@@ -57,7 +57,7 @@ QString ULogParser::extractArraySize(QString &typeNameFull, int &arraySize)
         return typeNameFull;
     }
 
-    arraySize = typeNameFull.mid(startPos + 1, endPos - startPos - 1).toInt();
+    arraySize = typeNameFull.midRef(startPos + 1, endPos - startPos - 1).toInt();
     return typeNameFull.mid(0, startPos);
 }
 

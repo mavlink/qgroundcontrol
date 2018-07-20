@@ -57,6 +57,8 @@ public:
     Fact* terrainAdjustMaxDescentRate   (void) { return &_terrainAdjustMaxClimbRateFact; }
     Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxDescentRateFact; }
 
+    const Fact* hoverAndCapture         (void) const { return &_hoverAndCaptureFact; }
+
     int             cameraShots             (void) const { return _cameraShots; }
     double          coveredArea             (void) const;
     bool            hoverAndCaptureAllowed  (void) const;
@@ -65,6 +67,10 @@ public:
     virtual double  timeBetweenShots        (void) { return 0; } // Most be overridden. Implementation here is needed for unit testing.
 
     void setFollowTerrain(bool followTerrain);
+
+    double  triggerDistance         (void) const { return _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble(); }
+    bool    hoverAndCaptureEnabled  (void) const { return hoverAndCapture()->rawValue().toBool(); }
+    bool    triggerCamera           (void) const { return triggerDistance() != 0; }
 
     // Overrides from ComplexMissionItem
 
@@ -148,10 +154,11 @@ protected:
     QGCMapPolygon   _surveyAreaPolygon;
 
     enum CoordType {
-        CoordTypeInterior,
-        CoordTypeInteriorTerrainAdded,
-        CoordTypeSurveyEdge,
-        CoordTypeTurnaround
+        CoordTypeInterior,              ///< Interior waypoint for flight path only
+        CoordTypeInteriorHoverTrigger,  ///< Interior waypoint for hover and capture trigger
+        CoordTypeInteriorTerrainAdded,  ///< Interior waypoint added for terrain
+        CoordTypeSurveyEdge,            ///< Waypoint at edge of survey polygon
+        CoordTypeTurnaround             ///< Waypoint outside of survey polygon for turnaround
     };
 
     typedef struct {

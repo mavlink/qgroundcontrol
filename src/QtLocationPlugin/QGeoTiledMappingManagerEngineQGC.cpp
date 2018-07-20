@@ -216,7 +216,7 @@ QGeoTiledMappingManagerEngineQGC::_setCache(const QVariantMap &parameters)
         if(!QFileInfo(cacheDir).exists()) {
             if(!QDir::root().mkpath(cacheDir)) {
                 qWarning() << "Could not create mapping disk cache directory: " << cacheDir;
-                cacheDir = QDir::homePath() + QLatin1String("/.qgcmapscache/");
+                cacheDir = QDir::homePath() + QStringLiteral("/.qgcmapscache/");
             }
         }
     }

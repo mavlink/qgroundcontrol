@@ -34,12 +34,13 @@ public:
     Q_PROPERTY(RallyPointController*    rallyPointController    READ rallyPointController   CONSTANT)
 
     Q_PROPERTY(Vehicle*     controllerVehicle   MEMBER _controllerVehicle               CONSTANT)
-    Q_PROPERTY(bool         offline             READ offline                            NOTIFY offlineEditingChanged)   ///< true: controller is not connected to an active vehicle
+    Q_PROPERTY(bool         offline             READ offline                            NOTIFY offlineChanged)          ///< true: controller is not connected to an active vehicle
     Q_PROPERTY(bool         containsItems       READ containsItems                      NOTIFY containsItemsChanged)    ///< true: Elemement is non-empty
     Q_PROPERTY(bool         syncInProgress      READ syncInProgress                     NOTIFY syncInProgressChanged)   ///< true: Information is currently being saved/sent, false: no active save/send in progress
     Q_PROPERTY(bool         dirty               READ dirty              WRITE setDirty  NOTIFY dirtyChanged)            ///< true: Unsaved/sent changes are present, false: no changes since last save/send
     Q_PROPERTY(QString      fileExtension       READ fileExtension                      CONSTANT)                       ///< File extension for missions
     Q_PROPERTY(QString      kmlFileExtension    READ kmlFileExtension                   CONSTANT)
+    Q_PROPERTY(QString      currentPlanFile     READ currentPlanFile                    NOTIFY currentPlanFileChanged)
     ///< kml file extension for missions
     Q_PROPERTY(QStringList  loadNameFilters     READ loadNameFilters                    CONSTANT)                       ///< File filter list loading plan files
     Q_PROPERTY(QStringList  saveNameFilters     READ saveNameFilters                    CONSTANT)                       ///< File filter list saving plan files
@@ -63,6 +64,7 @@ public:
     Q_INVOKABLE void loadFromVehicle(void);
     Q_INVOKABLE void sendToVehicle(void);
     Q_INVOKABLE void loadFromFile(const QString& filename);
+    Q_INVOKABLE void saveToCurrent();
     Q_INVOKABLE void saveToFile(const QString& filename);
     Q_INVOKABLE void saveToKml(const QString& filename);
     Q_INVOKABLE void removeAll(void);                       ///< Removes all from controller only, synce required to remove from vehicle
@@ -74,11 +76,12 @@ public:
 
     bool        offline         (void) const { return _offline; }
     bool        containsItems   (void) const;
-    bool        syncInProgress  (void) const { return _syncInProgress; }
+    bool        syncInProgress  (void) const;
     bool        dirty           (void) const;
     void        setDirty        (bool dirty);
     QString     fileExtension   (void) const;
     QString     kmlFileExtension(void) const;
+    QString     currentPlanFile (void) const { return _currentPlanFile; }
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
     QStringList fileKmlFilters  (void) const;
@@ -90,10 +93,10 @@ public:
 
 signals:
     void containsItemsChanged   (bool containsItems);
-    void syncInProgressChanged  (bool syncInProgress);
+    void syncInProgressChanged  (void);
     void dirtyChanged           (bool dirty);
-    void vehicleChanged         (Vehicle* vehicle);
-    void offlineEditingChanged  (bool offlineEditing);
+    void offlineChanged  		(bool offlineEditing);
+    void currentPlanFileChanged ();
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
@@ -119,7 +122,7 @@ private:
     bool                    _loadRallyPoints;
     bool                    _sendGeoFence;
     bool                    _sendRallyPoints;
-    bool                    _syncInProgress;
+    QString                 _currentPlanFile;
 
     static const int    _planFileVersion;
     static const char*  _planFileType;

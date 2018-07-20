@@ -25,13 +25,23 @@ public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
 
-    Q_PROPERTY(QmlObjectListModel*  cameras     READ cameras    NOTIFY camerasChanged)
+    Q_PROPERTY(QmlObjectListModel*  cameras             READ cameras            NOTIFY camerasChanged)
+    Q_PROPERTY(QStringList          cameraLabels        READ cameraLabels       NOTIFY cameraLabelsChanged)
+    Q_PROPERTY(int                  currentCamera       READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
 
     //-- Return a list of cameras provided by this vehicle
-    virtual QmlObjectListModel* cameras     () { return &_cameras; }
+    virtual QmlObjectListModel* cameras             () { return &_cameras; }
+    //-- Camera names to show the user (for selection)
+    virtual QStringList          cameraLabels       () { return _cameraLabels; }
+    //-- Current selected camera
+    virtual int                 currentCamera       () { return _currentCamera; }
+    //-- Set current camera
+    virtual void                setCurrentCamera    (int sel);
 
 signals:
-    void    camerasChanged                  ();
+    void    camerasChanged          ();
+    void    cameraLabelsChanged     ();
+    void    currentCameraChanged    ();
 
 protected slots:
     virtual void    _vehicleReady           (bool ready);
@@ -53,5 +63,7 @@ protected:
     bool                _vehicleReadyState;
     int                 _currentTask;
     QmlObjectListModel  _cameras;
+    QStringList         _cameraLabels;
     QMap<int, bool>     _cameraInfoRequested;
+    int                 _currentCamera;
 };

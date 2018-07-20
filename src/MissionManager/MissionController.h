@@ -254,9 +254,9 @@ private:
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
     void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
-    void _addCommandTimeDelay(SimpleMissionItem* simpleItem, bool vtolInHover);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
     int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i);
+    void _warnIfTerrainFrameUsed(void);
 
 private:
     MissionManager*         _missionManager;
@@ -267,6 +267,7 @@ private:
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
+    bool                    _inRecalcSequence;
     MissionFlightStatus_t   _missionFlightStatus;
     QString                 _surveyMissionItemName;
     QString                 _fwLandingMissionItemName;

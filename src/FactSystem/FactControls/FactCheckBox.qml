@@ -16,7 +16,5 @@ QGCCheckBox {
                            (fact.value === 0 ? Qt.Unchecked : Qt.Checked)) :
                       Qt.Unchecked
 
-    text: qsTr("Label")
-
     onClicked: fact.value = (checked ? checkedValue : uncheckedValue)
 }

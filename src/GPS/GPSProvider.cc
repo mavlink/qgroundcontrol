@@ -16,6 +16,7 @@
 #include <QDebug>
 
 #include "Drivers/src/ubx.h"
+#include "Drivers/src/ashtech.h"
 #include "Drivers/src/gps_helper.h"
 #include "definitions.h"
 
@@ -53,7 +54,7 @@ void GPSProvider::run()
     _serial->setFlowControl(QSerialPort::NoFlowControl);
 
     unsigned int baudrate;
-    GPSDriverUBX* gpsDriver = nullptr;
+    GPSHelper* gpsDriver = nullptr;
 
     while (!_requestStop) {
 
@@ -62,7 +63,13 @@ void GPSProvider::run()
             gpsDriver = nullptr;
         }
 
-        gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+        if (_type == GPSType::trimble) {
+            gpsDriver = new GPSDriverAshtech(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+            baudrate = 115200;
+        } else {
+            gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
+            baudrate = 0; // auto-configure
+        }
         gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000, _surveryInDurationSecs);
 
         if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
@@ -101,8 +108,9 @@ void GPSProvider::run()
     qCDebug(RTKGPSLog) << "Exiting GPS thread";
 }
 
-GPSProvider::GPSProvider(const QString& device, bool enableSatInfo, double surveyInAccMeters, int surveryInDurationSecs, const std::atomic_bool& requestStop)
+GPSProvider::GPSProvider(const QString& device, GPSType type, bool enableSatInfo, double surveyInAccMeters, int surveryInDurationSecs, const std::atomic_bool& requestStop)
     : _device(device)
+    , _type(type)
     , _requestStop(requestStop)
     , _surveyInAccMeters(surveyInAccMeters)
     , _surveryInDurationSecs(surveryInDurationSecs)

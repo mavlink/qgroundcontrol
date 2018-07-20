@@ -73,6 +73,7 @@ public:
     Q_PROPERTY(double altDifference     READ altDifference      WRITE setAltDifference      NOTIFY altDifferenceChanged)        ///< Change in altitude from previous waypoint
     Q_PROPERTY(double altPercent        READ altPercent         WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
     Q_PROPERTY(double terrainPercent    READ terrainPercent     WRITE setTerrainPercent     NOTIFY terrainPercentChanged)       ///< Percent of terrain altitude in mission altitude
+    Q_PROPERTY(bool   terrainCollision  READ terrainCollision   WRITE setTerrainCollision   NOTIFY terrainCollisionChanged)     ///< true: Item collides with terrain
     Q_PROPERTY(double azimuth           READ azimuth            WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
     Q_PROPERTY(double distance          READ distance           WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
 
@@ -84,6 +85,7 @@ public:
     double altDifference    (void) const { return _altDifference; }
     double altPercent       (void) const { return _altPercent; }
     double terrainPercent   (void) const { return _terrainPercent; }
+    bool   terrainCollision (void) const { return _terrainCollision; }
     double azimuth          (void) const { return _azimuth; }
     double distance         (void) const { return _distance; }
     bool   isCurrentItem    (void) const { return _isCurrentItem; }
@@ -96,6 +98,7 @@ public:
     void setAltDifference   (double altDifference);
     void setAltPercent      (double altPercent);
     void setTerrainPercent  (double terrainPercent);
+    void setTerrainCollision(bool terrainCollision);
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
 
@@ -151,6 +154,9 @@ public:
     /// Adjust the altitude of the item if appropriate to the new altitude.
     virtual void applyNewAltitude(double newAltitude) = 0;
 
+    /// @return Amount of additional time delay in seconds needed to fly this item
+    virtual double additionalTimeDelay(void) const = 0;
+
     double  missionGimbalYaw    (void) const { return _missionGimbalYaw; }
     double  missionVehicleYaw   (void) const { return _missionVehicleYaw; }
     void    setMissionVehicleYaw(double vehicleYaw);
@@ -163,6 +169,7 @@ signals:
     void altDifferenceChanged           (double altDifference);
     void altPercentChanged              (double altPercent);
     void terrainPercentChanged          (double terrainPercent);
+    void terrainCollisionChanged        (double terrainCollision);
     void azimuthChanged                 (double azimuth);
     void commandDescriptionChanged      (void);
     void commandNameChanged             (void);
@@ -184,6 +191,7 @@ signals:
     void missionGimbalYawChanged        (double missionGimbalYaw);
     void missionVehicleYawChanged       (double missionVehicleYaw);
     void terrainAltitudeChanged         (double terrainAltitude);
+    void additionalTimeDelayChanged     (void);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);
@@ -199,6 +207,7 @@ protected:
     double      _altDifference;             ///< Difference in altitude from previous waypoint
     double      _altPercent;                ///< Percent of total altitude change in mission
     double      _terrainPercent;            ///< Percent of terrain altitude for coordinate
+    bool        _terrainCollision;          ///< true: item collides with terrain
     double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     QString     _editorQml;                 ///< Qml resource for editing item
