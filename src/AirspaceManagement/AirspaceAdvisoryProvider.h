@@ -50,7 +50,7 @@ public:
      * Set region of interest that should be queried. When finished, the advisoryChanged() signal will be emmited.
      * @param center Center coordinate for ROI
      */
-    virtual void setROI (const QGCGeoBoundingCube& roi) = 0;
+    virtual void setROI (const QGCGeoBoundingCube& roi, bool reset = false) = 0;
 
 signals:
     void advisoryChanged  ();

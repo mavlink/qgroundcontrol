@@ -26,9 +26,10 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
     QGCTool::setToolbox(toolbox);
 }
 
-void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView)
+void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset)
 {
     Q_UNUSED(pointNW);
     Q_UNUSED(pointSE);
     Q_UNUSED(planView);
+    Q_UNUSED(reset)
 }

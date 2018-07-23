@@ -57,7 +57,7 @@ public:
     bool                valid               () override { return _valid; }
     AdvisoryColor       airspaceColor       () override { return _airspaceColor; }
     QmlObjectListModel* advisories          () override { return &_advisories; }
-    void                setROI              (const QGCGeoBoundingCube& roi) override;
+    void                setROI              (const QGCGeoBoundingCube& roi, bool reset = false) override;
 signals:
     void                error               (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
 private:

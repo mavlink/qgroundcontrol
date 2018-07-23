@@ -31,7 +31,7 @@ public:
     AirMapRestrictionManager            (AirMapSharedState& shared);
     QmlObjectListModel* polygons        () override { return &_polygons; }
     QmlObjectListModel* circles         () override { return &_circles; }
-    void                setROI          (const QGCGeoBoundingCube &roi) override;
+    void                setROI          (const QGCGeoBoundingCube &roi, bool reset = false) override;
 
 signals:
     void error                          (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

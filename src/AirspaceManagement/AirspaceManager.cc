@@ -22,13 +22,17 @@
 
 QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 
+//-----------------------------------------------------------------------------
 AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _airspaceVisible(false)
 {
     _roiUpdateTimer.setInterval(2000);
     _roiUpdateTimer.setSingleShot(true);
-    connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROI);
+    _updateTimer.setInterval(1000);
+    _updateTimer.setSingleShot(true);
+    connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROITimeout);
+    connect(&_updateTimer,    &QTimer::timeout, this, &AirspaceManager::_updateTimeout);
     qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
     qmlRegisterUncreatableType<AirspaceFlightPlanProvider>  ("QGroundControl.Airspace",      1, 0, "AirspaceFlightPlanProvider",     "Reference only");
     qmlRegisterUncreatableType<AirspaceManager>             ("QGroundControl.Airspace",      1, 0, "AirspaceManager",                "Reference only");
@@ -42,6 +46,7 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     qmlRegisterUncreatableType<AirspaceFlightInfo>          ("QGroundControl.Airspace",      1, 0, "AirspaceFlightInfo",             "Reference only");
 }
 
+//-----------------------------------------------------------------------------
 AirspaceManager::~AirspaceManager()
 {
     if(_advisories) {
@@ -61,7 +66,9 @@ AirspaceManager::~AirspaceManager()
     }
 }
 
-void AirspaceManager::setToolbox(QGCToolbox* toolbox)
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     // We should not call virtual methods in the constructor, so we instantiate the restriction provider here
@@ -72,23 +79,45 @@ void AirspaceManager::setToolbox(QGCToolbox* toolbox)
     _flightPlan         = _instantiateAirspaceFlightPlanProvider();
 }
 
-void AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView)
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset)
 {
     if(planView) {
         //-- Is there a mission?
         if(_flightPlan->flightPermitStatus() != AirspaceFlightPlanProvider::PermitNone) {
             //-- Is there a polygon to work with?
             if(_flightPlan->missionArea()->isValid() && _flightPlan->missionArea()->area() > 0.0) {
-                _setROI(*_flightPlan->missionArea());
+                if(reset) {
+                    _roi = *_flightPlan->missionArea();
+                    _updateToROI(true);
+                } else {
+                    _setROI(*_flightPlan->missionArea());
+                }
                 return;
             }
         }
     }
     //-- Use screen coordinates (what you see is what you get)
-    _setROI(QGCGeoBoundingCube(pointNW, pointSE));
+    if(reset) {
+        _roi = QGCGeoBoundingCube(pointNW, pointSE);
+        _updateToROI(true);
+    } else {
+        _setROI(QGCGeoBoundingCube(pointNW, pointSE));
+    }
 }
 
-void AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
+
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::setUpdate()
+{
+    _updateTimer.start();
+}
+
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 {
     if(_roi != roi) {
         _roi = roi;
@@ -96,18 +125,37 @@ void AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
     }
 }
 
-void AirspaceManager::_updateToROI()
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::_updateToROI(bool reset)
 {
+    if(reset) {
+        _updateTimer.stop();
+    }
     if(_airspaces) {
-        _airspaces->setROI(_roi);
+        _airspaces->setROI(_roi, reset);
     }
     if(_ruleSetsProvider) {
-        _ruleSetsProvider->setROI(_roi);
+        _ruleSetsProvider->setROI(_roi, reset);
     }
     if(_weatherProvider) {
-        _weatherProvider->setROI(_roi);
+        _weatherProvider->setROI(_roi, reset);
     }
     if (_advisories) {
-        _advisories->setROI(_roi);
+        _advisories->setROI(_roi, reset);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::_updateToROITimeout()
+{
+    _updateToROI(false);
+}
+
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::_updateTimeout()
+{
+    emit update();
 }

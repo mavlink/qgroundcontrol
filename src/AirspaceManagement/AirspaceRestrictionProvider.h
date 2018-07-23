@@ -38,7 +38,7 @@ public:
      * @param center Center coordinate for ROI
      * @param radiusMeters Radius in meters around center which is of interest
      */
-    virtual void setROI (const QGCGeoBoundingCube& roi) = 0;
+    virtual void setROI (const QGCGeoBoundingCube& roi, bool reset = false) = 0;
 
     virtual QmlObjectListModel* polygons        () = 0;     ///< List of AirspacePolygonRestriction objects
     virtual QmlObjectListModel* circles         () = 0;     ///< List of AirspaceCircularRestriction objects

@@ -89,12 +89,12 @@ QGCView {
         _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
     }
 
-    function updateAirspace() {
+    function updateAirspace(reset) {
         if(_airspaceEnabled) {
             var coordinateNW = editorMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
             var coordinateSE = editorMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
             if(coordinateNW.isValid && coordinateSE.isValid) {
-                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, true /*planView*/)
+                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, true /*planView*/, reset)
             }
         }
     }
@@ -115,7 +115,7 @@ QGCView {
         if(QGroundControl.airmapSupported) {
             if(_airspaceEnabled) {
                 planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
-                updateAirspace()
+                updateAirspace(true)
             } else {
                 planControlColapsed = false
             }
@@ -184,6 +184,9 @@ QGCView {
         target: QGroundControl.airspaceManager
         onAirspaceVisibleChanged: {
             planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
+        }
+        onUpdate: {
+            updateAirspace(true)
         }
     }
 
@@ -469,8 +472,8 @@ QGCView {
 
             QGCMapPalette { id: mapPal; lightColors: editorMap.isSatelliteMap }
 
-            onZoomLevelChanged: updateAirspace()
-            onCenterChanged:    updateAirspace()
+            onZoomLevelChanged: updateAirspace(false)
+            onCenterChanged:    updateAirspace(false)
 
             MouseArea {
                 //-- It's a whole lot faster to just fill parent and deal with top offset below

@@ -24,10 +24,10 @@ AirMapWeatherInfoManager::AirMapWeatherInfoManager(AirMapSharedState& shared, QO
 }
 
 void
-AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi)
+AirMapWeatherInfoManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
     //-- If first time or we've moved more than WEATHER_UPDATE_DISTANCE, ask for weather updates.
-    if(!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(roi.center()) > WEATHER_UPDATE_DISTANCE) {
+    if(reset || (!_lastRoiCenter.isValid() || _lastRoiCenter.distanceTo(roi.center()) > WEATHER_UPDATE_DISTANCE)) {
         _lastRoiCenter = roi.center();
         _requestWeatherUpdate(_lastRoiCenter);
         _weatherTime.start();
