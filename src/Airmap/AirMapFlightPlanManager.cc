@@ -597,7 +597,7 @@ adv_sort(QObject* a, QObject* b)
     AirMapAdvisory* aa = qobject_cast<AirMapAdvisory*>(a);
     AirMapAdvisory* bb = qobject_cast<AirMapAdvisory*>(b);
     if(!aa || !bb) return false;
-    return (int)aa->color() > (int)bb->color();
+    return static_cast<int>(aa->color()) > static_cast<int>(bb->color());
 }
 
 //-----------------------------------------------------------------------------
@@ -607,7 +607,7 @@ rules_sort(QObject* a, QObject* b)
     AirMapRule* aa = qobject_cast<AirMapRule*>(a);
     AirMapRule* bb = qobject_cast<AirMapRule*>(b);
     if(!aa || !bb) return false;
-    return (int)aa->status() > (int)bb->status();
+    return static_cast<int>(aa->status()) > static_cast<int>(bb->status());
 }
 
 //-----------------------------------------------------------------------------
@@ -627,7 +627,7 @@ AirMapFlightPlanManager::_findBriefFeature(const QString& name)
 void
 AirMapFlightPlanManager::_pollBriefing()
 {
-    qCDebug(AirMapManagerLog) << "Poll Briefing. State:" << (int)_state;
+    qCDebug(AirMapManagerLog) << "Poll Briefing. State:" << static_cast<int>(_state);
     if(_state != State::Idle) {
         QTimer::singleShot(100, this, &AirMapFlightPlanManager::_pollBriefing);
         return;
@@ -721,7 +721,7 @@ AirMapFlightPlanManager::_pollBriefing()
             for (const auto& authorization : briefing.evaluation.authorizations) {
                 AirMapFlightAuthorization* pAuth = new AirMapFlightAuthorization(authorization, this);
                 _authorizations.append(pAuth);
-                qCDebug(AirMapManagerLog) << "Autorization:" << pAuth->name() << " (" << pAuth->message() << ")" << (int)pAuth->status();
+                qCDebug(AirMapManagerLog) << "Autorization:" << pAuth->name() << " (" << pAuth->message() << ")" << static_cast<int>(pAuth->status());
                 switch (authorization.status) {
                 case Evaluation::Authorization::Status::accepted:
                 case Evaluation::Authorization::Status::accepted_upon_submission:
@@ -840,7 +840,7 @@ AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
 void
 AirMapFlightPlanManager::_loadFlightList()
 {
-    qCDebug(AirMapManagerLog) << "Load flight list. State:" << (int)_state;
+    qCDebug(AirMapManagerLog) << "Load flight list. State:" << static_cast<int>(_state);
     if(_state != State::Idle) {
         QTimer::singleShot(100, this, &AirMapFlightPlanManager::_loadFlightList);
         return;
@@ -854,10 +854,10 @@ AirMapFlightPlanManager::_loadFlightList()
         if (_state != State::LoadFlightList) return;
         Flights::Search::Parameters params;
         params.authorization = login_token.toStdString();
-        quint64 start   = _rangeStart.toUTC().toMSecsSinceEpoch();
-        quint64 end     = _rangeEnd.toUTC().toMSecsSinceEpoch();
-        params.start_after  = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)start));
-        params.start_before = airmap::from_milliseconds_since_epoch(airmap::milliseconds((long long)end));
+        quint64 start   = static_cast<quint64>(_rangeStart.toUTC().toMSecsSinceEpoch());
+        quint64 end     = static_cast<quint64>(_rangeEnd.toUTC().toMSecsSinceEpoch());
+        params.start_after  = airmap::from_milliseconds_since_epoch(airmap::milliseconds(static_cast<long long>(start)));
+        params.start_before = airmap::from_milliseconds_since_epoch(airmap::milliseconds(static_cast<long long>(end)));
         params.limit    = 250;
         params.pilot_id = _pilotID.toStdString();
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {

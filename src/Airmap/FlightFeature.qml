@@ -60,7 +60,7 @@ Rectangle {
                 anchors.left:   parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 Component.onCompleted: {
-                    checked = feature.value && feature.value < 2 ? feature.value : false
+                    checked = feature.value === 2 ? false : feature.value
                 }
             }
             QGCLabel {
