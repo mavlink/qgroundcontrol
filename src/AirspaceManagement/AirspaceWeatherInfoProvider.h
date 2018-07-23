@@ -29,23 +29,23 @@ public:
     Q_PROPERTY(QString  condition       READ condition      NOTIFY weatherChanged)
     Q_PROPERTY(QString  icon            READ icon           NOTIFY weatherChanged)
     Q_PROPERTY(quint32  windHeading     READ windHeading    NOTIFY weatherChanged)
-    Q_PROPERTY(quint32  windSpeed       READ windSpeed      NOTIFY weatherChanged)
+    Q_PROPERTY(float    windSpeed       READ windSpeed      NOTIFY weatherChanged)
     Q_PROPERTY(quint32  windGusting     READ windGusting    NOTIFY weatherChanged)
-    Q_PROPERTY(qint32   temperature     READ temperature    NOTIFY weatherChanged)
+    Q_PROPERTY(float    temperature     READ temperature    NOTIFY weatherChanged)
     Q_PROPERTY(float    humidity        READ humidity       NOTIFY weatherChanged)
-    Q_PROPERTY(quint32  visibility      READ visibility     NOTIFY weatherChanged)
-    Q_PROPERTY(quint32  precipitation   READ precipitation  NOTIFY weatherChanged)
+    Q_PROPERTY(float    visibility      READ visibility     NOTIFY weatherChanged)
+    Q_PROPERTY(float    precipitation   READ precipitation  NOTIFY weatherChanged)
 
     virtual bool    valid           ()  = 0;    ///< Current weather data is valid
     virtual QString condition       ()  = 0;    ///< The overall weather condition.
     virtual QString icon            ()  = 0;    ///< 2:1 Aspect ratio icon url ready to be used by an Image QML Item
     virtual quint32 windHeading     ()  = 0;    ///< The heading in [°].
-    virtual quint32 windSpeed       ()  = 0;    ///< The speed in [°].
+    virtual float   windSpeed       ()  = 0;    ///< The speed in [°].
     virtual quint32 windGusting     ()  = 0;
-    virtual qint32  temperature     ()  = 0;    ///< The temperature in [°C].
+    virtual float   temperature     ()  = 0;    ///< The temperature in [°C].
     virtual float   humidity        ()  = 0;
-    virtual quint32 visibility      ()  = 0;    ///< Visibility in [m].
-    virtual quint32 precipitation   ()  = 0;    ///< The probability of precipitation in [%].
+    virtual float   visibility      ()  = 0;    ///< Visibility in [m].
+    virtual float   precipitation   ()  = 0;    ///< The probability of precipitation in [%].
 
     /**
      * Set region of interest that should be queried. When finished, the weatherChanged() signal will be emmited.
