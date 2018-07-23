@@ -18,7 +18,7 @@
 #include <QGeoCoordinate>
 #include <QTime>
 
-#include "airmap/status.h"
+#include "airmap/advisory.h"
 
 /**
  * @file AirMapWeatherInfoManager.h
@@ -35,12 +35,12 @@ public:
     QString     condition       () override { return QString::fromStdString(_weather.condition); }
     QString     icon            () override { return _icon; }
     quint32     windHeading     () override { return _weather.wind.heading; }
-    quint32     windSpeed       () override { return _weather.wind.speed; }
+    float       windSpeed       () override { return _weather.wind.speed; }
     quint32     windGusting     () override { return _weather.wind.gusting; }
-    qint32      temperature     () override { return _weather.temperature; }
+    float       temperature     () override { return _weather.temperature; }
     float       humidity        () override { return _weather.humidity; }
-    quint32     visibility      () override { return _weather.visibility; }
-    quint32     precipitation   () override { return _weather.precipitation; }
+    float       visibility      () override { return _weather.visibility; }
+    float       precipitation   () override { return _weather.precipitation; }
 
     void        setROI          (const QGCGeoBoundingCube& roi) override;
 
@@ -53,7 +53,7 @@ private:
 private:
     bool                    _valid;
     QString                 _icon;
-    airmap::Status::Weather _weather;
+    airmap::Advisory::Weather _weather;
     //-- Don't check the weather every time the user moves the map
     AirMapSharedState&      _shared;
     QGeoCoordinate          _lastRoiCenter;

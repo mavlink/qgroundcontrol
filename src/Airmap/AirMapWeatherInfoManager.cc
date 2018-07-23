@@ -10,6 +10,7 @@
 #include "AirMapWeatherInfoManager.h"
 #include "AirMapManager.h"
 
+
 #define WEATHER_UPDATE_DISTANCE 50000                   //-- 50km threshold for weather updates
 #define WEATHER_UPDATE_TIME     30 * 60 * 60 * 1000     //-- 30 minutes threshold for weather updates
 
@@ -49,18 +50,17 @@ AirMapWeatherInfoManager::_requestWeatherUpdate(const QGeoCoordinate& coordinate
         emit weatherChanged();
         return;
     }
-    Status::GetStatus::Parameters params;
-    params.longitude= coordinate.longitude();
-    params.latitude = coordinate.latitude();
-    params.weather  = true;
-    _shared.client()->status().get_status_by_point(params, [this, coordinate](const Status::GetStatus::Result& result) {
+    Advisory::ReportWeather::Parameters params;
+    params.longitude= static_cast<float>(coordinate.longitude());
+    params.latitude = static_cast<float>(coordinate.latitude());
+    _shared.client()->advisory().report_weather(params, [this, coordinate](const Advisory::ReportWeather::Result& result) {
         if (result) {
-            _weather = result.value().weather;
+            _weather = result.value();
             _valid  = true;
             if(_weather.icon.empty()) {
                 _icon = QStringLiteral("qrc:/airmapweather/unknown.svg");
             } else {
-                _icon = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(_weather.icon) + QStringLiteral(".svg");
+                _icon = QStringLiteral("qrc:/airmapweather/") + QString::fromStdString(_weather.icon).replace("-", "_") + QStringLiteral(".svg");
             }
             qCDebug(AirMapManagerLog) << "Weather Info: " << _valid << "Icon:" << QString::fromStdString(_weather.icon) << "Condition:" << QString::fromStdString(_weather.condition) << "Temp:" << _weather.temperature;
         } else {
