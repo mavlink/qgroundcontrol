@@ -52,7 +52,7 @@ public:
     Q_ENUM(Measurement)
     Q_ENUM(Unit)
 
-    AirspaceRuleFeature(QObject* parent = NULL);
+    AirspaceRuleFeature(QObject* parent = nullptr);
 
     Q_PROPERTY(quint32          id              READ id             CONSTANT)
     Q_PROPERTY(Type             type            READ type           CONSTANT)
@@ -91,7 +91,7 @@ public:
 
     Q_ENUM(Status)
 
-    AirspaceRule(QObject* parent = NULL);
+    AirspaceRule(QObject* parent = nullptr);
 
     Q_PROPERTY(Status               status          READ status         CONSTANT)
     Q_PROPERTY(QString              shortText       READ shortText      CONSTANT)
@@ -118,7 +118,7 @@ public:
 
     Q_ENUM(SelectionType)
 
-    AirspaceRuleSet(QObject* parent = NULL);
+    AirspaceRuleSet(QObject* parent = nullptr);
 
     Q_PROPERTY(QString          id              READ id             CONSTANT)
     Q_PROPERTY(QString          name            READ name           CONSTANT)
@@ -148,12 +148,14 @@ signals:
 class AirspaceRulesetsProvider : public QObject {
     Q_OBJECT
 public:
-    AirspaceRulesetsProvider        (QObject* parent = NULL);
+    AirspaceRulesetsProvider        (QObject* parent = nullptr);
     ~AirspaceRulesetsProvider       () = default;
 
     Q_PROPERTY(bool                 valid               READ valid              NOTIFY ruleSetsChanged)
     Q_PROPERTY(QString              selectedRuleSets    READ selectedRuleSets   NOTIFY selectedRuleSetsChanged)
     Q_PROPERTY(QmlObjectListModel*  ruleSets            READ ruleSets           NOTIFY ruleSetsChanged)
+
+    Q_INVOKABLE virtual void    clearAllFeatures() {;}          ///< Clear all saved (persistent) feature values
 
     virtual bool                valid       () = 0;             ///< Current ruleset is valid
     virtual QmlObjectListModel* ruleSets    () = 0;             ///< List of AirspaceRuleSet
@@ -162,7 +164,7 @@ public:
      * Set region of interest that should be queried. When finished, the rulesChanged() signal will be emmited.
      * @param center Center coordinate for ROI
      */
-    virtual void        setROI      (const QGCGeoBoundingCube& roi) = 0;
+    virtual void        setROI      (const QGCGeoBoundingCube& roi, bool reset = false) = 0;
 
 signals:
     void ruleSetsChanged            ();

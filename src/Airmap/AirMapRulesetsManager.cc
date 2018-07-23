@@ -9,6 +9,7 @@
 
 #include "AirMapRulesetsManager.h"
 #include "AirMapManager.h"
+#include "QGCApplication.h"
 #include <QSettings>
 
 using namespace airmap;
@@ -193,11 +194,19 @@ void
 AirMapRuleSet::setSelected(bool sel)
 {
     if(_selectionType != AirspaceRuleSet::Required) {
-        _selected = sel;
+        if(_selected != sel) {
+            _selected = sel;
+            emit selectedChanged();
+            qDebug() << "Selection" << name() << sel;
+            qgcApp()->toolbox()->airspaceManager()->setUpdate();
+        }
     } else {
-        _selected = true;
+        if(!_selected) {
+            _selected = true;
+            emit selectedChanged();
+            qgcApp()->toolbox()->airspaceManager()->setUpdate();
+        }
     }
-    emit selectedChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -213,12 +222,13 @@ rules_sort(QObject* a, QObject* b)
     AirMapRule* aa = qobject_cast<AirMapRule*>(a);
     AirMapRule* bb = qobject_cast<AirMapRule*>(b);
     if(!aa || !bb) return false;
-    return (int)aa->order() > (int)bb->order();
+    return static_cast<int>(aa->order()) > static_cast<int>(bb->order());
 }
 
 //-----------------------------------------------------------------------------
-void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
+void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
+    Q_UNUSED(reset);
     if (!_shared.client()) {
         qCDebug(AirMapManagerLog) << "No AirMap client instance. Not updating Airspace";
         return;
@@ -229,6 +239,13 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
     }
     qCDebug(AirMapManagerLog) << "Rulesets Request (ROI Changed)";
     _valid = false;
+    //-- Save current selection state
+    QMap<QString, bool> selectionSet;
+    for(int rs = 0; rs < ruleSets()->count(); rs++) {
+        AirMapRuleSet* ruleSet = qobject_cast<AirMapRuleSet*>(ruleSets()->get(rs));
+        selectionSet[ruleSet->id()] = ruleSet->selected();
+        qDebug() << ruleSet->id() << ruleSet->selected();
+    }
     _ruleSets.clearAndDeleteContents();
     _state = State::RetrieveItems;
     RuleSets::Search::Parameters params;
@@ -243,7 +260,7 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
     params.geometry = Geometry(polygon);
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->rulesets().search(params,
-            [this, isAlive](const RuleSets::Search::Result& result) {
+            [this, isAlive, selectionSet](const RuleSets::Search::Result& result) {
         if (!isAlive.lock()) return;
         if (_state != State::RetrieveItems) return;
         if (result) {
@@ -257,10 +274,14 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
                 pRuleSet->_shortName   = QString::fromStdString(ruleset.short_name);
                 pRuleSet->_description = QString::fromStdString(ruleset.description);
                 pRuleSet->_isDefault   = ruleset.is_default;
-                //-- TODO: This should be persistent and if the new incoming set has the
-                //   same, previosuly selected rulesets, it should "remember".
-                if(pRuleSet->_isDefault) {
-                    pRuleSet->_selected = true;
+                //-- Restore selection set (if any)
+                if(selectionSet.contains(pRuleSet->id())) {
+                    pRuleSet->_selected = selectionSet[pRuleSet->id()];
+                    qDebug() << pRuleSet->name() << pRuleSet->id() << pRuleSet->_selected;
+                } else {
+                    if(pRuleSet->_isDefault) {
+                        pRuleSet->_selected = true;
+                    }
                 }
                 switch(ruleset.selection_type) {
                 case RuleSet::SelectionType::pickone:
@@ -270,7 +291,6 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi)
                     pRuleSet->_selectionType = AirspaceRuleSet::Required;
                     pRuleSet->_selected = true;
                     break;
-                default:
                 case RuleSet::SelectionType::optional:
                     pRuleSet->_selectionType = AirspaceRuleSet::Optional;
                     break;
@@ -356,3 +376,14 @@ AirMapRulesetsManager::_selectedChanged()
     emit selectedRuleSetsChanged();
     //-- TODO: Do whatever it is you do to select a rule
 }
+
+//-----------------------------------------------------------------------------
+void
+AirMapRulesetsManager::clearAllFeatures()
+{
+    QSettings settings;
+    settings.beginGroup(kAirMapFeatureGroup);
+    settings.remove("");
+    settings.endGroup();
+}
+

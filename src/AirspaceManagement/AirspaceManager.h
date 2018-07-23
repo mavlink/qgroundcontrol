@@ -55,7 +55,7 @@ class AirspaceManager : public QGCTool {
     Q_OBJECT
 public:
     AirspaceManager(QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~AirspaceManager();
+    virtual ~AirspaceManager() override;
 
     Q_PROPERTY(QString                      providerName        READ providerName       CONSTANT)
     Q_PROPERTY(AirspaceWeatherInfoProvider* weatherInfo         READ weatherInfo        CONSTANT)
@@ -67,7 +67,7 @@ public:
     Q_PROPERTY(QString                      connectStatus       READ connectStatus      NOTIFY connectStatusChanged)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
-    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView);
+    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset = false);
 
     AirspaceWeatherInfoProvider* weatherInfo    () { return _weatherProvider; }
     AirspaceAdvisoryProvider*    advisories     () { return _advisories; }
@@ -83,6 +83,7 @@ public:
     virtual void             setAirspaceVisible (bool set) { _airspaceVisible = set; emit airspaceVisibleChanged(); }
     virtual bool                connected       () const = 0;
     virtual QString             connectStatus   () const { return QString(); }
+    virtual void                setUpdate       ();
 
     /**
      * Factory method to create an AirspaceVehicleManager object
@@ -93,6 +94,7 @@ signals:
     void                airspaceVisibleChanged  ();
     void                connectedChanged        ();
     void                connectStatusChanged    ();
+    void                update                  ();
 
 protected:
     /**
@@ -119,9 +121,14 @@ protected:
     AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info
     AirspaceFlightPlanProvider*     _flightPlan             = nullptr; ///< Flight plan management
     QTimer                          _roiUpdateTimer;
+    QTimer                          _updateTimer;
     QGCGeoBoundingCube              _roi;
 
+private slots:
+    void _updateToROITimeout        ();
+    void _updateTimeout             ();
+
 private:
-    void _updateToROI   ();
+    void _updateToROI               (bool reset = false);
 
 };

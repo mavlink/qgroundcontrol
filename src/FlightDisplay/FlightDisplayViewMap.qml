@@ -56,12 +56,12 @@ FlightMap {
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
 
-    function updateAirspace() {
+    function updateAirspace(reset) {
         if(_airspaceEnabled) {
             var coordinateNW = flightMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
             var coordinateSE = flightMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
             if(coordinateNW.isValid && coordinateSE.isValid) {
-                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, false /*planView*/)
+                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, false /*planView*/, reset)
             }
         }
     }
@@ -70,11 +70,11 @@ FlightMap {
 
     onZoomLevelChanged: {
         QGroundControl.flightMapZoom = zoomLevel
-        updateAirspace()
+        updateAirspace(false)
     }
     onCenterChanged: {
         QGroundControl.flightMapPosition = center
-        updateAirspace()
+        updateAirspace(false)
     }
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
@@ -88,7 +88,7 @@ FlightMap {
     }
 
     on_AirspaceEnabledChanged: {
-        updateAirspace()
+        updateAirspace(true)
     }
 
     function pointInRect(point, rect) {
@@ -165,6 +165,13 @@ FlightMap {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
+
+    Connections {
+        target: QGroundControl.airspaceManager
+        onUpdate: {
+            updateAirspace(true)
+        }
+    }
 
     Connections {
         target: _missionController

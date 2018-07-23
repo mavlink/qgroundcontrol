@@ -25,10 +25,10 @@ AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
 
 //-----------------------------------------------------------------------------
 void
-AirMapRestrictionManager::setROI(const QGCGeoBoundingCube& roi)
+AirMapRestrictionManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
     //-- If first time or we've moved more than RESTRICTION_UPDATE_DISTANCE, ask for updates.
-    if(!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > RESTRICTION_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > RESTRICTION_UPDATE_DISTANCE) {
+    if(reset || (!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > RESTRICTION_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > RESTRICTION_UPDATE_DISTANCE)) {
         //-- No more than 40000 km^2
         if(roi.area() < 40000.0) {
             _lastROI = roi;
@@ -94,8 +94,12 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
                         // TODO: radius???
                     }
                         break;
+                    case Geometry::Type::invalid: {
+                        qWarning() << "Invalid geometry type";
+                    }
+                        break;
                     default:
-                        qWarning() << "unsupported geometry type: "<<(int)geometry.type();
+                        qWarning() << "Unsupported geometry type: " << static_cast<int>(geometry.type());
                         break;
                 }
             }

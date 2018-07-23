@@ -42,7 +42,7 @@ public:
     float       visibility      () override { return _weather.visibility; }
     float       precipitation   () override { return _weather.precipitation; }
 
-    void        setROI          (const QGCGeoBoundingCube& roi) override;
+    void        setROI          (const QGCGeoBoundingCube& roi, bool reset = false) override;
 
 signals:
     void        error           (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);

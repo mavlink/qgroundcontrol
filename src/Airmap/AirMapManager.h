@@ -18,6 +18,8 @@
 
 #include <memory>
 
+#include <QTimer>
+
 class QGCToolbox;
 
 Q_DECLARE_LOGGING_CATEGORY(AirMapManagerLog)
@@ -33,7 +35,7 @@ class AirMapManager : public AirspaceManager
     Q_OBJECT
 public:
     AirMapManager(QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~AirMapManager();
+    virtual ~AirMapManager() override;
 
     void setToolbox (QGCToolbox* toolbox) override;
 

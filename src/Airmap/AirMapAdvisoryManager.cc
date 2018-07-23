@@ -36,10 +36,10 @@ AirMapAdvisoryManager::AirMapAdvisoryManager(AirMapSharedState& shared, QObject 
 
 //-----------------------------------------------------------------------------
 void
-AirMapAdvisoryManager::setROI(const QGCGeoBoundingCube& roi)
+AirMapAdvisoryManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
     //-- If first time or we've moved more than ADVISORY_UPDATE_DISTANCE, ask for updates.
-    if(!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > ADVISORY_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > ADVISORY_UPDATE_DISTANCE) {
+    if(reset || (!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > ADVISORY_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > ADVISORY_UPDATE_DISTANCE)) {
         _lastROI = roi;
         _requestAdvisories();
     }
@@ -52,7 +52,7 @@ adv_sort(QObject* a, QObject* b)
     AirMapAdvisory* aa = qobject_cast<AirMapAdvisory*>(a);
     AirMapAdvisory* bb = qobject_cast<AirMapAdvisory*>(b);
     if(!aa || !bb) return false;
-    return (int)aa->color() > (int)bb->color();
+    return static_cast<int>(aa->color()) > static_cast<int>(bb->color());
 }
 
 //-----------------------------------------------------------------------------
@@ -69,12 +69,12 @@ AirMapAdvisoryManager::_requestAdvisories()
     _valid = false;
     _advisories.clearAndDeleteContents();
     Status::GetStatus::Parameters params;
-    params.longitude = _lastROI.center().longitude();
-    params.latitude  = _lastROI.center().latitude();
+    params.longitude = static_cast<float>(_lastROI.center().longitude());
+    params.latitude  = static_cast<float>(_lastROI.center().latitude());
     params.types     = Airspace::Type::all;
     params.weather   = false;
     double diagonal  = _lastROI.pointNW.distanceTo(_lastROI.pointSE);
-    params.buffer    = std::fmax(std::fmin(diagonal, 10000.0), 500.0);
+    params.buffer    = static_cast<std::uint32_t>(std::fmax(std::fmin(diagonal, 10000.0), 500.0));
     params.flight_date_time = Clock::universal_time();
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.client()->status().get_status_by_point(params, [this, isAlive](const Status::GetStatus::Result& result) {

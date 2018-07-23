@@ -26,7 +26,7 @@ class AirspaceManager : public QGCTool {
     Q_OBJECT
 public:
     AirspaceManager(QGCApplication* app, QGCToolbox* toolbox);
-    virtual ~AirspaceManager();
+    virtual ~AirspaceManager() override;
 
     Q_PROPERTY(QString                      providerName        READ providerName       CONSTANT)
     Q_PROPERTY(QObject*                     weatherInfo         READ weatherInfo        CONSTANT)
@@ -36,7 +36,7 @@ public:
     Q_PROPERTY(QObject*                     flightPlan          READ flightPlan         CONSTANT)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    CONSTANT)
 
-    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView);
+    Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset = false);
 
     QObject*                    weatherInfo    () { return &_dummy; }
     QObject*                    advisories     () { return &_dummy; }
