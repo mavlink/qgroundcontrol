@@ -75,26 +75,50 @@ QGCView {
                     }
                 }
                 Rectangle {
-                    height:                     generalCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    height:                     generalRow.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    Column {
-                        id:             generalCol
-                        spacing:        ScreenTools.defaultFontPixelWidth
-                        anchors.centerIn: parent
-                        FactCheckBox {
-                            text:       qsTr("Enable AirMap Services")
-                            fact:       _enableAirMapFact
-                            visible:    _enableAirMapFact.visible
+                    Row {
+                        id:                 generalRow
+                        spacing:            ScreenTools.defaultFontPixelWidth * 4
+                        anchors.centerIn:   parent
+                        Column {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            FactCheckBox {
+                                text:       qsTr("Enable AirMap Services")
+                                fact:       _enableAirMapFact
+                                visible:    _enableAirMapFact.visible
+                            }
+                            FactCheckBox {
+                                text:       qsTr("Enable Telemetry")
+                                fact:       _enableTelemetryFact
+                                visible:    _enableTelemetryFact.visible
+                                enabled:    _airMapEnabled
+                                property Fact _enableTelemetryFact: QGroundControl.settingsManager.airMapSettings.enableTelemetry
+                            }
                         }
-                        FactCheckBox {
-                            text:       qsTr("Enable Telemetry")
-                            fact:       _enableTelemetryFact
-                            visible:    _enableTelemetryFact.visible
-                            enabled:    _airMapEnabled
-                            property Fact _enableTelemetryFact: QGroundControl.settingsManager.airMapSettings.enableTelemetry
+                        QGCButton {
+                            text:           qsTr("Reset AirMap Data")
+                            enabled:        _enableAirMapFact.rawValue
+                            onClicked:      clearDialog.open()
+                            anchors.verticalCenter: parent.verticalCenter
+                            MessageDialog {
+                                id:                 clearDialog
+                                visible:            false
+                                icon:               StandardIcon.Warning
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                title:              qsTr("Reset AirMap Data")
+                                text:               qsTr("All saved ruleset answers will be cleared. Is this really what you want?")
+                                onYes: {
+                                    QGroundControl.airspaceManager.ruleSets.clearAllFeatures()
+                                    clearDialog.close()
+                                }
+                                onNo: {
+                                    clearDialog.close()
+                                }
+                            }
                         }
                     }
                 }
