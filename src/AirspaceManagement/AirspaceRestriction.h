@@ -22,7 +22,7 @@ class AirspaceRestriction : public QObject
 {
     Q_OBJECT
 public:
-    AirspaceRestriction(QObject* parent = NULL);
+    AirspaceRestriction(QObject* parent = nullptr);
 };
 
 /**
@@ -34,7 +34,7 @@ class AirspacePolygonRestriction : public AirspaceRestriction
 {
     Q_OBJECT
 public:
-    AirspacePolygonRestriction(const QVariantList& polygon, QObject* parent = NULL);
+    AirspacePolygonRestriction(const QVariantList& polygon, QObject* parent = nullptr);
 
     Q_PROPERTY(QVariantList polygon MEMBER _polygon CONSTANT)
 
@@ -53,7 +53,7 @@ class AirspaceCircularRestriction : public AirspaceRestriction
 {
     Q_OBJECT
 public:
-    AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QObject* parent = NULL);
+    AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QObject* parent = nullptr);
 
     Q_PROPERTY(QGeoCoordinate   center MEMBER _center CONSTANT)
     Q_PROPERTY(double           radius MEMBER _radius CONSTANT)

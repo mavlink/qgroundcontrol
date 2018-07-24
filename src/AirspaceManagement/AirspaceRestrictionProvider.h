@@ -27,7 +27,7 @@ class AirspaceCircularRestriction;
 class AirspaceRestrictionProvider : public QObject {
     Q_OBJECT
 public:
-    AirspaceRestrictionProvider     (QObject* parent = NULL);
+    AirspaceRestrictionProvider     (QObject* parent = nullptr);
     ~AirspaceRestrictionProvider    () = default;
 
     Q_PROPERTY(QmlObjectListModel*  polygons        READ polygons       CONSTANT)

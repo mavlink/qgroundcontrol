@@ -43,6 +43,7 @@ public:
     AirspaceVehicleManager*         instantiateVehicle                      (const Vehicle& vehicle) override;
     bool                            connected                               () const override;
     QString                         connectStatus                           () const override { return _connectStatus; }
+    AirspaceManager::AuthStatus     authStatus                              () const override { return _authStatus; }
 
 protected:
     AirspaceRulesetsProvider*       _instantiateRulesetsProvider            () override;
@@ -54,12 +55,14 @@ protected:
 private slots:
     void _error             (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
     void _settingsChanged   ();
+    void _authStatusChanged (AirspaceManager::AuthStatus status);
 
 private:
     QString                                         _connectStatus;
     AirMapSharedState                               _shared;
     std::shared_ptr<airmap::qt::Logger>             _logger;
     std::shared_ptr<airmap::qt::DispatchingLogger>  _dispatchingLogger;
+    AirspaceManager::AuthStatus                     _authStatus;
 };
 
 

@@ -197,7 +197,6 @@ AirMapRuleSet::setSelected(bool sel)
         if(_selected != sel) {
             _selected = sel;
             emit selectedChanged();
-            qDebug() << "Selection" << name() << sel;
             qgcApp()->toolbox()->airspaceManager()->setUpdate();
         }
     } else {
@@ -244,7 +243,6 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     for(int rs = 0; rs < ruleSets()->count(); rs++) {
         AirMapRuleSet* ruleSet = qobject_cast<AirMapRuleSet*>(ruleSets()->get(rs));
         selectionSet[ruleSet->id()] = ruleSet->selected();
-        qDebug() << ruleSet->id() << ruleSet->selected();
     }
     _ruleSets.clearAndDeleteContents();
     _state = State::RetrieveItems;
@@ -277,7 +275,6 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
                 //-- Restore selection set (if any)
                 if(selectionSet.contains(pRuleSet->id())) {
                     pRuleSet->_selected = selectionSet[pRuleSet->id()];
-                    qDebug() << pRuleSet->name() << pRuleSet->id() << pRuleSet->_selected;
                 } else {
                     if(pRuleSet->_isDefault) {
                         pRuleSet->_selected = true;
