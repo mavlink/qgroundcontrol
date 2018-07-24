@@ -12,6 +12,8 @@
 #include <QObject>
 #include <QQueue>
 
+#include "AirspaceManager.h"
+
 #include <airmap/qt/client.h>
 
 /**
@@ -55,7 +57,8 @@ public:
     const QString&      loginToken          () const { return _loginToken; }
 
 signals:
-    void error  (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void    error       (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void    authStatus  (AirspaceManager::AuthStatus status);
 
 private:
     void _processPendingRequests            ();

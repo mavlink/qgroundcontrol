@@ -50,10 +50,12 @@ AirMapSharedState::login()
             }
             if (result) {
                 qCDebug(AirMapManagerLog)<<"Successfully authenticated with AirMap: id="<< result.value().id.c_str();
+                emit authStatus(AirspaceManager::AuthStatus::Anonymous);
                 _loginToken = QString::fromStdString(result.value().id);
                 _processPendingRequests();
             } else {
                 _pendingRequests.clear();
+                emit authStatus(AirspaceManager::AuthStatus::Error);
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
                 emit error("Failed to authenticate with AirMap",
                         QString::fromStdString(result.error().message()), description);
@@ -73,11 +75,13 @@ AirMapSharedState::login()
             if (result) {
                 qCDebug(AirMapManagerLog)<<"Successfully authenticated with AirMap: id="<< result.value().id.c_str()<<", access="
                         <<result.value().access.c_str();
+                emit authStatus(AirspaceManager::AuthStatus::Autheticated);
                 _loginToken = QString::fromStdString(result.value().id);
                 _processPendingRequests();
             } else {
                 _pendingRequests.clear();
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");
+                emit authStatus(AirspaceManager::AuthStatus::Error);
                 emit error("Failed to authenticate with AirMap",
                         QString::fromStdString(result.error().message()), description);
             }

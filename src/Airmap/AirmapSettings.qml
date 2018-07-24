@@ -19,6 +19,7 @@ import QtLocation               5.3
 import QtPositioning            5.3
 
 import QGroundControl                       1.0
+import QGroundControl.Airspace              1.0
 import QGroundControl.Controllers           1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.FactControls          1.0
@@ -42,6 +43,7 @@ QGCView {
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
     property Fact _enableAirMapFact:            QGroundControl.settingsManager.airMapSettings.enableAirMap
     property bool _airMapEnabled:               _enableAirMapFact.rawValue
+    property var  _authStatus:                  QGroundControl.airspaceManager.authStatus
 
     readonly property real _internalWidthRatio:          0.8
 
@@ -184,7 +186,8 @@ QGCView {
                     anchors.horizontalCenter:   parent.horizontalCenter
                     GridLayout {
                         id:                 loginGrid
-                        columns:            2
+                        columns:            3
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth
                         rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
                         anchors.centerIn:   parent
                         QGCLabel        { text: qsTr("User Name:") }
@@ -196,6 +199,24 @@ QGCView {
                             Layout.fillWidth:    true
                             Layout.minimumWidth: _editFieldWidth
                             property Fact _usernameFact: QGroundControl.settingsManager.airMapSettings.userName
+                        }
+                        QGCLabel {
+                            text: {
+                                if(!QGroundControl.airspaceManager.connected)
+                                    return qsTr("Not Connected")
+                                switch(_authStatus) {
+                                case AirspaceManager.Unknown:
+                                    return qsTr("")
+                                case AirspaceManager.Anonymous:
+                                    return qsTr("Anonymous")
+                                case AirspaceManager.Autheticated:
+                                    return qsTr("Autheticated")
+                                default:
+                                    return qsTr("Authetication Error")
+                                }
+                            }
+                            Layout.rowSpan:     2
+                            Layout.alignment:   Qt.AlignVCenter
                         }
                         QGCLabel { text: qsTr("Password:") }
                         FactTextField {
@@ -211,22 +232,26 @@ QGCView {
                         Item {
                             width:  1
                             height: 1
-                            Layout.columnSpan: 2
-                        }
-                        QGCLabel {
-                            text:               qsTr("Forgot Your AirMap Password?")
-                            Layout.alignment:   Qt.AlignHCenter
-                            Layout.columnSpan:  2
                         }
                         Item {
                             width:  1
                             height: 1
-                            Layout.columnSpan:  2
+                            Layout.columnSpan: 3
+                        }
+                        QGCLabel {
+                            text:               qsTr("Forgot Your AirMap Password?")
+                            Layout.alignment:   Qt.AlignHCenter
+                            Layout.columnSpan:  3
+                        }
+                        Item {
+                            width:  1
+                            height: 1
+                            Layout.columnSpan:  3
                         }
                         QGCButton {
                             text:               qsTr("Register for an AirMap Account")
                             Layout.alignment:   Qt.AlignHCenter
-                            Layout.columnSpan:  2
+                            Layout.columnSpan:  3
                             enabled:            _airMapEnabled
                             onClicked: {
                                 Qt.openUrlExternally("https://www.airmap.com");

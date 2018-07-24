@@ -81,7 +81,7 @@ public:
 
     Q_ENUM(AdvisoryType)
 
-    AirspaceAdvisory    (QObject* parent = NULL);
+    AirspaceAdvisory    (QObject* parent = nullptr);
 
     Q_PROPERTY(QString          id              READ id             CONSTANT)
     Q_PROPERTY(QString          name            READ name           CONSTANT)

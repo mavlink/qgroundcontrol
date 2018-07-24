@@ -57,6 +57,15 @@ public:
     AirspaceManager(QGCApplication* app, QGCToolbox* toolbox);
     virtual ~AirspaceManager() override;
 
+    enum AuthStatus {
+        Unknown,
+        Anonymous,
+        Autheticated,
+        Error
+    };
+
+    Q_ENUM(AuthStatus)
+
     Q_PROPERTY(QString                      providerName        READ providerName       CONSTANT)
     Q_PROPERTY(AirspaceWeatherInfoProvider* weatherInfo         READ weatherInfo        CONSTANT)
     Q_PROPERTY(AirspaceAdvisoryProvider*    advisories          READ advisories         CONSTANT)
@@ -65,6 +74,7 @@ public:
     Q_PROPERTY(AirspaceFlightPlanProvider*  flightPlan          READ flightPlan         CONSTANT)
     Q_PROPERTY(bool                         connected           READ connected          NOTIFY connectedChanged)
     Q_PROPERTY(QString                      connectStatus       READ connectStatus      NOTIFY connectStatusChanged)
+    Q_PROPERTY(AirspaceManager::AuthStatus  authStatus          READ authStatus         NOTIFY authStatusChanged)
     Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
     Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset = false);
@@ -85,6 +95,8 @@ public:
     virtual QString             connectStatus   () const { return QString(); }
     virtual void                setUpdate       ();
 
+    virtual AirspaceManager::AuthStatus authStatus () const { return Anonymous; }
+
     /**
      * Factory method to create an AirspaceVehicleManager object
      */
@@ -94,6 +106,7 @@ signals:
     void                airspaceVisibleChanged  ();
     void                connectedChanged        ();
     void                connectStatusChanged    ();
+    void                authStatusChanged       ();
     void                update                  ();
 
 protected:
