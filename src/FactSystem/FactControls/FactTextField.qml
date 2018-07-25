@@ -16,6 +16,8 @@ QGCTextField {
     showUnits:  true
     showHelp:   true
 
+    signal updated()
+
     property Fact   fact: null
 
     property string _validateString
@@ -29,6 +31,7 @@ QGCTextField {
             var errorString = fact.validate(text, false /* convertOnly */)
             if (errorString === "") {
                 fact.value = text
+                _textField.updated()
             } else {
                 _validateString = text
                 qgcView.showDialog(validationErrorDialogComponent, qsTr("Invalid Value"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
@@ -36,6 +39,7 @@ QGCTextField {
         } else {
             fact.value = text
             fact.valueChanged(fact.value)
+            _textField.updated()
         }
     }
 
