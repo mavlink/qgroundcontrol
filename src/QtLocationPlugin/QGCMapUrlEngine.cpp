@@ -125,6 +125,12 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
                 case AirmapElevation:
                     format = "bin";
                     break;
+                case VWorldStreet :
+                    format = "png";
+                    break;
+                case VWorldSatellite :
+                    format = "jpg";
+                    break;
                 default:
                     qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
                     break;
@@ -419,6 +425,43 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     }
     break;
 
+    case VWorldStreet :
+    {
+        int gap = zoom - 6;
+        int x_min = 53 * pow(2, gap);
+        int x_max = 55 * pow(2, gap) + (2*gap - 1);
+        int y_min = 22 * pow(2, gap);
+        int y_max = 26 * pow(2, gap) + (2*gap - 1);
+
+        if ( zoom > 5 && x >= x_min && x <= x_max && y >= y_min && y <= y_max ) {
+            return QString("http://xdworld.vworld.kr:8080/2d/Base/service/%1/%2/%3.png").arg(zoom).arg(x).arg(y);
+        }
+        else {
+            QString key = _tileXYToQuadKey(x, y, zoom);
+            return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
+        }
+
+
+    }
+        break;
+
+    case VWorldSatellite :
+    {
+        int gap = zoom - 6;
+        int x_min = 53 * pow(2, gap);
+        int x_max = 55 * pow(2, gap) + (2*gap - 1);
+        int y_min = 22 * pow(2, gap);
+        int y_max = 26 * pow(2, gap) + (2*gap - 1);
+
+        if ( zoom > 5 && x >= x_min && x <= x_max && y >= y_min && y <= y_max ) {
+            return QString("http://xdworld.vworld.kr:8080/2d/Satellite/service/%1/%2/%3.jpeg").arg(zoom).arg(x).arg(y);
+        }
+        else {
+            QString key = _tileXYToQuadKey(x, y, zoom);
+            return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
+        }
+    }
+        break;
     default:
         qWarning("Unknown map id %d\n", type);
         break;
