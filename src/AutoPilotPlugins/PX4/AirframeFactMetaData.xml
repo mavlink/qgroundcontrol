@@ -387,6 +387,22 @@
       <type>Simulation</type>
     </airframe>
   </airframe_group>
+  <airframe_group image="AirframeUnknown" name="Tilt-Quad">
+    <airframe id="4100" maintainer="Ricardo Marques &lt;marques.ricardo17@gmail.com&gt;" name="Tilt-Quadrotor">
+      <class>Copter</class>
+      <maintainer>Ricardo Marques &lt;marques.ricardo17@gmail.com&gt;</maintainer>
+      <type>Tilt-Quad</type>
+      <url>http://www.alivaero.com/the-project.html</url>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+      <output name="AUX1">Outer servo motor for rotor 2 arm</output>
+      <output name="AUX2">Outer servo motor for rotor 4 arm</output>
+      <output name="AUX3">Inner servo motor for rotor 2 arm</output>
+      <output name="AUX4">Inner servo motor for rotor 4 arm</output>
+    </airframe>
+  </airframe_group>
   <airframe_group image="YPlus" name="Tricopter Y+">
     <airframe id="14001" maintainer="Trent Lukaczyk &lt;aerialhedgehog@gmail.com&gt;" name="Generic Tricopter Y+ Geometry">
       <class>Copter</class>
@@ -419,7 +435,6 @@
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
       <type>Flying Wing</type>
-      <url>https://pixhawk.org/platforms/planes/bormatec_camflyer_q</url>
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
@@ -431,7 +446,7 @@
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
       <type>Flying Wing</type>
-      <url>https://pixhawk.org/platforms/planes/z-84_wing_wing</url>
+      <url>https://docs.px4.io/en/frames_plane/wing_wing_z84.html</url>
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
@@ -443,7 +458,6 @@
       <class>Plane</class>
       <maintainer>Julian Oes &lt;julian@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
-      <url>https://pixhawk.org/platforms/planes/skywalker_x5</url>
       <output name="MAIN1">left aileron</output>
       <output name="MAIN2">right aileron</output>
       <output name="MAIN4">throttle</output>
@@ -595,6 +609,11 @@
     </airframe>
   </airframe_group>
   <airframe_group image="VTOLPlane" name="Standard VTOL">
+    <airframe id="1002" maintainer="Roman Bapst &lt;roman@auterion.com&gt;" name="HIL Standard VTOL QuadPlane">
+      <class>VTOL</class>
+      <maintainer>Roman Bapst &lt;roman@auterion.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+    </airframe>
     <airframe id="13000" maintainer="" name="Generic Quadplane VTOL">
       <class>VTOL</class>
       <maintainer />
@@ -650,7 +669,7 @@
       <maintainer>Andreas Antener &lt;andreas@uaventure.com&gt;</maintainer>
       <type>Standard VTOL</type>
     </airframe>
-    <airframe id="13013" maintainer="Sander Smeets &lt;sander@droneslab.com&gt;" name="DeltaQuad">
+    <airframe id="13013" maintainer="Sander Smeets &lt;sander@droneslab.com&gt;" name="Vertical Technologies DeltaQuad">
       <class>VTOL</class>
       <maintainer>Sander Smeets &lt;sander@droneslab.com&gt;</maintainer>
       <type>Standard VTOL</type>

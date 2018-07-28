@@ -425,7 +425,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="56" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
-      <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6 on px4fmu-v2 and the rail pins on px4fmu-v4). The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6.</long_desc>
+      <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6 on px4fmu-v2 and the rail pins on px4fmu-v4). The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6. For GPIO mode Pin 6 will be triggered followed by 5. With a value of 65 pin 5 will be triggered followed by 6. Pins may be non contiguous. I.E. 16 or 61. In GPIO mode the delay pin to pin is &lt; .2 uS.</long_desc>
       <min>1</min>
       <max>123456</max>
       <decimal>0</decimal>
@@ -451,7 +451,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>162128</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_BUZZER" type="INT32">
       <short_desc>Circuit breaker for disabling buzzer</short_desc>
@@ -459,7 +459,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>782097</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="284953" name="CBRK_ENGINEFAIL" type="INT32">
       <short_desc>Circuit breaker for engine failure detection</short_desc>
@@ -467,7 +467,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>284953</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="121212" name="CBRK_FLIGHTTERM" type="INT32">
       <short_desc>Circuit breaker for flight termination</short_desc>
@@ -475,7 +475,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>121212</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_GPSFAIL" type="INT32">
       <short_desc>Circuit breaker for GPS failure detection</short_desc>
@@ -483,7 +483,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>240024</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_IO_SAFETY" type="INT32">
       <short_desc>Circuit breaker for IO safety</short_desc>
@@ -491,7 +491,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>22027</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_RATE_CTRL" type="INT32">
       <short_desc>Circuit breaker for rate controller output</short_desc>
@@ -499,7 +499,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>140253</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_SUPPLY_CHK" type="INT32">
       <short_desc>Circuit breaker for power supply check</short_desc>
@@ -507,7 +507,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>894281</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_USB_CHK" type="INT32">
       <short_desc>Circuit breaker for USB link check</short_desc>
@@ -515,7 +515,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>197848</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_VELPOSERR" type="INT32">
       <short_desc>Circuit breaker for position error check</short_desc>
@@ -523,7 +523,7 @@ Set to 2 to use heading from motion capture</short_desc>
       <min>0</min>
       <max>201607</max>
       <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
+      <scope>lib/circuit_breaker</scope>
     </parameter>
   </group>
   <group name="Commander">
@@ -1372,6 +1372,18 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
+    <parameter default="0" name="EKF2_GPS_MASK" type="INT32">
+      <short_desc>Multi GPS Blending Control Mask</short_desc>
+      <long_desc>Set bits in the following positions to set which GPS accuracy metrics will be used to calculate the blending weight. Set to zero to disable and always used first GPS instance. 0 : Set to true to use speed accuracy 1 : Set to true to use horizontal position accuracy 2 : Set to true to use vertical position accuracy</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <scope>modules/ekf2</scope>
+      <bitmask>
+        <bit index="0">use speed accuracy</bit>
+        <bit index="1">use hpos accuracy</bit>
+        <bit index="2">use vpos accuracy</bit>
+      </bitmask>
+    </parameter>
     <parameter default="0.0" name="EKF2_GPS_POS_X" type="FLOAT">
       <short_desc>X position of GPS antenna in body frame</short_desc>
       <unit>m</unit>
@@ -1404,6 +1416,15 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <max>10.0</max>
       <unit>m</unit>
       <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="10.0" name="EKF2_GPS_TAU" type="FLOAT">
+      <short_desc>Multi GPS Blending Time Constant</short_desc>
+      <long_desc>Sets the longest time constant that will be applied to the calculation of GPS position and height offsets used to correct data from multiple GPS data for steady state position differences.</long_desc>
+      <min>1.0</min>
+      <max>100.0</max>
+      <unit>s</unit>
+      <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="5.0" name="EKF2_GPS_V_GATE" type="FLOAT">
@@ -1552,7 +1573,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
       <decimal>6</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0" name="EKF2_MAG_DECL" type="FLOAT">
+    <parameter default="0" name="EKF2_MAG_DECL" type="FLOAT" volatile="true">
       <short_desc>Magnetic declination</short_desc>
       <unit>deg</unit>
       <decimal>1</decimal>
@@ -1593,14 +1614,15 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="0" name="EKF2_MAG_TYPE" type="INT32">
       <short_desc>Type of magnetometer fusion</short_desc>
-      <long_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-axis magnetometer. If set to automatic: heading fusion on-ground and 3-axis fusion in-flight with fallback to heading fusion if there is insufficient motion to make yaw or mag biases observable.</long_desc>
+      <long_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-component vector. The fuson of magnetomer data as a three component vector enables vehicle body fixed hard iron errors to be learned, but requires a stable earth field. If set to 'Automatic' magnetic heading fusion is used when on-ground and 3-axis magnetic field fusion in-flight with fallback to magnetic heading fusion if there is insufficient motion to make yaw or magnetic field states observable. If set to 'Magnetic heading' magnetic heading fusion is used at all times If set to '3-axis' 3-axis field fusion is used at all times. If set to 'VTOL custom' the behaviour is the same as 'Automatic', but if fusing airspeed, magnetometer fusion is only allowed to modify the magnetic field states. This can be used by VTOL platforms with large magnetic field disturbances to prevent incorrect bias states being learned during forward flight operation which can adversely affect estimation accuracy after transition to hovering flight. If set to 'MC custom' the behaviour is the same as 'Automatic, but if there are no earth frame position or velocity observations being used, the magnetometer will not be used. This enables vehicles to operate with no GPS in environments where the magnetic field cannot be used to provide a heading reference.</long_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
       <values>
         <value code="0">Automatic</value>
         <value code="1">Magnetic heading</value>
-        <value code="2">3-axis fusion</value>
-        <value code="3">None</value>
+        <value code="2">3-axis</value>
+        <value code="3">VTOL customn</value>
+        <value code="4">MC custom</value>
       </values>
     </parameter>
     <parameter default="0.25" name="EKF2_MAG_YAWLIM" type="FLOAT">
@@ -1700,14 +1722,6 @@ Assumes measurement is timestamped at trailing edge of integration period</short
       <max>255</max>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="2.5" name="EKF2_OF_RMAX" type="FLOAT">
-      <short_desc>Optical Flow data will not fused if the magnitude of the flow rate &gt; EKF2_OF_RMAX.
-Control loops will be instructed to limit ground speed such that the flow rate produced by movement over ground is less than 50% of EKF2_OF_RMAX</short_desc>
-      <min>1.0</min>
-      <unit>rad/s</unit>
-      <decimal>2</decimal>
-      <scope>modules/ekf2</scope>
-    </parameter>
     <parameter default="0.0" name="EKF2_PCOEF_XN" type="FLOAT">
       <short_desc>Static pressure position error coefficient for the negative X axis.
 This is the ratio of static pressure error to dynamic pressure generated by a negative wind relative velocity along the X body axis.
@@ -1798,7 +1812,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
     </parameter>
     <parameter default="0" name="EKF2_RNG_AID" type="INT32">
       <short_desc>Range sensor aid</short_desc>
-      <long_desc>If this parameter is enabled then the estimator will make use of the range finder measurements to estimate it's height even if range sensor is not the primary height source. It will only do so if conditions for range measurement fusion are met.</long_desc>
+      <long_desc>If this parameter is enabled then the estimator will make use of the range finder measurements to estimate it's height even if range sensor is not the primary height source. It will only do so if conditions for range measurement fusion are met. This enables the range finder to be used during low speed and low altitude operation, eg takeoff and landing, where baro interference from rotor wash is excessive and can corrupt EKF state estimates. It is intended to be used where a vertical takeoff and landing is performed, and horizontal flight does not occur until above EKF2_RNG_A_HMAX. If vehicle motion causes repeated switching between the primary height sensor and range finder, an offset in the local position origin can accumulate. Also range finder measurements are less reliable and can experience unexpected errors. For these reasons, if accurate control of height relative to ground is required, it is recommended to use the MPC_ALT_MODE parameter instead, unless baro errors are severe enough to cause problems with landing and takeoff.</long_desc>
       <scope>modules/ekf2</scope>
       <values>
         <value code="0">Range aid disabled</value>
@@ -1931,6 +1945,22 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <scope>modules/ekf2</scope>
     </parameter>
   </group>
+  <group name="Events">
+    <parameter default="0" name="EV_TSK_RC_LOSS" type="INT32">
+      <short_desc>RC Loss Alarm</short_desc>
+      <long_desc>Enable/disable event task for RC Loss. When enabled, an alarm tune will be played via buzzer or ESCs, if supported. The alarm will sound after a disarm, if the vehicle was previously armed and only if the vehicle had RC signal at some point. Particularly useful for locating crashed drones without a GPS sensor.</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/events</scope>
+    </parameter>
+    <parameter default="0" name="EV_TSK_STAT_DIS" type="INT32">
+      <short_desc>Status Display</short_desc>
+      <long_desc>Enable/disable event task for displaying the vehicle status using arm-mounted LEDs. When enabled and if the vehicle supports it, LEDs will flash indicating various vehicle status changes. Currently PX4 has not implemented any specific status events. -</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>modules/events</scope>
+    </parameter>
+  </group>
   <group name="FW Attitude Control">
     <parameter default="90" name="FW_ACRO_X_MAX" type="FLOAT">
       <short_desc>Acro body x max rate</short_desc>
@@ -2054,6 +2084,16 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
     </parameter>
     <parameter default="1.0" name="FW_FLAPS_SCL" type="FLOAT">
       <short_desc>Scale factor for flaps</short_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+      <scope>modules/fw_att_control</scope>
+    </parameter>
+    <parameter default="0.0" name="FW_FLAPS_TO_SCL" type="FLOAT">
+      <short_desc>Flaps setting during take-off</short_desc>
+      <long_desc>Sets a fraction of full flaps (FW_FLAPS_SCL) during take-off</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2427,7 +2467,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
-    <parameter default="8.0" name="FW_LND_FLALT" type="FLOAT">
+    <parameter default="3.0" name="FW_LND_FLALT" type="FLOAT">
       <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
       <min>0.0</min>
       <max>25.0</max>
@@ -2702,7 +2742,7 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
     <parameter default="0.1" name="FW_T_INTEG_GAIN" type="FLOAT">
       <short_desc>Integrator gain</short_desc>
-      <long_desc>This is the integrator gain on the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot.</long_desc>
+      <long_desc>This is the integrator gain on the control loop. Increasing this gain increases the speed at which speed and height offsets are trimmed out, but reduces damping and increases overshoot. Set this value to zero to completely disable all integrator action.</long_desc>
       <min>0.0</min>
       <max>2.0</max>
       <decimal>2</decimal>
@@ -2730,7 +2770,7 @@ Set to 0 to disable heading hold</short_desc>
     <parameter default="5.0" name="FW_T_SINK_MAX" type="FLOAT">
       <short_desc>Maximum descent rate</short_desc>
       <long_desc>This sets the maximum descent rate that the controller will use. If this value is too large, the aircraft can over-speed on descent. This should be set to a value that can be achieved without exceeding the lower pitch angle limit and without over-speeding the aircraft.</long_desc>
-      <min>2.0</min>
+      <min>1.0</min>
       <max>15.0</max>
       <unit>m/s</unit>
       <decimal>1</decimal>
@@ -3119,6 +3159,16 @@ but also ignore less noise</short_desc>
         <value code="8">airborne with &lt;4g acceleration</value>
       </values>
     </parameter>
+    <parameter default="0." name="GPS_YAW_OFFSET" type="FLOAT">
+      <short_desc>Heading/Yaw offset for dual antenna GPS</short_desc>
+      <long_desc>Heading offset angle for dual antenna GPS setups that support heading estimation. (currently only for the Trimble MB-Two). Set this to 0 if the antennas are parallel to the forward-facing direction of the vehicle and the first antenna is in front. The offset angle increases counterclockwise. Set this to 90 if the first antenna is placed on the right side and the second on the left side of the vehicle.</long_desc>
+      <min>0</min>
+      <max>360</max>
+      <unit>deg</unit>
+      <decimal>0</decimal>
+      <reboot_required>true</reboot_required>
+      <scope>drivers/gps</scope>
+    </parameter>
   </group>
   <group name="GPS Failure Navigation">
     <parameter default="0.0" name="NAV_GPSF_LT" type="FLOAT">
@@ -3260,15 +3310,6 @@ Value 0 turns the functionality off</short_desc>
       <decimal>1</decimal>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="8.0" name="LNDFW_VELI_MAX" type="FLOAT">
-      <short_desc>Fixedwing max short-term velocity</short_desc>
-      <long_desc>Maximum velocity integral in flight direction allowed in the landed state (m/s)</long_desc>
-      <min>2</min>
-      <max>10</max>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <scope>modules/land_detector</scope>
-    </parameter>
     <parameter default="5.0" name="LNDFW_VEL_XY_MAX" type="FLOAT">
       <short_desc>Fixedwing max horizontal velocity</short_desc>
       <long_desc>Maximum horizontal velocity allowed in the landed state (m/s)</long_desc>
@@ -3278,12 +3319,21 @@ Value 0 turns the functionality off</short_desc>
       <decimal>1</decimal>
       <scope>modules/land_detector</scope>
     </parameter>
-    <parameter default="10.0" name="LNDFW_VEL_Z_MAX" type="FLOAT">
+    <parameter default="3.0" name="LNDFW_VEL_Z_MAX" type="FLOAT">
       <short_desc>Fixedwing max climb rate</short_desc>
       <long_desc>Maximum vertical velocity allowed in the landed state (m/s up and down)</long_desc>
-      <min>5</min>
+      <min>0.1</min>
       <max>20</max>
       <unit>m/s</unit>
+      <decimal>1</decimal>
+      <scope>modules/land_detector</scope>
+    </parameter>
+    <parameter default="8.0" name="LNDFW_XYACC_MAX" type="FLOAT">
+      <short_desc>Fixedwing max horizontal acceleration</short_desc>
+      <long_desc>Maximum horizontal (x,y body axes) acceleration allowed in the landed state (m/s^2)</long_desc>
+      <min>2</min>
+      <max>15</max>
+      <unit>m/s^2</unit>
       <decimal>1</decimal>
       <scope>modules/land_detector</scope>
     </parameter>
@@ -4588,15 +4638,6 @@ default 1.5 turns per second</short_desc>
       <increment>5</increment>
       <scope>modules/mc_att_control</scope>
     </parameter>
-    <parameter default="0.5" name="MC_YAW_FF" type="FLOAT">
-      <short_desc>Yaw feed forward</short_desc>
-      <long_desc>Feed forward weight for manual yaw control. 0 will give slow responce and no overshot, 1 - fast responce and big overshot.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-      <scope>modules/mc_att_control</scope>
-    </parameter>
     <parameter default="2.8" name="MC_YAW_P" type="FLOAT">
       <short_desc>Yaw P gain</short_desc>
       <long_desc>Yaw proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
@@ -4635,9 +4676,10 @@ default 1.5 turns per second</short_desc>
       <increment>1</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0.5" name="MPC_ACC_HOR_FLOW" type="FLOAT">
-      <short_desc>Horizontal acceleration in manual modes when optical flow ground speed limit is removed.
-If full stick is being applied and the EKF starts using GPS whilst using optical flow,
+    <parameter default="0.5" name="MPC_ACC_HOR_ESTM" type="FLOAT">
+      <short_desc>Horizontal acceleration in manual modes when te estimator speed limit is removed.
+If full stick is being applied and the estimator stops demanding a speed limit,
+which it had been before (e.g if GPS is gained while flying on optical flow/vision only),
 the vehicle will accelerate at this rate until the normal position control speed is achieved</short_desc>
       <min>0.2</min>
       <max>2.0</max>
@@ -4665,13 +4707,15 @@ the vehicle will accelerate at this rate until the normal position control speed
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0" name="MPC_ALT_MODE" type="INT32">
-      <short_desc>Altitude control mode, note mode 1 only tested with LPE</short_desc>
+      <short_desc>Altitude control mode</short_desc>
+      <long_desc>Set to 0 to control height relative to the earth frame origin. This origin may move up and down in flight due to sensor drift. Set to 1 to control height relative to estimated distance to ground. The vehicle will move up and down with terrain height variation. Requires a distance to ground sensor. The height controller will revert to using height above origin if the distance to ground estimate becomes invalid as indicated by the local_position.distance_bottom_valid message being false. Set to 2 to control height relative to ground (requires a distance sensor) when stationary and relative to earth frame origin when moving horizontally. The speed threshold is controlled by the MPC_HOLD_MAX_XY parameter.</long_desc>
       <min>0</min>
-      <max>1</max>
+      <max>2</max>
       <scope>modules/mc_pos_control</scope>
       <values>
         <value code="0">Altitude following</value>
         <value code="1">Terrain following</value>
+        <value code="2">Terrain hold</value>
       </values>
     </parameter>
     <parameter default="3.0" name="MPC_CRUISE_90" type="FLOAT">
@@ -4694,17 +4738,6 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <increment>1</increment>
       <scope>modules/mc_pos_control</scope>
     </parameter>
-    <parameter default="0" name="MPC_FLT_TSK" type="INT32">
-      <short_desc>Flag to test flight tasks instead of legacy functionality
-Temporary Parameter during the transition to flight tasks</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <scope>modules/mc_pos_control</scope>
-      <values>
-        <value code="0">Legacy Functionality</value>
-        <value code="1">Test flight tasks</value>
-      </values>
-    </parameter>
     <parameter default="0.1" name="MPC_HOLD_DZ" type="FLOAT">
       <short_desc>Deadzone of sticks where position hold is enabled</short_desc>
       <min>0.0</min>
@@ -4726,6 +4759,14 @@ Temporary Parameter during the transition to flight tasks</short_desc>
       <max>3.0</max>
       <unit>m/s</unit>
       <decimal>2</decimal>
+      <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="0.0" name="MPC_IDLE_TKO" type="FLOAT">
+      <short_desc>Delay from idle state to arming state</short_desc>
+      <long_desc>For altitude controlled modes, the transition from idle to armed state is delayed by MPC_IDLE_TKO time to ensure that the propellers have reached idle speed before attempting a takeoff. This delay is particularly useful for vehicles with large propellers.</long_desc>
+      <min>0</min>
+      <max>10</max>
+      <unit>sec</unit>
       <scope>modules/mc_pos_control</scope>
     </parameter>
     <parameter default="0.0" name="MPC_JERK_MAX" type="FLOAT">
@@ -4811,6 +4852,24 @@ towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
       <unit>deg/s</unit>
       <decimal>1</decimal>
       <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="0" name="MPC_OBS_AVOID" type="INT32">
+      <short_desc>Flag to enable obstacle avoidance
+Temporary Parameter to enable interface testing</short_desc>
+      <boolean />
+      <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="1" name="MPC_POS_MODE" type="INT32">
+      <short_desc>Manual-Position control sub-mode</short_desc>
+      <long_desc>The supported sub-modes are: 0 Default position control where sticks map to position/velocity directly. Maximum speeds is MPC_VEL_MANUAL. 1 Smooth position control where setpoints are adjusted based on acceleration limits and jerk limits. 2 Sport mode that is the same Default position control but with velocity limits set to the maximum allowed speeds (MPC_XY_VEL_MAX)</long_desc>
+      <min>0</min>
+      <max>2</max>
+      <scope>modules/mc_pos_control</scope>
+      <values>
+        <value code="0">Default position control</value>
+        <value code="1">Smooth position control</value>
+        <value code="2">Sport position control</value>
+      </values>
     </parameter>
     <parameter default="0.5" name="MPC_THR_HOVER" type="FLOAT">
       <short_desc>Hover thrust</short_desc>
@@ -4951,6 +5010,14 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
     </parameter>
+    <parameter default="0.0" name="MPC_YAW_EXPO" type="FLOAT">
+      <short_desc>Manual control stick yaw rotation exponential curve</short_desc>
+      <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve (default) 1 Purely cubic input curve</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <decimal>2</decimal>
+      <scope>modules/mc_pos_control</scope>
+    </parameter>
     <parameter default="0.0" name="MPC_Z_MAN_EXPO" type="FLOAT">
       <short_desc>Manual control stick vertical exponential curve</short_desc>
       <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve (default) 1 Purely cubic input curve</long_desc>
@@ -5023,10 +5090,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <long_desc>Minimum time allowed for the motor input signal to pass through a range of 1000 PWM units. A value x means that the motor signal can only go from 1000 to 2000 PWM in maximum x seconds. Zero means that slew rate limiting is disabled.</long_desc>
       <min>0.0</min>
       <unit>s/(1000*PWM)</unit>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="PWM_AUX_DIS1" type="INT32">
-      <short_desc>Set the disarmed PWM for the AUX 1 output</short_desc>
+      <short_desc>Set the disarmed PWM for the auxiliary 1 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
@@ -5035,7 +5102,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="PWM_AUX_DIS2" type="INT32">
-      <short_desc>Set the disarmed PWM for the AUX 2 output</short_desc>
+      <short_desc>Set the disarmed PWM for the auxiliary 2 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
@@ -5044,7 +5111,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="PWM_AUX_DIS3" type="INT32">
-      <short_desc>Set the disarmed PWM for the AUX 3 output</short_desc>
+      <short_desc>Set the disarmed PWM for the auxiliary 3 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
@@ -5053,7 +5120,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="PWM_AUX_DIS4" type="INT32">
-      <short_desc>Set the disarmed PWM for the AUX 4 output</short_desc>
+      <short_desc>Set the disarmed PWM for the auxiliary 4 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
@@ -5062,7 +5129,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="PWM_AUX_DIS5" type="INT32">
-      <short_desc>Set the disarmed PWM for the AUX 5 output</short_desc>
+      <short_desc>Set the disarmed PWM for the auxiliary 5 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
@@ -5071,7 +5138,25 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <scope>modules/sensors</scope>
     </parameter>
     <parameter default="-1" name="PWM_AUX_DIS6" type="INT32">
-      <short_desc>Set the disarmed PWM for the AUX 6 output</short_desc>
+      <short_desc>Set the disarmed PWM for the auxiliary 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_DIS7" type="INT32">
+      <short_desc>Set the disarmed PWM for the auxiliary 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_DIS8" type="INT32">
+      <short_desc>Set the disarmed PWM for the auxiliary 8 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_AUX_DISARMED will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
@@ -5090,7 +5175,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="2000" name="PWM_AUX_MAX" type="INT32">
       <short_desc>Set the maximum PWM for the auxiliary outputs</short_desc>
-      <long_desc>Set to 2000 for default or 2100 to increase servo travel</long_desc>
+      <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
       <min>1600</min>
       <max>2200</max>
       <unit>us</unit>
@@ -5099,96 +5184,133 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="1000" name="PWM_AUX_MIN" type="INT32">
       <short_desc>Set the minimum PWM for the auxiliary outputs</short_desc>
-      <long_desc>Set to 1000 for default or 900 to increase servo travel</long_desc>
+      <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
       <min>800</min>
       <max>1400</max>
       <unit>us</unit>
       <reboot_required>true</reboot_required>
       <scope>modules/sensors</scope>
     </parameter>
+    <parameter default="50" name="PWM_AUX_RATE" type="INT32">
+      <short_desc>Set the PWM output frequency for the auxiliary outputs</short_desc>
+      <long_desc>Set to 400 for industry default or 1000 for high frequency ESCs. Set to 0 for Oneshot125.</long_desc>
+      <min>-1</min>
+      <max>2000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
     <parameter default="0" name="PWM_AUX_REV1" type="INT32">
-      <short_desc>Invert direction of aux output channel 1</short_desc>
+      <short_desc>Invert direction of auxiliary output channel 1</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV2" type="INT32">
-      <short_desc>Invert direction of aux output channel 2</short_desc>
+      <short_desc>Invert direction of auxiliary output channel 2</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV3" type="INT32">
-      <short_desc>Invert direction of aux output channel 3</short_desc>
+      <short_desc>Invert direction of auxiliary output channel 3</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV4" type="INT32">
-      <short_desc>Invert direction of aux output channel 4</short_desc>
+      <short_desc>Invert direction of auxiliary output channel 4</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV5" type="INT32">
-      <short_desc>Invert direction of aux output channel 5</short_desc>
+      <short_desc>Invert direction of auxiliary output channel 5</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_REV6" type="INT32">
-      <short_desc>Invert direction of aux output channel 6</short_desc>
+      <short_desc>Invert direction of auxiliary output channel 6</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="PWM_AUX_REV7" type="INT32">
+      <short_desc>Invert direction of auxiliary output channel 7</short_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="PWM_AUX_REV8" type="INT32">
+      <short_desc>Invert direction of auxiliary output channel 8</short_desc>
+      <long_desc>Enable to invert the channel.</long_desc>
+      <boolean />
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM1" type="FLOAT">
-      <short_desc>Trim value for FMU PWM output channel 1</short_desc>
+      <short_desc>Trim value for auxiliary output channel 1</short_desc>
       <long_desc>Set to normalized offset</long_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM2" type="FLOAT">
-      <short_desc>Trim value for FMU PWM output channel 2</short_desc>
+      <short_desc>Trim value for auxiliary output channel 2</short_desc>
       <long_desc>Set to normalized offset</long_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM3" type="FLOAT">
-      <short_desc>Trim value for FMU PWM output channel 3</short_desc>
+      <short_desc>Trim value for auxiliary output channel 3</short_desc>
       <long_desc>Set to normalized offset</long_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM4" type="FLOAT">
-      <short_desc>Trim value for FMU PWM output channel 4</short_desc>
+      <short_desc>Trim value for auxiliary output channel 4</short_desc>
       <long_desc>Set to normalized offset</long_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM5" type="FLOAT">
-      <short_desc>Trim value for FMU PWM output channel 5</short_desc>
+      <short_desc>Trim value for auxiliary output channel 5</short_desc>
       <long_desc>Set to normalized offset</long_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_AUX_TRIM6" type="FLOAT">
-      <short_desc>Trim value for FMU PWM output channel 6</short_desc>
+      <short_desc>Trim value for auxiliary output channel 6</short_desc>
       <long_desc>Set to normalized offset</long_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="PWM_AUX_TRIM7" type="FLOAT">
+      <short_desc>Trim value for auxiliary output channel 7</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0" name="PWM_AUX_TRIM8" type="FLOAT">
+      <short_desc>Trim value for auxiliary output channel 8</short_desc>
+      <long_desc>Set to normalized offset</long_desc>
+      <min>-0.2</min>
+      <max>0.2</max>
+      <decimal>2</decimal>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="900" name="PWM_DISARMED" type="INT32">
       <short_desc>Set the disarmed PWM for the main outputs</short_desc>
@@ -5275,49 +5397,49 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <short_desc>Invert direction of main output channel 1</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV2" type="INT32">
       <short_desc>Invert direction of main output channel 2</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV3" type="INT32">
       <short_desc>Invert direction of main output channel 3</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV4" type="INT32">
       <short_desc>Invert direction of main output channel 4</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV5" type="INT32">
       <short_desc>Invert direction of main output channel 5</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV6" type="INT32">
       <short_desc>Invert direction of main output channel 6</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV7" type="INT32">
       <short_desc>Invert direction of main output channel 7</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_REV8" type="INT32">
       <short_desc>Invert direction of main output channel 8</short_desc>
       <long_desc>Enable to invert the channel.</long_desc>
       <boolean />
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM1" type="FLOAT">
       <short_desc>Trim value for main output channel 1</short_desc>
@@ -5325,7 +5447,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM2" type="FLOAT">
       <short_desc>Trim value for main output channel 2</short_desc>
@@ -5333,7 +5455,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM3" type="FLOAT">
       <short_desc>Trim value for main output channel 3</short_desc>
@@ -5341,7 +5463,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM4" type="FLOAT">
       <short_desc>Trim value for main output channel 4</short_desc>
@@ -5349,7 +5471,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM5" type="FLOAT">
       <short_desc>Trim value for main output channel 5</short_desc>
@@ -5357,7 +5479,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM6" type="FLOAT">
       <short_desc>Trim value for main output channel 6</short_desc>
@@ -5365,7 +5487,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM7" type="FLOAT">
       <short_desc>Trim value for main output channel 7</short_desc>
@@ -5373,7 +5495,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="0" name="PWM_MAIN_TRIM8" type="FLOAT">
       <short_desc>Trim value for main output channel 8</short_desc>
@@ -5381,7 +5503,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>-0.2</min>
       <max>0.2</max>
       <decimal>2</decimal>
-      <scope>drivers/px4io</scope>
+      <scope>modules/sensors</scope>
     </parameter>
     <parameter default="2000" name="PWM_MAX" type="INT32">
       <short_desc>Set the maximum PWM for the main outputs</short_desc>
@@ -5421,7 +5543,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <long_desc>Parameter used to model the relationship between static thrust and motor input PWM. Model is: thrust = (1-factor)*PWM + factor * PWM^2</long_desc>
       <min>0.0</min>
       <max>1.0</max>
-      <scope>drivers/px4fmu</scope>
+      <scope>modules/sensors</scope>
     </parameter>
   </group>
   <group name="Payload drop">
@@ -7045,6 +7167,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0" name="RC_MAP_ARM_SW" type="INT32">
       <short_desc>Arm switch channel</short_desc>
+      <long_desc>Use it to arm/disarm via switch instead of default throttle stick. If this is assigned, arming and disarming via stick is disabled.</long_desc>
       <min>0</min>
       <max>18</max>
       <scope>modules/sensors</scope>
@@ -7614,24 +7737,6 @@ to takeoff is reached</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/logger</scope>
     </parameter>
-    <parameter default="-1" name="SDLOG_EXT" type="INT32">
-      <short_desc>Extended logging mode</short_desc>
-      <long_desc>A value of -1 indicates the command line argument should be obeyed. A value of 0 disables extended logging mode, a value of 1 enables it. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
-      <min>-1</min>
-      <max>1</max>
-      <scope>modules/sdlog2</scope>
-      <values>
-        <value code="-1">Command Line</value>
-        <value code="0">Disable</value>
-        <value code="1">Enable</value>
-      </values>
-    </parameter>
-    <parameter default="1" name="SDLOG_GPSTIME" type="INT32">
-      <short_desc>Use timestamps only if GPS 3D fix is available</short_desc>
-      <long_desc>Constrain the log folder creation to only use the time stamp if a 3D GPS lock is present.</long_desc>
-      <boolean />
-      <scope>modules/sdlog2</scope>
-    </parameter>
     <parameter default="0" name="SDLOG_MODE" type="INT32">
       <short_desc>Logging Mode</short_desc>
       <long_desc>Determines when to start and stop logging. By default, logging is started when arming the system, and stopped when disarming. This parameter is only for the new logger (SYS_LOGGER=1).</long_desc>
@@ -7643,20 +7748,6 @@ to takeoff is reached</short_desc>
         <value code="0">when armed until disarm (default)</value>
         <value code="1">from boot until disarm</value>
         <value code="2">from boot until shutdown</value>
-      </values>
-    </parameter>
-    <parameter default="2" name="SDLOG_PRIO_BOOST" type="INT32">
-      <short_desc>Give logging app higher thread priority to avoid data loss.
-This is used for gathering replay logs for the ekf2 module</short_desc>
-      <long_desc>A value of 0 indicates that the default priority is used. Increasing the parameter in steps of one increases the priority.</long_desc>
-      <min>0</min>
-      <max>3</max>
-      <scope>modules/sdlog2</scope>
-      <values>
-        <value code="0">Low priority</value>
-        <value code="1">Default priority</value>
-        <value code="2">Medium priority</value>
-        <value code="3">Max priority</value>
       </values>
     </parameter>
     <parameter default="3" name="SDLOG_PROFILE" type="INT32">
@@ -7675,14 +7766,6 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
         <bit index="5">debug</bit>
         <bit index="6">sensor comparison</bit>
       </bitmask>
-    </parameter>
-    <parameter default="-1" name="SDLOG_RATE" type="INT32">
-      <short_desc>Logging rate</short_desc>
-      <long_desc>A value of -1 indicates the commandline argument should be obeyed. A value of 0 sets the minimum rate, any other value is interpreted as rate in Hertz. This parameter is only read out before logging starts (which commonly is before arming).</long_desc>
-      <min>-1</min>
-      <max>250</max>
-      <unit>Hz</unit>
-      <scope>modules/sdlog2</scope>
     </parameter>
     <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
       <short_desc>UTC offset (unit: min)</short_desc>
@@ -8243,9 +8326,34 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <long_desc>The offset (zero-reading) in Pascal</long_desc>
       <scope>modules/sensors</scope>
     </parameter>
-    <parameter default="0.7" name="SENS_FLOW_MINRNG" type="FLOAT">
-      <short_desc>Optical Flow minimum focus distance</short_desc>
-      <long_desc>This parameter defines the minimum distance from ground required for the optical flow sensor to operate reliably. The sensor may be usable below this height, but accuracy will progressively reduce to loss of focus. *</long_desc>
+    <parameter default="3.0" name="SENS_FLOW_MAXHGT" type="FLOAT">
+      <short_desc>Maximum height above ground when reliant on optical flow</short_desc>
+      <long_desc>This parameter defines the maximum distance from ground at which the optical flow sensor operates reliably. The height setpoint will be limited to be no greater than this value when the navigation system is completely reliant on optical flow data and the height above ground estimate is valid. The sensor may be usable above this height, but accuracy will progressively degrade.</long_desc>
+      <min>1.0</min>
+      <max>25.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="2.5" name="SENS_FLOW_MAXR" type="FLOAT">
+      <short_desc>Magnitude of maximum angular flow rate reliably measurable by the optical flow sensor.
+Optical flow data will not fused by the estimators if the magnitude of the flow rate exceeds this value and
+control loops will be instructed to limit ground speed such that the flow rate produced by movement over ground
+is less than 50% of this value</short_desc>
+      <min>1.0</min>
+      <unit>rad/s</unit>
+      <decimal>2</decimal>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="0.7" name="SENS_FLOW_MINHGT" type="FLOAT">
+      <short_desc>Minimum height above ground when reliant on optical flow</short_desc>
+      <long_desc>This parameter defines the minimum distance from ground at which the optical flow sensor operates reliably. The sensor may be usable below this height, but accuracy will progressively reduce to loss of focus.</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
       <scope>modules/sensors</scope>
     </parameter>
   </group>
@@ -8584,7 +8692,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <short_desc>TELEM2 as companion computer link</short_desc>
       <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface.</long_desc>
       <min>0</min>
-      <max>1921600</max>
+      <max>6460800</max>
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
       <values>
@@ -8608,7 +8716,7 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
         <value code="6460800">RTPS Client (460800 baud)</value>
       </values>
     </parameter>
-    <parameter default="0" name="SYS_FMU_TASK" type="INT32">
+    <parameter default="1" name="SYS_FMU_TASK" type="INT32">
       <short_desc>Run the FMU as a task to reduce latency</short_desc>
       <long_desc>If true, the FMU will run in a separate task instead of on the work queue. Set this if low latency is required, for example for racing. This is a trade-off between RAM usage and latency: running as a task, it requires a separate stack and directly polls on the control topics, whereas running on the work queue, it runs at a fixed update rate.</long_desc>
       <boolean />
@@ -8635,17 +8743,6 @@ This is used for gathering replay logs for the ekf2 module</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
-    </parameter>
-    <parameter default="1" name="SYS_LOGGER" type="INT32">
-      <short_desc>SD logger</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <reboot_required>true</reboot_required>
-      <scope>modules/systemlib</scope>
-      <values>
-        <value code="0">sdlog2 (legacy)</value>
-        <value code="1">logger (default)</value>
-      </values>
     </parameter>
     <parameter default="2" name="SYS_MC_EST_GROUP" type="INT32">
       <short_desc>Set multicopter estimator group</short_desc>
