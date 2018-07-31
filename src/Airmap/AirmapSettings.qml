@@ -102,7 +102,7 @@ QGCView {
                             }
                         }
                         QGCButton {
-                            text:           qsTr("Reset AirMap Data")
+                            text:           qsTr("Clear Saved Answers")
                             enabled:        _enableAirMapFact.rawValue
                             onClicked:      clearDialog.open()
                             anchors.verticalCenter: parent.verticalCenter
@@ -111,7 +111,7 @@ QGCView {
                                 visible:            false
                                 icon:               StandardIcon.Warning
                                 standardButtons:    StandardButton.Yes | StandardButton.No
-                                title:              qsTr("Reset AirMap Data")
+                                title:              qsTr("Clear Saved Answers")
                                 text:               qsTr("All saved ruleset answers will be cleared. Is this really what you want?")
                                 onYes: {
                                     QGroundControl.airspaceManager.ruleSets.clearAllFeatures()
