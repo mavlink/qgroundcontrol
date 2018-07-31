@@ -25,7 +25,7 @@ public:
     /// The initial value of the Fact at the meta data specified decimal place precision
     Q_PROPERTY(double initialValueAtPrecision READ initialValueAtPrecision NOTIFY initialValueAtPrecisionChanged)
 
-    double initialValueAtPrecision(void);
+    double initialValueAtPrecision(void) const { return _initialValueAtPrecision; }
 
     Q_INVOKABLE int resetInitialValue(void);
     Q_INVOKABLE double valueAtModelIndex(int index);
@@ -35,6 +35,8 @@ signals:
     void initialValueAtPrecisionChanged(void);
 
 private:
+    double _valueAtPrecision(double value) const;
+
     // Overrides from QAbstractListModel
     int	rowCount(const QModelIndex & parent = QModelIndex()) const override;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
@@ -48,7 +50,7 @@ private:
     int     _cNextValues;
     int     _windowSize;
     double  _initialValue;
-    double  _initialValueRounded;
+    double  _initialValueAtPrecision;
     double  _increment;
 
     static const int _valueRole;
