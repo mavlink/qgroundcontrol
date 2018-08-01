@@ -76,9 +76,9 @@ void QGCMapPolyline::clear(void)
 void QGCMapPolyline::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polylinePath[vertexIndex] = QVariant::fromValue(coordinate);
-    emit pathChanged();
     _polylineModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     setDirty(true);
+    emit pathChanged();
 }
 
 void QGCMapPolyline::setDirty(bool dirty)
