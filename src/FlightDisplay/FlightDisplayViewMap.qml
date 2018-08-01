@@ -167,13 +167,6 @@ FlightMap {
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     Connections {
-        target: QGroundControl.airspaceManager
-        onUpdate: {
-            updateAirspace(true)
-        }
-    }
-
-    Connections {
         target: _missionController
 
         onNewItemsFromVehicle: {

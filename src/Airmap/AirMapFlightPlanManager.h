@@ -22,6 +22,7 @@
 #include "airmap/flight_plan.h"
 #include "airmap/ruleset.h"
 
+class AirMapRuleFeature;
 class PlanMasterController;
 
 //-----------------------------------------------------------------------------
@@ -52,7 +53,7 @@ public:
     QString             startTime           () override;
     QString             endTime             () override;
     QDateTime           qStartTime          () override;
-    QGeoCoordinate      takeOff             () override { return QGeoCoordinate(_flight.latitude, _flight.longitude);}
+    QGeoCoordinate      takeOff             () override { return QGeoCoordinate(static_cast<double>(_flight.latitude), static_cast<double>(_flight.longitude));}
     QVariantList        boundingBox         () override { return _boundingBox; }
     bool                active              () override;
     void                setEndFlight        (airmap::DateTime end);
@@ -68,7 +69,7 @@ class AirMapFlightPlanManager : public AirspaceFlightPlanProvider, public Lifeti
     Q_OBJECT
 public:
     AirMapFlightPlanManager                 (AirMapSharedState& shared, QObject *parent = nullptr);
-    ~AirMapFlightPlanManager                ();
+    ~AirMapFlightPlanManager                () override;
 
     PermitStatus        flightPermitStatus  () const override { return _flightPermitStatus; }
     QDateTime           flightStartTime     () const override;
@@ -102,6 +103,7 @@ public:
 
 signals:
     void            error                   (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
+    void            flightIDChanged         (QString flightID);
 
 private slots:
     void _pollBriefing                      ();
@@ -116,6 +118,7 @@ private:
     bool _collectFlightDtata                ();
     void _updateFlightPlan                  (bool interactive = false);
     bool _findBriefFeature                  (const QString& name);
+    void _updateFlightStartEndTime          (airmap::DateTime& start_time, airmap::DateTime& end_time);
     void _updateRulesAndFeatures            (std::vector<airmap::RuleSet::Id>& rulesets, std::unordered_map<std::string, airmap::RuleSet::Feature::Value>& features, bool updateFeatures = false);
 
 private:
@@ -164,6 +167,10 @@ private:
     QDateTime               _rangeStart;
     QDateTime               _rangeEnd;
     airmap::FlightPlan      _flightPlan;
+    QDateTime               _flightStartTime;
+    QDateTime               _flightEndTime;
+
+    QList<AirMapRuleFeature*> _importantFeatures;
 
     AirspaceAdvisoryProvider::AdvisoryColor  _airspaceColor;
     AirspaceFlightPlanProvider::PermitStatus _flightPermitStatus = AirspaceFlightPlanProvider::PermitNone;

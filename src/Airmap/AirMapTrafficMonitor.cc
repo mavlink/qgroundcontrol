@@ -28,7 +28,11 @@ AirMapTrafficMonitor::~AirMapTrafficMonitor()
 void
 AirMapTrafficMonitor::startConnection(const QString& flightID)
 {
+    if(flightID.isEmpty() || _flightID == flightID) {
+        return;
+    }
     _flightID = flightID;
+    qCDebug(AirMapManagerLog) << "Traffic update started for" << flightID;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     auto handler = [this, isAlive](const Traffic::Monitor::Result& result) {
         if (!isAlive.lock()) return;
@@ -58,7 +62,7 @@ AirMapTrafficMonitor::_update(Traffic::Update::Type type, const std::vector<Traf
         QString traffic_id = QString::fromStdString(traffic.id);
         QString vehicle_id = QString::fromStdString(traffic.aircraft_id);
         emit trafficUpdate(type == Traffic::Update::Type::alert, traffic_id, vehicle_id,
-            QGeoCoordinate(traffic.latitude, traffic.longitude, traffic.altitude), traffic.heading);
+            QGeoCoordinate(traffic.latitude, traffic.longitude, traffic.altitude), static_cast<float>(traffic.heading));
     }
 }
 

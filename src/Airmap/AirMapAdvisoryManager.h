@@ -32,7 +32,7 @@ class AirMapAdvisory : public AirspaceAdvisory
     friend class AirMapAdvisoryManager;
     friend class AirMapFlightPlanManager;
 public:
-    AirMapAdvisory (QObject* parent = NULL);
+    AirMapAdvisory (QObject* parent = nullptr);
     QString         id              () override { return _id; }
     QString         name            () override { return _name; }
     AdvisoryType    type            () override { return _type; }

@@ -27,12 +27,12 @@ AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _airspaceVisible(false)
 {
-    _roiUpdateTimer.setInterval(2000);
-    _roiUpdateTimer.setSingleShot(true);
+    _ruleUpdateTimer.setInterval(2000);
+    _ruleUpdateTimer.setSingleShot(true);
     _updateTimer.setInterval(1000);
     _updateTimer.setSingleShot(true);
-    connect(&_roiUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateToROITimeout);
-    connect(&_updateTimer,    &QTimer::timeout, this, &AirspaceManager::_updateTimeout);
+    connect(&_ruleUpdateTimer, &QTimer::timeout, this, &AirspaceManager::_updateRulesTimeout);
+    connect(&_updateTimer,     &QTimer::timeout, this, &AirspaceManager::_updateTimeout);
     qmlRegisterUncreatableType<AirspaceAdvisoryProvider>    ("QGroundControl.Airspace",      1, 0, "AirspaceAdvisoryProvider",       "Reference only");
     qmlRegisterUncreatableType<AirspaceFlightPlanProvider>  ("QGroundControl.Airspace",      1, 0, "AirspaceFlightPlanProvider",     "Reference only");
     qmlRegisterUncreatableType<AirspaceManager>             ("QGroundControl.Airspace",      1, 0, "AirspaceManager",                "Reference only");
@@ -77,6 +77,10 @@ AirspaceManager::setToolbox(QGCToolbox* toolbox)
     _advisories         = _instatiateAirspaceAdvisoryProvider();
     _airspaces          = _instantiateAirspaceRestrictionProvider();
     _flightPlan         = _instantiateAirspaceFlightPlanProvider();
+    //-- Keep track of rule changes
+    if(_ruleSetsProvider) {
+        connect(_ruleSetsProvider, &AirspaceRulesetsProvider::selectedRuleSetsChanged, this, &AirspaceManager::_rulesChanged);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -107,21 +111,13 @@ AirspaceManager::setROI(const QGeoCoordinate& pointNW, const QGeoCoordinate& poi
     }
 }
 
-
-//-----------------------------------------------------------------------------
-void
-AirspaceManager::setUpdate()
-{
-    _updateTimer.start();
-}
-
 //-----------------------------------------------------------------------------
 void
 AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 {
     if(_roi != roi) {
         _roi = roi;
-        _roiUpdateTimer.start();
+        _ruleUpdateTimer.start();
     }
 }
 
@@ -129,9 +125,6 @@ AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 void
 AirspaceManager::_updateToROI(bool reset)
 {
-    if(reset) {
-        _updateTimer.stop();
-    }
     if(_airspaces) {
         _airspaces->setROI(_roi, reset);
     }
@@ -141,21 +134,28 @@ AirspaceManager::_updateToROI(bool reset)
     if(_weatherProvider) {
         _weatherProvider->setROI(_roi, reset);
     }
-    if (_advisories) {
-        _advisories->setROI(_roi, reset);
-    }
 }
+
 
 //-----------------------------------------------------------------------------
 void
-AirspaceManager::_updateToROITimeout()
+AirspaceManager::_updateTimeout()
 {
     _updateToROI(false);
 }
 
 //-----------------------------------------------------------------------------
 void
-AirspaceManager::_updateTimeout()
+AirspaceManager::_rulesChanged()
 {
-    emit update();
+    _ruleUpdateTimer.start();
+}
+
+//-----------------------------------------------------------------------------
+void
+AirspaceManager::_updateRulesTimeout()
+{
+    if (_advisories) {
+        _advisories->setROI(_roi, true);
+    }
 }

@@ -200,6 +200,7 @@ Item {
                 visible:        planView
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 onClicked: {
+                    _dirty = false
                     QGroundControl.airspaceManager.flightPlan.updateFlightPlan()
                 }
             }
