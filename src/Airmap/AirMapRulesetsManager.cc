@@ -197,13 +197,11 @@ AirMapRuleSet::setSelected(bool sel)
         if(_selected != sel) {
             _selected = sel;
             emit selectedChanged();
-            qgcApp()->toolbox()->airspaceManager()->setUpdate();
         }
     } else {
         if(!_selected) {
             _selected = true;
             emit selectedChanged();
-            qgcApp()->toolbox()->airspaceManager()->setUpdate();
         }
     }
 }

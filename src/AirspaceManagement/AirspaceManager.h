@@ -93,7 +93,6 @@ public:
     virtual void             setAirspaceVisible (bool set) { _airspaceVisible = set; emit airspaceVisibleChanged(); }
     virtual bool                connected       () const = 0;
     virtual QString             connectStatus   () const { return QString(); }
-    virtual void                setUpdate       ();
 
     virtual AirspaceManager::AuthStatus authStatus () const { return Anonymous; }
 
@@ -107,7 +106,6 @@ signals:
     void                connectedChanged        ();
     void                connectStatusChanged    ();
     void                authStatusChanged       ();
-    void                update                  ();
 
 protected:
     /**
@@ -133,13 +131,14 @@ protected:
     AirspaceAdvisoryProvider*       _advisories             = nullptr; ///< Advisory info
     AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info
     AirspaceFlightPlanProvider*     _flightPlan             = nullptr; ///< Flight plan management
-    QTimer                          _roiUpdateTimer;
+    QTimer                          _ruleUpdateTimer;
     QTimer                          _updateTimer;
     QGCGeoBoundingCube              _roi;
 
 private slots:
-    void _updateToROITimeout        ();
+    void _updateRulesTimeout        ();
     void _updateTimeout             ();
+    void _rulesChanged              ();
 
 private:
     void _updateToROI               (bool reset = false);

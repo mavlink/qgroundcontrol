@@ -2,6 +2,7 @@ import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
+import QtQuick.Layouts          1.2
 import QtQml                    2.2
 
 import QGroundControl                   1.0
@@ -62,21 +63,34 @@ Item {
                         anchors.right:      parent.right
                         anchors.left:       parent.left
                         anchors.verticalCenter: parent.verticalCenter
-                        QGCButton {
-                            text: {
-                                var today = new Date();
-                                if(datePicker.selectedDate.setHours(0,0,0,0) === today.setHours(0,0,0,0)) {
-                                    return qsTr("Today")
-                                } else {
-                                    return datePicker.selectedDate.toLocaleDateString(Qt.locale())
-                                }
-                            }
-                            iconSource:     "qrc:/airmap/expand.svg"
+                        RowLayout {
+                            spacing:        ScreenTools.defaultFontPixelWidth * 0.5
                             anchors.right:  parent.right
                             anchors.left:   parent.left
-                            onClicked: {
-                                _dirty = true
-                                datePicker.visible = true
+                            QGCButton {
+                                text:       qsTr("Now")
+                                onClicked: {
+                                    _dirty = true
+                                    var today = new Date()
+                                    QGroundControl.airspaceManager.flightPlan.flightStartTime = today
+                                    timeSlider.updateTime()
+                                }
+                            }
+                            QGCButton {
+                                text: {
+                                    var today = QGroundControl.airspaceManager.flightPlan.flightStartTime
+                                    if(datePicker.selectedDate.setHours(0,0,0,0) === today.setHours(0,0,0,0)) {
+                                        return qsTr("Today")
+                                    } else {
+                                        return datePicker.selectedDate.toLocaleDateString(Qt.locale())
+                                    }
+                                }
+                                Layout.fillWidth:   true
+                                iconSource:         "qrc:/airmap/expand.svg"
+                                onClicked: {
+                                    _dirty = true
+                                    datePicker.visible = true
+                                }
                             }
                         }
                         Item {
@@ -102,12 +116,20 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 onValueChanged: {
                                     _dirty = true
+                                    var today = QGroundControl.airspaceManager.flightPlan.flightStartTime
+                                    today.setHours(Math.floor(timeSlider.value * 0.25))
+                                    today.setMinutes((timeSlider.value * 15) % 60)
+                                    today.setSeconds(0)
+                                    QGroundControl.airspaceManager.flightPlan.flightStartTime = today
                                 }
                                 Component.onCompleted: {
-                                    var today = new Date()
+                                    updateTime()
+                                }
+                                function updateTime() {
+                                    var today = QGroundControl.airspaceManager.flightPlan.flightStartTime
                                     var val = (((today.getHours() * 60) + today.getMinutes()) * (96/1440)) + 1
                                     if(val > 95) val = 95
-                                    value = Math.ceil(val)
+                                    timeSlider.value = Math.ceil(val)
                                 }
                             }
                         }
@@ -133,12 +155,11 @@ Item {
     }
     Calendar {
         id: datePicker
-        anchors.centerIn: parent
-        visible: false;
-        minimumDate: {
-            return new Date()
-        }
+        anchors.centerIn:   parent
+        visible:            false;
+        minimumDate:        QGroundControl.airspaceManager.flightPlan.flightStartTime
         onClicked: {
+            QGroundControl.airspaceManager.flightPlan.flightStartTime = datePicker.selectedDate
             visible = false;
         }
     }

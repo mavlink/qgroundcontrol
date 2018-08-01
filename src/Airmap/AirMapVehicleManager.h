@@ -23,7 +23,7 @@ class AirMapVehicleManager : public AirspaceVehicleManager
     Q_OBJECT
 public:
     AirMapVehicleManager        (AirMapSharedState& shared, const Vehicle& vehicle);
-    ~AirMapVehicleManager       () = default;
+    ~AirMapVehicleManager       () override = default;
 
     void startTelemetryStream   () override;
     void stopTelemetryStream    () override;
@@ -36,7 +36,10 @@ public slots:
     void endFlight              () override;
 
 protected slots:
-    virtual void vehicleMavlinkMessageReceived(const mavlink_message_t& message) override;
+    void vehicleMavlinkMessageReceived(const mavlink_message_t& message) override;
+
+private slots:
+    void _flightIDChanged       (QString flightID);
 
 private:
     AirMapSharedState&           _shared;

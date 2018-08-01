@@ -77,11 +77,11 @@ AirMapTelemetry::_handleGlobalPositionInt(const mavlink_message_t& message)
     mavlink_msg_global_position_int_decode(&message, &globalPosition);
     Telemetry::Position position{
         milliseconds_since_epoch(Clock::universal_time()),
-        (double) globalPosition.lat / 1e7,
-        (double) globalPosition.lon / 1e7,
-        (float) globalPosition.alt / 1000.f,
-        (float) globalPosition.relative_alt / 1000.f,
-        _lastHdop
+        static_cast<double>(globalPosition.lat / 1e7),
+        static_cast<double>(globalPosition.lon / 1e7),
+        static_cast<double>(globalPosition.alt) / 1000.0,
+        static_cast<double>(globalPosition.relative_alt) / 1000.0,
+        static_cast<double>(_lastHdop)
     };
     Telemetry::Speed speed{
         milliseconds_since_epoch(Clock::universal_time()),
@@ -102,7 +102,7 @@ void
 AirMapTelemetry::startTelemetryStream(const QString& flightID)
 {
     if (_state != State::Idle) {
-        qCWarning(AirMapManagerLog) << "Not starting telemetry: not in idle state:" << (int)_state;
+        qCWarning(AirMapManagerLog) << "Not starting telemetry: not in idle state:" << static_cast<int>(_state);
         return;
     }
     if(flightID.isEmpty()) {

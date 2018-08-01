@@ -185,9 +185,6 @@ QGCView {
         onAirspaceVisibleChanged: {
             planControlColapsed = QGroundControl.airspaceManager.airspaceVisible
         }
-        onUpdate: {
-            updateAirspace(true)
-        }
     }
 
     Component {
