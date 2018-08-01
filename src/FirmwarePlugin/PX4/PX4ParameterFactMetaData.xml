@@ -889,7 +889,7 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
 See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <min>0</min>
       <max>60</max>
-      <unit>second</unit>
+      <unit>s</unit>
       <increment>1</increment>
       <scope>modules/commander</scope>
     </parameter>
@@ -976,7 +976,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     <parameter default="1" name="COM_VEL_FS_EVH" type="FLOAT">
       <short_desc>Horizontal velocity error threshold</short_desc>
       <long_desc>This is the horizontal velocity error (EVH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
-      <unit>m</unit>
+      <unit>m/s</unit>
       <scope>modules/commander</scope>
     </parameter>
   </group>
