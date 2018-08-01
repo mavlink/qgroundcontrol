@@ -161,7 +161,7 @@ Item {
     Component {
         id: editPositionDialog
         EditPositionDialog {
-            coordinate:  mapPolyline.vertexCoordinate(menu._removeVertexIndex)
+            coordinate:  mapPolyline.path[menu._removeVertexIndex]
             onCoordinateChanged:  mapPolyline.adjustVertex(menu._removeVertexIndex,coordinate)
         }
     }
