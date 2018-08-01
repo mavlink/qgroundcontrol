@@ -24,6 +24,7 @@
     </qresource>
     <qresource prefix="/airmapweather">
         <file alias="clear.svg">images/weather-icons/clear.svg</file>
+        <file alias="clear_day.svg">images/weather-icons/sunny.svg</file>
         <file alias="cloudy.svg">images/weather-icons/cloudy.svg</file>
         <file alias="cloudy_wind.svg">images/weather-icons/cloudy_wind.svg</file>
         <file alias="drizzle.svg">images/weather-icons/drizzle.svg</file>
