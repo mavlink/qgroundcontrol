@@ -56,7 +56,7 @@ public:
     QList<QGeoCoordinate> coordinateList(void) const;
 
     /// Returns the QGeoCoordinate for the vertex specified
-    Q_INVOKABLE QGeoCoordinate vertexCoordinate(int vertex);
+    QGeoCoordinate vertexCoordinate(int vertex) const;
 
     /// Saves the polyline to the json object.
     ///     @param json Json object to save to
