@@ -247,7 +247,7 @@ void QGCMapPolyline::setInteractive(bool interactive)
     }
 }
 
-QGeoCoordinate QGCMapPolyline::vertexCoordinate(int vertex)
+QGeoCoordinate QGCMapPolyline::vertexCoordinate(int vertex) const
 {
     if (vertex >= 0 && vertex < _polylinePath.count()) {
         return _polylinePath[vertex].value<QGeoCoordinate>();
