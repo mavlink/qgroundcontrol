@@ -286,7 +286,12 @@ QGCView {
 
                     Item { width: 1; height: 1 }
 
-                    QGCLabel { text:       qsTr("Max Cache Memory Size (MB):") }
+                    QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
+                        text:           qsTr("Max Cache Memory Size (MB):")
+                    }
 
                     QGCTextField {
                         id:                 maxCacheMemSize
@@ -297,6 +302,9 @@ QGCView {
                     }
 
                     QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
                         font.pointSize: _adjustableFontPointSize
                         text:           qsTr("Memory cache changes require a restart to take effect.")
                     }
@@ -310,6 +318,9 @@ QGCView {
                         width:              ScreenTools.defaultFontPixelWidth * 30
                     }
                     QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
                         text:           qsTr("To enable Mapbox maps, enter your access token.")
                         visible:        _mapboxFact ? _mapboxFact.visible : false
                         font.pointSize: _adjustableFontPointSize
@@ -324,6 +335,9 @@ QGCView {
                         width:              ScreenTools.defaultFontPixelWidth * 30
                     }
                     QGCLabel {
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        wrapMode:       Text.WordWrap
                         text:           qsTr("To enable Esri maps, enter your access token.")
                         visible:        _esriFact ? _esriFact.visible : false
                         font.pointSize: _adjustableFontPointSize
