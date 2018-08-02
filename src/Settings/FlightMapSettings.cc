@@ -119,6 +119,9 @@ void FlightMapSettings::_newMapProvider(QVariant value)
     case mapProviderEsri:
         _removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
         break;
+    case mapProviderVWorld:
+        _removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
+        _removeEnumValue(mapTypeTerrain, enumStrings, enumValues);
     }
     metaData->setEnumInfo(enumStrings, enumValues);
     emit mapTypeChanged();
