@@ -502,6 +502,8 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         QTimer::singleShot(100, this, &AirMapFlightPlanManager::_uploadFlightPlan);
         return;
     }
+    //-- Reset "relevant" features
+    _importantFeatures.clear();
     _state = State::FlightUpload;
     std::weak_ptr<LifetimeChecker> isAlive(_instance);
     _shared.doRequestWithLogin([this, isAlive](const QString& login_token) {
@@ -718,6 +720,8 @@ AirMapFlightPlanManager::_pollBriefing()
                             }
                         }
                     }
+                    //-- When a flight is first created, we send no features. That means that all "missing_info" are "relevant" features.
+                    //   We keep a list of them so they will be always shown to the user even when they are no longer "missing_info"
                     for(const auto& feature : _importantFeatures) {
                         if(!_findBriefFeature(feature->name())) {
                             _briefFeatures.append(feature);
