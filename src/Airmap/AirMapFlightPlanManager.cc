@@ -150,7 +150,7 @@ AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
         _flightEndTime = _flightStartTime.addSecs(30 * 60);
         emit flightEndTimeChanged();
     }
-    qCDebug(AirMapManagerLog) << "Set time" << _flightStartTime << _flightEndTime;
+    qCDebug(AirMapManagerLog) << "Set time start time" << _flightStartTime << _flightEndTime;
 }
 
 //-----------------------------------------------------------------------------
@@ -165,6 +165,7 @@ AirMapFlightPlanManager::setFlightEndTime(QDateTime end)
         _flightEndTime = end;
         emit flightEndTimeChanged();
     }
+    qCDebug(AirMapManagerLog) << "Set time end time" << _flightStartTime << _flightEndTime;
 }
 
 //-----------------------------------------------------------------------------
@@ -380,7 +381,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "Flight Start:" << flightStartTime().toString();
     qCDebug(AirMapManagerLog) << "Flight End:  " << flightEndTime().toString();
 
-    if (_pilotID == "") {
+    if (_pilotID == "" && !_shared.settings().userName.isEmpty() && !_shared.settings().password.isEmpty()) {
         //-- Need to get the pilot id before uploading the flight plan
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
         _state = State::GetPilotID;
@@ -509,7 +510,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         FlightPlans::Create::Parameters params;
         params.max_altitude = _flight.maxAltitude;
         params.min_altitude = 0.0;
-        params.buffer       = 0.f;
+        params.buffer       = 10.f;
         params.latitude     = static_cast<float>(_flight.takeoffCoord.latitude());
         params.longitude    = static_cast<float>(_flight.takeoffCoord.longitude());
         params.pilot.id     = _pilotID.toStdString();
