@@ -147,8 +147,22 @@ Item {
         }
 
         MenuItem {
+            text:           qsTr("Edit position..." )
+            onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        }
+
+        MenuItem {
             text:           qsTr("Load KML...")
             onTriggered:    kmlLoadDialog.openForLoad()
+        }
+    }
+
+    Component {
+        id: editPositionDialog
+
+        EditPositionDialog {
+            Component.onCompleted: coordinate = mapPolyline.path[menu._removeVertexIndex]
+            onCoordinateChanged:  mapPolyline.adjustVertex(menu._removeVertexIndex,coordinate)
         }
     }
 
