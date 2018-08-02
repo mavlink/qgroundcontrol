@@ -29,7 +29,7 @@ class Advisory : DoNotCopyOrMove {
   struct AirspaceAdvisory {
     Status::Advisory advisory;  /// Airspace information.
     Status::Color color;        /// The evaluation of the airspace.
-    std::string rule_id;        /// The id of the ruleset.
+    std::uint32_t rule_id;      /// The id of the ruleset.
     std::string ruleset_id;     /// The id of the rule.
   };
 
