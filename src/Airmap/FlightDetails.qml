@@ -19,6 +19,13 @@ Item {
     implicitWidth:      detailCol.width
     property real baseHeight:  ScreenTools.defaultFontPixelHeight * 22
     property real baseWidth:   ScreenTools.defaultFontPixelWidth  * 40
+    function setEndTime() {
+        _dirty = true
+        var endTime = QGroundControl.airspaceManager.flightPlan.flightStartTime
+        endTime.setTime(endTime.getTime() + (Math.floor(durationSlider.value * 0.25) * 60 * 60 * 1000))
+        endTime.setTime(endTime.getTime() + ((durationSlider.value * 15) % 60) * 60 * 1000)
+        QGroundControl.airspaceManager.flightPlan.flightEndTime = endTime
+    }
     Column {
         id:             detailCol
         spacing:        ScreenTools.defaultFontPixelHeight * 0.25
@@ -44,7 +51,7 @@ Item {
             flickableDirection: Flickable.VerticalFlick
             Column {
                 id:                 flContextCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.25
                 anchors.right:      parent.right
                 anchors.left:       parent.left
                 QGCLabel {
@@ -78,11 +85,12 @@ Item {
                             }
                             QGCButton {
                                 text: {
-                                    var today = QGroundControl.airspaceManager.flightPlan.flightStartTime
-                                    if(datePicker.selectedDate.setHours(0,0,0,0) === today.setHours(0,0,0,0)) {
+                                    var nowTime = new Date()
+                                    var setTime = QGroundControl.airspaceManager.flightPlan.flightStartTime
+                                    if(setTime.setHours(0,0,0,0) === nowTime.setHours(0,0,0,0)) {
                                         return qsTr("Today")
                                     } else {
-                                        return datePicker.selectedDate.toLocaleDateString(Qt.locale())
+                                        return setTime.toLocaleDateString(Qt.locale())
                                     }
                                 }
                                 Layout.fillWidth:   true
@@ -93,26 +101,20 @@ Item {
                                 }
                             }
                         }
+                        QGCLabel {
+                            text:   qsTr("Flight Start Time")
+                        }
                         Item {
                             anchors.right:  parent.right
                             anchors.left:   parent.left
                             height:         timeSlider.height
-                            QGCLabel {
-                                id:         timeLabel
-                                text:       ('00' + hour).slice(-2) + ":" + ('00' + minute).slice(-2)
-                                width:      ScreenTools.defaultFontPixelWidth * 5
-                                anchors.left:  parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                property int hour:   Math.floor(timeSlider.value * 0.25)
-                                property int minute: (timeSlider.value * 15) % 60
-                            }
                             QGCSlider {
                                 id:             timeSlider
                                 width:          parent.width - timeLabel.width - ScreenTools.defaultFontPixelWidth
                                 stepSize:       1
                                 minimumValue:   0
                                 maximumValue:   95 // 96 blocks of 15 minutes in 24 hours
-                                anchors.right:  parent.right
+                                anchors.left:   parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 onValueChanged: {
                                     _dirty = true
@@ -120,7 +122,9 @@ Item {
                                     today.setHours(Math.floor(timeSlider.value * 0.25))
                                     today.setMinutes((timeSlider.value * 15) % 60)
                                     today.setSeconds(0)
+                                    today.setMilliseconds(0)
                                     QGroundControl.airspaceManager.flightPlan.flightStartTime = today
+                                    setEndTime()
                                 }
                                 Component.onCompleted: {
                                     updateTime()
@@ -131,6 +135,55 @@ Item {
                                     if(val > 95) val = 95
                                     timeSlider.value = Math.ceil(val)
                                 }
+                            }
+                            QGCLabel {
+                                id:             timeLabel
+                                text:           ('00' + hour).slice(-2) + ":" + ('00' + minute).slice(-2)
+                                width:          ScreenTools.defaultFontPixelWidth * 5
+                                anchors.right:  parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                property int hour:   Math.floor(timeSlider.value * 0.25)
+                                property int minute: (timeSlider.value * 15) % 60
+                            }
+                        }
+                        QGCLabel {
+                            text:   qsTr("Duration")
+                        }
+                        Item {
+                            anchors.right:  parent.right
+                            anchors.left:   parent.left
+                            height:         durationSlider.height
+                            QGCSlider {
+                                id:             durationSlider
+                                width:          parent.width - durationLabel.width - ScreenTools.defaultFontPixelWidth
+                                stepSize:       1
+                                minimumValue:   1
+                                maximumValue:   24 // 24 blocks of 15 minutes in 6 hours
+                                anchors.left:  parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                onValueChanged: {
+                                    setEndTime()
+                                }
+                                Component.onCompleted: {
+                                    updateTime()
+                                }
+                                function updateTime() {
+                                    var startTime = QGroundControl.airspaceManager.flightPlan.flightStartTime
+                                    var endTime = QGroundControl.airspaceManager.flightPlan.flightEndTime
+                                    var val = (endTime.getTime() - startTime.getTime()) / 1000 / 60
+                                    val = (val * (96/360)) + 1
+                                    if(val > 24) val = 24
+                                    durationSlider.value = Math.ceil(val)
+                                }
+                            }
+                            QGCLabel {
+                                id:             durationLabel
+                                text:           ('00' + hour).slice(-2) + ":" + ('00' + minute).slice(-2)
+                                width:          ScreenTools.defaultFontPixelWidth * 5
+                                anchors.right:  parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                property int hour:   Math.floor(durationSlider.value * 0.25)
+                                property int minute: (durationSlider.value * 15) % 60
                             }
                         }
                     }

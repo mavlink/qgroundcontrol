@@ -40,16 +40,16 @@ AirMapSharedState::login()
     }
     _isLoginInProgress = true;
     if (_settings.userName == "") { //use anonymous login
-
+        qCDebug(AirMapManagerLog) << "Anonymous authentication";
         Authenticator::AuthenticateAnonymously::Params params;
-        params.id = "";
+        params.id = "Anonymous";
         _client->authenticator().authenticate_anonymously(params,
                 [this](const Authenticator::AuthenticateAnonymously::Result& result) {
             if (!_isLoginInProgress) { // was logout() called in the meanwhile?
                 return;
             }
             if (result) {
-                qCDebug(AirMapManagerLog)<<"Successfully authenticated with AirMap: id="<< result.value().id.c_str();
+                qCDebug(AirMapManagerLog) << "Successfully authenticated with AirMap: id="<< result.value().id.c_str();
                 emit authStatus(AirspaceManager::AuthStatus::Anonymous);
                 _loginToken = QString::fromStdString(result.value().id);
                 _processPendingRequests();
@@ -67,13 +67,14 @@ AirMapSharedState::login()
         params.oauth.password = _settings.password.toStdString();
         params.oauth.client_id = _settings.clientID.toStdString();
         params.oauth.device_id = "QGroundControl";
+        qCDebug(AirMapManagerLog) << "User authentication" << _settings.userName;
         _client->authenticator().authenticate_with_password(params,
                 [this](const Authenticator::AuthenticateWithPassword::Result& result) {
             if (!_isLoginInProgress) { // was logout() called in the meanwhile?
                 return;
             }
             if (result) {
-                qCDebug(AirMapManagerLog)<<"Successfully authenticated with AirMap: id="<< result.value().id.c_str()<<", access="
+                qCDebug(AirMapManagerLog) << "Successfully authenticated with AirMap: id="<< result.value().id.c_str()<<", access="
                         <<result.value().access.c_str();
                 emit authStatus(AirspaceManager::AuthStatus::Autheticated);
                 _loginToken = QString::fromStdString(result.value().id);
