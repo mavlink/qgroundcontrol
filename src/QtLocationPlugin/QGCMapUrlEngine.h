@@ -56,6 +56,10 @@ public:
         MapQuestSat             = 701,
         */
 
+        VWorldMap                = 800,
+        VWorldSatellite          = 801,
+        VWorldStreet             = 802,
+
         MapboxStreets           = 6000,
         MapboxLight             = 6001,
         MapboxDark              = 6002,
