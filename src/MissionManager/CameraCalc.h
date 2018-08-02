@@ -19,7 +19,7 @@ class CameraCalc : public CameraSpec
     Q_OBJECT
 
 public:
-    CameraCalc(Vehicle* vehicle, QString settingsGroup, QObject* parent = NULL);
+    CameraCalc(Vehicle* vehicle, const QString& settingsGroup, QObject* parent = NULL);
 
     Q_PROPERTY(QString          customCameraName            READ customCameraName                                               CONSTANT)                                   ///< Camera name for custom camera setting
     Q_PROPERTY(QString          manualCameraName            READ manualCameraName                                               CONSTANT)                                   ///< Camera name for manual camera setting
