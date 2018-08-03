@@ -338,16 +338,23 @@ void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQu
     qCDebug(TerrainQueryLog) << "TerrainTileManager::addCoordinateQuery count" << coordinates.count();
 
     if (coordinates.length() > 0) {
+        bool error;
         QList<double> altitudes;
 
-        if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
+        if (!_getAltitudesForCoordinates(coordinates, altitudes, error)) {
             QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModeCoordinates, 0, 0, coordinates };
             _requestQueue.append(queuedRequestInfo);
             return;
         }
 
-        qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
-        terrainQueryInterface->_signalCoordinateHeights(coordinates.count() == altitudes.count(), altitudes);
+        if (error) {
+            QList<double> noAltitudes;
+            qCWarning(TerrainQueryLog) << "addCoordinateQuery: signalling failure due to internal error";
+            terrainQueryInterface->_signalCoordinateHeights(false, noAltitudes);
+        } else {
+            qCDebug(TerrainQueryLog) << "addCoordinateQuery: All altitudes taken from cached data";
+            terrainQueryInterface->_signalCoordinateHeights(coordinates.count() == altitudes.count(), altitudes);
+        }
     }
 }
 
@@ -370,19 +377,28 @@ void TerrainTileManager::addPathQuery(TerrainOfflineAirMapQuery* terrainQueryInt
 
     qCDebug(TerrainQueryLog) << "TerrainTileManager::addPathQuery start:end:coordCount" << startPoint << endPoint << coordinates.count();
 
+    bool error;
     QList<double> altitudes;
-    if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
+    if (!_getAltitudesForCoordinates(coordinates, altitudes, error)) {
         QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModePath, latStep, lonStep, coordinates };
         _requestQueue.append(queuedRequestInfo);
         return;
     }
 
-    qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
-    terrainQueryInterface->_signalPathHeights(coordinates.count() == altitudes.count(), latStep, lonStep, altitudes);
+    if (error) {
+        QList<double> noAltitudes;
+        qCWarning(TerrainQueryLog) << "addPathQuery: signalling failure due to internal error";
+        terrainQueryInterface->_signalPathHeights(false, latStep, lonStep, noAltitudes);
+    } else {
+        qCDebug(TerrainQueryLog) << "addPathQuery: All altitudes taken from cached data";
+        terrainQueryInterface->_signalPathHeights(coordinates.count() == altitudes.count(), latStep, lonStep, altitudes);
+    }
 }
 
-bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes)
+bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error)
 {
+    error = false;
+
     foreach (const QGeoCoordinate& coordinate, coordinates) {
         QString tileHash = _getTileHash(coordinate);
         _tilesMutex.lock();
@@ -406,14 +422,20 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
             return false;
         } else {
             if (_tiles[tileHash].isIn(coordinate)) {
-                altitudes.push_back(_tiles[tileHash].elevation(coordinate));
+                double elevation = _tiles[tileHash].elevation(coordinate);
+                if (elevation < 0.0) {
+                    error = true;
+                }
+                altitudes.push_back(elevation);
             } else {
                 qCWarning(TerrainQueryLog) << "Error: coordinate not in tile region";
                 altitudes.push_back(-1.0);
+                error = true;
             }
         }
         _tilesMutex.unlock();
     }
+
     return true;
 }
 
@@ -477,14 +499,29 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
     // now try to query the data again
     for (int i = _requestQueue.count() - 1; i >= 0; i--) {
+        bool error;
         QList<double> altitudes;
         QueuedRequestInfo_t& requestInfo = _requestQueue[i];
 
-        if (_getAltitudesForCoordinates(requestInfo.coordinates, altitudes)) {
+        if (_getAltitudesForCoordinates(requestInfo.coordinates, altitudes, error)) {
             if (requestInfo.queryMode == QueryMode::QueryModeCoordinates) {
-                requestInfo.terrainQueryInterface->_signalCoordinateHeights(requestInfo.coordinates.count() == altitudes.count(), altitudes);
+                if (error) {
+                    QList<double> noAltitudes;
+                    qCWarning(TerrainQueryLog) << "_terrainDone(coordinateQuery): signalling failure due to internal error";
+                    requestInfo.terrainQueryInterface->_signalCoordinateHeights(false, noAltitudes);
+                } else {
+                    qCDebug(TerrainQueryLog) << "_terrainDone(coordinateQuery): All altitudes taken from cached data";
+                    requestInfo.terrainQueryInterface->_signalCoordinateHeights(requestInfo.coordinates.count() == altitudes.count(), altitudes);
+                }
             } else if (requestInfo.queryMode == QueryMode::QueryModePath) {
-                requestInfo.terrainQueryInterface->_signalPathHeights(requestInfo.coordinates.count() == altitudes.count(), requestInfo.latStep, requestInfo.lonStep, altitudes);
+                if (error) {
+                    QList<double> noAltitudes;
+                    qCWarning(TerrainQueryLog) << "_terrainDone(coordinateQuery): signalling failure due to internal error";
+                    requestInfo.terrainQueryInterface->_signalPathHeights(false, requestInfo.latStep, requestInfo.lonStep, noAltitudes);
+                } else {
+                    qCDebug(TerrainQueryLog) << "_terrainDone(coordinateQuery): All altitudes taken from cached data";
+                    requestInfo.terrainQueryInterface->_signalPathHeights(requestInfo.coordinates.count() == altitudes.count(), requestInfo.latStep, requestInfo.lonStep, altitudes);
+                }
             }
             _requestQueue.removeAt(i);
         }

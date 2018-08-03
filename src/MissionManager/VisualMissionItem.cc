@@ -195,9 +195,7 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 
 void VisualMissionItem::_terrainDataReceived(bool success, QList<double> heights)
 {
-    if (success) {
-        _terrainAltitude = heights[0];
-        emit terrainAltitudeChanged(_terrainAltitude);
-        sender()->deleteLater();
-    }
+    _terrainAltitude = success ? heights[0] : qQNaN();
+    emit terrainAltitudeChanged(_terrainAltitude);
+    sender()->deleteLater();
 }
