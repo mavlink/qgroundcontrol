@@ -134,7 +134,7 @@ TerrainTile::TerrainTile(QByteArray byteArray)
 bool TerrainTile::isIn(const QGeoCoordinate& coordinate) const
 {
     if (!_isValid) {
-        qCDebug(TerrainTileLog) << "isIn requested, but tile not valid";
+        qCWarning(TerrainTileLog) << "isIn requested, but tile not valid";
         return false;
     }
     bool ret = coordinate.latitude() >= _southWest.latitude() && coordinate.longitude() >= _southWest.longitude() &&
@@ -157,7 +157,7 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
         return static_cast<double>(_data[indexLat][indexLon]);
     } else {
-        qCDebug(TerrainTileLog) << "Asking for elevation, but no valid data.";
+        qCWarning(TerrainTileLog) << "Asking for elevation, but no valid data.";
         return -1.0;
     }
 }
@@ -284,6 +284,7 @@ int TerrainTile::_latToDataIndex(double latitude) const
     if (isValid() && _southWest.isValid() && _northEast.isValid()) {
         return qRound((latitude - _southWest.latitude()) / (_northEast.latitude() - _southWest.latitude()) * (_gridSizeLat - 1));
     } else {
+        qCWarning(TerrainTileLog) << "TerrainTile::_latToDataIndex internal error" << isValid() << _southWest.isValid() << _northEast.isValid();
         return -1;
     }
 }
@@ -293,6 +294,7 @@ int TerrainTile::_lonToDataIndex(double longitude) const
     if (isValid() && _southWest.isValid() && _northEast.isValid()) {
         return qRound((longitude - _southWest.longitude()) / (_northEast.longitude() - _southWest.longitude()) * (_gridSizeLon - 1));
     } else {
+        qCWarning(TerrainTileLog) << "TerrainTile::_lonToDataIndex internal error" << isValid() << _southWest.isValid() << _northEast.isValid();
         return -1;
     }
 }
