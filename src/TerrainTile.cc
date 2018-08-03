@@ -53,81 +53,50 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     , _gridSizeLon(-1)
     , _isValid(false)
 {
-    QDataStream stream(byteArray);
+    int cTileHeaderBytes = static_cast<int>(sizeof(TileInfo_t));
+    int cTileBytesAvailable = byteArray.size();
 
-    float lat,lon;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
+    if (cTileBytesAvailable < cTileHeaderBytes) {
+        qWarning() << "Terrain tile binary data too small for TileInfo_s header";
         return;
     }
-    stream >> lat;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> lon;
-    _southWest.setLatitude(lat);
-    _southWest.setLongitude(lon);
 
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> lat;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> lon;
-    _northEast.setLatitude(lat);
-    _northEast.setLongitude(lon);
-
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> _minElevation;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> _maxElevation;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> _avgElevation;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> _gridSizeLat;
-    if (stream.atEnd()) {
-        qWarning() << "Terrain tile binary data does not contain all data";
-        return;
-    }
-    stream >> _gridSizeLon;
+    const TileInfo_t* tileInfo = reinterpret_cast<const TileInfo_t*>(byteArray.constData());
+    _southWest.setLatitude(tileInfo->swLat);
+    _southWest.setLongitude(tileInfo->swLon);
+    _northEast.setLatitude(tileInfo->neLat);
+    _northEast.setLongitude(tileInfo->neLon);
+    _minElevation = tileInfo->minElevation;
+    _maxElevation = tileInfo->maxElevation;
+    _avgElevation = tileInfo->avgElevation;
+    _gridSizeLat = tileInfo->gridSizeLat;
+    _gridSizeLon = tileInfo->gridSizeLon;
 
     qCDebug(TerrainTileLog) << "Loading terrain tile: " << _southWest << " - " << _northEast;
     qCDebug(TerrainTileLog) << "min:max:avg:sizeLat:sizeLon" << _minElevation << _maxElevation << _avgElevation << _gridSizeLat << _gridSizeLon;
 
+    int cTileDataBytes = static_cast<int>(sizeof(int16_t)) * _gridSizeLat * _gridSizeLon;
+    if (cTileBytesAvailable < cTileHeaderBytes + cTileDataBytes) {
+        qWarning() << "Terrain tile binary data too small for tile data";
+        return;
+    }
+
+    _data = new int16_t*[_gridSizeLat];
+    for (int k = 0; k < _gridSizeLat; k++) {
+        _data[k] = new int16_t[_gridSizeLon];
+    }
+
+    int valueIndex = 0;
+    const int16_t* pTileData = reinterpret_cast<const int16_t*>(&reinterpret_cast<const uint8_t*>(byteArray.constData())[cTileHeaderBytes]);
     for (int i = 0; i < _gridSizeLat; i++) {
-        if (i == 0) {
-            _data = new int16_t*[_gridSizeLat];
-            for (int k = 0; k < _gridSizeLat; k++) {
-                _data[k] = new int16_t[_gridSizeLon];
-            }
-        }
         for (int j = 0; j < _gridSizeLon; j++) {
-            if (stream.atEnd()) {
-                qWarning() << "Terrain tile binary data does not contain all data";
-                return;
-            }
-            stream >> _data[i][j];
+            _data[i][j] = pTileData[valueIndex++];
         }
     }
 
     _isValid = true;
+
+    return;
 }
 
 
@@ -176,8 +145,6 @@ QByteArray TerrainTile::serialize(QByteArray input)
         return emptyArray;
     }
 
-    QByteArray byteArray;
-    QDataStream stream(&byteArray, QIODevice::WriteOnly);
     if (!document.isObject()) {
         qCDebug(TerrainTileLog) << "Terrain tile json doc is no object";
         QByteArray emptyArray;
@@ -231,10 +198,6 @@ QByteArray TerrainTile::serialize(QByteArray input)
         QByteArray emptyArray;
         return emptyArray;
     }
-    stream << static_cast<float>(swArray[0].toDouble());
-    stream << static_cast<float>(swArray[1].toDouble());
-    stream << static_cast<float>(neArray[0].toDouble());
-    stream << static_cast<float>(neArray[1].toDouble());
 
     // Stats
     const QJsonObject& statsObject = dataObject[_jsonStatsKey].toObject();
@@ -248,30 +211,46 @@ QByteArray TerrainTile::serialize(QByteArray input)
         QByteArray emptyArray;
         return emptyArray;
     }
-    stream << static_cast<int16_t>(statsObject[_jsonMinElevationKey].toInt());
-    stream << static_cast<int16_t>(statsObject[_jsonMaxElevationKey].toInt());
-    stream << static_cast<float>(statsObject[_jsonAvgElevationKey].toDouble());
 
     // Carpet
     const QJsonArray& carpetArray = dataObject[_jsonCarpetKey].toArray();
     int gridSizeLat = carpetArray.count();
-    stream << static_cast<int16_t>(gridSizeLat);
-    int gridSizeLon = 0;
-    qCDebug(TerrainTileLog) << "Received tile has size in latitude direction: " << carpetArray.count();
+    int gridSizeLon = carpetArray[0].toArray().count();
+    qCDebug(TerrainTileLog) << "Received tile has size in latitude direction: " << gridSizeLat;
+    qCDebug(TerrainTileLog) << "Received tile has size in longitued direction: " << gridSizeLon;
+
+    TileInfo_t tileInfo;
+
+    tileInfo.swLat = swArray[0].toDouble();
+    tileInfo.swLon = swArray[1].toDouble();
+    tileInfo.neLat = neArray[0].toDouble();
+    tileInfo.neLon = neArray[1].toDouble();
+    tileInfo.minElevation = static_cast<int16_t>(statsObject[_jsonMinElevationKey].toInt());
+    tileInfo.maxElevation = static_cast<int16_t>(statsObject[_jsonMaxElevationKey].toInt());
+    tileInfo.avgElevation = statsObject[_jsonAvgElevationKey].toDouble();
+    tileInfo.gridSizeLat = static_cast<int16_t>(gridSizeLat);
+    tileInfo.gridSizeLon = static_cast<int16_t>(gridSizeLon);
+
+    int cTileHeaderBytes = static_cast<int>(sizeof(TileInfo_t));
+    int cTileDataBytes = static_cast<int>(sizeof(int16_t)) * gridSizeLat * gridSizeLon;
+
+    QByteArray byteArray(cTileHeaderBytes + cTileDataBytes, 0);
+
+    TileInfo_t* pTileInfo = reinterpret_cast<TileInfo_t*>(byteArray.data());
+    int16_t*    pTileData = reinterpret_cast<int16_t*>(&reinterpret_cast<uint8_t*>(byteArray.data())[cTileHeaderBytes]);
+
+    *pTileInfo = tileInfo;
+
+    int valueIndex = 0;
     for (int i = 0; i < gridSizeLat; i++) {
         const QJsonArray& row = carpetArray[i].toArray();
-        if (i == 0) {
-            gridSizeLon = row.count();
-            stream << static_cast<int16_t>(gridSizeLon);
-            qCDebug(TerrainTileLog) << "Received tile has size in longitued direction: " << row.count();
-        }
         if (row.count() < gridSizeLon) {
             qCDebug(TerrainTileLog) << "Expected row array of " << gridSizeLon << ", instead got " << row.count();
             QByteArray emptyArray;
             return emptyArray;
         }
         for (int j = 0; j < gridSizeLon; j++) {
-            stream << static_cast<int16_t>(row[j].toDouble());
+            pTileData[valueIndex++] = static_cast<int16_t>(row[j].toDouble());
         }
     }
 
