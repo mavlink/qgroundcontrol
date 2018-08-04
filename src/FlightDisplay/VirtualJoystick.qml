@@ -40,6 +40,7 @@ Item {
         height:                 parent.height
         yAxisThrottle:          true
         lightColors:            useLightColors
+        throttle:               true
     }
 
     JoystickThumbPad {
