@@ -412,7 +412,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
         if (_tiles.contains(tileHash)) {
             if (_tiles[tileHash].isIn(coordinate)) {
                 double elevation = _tiles[tileHash].elevation(coordinate);
-                if (elevation < 0.0) {
+                if (qIsNaN(elevation)) {
                     error = true;
                     qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: negative elevation in tile cache";
                 } else {
@@ -421,7 +421,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
                 altitudes.push_back(elevation);
             } else {
                 qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: coordinate not in tile region";
-                altitudes.push_back(-1.0);
+                altitudes.push_back(qQNaN());
                 error = true;
             }
         } else {
