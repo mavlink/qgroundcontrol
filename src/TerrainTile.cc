@@ -121,13 +121,13 @@ double TerrainTile::elevation(const QGeoCoordinate& coordinate) const
         int indexLon = _lonToDataIndex(coordinate.longitude());
         if (indexLat == -1 || indexLon == -1) {
             qCWarning(TerrainTileLog) << "Internal error indexLat:indexLon == -1" << indexLat << indexLon;
-            return -1.0;
+            return qQNaN();
         }
         qCDebug(TerrainTileLog) << "indexLat:indexLon" << indexLat << indexLon << "elevation" << _data[indexLat][indexLon];
         return static_cast<double>(_data[indexLat][indexLon]);
     } else {
         qCWarning(TerrainTileLog) << "Asking for elevation, but no valid data.";
-        return -1.0;
+        return qQNaN();
     }
 }
 
