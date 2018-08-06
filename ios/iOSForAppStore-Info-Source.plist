@@ -83,6 +83,8 @@
 	<string>Ground Station Location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Ground Station Location</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Ground Station Location</string>
 	<key>UILaunchStoryboardName</key>
 	<string>QGCLaunchScreen</string>
     <key>NSBluetoothPeripheralUsageDescription</key>

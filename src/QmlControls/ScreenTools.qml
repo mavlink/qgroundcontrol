@@ -54,7 +54,7 @@ Item {
     readonly property real largeFontPointRatio:      1.5
 
     property real realPixelDensity:  QGroundControl.corePlugin.options.devicePixelDensity != 0 ? QGroundControl.corePlugin.options.devicePixelDensity : Screen.pixelDensity
-    property real realPixelRatio:    QGroundControl.corePlugin.options.devicePixelRatio   != 0 ? QGroundControl.corePlugin.options.devicePixelRatio   : Screen.devicePixelRatio
+    property real realPixelRatio:    isiOS ? 1 : (QGroundControl.corePlugin.options.devicePixelRatio   != 0 ? QGroundControl.corePlugin.options.devicePixelRatio   : Screen.devicePixelRatio)
 
     property bool isAndroid:        ScreenToolsController.isAndroid
     property bool isiOS:            ScreenToolsController.isiOS

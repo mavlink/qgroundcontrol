@@ -120,8 +120,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
 
-
         // Initialize GStreamer
+#if !defined(__ios__)
         if (logpath) {
             if (debuglevel) {
                 qputenv("GST_DEBUG", debuglevel);
@@ -130,9 +130,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
             qputenv("GST_DEBUG_FILE", QString("%1/%2").arg(logpath).arg("gstreamer-log.txt").toUtf8());
             qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
         }
-
-
-        GError* error = NULL;
+#endif
+        GError* error = nullptr;
         if (!gst_init_check(&argc, &argv, &error)) {
             qCritical() << "gst_init_check() failed: " << error->message;
             g_error_free(error);
