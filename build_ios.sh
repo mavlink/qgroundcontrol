@@ -14,7 +14,7 @@ mkdir -p ${SHADOW_BUILD_DIR} &&
 cd ${SHADOW_BUILD_DIR} &&
 #-- Create project only (build using Xcode)
 ${QMAKE} -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release CONFIG+=ForAppStore
-rsync -av ${TRAVIS_BUILD_DIR}/ios/Images.xcassets ${SHADOW_BUILD_DIR}/QGroundControl/
+sed -i .bak 's/com.yourcompany.${PRODUCT_NAME:rfc1034identifier}/org.QGroundControl.qgc/' ${SHADOW_BUILD_DIR}/QGroundControl.xcodeproj/project.pbxproj
 #-- Create and build
 #${QMAKE} -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=WarningsAsErrorsOn CONFIG-=debug_and_release CONFIG+=release CONFIG+=ForAppStore &&
 #xcodebuild -configuration Release -xcconfig ${TRAVIS_BUILD_DIR}/ios/qgroundcontrol_appstore.xcconfig
