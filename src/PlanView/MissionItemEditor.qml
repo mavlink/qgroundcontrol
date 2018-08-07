@@ -142,7 +142,7 @@ Rectangle {
             MenuItem {
                 text:           qsTr("Change command...")
                 onTriggered:    commandPicker.clicked()
-                visible:        !_waypointsOnlyMode
+                visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
             }
 
             MenuItem {
