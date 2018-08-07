@@ -65,7 +65,7 @@ Item {
     readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
     readonly property string gotoMessage:                       qsTr("Move the vehicle to the specified location.")
              property string setWaypointMessage:                qsTr("Adjust current waypoint to %1.").arg(_actionData)
-    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location. Warning: WORK IN PROGRESS!")
+    readonly property string orbitMessage:                      qsTr("Orbit the vehicle around the specified location.")
     readonly property string landAbortMessage:                  qsTr("Abort the landing sequence.")
     readonly property string pauseMessage:                      qsTr("Pause the vehicle at it's current position, adjusting altitude up or down as needed.")
     readonly property string mvPauseMessage:                    qsTr("Pause all vehicles at their current position.")

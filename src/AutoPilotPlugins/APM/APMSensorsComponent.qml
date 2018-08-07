@@ -128,9 +128,7 @@ SetupPage {
 
                 onWaitingForCancelChanged: {
                     if (controller.waitingForCancel) {
-                        showMessage(qsTr("Calibration Cancel"), qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds."), 0)
-                    } else {
-                        hideDialog()
+                        showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), qgcView.showDialogDefaultWidth, 0)
                     }
                 }
 
@@ -162,6 +160,24 @@ SetupPage {
             }
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
+            Component {
+                id: waitForCancelDialogComponent
+
+                QGCViewMessage {
+                    message: qsTr("Waiting for Vehicle to response to Cancel. This may take a few seconds.")
+
+                    Connections {
+                        target: controller
+
+                        onWaitingForCancelChanged: {
+                            if (!controller.waitingForCancel) {
+                                hideDialog()
+                            }
+                        }
+                    }
+                }
+            }
 
             Component {
                 id: singleCompassOnboardResultsComponent
@@ -265,7 +281,10 @@ SetupPage {
 
                         QGCButton {
                             text:       qsTr("Reboot Vehicle")
-                            onClicked:  controller.vehicle.reboot()
+                            onClicked: {
+                                controller.vehicle.rebootVehicle()
+                                hideDialog()
+                            }
                         }
                     }
                 }
@@ -290,8 +309,11 @@ SetupPage {
 
                         QGCButton {
                             text:       qsTr("Reboot Vehicle")
-                            onClicked:  controller.vehicle.rebootVehicle()
-                        }
+                            onClicked: {
+                                controller.vehicle.rebootVehicle()
+                                hideDialog()
+                            }
+                       }
                     }
                 }
             }

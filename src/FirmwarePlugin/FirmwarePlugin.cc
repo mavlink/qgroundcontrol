@@ -505,6 +505,30 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
                                       0,        // minTriggerInterval
                                       this);
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Sentera NDVI Single Sensor"),
+                                      4.68,     // sensorWidth
+                                      3.56,     // sendsorHeight
+                                      1248,     // imageWidth
+                                      952,      // imageHeight
+                                      4.14,     // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(tr("Sentera Double 4K Sensor"),
+                                      6.2,      // sensorWidth
+                                      4.65,     // sendsorHeight
+                                      4000,     // imageWidth
+                                      3000,     // imageHeight
+                                      5.4,      // focalLength
+                                      true,     // landscape
+                                      false,    // fixedOrientation
+                                      0,        // minTriggerInterval
+                                      this);
+        _cameraList.append(QVariant::fromValue(metaData));
     }
 
     return _cameraList;
