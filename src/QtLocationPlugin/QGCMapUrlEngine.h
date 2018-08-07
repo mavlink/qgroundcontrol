@@ -79,7 +79,7 @@ public:
         EsriWorldSatellite      = 7001,
         EsriTerrain             = 7002,
 
-        AirmapElevation         = 8000
+        AirmapElevation         = 8001
     };
 
     UrlFactory      ();

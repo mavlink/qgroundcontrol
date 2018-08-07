@@ -65,7 +65,7 @@ Map {
     }
 
     function centerToSpecifiedLocation() {
-        qgcView.showDialog(specifyMapPositionDialog, qsTr("Specify Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        qgcView.showDialog(specifyMapPositionDialog, qsTr("Specify Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
 
     }
 

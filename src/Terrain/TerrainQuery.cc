@@ -338,16 +338,24 @@ void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQu
     qCDebug(TerrainQueryLog) << "TerrainTileManager::addCoordinateQuery count" << coordinates.count();
 
     if (coordinates.length() > 0) {
+        bool error;
         QList<double> altitudes;
 
-        if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
+        if (!_getAltitudesForCoordinates(coordinates, altitudes, error)) {
+            qCDebug(TerrainQueryLog) << "TerrainTileManager::addPathQuery queue count" << _requestQueue.count();
             QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModeCoordinates, 0, 0, coordinates };
             _requestQueue.append(queuedRequestInfo);
             return;
         }
 
-        qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
-        terrainQueryInterface->_signalCoordinateHeights(coordinates.count() == altitudes.count(), altitudes);
+        if (error) {
+            QList<double> noAltitudes;
+            qCWarning(TerrainQueryLog) << "addCoordinateQuery: signalling failure due to internal error";
+            terrainQueryInterface->_signalCoordinateHeights(false, noAltitudes);
+        } else {
+            qCDebug(TerrainQueryLog) << "addCoordinateQuery: All altitudes taken from cached data";
+            terrainQueryInterface->_signalCoordinateHeights(coordinates.count() == altitudes.count(), altitudes);
+        }
     }
 }
 
@@ -370,28 +378,56 @@ void TerrainTileManager::addPathQuery(TerrainOfflineAirMapQuery* terrainQueryInt
 
     qCDebug(TerrainQueryLog) << "TerrainTileManager::addPathQuery start:end:coordCount" << startPoint << endPoint << coordinates.count();
 
+    bool error;
     QList<double> altitudes;
-    if (!_getAltitudesForCoordinates(coordinates, altitudes)) {
+    if (!_getAltitudesForCoordinates(coordinates, altitudes, error)) {
+        qCDebug(TerrainQueryLog) << "TerrainTileManager::addPathQuery queue count" << _requestQueue.count();
         QueuedRequestInfo_t queuedRequestInfo = { terrainQueryInterface, QueryMode::QueryModePath, latStep, lonStep, coordinates };
         _requestQueue.append(queuedRequestInfo);
         return;
     }
 
-    qCDebug(TerrainQueryLog) << "All altitudes taken from cached data";
-    terrainQueryInterface->_signalPathHeights(coordinates.count() == altitudes.count(), latStep, lonStep, altitudes);
+    if (error) {
+        QList<double> noAltitudes;
+        qCWarning(TerrainQueryLog) << "addPathQuery: signalling failure due to internal error";
+        terrainQueryInterface->_signalPathHeights(false, latStep, lonStep, noAltitudes);
+    } else {
+        qCDebug(TerrainQueryLog) << "addPathQuery: All altitudes taken from cached data";
+        terrainQueryInterface->_signalPathHeights(coordinates.count() == altitudes.count(), latStep, lonStep, altitudes);
+    }
 }
 
-bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes)
+/// Either returns altitudes from cache or queues database request
+///     @param[out] error true: altitude not returned due to error, false: altitudes returned
+/// @return true: altitude returned (check error as well), false: database query queued (altitudes not returned)
+bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error)
 {
+    error = false;
+
     foreach (const QGeoCoordinate& coordinate, coordinates) {
         QString tileHash = _getTileHash(coordinate);
-        _tilesMutex.lock();
-        if (!_tiles.contains(tileHash)) {
-            qCDebug(TerrainQueryLog) << "Need to download tile " << tileHash;
+        qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates hash:coordinate" << tileHash << coordinate;
 
-            // Schedule the fetch task
+        _tilesMutex.lock();
+        if (_tiles.contains(tileHash)) {
+            if (_tiles[tileHash].isIn(coordinate)) {
+                double elevation = _tiles[tileHash].elevation(coordinate);
+                if (qIsNaN(elevation)) {
+                    error = true;
+                    qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: negative elevation in tile cache";
+                } else {
+                    qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates returning elevation from tile cache" << elevation;
+                }
+                altitudes.push_back(elevation);
+            } else {
+                qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: coordinate not in tile region";
+                altitudes.push_back(qQNaN());
+                error = true;
+            }
+        } else {
             if (_state != State::Downloading) {
                 QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(UrlFactory::AirmapElevation, QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1, &_networkManager);
+                qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates query from database" << request.url();
                 QGeoTileSpec spec;
                 spec.setX(QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1));
                 spec.setY(QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1));
@@ -404,16 +440,10 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
             _tilesMutex.unlock();
 
             return false;
-        } else {
-            if (_tiles[tileHash].isIn(coordinate)) {
-                altitudes.push_back(_tiles[tileHash].elevation(coordinate));
-            } else {
-                qCWarning(TerrainQueryLog) << "Error: coordinate not in tile region";
-                altitudes.push_back(-1.0);
-            }
         }
         _tilesMutex.unlock();
     }
+
     return true;
 }
 
@@ -477,14 +507,29 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
     // now try to query the data again
     for (int i = _requestQueue.count() - 1; i >= 0; i--) {
+        bool error;
         QList<double> altitudes;
         QueuedRequestInfo_t& requestInfo = _requestQueue[i];
 
-        if (_getAltitudesForCoordinates(requestInfo.coordinates, altitudes)) {
+        if (_getAltitudesForCoordinates(requestInfo.coordinates, altitudes, error)) {
             if (requestInfo.queryMode == QueryMode::QueryModeCoordinates) {
-                requestInfo.terrainQueryInterface->_signalCoordinateHeights(requestInfo.coordinates.count() == altitudes.count(), altitudes);
+                if (error) {
+                    QList<double> noAltitudes;
+                    qCWarning(TerrainQueryLog) << "_terrainDone(coordinateQuery): signalling failure due to internal error";
+                    requestInfo.terrainQueryInterface->_signalCoordinateHeights(false, noAltitudes);
+                } else {
+                    qCDebug(TerrainQueryLog) << "_terrainDone(coordinateQuery): All altitudes taken from cached data";
+                    requestInfo.terrainQueryInterface->_signalCoordinateHeights(requestInfo.coordinates.count() == altitudes.count(), altitudes);
+                }
             } else if (requestInfo.queryMode == QueryMode::QueryModePath) {
-                requestInfo.terrainQueryInterface->_signalPathHeights(requestInfo.coordinates.count() == altitudes.count(), requestInfo.latStep, requestInfo.lonStep, altitudes);
+                if (error) {
+                    QList<double> noAltitudes;
+                    qCWarning(TerrainQueryLog) << "_terrainDone(coordinateQuery): signalling failure due to internal error";
+                    requestInfo.terrainQueryInterface->_signalPathHeights(false, requestInfo.latStep, requestInfo.lonStep, noAltitudes);
+                } else {
+                    qCDebug(TerrainQueryLog) << "_terrainDone(coordinateQuery): All altitudes taken from cached data";
+                    requestInfo.terrainQueryInterface->_signalPathHeights(requestInfo.coordinates.count() == altitudes.count(), requestInfo.latStep, requestInfo.lonStep, altitudes);
+                }
             }
             _requestQueue.removeAt(i);
         }
@@ -525,7 +570,7 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
 
     if (_state != State::Idle) {
         // Waiting for last download the complete, wait some more
-        qCDebug(TerrainQueryLog) << "_sendNextBatch restarting timer";
+        qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_sendNextBatch waiting for current batch, restarting timer";
         _batchTimer.start();
         return;
     }
@@ -549,7 +594,7 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
         }
     }
     _requestQueue = _requestQueue.mid(requestQueueAdded);
-    qCDebug(TerrainQueryLog) << "_sendNextBatch - batch count:request queue count" << coords.count() << _requestQueue.count();
+    qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_sendNextBatch requesting next batch _state:_requestQueue.count:_sentRequests.count" << _stateToString(_state) << _requestQueue.count() << _sentRequests.count();
 
     _state = State::Downloading;
     _terrainQuery.requestCoordinateHeights(coords);
@@ -610,7 +655,7 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<dou
 {
     _state = State::Idle;
 
-    qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_coordinateHeights success:count" << success << heights.count();
+    qCDebug(TerrainQueryLog) << "TerrainAtCoordinateBatchManager::_coordinateHeights signalled success:count" << success << heights.count();
 
     if (!success) {
         _batchFailed();
