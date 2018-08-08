@@ -131,11 +131,11 @@ Item {
 
         onResetStatusTextArea: statusLog.text = statusTextAreaDefaultText
 
-        onSetCompassRotations: {
-            if (!_sensorsHaveFixedOrientation && (showCompass0Rot || showCompass1Rot || showCompass2Rot)) {
+        onMagCalComplete: {
+            //if (!_sensorsHaveFixedOrientation && (showCompass0Rot || showCompass1Rot || showCompass2Rot)) {
                 setOrientationsDialogShowBoardOrientation = false
-                showDialog(setOrientationsDialogComponent, qsTr("Set Compass Rotation(s)"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
-            }
+                showDialog(setOrientationsDialogComponent, qsTr("Compass Calibration Complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+            //}
         }
 
         onWaitingForCancelChanged: {
@@ -251,6 +251,20 @@ Item {
                     anchors.right:      parent.right
                     anchors.top:        parent.top
                     spacing:            ScreenTools.defaultFontPixelHeight
+
+                    QGCLabel {
+                        width:      parent.width
+                        wrapMode:   Text.WordWrap
+                        text:       qsTr("Set your compass orientations below and the make sure to reboot the vehicle prior to flight.")
+                    }
+
+                    QGCButton {
+                        text: qsTr("Reboot Vehicle")
+                        onClicked: {
+                            controller.vehicle.rebootVehicle()
+                            hideDialog()
+                        }
+                    }
 
                     QGCLabel {
                         width:      parent.width

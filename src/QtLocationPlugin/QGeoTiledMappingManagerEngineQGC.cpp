@@ -133,6 +133,10 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "Esri Satellite Map",       "ArcGIS Online World Imagery",      true,   false,  UrlFactory::EsriWorldSatellite);
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Esri Terrain Map",         "World Terrain Base",               false,  false,  UrlFactory::EsriTerrain);
 
+    // VWorld
+    mapTypes << QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "VWorld Satellite Map",      "VWorld Satellite Map",               false,  false,  UrlFactory::VWorldSatellite);
+    mapTypes << QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "VWorld Street Map",         "VWorld Street Map",                  false,  false,  UrlFactory::VWorldStreet);
+
     /* See: https://wiki.openstreetmap.org/wiki/Tile_usage_policy
     mapTypes << QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Open Street Map",          "Open Street map",              false, false, UrlFactory::OpenStreetMap);
     */

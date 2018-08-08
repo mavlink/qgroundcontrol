@@ -95,6 +95,15 @@ public:
     static constexpr double terrainAltitudeSpacing = 30.0;
 
 private:
+    typedef struct {
+        double  swLat,swLon, neLat, neLon;
+        int16_t minElevation;
+        int16_t maxElevation;
+        double  avgElevation;
+        int16_t gridSizeLat;
+        int16_t gridSizeLon;
+    } TileInfo_t;
+
     inline int _latToDataIndex(double latitude) const;
     inline int _lonToDataIndex(double longitude) const;
 
@@ -103,7 +112,7 @@ private:
 
     int16_t             _minElevation;                                  /// Minimum elevation in tile
     int16_t             _maxElevation;                                  /// Maximum elevation in tile
-    float               _avgElevation;                                  /// Average elevation of the tile
+    double              _avgElevation;                                  /// Average elevation of the tile
 
     int16_t**           _data;                                          /// 2D elevation data array
     int16_t             _gridSizeLat;                                   /// data grid size in latitude direction

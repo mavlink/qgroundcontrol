@@ -167,7 +167,7 @@ void SensorsComponentController::_stopCalibration(SensorsComponentController::St
                 emit resetStatusTextArea();
             }
             if (_magCalInProgress) {
-                emit setCompassRotations();
+                emit magCalComplete();
             }
             break;
             
