@@ -438,7 +438,7 @@ FlightMap {
         delegate: MapCircle {
             center:         object.center
             radius:         object.radius
-            color:          Qt.rgba(0.94, 0.87, 0, 0.15)
+            color:          object.color
             border.color:   Qt.rgba(1,1,1,0.85)
         }
     }
@@ -447,7 +447,7 @@ FlightMap {
         model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
         delegate: MapPolygon {
             path:           object.polygon
-            color:          Qt.rgba(0.94, 0.87, 0, 0.15)
+            color:          object.color
             border.color:   Qt.rgba(1,1,1,0.85)
         }
     }

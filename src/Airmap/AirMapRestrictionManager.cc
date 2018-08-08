@@ -11,8 +11,6 @@
 #include "AirMapManager.h"
 #include "AirspaceRestriction.h"
 
-#include "airmap/airspaces.h"
-
 #define RESTRICTION_UPDATE_DISTANCE    500     //-- 500m threshold for updates
 
 using namespace airmap;
@@ -37,6 +35,40 @@ AirMapRestrictionManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     }
 }
 
+
+//-----------------------------------------------------------------------------
+QColor
+AirMapRestrictionManager::_getColor(const Airspace::Type type)
+{
+    if(type == Airspace::Type::airport)
+        return QColor(254,65,65,30);
+    if(type == Airspace::Type::controlled_airspace)
+        return QColor(254,158,65,60);
+    if(type == Airspace::Type::special_use_airspace)
+        return QColor(65,230,254,30);
+    if(type == Airspace::Type::tfr)
+        return QColor(95,230,254,30);
+    if(type == Airspace::Type::wildfire)
+        return QColor(254,120,0,30);
+    if(type == Airspace::Type::park)
+        return QColor(7,165,22,30);
+    if(type == Airspace::Type::power_plant)
+        return QColor(11,7,165,30);
+    if(type == Airspace::Type::heliport)
+        return QColor(233,57,57,30);
+    if(type == Airspace::Type::prison)
+        return QColor(100,100,100,30);
+    if(type == Airspace::Type::school)
+        return QColor(56,224,190,30);
+    if(type == Airspace::Type::hospital)
+        return QColor(56,159,224,30);
+    if(type == Airspace::Type::fire)
+        return QColor(223,83,10,30);
+    if(type == Airspace::Type::emergency)
+        return QColor(255,0,0,30);
+    return QColor(255,0,255,30);
+}
+
 //-----------------------------------------------------------------------------
 void
 AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
@@ -54,7 +86,7 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
     _circles.clear();
     _state = State::RetrieveItems;
     Airspaces::Search::Parameters params;
-    params.full = true;
+    params.full = false;
     params.date_time = Clock::universal_time();
     //-- Geometry: Polygon
     Geometry::Polygon polygon;
@@ -74,23 +106,24 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
             const std::vector<Airspace>& airspaces = result.value();
             qCDebug(AirMapManagerLog)<<"Successful search. Items:" << airspaces.size();
             for (const auto& airspace : airspaces) {
+                QColor color = _getColor(airspace.type());
                 const Geometry& geometry = airspace.geometry();
                 switch(geometry.type()) {
                     case Geometry::Type::polygon: {
                         const Geometry::Polygon& polygon = geometry.details_for_polygon();
-                        _addPolygonToList(polygon);
+                        _addPolygonToList(polygon, color);
                     }
                         break;
                     case Geometry::Type::multi_polygon: {
                         const Geometry::MultiPolygon& multiPolygon = geometry.details_for_multi_polygon();
                         for (const auto& polygon : multiPolygon) {
-                            _addPolygonToList(polygon);
+                            _addPolygonToList(polygon, color);
                         }
                     }
                         break;
                     case Geometry::Type::point: {
                         const Geometry::Point& point = geometry.details_for_point();
-                        _circles.append(new AirspaceCircularRestriction(QGeoCoordinate(point.latitude, point.longitude), 0.));
+                        _circles.append(new AirspaceCircularRestriction(QGeoCoordinate(point.latitude, point.longitude), 0., color));
                         // TODO: radius???
                     }
                         break;
@@ -114,7 +147,7 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
 
 //-----------------------------------------------------------------------------
 void
-AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& polygon)
+AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& polygon, const QColor color)
 {
     QVariantList polygonArray;
     for (const auto& vertex : polygon.outer_ring.coordinates) {
@@ -126,7 +159,7 @@ AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& pol
         }
         polygonArray.append(QVariant::fromValue(coord));
     }
-    _polygons.append(new AirspacePolygonRestriction(polygonArray));
+    _polygons.append(new AirspacePolygonRestriction(polygonArray, color));
     if (polygon.inner_rings.size() > 0) {
         // no need to support those (they are rare, and in most cases, there's a more restrictive polygon filling the hole)
         qCDebug(AirMapManagerLog) << "Polygon with holes. Size: "<<polygon.inner_rings.size();

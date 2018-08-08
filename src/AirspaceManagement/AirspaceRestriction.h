@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QGeoCoordinate>
 #include <QVariantList>
+#include <QColor>
 
 /**
  * @class AirspaceRestriction
@@ -22,7 +23,11 @@ class AirspaceRestriction : public QObject
 {
     Q_OBJECT
 public:
-    AirspaceRestriction(QObject* parent = nullptr);
+    AirspaceRestriction(QColor color, QObject* parent = nullptr);
+    Q_PROPERTY(QColor color  READ color CONSTANT)
+    QColor color() { return _color; }
+protected:
+    QColor         _color;
 };
 
 /**
@@ -34,12 +39,9 @@ class AirspacePolygonRestriction : public AirspaceRestriction
 {
     Q_OBJECT
 public:
-    AirspacePolygonRestriction(const QVariantList& polygon, QObject* parent = nullptr);
-
-    Q_PROPERTY(QVariantList polygon MEMBER _polygon CONSTANT)
-
-    const QVariantList& getPolygon() const { return _polygon; }
-
+    AirspacePolygonRestriction(const QVariantList& polygon, QColor color, QObject* parent = nullptr);
+    Q_PROPERTY(QVariantList polygon READ polygon CONSTANT)
+    QVariantList polygon() { return _polygon; }
 private:
     QVariantList    _polygon;
 };
@@ -53,11 +55,11 @@ class AirspaceCircularRestriction : public AirspaceRestriction
 {
     Q_OBJECT
 public:
-    AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QObject* parent = nullptr);
-
-    Q_PROPERTY(QGeoCoordinate   center MEMBER _center CONSTANT)
-    Q_PROPERTY(double           radius MEMBER _radius CONSTANT)
-
+    AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QColor color, QObject* parent = nullptr);
+    Q_PROPERTY(QGeoCoordinate   center READ center CONSTANT)
+    Q_PROPERTY(double           radius READ radius CONSTANT)
+    QGeoCoordinate   center     () { return _center; }
+    double           radius     () { return _radius; }
 private:
     QGeoCoordinate  _center;
     double          _radius;
