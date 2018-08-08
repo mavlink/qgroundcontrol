@@ -173,6 +173,10 @@ void VisualMissionItem::setMissionVehicleYaw(double vehicleYaw)
 
 void VisualMissionItem::_updateTerrainAltitude(void)
 {
+    if (coordinate().latitude() == 0 && coordinate().longitude() == 0) {
+        // This is an intermediate state we don't react to
+        return;
+    }
     if (!_flyView && coordinate().isValid()) {
         // We use a timer so that any additional requests before the timer fires result in only a single request
         _updateTerrainTimer.start();
@@ -195,9 +199,7 @@ void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 
 void VisualMissionItem::_terrainDataReceived(bool success, QList<double> heights)
 {
-    if (success) {
-        _terrainAltitude = heights[0];
-        emit terrainAltitudeChanged(_terrainAltitude);
-        sender()->deleteLater();
-    }
+    _terrainAltitude = success ? heights[0] : qQNaN();
+    emit terrainAltitudeChanged(_terrainAltitude);
+    sender()->deleteLater();
 }

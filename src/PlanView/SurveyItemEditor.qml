@@ -74,17 +74,18 @@ Rectangle {
         }
 
         SectionHeader {
-            id:     corridorHeader
+            id:     transectsHeader
             text:   qsTr("Transects")
         }
 
         GridLayout {
+            id:             transectsGrid
             anchors.left:   parent.left
             anchors.right:  parent.right
             columnSpacing:  _margin
             rowSpacing:     _margin
             columns:        2
-            visible:        corridorHeader.checked
+            visible:        transectsHeader.checked
 
             QGCLabel { text: qsTr("Angle") }
             FactTextField {
@@ -108,8 +109,8 @@ Rectangle {
 
             QGCLabel { text: qsTr("Turnaround dist") }
             FactTextField {
-                fact:                   missionItem.turnAroundDistance
-                Layout.fillWidth:       true
+                fact:               missionItem.turnAroundDistance
+                Layout.fillWidth:   true
             }
 
             QGCButton {
@@ -132,14 +133,14 @@ Rectangle {
             }
 
             FactCheckBox {
-                text:               qsTr("Refly at 90 degree offset")
+                text:               qsTr("Refly at 90 deg offset")
                 fact:               missionItem.refly90Degrees
                 enabled:            !missionItem.followTerrain
                 Layout.columnSpan:  2
             }
 
             FactCheckBox {
-                text:               qsTr("Take images in turnarounds")
+                text:               qsTr("Images in turnarounds")
                 fact:               missionItem.cameraTriggerInTurnAround
                 enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
                 Layout.columnSpan:  2
