@@ -21,38 +21,20 @@ const char* CameraSpec::_landscapeName =            "Landscape";
 const char* CameraSpec::_fixedOrientationName =     "FixedOrientation";
 const char* CameraSpec::_minTriggerIntervalName =   "MinTriggerInterval";
 
-CameraSpec::CameraSpec(QObject* parent)
+CameraSpec::CameraSpec(const QString& settingsGroup, QObject* parent)
     : QObject                   (parent)
     , _dirty                    (false)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraSpec.FactMetaData.json"), this))
-    , _sensorWidthFact          (0, _sensorWidthName,           FactMetaData::valueTypeDouble)
-    , _sensorHeightFact         (0, _sensorHeightName,          FactMetaData::valueTypeDouble)
-    , _imageWidthFact           (0, _imageWidthName,            FactMetaData::valueTypeUint32)
-    , _imageHeightFact          (0, _imageHeightName,           FactMetaData::valueTypeUint32)
-    , _focalLengthFact          (0, _focalLengthName,           FactMetaData::valueTypeDouble)
-    , _landscapeFact            (0, _landscapeName,             FactMetaData::valueTypeBool)
-    , _fixedOrientationFact     (0, _fixedOrientationName,      FactMetaData::valueTypeBool)
-    , _minTriggerIntervalFact   (0, _minTriggerIntervalName,    FactMetaData::valueTypeDouble)
+    , _sensorWidthFact          (settingsGroup, _metaDataMap[_sensorWidthName])
+    , _sensorHeightFact         (settingsGroup, _metaDataMap[_sensorHeightName])
+    , _imageWidthFact           (settingsGroup, _metaDataMap[_imageWidthName])
+    , _imageHeightFact          (settingsGroup, _metaDataMap[_imageHeightName])
+    , _focalLengthFact          (settingsGroup, _metaDataMap[_focalLengthName])
+    , _landscapeFact            (settingsGroup, _metaDataMap[_landscapeName])
+    , _fixedOrientationFact     (settingsGroup, _metaDataMap[_fixedOrientationName])
+    , _minTriggerIntervalFact   (settingsGroup, _metaDataMap[_minTriggerIntervalName])
 {
-    _init(true);
-}
-
-CameraSpec::CameraSpec(const CameraSpec& other, QObject* parent)
-    : QObject                   (parent)
-    , _dirty                    (false)
-    , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/CameraSpec.FactMetaData.json"), this))
-    , _sensorWidthFact          (0, _sensorWidthName,           FactMetaData::valueTypeDouble)
-    , _sensorHeightFact         (0, _sensorHeightName,          FactMetaData::valueTypeDouble)
-    , _imageWidthFact           (0, _imageWidthName,            FactMetaData::valueTypeUint32)
-    , _imageHeightFact          (0, _imageHeightName,           FactMetaData::valueTypeUint32)
-    , _focalLengthFact          (0, _focalLengthName,           FactMetaData::valueTypeDouble)
-    , _landscapeFact            (0, _landscapeName,             FactMetaData::valueTypeBool)
-    , _fixedOrientationFact     (0, _fixedOrientationName,      FactMetaData::valueTypeBool)
-    , _minTriggerIntervalFact   (0, _minTriggerIntervalName,    FactMetaData::valueTypeDouble)
-{
-    _init(false);
-
-    *this = other;
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
 }
 
 const CameraSpec& CameraSpec::operator=(const CameraSpec& other)
@@ -67,20 +49,6 @@ const CameraSpec& CameraSpec::operator=(const CameraSpec& other)
     _minTriggerIntervalFact.setRawValue (other._minTriggerIntervalFact.rawValue());
 
     return *this;
-}
-
-void CameraSpec::_init(bool setDefaults)
-{
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-
-    _sensorWidthFact.setMetaData        (_metaDataMap[_sensorWidthName],        setDefaults);
-    _sensorHeightFact.setMetaData       (_metaDataMap[_sensorHeightName],       setDefaults);
-    _imageWidthFact.setMetaData         (_metaDataMap[_imageWidthName],         setDefaults);
-    _imageHeightFact.setMetaData        (_metaDataMap[_imageHeightName],        setDefaults);
-    _focalLengthFact.setMetaData        (_metaDataMap[_focalLengthName],        setDefaults);
-    _landscapeFact.setMetaData          (_metaDataMap[_landscapeName],          setDefaults);
-    _fixedOrientationFact.setMetaData   (_metaDataMap[_fixedOrientationName],   setDefaults);
-    _minTriggerIntervalFact.setMetaData (_metaDataMap[_minTriggerIntervalName], setDefaults);
 }
 
 void CameraSpec::setDirty(bool dirty)

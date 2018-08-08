@@ -299,8 +299,13 @@ QGCView {
                 if (retList[0] == KMLFileHelper.Error) {
                     _qgcView.showMessage("Error", retList[1], StandardButton.Ok)
                 } else if (retList[0] == KMLFileHelper.Polygon) {
-                    kmlPolygonSelectDialogKMLFile = file
-                    _qgcView.showDialog(kmlPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    var editVehicle = _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+                    if (editVehicle.fixedWing) {
+                        insertComplexMissionItemFromKML(_missionController.surveyComplexItemName, file, -1)
+                    } else {
+                        kmlPolygonSelectDialogKMLFile = file
+                        _qgcView.showDialog(kmlPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    }
                 } else if (retList[0] == KMLFileHelper.Polyline) {
                     insertComplexMissionItemFromKML(_missionController.corridorScanComplexItemName, file, -1)
                 }
@@ -314,8 +319,6 @@ QGCView {
         id: kmlPolygonSelectDialog
 
         QGCViewDialog {
-            property var editVehicle: _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-
             function accept() {
                 var complexItemName
                 if (surveyRadio.checked) {
@@ -325,13 +328,6 @@ QGCView {
                 }
                 insertComplexMissionItemFromKML(complexItemName, kmlPolygonSelectDialogKMLFile, -1)
                 hideDialog()
-            }
-
-            Component.onCompleted: {
-                if (editVehicle.fixedWing) {
-                    // Only Survey available
-                    accept()
-                }
             }
 
             ExclusiveGroup {
@@ -360,7 +356,6 @@ QGCView {
                 QGCRadioButton {
                     text:           qsTr("Structure Scan")
                     exclusiveGroup: radioGroup
-                    visible:        !editVehicle.fixedWing
                 }
             }
         }

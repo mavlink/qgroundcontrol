@@ -20,9 +20,16 @@ import QGroundControl.Palette 1.0
 QGCViewDialog {
     property string message
 
-    QGCLabel {
+    QGCFlickable {
         anchors.fill:   parent
-        wrapMode:       Text.WordWrap
-        text:           message
+        contentHeight:  label.contentHeight
+
+        QGCLabel {
+            id:             label
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            wrapMode:       Text.WordWrap
+            text:           message
+        }
     }
 }
