@@ -123,7 +123,6 @@ Item {
         _circle = false
     }
 
-    /// Reset polygon to a circle which fits within initial polygon
     function setCircleRadius(center, radius) {
         var unboundCenter = center.atDistanceAndAzimuth(0, 0)
         _circleRadius = radius
@@ -460,7 +459,8 @@ Item {
             }
 
             function setRadiusFromDialog() {
-                setCircleRadius(mapPolygon.center, radiusField.text)
+                var radius = QGroundControl.appSettingsDistanceUnitsToMeters(radiusField.text)
+                setCircleRadius(mapPolygon.center, radius)
                 _editCircleRadius = false
             }
 
@@ -484,7 +484,9 @@ Item {
 
                     QGCTextField {
                         id:                 radiusField
-                        text:               _circleRadius.toFixed(2)
+                        showUnits:          true
+                        unitsLabel:         QGroundControl.appSettingsDistanceUnitsString
+                        text:               QGroundControl.metersToAppSettingsDistanceUnits(_circleRadius).toFixed(2)
                         onEditingFinished:  setRadiusFromDialog()
                         inputMethodHints:   Qt.ImhFormattedNumbersOnly
                     }
