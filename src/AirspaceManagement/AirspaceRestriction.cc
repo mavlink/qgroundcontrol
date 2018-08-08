@@ -9,20 +9,21 @@
 
 #include "AirspaceRestriction.h"
 
-AirspaceRestriction::AirspaceRestriction(QObject* parent)
+AirspaceRestriction::AirspaceRestriction(QColor color, QObject* parent)
     : QObject(parent)
+    , _color(color)
 {
 }
 
-AirspacePolygonRestriction::AirspacePolygonRestriction(const QVariantList& polygon, QObject* parent)
-    : AirspaceRestriction(parent)
+AirspacePolygonRestriction::AirspacePolygonRestriction(const QVariantList& polygon, QColor color, QObject* parent)
+    : AirspaceRestriction(color, parent)
     , _polygon(polygon)
 {
 
 }
 
-AirspaceCircularRestriction::AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QObject* parent)
-    : AirspaceRestriction(parent)
+AirspaceCircularRestriction::AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QColor color, QObject* parent)
+    : AirspaceRestriction(color, parent)
     , _center(center)
     , _radius(radius)
 {

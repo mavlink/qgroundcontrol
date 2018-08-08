@@ -18,6 +18,7 @@
 #include <QGeoCoordinate>
 
 #include "airmap/geometry.h"
+#include "airmap/airspaces.h"
 
 /**
  * @file AirMapRestrictionManager.h
@@ -38,7 +39,8 @@ signals:
 
 private:
     void            _requestRestrictions(const QGCGeoBoundingCube& roi);
-    void            _addPolygonToList   (const airmap::Geometry::Polygon& polygon);
+    void            _addPolygonToList   (const airmap::Geometry::Polygon& polygon, const QColor color);
+    QColor          _getColor           (const airmap::Airspace::Type type);
 
     enum class State {
         Idle,

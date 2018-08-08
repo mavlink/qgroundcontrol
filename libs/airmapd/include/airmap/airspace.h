@@ -48,7 +48,9 @@ class Airspace {
 
   /// ControlledAirspace bundles up properties describing
   /// a controlled airspace.
-  struct ControlledAirspace {};
+  struct ControlledAirspace {
+    std::string airspace_classification;  ///< The classification of the ControlledAirspace.
+  };
 
   /// SpecialUseAirspace bundles up properties describing
   /// a special use airspace.

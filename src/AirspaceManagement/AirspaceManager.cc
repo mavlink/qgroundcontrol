@@ -117,7 +117,7 @@ AirspaceManager::_setROI(const QGCGeoBoundingCube& roi)
 {
     if(_roi != roi) {
         _roi = roi;
-        _ruleUpdateTimer.start();
+        _updateTimer.start();
     }
 }
 
