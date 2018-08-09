@@ -282,16 +282,16 @@ void FirmwareUpgradeController::_initFirmwareHash()
     QString apmChibiOSUrl   ("http://firmware.ardupilot.org/%1/%2/fmuv%3%4/%5.apj");
 
     QMap<FirmwareType_t, QString> px4MapFirmwareTypeToDir;
-    px4MapFirmwareTypeToDir[StableFirmware] =     QStringLiteral("stable");
-    px4MapFirmwareTypeToDir[BetaFirmware] =       QStringLiteral("beta");
-    px4MapFirmwareTypeToDir[DeveloperFirmware] =  QStringLiteral("master");
+    px4MapFirmwareTypeToDir[StableFirmware] =       QStringLiteral("stable");
+    px4MapFirmwareTypeToDir[BetaFirmware] =         QStringLiteral("beta");
+    px4MapFirmwareTypeToDir[DeveloperFirmware] =    QStringLiteral("master");
 
     QMap<FirmwareVehicleType_t, QString> apmMapVehicleTypeToDir;
-    apmMapVehicleTypeToDir[CopterFirmware] =  QStringLiteral("Copter");
-    apmMapVehicleTypeToDir[HeliFirmware] =    QStringLiteral("Copter");
-    apmMapVehicleTypeToDir[PlaneFirmware] =   QStringLiteral("Plane");
-    apmMapVehicleTypeToDir[RoverFirmware] =   QStringLiteral("Rover");
-    apmMapVehicleTypeToDir[SubFirmware] =     QStringLiteral("Sub");
+    apmMapVehicleTypeToDir[CopterFirmware] =    QStringLiteral("Copter");
+    apmMapVehicleTypeToDir[HeliFirmware] =      QStringLiteral("Copter");
+    apmMapVehicleTypeToDir[PlaneFirmware] =     QStringLiteral("Plane");
+    apmMapVehicleTypeToDir[RoverFirmware] =     QStringLiteral("Rover");
+    apmMapVehicleTypeToDir[SubFirmware] =       QStringLiteral("Sub");
 
     QMap<FirmwareVehicleType_t, QString> apmChibiOSMapVehicleTypeToDir;
     apmChibiOSMapVehicleTypeToDir[CopterChibiOSFirmware] =  QStringLiteral("Copter");
@@ -301,37 +301,37 @@ void FirmwareUpgradeController::_initFirmwareHash()
     apmChibiOSMapVehicleTypeToDir[SubChibiOSFirmware] =     QStringLiteral("Sub");
 
     QMap<FirmwareType_t, QString> apmMapFirmwareTypeToDir;
-    apmMapFirmwareTypeToDir[StableFirmware] =     QStringLiteral("stable");
-    apmMapFirmwareTypeToDir[BetaFirmware] =       QStringLiteral("beta");
-    apmMapFirmwareTypeToDir[DeveloperFirmware] =  QStringLiteral("latest");
+    apmMapFirmwareTypeToDir[StableFirmware] =       QStringLiteral("stable");
+    apmMapFirmwareTypeToDir[BetaFirmware] =         QStringLiteral("beta");
+    apmMapFirmwareTypeToDir[DeveloperFirmware] =    QStringLiteral("latest");
 
     QMap<FirmwareVehicleType_t, QString> apmMapVehicleTypeToPX4Dir;
-    apmMapVehicleTypeToPX4Dir[CopterFirmware] =  QStringLiteral("PX4");
-    apmMapVehicleTypeToPX4Dir[HeliFirmware] =    QStringLiteral("PX4-heli");
-    apmMapVehicleTypeToPX4Dir[PlaneFirmware] =   QStringLiteral("PX4");
-    apmMapVehicleTypeToPX4Dir[RoverFirmware] =   QStringLiteral("PX4");
-    apmMapVehicleTypeToPX4Dir[SubFirmware] =     QStringLiteral("PX4");
+    apmMapVehicleTypeToPX4Dir[CopterFirmware] = QStringLiteral("PX4");
+    apmMapVehicleTypeToPX4Dir[HeliFirmware] =   QStringLiteral("PX4-heli");
+    apmMapVehicleTypeToPX4Dir[PlaneFirmware] =  QStringLiteral("PX4");
+    apmMapVehicleTypeToPX4Dir[RoverFirmware] =  QStringLiteral("PX4");
+    apmMapVehicleTypeToPX4Dir[SubFirmware] =    QStringLiteral("PX4");
 
     QMap<FirmwareVehicleType_t, QString> apmMapVehicleTypeToFilename;
-    apmMapVehicleTypeToFilename[CopterFirmware] =  QStringLiteral("ArduCopter");
-    apmMapVehicleTypeToFilename[HeliFirmware] =    QStringLiteral("PX4-ArduCopter");
-    apmMapVehicleTypeToFilename[PlaneFirmware] =   QStringLiteral("ArduPlane");
-    apmMapVehicleTypeToFilename[RoverFirmware] =   QStringLiteral("APMrover2");
-    apmMapVehicleTypeToFilename[SubFirmware] =     QStringLiteral("ArduSub");
+    apmMapVehicleTypeToFilename[CopterFirmware] =   QStringLiteral("ArduCopter");
+    apmMapVehicleTypeToFilename[HeliFirmware] =     QStringLiteral("PX4-ArduCopter");
+    apmMapVehicleTypeToFilename[PlaneFirmware] =    QStringLiteral("ArduPlane");
+    apmMapVehicleTypeToFilename[RoverFirmware] =    QStringLiteral("APMrover2");
+    apmMapVehicleTypeToFilename[SubFirmware] =      QStringLiteral("ArduSub");
 
     QMap<FirmwareVehicleType_t, QString> apmChibiOSMapVehicleTypeToFmuDir;
-    apmChibiOSMapVehicleTypeToFmuDir[CopterChibiOSFirmware] =  QString();
-    apmChibiOSMapVehicleTypeToFmuDir[HeliChibiOSFirmware] =    QStringLiteral("-heli");
-    apmChibiOSMapVehicleTypeToFmuDir[PlaneChibiOSFirmware] =   QString();
-    apmChibiOSMapVehicleTypeToFmuDir[RoverChibiOSFirmware] =   QString();
-    apmChibiOSMapVehicleTypeToFmuDir[SubChibiOSFirmware] =     QString();
+    apmChibiOSMapVehicleTypeToFmuDir[CopterChibiOSFirmware] =   QString();
+    apmChibiOSMapVehicleTypeToFmuDir[HeliChibiOSFirmware] =     QStringLiteral("-heli");
+    apmChibiOSMapVehicleTypeToFmuDir[PlaneChibiOSFirmware] =    QString();
+    apmChibiOSMapVehicleTypeToFmuDir[RoverChibiOSFirmware] =    QString();
+    apmChibiOSMapVehicleTypeToFmuDir[SubChibiOSFirmware] =      QString();
 
     QMap<FirmwareVehicleType_t, QString> apmChibiOSMapVehicleTypeToFilename;
-    apmChibiOSMapVehicleTypeToFilename[CopterChibiOSFirmware] =  QStringLiteral("arducopter");
-    apmChibiOSMapVehicleTypeToFilename[HeliChibiOSFirmware] =    QStringLiteral("arducopter");
-    apmChibiOSMapVehicleTypeToFilename[PlaneChibiOSFirmware] =   QStringLiteral("arduplane");
-    apmChibiOSMapVehicleTypeToFilename[RoverChibiOSFirmware] =   QStringLiteral("ardurover");
-    apmChibiOSMapVehicleTypeToFilename[SubChibiOSFirmware] =     QStringLiteral("ardusub");
+    apmChibiOSMapVehicleTypeToFilename[CopterChibiOSFirmware] = QStringLiteral("arducopter");
+    apmChibiOSMapVehicleTypeToFilename[HeliChibiOSFirmware] =   QStringLiteral("arducopter");
+    apmChibiOSMapVehicleTypeToFilename[PlaneChibiOSFirmware] =  QStringLiteral("arduplane");
+    apmChibiOSMapVehicleTypeToFilename[RoverChibiOSFirmware] =  QStringLiteral("ardurover");
+    apmChibiOSMapVehicleTypeToFilename[SubChibiOSFirmware] =    QStringLiteral("ardusub");
 
     // PX4 Firmwares
     foreach (const FirmwareType_t& firmwareType, px4MapFirmwareTypeToDir.keys()) {
