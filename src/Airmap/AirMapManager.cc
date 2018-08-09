@@ -123,8 +123,8 @@ AirMapManager::_settingsChanged()
     //-- If we have a hardwired key (and no custom key is present), set it.
 #if defined(QGC_AIRMAP_KEY_AVAILABLE)
     if(!ap->usePersonalApiKey()->rawValue().toBool()) {
-        settings.apiKey     = kAirmapAPIKey;
-        settings.clientID   = kAirmapClientID;
+        settings.apiKey     = AirmapAPIKey();
+        settings.clientID   = AirmapClientID();
     }
     bool authChanged = settings.apiKey != _shared.settings().apiKey || settings.apiKey.isEmpty();
 #else
