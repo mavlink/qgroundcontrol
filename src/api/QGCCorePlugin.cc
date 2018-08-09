@@ -36,6 +36,7 @@ public:
     #endif
         , pMAVLink                  (NULL)
         , pConsole                  (NULL)
+        , pHelp                     (NULL)
     #if defined(QT_DEBUG)
         , pMockLink                 (NULL)
         , pDebug                    (NULL)
@@ -83,6 +84,7 @@ public:
 #endif
     QmlComponentInfo* pMAVLink;
     QmlComponentInfo* pConsole;
+    QmlComponentInfo* pHelp;
 #if defined(QT_DEBUG)
     QmlComponentInfo* pMockLink;
     QmlComponentInfo* pDebug;
@@ -151,6 +153,9 @@ QVariantList &QGCCorePlugin::settingsPages()
         _p->pConsole = new QmlComponentInfo(tr("Console"),
                                        QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/AppMessages.qml"));
         _p->settingsList.append(QVariant::fromValue((QmlComponentInfo*)_p->pConsole));
+        _p->pHelp = new QmlComponentInfo(tr("Help"),
+                                       QUrl::fromUserInput("qrc:/qml/HelpSettings.qml"));
+        _p->settingsList.append(QVariant::fromValue((QmlComponentInfo*)_p->pHelp));
 #if defined(QT_DEBUG)
         //-- These are always present on Debug builds
         _p->pMockLink = new QmlComponentInfo(tr("Mock Link"),

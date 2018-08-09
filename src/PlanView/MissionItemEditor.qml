@@ -142,13 +142,13 @@ Rectangle {
             MenuItem {
                 text:           qsTr("Change command...")
                 onTriggered:    commandPicker.clicked()
-                visible:        !_waypointsOnlyMode
+                visible:        missionItem.isSimpleItem && !_waypointsOnlyMode
             }
 
             MenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
-                onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+                onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
             }
 
             MenuSeparator {

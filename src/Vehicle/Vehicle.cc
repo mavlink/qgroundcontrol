@@ -1288,6 +1288,10 @@ void Vehicle::_handleWindCov(mavlink_message_t& message)
     float direction = qRadiansToDegrees(qAtan2(wind.wind_y, wind.wind_x));
     float speed = qSqrt(qPow(wind.wind_x, 2) + qPow(wind.wind_y, 2));
 
+    if (direction < 0) {
+        direction += 360;
+    }
+
     _windFactGroup.direction()->setRawValue(direction);
     _windFactGroup.speed()->setRawValue(speed);
     _windFactGroup.verticalSpeed()->setRawValue(0);

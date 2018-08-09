@@ -140,9 +140,9 @@ private:
         QList<QGeoCoordinate>       coordinates;
     } QueuedRequestInfo_t;
 
-    void _tileFailed(void);
-    bool _getAltitudesForCoordinates(const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes);
-    QString _getTileHash(const QGeoCoordinate& coordinate);     /// Method to create a unique string for each tile
+    void    _tileFailed                         (void);
+    bool    _getAltitudesForCoordinates         (const QList<QGeoCoordinate>& coordinates, QList<double>& altitudes, bool& error);
+    QString _getTileHash                        (const QGeoCoordinate& coordinate);
 
     QList<QueuedRequestInfo_t>  _requestQueue;
     State                       _state = State::Idle;

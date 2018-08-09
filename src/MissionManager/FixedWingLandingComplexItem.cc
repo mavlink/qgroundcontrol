@@ -225,7 +225,9 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
     _landingCoordSet = true;
 
     _ignoreRecalcSignals = false;
+
     _recalcFromCoordinateChange();
+    emit coordinateChanged(this->coordinate());    // This will kick off terrain query
 
     return true;
 }

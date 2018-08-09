@@ -26,8 +26,8 @@ const char* CameraCalc::adjustedFootprintSideName =         "AdjustedFootprintSi
 
 const char* CameraCalc::_jsonCameraSpecTypeKey =            "CameraSpecType";
 
-CameraCalc::CameraCalc(Vehicle* vehicle, QString settingsGroup, QObject* parent)
-    : CameraSpec                    (parent)
+CameraCalc::CameraCalc(Vehicle* vehicle, const QString& settingsGroup, QObject* parent)
+    : CameraSpec                    (settingsGroup, parent)
     , _vehicle                      (vehicle)
     , _dirty                        (false)
     , _disableRecalc                (false)
