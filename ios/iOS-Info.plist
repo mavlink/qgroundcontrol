@@ -26,8 +26,6 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>QGCLaunchScreen</string>
 	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -38,6 +36,8 @@
 	<string>Ground Station Location</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Ground Station Location</string>
+	<key>UILaunchStoryboardName</key>
+	<string>QGCLaunchScreen</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

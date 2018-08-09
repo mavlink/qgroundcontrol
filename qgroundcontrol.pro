@@ -62,9 +62,9 @@ iOSBuild {
         QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
         OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
     }
-    BUNDLE.files        = $$files($$PWD/ios/AppIcon*.png) $$PWD/ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
-    QMAKE_BUNDLE_DATA  += BUNDLE
-    #-- TODO: Add iTunesArtwork
+    QMAKE_ASSET_CATALOGS += ios/Images.xcassets
+    BUNDLE.files          = ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
+    QMAKE_BUNDLE_DATA    += BUNDLE
 }
 
 LinuxBuild {
