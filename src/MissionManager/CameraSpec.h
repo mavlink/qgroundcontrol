@@ -9,15 +9,14 @@
 
 #pragma once
 
-#include "Fact.h"
+#include "SettingsFact.h"
 
 class CameraSpec : public QObject
 {
     Q_OBJECT
 
 public:
-    CameraSpec(QObject* parent = NULL);
-    CameraSpec(const CameraSpec& other, QObject* parent);
+    CameraSpec(const QString& settingsGroup, QObject* parent = NULL);
 
     const CameraSpec& operator=(const CameraSpec& other);
 
@@ -31,14 +30,14 @@ public:
     Q_PROPERTY(Fact* fixedOrientation   READ fixedOrientation   CONSTANT)   ///< true: camera is in fixed orientation
     Q_PROPERTY(Fact* minTriggerInterval READ minTriggerInterval CONSTANT)   ///< Minimum time in seconds between each photo taken, 0 for not specified
 
-    Fact* sensorWidth       (void) { return &_sensorWidthFact; }
-    Fact* sensorHeight      (void) { return &_sensorHeightFact; }
-    Fact* imageWidth        (void) { return &_imageWidthFact; }
-    Fact* imageHeight       (void) { return &_imageHeightFact; }
-    Fact* focalLength       (void) { return &_focalLengthFact; }
-    Fact* landscape         (void) { return &_landscapeFact; }
-    Fact* fixedOrientation  (void) { return &_fixedOrientationFact; }
-    Fact* minTriggerInterval(void) { return &_minTriggerIntervalFact; }
+    SettingsFact* sensorWidth       (void) { return &_sensorWidthFact; }
+    SettingsFact* sensorHeight      (void) { return &_sensorHeightFact; }
+    SettingsFact* imageWidth        (void) { return &_imageWidthFact; }
+    SettingsFact* imageHeight       (void) { return &_imageHeightFact; }
+    SettingsFact* focalLength       (void) { return &_focalLengthFact; }
+    SettingsFact* landscape         (void) { return &_landscapeFact; }
+    SettingsFact* fixedOrientation  (void) { return &_fixedOrientationFact; }
+    SettingsFact* minTriggerInterval(void) { return &_minTriggerIntervalFact; }
 
     bool dirty      (void) const { return _dirty; }
     void setDirty   (bool dirty);
@@ -50,20 +49,18 @@ signals:
     void dirtyChanged(bool dirty);
 
 private:
-    void _init(bool setDefaults);
-
     bool _dirty;
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
-    Fact _sensorWidthFact;
-    Fact _sensorHeightFact;
-    Fact _imageWidthFact;
-    Fact _imageHeightFact;
-    Fact _focalLengthFact;
-    Fact _landscapeFact;
-    Fact _fixedOrientationFact;
-    Fact _minTriggerIntervalFact;
+    SettingsFact _sensorWidthFact;
+    SettingsFact _sensorHeightFact;
+    SettingsFact _imageWidthFact;
+    SettingsFact _imageHeightFact;
+    SettingsFact _focalLengthFact;
+    SettingsFact _landscapeFact;
+    SettingsFact _fixedOrientationFact;
+    SettingsFact _minTriggerIntervalFact;
 
     static const char* _sensorWidthName;
     static const char* _sensorHeightName;

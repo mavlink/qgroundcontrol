@@ -98,10 +98,15 @@ void ParameterEditorController::clearRCToParam(void)
 void ParameterEditorController::saveToFile(const QString& filename)
 {
     if (!filename.isEmpty()) {
-        QFile file(filename);
+        QString parameterFilename = filename;
+        if (!QFileInfo(filename).fileName().contains(".")) {
+            parameterFilename += QString(".%1").arg(AppSettings::parameterFileExtension);
+        }
+
+        QFile file(parameterFilename);
         
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qgcApp()->showMessage(tr("Unable to create file: %1").arg(filename));
+            qgcApp()->showMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
         
