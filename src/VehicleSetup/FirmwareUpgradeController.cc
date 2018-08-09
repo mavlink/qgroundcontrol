@@ -278,7 +278,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
 #endif
 
     QString px4Url          ("http://px4-travis.s3.amazonaws.com/Firmware/%1/px4fmu-%2_default.px4");
-    QString apmUrl          ("http://firmware.ardupilot.org/%1/%2/%3/%4-%5.px4");
+    QString apmUrl          ("http://firmware.ardupilot.org/%1/%2/%3/%4-v%5.px4");
     QString apmChibiOSUrl   ("http://firmware.ardupilot.org/%1/%2/fmuv%3%4/%5.apj");
 
     QMap<FirmwareType_t, QString> px4MapFirmwareTypeToDir;
