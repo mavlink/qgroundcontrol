@@ -160,13 +160,13 @@ QGCView {
                 font.family:    ScreenTools.normalFontFamily
             }
             Text {
-                text:   Screen.pixelDensity.toFixed(4)
-                color:  qgcPal.text
+                text:           Screen.pixelDensity.toFixed(4)
+                color:          qgcPal.text
                 font.family:    ScreenTools.normalFontFamily
             }
             Text {
-                text:   qsTr("Font Point Size 13.5")
-                color:  qgcPal.text
+                text:           qsTr("Font Point Size 13.5")
+                color:          qgcPal.text
                 font.pointSize: 13.5
                 font.family:    ScreenTools.normalFontFamily
             }
@@ -216,6 +216,38 @@ QGCView {
                 text:           qsTr("Font Point Size 15")
                 color:          qgcPal.text
                 font.pointSize: 15
+                font.family:    ScreenTools.normalFontFamily
+            }
+            Text {
+                text:           qsTr("Computed Screen Height:")
+                color:          qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
+            }
+            Text {
+                text:           (Screen.height / Screen.pixelDensity * Screen.devicePixelRatio).toFixed(0)
+                color:          qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
+            }
+            Text {
+                text:           qsTr("Font Point Size 15.5")
+                color:          qgcPal.text
+                font.pointSize: 15.5
+                font.family:    ScreenTools.normalFontFamily
+            }
+            Text {
+                text:           qsTr("Computed Screen Width:")
+                color:          qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
+            }
+            Text {
+                text:           (Screen.width / Screen.pixelDensity * Screen.devicePixelRatio).toFixed(0)
+                color:          qgcPal.text
+                font.family:    ScreenTools.normalFontFamily
+            }
+            Text {
+                text:           qsTr("Font Point Size 16")
+                color:          qgcPal.text
+                font.pointSize: 16
                 font.family:    ScreenTools.normalFontFamily
             }
         }
