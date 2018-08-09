@@ -349,7 +349,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     newItem->setCoordinate(coordinate);
     newItem->setCommand(MAV_CMD_NAV_WAYPOINT);
     _initVisualItem(newItem);
-    if (_visualItems->count() == 1) {
+    if (_visualItems->count() == 1 && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol() || _controllerVehicle->multiRotor())) {
         MAV_CMD takeoffCmd = _controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF;
         if (_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)takeoffCmd)) {
             newItem->setCommand(takeoffCmd);
