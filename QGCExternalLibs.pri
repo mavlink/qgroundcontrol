@@ -153,7 +153,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
     AIRMAPD_PATH = $$PWD/libs/airmapd
-    MacBuild|iOSBuild {
+    MacBuild {
         exists($${AIRMAPD_PATH}/macOS/Qt.5.11.0) {
             message("Including support for AirMap for macOS")
             LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.11.0 -lairmap-qt
