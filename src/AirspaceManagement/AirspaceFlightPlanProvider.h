@@ -144,7 +144,8 @@ public:
 
     ///< Flight Planning and Filing
     Q_PROPERTY(QDateTime            flightStartTime         READ flightStartTime    WRITE  setFlightStartTime   NOTIFY flightStartTimeChanged)      ///< Start of flight
-    Q_PROPERTY(QDateTime            flightEndTime           READ flightEndTime      WRITE  setFlightEndTime     NOTIFY flightEndTimeChanged)        ///< End of flight
+    Q_PROPERTY(int                  flightDuration          READ flightDuration     WRITE  setFlightDuration    NOTIFY flightDurationChanged)       ///< Flight Duration
+    Q_PROPERTY(bool                 flightStartsNow         READ flightStartsNow    WRITE  setFlightStartsNow   NOTIFY flightStartsNowChanged)
 
     ///< Flight Briefing
     Q_PROPERTY(PermitStatus         flightPermitStatus      READ flightPermitStatus                             NOTIFY flightPermitStatusChanged)   ///< State of flight permission
@@ -172,7 +173,8 @@ public:
 
     virtual PermitStatus        flightPermitStatus  () const { return PermitNone; }
     virtual QDateTime           flightStartTime     () const = 0;
-    virtual QDateTime           flightEndTime       () const = 0;
+    virtual int                 flightDuration      () const = 0;
+    virtual bool                flightStartsNow     () const = 0;
     virtual QGCGeoBoundingCube* missionArea         () = 0;
     virtual bool                valid               () = 0;                     ///< Current advisory list is valid
     virtual QmlObjectListModel* advisories          () = 0;                     ///< List of AirspaceAdvisory
@@ -189,13 +191,15 @@ public:
     virtual bool                loadingFlightList   () = 0;
 
     virtual void                setFlightStartTime  (QDateTime start) = 0;
-    virtual void                setFlightEndTime    (QDateTime end) = 0;
+    virtual void                setFlightDuration   (int seconds) = 0;
+    virtual void                setFlightStartsNow  (bool now) = 0;
     virtual void                startFlightPlanning (PlanMasterController* planController) = 0;
 
 signals:
     void flightPermitStatusChanged                  ();
     void flightStartTimeChanged                     ();
-    void flightEndTimeChanged                       ();
+    void flightStartsNowChanged                     ();
+    void flightDurationChanged                      ();
     void advisoryChanged                            ();
     void missionAreaChanged                         ();
     void rulesChanged                               ();
