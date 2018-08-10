@@ -754,46 +754,47 @@ AirMapFlightPlanManager::_pollBriefing()
                 qCDebug(AirMapManagerLog) << "Adding briefing ruleset" << pRuleSet->id();
             }
             //-- Evaluate briefing status
-            bool rejected = false;
-            bool accepted = false;
-            bool pending  = false;
-            for (const auto& authorization : briefing.evaluation.authorizations) {
-                AirMapFlightAuthorization* pAuth = new AirMapFlightAuthorization(authorization, this);
-                _authorizations.append(pAuth);
-                qCDebug(AirMapManagerLog) << "Autorization:" << pAuth->name() << " (" << pAuth->message() << ")" << static_cast<int>(pAuth->status());
-                switch (authorization.status) {
-                case Evaluation::Authorization::Status::accepted:
-                case Evaluation::Authorization::Status::accepted_upon_submission:
-                    accepted = true;
-                    break;
-                case Evaluation::Authorization::Status::rejected:
-                case Evaluation::Authorization::Status::rejected_upon_submission:
-                    rejected = true;
-                    break;
-                case Evaluation::Authorization::Status::pending:
-                    pending = true;
-                    break;
-                }
-            }
             if (briefing.evaluation.authorizations.size() == 0) {
-                // If we don't get any authorizations, we assume it's accepted
-                accepted = true;
-            }
-            emit advisoryChanged();
-            emit rulesChanged();
-            qCDebug(AirMapManagerLog) << "Flight approval: accepted=" << accepted << "rejected" << rejected << "pending" << pending;
-            _state = State::Idle;
-            if ((rejected || accepted) && !pending) {
-                if (rejected) { // rejected has priority
-                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitRejected;
-                } else {
-                    _flightPermitStatus = AirspaceFlightPlanProvider::PermitAccepted;
-                }
+                _flightPermitStatus = AirspaceFlightPlanProvider::PermitNotRequired;
                 emit flightPermitStatusChanged();
             } else {
-                //-- Pending. Try again.
-                _pollTimer.setSingleShot(true);
-                _pollTimer.start(1000);
+                bool rejected = false;
+                bool accepted = false;
+                bool pending  = false;
+                for (const auto& authorization : briefing.evaluation.authorizations) {
+                    AirMapFlightAuthorization* pAuth = new AirMapFlightAuthorization(authorization, this);
+                    _authorizations.append(pAuth);
+                    qCDebug(AirMapManagerLog) << "Autorization:" << pAuth->name() << " (" << pAuth->message() << ")" << static_cast<int>(pAuth->status());
+                    switch (authorization.status) {
+                    case Evaluation::Authorization::Status::accepted:
+                    case Evaluation::Authorization::Status::accepted_upon_submission:
+                        accepted = true;
+                        break;
+                    case Evaluation::Authorization::Status::rejected:
+                    case Evaluation::Authorization::Status::rejected_upon_submission:
+                        rejected = true;
+                        break;
+                    case Evaluation::Authorization::Status::pending:
+                        pending = true;
+                        break;
+                    }
+                }
+                emit advisoryChanged();
+                emit rulesChanged();
+                qCDebug(AirMapManagerLog) << "Flight approval: accepted=" << accepted << "rejected" << rejected << "pending" << pending;
+                _state = State::Idle;
+                if ((rejected || accepted) && !pending) {
+                    if (rejected) { // rejected has priority
+                        _flightPermitStatus = AirspaceFlightPlanProvider::PermitRejected;
+                    } else {
+                        _flightPermitStatus = AirspaceFlightPlanProvider::PermitAccepted;
+                    }
+                    emit flightPermitStatusChanged();
+                } else {
+                    //-- Pending. Try again.
+                    _pollTimer.setSingleShot(true);
+                    _pollTimer.start(1000);
+                }
             }
         } else {
             _state = State::Idle;
