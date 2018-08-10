@@ -19,13 +19,6 @@ Item {
     implicitWidth:      detailCol.width
     property real baseHeight:  ScreenTools.defaultFontPixelHeight * 22
     property real baseWidth:   ScreenTools.defaultFontPixelWidth  * 40
-    function setEndTime() {
-        _dirty = true
-        var endTime = QGroundControl.airspaceManager.flightPlan.flightStartTime
-        endTime.setTime(endTime.getTime() + (Math.floor(durationSlider.value * 0.25) * 60 * 60 * 1000))
-        endTime.setTime(endTime.getTime() + ((durationSlider.value * 15) % 60) * 60 * 1000)
-        QGroundControl.airspaceManager.flightPlan.flightEndTime = endTime
-    }
     Column {
         id:             detailCol
         spacing:        ScreenTools.defaultFontPixelHeight * 0.25
@@ -76,11 +69,10 @@ Item {
                             anchors.left:   parent.left
                             QGCButton {
                                 text:       qsTr("Now")
+                                checked:    QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 onClicked: {
                                     _dirty = true
-                                    var today = new Date()
-                                    QGroundControl.airspaceManager.flightPlan.flightStartTime = today
-                                    timeSlider.updateTime()
+                                    QGroundControl.airspaceManager.flightPlan.flightStartsNow = !QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 }
                             }
                             QGCButton {
@@ -94,6 +86,7 @@ Item {
                                     }
                                 }
                                 Layout.fillWidth:   true
+                                enabled:            !QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 iconSource:         "qrc:/airmap/expand.svg"
                                 onClicked: {
                                     _dirty = true
@@ -108,10 +101,12 @@ Item {
                             anchors.right:  parent.right
                             anchors.left:   parent.left
                             height:         timeSlider.height
+                            visible:        !QGroundControl.airspaceManager.flightPlan.flightStartsNow
                             QGCSlider {
                                 id:             timeSlider
                                 width:          parent.width - timeLabel.width - ScreenTools.defaultFontPixelWidth
                                 stepSize:       1
+                                enabled:        !QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 minimumValue:   0
                                 maximumValue:   95 // 96 blocks of 15 minutes in 24 hours
                                 anchors.left:   parent.left
@@ -124,7 +119,6 @@ Item {
                                     today.setSeconds(0)
                                     today.setMilliseconds(0)
                                     QGroundControl.airspaceManager.flightPlan.flightStartTime = today
-                                    setEndTime()
                                 }
                                 Component.onCompleted: {
                                     updateTime()
@@ -147,7 +141,12 @@ Item {
                             }
                         }
                         QGCLabel {
-                            text:   qsTr("Duration")
+                            text:               qsTr("Now")
+                            visible:            QGroundControl.airspaceManager.flightPlan.flightStartsNow
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCLabel {
+                            text:               qsTr("Duration")
                         }
                         Item {
                             anchors.right:  parent.right
@@ -162,16 +161,13 @@ Item {
                                 anchors.left:  parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 onValueChanged: {
-                                    setEndTime()
+                                    var hour   = Math.floor(durationSlider.value * 0.25)
+                                    var minute = (durationSlider.value * 15) % 60
+                                    var seconds = (hour * 60 * 60) + (minute * 60)
+                                    QGroundControl.airspaceManager.flightPlan.flightDuration = seconds
                                 }
                                 Component.onCompleted: {
-                                    updateTime()
-                                }
-                                function updateTime() {
-                                    var startTime = QGroundControl.airspaceManager.flightPlan.flightStartTime
-                                    var endTime = QGroundControl.airspaceManager.flightPlan.flightEndTime
-                                    var val = (endTime.getTime() - startTime.getTime()) / 1000 / 60
-                                    val = (val * (96/360)) + 1
+                                    var val = ((QGroundControl.airspaceManager.flightPlan.flightDuration / 60) * (96/1440)) + 1
                                     if(val > 24) val = 24
                                     durationSlider.value = Math.ceil(val)
                                 }

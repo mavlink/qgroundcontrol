@@ -73,7 +73,8 @@ public:
 
     PermitStatus        flightPermitStatus  () const override { return _flightPermitStatus; }
     QDateTime           flightStartTime     () const override;
-    QDateTime           flightEndTime       () const override;
+    int                 flightDuration      () const override;
+    bool                flightStartsNow     () const override { return _flightStartsNow; }
     bool                valid               () override { return _valid; }
     QmlObjectListModel* advisories          () override { return &_advisories; }
     QmlObjectListModel* ruleSets            () override { return &_rulesets; }
@@ -97,8 +98,9 @@ public:
     void                submitFlightPlan    () override;
     void                startFlightPlanning (PlanMasterController* planController) override;
     void                setFlightStartTime  (QDateTime start) override;
-    void                setFlightEndTime    (QDateTime end) override;
+    void                setFlightDuration   (int seconds) override;
     void                loadFlightList      (QDateTime startTime, QDateTime endTime) override;
+    void                setFlightStartsNow  (bool now) override;
     void                endFlight           (QString flightID) override;
 
 signals:
@@ -155,6 +157,7 @@ private:
     PlanMasterController*   _planController = nullptr;
     bool                    _valid = false;
     bool                    _loadingFlightList = false;
+    bool                    _flightStartsNow = false;
     QmlObjectListModel      _advisories;
     QmlObjectListModel      _rulesets;
     QmlObjectListModel      _rulesViolation;
@@ -168,7 +171,7 @@ private:
     QDateTime               _rangeEnd;
     airmap::FlightPlan      _flightPlan;
     QDateTime               _flightStartTime;
-    QDateTime               _flightEndTime;
+    int                     _flightDuration = 15 * 60;
 
     QList<AirMapRuleFeature*> _importantFeatures;
 
