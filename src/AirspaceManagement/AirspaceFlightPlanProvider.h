@@ -135,6 +135,7 @@ public:
         PermitPending,
         PermitAccepted,
         PermitRejected,
+        PermitNotRequired,
     };
 
     Q_ENUM(PermitStatus)

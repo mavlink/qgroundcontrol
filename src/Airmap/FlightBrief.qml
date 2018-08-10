@@ -113,7 +113,7 @@ Item {
                             color: {
                                 if(_flightPermit === AirspaceFlightPlanProvider.PermitPending)
                                     return _colorOrange
-                                if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
+                                if(_flightPermit === AirspaceFlightPlanProvider.PermitAccepted || _flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
                                     return _colorGreen
                                 if(_flightPermit === AirspaceFlightPlanProvider.PermitRejected)
                                     return _colorRed
@@ -129,6 +129,8 @@ Item {
                                         return qsTr("Authorization Accepted")
                                     if(_flightPermit === AirspaceFlightPlanProvider.PermitRejected)
                                         return qsTr("Authorization Rejected")
+                                    if(_flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
+                                        return qsTr("Authorization Not Required")
                                     return qsTr("Authorization Unknown")
                                 }
                                 anchors.centerIn: parent
@@ -209,7 +211,7 @@ Item {
                 backRadius:     4
                 heightFactor:   0.3333
                 showBorder:     true
-                enabled:        _flightPermit === AirspaceFlightPlanProvider.PermitAccepted
+                enabled:        _flightPermit === AirspaceFlightPlanProvider.PermitAccepted || _flightPermit === AirspaceFlightPlanProvider.PermitNotRequired
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 visible:        planView
                 onClicked: {

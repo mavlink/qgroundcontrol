@@ -689,7 +689,7 @@ QGCView {
                     if(airspaceIndicator.flightPermit) {
                         if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitPending)
                             return qsTr("Approval Pending")
-                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted || airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
                             return qsTr("Flight Approved")
                         if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitRejected)
                             return qsTr("Flight Rejected")
@@ -700,7 +700,7 @@ QGCView {
                     if(airspaceIndicator.flightPermit) {
                         if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitPending)
                             return qgcPal.colorOrange
-                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted)
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted || airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
                             return qgcPal.colorGreen
                     }
                     return qgcPal.colorRed
