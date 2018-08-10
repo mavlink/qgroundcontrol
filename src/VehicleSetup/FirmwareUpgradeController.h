@@ -54,17 +54,16 @@ public:
         } FirmwareType_t;
 
         typedef enum {
-            QuadFirmware,
-            X8Firmware,
-            HexaFirmware,
-            OctoFirmware,
-            YFirmware,
-            Y6Firmware,
-            HeliFirmware,
             CopterFirmware,
+            HeliFirmware,
             PlaneFirmware,
             RoverFirmware,
             SubFirmware,
+            CopterChibiOSFirmware,
+            HeliChibiOSFirmware,
+            PlaneChibiOSFirmware,
+            RoverChibiOSFirmware,
+            SubChibiOSFirmware,
             DefaultVehicleFirmware
         } FirmwareVehicleType_t;
 
