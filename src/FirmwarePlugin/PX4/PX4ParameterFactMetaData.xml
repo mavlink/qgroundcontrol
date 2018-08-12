@@ -207,6 +207,11 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
   </group>
   <group name="Battery Calibration">
+    <parameter default="-1" name="BAT_ADC_CHANNEL" type="INT32">
+      <short_desc>Battery ADC Channel</short_desc>
+      <long_desc>This parameter specifies the ADC channel used to monitor voltage of main power battery. A value of -1 means to use the board default.</long_desc>
+      <scope>modules/sensors</scope>
+    </parameter>
     <parameter default="-1.0" name="BAT_A_PER_V" type="FLOAT">
       <short_desc>Battery current per volt (A/V)</short_desc>
       <long_desc>The voltage seen by the 3.3V ADC multiplied by this factor will determine the battery current. A value of -1 means to use the board default.</long_desc>
@@ -3176,6 +3181,20 @@ but also ignore less noise</short_desc>
       <decimal>0</decimal>
       <reboot_required>true</reboot_required>
       <scope>drivers/gps</scope>
+    </parameter>
+    <parameter default="0" name="SER_GPS1_BAUD" type="INT32">
+      <short_desc>GPS Baudrate</short_desc>
+      <long_desc>Configure the Baudrate for the GPS Serial Port. In most cases this can be set to Auto. The Trimble MB-Two GPS does not support auto-detection and uses a baudrate of 115200.</long_desc>
+      <reboot_required>true</reboot_required>
+      <scope>drivers/gps</scope>
+      <values>
+        <value code="0">Auto</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+      </values>
     </parameter>
   </group>
   <group name="GPS Failure Navigation">
@@ -7747,7 +7766,7 @@ to takeoff is reached</short_desc>
     </parameter>
     <parameter default="0" name="SDLOG_MODE" type="INT32">
       <short_desc>Logging Mode</short_desc>
-      <long_desc>Determines when to start and stop logging. By default, logging is started when arming the system, and stopped when disarming. This parameter is only for the new logger (SYS_LOGGER=1).</long_desc>
+      <long_desc>Determines when to start and stop logging. By default, logging is started when arming the system, and stopped when disarming.</long_desc>
       <min>0</min>
       <max>2</max>
       <reboot_required>true</reboot_required>
@@ -8713,13 +8732,14 @@ is less than 50% of this value</short_desc>
         <value code="319200">Normal Telemetry (19200 baud, 8N1)</value>
         <value code="338400">Normal Telemetry (38400 baud, 8N1)</value>
         <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
-        <value code="419200">Iridium Telemetry (19200 baud, 8N1)</value>
         <value code="519200">Minimal Telemetry (19200 baud, 8N1)</value>
         <value code="538400">Minimal Telemetry (38400 baud, 8N1)</value>
         <value code="557600">Minimal Telemetry (57600 baud, 8N1)</value>
         <value code="921600">Companion Link (921600 baud, 8N1)</value>
+        <value code="1500000">Companion Link (1500000 baud, 8N1)</value>
         <value code="1921600">ESP8266 (921600 baud, 8N1)</value>
         <value code="3115200">Normal Telemetry (115200 baud, 8N1)</value>
+        <value code="4115200">Iridium Telemetry (115200 baud, 8N1)</value>
         <value code="5115200">Minimal Telemetry (115200 baud, 8N1)</value>
         <value code="6460800">RTPS Client (460800 baud)</value>
       </values>
