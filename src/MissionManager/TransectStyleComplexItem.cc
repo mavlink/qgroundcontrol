@@ -385,11 +385,6 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
 {
     _transectsPathHeightInfo.clear();
-    if (_terrainPolyPathQuery) {
-        // Toss previous query
-        _terrainPolyPathQuery->deleteLater();
-        _terrainPolyPathQuery = NULL;
-    }
 
     if (_transects.count()) {
         // We don't actually send the query until this timer times out. This way we only send
@@ -400,6 +395,20 @@ void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
 
 void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 {
+    // Clear any previous query
+    if (_terrainPolyPathQuery) {
+        // FIXME: We should really be blowing away any previous query here. But internally that is difficult to implement so instead we let
+        // it complete and drop the results.
+#if 0
+        // Toss previous query
+        _terrainPolyPathQuery->deleteLater();
+#else
+        // Let the signal fall on the floor
+        disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
+#endif
+        _terrainPolyPathQuery = NULL;
+    }
+
     // Append all transects into a single PolyPath query
 
     QList<QGeoCoordinate> transectPoints;
@@ -436,6 +445,12 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
         // Now that we have terrain data we can adjust
         _adjustTransectsForTerrain();
     }
+
+    if (_terrainPolyPathQuery != sender()) {
+        qWarning() << "TransectStyleComplexItem::_polyPathTerrainData _terrainPolyPathQuery != sender()";
+    }
+    disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
+    _terrainPolyPathQuery = NULL;
 }
 
 bool TransectStyleComplexItem::readyForSave(void) const
