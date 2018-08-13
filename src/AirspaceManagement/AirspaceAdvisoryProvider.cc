@@ -27,20 +27,20 @@ QString
 AirspaceAdvisory::typeStr()
 {
     switch(type()) {
-    case Airport:               return QString(tr("Airport")); break;
-    case Controlled_airspace:   return QString(tr("Controlled Airspace")); break;
-    case Special_use_airspace:  return QString(tr("Special Use Airspace")); break;
-    case Tfr:                   return QString(tr("TFR")); break;
-    case Wildfire:              return QString(tr("Wild Fire")); break;
-    case Park:                  return QString(tr("Park")); break;
-    case Power_plant:           return QString(tr("Power Plant")); break;
-    case Heliport:              return QString(tr("Heliport")); break;
-    case Prison:                return QString(tr("Prison")); break;
-    case School:                return QString(tr("School")); break;
-    case Hospital:              return QString(tr("Hospital")); break;
-    case Fire:                  return QString(tr("Fire")); break;
-    case Emergency:             return QString(tr("Emergency")); break;
-    case Invalid:               return QString(tr("Invalid")); break;
-    default:                    return QString(tr("Unknown")); break;
+    case Airport:               return QString(tr("Airport"));
+    case Controlled_airspace:   return QString(tr("Controlled Airspace"));
+    case Special_use_airspace:  return QString(tr("Special Use Airspace"));
+    case Tfr:                   return QString(tr("TFR"));
+    case Wildfire:              return QString(tr("Wild Fire"));
+    case Park:                  return QString(tr("Park"));
+    case Power_plant:           return QString(tr("Power Plant"));
+    case Heliport:              return QString(tr("Heliport"));
+    case Prison:                return QString(tr("Prison"));
+    case School:                return QString(tr("School"));
+    case Hospital:              return QString(tr("Hospital"));
+    case Fire:                  return QString(tr("Fire"));
+    case Emergency:             return QString(tr("Emergency"));
+    case Invalid:               return QString(tr("Custom"));
+    default:                    return QString(tr("Unknown"));
     }
 }
