@@ -355,7 +355,6 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
             newItem->setCommand(takeoffCmd);
         }
     }
-    newItem->setDefaultsForCommand();
     if (newItem->specifiesAltitude()) {
         double  prevAltitude;
         int     prevAltitudeMode;
@@ -382,7 +381,6 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
         MAV_CMD_DO_SET_ROI_LOCATION :
         MAV_CMD_DO_SET_ROI));
     _initVisualItem(newItem);
-    newItem->setDefaultsForCommand();
     newItem->setCoordinate(coordinate);
 
     double  prevAltitude;
