@@ -38,6 +38,16 @@ Rectangle {
         QGCTextField {
             text:           feature.value ? feature.value : ""
             visible:        feature.type !== AirspaceRuleFeature.Boolean
+            showUnits:      true
+            unitsLabel: {
+                if(feature.unit == AirspaceRuleFeature.Kilogram)
+                    return "kg";
+                if(feature.unit == AirspaceRuleFeature.Meters)
+                    return "m";
+                if(feature.unit == AirspaceRuleFeature.MetersPerSecond)
+                    return "m/s";
+                return ""
+            }
             anchors.right:  parent.right
             anchors.left:   parent.left
             inputMethodHints: feature.type === AirspaceRuleFeature.Float ? Qt.ImhFormattedNumbersOnly :Qt.ImhNone
