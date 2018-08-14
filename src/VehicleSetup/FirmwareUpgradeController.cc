@@ -36,20 +36,20 @@ struct FirmwareToUrlElement_t {
 
 uint qHash(const FirmwareUpgradeController::FirmwareIdentifier& firmwareId)
 {
-    return ( firmwareId.autopilotStackType |
+    return static_cast<uint>(( firmwareId.autopilotStackType |
              (firmwareId.firmwareType << 8) |
-             (firmwareId.firmwareVehicleType << 16) );
+             (firmwareId.firmwareVehicleType << 16) ));
 }
 
 /// @Brief Constructs a new FirmwareUpgradeController Widget. This widget is used within the PX4VehicleConfig set of screens.
 FirmwareUpgradeController::FirmwareUpgradeController(void)
     : _singleFirmwareURL(qgcApp()->toolbox()->corePlugin()->options()->firmwareUpgradeSingleURL())
     , _singleFirmwareMode(!_singleFirmwareURL.isEmpty())
-    , _downloadManager(NULL)
-    , _downloadNetworkReply(NULL)
-    , _statusLog(NULL)
+    , _downloadManager(nullptr)
+    , _downloadNetworkReply(nullptr)
+    , _statusLog(nullptr)
     , _selectedFirmwareType(StableFirmware)
-    , _image(NULL)
+    , _image(nullptr)
 {
     _threadController = new PX4FirmwareUpgradeThreadController(this);
     Q_CHECK_PTR(_threadController);
@@ -129,7 +129,7 @@ void FirmwareUpgradeController::cancel(void)
 void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType, QString boardName)
 {
     _foundBoardInfo = info;
-    _foundBoardType = (QGCSerialPortInfo::BoardType_t)boardType;
+    _foundBoardType = static_cast<QGCSerialPortInfo::BoardType_t>(boardType);
     _foundBoardTypeName = boardName;
     _startFlashWhenBootloaderFound = false;
 
@@ -164,9 +164,9 @@ void FirmwareUpgradeController::_boardGone(void)
 void FirmwareUpgradeController::_foundBootloader(int bootloaderVersion, int boardID, int flashSize)
 {
     _bootloaderFound = true;
-    _bootloaderVersion = bootloaderVersion;
-    _bootloaderBoardID = boardID;
-    _bootloaderBoardFlashSize = flashSize;
+    _bootloaderVersion = static_cast<uint32_t>(bootloaderVersion);
+    _bootloaderBoardID = static_cast<uint32_t>(boardID);
+    _bootloaderBoardFlashSize = static_cast<uint32_t>(flashSize);
     
     _appendStatusLog(tr("Connected to bootloader:"));
     _appendStatusLog(tr("  Version: %1").arg(_bootloaderVersion));
@@ -196,6 +196,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/stable/aerocore_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/beta/aerocore_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://gumstix-aerocore.s3.amazonaws.com/PX4/master/aerocore_default.px4"},
+    #if !defined(NO_ARDUPILOT_DIALECT)
         { AutoPilotStackAPM, BetaFirmware,      CopterFirmware,         "http://firmware.ardupilot.org/Copter/beta/PX4/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/stable/PX4-heli/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Plane/stable/PX4/ArduPlane-v2.px4"},
@@ -207,6 +208,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, DeveloperFirmware, HeliFirmware,           "http://gumstix-aerocore.s3.amazonaws.com/Copter/latest/PX4-heli/ArduCopter-v2.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Plane/latest/PX4/ArduPlane-v2.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://gumstix-aerocore.s3.amazonaws.com/Rover/latest/PX4/APMrover2-v2.px4"}
+    #endif
     };
 
     //////////////////////////////////// AUAVX2_1 firmwares //////////////////////////////////////////////////
@@ -214,6 +216,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/auav-x21_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/auav-x21_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/auav-x21_default.px4"},
+    #if !defined(NO_ARDUPILOT_DIALECT)
         { AutoPilotStackAPM, StableFirmware,    CopterFirmware,         "http://firmware.ardupilot.org/Copter/stable/PX4/ArduCopter-v3.px4"},
         { AutoPilotStackAPM, StableFirmware,    HeliFirmware,           "http://firmware.ardupilot.org/Copter/stable/PX4-heli/ArduCopter-v3.px4"},
         { AutoPilotStackAPM, StableFirmware,    PlaneFirmware,          "http://firmware.ardupilot.org/Plane/stable/PX4/ArduPlane-v2.px4"},
@@ -229,6 +232,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackAPM, DeveloperFirmware, PlaneFirmware,          "http://firmware.ardupilot.org/Plane/latest/PX4/ArduPlane-v3.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, RoverFirmware,          "http://firmware.ardupilot.org/Rover/latest/PX4/APMrover2-v3.px4"},
         { AutoPilotStackAPM, DeveloperFirmware, SubFirmware,            "http://firmware.ardupilot.org/Sub/latest/PX4/ArduSub-v3.px4"}
+    #endif
     };
     //////////////////////////////////// MindPXFMUV2 firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgMindPXFMUV2FirmwareArray[] = {
@@ -260,7 +264,9 @@ void FirmwareUpgradeController::_initFirmwareHash()
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
         { PX4FlowPX4, StableFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Flow/master/px4flow.px4" },
+    #if !defined(NO_ARDUPILOT_DIALECT)
         { PX4FlowAPM, StableFirmware, DefaultVehicleFirmware, "http://firmware.ardupilot.org/Tools/PX4Flow/px4flow-klt-latest.px4" },
+    #endif
     };
 
     /////////////////////////////// 3dr radio firmwares ///////////////////////////////////////
@@ -286,52 +292,66 @@ void FirmwareUpgradeController::_initFirmwareHash()
     px4MapFirmwareTypeToDir[BetaFirmware] =         QStringLiteral("beta");
     px4MapFirmwareTypeToDir[DeveloperFirmware] =    QStringLiteral("master");
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareVehicleType_t, QString> apmMapVehicleTypeToDir;
     apmMapVehicleTypeToDir[CopterFirmware] =    QStringLiteral("Copter");
     apmMapVehicleTypeToDir[HeliFirmware] =      QStringLiteral("Copter");
     apmMapVehicleTypeToDir[PlaneFirmware] =     QStringLiteral("Plane");
     apmMapVehicleTypeToDir[RoverFirmware] =     QStringLiteral("Rover");
     apmMapVehicleTypeToDir[SubFirmware] =       QStringLiteral("Sub");
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareVehicleType_t, QString> apmChibiOSMapVehicleTypeToDir;
     apmChibiOSMapVehicleTypeToDir[CopterChibiOSFirmware] =  QStringLiteral("Copter");
     apmChibiOSMapVehicleTypeToDir[HeliChibiOSFirmware] =    QStringLiteral("Copter");
     apmChibiOSMapVehicleTypeToDir[PlaneChibiOSFirmware] =   QStringLiteral("Plane");
     apmChibiOSMapVehicleTypeToDir[RoverChibiOSFirmware] =   QStringLiteral("Rover");
     apmChibiOSMapVehicleTypeToDir[SubChibiOSFirmware] =     QStringLiteral("Sub");
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareType_t, QString> apmMapFirmwareTypeToDir;
     apmMapFirmwareTypeToDir[StableFirmware] =       QStringLiteral("stable");
     apmMapFirmwareTypeToDir[BetaFirmware] =         QStringLiteral("beta");
     apmMapFirmwareTypeToDir[DeveloperFirmware] =    QStringLiteral("latest");
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareVehicleType_t, QString> apmMapVehicleTypeToPX4Dir;
     apmMapVehicleTypeToPX4Dir[CopterFirmware] = QStringLiteral("PX4");
     apmMapVehicleTypeToPX4Dir[HeliFirmware] =   QStringLiteral("PX4-heli");
     apmMapVehicleTypeToPX4Dir[PlaneFirmware] =  QStringLiteral("PX4");
     apmMapVehicleTypeToPX4Dir[RoverFirmware] =  QStringLiteral("PX4");
     apmMapVehicleTypeToPX4Dir[SubFirmware] =    QStringLiteral("PX4");
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareVehicleType_t, QString> apmMapVehicleTypeToFilename;
     apmMapVehicleTypeToFilename[CopterFirmware] =   QStringLiteral("ArduCopter");
     apmMapVehicleTypeToFilename[HeliFirmware] =     QStringLiteral("ArduCopter");
     apmMapVehicleTypeToFilename[PlaneFirmware] =    QStringLiteral("ArduPlane");
     apmMapVehicleTypeToFilename[RoverFirmware] =    QStringLiteral("APMrover2");
     apmMapVehicleTypeToFilename[SubFirmware] =      QStringLiteral("ArduSub");
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareVehicleType_t, QString> apmChibiOSMapVehicleTypeToFmuDir;
     apmChibiOSMapVehicleTypeToFmuDir[CopterChibiOSFirmware] =   QString();
     apmChibiOSMapVehicleTypeToFmuDir[HeliChibiOSFirmware] =     QStringLiteral("-heli");
     apmChibiOSMapVehicleTypeToFmuDir[PlaneChibiOSFirmware] =    QString();
     apmChibiOSMapVehicleTypeToFmuDir[RoverChibiOSFirmware] =    QString();
     apmChibiOSMapVehicleTypeToFmuDir[SubChibiOSFirmware] =      QString();
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     QMap<FirmwareVehicleType_t, QString> apmChibiOSMapVehicleTypeToFilename;
     apmChibiOSMapVehicleTypeToFilename[CopterChibiOSFirmware] = QStringLiteral("arducopter");
     apmChibiOSMapVehicleTypeToFilename[HeliChibiOSFirmware] =   QStringLiteral("arducopter-heli");
     apmChibiOSMapVehicleTypeToFilename[PlaneChibiOSFirmware] =  QStringLiteral("arduplane");
     apmChibiOSMapVehicleTypeToFilename[RoverChibiOSFirmware] =  QStringLiteral("ardurover");
     apmChibiOSMapVehicleTypeToFilename[SubChibiOSFirmware] =    QStringLiteral("ardusub");
+#endif
 
     // PX4 Firmwares
     foreach (const FirmwareType_t& firmwareType, px4MapFirmwareTypeToDir.keys()) {
@@ -343,6 +363,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgPX4FMUV2Firmware.insert      (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v2"));
     }
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     // ArduPilot Firmwares
     foreach (const FirmwareType_t& firmwareType, apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
@@ -357,7 +378,9 @@ void FirmwareUpgradeController::_initFirmwareHash()
             _rgPX4FMUV2Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("2"));
         }
     }
+#endif
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     // ArduPilot ChibiOS Firmwares
     foreach (const FirmwareType_t& firmwareType, apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
@@ -372,6 +395,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
             _rgPX4FMUV2Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("2").arg(fmuDir).arg(filename));
         }
     }
+#endif
 
     int size = sizeof(rgAeroCoreFirmwareArray)/sizeof(rgAeroCoreFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
@@ -467,14 +491,14 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     case Bootloader::boardID3DRRadio:
         return &_rg3DRRadioFirmware;
     default:
-        return NULL;
+        return nullptr;
     }
 }
 
 /// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(_bootloaderBoardID);
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
     
     if (!prgFirmware && firmwareId.firmwareType != CustomFirmware) {
         _errorCancel(tr("Attempting to flash an unknown board type, you must select 'Custom firmware file'"));
@@ -482,9 +506,9 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     }
     
     if (firmwareId.firmwareType == CustomFirmware) {
-        _firmwareFilename = QGCQFileDialog::getOpenFileName(NULL,                                                                // Parent to main window
-                                                            tr("Select Firmware File"),                                          // Dialog Caption
-                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation), // Initial directory
+        _firmwareFilename = QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
+                                                            tr("Select Firmware File"),                                             // Dialog Caption
+                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
                                                             tr("Firmware Files (*.px4 *.bin *.ihx)"));                              // File filter
     } else {
         if (prgFirmware->contains(firmwareId)) {
@@ -522,7 +546,7 @@ void FirmwareUpgradeController::_firmwareDownloadProgress(qint64 curr, qint64 to
 {
     // Take care of cases where 0 / 0 is emitted as error return value
     if (total > 0) {
-        _progressBar->setProperty("value", (float)curr / (float)total);
+        _progressBar->setProperty("value", static_cast<float>(curr) / static_cast<float>(total));
     }
 }
 
@@ -583,7 +607,7 @@ QString FirmwareUpgradeController::firmwareTypeAsString(FirmwareType_t type) con
 void FirmwareUpgradeController::_flashComplete(void)
 {
     delete _image;
-    _image = NULL;
+    _image = nullptr;
     
     _appendStatusLog(tr("Upgrade complete"), true);
     _appendStatusLog("------------------------------------------", false);
@@ -594,7 +618,7 @@ void FirmwareUpgradeController::_flashComplete(void)
 void FirmwareUpgradeController::_error(const QString& errorString)
 {
     delete _image;
-    _image = NULL;
+    _image = nullptr;
     
     _errorCancel(QString("Error: %1").arg(errorString));
 }
@@ -609,7 +633,7 @@ void FirmwareUpgradeController::_updateProgress(int curr, int total)
 {
     // Take care of cases where 0 / 0 is emitted as error return value
     if (total > 0) {
-        _progressBar->setProperty("value", (float)curr / (float)total);
+        _progressBar->setProperty("value", static_cast<float>(curr) / static_cast<float>(total));
     }
 }
 
@@ -617,7 +641,7 @@ void FirmwareUpgradeController::_updateProgress(int curr, int total)
 void FirmwareUpgradeController::_eraseProgressTick(void)
 {
     _eraseTickCount++;
-    _progressBar->setProperty("value", (float)(_eraseTickCount*_eraseTickMsec) / (float)_eraseTotalMsec);
+    _progressBar->setProperty("value", static_cast<float>(_eraseTickCount*_eraseTickMsec) / static_cast<float>(_eraseTotalMsec));
 }
 
 /// Appends the specified text to the status log area in the ui
@@ -666,7 +690,7 @@ void FirmwareUpgradeController::_loadAPMVersions(uint32_t bootloaderBoardID)
 {
     _apmVersionMap.clear();
 
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(bootloaderBoardID);
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(bootloaderBoardID));
 
     foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
         if (firmwareId.autopilotStackType == AutoPilotStackAPM) {
@@ -706,7 +730,7 @@ void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, 
 
     // In order to determine the firmware and vehicle type for this file we find the matching entry in the firmware list
 
-    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(_bootloaderBoardID);
+    QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
 
     QString remotePath = QFileInfo(remoteFile).path();
     foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
