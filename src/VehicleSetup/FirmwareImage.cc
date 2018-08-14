@@ -57,6 +57,9 @@ bool FirmwareImage::load(const QString& imageFilename, uint32_t boardId)
     } else if (imageFilename.endsWith(".px4")) {
         _binFormat = true;
         return _px4Load(imageFilename);
+    } else if (imageFilename.endsWith(".apj")) {
+        _binFormat = true;
+        return _px4Load(imageFilename);
     } else if (imageFilename.endsWith(".ihx")) {
         _binFormat = false;
         return _ihxLoad(imageFilename);
