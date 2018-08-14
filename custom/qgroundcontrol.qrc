@@ -39,6 +39,7 @@
 		<file alias="GeneralSettings.qml">../src/ui/preferences/GeneralSettings.qml</file>
 		<file alias="GeoTagPage.qml">../src/AnalyzeView/GeoTagPage.qml</file>
 		<file alias="HealthPageWidget.qml">../src/FlightMap/Widgets/HealthPageWidget.qml</file>
+		<file alias="HelpSettings.qml">../src/ui/preferences/HelpSettings.qml</file>
 		<file alias="JoystickConfig.qml">../src/VehicleSetup/JoystickConfig.qml</file>
 		<file alias="LinkSettings.qml">../src/ui/preferences/LinkSettings.qml</file>
 		<file alias="LogDownloadPage.qml">../src/AnalyzeView/LogDownloadPage.qml</file>
@@ -112,7 +113,6 @@
 		<file alias="QGroundControl/Controls/QGCSlider.qml">../src/QmlControls/QGCSlider.qml</file>
 		<file alias="QGroundControl/Controls/QGCSwitch.qml">../src/QmlControls/QGCSwitch.qml</file>
 		<file alias="QGroundControl/Controls/QGCTextField.qml">../src/QmlControls/QGCTextField.qml</file>
-		<file alias="QGroundControl/Controls/QGCToolBarButton.qml">../src/QmlControls/QGCToolBarButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCView.qml">../src/QmlControls/QGCView.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewDialog.qml">../src/QmlControls/QGCViewDialog.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewDialogContainer.qml">../src/QmlControls/QGCViewDialogContainer.qml</file>
@@ -148,7 +148,6 @@
 		<file alias="QGroundControl/FactControls/qmldir">../src/FactSystem/FactControls/qmldir</file>
 		<file alias="QGroundControl/FlightDisplay/FlightDisplayView.qml">../src/FlightDisplay/FlightDisplayView.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlightDisplayViewMap.qml">../src/FlightDisplay/FlightDisplayViewMap.qml</file>
-		<file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">../src/FlightDisplay/FlightDisplayViewVideo.qml</file>
 		<file alias="QGroundControl/FlightDisplay/FlightDisplayViewWidgets.qml">../src/FlightDisplay/FlightDisplayViewWidgets.qml</file>
 		<file alias="QGroundControl/FlightDisplay/GuidedActionConfirm.qml">../src/FlightDisplay/GuidedActionConfirm.qml</file>
 		<file alias="QGroundControl/FlightDisplay/GuidedActionList.qml">../src/FlightDisplay/GuidedActionList.qml</file>
