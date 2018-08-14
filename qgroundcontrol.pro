@@ -44,29 +44,6 @@ MacBuild {
     }
 }
 
-iOSBuild {
-    LIBS               += -framework AVFoundation
-    #-- Info.plist (need an "official" one for the App Store)
-    ForAppStore {
-        message(App Store Build)
-        #-- Create official, versioned Info.plist
-        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
-        APP_ERROR = $$find(APP_STORE, "Error")
-        count(APP_ERROR, 1) {
-            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
-        }
-        QT               += qml-private
-        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
-        OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
-    } else {
-        QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
-        OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
-    }
-    QMAKE_ASSET_CATALOGS += ios/Images.xcassets
-    BUNDLE.files          = ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
-    QMAKE_BUNDLE_DATA    += BUNDLE
-}
-
 LinuxBuild {
     CONFIG  += qesp_linux_udev
 }
@@ -130,6 +107,36 @@ WindowsBuild {
     QMAKE_TARGET_DESCRIPTION    = "$${QGC_APP_DESCRIPTION}"
     QMAKE_TARGET_COPYRIGHT      = "$${QGC_APP_COPYRIGHT}"
     QMAKE_TARGET_PRODUCT        = "$${QGC_APP_NAME}"
+}
+
+#-------------------------------------------------------------------------------------
+# iOS
+
+iOSBuild {
+    contains (CONFIG, DISABLE_BUILTIN_IOS) {
+        message("Skipping builtin support for iOS")
+    } else {
+        LIBS                 += -framework AVFoundation
+        #-- Info.plist (need an "official" one for the App Store)
+        ForAppStore {
+            message(App Store Build)
+            #-- Create official, versioned Info.plist
+            APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $${BASEDIR}/ios/iOSForAppStore-Info-Source.plist $${BASEDIR}/ios/iOSForAppStore-Info.plist)
+            APP_ERROR = $$find(APP_STORE, "Error")
+            count(APP_ERROR, 1) {
+                error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
+            }
+            QT               += qml-private
+            QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOSForAppStore-Info.plist
+            OTHER_FILES      += $${BASEDIR}/ios/iOSForAppStore-Info.plist
+        } else {
+            QMAKE_INFO_PLIST  = $${BASEDIR}/ios/iOS-Info.plist
+            OTHER_FILES      += $${BASEDIR}/ios/iOS-Info.plist
+        }
+        QMAKE_ASSET_CATALOGS += ios/Images.xcassets
+        BUNDLE.files          = ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
+        QMAKE_BUNDLE_DATA    += BUNDLE
+    }
 }
 
 #
