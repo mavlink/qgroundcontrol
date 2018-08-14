@@ -47,7 +47,7 @@ QGC_APP_NAME        = "Auterion GS"
 QGC_ORG_NAME        = "Auterion"
 QGC_ORG_DOMAIN      = "com.auterion"
 QGC_APP_DESCRIPTION = "Auterion Ground Station"
-QGC_APP_COPYRIGHT   = "Copyright (C) 2018 Auterion. All rights reserved."
+QGC_APP_COPYRIGHT   = "Copyright (C) 2018 Auterion AG. All rights reserved."
 
 MacBuild {
     QMAKE_INFO_PLIST    = $$PWD/macOS/Info.plist
