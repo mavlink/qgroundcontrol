@@ -70,6 +70,29 @@ WindowsBuild {
     }
 }
 
+iOSBuild {
+    CONFIG               += DISABLE_BUILTIN_IOS
+    LIBS                 += -framework AVFoundation
+    #-- Info.plist (need an "official" one for the App Store)
+    ForAppStore {
+        message(App Store Build)
+        #-- Create official, versioned Info.plist
+        APP_STORE = $$system(cd $${BASEDIR} && $${BASEDIR}/tools/update_ios_version.sh $$PWD/ios/iOSForAppStore-Info-Source.plist $$PWD/ios/iOSForAppStore-Info.plist)
+        APP_ERROR = $$find(APP_STORE, "Error")
+        count(APP_ERROR, 1) {
+            error("Error building .plist file. 'ForAppStore' builds are only possible through the official build system.")
+        }
+        QMAKE_INFO_PLIST  = $$PWD/ios/iOSForAppStore-Info.plist
+        OTHER_FILES      += $$PWD/ios/iOSForAppStore-Info.plist
+    } else {
+        QMAKE_INFO_PLIST  = $$PWD/ios/iOS-Info.plist
+        OTHER_FILES      += $$PWD/ios/iOS-Info.plist
+    }
+    QMAKE_ASSET_CATALOGS += $$PWD/ios/Images.xcassets
+    BUNDLE.files          = $$PWD/ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
+    QMAKE_BUNDLE_DATA    += BUNDLE
+}
+
 QML_IMPORT_PATH += \
     $$QGCROOT/custom/res
 
