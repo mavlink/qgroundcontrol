@@ -416,7 +416,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
                     error = true;
                     qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates Internal Error: negative elevation in tile cache";
                 } else {
-                    qCWarning(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates returning elevation from tile cache" << elevation;
+                    qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates returning elevation from tile cache" << elevation;
                 }
                 altitudes.push_back(elevation);
             } else {
