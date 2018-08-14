@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>QGroundControl</string>
+	<string>Auterion GS</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
@@ -23,7 +23,7 @@
 		<string>armv7</string>
 	</array>
 	<key>CFBundleIdentifier</key>
-	<string>org.QGroundControl.qgc</string>
+	<string>com.auterion.auteriongs</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -47,7 +47,7 @@
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Ground Station Location</string>
     <key>NSBluetoothPeripheralUsageDescription</key>
-    <string>QGroundControl would like to use bluetooth.</string>    
+    <string>Auterion GS would like to use bluetooth.</string>    
 	<key>UIRequiresFullScreen</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>

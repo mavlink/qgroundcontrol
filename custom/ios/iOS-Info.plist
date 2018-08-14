@@ -5,15 +5,15 @@
 	<key>NSCameraUsageDescription</key>
 	<string>QGC uses UVC devices for video streaming.</string>
 	<key>CFBundleDisplayName</key>
-	<string>QGroundControl</string>
+	<string>Auterion GS</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Open Source Flight Systems GmbH - Internal Build</string>
+	<string>Auterion AG - Internal Build</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>org.QGroundControl.qgc</string>
+	<string>com.auterion.auteriongs</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
