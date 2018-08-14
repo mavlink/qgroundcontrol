@@ -7818,10 +7818,6 @@ to takeoff is reached</short_desc>
       <increment>1</increment>
       <scope>modules/simulator</scope>
     </parameter>
-    <parameter default="14560" name="SITL_UDP_PRT" type="INT32">
-      <short_desc>Simulator UDP port</short_desc>
-      <scope>modules/simulator</scope>
-    </parameter>
   </group>
   <group name="Sensor Calibration">
     <parameter category="System" default="1" name="CAL_ACC0_EN" type="INT32">
