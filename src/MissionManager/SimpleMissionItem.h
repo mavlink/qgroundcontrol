@@ -134,9 +134,6 @@ public:
     int  lastSequenceNumber (void) const final;
     void save               (QJsonArray&  missionItems) final;
 
-public slots:
-    void setDefaultsForCommand(void);
-
 signals:
     void commandChanged             (int command);
     void friendlyEditAllowedChanged (bool friendlyEditAllowed);
@@ -160,6 +157,7 @@ private slots:
     void _rebuildFacts                      (void);
     void _rebuildTextFieldFacts             (void);
     void _possibleAdditionalTimeDelayChanged(void);
+    void _setDefaultsForCommand              (void);
 
 private:
     void _connectSignals        (void);

@@ -54,8 +54,8 @@ public:
     Fact* hoverAndCapture               (void) { return &_hoverAndCaptureFact; }
     Fact* refly90Degrees                (void) { return &_refly90DegreesFact; }
     Fact* terrainAdjustTolerance        (void) { return &_terrainAdjustToleranceFact; }
-    Fact* terrainAdjustMaxDescentRate   (void) { return &_terrainAdjustMaxClimbRateFact; }
-    Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxDescentRateFact; }
+    Fact* terrainAdjustMaxDescentRate   (void) { return &_terrainAdjustMaxDescentRateFact; }
+    Fact* terrainAdjustMaxClimbRate     (void) { return &_terrainAdjustMaxClimbRateFact; }
 
     const Fact* hoverAndCapture         (void) const { return &_hoverAndCaptureFact; }
 
