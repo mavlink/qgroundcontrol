@@ -98,6 +98,12 @@ AirMapAdvisoryManager::_requestAdvisories()
             }
         }
     }
+    if(ruleIDs.isEmpty()) {
+        qCDebug(AirMapManagerLog) << "No rules defined. Not updating Advisories";
+        _valid = false;
+        emit advisoryChanged();
+        return;
+    }
     params.rulesets = ruleIDs.toStdString();
     //-- Time
     quint64 start   = static_cast<quint64>(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
