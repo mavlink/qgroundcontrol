@@ -37,6 +37,9 @@ public:
     const Settings&     settings            () const { return _settings; }
     void                setClient           (airmap::qt::Client* client) { _client = client; }
 
+    QString             pilotID             () { return _pilotID; }
+    void                setPilotID          (const QString& pilotID) { _pilotID = pilotID; }
+
     /**
      * Get the current client instance. It can be NULL. If not NULL, it implies
      * there's an API key set.
@@ -66,6 +69,7 @@ private:
 private:
     bool                _isLoginInProgress = false;
     QString             _loginToken;        ///< login token: empty when not logged in
+    QString             _pilotID;
     airmap::qt::Client* _client = nullptr;
     Settings            _settings;
     QQueue<Callback>    _pendingRequests;   ///< pending requests that are processed after a successful login

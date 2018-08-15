@@ -1161,6 +1161,8 @@ contains (DEFINES, QGC_AIRMAP_ENABLED) {
         DEFINES += QGC_AIRMAP_KEY_AVAILABLE
     }
 
+    include(src/Airmap/QJsonWebToken/src/qjsonwebtoken.pri)
+
 } else {
     #-- Dummies
     INCLUDEPATH += \

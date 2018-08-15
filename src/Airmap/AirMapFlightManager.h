@@ -48,7 +48,6 @@ private:
     State                               _state = State::Idle;
     AirMapSharedState&                  _shared;
     QString                             _flightID;
-    QString                             _pilotID; ///< Pilot ID in the form "auth0|abc123"
     QGCGeoBoundingCube                  _searchArea;
 };
 

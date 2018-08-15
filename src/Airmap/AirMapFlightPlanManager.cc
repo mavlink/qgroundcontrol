@@ -270,7 +270,7 @@ AirMapFlightPlanManager::endFlight(QString flightID)
 {
     qCDebug(AirMapManagerLog) << "End flight";
     _flightToEnd = flightID;
-    if (_pilotID == "") {
+    if (_shared.pilotID().isEmpty()) {
         //-- Need to get the pilot id
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
         _state = State::GetPilotID;
@@ -283,8 +283,9 @@ AirMapFlightPlanManager::endFlight(QString flightID)
                 if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
                 if (result) {
-                    _pilotID = QString::fromStdString(result.value().id);
-                    qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    QString pilotID = QString::fromStdString(result.value().id);
+                    _shared.setPilotID(pilotID);
+                    qCDebug(AirMapManagerLog) << "Got Pilot ID:" << pilotID;
                     _state = State::Idle;
                     _endFlight();
                 } else {
@@ -380,7 +381,7 @@ AirMapFlightPlanManager::_createFlightPlan()
     qCDebug(AirMapManagerLog) << "Flight Start:" << flightStartTime().toString();
     qCDebug(AirMapManagerLog) << "Flight Duration:  " << flightDuration();
 
-    if (_pilotID == "" && !_shared.settings().userName.isEmpty() && !_shared.settings().password.isEmpty()) {
+    if (_shared.pilotID().isEmpty() && !_shared.settings().userName.isEmpty() && !_shared.settings().password.isEmpty()) {
         //-- Need to get the pilot id before uploading the flight plan
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
         _state = State::GetPilotID;
@@ -393,8 +394,9 @@ AirMapFlightPlanManager::_createFlightPlan()
                 if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
                 if (result) {
-                    _pilotID = QString::fromStdString(result.value().id);
-                    qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    QString pilotID = QString::fromStdString(result.value().id);
+                    _shared.setPilotID(pilotID);
+                    qCDebug(AirMapManagerLog) << "Got Pilot ID:" << pilotID;
                     _state = State::Idle;
                     _uploadFlightPlan();
                 } else {
@@ -513,7 +515,7 @@ AirMapFlightPlanManager::_uploadFlightPlan()
         params.buffer       = 10.f;
         params.latitude     = static_cast<float>(_flight.takeoffCoord.latitude());
         params.longitude    = static_cast<float>(_flight.takeoffCoord.longitude());
-        params.pilot.id     = _pilotID.toStdString();
+        params.pilot.id     = _shared.pilotID().toStdString();
         //-- Handle flight start/end
         _updateFlightStartEndTime(params.start_time, params.end_time);
         //-- Rules & Features
@@ -838,7 +840,7 @@ AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
     _rangeStart = startTime;
     _rangeEnd   = endTime;
     qCDebug(AirMapManagerLog) << "List flights from:" << _rangeStart.toString("yyyy MM dd - hh:mm:ss") << "to" << _rangeEnd.toString("yyyy MM dd - hh:mm:ss");
-    if (_pilotID == "") {
+    if (_shared.pilotID().isEmpty()) {
         //-- Need to get the pilot id
         qCDebug(AirMapManagerLog) << "Getting pilot ID";
         _state = State::GetPilotID;
@@ -851,8 +853,9 @@ AirMapFlightPlanManager::loadFlightList(QDateTime startTime, QDateTime endTime)
                 if (!isAlive.lock()) return;
                 if (_state != State::GetPilotID) return;
                 if (result) {
-                    _pilotID = QString::fromStdString(result.value().id);
-                    qCDebug(AirMapManagerLog) << "Got Pilot ID:"<<_pilotID;
+                    QString pilotID = QString::fromStdString(result.value().id);
+                    _shared.setPilotID(pilotID);
+                    qCDebug(AirMapManagerLog) << "Got Pilot ID:" << pilotID;
                     _state = State::Idle;
                     _loadFlightList();
                 } else {
@@ -893,7 +896,7 @@ AirMapFlightPlanManager::_loadFlightList()
         params.start_after  = airmap::from_milliseconds_since_epoch(airmap::milliseconds(static_cast<long long>(start)));
         params.start_before = airmap::from_milliseconds_since_epoch(airmap::milliseconds(static_cast<long long>(end)));
         params.limit    = 250;
-        params.pilot_id = _pilotID.toStdString();
+        params.pilot_id = _shared.pilotID().toStdString();
         _shared.client()->flights().search(params, [this, isAlive](const Flights::Search::Result& result) {
             if (!isAlive.lock()) return;
             if (_state != State::LoadFlightList) return;

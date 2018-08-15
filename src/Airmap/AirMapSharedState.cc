@@ -11,6 +11,7 @@
 #include "AirMapManager.h"
 
 #include "airmap/authenticator.h"
+#include "qjsonwebtoken.h"
 
 using namespace airmap;
 
@@ -32,6 +33,11 @@ AirMapSharedState::doRequestWithLogin(const Callback& callback)
     }
 }
 
+//-- TODO:
+//   For now, only anonymous login collects the (anonymous) pilot ID within login()
+//   For autheticated logins, we need to collect it here as opposed to spread all over
+//   the place as it is the case now.
+
 void
 AirMapSharedState::login()
 {
@@ -52,6 +58,11 @@ AirMapSharedState::login()
                 qCDebug(AirMapManagerLog) << "Successfully authenticated with AirMap: id="<< result.value().id.c_str();
                 emit authStatus(AirspaceManager::AuthStatus::Anonymous);
                 _loginToken = QString::fromStdString(result.value().id);
+                QJsonWebToken token = QJsonWebToken::fromTokenAndSecret(_loginToken, QString());
+                QJsonDocument doc = token.getPayloadJDoc();
+                QJsonObject json = doc.object();
+                _pilotID = json.value("sub").toString();
+                qCDebug(AirMapManagerLog) << "Anonymous pilot id:" << _pilotID;
                 _processPendingRequests();
             } else {
                 _pendingRequests.clear();
@@ -105,9 +116,9 @@ AirMapSharedState::logout()
     if (!isLoggedIn()) {
         return;
     }
-    _loginToken = "";
+    _pilotID.clear();
+    _loginToken.clear();
     _pendingRequests.clear();
-
 }
 
 

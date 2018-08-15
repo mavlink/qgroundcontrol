@@ -152,7 +152,6 @@ private:
     AirMapSharedState&      _shared;
     QTimer                  _pollTimer;             ///< timer to poll for approval check
     QString                 _flightId;              ///< Current flight ID, not necessarily accepted yet
-    QString                 _pilotID;               ///< Pilot ID in the form "auth0|abc123"
     QString                 _flightToEnd;
     PlanMasterController*   _planController = nullptr;
     bool                    _valid = false;
