@@ -76,7 +76,7 @@ AirMapSharedState::login()
             if (result) {
                 qCDebug(AirMapManagerLog) << "Successfully authenticated with AirMap: id="<< result.value().id.c_str()<<", access="
                         <<result.value().access.c_str();
-                emit authStatus(AirspaceManager::AuthStatus::Autheticated);
+                emit authStatus(AirspaceManager::AuthStatus::Authenticated);
                 _loginToken = QString::fromStdString(result.value().id);
                 _processPendingRequests();
             } else {

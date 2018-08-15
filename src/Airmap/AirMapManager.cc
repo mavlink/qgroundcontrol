@@ -63,6 +63,7 @@ AirMapManager::~AirMapManager()
 void
 AirMapManager::setToolbox(QGCToolbox* toolbox)
 {
+    _settingsTimer.setSingleShot(true);
     AirspaceManager::setToolbox(toolbox);
     AirMapSettings* ap = toolbox->settingsManager()->airMapSettings();
     connect(ap->enableAirMap(),     &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
@@ -71,7 +72,8 @@ AirMapManager::setToolbox(QGCToolbox* toolbox)
     connect(ap->clientID(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->userName(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->password(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
-    _settingsChanged();
+    connect(&_settingsTimer,        &QTimer::timeout,       this, &AirMapManager::_settingsTimeout);
+    _settingsTimeout();
 }
 
 //-----------------------------------------------------------------------------
@@ -100,6 +102,13 @@ AirMapManager::_authStatusChanged(AirspaceManager::AuthStatus status)
 //-----------------------------------------------------------------------------
 void
 AirMapManager::_settingsChanged()
+{
+    _settingsTimer.start(1000);
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapManager::_settingsTimeout()
 {
     qCDebug(AirMapManagerLog) << "AirMap settings changed";
     _connectStatus.clear();
@@ -156,6 +165,8 @@ AirMapManager::_settingsChanged()
                 emit connectedChanged();
                 _connectStatus = tr("AirMap Enabled");
                 emit connectStatusChanged();
+                //-- Now test authentication
+                _shared.login();
             } else {
                 qWarning("Failed to create airmap::qt::Client instance");
                 QString description = QString::fromStdString(result.error().description() ? result.error().description().get() : "");

@@ -60,7 +60,7 @@ public:
     enum AuthStatus {
         Unknown,
         Anonymous,
-        Autheticated,
+        Authenticated,
         Error
     };
 
