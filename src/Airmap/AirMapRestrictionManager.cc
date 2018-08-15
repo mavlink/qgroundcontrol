@@ -37,36 +37,89 @@ AirMapRestrictionManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 
 
 //-----------------------------------------------------------------------------
-QColor
-AirMapRestrictionManager::_getColor(const Airspace::Type type)
+void
+AirMapRestrictionManager::_getColor(const Airspace& airspace, QColor& color, QColor& lineColor, float& lineWidth)
 {
-    if(type == Airspace::Type::airport)
-        return QColor(254,65,65,30);
-    if(type == Airspace::Type::controlled_airspace)
-        return QColor(254,158,65,60);
-    if(type == Airspace::Type::special_use_airspace)
-        return QColor(65,230,254,30);
-    if(type == Airspace::Type::tfr)
-        return QColor(95,230,254,30);
-    if(type == Airspace::Type::wildfire)
-        return QColor(254,120,0,30);
-    if(type == Airspace::Type::park)
-        return QColor(7,165,22,30);
-    if(type == Airspace::Type::power_plant)
-        return QColor(11,7,165,30);
-    if(type == Airspace::Type::heliport)
-        return QColor(233,57,57,30);
-    if(type == Airspace::Type::prison)
-        return QColor(100,100,100,30);
-    if(type == Airspace::Type::school)
-        return QColor(56,224,190,30);
-    if(type == Airspace::Type::hospital)
-        return QColor(56,159,224,30);
-    if(type == Airspace::Type::fire)
-        return QColor(223,83,10,30);
-    if(type == Airspace::Type::emergency)
-        return QColor(255,0,0,30);
-    return QColor(255,0,255,30);
+    if(airspace.type() == Airspace::Type::airport) {
+        color       = QColor(246,165,23,50);
+        lineColor   = QColor(246,165,23,255);
+        lineWidth   = 2.0f;
+    } else if(airspace.type() == Airspace::Type::controlled_airspace) {
+        QString classification = QString::fromStdString(airspace.details_for_controlled_airspace().airspace_classification).toUpper();
+        if(classification == "B") {
+            color       = QColor(31,160,211,25);
+            lineColor   = QColor(31,160,211,255);
+            lineWidth   = 1.5f;
+        } else if(classification == "C") {
+            color       = QColor(155,108,157,25);
+            lineColor   = QColor(155,108,157,255);
+            lineWidth   = 1.5f;
+        } else if(classification == "D") {
+            color       = QColor(26,116,179,25);
+            lineColor   = QColor(26,116,179,255);
+            lineWidth   = 1.0f;
+        } else if(classification == "E") {
+            color       = QColor(155,108,157,25);
+            lineColor   = QColor(155,108,157,255);
+            lineWidth   = 1.0f;
+        } else {
+            //-- Don't know it
+            qCWarning(AirMapManagerLog) << "Unknown airspace classification:" << QString::fromStdString(airspace.details_for_controlled_airspace().airspace_classification);
+            color       = QColor(255,230,0,25);
+            lineColor   = QColor(255,230,0,255);
+            lineWidth   = 0.5f;
+        }
+    } else if(airspace.type() == Airspace::Type::special_use_airspace) {
+        color       = QColor(27,90,207,38);
+        lineColor   = QColor(27,90,207,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::tfr) {
+        color       = QColor(244,67,54,38);
+        lineColor   = QColor(244,67,54,255);
+        lineWidth   = 2.0f;
+    } else if(airspace.type() == Airspace::Type::wildfire) {
+        color       = QColor(244,67,54,50);
+        lineColor   = QColor(244,67,54,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::park) {
+        color       = QColor(224,18,18,25);
+        lineColor   = QColor(224,18,18,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::power_plant) {
+        color       = QColor(246,165,23,25);
+        lineColor   = QColor(246,165,23,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::heliport) {
+        color       = QColor(246,165,23,20);
+        lineColor   = QColor(246,165,23,100);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::prison) {
+        color       = QColor(246,165,23,38);
+        lineColor   = QColor(246,165,23,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::school) {
+        color       = QColor(246,165,23,38);
+        lineColor   = QColor(246,165,23,255);
+        lineWidth   = 1.0f;
+     } else if(airspace.type() == Airspace::Type::hospital) {
+        color       = QColor(246,165,23,38);
+        lineColor   = QColor(246,165,23,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::fire) {
+        color       = QColor(244,67,54,50);
+        lineColor   = QColor(244,67,54,255);
+        lineWidth   = 1.0f;
+    } else if(airspace.type() == Airspace::Type::emergency) {
+        color       = QColor(246,113,23,77);
+        lineColor   = QColor(246,113,23,255);
+        lineWidth   = 1.0f;
+    } else {
+        //-- Don't know it
+        qCWarning(AirMapManagerLog) << "Unknown airspace type:" << static_cast<int>(airspace.type());
+        color       = QColor(255,0,230,25);
+        lineColor   = QColor(255,0,230,255);
+        lineWidth   = 0.5f;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -106,24 +159,27 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
             const std::vector<Airspace>& airspaces = result.value();
             qCDebug(AirMapManagerLog)<<"Successful search. Items:" << airspaces.size();
             for (const auto& airspace : airspaces) {
-                QColor color = _getColor(airspace.type());
+                QColor color;
+                QColor lineColor;
+                float  lineWidth;
+                _getColor(airspace, color, lineColor, lineWidth);
                 const Geometry& geometry = airspace.geometry();
                 switch(geometry.type()) {
                     case Geometry::Type::polygon: {
                         const Geometry::Polygon& polygon = geometry.details_for_polygon();
-                        _addPolygonToList(polygon, color);
+                        _addPolygonToList(polygon, QString::fromStdString(airspace.id()), color, lineColor, lineWidth);
                     }
                         break;
                     case Geometry::Type::multi_polygon: {
                         const Geometry::MultiPolygon& multiPolygon = geometry.details_for_multi_polygon();
                         for (const auto& polygon : multiPolygon) {
-                            _addPolygonToList(polygon, color);
+                            _addPolygonToList(polygon, QString::fromStdString(airspace.id()), color, lineColor, lineWidth);
                         }
                     }
                         break;
                     case Geometry::Type::point: {
                         const Geometry::Point& point = geometry.details_for_point();
-                        _circles.append(new AirspaceCircularRestriction(QGeoCoordinate(point.latitude, point.longitude), 0., color));
+                        _circles.append(new AirspaceCircularRestriction(QGeoCoordinate(point.latitude, point.longitude), 0., QString::fromStdString(airspace.id()), color, lineColor, lineWidth));
                         // TODO: radius???
                     }
                         break;
@@ -147,7 +203,7 @@ AirMapRestrictionManager::_requestRestrictions(const QGCGeoBoundingCube& roi)
 
 //-----------------------------------------------------------------------------
 void
-AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& polygon, const QColor color)
+AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& polygon, const QString advisoryID, const QColor color, const QColor lineColor, float lineWidth)
 {
     QVariantList polygonArray;
     for (const auto& vertex : polygon.outer_ring.coordinates) {
@@ -159,7 +215,7 @@ AirMapRestrictionManager::_addPolygonToList(const airmap::Geometry::Polygon& pol
         }
         polygonArray.append(QVariant::fromValue(coord));
     }
-    _polygons.append(new AirspacePolygonRestriction(polygonArray, color));
+    _polygons.append(new AirspacePolygonRestriction(polygonArray, advisoryID, color, lineColor, lineWidth));
     if (polygon.inner_rings.size() > 0) {
         // no need to support those (they are rare, and in most cases, there's a more restrictive polygon filling the hole)
         qCDebug(AirMapManagerLog) << "Polygon with holes. Size: "<<polygon.inner_rings.size();

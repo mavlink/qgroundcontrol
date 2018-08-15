@@ -23,11 +23,20 @@ class AirspaceRestriction : public QObject
 {
     Q_OBJECT
 public:
-    AirspaceRestriction(QColor color, QObject* parent = nullptr);
-    Q_PROPERTY(QColor color  READ color CONSTANT)
-    QColor color() { return _color; }
+    AirspaceRestriction(QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent = nullptr);
+    Q_PROPERTY(QString  advisoryID  READ advisoryID CONSTANT)
+    Q_PROPERTY(QColor   color       READ color      CONSTANT)
+    Q_PROPERTY(QColor   lineColor   READ lineColor  CONSTANT)
+    Q_PROPERTY(float    lineWidth   READ lineWidth  CONSTANT)
+    QString advisoryID  () { return _advisoryID; }
+    QColor  color       () { return _color; }
+    QColor  lineColor   () { return _lineColor; }
+    float   lineWidth   () { return _lineWidth; }
 protected:
-    QColor         _color;
+    QString         _advisoryID;
+    QColor          _color;
+    QColor          _lineColor;
+    float           _lineWidth;
 };
 
 /**
@@ -39,7 +48,7 @@ class AirspacePolygonRestriction : public AirspaceRestriction
 {
     Q_OBJECT
 public:
-    AirspacePolygonRestriction(const QVariantList& polygon, QColor color, QObject* parent = nullptr);
+    AirspacePolygonRestriction(const QVariantList& polygon, QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent = nullptr);
     Q_PROPERTY(QVariantList polygon READ polygon CONSTANT)
     QVariantList polygon() { return _polygon; }
 private:
@@ -55,7 +64,7 @@ class AirspaceCircularRestriction : public AirspaceRestriction
 {
     Q_OBJECT
 public:
-    AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QColor color, QObject* parent = nullptr);
+    AirspaceCircularRestriction(const QGeoCoordinate& center, double radius, QString advisoryID, QColor color, QColor lineColor, float lineWidth, QObject* parent = nullptr);
     Q_PROPERTY(QGeoCoordinate   center READ center CONSTANT)
     Q_PROPERTY(double           radius READ radius CONSTANT)
     QGeoCoordinate   center     () { return _center; }
