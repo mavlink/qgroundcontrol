@@ -81,6 +81,9 @@ pipeline {
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
+            withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
+              sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
+            }
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
@@ -131,20 +134,43 @@ pipeline {
             QGC_CONFIG = 'installer'
             QMAKE_VER = "5.11.0/clang_64/bin/qmake"
           }
-          steps {
-            sh 'export'
-            sh 'ccache -z'
-            sh 'git submodule deinit -f .'
-            sh 'git clean -ff -x -d .'
-            sh 'git submodule update --init --recursive --force'
-            sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
-            sh 'cd build; make -j`sysctl -n hw.ncpu`'
-            sh 'ccache -s'
+          stages {
+            stage('Clean Checkout') {
+              steps {
+                sh 'export'
+                sh 'ccache -z'
+                sh 'git submodule deinit -f .'
+                sh 'git clean -ff -x -d .'
+                sh 'git submodule update --init --recursive --force'
+              }
+            }
+
+            stage('Add Airmap API key') {
+              steps {
+                withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
+                  sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
+                }
+              }
+              when {
+                anyOf {
+                  branch 'master';
+                  branch 'Airmap';
+                  branch 'pr-airmap_api_key';
+                  branch 'Stable_*'
+                }
+              }
+            }
+
+            stage('Build OSX Release') {
+              steps {
+                sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+                sh 'cd build; make -j`sysctl -n hw.ncpu`'
+                archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+                sh 'ccache -s'
+              }
+            }
           }
           post {
-            success {
-              archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
-            }
             cleanup {
               sh 'git clean -ff -x -d .'
             }
