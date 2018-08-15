@@ -209,10 +209,10 @@ QGCView {
                                     return qsTr("")
                                 case AirspaceManager.Anonymous:
                                     return qsTr("Anonymous")
-                                case AirspaceManager.Autheticated:
-                                    return qsTr("Autheticated")
+                                case AirspaceManager.Authenticated:
+                                    return qsTr("Authenticated")
                                 default:
-                                    return qsTr("Authetication Error")
+                                    return qsTr("Authentication Error")
                                 }
                             }
                             Layout.rowSpan:     2

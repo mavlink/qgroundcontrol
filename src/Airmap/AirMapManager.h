@@ -55,10 +55,12 @@ protected:
 private slots:
     void _error             (const QString& what, const QString& airmapdMessage, const QString& airmapdDetails);
     void _settingsChanged   ();
+    void _settingsTimeout   ();
     void _authStatusChanged (AirspaceManager::AuthStatus status);
 
 private:
     QString                                         _connectStatus;
+    QTimer                                          _settingsTimer;
     AirMapSharedState                               _shared;
     std::shared_ptr<airmap::qt::Logger>             _logger;
     std::shared_ptr<airmap::qt::DispatchingLogger>  _dispatchingLogger;
