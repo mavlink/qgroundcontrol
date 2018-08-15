@@ -439,7 +439,8 @@ FlightMap {
             center:         object.center
             radius:         object.radius
             color:          object.color
-            border.color:   Qt.rgba(1,1,1,0.85)
+            border.color:   object.lineColor
+            border.width:   object.lineWidth
         }
     }
 
@@ -448,7 +449,8 @@ FlightMap {
         delegate: MapPolygon {
             path:           object.polygon
             color:          object.color
-            border.color:   Qt.rgba(1,1,1,0.85)
+            border.color:   object.lineColor
+            border.width:   object.lineWidth
         }
     }
 }

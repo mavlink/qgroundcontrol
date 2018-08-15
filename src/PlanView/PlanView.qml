@@ -556,7 +556,8 @@ QGCView {
                     center:         object.center
                     radius:         object.radius
                     color:          object.color
-                    border.color:   Qt.rgba(1,1,1,0.65)
+                    border.color:   object.lineColor
+                    border.width:   object.lineWidth
                 }
             }
 
@@ -565,7 +566,8 @@ QGCView {
                 delegate: MapPolygon {
                     path:           object.polygon
                     color:          object.color
-                    border.color:   Qt.rgba(1,1,1,0.65)
+                    border.color:   object.lineColor
+                    border.width:   object.lineWidth
                 }
             }
 

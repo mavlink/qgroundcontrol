@@ -39,8 +39,8 @@ signals:
 
 private:
     void            _requestRestrictions(const QGCGeoBoundingCube& roi);
-    void            _addPolygonToList   (const airmap::Geometry::Polygon& polygon, const QColor color);
-    QColor          _getColor           (const airmap::Airspace::Type type);
+    void            _addPolygonToList   (const airmap::Geometry::Polygon& polygon, const QString advisoryID, const QColor color, const QColor lineColor, float lineWidth);
+    void            _getColor           (const airmap::Airspace& airspace, QColor &color, QColor &lineColor, float &lineWidth);
 
     enum class State {
         Idle,
