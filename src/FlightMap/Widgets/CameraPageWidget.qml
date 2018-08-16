@@ -47,6 +47,7 @@ Column {
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
+    property Fact   _zoomStepFact:          _camera && _camera.zoomStep
 
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -187,6 +188,35 @@ Column {
         font.pointSize: ScreenTools.smallFontPointSize
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
+    }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _zoomStepFact; }
+    Row {
+        spacing:    ScreenTools.defaultFontPixelWidth * 4
+        visible:    _zoomStepFact
+        anchors.horizontalCenter: parent.horizontalCenter
+        QGCButton {
+            text:   qsTr("T")
+            onClicked: {
+                if(_zoomStepFact._zoomDirection === 1) {
+                    _zoomStepFact.rawValue = _zoomStepFact.rawValue + 1
+                } else {
+                    _zoomStepFact._zoomDirection = 1
+                    _zoomStepFact.rawValue = 1
+                }
+            }
+        }
+        QGCButton {
+            text:   qsTr("W")
+            onClicked: {
+                if(_zoomStepFact._zoomDirection === -1) {
+                    _zoomStepFact.rawValue = _zoomStepFact.rawValue - 1
+                } else {
+                    _zoomStepFact._zoomDirection = -1
+                    _zoomStepFact.rawValue = -1
+                }
+            }
+        }
+        property int _zoomDirection: 0
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     Component {

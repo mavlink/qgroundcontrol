@@ -21,13 +21,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLogVerbose)
 class QGCCameraOptionExclusion : public QObject
 {
 public:
-    QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
-        : QObject(parent)
-        , param(param_)
-        , value(value_)
-        , exclusions(exclusions_)
-    {
-    }
+    QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_);
     QString param;
     QString value;
     QStringList exclusions;
@@ -37,16 +31,7 @@ public:
 class QGCCameraOptionRange : public QObject
 {
 public:
-    QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_)
-        : QObject(parent)
-        , param(param_)
-        , value(value_)
-        , targetParam(targetParam_)
-        , condition(condition_)
-        , optNames(optNames_)
-        , optValues(optValues_)
-    {
-    }
+    QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_);
     QString param;
     QString value;
     QString targetParam;
@@ -62,7 +47,7 @@ class QGCCameraControl : public FactGroup
     Q_OBJECT
     friend class QGCCameraParamIO;
 public:
-    QGCCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
+    QGCCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     virtual ~QGCCameraControl();
 
     //-- cam_mode
@@ -119,6 +104,8 @@ public:
     Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
 
+    Q_PROPERTY(Fact*        zoomStep            READ zoomStep           NOTIFY parametersReady)
+
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
     Q_PROPERTY(PhotoStatus  photoStatus         READ photoStatus                                    NOTIFY photoStatusChanged)
@@ -142,8 +129,8 @@ public:
     virtual QString     modelName           () { return _modelName; }
     virtual QString     vendor              () { return _vendor; }
     virtual QString     firmwareVersion     ();
-    virtual qreal       focalLength         () { return (qreal)_info.focal_length; }
-    virtual QSizeF      sensorSize          () { return QSizeF(_info.sensor_size_h, _info.sensor_size_v); }
+    virtual qreal       focalLength         () { return static_cast<qreal>(_info.focal_length); }
+    virtual QSizeF      sensorSize          () { return QSizeF(static_cast<qreal>(_info.sensor_size_h), static_cast<qreal>(_info.sensor_size_v)); }
     virtual QSize       resolution          () { return QSize(_info.resolution_h, _info.resolution_v); }
     virtual bool        capturesVideo       () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO; }
     virtual bool        capturesPhotos      () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE; }
@@ -163,6 +150,8 @@ public:
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
+
+    virtual Fact*       zoomStep            ();
 
     virtual void        setCameraMode       (CameraMode mode);
     virtual void        setPhotoMode        (PhotoMode mode);
@@ -213,6 +202,7 @@ protected slots:
     virtual void    _dataReady              (QByteArray data);
     virtual void    _paramDone              ();
 
+
 private:
     bool    _handleLocalization             (QByteArray& bytes);
     bool    _replaceLocaleStrings           (const QDomNode node, QByteArray& bytes);
@@ -239,6 +229,7 @@ protected:
     mavlink_camera_information_t        _info;
     int                                 _version;
     bool                                _cached;
+    bool                                _paramComplete;
     uint32_t                            _storageFree;
     uint32_t                            _storageTotal;
     QNetworkAccessManager*              _netManager;

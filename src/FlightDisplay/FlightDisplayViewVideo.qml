@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick                          2.3
+import QtQuick                          2.11
 import QtQuick.Controls                 1.2
 
 import QGroundControl                   1.0
@@ -28,6 +28,10 @@ Item {
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _connected:         _activeVehicle ? !_activeVehicle.connectionLost : false
+    property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
+    property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
+    property var    _zoomStepFact:      _camera && _camera.zoomStep
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
@@ -103,6 +107,27 @@ Item {
             onDoubleClicked: {
                 QGroundControl.videoManager.fullScreen = !QGroundControl.videoManager.fullScreen
             }
+        }
+        PinchArea {
+            id:             pinchZoom
+            enabled:        _zoomStepFact
+            anchors.fill:   parent
+            onPinchStarted: pinchZoom.zoom = 0
+            onPinchUpdated: {
+                if(_zoomStepFact) {
+                    var z = 0
+                    if(pinch.scale < 1) {
+                        z = Math.round(pinch.scale * -10)
+                    } else {
+                        z = Math.round(pinch.scale)
+                    }
+                    if(pinchZoom.zoom != z) {
+                        _zoomStepFact.rawValue = z
+                    }
+                    console.log('Pinch: ' + z + ' ' + pinch.scale)
+                }
+            }
+            property int zoom: 0
         }
     }
 }
