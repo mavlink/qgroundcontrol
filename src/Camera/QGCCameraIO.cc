@@ -76,7 +76,7 @@ QGCCameraParamIO::QGCCameraParamIO(QGCCameraControl *control, Fact* fact, Vehicl
             break;
         default:
             qWarning() << "Unsupported fact type" << _fact->type() << "for" << _fact->name();
-            // Fall through
+            //-- Fall Through (screw clang)
         case FactMetaData::valueTypeInt32:
             _mavParamType = MAV_PARAM_EXT_TYPE_INT32;
             break;
@@ -140,25 +140,25 @@ QGCCameraParamIO::_sendParameter()
     switch (factType) {
         case FactMetaData::valueTypeUint8:
         case FactMetaData::valueTypeBool:
-            union_value.param_uint8 = (uint8_t)_fact->rawValue().toUInt();
+            union_value.param_uint8 = static_cast<uint8_t>(_fact->rawValue().toUInt());
             break;
         case FactMetaData::valueTypeInt8:
-            union_value.param_int8 = (int8_t)_fact->rawValue().toInt();
+            union_value.param_int8 = static_cast<int8_t>(_fact->rawValue().toInt());
             break;
         case FactMetaData::valueTypeUint16:
-            union_value.param_uint16 = (uint16_t)_fact->rawValue().toUInt();
+            union_value.param_uint16 = static_cast<uint16_t>(_fact->rawValue().toUInt());
             break;
         case FactMetaData::valueTypeInt16:
-            union_value.param_int16 = (int16_t)_fact->rawValue().toInt();
+            union_value.param_int16 = static_cast<int16_t>(_fact->rawValue().toInt());
             break;
         case FactMetaData::valueTypeUint32:
-            union_value.param_uint32 = (uint32_t)_fact->rawValue().toUInt();
+            union_value.param_uint32 = static_cast<uint32_t>(_fact->rawValue().toUInt());
             break;
         case FactMetaData::valueTypeInt64:
-            union_value.param_int64 = (int64_t)_fact->rawValue().toLongLong();
+            union_value.param_int64 = static_cast<int64_t>(_fact->rawValue().toLongLong());
             break;
         case FactMetaData::valueTypeUint64:
-            union_value.param_uint64 = (uint64_t)_fact->rawValue().toULongLong();
+            union_value.param_uint64 = static_cast<uint64_t>(_fact->rawValue().toULongLong());
             break;
         case FactMetaData::valueTypeFloat:
             union_value.param_float = _fact->rawValue().toFloat();
@@ -171,23 +171,23 @@ QGCCameraParamIO::_sendParameter()
         case FactMetaData::valueTypeCustom:
             {
                 QByteArray custom = _fact->rawValue().toByteArray();
-                memcpy(union_value.bytes, custom.data(), std::max(custom.size(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN));
+                memcpy(union_value.bytes, custom.data(), static_cast<size_t>(std::max(custom.size(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN)));
             }
             break;
         default:
             qCritical() << "Unsupported fact type" << factType << "for" << _fact->name();
-            // fall through
+            //-- Fall Through (screw clang)
         case FactMetaData::valueTypeInt32:
-            union_value.param_int32 = (int32_t)_fact->rawValue().toInt();
+            union_value.param_int32 = static_cast<int32_t>(_fact->rawValue().toInt());
             break;
     }
     memcpy(&p.param_value[0], &union_value.bytes[0], MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN);
-    p.target_system = (uint8_t)_vehicle->id();
-    p.target_component = (uint8_t)_control->compID();
+    p.target_system     = static_cast<uint8_t>(_vehicle->id());
+    p.target_component  = static_cast<uint8_t>(_control->compID());
     strncpy(p.param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_ID_LEN);
     mavlink_msg_param_ext_set_encode_chan(
-        _pMavlink->getSystemId(),
-        _pMavlink->getComponentId(),
+        static_cast<uint8_t>(_pMavlink->getSystemId()),
+        static_cast<uint8_t>(_pMavlink->getComponentId()),
         _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
         &p);
@@ -301,10 +301,10 @@ QGCCameraParamIO::_valueFromMessage(const char* value, uint8_t param_type)
             var = QVariant(u.param_int32);
             break;
         case MAV_PARAM_EXT_TYPE_UINT64:
-            var = QVariant((qulonglong)u.param_uint64);
+            var = QVariant(static_cast<qulonglong>(u.param_uint64));
             break;
         case MAV_PARAM_EXT_TYPE_INT64:
-            var = QVariant((qlonglong)u.param_int64);
+            var = QVariant(static_cast<qulonglong>(u.param_int64));
             break;
         case MAV_PARAM_EXT_TYPE_CUSTOM:
             var = QVariant(QByteArray(value, MAVLINK_MSG_PARAM_EXT_SET_FIELD_PARAM_VALUE_LEN));
@@ -356,12 +356,12 @@ QGCCameraParamIO::paramRequest(bool reset)
     strncpy(param_id, _fact->name().toStdString().c_str(), MAVLINK_MSG_PARAM_EXT_REQUEST_READ_FIELD_PARAM_ID_LEN);
     mavlink_message_t msg;
     mavlink_msg_param_ext_request_read_pack_chan(
-        _pMavlink->getSystemId(),
-        _pMavlink->getComponentId(),
+        static_cast<uint8_t>(_pMavlink->getSystemId()),
+        static_cast<uint8_t>(_pMavlink->getComponentId()),
         _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
-        _vehicle->id(),
-        _control->compID(),
+        static_cast<uint8_t>(_vehicle->id()),
+        static_cast<uint8_t>(_control->compID()),
         param_id,
         -1);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);

@@ -8,6 +8,5 @@
     </qresource>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/AuterionToolBarButton.qml</file>
-        <file alias="QGroundControl/FlightDisplay/FlightDisplayViewVideo.qml">res/AuterionFlightDisplayViewVideo.qml</file>
     </qresource>
 </RCC>
