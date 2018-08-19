@@ -1068,11 +1068,6 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
 
 void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
 {
-    _rebuildTranscetsFromPolygon(refly);
-}
-
-void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly)
-{
     if (_ignoreRecalc) {
         return;
     }
@@ -1112,6 +1107,19 @@ void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly)
         qCDebug(SurveyComplexItemLog) << "_rebuildTransectsPhase1 vertex:x:y" << vertex << polygonPoints.last().x() << polygonPoints.last().y();
     }
 
+    // convert into QPolygonF
+    QPolygonF polygon;
+    for (int i=0; i<polygonPoints.count(); i++) {
+        qCDebug(SurveyComplexItemLog) << "Vertex" << polygonPoints[i];
+        polygon << polygonPoints[i];
+    }
+    polygon << polygonPoints[0];
+
+    _rebuildTranscetsFromPolygon(refly, polygon, tangentOrigin);
+}
+
+void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin)
+{
     // Generate transects
 
     double gridAngle = _gridAngleFact.rawValue().toDouble();
@@ -1126,12 +1134,6 @@ void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly)
     // Convert polygon to bounding rect
 
     qCDebug(SurveyComplexItemLog) << "_rebuildTransectsPhase1 Polygon";
-    QPolygonF polygon;
-    for (int i=0; i<polygonPoints.count(); i++) {
-        qCDebug(SurveyComplexItemLog) << "Vertex" << polygonPoints[i];
-        polygon << polygonPoints[i];
-    }
-    polygon << polygonPoints[0];
     QRectF boundingRect = polygon.boundingRect();
     QPointF boundingCenter = boundingRect.center();
     qCDebug(SurveyComplexItemLog) << "Bounding rect" << boundingRect.topLeft().x() << boundingRect.topLeft().y() << boundingRect.bottomRight().x() << boundingRect.bottomRight().y();
