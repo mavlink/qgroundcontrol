@@ -159,8 +159,8 @@ bool ExifParser::write(QByteArray& buf, GeoTagWorker::cameraFeedbackPacket& geot
     gpsData.readable.fields.gpsLon.content = gpsDataExtInd + 6 * 4;
 
     gpsData.readable.fields.gpsAltRef.tagID = 5;
-    gpsData.readable.fields.gpsAltRef.type = 2;
-    gpsData.readable.fields.gpsAltRef.size = 2;
+    gpsData.readable.fields.gpsAltRef.type = 1;
+    gpsData.readable.fields.gpsAltRef.size = 1;
     gpsData.readable.fields.gpsAltRef.content = 0x00;
 
     gpsData.readable.fields.gpsAlt.tagID = 6;
