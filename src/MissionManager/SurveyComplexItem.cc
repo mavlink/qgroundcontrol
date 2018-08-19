@@ -1115,7 +1115,14 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
     }
     polygon << polygonPoints[0];
 
-    _rebuildTranscetsFromPolygon(refly, polygon, tangentOrigin);
+    // Create list of separate polygons
+    QList<QPolygonF> polygons;
+    polygons << polygon;
+
+    // iterate over polygons
+    for (const auto& p : polygons) {
+        _rebuildTranscetsFromPolygon(refly, p, tangentOrigin);
+    }
 }
 
 void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin)
