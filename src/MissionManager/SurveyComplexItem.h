@@ -113,6 +113,7 @@ private:
     void _rebuildTransectsPhase1Worker(bool refly);
     /// Adds to the _transects array from one polygon
     void _rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin);
+    void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& polygons);
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

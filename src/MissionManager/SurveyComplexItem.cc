@@ -1117,12 +1117,17 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
 
     // Create list of separate polygons
     QList<QPolygonF> polygons;
-    polygons << polygon;
+    _PolygonDecomposeConvex(polygon, polygons);
 
     // iterate over polygons
     for (const auto& p : polygons) {
         _rebuildTranscetsFromPolygon(refly, p, tangentOrigin);
     }
+}
+
+void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& polygons)
+{
+    polygons << polygon;
 }
 
 void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin)
