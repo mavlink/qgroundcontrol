@@ -111,6 +111,7 @@ private:
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     bool _loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     void _rebuildTransectsPhase1Worker(bool refly);
+    void _rebuildTranscetsFromPolygon(bool refly); ///< Adds to the _transects array from one polygon
 
     QMap<QString, FactMetaData*> _metaDataMap;
 

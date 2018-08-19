@@ -1068,6 +1068,11 @@ void SurveyComplexItem::_rebuildTransectsPhase1(void)
 
 void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
 {
+    _rebuildTranscetsFromPolygon(refly);
+}
+
+void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly)
+{
     if (_ignoreRecalc) {
         return;
     }
