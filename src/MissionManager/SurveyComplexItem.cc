@@ -1113,14 +1113,17 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
         qCDebug(SurveyComplexItemLog) << "Vertex" << polygonPoints[i];
         polygon << polygonPoints[i];
     }
-    polygon << polygonPoints[0];
 
     // Create list of separate polygons
     QList<QPolygonF> polygons;
     _PolygonDecomposeConvex(polygon, polygons);
 
     // iterate over polygons
-    for (const auto& p : polygons) {
+    for (auto& p : polygons) {
+        // close polygon
+        p << p.front();
+        // build transects for this polygon
+        // TODO figure out tangent origin
         _rebuildTranscetsFromPolygon(refly, p, tangentOrigin);
     }
 }
