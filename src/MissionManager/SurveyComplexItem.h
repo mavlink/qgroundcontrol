@@ -112,11 +112,12 @@ private:
     bool _loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     void _rebuildTransectsPhase1Worker(bool refly);
     /// Adds to the _transects array from one polygon
-    void _rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin);
+    void _rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
     // Decompose polygon into list of convex sub polygons
     void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons);
     // return true if vertex a can see vertex b
-    bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* VertexA, const QPointF* VertexB);
+    bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* vertexA, const QPointF* vertexB);
+    bool _VertexIsReflex(const QPolygonF& polygon, const QPointF* vertex);
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
