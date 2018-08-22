@@ -56,8 +56,8 @@ const int   MissionController::_missionFileVersion =            2;
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController         (masterController, parent)
     , _missionManager               (_managerVehicle->missionManager())
-    , _visualItems                  (NULL)
-    , _settingsItem                 (NULL)
+    , _visualItems                  (nullptr)
+    , _settingsItem                 (nullptr)
     , _firstItemsFromVehicle        (false)
     , _itemsRequested               (false)
     , _inRecalcSequence             (false)
@@ -68,7 +68,7 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _appSettings                  (qgcApp()->toolbox()->settingsManager()->appSettings())
     , _progressPct                  (0)
     , _currentPlanViewIndex         (-1)
-    , _currentPlanViewItem          (NULL)
+    , _currentPlanViewItem          (nullptr)
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
@@ -109,7 +109,7 @@ void MissionController::_resetMissionFlightStatus(void)
     _controllerVehicle->firmwarePlugin()->batteryConsumptionData(_controllerVehicle, _missionFlightStatus.mAhBattery, _missionFlightStatus.hoverAmps, _missionFlightStatus.cruiseAmps);
     if (_missionFlightStatus.mAhBattery != 0) {
         double batteryPercentRemainingAnnounce = qgcApp()->toolbox()->settingsManager()->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toDouble();
-        _missionFlightStatus.ampMinutesAvailable = (double)_missionFlightStatus.mAhBattery / 1000.0 * 60.0 * ((100.0 - batteryPercentRemainingAnnounce) / 100.0);
+        _missionFlightStatus.ampMinutesAvailable = static_cast<double>(_missionFlightStatus.mAhBattery) / 1000.0 * 60.0 * ((100.0 - batteryPercentRemainingAnnounce) / 100.0);
     }
 
     emit missionDistanceChanged(_missionFlightStatus.totalDistance);
@@ -182,8 +182,8 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
 
         _deinitAllVisualItems();
         _visualItems->deleteLater();
-        _settingsItem = NULL;
-        _visualItems = NULL;
+        _settingsItem = nullptr;
+        _visualItems  = nullptr;
         _updateContainsItems(); // This will clear containsItems which will be set again below. This will re-pop Start Mission confirmation.
         _visualItems = newControllerMissionItems;
 
@@ -351,7 +351,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     _initVisualItem(newItem);
     if (_visualItems->count() == 1 && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol() || _controllerVehicle->multiRotor())) {
         MAV_CMD takeoffCmd = _controllerVehicle->vtol() ? MAV_CMD_NAV_VTOL_TAKEOFF : MAV_CMD_NAV_TAKEOFF;
-        if (_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)takeoffCmd)) {
+        if (_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains(takeoffCmd)) {
             newItem->setCommand(takeoffCmd);
         }
     }
@@ -361,7 +361,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 
         if (_findPreviousAltitude(i, &prevAltitude, &prevAltitudeMode)) {
             newItem->altitude()->setRawValue(prevAltitude);
-            newItem->setAltitudeMode((SimpleMissionItem::AltitudeMode)prevAltitudeMode);
+            newItem->setAltitudeMode(static_cast<SimpleMissionItem::AltitudeMode>(prevAltitudeMode));
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
@@ -377,7 +377,7 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, this);
     newItem->setSequenceNumber(sequenceNumber);
-    newItem->setCommand((MAV_CMD)(_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains((MAV_CMD)MAV_CMD_DO_SET_ROI_LOCATION) ?
+    newItem->setCommand((_controllerVehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_DO_SET_ROI_LOCATION) ?
         MAV_CMD_DO_SET_ROI_LOCATION :
         MAV_CMD_DO_SET_ROI));
     _initVisualItem(newItem);
@@ -388,7 +388,7 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
 
     if (_findPreviousAltitude(i, &prevAltitude, &prevAltitudeMode)) {
         newItem->altitude()->setRawValue(prevAltitude);
-        newItem->setAltitudeMode((SimpleMissionItem::AltitudeMode)prevAltitudeMode);
+        newItem->setAltitudeMode(static_cast<SimpleMissionItem::AltitudeMode>(prevAltitudeMode));
     }
     _visualItems->insert(i, newItem);
 
@@ -533,7 +533,7 @@ void MissionController::removeAll(void)
         _deinitAllVisualItems();
         _visualItems->clearAndDeleteContents();
         _visualItems->deleteLater();
-        _settingsItem = NULL;
+        _settingsItem = nullptr;
         _visualItems = new QmlObjectListModel(this);
         _addMissionSettings(_visualItems, false /* addToCenter */);
         _initAllVisualItems();
@@ -661,9 +661,9 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
 
     if (_masterController->offline()) {
         // We only update if offline since if we are online we use the online vehicle settings
-        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType((MAV_AUTOPILOT)json[_jsonFirmwareTypeKey].toInt()));
+        appSettings->offlineEditingFirmwareType()->setRawValue(AppSettings::offlineEditingFirmwareTypeFromFirmwareType(static_cast<MAV_AUTOPILOT>(json[_jsonFirmwareTypeKey].toInt())));
         if (json.contains(_jsonVehicleTypeKey)) {
-            appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType((MAV_TYPE)json[_jsonVehicleTypeKey].toInt()));
+            appSettings->offlineEditingVehicleType()->setRawValue(AppSettings::offlineEditingVehicleTypeFromVehicleType(static_cast<MAV_TYPE>(json[_jsonVehicleTypeKey].toInt())));
         }
     }
     if (json.contains(_jsonCruiseSpeedKey)) {
@@ -781,9 +781,9 @@ bool MissionController::_loadJsonMissionFileV2(const QJsonObject& json, QmlObjec
     for (int i=0; i<visualItems->count(); i++) {
         if (visualItems->value<VisualMissionItem*>(i)->isSimpleItem()) {
             SimpleMissionItem* doJumpItem = visualItems->value<SimpleMissionItem*>(i);
-            if ((MAV_CMD)doJumpItem->command() == MAV_CMD_DO_JUMP) {
+            if (doJumpItem->command() == MAV_CMD_DO_JUMP) {
                 bool found = false;
-                int findDoJumpId = doJumpItem->missionItem().param1();
+                int findDoJumpId = static_cast<int>(doJumpItem->missionItem().param1());
                 for (int j=0; j<visualItems->count(); j++) {
                     if (visualItems->value<VisualMissionItem*>(j)->isSimpleItem()) {
                         SimpleMissionItem* targetItem = visualItems->value<SimpleMissionItem*>(j);
@@ -878,7 +878,7 @@ bool MissionController::_loadTextMissionFile(QTextStream& stream, QmlObjectListM
         for (int i=1; i<visualItems->count(); i++) {
             SimpleMissionItem* item = qobject_cast<SimpleMissionItem*>(visualItems->get(i));
             if (item && item->command() == MAV_CMD_DO_JUMP) {
-                item->missionItem().setParam1((int)item->missionItem().param1() + 1);
+                item->missionItem().setParam1(static_cast<int>(item->missionItem().param1()) + 1);
             }
         }
     }
@@ -891,7 +891,7 @@ void MissionController::_initLoadedVisualItems(QmlObjectListModel* loadedVisualI
     if (_visualItems) {
         _deinitAllVisualItems();
         _visualItems->deleteLater();
-        _settingsItem = NULL;
+        _settingsItem = nullptr;
     }
 
     _visualItems = loadedVisualItems;
@@ -987,11 +987,11 @@ void MissionController::save(QJsonObject& json)
     }
     QJsonValue coordinateValue;
     JsonHelper::saveGeoCoordinate(settingsItem->coordinate(), true /* writeAltitude */, coordinateValue);
-    json[_jsonPlannedHomePositionKey] = coordinateValue;
-    json[_jsonFirmwareTypeKey] = _controllerVehicle->firmwareType();
-    json[_jsonVehicleTypeKey] = _controllerVehicle->vehicleType();
-    json[_jsonCruiseSpeedKey] = _controllerVehicle->defaultCruiseSpeed();
-    json[_jsonHoverSpeedKey] = _controllerVehicle->defaultHoverSpeed();
+    json[_jsonPlannedHomePositionKey]   = coordinateValue;
+    json[_jsonFirmwareTypeKey]          = _controllerVehicle->firmwareType();
+    json[_jsonVehicleTypeKey]           = _controllerVehicle->vehicleType();
+    json[_jsonCruiseSpeedKey]           = _controllerVehicle->defaultCruiseSpeed();
+    json[_jsonHoverSpeedKey]            = _controllerVehicle->defaultHoverSpeed();
 
     // Save the visual items
 
