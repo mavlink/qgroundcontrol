@@ -32,6 +32,7 @@ class Vehicle;
 class LinkInterface;
 class QmlObjectListModel;
 class VideoReceiver;
+class PlanMasterController;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -88,7 +89,7 @@ public:
     virtual QString showAdvancedUIMessage(void) const;
 
     /// @return An instance of an alternate position source (or NULL if not available)
-    virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return NULL; }
+    virtual QGeoPositionInfoSource* createPositionSource(QObject* parent) { Q_UNUSED(parent); return nullptr; }
 
     /// Allows a plugin to override the specified color name from the palette
     virtual void paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo);
@@ -109,6 +110,20 @@ public:
     /// Allows custom builds to add custom items to the FlightMap. Objects put into QmlObjectListModel
     /// should derive from QmlComponentInfo and set the url property.
     virtual QmlObjectListModel* customMapItems(void);
+
+    /// Allows custom builds to add custom items to the plan file. Either before the document is
+    /// created or after.
+    virtual void    preSaveToJson           (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+    virtual void    postSaveToJson          (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+
+    /// Same for the specific "mission" portion
+    virtual void    preSaveToMissionJson    (PlanMasterController* pController, QJsonObject& missionJson) { Q_UNUSED(pController); Q_UNUSED(missionJson); }
+    virtual void    postSaveToMissionJson   (PlanMasterController* pController, QJsonObject& missionJson) { Q_UNUSED(pController); Q_UNUSED(missionJson); }
+
+    /// Allows custom builds to load custom items from the plan file. Either before the document is
+    /// parsed or after.
+    virtual void    preLoadFromJson     (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
+    virtual void    postLoadFromJson    (PlanMasterController* pController, QJsonObject& json) { Q_UNUSED(pController); Q_UNUSED(json); }
 
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }
