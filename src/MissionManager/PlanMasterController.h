@@ -91,6 +91,12 @@ public:
     Vehicle* controllerVehicle(void) { return _controllerVehicle; }
     Vehicle* managerVehicle(void) { return _managerVehicle; }
 
+    static const int    kPlanFileVersion;
+    static const char*  kPlanFileType;
+    static const char*  kJsonMissionObjectKey;
+    static const char*  kJsonGeoFenceObjectKey;
+    static const char*  kJsonRallyPointsObjectKey;
+
 signals:
     void containsItemsChanged   (bool containsItems);
     void syncInProgressChanged  (void);
@@ -124,9 +130,4 @@ private:
     bool                    _sendRallyPoints;
     QString                 _currentPlanFile;
 
-    static const int    _planFileVersion;
-    static const char*  _planFileType;
-    static const char*  _jsonMissionObjectKey;
-    static const char*  _jsonGeoFenceObjectKey;
-    static const char*  _jsonRallyPointsObjectKey;
 };
