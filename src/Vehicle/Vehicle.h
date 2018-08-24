@@ -45,7 +45,7 @@ class VehicleDistanceSensorFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleDistanceSensorFactGroup(QObject* parent = NULL);
+    VehicleDistanceSensorFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* rotationNone       READ rotationNone       CONSTANT)
     Q_PROPERTY(Fact* rotationYaw45      READ rotationYaw45      CONSTANT)
@@ -106,7 +106,7 @@ class VehicleSetpointFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleSetpointFactGroup(QObject* parent = NULL);
+    VehicleSetpointFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* roll       READ roll       CONSTANT)
     Q_PROPERTY(Fact* pitch      READ pitch      CONSTANT)
@@ -143,7 +143,7 @@ class VehicleVibrationFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleVibrationFactGroup(QObject* parent = NULL);
+    VehicleVibrationFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* xAxis      READ xAxis      CONSTANT)
     Q_PROPERTY(Fact* yAxis      READ yAxis      CONSTANT)
@@ -180,7 +180,7 @@ class VehicleWindFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleWindFactGroup(QObject* parent = NULL);
+    VehicleWindFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* direction      READ direction      CONSTANT)
     Q_PROPERTY(Fact* speed          READ speed          CONSTANT)
@@ -205,7 +205,7 @@ class VehicleGPSFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleGPSFactGroup(QObject* parent = NULL);
+    VehicleGPSFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* lat                READ lat                CONSTANT)
     Q_PROPERTY(Fact* lon                READ lon                CONSTANT)
@@ -246,7 +246,7 @@ class VehicleBatteryFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleBatteryFactGroup(QObject* parent = NULL);
+    VehicleBatteryFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* voltage            READ voltage            CONSTANT)
     Q_PROPERTY(Fact* percentRemaining   READ percentRemaining   CONSTANT)
@@ -305,7 +305,7 @@ class VehicleTemperatureFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleTemperatureFactGroup(QObject* parent = NULL);
+    VehicleTemperatureFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* temperature1       READ temperature1       CONSTANT)
     Q_PROPERTY(Fact* temperature2       READ temperature2       CONSTANT)
@@ -334,7 +334,7 @@ class VehicleClockFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    VehicleClockFactGroup(QObject* parent = NULL);
+    VehicleClockFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* currentTime        READ currentTime        CONSTANT)
     Q_PROPERTY(Fact* currentDate        READ currentDate        CONSTANT)
@@ -354,6 +354,131 @@ private:
     Fact            _currentTimeFact;
     Fact            _currentDateFact;
 };
+
+class VehicleEstimatorStatusFactGroup : public FactGroup
+{
+    Q_OBJECT
+
+public:
+    VehicleEstimatorStatusFactGroup(QObject* parent = nullptr);
+
+    Q_PROPERTY(Fact* goodAttitudeEstimate           READ goodAttitudeEstimate           CONSTANT)
+    Q_PROPERTY(Fact* goodHorizVelEstimate           READ goodHorizVelEstimate           CONSTANT)
+    Q_PROPERTY(Fact* goodVertVelEstimate            READ goodVertVelEstimate            CONSTANT)
+    Q_PROPERTY(Fact* goodHorizPosRelEstimate        READ goodHorizPosRelEstimate        CONSTANT)
+    Q_PROPERTY(Fact* goodHorizPosAbsEstimate        READ goodHorizPosAbsEstimate        CONSTANT)
+    Q_PROPERTY(Fact* goodVertPosAbsEstimate         READ goodVertPosAbsEstimate         CONSTANT)
+    Q_PROPERTY(Fact* goodVertPosAGLEstimate         READ goodVertPosAGLEstimate         CONSTANT)
+    Q_PROPERTY(Fact* goodConstPosModeEstimate       READ goodConstPosModeEstimate       CONSTANT)
+    Q_PROPERTY(Fact* goodPredHorizPosRelEstimate    READ goodPredHorizPosRelEstimate    CONSTANT)
+    Q_PROPERTY(Fact* goodPredHorizPosAbsEstimate    READ goodPredHorizPosAbsEstimate    CONSTANT)
+    Q_PROPERTY(Fact* gpsGlitch                      READ gpsGlitch                      CONSTANT)
+    Q_PROPERTY(Fact* accelError                     READ accelError                     CONSTANT)
+    Q_PROPERTY(Fact* velRatio                       READ velRatio                       CONSTANT)
+    Q_PROPERTY(Fact* horizPosRatio                  READ horizPosRatio                  CONSTANT)
+    Q_PROPERTY(Fact* vertPosRatio                   READ vertPosRatio                   CONSTANT)
+    Q_PROPERTY(Fact* magRatio                       READ magRatio                       CONSTANT)
+    Q_PROPERTY(Fact* haglRatio                      READ haglRatio                      CONSTANT)
+    Q_PROPERTY(Fact* tasRatio                       READ tasRatio                       CONSTANT)
+    Q_PROPERTY(Fact* horizPosAccuracy               READ horizPosAccuracy               CONSTANT)
+    Q_PROPERTY(Fact* vertPosAccuracy                READ vertPosAccuracy                CONSTANT)
+
+    Fact* goodAttitudeEstimate          (void) { return &_goodAttitudeEstimateFact; }
+    Fact* goodHorizVelEstimate          (void) { return &_goodHorizVelEstimateFact; }
+    Fact* goodVertVelEstimate           (void) { return &_goodVertVelEstimateFact; }
+    Fact* goodHorizPosRelEstimate       (void) { return &_goodHorizPosRelEstimateFact; }
+    Fact* goodHorizPosAbsEstimate       (void) { return &_goodHorizPosAbsEstimateFact; }
+    Fact* goodVertPosAbsEstimate        (void) { return &_goodVertPosAbsEstimateFact; }
+    Fact* goodVertPosAGLEstimate        (void) { return &_goodVertPosAGLEstimateFact; }
+    Fact* goodConstPosModeEstimate      (void) { return &_goodConstPosModeEstimateFact; }
+    Fact* goodPredHorizPosRelEstimate   (void) { return &_goodPredHorizPosRelEstimateFact; }
+    Fact* goodPredHorizPosAbsEstimate   (void) { return &_goodPredHorizPosAbsEstimateFact; }
+    Fact* gpsGlitch                     (void) { return &_gpsGlitchFact; }
+    Fact* accelError                    (void) { return &_accelErrorFact; }
+    Fact* velRatio                      (void) { return &_velRatioFact; }
+    Fact* horizPosRatio                 (void) { return &_horizPosRatioFact; }
+    Fact* vertPosRatio                  (void) { return &_vertPosRatioFact; }
+    Fact* magRatio                      (void) { return &_magRatioFact; }
+    Fact* haglRatio                     (void) { return &_haglRatioFact; }
+    Fact* tasRatio                      (void) { return &_tasRatioFact; }
+    Fact* horizPosAccuracy              (void) { return &_horizPosAccuracyFact; }
+    Fact* vertPosAccuracy               (void) { return &_vertPosAccuracyFact; }
+
+    static const char* _goodAttitudeEstimateFactName;
+    static const char* _goodHorizVelEstimateFactName;
+    static const char* _goodVertVelEstimateFactName;
+    static const char* _goodHorizPosRelEstimateFactName;
+    static const char* _goodHorizPosAbsEstimateFactName;
+    static const char* _goodVertPosAbsEstimateFactName;
+    static const char* _goodVertPosAGLEstimateFactName;
+    static const char* _goodConstPosModeEstimateFactName;
+    static const char* _goodPredHorizPosRelEstimateFactName;
+    static const char* _goodPredHorizPosAbsEstimateFactName;
+    static const char* _gpsGlitchFactName;
+    static const char* _accelErrorFactName;
+    static const char* _velRatioFactName;
+    static const char* _horizPosRatioFactName;
+    static const char* _vertPosRatioFactName;
+    static const char* _magRatioFactName;
+    static const char* _haglRatioFactName;
+    static const char* _tasRatioFactName;
+    static const char* _horizPosAccuracyFactName;
+    static const char* _vertPosAccuracyFactName;
+
+private:
+    Fact _goodAttitudeEstimateFact;
+    Fact _goodHorizVelEstimateFact;
+    Fact _goodVertVelEstimateFact;
+    Fact _goodHorizPosRelEstimateFact;
+    Fact _goodHorizPosAbsEstimateFact;
+    Fact _goodVertPosAbsEstimateFact;
+    Fact _goodVertPosAGLEstimateFact;
+    Fact _goodConstPosModeEstimateFact;
+    Fact _goodPredHorizPosRelEstimateFact;
+    Fact _goodPredHorizPosAbsEstimateFact;
+    Fact _gpsGlitchFact;
+    Fact _accelErrorFact;
+    Fact _velRatioFact;
+    Fact _horizPosRatioFact;
+    Fact _vertPosRatioFact;
+    Fact _magRatioFact;
+    Fact _haglRatioFact;
+    Fact _tasRatioFact;
+    Fact _horizPosAccuracyFact;
+    Fact _vertPosAccuracyFact;
+
+#if 0
+    typedef enum ESTIMATOR_STATUS_FLAGS
+    {
+       ESTIMATOR_ATTITUDE=1, /* True if the attitude estimate is good | */
+       ESTIMATOR_VELOCITY_HORIZ=2, /* True if the horizontal velocity estimate is good | */
+       ESTIMATOR_VELOCITY_VERT=4, /* True if the  vertical velocity estimate is good | */
+       ESTIMATOR_POS_HORIZ_REL=8, /* True if the horizontal position (relative) estimate is good | */
+       ESTIMATOR_POS_HORIZ_ABS=16, /* True if the horizontal position (absolute) estimate is good | */
+       ESTIMATOR_POS_VERT_ABS=32, /* True if the vertical position (absolute) estimate is good | */
+       ESTIMATOR_POS_VERT_AGL=64, /* True if the vertical position (above ground) estimate is good | */
+       ESTIMATOR_CONST_POS_MODE=128, /* True if the EKF is in a constant position mode and is not using external measurements (eg GPS or optical flow) | */
+       ESTIMATOR_PRED_POS_HORIZ_REL=256, /* True if the EKF has sufficient data to enter a mode that will provide a (relative) position estimate | */
+       ESTIMATOR_PRED_POS_HORIZ_ABS=512, /* True if the EKF has sufficient data to enter a mode that will provide a (absolute) position estimate | */
+       ESTIMATOR_GPS_GLITCH=1024, /* True if the EKF has detected a GPS glitch | */
+       ESTIMATOR_ACCEL_ERROR=2048, /* True if the EKF has detected bad accelerometer data | */
+
+        typedef struct __mavlink_estimator_status_t {
+         uint64_t time_usec; /*< Timestamp (micros since boot or Unix epoch)*/
+         float vel_ratio; /*< Velocity innovation test ratio*/
+         float pos_horiz_ratio; /*< Horizontal position innovation test ratio*/
+         float pos_vert_ratio; /*< Vertical position innovation test ratio*/
+         float mag_ratio; /*< Magnetometer innovation test ratio*/
+         float hagl_ratio; /*< Height above terrain innovation test ratio*/
+         float tas_ratio; /*< True airspeed innovation test ratio*/
+         float pos_horiz_accuracy; /*< Horizontal position 1-STD accuracy relative to the EKF local origin (m)*/
+         float pos_vert_accuracy; /*< Vertical position 1-STD accuracy relative to the EKF local origin (m)*/
+         uint16_t flags; /*< Integer bitmask indicating which EKF outputs are valid. See definition for ESTIMATOR_STATUS_FLAGS.*/
+        }) mavlink_estimator_status_t;
+
+#endif
+};
+
 
 class Vehicle : public FactGroup
 {
@@ -526,14 +651,15 @@ public:
     Q_PROPERTY(Fact* distanceToHome     READ distanceToHome     CONSTANT)
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
 
-    Q_PROPERTY(FactGroup* gps         READ gpsFactGroup         CONSTANT)
-    Q_PROPERTY(FactGroup* battery     READ battery1FactGroup    CONSTANT)
-    Q_PROPERTY(FactGroup* battery2    READ battery2FactGroup    CONSTANT)
-    Q_PROPERTY(FactGroup* wind        READ windFactGroup        CONSTANT)
-    Q_PROPERTY(FactGroup* vibration   READ vibrationFactGroup   CONSTANT)
-    Q_PROPERTY(FactGroup* temperature READ temperatureFactGroup CONSTANT)
-    Q_PROPERTY(FactGroup* clock       READ clockFactGroup       CONSTANT)
-    Q_PROPERTY(FactGroup* setpoint    READ setpointFactGroup    CONSTANT)
+    Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
+    Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* battery2          READ battery2FactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* wind              READ windFactGroup              CONSTANT)
+    Q_PROPERTY(FactGroup* vibration         READ vibrationFactGroup         CONSTANT)
+    Q_PROPERTY(FactGroup* temperature       READ temperatureFactGroup       CONSTANT)
+    Q_PROPERTY(FactGroup* clock             READ clockFactGroup             CONSTANT)
+    Q_PROPERTY(FactGroup* setpoint          READ setpointFactGroup          CONSTANT)
+    Q_PROPERTY(FactGroup* estimatorStatus   READ estimatorStatusFactGroup   CONSTANT)
 
     Q_PROPERTY(int      firmwareMajorVersion        READ firmwareMajorVersion       NOTIFY firmwareVersionChanged)
     Q_PROPERTY(int      firmwareMinorVersion        READ firmwareMinorVersion       NOTIFY firmwareVersionChanged)
@@ -823,6 +949,7 @@ public:
     FactGroup* clockFactGroup           (void) { return &_clockFactGroup; }
     FactGroup* setpointFactGroup        (void) { return &_setpointFactGroup; }
     FactGroup* distanceSensorFactGroup  (void) { return &_distanceSensorFactGroup; }
+    FactGroup* estimatorStatusFactGroup (void) { return &_estimatorStatusFactGroup; }
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
@@ -1088,6 +1215,7 @@ private:
     void _handleAttitudeQuaternion(mavlink_message_t& message);
     void _handleAttitudeTarget(mavlink_message_t& message);
     void _handleDistanceSensor(mavlink_message_t& message);
+    void _handleEstimatorStatus(mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1304,6 +1432,7 @@ private:
     VehicleClockFactGroup           _clockFactGroup;
     VehicleSetpointFactGroup        _setpointFactGroup;
     VehicleDistanceSensorFactGroup  _distanceSensorFactGroup;
+    VehicleEstimatorStatusFactGroup _estimatorStatusFactGroup;
 
     static const char* _rollFactName;
     static const char* _pitchFactName;
@@ -1329,6 +1458,7 @@ private:
     static const char* _temperatureFactGroupName;
     static const char* _clockFactGroupName;
     static const char* _distanceSensorFactGroupName;
+    static const char* _estimatorStatusFactGroupName;
 
     static const int _vehicleUIUpdateRateMSecs = 100;
 
