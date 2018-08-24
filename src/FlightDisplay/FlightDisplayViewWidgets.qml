@@ -39,12 +39,10 @@ Item {
     QGCPalette    { id: qgcPal }
 
     function getPreferredInstrumentWidth() {
-        if(ScreenTools.isMobile) {
-            return mainWindow.width * 0.25
-        } else if(ScreenTools.isHugeScreen) {
-            return mainWindow.width * 0.11
-        }
-        return ScreenTools.defaultFontPixelWidth * 30
+        // Don't allow instrument panel to chew more than 1/4 of full window
+        var defaultWidth = ScreenTools.defaultFontPixelWidth * 30
+        var maxWidth = mainWindow.width * 0.25
+        return Math.min(maxWidth, defaultWidth)
     }
 
     function _setInstrumentWidget() {
