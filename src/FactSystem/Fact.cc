@@ -310,6 +310,9 @@ QString Fact::_variantToString(const QVariant& variant, int decimalPlaces) const
         }
     }
         break;
+    case FactMetaData::valueTypeBool:
+        valueString = variant.toBool() ? tr("true") : tr("false");
+        break;
     case FactMetaData::valueTypeElapsedTimeInSeconds:
     {
         double dValue = variant.toDouble();

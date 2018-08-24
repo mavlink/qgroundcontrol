@@ -1207,7 +1207,7 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& 
     QJsonParseError jsonParseError;
     QJsonDocument doc = QJsonDocument::fromJson(bytes, &jsonParseError);
     if (jsonParseError.error != QJsonParseError::NoError) {
-        qWarning() <<  "Unable to parse json document" << jsonFilename << jsonParseError.errorString();
+        qWarning() <<  "Unable to parse json document filename:error:offset" << jsonFilename << jsonParseError.errorString() << jsonParseError.offset;
         return metaDataMap;
     }
 
