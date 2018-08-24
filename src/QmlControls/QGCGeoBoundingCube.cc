@@ -22,7 +22,7 @@ bool
 QGCGeoBoundingCube::isValid() const
 {
     return pointNW.isValid() && pointSE.isValid() && pointNW.latitude() != MaxSouth && pointSE.latitude() != MaxNorth && \
-           pointNW.longitude() != MaxEast && pointSE.longitude() != MaxWest && pointNW.altitude() < MaxAlt and pointSE.altitude() > MinAlt;
+           pointNW.longitude() != MaxEast && pointSE.longitude() != MaxWest && pointNW.altitude() < MaxAlt && pointSE.altitude() > MinAlt;
 }
 
 //-----------------------------------------------------------------------------
