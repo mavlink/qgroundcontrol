@@ -194,8 +194,11 @@ void SimpleMissionItemTest::_testSignals(void)
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6() + 1, missionItem.param7()));
     QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
     _spyVisualItem->clearAllSignals();
+
+    // Altitude in coordinate is not used in setCoordinate
     _simpleItem->setCoordinate(QGeoCoordinate(missionItem.param5(), missionItem.param6(), missionItem.param7() + 1));
-    QVERIFY(_spyVisualItem->checkOnlySignalByMask(coordinateChangedMask | dirtyChangedMask));
+    QVERIFY(_spyVisualItem->checkNoSignals());
+    QVERIFY(_spySimpleItem->checkNoSignals());
     _spyVisualItem->clearAllSignals();
 
     // Check dirtyChanged signalling
