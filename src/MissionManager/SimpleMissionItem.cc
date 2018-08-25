@@ -815,8 +815,10 @@ void SimpleMissionItem::setCommand(int command)
 
 void SimpleMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (_missionItem.coordinate() != coordinate) {
-        _missionItem.setCoordinate(coordinate);
+    // We only use lat/lon from coordinate. This keeps param7 and the altitude value which is kept to the side in sync.
+    if (_missionItem.param5() != coordinate.latitude() || _missionItem.param6() != coordinate.longitude()) {
+        _missionItem.setParam5(coordinate.latitude());
+        _missionItem.setParam6(coordinate.longitude());
     }
 }
 
