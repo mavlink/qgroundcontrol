@@ -96,6 +96,7 @@ public:
     void setParam5          (double param5);
     void setParam6          (double param6);
     void setParam7          (double param7);
+    void setCoordinate      (const QGeoCoordinate& coordinate);
     
     void save(QJsonObject& json) const;
     bool load(QTextStream &loadStream);
