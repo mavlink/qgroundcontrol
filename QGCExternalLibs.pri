@@ -159,6 +159,12 @@ contains (DEFINES, DISABLE_AIRMAP) {
             LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.11.0 -lairmap-qt
             DEFINES += QGC_AIRMAP_ENABLED
         }
+    } else:iOSBuild {
+        exists($${AIRMAPD_PATH}/iOS/Qt.5.11.0) {
+            message("Including support for AirMap for iOS")
+            LIBS += -L$${AIRMAPD_PATH}/iOS/Qt.5.11.0 -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
+        }
     } else:LinuxBuild {
         exists($${AIRMAPD_PATH}/linux/Qt.5.11.0) {
             message("Including support for AirMap for Linux")
