@@ -1554,10 +1554,6 @@ QGCCameraControl::activeSettings()
 Fact*
 QGCCameraControl::zoomStep()
 {
-    //-- Avoid "Unknown Fact" warning
-    if(_nameToFactGroupMap.contains(kCAM_ZOOMSTEP)) {
-        return getFact(kCAM_ZOOMSTEP);
-    }
-    return nullptr;
+    return getFact(kCAM_ZOOMSTEP);
 }
 
