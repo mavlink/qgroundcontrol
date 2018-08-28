@@ -21,6 +21,19 @@
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
+AuterionVideoReceiver::AuterionVideoReceiver(QObject* parent)
+    : VideoReceiver(parent)
+{
+#if defined(QGC_GST_STREAMING)
+    //-- Shorter RTSP test interval
+    _rtspTestInterval_ms = 1000;
+#endif
+}
+
+AuterionVideoReceiver::~AuterionVideoReceiver()
+{
+}
+
 //-----------------------------------------------------------------------------
 static QObject*
 auterionQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
@@ -37,15 +50,10 @@ auterionQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 //-----------------------------------------------------------------------------
-class AuterionOptions : public QGCOptions
+AuterionOptions::AuterionOptions(AuterionPlugin*, QObject* parent)
+    : QGCOptions(parent)
 {
-public:
-    AuterionOptions(AuterionPlugin*, QObject* parent = NULL)
-        : QGCOptions(parent)
-    {
-    }
-    bool        wifiReliableForCalibration      () const final { return true; }
-};
+}
 
 //-----------------------------------------------------------------------------
 AuterionPlugin::AuterionPlugin(QGCApplication *app, QGCToolbox* toolbox)
@@ -100,4 +108,11 @@ AuterionPlugin::overrideSettingsGroupVisibility(QString name)
         return false;
     }
     return true;
+}
+
+//-----------------------------------------------------------------------------
+VideoReceiver*
+AuterionPlugin::createVideoReceiver(QObject* parent)
+{
+    return new AuterionVideoReceiver(parent);
 }
