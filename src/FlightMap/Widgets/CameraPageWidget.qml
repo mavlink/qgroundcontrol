@@ -195,17 +195,6 @@ Column {
         visible:    _zoomStepFact
         anchors.horizontalCenter: parent.horizontalCenter
         QGCButton {
-            text:   qsTr("T")
-            onClicked: {
-                if(_zoomStepFact._zoomDirection === 1) {
-                    _zoomStepFact.rawValue = _zoomStepFact.rawValue + 1
-                } else {
-                    _zoomStepFact._zoomDirection = 1
-                    _zoomStepFact.rawValue = 1
-                }
-            }
-        }
-        QGCButton {
             text:   qsTr("W")
             onClicked: {
                 if(_zoomStepFact._zoomDirection === -1) {
@@ -213,6 +202,17 @@ Column {
                 } else {
                     _zoomStepFact._zoomDirection = -1
                     _zoomStepFact.rawValue = -1
+                }
+            }
+        }
+        QGCButton {
+            text:   qsTr("T")
+            onClicked: {
+                if(_zoomStepFact._zoomDirection === 1) {
+                    _zoomStepFact.rawValue = _zoomStepFact.rawValue + 1
+                } else {
+                    _zoomStepFact._zoomDirection = 1
+                    _zoomStepFact.rawValue = 1
                 }
             }
         }
