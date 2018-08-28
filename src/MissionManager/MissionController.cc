@@ -56,8 +56,9 @@ const int   MissionController::_missionFileVersion =            2;
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController         (masterController, parent)
     , _missionManager               (_managerVehicle->missionManager())
-    , _visualItems                  (NULL)
-    , _settingsItem                 (NULL)
+    , _missionItemCount             (0)
+    , _visualItems                  (nullptr)
+    , _settingsItem                 (nullptr)
     , _firstItemsFromVehicle        (false)
     , _itemsRequested               (false)
     , _inRecalcSequence             (false)
@@ -68,7 +69,7 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _appSettings                  (qgcApp()->toolbox()->settingsManager()->appSettings())
     , _progressPct                  (0)
     , _currentPlanViewIndex         (-1)
-    , _currentPlanViewItem          (NULL)
+    , _currentPlanViewItem          (nullptr)
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
@@ -158,6 +159,9 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
         QmlObjectListModel* newControllerMissionItems = new QmlObjectListModel(this);
         const QList<MissionItem*>& newMissionItems = _missionManager->missionItems();
         qCDebug(MissionControllerLog) << "loading from vehicle: count"<< newMissionItems.count();
+
+        _missionItemCount = newMissionItems.count();
+        emit missionItemCountChanged(_missionItemCount);
 
         int i = 0;
         if (_controllerVehicle->firmwarePlugin()->sendHomePositionToVehicle() && newMissionItems.count() != 0) {
