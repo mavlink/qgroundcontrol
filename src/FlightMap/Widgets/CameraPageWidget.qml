@@ -28,6 +28,8 @@ Column {
     width:      pageWidth
     spacing:    ScreenTools.defaultFontPixelHeight * 0.25
 
+    QGCPalette { id: qgcPal; colorGroupEnabled: true }
+
     property bool   showSettingsIcon:       _camera !== null
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
@@ -47,7 +49,8 @@ Column {
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
-    property Fact   _zoomStepFact:          _camera && _camera.zoomStep
+    property Fact   _zoomTeleFact:          _camera && _camera.zoomTele
+    property Fact   _zoomWideFact:          _camera && _camera.zoomWide
 
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -189,34 +192,53 @@ Column {
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _zoomStepFact; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _zoomTeleFact && _zoomWideFact; }
     Row {
         spacing:    ScreenTools.defaultFontPixelWidth * 4
-        visible:    _zoomStepFact
+        visible:    _zoomTeleFact && _zoomWideFact
         anchors.horizontalCenter: parent.horizontalCenter
-        QGCButton {
-            text:   qsTr("W")
-            onClicked: {
-                if(_zoomStepFact._zoomDirection === -1) {
-                    _zoomStepFact.rawValue = _zoomStepFact.rawValue - 1
-                } else {
-                    _zoomStepFact._zoomDirection = -1
-                    _zoomStepFact.rawValue = -1
+        Rectangle {
+            color:  qgcPal.button
+            height: ScreenTools.defaultFontPixelHeight * 2
+            width:  height
+            radius: width * 0.5
+            border.color: qgcPal.buttonText
+            border.width: 1
+            QGCLabel {
+                text:   qsTr("W")
+                anchors.centerIn: parent
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressAndHold: {
+                    _zoomWideFact.rawValue = true
+                }
+                onReleased: {
+                    _zoomWideFact.rawValue = false
                 }
             }
         }
-        QGCButton {
-            text:   qsTr("T")
-            onClicked: {
-                if(_zoomStepFact._zoomDirection === 1) {
-                    _zoomStepFact.rawValue = _zoomStepFact.rawValue + 1
-                } else {
-                    _zoomStepFact._zoomDirection = 1
-                    _zoomStepFact.rawValue = 1
+        Rectangle {
+            color:  qgcPal.button
+            height: ScreenTools.defaultFontPixelHeight * 2
+            width:  height
+            radius: width * 0.5
+            border.color: qgcPal.buttonText
+            border.width: 1
+            QGCLabel {
+                text:   qsTr("T")
+                anchors.centerIn: parent
+            }
+            MouseArea {
+                anchors.fill: parent
+                onPressAndHold: {
+                    _zoomTeleFact.rawValue = true
+                }
+                onReleased: {
+                    _zoomTeleFact.rawValue = false
                 }
             }
         }
-        property int _zoomDirection: 0
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     Component {

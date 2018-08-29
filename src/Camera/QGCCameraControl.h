@@ -105,6 +105,8 @@ public:
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
 
     Q_PROPERTY(Fact*        zoomStep            READ zoomStep           NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        zoomTele            READ zoomTele           NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        zoomWide            READ zoomWide           NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -152,6 +154,8 @@ public:
     virtual quint32     storageTotal        () { return _storageTotal; }
 
     virtual Fact*       zoomStep            ();
+    virtual Fact*       zoomTele            ();
+    virtual Fact*       zoomWide            ();
 
     virtual void        setCameraMode       (CameraMode mode);
     virtual void        setPhotoMode        (PhotoMode mode);

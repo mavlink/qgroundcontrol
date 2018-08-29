@@ -60,6 +60,8 @@ static const char* kPhotoLapseCount = "PhotoLapseCount";
 //-----------------------------------------------------------------------------
 // Known Parameters
 static const char *kCAM_ZOOMSTEP    = "CAM_ZOOMSTEP";
+static const char *kCAM_ZOOMTELE    = "CAM_ZOOMTELE";
+static const char *kCAM_ZOOMWIDE    = "CAM_ZOOMWIDE";
 
 //-----------------------------------------------------------------------------
 static bool
@@ -1555,5 +1557,19 @@ Fact*
 QGCCameraControl::zoomStep()
 {
     return getFact(kCAM_ZOOMSTEP);
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::zoomTele()
+{
+    return getFact(kCAM_ZOOMTELE);
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::zoomWide()
+{
+    return getFact(kCAM_ZOOMWIDE);
 }
 
