@@ -15,7 +15,7 @@ class AirMapSettings : public SettingsGroup
 {
     Q_OBJECT
 public:
-    AirMapSettings(QObject* parent = NULL);
+    AirMapSettings(QObject* parent = nullptr);
 
     DEFINE_SETTINGGROUP(AirMap)
 
@@ -25,6 +25,7 @@ public:
     DEFINE_SETTINGFACT(userName)
     DEFINE_SETTINGFACT(password)
     DEFINE_SETTINGFACT(enableAirMap)
+    DEFINE_SETTINGFACT(enableAirspace)
     DEFINE_SETTINGFACT(enableTelemetry)
 
 };

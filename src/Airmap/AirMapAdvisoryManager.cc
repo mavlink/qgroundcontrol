@@ -75,7 +75,8 @@ AirMapAdvisoryManager::_requestAdvisories()
     Advisory::Search::Parameters params;
     //-- Geometry
     Geometry::Polygon polygon;
-    for (const auto& qcoord : _lastROI.polygon2D()) {
+    //-- Get ROI bounding box, clipping to max area of interest
+    for (const auto& qcoord : _lastROI.polygon2D(qgcApp()->toolbox()->airspaceManager()->maxAreaOfInterest())) {
         Geometry::Coordinate coord;
         coord.latitude  = qcoord.latitude();
         coord.longitude = qcoord.longitude();

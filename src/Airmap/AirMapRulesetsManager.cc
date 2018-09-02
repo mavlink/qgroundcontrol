@@ -247,7 +247,8 @@ void AirMapRulesetsManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
     RuleSets::Search::Parameters params;
     //-- Geometry: Polygon
     Geometry::Polygon polygon;
-    for (const auto& qcoord : roi.polygon2D()) {
+    //-- Get ROI bounding box, clipping to max area of interest
+    for (const auto& qcoord : roi.polygon2D(qgcApp()->toolbox()->airspaceManager()->maxAreaOfInterest())) {
         Geometry::Coordinate coord;
         coord.latitude  = qcoord.latitude();
         coord.longitude = qcoord.longitude();

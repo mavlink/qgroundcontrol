@@ -9,6 +9,7 @@
 
 #include "QGCGeoBoundingCube.h"
 #include <QDebug>
+#include <cmath>
 
 double QGCGeoBoundingCube::MaxAlt    =  1000000.0;
 double QGCGeoBoundingCube::MinAlt    = -1000000.0;
@@ -47,15 +48,31 @@ QGCGeoBoundingCube::center() const
 
 //-----------------------------------------------------------------------------
 QList<QGeoCoordinate>
-QGCGeoBoundingCube::polygon2D() const
+QGCGeoBoundingCube::polygon2D(double clipTo) const
 {
     QList<QGeoCoordinate> coords;
     if(isValid()) {
-        coords.append(QGeoCoordinate(pointNW.latitude(), pointNW.longitude(), pointSE.altitude()));
-        coords.append(QGeoCoordinate(pointNW.latitude(), pointSE.longitude(), pointSE.altitude()));
-        coords.append(QGeoCoordinate(pointSE.latitude(), pointSE.longitude(), pointSE.altitude()));
-        coords.append(QGeoCoordinate(pointSE.latitude(), pointNW.longitude(), pointSE.altitude()));
-        coords.append(QGeoCoordinate(pointNW.latitude(), pointNW.longitude(), pointSE.altitude()));
+        //-- Should we clip it?
+        if(clipTo > 0.0 && area() > clipTo) {
+            //-- Clip it to a square of given area centered on current bounding box center.
+            double side = sqrt(clipTo);
+            QGeoCoordinate c = center();
+            double a = pow((side * 0.5), 2);
+            double h = sqrt(a + a) * 1000.0;
+            QGeoCoordinate nw = c.atDistanceAndAzimuth(h, 315.0);
+            QGeoCoordinate se = c.atDistanceAndAzimuth(h, 135.0);
+            coords.append(QGeoCoordinate(nw.latitude(), nw.longitude(), se.altitude()));
+            coords.append(QGeoCoordinate(nw.latitude(), se.longitude(), se.altitude()));
+            coords.append(QGeoCoordinate(se.latitude(), se.longitude(), se.altitude()));
+            coords.append(QGeoCoordinate(se.latitude(), nw.longitude(), se.altitude()));
+            coords.append(QGeoCoordinate(nw.latitude(), nw.longitude(), se.altitude()));
+        } else {
+            coords.append(QGeoCoordinate(pointNW.latitude(), pointNW.longitude(), pointSE.altitude()));
+            coords.append(QGeoCoordinate(pointNW.latitude(), pointSE.longitude(), pointSE.altitude()));
+            coords.append(QGeoCoordinate(pointSE.latitude(), pointSE.longitude(), pointSE.altitude()));
+            coords.append(QGeoCoordinate(pointSE.latitude(), pointNW.longitude(), pointSE.altitude()));
+            coords.append(QGeoCoordinate(pointNW.latitude(), pointNW.longitude(), pointSE.altitude()));
+        }
     }
     return coords;
 }
@@ -100,7 +117,6 @@ QGCGeoBoundingCube::area() const
         return 0.0;
     // Area in km^2
     double a = (height() / 1000.0) * (width() / 1000.0);
-    //qDebug() << "Area:" << a;
     return a;
 }
 
