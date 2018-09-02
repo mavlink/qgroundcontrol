@@ -72,6 +72,7 @@ AirMapManager::setToolbox(QGCToolbox* toolbox)
     connect(ap->clientID(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->userName(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
     connect(ap->password(),         &Fact::rawValueChanged, this, &AirMapManager::_settingsChanged);
+    connect(ap->enableAirspace(),   &Fact::rawValueChanged, this, &AirMapManager::_airspaceEnabled);
     connect(&_settingsTimer,        &QTimer::timeout,       this, &AirMapManager::_settingsTimeout);
     _settingsTimeout();
 }
@@ -88,7 +89,7 @@ void
 AirMapManager::_error(const QString& what, const QString& airmapdMessage, const QString& airmapdDetails)
 {
     qCDebug(AirMapManagerLog) << "Error: "<<what<<", msg: "<<airmapdMessage<<", details: "<<airmapdDetails;
-    qgcApp()->showMessage(QString("AirMap Error: %1. %2").arg(what).arg(airmapdMessage));
+    qgcApp()->showMessage(QString("Error: %1. %2").arg(what).arg(airmapdMessage));
 }
 
 //-----------------------------------------------------------------------------
@@ -104,6 +105,17 @@ void
 AirMapManager::_settingsChanged()
 {
     _settingsTimer.start(1000);
+}
+
+//-----------------------------------------------------------------------------
+void
+AirMapManager::_airspaceEnabled()
+{
+    if(qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirspace()->rawValue().toBool()) {
+        if(_airspaces) {
+            _airspaces->setROI(_roi, true);
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------

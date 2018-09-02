@@ -434,7 +434,7 @@ FlightMap {
 
     // Airspace overlap support
     MapItemView {
-        model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
+        model:              _airspaceEnabled && QGroundControl.settingsManager.airMapSettings.enableAirspace && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
         delegate: MapCircle {
             center:         object.center
             radius:         object.radius
@@ -445,7 +445,7 @@ FlightMap {
     }
 
     MapItemView {
-        model:              _airspaceEnabled && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
+        model:              _airspaceEnabled && QGroundControl.settingsManager.airMapSettings.enableAirspace && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
         delegate: MapPolygon {
             path:           object.polygon
             color:          object.color
@@ -453,4 +453,5 @@ FlightMap {
             border.width:   object.lineWidth
         }
     }
+
 }

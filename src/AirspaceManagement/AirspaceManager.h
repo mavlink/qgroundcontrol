@@ -75,7 +75,7 @@ public:
     Q_PROPERTY(bool                         connected           READ connected          NOTIFY connectedChanged)
     Q_PROPERTY(QString                      connectStatus       READ connectStatus      NOTIFY connectStatusChanged)
     Q_PROPERTY(AirspaceManager::AuthStatus  authStatus          READ authStatus         NOTIFY authStatusChanged)
-    Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE setAirspaceVisible    NOTIFY airspaceVisibleChanged)
+    Q_PROPERTY(bool                         airspaceVisible     READ airspaceVisible    WRITE  setAirspaceVisible    NOTIFY airspaceVisibleChanged)
 
     Q_INVOKABLE void setROI                     (const QGeoCoordinate& pointNW, const QGeoCoordinate& pointSE, bool planView, bool reset = false);
 
@@ -93,6 +93,7 @@ public:
     virtual void             setAirspaceVisible (bool set) { _airspaceVisible = set; emit airspaceVisibleChanged(); }
     virtual bool                connected       () const = 0;
     virtual QString             connectStatus   () const { return QString(); }
+    virtual double             maxAreaOfInterest() const { return _maxAreaOfInterest; }
 
     virtual AirspaceManager::AuthStatus authStatus () const { return Anonymous; }
 
@@ -125,12 +126,13 @@ protected:
     virtual AirspaceFlightPlanProvider*     _instantiateAirspaceFlightPlanProvider  () = 0;
 
 protected:
-    bool                            _airspaceVisible;
-    AirspaceRulesetsProvider*       _ruleSetsProvider       = nullptr; ///< Rulesets
-    AirspaceWeatherInfoProvider*    _weatherProvider        = nullptr; ///< Weather info
-    AirspaceAdvisoryProvider*       _advisories             = nullptr; ///< Advisory info
-    AirspaceRestrictionProvider*    _airspaces              = nullptr; ///< Airspace info
-    AirspaceFlightPlanProvider*     _flightPlan             = nullptr; ///< Flight plan management
+    bool                            _airspaceVisible        = false;
+    AirspaceRulesetsProvider*       _ruleSetsProvider       = nullptr;  ///< Rulesets
+    AirspaceWeatherInfoProvider*    _weatherProvider        = nullptr;  ///< Weather info
+    AirspaceAdvisoryProvider*       _advisories             = nullptr;  ///< Advisory info
+    AirspaceRestrictionProvider*    _airspaces              = nullptr;  ///< Airspace info
+    AirspaceFlightPlanProvider*     _flightPlan             = nullptr;  ///< Flight plan management
+    double                          _maxAreaOfInterest      = 500.0;    ///< Ignore area larger than 500km^2
     QTimer                          _ruleUpdateTimer;
     QTimer                          _updateTimer;
     QGCGeoBoundingCube              _roi;

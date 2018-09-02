@@ -64,7 +64,7 @@ public:
     }
 
     //-- 2D
-    QList<QGeoCoordinate> polygon2D() const;
+    QList<QGeoCoordinate> polygon2D(double clipTo = 0.0) const;
 
     Q_INVOKABLE double width    () const;
     Q_INVOKABLE double height   () const;

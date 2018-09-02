@@ -36,6 +36,12 @@
     "defaultValue":     false
 },
 {
+    "name":             "enableAirspace",
+    "shortDescription": "Show Airspace on Map (Experimental)",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "enableTelemetry",
     "shortDescription": "Enable AirMap Telemetry",
     "type":             "bool",

@@ -100,6 +100,13 @@ QGCView {
                                 enabled:    _airMapEnabled
                                 property Fact _enableTelemetryFact: QGroundControl.settingsManager.airMapSettings.enableTelemetry
                             }
+                            FactCheckBox {
+                                text:       qsTr("Show Airspace on Map (Experimental)")
+                                fact:       _enableAirspaceFact
+                                visible:    _enableAirspaceFact.visible
+                                enabled:    _airMapEnabled
+                                property Fact _enableAirspaceFact: QGroundControl.settingsManager.airMapSettings.enableAirspace
+                            }
                         }
                         QGCButton {
                             text:           qsTr("Clear Saved Answers")

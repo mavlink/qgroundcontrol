@@ -11,6 +11,9 @@
 #include "AirMapManager.h"
 #include "AirspaceRestriction.h"
 
+#include "QGCApplication.h"
+#include "SettingsManager.h"
+
 #define RESTRICTION_UPDATE_DISTANCE    500     //-- 500m threshold for updates
 
 using namespace airmap;
@@ -25,12 +28,20 @@ AirMapRestrictionManager::AirMapRestrictionManager(AirMapSharedState& shared)
 void
 AirMapRestrictionManager::setROI(const QGCGeoBoundingCube& roi, bool reset)
 {
-    //-- If first time or we've moved more than RESTRICTION_UPDATE_DISTANCE, ask for updates.
-    if(reset || (!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > RESTRICTION_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > RESTRICTION_UPDATE_DISTANCE)) {
-        //-- No more than 40000 km^2
-        if(roi.area() < 40000.0) {
-            _lastROI = roi;
-            _requestRestrictions(roi);
+    if(qgcApp()->toolbox()->settingsManager()->airMapSettings()->enableAirspace()->rawValue().toBool()) {
+        //-- If first time or we've moved more than RESTRICTION_UPDATE_DISTANCE, ask for updates.
+        if(reset ||
+          (!_lastROI.isValid() || _lastROI.pointNW.distanceTo(roi.pointNW) > RESTRICTION_UPDATE_DISTANCE || _lastROI.pointSE.distanceTo(roi.pointSE) > RESTRICTION_UPDATE_DISTANCE) ||
+           (_polygons.count() == 0 && _circles.count() == 0)) {
+            //-- Limit area of interest
+            qCDebug(AirMapManagerLog) << "ROI Area:" << roi.area() << "km^2";
+            if(roi.area() < qgcApp()->toolbox()->airspaceManager()->maxAreaOfInterest()) {
+                _lastROI = roi;
+                _requestRestrictions(roi);
+            } else {
+                _polygons.clear();
+                _circles.clear();
+            }
         }
     }
 }

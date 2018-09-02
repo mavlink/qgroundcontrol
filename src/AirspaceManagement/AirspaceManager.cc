@@ -25,7 +25,6 @@ QGC_LOGGING_CATEGORY(AirspaceManagementLog, "AirspaceManagementLog")
 //-----------------------------------------------------------------------------
 AirspaceManager::AirspaceManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _airspaceVisible(false)
 {
     _ruleUpdateTimer.setInterval(2000);
     _ruleUpdateTimer.setSingleShot(true);
