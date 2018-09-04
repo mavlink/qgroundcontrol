@@ -105,7 +105,6 @@ protected:
     uint8_t     lastIndex[256][256];                            ///< Store the last received sequence ID for each system/componenet pair
     uint8_t     firstMessage[256][256];                         ///< First message flag
     uint64_t    totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];  ///< The total number of successfully received messages
-    uint64_t    totalSentCounter[MAVLINK_COMM_NUM_BUFFERS];     ///< The calculated total number of messages sent to us
     uint64_t    totalLossCounter[MAVLINK_COMM_NUM_BUFFERS];     ///< Total messages lost during transmission.
     float       runningLossPercent[MAVLINK_COMM_NUM_BUFFERS];   ///< Loss rate
 
