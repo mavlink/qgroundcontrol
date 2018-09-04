@@ -477,8 +477,8 @@ private:
          float pos_horiz_accuracy; /*< Horizontal position 1-STD accuracy relative to the EKF local origin (m)*/
          float pos_vert_accuracy; /*< Vertical position 1-STD accuracy relative to the EKF local origin (m)*/
          uint16_t flags; /*< Integer bitmask indicating which EKF outputs are valid. See definition for ESTIMATOR_STATUS_FLAGS.*/
-        }) mavlink_estimator_status_t;
-
+        } mavlink_estimator_status_t;
+    };
 #endif
 };
 
