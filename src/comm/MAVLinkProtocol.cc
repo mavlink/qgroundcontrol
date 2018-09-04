@@ -65,7 +65,6 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     , _multiVehicleManager(nullptr)
 {
     memset(totalReceiveCounter, 0, sizeof(totalReceiveCounter));
-    memset(totalSentCounter,    0, sizeof(totalSentCounter));
     memset(totalLossCounter,    0, sizeof(totalLossCounter));
     memset(runningLossPercent,  0, sizeof(runningLossPercent));
     memset(firstMessage,        1, sizeof(firstMessage));
@@ -149,7 +148,6 @@ void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
     int channel = link->mavlinkChannel();
     totalReceiveCounter[channel] = 0;
     totalLossCounter[channel]    = 0;
-    totalSentCounter[channel]    = 0;
     runningLossPercent[channel]  = 0.0f;
     for(int i = 0; i < 256; i++) {
         firstMessage[channel][i] =  1;
@@ -221,16 +219,13 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 // Log how many were lost
                 totalLossCounter[mavlinkChannel] += static_cast<uint64_t>(lostMessages);
-                // Compute actual count of sent messages
-                totalSentCounter[mavlinkChannel] += static_cast<uint64_t>(lostMessages);
-            } else {
-                totalSentCounter[mavlinkChannel]++;
             }
 
             // And update the last sequence number for this system/component pair
             lastIndex[_message.sysid][_message.compid] = _message.seq;;
             // Calculate new loss ratio
-            float receiveLossPercent = static_cast<float>(totalLossCounter[mavlinkChannel]) / static_cast<float>(totalSentCounter[mavlinkChannel]);
+            uint64_t totalSent = totalReceiveCounter[mavlinkChannel] + totalLossCounter[mavlinkChannel];
+            float receiveLossPercent = static_cast<float>(static_cast<double>(totalLossCounter[mavlinkChannel]) / static_cast<double>(totalSent));
             receiveLossPercent *= 100.0f;
             receiveLossPercent = (receiveLossPercent * 0.5f) + (runningLossPercent[mavlinkChannel] * 0.5f);
             runningLossPercent[mavlinkChannel] = receiveLossPercent;
@@ -310,7 +305,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             // Update MAVLink status on every 32th packet
             if ((totalReceiveCounter[mavlinkChannel] & 0x1F) == 0) {
-                emit mavlinkMessageStatus(_message.sysid, totalSentCounter[mavlinkChannel], totalReceiveCounter[mavlinkChannel], totalLossCounter[mavlinkChannel], receiveLossPercent);
+                emit mavlinkMessageStatus(_message.sysid, totalSent, totalReceiveCounter[mavlinkChannel], totalLossCounter[mavlinkChannel], receiveLossPercent);
             }
 
             // The packet is emitted as a whole, as it is only 255 - 261 bytes short
