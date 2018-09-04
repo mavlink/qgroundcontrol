@@ -202,7 +202,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _mavlink = _toolbox->mavlinkProtocol();
 
-    connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
+    connect(_mavlink, &MAVLinkProtocol::messageReceived,        this, &Vehicle::_mavlinkMessageReceived);
+    connect(_mavlink, &MAVLinkProtocol::mavlinkMessageStatus,   this, &Vehicle::_mavlinkMessageStatus);
 
     _addLink(link);
 
@@ -3591,6 +3592,17 @@ void Vehicle::_updateHighLatencyLink(bool sendCommand)
                            true,
                            _highLatencyLink ? 1.0f : 0.0f); // request start/stop transmitting over high latency telemetry
         }
+    }
+}
+
+void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)
+{
+    if(uasId == _id) {
+        _mavlinkSentCount       = totalSent;
+        _mavlinkReceivedCount   = totalReceived;
+        _mavlinkLossCount       = totalLoss;
+        _mavlinkLossPercent     = lossPercent;
+        emit mavlinkStatusChanged();
     }
 }
 
