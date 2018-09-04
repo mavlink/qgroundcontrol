@@ -1528,7 +1528,9 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
         if (item->specifiesCoordinate()) {
-            _settingsItem->setCoordinate(item->coordinate().atDistanceAndAzimuth(30, 0));
+            QGeoCoordinate plannedHomeCoord = item->coordinate().atDistanceAndAzimuth(30, 0);
+            plannedHomeCoord.setAltitude(0);
+            _settingsItem->setCoordinate(plannedHomeCoord);
         }
     }
 }
