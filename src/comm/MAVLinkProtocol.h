@@ -66,27 +66,6 @@ public:
         return _current_version;
     }
     /**
-     * Retrieve a total of all successfully parsed packets for the specified link.
-     * @returns -1 if this is not available for this protocol, # of packets otherwise.
-     */
-    qint32 getReceivedPacketCount(const LinkInterface *link) const {
-        return totalReceiveCounter[link->mavlinkChannel()];
-    }
-    /**
-     * Retrieve a total of all parsing errors for the specified link.
-     * @returns -1 if this is not available for this protocol, # of errors otherwise.
-     */
-    qint32 getParsingErrorCount(const LinkInterface *link) const {
-        return totalErrorCounter[link->mavlinkChannel()];
-    }
-    /**
-     * Retrieve a total of all dropped packets for the specified link.
-     * @returns -1 if this is not available for this protocol, # of packets otherwise.
-     */
-    qint32 getDroppedPacketCount(const LinkInterface *link) const {
-        return totalLossCounter[link->mavlinkChannel()];
-    }
-    /**
      * Reset the counters for all metadata for this link.
      */
     virtual void resetMetadataForLink(LinkInterface *link);
@@ -122,18 +101,20 @@ public slots:
     void checkForLostLogFiles(void);
 
 protected:
-    bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
-    QMutex receiveMutex;        ///< Mutex to protect receiveBytes function
-    int lastIndex[256][256];    ///< Store the last received sequence ID for each system/componenet pair
-    int totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];    ///< The total number of successfully received messages
-    int totalLossCounter[MAVLINK_COMM_NUM_BUFFERS];       ///< Total messages lost during transmission.
-    int totalErrorCounter[MAVLINK_COMM_NUM_BUFFERS];      ///< Total count of all parsing errors. Generally <= totalLossCounter.
-    int currReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];     ///< Received messages during this sample time window. Used for calculating loss %.
-    int currLossCounter[MAVLINK_COMM_NUM_BUFFERS];        ///< Lost messages during this sample time window. Used for calculating loss %.
-    bool versionMismatchIgnore;
-    int systemId;
-    unsigned _current_version;
-    unsigned _radio_version_mismatch_count;
+    bool        m_enable_version_check;                         ///< Enable checking of version match of MAV and QGC
+    uint8_t     lastIndex[256][256];                            ///< Store the last received sequence ID for each system/componenet pair
+    uint8_t     firstMessage[256][256];                         ///< First message flag
+    uint64_t    totalReceiveCounter[MAVLINK_COMM_NUM_BUFFERS];  ///< The total number of successfully received messages
+    uint64_t    totalLossCounter[MAVLINK_COMM_NUM_BUFFERS];     ///< Total messages lost during transmission.
+    float       runningLossPercent[MAVLINK_COMM_NUM_BUFFERS];   ///< Loss rate
+
+    mavlink_message_t _message = {};
+    mavlink_status_t _status   = {};
+
+    bool        versionMismatchIgnore;
+    int         systemId;
+    unsigned    _current_version;
+    unsigned    _radio_version_mismatch_count;
 
 signals:
     /// Heartbeat received on link
@@ -148,8 +129,7 @@ signals:
     /** @brief Emitted if a new system ID was set */
     void systemIdChanged(int systemId);
 
-    void receiveLossPercentChanged(int uasId, float lossPercent);
-    void receiveLossTotalChanged(int uasId, int totalLoss);
+    void mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
 
     /**
      * @brief Emitted if a new radio status packet received

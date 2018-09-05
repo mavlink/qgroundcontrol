@@ -208,7 +208,8 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _mavlink = _toolbox->mavlinkProtocol();
 
-    connect(_mavlink, &MAVLinkProtocol::messageReceived,     this, &Vehicle::_mavlinkMessageReceived);
+    connect(_mavlink, &MAVLinkProtocol::messageReceived,        this, &Vehicle::_mavlinkMessageReceived);
+    connect(_mavlink, &MAVLinkProtocol::mavlinkMessageStatus,   this, &Vehicle::_mavlinkMessageStatus);
 
     _addLink(link);
 
@@ -1845,7 +1846,7 @@ void Vehicle::_updatePriorityLink(bool updateActive, bool sendCommand)
 
     // This routine specifically does not clear _priorityLink when there are no links remaining.
     // By doing this we hold a reference on the last link as the Vehicle shuts down. Thus preventing shutdown
-    // ordering NULL pointer crashes where priorityLink() is still called during shutdown sequence.
+    // ordering nullptr pointer crashes where priorityLink() is still called during shutdown sequence.
     if (_links.count() == 0) {
         return;
     }
@@ -3649,6 +3650,17 @@ void Vehicle::_adsbTimerTimeout()
         } else {
             ++it;
         }
+    }
+}
+
+void Vehicle::_mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent)
+{
+    if(uasId == _id) {
+        _mavlinkSentCount       = totalSent;
+        _mavlinkReceivedCount   = totalReceived;
+        _mavlinkLossCount       = totalLoss;
+        _mavlinkLossPercent     = lossPercent;
+        emit mavlinkStatusChanged();
     }
 }
 
