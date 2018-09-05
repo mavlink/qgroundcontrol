@@ -28,6 +28,7 @@
         <file alias="Airframe/OctoRotorXCoaxial">src/AutoPilotPlugins/Common/Images/OctoRotorXCoaxial.svg</file>
         <file alias="Airframe/Plane">src/AutoPilotPlugins/Common/Images/Plane.svg</file>
         <file alias="Airframe/PlaneATail">src/AutoPilotPlugins/Common/Images/PlaneATail.svg</file>
+        <file alias="Airframe/PlaneVTail">src/AutoPilotPlugins/Common/Images/PlaneVTail.svg</file>
         <file alias="Airframe/QuadRotorATail">src/AutoPilotPlugins/Common/Images/QuadRotorATail.svg</file>
         <file alias="Airframe/QuadRotorH">src/AutoPilotPlugins/Common/Images/QuadRotorH.svg</file>
         <file alias="Airframe/QuadRotorPlus">src/AutoPilotPlugins/Common/Images/QuadRotorPlus.svg</file>
