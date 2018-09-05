@@ -7,9 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtLocation       5.3
-import QtPositioning    5.3
+import QtQuick              2.3
+import QtLocation           5.3
+import QtPositioning        5.3
+import QtGraphicalEffects   1.0
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -24,6 +25,7 @@ MapQuickItem {
     property string callsign:       ""                                              ///< Vehicle callsign
     property double heading:        vehicle ? vehicle.heading.value : Number.NaN    ///< Vehicle heading, NAN for none
     property real   size:           _adsbVehicle ? _adsbSize : _uavSize             /// Size for icon
+    property bool   alert:          false                                           /// Collision alert
 
     anchorPoint.x:  vehicleItem.width  / 2
     anchorPoint.y:  vehicleItem.height / 2
@@ -31,7 +33,7 @@ MapQuickItem {
 
     property bool   _adsbVehicle:   vehicle ? false : true
     property real   _uavSize:       ScreenTools.defaultFontPixelHeight * 5
-    property real   _adsbSize:      ScreenTools.defaultFontPixelHeight * 1.5
+    property real   _adsbSize:      ScreenTools.defaultFontPixelHeight * 2.5
     property var    _map:           map
     property bool   _multiVehicle:  QGroundControl.multiVehicleManager.vehicles.count > 1
 
@@ -41,14 +43,30 @@ MapQuickItem {
         height:     vehicleIcon.height
         opacity:    vehicle ? (vehicle.active ? 1.0 : 0.5) : 1.0
 
+        Rectangle {
+            id:                 vehicleShadow
+            anchors.fill:       vehicleIcon
+            color:              Qt.rgba(1,1,1,1)
+            radius:             width * 0.5
+            visible:            false
+        }
+        DropShadow {
+            anchors.fill:       vehicleShadow
+            visible:            vehicleIcon.visible && _adsbVehicle
+            horizontalOffset:   4
+            verticalOffset:     4
+            radius:             32.0
+            samples:            65
+            color:              Qt.rgba(0.94,0.91,0,0.5)
+            source:             vehicleShadow
+        }
         Image {
             id:                 vehicleIcon
-            source:             _adsbVehicle ? "/qmlimages/adsbVehicle.svg" : vehicle.vehicleImageOpaque
+            source:             _adsbVehicle ? (alert ? "/qmlimages/AlertAircraft.svg" : "/qmlimages/AwarenessAircraft.svg") : vehicle.vehicleImageOpaque
             mipmap:             true
             width:              size
             sourceSize.width:   size
             fillMode:           Image.PreserveAspectFit
-
             transform: Rotation {
                 origin.x:       vehicleIcon.width  / 2
                 origin.y:       vehicleIcon.height / 2
@@ -64,7 +82,6 @@ MapQuickItem {
             text:                       vehicleLabelText
             font.pointSize:             ScreenTools.smallFontPointSize
             visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
-
             property string vehicleLabelText: visible ?
                                                   (_adsbVehicle ?
                                                        QGroundControl.metersToAppSettingsDistanceUnits(altitude).toFixed(0) + " " + QGroundControl.appSettingsDistanceUnitsString :
@@ -80,7 +97,6 @@ MapQuickItem {
             text:                       vehicleLabelText
             font.pointSize:             ScreenTools.smallFontPointSize
             visible:                    _adsbVehicle ? !isNaN(altitude) : _multiVehicle
-
             property string vehicleLabelText: visible && _adsbVehicle ? callsign : ""
         }
     }

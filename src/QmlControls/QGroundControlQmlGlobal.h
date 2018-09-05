@@ -22,6 +22,7 @@
 #include "SimulatedPosition.h"
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
+#include "AirspaceManager.h"
 #ifndef __mobile__
 #include "GPS/GPSManager.h"
 #endif /* __mobile__ */
@@ -53,6 +54,8 @@ public:
     Q_PROPERTY(QGCCorePlugin*       corePlugin          READ corePlugin             CONSTANT)
     Q_PROPERTY(SettingsManager*     settingsManager     READ settingsManager        CONSTANT)
     Q_PROPERTY(FactGroup*           gpsRtk              READ gpsRtkFactGroup        CONSTANT)
+    Q_PROPERTY(AirspaceManager*     airspaceManager     READ airspaceManager        CONSTANT)
+    Q_PROPERTY(bool                 airmapSupported     READ airmapSupported        CONSTANT)
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
 
@@ -142,6 +145,7 @@ public:
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
     FactGroup*              gpsRtkFactGroup     ()  { return &_gpsRtkFactGroup; }
+    AirspaceManager*        airspaceManager     ()  { return _airspaceManager; }
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
 
@@ -171,6 +175,11 @@ public:
 
     QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
 
+#if defined(QGC_AIRMAP_ENABLED)
+    bool    airmapSupported() { return true; }
+#else
+    bool    airmapSupported() { return false; }
+#endif
 
     // Overrides from QGCTool
     virtual void setToolbox(QGCToolbox* toolbox);
@@ -202,6 +211,7 @@ private:
     FirmwarePluginManager*  _firmwarePluginManager;
     SettingsManager*        _settingsManager;
     GPSRTKFactGroup         _gpsRtkFactGroup;
+    AirspaceManager*        _airspaceManager;
 
     bool                    _skipSetupPage;
 

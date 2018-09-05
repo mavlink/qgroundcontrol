@@ -39,6 +39,9 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#if defined(QGC_AIRMAP_ENABLED)
+#include "AirspaceVehicleManager.h"
+#endif
 
 QGC_LOGGING_CATEGORY(VehicleLog, "VehicleLog")
 
@@ -147,6 +150,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _rallyPointManager(nullptr)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(nullptr)
+#if defined(QGC_AIRMAP_ENABLED)
+    , _airspaceVehicleManager(nullptr)
+#endif
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -273,6 +279,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     // Create camera manager instance
     _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
+
+    connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
+    _adsbTimer.setSingleShot(false);
+    _adsbTimer.start(1000);
 }
 
 // Disconnected Vehicle for offline editing
@@ -334,6 +344,9 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _rallyPointManager(nullptr)
     , _rallyPointManagerInitialRequestSent(false)
     , _parameterManager(nullptr)
+#if defined(QGC_AIRMAP_ENABLED)
+    , _airspaceVehicleManager(nullptr)
+#endif
     , _armed(false)
     , _base_mode(0)
     , _custom_mode(0)
@@ -466,6 +479,17 @@ void Vehicle::_commonInit(void)
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
+
+    //-- Airspace Management
+#if defined(QGC_AIRMAP_ENABLED)
+    AirspaceManager* airspaceManager = _toolbox->airspaceManager();
+    if (airspaceManager) {
+        _airspaceVehicleManager = airspaceManager->instantiateVehicle(*this);
+        if (_airspaceVehicleManager) {
+            connect(_airspaceVehicleManager, &AirspaceVehicleManager::trafficUpdate, this, &Vehicle::_trafficUpdate);
+        }
+    }
+#endif
 }
 
 Vehicle::~Vehicle()
@@ -481,6 +505,11 @@ Vehicle::~Vehicle()
     delete _mav;
     _mav = nullptr;
 
+#if defined(QGC_AIRMAP_ENABLED)
+    if (_airspaceVehicleManager) {
+        delete _airspaceVehicleManager;
+    }
+#endif
 }
 
 void Vehicle::prepareDelete()
@@ -3591,6 +3620,35 @@ void Vehicle::_updateHighLatencyLink(bool sendCommand)
                            MAV_CMD_CONTROL_HIGH_LATENCY,
                            true,
                            _highLatencyLink ? 1.0f : 0.0f); // request start/stop transmitting over high latency telemetry
+        }
+    }
+}
+
+void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading)
+{
+    Q_UNUSED(vehicle_id);
+    // qDebug() << "traffic update:" << traffic_id << vehicle_id << heading << location;
+    // TODO: filter based on minimum altitude?
+    if (_trafficVehicleMap.contains(traffic_id)) {
+        _trafficVehicleMap[traffic_id]->update(alert, location, heading);
+    } else {
+        ADSBVehicle* vehicle = new ADSBVehicle(location, heading, alert, this);
+        _trafficVehicleMap[traffic_id] = vehicle;
+        _adsbVehicles.append(vehicle);
+    }
+
+}
+void Vehicle::_adsbTimerTimeout()
+{
+    // TODO: take into account _adsbICAOMap as well? Needs to be tested, especially the timeout
+
+    for (auto it = _trafficVehicleMap.begin(); it != _trafficVehicleMap.end();) {
+        if (it.value()->expired()) {
+            _adsbVehicles.removeOne(it.value());
+            delete it.value();
+            it = _trafficVehicleMap.erase(it);
+        } else {
+            ++it;
         }
     }
 }

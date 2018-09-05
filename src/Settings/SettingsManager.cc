@@ -14,6 +14,9 @@
 
 SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
+#if defined(QGC_AIRMAP_ENABLED)
+    , _airMapSettings       (NULL)
+#endif
     , _appSettings          (NULL)
     , _unitsSettings        (NULL)
     , _autoConnectSettings  (NULL)
@@ -40,4 +43,7 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _rtkSettings =          new RTKSettings(this);
     _guidedSettings =       new GuidedSettings(this);
     _brandImageSettings =   new BrandImageSettings(this);
+#if defined(QGC_AIRMAP_ENABLED)
+    _airMapSettings =       new AirMapSettings(this);
+#endif
 }

@@ -16,6 +16,9 @@
 #include "JsonHelper.h"
 #include "MissionManager.h"
 #include "KML.h"
+#if defined(QGC_AIRMAP_ENABLED)
+#include "AirspaceFlightPlanProvider.h"
+#endif
 
 #include <QDomDocument>
 #include <QJsonDocument>
@@ -74,6 +77,13 @@ void PlanMasterController::start(bool flyView)
 
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);
     _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
+
+#if defined(QGC_AIRMAP_ENABLED)
+    //-- This assumes there is one single instance of PlanMasterController in edit mode.
+    if(!flyView) {
+        qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
+    }
+#endif
 }
 
 void PlanMasterController::startStaticActiveVehicle(Vehicle* vehicle)
@@ -546,7 +556,7 @@ void PlanMasterController::_showPlanFromManagerVehicle(void)
         _managerVehicle->forceInitialPlanRequestComplete();
     }
 
-    // The crazy if structure is to handle the load propogating by itself through the system
+    // The crazy if structure is to handle the load propagating by itself through the system
     if (!_missionController.showPlanFromManagerVehicle()) {
         if (!_geoFenceController.showPlanFromManagerVehicle()) {
             _rallyPointController.showPlanFromManagerVehicle();

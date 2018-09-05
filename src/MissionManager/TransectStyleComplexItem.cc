@@ -362,13 +362,32 @@ void TransectStyleComplexItem::_rebuildTransects(void)
         }
     }
 
+    // Calc bounding cube
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    double bottom = 100000.;
+    double top = 0.;
     // Generate the visuals transect representation
     _visualTransectPoints.clear();
     foreach (const QList<CoordInfo_t>& transect, _transects) {
         foreach (const CoordInfo_t& coordInfo, transect) {
             _visualTransectPoints.append(QVariant::fromValue(coordInfo.coord));
+            double lat = coordInfo.coord.latitude()  + 90.0;
+            double lon = coordInfo.coord.longitude() + 180.0;
+            north   = fmax(north, lat);
+            south   = fmin(south, lat);
+            east    = fmax(east,  lon);
+            west    = fmin(west,  lon);
+            bottom  = fmin(bottom, coordInfo.coord.altitude());
+            top     = fmax(top, coordInfo.coord.altitude());
         }
     }
+    //-- Update bounding cube for airspace management control
+    _setBoundingCube(QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, bottom),
+        QGeoCoordinate(south - 90.0, east - 180.0, top)));
     emit visualTransectPointsChanged();
 
     _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
@@ -380,6 +399,14 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 
     emit lastSequenceNumberChanged(lastSequenceNumber());
     emit timeBetweenShotsChanged();
+}
+
+void TransectStyleComplexItem::_setBoundingCube(QGCGeoBoundingCube bc)
+{
+    if (bc != _boundingCube) {
+        _boundingCube = bc;
+        emit boundingCubeChanged();
+    }
 }
 
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)

@@ -19,14 +19,15 @@ import QtQuick.Window           2.2
 import QtQml.Models             2.1
 
 import QGroundControl               1.0
+import QGroundControl.Airspace      1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.FactSystem    1.0
 
 /// Flight Display View
 QGCView {
@@ -665,12 +666,57 @@ QGCView {
         }
     }
 
+    //-- Airspace Indicator
+    Rectangle {
+        id:             airspaceIndicator
+        width:          airspaceRow.width + (ScreenTools.defaultFontPixelWidth * 3)
+        height:         airspaceRow.height * 1.25
+        color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitNone && !messageArea.visible && !criticalMmessageArea.visible
+        radius:         3
+        border.width:   1
+        border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
+        anchors.top:    parent.top
+        anchors.topMargin: ScreenTools.toolbarHeight + (ScreenTools.defaultFontPixelHeight * 0.25)
+        anchors.horizontalCenter: parent.horizontalCenter
+        Row {
+            id: airspaceRow
+            spacing: ScreenTools.defaultFontPixelWidth
+            anchors.centerIn: parent
+            QGCLabel { text: airspaceIndicator.providerName+":"; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel {
+                text: {
+                    if(airspaceIndicator.flightPermit) {
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitPending)
+                            return qsTr("Approval Pending")
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted || airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
+                            return qsTr("Flight Approved")
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitRejected)
+                            return qsTr("Flight Rejected")
+                    }
+                    return ""
+                }
+                color: {
+                    if(airspaceIndicator.flightPermit) {
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitPending)
+                            return qgcPal.colorOrange
+                        if(airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitAccepted || airspaceIndicator.flightPermit === AirspaceFlightPlanProvider.PermitNotRequired)
+                            return qgcPal.colorGreen
+                    }
+                    return qgcPal.colorRed
+                }
+                anchors.verticalCenter: parent.verticalCenter;
+            }
+        }
+        property var  flightPermit: QGroundControl.airmapSupported ? QGroundControl.airspaceManager.flightPlan.flightPermitStatus : null
+        property string  providerName: QGroundControl.airspaceManager.providerName
+    }
+
     //-- Checklist GUI
     Component {
         id: checklistDropPanel
-
         PreFlightCheckList {
             model: preFlightCheckModel
         }
-    } //Component
-} //QGC View
+    }
+}

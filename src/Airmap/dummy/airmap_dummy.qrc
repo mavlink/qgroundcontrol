@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/qml">
+        <file alias="QGroundControl/Airmap/qmldir">QGroundControl.Airmap.qmldir</file>
+        <file alias="QGroundControl/Airmap/AirspaceControl.qml">AirspaceControl.qml</file>
+        <file alias="QGroundControl/Airmap/AirspaceRegulation.qml">AirspaceRegulation.qml</file>
+        <file alias="QGroundControl/Airmap/AirspaceWeather.qml">AirspaceWeather.qml</file>
+        <file alias="QGroundControl/Airmap/ComplianceRules.qml">ComplianceRules.qml</file>
+        <file alias="QGroundControl/Airmap/FlightBrief.qml">FlightBrief.qml</file>
+        <file alias="QGroundControl/Airmap/FlightDetails.qml">FlightDetails.qml</file>
+        <file alias="QGroundControl/Airmap/FlightFeature.qml">FlightFeature.qml</file>
+        <file alias="QGroundControl/Airmap/RuleSelector.qml">RuleSelector.qml</file>
+    </qresource>
+</RCC>

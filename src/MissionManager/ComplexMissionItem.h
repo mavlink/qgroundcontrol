@@ -11,6 +11,7 @@
 #define ComplexMissionItem_H
 
 #include "VisualMissionItem.h"
+#include "QGCGeo.h"
 
 class ComplexMissionItem : public VisualMissionItem
 {
@@ -26,6 +27,10 @@ public:
     /// @return The distance covered the complex mission item in meters.
     /// Signals complexDistanceChanged
     virtual double complexDistance(void) const = 0;
+
+    /// @return The item bounding cube
+    /// Signals boundingCubeChanged
+    virtual QGCGeoBoundingCube boundingCube(void) const { return QGCGeoBoundingCube(); }
 
     /// Load the complex mission item from Json
     ///     @param complexObject Complex mission item json object
@@ -49,6 +54,7 @@ public:
 
 signals:
     void complexDistanceChanged     (void);
+    void boundingCubeChanged        (void);
     void greatestDistanceToChanged  (void);
 };
 
