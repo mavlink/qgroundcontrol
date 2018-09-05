@@ -35,6 +35,9 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
+#if defined(QGC_AIRMAP_ENABLED)
+class AirspaceVehicleManager;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(VehicleLog)
 
@@ -1191,6 +1194,9 @@ private slots:
     void _sendQGCTimeToVehicle(void);
     void _mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
 
+    void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
+    void _adsbTimerTimeout      ();
+
 private:
     bool _containsLink(LinkInterface* link);
     void _addLink(LinkInterface* link);
@@ -1353,7 +1359,11 @@ private:
     RallyPointManager*  _rallyPointManager;
     bool                _rallyPointManagerInitialRequestSent;
 
-    ParameterManager*    _parameterManager;
+    ParameterManager*   _parameterManager;
+
+#if defined(QGC_AIRMAP_ENABLED)
+    AirspaceVehicleManager* _airspaceVehicleManager;
+#endif
 
     bool    _armed;         ///< true: vehicle is armed
     uint8_t _base_mode;     ///< base_mode from HEARTBEAT
@@ -1384,6 +1394,8 @@ private:
 
     QmlObjectListModel              _adsbVehicles;
     QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
+    QMap<QString, ADSBVehicle*>     _trafficVehicleMap;
+    QTimer                          _adsbTimer;
 
     // Toolbox references
     FirmwarePluginManager*      _firmwarePluginManager;

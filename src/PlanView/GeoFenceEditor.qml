@@ -42,7 +42,7 @@ QGCFlickable {
                 anchors.left:       parent.left
                 anchors.top:        parent.top
                 text:               qsTr("GeoFence")
-                color:              "black"
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
             }
 
             Rectangle {

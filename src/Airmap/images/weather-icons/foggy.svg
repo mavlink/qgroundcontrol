@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 3.8.3 (29802) - http://www.bohemiancoding.com/sketch -->
+    <title>foggy</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="foggy" stroke="#000000" stroke-width="6">
+            <g id="Group" transform="translate(36.000000, 77.000000)">
+                <path d="M0,3 C21.8430494,3 48.0417799,-2.51367207 65.5291483,3 C83.0165166,8.51367207 126,3 126,3" id="Path-136"></path>
+            </g>
+            <path d="M33,90 C56.2299097,90 84.0920516,84.4863279 102.689729,90 C121.287407,95.5136721 167,90 167,90" id="Path-136"></path>
+            <path d="M33,100 C56.2299097,100 84.0920516,94.4863279 102.689729,100 C121.287407,105.513672 167,100 167,100" id="Path-136"></path>
+            <path d="M33,110 C56.2299097,110 84.0920516,104.486328 102.689729,110 C121.287407,115.513672 167,110 167,110" id="Path-136"></path>
+            <path d="M36,120 C57.8430494,120 84.0417799,114.486328 101.529148,120 C119.016517,125.513672 162,120 162,120" id="Path-136"></path>
+        </g>
+    </g>
+</svg>

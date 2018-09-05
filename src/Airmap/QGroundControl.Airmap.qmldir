@@ -1,0 +1,10 @@
+Module QGroundControl.Airmap
+
+AirspaceControl         1.0 AirspaceControl.qml
+AirspaceRegulation      1.0 AirspaceRegulation.qml
+AirspaceWeather         1.0 AirspaceWeather.qml
+ComplianceRules         1.0 ComplianceRules.qml
+FlightFeature           1.0 FlightFeature.qml
+RuleSelector            1.0 RuleSelector.qml
+FlightBrief             1.0 FlightBrief.qml
+FlightDetails           1.0 FlightDetails.qml

@@ -22,7 +22,9 @@
 #include "RTKSettings.h"
 #include "GuidedSettings.h"
 #include "BrandImageSettings.h"
-
+#if defined(QGC_AIRMAP_ENABLED)
+#include "AirMapSettings.h"
+#endif
 #include <QVariantList>
 
 /// Provides access to all app settings
@@ -33,6 +35,9 @@ class SettingsManager : public QGCTool
 public:
     SettingsManager(QGCApplication* app, QGCToolbox* toolbox);
 
+#if defined(QGC_AIRMAP_ENABLED)
+    Q_PROPERTY(QObject* airMapSettings      READ airMapSettings         CONSTANT)
+#endif
     Q_PROPERTY(QObject* appSettings         READ appSettings            CONSTANT)
     Q_PROPERTY(QObject* unitsSettings       READ unitsSettings          CONSTANT)
     Q_PROPERTY(QObject* autoConnectSettings READ autoConnectSettings    CONSTANT)
@@ -45,6 +50,9 @@ public:
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
+#if defined(QGC_AIRMAP_ENABLED)
+    AirMapSettings*         airMapSettings      (void) { return _airMapSettings; }
+#endif
     AppSettings*            appSettings         (void) { return _appSettings; }
     UnitsSettings*          unitsSettings       (void) { return _unitsSettings; }
     AutoConnectSettings*    autoConnectSettings (void) { return _autoConnectSettings; }
@@ -55,6 +63,9 @@ public:
     BrandImageSettings*     brandImageSettings  (void) { return _brandImageSettings; }
 
 private:
+#if defined(QGC_AIRMAP_ENABLED)
+    AirMapSettings*         _airMapSettings;
+#endif
     AppSettings*            _appSettings;
     UnitsSettings*          _unitsSettings;
     AutoConnectSettings*    _autoConnectSettings;

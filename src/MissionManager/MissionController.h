@@ -16,6 +16,8 @@
 #include "Vehicle.h"
 #include "QGCLoggingCategory.h"
 
+#include "QGCGeoBoundingCube.h"
+
 #include <QHash>
 
 class CoordinateVector;
@@ -89,6 +91,7 @@ public:
 
     Q_PROPERTY(int                  batteryChangePoint      READ batteryChangePoint         NOTIFY batteryChangePointChanged)
     Q_PROPERTY(int                  batteriesRequired       READ batteriesRequired          NOTIFY batteriesRequiredChanged)
+    Q_PROPERTY(QGCGeoBoundingCube*  travelBoundingCube      READ travelBoundingCube         NOTIFY missionBoundingCubeChanged)
 
     Q_PROPERTY(QString              surveyComplexItemName           READ surveyComplexItemName          CONSTANT)
     Q_PROPERTY(QString              corridorScanComplexItemName     READ corridorScanComplexItemName    CONSTANT)
@@ -137,6 +140,9 @@ public:
 
     bool loadJsonFile(QFile& file, QString& errorString);
     bool loadTextFile(QFile& file, QString& errorString);
+
+    QGCGeoBoundingCube* travelBoundingCube  () { return &_travelBoundingCube; }
+    QGeoCoordinate      takeoffCoordinate   () { return _takeoffCoordinate; }
 
     // Overrides from PlanElementController
     bool supported                  (void) const final { return true; }
@@ -208,6 +214,7 @@ signals:
     void currentMissionIndexChanged     (int currentMissionIndex);
     void currentPlanViewIndexChanged    (void);
     void currentPlanViewItemChanged     (void);
+    void missionBoundingCubeChanged     (void);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -222,6 +229,8 @@ private slots:
     void _visualItemsDirtyChanged(bool dirty);
     void _managerSendComplete(bool error);
     void _managerRemoveAllComplete(bool error);
+    void _updateTimeout();
+    void _complexBoundingBoxChanged();
 
 private:
     void _init(void);
@@ -277,6 +286,9 @@ private:
     double                  _progressPct;
     int                     _currentPlanViewIndex;
     VisualMissionItem*      _currentPlanViewItem;
+    QTimer                  _updateTimer;
+    QGCGeoBoundingCube      _travelBoundingCube;
+    QGeoCoordinate          _takeoffCoordinate;
 
     static const char*  _settingsGroup;
 

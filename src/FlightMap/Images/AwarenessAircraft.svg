@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="72px" height="72px" viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#404040;}
+	.st1{fill:#808080;}
+</style>
+<circle class="st0" cx="36" cy="36" r="36"/>
+<circle class="st1" cx="36" cy="36" r="30.6"/>
+<g>
+	<g id="flights">
+		<path d="M34.066,9.531c-1.349,0.775-2.116,2.277-2.116,3.833l0,11.91c0,1.634-0.842,3.152-2.227,4.018L12.838,39.845
+			c-1.548,0.967-2.488,2.664-2.488,4.489V46.8l18.25-5.703c1.661-0.519,3.35,0.722,3.35,2.463V54.9l-4.364,3.273
+			c-0.652,0.489-1.036,1.257-1.036,2.073V63L36,60.3l9.45,2.7v-2.754c0-0.816-0.384-1.584-1.036-2.073L40.05,54.9V43.56
+			c0-1.741,1.688-2.982,3.35-2.463L61.65,46.8v-2.466c0-1.825-0.94-3.522-2.488-4.489L42.277,29.292
+			c-1.385-0.866-2.227-2.384-2.227-4.018V13.05C40.05,10.255,36.886,7.912,34.066,9.531z"/>
+	</g>
+</g>
+</svg>

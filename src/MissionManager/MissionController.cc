@@ -35,6 +35,8 @@
 #include "QGCQFileDialog.h"
 #endif
 
+#define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
+
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
 
 const char* MissionController::_settingsGroup =                 "MissionController";
@@ -72,6 +74,8 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
+    _updateTimer.setSingleShot(true);
+    connect(&_updateTimer, &QTimer::timeout, this, &MissionController::_updateTimeout);
 }
 
 MissionController::~MissionController()
@@ -175,7 +179,7 @@ void MissionController::_newMissionItemsAvailableFromVehicle(bool removeAllReque
             i = 1;
         }
 
-        for (; i<newMissionItems.count(); i++) {
+        for (; i < newMissionItems.count(); i++) {
             const MissionItem* missionItem = newMissionItems[i];
             newControllerMissionItems->append(new SimpleMissionItem(_controllerVehicle, _flyView, *missionItem, this));
         }
@@ -368,7 +372,6 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     _visualItems->insert(i, newItem);
 
     _recalcAll();
-
     return newItem->sequenceNumber();
 }
 
@@ -443,9 +446,9 @@ int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* compl
     bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) || qobject_cast<CorridorScanComplexItem*>(complexItem);
 
     if (surveyStyleItem) {
-        bool rollSupported = false;
+        bool rollSupported  = false;
         bool pitchSupported = false;
-        bool yawSupported = false;
+        bool yawSupported   = false;
 
         // If the vehicle is known to have a gimbal then we automatically point the gimbal straight down if not already set
 
@@ -477,6 +480,10 @@ int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* compl
         _visualItems->insert(i, complexItem);
     }
 
+    //-- Keep track of bounding box changes in complex items
+    if(!complexItem->isSimpleItem()) {
+        connect(complexItem, &ComplexMissionItem::boundingCubeChanged, this, &MissionController::_complexBoundingBoxChanged);
+    }
     _recalcAll();
 
     return complexItem->sequenceNumber();
@@ -1471,6 +1478,8 @@ void MissionController::_recalcMissionFlightStatus()
             }
         }
     }
+
+    _updateTimer.start(UPDATE_TIMEOUT);
 }
 
 // This will update the sequence numbers to be sequential starting from 0
@@ -1538,6 +1547,7 @@ void MissionController::_recalcAll(void)
     _recalcSequence();
     _recalcChildItems();
     _recalcWaypointLines();
+    _updateTimer.start(UPDATE_TIMEOUT);
 }
 
 /// Initializes a new set of mission items
@@ -2031,4 +2041,88 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
         emit currentPlanViewIndexChanged();
         emit currentPlanViewItemChanged();
     }
+}
+
+void MissionController::_updateTimeout()
+{
+    QGeoCoordinate firstCoordinate;
+    QGeoCoordinate takeoffCoordinate;
+    QGCGeoBoundingCube boundingCube;
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    double minAlt = QGCGeoBoundingCube::MaxAlt;
+    double maxAlt = QGCGeoBoundingCube::MinAlt;
+    for (int i = 1; i < _visualItems->count(); i++) {
+        VisualMissionItem* item = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
+        if(item->isSimpleItem()) {
+            SimpleMissionItem* pSimpleItem = qobject_cast<SimpleMissionItem*>(item);
+            if(pSimpleItem) {
+                switch(pSimpleItem->command()) {
+                case MAV_CMD_NAV_TAKEOFF:
+                case MAV_CMD_NAV_WAYPOINT:
+                case MAV_CMD_NAV_LAND:
+                if(pSimpleItem->coordinate().isValid()) {
+                    if((MAV_CMD)pSimpleItem->command() == MAV_CMD_NAV_TAKEOFF) {
+                        takeoffCoordinate = pSimpleItem->coordinate();
+                    } else if(!firstCoordinate.isValid()) {
+                        firstCoordinate = pSimpleItem->coordinate();
+                    }
+                    double lat = pSimpleItem->coordinate().latitude()  + 90.0;
+                    double lon = pSimpleItem->coordinate().longitude() + 180.0;
+                    double alt = pSimpleItem->coordinate().altitude();
+                    north  = fmax(north, lat);
+                    south  = fmin(south, lat);
+                    east   = fmax(east,  lon);
+                    west   = fmin(west,  lon);
+                    minAlt = fmin(minAlt, alt);
+                    maxAlt = fmax(maxAlt, alt);
+                }
+                break;
+                default:
+                    break;
+                }
+            }
+        } else {
+            ComplexMissionItem* pComplexItem = qobject_cast<ComplexMissionItem*>(item);
+            if(pComplexItem) {
+                QGCGeoBoundingCube bc = pComplexItem->boundingCube();
+                if(bc.isValid()) {
+                    if(!firstCoordinate.isValid() && pComplexItem->coordinate().isValid()) {
+                        firstCoordinate = pComplexItem->coordinate();
+                    }
+                    north  = fmax(north, bc.pointNW.latitude()  + 90.0);
+                    south  = fmin(south, bc.pointSE.latitude()  + 90.0);
+                    east   = fmax(east,  bc.pointNW.longitude() + 180.0);
+                    west   = fmin(west,  bc.pointSE.longitude() + 180.0);
+                    minAlt = fmin(minAlt, bc.pointNW.altitude());
+                    maxAlt = fmax(maxAlt, bc.pointSE.altitude());
+                }
+            }
+        }
+    }
+    //-- Figure out where this thing is taking off from
+    if(!takeoffCoordinate.isValid()) {
+        if(firstCoordinate.isValid()) {
+            takeoffCoordinate = firstCoordinate;
+        } else {
+            takeoffCoordinate = plannedHomePosition();
+        }
+    }
+    //-- Build bounding "cube"
+    boundingCube = QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, minAlt),
+        QGeoCoordinate(south - 90.0, east - 180.0, maxAlt));
+    if(_travelBoundingCube != boundingCube || _takeoffCoordinate != takeoffCoordinate) {
+        _takeoffCoordinate  = takeoffCoordinate;
+        _travelBoundingCube = boundingCube;
+        emit missionBoundingCubeChanged();
+        qCDebug(MissionControllerLog) << "Bounding cube:" << _travelBoundingCube.pointNW << _travelBoundingCube.pointSE;
+    }
+}
+
+void MissionController::_complexBoundingBoxChanged()
+{
+    _updateTimer.start(UPDATE_TIMEOUT);
 }
