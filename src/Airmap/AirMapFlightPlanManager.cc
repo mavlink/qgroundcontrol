@@ -138,7 +138,7 @@ void
 AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
 {
     if(start < QDateTime::currentDateTime()) {
-        start = QDateTime::currentDateTime().addSecs(60);
+        start = QDateTime::currentDateTime().addSecs(1);
     }
     if(_flightStartTime != start) {
         _flightStartTime = start;
@@ -478,14 +478,8 @@ AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rules
 void
 AirMapFlightPlanManager::_updateFlightStartEndTime(DateTime& start_time, DateTime& end_time)
 {
-    if(_flightStartsNow) {
-        setFlightStartTime(QDateTime::currentDateTime().addSecs(60));
-    } else {
-        if(_flightStartTime < QDateTime::currentDateTime()) {
-            //-- Can't start in the past
-            _flightStartTime = QDateTime::currentDateTime();
-            emit flightStartTimeChanged();
-        }
+    if(_flightStartsNow || _flightStartTime < QDateTime::currentDateTime()) {
+        setFlightStartTime(QDateTime::currentDateTime().addSecs(1));
     }
     quint64 startt = static_cast<quint64>(_flightStartTime.toUTC().toMSecsSinceEpoch());
     start_time = airmap::from_milliseconds_since_epoch(airmap::milliseconds(static_cast<qint64>(startt)));

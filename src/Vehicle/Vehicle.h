@@ -625,6 +625,10 @@ public:
     Q_PROPERTY(QString              priorityLinkName        READ priorityLinkName       WRITE setPriorityLinkByName     NOTIFY priorityLinkNameChanged)
     Q_PROPERTY(QVariantList         links                   READ links                                                  NOTIFY linksChanged)
     Q_PROPERTY(LinkInterface*       priorityLink            READ priorityLink                                           NOTIFY priorityLinkNameChanged)
+    Q_PROPERTY(quint64              mavlinkSentCount        READ mavlinkSentCount                                       NOTIFY mavlinkStatusChanged)
+    Q_PROPERTY(quint64              mavlinkReceivedCount    READ mavlinkReceivedCount                                   NOTIFY mavlinkStatusChanged)
+    Q_PROPERTY(quint64              mavlinkLossCount        READ mavlinkLossCount                                       NOTIFY mavlinkStatusChanged)
+    Q_PROPERTY(float                mavlinkLossPercent      READ mavlinkLossPercent                                     NOTIFY mavlinkStatusChanged)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -1047,6 +1051,11 @@ public:
     /// Vehicle is about to be deleted
     void prepareDelete();
 
+    quint64     mavlinkSentCount        () { return _mavlinkSentCount; }        /// Calculated total number of messages sent to us
+    quint64     mavlinkReceivedCount    () { return _mavlinkReceivedCount; }    /// Total number of sucessful messages received
+    quint64     mavlinkLossCount        () { return _mavlinkLossCount; }        /// Total number of lost messages
+    float       mavlinkLossPercent      () { return _mavlinkLossPercent; }      /// Running loss rate
+
 signals:
     void allLinksInactive(Vehicle* vehicle);
     void coordinateChanged(QGeoCoordinate coordinate);
@@ -1150,6 +1159,7 @@ signals:
 
     // MAVLink protocol version
     void requestProtocolVersion(unsigned version);
+    void mavlinkStatusChanged();
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -1182,6 +1192,7 @@ private slots:
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
     void _sendQGCTimeToVehicle(void);
+    void _mavlinkMessageStatus(int uasId, uint64_t totalSent, uint64_t totalReceived, uint64_t totalLoss, float lossPercent);
 
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _adsbTimerTimeout      ();
@@ -1416,6 +1427,11 @@ private:
 
     SharedLinkInterfacePointer _priorityLink;  // We always keep a reference to the priority link to manage shutdown ordering
     bool _priorityLinkCommanded;
+
+    uint64_t    _mavlinkSentCount       = 0;
+    uint64_t    _mavlinkReceivedCount   = 0;
+    uint64_t    _mavlinkLossCount       = 0;
+    float       _mavlinkLossPercent     = 0.0f;
 
     // FactGroup facts
 
