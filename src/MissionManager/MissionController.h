@@ -73,6 +73,7 @@ public:
 
     Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
 
+    Q_PROPERTY(int                  missionItemCount        READ missionItemCount           NOTIFY missionItemCountChanged)     ///< True mission item command count (only valid in Fly View)
     Q_PROPERTY(int                  currentMissionIndex     READ currentMissionIndex        NOTIFY currentMissionIndexChanged)
     Q_PROPERTY(int                  resumeMissionIndex      READ resumeMissionIndex         NOTIFY resumeMissionIndexChanged)   ///< Returns the item index two which a mission should be resumed. -1 indicates resume mission not available.
 
@@ -170,6 +171,7 @@ public:
     QString             corridorScanComplexItemName (void) const { return _corridorScanMissionItemName; }
     QString             structureScanComplexItemName(void) const { return _structureScanMissionItemName; }
 
+    int missionItemCount            (void) const { return _missionItemCount; }
     int currentMissionIndex         (void) const;
     int resumeMissionIndex          (void) const;
     int currentPlanViewIndex        (void) const;
@@ -208,6 +210,7 @@ signals:
     void currentMissionIndexChanged     (int currentMissionIndex);
     void currentPlanViewIndexChanged    (void);
     void currentPlanViewItemChanged     (void);
+    void missionItemCountChanged        (int missionItemCount);
 
 private slots:
     void _newMissionItemsAvailableFromVehicle(bool removeAllRequested);
@@ -260,6 +263,7 @@ private:
 
 private:
     MissionManager*         _missionManager;
+    int                     _missionItemCount;
     QmlObjectListModel*     _visualItems;
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;

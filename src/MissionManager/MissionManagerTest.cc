@@ -37,7 +37,9 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     // Editor has a home position item on the front, so we do the same
     MissionItem* homeItem = new MissionItem(NULL /* Vehicle */, this);
     homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
-    homeItem->setCoordinate(QGeoCoordinate(47.3769, 8.549444, 0));
+    homeItem->setParam5(47.3769);
+    homeItem->setParam6(8.549444);
+    homeItem->setParam7(0);
     homeItem->setSequenceNumber(0);
     missionItems.append(homeItem);
 
