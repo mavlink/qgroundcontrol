@@ -154,8 +154,6 @@ pipeline {
               when {
                 anyOf {
                   branch 'master';
-                  branch 'Airmap';
-                  branch 'pr-airmap_api_key';
                   branch 'Stable_*'
                 }
               }
