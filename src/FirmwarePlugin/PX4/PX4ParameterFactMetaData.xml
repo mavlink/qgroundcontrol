@@ -648,14 +648,13 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <boolean />
       <scope>modules/commander</scope>
     </parameter>
-    <parameter default="0" name="COM_DISARM_LAND" type="INT32">
+    <parameter default="-1.0" name="COM_DISARM_LAND" type="FLOAT">
       <short_desc>Time-out for auto disarm after landing</short_desc>
-      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. The vehicle will also auto-disarm right after arming if it has not even flown, however the time will be longer by a factor of 5. A value of zero means that automatic disarming is disabled.</long_desc>
-      <min>0</min>
+      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. The vehicle will also auto-disarm right after arming if it has not even flown, however the time will always be 10 seconds such that the pilot has enough time to take off. A negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
+      <min>-1</min>
       <max>20</max>
       <unit>s</unit>
-      <decimal>0</decimal>
-      <increment>1</increment>
+      <decimal>2</decimal>
       <scope>modules/commander</scope>
     </parameter>
     <parameter default="10" name="COM_DL_LOSS_T" type="INT32">
@@ -1350,9 +1349,9 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="21" name="EKF2_GPS_CHECK" type="INT32">
+    <parameter default="245" name="EKF2_GPS_CHECK" type="INT32">
       <short_desc>Integer bitmask controlling GPS checks</short_desc>
-      <long_desc>Set bits to 1 to enable checks. Checks enabled by the following bit positions 0 : Minimum required sat count set by EKF2_REQ_NSATS 1 : Minimum required GDoP set by EKF2_REQ_GDOP 2 : Maximum allowed horizontal position error set by EKF2_REQ_EPH 3 : Maximum allowed vertical position error set by EKF2_REQ_EPV 4 : Maximum allowed speed error set by EKF2_REQ_SACC 5 : Maximum allowed horizontal position rate set by EKF2_REQ_HDRIFT. This check can only be used if the vehicle is stationary during alignment. 6 : Maximum allowed vertical position rate set by EKF2_REQ_VDRIFT. This check can only be used if the vehicle is stationary during alignment. 7 : Maximum allowed horizontal speed set by EKF2_REQ_HDRIFT. This check can only be used if the vehicle is stationary during alignment. 8 : Maximum allowed vertical velocity discrepancy set by EKF2_REQ_VDRIFT</long_desc>
+      <long_desc>Set bits to 1 to enable checks. Checks enabled by the following bit positions 0 : Minimum required sat count set by EKF2_REQ_NSATS 1 : Minimum required GDoP set by EKF2_REQ_GDOP 2 : Maximum allowed horizontal position error set by EKF2_REQ_EPH 3 : Maximum allowed vertical position error set by EKF2_REQ_EPV 4 : Maximum allowed speed error set by EKF2_REQ_SACC 5 : Maximum allowed horizontal position rate set by EKF2_REQ_HDRIFT. This check will only run when the vehicle is on ground and stationary. Detecton of the stationary condition is controlled by the EKF2_MOVE_TEST parameter. 6 : Maximum allowed vertical position rate set by EKF2_REQ_VDRIFT. This check will only run when the vehicle is on ground and stationary. Detecton of the stationary condition is controlled by the EKF2_MOVE_TEST parameter. 7 : Maximum allowed horizontal speed set by EKF2_REQ_HDRIFT. This check will only run when the vehicle is on ground and stationary. Detecton of the stationary condition is controlled by the EKF2_MOVE_TEST parameter. 8 : Maximum allowed vertical velocity discrepancy set by EKF2_REQ_VDRIFT</long_desc>
       <min>0</min>
       <max>511</max>
       <scope>modules/ekf2</scope>
@@ -1619,7 +1618,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
     </parameter>
     <parameter default="0" name="EKF2_MAG_TYPE" type="INT32">
       <short_desc>Type of magnetometer fusion</short_desc>
-      <long_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-component vector. The fuson of magnetomer data as a three component vector enables vehicle body fixed hard iron errors to be learned, but requires a stable earth field. If set to 'Automatic' magnetic heading fusion is used when on-ground and 3-axis magnetic field fusion in-flight with fallback to magnetic heading fusion if there is insufficient motion to make yaw or magnetic field states observable. If set to 'Magnetic heading' magnetic heading fusion is used at all times If set to '3-axis' 3-axis field fusion is used at all times. If set to 'VTOL custom' the behaviour is the same as 'Automatic', but if fusing airspeed, magnetometer fusion is only allowed to modify the magnetic field states. This can be used by VTOL platforms with large magnetic field disturbances to prevent incorrect bias states being learned during forward flight operation which can adversely affect estimation accuracy after transition to hovering flight. If set to 'MC custom' the behaviour is the same as 'Automatic, but if there are no earth frame position or velocity observations being used, the magnetometer will not be used. This enables vehicles to operate with no GPS in environments where the magnetic field cannot be used to provide a heading reference.</long_desc>
+      <long_desc>Integer controlling the type of magnetometer fusion used - magnetic heading or 3-component vector. The fuson of magnetomer data as a three component vector enables vehicle body fixed hard iron errors to be learned, but requires a stable earth field. If set to 'Automatic' magnetic heading fusion is used when on-ground and 3-axis magnetic field fusion in-flight with fallback to magnetic heading fusion if there is insufficient motion to make yaw or magnetic field states observable. If set to 'Magnetic heading' magnetic heading fusion is used at all times If set to '3-axis' 3-axis field fusion is used at all times. If set to 'VTOL custom' the behaviour is the same as 'Automatic', but if fusing airspeed, magnetometer fusion is only allowed to modify the magnetic field states. This can be used by VTOL platforms with large magnetic field disturbances to prevent incorrect bias states being learned during forward flight operation which can adversely affect estimation accuracy after transition to hovering flight. If set to 'MC custom' the behaviour is the same as 'Automatic, but if there are no earth frame position or velocity observations being used, the magnetometer will not be used. This enables vehicles to operate with no GPS in environments where the magnetic field cannot be used to provide a heading reference. Prior to flight, the yaw angle is assumed to be constant if movement tests controlled by the EKF2_MOVE_TEST parameter indicate that the vehicle is static. This allows the vehicle to be placed on the ground to learn the yaw gyro bias prior to flight.</long_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/ekf2</scope>
       <values>
@@ -1653,6 +1652,14 @@ Baro and Magnetometer data will be averaged before downsampling, other data will
       <min>0.01</min>
       <unit>m</unit>
       <decimal>2</decimal>
+      <scope>modules/ekf2</scope>
+    </parameter>
+    <parameter default="1.0" name="EKF2_MOVE_TEST" type="FLOAT">
+      <short_desc>Vehicle movement test threshold</short_desc>
+      <long_desc>Scales the threshold tests applied to IMU data used to determine if the vehicle is static or moving. See parameter descriptions for EKF2_GPS_CHECK and EKF2_MAG_TYPE for further information on the functionality affected by this parameter.</long_desc>
+      <min>0.1</min>
+      <max>10.0</max>
+      <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
     <parameter default="10.0" name="EKF2_NOAID_NOISE" type="FLOAT">
@@ -1762,7 +1769,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>2</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="5.0" name="EKF2_REQ_EPH" type="FLOAT">
+    <parameter default="3.0" name="EKF2_REQ_EPH" type="FLOAT">
       <short_desc>Required EPH to use GPS</short_desc>
       <min>2</min>
       <max>100</max>
@@ -1770,7 +1777,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="8.0" name="EKF2_REQ_EPV" type="FLOAT">
+    <parameter default="5.0" name="EKF2_REQ_EPV" type="FLOAT">
       <short_desc>Required EPV to use GPS</short_desc>
       <min>2</min>
       <max>100</max>
@@ -1785,7 +1792,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>1</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.3" name="EKF2_REQ_HDRIFT" type="FLOAT">
+    <parameter default="0.1" name="EKF2_REQ_HDRIFT" type="FLOAT">
       <short_desc>Maximum horizontal drift speed to use GPS</short_desc>
       <min>0.1</min>
       <max>1.0</max>
@@ -1799,7 +1806,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <max>12</max>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="1.0" name="EKF2_REQ_SACC" type="FLOAT">
+    <parameter default="0.5" name="EKF2_REQ_SACC" type="FLOAT">
       <short_desc>Required speed accuracy to use GPS</short_desc>
       <min>0.5</min>
       <max>5.0</max>
@@ -1807,7 +1814,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <decimal>2</decimal>
       <scope>modules/ekf2</scope>
     </parameter>
-    <parameter default="0.5" name="EKF2_REQ_VDRIFT" type="FLOAT">
+    <parameter default="0.2" name="EKF2_REQ_VDRIFT" type="FLOAT">
       <short_desc>Maximum vertical drift speed to use GPS</short_desc>
       <min>0.1</min>
       <max>1.5</max>
@@ -2480,6 +2487,15 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
       <increment>0.5</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
+    <parameter default="1" name="FW_LND_EARLYCFG" type="INT32">
+      <short_desc>Early landing configuration deployment</short_desc>
+      <long_desc>When set to 0/disabled, the landing configuration (flaps, landing airspeed, etc.) is only activated on the final approach to landing. When set to 1/enabled, it is already activated when entering the final loiter-down (loiter-to-alt) WP before the landing approach. This shifts the (often large) altitude and airspeed errors caused by the configuration change away from the ground such that these are not so critical. It also gives the controller enough time to adapt to the new configuration such that the landing approach starts with a cleaner initial state.</long_desc>
+      <scope>modules/fw_pos_control_l1</scope>
+      <values>
+        <value code="0">Disable early land configuration deployment</value>
+        <value code="1">Enable early land configuration deployment</value>
+      </values>
+    </parameter>
     <parameter default="3.0" name="FW_LND_FLALT" type="FLOAT">
       <short_desc>Landing flare altitude (relative to landing altitude)</short_desc>
       <min>0.0</min>
@@ -2491,7 +2507,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
     </parameter>
     <parameter default="15.0" name="FW_LND_FL_PMAX" type="FLOAT">
       <short_desc>Flare, maximum pitch</short_desc>
-      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
+      <long_desc>Maximum pitch during flare, a positive sign means nose up Applied once FW_LND_FLALT is reached</long_desc>
       <min>0</min>
       <max>45.0</max>
       <unit>deg</unit>
@@ -2501,7 +2517,7 @@ This is the ratio of static pressure error to dynamic pressure generated by a wi
     </parameter>
     <parameter default="2.5" name="FW_LND_FL_PMIN" type="FLOAT">
       <short_desc>Flare, minimum pitch</short_desc>
-      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_TLALT is reached</long_desc>
+      <long_desc>Minimum pitch during flare, a positive sign means nose up Applied once FW_LND_FLALT is reached</long_desc>
       <min>0</min>
       <max>15.0</max>
       <unit>deg</unit>
@@ -2526,6 +2542,15 @@ Set to 0 to disable heading hold</short_desc>
       <unit>m</unit>
       <decimal>1</decimal>
       <increment>0.5</increment>
+      <scope>modules/fw_pos_control_l1</scope>
+    </parameter>
+    <parameter default="1.0" name="FW_LND_THRTC_SC" type="FLOAT">
+      <short_desc>Throttle time constant factor for landing</short_desc>
+      <long_desc>Set this parameter to &lt;1.0 to make the TECS throttle loop react faster during landing than during normal flight (i.e. giving efficiency and low motor wear at high altitudes but control accuracy during landing). During landing, the TECS throttle time constant (FW_T_THRO_CONST) is multiplied by this value.</long_desc>
+      <min>0.2</min>
+      <max>1.0</max>
+      <unit />
+      <increment>0.1</increment>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="-1.0" name="FW_LND_TLALT" type="FLOAT">
@@ -2603,8 +2628,8 @@ Set to 0 to disable heading hold</short_desc>
       <scope>modules/fw_pos_control_l1</scope>
     </parameter>
     <parameter default="1.0" name="FW_THR_LND_MAX" type="FLOAT">
-      <short_desc>Throttle limit value before flare</short_desc>
-      <long_desc>This throttle value will be set as throttle limit at FW_LND_TLALT, before aircraft will flare.</long_desc>
+      <short_desc>Throttle limit during landing below throttle limit altitude</short_desc>
+      <long_desc>During the flare of the autonomous landing process, this value will be set as throttle limit when the aircraft altitude is below FW_LND_TLALT.</long_desc>
       <min>0.0</min>
       <max>1.0</max>
       <unit>norm</unit>
@@ -2883,6 +2908,24 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
       <scope>modules/gnd_pos_control</scope>
+    </parameter>
+  </group>
+  <group name="Failure Detector">
+    <parameter default="60" name="FD_FAIL_P" type="INT32">
+      <short_desc>FailureDetector Max Pitch</short_desc>
+      <long_desc>Maximum pitch angle before FailureDetector triggers the attitude_failure flag Does not affect the behavior of the vehicle for now; only for logging</long_desc>
+      <min>0</min>
+      <max>180</max>
+      <unit>degrees</unit>
+      <scope>modules/commander/failure_detector</scope>
+    </parameter>
+    <parameter default="60" name="FD_FAIL_R" type="INT32">
+      <short_desc>FailureDetector Max Roll</short_desc>
+      <long_desc>Maximum roll angle before FailureDetector triggers the attitude_failure flag Does not affect the behavior of the vehicle for now; only for logging</long_desc>
+      <min>0</min>
+      <max>180</max>
+      <unit>degrees</unit>
+      <scope>modules/commander/failure_detector</scope>
     </parameter>
   </group>
   <group name="Follow target">
@@ -4120,6 +4163,15 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <boolean />
       <scope>modules/navigator</scope>
     </parameter>
+    <parameter default="5.0" name="NAV_FW_ALTL_RAD" type="FLOAT">
+      <short_desc>FW Altitude Acceptance Radius before a landing</short_desc>
+      <long_desc>Altitude acceptance used for the last waypoint before a fixed-wing landing. This is usually smaller than the standard vertical acceptance because close to the ground higher accuracy is required.</long_desc>
+      <min>0.05</min>
+      <max>200.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <scope>modules/navigator</scope>
+    </parameter>
     <parameter default="10.0" name="NAV_FW_ALT_RAD" type="FLOAT">
       <short_desc>FW Altitude Acceptance Radius</short_desc>
       <long_desc>Acceptance radius for fixedwing altitude.</long_desc>
@@ -5200,6 +5252,78 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/sensors</scope>
     </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL1" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 1 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL2" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 2 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL3" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 3 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL4" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 4 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL5" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 5 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL6" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL7" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_FAIL8" type="INT32">
+      <short_desc>Set the failsafe PWM for the auxiliary 8 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
     <parameter default="2000" name="PWM_AUX_MAX" type="INT32">
       <short_desc>Set the maximum PWM for the auxiliary outputs</short_desc>
       <long_desc>Set to 2000 for industry default or 2100 to increase servo travel.</long_desc>
@@ -5414,6 +5538,78 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     <parameter default="-1" name="PWM_MAIN_DIS8" type="INT32">
       <short_desc>Set the disarmed PWM for the main 8 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if not armed. When set to -1 the value for PWM_DISARMED will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL1" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 1 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL2" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 2 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL3" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 3 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL4" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 4 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL5" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 5 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL6" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 6 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL7" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 7 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_FAIL8" type="INT32">
+      <short_desc>Set the failsafe PWM for the main 8 output</short_desc>
+      <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
       <min>-1</min>
       <max>2200</max>
       <unit>us</unit>
@@ -7778,20 +7974,20 @@ to takeoff is reached</short_desc>
       </values>
     </parameter>
     <parameter default="3" name="SDLOG_PROFILE" type="INT32">
-      <short_desc>Logging Topic Profile</short_desc>
-      <long_desc>This is an integer bitmask controlling the set and rates of logged topics. The default allows for general log analysis and estimator replay, while keeping the log file size reasonably small. Enabling multiple sets leads to higher bandwidth requirements and larger log files. Set bits in the following positions to enable: 0 : Set to true to use the default set (used for general log analysis) 1 : Set to true to enable full rate estimator (EKF2) replay topics 2 : Set to true to enable topics for thermal calibration (high rate raw IMU and Baro sensor data) 3 : Set to true to enable topics for system identification (high rate actuator control and IMU data) 4 : Set to true to enable full rates for analysis of fast maneuvers (RC, attitude, rates and actuators) 5 : Set to true to enable debugging topics (debug_*.msg topics, for custom code) 6 : Set to true to enable topics for sensor comparison (low rate raw IMU, Baro and Magnetomer data)</long_desc>
+      <short_desc>Logging topic profile (integer bitmask)</short_desc>
+      <long_desc>This integer bitmask controls the set and rates of logged topics. The default allows for general log analysis and estimator replay, while keeping the log file size reasonably small. Enabling multiple sets leads to higher bandwidth requirements and larger log files. Set bits true to enable: 0 : Default set (used for general log analysis) 1 : Full rate estimator (EKF2) replay topics 2 : Topics for thermal calibration (high rate raw IMU and Baro sensor data) 3 : Topics for system identification (high rate actuator control and IMU data) 4 : Full rates for analysis of fast maneuvers (RC, attitude, rates and actuators) 5 : Debugging topics (debug_*.msg topics, for custom code) 6 : Topics for sensor comparison (low rate raw IMU, Baro and Magnetomer data)</long_desc>
       <min>0</min>
       <max>127</max>
       <reboot_required>true</reboot_required>
       <scope>modules/logger</scope>
       <bitmask>
-        <bit index="0">default set (log analysis)</bit>
-        <bit index="1">estimator replay (EKF2)</bit>
-        <bit index="2">thermal calibration</bit>
-        <bit index="3">system identification</bit>
-        <bit index="4">high rate</bit>
-        <bit index="5">debug</bit>
-        <bit index="6">sensor comparison</bit>
+        <bit index="0">Default set (general log analysis)</bit>
+        <bit index="1">Estimator replay (EKF2)</bit>
+        <bit index="2">Thermal calibration</bit>
+        <bit index="3">System identification</bit>
+        <bit index="4">High rate</bit>
+        <bit index="5">Debug</bit>
+        <bit index="6">Sensor comparison</bit>
       </bitmask>
     </parameter>
     <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
@@ -8503,6 +8699,12 @@ is less than 50% of this value</short_desc>
       <reboot_required>true</reboot_required>
       <scope>drivers/distance_sensor/mb12xx</scope>
     </parameter>
+    <parameter default="0" name="SENS_EN_PGA460" type="INT32">
+      <short_desc>PGA460 Ultrasonic driver (PGA460)</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+      <scope>drivers/distance_sensor/pga460</scope>
+    </parameter>
     <parameter default="0" name="SENS_EN_SF0X" type="INT32">
       <short_desc>Lightware laser rangefinder (serial)</short_desc>
       <min>0</min>
@@ -8576,6 +8778,42 @@ is less than 50% of this value</short_desc>
         <value code="6">Yaw 270°</value>
         <value code="7">Yaw 315°</value>
       </values>
+    </parameter>
+    <parameter default="55.0" name="SENS_IMU_TEMP" type="FLOAT">
+      <short_desc>Target IMU temperature</short_desc>
+      <min>0</min>
+      <max>85.0</max>
+      <unit>C</unit>
+      <decimal>3</decimal>
+      <scope>drivers/heater</scope>
+    </parameter>
+    <parameter default="0.5" name="SENS_IMU_TEMP_FF" type="FLOAT">
+      <short_desc>IMU heater controller feedforward value</short_desc>
+      <min>0</min>
+      <max>1.0</max>
+      <unit>microseconds</unit>
+      <decimal>3</decimal>
+      <scope>drivers/heater</scope>
+    </parameter>
+    <parameter default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
+      <short_desc>IMU heater controller integrator gain value</short_desc>
+      <min>0</min>
+      <max>1.0</max>
+      <unit>microseconds/C</unit>
+      <decimal>3</decimal>
+      <scope>drivers/heater</scope>
+    </parameter>
+    <parameter default="0.25" name="SENS_IMU_TEMP_P" type="FLOAT">
+      <short_desc>IMU heater controller proportional gain value</short_desc>
+      <min>0</min>
+      <max>1.0</max>
+      <unit>microseconds/C</unit>
+      <decimal>3</decimal>
+      <scope>drivers/heater</scope>
+    </parameter>
+    <parameter default="1442826" name="SENS_TEMP_ID" type="INT32">
+      <short_desc>Target IMU device ID to regulate temperature</short_desc>
+      <scope>drivers/heater</scope>
     </parameter>
   </group>
   <group name="Snapdragon UART ESC">
