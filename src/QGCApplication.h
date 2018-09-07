@@ -177,6 +177,8 @@ private:
 
     QGCToolbox* _toolbox;
 
+    QTranslator _QGCTranslator;
+
     bool _bluetoothAvailable;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
