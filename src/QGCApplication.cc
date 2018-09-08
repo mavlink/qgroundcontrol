@@ -114,7 +114,7 @@
 
 #include "QGCMapEngine.h"
 
-QGCApplication* QGCApplication::_app = NULL;
+QGCApplication* QGCApplication::_app = nullptr;
 
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
@@ -150,7 +150,7 @@ static QObject* kmlFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
     : QGuiApplication       (argc, argv)
-    , _qmlAppEngine         (NULL)
+    , _qmlAppEngine         (nullptr)
 #else
     : QApplication          (argc, argv)
 #endif
@@ -161,10 +161,23 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef QT_DEBUG
     , _testHighDPI          (false)
 #endif
-    , _toolbox              (NULL)
+    , _toolbox              (nullptr)
     , _bluetoothAvailable   (false)
 {
     _app = this;
+
+
+    QLocale locale = QLocale::system();
+    //-- Some forced locales for testing
+    //QLocale locale = QLocale(QLocale::German);
+    //QLocale locale = QLocale(QLocale::French);
+    //QLocale locale = QLocale(QLocale::Chinese);
+#if defined (__macos__)
+    locale = QLocale(locale.name());
+#endif
+    //-- Our localization
+    if(_QGCTranslator.load(locale, "qgc_", "", ":/localization"))
+        _app->installTranslator(&_QGCTranslator);
 
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
 #ifndef __android__
@@ -222,12 +235,12 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     QString loggingOptions;
 
     CmdLineOpt_t rgCmdLineOptions[] = {
-        { "--clear-settings",   &fClearSettingsOptions, NULL },
+        { "--clear-settings",   &fClearSettingsOptions, nullptr },
         { "--logging",          &logging,               &loggingOptions },
-        { "--fake-mobile",      &_fakeMobile,           NULL },
-        { "--log-output",       &_logOutput,            NULL },
+        { "--fake-mobile",      &_fakeMobile,           nullptr },
+        { "--log-output",       &_logOutput,            nullptr },
     #ifdef QT_DEBUG
-        { "--test-high-dpi",    &_testHighDPI,          NULL },
+        { "--test-high-dpi",    &_testHighDPI,          nullptr },
     #endif
         // Add additional command line option flags here
     };
@@ -344,7 +357,7 @@ void QGCApplication::_shutdown(void)
 QGCApplication::~QGCApplication()
 {
     // Place shutdown code in _shutdown
-    _app = NULL;
+    _app = nullptr;
 }
 
 void QGCApplication::_initCommon(void)
@@ -648,10 +661,10 @@ QObject* QGCApplication::_rootQmlObject()
         return mainWindow->rootQmlObject();
     } else if (runningUnitTests()){
         // Unit test can run without a main window
-        return NULL;
+        return nullptr;
     } else {
         qWarning() << "Why is MainWindow missing?";
-        return NULL;
+        return nullptr;
     }
 #endif
 }
