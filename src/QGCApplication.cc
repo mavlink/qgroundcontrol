@@ -24,6 +24,7 @@
 #include <QStyleFactory>
 #include <QAction>
 #include <QStringListModel>
+#include <QRegularExpression>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -86,6 +87,7 @@
 #include "EditPositionDialogController.h"
 #include "FactValueSliderListModel.h"
 #include "KMLFileHelper.h"
+#include "QGCFileDownload.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -148,20 +150,24 @@ static QObject* kmlFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
-    : QGuiApplication       (argc, argv)
-    , _qmlAppEngine         (NULL)
+    : QGuiApplication           (argc, argv)
+    , _qmlAppEngine             (nullptr)
 #else
-    : QApplication          (argc, argv)
+    : QApplication              (argc, argv)
 #endif
-    , _runningUnitTests     (unitTesting)
-    , _logOutput            (false)
-    , _fakeMobile           (false)
-    , _settingsUpgraded     (false)
+    , _runningUnitTests         (unitTesting)
+    , _logOutput                (false)
+    , _fakeMobile               (false)
+    , _settingsUpgraded         (false)
+    , _majorVersion             (0)
+    , _minorVersion             (0)
+    , _buildVersion             (0)
+    , _currentVersionDownload   (nullptr)
 #ifdef QT_DEBUG
-    , _testHighDPI          (false)
+    , _testHighDPI              (false)
 #endif
-    , _toolbox              (NULL)
-    , _bluetoothAvailable   (false)
+    , _toolbox                  (nullptr)
+    , _bluetoothAvailable       (false)
 {
     _app = this;
 
@@ -250,6 +256,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     setOrganizationDomain(QGC_ORG_DOMAIN);
 
     this->setApplicationVersion(QString(GIT_VERSION));
+    _checkForNewVersion();
 
     // Set settings format
     QSettings::setDefaultFormat(QSettings::IniFormat);
@@ -691,4 +698,63 @@ void QGCApplication::qmlAttemptWindowClose(void)
 bool QGCApplication::isInternetAvailable()
 {
     return getQGCMapEngine()->isInternetActive();
+}
+
+void QGCApplication::_checkForNewVersion(void)
+{
+#ifndef __mobile__
+    if (!_runningUnitTests) {
+        if (_parseVersionText("v3.4.3" /*applicationVersion()*/, _majorVersion, _minorVersion, _buildVersion)) {
+            _currentVersionDownload = new QGCFileDownload(this);
+            connect(_currentVersionDownload, &QGCFileDownload::downloadFinished, this, &QGCApplication::_currentVersionDownloadFinished);
+            connect(_currentVersionDownload, &QGCFileDownload::error, this, &QGCApplication::_currentVersionDownloadError);
+            _currentVersionDownload->download(QStringLiteral("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt"));
+        }
+    }
+#endif
+}
+
+void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString localFile)
+{
+    Q_UNUSED(remoteFile);
+
+    QFile versionFile(localFile);
+    if (versionFile.open(QIODevice::ReadOnly)) {
+        QTextStream textStream(&versionFile);
+        QString version = textStream.readLine();
+
+        qDebug() << version;
+
+        int majorVersion, minorVersion, buildVersion;
+        if (_parseVersionText(version, majorVersion, minorVersion, buildVersion)) {
+            qDebug() << "parse" << majorVersion << minorVersion << buildVersion;
+            if (_majorVersion < majorVersion ||
+                    (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
+                    (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
+                qDebug("Running old build");
+            }
+        }
+    }
+
+    _currentVersionDownload->deleteLater();
+}
+
+void QGCApplication::_currentVersionDownloadError(QString errorMsg)
+{
+    Q_UNUSED(errorMsg);
+    _currentVersionDownload->deleteLater();
+}
+
+bool QGCApplication::_parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion)
+{
+    QRegularExpression regExp("v(\\d+)\\.(\\d+)\\.(\\d+)");
+    QRegularExpressionMatch match = regExp.match(versionString);
+    if (match.hasMatch() && match.lastCapturedIndex() == 3) {
+        majorVersion = match.captured(1).toInt();
+        minorVersion = match.captured(2).toInt();
+        buildVersion = match.captured(3).toInt();
+        return true;
+    }
+
+    return false;
 }
