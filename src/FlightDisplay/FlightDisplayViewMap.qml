@@ -192,17 +192,58 @@ FlightMap {
     }
 
     // Add trajectory points to the map
+//    MapItemView {
+//        model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
+
+//        delegate: MapPolyline {
+//            line.width: 3
+//            line.color: QGroundControl.settingsManager.appSettings.getVehiclesTrajectoryPointsColor(_activeVehicle)
+//            z:          QGroundControl.zOrderTrajectoryLines
+//            path: [
+//                object.coordinate1,
+//                object.coordinate2,
+//            ]
+//        }
+//    }
     MapItemView {
-        model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
+        model: QGroundControl.multiVehicleManager.vehicles
 
         delegate: MapPolyline {
+            property var vehicle: object
+            opacity: (vehicle && vehicle.active) ? 1.0 : (0.01 * QGroundControl.settingsManager.appSettings.unactivatedVehiclesTrajectoryPointsOpacity.value)
             line.width: 3
-            line.color: "red"
-            z:          QGroundControl.zOrderTrajectoryLines
-            path: [
-                object.coordinate1,
-                object.coordinate2,
-            ]
+            line.color: QGroundControl.settingsManager.appSettings.getVehiclesTrajectoryPointsColor(vehicle)
+            z: QGroundControl.zOrderTrajectoryLines
+
+            function update() {
+                if (!vehicle) {
+                    return;
+                }
+
+                line.color = QGroundControl.settingsManager.appSettings.getVehiclesTrajectoryPointsColor(vehicle);
+
+                path = [];
+                var path_ = [];
+                var trajectoryPoints = vehicle.trajectoryPoints;
+                for (var i = 0; i < trajectoryPoints.count; ++i) {
+                    path_.push(trajectoryPoints.get(i).coordinate1);
+                }
+                if (trajectoryPoints.count > 0) {
+                    path_.push(trajectoryPoints.get(trajectoryPoints.count - 1).coordinate2);
+                }
+                path = path_;
+            }
+
+            Component.onCompleted: update()
+            onVehicleChanged: update()
+            Connections {
+                target: vehicle
+                onActiveChanged: update()
+            }
+            Connections {
+                target: vehicle.trajectoryPoints
+                onCountChanged: update()
+            }
         }
     }
 

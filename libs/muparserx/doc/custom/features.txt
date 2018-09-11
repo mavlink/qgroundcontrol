@@ -1,0 +1,69 @@
+/*! \page page_features Features
+\section fea_overview Feature overview
+
+<ul>
+<li>Supported data types: <b>double, integer, complex, boolean, string, array</b></li>
+<li>Extensible with custom operators (<b>binary, infix or postfix</b>)</li>
+<li>Extensible with custom functions with an arbitrary number of function arguments</li>
+<li>Support for an unlimited number of variables and constants</li>
+<li>No limit on expression complexity</li>
+<li>Reads binary, hexadecimal, complex, integer and string values from expressions and
+    can be extended to read user defined values as well.</li>
+<li>Supports a large variety of predefined \ref fea_predefined_op, \ref fea_predefined_fun
+     and \ref fea_predefined_const.</li>    
+</ul>
+
+\section fea_predefined_const Predefined Constants
+By default the parser supports the following mathematical constants:
+<ul>
+	<li>The eulerian number with:<br/>
+	    <b>e</b> = 2.718281828459045235360287<br/>&nbsp;</li>
+	<li>The mathematical constant equal to a circle's circumference divided by its diameter.<br/>
+	    <b>pi</b> =  3.141592653589793238462643<br/>&nbsp;</li>
+	<li>The imaginary unit with:<br/>
+	    <b>i</b> = sqrt(-1)<br/>&nbsp;</li>
+</ul>	
+	
+\section fea_predefined_op Predefined Operators
+<h3>Binary operators:</h3>
+<ul>
+  <li>Standard operators:<br/>
+  <b>"+", "-", "*", "/", "^"</b><br/>&nbsp;</li>
+  <li>Assignment operators:<br/>
+  <b>"=", "+=", "-=", "*=", "/="</b><br/>&nbsp;</li>
+  <li>Logical operators:<br/>
+  <b>"and", "or", "xor","==", "!=", ">", "<", "<=", ">="</b><br/>&nbsp;</li>
+  <li>Bit manipulation:<br/>
+  <b>"&", "|", "<<", ">>"</b><br/>&nbsp;</li>
+  <li>String concatenation:<br/>
+  <b>"//"</b><br/>&nbsp;</li>
+</ul>
+
+<h3>Postfix operators:</h3>
+<ul>
+  <li>Unit postfixes (nano, micro, milli, kilo, giga, mega):<br/>
+  <b>"{n}", "{mu}", "{m}", "{k}", "{G}", "{M}"</b><br/>&nbsp;</li>
+</ul>
+
+<p/>
+<h3>Infix operators:</h3>
+<ul>
+  <li>Sign operator and type conversions:<br/>
+  <b>"-", "(float)", "(int)"</b><br/>&nbsp;</li>
+</ul>
+
+\section fea_predefined_fun Predefined Functions
+<ul>
+  <li>Standard functions:<br/>
+  <b>abs, sin, cos, tan, sinh, cosh, tanh, ln, log, log10, exp, sqrt</b><br/>&nbsp;</li>
+  <li>Unlimited number of arguments:<br/>
+  <b>min, max, sum</b><br/>&nbsp;</li>
+  <li>String functions:<br/>
+  <b>str2dbl, strlen, toupper</b><br/>&nbsp;</li>
+  <li>Complex functions:<br/>
+  <b>real, imag, conj, arg, norm</b><br/>&nbsp;</li>  
+  <li>Array functions:<br/>
+  <b>sizeof</b><br/>&nbsp;</li>  
+</ul>  
+
+*/

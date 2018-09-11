@@ -5255,6 +5255,26 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <translation>默认任务高度：</translation>
     </message>
     <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="351"/>
+      <source>Unactivated Vehicles Trajectory Points Opacity</source>
+      <translation>非激活状态飞行器的航迹透明度</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="362"/>
+      <source>Unactivated Vehicles Icon Opacity</source>
+      <translation>非激活状态飞行器的图标透明度</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="373"/>
+      <source>Trajectory Points Color for Vehicles:</source>
+      <translation>飞行器的航迹颜色</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="407"/>
+      <source>Icon Color for Vehicles:</source>
+      <translation>飞行器的图标颜色</translation>
+    </message>
+    <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="359"/>
       <source>Application Load/Save Path</source>
       <translation>应用程序加载/保存路径</translation>

@@ -1,0 +1,15 @@
+/** \example listvar.cpp
+    This example shows how to list parser variables.
+*/
+
+/** \example list_expr_var.cpp
+  This example shows how to list variables used in an expression.
+*/
+
+/** \example calc.cpp
+    This example shows a typical use case of muParser. It sets up the parser 
+    engine and is defining several variables.
+*/
+}    
+*/
+

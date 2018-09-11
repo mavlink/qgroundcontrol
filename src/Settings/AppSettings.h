@@ -28,6 +28,16 @@ public:
     Q_PROPERTY(Fact* offlineEditingDescentSpeed         READ offlineEditingDescentSpeed         CONSTANT)
     Q_PROPERTY(Fact* batteryPercentRemainingAnnounce    READ batteryPercentRemainingAnnounce    CONSTANT)
     Q_PROPERTY(Fact* defaultMissionItemAltitude         READ defaultMissionItemAltitude         CONSTANT)
+    Q_PROPERTY(Fact* unactivatedVehiclesTrajectoryPointsOpacity READ unactivatedVehiclesTrajectoryPointsOpacity CONSTANT)
+    Q_PROPERTY(Fact* unactivatedVehiclesIconOpacity     READ unactivatedVehiclesIconOpacity     CONSTANT)
+    Q_PROPERTY(Fact* vehiclesTrajectoryPointsColorR     READ vehiclesTrajectoryPointsColorR     CONSTANT)
+    Q_PROPERTY(Fact* vehiclesTrajectoryPointsColorG     READ vehiclesTrajectoryPointsColorG     CONSTANT)
+    Q_PROPERTY(Fact* vehiclesTrajectoryPointsColorB     READ vehiclesTrajectoryPointsColorB     CONSTANT)
+    Q_PROPERTY(Fact* vehiclesTrajectoryPointsColorA     READ vehiclesTrajectoryPointsColorA     CONSTANT)
+    Q_PROPERTY(Fact* vehiclesIconColorR                 READ vehiclesIconColorR                 CONSTANT)
+    Q_PROPERTY(Fact* vehiclesIconColorG                 READ vehiclesIconColorG                 CONSTANT)
+    Q_PROPERTY(Fact* vehiclesIconColorB                 READ vehiclesIconColorB                 CONSTANT)
+    Q_PROPERTY(Fact* vehiclesIconColorA                 READ vehiclesIconColorA                 CONSTANT)
     Q_PROPERTY(Fact* telemetrySave                      READ telemetrySave                      CONSTANT)
     Q_PROPERTY(Fact* telemetrySaveNotArmed              READ telemetrySaveNotArmed              CONSTANT)
     Q_PROPERTY(Fact* audioMuted                         READ audioMuted                         CONSTANT)
@@ -59,6 +69,9 @@ public:
     Q_PROPERTY(QString kmlFileExtension         MEMBER kmlFileExtension         CONSTANT)
     Q_PROPERTY(QString logFileExtension         MEMBER logFileExtension         CONSTANT)
 
+    Q_INVOKABLE QColor getVehiclesTrajectoryPointsColor(Vehicle *vehicle);
+    Q_INVOKABLE QColor getVehiclesIconColor(Vehicle *vehicle);
+
     Fact* offlineEditingFirmwareType        (void);
     Fact* offlineEditingVehicleType         (void);
     Fact* offlineEditingCruiseSpeed         (void);
@@ -67,6 +80,16 @@ public:
     Fact* offlineEditingDescentSpeed        (void);
     Fact* batteryPercentRemainingAnnounce   (void);
     Fact* defaultMissionItemAltitude        (void);
+    Fact* unactivatedVehiclesTrajectoryPointsOpacity (void);
+    Fact* unactivatedVehiclesIconOpacity    (void);
+    Fact* vehiclesTrajectoryPointsColorR    (void);
+    Fact* vehiclesTrajectoryPointsColorG    (void);
+    Fact* vehiclesTrajectoryPointsColorB    (void);
+    Fact* vehiclesTrajectoryPointsColorA    (void);
+    Fact* vehiclesIconColorR                (void);
+    Fact* vehiclesIconColorG                (void);
+    Fact* vehiclesIconColorB                (void);
+    Fact* vehiclesIconColorA                (void);
     Fact* telemetrySave                     (void);
     Fact* telemetrySaveNotArmed             (void);
     Fact* audioMuted                        (void);
@@ -104,6 +127,16 @@ public:
     static const char* offlineEditingDescentSpeedSettingsName;
     static const char* batteryPercentRemainingAnnounceSettingsName;
     static const char* defaultMissionItemAltitudeSettingsName;
+    static const char* unactivatedVehiclesTrajectoryPointsOpacitySettingsName;
+    static const char* unactivatedVehiclesIconOpacitySettingsName;
+    static const char* vehiclesTrajectoryPointsColorRSettingsName;
+    static const char* vehiclesTrajectoryPointsColorGSettingsName;
+    static const char* vehiclesTrajectoryPointsColorBSettingsName;
+    static const char* vehiclesTrajectoryPointsColorASettingsName;
+    static const char* vehiclesIconColorRSettingsName;
+    static const char* vehiclesIconColorGSettingsName;
+    static const char* vehiclesIconColorBSettingsName;
+    static const char* vehiclesIconColorASettingsName;
     static const char* telemetrySaveName;
     static const char* telemetrySaveNotArmedName;
     static const char* audioMutedName;
@@ -141,6 +174,8 @@ public:
 
 signals:
     void savePathsChanged(void);
+    void vehiclesTrajectoryPointsColorChanged(void);
+    void vehiclesIconColorChanged(void);
 
 private slots:
     void _indoorPaletteChanged(void);
@@ -155,6 +190,16 @@ private:
     SettingsFact* _offlineEditingDescentSpeedFact;
     SettingsFact* _batteryPercentRemainingAnnounceFact;
     SettingsFact* _defaultMissionItemAltitudeFact;
+    SettingsFact* _unactivatedVehiclesTrajectoryPointsOpacityFact;
+    SettingsFact* _unactivatedVehiclesIconOpacityFact;
+    SettingsFact* _vehiclesTrajectoryPointsColorRFact;
+    SettingsFact* _vehiclesTrajectoryPointsColorGFact;
+    SettingsFact* _vehiclesTrajectoryPointsColorBFact;
+    SettingsFact* _vehiclesTrajectoryPointsColorAFact;
+    SettingsFact* _vehiclesIconColorRFact;
+    SettingsFact* _vehiclesIconColorGFact;
+    SettingsFact* _vehiclesIconColorBFact;
+    SettingsFact* _vehiclesIconColorAFact;
     SettingsFact* _telemetrySaveFact;
     SettingsFact* _telemetrySaveNotArmedFact;
     SettingsFact* _audioMutedFact;

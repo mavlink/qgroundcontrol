@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="value_test">
+</Property><Property Name="Solution File" Value="C:\Projekte\muparser_sf\branches\muParserX\value_test\value_test.sln">
+</Property><Property Name="User Options File" Value="C:\Projekte\muparser_sf\branches\muParserX\value_test\value_test.suo">
+</Property><Property Name="Date" Value="Montag, 22. August 2011">
+</Property><Property Name="Time" Value="18:49">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="value_test.sln" Description="File successfully backed up as C:\Projekte\muparser_sf\branches\muParserX\value_test\value_test.sln.old">
+</Event><Event ErrorLevel="0" Project="" Source="value_test.suo" Description="File successfully backed up as C:\Projekte\muparser_sf\branches\muParserX\value_test\value_test.suo.old">
+</Event><Event ErrorLevel="0" Project="value_test" Source="value_test.vcproj" Description="Converting project file 'C:\Projekte\muparser_sf\branches\muParserX\value_test\value_test.vcproj'.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="VCWebServiceProxyGeneratorTool is no longer supported. The tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="Attribute 'CopyLocalDependencies' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="1" Project="value_test" Source="value_test.vcproj" Description="Attribute 'UseDependenciesInBuild' of 'AssemblyReference' is not supported in this version and has been removed during conversion.">
+</Event><Event ErrorLevel="0" Project="value_test" Source="value_test.vcproj" Description="Done converting to new project file 'C:\Projekte\muparser_sf\branches\muParserX\value_test\value_test.vcxproj'.">
+</Event><Event ErrorLevel="3" Project="value_test" Source="value_test.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="value_test.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="value_test.sln" Description="Converted">
+</Event></UpgradeLog>

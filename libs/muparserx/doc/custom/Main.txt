@@ -1,0 +1,16 @@
+/** \mainpage
+
+<div>
+  <img src="../muParserX.png"/>
+</div>
+
+	\section intro_sec Introduction
+
+	muParserX is a mathematical expression parser with support for complex numbers and matrix calculations.	This is the API documentation of muParserX. 
+	For additional documentation consult the <a href="http://code.google.com/p/muparserx/">project home page at google code</a>.
+
+	\section toc Table of content
+	\ref page_features<br/>
+*/
+
+
