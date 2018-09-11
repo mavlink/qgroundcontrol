@@ -279,7 +279,7 @@ bool Bootloader::_ihxProgram(QSerialPort* port, const FirmwareImage* image)
         }
         
         if (failed) {
-            _errorString = tr("Unable to set flash start address: 0x%2").arg(flashAddress, 8, 16, QLatin1Char('0'));
+            _errorString = tr("Unable to set flash start address: 0x%1").arg(flashAddress, 8, 16, QLatin1Char('0'));
             return false;
         }
         
@@ -451,7 +451,7 @@ bool Bootloader::_ihxVerifyBytes(QSerialPort* port, const FirmwareImage* image)
         }
         
         if (failed) {
-            _errorString = tr("Unable to set read start address: 0x%2").arg(readAddress, 8, 16, QLatin1Char('0'));
+            _errorString = tr("Unable to set read start address: 0x%1").arg(readAddress, 8, 16, QLatin1Char('0'));
             return false;
         }
         
