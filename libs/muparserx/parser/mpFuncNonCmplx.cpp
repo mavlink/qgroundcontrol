@@ -35,7 +35,6 @@
 #include "mpFuncNonCmplx.h"
 
 //--- Standard includes ----------------------------------------------------
-#include <ctgmath>
 #include <cmath>
 #include <cassert>
 #include <iostream>
