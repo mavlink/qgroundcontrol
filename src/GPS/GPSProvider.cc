@@ -17,7 +17,7 @@
 
 #include "Drivers/src/ubx.h"
 #include "Drivers/src/ashtech.h"
-#include "Drivers/src/gps_helper.h"
+#include "Drivers/src/base_station.h"
 #include "definitions.h"
 
 //#define SIMULATE_RTCM_OUTPUT //if defined, generate simulated RTCM messages
@@ -67,7 +67,7 @@ void GPSProvider::run()
     _serial->setFlowControl(QSerialPort::NoFlowControl);
 
     unsigned int baudrate;
-    GPSHelper* gpsDriver = nullptr;
+    GPSBaseStationSupport* gpsDriver = nullptr;
 
     while (!_requestStop) {
 
@@ -84,6 +84,13 @@ void GPSProvider::run()
             baudrate = 0; // auto-configure
         }
         gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000, _surveryInDurationSecs);
+
+        // fixed base position:
+        double latitude = xyz;
+        double longitude = xyz;
+        float altitude = xyz;
+        float position_accuracy = xyz;
+        gpsDriver->setBasePosition(latitude, longitude, altitude, position_accuracy);
 
         if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
 
@@ -192,6 +199,8 @@ int GPSProvider::callback(GPSCallbackType type, void *data1, int data2)
         case GPSCallbackType::surveyInStatus:
         {
             SurveyInStatus* status = (SurveyInStatus*)data1;
+            qCDebug(RTKGPSLog) << "Position: " << status->latitude << status->longitude << status->altitude;
+
             qCDebug(RTKGPSLog) << QString("Survey-in status: %1s cur accuracy: %2mm valid: %3 active: %4").arg(status->duration).arg(status->mean_accuracy).arg((int)(status->flags & 1)).arg((int)((status->flags>>1) & 1));
             emit surveyInStatus(status->duration, status->mean_accuracy, (int)(status->flags & 1), (int)((status->flags>>1) & 1));
         }
