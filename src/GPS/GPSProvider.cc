@@ -44,8 +44,21 @@ void GPSProvider::run()
     _serial = new QSerialPort();
     _serial->setPortName(_device);
     if (!_serial->open(QIODevice::ReadWrite)) {
-        qWarning() << "GPS: Failed to open Serial Device" << _device;
-        return;
+        int retries = 60;
+        // Give the device some time to come up. In some cases the device is not
+        // immediately accessible right after startup for some reason. This can take 10-20s.
+        while (retries-- > 0 && _serial->error() == QSerialPort::PermissionError) {
+            qCDebug(RTKGPSLog) << "Cannot open device... retrying";
+            msleep(500);
+            if (_serial->open(QIODevice::ReadWrite)) {
+                _serial->clearError();
+                break;
+            }
+        }
+        if (_serial->error() != QSerialPort::NoError) {
+            qWarning() << "GPS: Failed to open Serial Device" << _device << _serial->errorString();
+            return;
+        }
     }
     _serial->setBaudRate(QSerialPort::Baud9600);
     _serial->setDataBits(QSerialPort::Data8);
