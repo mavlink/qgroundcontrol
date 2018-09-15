@@ -176,6 +176,7 @@ BASEDIR      = $$IN_PWD
     MOC_DIR      = $${OUT_PWD}/moc
     UI_DIR       = $${OUT_PWD}/ui
     RCC_DIR      = $${OUT_PWD}/rcc
+    QMLCACHE_DIR = qmlcache
 }
 
 LANGUAGE = C++
