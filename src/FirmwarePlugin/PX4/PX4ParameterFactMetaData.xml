@@ -3885,6 +3885,18 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <boolean />
       <scope>modules/mavlink</scope>
     </parameter>
+    <parameter default="1" name="MAV_HASH_CHK_EN" type="INT32">
+      <short_desc>Parameter hash check</short_desc>
+      <long_desc>Disabling the parameter hash check functionality will make the mavlink instance stream parameters continuously.</long_desc>
+      <boolean />
+      <scope>modules/mavlink</scope>
+    </parameter>
+    <parameter default="1" name="MAV_HB_FORW_EN" type="INT32">
+      <short_desc>Hearbeat message forwarding</short_desc>
+      <long_desc>The mavlink hearbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
+      <boolean />
+      <scope>modules/mavlink</scope>
+    </parameter>
     <parameter default="0" name="MAV_PROTO_VER" type="INT32">
       <short_desc>MAVLink protocol version</short_desc>
       <scope>modules/mavlink</scope>
@@ -5333,11 +5345,155 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <reboot_required>true</reboot_required>
       <scope>modules/sensors</scope>
     </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX1" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 1 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX2" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 2 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX3" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 3 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX4" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 4 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX5" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 5 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX6" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 6 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX7" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 7 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MAX8" type="INT32">
+      <short_desc>Set the max PWM value for the auxiliary 8 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
     <parameter default="1000" name="PWM_AUX_MIN" type="INT32">
       <short_desc>Set the minimum PWM for the auxiliary outputs</short_desc>
       <long_desc>Set to 1000 for industry default or 900 to increase servo travel.</long_desc>
       <min>800</min>
       <max>1400</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN1" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 1 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN2" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 2 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN3" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 3 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN4" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 4 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN5" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 5 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN6" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 6 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN7" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 7 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_AUX_MIN8" type="INT32">
+      <short_desc>Set the min PWM value for the auxiliary 8 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_AUX_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
       <unit>us</unit>
       <reboot_required>true</reboot_required>
       <scope>modules/sensors</scope>
@@ -5610,6 +5766,150 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     <parameter default="-1" name="PWM_MAIN_FAIL8" type="INT32">
       <short_desc>Set the failsafe PWM for the main 8 output</short_desc>
       <long_desc>This is the PWM pulse the autopilot is outputting if in failsafe mode. When set to -1 the value is set automatically depending if the actuator is a motor (900us) or a servo (1500us)</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX1" type="INT32">
+      <short_desc>Set the max PWM value for the main 1 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX2" type="INT32">
+      <short_desc>Set the max PWM value for the main 2 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX3" type="INT32">
+      <short_desc>Set the max PWM value for the main 3 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX4" type="INT32">
+      <short_desc>Set the max PWM value for the main 4 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX5" type="INT32">
+      <short_desc>Set the max PWM value for the main 5 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX6" type="INT32">
+      <short_desc>Set the max PWM value for the main 6 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX7" type="INT32">
+      <short_desc>Set the max PWM value for the main 7 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MAX8" type="INT32">
+      <short_desc>Set the max PWM value for the main 8 output</short_desc>
+      <long_desc>This is the maximum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MAX will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN1" type="INT32">
+      <short_desc>Set the min PWM value for the main 1 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN2" type="INT32">
+      <short_desc>Set the min PWM value for the main 2 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN3" type="INT32">
+      <short_desc>Set the min PWM value for the main 3 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN4" type="INT32">
+      <short_desc>Set the min PWM value for the main 4 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN5" type="INT32">
+      <short_desc>Set the min PWM value for the main 5 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN6" type="INT32">
+      <short_desc>Set the min PWM value for the main 6 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN7" type="INT32">
+      <short_desc>Set the min PWM value for the main 7 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
+      <min>-1</min>
+      <max>2200</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+      <scope>modules/sensors</scope>
+    </parameter>
+    <parameter default="-1" name="PWM_MAIN_MIN8" type="INT32">
+      <short_desc>Set the min PWM value for the main 8 output</short_desc>
+      <long_desc>This is the minimum PWM pulse the autopilot is allowed to output. When set to -1 the value for PWM_MIN will be used</long_desc>
       <min>-1</min>
       <max>2200</max>
       <unit>us</unit>
@@ -8906,6 +9206,13 @@ is less than 50% of this value</short_desc>
       <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
       <min>0</min>
       <max>99999</max>
+      <reboot_required>true</reboot_required>
+      <scope>modules/systemlib</scope>
+    </parameter>
+    <parameter default="0" name="SYS_BL_UPDATE" type="INT32">
+      <short_desc>Bootloader update</short_desc>
+      <long_desc>If enabled, update the bootloader on the next boot. WARNING: do not cut the power during an update process, otherwise you will have to recover using some alternative method (e.g. JTAG). Instructions: - Insert an SD card - Enable this parameter - Reboot the board (plug the power or send a reboot command) - Wait until the board comes back up (or at least 2 minutes) - If it does not come back, check the file bootlog.txt on the SD card</long_desc>
+      <boolean />
       <reboot_required>true</reboot_required>
       <scope>modules/systemlib</scope>
     </parameter>

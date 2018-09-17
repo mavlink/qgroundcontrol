@@ -535,18 +535,6 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
-  <airframe_group image="PlaneVTail" name="Plane V-Tail">
-    <airframe id="2200" maintainer="Friedrich Beckmann &lt;friedrich.beckmann@hs-augsburg.de&gt;" name="X-UAV Mini Talon">
-      <class>Plane</class>
-      <maintainer>Friedrich Beckmann &lt;friedrich.beckmann@hs-augsburg.de&gt;</maintainer>
-      <type>Plane V-Tail</type>
-      <output name="MAIN1">aileron right</output>
-      <output name="MAIN2">aileron left</output>
-      <output name="MAIN3">v-tail right</output>
-      <output name="MAIN4">v-tail left</output>
-      <output name="MAIN5">throttle</output>
-    </airframe>
-  </airframe_group>
   <airframe_group image="AirframeUnknown" name="Simulation (Plane)">
     <airframe id="1000" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="HILStar (XPlane)">
       <class>Plane</class>
