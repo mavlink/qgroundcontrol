@@ -3870,6 +3870,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <values>
         <value code="0">Never broadcast</value>
         <value code="1">Always broadcast</value>
+        <value code="2">Only multicast</value>
       </values>
     </parameter>
     <parameter default="1" name="MAV_COMP_ID" type="INT32">
@@ -4247,21 +4248,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="2">Return mode</value>
         <value code="3">Land mode</value>
       </values>
-    </parameter>
-    <parameter default="0" name="VT_WV_LND_EN" type="INT32">
-      <short_desc>Weather-vane mode landings for missions</short_desc>
-      <boolean />
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0" name="VT_WV_LTR_EN" type="INT32">
-      <short_desc>Weather-vane mode for loiter</short_desc>
-      <boolean />
-      <scope>modules/vtol_att_control</scope>
-    </parameter>
-    <parameter default="0" name="VT_WV_TKO_EN" type="INT32">
-      <short_desc>Enable weather-vane mode takeoff for missions</short_desc>
-      <boolean />
-      <scope>modules/vtol_att_control</scope>
     </parameter>
   </group>
   <group name="Mount">
@@ -5162,6 +5148,25 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>0.4</max>
       <decimal>2</decimal>
       <scope>modules/mc_pos_control</scope>
+    </parameter>
+    <parameter default="0" name="WV_EN" type="INT32">
+      <short_desc>Enable weathervane</short_desc>
+      <boolean />
+      <scope>lib/WeatherVane</scope>
+    </parameter>
+    <parameter default="1.0" name="WV_ROLL_MIN" type="FLOAT">
+      <short_desc>Minimum roll angle setpoint for weathervane controller to demand a yaw-rate</short_desc>
+      <min>0</min>
+      <max>5</max>
+      <unit>deg</unit>
+      <scope>lib/WeatherVane</scope>
+    </parameter>
+    <parameter default="90.0" name="WV_YRATE_MAX" type="FLOAT">
+      <short_desc>Maximum yawrate the weathervane controller is allowed to demand</short_desc>
+      <min>0</min>
+      <max>120</max>
+      <unit>deg/s</unit>
+      <scope>lib/WeatherVane</scope>
     </parameter>
   </group>
   <group name="PWM Outputs">
@@ -10384,14 +10389,15 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
         <value code="2">Standard</value>
       </values>
     </parameter>
-    <parameter default="0.15" name="VT_WV_YAWR_SCL" type="FLOAT">
-      <short_desc>Weather-vane yaw rate scale</short_desc>
-      <long_desc>The desired yawrate from the controller will be scaled in order to avoid yaw fighting against the wind.</long_desc>
+    <parameter default="1.0" name="WV_GAIN" type="FLOAT">
+      <short_desc>Weather-vane roll angle to yawrate</short_desc>
+      <long_desc>The desired gain to convert roll sp into yaw rate sp.</long_desc>
       <min>0.0</min>
-      <max>1.0</max>
+      <max>3.0</max>
+      <unit>1/s</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
-      <scope>modules/vtol_att_control</scope>
+      <scope>lib/WeatherVane</scope>
     </parameter>
   </group>
   <group name="Wind Estimator">
