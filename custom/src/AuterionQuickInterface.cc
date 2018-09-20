@@ -9,6 +9,8 @@
 #include "SettingsManager.h"
 #include "MAVLinkLogManager.h"
 #include "QGCMapEngine.h"
+#include "QGCApplication.h"
+#include "PositionManager.h"
 
 #include "AuterionPlugin.h"
 #include "AuterionQuickInterface.h"

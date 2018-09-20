@@ -34,6 +34,8 @@ class AuterionOptions : public QGCOptions
 public:
     AuterionOptions(AuterionPlugin*, QObject* parent = nullptr);
     bool        wifiReliableForCalibration      () const final { return true; }
+    QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionFlyView.qml"); }
+    CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
 };
 
 
@@ -46,15 +48,15 @@ public:
     ~AuterionPlugin();
 
     // Overrides from QGCCorePlugin
-    QGCOptions*     options                         () final;
-    QString         brandImageIndoor                () const final;
-    QString         brandImageOutdoor               () const final;
-
-    bool            overrideSettingsGroupVisibility (QString name) final;
-    VideoReceiver*  createVideoReceiver             (QObject* parent) final;
+    QGCOptions*             options                         () final;
+    QString                 brandImageIndoor                () const final;
+    QString                 brandImageOutdoor               () const final;
+    bool                    overrideSettingsGroupVisibility (QString name) final;
+    VideoReceiver*          createVideoReceiver             (QObject* parent) final;
+    QQmlApplicationEngine*  createRootWindow                (QObject* parent) final;
 
     // Overrides from QGCTool
-    void            setToolbox                      (QGCToolbox* toolbox);
+    void                    setToolbox                      (QGCToolbox* toolbox);
 
 private:
     AuterionOptions*     _pOptions;

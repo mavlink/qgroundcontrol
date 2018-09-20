@@ -53,6 +53,15 @@
     "defaultValue":     0
 },
 {
+    "name":             "VideoFit",
+    "shortDescription": "Video Display Fit",
+    "longDescription":  "Handle Video Aspect Ratio.",
+    "type":             "uint32",
+    "enumStrings":      "Fit Width,Fit Height,Stretch",
+    "enumValues":       "0,1,2",
+    "defaultValue":     1
+},
+{
     "name":             "ShowRecControl",
     "shortDescription": "Show Video Record Control",
     "longDescription":  "Show recording control in the UI.",
