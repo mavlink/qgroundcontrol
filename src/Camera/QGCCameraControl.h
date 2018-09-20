@@ -108,6 +108,9 @@ public:
     Q_PROPERTY(Fact*        exposureMode        READ exposureMode       NOTIFY parametersReady)
     Q_PROPERTY(Fact*        ev                  READ ev                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        iso                 READ iso                NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        shutter             READ shutter            NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        zoomStep            READ zoomStep           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        zoomTele            READ zoomTele           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        zoomWide            READ zoomWide           NOTIFY parametersReady)
@@ -161,6 +164,9 @@ public:
     virtual Fact*       exposureMode        ();
     virtual Fact*       ev                  ();
     virtual Fact*       iso                 ();
+    virtual Fact*       shutter             ();
+    virtual Fact*       aperture            ();
+    virtual Fact*       wb                  ();
     virtual Fact*       zoomStep            ();
     virtual Fact*       zoomTele            ();
     virtual Fact*       zoomWide            ();

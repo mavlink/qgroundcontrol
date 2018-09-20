@@ -62,6 +62,9 @@ static const char* kPhotoLapseCount = "PhotoLapseCount";
 static const char *kCAM_EV          = "CAM_EV";
 static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
 static const char *kCAM_ISO         = "CAM_ISO";
+static const char* kCAM_SHUTTER     = "CAM_SHUTTER";
+static const char* kCAM_APERTURE    = "CAM_APERTURE";
+static const char* kCAM_WBMODE      = "CAM_WBMODE";
 static const char *kCAM_ZOOMSTEP    = "CAM_ZOOMSTEP";
 static const char *kCAM_ZOOMTELE    = "CAM_ZOOMTELE";
 static const char *kCAM_ZOOMWIDE    = "CAM_ZOOMWIDE";
@@ -1578,6 +1581,27 @@ Fact*
 QGCCameraControl::iso()
 {
     return (_paramComplete && _activeSettings.contains(kCAM_ISO)) ? getFact(kCAM_ISO) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::shutter()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_SHUTTER)) ? getFact(kCAM_SHUTTER) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::aperture()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_APERTURE)) ? getFact(kCAM_APERTURE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::wb()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_WBMODE)) ? getFact(kCAM_WBMODE) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
