@@ -6,8 +6,6 @@
 #include <QtQml>
 #include <QQmlEngine>
 #include <QDateTime>
-#include <QtPositioning/QGeoPositionInfo>
-#include <QtPositioning/QGeoPositionInfoSource>
 
 #include "QGCSettings.h"
 #include "MAVLinkLogManager.h"
@@ -18,6 +16,7 @@
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
 #include "SettingsManager.h"
+#include "AppMessages.h"
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
@@ -116,3 +115,17 @@ AuterionPlugin::createVideoReceiver(QObject* parent)
 {
     return new AuterionVideoReceiver(parent);
 }
+
+//-----------------------------------------------------------------------------
+QQmlApplicationEngine*
+AuterionPlugin::createRootWindow(QObject *parent)
+{
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->addImportPath("qrc:/Auterion/Widgets");
+    pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
+    pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    return pEngine;
+}
+

@@ -3,8 +3,25 @@
         <file alias="QGCLogoFull">res/images/toolbar_logo.svg</file>
         <file alias="QGCLogoWhite">res/images/toolbar_logo.svg</file>
     </qresource>
+    <qresource prefix="/auterion">
+        <file alias="AuterionCameraControl.qml">res/AuterionCameraControl.qml</file>
+        <file alias="AuterionFlyView.qml">res/AuterionFlyView.qml</file>
+    </qresource>
     <qresource prefix="/auterion/img">
+        <file alias="camera_switch_elapsed_mode.svg">res/images/camera_switch_elapsed_mode.svg</file>
+        <file alias="camera_switch_photo.svg">res/images/camera_switch_photo.svg</file>
+        <file alias="camera_switch_photo_mode.svg">res/images/camera_switch_photo_mode.svg</file>
+        <file alias="camera_switch_video.svg">res/images/camera_switch_video.svg</file>
+        <file alias="camera_switch_video_mode.svg">res/images/camera_switch_video_mode.svg</file>
+        <file alias="odometer.svg">res/images/odometer.svg</file>
+        <file alias="sliders.svg">res/images/sliders.svg</file>
+        <file alias="time.svg">res/images/time.svg</file>
         <file alias="void.png">res/images/void.png</file>
+    </qresource>
+    <qresource prefix="/Auterion/Widgets">
+        <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
+        <file alias="Auterion/Widgets/AuterionFactCombo.qml">res/Auterion/Widgets/AuterionFactCombo.qml</file>
+        <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
     </qresource>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/AuterionToolBarButton.qml</file>

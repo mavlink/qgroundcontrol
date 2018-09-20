@@ -27,6 +27,10 @@ message(Auterion GS Version: $${AUTERION_QGC_VERSION})
 MAVLINK_CONF = common
 CONFIG  += QGC_DISABLE_APM_MAVLINK
 
+#   We are a native QML app
+CONFIG  += MobileBuild
+DEFINES += __mobile__
+
 #   Branding
 
 DEFINES += CUSTOMHEADER=\"\\\"AuterionPlugin.h\\\"\"
