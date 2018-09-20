@@ -60,7 +60,8 @@ Item {
     property var    _expModeFact:           _camera && _camera.exposureMode ? _camera.exposureMode : null
     property var    _evFact:                _camera && _camera.ev ? _camera.ev : null
     property var    _isoFact:               _camera && _camera.iso ? _camera.iso : null
-    property var    _shutterFact:           _camera && _camera.shutterSpeed ? _camera.shutterSpeed : null
+    property var    _shutterFact:           _camera && _camera.shutter ? _camera.shutter : null
+    property var    _apertureFact:          _camera && _camera.aperture ? _camera.aperture : null
     property var    _wbFact:                _camera && _camera.wb ? _camera.wb : null
     property var    _meteringFact:          _camera && _camera.meteringMode ? _camera.meteringMode : null
     property var    _videoResFact:          _camera && _camera.videoRes ? _camera.videoRes : null
@@ -73,18 +74,6 @@ Item {
     property bool   _showAttitude:          false
     property string _messageTitle:          ""
     property string _messageText:           ""
-
-    function showSimpleAlert(title, message) {
-        _messageTitle   = title;
-        _messageText    = message;
-        rootLoader.sourceComponent = simpleAlert
-    }
-
-    function showFullSDCardMessage() {
-        showSimpleAlert(
-            qsTr("MicroSD Card in Camera is Full"),
-            qsTr("No images will be captured or videos recorded."))
-    }
 
     function indicatorClicked() {
         vehicleStatus.visible = !vehicleStatus.visible
@@ -228,6 +217,16 @@ Item {
                 visible:    _shutterFact;
                 indexModel: false
                 fact:       _shutterFact
+                enabled:    _cameraIdle
+            }
+            //-- Aperture
+            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: _apertureFact; anchors.verticalCenter: parent.verticalCenter; }
+            QGCLabel {text: qsTr("Aperture:"); visible: _apertureFact; anchors.verticalCenter: parent.verticalCenter; }
+            AuterionFactCombo {
+                anchors.verticalCenter: parent.verticalCenter
+                visible:    _apertureFact;
+                indexModel: false
+                fact:       _apertureFact
                 enabled:    _cameraIdle
             }
             //-- WB
@@ -534,82 +533,6 @@ Item {
         }
     }
 
-    //-- Simple alert message
-    Component {
-        id:             simpleAlert
-        Item {
-            id:         simpleAlertItem
-            width:      mainWindow.width
-            height:     mainWindow.height
-            z:          1000000
-            DeadMouseArea {
-                anchors.fill:   parent
-            }
-            Rectangle {
-                id:             simpleAlertShadow
-                anchors.fill:   simpleAlertRect
-                radius:         simpleAlertRect.radius
-                color:          qgcPal.window
-                visible:        false
-            }
-            DropShadow {
-                anchors.fill:       simpleAlertShadow
-                visible:            simpleAlertRect.visible
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             simpleAlertShadow
-            }
-            Rectangle {
-                id:                 simpleAlertRect
-                width:              mainWindow.width * 0.65
-                height:             simpleAlertCol.height * 1.5
-                radius:             ScreenTools.defaultFontPixelWidth
-                color:              qgcPal.alertBackground
-                border.color:       qgcPal.alertBorder
-                border.width:       2
-                anchors.centerIn:   parent
-                Column {
-                    id:                 simpleAlertCol
-                    width:              simpleAlertRect.width
-                    spacing:            ScreenTools.defaultFontPixelHeight * 3
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           _messageTitle
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        color:          qgcPal.alertText
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           _messageText
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCButton {
-                        text:           qsTr("Close")
-                        width:          ScreenTools.defaultFontPixelWidth  * 10
-                        height:         ScreenTools.defaultFontPixelHeight * 2
-                        onClicked: {
-                            mainWindow.enableToolbar()
-                            rootLoader.sourceComponent = null
-                        }
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
-            }
-            Component.onCompleted: {
-                rootLoader.width  = simpleAlertItem.width
-                rootLoader.height = simpleAlertItem.height
-            }
-        }
-    }
-
     //-- Connection Lost While Armed
     Component {
         id:         connectionLostArmed
@@ -636,14 +559,14 @@ Item {
                 source:             connectionLostArmedShadow
             }
             Rectangle {
-                id:     connectionLostArmedRect
-                width:  mainWindow.width   * 0.65
-                height: connectionLostArmedCol.height * 1.5
-                radius: ScreenTools.defaultFontPixelWidth
-                color:  qgcPal.alertBackground
-                border.color: qgcPal.alertBorder
-                border.width: 2
-                anchors.centerIn: parent
+                id:                 connectionLostArmedRect
+                width:              mainWindow.width   * 0.65
+                height:             connectionLostArmedCol.height * 1.5
+                radius:             ScreenTools.defaultFontPixelWidth
+                color:              qgcPal.alertBackground
+                border.color:       qgcPal.alertBorder
+                border.width:       2
+                anchors.centerIn:   parent
                 Column {
                     id:                 connectionLostArmedCol
                     width:              connectionLostArmedRect.width
