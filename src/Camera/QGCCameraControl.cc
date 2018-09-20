@@ -59,6 +59,9 @@ static const char* kPhotoLapseCount = "PhotoLapseCount";
 
 //-----------------------------------------------------------------------------
 // Known Parameters
+static const char *kCAM_EV          = "CAM_EV";
+static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
+static const char *kCAM_ISO         = "CAM_ISO";
 static const char *kCAM_ZOOMSTEP    = "CAM_ZOOMSTEP";
 static const char *kCAM_ZOOMTELE    = "CAM_ZOOMTELE";
 static const char *kCAM_ZOOMWIDE    = "CAM_ZOOMWIDE";
@@ -1031,6 +1034,10 @@ QGCCameraControl::_updateActiveList()
         qCDebug(CameraControlLogVerbose) << "Excluding" << exclusionList;
         _activeSettings = active;
         emit activeSettingsChanged();
+        //-- Force validity of "Facts" based on active set
+        if(_paramComplete) {
+            emit parametersReady();
+        }
     }
 }
 
@@ -1554,22 +1561,43 @@ QGCCameraControl::activeSettings()
 
 //-----------------------------------------------------------------------------
 Fact*
+QGCCameraControl::exposureMode()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_EXPMODE)) ? getFact(kCAM_EXPMODE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::ev()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_EV)) ? getFact(kCAM_EV) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::iso()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_ISO)) ? getFact(kCAM_ISO) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
 QGCCameraControl::zoomStep()
 {
-    return getFact(kCAM_ZOOMSTEP);
+    return (_paramComplete && _activeSettings.contains(kCAM_ZOOMSTEP)) ? getFact(kCAM_ZOOMSTEP) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 QGCCameraControl::zoomTele()
 {
-    return getFact(kCAM_ZOOMTELE);
+    return (_paramComplete && _activeSettings.contains(kCAM_ZOOMTELE)) ? getFact(kCAM_ZOOMTELE) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
 Fact*
 QGCCameraControl::zoomWide()
 {
-    return getFact(kCAM_ZOOMWIDE);
+    return (_paramComplete && _activeSettings.contains(kCAM_ZOOMWIDE)) ? getFact(kCAM_ZOOMWIDE) : nullptr;
 }
 

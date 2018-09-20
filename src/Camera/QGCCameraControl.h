@@ -103,7 +103,11 @@ public:
     Q_PROPERTY(quint32      storageFree         READ storageFree        NOTIFY storageFreeChanged)
     Q_PROPERTY(QString      storageFreeStr      READ storageFreeStr     NOTIFY storageFreeChanged)
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
+    Q_PROPERTY(bool         paramComplete       READ paramComplete      NOTIFY parametersReady)
 
+    Q_PROPERTY(Fact*        exposureMode        READ exposureMode       NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        ev                  READ ev                 NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        iso                 READ iso                NOTIFY parametersReady)
     Q_PROPERTY(Fact*        zoomStep            READ zoomStep           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        zoomTele            READ zoomTele           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        zoomWide            READ zoomWide           NOTIFY parametersReady)
@@ -152,7 +156,11 @@ public:
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
+    virtual bool        paramComplete       () { return _paramComplete; }
 
+    virtual Fact*       exposureMode        ();
+    virtual Fact*       ev                  ();
+    virtual Fact*       iso                 ();
     virtual Fact*       zoomStep            ();
     virtual Fact*       zoomTele            ();
     virtual Fact*       zoomWide            ();
