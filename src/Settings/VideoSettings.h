@@ -17,13 +17,14 @@ class VideoSettings : public SettingsGroup
     Q_OBJECT
 
 public:
-    VideoSettings(QObject* parent = NULL);
+    VideoSettings(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* videoSource            READ videoSource            CONSTANT)
     Q_PROPERTY(Fact* udpPort                READ udpPort                CONSTANT)
     Q_PROPERTY(Fact* tcpUrl                 READ tcpUrl                 CONSTANT)
     Q_PROPERTY(Fact* rtspUrl                READ rtspUrl                CONSTANT)
     Q_PROPERTY(Fact* aspectRatio            READ aspectRatio            CONSTANT)
+    Q_PROPERTY(Fact* videoFit               READ videoFit               CONSTANT)
     Q_PROPERTY(Fact* gridLines              READ gridLines              CONSTANT)
     Q_PROPERTY(Fact* showRecControl         READ showRecControl         CONSTANT)
     Q_PROPERTY(Fact* recordingFormat        READ recordingFormat        CONSTANT)
@@ -34,20 +35,21 @@ public:
     Q_PROPERTY(Fact* disableWhenDisarmed    READ disableWhenDisarmed    CONSTANT)
     Q_PROPERTY(bool  streamConfigured       READ streamConfigured       NOTIFY streamConfiguredChanged)
 
-    Fact* videoSource           (void);
-    Fact* udpPort               (void);
-    Fact* rtspUrl               (void);
-    Fact* tcpUrl                (void);
-    Fact* aspectRatio           (void);
-    Fact* gridLines             (void);
-    Fact* showRecControl        (void);
-    Fact* recordingFormat       (void);
-    Fact* maxVideoSize          (void);
-    Fact* enableStorageLimit    (void);
-    Fact* rtspTimeout           (void);
-    Fact* streamEnabled         (void);
-    Fact* disableWhenDisarmed   (void);
-    bool  streamConfigured      (void);
+    Fact* videoSource           ();
+    Fact* udpPort               ();
+    Fact* rtspUrl               ();
+    Fact* tcpUrl                ();
+    Fact* aspectRatio           ();
+    Fact* gridLines             ();
+    Fact* videoFit              ();
+    Fact* showRecControl        ();
+    Fact* recordingFormat       ();
+    Fact* maxVideoSize          ();
+    Fact* enableStorageLimit    ();
+    Fact* rtspTimeout           ();
+    Fact* streamEnabled         ();
+    Fact* disableWhenDisarmed   ();
+    bool  streamConfigured      ();
 
     static const char* name;
     static const char* settingsGroup;
@@ -57,6 +59,7 @@ public:
     static const char* rtspUrlName;
     static const char* tcpUrlName;
     static const char* videoAspectRatioName;
+    static const char* videoFitName;
     static const char* videoGridLinesName;
     static const char* showRecControlName;
     static const char* recordingFormatName;
@@ -84,6 +87,7 @@ private:
     SettingsFact* _tcpUrlFact;
     SettingsFact* _rtspUrlFact;
     SettingsFact* _videoAspectRatioFact;
+    SettingsFact* _videoFitFact;
     SettingsFact* _gridLinesFact;
     SettingsFact* _showRecControlFact;
     SettingsFact* _recordingFormatFact;

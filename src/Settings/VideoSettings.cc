@@ -25,6 +25,7 @@ const char* VideoSettings::udpPortName =            "VideoUDPPort";
 const char* VideoSettings::rtspUrlName =            "VideoRTSPUrl";
 const char* VideoSettings::tcpUrlName =             "VideoTCPUrl";
 const char* VideoSettings::videoAspectRatioName =   "VideoAspectRatio";
+const char* VideoSettings::videoFitName =           "VideoFit";
 const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
 const char* VideoSettings::showRecControlName =     "ShowRecControl";
 const char* VideoSettings::recordingFormatName =    "RecordingFormat";
@@ -42,19 +43,20 @@ const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
 
 VideoSettings::VideoSettings(QObject* parent)
     : SettingsGroup(name, settingsGroup, parent)
-    , _videoSourceFact(NULL)
-    , _udpPortFact(NULL)
-    , _tcpUrlFact(NULL)
-    , _rtspUrlFact(NULL)
-    , _videoAspectRatioFact(NULL)
-    , _gridLinesFact(NULL)
-    , _showRecControlFact(NULL)
-    , _recordingFormatFact(NULL)
-    , _maxVideoSizeFact(NULL)
-    , _enableStorageLimitFact(NULL)
-    , _rtspTimeoutFact(NULL)
-    , _streamEnabledFact(NULL)
-    , _disableWhenDisarmedFact(NULL)
+    , _videoSourceFact(nullptr)
+    , _udpPortFact(nullptr)
+    , _tcpUrlFact(nullptr)
+    , _rtspUrlFact(nullptr)
+    , _videoAspectRatioFact(nullptr)
+    , _videoFitFact(nullptr)
+    , _gridLinesFact(nullptr)
+    , _showRecControlFact(nullptr)
+    , _recordingFormatFact(nullptr)
+    , _maxVideoSizeFact(nullptr)
+    , _enableStorageLimitFact(nullptr)
+    , _rtspTimeoutFact(nullptr)
+    , _streamEnabledFact(nullptr)
+    , _disableWhenDisarmedFact(nullptr)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -137,6 +139,14 @@ Fact* VideoSettings::aspectRatio(void)
         _videoAspectRatioFact = _createSettingsFact(videoAspectRatioName);
     }
     return _videoAspectRatioFact;
+}
+
+Fact* VideoSettings::videoFit(void)
+{
+    if (!_videoFitFact) {
+        _videoFitFact = _createSettingsFact(videoFitName);
+    }
+    return _videoFitFact;
 }
 
 Fact* VideoSettings::gridLines(void)

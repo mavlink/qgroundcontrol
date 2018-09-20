@@ -32,6 +32,7 @@ Item {
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property var    _zoomStepFact:      _camera && _camera.zoomStep
+    property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     Rectangle {
         id:             noVideo
         anchors.fill:   parent
@@ -55,10 +56,26 @@ Item {
         anchors.fill:   parent
         color:          "black"
         visible:        _videoReceiver && _videoReceiver.videoRunning
+        function getWidth() {
+            //-- Fit Width or Stretch
+            if(_fitMode === 0 || _fitMode === 2) {
+                return parent.width
+            }
+            //-- Fit Height
+            return _ar != 0.0 ? parent.height * _ar : parent.width
+        }
+        function getHeight() {
+            //-- Fit Height or Stretch
+            if(_fitMode === 1 || _fitMode === 2) {
+                return parent.height
+            }
+            //-- Fit Width
+            return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
+        }
         QGCVideoBackground {
             id:             videoContent
-            height:         parent.height
-            width:          _ar != 0.0 ? height * _ar : parent.width
+            height:         parent.getHeight()
+            width:          parent.getWidth()
             anchors.centerIn: parent
             receiver:       _videoReceiver
             display:        _videoReceiver && _videoReceiver.videoSurface
