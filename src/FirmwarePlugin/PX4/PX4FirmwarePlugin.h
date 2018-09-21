@@ -111,6 +111,8 @@ private slots:
 
 private:
     void _handleAutopilotVersion(Vehicle* vehicle, mavlink_message_t* message);
+    QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
+    QString _versionRegex() override;
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into PX4FirmwarePluginInstanceData

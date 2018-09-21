@@ -1239,6 +1239,7 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
         _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
     }
+    _firmwarePlugin->checkIfIsLatestStable(this);
     emit gitHashChanged(_gitHash);
 
     _setCapabilities(autopilotVersion.capabilities);
