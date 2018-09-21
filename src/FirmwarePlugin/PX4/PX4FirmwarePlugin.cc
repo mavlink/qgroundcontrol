@@ -22,6 +22,7 @@
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
 #include "QGCCameraManager.h"
+#include "QGCFileDownload.h"
 
 #include <QDebug>
 
@@ -596,4 +597,13 @@ uint32_t PX4FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
     px4_cm.custom_mode_hl = hlCustomMode;
 
     return px4_cm.data;
+}
+
+QString PX4FirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle){
+    Q_UNUSED(vehicle);
+    return QStringLiteral("https://api.github.com/repos/PX4/Firmware/releases");
+}
+
+QString PX4FirmwarePlugin::_versionRegex() {
+    return QStringLiteral("v([0-9,\\.]*) Stable");
 }
