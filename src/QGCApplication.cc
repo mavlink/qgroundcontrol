@@ -158,9 +158,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _logOutput            (false)
     , _fakeMobile           (false)
     , _settingsUpgraded     (false)
-#ifdef QT_DEBUG
-    , _testHighDPI          (false)
-#endif
     , _toolbox              (nullptr)
     , _bluetoothAvailable   (false)
 {
@@ -239,9 +236,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         { "--logging",          &logging,               &loggingOptions },
         { "--fake-mobile",      &_fakeMobile,           nullptr },
         { "--log-output",       &_logOutput,            nullptr },
-    #ifdef QT_DEBUG
-        { "--test-high-dpi",    &_testHighDPI,          nullptr },
-    #endif
         // Add additional command line option flags here
     };
 
