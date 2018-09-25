@@ -5,7 +5,7 @@ Note: This file only contains high level features or important fixes.
 ## 3.4
 
 ### 3.4.4 - Not yet released
-* 
+* Multi-Vehicle Start Mission and Pause now work correctly. Issue #6864.
 
 ### 3.4.3
 * Fix bug where Resume Mission would not display correctly in some cases. Issue #6835.
