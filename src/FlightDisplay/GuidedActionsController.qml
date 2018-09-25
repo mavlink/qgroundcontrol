@@ -40,10 +40,12 @@ Item {
     readonly property string takeoffTitle:                  qsTr("Takeoff")
     readonly property string landTitle:                     qsTr("Land")
     readonly property string startMissionTitle:             qsTr("Start Mission")
+    readonly property string mvStartMissionTitle:           qsTr("Start Mission (MV)")
     readonly property string continueMissionTitle:          qsTr("Continue Mission")
     readonly property string resumeMissionTitle:            qsTr("Resume Mission")
     readonly property string resumeMissionUploadFailTitle:  qsTr("Resume FAILED")
     readonly property string pauseTitle:                    qsTr("Pause")
+    readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
     readonly property string changeAltTitle:                qsTr("Change Altitude")
     readonly property string orbitTitle:                    qsTr("Orbit")
     readonly property string landAbortTitle:                qsTr("Land Abort")
@@ -247,7 +249,7 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showStartMission })
             break;
         case actionMVStartMission:
-            confirmDialog.title = startMissionTitle
+            confirmDialog.title = mvStartMissionTitle
             confirmDialog.message = startMissionMessage
             confirmDialog.hideTrigger = true
             break;
@@ -319,7 +321,7 @@ Item {
             altitudeSlider.visible = true
             break;
         case actionMVPause:
-            confirmDialog.title = pauseTitle
+            confirmDialog.title = mvPauseTitle
             confirmDialog.message = mvPauseMessage
             confirmDialog.hideTrigger = true
             break;
