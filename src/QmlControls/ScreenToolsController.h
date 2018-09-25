@@ -32,7 +32,6 @@ public:
     Q_PROPERTY(bool     isAndroid           READ isAndroid       CONSTANT)
     Q_PROPERTY(bool     isiOS               READ isiOS           CONSTANT)
     Q_PROPERTY(bool     isMobile            READ isMobile        CONSTANT)
-    Q_PROPERTY(bool     testHighDPI         READ testHighDPI     CONSTANT)
     Q_PROPERTY(bool     isDebug             READ isDebug         CONSTANT)
     Q_PROPERTY(bool     isMacOS             READ isMacOS         CONSTANT)
     Q_PROPERTY(bool     isLinux             READ isLinux         CONSTANT)
@@ -89,11 +88,9 @@ public:
 #endif
 
 #ifdef QT_DEBUG
-    bool testHighDPI            () { return qgcApp()->testHighDPI(); }
     bool isDebug                () { return true; }
 #else
     bool isDebug                () { return false; }
-    bool testHighDPI            () { return false; }
 #endif
 
     QString  iOSDevice          () const;
