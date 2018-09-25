@@ -269,7 +269,7 @@ bool LogReplayLink::_loadLogFile(void)
         // timestamp size. This guarantees that we will hit a MAVLink packet before
         // the end of the file. Unfortunately, it basically guarantees that we will
         // hit more than one. This is why we have to search for a bit.
-        qint64 fileLoc = _logFile.size() - MAVLINK_MAX_PACKET_LEN - cbTimestamp;
+        qint64 fileLoc = _logFile.size() - ((MAVLINK_MAX_PACKET_LEN - cbTimestamp) * 2);
         _logFile.seek(fileLoc);
         quint64 endTimeUSecs = startTimeUSecs; // Set a sane default for the endtime
         mavlink_message_t msg;
