@@ -17,7 +17,6 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FlightMap     1.0
 import QGroundControl.Palette       1.0
 
-/// Instrument panel shown when virtual thumbsticks are visible
 Rectangle {
     id:             root
     width:          getPreferredInstrumentWidth()
@@ -39,6 +38,11 @@ Rectangle {
     property real   _topBottomMargin:   (width * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (root.height + _valuesItem.anchors.topMargin)
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
+
+    // Prevent all clicks from going through to lower layers
+    DeadMouseArea {
+        anchors.fill: parent
+    }
 
     QGCPalette { id: qgcPal }
 
@@ -67,6 +71,11 @@ Rectangle {
         width:              parent.width
         height:             _valuesWidget.height
         visible:            widgetRoot.showValues
+
+        // Prevent all clicks from going through to lower layers
+        DeadMouseArea {
+            anchors.fill: parent
+        }
 
         Rectangle {
             anchors.fill:   _valuesWidget
