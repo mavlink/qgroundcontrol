@@ -2854,6 +2854,36 @@ but also ignore less noise</short_desc>
     </parameter>
   </group>
   <group name="GPS">
+    <parameter default="201" name="GPS_1_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for Main GPS</short_desc>
+      <long_desc>Configure on which serial port to run Main GPS.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="GPS_2_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for Secondary GPS</short_desc>
+      <long_desc>Configure on which serial port to run Secondary GPS.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
     <parameter default="0" name="GPS_DUMP_COMM" type="INT32">
       <short_desc>Dump GPS communication to a file</short_desc>
       <long_desc>If this is set to 1, all GPS communication data will be published via uORB, and written to the log file as gps_dump message.</long_desc>
@@ -2886,19 +2916,6 @@ but also ignore less noise</short_desc>
       <unit>deg</unit>
       <decimal>0</decimal>
       <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter default="0" name="SER_GPS1_BAUD" type="INT32">
-      <short_desc>GPS Baudrate</short_desc>
-      <long_desc>Configure the Baudrate for the GPS Serial Port. In most cases this can be set to Auto. The Trimble MB-Two GPS does not support auto-detection and uses a baudrate of 115200.</long_desc>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Auto</value>
-        <value code="9600">9600 8N1</value>
-        <value code="19200">19200 8N1</value>
-        <value code="38400">38400 8N1</value>
-        <value code="57600">57600 8N1</value>
-        <value code="115200">115200 8N1</value>
-      </values>
     </parameter>
   </group>
   <group name="GPS Failure Navigation">
@@ -2998,6 +3015,21 @@ but also ignore less noise</short_desc>
     </parameter>
   </group>
   <group name="Iridium SBD">
+    <parameter default="0" name="ISBD_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for Iridium (with MAVLink)</short_desc>
+      <long_desc>Configure on which serial port to run Iridium (with MAVLink).</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
     <parameter default="0" name="ISBD_READ_INT" type="INT32">
       <short_desc>Satellite radio read interval. Only required to be nonzero if data is not sent using a ring call</short_desc>
       <min>0</min>
@@ -3452,6 +3484,135 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
   </group>
   <group name="MAVLink">
+    <parameter default="101" name="MAV_0_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for MAVLink (instance 0)</short_desc>
+      <long_desc>Configure on which serial port to run MAVLink.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="1" name="MAV_0_FORWARD" type="INT32">
+      <short_desc>Enable MAVLink Message forwarding for instance 0</short_desc>
+      <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
+      <boolean />
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="MAV_0_MODE" type="INT32">
+      <short_desc>MAVLink Mode for instance 0</short_desc>
+      <long_desc>The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Normal</value>
+        <value code="1">Custom</value>
+        <value code="2">Onboard</value>
+        <value code="3">OSD</value>
+        <value code="4">Magic</value>
+        <value code="5">Config</value>
+        <value code="6">Iridium</value>
+        <value code="7">Minimal</value>
+      </values>
+    </parameter>
+    <parameter default="1200" name="MAV_0_RATE" type="INT32">
+      <short_desc>Maximum MAVLink sending rate for instance 0</short_desc>
+      <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0, a value of &lt;baudrate&gt;/20 is used, which corresponds to half of the theoretical maximum bandwidth.</long_desc>
+      <min>0</min>
+      <unit>B/s</unit>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="MAV_1_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for MAVLink (instance 1)</short_desc>
+      <long_desc>Configure on which serial port to run MAVLink.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="MAV_1_FORWARD" type="INT32">
+      <short_desc>Enable MAVLink Message forwarding for instance 1</short_desc>
+      <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
+      <boolean />
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="2" name="MAV_1_MODE" type="INT32">
+      <short_desc>MAVLink Mode for instance 1</short_desc>
+      <long_desc>The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Normal</value>
+        <value code="1">Custom</value>
+        <value code="2">Onboard</value>
+        <value code="3">OSD</value>
+        <value code="4">Magic</value>
+        <value code="5">Config</value>
+        <value code="6">Iridium</value>
+        <value code="7">Minimal</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="MAV_1_RATE" type="INT32">
+      <short_desc>Maximum MAVLink sending rate for instance 1</short_desc>
+      <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0, a value of &lt;baudrate&gt;/20 is used, which corresponds to half of the theoretical maximum bandwidth.</long_desc>
+      <min>0</min>
+      <unit>B/s</unit>
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="MAV_2_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for MAVLink (instance 2)</short_desc>
+      <long_desc>Configure on which serial port to run MAVLink.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="MAV_2_FORWARD" type="INT32">
+      <short_desc>Enable MAVLink Message forwarding for instance 2</short_desc>
+      <long_desc>If enabled, forward incoming MAVLink messages to other MAVLink ports if the message is either broadcast or the target is not the autopilot. This allows for example a GCS to talk to a camera that is connected to the autopilot via MAVLink (on a different link than the GCS).</long_desc>
+      <boolean />
+      <reboot_required>True</reboot_required>
+    </parameter>
+    <parameter default="0" name="MAV_2_MODE" type="INT32">
+      <short_desc>MAVLink Mode for instance 2</short_desc>
+      <long_desc>The MAVLink Mode defines the set of streamed messages (for example the vehicle's attitude) and their sending rates.</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">Normal</value>
+        <value code="1">Custom</value>
+        <value code="2">Onboard</value>
+        <value code="3">OSD</value>
+        <value code="4">Magic</value>
+        <value code="5">Config</value>
+        <value code="6">Iridium</value>
+        <value code="7">Minimal</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="MAV_2_RATE" type="INT32">
+      <short_desc>Maximum MAVLink sending rate for instance 2</short_desc>
+      <long_desc>Configure the maximum sending rate for the MAVLink streams in Bytes/sec. If the configured streams exceed the maximum rate, the sending rate of each stream is automatically decreased. If this is set to 0, a value of &lt;baudrate&gt;/20 is used, which corresponds to half of the theoretical maximum bandwidth.</long_desc>
+      <min>0</min>
+      <unit>B/s</unit>
+      <reboot_required>True</reboot_required>
+    </parameter>
     <parameter default="0" name="MAV_BROADCAST" type="INT32">
       <short_desc>Broadcast heartbeats on local network</short_desc>
       <long_desc>This allows a ground control station to automatically find the drone on the local network.</long_desc>
@@ -5684,6 +5845,38 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     <parameter default="1" name="RC_RECEIVER_TYPE" type="INT32">
       <short_desc>RC receiver type</short_desc>
       <long_desc>Acceptable values: - RC_RECEIVER_SPEKTRUM = 1, - RC_RECEIVER_LEMONRX = 2,</long_desc>
+    </parameter>
+  </group>
+  <group name="RTPS">
+    <parameter default="0" name="RTPS_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for FastRTPS</short_desc>
+      <long_desc>Configure on which serial port to run FastRTPS.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="RTPS_MAV_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for MAVLink + FastRTPS</short_desc>
+      <long_desc>Configure on which serial port to run MAVLink + FastRTPS.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
     </parameter>
   </group>
   <group name="Radio Calibration">
@@ -8014,11 +8207,6 @@ is less than 50% of this value</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
       <unit>deg</unit>
     </parameter>
-    <parameter default="0" name="SENS_EN_LEDDAR1" type="INT32">
-      <short_desc>LeddarOne rangefinder</short_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
       <short_desc>Lidar-Lite (LL40LS)</short_desc>
       <min>0</min>
@@ -8040,13 +8228,10 @@ is less than 50% of this value</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter default="0" name="SENS_EN_SF0X" type="INT32">
-      <short_desc>Lightware laser rangefinder (serial)</short_desc>
-      <min>0</min>
-      <max>4</max>
+    <parameter default="1" name="SENS_EN_SF0X" type="INT32">
+      <short_desc>Lightware Laser Rangefinder hardware model</short_desc>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="0">Disabled</value>
         <value code="1">SF02</value>
         <value code="2">SF10/a</value>
         <value code="3">SF10/b</value>
@@ -8067,11 +8252,6 @@ is less than 50% of this value</short_desc>
         <value code="4">SF11/c</value>
         <value code="5">SF/LW20</value>
       </values>
-    </parameter>
-    <parameter default="0" name="SENS_EN_TFMINI" type="INT32">
-      <short_desc>Benewake TFmini laser rangefinder</short_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
       <short_desc>Thermal control of sensor temperature</short_desc>
@@ -8136,8 +8316,286 @@ is less than 50% of this value</short_desc>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
+    <parameter default="0" name="SENS_LEDDAR1_CFG" type="INT32">
+      <short_desc>Serial Configuration for LeddarOne Rangefinder</short_desc>
+      <long_desc>Configure on which serial port to run LeddarOne Rangefinder.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_SF0X_CFG" type="INT32">
+      <short_desc>Serial Configuration for Lightware Laser Rangefinder</short_desc>
+      <long_desc>Configure on which serial port to run Lightware Laser Rangefinder.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
     <parameter default="1442826" name="SENS_TEMP_ID" type="INT32">
       <short_desc>Target IMU device ID to regulate temperature</short_desc>
+    </parameter>
+    <parameter default="0" name="SENS_TFMINI_CFG" type="INT32">
+      <short_desc>Serial Configuration for Benewake TFmini Rangefinder</short_desc>
+      <long_desc>Configure on which serial port to run Benewake TFmini Rangefinder.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="Serial">
+    <parameter default="0" name="SER_GPS1_BAUD" type="INT32">
+      <short_desc>Baudrate for the GPS 1 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the GPS 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SER_GPS2_BAUD" type="INT32">
+      <short_desc>Baudrate for the GPS 2 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the GPS 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="57600" name="SER_TEL1_BAUD" type="INT32">
+      <short_desc>Baudrate for the TELEM 1 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the TELEM 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="921600" name="SER_TEL2_BAUD" type="INT32">
+      <short_desc>Baudrate for the TELEM 2 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the TELEM 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="57600" name="SER_TEL3_BAUD" type="INT32">
+      <short_desc>Baudrate for the TELEM 3 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the TELEM 3 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="57600" name="SER_TEL4_BAUD" type="INT32">
+      <short_desc>Baudrate for the TELEM/SERIAL 4 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the TELEM/SERIAL 4 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="57600" name="SER_URT6_BAUD" type="INT32">
+      <short_desc>Baudrate for the UART 6 Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the UART 6 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
     </parameter>
   </group>
   <group name="Snapdragon UART ESC">
@@ -8258,9 +8716,9 @@ is less than 50% of this value</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>deg C</unit>
     </parameter>
-    <parameter default="157600" name="SYS_COMPANION" type="INT32">
-      <short_desc>TELEM2 as companion computer link</short_desc>
-      <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Configures the baud rate of the TELEM2 connector as companion computer interface.</long_desc>
+    <parameter default="0" name="SYS_COMPANION" type="INT32">
+      <short_desc>TELEM2 as companion computer link (deprecated)</short_desc>
+      <long_desc>This parameter is deprecated. Do not change it, use the more generic serial configuration parameters instead.</long_desc>
       <min>0</min>
       <max>6460800</max>
       <reboot_required>true</reboot_required>
@@ -8348,6 +8806,38 @@ is less than 50% of this value</short_desc>
       <max>1</max>
       <boolean />
       <reboot_required>true</reboot_required>
+    </parameter>
+  </group>
+  <group name="Telemetry">
+    <parameter default="0" name="TEL_FRSKY_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for FrSky Telemetry</short_desc>
+      <long_desc>Configure on which serial port to run FrSky Telemetry.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="TEL_HOTT_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for HoTT Telemetry</short_desc>
+      <long_desc>Configure on which serial port to run HoTT Telemetry.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
     </parameter>
   </group>
   <group name="Testing">
