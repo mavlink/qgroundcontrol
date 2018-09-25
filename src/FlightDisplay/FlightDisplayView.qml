@@ -470,13 +470,14 @@ QGCView {
         }
 
         MultiVehicleList {
-            anchors.margins:    _margins
-            anchors.top:        singleMultiSelector.bottom
-            anchors.right:      parent.right
-            anchors.bottom:     parent.bottom
-            width:              ScreenTools.defaultFontPixelWidth * 30
-            visible:            !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
-            z:                  _panel.z + 4
+            anchors.margins:            _margins
+            anchors.top:                singleMultiSelector.bottom
+            anchors.right:              parent.right
+            anchors.bottom:             parent.bottom
+            width:                      ScreenTools.defaultFontPixelWidth * 30
+            visible:                    !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
+            z:                          _panel.z + 4
+            guidedActionsController:    _guidedController
         }
 
         //-- Virtual Joystick
