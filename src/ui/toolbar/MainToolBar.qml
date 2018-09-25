@@ -62,6 +62,11 @@ Rectangle {
         flyButton.checked = true
     }
 
+    // Prevent all clicks from going through to lower layers
+    DeadMouseArea {
+        anchors.fill: parent
+    }
+
     /// Bottom single pixel divider
     Rectangle {
         anchors.left:   parent.left
