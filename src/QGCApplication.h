@@ -85,10 +85,6 @@ public:
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) { return _fakeMobile; }
 
-#ifdef QT_DEBUG
-    bool testHighDPI(void) { return _testHighDPI; }
-#endif
-
     // Still working on getting rid of this and using dependency injection instead for everything
     QGCToolbox* toolbox(void) { return _toolbox; }
 
@@ -170,10 +166,6 @@ private:
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
     bool				_fakeMobile;                                        ///< true: Fake ui into displaying mobile interface
     bool                _settingsUpgraded;                                  ///< true: Settings format has been upgrade to new version
-
-#ifdef QT_DEBUG
-    bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
-#endif
 
     QGCToolbox* _toolbox;
 
