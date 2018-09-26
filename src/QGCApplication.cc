@@ -722,6 +722,9 @@ void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString
 {
     Q_UNUSED(remoteFile);
 
+#ifdef __mobile__
+    Q_UNUSED(localFile);
+#else
     QFile versionFile(localFile);
     if (versionFile.open(QIODevice::ReadOnly)) {
         QTextStream textStream(&versionFile);
@@ -740,6 +743,7 @@ void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString
     }
 
     _currentVersionDownload->deleteLater();
+#endif
 }
 
 void QGCApplication::_currentVersionDownloadError(QString errorMsg)
