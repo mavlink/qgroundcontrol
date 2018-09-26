@@ -4,7 +4,8 @@ Note: This file only contains high level features or important fixes.
 
 ## 3.4
 
-### 3.4.4 - Not yet released
+### 3.4.4
+* Stable desktop versions now inform user at boot if newer version is available.
 * Multi-Vehicle Start Mission and Pause now work correctly. Issue #6864.
 
 ### 3.4.3
