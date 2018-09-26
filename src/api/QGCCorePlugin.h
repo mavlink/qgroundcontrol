@@ -112,6 +112,17 @@ public:
     /// should derive from QmlComponentInfo and set the url property.
     virtual QmlObjectListModel* customMapItems(void);
 
+    /// Returns the url to download the stable version check file. Return QString() to indicate no version check should be performed.
+    /// Default implemenentation returns QGC Stable file location. Custom builds must override to turn off or provide their own location.
+    /// The contents of this file should be a single line in the form:
+    ///     v3.4.4
+    /// This indicates the latest stable version number.
+    virtual QString stableVersionCheckFileUrl(void) { return QString("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt"); }
+
+    /// Returns the user visible url to show user where to download new stable builds from.
+    /// Custom builds must override to provide their own location.
+    virtual QString stableDownloadLocation(void) { return QString("qgroundcontrol.com"); }
+
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
