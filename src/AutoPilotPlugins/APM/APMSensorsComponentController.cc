@@ -102,7 +102,7 @@ void APMSensorsComponentController::_startLogCalibration(void)
 {
     _hideAllCalAreas();
     
-    connect(_uas, &UASInterface::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
+    connect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
     emit setAllCalButtonsEnabled(false);
     if (_calTypeInProgress == CalTypeAccel || _calTypeInProgress == CalTypeCompassMot) {
@@ -152,7 +152,7 @@ void APMSensorsComponentController::_stopCalibration(APMSensorsComponentControll
 {
     _vehicle->setConnectionLostEnabled(true);
 
-    disconnect(_uas, &UASInterface::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
+    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &APMSensorsComponentController::_handleUASTextMessage);
     
     emit setAllCalButtonsEnabled(true);
     _nextButton->setEnabled(false);
