@@ -829,7 +829,7 @@ void Vehicle::_handleStatusText(mavlink_message_t& message)
 
     bool skipSpoken = false;
     bool ardupilotPrearm = messageText.startsWith(QStringLiteral("PreArm"));
-    bool px4Prearm = messageText.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && severity == MAV_SEVERITY_CRITICAL;
+    bool px4Prearm = messageText.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && severity >= MAV_SEVERITY_CRITICAL;
     if (ardupilotPrearm || px4Prearm) {
         // Limit repeated PreArm message to once every 10 seconds
         if (_noisySpokenPrearmMap.contains(messageText) && _noisySpokenPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
