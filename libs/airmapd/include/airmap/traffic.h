@@ -60,6 +60,7 @@ class Traffic : DoNotCopyOrMove {
     /// Subscriber abstracts handling of batches of Update instances.
     class Subscriber {
      public:
+     virtual ~Subscriber() = default;
       /// handle_update is invoked when a new batch of Update instances
       /// is available.
       virtual void handle_update(Update::Type type, const std::vector<Update>& update) = 0;
