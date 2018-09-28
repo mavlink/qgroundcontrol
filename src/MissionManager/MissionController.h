@@ -225,12 +225,13 @@ private slots:
     void _visualItemsDirtyChanged(bool dirty);
     void _managerSendComplete(bool error);
     void _managerRemoveAllComplete(bool error);
+    void _recalcAll(void);
 
 private:
     void _init(void);
     void _recalcSequence(void);
     void _recalcChildItems(void);
-    void _recalcAll(void);
+    void _recalcAllWithClickCoordinate(QGeoCoordinate& clickCoordinate);
     void _initAllVisualItems(void);
     void _deinitAllVisualItems(void);
     void _initVisualItem(VisualMissionItem* item);
@@ -249,7 +250,7 @@ private:
     int _nextSequenceNumber(void);
     void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
     static bool _convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
-    void _setPlannedHomePositionFromFirstCoordinate(void);
+    void _setPlannedHomePositionFromFirstCoordinate(const QGeoCoordinate& clickCoordinate);
     void _resetMissionFlightStatus(void);
     void _addHoverTime(double hoverTime, double hoverDistance, int waypointIndex);
     void _addCruiseTime(double cruiseTime, double cruiseDistance, int wayPointIndex);
