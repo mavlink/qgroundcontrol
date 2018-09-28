@@ -2219,7 +2219,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="520"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="520"/>
       <source>Pressure calibration will set the %1 to zero at the current pressure reading. %2</source>
-      <translation>压力校正会在现行的压力读数%2之下将%1设置为0，</translation>
+      <translation>压力校正会在现行的压力读数之下将 %1 设置为0。%2</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="521"/>
@@ -3039,7 +3039,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="109"/>
       <source>Command failed: 0x%1 (%2)</source>
-      <translation>命令失败：%1</translation>
+      <translation>命令失败：0x%1 (%2)</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="137"/>
@@ -3083,8 +3083,8 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="282"/>
-      <source>Unable to set flash start address: 0x%2</source>
-      <translation>无法设置闪存开始地址: 0x%2</translation>
+      <source>Unable to set flash start address: 0x%1</source>
+      <translation>无法设置闪存开始地址: 0x%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="400"/>
@@ -3096,22 +3096,22 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <location filename="../src/VehicleSetup/Bootloader.cc" line="406"/>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="493"/>
       <source>Compare failed: expected(0x%1) actual(0x%2) at address: 0x%3</source>
-      <translation>对比失败: 预期 (0 x%1) 实际 (0 x%2) 地址: 0x%3</translation>
+      <translation>对比失败: 预期 (0x%1) 实际 (0x%2) 地址: 0x%3</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="454"/>
-      <source>Unable to set read start address: 0x%2</source>
-      <translation>无法设置闪存开始地址: 0x%2</translation>
+      <source>Unable to set read start address: 0x%1</source>
+      <translation>无法设置闪存开始地址: 0x%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="529"/>
       <source>CRC mismatch: board(0x%1) file(0x%2)</source>
-      <translation>CRC 不匹配: 主板 (0 x%1) 文件 (0 x%2)</translation>
+      <translation>CRC 不匹配: 主板 (0x%1) 文件 (0x%2)</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="548"/>
       <source>Open failed on port %1: %2</source>
-      <translation>在端口 %1上打开失败: %2</translation>
+      <translation>在端口 %1 上打开失败: %2</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="573"/>
@@ -4221,7 +4221,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <location filename="../src/FactSystem/FactMetaData.cc" line="447"/>
       <location filename="../src/FactSystem/FactMetaData.cc" line="456"/>
       <source>Value must be within %1 and %2</source>
-      <translation>这个值必须处于 %1 与%2之间</translation>
+      <translation>这个值必须处于 %1 与 %2 之间</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/FactMetaData.cc" line="394"/>
@@ -4235,7 +4235,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/FactSystem/FactControls/FactPanel.qml" line="57"/>
       <source>Parameters(s) missing: %1</source>
-      <translation>参数缺失： %1</translation>
+      <translation>参数缺失：%1</translation>
     </message>
   </context>
   <context>
@@ -4764,7 +4764,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgradeController.cc" line="172"/>
       <source>  Version: %1</source>
-      <translation>  版本： %1</translation>
+      <translation>  版本：%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgradeController.cc" line="173"/>
@@ -4774,7 +4774,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgradeController.cc" line="174"/>
       <source>  Flash size: %1</source>
-      <translation>  闪存大小： %1</translation>
+      <translation>  闪存大小：%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgradeController.cc" line="504"/>
@@ -4809,7 +4809,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgradeController.cc" line="535"/>
       <source> From: %1</source>
-      <translation> 来自： %1</translation>
+      <translation> 来自：%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/FirmwareUpgradeController.cc" line="558"/>
@@ -5242,7 +5242,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="302"/>
       <source>All saved settings will be reset the next time you start %1. Is this really what you want?</source>
-      <translation>所有设置将在下次启动时被复位%1。你真想这样吗？</translation>
+      <translation>所有设置将在下次启动时被复位 %1 。你真想这样吗？</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="319"/>
@@ -5253,6 +5253,26 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="340"/>
       <source>Default Mission Altitude</source>
       <translation>默认任务高度：</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="351"/>
+      <source>Unactivated Vehicles Trajectory Points Opacity</source>
+      <translation>非激活状态飞行器的航迹透明度</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="362"/>
+      <source>Unactivated Vehicles Icon Opacity</source>
+      <translation>非激活状态飞行器的图标透明度</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="373"/>
+      <source>Trajectory Points Color for Vehicles:</source>
+      <translation>飞行器的航迹颜色</translation>
+    </message>
+    <message>
+      <location filename="../src/ui/preferences/GeneralSettings.qml" line="407"/>
+      <source>Icon Color for Vehicles:</source>
+      <translation>飞行器的图标颜色</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="359"/>
@@ -5365,7 +5385,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="747"/>
       <source>%1 Version</source>
-      <translation>版本</translation>
+      <translation>%1 版本</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/GeneralSettings.qml" line="274"/>
@@ -5548,7 +5568,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/MissionManager/GeoFenceManager.cc" line="174"/>
       <source>GeoFence load: Unsupported command %1</source>
-      <translation>地理围栏加载：不支持的命令%1</translation>
+      <translation>地理围栏加载：不支持的命令 %1</translation>
     </message>
   </context>
   <context>
@@ -5699,7 +5719,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/AnalyzeView/GeoTagController.cc" line="232"/>
       <source>%1 - tagging cancelled</source>
-      <translation>取消标记</translation>
+      <translation>%1 - 取消标记</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/GeoTagController.cc" line="232"/>
@@ -5878,7 +5898,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="60"/>
       <source>Resume the current mission. This will re-generate the mission from waypoint %1, takeoff and continue the mission.</source>
-      <translation>继续当前任务。这将从%1航点开始从新生成任务，起飞并继续任务</translation>
+      <translation>继续当前任务。这将从 %1 航点开始从新生成任务，起飞并继续任务</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/GuidedActionsController.qml" line="61"/>
@@ -6123,12 +6143,12 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/JoystickConfig.qml" line="521"/>
       <source>Joystick mode:</source>
-      <translation>遥控器模式 %s</translation>
+      <translation>遥控器模式：</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfig.qml" line="539"/>
       <source>Message frequency (Hz):</source>
-      <translation>消息频率 (Hz):</translation>
+      <translation>消息频率 (Hz)：</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/JoystickConfig.qml" line="559"/>
@@ -6449,7 +6469,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/ui/linechart/LinechartWidget.cc" line="540"/>
       <location filename="../src/ui/linechart/LinechartWidget.cc" line="541"/>
       <source>Current value of %1 in %2 units</source>
-      <translation>以%2单位显示的电流值%1</translation>
+      <translation>以 %2 单位显示的电流值 %1</translation>
     </message>
     <message>
       <location filename="../src/ui/linechart/LinechartWidget.cc" line="548"/>
@@ -6467,7 +6487,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/ui/linechart/LinechartWidget.cc" line="574"/>
       <location filename="../src/ui/linechart/LinechartWidget.cc" line="575"/>
       <source>Variance of %1 in (%2)^2 units</source>
-      <translation>%1的方差%2个单位</translation>
+      <translation>%1 的方差 (%2)^2 个单位</translation>
     </message>
   </context>
   <context>
@@ -6507,7 +6527,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/comm/LinkManager.cc" line="931"/>
       <source>Your Vehicle is not responding. If this continues, shutdown %1, restart the Vehicle letting it boot completely, then start %1.</source>
-      <translation>你的飞机没有回应，如果一直有这个问题，请将%1关机，重启并等它完全启动后，再试%1</translation>
+      <translation>你的飞机没有回应，如果一直有这个问题，请将 %1 关机，重启并等它完全启动后，再试 %1</translation>
     </message>
   </context>
   <context>
@@ -6525,7 +6545,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="100"/>
       <source>Remove %1. Is this really what you want?</source>
-      <translation>移除%1。你真想这么干吗？</translation>
+      <translation>移除 %1。你真想这么干吗？</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/LinkSettings.qml" line="112"/>
@@ -6583,12 +6603,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/LogCompressor.cc" line="50"/>
       <source>Log Compressor: Cannot start/compress log file, since input file %1 is not readable</source>
-      <translation>日志压缩器：因为输入文件%1不可读，所以无法打开/压缩日志文件</translation>
+      <translation>日志压缩器：因为输入文件 %1 不可读，所以无法打开/压缩日志文件</translation>
     </message>
     <message>
       <location filename="../src/LogCompressor.cc" line="67"/>
       <source>Log Compressor: Cannot start/compress log file, since output file %1 is not writable</source>
-      <translation>日志压缩器：因为输入文件%1不可写，所以无法打开/压缩日志文件</translation>
+      <translation>日志压缩器：因为输入文件 %1 不可写，所以无法打开/压缩日志文件</translation>
     </message>
     <message>
       <location filename="../src/LogCompressor.cc" line="105"/>
@@ -6750,7 +6770,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/comm/LogReplayLink.cc" line="252"/>
       <source>Unable to open log file: &apos;%1&apos;, error: %2</source>
-      <translation>无法打开文件：&apos;&apos;错误%2</translation>
+      <translation>无法打开文件：&apos;%1&apos;，错误 %2</translation>
     </message>
     <message>
       <location filename="../src/comm/LogReplayLink.cc" line="282"/>
@@ -7228,7 +7248,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="220"/>
       <source>Warning: You are using MAV_FRAME_GLOBAL_TERRAIN_ALT in a mission. %1 does not support sending terrain tiles to vehicle.</source>
-      <translation>警告：你正在任务中使用MAV_FRAME_GLOBAL_TERRAIN_ALT所设置的参数，不支持现在发送新的地形数据给载具</translation>
+      <translation>警告：你正在任务中使用MAV_FRAME_GLOBAL_TERRAIN_ALT所设置的参数，%1 不支持现在发送新的地形数据给载具。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="693"/>
@@ -7248,7 +7268,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="798"/>
       <source>Could not find doJumpId: %1</source>
-      <translation>找不到跳转点id%1</translation>
+      <translation>找不到跳转点id：%1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="867"/>
@@ -7265,7 +7285,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
       <location filename="../src/MissionManager/MissionController.cc" line="926"/>
       <location filename="../src/MissionManager/MissionController.cc" line="950"/>
       <source>Mission: %1</source>
-      <translation>任务： </translation>
+      <translation>任务：%1</translation>
     </message>
   </context>
   <context>
@@ -7626,7 +7646,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/Vehicle/MultiVehicleManager.cc" line="126"/>
       <source>Warning: A vehicle is using the same system id as %1: %2</source>
-      <translation>警告：已经有一架飞机用了同样的系统ID%1：%2</translation>
+      <translation>警告：已经有一架飞机用了同样的系统ID %1：%2</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/MultiVehicleManager.cc" line="144"/>
@@ -7688,7 +7708,7 @@ Is this really what you want?</source>
       <source>Delete %1 and all its tiles.
 
 Is this really what you want?</source>
-      <translation>删除%1和所有相关的图片单元块，你真想这么干吗？</translation>
+      <translation>删除 %1 和所有相关的图片单元块，你真想这么干吗？</translation>
     </message>
     <message>
       <location filename="../src/QtLocationPlugin/QMLControl/OfflineMap.qml" line="464"/>
@@ -8258,7 +8278,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc" line="188"/>
       <source>%1 is set to %2. Threshold must between 0.0 and 1.0 (inclusive).
 </source>
-      <translation>%1 设置为 %2。映射必须介于0和 %3 之间 (包含)。
+      <translation>%1 设置为 %2。映射必须介于0和 1.0 之间 (包含)。
 </translation>
     </message>
   </context>
@@ -8360,7 +8380,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="188"/>
       <source>Unknown %1:%2</source>
-      <translation>未知 %1/%2</translation>
+      <translation>未知 %1:%2</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="405"/>
@@ -8380,7 +8400,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="564"/>
       <source>QGroundControl supports PX4 Pro firmware Version %1.%2.%3 and above. You are using a version prior to that which will lead to unpredictable results. Please upgrade your firmware.</source>
-      <translation>QGroundControl 支持 PX4 Pro 固件版本 %1。%2。%3 和以上。您使用的版本之前, 这将导致不可预知的结果。请升级固件。</translation>
+      <translation>QGroundControl 支持 PX4 Pro 固件版本 %1.%2.%3 和以上。您使用的版本之前, 这将导致不可预知的结果。请升级固件。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="427"/>
@@ -8576,7 +8596,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="102"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="102"/>
       <source>Flight Mode %1</source>
-      <translation>飞行模式:%1</translation>
+      <translation>飞行模式 %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4SimpleFlightModes.qml" line="122"/>
@@ -8802,7 +8822,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="289"/>
       <source>Parameter Files (*.%1)</source>
-      <translation>参数文件 (*。%1)</translation>
+      <translation>参数文件 (*.%1)</translation>
     </message>
     <message>
       <location filename="../src/QmlControls/ParameterEditor.qml" line="289"/>
@@ -8947,12 +8967,12 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="1149"/>
       <source>%1 was unable to retrieve the full set of parameters from vehicle %2. This will cause %1 to be unable to display its full user interface. If you are using modified firmware, you may need to resolve any vehicle startup errors to resolve the issue. If you are using standard firmware, you may need to upgrade to a newer version to resolve the issue.</source>
-      <translation>%1 无法从载具 %2检索完整的参数集。这将导致 %1 无法显示其完整的用户界面。如果使用的是修改后的固件, 则可能需要解决任何载具启动错误以解决此问题。如果使用的是标准固件, 则可能需要升级到较新的版本才能解决此问题。</translation>
+      <translation>%1 无法从载具 %2 检索完整的参数集。这将导致 %1 无法显示其完整的用户界面。如果使用的是修改后的固件, 则可能需要解决任何载具启动错误以解决此问题。如果使用的是标准固件, 则可能需要升级到较新的版本才能解决此问题。</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="1175"/>
       <source>Vehicle %1 did not respond to request for parameters. This will cause %2 to be unable to display its full user interface.</source>
-      <translation>载具%1 未响应对参数的请求。这将导致 %2 无法显示其完整的用户界面。</translation>
+      <translation>载具 %1 未响应对参数的请求。这将导致 %2 无法显示其完整的用户界面。</translation>
     </message>
     <message>
       <location filename="../src/FactSystem/ParameterManager.cc" line="1521"/>
@@ -9042,7 +9062,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="656"/>
       <source>Vehicle returned error: %1. %2Vehicle did not accept guided item.</source>
-      <translation>载具返回错误: %1。 %2载具未接受引导项目。</translation>
+      <translation>载具返回错误: %1. %2 载具未接受引导项目。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/PlanManager.cc" line="769"/>
@@ -9522,7 +9542,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FlightMap/MapItems/PolygonEditor.qml" line="178"/>
       <source>Click to add point %1</source>
-      <translation>点击以添加点%1</translation>
+      <translation>点击以添加点 %1</translation>
     </message>
     <message>
       <location filename="../src/FlightMap/MapItems/PolygonEditor.qml" line="178"/>
@@ -9565,7 +9585,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="93"/>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="93"/>
       <source>%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.</source>
-      <translation>%1此版本固件不能进行电调校准，你需要升级到一个更新的固件</translation>
+      <translation>%1 此版本固件不能进行电调校准，你需要升级到一个更新的固件</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PowerComponent.qml" line="94"/>
@@ -10073,7 +10093,7 @@ Is this really what you want?</source>
       <source>You are running %1 as root. You should not do this since it will cause other issues with %1. %1 will now exit. If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:
 sudo usermod -a -G dialout $USER
 sudo apt-get remove modemmanager</source>
-      <translation>您正在以 root 用户的状态运行 %1 。您不应该这样做, 因为它会导致 %1的其他问题。 %1 现在将退出。如果在 Ubuntu 上有串行端口问题, 请执行以下命令来修复大多数问题:
+      <translation>您正在以 root 用户的状态运行 %1 。您不应该这样做, 因为它会导致 %1 的其他问题。 %1 现在将退出。如果在 Ubuntu 上有串行端口问题, 请执行以下命令来修复大多数问题:
 sudo usermod 拨出 $USER
 sudo apt-获取删除modemmanager</translation>
     </message>
@@ -10334,7 +10354,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/comm/QGCFlightGearLink.cc" line="292"/>
       <source>Flight Gear protocol file &apos;%1&apos; is out of date. Quit %2. Delete the file and restart %2 to fix.</source>
-      <translation>FlightGear协议文件&apos;%1&apos; 已过期，退出%2删除文件并重启以修复</translation>
+      <translation>FlightGear协议文件&apos;%1&apos; 已过期，退出 %2 删除文件并重启以修复</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCFlightGearLink.cc" line="535"/>
@@ -10350,7 +10370,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/comm/QGCFlightGearLink.cc" line="731"/>
       <source>FlightGear application not found at: %1</source>
-      <translation>在%1中找不到FlightGear应用程序</translation>
+      <translation>在 %1 中找不到FlightGear应用程序</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCFlightGearLink.cc" line="735"/>
@@ -10610,7 +10630,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/comm/QGCJSBSimLink.cc" line="45"/>
       <source>JSBSim Link (port:%1)</source>
-      <translation>JSBSim连接（端口%1）</translation>
+      <translation>JSBSim连接（端口:%1）</translation>
     </message>
     <message>
       <location filename="../src/comm/QGCJSBSimLink.cc" line="109"/>
@@ -10703,7 +10723,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/ui/QGCMAVLinkInspector.cc" line="56"/>
       <source>Vehicle %1</source>
-      <translation>载具%1</translation>
+      <translation>载具 %1</translation>
     </message>
   </context>
   <context>
@@ -10962,7 +10982,7 @@ sudo apt-获取删除modemmanager</translation>
       <location filename="../src/QGCQFileDialog.cc" line="142"/>
       <source>%1 already exists.
 Do you want to replace it?</source>
-      <translation>%1已经存在。
+      <translation>%1 已经存在。
 你想要替换它么？</translation>
     </message>
     <message>
@@ -11491,7 +11511,7 @@ Errors:
       <source>Before calibrating you should zero all your trims and subtrims. Click Ok to start Calibration.
 
 %1</source>
-      <translation>在校准之前，你应该把所有的微调量设为零。单击“确定”开始校准。</translation>
+      <translation>在校准之前，你应该把所有的微调量设为零。单击“确定”开始校准。 %1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="94"/>
@@ -11506,7 +11526,7 @@ Errors:
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="107"/>
       <source>%1 channels or more are needed to fly.</source>
-      <translation>需要%1个或者更多通道以进行飞行</translation>
+      <translation>需要 %1 个或者更多通道以进行飞行</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/RadioComponent.qml" line="132"/>
@@ -11720,12 +11740,12 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/MissionManager/RallyPointController.cc" line="103"/>
       <source>Rally: %1</source>
-      <translation>集结： %1</translation>
+      <translation>集结：%1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/RallyPointController.cc" line="106"/>
       <source>Rally Points supports version %1</source>
-      <translation>集结点支持版本%1</translation>
+      <translation>集结点支持版本 %1</translation>
     </message>
   </context>
   <context>
@@ -12435,7 +12455,7 @@ Click Ok to start calibration.</source>
     <message>
       <location filename="../src/comm/SerialLink.cc" line="234"/>
       <source>Error opening port: %1</source>
-      <translation>打开%1端口时错误</translation>
+      <translation>打开 %1 端口时错误</translation>
     </message>
     <message>
       <location filename="../src/comm/SerialLink.cc" line="272"/>
@@ -12734,7 +12754,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="71"/>
       <source>WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</source>
-      <translation>警告：拍照间隔低于相机支持的最小间隔(1ms)</translation>
+      <translation>警告：拍照间隔低于相机支持的最小间隔(%1 ms)</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="80"/>
@@ -12813,7 +12833,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="133"/>
       <source>Survey items do not support version %1</source>
-      <translation>航测项目不支持版本%1</translation>
+      <translation>航测项目不支持版本 %1</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/SurveyComplexItem.cc" line="177"/>
@@ -12853,7 +12873,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="62"/>
       <source>WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.</source>
-      <translation>警告：拍照间隔低于相机支持的最小间隔(1ms)
+      <translation>警告：拍照间隔低于相机支持的最小间隔(%1 ms)
 </translation>
     </message>
     <message>
@@ -12984,12 +13004,12 @@ Abs Alt </source>
     <message>
       <location filename="../src/comm/TCPLink.cc" line="165"/>
       <source>Error on link %1. Connection failed</source>
-      <translation>链接 %1时出错。连接失败</translation>
+      <translation>链接 %1 时出错。连接失败</translation>
     </message>
     <message>
       <location filename="../src/comm/TCPLink.cc" line="179"/>
       <source>Error on link %1. Error on socket: %2.</source>
-      <translation>链接 %1时出错。套接字上的错误: %2。</translation>
+      <translation>链接 %1 时出错。套接字上的错误: %2。</translation>
     </message>
   </context>
   <context>
@@ -13440,12 +13460,12 @@ Abs Alt </source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="3147"/>
       <source>%1 command not supported</source>
-      <translation>不支持该命令</translation>
+      <translation>%1 不支持该命令</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="3150"/>
       <source>%1 command failed</source>
-      <translation>命令执行失败</translation>
+      <translation>%1 命令执行失败</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2402"/>
@@ -13455,7 +13475,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="1382"/>
       <source>%1 low battery: %2 percent remaining</source>
-      <translation>%1低电量：%2剩余百分比</translation>
+      <translation>%1 低电量：%2 剩余百分比</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2332"/>
@@ -13607,12 +13627,12 @@ Abs Alt </source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2735"/>
       <source>vehicle %1</source>
-      <translation>载具%1</translation>
+      <translation>载具 %1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2743"/>
       <source>%1 %2 flight mode</source>
-      <translation>%1%2飞行模式</translation>
+      <translation>%1 %2 飞行模式</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2749"/>
@@ -13635,7 +13655,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/FlightMap/MapItems/VehicleMapItem.qml" line="71"/>
       <source>Vehicle %1</source>
-      <translation>载具%1</translation>
+      <translation>载具 %1</translation>
     </message>
   </context>
   <context>

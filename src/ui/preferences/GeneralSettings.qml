@@ -343,6 +343,96 @@ QGCView {
                                         fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
                                     }
                                 }
+
+                                RowLayout {
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    QGroundControl.settingsManager.appSettings.unactivatedVehiclesTrajectoryPointsOpacity.visible
+
+                                    QGCLabel { text: qsTr("Unactivated Vehicles Trajectory Points Opacity") }
+                                    FactTextField {
+                                        Layout.preferredWidth:  _valueFieldWidth
+                                        fact:                   QGroundControl.settingsManager.appSettings.unactivatedVehiclesTrajectoryPointsOpacity
+                                    }
+                                }
+
+                                RowLayout {
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    QGroundControl.settingsManager.appSettings.unactivatedVehiclesIconOpacity.visible
+
+                                    QGCLabel { text: qsTr("Unactivated Vehicles Icon Opacity") }
+                                    FactTextField {
+                                        Layout.preferredWidth:  _valueFieldWidth
+                                        fact:                   QGroundControl.settingsManager.appSettings.unactivatedVehiclesIconOpacity
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    QGroundControl.settingsManager.appSettings.vehiclesTrajectoryPointsColorR.visible
+
+                                    QGCLabel { text: qsTr("Trajectory Points Color for Vehicles:") }
+
+                                    GridLayout {
+                                        rowSpacing: _margins
+                                        columnSpacing: ScreenTools.defaultFontPixelWidth
+                                        columns: 2
+
+                                        QGCLabel { text: qsTr("          red:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesTrajectoryPointsColorR
+                                        }
+                                        QGCLabel { text: qsTr("        green:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesTrajectoryPointsColorG
+                                        }
+                                        QGCLabel { text: qsTr("         blue:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesTrajectoryPointsColorB
+                                        }
+                                        QGCLabel { text: qsTr("        alpha:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesTrajectoryPointsColorA
+                                        }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    spacing:    ScreenTools.defaultFontPixelWidth
+                                    visible:    QGroundControl.settingsManager.appSettings.vehiclesIconColorR.visible
+
+                                    QGCLabel { text: qsTr("Icon Color for Vehicles:") }
+
+                                    GridLayout {
+                                        rowSpacing: _margins
+                                        columnSpacing: ScreenTools.defaultFontPixelWidth
+                                        columns: 2
+
+                                        QGCLabel { text: qsTr("          red:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesIconColorR
+                                        }
+                                        QGCLabel { text: qsTr("        green:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesIconColorG
+                                        }
+                                        QGCLabel { text: qsTr("         blue:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesIconColorB
+                                        }
+                                        QGCLabel { text: qsTr("        alpha:") }
+                                        FactTextField {
+                                            Layout.fillWidth: true
+                                            fact: QGroundControl.settingsManager.appSettings.vehiclesIconColorA
+                                        }
+                                    }
+                                }
                             }
                         }
 

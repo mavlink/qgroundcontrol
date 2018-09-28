@@ -1,0 +1,15 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib@LIB_SUFFIX@
+includedir=${prefix}/include/muparserx
+
+Name: muparserx
+Description: A mathematical expression parser library.
+URL: http://articles.beltoforion.de/article.php?a=muparserx
+Version: @MUPARSERX_VERSION@
+Requires:
+Requires.private:
+Conflicts:
+Cflags: -I${includedir}
+Libs: -L${libdir} -lmuparserx
+Libs.private:

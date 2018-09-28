@@ -15,6 +15,10 @@
 #include <QtQml>
 #include <QStandardPaths>
 
+#include <mpParser.h>
+
+QGC_LOGGING_CATEGORY(AppSettingsLog, "AppSettingsLog")
+
 const char* AppSettings::name =                                         "App";
 const char* AppSettings::settingsGroup =                                ""; // settings are in root group
 
@@ -26,6 +30,16 @@ const char* AppSettings::offlineEditingAscentSpeedSettingsName =        "Offline
 const char* AppSettings::offlineEditingDescentSpeedSettingsName =       "OfflineEditingDescentSpeed";
 const char* AppSettings::batteryPercentRemainingAnnounceSettingsName =  "batteryPercentRemainingAnnounce";
 const char* AppSettings::defaultMissionItemAltitudeSettingsName =       "DefaultMissionItemAltitude";
+const char* AppSettings::unactivatedVehiclesTrajectoryPointsOpacitySettingsName = "UnactivatedVehiclesTrajectoryPointsOpacity";
+const char* AppSettings::unactivatedVehiclesIconOpacitySettingsName =   "UnactivatedVehiclesIconOpacity";
+const char* AppSettings::vehiclesTrajectoryPointsColorRSettingsName =   "VehiclesTrajectoryPointsColorR";
+const char* AppSettings::vehiclesTrajectoryPointsColorGSettingsName =   "VehiclesTrajectoryPointsColorG";
+const char* AppSettings::vehiclesTrajectoryPointsColorBSettingsName =   "VehiclesTrajectoryPointsColorB";
+const char* AppSettings::vehiclesTrajectoryPointsColorASettingsName =   "VehiclesTrajectoryPointsColorA";
+const char* AppSettings::vehiclesIconColorRSettingsName =               "VehiclesIconColorR";
+const char* AppSettings::vehiclesIconColorGSettingsName =               "VehiclesIconColorG";
+const char* AppSettings::vehiclesIconColorBSettingsName =               "VehiclesIconColorB";
+const char* AppSettings::vehiclesIconColorASettingsName =               "VehiclesIconColorA";
 const char* AppSettings::telemetrySaveName =                            "PromptFLightDataSave";
 const char* AppSettings::telemetrySaveNotArmedName =                    "PromptFLightDataSaveNotArmed";
 const char* AppSettings::audioMutedName =                               "AudioMuted";
@@ -69,6 +83,16 @@ AppSettings::AppSettings(QObject* parent)
     , _offlineEditingDescentSpeedFact       (NULL)
     , _batteryPercentRemainingAnnounceFact  (NULL)
     , _defaultMissionItemAltitudeFact       (NULL)
+    , _unactivatedVehiclesTrajectoryPointsOpacityFact (NULL)
+    , _unactivatedVehiclesIconOpacityFact   (NULL)
+    , _vehiclesTrajectoryPointsColorRFact   (NULL)
+    , _vehiclesTrajectoryPointsColorGFact   (NULL)
+    , _vehiclesTrajectoryPointsColorBFact   (NULL)
+    , _vehiclesTrajectoryPointsColorAFact   (NULL)
+    , _vehiclesIconColorRFact               (NULL)
+    , _vehiclesIconColorGFact               (NULL)
+    , _vehiclesIconColorBFact               (NULL)
+    , _vehiclesIconColorAFact               (NULL)
     , _telemetrySaveFact                    (NULL)
     , _telemetrySaveNotArmedFact            (NULL)
     , _audioMutedFact                       (NULL)
@@ -111,6 +135,82 @@ AppSettings::AppSettings(QObject* parent)
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
 
     _checkSavePathDirectories();
+}
+
+QColor parseColor(Vehicle *vehicle, const QString &rString, const QString &gString, const QString &bString, const QString &aString)
+{
+    int r = 255, g = 0, b = 0, a = 255;
+
+    if (!vehicle)
+    {
+        return QColor(r, g, b, a);
+    }
+
+    MultiVehicleManager *multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
+
+    int vehicleId = vehicle->id();
+    int vehicleCount = multiVehicleManager->vehicles()->count();
+    bool isActivatedVehicle = vehicle->active();
+
+    try
+    {
+        mup::ParserX parser;
+        mup::Value vehicle_id(vehicleId);
+        parser.DefineVar(_T("vehicle_id"), mup::Variable(&vehicle_id));
+        mup::Value vehicle_count(vehicleCount);
+        parser.DefineVar(_T("vehicle_count"), mup::Variable(&vehicle_count));
+        mup::Value is_activated_vehicle(isActivatedVehicle);
+        parser.DefineVar(_T("is_activated_vehicle"), mup::Variable(&is_activated_vehicle));
+#if defined(_UNICODE)
+        parser.SetExpr(rString.toStdWString());
+        r = parser.Eval().GetInteger();
+        parser.SetExpr(gString.toStdWString());
+        g = parser.Eval().GetInteger();
+        parser.SetExpr(bString.toStdWString());
+        b = parser.Eval().GetInteger();
+        parser.SetExpr(aString.toStdWString());
+        a = parser.Eval().GetInteger();
+#else
+        parser.SetExpr(rString.toStdString());
+        r = parser.Eval().GetInteger();
+        parser.SetExpr(gString.toStdString());
+        g = parser.Eval().GetInteger();
+        parser.SetExpr(bString.toStdString());
+        b = parser.Eval().GetInteger();
+        parser.SetExpr(aString.toStdString());
+        a = parser.Eval().GetInteger();
+#endif
+    }
+    catch (mup::ParserError &e)
+    {
+#if defined(_UNICODE)
+        qCDebug(AppSettingsLog()) << "muParser Error: " << QString::fromStdWString(e.GetMsg()) << "(error code: " << e.GetCode() << ")";
+#else
+        qCDebug(AppSettingsLog()) << "muParser Error: " << QString::fromStdString(e.GetMsg()) << "(error code: " << e.GetCode() << ")";
+#endif
+    }
+
+    return QColor(r, g, b, a);
+}
+
+QColor AppSettings::getVehiclesTrajectoryPointsColor(Vehicle *vehicle)
+{
+    const QString rString = vehiclesTrajectoryPointsColorR()->cookedValue().toString();
+    const QString gString = vehiclesTrajectoryPointsColorG()->cookedValue().toString();
+    const QString bString = vehiclesTrajectoryPointsColorB()->cookedValue().toString();
+    const QString aString = vehiclesTrajectoryPointsColorA()->cookedValue().toString();
+
+    return parseColor(vehicle, rString, gString, bString, aString);
+}
+
+QColor AppSettings::getVehiclesIconColor(Vehicle *vehicle)
+{
+    const QString rString = vehiclesIconColorR()->cookedValue().toString();
+    const QString gString = vehiclesIconColorG()->cookedValue().toString();
+    const QString bString = vehiclesIconColorB()->cookedValue().toString();
+    const QString aString = vehiclesIconColorA()->cookedValue().toString();
+
+    return parseColor(vehicle, rString, gString, bString, aString);
 }
 
 void AppSettings::_checkSavePathDirectories(void)
@@ -195,6 +295,104 @@ Fact* AppSettings::defaultMissionItemAltitude(void)
     }
 
     return _defaultMissionItemAltitudeFact;
+}
+
+Fact* AppSettings::unactivatedVehiclesTrajectoryPointsOpacity(void)
+{
+    if (!_unactivatedVehiclesTrajectoryPointsOpacityFact) {
+        _unactivatedVehiclesTrajectoryPointsOpacityFact = _createSettingsFact(unactivatedVehiclesTrajectoryPointsOpacitySettingsName);
+    }
+
+    return _unactivatedVehiclesTrajectoryPointsOpacityFact;
+}
+
+Fact* AppSettings::unactivatedVehiclesIconOpacity(void)
+{
+    if (!_unactivatedVehiclesIconOpacityFact) {
+        _unactivatedVehiclesIconOpacityFact = _createSettingsFact(unactivatedVehiclesIconOpacitySettingsName);
+    }
+
+    return _unactivatedVehiclesIconOpacityFact;
+}
+
+Fact* AppSettings::vehiclesTrajectoryPointsColorR(void)
+{
+    if (!_vehiclesTrajectoryPointsColorRFact) {
+        _vehiclesTrajectoryPointsColorRFact = _createSettingsFact(vehiclesTrajectoryPointsColorRSettingsName);
+        connect(_vehiclesTrajectoryPointsColorRFact, &Fact::valueChanged, this, &AppSettings::vehiclesTrajectoryPointsColorChanged);
+    }
+
+    return _vehiclesTrajectoryPointsColorRFact;
+}
+
+Fact* AppSettings::vehiclesTrajectoryPointsColorG(void)
+{
+    if (!_vehiclesTrajectoryPointsColorGFact) {
+        _vehiclesTrajectoryPointsColorGFact = _createSettingsFact(vehiclesTrajectoryPointsColorGSettingsName);
+        connect(_vehiclesTrajectoryPointsColorGFact, &Fact::valueChanged, this, &AppSettings::vehiclesTrajectoryPointsColorChanged);
+    }
+
+    return _vehiclesTrajectoryPointsColorGFact;
+}
+
+Fact* AppSettings::vehiclesTrajectoryPointsColorB(void)
+{
+    if (!_vehiclesTrajectoryPointsColorBFact) {
+        _vehiclesTrajectoryPointsColorBFact = _createSettingsFact(vehiclesTrajectoryPointsColorBSettingsName);
+        connect(_vehiclesTrajectoryPointsColorBFact, &Fact::valueChanged, this, &AppSettings::vehiclesTrajectoryPointsColorChanged);
+    }
+
+    return _vehiclesTrajectoryPointsColorBFact;
+}
+
+Fact* AppSettings::vehiclesTrajectoryPointsColorA(void)
+{
+    if (!_vehiclesTrajectoryPointsColorAFact) {
+        _vehiclesTrajectoryPointsColorAFact = _createSettingsFact(vehiclesTrajectoryPointsColorASettingsName);
+        connect(_vehiclesTrajectoryPointsColorAFact, &Fact::valueChanged, this, &AppSettings::vehiclesTrajectoryPointsColorChanged);
+    }
+
+    return _vehiclesTrajectoryPointsColorAFact;
+}
+
+Fact* AppSettings::vehiclesIconColorR(void)
+{
+    if (!_vehiclesIconColorRFact) {
+        _vehiclesIconColorRFact = _createSettingsFact(vehiclesIconColorRSettingsName);
+        connect(_vehiclesIconColorRFact, &Fact::valueChanged, this, &AppSettings::vehiclesIconColorChanged);
+    }
+
+    return _vehiclesIconColorRFact;
+}
+
+Fact* AppSettings::vehiclesIconColorG(void)
+{
+    if (!_vehiclesIconColorGFact) {
+        _vehiclesIconColorGFact = _createSettingsFact(vehiclesIconColorGSettingsName);
+        connect(_vehiclesIconColorGFact, &Fact::valueChanged, this, &AppSettings::vehiclesIconColorChanged);
+    }
+
+    return _vehiclesIconColorGFact;
+}
+
+Fact* AppSettings::vehiclesIconColorB(void)
+{
+    if (!_vehiclesIconColorBFact) {
+        _vehiclesIconColorBFact = _createSettingsFact(vehiclesIconColorBSettingsName);
+        connect(_vehiclesIconColorBFact, &Fact::valueChanged, this, &AppSettings::vehiclesIconColorChanged);
+    }
+
+    return _vehiclesIconColorBFact;
+}
+
+Fact* AppSettings::vehiclesIconColorA(void)
+{
+    if (!_vehiclesIconColorAFact) {
+        _vehiclesIconColorAFact = _createSettingsFact(vehiclesIconColorASettingsName);
+        connect(_vehiclesIconColorAFact, &Fact::valueChanged, this, &AppSettings::vehiclesIconColorChanged);
+    }
+
+    return _vehiclesIconColorAFact;
 }
 
 Fact* AppSettings::telemetrySave(void)

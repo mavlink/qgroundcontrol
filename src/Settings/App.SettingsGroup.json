@@ -76,6 +76,82 @@
     "decimalPlaces":    1
 },
 {
+    "name":             "UnactivatedVehiclesTrajectoryPointsOpacity",
+    "shortDescription": "Trajectory points opacity for unactivated vehicles",
+    "longDescription":  "This value specifies the trajectory points opacity for unactivated vehicles.",
+    "type":             "uint32",
+    "defaultValue":     0,
+    "min":              0,
+    "max":              100,
+    "units":            "%"
+},
+{
+    "name":             "UnactivatedVehiclesIconOpacity",
+    "shortDescription": "Icon opacity for unactivated vehicles",
+    "longDescription":  "This value specifies the icon opacity for unactivated vehicles.",
+    "type":             "uint32",
+    "defaultValue":     0,
+    "min":              0,
+    "max":              100,
+    "units":            "%"
+},
+{
+    "name":             "VehiclesTrajectoryPointsColorR",
+    "shortDescription": "Trajectory points color for vehicles (red channel)",
+    "longDescription":  "Math function for trajectory points color for vehicles (red channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "is_activated_vehicle ? 255 : (255 * (1 - vehicle_id / vehicle_count))"
+},
+{
+    "name":             "VehiclesTrajectoryPointsColorG",
+    "shortDescription": "Trajectory points color for vehicles (green channel)",
+    "longDescription":  "Math function for trajectory points color for vehicles (green channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "0"
+},
+{
+    "name":             "VehiclesTrajectoryPointsColorB",
+    "shortDescription": "Trajectory points color for vehicles (blue channel)",
+    "longDescription":  "Math function for trajectory points color for vehicles (blue channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "is_activated_vehicle ? 0 : (255 * (vehicle_id / vehicle_count))"
+},
+{
+    "name":             "VehiclesTrajectoryPointsColorA",
+    "shortDescription": "Trajectory points color for vehicles (alpha channel)",
+    "longDescription":  "Math function for trajectory points color for vehicles (alpha channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "255"
+},
+{
+    "name":             "VehiclesIconColorR",
+    "shortDescription": "Icon color for vehicles (red channel)",
+    "longDescription":  "Math function for icon color for vehicles (red channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "is_activated_vehicle ? 255 : (255 * (1 - vehicle_id / vehicle_count))"
+},
+{
+    "name":             "VehiclesIconColorG",
+    "shortDescription": "Icon color for vehicles (green channel)",
+    "longDescription":  "Math function for icon color for vehicles (green channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "0"
+},
+{
+    "name":             "VehiclesIconColorB",
+    "shortDescription": "Icon color for vehicles (blue channel)",
+    "longDescription":  "Math function for icon color for vehicles (blue channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "is_activated_vehicle ? 0 : (255 * (vehicle_id / vehicle_count))"
+},
+{
+    "name":             "VehiclesIconColorA",
+    "shortDescription": "Icon color for vehicles (alpha channel)",
+    "longDescription":  "Math function for icon color for vehicles (alpha channel) (0-255). It's possibile to use the following variables in the expression: vehicle_id, vehicle_count, is_activated_vehicle.",
+    "type":             "string",
+    "defaultValue":     "255"
+},
+{
     "name":             "PromptFLightDataSave",
     "shortDescription": "Save telemetry Log after each flight",
     "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",

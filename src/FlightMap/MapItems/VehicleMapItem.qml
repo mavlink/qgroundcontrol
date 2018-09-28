@@ -19,6 +19,7 @@ import QGroundControl.Controls      1.0
 
 /// Marker for displaying a vehicle location on the map
 MapQuickItem {
+    id: vehicleMapItem
     property var    vehicle                                                         /// Vehicle object, undefined for ADSB vehicle
     property var    map
     property double altitude:       Number.NaN                                      ///< NAN to not show
@@ -41,7 +42,7 @@ MapQuickItem {
         id:         vehicleItem
         width:      vehicleIcon.width
         height:     vehicleIcon.height
-        opacity:    vehicle ? (vehicle.active ? 1.0 : 0.5) : 1.0
+        opacity:    vehicle ? (vehicle.active ? 1.0 : (0.01 * QGroundControl.settingsManager.appSettings.unactivatedVehiclesIconOpacity.value)) : 1.0
 
         Rectangle {
             id:                 vehicleShadow
@@ -60,17 +61,77 @@ MapQuickItem {
             color:              Qt.rgba(0.94,0.91,0,0.5)
             source:             vehicleShadow
         }
-        Image {
-            id:                 vehicleIcon
-            source:             _adsbVehicle ? (alert ? "/qmlimages/AlertAircraft.svg" : "/qmlimages/AwarenessAircraft.svg") : vehicle.vehicleImageOpaque
-            mipmap:             true
-            width:              size
-            sourceSize.width:   size
-            fillMode:           Image.PreserveAspectFit
+//        Image {
+//            id:                 vehicleIcon
+//            source:             _adsbVehicle ? (alert ? "/qmlimages/AlertAircraft.svg" : "/qmlimages/AwarenessAircraft.svg") : vehicle.vehicleImageOpaque
+//            mipmap:             true
+//            width:              size
+//            sourceSize.width:   size
+//            fillMode:           Image.PreserveAspectFit
+//            transform: Rotation {
+//                origin.x:       vehicleIcon.width  / 2
+//                origin.y:       vehicleIcon.height / 2
+//                angle:          isNaN(heading) ? 0 : heading
+//            }
+//        }
+        Item {
+            id: vehicleIcon
+            width: size
+            height: size
             transform: Rotation {
-                origin.x:       vehicleIcon.width  / 2
-                origin.y:       vehicleIcon.height / 2
-                angle:          isNaN(heading) ? 0 : heading
+                origin.x: vehicleIcon.width / 2
+                origin.y: vehicleIcon.height / 2
+                angle: isNaN(heading) ? 0 : heading
+            }
+            property bool showCanvas: !_adsbVehicle
+
+            Image {
+                id:               vehicleIconImage
+                source:           _adsbVehicle ? (alert ? "/qmlimages/AlertAircraft.svg" : "/qmlimages/AwarenessAircraft.svg") : vehicle.vehicleImageOpaque
+                mipmap:           true
+                width:            size
+                sourceSize.width: size
+                fillMode:         Image.PreserveAspectFit
+                visible:          !parent.showCanvas
+            }
+
+            Canvas {
+                id: vehicleIconCanvas
+                anchors.fill: parent
+                visible: parent.showCanvas
+
+                onPaint: {
+                    var context = getContext("2d");
+                    var color_ = QGroundControl.settingsManager.appSettings.getVehiclesIconColor(vehicle);
+                    context.strokeStyle = Qt.darker(color_);
+                    context.fillStyle = color_;
+                    context.beginPath();
+                    context.moveTo(width * 0.5, 2);
+                    context.lineTo(width * 0.5, height * 0.74);
+                    context.lineTo(width - 2, height - 2);
+                    context.fill();
+                    context.stroke();
+                    context.fillStyle = Qt.darker(color_, 1.2);
+                    context.beginPath();
+                    context.moveTo(width * 0.5, 2);
+                    context.lineTo(width * 0.5, height * 0.74);
+                    context.lineTo(2, height - 2);
+                    context.fill();
+                    context.stroke();
+                }
+
+                Connections {
+                    target: QGroundControl.settingsManager.appSettings
+                    onVehiclesIconColorChanged: vehicleIconCanvas.requestPaint()
+                }
+                Connections {
+                    target: vehicleMapItem
+                    onVehicleChanged: vehicleIconCanvas.requestPaint()
+                }
+                Connections {
+                    target: vehicle
+                    onActiveChanged: vehicleIconCanvas.requestPaint()
+                }
             }
         }
 
