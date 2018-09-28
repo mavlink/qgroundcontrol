@@ -825,9 +825,12 @@ void Vehicle::_handleStatusText(mavlink_message_t& message)
     mavlink_msg_statustext_get_text(&message, b.data());
     b[b.length()-1] = '\0';
     QString messageText = QString(b);
+    int severity = mavlink_msg_statustext_get_severity(&message);
 
     bool skipSpoken = false;
-    if (messageText.startsWith(QStringLiteral("PreArm")) || messageText.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
+    bool ardupilotPrearm = messageText.startsWith(QStringLiteral("PreArm"));
+    bool px4Prearm = messageText.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive) && severity == MAV_SEVERITY_CRITICAL;
+    if (ardupilotPrearm || px4Prearm) {
         // Limit repeated PreArm message to once every 10 seconds
         if (_noisySpokenPrearmMap.contains(messageText) && _noisySpokenPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
             skipSpoken = true;
@@ -840,7 +843,6 @@ void Vehicle::_handleStatusText(mavlink_message_t& message)
 
     // If the message is NOTIFY or higher severity, or starts with a '#',
     // then read it aloud.
-    int severity = mavlink_msg_statustext_get_severity(&message);
     if (messageText.startsWith("#") || severity <= MAV_SEVERITY_NOTICE) {
         messageText.remove("#");
         if (!skipSpoken) {
