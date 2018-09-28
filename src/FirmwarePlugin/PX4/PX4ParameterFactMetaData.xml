@@ -8364,6 +8364,21 @@ is less than 50% of this value</short_desc>
         <value code="202">GPS 2</value>
       </values>
     </parameter>
+    <parameter default="0" name="SENS_ULAND_CFG" type="INT32">
+      <short_desc>Serial Configuration for uLanding Radar</short_desc>
+      <long_desc>Configure on which serial port to run uLanding Radar.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
   </group>
   <group name="Serial">
     <parameter default="0" name="SER_GPS1_BAUD" type="INT32">
