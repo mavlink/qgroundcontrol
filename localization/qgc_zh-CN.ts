@@ -37,7 +37,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentController.cc" line="245"/>
       <source>Param file github json download failed: %1</source>
-      <translation>从github中下载参数文件json失败：%1</translation>
+      <translation>从github下载json参数文件失败：%1</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMAirframeComponentController.cc" line="258"/>
@@ -122,7 +122,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="305"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="305"/>
       <source>Gimbal angle limits:</source>
-      <translation>云台角度限制</translation>
+      <translation>云台角度限制：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="314"/>
@@ -156,7 +156,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="422"/>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="422"/>
       <source>Type:</source>
-      <translation>类型</translation>
+      <translation>类型：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMCameraComponent.qml" line="444"/>
@@ -251,7 +251,7 @@
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="958"/>
       <source>Unable to takeoff, vehicle position not known.</source>
-      <translation>无法起飞，飞行器位置未知。</translation>
+      <translation>无法起飞：飞行器位置未知。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="968"/>
@@ -267,12 +267,12 @@
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="991"/>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1011"/>
       <source>Unable to start mission: Vehicle failed to change to Auto mode.</source>
-      <translation>无法开始任务，飞行器无法进入自动模式。</translation>
+      <translation>无法开始任务：飞行器进入自动模式失败。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="999"/>
       <source>Unable to start mission: Vehicle failed to change to Guided mode.</source>
-      <translation>无法开始任务：飞行器无法进入引导模式。</translation>
+      <translation>无法开始任务：飞行器进入引导模式失败。</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/APM/APMFirmwarePlugin.cc" line="1004"/>
@@ -304,7 +304,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="86"/>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="86"/>
       <source>Not assigned</source>
-      <translation>未指定</translation>
+      <translation>未分配</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMFlightModesComponent.qml" line="86"/>
@@ -688,7 +688,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="462"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="462"/>
       <source>Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier.</source>
-      <translation>使用外部万用表测量电池电压并输入，点击计算是指新的电压</translation>
+      <translation>使用外部万用表测量电池电压并输入，点击计算设置新的电压倍率。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="471"/>
@@ -712,7 +712,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="533"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="533"/>
       <source>Measured current:</source>
-      <translation>测量电流：</translation>
+      <translation>电流测量值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="537"/>
@@ -724,13 +724,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="288"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="288"/>
       <source>Battery monitor:</source>
-      <translation>电池监控：</translation>
+      <translation>电池监控器：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="49"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="49"/>
       <source>Requires vehicle reboot</source>
-      <translation>需要重启驾驶器</translation>
+      <translation>需要重启飞行器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="59"/>
@@ -744,7 +744,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="79"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="79"/>
       <source>Battery1 monitor:</source>
-      <translation>电池监控1</translation>
+      <translation>电池1监控器：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="93"/>
@@ -766,7 +766,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="163"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="163"/>
       <source>Battery2 monitor:</source>
-      <translation>电池监控2</translation>
+      <translation>电池2监控器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="299"/>
@@ -778,7 +778,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="311"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="311"/>
       <source>Minimum arming voltage:</source>
-      <translation>最小解锁电压：</translation>
+      <translation>最低解锁电压：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="323"/>
@@ -804,7 +804,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="374"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="478"/>
       <source>Voltage multiplier:</source>
-      <translation>倍压器：</translation>
+      <translation>电压乘数：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="385"/>
@@ -818,7 +818,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="391"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="391"/>
       <source>Calculate Voltage Multiplier</source>
-      <translation>计算电压告警值</translation>
+      <translation>计算电压乘数</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="401"/>
@@ -832,7 +832,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="406"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="540"/>
       <source>Amps per volt:</source>
-      <translation>安培/伏特</translation>
+      <translation>安培/伏特：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.qml" line="423"/>
@@ -854,7 +854,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponent.cc" line="29"/>
       <source>The Power Component is used to setup battery parameters.</source>
-      <translation>电源模块用来设置电池相关的参数</translation>
+      <translation>电源组件用来设置电池相关的参数。</translation>
     </message>
   </context>
   <context>
@@ -863,7 +863,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="40"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="40"/>
       <source>Batt1 monitor</source>
-      <translation>电池1监控</translation>
+      <translation>电池1监控器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="45"/>
@@ -875,7 +875,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="51"/>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="51"/>
       <source>Batt2 monitor</source>
-      <translation>电池2监控</translation>
+      <translation>电池2监控器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMPowerComponentSummary.qml" line="57"/>
@@ -894,7 +894,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponent.cc" line="37"/>
       <source>The Radio Component is used to setup which channels on your RC Transmitter you will use for each vehicle control such as Roll, Pitch, Yaw and Throttle. It also allows you to assign switches and dials to the various flight modes. Prior to flight you must also calibrate the extents for all of your channels.</source>
-      <translation>遥控器模块用来设置你的遥控器上的各个控制通道，例如横滚，俯仰，方向和油门，另外还可以分配开关通道映射飞行模式，在起飞之前您必须先校准遥控器的各个通道。</translation>
+      <translation>遥控器组件用来设置你的遥控器上的各个控制通道如：横滚，俯仰，偏航和油门。另外还可以分配开关通道映射飞行模式。在起飞之前您必须先校准遥控器的各个通道。</translation>
     </message>
   </context>
   <context>
@@ -939,7 +939,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="36"/>
       <source>Yaw</source>
-      <translation>航向</translation>
+      <translation>偏航</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMRadioComponentSummary.qml" line="41"/>
@@ -958,7 +958,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.cc" line="34"/>
       <source>Safety Setup is used to setup failsafe actions, leak detection, and arming checks.</source>
-      <translation>安全设置用来设置失控保护，异常检测和解锁校验。</translation>
+      <translation>安全设置用来设置失控保护动作，异常检测和解锁检查。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.cc" line="45"/>
@@ -969,19 +969,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="63"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="63"/>
       <source>Requires vehicle reboot</source>
-      <translation>需要重启驾驶器</translation>
+      <translation>需要重启飞行器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="80"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="80"/>
       <source>Low action:</source>
-      <translation>低位动作</translation>
+      <translation>低位动作：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="87"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="87"/>
       <source>Critical action:</source>
-      <translation>警戒值动作</translation>
+      <translation>临界值动作：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="94"/>
@@ -999,31 +999,31 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="109"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="109"/>
       <source>Low mAh threshold:</source>
-      <translation>低毫安时偏移</translation>
+      <translation>低毫安时阈值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="116"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="116"/>
       <source>Critical mAh threshold:</source>
-      <translation>临界电压阈值</translation>
+      <translation>临界毫安时阈值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="137"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="137"/>
       <source>Reboot vehicle</source>
-      <translation>重启驾驶器</translation>
+      <translation>重启飞行器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="148"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="148"/>
       <source>Battery1 Failsafe Triggers</source>
-      <translation>电池电量保护触发1</translation>
+      <translation>电池1故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="182"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="182"/>
       <source>Battery2 Failsafe Triggers</source>
-      <translation>电池电量保护触发2</translation>
+      <translation>电池1故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="221"/>
@@ -1031,13 +1031,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="221"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="280"/>
       <source>Failsafe Triggers</source>
-      <translation>故障保护触发</translation>
+      <translation>故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="239"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="239"/>
       <source>Throttle PWM threshold:</source>
-      <translation>油门PWM偏移</translation>
+      <translation>油门PWM阈值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="253"/>
@@ -1051,7 +1051,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="297"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="367"/>
       <source>Ground Station failsafe:</source>
-      <translation>地面站故障保护</translation>
+      <translation>地面站故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="304"/>
@@ -1059,7 +1059,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="304"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="374"/>
       <source>Throttle failsafe:</source>
-      <translation>油门故障保护</translation>
+      <translation>油门故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="311"/>
@@ -1073,13 +1073,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="317"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="317"/>
       <source>Failsafe Crash Check:</source>
-      <translation>故障保护坠毁检查</translation>
+      <translation>故障保护坠毁检查：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="346"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="346"/>
       <source>General Failsafe Triggers</source>
-      <translation>通用故障保护触发</translation>
+      <translation>通用故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
@@ -1091,7 +1091,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="376"/>
       <source>Always RTL</source>
-      <translation>始终返航降落</translation>
+      <translation>始终返航</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="377"/>
@@ -1115,19 +1115,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="430"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="430"/>
       <source>Circle GeoFence enabled</source>
-      <translation>环形地理围栏使能</translation>
+      <translation>环形地理围栏已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="455"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="455"/>
       <source>Altitude GeoFence enabled</source>
-      <translation>高度地理围栏使能</translation>
+      <translation>高度地理围栏已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="480"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="480"/>
       <source>Report only</source>
-      <translation>只报告</translation>
+      <translation>仅报告</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="492"/>
@@ -1175,7 +1175,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="622"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="622"/>
       <source>Loiter above Home for:</source>
-      <translation>在HOME点上方游荡</translation>
+      <translation>在HOME点上方悬停：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="641"/>
@@ -1187,7 +1187,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="662"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="662"/>
       <source>Final loiter altitude:</source>
-      <translation>最终悬停高度</translation>
+      <translation>最终留待高度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponent.qml" line="748"/>
@@ -1227,17 +1227,17 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="255"/>
       <source>Continue with Mission in Auto Mode</source>
-      <translation>继续任务在自动模式下</translation>
+      <translation>自动模式下继续任务</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="255"/>
       <source>Always Land</source>
-      <translation>始终降落</translation>
+      <translation>始终着陆</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="262"/>
       <source>PWM threshold:</source>
-      <translation>PWM门限</translation>
+      <translation>PWM阈值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="402"/>
@@ -1248,40 +1248,40 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="195"/>
       <source>Voltage threshold:</source>
-      <translation>电压门限</translation>
+      <translation>电压阈值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="85"/>
       <source>Battery1 Failsafe Triggers</source>
-      <translation>电池1故障保护触发</translation>
+      <translation>电池1故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="106"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="178"/>
       <source>Battery low action:</source>
-      <translation>电池低电压动作</translation>
+      <translation>电池低电压动作：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="114"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="186"/>
       <source>Battery critical action:</source>
-      <translation>电池极低电压动作</translation>
+      <translation>电池临界电压动作：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="136"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="206"/>
       <source>MAH threshold:</source>
-      <translation>毫安时偏移</translation>
+      <translation>毫安时阈值：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="155"/>
       <source>Battery2 Failsafe Triggers</source>
-      <translation>2号电池监控故障保护触发</translation>
+      <translation>电池2故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="224"/>
       <source>General Failsafe Triggers</source>
-      <translation>通用故障保护触发</translation>
+      <translation>通用故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="278"/>
@@ -1291,12 +1291,12 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="293"/>
       <source>Circle GeoFence enabled</source>
-      <translation>圆周地理围栏使能</translation>
+      <translation>圆形地理围栏已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="318"/>
       <source>Altitude GeoFence enabled</source>
-      <translation>高度地理围栏使能</translation>
+      <translation>高度地理围栏已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="343"/>
@@ -1311,12 +1311,12 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="366"/>
       <source>Max radius:</source>
-      <translation>最大半径</translation>
+      <translation>最大半径：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="382"/>
       <source>Max altitude:</source>
-      <translation>最大高度</translation>
+      <translation>最大高度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="438"/>
@@ -1326,22 +1326,22 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="450"/>
       <source>Return at specified altitude:</source>
-      <translation>爬升到特定高度返航</translation>
+      <translation>指定高度返航</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="472"/>
       <source>Loiter above Home for:</source>
-      <translation>在HOME点上方游荡：</translation>
+      <translation>在HOME点上方留待：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="491"/>
       <source>Land with descent speed:</source>
-      <translation>着陆的下降速度为：</translation>
+      <translation>以这个下降速度着陆：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="512"/>
       <source>Final loiter altitude:</source>
-      <translation>最终悬停高度</translation>
+      <translation>最终留待高度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="534"/>
@@ -1351,7 +1351,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentCopter.qml" line="565"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation>警告：关闭解锁检查有可能导致飞机失控</translation>
+      <translation>警告：关闭解锁检查有可能导致飞机失控。</translation>
     </message>
   </context>
   <context>
@@ -1359,7 +1359,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="53"/>
       <source>Failsafe Triggers</source>
-      <translation>故障保护触发</translation>
+      <translation>故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="67"/>
@@ -1384,7 +1384,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="142"/>
       <source>Return to Launch</source>
-      <translation>返航</translation>
+      <translation>返回起飞点</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentPlane.qml" line="156"/>
@@ -1402,17 +1402,17 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="53"/>
       <source>Failsafe Triggers</source>
-      <translation>故障保护触发</translation>
+      <translation>故障保护触发器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="68"/>
       <source>Ground Station failsafe:</source>
-      <translation>地面站故障保护</translation>
+      <translation>地面站故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="87"/>
       <source>Throttle failsafe:</source>
-      <translation>油门故障保护:</translation>
+      <translation>油门故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="105"/>
@@ -1422,7 +1422,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="122"/>
       <source>Failsafe Crash Check:</source>
-      <translation>坠毁检查故障保护:</translation>
+      <translation>故障保护坠毁检查：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
@@ -1432,12 +1432,12 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
       <source>Hold</source>
-      <translation>等待</translation>
+      <translation>保持</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="131"/>
       <source>Hold and Disarm</source>
-      <translation>保持并锁定</translation>
+      <translation>保持并加锁</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="143"/>
@@ -1447,7 +1447,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentRover.qml" line="174"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation>警告: 关闭解锁检查可能导致载具失去控制。</translation>
+      <translation>警告：关闭解锁检查可能导致飞行器失去控制。</translation>
     </message>
   </context>
   <context>
@@ -1456,13 +1456,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="72"/>
       <source>Failsafe Actions</source>
-      <translation>启动故障保护</translation>
+      <translation>故障保护动作</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="98"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="98"/>
       <source>GCS Heartbeat:</source>
-      <translation>地面站心跳:</translation>
+      <translation>地面站心跳包：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="117"/>
@@ -1474,37 +1474,37 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="129"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="129"/>
       <source>Detector Pin:</source>
-      <translation>检测针:</translation>
+      <translation>探测针脚：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="167"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="167"/>
       <source>Battery:</source>
-      <translation>电池</translation>
+      <translation>电池：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="215"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="215"/>
       <source>EKF:</source>
-      <translation>Ekf：</translation>
+      <translation>EKF：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="249"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="249"/>
       <source>Pilot Input:</source>
-      <translation>操纵者输入</translation>
+      <translation>操纵者输入：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="283"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="283"/>
       <source>Internal Temperature:</source>
-      <translation>内部温度:</translation>
+      <translation>内部温度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="316"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="316"/>
       <source>Internal Pressure:</source>
-      <translation>内部压力:</translation>
+      <translation>内部压力：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="328"/>
@@ -1522,7 +1522,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="380"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSub.qml" line="380"/>
       <source>Warning: Turning off arming checks can lead to loss of Vehicle control.</source>
-      <translation>警告: 关闭解锁检查可能导致飞行器失去控制。</translation>
+      <translation>警告：关闭解锁检查可能导致飞行器失去控制。</translation>
     </message>
   </context>
   <context>
@@ -1531,19 +1531,19 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="38"/>
       <source>Arming Checks:</source>
-      <translation>解锁检查</translation>
+      <translation>解锁检查：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="39"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="39"/>
       <source>Enabled</source>
-      <translation>使能</translation>
+      <translation>已启用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="39"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="39"/>
       <source>Some disabled</source>
-      <translation>无法解锁</translation>
+      <translation>一些已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="45"/>
@@ -1553,13 +1553,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="53"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="61"/>
       <source>Throttle failsafe:</source>
-      <translation>油门故障保护</translation>
+      <translation>油门故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="69"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="69"/>
       <source>Failsafe Action:</source>
-      <translation>故障保护</translation>
+      <translation>故障保护动作：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="77"/>
@@ -1571,25 +1571,25 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="85"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="85"/>
       <source>Batt1 low failsafe:</source>
-      <translation>电池1低电量保护</translation>
+      <translation>电池1低电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="91"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="91"/>
       <source>Batt1 critical failsafe:</source>
-      <translation>电池1 临界电量保护</translation>
+      <translation>电池1临界电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="97"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="97"/>
       <source>Batt2 low failsafe:</source>
-      <translation>电池2低电量保护</translation>
+      <translation>电池2低电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="103"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="103"/>
       <source>Batt2 critical failsafe:</source>
-      <translation>电池2 临界电量保护</translation>
+      <translation>电池2临界电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="109"/>
@@ -1597,13 +1597,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="109"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="119"/>
       <source>GeoFence:</source>
-      <translation>地理围栏:</translation>
+      <translation>地理围栏：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="111"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="111"/>
       <source>Disabled</source>
-      <translation>禁用</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="113"/>
@@ -1633,7 +1633,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="122"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="122"/>
       <source>RTL or Land</source>
-      <translation>返航或者降落</translation>
+      <translation>返航或降落</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="122"/>
@@ -1647,7 +1647,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="127"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="135"/>
       <source>RTL min alt:</source>
-      <translation>返航最小高度</translation>
+      <translation>返航最小高度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummary.qml" line="128"/>
@@ -1673,7 +1673,7 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="43"/>
       <source>Arming Checks:</source>
-      <translation>解锁检查</translation>
+      <translation>解锁检查：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="44"/>
@@ -1683,43 +1683,43 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="44"/>
       <source>Some disabled</source>
-      <translation>无法解锁</translation>
+      <translation>一些已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="48"/>
       <source>Throttle failsafe:</source>
-      <translation>油门故障保护</translation>
+      <translation>油门故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="53"/>
       <source>Batt1 low failsafe:</source>
-      <translation>电池1低电量保护</translation>
+      <translation>电池1低电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="59"/>
       <source>Batt1 critical failsafe:</source>
-      <translation>电池1 临界电量保护</translation>
+      <translation>电池1临界电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="65"/>
       <source>Batt2 low failsafe:</source>
-      <translation>电池2低电量保护</translation>
+      <translation>电池2低电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="71"/>
       <source>Batt2 critical failsafe:</source>
-      <translation>电池2 临界电量保护</translation>
+      <translation>电池2临界电量故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="77"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="86"/>
       <source>GeoFence:</source>
-      <translation>地理围栏</translation>
+      <translation>地理围栏：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="81"/>
       <source>Altitude</source>
-      <translation>定高</translation>
+      <translation>高度</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="82"/>
@@ -1739,12 +1739,12 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="89"/>
       <source>RTL or Land</source>
-      <translation>返航或者着陆</translation>
+      <translation>返航或着陆</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="94"/>
       <source>RTL min alt:</source>
-      <translation>返航最小高度</translation>
+      <translation>返航最低高度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryCopter.qml" line="95"/>
@@ -1757,29 +1757,29 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="29"/>
       <source>Throttle failsafe:</source>
-      <translation>油门故障保护</translation>
+      <translation>油门故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="30"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="35"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="40"/>
       <source>Disabled</source>
-      <translation>禁用</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="34"/>
       <source>Voltage failsafe:</source>
-      <translation>电压故障保护</translation>
+      <translation>电压故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="39"/>
       <source>mAh failsafe:</source>
-      <translation>电能故障保护</translation>
+      <translation>电能故障保护：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="44"/>
       <source>RTL min alt:</source>
-      <translation>返航最低高度</translation>
+      <translation>返航最低高度：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryPlane.qml" line="45"/>
@@ -1794,7 +1794,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="95"/>
       <source>Disabled</source>
-      <translation>禁用</translation>
+      <translation>已禁用</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="59"/>
@@ -1815,17 +1815,17 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="75"/>
       <source>Hold</source>
-      <translation>等待</translation>
+      <translation>保持</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="78"/>
       <source>Hold and Disarm</source>
-      <translation>保持与上锁</translation>
+      <translation>保持并加锁</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="89"/>
       <source>Arming Checks:</source>
-      <translation>解锁检查</translation>
+      <translation>解锁检查：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSafetyComponentSummaryRover.qml" line="90"/>
@@ -2109,7 +2109,7 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="351"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="351"/>
       <source>Orientation:</source>
-      <translation>方向:</translation>
+      <translation>方向：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="40"/>
@@ -2141,13 +2141,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="283"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="311"/>
       <source>Reboot Vehicle</source>
-      <translation>重启设备</translation>
+      <translation>重启飞行器</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="398"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="398"/>
       <source>Autopilot Rotation:</source>
-      <translation>飞控旋转</translation>
+      <translation>飞控方向：</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="444"/>
@@ -2249,13 +2249,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="567"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="567"/>
       <source>Level Horizon</source>
-      <translation>水平地平线</translation>
+      <translation>校平地平线</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="571"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="571"/>
       <source>Accelerometer must be calibrated prior to Level Horizon.</source>
-      <translation>加速度计必须在飞机致平较准之前校准。</translation>
+      <translation>加速度计必须在飞机校平地平线之前校准。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="583"/>
@@ -2273,13 +2273,13 @@
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="588"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="588"/>
       <source>CompassMot</source>
-      <translation>罗盘马达</translation>
+      <translation>罗盘电机CompassMot</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="591"/>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="591"/>
       <source>CompassMot - Compass Motor Interference Calibration</source>
-      <translation>CompassMot-罗盘马达干扰校准</translation>
+      <translation>CompassMot - 罗盘电机干扰校准</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponent.qml" line="611"/>
@@ -2396,12 +2396,12 @@
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="630"/>
       <source>Level horizon complete</source>
-      <translation>水平较准完成</translation>
+      <translation>校平地平线完成</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="634"/>
       <source>Level horizon failed</source>
-      <translation>水平较准失败</translation>
+      <translation>校平地平线失败</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/APM/APMSensorsComponentController.cc" line="648"/>
@@ -2727,13 +2727,13 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="124"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="124"/>
       <source>You&apos;ve connected a %1.</source>
-      <translation>你&apos;已经连接了 %1。</translation>
+      <translation>你已经连接了 %1。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="125"/>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="125"/>
       <source>Airframe is not set.</source>
-      <translation>机身对数没有设置</translation>
+      <translation>未设定机架。</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.qml" line="126"/>
@@ -2752,7 +2752,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="20"/>
       <source>Airframe</source>
-      <translation>机型</translation>
+      <translation>机架</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/AirframeComponent.cc" line="32"/>
@@ -2824,7 +2824,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/AnalyzeView/AnalyzeView.qml" line="108"/>
       <source>GeoTag Images</source>
-      <translation>标记图像</translation>
+      <translation>地理标记图像</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/AnalyzeView.qml" line="113"/>
@@ -2945,7 +2945,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/ui/toolbar/BatteryIndicator.qml" line="93"/>
       <source>Accumulated Consumption:</source>
-      <translation>耗电量:</translation>
+      <translation>累计耗电量：</translation>
     </message>
   </context>
   <context>
@@ -3004,27 +3004,27 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="40"/>
       <source>Incorrect number of bytes returned for write: actual(%1) expected(%2)</source>
-      <translation>为写入返回的字节数不正确: 实际 (%1) 预期 (%2)</translation>
+      <translation>为写入返回的字节数不正确：实际（%1）预期（%2）</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="63"/>
       <source>Timeout waiting for bytes to be available</source>
-      <translation>等待字节可用的超时时间</translation>
+      <translation>等待字节变为可用超时</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="73"/>
       <source>Read failed: error: %1</source>
-      <translation>读取失败: 错误: %1</translation>
+      <translation>读取失败：错误：%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="91"/>
       <source>Get Command Response: </source>
-      <translation>获取命令响应: </translation>
+      <translation>获取命令响应： </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="97"/>
       <source>Invalid sync response: 0x%1 0x%2</source>
-      <translation>同步响应无效: 0x%1 0x%2</translation>
+      <translation>同步响应无效：0x%1 0x%2</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="100"/>
@@ -3039,23 +3039,23 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="109"/>
       <source>Command failed: 0x%1 (%2)</source>
-      <translation>命令失败：%1</translation>
+      <translation>命令失败：0x%1 (%2)</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="137"/>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="600"/>
       <source>Get Board Info: </source>
-      <translation>获取主板信息: </translation>
+      <translation>获取飞控板信息： </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="159"/>
       <source>Send Command: </source>
-      <translation>发送命令</translation>
+      <translation>发送命令： </translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="167"/>
       <source>Board erase failed: %1</source>
-      <translation>主板擦除失败: %1</translation>
+      <translation>飞控板擦除失败: %1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="187"/>
@@ -3067,7 +3067,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <location filename="../src/VehicleSetup/Bootloader.cc" line="208"/>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="382"/>
       <source>Firmware file read failed: %1</source>
-      <translation>固件文件读取失败: %1</translation>
+      <translation>固件文件读取失败：%1</translation>
     </message>
     <message>
       <location filename="../src/VehicleSetup/Bootloader.cc" line="228"/>
@@ -3706,7 +3706,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="145"/>
       <source>Vehicle follows terrain</source>
-      <translation>飞机地形跟随</translation>
+      <translation>飞机跟随地形</translation>
     </message>
     <message>
       <location filename="../src/PlanView/CorridorScanEditor.qml" line="157"/>
@@ -4394,13 +4394,13 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
       <location filename="../src/uas/FileManager.cc" line="800"/>
       <location filename="../src/uas/FileManager.cc" line="806"/>
       <source>Timeout waiting for ack: Download failed</source>
-      <translation>等待 ack 的超时: 下载失败</translation>
+      <translation>等待ack超时：下载失败</translation>
     </message>
     <message>
       <location filename="../src/uas/FileManager.cc" line="812"/>
       <location filename="../src/uas/FileManager.cc" line="818"/>
       <source>Timeout waiting for ack: Upload failed</source>
-      <translation>等待 ack 的超时: 上载失败</translation>
+      <translation>等待ack超时：上传失败</translation>
     </message>
   </context>
   <context>
@@ -4945,7 +4945,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/FlightDisplay/FlightDisplayViewMap.qml" line="342"/>
       <source>Go to location</source>
-      <translation>去那指定位置</translation>
+      <translation>前往位置</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlightDisplayViewMap.qml" line="353"/>
@@ -4958,7 +4958,7 @@ propellers on the green thrusters and counter-clockwise propellers on the blue t
     <message>
       <location filename="../src/FlightDisplay/FlightDisplayViewVideo.qml" line="37"/>
       <source>WAITING FOR VIDEO</source>
-      <translation>等待图像连接</translation>
+      <translation>等待视频中</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/FlightDisplayViewVideo.qml" line="37"/>
@@ -6639,7 +6639,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/AnalyzeView/LogDownloadController.cc" line="548"/>
       <source>Waiting</source>
-      <translation>等待</translation>
+      <translation>等待中</translation>
     </message>
     <message>
       <location filename="../src/AnalyzeView/LogDownloadController.cc" line="594"/>
@@ -7049,7 +7049,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="185"/>
       <source>Manual Start/Stop:</source>
-      <translation>手动启/停止：</translation>
+      <translation>手动开启/停止：</translation>
     </message>
     <message>
       <location filename="../src/ui/preferences/MavlinkSettings.qml" line="189"/>
@@ -7258,14 +7258,14 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="872"/>
       <source>The mission file is not compatible with this version of %1.</source>
-      <translation>任务文件于此版本（%1）不兼容。</translation>
+      <translation>任务文件与此版本（%1）不兼容。</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/MissionController.cc" line="911"/>
       <location filename="../src/MissionManager/MissionController.cc" line="926"/>
       <location filename="../src/MissionManager/MissionController.cc" line="950"/>
       <source>Mission: %1</source>
-      <translation>任务： </translation>
+      <translation>任务： %1</translation>
     </message>
   </context>
   <context>
@@ -7331,7 +7331,7 @@ Click the Next button to upload calibration to board. Click Cancel if you don&ap
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="169"/>
       <source>Mission Edit</source>
-      <translation>编辑任务</translation>
+      <translation>任务编辑</translation>
     </message>
     <message>
       <location filename="../src/PlanView/MissionItemEditor.qml" line="169"/>
@@ -8079,13 +8079,13 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="61"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="61"/>
       <source>Stabilized</source>
-      <translation>自稳</translation>
+      <translation>自稳Stabilized</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="62"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="62"/>
       <source>Acro</source>
-      <translation>特技</translation>
+      <translation>特技Acro</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="63"/>
@@ -8097,13 +8097,13 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="64"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="64"/>
       <source>The angular rates are controlled, but not the attitude. </source>
-      <translation>角速率是受控的, 但姿态不受控。 </translation>
+      <translation>角速率是受控的，但姿态不受控。 </translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="66"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="66"/>
       <source>Altitude</source>
-      <translation>高度</translation>
+      <translation>定高Altitude</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="67"/>
@@ -8133,7 +8133,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="72"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="72"/>
       <source>Position Control</source>
-      <translation>位置控</translation>
+      <translation>位置控制</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="73"/>
@@ -8169,7 +8169,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="79"/>
       <source>Mission</source>
-      <translation>任务</translation>
+      <translation>任务Mission</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="80"/>
@@ -8181,7 +8181,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="82"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="82"/>
       <source>Hold</source>
-      <translation>等待</translation>
+      <translation>保持Hold</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="83"/>
@@ -8199,7 +8199,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="86"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="86"/>
       <source>Return</source>
-      <translation>返回：</translation>
+      <translation>返航Return</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="87"/>
@@ -8211,7 +8211,7 @@ Is this really what you want?</source>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="89"/>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="89"/>
       <source>Offboard</source>
-      <translation>机载</translation>
+      <translation>板外Offboard</translation>
     </message>
     <message>
       <location filename="../src/AutoPilotPlugins/PX4/PX4AdvancedFlightModes.qml" line="90"/>
@@ -8275,42 +8275,42 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="38"/>
       <source>Manual</source>
-      <translation>手动</translation>
+      <translation>手动Manual</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="39"/>
       <source>Acro</source>
-      <translation>对面</translation>
+      <translation>特技Acro</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="40"/>
       <source>Stabilized</source>
-      <translation>增稳</translation>
+      <translation>自稳Stabilized</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="41"/>
       <source>Rattitude</source>
-      <translation>角速率姿态</translation>
+      <translation>半自动Rattitude</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="42"/>
       <source>Altitude</source>
-      <translation>高度</translation>
+      <translation>定高Altitude</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="43"/>
       <source>Position</source>
-      <translation>位置</translation>
+      <translation>定点Position</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="44"/>
       <source>Offboard</source>
-      <translation>机载</translation>
+      <translation>板外Offboard</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="45"/>
       <source>Ready</source>
-      <translation>已准备</translation>
+      <translation>就绪</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="46"/>
@@ -8320,17 +8320,17 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="47"/>
       <source>Hold</source>
-      <translation>等待</translation>
+      <translation>保持Hold</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="48"/>
       <source>Mission</source>
-      <translation>任务</translation>
+      <translation>任务Mission</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="49"/>
       <source>Return</source>
-      <translation>返回：</translation>
+      <translation>返航Return</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="50"/>
@@ -8350,7 +8350,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="53"/>
       <source>Follow Me</source>
-      <translation>跟随</translation>
+      <translation>跟随Follow Me</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="54"/>
@@ -8360,7 +8360,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="188"/>
       <source>Unknown %1:%2</source>
-      <translation>未知 %1/%2</translation>
+      <translation>未知 %1:%2</translation>
     </message>
     <message>
       <location filename="../src/FirmwarePlugin/PX4/PX4FirmwarePlugin.cc" line="405"/>
@@ -9974,7 +9974,7 @@ Is this really what you want?</source>
     <message>
       <location filename="../src/FlightDisplay/PreFlightGPSCheck.qml" line="20"/>
       <source>Waiting for 3D lock.</source>
-      <translation>等待GPS 3D定位。</translation>
+      <translation>等待3D定位中。</translation>
     </message>
     <message>
       <location filename="../src/FlightDisplay/PreFlightGPSCheck.qml" line="32"/>
@@ -10803,7 +10803,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="231"/>
       <source>Edit position...</source>
-      <translation>编辑航点位置</translation>
+      <translation>编辑航点位置...</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolygonVisuals.qml" line="233"/>
@@ -10841,7 +10841,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="150"/>
       <source>Edit position...</source>
-      <translation>编辑航点位置</translation>
+      <translation>编辑航点位置...</translation>
     </message>
     <message>
       <location filename="../src/MissionManager/QGCMapPolylineVisuals.qml" line="151"/>
@@ -10925,7 +10925,7 @@ sudo apt-获取删除modemmanager</translation>
     <message>
       <location filename="../src/ui/QGCMapRCToParamDialog.ui" line="168"/>
       <source>Waiting for parameter refresh,,,</source>
-      <translation>正在等待参数刷新,,,</translation>
+      <translation>正在等待参数刷新...</translation>
     </message>
     <message>
       <location filename="../src/ui/QGCMapRCToParamDialog.ui" line="188"/>
@@ -11336,7 +11336,7 @@ Errors:
     <message>
       <location filename="../src/FirmwarePlugin/FirmwarePlugin.cc" line="25"/>
       <source>Follow Me</source>
-      <translation>跟随</translation>
+      <translation>跟随Follow Me</translation>
     </message>
   </context>
   <context>
@@ -12770,7 +12770,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="123"/>
       <source>Bottom layer alt</source>
-      <translation type="unfinished">Bottom layer alt</translation>
+      <translation>底部图层高度</translation>
     </message>
     <message>
       <location filename="../src/PlanView/StructureScanEditor.qml" line="130"/>
@@ -12900,7 +12900,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="150"/>
       <source>Fly alternate transects</source>
-      <translation type="unfinished">Fly alternate transects</translation>
+      <translation>断面交替飞行</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="159"/>
@@ -12916,7 +12916,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="187"/>
       <source>Vehicle follows terrain</source>
-      <translation>载具地形跟随</translation>
+      <translation>飞机跟随地形</translation>
     </message>
     <message>
       <location filename="../src/PlanView/SurveyItemEditor.qml" line="199"/>
@@ -12970,7 +12970,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/AutoPilotPlugins/Common/SyslinkComponent.cc" line="28"/>
       <source>The Syslink Component is used to setup the radio connection on Crazyflies.</source>
-      <translation type="unfinished">The Syslink Component is used to setup the radio connection on Crazyflies.</translation>
+      <translation>Syslink 组件用于在Crazyfly控制器上设置电台连接。</translation>
     </message>
   </context>
   <context>
@@ -13415,7 +13415,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2624"/>
       <source>Communication lost to vehicle %1 on %2 link %3</source>
-      <translation type="unfinished">Communication lost to vehicle %1 on %2 link %3</translation>
+      <translation>飞行器 %1 在 %2 上的连接 %3 通讯丢失</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2626"/>
@@ -13425,7 +13425,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2630"/>
       <source> to vehicle %1</source>
-      <translation type="unfinished"> to vehicle %1</translation>
+      <translation> 飞行器 %1</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="3141"/>
@@ -13562,12 +13562,12 @@ Abs Alt </source>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2718"/>
       <source>Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter</source>
-      <translation type="unfinished">Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter</translation>
+      <translation>另外，双旋翼VTOL在垂直操作时使用控制舵面。 尾座式</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2719"/>
       <source>Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter</source>
-      <translation type="unfinished">Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter</translation>
+      <translation>四旋翼VTOL在垂直操作时使用V型四轴配置。 尾座式</translation>
     </message>
     <message>
       <location filename="../src/Vehicle/Vehicle.cc" line="2720"/>
@@ -13748,7 +13748,7 @@ Abs Alt </source>
     <message>
       <location filename="../src/ViewWidgets/ViewWidget.qml" line="61"/>
       <source>missing connected implementation</source>
-      <translation type="unfinished">missing connected implementation</translation>
+      <translation>连接意外断开</translation>
     </message>
     <message>
       <location filename="../src/ViewWidgets/ViewWidget.qml" line="81"/>
