@@ -4,6 +4,9 @@ Note: This file only contains high level features or important fixes.
 
 ## 3.4
 
+### 3.4.5 - Not yet released
+* ArduPilot: Fix location of planned home position when not connected to vehicle. Issue #6840.
+
 ### 3.4.4 - Stable
 * Stable desktop versions now inform user at boot if newer version is available.
 * Multi-Vehicle Start Mission and Pause now work correctly. Issue #6864.
