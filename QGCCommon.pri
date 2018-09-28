@@ -68,6 +68,8 @@ linux {
         #-- Not forcing anything. Let qmake find the latest, installed SDK.
         #QMAKE_MAC_SDK = macosx10.12
         QMAKE_CXXFLAGS += -fvisibility=hidden
+        #-- Disable annoying warnings comming from mavlink.h
+        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
     } else {
         error("Unsupported Mac toolchain, only 64-bit LLVM+clang is supported")
     }
