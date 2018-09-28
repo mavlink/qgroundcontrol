@@ -1,4 +1,5 @@
 libs/lib/Frameworks/GStreamer.framework
+*_qmlcache.qrc
 *.swp
 *.nfs
 CMakeFiles
