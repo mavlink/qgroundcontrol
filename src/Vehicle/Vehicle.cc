@@ -827,7 +827,7 @@ void Vehicle::_handleStatusText(mavlink_message_t& message)
     QString messageText = QString(b);
 
     bool skipSpoken = false;
-    if (messageText.startsWith(QStringLiteral("PreArm")) || messageText.startsWith(QStringLiteral("PREFLIGHT"))) {
+    if (messageText.startsWith(QStringLiteral("PreArm")) || messageText.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
         // Limit repeated PreArm message to once every 10 seconds
         if (_noisySpokenPrearmMap.contains(messageText) && _noisySpokenPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
             skipSpoken = true;

@@ -675,7 +675,7 @@ QObject* QGCApplication::_rootQmlObject()
 void QGCApplication::showMessage(const QString& message)
 {
     // PreArm messages are handled by Vehicle and shown in Map
-    if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("PREFLIGHT"))) {
+    if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
         return;
     }
 
