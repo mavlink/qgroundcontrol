@@ -1093,6 +1093,7 @@ signals:
     void priorityLinkNameChanged(const QString& priorityLinkName);
     void linksChanged(void);
     void linksPropertiesChanged(void);
+    void textMessageReceived(int uasid, int componentid, int severity, QString text);
 
     void messagesReceivedChanged    ();
     void messagesSentChanged        ();
@@ -1233,6 +1234,7 @@ private:
     void _handleAttitudeTarget(mavlink_message_t& message);
     void _handleDistanceSensor(mavlink_message_t& message);
     void _handleEstimatorStatus(mavlink_message_t& message);
+    void _handleStatusText(mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1432,6 +1434,8 @@ private:
     uint64_t    _mavlinkReceivedCount   = 0;
     uint64_t    _mavlinkLossCount       = 0;
     float       _mavlinkLossPercent     = 0.0f;
+
+    QMap<QString, QTime> _noisySpokenPrearmMap; ///< Used to prevent PreArm messages from being spoken too often
 
     // FactGroup facts
 
