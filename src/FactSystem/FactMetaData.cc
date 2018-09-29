@@ -80,6 +80,7 @@ const char* FactMetaData::_minJsonKey =                 "min";
 const char* FactMetaData::_maxJsonKey =                 "max";
 const char* FactMetaData::_incrementJsonKey =           "increment";
 const char* FactMetaData::_hasControlJsonKey =          "control";
+const char* FactMetaData::_qgcRebootRequiredJsonKey =   "qgcRebootRequired";
 
 FactMetaData::FactMetaData(QObject* parent)
     : QObject               (parent)
@@ -93,7 +94,8 @@ FactMetaData::FactMetaData(QObject* parent)
     , _minIsDefaultForType  (true)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
-    , _rebootRequired       (false)
+    , _vehicleRebootRequired(false)
+    , _qgcRebootRequired    (false)
     , _rawIncrement         (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
@@ -116,7 +118,8 @@ FactMetaData::FactMetaData(ValueType_t type, QObject* parent)
     , _minIsDefaultForType  (true)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
-    , _rebootRequired       (false)
+    , _vehicleRebootRequired(false)
+    , _qgcRebootRequired    (false)
     , _rawIncrement         (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
@@ -146,7 +149,8 @@ FactMetaData::FactMetaData(ValueType_t type, const QString name, QObject* parent
     , _name                 (name)
     , _rawTranslator        (_defaultTranslator)
     , _cookedTranslator     (_defaultTranslator)
-    , _rebootRequired       (false)
+    , _vehicleRebootRequired(false)
+    , _qgcRebootRequired    (false)
     , _rawIncrement         (std::numeric_limits<double>::quiet_NaN())
     , _hasControl           (true)
     , _readOnly             (false)
@@ -180,7 +184,8 @@ const FactMetaData& FactMetaData::operator=(const FactMetaData& other)
     _cookedUnits            = other._cookedUnits;
     _rawTranslator          = other._rawTranslator;
     _cookedTranslator       = other._cookedTranslator;
-    _rebootRequired         = other._rebootRequired;
+    _vehicleRebootRequired  = other._vehicleRebootRequired;
+    _qgcRebootRequired      = other._qgcRebootRequired;
     _rawIncrement           = other._rawIncrement;
     _hasControl             = other._hasControl;
     _readOnly               = other._readOnly;
@@ -363,7 +368,7 @@ bool FactMetaData::convertAndValidateRaw(const QVariant& rawValue, bool convertO
         typedValue = QVariant(rawValue.toFloat(&convertOk));
         if (!convertOnly && convertOk) {
             if (typedValue < rawMin() || typedValue > rawMax()) {
-                errorString = tr("Value must be within %1 and %2").arg(rawMin().toFloat()).arg(rawMax().toFloat());
+                errorString = tr("Value must be within %1 and %2").arg(rawMin().toDouble()).arg(rawMax().toDouble());
             }
         }
         break;
@@ -1065,15 +1070,16 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     }
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
-        { _nameJsonKey,             QJsonValue::String, true },
-        { _typeJsonKey,             QJsonValue::String, true },
-        { _shortDescriptionJsonKey, QJsonValue::String, false },
-        { _longDescriptionJsonKey,  QJsonValue::String, false },
-        { _unitsJsonKey,            QJsonValue::String, false },
-        { _decimalPlacesJsonKey,    QJsonValue::Double, false },
-        { _minJsonKey,              QJsonValue::Double, false },
-        { _maxJsonKey,              QJsonValue::Double, false },
-        { _hasControlJsonKey,       QJsonValue::Bool,   false },
+        { _nameJsonKey,                 QJsonValue::String, true },
+        { _typeJsonKey,                 QJsonValue::String, true },
+        { _shortDescriptionJsonKey,     QJsonValue::String, false },
+        { _longDescriptionJsonKey,      QJsonValue::String, false },
+        { _unitsJsonKey,                QJsonValue::String, false },
+        { _decimalPlacesJsonKey,        QJsonValue::Double, false },
+        { _minJsonKey,                  QJsonValue::Double, false },
+        { _maxJsonKey,                  QJsonValue::Double, false },
+        { _hasControlJsonKey,           QJsonValue::Bool,   false },
+        { _qgcRebootRequiredJsonKey,    QJsonValue::Bool,   false },
     };
     if (!JsonHelper::validateKeys(json, keyInfoList, errorString)) {
         qWarning() << errorString;
@@ -1187,6 +1193,12 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
         metaData->setHasControl(json[_hasControlJsonKey].toBool());
     } else {
         metaData->setHasControl(true);
+    }
+
+    if (json.contains(_qgcRebootRequiredJsonKey)) {
+        metaData->setQGCRebootRequired(json[_qgcRebootRequiredJsonKey].toBool());
+    } else {
+        metaData->setQGCRebootRequired(false);
     }
 
     return metaData;

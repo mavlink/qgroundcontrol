@@ -403,10 +403,6 @@ void ParameterManager::_valueUpdated(const QVariant& value)
 
     _writeParameterRaw(componentId, fact->name(), value);
     qCDebug(ParameterManagerLog) << _logVehiclePrefix(componentId) << "Set parameter - name:" << name << value << "(_waitingParamTimeoutTimer started)";
-
-    if (fact->rebootRequired() && !qgcApp()->runningUnitTests()) {
-        qgcApp()->showMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect").arg(name));
-    }
 }
 
 void ParameterManager::refreshAllParameters(uint8_t componentId)
