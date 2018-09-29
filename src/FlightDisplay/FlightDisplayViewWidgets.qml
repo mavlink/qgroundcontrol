@@ -104,37 +104,51 @@ Item {
     }
 
     //-- Map warnings
+
+    Rectangle {
+        anchors.margins:    -ScreenTools.defaultFontPixelHeight
+        anchors.fill:       warningsCol
+        color:              "white"
+        opacity:            0.5
+        radius:             ScreenTools.defaultFontPixelWidth / 2
+        visible:            warningsCol.noGPSLockVisible || warningsCol.prearmErrorVisible
+    }
+
     Column {
+        id:                         warningsCol
         anchors.horizontalCenter:   parent.horizontalCenter
         anchors.top:                parent.verticalCenter
         spacing:                    ScreenTools.defaultFontPixelHeight
 
+        property bool noGPSLockVisible:     _activeVehicle && !_activeVehicle.coordinate.isValid && _mainIsMap
+        property bool prearmErrorVisible:   _activeVehicle && _activeVehicle.prearmError
+
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
-            visible:                    _activeVehicle && !_activeVehicle.coordinate.isValid && _mainIsMap
+            visible:                    warningsCol.noGPSLockVisible
             z:                          QGroundControl.zOrderTopMost
-            color:                      mapPal.text
+            color:                      "black"
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       qsTr("No GPS Lock for Vehicle")
         }
 
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
-            visible:                    _activeVehicle && _activeVehicle.prearmError
+            visible:                    warningsCol.prearmErrorVisible
             z:                          QGroundControl.zOrderTopMost
-            color:                      mapPal.text
+            color:                      "black"
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       _activeVehicle ? _activeVehicle.prearmError : ""
         }
 
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
-            visible:                    _activeVehicle && _activeVehicle.prearmError
+            visible:                    warningsCol.prearmErrorVisible
             width:                      ScreenTools.defaultFontPixelWidth * 50
             horizontalAlignment:        Text.AlignHCenter
             wrapMode:                   Text.WordWrap
             z:                          QGroundControl.zOrderTopMost
-            color:                      mapPal.text
+            color:                      "black"
             font.pointSize:             ScreenTools.largeFontPointSize
             text:                       "The vehicle has failed a pre-arm check. In order to arm the vehicle, resolve the failure."
         }

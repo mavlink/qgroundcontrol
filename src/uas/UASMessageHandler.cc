@@ -17,7 +17,7 @@
 #include "QGCApplication.h"
 #include "UASMessageHandler.h"
 #include "MultiVehicleManager.h"
-#include "UAS.h"
+#include "Vehicle.h"
 
 UASMessage::UASMessage(int componentid, int severity, QString text)
 {
@@ -88,7 +88,7 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
 {
     // If we were already attached to an autopilot, disconnect it.
     if (_activeVehicle) {
-        disconnect(_activeVehicle->uas(), &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
+        disconnect(_activeVehicle, &Vehicle::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
         _activeVehicle = NULL;
         clearMessages();
         emit textMessageReceived(NULL);
@@ -99,7 +99,7 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
         // Connect to the new UAS.
         clearMessages();
         _activeVehicle = vehicle;
-        connect(_activeVehicle->uas(), &UASInterface::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
+        connect(_activeVehicle, &Vehicle::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
     }
 }
 
