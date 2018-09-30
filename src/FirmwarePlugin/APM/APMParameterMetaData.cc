@@ -443,7 +443,7 @@ void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
     metaData->setName(rawMetaData->name);
     metaData->setCategory(rawMetaData->category);
     metaData->setGroup(rawMetaData->group);
-    metaData->setRebootRequired(rawMetaData->rebootRequired);
+    metaData->setVehicleRebootRequired(rawMetaData->rebootRequired);
 
     if (!rawMetaData->shortDescription.isEmpty()) {
         metaData->setShortDescription(rawMetaData->shortDescription);

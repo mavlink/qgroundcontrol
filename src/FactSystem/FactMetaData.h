@@ -103,7 +103,8 @@ public:
     ValueType_t     type                    (void) const { return _type; }
     QString         rawUnits                (void) const { return _rawUnits; }
     QString         cookedUnits             (void) const { return _cookedUnits; }
-    bool            rebootRequired          (void) const { return _rebootRequired; }
+    bool            vehicleRebootRequired   (void) const { return _vehicleRebootRequired; }
+    bool            qgcRebootRequired       (void) const { return _qgcRebootRequired; }
     bool            hasControl              (void) const { return _hasControl; }
     bool            readOnly                (void) const { return _readOnly; }
     bool            writeOnly               (void) const { return _writeOnly; }
@@ -123,24 +124,25 @@ public:
     /// Used to add new values to the enum lists after the meta data has been loaded
     void addEnumInfo(const QString& name, const QVariant& value);
 
-    void setDecimalPlaces   (int decimalPlaces)                 { _decimalPlaces = decimalPlaces; }
-    void setRawDefaultValue (const QVariant& rawDefaultValue);
-    void setBitmaskInfo     (const QStringList& strings, const QVariantList& values);
-    void setEnumInfo        (const QStringList& strings, const QVariantList& values);
-    void setCategory        (const QString& category)           { _category = category; }
-    void setGroup           (const QString& group)              { _group = group; }
-    void setLongDescription (const QString& longDescription)    { _longDescription = longDescription;}
-    void setRawMax          (const QVariant& rawMax);
-    void setRawMin          (const QVariant& rawMin);
-    void setName            (const QString& name)               { _name = name; }
-    void setShortDescription(const QString& shortDescription)   { _shortDescription = shortDescription; }
-    void setRawUnits        (const QString& rawUnits);
-    void setRebootRequired  (bool rebootRequired)               { _rebootRequired = rebootRequired; }
-    void setRawIncrement    (double increment)                  { _rawIncrement = increment; }
-    void setHasControl      (bool bValue)                       { _hasControl = bValue; }
-    void setReadOnly        (bool bValue)                       { _readOnly = bValue; }
-    void setWriteOnly       (bool bValue)                       { _writeOnly = bValue; }
-    void setVolatileValue   (bool bValue);
+    void setDecimalPlaces           (int decimalPlaces)                 { _decimalPlaces = decimalPlaces; }
+    void setRawDefaultValue         (const QVariant& rawDefaultValue);
+    void setBitmaskInfo             (const QStringList& strings, const QVariantList& values);
+    void setEnumInfo                (const QStringList& strings, const QVariantList& values);
+    void setCategory                (const QString& category)           { _category = category; }
+    void setGroup                   (const QString& group)              { _group = group; }
+    void setLongDescription         (const QString& longDescription)    { _longDescription = longDescription;}
+    void setRawMax                  (const QVariant& rawMax);
+    void setRawMin                  (const QVariant& rawMin);
+    void setName                    (const QString& name)               { _name = name; }
+    void setShortDescription        (const QString& shortDescription)   { _shortDescription = shortDescription; }
+    void setRawUnits                (const QString& rawUnits);
+    void setVehicleRebootRequired   (bool rebootRequired)               { _vehicleRebootRequired = rebootRequired; }
+    void setQGCRebootRequired       (bool rebootRequired)               { _qgcRebootRequired = rebootRequired; }
+    void setRawIncrement            (double increment)                  { _rawIncrement = increment; }
+    void setHasControl              (bool bValue)                       { _hasControl = bValue; }
+    void setReadOnly                (bool bValue)                       { _readOnly = bValue; }
+    void setWriteOnly               (bool bValue)                       { _writeOnly = bValue; }
+    void setVolatileValue           (bool bValue);
 
     void setTranslators(Translator rawTranslator, Translator cookedTranslator);
 
@@ -248,7 +250,8 @@ private:
     QString         _cookedUnits;
     Translator      _rawTranslator;
     Translator      _cookedTranslator;
-    bool            _rebootRequired;
+    bool            _vehicleRebootRequired;
+    bool            _qgcRebootRequired;
     double          _rawIncrement;
     bool            _hasControl;
     bool            _readOnly;
@@ -276,18 +279,19 @@ private:
 
     static const AppSettingsTranslation_s _rgAppSettingsTranslations[];
 
-    static const char*  _nameJsonKey;
-    static const char*  _decimalPlacesJsonKey;
-    static const char*  _typeJsonKey;
-    static const char*  _shortDescriptionJsonKey;
-    static const char*  _longDescriptionJsonKey;
-    static const char*  _unitsJsonKey;
-    static const char*  _defaultValueJsonKey;
-    static const char*  _mobileDefaultValueJsonKey;
-    static const char*  _minJsonKey;
-    static const char*  _maxJsonKey;
-    static const char*  _incrementJsonKey;
+    static const char* _nameJsonKey;
+    static const char* _decimalPlacesJsonKey;
+    static const char* _typeJsonKey;
+    static const char* _shortDescriptionJsonKey;
+    static const char* _longDescriptionJsonKey;
+    static const char* _unitsJsonKey;
+    static const char* _defaultValueJsonKey;
+    static const char* _mobileDefaultValueJsonKey;
+    static const char* _minJsonKey;
+    static const char* _maxJsonKey;
+    static const char* _incrementJsonKey;
     static const char* _hasControlJsonKey;
+    static const char* _qgcRebootRequiredJsonKey;
 };
 
 #endif
