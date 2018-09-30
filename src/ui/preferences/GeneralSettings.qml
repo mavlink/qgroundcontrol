@@ -38,7 +38,7 @@ QGCView {
     property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
     property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 25
-    property real _valueFieldWidth:             ScreenTools.defaultFontPixelWidth * 8
+    property real _valueFieldWidth:             ScreenTools.defaultFontPixelWidth * 10
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
@@ -46,8 +46,6 @@ QGCView {
     property real _margins:                     ScreenTools.defaultFontPixelWidth
 
     readonly property real _internalWidthRatio:          0.8
-
-    readonly property string _requiresRestart:  qsTr("(Requires Restart)")
 
     QGCPalette { id: qgcPal }
 
@@ -72,7 +70,7 @@ QGCView {
 
                     QGCLabel {
                         id:         unitsSectionLabel
-                        text:       qsTr("Units (Requires Restart)")
+                        text:       qsTr("Units")
                         visible:    QGroundControl.settingsManager.unitsSettings.visible
                     }
                     Rectangle {
@@ -233,9 +231,6 @@ QGCView {
                                             }
                                         }
                                     }
-                                    QGCLabel {
-                                        text: _requiresRestart
-                                    }
                                 }
 
 
@@ -384,7 +379,7 @@ QGCView {
 
                     QGCLabel {
                         id:         rtkSectionLabel
-                        text:       qsTr("RTK GPS (Requires Restart)")
+                        text:       qsTr("RTK GPS")
                         visible:    QGroundControl.settingsManager.rtkSettings.visible
                     }
                     Rectangle {
@@ -402,16 +397,18 @@ QGCView {
                             anchors.horizontalCenter:   parent.horizontalCenter
                             columns:                    2
 
-                            QGCLabel { text: qsTr("Survey in accuracy (U-blox only)") }
+                            property var rtkSettings: QGroundControl.settingsManager.rtkSettings
+
+                            QGCLabel { text: rtkGrid.rtkSettings.surveyInAccuracyLimit.shortDescription }
                             FactTextField {
                                 Layout.preferredWidth:  _valueFieldWidth
-                                fact:                   QGroundControl.settingsManager.rtkSettings.surveyInAccuracyLimit
+                                fact:                   rtkGrid.rtkSettings.surveyInAccuracyLimit
                             }
 
-                            QGCLabel { text: qsTr("Minimum observation duration") }
+                            QGCLabel { text: rtkGrid.rtkSettings.surveyInMinObservationDuration.shortDescription }
                             FactTextField {
                                 Layout.preferredWidth:  _valueFieldWidth
-                                fact:                   QGroundControl.settingsManager.rtkSettings.surveyInMinObservationDuration
+                                fact:                   rtkGrid.rtkSettings.surveyInMinObservationDuration
                             }
                         }
                     }
