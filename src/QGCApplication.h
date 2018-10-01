@@ -33,6 +33,7 @@
 #include "AudioOutput.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
+#include "GPSRTKFactGroup.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -95,6 +96,8 @@ public:
     /// Is Internet available?
     bool isInternetAvailable();
 
+    FactGroup* gpsRtkFactGroup(void)  { return _gpsRtkFactGroup; }
+
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -152,6 +155,10 @@ private slots:
     void _currentVersionDownloadFinished(QString remoteFile, QString localFile);
     void _currentVersionDownloadError(QString errorMsg);
     bool _parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
+    void _onGPSConnect();
+    void _onGPSDisconnect();
+    void _gpsSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void _gpsNumSatellites(int numSatellites);
 
 private:
     QObject* _rootQmlObject(void);
@@ -175,6 +182,7 @@ private:
     int                 _minorVersion;
     int                 _buildVersion;
     QGCFileDownload*    _currentVersionDownload;
+    GPSRTKFactGroup*    _gpsRtkFactGroup;
 
     QGCToolbox* _toolbox;
 
