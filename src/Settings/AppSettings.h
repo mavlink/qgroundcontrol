@@ -43,6 +43,7 @@ public:
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
     Q_PROPERTY(Fact* gstDebug                           READ gstDebug                           CONSTANT)
     Q_PROPERTY(Fact* followTarget                       READ followTarget                       CONSTANT)
+    Q_PROPERTY(Fact* splitConcavePolygons               READ splitConcavePolygons               CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
@@ -82,13 +83,14 @@ public:
     Fact* defaultFirmwareType               (void);
     Fact* gstDebug                          (void);
     Fact* followTarget                      (void);
+    Fact* splitConcavePolygons              (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
     QString logSavePath         (void);
-    QString videoSavePath         (void);
-    QString crashSavePath         (void);
+    QString videoSavePath       (void);
+    QString crashSavePath       (void);
 
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
@@ -119,6 +121,7 @@ public:
     static const char* defaultFirmwareTypeName;
     static const char* gstDebugName;
     static const char* followTargetName;
+    static const char* splitConcavePolygonsName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -170,6 +173,7 @@ private:
     SettingsFact* _defaultFirmwareTypeFact;
     SettingsFact* _gstDebugFact;
     SettingsFact* _followTargetFact;
+    SettingsFact* _splitConcavePolygonsFact;
 };
 
 #endif
