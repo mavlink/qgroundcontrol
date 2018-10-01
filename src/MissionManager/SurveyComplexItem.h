@@ -111,6 +111,8 @@ private:
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     bool _loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
     void _rebuildTransectsPhase1Worker(bool refly);
+    void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
+    void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
     /// Adds to the _transects array from one polygon
     void _rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
     // Decompose polygon into list of convex sub polygons
