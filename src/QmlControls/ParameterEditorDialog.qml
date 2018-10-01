@@ -226,8 +226,13 @@ QGCViewDialog {
             }
 
             QGCLabel {
-                visible:    fact.rebootRequired
-                text:       "Reboot required after change"
+                visible:    fact.vehicleRebootRequired
+                text:       "Vehicle reboot required after change"
+            }
+
+            QGCLabel {
+                visible:    fact.qgcRebootRequired
+                text:       "Appliction restart required after change"
             }
 
             QGCLabel {

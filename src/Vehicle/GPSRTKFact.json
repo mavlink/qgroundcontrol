@@ -2,35 +2,62 @@
 {
     "name":             "connected",
     "shortDescription": "Connected",
-    "type":             "bool"
+    "type":             "bool",
+    "default":          false
 },
 {
     "name":             "currentAccuracy",
-    "shortDescription": "Current Accuracy",
+    "shortDescription": "Current Survey-In Accuracy",
     "type":             "double",
     "decimalPlaces":    1,
-    "units":            "m"
+    "units":            "m",
+    "default":          null
+},
+{
+    "name":             "currentLatitude",
+    "shortDescription": "Current Survey-In Latitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "currentLongitude",
+    "shortDescription": "Current Survey-In Longitude",
+    "type":             "double",
+    "decimalPlaces":    7,
+    "default":          null
+},
+{
+    "name":             "currentAltitude",
+    "shortDescription": "Current Survey-In Altitude",
+    "type":             "float",
+    "decimalPlaces":    2,
+    "default":          null
 },
 {
     "name":             "currentDuration",
-    "shortDescription": "Current Duration",
+    "shortDescription": "Current Survey-In Duration",
     "type":             "double",
     "decimalPlaces":    0,
-    "units":            "s"
+    "units":            "s",
+    "default":          0
 },
 {
     "name":             "valid",
-    "shortDescription": "Survey-in Valid",
-    "type":             "bool"
+    "shortDescription": "Survey-In Valid",
+    "type":             "bool",
+    "default":          false
 },
 {
     "name":             "active",
-    "shortDescription": "Survey-in Active",
-    "type":             "bool"
+    "shortDescription": "Survey-In Active",
+    "type":             "bool",
+    "default":          false
 },
 {
     "name":             "numSatellites",
     "shortDescription": "Number of Satellites",
-    "type":             "int32"
+    "type":             "int32",
+    "default":          0
 }
 ]

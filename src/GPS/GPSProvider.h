@@ -35,19 +35,29 @@ public:
         trimble
     };
 
-    GPSProvider(const QString& device, GPSType type, bool enableSatInfo, double surveyInAccMeters, int surveryInDurationSecs,
-            const std::atomic_bool& requestStop);
+    GPSProvider(const QString& device,
+                GPSType type,
+                bool    enableSatInfo,
+                double  surveyInAccMeters,
+                int     surveryInDurationSecs,
+                bool    useFixedBaseLocation,
+                double  fixedBaseLatitude,
+                double  fixedBaseLongitude,
+                float   fixedBaseAltitudeMeters,
+                float   fixedBaseAccuracyMeters,
+                const std::atomic_bool& requestStop);
     ~GPSProvider();
 
     /**
      * this is called by the callback method
      */
     void gotRTCMData(uint8_t *data, size_t len);
+
 signals:
     void positionUpdate(GPSPositionMessage message);
     void satelliteInfoUpdate(GPSSatelliteMessage message);
     void RTCMDataUpdate(QByteArray message);
-    void surveyInStatus(float duration, float accuracyMM, bool valid, bool active);
+    void surveyInStatus(float duration, float accuracyMM, double latitude, double longitude, float altitude, bool valid, bool active);
 
 protected:
     void run();
@@ -68,6 +78,11 @@ private:
     const std::atomic_bool& _requestStop;
     double  _surveyInAccMeters;
     int     _surveryInDurationSecs;
+    bool    _useFixedBaseLoction;
+    double  _fixedBaseLatitude;
+    double  _fixedBaseLongitude;
+    float   _fixedBaseAltitudeMeters;
+    float   _fixedBaseAccuracyMeters;
 
 	struct vehicle_gps_position_s	_reportGpsPos;
 	struct satellite_info_s		*_pReportSatInfo = nullptr;
