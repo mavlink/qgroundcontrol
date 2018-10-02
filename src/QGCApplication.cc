@@ -199,7 +199,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
             QMessageBox msgBox;
             msgBox.setInformativeText(tr("You are running %1 as root. "
                                          "You should not do this since it will cause other issues with %1. "
-                                         "%1 will now exiQGroundControl.gpsRtkt. "
+                                         "%1 will now exit. "
                                          "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
                                          "sudo usermod -a -G dialout $USER\n"
                                          "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
