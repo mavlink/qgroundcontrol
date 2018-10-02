@@ -147,8 +147,8 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
 
     saveObject[altitudeName] =              _altitudeFact.rawValue().toDouble();
-    saveObject[structureHeightName] =      _structureHeightFact.rawValue().toDouble();
-    saveObject[_jsonAltitudeRelativeKey] =   _altitudeRelative;
+    saveObject[structureHeightName] =       _structureHeightFact.rawValue().toDouble();
+    saveObject[_jsonAltitudeRelativeKey] =  _altitudeRelative;
     saveObject[layersName] =                _layersFact.rawValue().toDouble();
 
     QJsonObject cameraCalcObject;
@@ -208,9 +208,11 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         return false;
     }
 
-    _altitudeFact.setRawValue   (complexObject[altitudeName].toDouble());
-    _layersFact.setRawValue     (complexObject[layersName].toDouble());
-    _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
+    _altitudeFact.setRawValue       (complexObject[altitudeName].toDouble());
+    _layersFact.setRawValue         (complexObject[layersName].toDouble());
+    _structureHeightFact.setRawValue(complexObject[structureHeightName].toDouble());
+
+    _altitudeRelative = complexObject[_jsonAltitudeRelativeKey].toBool(true);
 
     if (!_structurePolygon.loadFromJson(complexObject, true /* required */, errorString)) {
         _structurePolygon.clear();
