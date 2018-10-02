@@ -37,7 +37,7 @@
     "defaultValue":         0,
     "min":                  -90,
     "max":                  90,
-    "decimalPlaces":        7,
+    "decimalPlaces":        9,
     "qgcRebootRequired":    true
 },
 {
@@ -48,7 +48,7 @@
     "defaultValue":         0,
     "min":                  -180,
     "max":                  180,
-    "decimalPlaces":        7,
+    "decimalPlaces":        9,
     "qgcRebootRequired":    true
 },
 {
