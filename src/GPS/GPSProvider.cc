@@ -88,7 +88,7 @@ void GPSProvider::run()
         gpsDriver->setSurveyInSpecs(_surveyInAccMeters * 10000.0f, _surveryInDurationSecs);
 
         if (_useFixedBaseLoction) {
-            gpsDriver->setBasePosition(_fixedBaseLatitude, _fixedBaseLongitude, _fixedBaseAltitudeMeters * 10000.0f, _fixedBaseAccuracyMeters * 10000.0f);
+            gpsDriver->setBasePosition(_fixedBaseLatitude, _fixedBaseLongitude, _fixedBaseAltitudeMeters, _fixedBaseAccuracyMeters * 1000.0f);
         }
 
         if (gpsDriver->configure(baudrate, GPSDriverUBX::OutputMode::RTCM) == 0) {
