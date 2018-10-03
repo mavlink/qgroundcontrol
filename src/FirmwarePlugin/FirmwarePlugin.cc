@@ -16,6 +16,8 @@
 
 #include <QDebug>
 
+QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
+
 static FirmwarePluginFactoryRegister* _instance = NULL;
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
