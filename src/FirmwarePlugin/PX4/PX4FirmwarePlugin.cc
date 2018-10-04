@@ -232,7 +232,7 @@ bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities c
 {
     int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;
     if (vehicle->multiRotor() || vehicle->vtol()) {
-        available |= TakeoffVehicleCapability | OrbitModeCapability;
+        available |= TakeoffVehicleCapability;
     }
 
     return (capabilities & available) == capabilities;
