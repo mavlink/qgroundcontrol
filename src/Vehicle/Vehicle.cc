@@ -1986,6 +1986,47 @@ int Vehicle::motorCount(void)
         return 6;
     case MAV_TYPE_OCTOROTOR:
         return 8;
+    case MAV_TYPE_SUBMARINE:
+    {
+        // Supported frame types
+        enum {
+            SUB_FRAME_BLUEROV1,
+            SUB_FRAME_VECTORED,
+            SUB_FRAME_VECTORED_6DOF,
+            SUB_FRAME_VECTORED_6DOF_90DEG,
+            SUB_FRAME_SIMPLEROV_3,
+            SUB_FRAME_SIMPLEROV_4,
+            SUB_FRAME_SIMPLEROV_5,
+            SUB_FRAME_CUSTOM
+        };
+
+        uint8_t frameType = parameterManager()->getParameter(_compID, "FRAME_CONFIG")->rawValue().toInt();
+
+        switch (frameType) {  // ardupilot/libraries/AP_Motors/AP_Motors6DOF.h sub_frame_t
+
+        case SUB_FRAME_BLUEROV1:
+        case SUB_FRAME_VECTORED:
+            return 6;
+
+        case SUB_FRAME_SIMPLEROV_3:
+            return 3;
+
+        case SUB_FRAME_SIMPLEROV_4:
+            return 4;
+
+        case SUB_FRAME_SIMPLEROV_5:
+            return 5;
+
+        case SUB_FRAME_VECTORED_6DOF:
+        case SUB_FRAME_VECTORED_6DOF_90DEG:
+        case SUB_FRAME_CUSTOM:
+            return 8;
+
+        default:
+            return -1;
+        }
+    }
+
     default:
         return -1;
     }
