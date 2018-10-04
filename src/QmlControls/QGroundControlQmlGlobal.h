@@ -23,10 +23,6 @@
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "AirspaceManager.h"
-#ifndef __mobile__
-#include "GPS/GPSManager.h"
-#endif /* __mobile__ */
-#include "GPSRTKFactGroup.h"
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -144,7 +140,7 @@ public:
     MAVLinkLogManager*      mavlinkLogManager   ()  { return _mavlinkLogManager; }
     QGCCorePlugin*          corePlugin          ()  { return _corePlugin; }
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
-    FactGroup*              gpsRtkFactGroup     ()  { return &_gpsRtkFactGroup; }
+    FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
     AirspaceManager*        airspaceManager     ()  { return _airspaceManager; }
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
@@ -192,12 +188,6 @@ signals:
     void flightMapZoomChanged           (double flightMapZoom);
     void skipSetupPageChanged           ();
 
-private slots:
-    void _onGPSConnect();
-    void _onGPSDisconnect();
-    void _GPSSurveyInStatus(float duration, float accuracyMM, bool valid, bool active);
-    void _GPSNumSatellites(int numSatellites);
-
 private:
     double                  _flightMapInitialZoom;
     LinkManager*            _linkManager;
@@ -210,7 +200,7 @@ private:
     QGCCorePlugin*          _corePlugin;
     FirmwarePluginManager*  _firmwarePluginManager;
     SettingsManager*        _settingsManager;
-    GPSRTKFactGroup         _gpsRtkFactGroup;
+    FactGroup*              _gpsRtkFactGroup;
     AirspaceManager*        _airspaceManager;
 
     bool                    _skipSetupPage;

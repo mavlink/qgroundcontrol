@@ -35,7 +35,7 @@ public:
 signals:
     void onConnect();
     void onDisconnect();
-    void surveyInStatus(float duration, float accuracyMM, bool valid, bool active);
+    void surveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
     void satelliteUpdate(int numSats);
 
 private slots:
