@@ -20,5 +20,55 @@
     "units":                "secs",
     "decimalPlaces":        0,
     "qgcRebootRequired":    true
+},
+{
+    "name":                 "UseFixedBasePosition",
+    "shortDescription":     "Use specified base position",
+    "longDescription":      "Specify the values for the RTK base position without having to do a survey in.",
+    "type":                 "bool",
+    "defaultValue":         false,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "FixedBasePositionLatitude",
+    "shortDescription":     "Base Position Latitude",
+    "longDescription":      "Defines the latitude of the fixed RTK base position.",
+    "type":                 "double",
+    "defaultValue":         0,
+    "min":                  -90,
+    "max":                  90,
+    "decimalPlaces":        9,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "FixedBasePositionLongitude",
+    "shortDescription":     "Base Position Longitude",
+    "longDescription":      "Defines the longitude of the fixed RTK base position.",
+    "type":                 "double",
+    "defaultValue":         0,
+    "min":                  -180,
+    "max":                  180,
+    "decimalPlaces":        9,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "FixedBasePositionAltitude",
+    "shortDescription":     "Base Position Altitude",
+    "longDescription":      "Defines the altitude of the fixed RTK base position.",
+    "type":                 "float",
+    "defaultValue":         0,
+    "units":                "m",
+    "decimalPlaces":        2,
+    "qgcRebootRequired":    true
+},
+{
+    "name":                 "FixedBasePositionAccuracy",
+    "shortDescription":     "Base Position Accuracy",
+    "longDescription":      "Defines the accuracy of the fixed RTK base position.",
+    "type":                 "float",
+    "defaultValue":         0,
+    "units":                "m",
+    "decimalPlaces":        2,
+    "qgcRebootRequired":    true
 }
 ]
