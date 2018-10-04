@@ -16,6 +16,7 @@
 #include "APMSensorsComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
+#include "QGCFileDownload.h"
 
 #include <QTcpSocket>
 
@@ -1003,4 +1004,26 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
     } else {
         vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
+}
+
+QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle)
+{
+    const static QString baseUrl("http://firmware.ardupilot.org/%1/stable/PX4/git-version.txt");
+    if (vehicle->fixedWing()) {
+        return baseUrl.arg("Plane");
+    }
+    if (vehicle->vtol()) {
+        return baseUrl.arg("Plane");
+    }
+    if (vehicle->rover()) {
+        return baseUrl.arg("Rover");
+    }
+    if (vehicle->sub()) {
+        return baseUrl.arg("Sub");
+    }
+    return baseUrl.arg("Copter");
+}
+
+QString APMFirmwarePlugin::_versionRegex() {
+    return QStringLiteral(" V([0-9,\\.]*)$");
 }

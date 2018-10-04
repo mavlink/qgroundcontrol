@@ -306,6 +306,9 @@ public:
     /// Convert from HIGH_LATENCY2.custom_mode value to correct 32 bit value.
     virtual uint32_t highLatencyCustomModeTo32Bits(uint16_t hlCustomMode);
 
+    /// Used to check if running firmware is latest stable version.
+    virtual void checkIfIsLatestStable(Vehicle* vehicle);
+
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
 
@@ -320,6 +323,15 @@ protected:
     // Sets the vehicle to the specified flight mode with validation and retries
     // @return: true - vehicle in specified flight mode, false - flight mode change failed
     bool _setFlightModeAndValidate(Vehicle* vehicle, const QString& flightMode);
+
+    // returns url with latest firmware release information.
+    virtual QString _getLatestVersionFileUrl(Vehicle* vehicle) { Q_UNUSED(vehicle); return QString(); }
+
+    // Callback to process file with latest release information
+    virtual void _versionFileDownloadFinished(QString& remoteFile, QString& localFile, Vehicle* vehicle);
+
+    // Returns regex QString to extract version information from text
+    virtual QString _versionRegex() { return QString(); }
 
 private:
     QVariantList _toolBarIndicatorList;
