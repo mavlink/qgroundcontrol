@@ -86,7 +86,8 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
-            if (_vehicle->multiRotor() || _vehicle->vtol()) {
+            int versionInt = _vehicle->firmwareMajorVersion() * 100 + _vehicle->firmwareMinorVersion() * 10 + _vehicle->firmwarePatchVersion();
+            if (_vehicle->sub() && versionInt >= 353) {
                 _motorComponent = new MotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
