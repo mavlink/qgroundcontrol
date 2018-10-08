@@ -768,16 +768,17 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
-        if (vehicle->versionCompare(3,4,0) < 0) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml");
+        if (vehicle->versionCompare(3, 6, 0) >= 0) {  // 3.6.0 and higher
+             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
         }
-        if (vehicle->versionCompare(3,5,0) < 0) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml");
-        }
-        if (vehicle->versionCompare(3,6,0) < 0) {
+        if (vehicle->versionCompare(3, 5, 0) >= 0) {  // 3.5.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
         }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
+        if (vehicle->versionCompare(3, 4, 0) >= 0) {  // 3.4.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.4.xml");
+        }
+        // Up to 3.3.x
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.3.xml");
 
     case MAV_TYPE_VTOL_DUOROTOR:
     case MAV_TYPE_VTOL_QUADROTOR:
@@ -787,35 +788,39 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
-        if (vehicle->versionCompare(3,5,0) < 0) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml");
+        if (vehicle->versionCompare(3, 8, 0) >= 0) {  // 3.8.0 and higher
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.8.xml");
         }
-        if (vehicle->versionCompare(3,7,0) < 0) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.5.xml");
-        }
-        if (vehicle->versionCompare(3,8,0) < 0) {
+        if (vehicle->versionCompare(3, 7, 0) >= 0) {  // 3.7.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.7.xml");
         }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.8.xml");
+        if (vehicle->versionCompare(3, 5, 0) >= 0) {  // 3.5.x to 3.6.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.5.xml");
+        }
+        // up to 3.4.x
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.3.xml");
 
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
-        if (vehicle->versionCompare(3,2,0) < 0) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml");
+        if (vehicle->versionCompare(3, 4, 0) >= 0) {  // 3.4.0 and higher
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
         }
-        if (vehicle->versionCompare(3,4,0) < 0) {
+        if (vehicle->versionCompare(3, 2, 0) >= 0) { // 3.2.x to 3.3.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.2.xml");
         }
-        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.4.xml");
+        // up to 3.1.x
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.0.xml");
 
     case MAV_TYPE_SUBMARINE:
-        if (vehicle->firmwareMajorVersion() < 3 || (vehicle->firmwareMajorVersion() == 3 && vehicle->firmwareMinorVersion() <= 4)) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml");
-        } else if (vehicle->firmwareMinorVersion() <= 5) {
-            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.5.xml");
-        } else {
+        if (vehicle->versionCompare(3, 6, 0) >= 0) { // 3.5.x
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.6dev.xml");
         }
+        if (vehicle->versionCompare(3, 5, 0) >= 0) { // 3.5.x
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.5.xml");
+        }
+        // up to 3.4.x
+        return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Sub.3.4.xml");
+
     default:
         return QString();
     }
