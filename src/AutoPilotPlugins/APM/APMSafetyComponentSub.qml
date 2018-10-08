@@ -36,7 +36,7 @@ SetupPage {
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 
             property var _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-            property bool _firmware34: _activeVehicle.firmwareMajorVersion == 3 && _activeVehicle.firmwareMinorVersion == 4
+            property bool _firmware34:       _activeVehicle.versionCompare(3, 5, 0) < 0
 
             // Enable/Action parameters
             property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT")
