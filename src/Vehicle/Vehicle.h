@@ -746,6 +746,11 @@ public:
     Q_INVOKABLE void triggerCamera(void);
     Q_INVOKABLE void sendPlan(QString planFile);
 
+    /// Used to check if running current version is equal or higher than the one being compared.
+    //  returns 1 if current > compare, 0 if current == compare, -1 if current < compare
+    Q_INVOKABLE int versionCompare(QString& compare);
+    Q_INVOKABLE int versionCompare(int major, int minor, int patch);
+
     /// Test motor
     ///     @param motor Motor number, 1-based
     ///     @param percent 0-no power, 100-full power
