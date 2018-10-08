@@ -740,3 +740,35 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
         qgcApp()->showMessage(message.arg(vehicle->firmwareVersionTypeString(), currentVersion, version));
     }
 }
+
+int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int patch)
+{
+    int currMajor = vehicle->firmwareMajorVersion();
+    int currMinor = vehicle->firmwareMinorVersion();
+    int currPatch = vehicle->firmwarePatchVersion();
+
+    if (currMajor == major && currMinor == minor && currPatch == patch) {
+        return 0;
+    }
+
+    if (currMajor > major
+       || (currMajor == major && currMinor > minor)
+       || (currMajor == major && currMinor == minor && currPatch > patch))
+    {
+        return 1;
+    }
+    return -1;
+}
+
+int FirmwarePlugin::versionCompare(Vehicle* vehicle, QString& compare)
+{
+    QStringList versionNumbers = compare.split(".");
+    if(versionNumbers.size() != 3) {
+        qCWarning(FirmwarePluginLog) << "Error parsing version number: wrong format";
+        return -1;
+    }
+    int major = versionNumbers[0].toInt();
+    int minor = versionNumbers[1].toInt();
+    int patch = versionNumbers[2].toInt();
+    return versionCompare(vehicle, major, minor, patch);
+}
