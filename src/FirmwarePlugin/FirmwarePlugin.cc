@@ -713,25 +713,12 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
     }
 
     qCDebug(FirmwarePluginLog) << "Latest stable version = "  << version;
-    QStringList versionNumbers = version.split(".");
-    if(versionNumbers.size() != 3) {
-        qCWarning(FirmwarePluginLog) << "Error parsing version number: wrong format";
-        return;
-    }
-    int stableMajor = versionNumbers[0].toInt();
-    int stableMinor = versionNumbers[1].toInt();
-    int stablePatch = versionNumbers[2].toInt();
 
-    int currMajor = vehicle->firmwareMajorVersion();
-    int currMinor = vehicle->firmwareMinorVersion();
-    int currPatch = vehicle->firmwarePatchVersion();
     int currType = vehicle->firmwareVersionType();
 
-    if (currMajor < stableMajor
-        || (currMajor == stableMajor && currMinor < stableMinor)
-        || (currMajor == stableMajor && currMinor == stableMinor && currPatch < stablePatch)
-        || (currMajor == stableMajor && currMinor == stableMinor && currPatch == stablePatch && currType != FIRMWARE_VERSION_TYPE_OFFICIAL)
-        )
+    // Check if lower version than stable or same version but different type
+    if (vehicle->versionCompare(version) < 0
+       || (vehicle->versionCompare(version) == 0 && currType != FIRMWARE_VERSION_TYPE_OFFICIAL))
     {
         const static QString currentVersion = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                                                                  .arg(vehicle->firmwareMinorVersion())
