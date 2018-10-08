@@ -72,7 +72,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             }
 
             // No flight modes component for Sub versions 3.5 and up
-            if (!_vehicle->sub() || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() <= 4)) {
+            if (!_vehicle->sub() || (_vehicle->versionCompare(3, 5, 0) < 0)) {
                 _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
                 _flightModesComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
@@ -86,8 +86,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
-            int versionInt = _vehicle->firmwareMajorVersion() * 100 + _vehicle->firmwareMinorVersion() * 10 + _vehicle->firmwarePatchVersion();
-            if (_vehicle->sub() && versionInt >= 353) {
+            if (_vehicle->sub() && _vehicle->versionCompare(3, 5, 3) >= 0) {
                 _motorComponent = new APMMotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
@@ -116,7 +115,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _lightsComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_lightsComponent));
 
-                if(_vehicle->firmwareMajorVersion() > 3 || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() >= 5)) {
+                if(_vehicle->versionCompare(3, 5, 0) >= 0) {
                     _subFrameComponent = new APMSubFrameComponent(_vehicle, this);
                     _subFrameComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue((VehicleComponent*)_subFrameComponent));
