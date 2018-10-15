@@ -57,7 +57,6 @@ linux {
     macx-clang | macx-llvm {
         message("Mac build")
         CONFIG += MacBuild
-        DEFINES += __macos__
         CONFIG += x86_64
         CONFIG -= x86
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {

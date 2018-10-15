@@ -41,10 +41,6 @@
 
 #include "ui_MainWindow.h"
 
-#if (defined QGC_MOUSE_ENABLED_WIN) | (defined QGC_MOUSE_ENABLED_LINUX)
-    #include "Mouse6dofInput.h"
-#endif // QGC_MOUSE_ENABLED_WIN
-
 class QGCStatusBar;
 class Linecharts;
 
@@ -109,11 +105,6 @@ signals:
     // Used for unit tests to know when the main window closes
     void mainWindowClosed(void);
 
-#ifdef QGC_MOUSE_ENABLED_LINUX
-    /** @brief Forward X11Event to catch 3DMouse inputs */
-    void x11EventOccured(XEvent *event);
-#endif //QGC_MOUSE_ENABLED_LINUX
-
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
     {
@@ -134,12 +125,6 @@ protected:
     Mouse3DInput* mouseInput;               ///< 3dConnexion 3dMouse SDK
     Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
 #endif // QGC_MOUSE_ENABLED_WIN
-
-#ifdef QGC_MOUSE_ENABLED_LINUX
-    /** @brief Reimplementation of X11Event to handle 3dMouse Events (magellan) */
-    bool x11Event(XEvent *event);
-    Mouse6dofInput* mouse;                  ///< Implementation for 3dMouse input
-#endif // QGC_MOUSE_ENABLED_LINUX
 
     /** User interface actions **/
     QAction* connectUASAct;

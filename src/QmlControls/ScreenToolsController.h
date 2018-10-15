@@ -49,19 +49,19 @@ public:
     bool    isMobile            () { return qgcApp()->fakeMobile(); }
 #endif
 
-#if defined (__android__)
+#if defined (Q_OS_ANDROID)
     bool    isAndroid           () { return true;  }
     bool    isiOS               () { return false; }
     bool    isLinux             () { return false; }
     bool    isMacOS             () { return false; }
     bool    isWindows           () { return false; }
-#elif defined(__ios__)
+#elif defined(Q_OS_IOS)
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return true; }
     bool    isLinux             () { return false; }
     bool    isMacOS             () { return false; }
     bool    isWindows           () { return false; }
-#elif defined(__macos__)
+#elif defined(Q_OS_MAC)
     bool    isAndroid           () { return false; }
     bool    isiOS               () { return false; }
     bool    isLinux             () { return false; }
