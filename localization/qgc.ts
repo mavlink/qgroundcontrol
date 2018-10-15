@@ -11140,19 +11140,6 @@ Errors:
     </message>
 </context>
 <context>
-    <name>QGCWebView</name>
-    <message>
-        <location filename="../src/ui/QGCWebView.ui" line="14"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../src/ui/QGCWebView.ui" line="21"/>
-        <source>about:blank</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>QGCXPlaneLink</name>
     <message>
         <location filename="../src/comm/QGCXPlaneLink.cc" line="64"/>

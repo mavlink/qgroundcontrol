@@ -3,7 +3,6 @@ libs/lib/Frameworks/GStreamer.framework
 *.swp
 *.nfs
 CMakeFiles
-*Makefile*
 tags
 build*/
 Info.plist
@@ -85,5 +84,7 @@ src/latex/
 # vagrant
 .vagrant/
 Qt*-linux*.tar.*
+
+.vs/
 
 libs/airmapd/include/boost
