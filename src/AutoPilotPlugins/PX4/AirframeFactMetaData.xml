@@ -579,6 +579,27 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
+  <airframe_group image="AirframeUnknown" name="Plane V-Tail">
+    <airframe id="2200" maintainer="Friedrich Beckmann &lt;friedrich.beckmann@hs-augsburg.de&gt;" name="X-UAV Mini Talon">
+      <class>Plane
+The Mini Talon does not have a wheel and
+no flaps. I leave them here because the mixer
+computes also wheel and flap controls.</class>
+      <maintainer>Friedrich Beckmann &lt;friedrich.beckmann@hs-augsburg.de&gt;</maintainer>
+      <type>Plane V-Tail</type>
+      <output name="MAIN1">aileron right</output>
+      <output name="MAIN2">aileron left</output>
+      <output name="MAIN3">v-tail right</output>
+      <output name="MAIN4">v-tail left</output>
+      <output name="MAIN5">throttle</output>
+      <output name="MAIN6">wheel</output>
+      <output name="MAIN7">flaps right</output>
+      <output name="MAIN8">flaps left</output>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
+    </airframe>
+  </airframe_group>
   <airframe_group image="Rover" name="Rover">
     <airframe id="50000" maintainer="" name="Generic Ground Vehicle">
       <class>Rover</class>
