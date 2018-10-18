@@ -40,9 +40,9 @@ Button {
         background: Rectangle {
             implicitWidth:  ScreenTools.implicitComboBoxWidth
             implicitHeight: ScreenTools.implicitComboBoxHeight
-            color:          control._qgcPal.button
-            border.width:   control._showBorder ? 1: 0
-            border.color:   control._qgcPal.buttonText
+            color:          control._qgcPal.textField
+            border.width:   enabled ? 1 : 0
+            border.color:   "#999"
 
             QGCColoredImage {
                 id:                     image
@@ -52,7 +52,7 @@ Button {
                 anchors.rightMargin:    _dropImageMargin
                 anchors.right:          parent.right
                 source:                 "/qmlimages/arrow-down.png"
-                color:                  control._qgcPal.buttonText
+                color:                  control._qgcPal.textFieldText
             }
         }
 
@@ -67,7 +67,7 @@ Button {
                 anchors.verticalCenter:     parent.verticalCenter
                 anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
                 text:                       control.currentText
-                color:                      control._qgcPal.buttonText
+                color:                      control._qgcPal.textFieldText
                 font.pointSize:             pointSize
             }
         }
