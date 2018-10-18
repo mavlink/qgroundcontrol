@@ -535,7 +535,7 @@
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
-  <airframe_group image="AirframeUnknown" name="Plane V-Tail">
+  <airframe_group image="PlaneVTail" name="Plane V-Tail">
     <airframe id="2200" maintainer="Friedrich Beckmann &lt;friedrich.beckmann@hs-augsburg.de&gt;" name="X-UAV Mini Talon">
       <class>Plane</class>
       <maintainer>Friedrich Beckmann &lt;friedrich.beckmann@hs-augsburg.de&gt;</maintainer>
