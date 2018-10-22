@@ -22,6 +22,7 @@
 #include "PowerComponentController.h"
 #include "RadioComponentController.h"
 #include "QGCCameraManager.h"
+#include "QGCFileDownload.h"
 
 #include <QDebug>
 
@@ -285,7 +286,7 @@ QList<MAV_CMD> PX4FirmwarePlugin::supportedMissionCommands(void)
 
     list << MAV_CMD_NAV_WAYPOINT
          << MAV_CMD_NAV_LOITER_UNLIM << MAV_CMD_NAV_LOITER_TIME << MAV_CMD_NAV_LOITER_TO_ALT
-         << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF
+         << MAV_CMD_NAV_LAND << MAV_CMD_NAV_TAKEOFF << MAV_CMD_NAV_RETURN_TO_LAUNCH
          << MAV_CMD_DO_JUMP
          << MAV_CMD_DO_VTOL_TRANSITION << MAV_CMD_NAV_VTOL_TAKEOFF << MAV_CMD_NAV_VTOL_LAND
          << MAV_CMD_DO_DIGICAM_CONTROL
@@ -596,4 +597,13 @@ uint32_t PX4FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
     px4_cm.custom_mode_hl = hlCustomMode;
 
     return px4_cm.data;
+}
+
+QString PX4FirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle){
+    Q_UNUSED(vehicle);
+    return QStringLiteral("https://api.github.com/repos/PX4/Firmware/releases");
+}
+
+QString PX4FirmwarePlugin::_versionRegex() {
+    return QStringLiteral("v([0-9,\\.]*) Stable");
 }

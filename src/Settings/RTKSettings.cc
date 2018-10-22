@@ -17,11 +17,21 @@ const char* RTKSettings::settingsGroup =                        "RTK";
 
 const char* RTKSettings::surveyInAccuracyLimitName =            "SurveyInAccuracyLimit";
 const char* RTKSettings::surveyInMinObservationDurationName =   "SurveyInMinObservationDuration";
+const char* RTKSettings::useFixedBasePositionName =             "UseFixedBasePosition";
+const char* RTKSettings::fixedBasePositionLatitudeName =        "FixedBasePositionLatitude";
+const char* RTKSettings::fixedBasePositionLongitudeName =       "FixedBasePositionLongitude";
+const char* RTKSettings::fixedBasePositionAltitudeName =        "FixedBasePositionAltitude";
+const char* RTKSettings::fixedBasePositionAccuracyName =        "FixedBasePositionAccuracy";
 
 RTKSettings::RTKSettings(QObject* parent)
-    : SettingsGroup(name, settingsGroup, parent)
-    , _surveyInAccuracyLimitFact(NULL)
-    , _surveyInMinObservationDurationFact(NULL)
+    : SettingsGroup                         (name, settingsGroup, parent)
+    , _surveyInAccuracyLimitFact            (nullptr)
+    , _surveyInMinObservationDurationFact   (nullptr)
+    , _useFixedBasePositionFact             (nullptr)
+    , _fixedBasePositionLatitudeFact        (nullptr)
+    , _fixedBasePositionLongitudeFact       (nullptr)
+    , _fixedBasePositionAltitudeFact        (nullptr)
+    , _fixedBasePositionAccuracyFact        (nullptr)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<RTKSettings>("QGroundControl.SettingsManager", 1, 0, "RTKSettings", "Reference only");
@@ -43,4 +53,49 @@ Fact* RTKSettings::surveyInMinObservationDuration(void)
     }
 
     return _surveyInMinObservationDurationFact;
+}
+
+Fact* RTKSettings::useFixedBasePosition(void)
+{
+    if (!_useFixedBasePositionFact) {
+        _useFixedBasePositionFact = _createSettingsFact(useFixedBasePositionName);
+    }
+
+    return _useFixedBasePositionFact;
+}
+
+Fact* RTKSettings::fixedBasePositionLatitude(void)
+{
+    if (!_fixedBasePositionLatitudeFact) {
+        _fixedBasePositionLatitudeFact = _createSettingsFact(fixedBasePositionLatitudeName);
+    }
+
+    return _fixedBasePositionLatitudeFact;
+}
+
+Fact* RTKSettings::fixedBasePositionLongitude(void)
+{
+    if (!_fixedBasePositionLongitudeFact) {
+        _fixedBasePositionLongitudeFact = _createSettingsFact(fixedBasePositionLongitudeName);
+    }
+
+    return _fixedBasePositionLongitudeFact;
+}
+
+Fact* RTKSettings::fixedBasePositionAltitude(void)
+{
+    if (!_fixedBasePositionAltitudeFact) {
+        _fixedBasePositionAltitudeFact = _createSettingsFact(fixedBasePositionAltitudeName);
+    }
+
+    return _fixedBasePositionAltitudeFact;
+}
+
+Fact* RTKSettings::fixedBasePositionAccuracy(void)
+{
+    if (!_fixedBasePositionAccuracyFact) {
+        _fixedBasePositionAccuracyFact = _createSettingsFact(fixedBasePositionAccuracyName);
+    }
+
+    return _fixedBasePositionAccuracyFact;
 }

@@ -58,18 +58,14 @@ Item {
         if(QGroundControl.corePlugin.options.devicePixelDensity != 0) {
             return QGroundControl.corePlugin.options.devicePixelDensity
         }
-        //-- Apple returns proper values
-        if(isiOS || isMac) {
-            return Screen.pixelDensity
-        }
-        //-- Mobile is rather unreliable
-        if(isMobile) {
+        //-- Android is rather unreliable
+        if(isAndroid) {
             // Lets assume it's unlikely you have a tablet over 300mm wide
             if((Screen.width / Screen.pixelDensity) > 300) {
                 return Screen.pixelDensity * 2
             }
         }
-        //-- Still needs logical pixel density on Windows
+        //-- Let's use what the system tells us
         return Screen.pixelDensity
     }
 
@@ -81,7 +77,7 @@ Item {
     property bool isMac:            ScreenToolsController.isMacOS
     property bool isTinyScreen:     (Screen.width / realPixelDensity) < 120 // 120mm
     property bool isShortScreen:    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
-    property bool isHugeScreen:     Screen.width >= 1920*2
+    property bool isHugeScreen:     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
 
     readonly property real minTouchMillimeters: 10      ///< Minimum touch size in millimeters
     property real minTouchPixels:               0       ///< Minimum touch size in pixels

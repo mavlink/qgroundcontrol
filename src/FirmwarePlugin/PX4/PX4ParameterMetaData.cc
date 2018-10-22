@@ -305,7 +305,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                             QString text = xml.readElementText();
                             qCDebug(PX4ParameterMetaDataLog) << "RebootRequired:" << text;
                             if (text.compare("true", Qt::CaseInsensitive) == 0) {
-                                metaData->setRebootRequired(true);
+                                metaData->setVehicleRebootRequired(true);
                             }
 
                         } else if (elementName == "values") {

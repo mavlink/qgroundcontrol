@@ -13,8 +13,12 @@
 #include "CameraMetaData.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "QGCFileDownload.h"
 
+#include <QRegularExpression>
 #include <QDebug>
+
+QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 
 static FirmwarePluginFactoryRegister* _instance = NULL;
 
@@ -663,3 +667,76 @@ uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
     return hlCustomMode;
 }
 
+void FirmwarePlugin::checkIfIsLatestStable(Vehicle* vehicle)
+{
+    // This is required as mocklink uses a hardcoded firmware version
+    if (qgcApp()->runningUnitTests()) {
+        qCDebug(FirmwarePluginLog) << "Skipping version check";
+        return;
+    }
+    QString versionFile = _getLatestVersionFileUrl(vehicle);
+    qCDebug(FirmwarePluginLog) << "Downloading" << versionFile;
+    QGCFileDownload* downloader = new QGCFileDownload(this);
+    connect(
+        downloader,
+        &QGCFileDownload::downloadFinished,
+        this,
+        [vehicle, this](QString remoteFile, QString localFile) {
+            _versionFileDownloadFinished(remoteFile, localFile, vehicle);
+            sender()->deleteLater();
+        });
+    downloader->download(versionFile);
+}
+
+void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& localFile, Vehicle* vehicle)
+{
+    qCDebug(FirmwarePluginLog) << "Download complete" << remoteFile << localFile;
+    // Now read the version file and pull out the version string
+    QFile versionFile(localFile);
+    if (!versionFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qCWarning(FirmwarePluginLog) << "Error opening downloaded version file.";
+        return;
+    }
+
+    QTextStream stream(&versionFile);
+    QString versionFileContents = stream.readAll();
+    QString version;
+    QRegularExpressionMatch match = QRegularExpression(_versionRegex()).match(versionFileContents);
+
+    qCDebug(FirmwarePluginLog) << "Looking for version number...";
+
+    if (match.hasMatch()) {
+        version = match.captured(1);
+    } else {
+        qCWarning(FirmwarePluginLog) << "Unable to parse version info from file" << remoteFile;
+        return;
+    }
+
+    qCDebug(FirmwarePluginLog) << "Latest stable version = "  << version;
+    QStringList versionNumbers = version.split(".");
+    if(versionNumbers.size() != 3) {
+        qCWarning(FirmwarePluginLog) << "Error parsing version number: wrong format";
+        return;
+    }
+    int stableMajor = versionNumbers[0].toInt();
+    int stableMinor = versionNumbers[1].toInt();
+    int stablePatch = versionNumbers[2].toInt();
+
+    int currMajor = vehicle->firmwareMajorVersion();
+    int currMinor = vehicle->firmwareMinorVersion();
+    int currPatch = vehicle->firmwarePatchVersion();
+    int currType = vehicle->firmwareVersionType();
+
+    if (currMajor < stableMajor
+        || (currMajor == stableMajor && currMinor < stableMinor)
+        || (currMajor == stableMajor && currMinor == stableMinor && currPatch < stablePatch)
+        || (currMajor == stableMajor && currMinor == stableMinor && currPatch == stablePatch && currType != FIRMWARE_VERSION_TYPE_OFFICIAL)
+        )
+    {
+        const static QString currentVersion = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
+                                                                 .arg(vehicle->firmwareMinorVersion())
+                                                                 .arg(vehicle->firmwarePatchVersion());
+        const static QString message = tr("Vehicle is not running latest stable firmware! Running %2-%1, latest stable is %3.");
+        qgcApp()->showMessage(message.arg(vehicle->firmwareVersionTypeString(), currentVersion, version));
+    }
+}

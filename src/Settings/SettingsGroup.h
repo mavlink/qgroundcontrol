@@ -17,6 +17,34 @@
 
 #include <QVariantList>
 
+#define DEFINE_SETTINGGROUP(CLASS) \
+    static const char* CLASS ## Settings ## GroupName;
+
+#define DECLARE_SETTINGGROUP(CLASS) \
+    const char* CLASS ## Settings::CLASS ## Settings ## GroupName = #CLASS; \
+    CLASS ## Settings::CLASS ## Settings(QObject* parent) \
+        : SettingsGroup(CLASS ## Settings ## GroupName, QString() /* root settings group */, parent)
+
+#define DECLARE_SETTINGSFACT(CLASS, NAME) \
+    const char* CLASS::NAME ## Name = #NAME; \
+    Fact* CLASS::NAME(void) \
+    { \
+        if (!_ ## NAME ## Fact) { \
+            _ ## NAME ## Fact = _createSettingsFact(NAME ## Name); \
+        } \
+        return _ ## NAME ## Fact; \
+    }
+
+#define DEFINE_SETTINGFACT(NAME) \
+    public: \
+    Q_PROPERTY(Fact* NAME READ NAME CONSTANT) \
+    Fact* NAME(); \
+    static const char* NAME ## Name; \
+    private: \
+    SettingsFact* _ ## NAME ## Fact;
+
+#define INIT_SETTINGFACT(NAME) _ ## NAME ## Fact = NULL
+
 /// Provides access to group of settings. The group is named and has a visible property associated with which can control whether the group
 /// is shows in the ui.
 class SettingsGroup : public QObject

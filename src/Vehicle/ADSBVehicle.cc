@@ -18,13 +18,34 @@ ADSBVehicle::ADSBVehicle(mavlink_adsb_vehicle_t& adsbVehicle, QObject* parent)
     , _callsign     (adsbVehicle.callsign)
     , _altitude     (NAN)
     , _heading      (NAN)
+    , _alert        (false)
 {
     if (!(adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS)) {
         qWarning() << "At least coords must be valid";
         return;
     }
-
     update(adsbVehicle);
+}
+
+ADSBVehicle::ADSBVehicle(const QGeoCoordinate& location, float heading, bool alert, QObject* parent)
+    : QObject(parent)
+    , _icaoAddress(0)
+    , _alert(alert)
+{
+    update(alert, location, heading);
+}
+
+void ADSBVehicle::update(bool alert, const QGeoCoordinate& location, float heading)
+{
+    _coordinate = location;
+    _altitude   = location.altitude();
+    _heading    = heading;
+    _alert      = alert;
+    emit coordinateChanged();
+    emit altitudeChanged();
+    emit headingChanged();
+    emit alertChanged();
+    _lastUpdateTimer.restart();
 }
 
 void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
@@ -42,13 +63,13 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
 
     if (currCallsign != _callsign) {
         _callsign = currCallsign;
-        emit callsignChanged(_callsign);
+        emit callsignChanged();
     }
 
     QGeoCoordinate newCoordinate(adsbVehicle.lat / 1e7, adsbVehicle.lon / 1e7);
     if (newCoordinate != _coordinate) {
         _coordinate = newCoordinate;
-        emit coordinateChanged(_coordinate);
+        emit coordinateChanged();
     }
 
     double newAltitude = NAN;
@@ -57,7 +78,7 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
     }
     if (!(qIsNaN(newAltitude) && qIsNaN(_altitude)) && !qFuzzyCompare(newAltitude, _altitude)) {
         _altitude = newAltitude;
-        emit altitudeChanged(_altitude);
+        emit altitudeChanged();
     }
 
     double newHeading = NAN;
@@ -66,6 +87,12 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
     }
     if (!(qIsNaN(newHeading) && qIsNaN(_heading)) && !qFuzzyCompare(newHeading, _heading)) {
         _heading = newHeading;
-        emit headingChanged(_heading);
+        emit headingChanged();
     }
+    _lastUpdateTimer.restart();
+}
+
+bool ADSBVehicle::expired()
+{
+    return _lastUpdateTimer.hasExpired(expirationTimeoutMs);
 }

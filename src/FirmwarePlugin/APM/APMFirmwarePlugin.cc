@@ -16,6 +16,7 @@
 #include "APMSensorsComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
+#include "QGCFileDownload.h"
 
 #include <QTcpSocket>
 
@@ -432,17 +433,6 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 _coaxialMotors = true;
             }
         }
-    }
-
-    if (messageText.startsWith("PreArm")) {
-        // ArduPilot PreArm messages can come across very frequently especially on Solo, which seems to send them once a second.
-        // Filter them out if they come too quickly.
-        if (instanceData->noisyPrearmMap.contains(messageText) && instanceData->noisyPrearmMap[messageText].msecsTo(QTime::currentTime()) < (10 * 1000)) {
-            return false;
-        }
-        instanceData->noisyPrearmMap[messageText] = QTime::currentTime();
-
-        vehicle->setPrearmError(messageText);
     }
 
     return true;
@@ -1014,4 +1004,26 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
     } else {
         vehicle->sendMavCommand(vehicle->defaultComponentId(), MAV_CMD_MISSION_START, true /*show error */);
     }
+}
+
+QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle)
+{
+    const static QString baseUrl("http://firmware.ardupilot.org/%1/stable/PX4/git-version.txt");
+    if (vehicle->fixedWing()) {
+        return baseUrl.arg("Plane");
+    }
+    if (vehicle->vtol()) {
+        return baseUrl.arg("Plane");
+    }
+    if (vehicle->rover()) {
+        return baseUrl.arg("Rover");
+    }
+    if (vehicle->sub()) {
+        return baseUrl.arg("Sub");
+    }
+    return baseUrl.arg("Copter");
+}
+
+QString APMFirmwarePlugin::_versionRegex() {
+    return QStringLiteral(" V([0-9,\\.]*)$");
 }
