@@ -1,0 +1,55 @@
+# QGroundControl .mailmap
+# See this guide for help modifying this file https://github.com/sympy/sympy/wiki/Using-.mailmap
+# Please append your entry
+# Example use of this map:
+#   git log --pretty='%aN <%aE>' | sort | uniq -c | sort -rn | HEAD -10
+
+
+Don Gagne <don@thegagnes.com> Don Gagne <DonLakeFlyer@users.noreply.github.com>
+Don Gagne <don@thegagnes.com> DonLakeFlyer <don@thegagnes.com>
+Don Gagne <don@thegagnes.com> Don Gagne <dongagne@outlook.com>
+Don Gagne <don@thegagnes.com> Don Gagne <Don@don-laptop.local>
+Gus Grubba <gus@grubba.com> Gus Grubba <mavlink@grubba.com>
+Gus Grubba <gus@grubba.com> dogmaphobic <mavlink@grubba.com>
+Andreas Bircher <bircher@gmx.ch>
+PX4 Jenkins <bot@pixhawk.org> PX4 Build Bot <bot@pixhawk.org>
+Florian Achermann <florian.achermann@mavt.ethz.ch>
+Patrick José Pereira <patrickelectric@gmail.com> Patrick José Pereira <patrickjp@kde.org>
+Patrick José Pereira <patrickelectric@gmail.com> Patrick J.P <patrickelectric@gmail.com>
+Daniel Agar <daniel@agar.ca>
+Nick Anthony <nickexists@hotmail.com>
+Nick Anthony <nickexists@hotmail.com> Nick Anthony <nanthony@brewerscience.com>
+Philipp Oettershagen <philipp.oettershagen@mavt.ethz.ch>
+Jacob Walser <jwalser90@gmail.com>
+Beat Küng <beat-kueng@gmx.net>
+Sebastian Verling <sverling@student.ethz.ch>
+Lorenz Meier <lorenz@px4.io>
+Anthony Lamping <lamping.ap@gmail.com>
+Thomas Mantel <thomas.mantel@mavt.ethz.ch>
+Barza Nisar <nisarb@student.ethz.ch> barzanisar <nisarb@student.ethz.ch>
+Amy Wagoner <arwagoner@gmail.com>
+Peter Barker <pbarker@barker.dropbear.id.au>
+Julian Oes <julian@oes.ch>
+Hamish Willee <hamishwillee@gmail.com>
+Ahmet Fehmi Ozcan <fehmi.ozcan@maxwell-innovations.com> <Fehmi.Ozcan@maxwell-innovations.com>
+yaoling <165577564@qq.com>
+Nathan Tsoi <nathan@vertile.com>
+Vavooon <vavooon@gmail.com>
+Thomas Gubler <thomas@auterion.com>
+Pierre Kancir <khancyr@gmail.com>
+Oleg Kalachev <okalachev@gmail.com>
+Jin Chengde <jinchengde@gmail.com>
+Jared Szechy <jared.szechy@gmail.com>
+David Sidrane <david_s5@nscdg.com>
+Andre Kjellstrup <andre.kjellstrup@gmail.com>
+Ahmet Fehmi Ozcan <fehmi.ozcan@maxwell-innovations.com> Ahmet Fehmi OZCAN <fehmi.ozcan@maxwell-innovations.com>
+Lorenz Meier <lorenz@px4.io> Lorenz Meier <lm@inf.ethz.ch>
+Lorenz Meier <lorenz@px4.io> LM <lm@student.ethz.ch>
+Lorenz Meier <lorenz@px4.io> lm <mail@qgroundcontrol.org>
+Lorenz Meier <lorenz@px4.io> lm <pixhawk@pixhawk02.(none)>
+Lorenz Meier <lorenz@px4.io> lm <lm@inf.ethz.ch>
+Lorenz Meier <lorenz@px4.io> LM <lm@inf.ethz.ch>
+Lorenz Meier <lorenz@px4.io> lm <pixhawk@student.ethz.ch>
+Lorenz Meier <lorenz@px4.io> lm <pixhawk@switched.com>
+Lorenz Meier <lorenz@px4.io> pixhawk <pixhawk@student.ethz.ch>
+Todd Stellanova <todd@droneflow.com> tstellanova <tstellanova+github@gmail.com>

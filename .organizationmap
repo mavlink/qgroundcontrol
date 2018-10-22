@@ -1,0 +1,58 @@
+# QGC Organization map
+# More information at
+#  http://tracker.ceph.com/projects/ceph/wiki/Ceph_contributors_list_maintenance_guide
+#
+# See .githubmap for GitHub username contributors
+# See .mailmap for name and mail normalization.
+# See .peoplemap for unique list of people
+#
+# To display the 10 organization who contributed
+# most commits to ceph ( requires git >= 1.8.4 ):
+#
+# git log --pretty='%aN <%aE>' | \
+#   git -c mailmap.file=.organizationmap check-mailmap --stdin | \
+#   sort | uniq -c | sort -rn | nl | head -10
+#     1	13235 Auterion <contact@auterion.com>
+#     2	4106 Unaffiliated <no@organization.net>
+#     3	2076 Yuneec Research <contact@yuneecresearch.com>
+#     4	1408 Nuttx <contact@nuttx.org>
+#     5	 977 Anton Babushkin <anton.babushkin@me.com>
+#     6	 811 px4dev <px4@purgatory.org>
+#     7	 720 Qualcomm <contact@qualcomm.com>
+#     8	 421 UAVenture <contact@uaventure.com>
+#     9	 295 James Goppert <james.goppert@gmail.com>
+#    10	 244 Mark Whitehorn <kd0aij@gmail.com>
+Auterion <contact@auterion.com> Gus Grubba <gus@grubba.com>
+Auterion <contact@auterion.com> Beat Küng <beat-kueng@gmx.net>
+Auterion <contact@auterion.com> Lorenz Meier <lorenz@px4.io>
+Auterion <contact@auterion.com> Barza Nisar <nisarb@student.ethz.ch>
+Auterion <contact@auterion.com> Thomas Gubler <thomas@auterion.com>
+Copter Express <contact@copterexpress.com> Oleg Kalachev <okalachev@gmail.com>
+Copter Express <contact@copterexpress.com> Elia Tarasov <elias.tarasov@gmail.com>
+DIU <contact@diu.(none)> Hamish Willee <hamishwillee@gmail.com>
+ETH Zurich <contact@student.ethz.ch> Florian Achermann <florian.achermann@mavt.ethz.ch>
+ETH Zurich <contact@student.ethz.ch> Philipp Oettershagen <philipp.oettershagen@mavt.ethz.ch>
+ETH Zurich <contact@student.ethz.ch> Thomas Mantel <thomas.mantel@mavt.ethz.ch>
+Unaffiliated <no@organization.net> Don Gagne <don@thegagnes.com>
+Unaffiliated <no@organization.net> Nick Anthony <nickexists@hotmail.com>
+Unaffiliated <no@organization.net> Daniel Agar <daniel@agar.ca>
+Unaffiliated <no@organization.net> mak <maktrefa@gmail.com>
+Unaffiliated <no@organization.net> Jacob Walser <jwalser90@gmail.com>
+Unaffiliated <no@organization.net> Anthony Lamping <lamping.ap@gmail.com>
+Unaffiliated <no@organization.net> Ahmet Fehmi Ozcan <fehmi.ozcan@maxwell-innovations.com>
+Unaffiliated <no@organization.net> Peter Barker <pbarker@barker.dropbear.id.au>
+Unaffiliated <no@organization.net> Amy Wagoner <arwagoner@gmail.com>
+Unaffiliated <no@organization.net> yaoling <165577564@qq.com>
+Unaffiliated <no@organization.net> Vavooon <vavooon@gmail.com>
+Unaffiliated <no@organization.net> Pierre Kancir <khancyr@gmail.com>
+Unaffiliated <no@organization.net> Nathan Tsoi <nathan@vertile.com>
+Unaffiliated <no@organization.net> Jin Chengde <jinchengde@gmail.com>
+Unaffiliated <no@organization.net> Jared Szechy <jared.szechy@gmail.com>
+Unaffiliated <no@organization.net> David Sidrane <david_s5@nscdg.com>
+Unaffiliated <no@organization.net> Andre Kjellstrup <andre.kjellstrup@gmail.com>
+Unaffiliated <no@organization.net> Patrick José Pereira <patrickelectric@gmail.com>
+PX4 Bots <contact@px4.io> PX4 Jenkins <bot@pixhawk.org>
+Wingtra <contact@wingtra.com> Andreas Bircher <bircher@gmx.ch>
+Wingtra <contact@wingtra.com> Sebastian Verling <sverling@student.ethz.ch>
+Yuneec Research <contact@yuneecresearch.com> Julian Oes <julian@oes.ch>
+
