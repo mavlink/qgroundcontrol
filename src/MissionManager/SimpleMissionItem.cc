@@ -78,7 +78,7 @@ SimpleMissionItem::SimpleMissionItem(Vehicle* vehicle, bool flyView, QObject* pa
     _connectSignals();
     _updateOptionalSections();
 
-    setDefaultsForCommand();
+    _setDefaultsForCommand();
     _rebuildFacts();
 
     setDirty(false);
@@ -213,7 +213,7 @@ void SimpleMissionItem::_connectSignals(void)
     connect(&_missionItem._frameFact,           &Fact::valueChanged, this, &SimpleMissionItem::_sendFriendlyEditAllowedChanged);
 
     // A command change triggers a number of other changes as well.
-    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::setDefaultsForCommand);
+    connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::_setDefaultsForCommand);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandNameChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::commandDescriptionChanged);
     connect(&_missionItem._commandFact, &Fact::valueChanged, this, &SimpleMissionItem::abbreviationChanged);
@@ -729,15 +729,32 @@ bool SimpleMissionItem::readyForSave(void) const
     return !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
 }
 
-void SimpleMissionItem::setDefaultsForCommand(void)
+void SimpleMissionItem::_setDefaultsForCommand(void)
 {
-    // We set these global defaults first, then if there are param defaults they will get reset
+    // First reset params 1-4 to 0, we leave 5-7 alone to preserve any previous location information on command change
+    _missionItem._param1Fact.setRawValue(0);
+    _missionItem._param2Fact.setRawValue(0);
+    _missionItem._param3Fact.setRawValue(0);
+    _missionItem._param4Fact.setRawValue(0);
+
+    if (!specifiesCoordinate() && !isStandaloneCoordinate()) {
+        // No need to carry across previous lat/lon
+        _missionItem._param5Fact.setRawValue(0);
+        _missionItem._param6Fact.setRawValue(0);
+    }
+
+    // Set global defaults first, then if there are param defaults they will get reset
     _altitudeMode = AltitudeRelative;
     emit altitudeModeChanged();
-    double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
-    _altitudeFact.setRawValue(defaultAlt);
-    _missionItem._param7Fact.setRawValue(defaultAlt);
     _amslAltAboveTerrainFact.setRawValue(qQNaN());
+    if (specifiesCoordinate() || isStandaloneCoordinate() || specifiesAltitudeOnly()) {
+        double defaultAlt = qgcApp()->toolbox()->settingsManager()->appSettings()->defaultMissionItemAltitude()->rawValue().toDouble();
+        _altitudeFact.setRawValue(defaultAlt);
+        _missionItem._param7Fact.setRawValue(defaultAlt);
+    } else {
+        _altitudeFact.setRawValue(0);
+        _missionItem._param7Fact.setRawValue(0);
+    }
 
     MAV_CMD command = (MAV_CMD)this->command();
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
@@ -798,8 +815,10 @@ void SimpleMissionItem::setCommand(int command)
 
 void SimpleMissionItem::setCoordinate(const QGeoCoordinate& coordinate)
 {
-    if (_missionItem.coordinate() != coordinate) {
-        _missionItem.setCoordinate(coordinate);
+    // We only use lat/lon from coordinate. This keeps param7 and the altitude value which is kept to the side in sync.
+    if (_missionItem.param5() != coordinate.latitude() || _missionItem.param6() != coordinate.longitude()) {
+        _missionItem.setParam5(coordinate.latitude());
+        _missionItem.setParam6(coordinate.longitude());
     }
 }
 

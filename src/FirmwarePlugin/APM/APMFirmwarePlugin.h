@@ -127,6 +127,8 @@ private:
     void _handleOutgoingParamSet(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message);
     void _soloVideoHandshake(Vehicle* vehicle, bool originalSoloFirmware);
     bool _guidedModeTakeoff(Vehicle* vehicle, double altitudeRel);
+    QString _getLatestVersionFileUrl(Vehicle* vehicle) override;
+    QString _versionRegex() override;
 
     // Any instance data here must be global to all vehicles
     // Vehicle specific data should go into APMFirmwarePluginInstanceData
@@ -145,7 +147,6 @@ public:
     APMFirmwarePluginInstanceData(QObject* parent = NULL);
 
     bool                    textSeverityAdjustmentNeeded;
-    QMap<QString, QTime>    noisyPrearmMap;
 };
 
 #endif

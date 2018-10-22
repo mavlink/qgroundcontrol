@@ -33,6 +33,7 @@
 #include "AudioOutput.h"
 #include "UASMessageHandler.h"
 #include "FactSystem.h"
+#include "GPSRTKFactGroup.h"
 
 #ifdef QGC_RTLAB_ENABLED
 #include "OpalLink.h"
@@ -42,6 +43,7 @@
 class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
+class QGCFileDownload;
 
 /**
  * @brief The main application and management class.
@@ -85,10 +87,6 @@ public:
     /// @return true: Fake ui into showing mobile interface
     bool fakeMobile(void) { return _fakeMobile; }
 
-#ifdef QT_DEBUG
-    bool testHighDPI(void) { return _testHighDPI; }
-#endif
-
     // Still working on getting rid of this and using dependency injection instead for everything
     QGCToolbox* toolbox(void) { return _toolbox; }
 
@@ -97,6 +95,8 @@ public:
 
     /// Is Internet available?
     bool isInternetAvailable();
+
+    FactGroup* gpsRtkFactGroup(void)  { return _gpsRtkFactGroup; }
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -152,9 +152,17 @@ public:
 
 private slots:
     void _missingParamsDisplay(void);
+    void _currentVersionDownloadFinished(QString remoteFile, QString localFile);
+    void _currentVersionDownloadError(QString errorMsg);
+    bool _parseVersionText(const QString& versionString, int& majorVersion, int& minorVersion, int& buildVersion);
+    void _onGPSConnect();
+    void _onGPSDisconnect();
+    void _gpsSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active);
+    void _gpsNumSatellites(int numSatellites);
 
 private:
     QObject* _rootQmlObject(void);
+    void _checkForNewVersion(void);
 
 #ifdef __mobile__
     QQmlApplicationEngine* _qmlAppEngine;
@@ -170,12 +178,15 @@ private:
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
     bool				_fakeMobile;                                        ///< true: Fake ui into displaying mobile interface
     bool                _settingsUpgraded;                                  ///< true: Settings format has been upgrade to new version
-
-#ifdef QT_DEBUG
-    bool _testHighDPI;  ///< true: double fonts sizes for simulating high dpi devices
-#endif
+    int                 _majorVersion;
+    int                 _minorVersion;
+    int                 _buildVersion;
+    QGCFileDownload*    _currentVersionDownload;
+    GPSRTKFactGroup*    _gpsRtkFactGroup;
 
     QGCToolbox* _toolbox;
+
+    QTranslator _QGCTranslator;
 
     bool _bluetoothAvailable;
 

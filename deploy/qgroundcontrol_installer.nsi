@@ -2,6 +2,7 @@
 !include LogicLib.nsh
 !include Win\COM.nsh
 !include Win\Propkey.nsh
+!include "FileFunc.nsh"
 
 !macro DemoteShortCut target
     !insertmacro ComHlpr_CreateInProcInstance ${CLSID_ShellLink} ${IID_IShellLink} r0 ""
@@ -61,7 +62,7 @@ Section
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
   StrCmp $R0 "" doinstall
 
-  ExecWait "$R0 /S _?=$INSTDIR"
+  ExecWait "$R0 /S _?=$INSTDIR -LEAVE_DATA=1"
   IntCmp $0 0 doinstall
 
   MessageBox MB_OK|MB_ICONEXCLAMATION \
@@ -104,12 +105,16 @@ done:
 SectionEnd 
 
 Section "Uninstall"
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "-LEAVE_DATA=" $R1
   !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
   SetShellVarContext all
   RMDir /r /REBOOTOK $INSTDIR
   RMDir /r /REBOOTOK "$SMPROGRAMS\$StartMenuFolder\"
   SetShellVarContext current
-  RMDir /r /REBOOTOK "$APPDATA\${ORGNAME}\"
+  ${If} $R1 != 1
+    RMDir /r /REBOOTOK "$APPDATA\${ORGNAME}\"
+  ${Endif}
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe"
 SectionEnd

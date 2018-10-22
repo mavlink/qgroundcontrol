@@ -15,13 +15,14 @@ import QtPositioning    5.3
 import QtQuick.Dialogs  1.2
 
 import QGroundControl               1.0
+import QGroundControl.Airspace      1.0
+import QGroundControl.Controllers   1.0
+import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
+import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
-import QGroundControl.Controllers   1.0
 
 FlightMap {
     id:                         flightMap
@@ -50,13 +51,31 @@ FlightMap {
     property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
+    property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
 
     property bool   _disableVehicleTracking:    false
     property bool   _keepVehicleCentered:       _mainIsMap ? false : true
 
+    function updateAirspace(reset) {
+        if(_airspaceEnabled) {
+            var coordinateNW = flightMap.toCoordinate(Qt.point(0,0), false /* clipToViewPort */)
+            var coordinateSE = flightMap.toCoordinate(Qt.point(width,height), false /* clipToViewPort */)
+            if(coordinateNW.isValid && coordinateSE.isValid) {
+                QGroundControl.airspaceManager.setROI(coordinateNW, coordinateSE, false /*planView*/, reset)
+            }
+        }
+    }
+
     // Track last known map position and zoom from Fly view in settings
-    onZoomLevelChanged: QGroundControl.flightMapZoom = zoomLevel
-    onCenterChanged:    QGroundControl.flightMapPosition = center
+
+    onZoomLevelChanged: {
+        QGroundControl.flightMapZoom = zoomLevel
+        updateAirspace(false)
+    }
+    onCenterChanged: {
+        QGroundControl.flightMapPosition = center
+        updateAirspace(false)
+    }
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
     onUserPannedChanged: {
@@ -66,6 +85,10 @@ FlightMap {
             _disableVehicleTracking = true
             panRecenterTimer.restart()
         }
+    }
+
+    on_AirspaceEnabledChanged: {
+        updateAirspace(true)
     }
 
     function pointInRect(point, rect) {
@@ -198,15 +221,14 @@ FlightMap {
 
     // Add ADSB vehicles to the map
     MapItemView {
-        model: _activeVehicle ? _activeVehicle.adsbVehicles : 0
-
+        model: _activeVehicle ? _activeVehicle.adsbVehicles : []
         property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
         delegate: VehicleMapItem {
             coordinate:     object.coordinate
             altitude:       object.altitude
             callsign:       object.callsign
             heading:        object.heading
+            alert:          object.alert
             map:            flightMap
             z:              QGroundControl.zOrderVehicles
         }
@@ -409,4 +431,27 @@ FlightMap {
             }
         ]
     }
+
+    // Airspace overlap support
+    MapItemView {
+        model:              _airspaceEnabled && QGroundControl.settingsManager.airMapSettings.enableAirspace && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.circles : []
+        delegate: MapCircle {
+            center:         object.center
+            radius:         object.radius
+            color:          object.color
+            border.color:   object.lineColor
+            border.width:   object.lineWidth
+        }
+    }
+
+    MapItemView {
+        model:              _airspaceEnabled && QGroundControl.settingsManager.airMapSettings.enableAirspace && QGroundControl.airspaceManager.airspaceVisible ? QGroundControl.airspaceManager.airspaces.polygons : []
+        delegate: MapPolygon {
+            path:           object.polygon
+            color:          object.color
+            border.color:   object.lineColor
+            border.width:   object.lineWidth
+        }
+    }
+
 }

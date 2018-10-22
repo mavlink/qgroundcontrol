@@ -427,7 +427,6 @@ void PlanManager::_handleMissionItem(const mavlink_message_t& message, bool miss
     } else if (frame == MAV_FRAME_GLOBAL_RELATIVE_ALT_INT) {
         frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
     }
-    
 
     bool ardupilotHomePositionUpdate = false;
     if (!_checkForExpectedAck(AckMissionItem)) {

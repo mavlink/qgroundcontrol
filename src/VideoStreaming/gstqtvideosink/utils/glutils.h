@@ -17,7 +17,7 @@
 #ifndef GLUTILS_H
 #define GLUTILS_H
 
-#if defined(__mobile__) && !defined(__macos__)
+#if defined(__mobile__) && !defined(Q_OS_MAC)  && !defined(Q_OS_WIN32)
 #include <QOpenGLFunctions>
 #define getQOpenGLFunctions() QOpenGLContext::currentContext()->functions()
 #define QOpenGLFunctionsDef QOpenGLFunctions

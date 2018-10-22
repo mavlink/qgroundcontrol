@@ -89,7 +89,7 @@ void SensorsComponentController::_startLogCalibration(void)
     _unknownFirmwareVersion = false;
     _hideAllCalAreas();
     
-    connect(_uas, &UASInterface::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
+    connect(_vehicle, &Vehicle::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
     
     _cancelButton->setEnabled(false);
 }
@@ -137,7 +137,7 @@ void SensorsComponentController::_resetInternalState(void)
 
 void SensorsComponentController::_stopCalibration(SensorsComponentController::StopCalibrationCode code)
 {
-    disconnect(_uas, &UASInterface::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
+    disconnect(_vehicle, &Vehicle::textMessageReceived, this, &SensorsComponentController::_handleUASTextMessage);
     
     _compassButton->setEnabled(true);
     _gyroButton->setEnabled(true);

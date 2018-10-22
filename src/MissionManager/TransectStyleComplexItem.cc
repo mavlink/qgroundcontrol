@@ -362,13 +362,32 @@ void TransectStyleComplexItem::_rebuildTransects(void)
         }
     }
 
+    // Calc bounding cube
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    double bottom = 100000.;
+    double top = 0.;
     // Generate the visuals transect representation
     _visualTransectPoints.clear();
     foreach (const QList<CoordInfo_t>& transect, _transects) {
         foreach (const CoordInfo_t& coordInfo, transect) {
             _visualTransectPoints.append(QVariant::fromValue(coordInfo.coord));
+            double lat = coordInfo.coord.latitude()  + 90.0;
+            double lon = coordInfo.coord.longitude() + 180.0;
+            north   = fmax(north, lat);
+            south   = fmin(south, lat);
+            east    = fmax(east,  lon);
+            west    = fmin(west,  lon);
+            bottom  = fmin(bottom, coordInfo.coord.altitude());
+            top     = fmax(top, coordInfo.coord.altitude());
         }
     }
+    //-- Update bounding cube for airspace management control
+    _setBoundingCube(QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, bottom),
+        QGeoCoordinate(south - 90.0, east - 180.0, top)));
     emit visualTransectPointsChanged();
 
     _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
@@ -382,14 +401,17 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     emit timeBetweenShotsChanged();
 }
 
+void TransectStyleComplexItem::_setBoundingCube(QGCGeoBoundingCube bc)
+{
+    if (bc != _boundingCube) {
+        _boundingCube = bc;
+        emit boundingCubeChanged();
+    }
+}
+
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
 {
     _transectsPathHeightInfo.clear();
-    if (_terrainPolyPathQuery) {
-        // Toss previous query
-        _terrainPolyPathQuery->deleteLater();
-        _terrainPolyPathQuery = NULL;
-    }
 
     if (_transects.count()) {
         // We don't actually send the query until this timer times out. This way we only send
@@ -400,6 +422,20 @@ void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
 
 void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 {
+    // Clear any previous query
+    if (_terrainPolyPathQuery) {
+        // FIXME: We should really be blowing away any previous query here. But internally that is difficult to implement so instead we let
+        // it complete and drop the results.
+#if 0
+        // Toss previous query
+        _terrainPolyPathQuery->deleteLater();
+#else
+        // Let the signal fall on the floor
+        disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
+#endif
+        _terrainPolyPathQuery = NULL;
+    }
+
     // Append all transects into a single PolyPath query
 
     QList<QGeoCoordinate> transectPoints;
@@ -436,6 +472,12 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
         // Now that we have terrain data we can adjust
         _adjustTransectsForTerrain();
     }
+
+    if (_terrainPolyPathQuery != sender()) {
+        qWarning() << "TransectStyleComplexItem::_polyPathTerrainData _terrainPolyPathQuery != sender()";
+    }
+    disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
+    _terrainPolyPathQuery = NULL;
 }
 
 bool TransectStyleComplexItem::readyForSave(void) const
