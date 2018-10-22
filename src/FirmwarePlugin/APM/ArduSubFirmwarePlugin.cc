@@ -114,6 +114,11 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
 
         remapV3_6["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
         remapV3_6["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
+        remapV3_6["BATT_AMP_PERVLT"] =  QStringLiteral("BATT_AMP_PERVOLT");
+        remapV3_6["BATT2_AMP_PERVLT"] = QStringLiteral("BATT2_AMP_PERVOL");
+        remapV3_6["BATT_LOW_MAH"] = QStringLiteral("FS_BATT_MAH");
+        remapV3_6["BATT_LOW_VOLT"] = QStringLiteral("FS_BATT_VOLTAGE");
+        remapV3_6["BATT_FS_LOW_ACT"] = QStringLiteral("FS_BATT_ENABLE");
 
         _remapParamNameIntialized = true;
     }
