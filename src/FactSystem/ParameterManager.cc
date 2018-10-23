@@ -868,13 +868,13 @@ void ParameterManager::_tryCacheHashLoad(int vehicleId, int componentId, QVarian
         ani->setEndValue(1.0);
         ani->setDuration(750);
 
-        connect(ani, &QVariantAnimation::valueChanged, [this](const QVariant &value) {
+        connect(ani, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
             _setLoadProgress(value.toDouble());
         });
 
         // Hide 500ms after animation finishes
-        connect(ani, &QVariantAnimation::finished, [this](){
-            QTimer::singleShot(500, [this]() {
+        connect(ani, &QVariantAnimation::finished, this, [this] {
+            QTimer::singleShot(500, [this] {
                 _setLoadProgress(0);
             });
         });
