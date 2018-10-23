@@ -5,6 +5,8 @@
 #   git log --pretty='%aN <%aE>' | sort | uniq -c | sort -rn | HEAD -10
 
 
+Don Gagne <don@thegagnes.com>
+Don Gagne <don@thegagnes.com> <>
 Don Gagne <don@thegagnes.com> Don Gagne <DonLakeFlyer@users.noreply.github.com>
 Don Gagne <don@thegagnes.com> DonLakeFlyer <don@thegagnes.com>
 Don Gagne <don@thegagnes.com> Don Gagne <dongagne@outlook.com>
@@ -19,6 +21,7 @@ Patrick José Pereira <patrickelectric@gmail.com> Patrick J.P <patrickelectric@g
 Daniel Agar <daniel@agar.ca>
 Nick Anthony <nickexists@hotmail.com>
 Nick Anthony <nickexists@hotmail.com> Nick Anthony <nanthony@brewerscience.com>
+Nick Anthony <nickexists@hotmail.com> nanthony21 <nickexists@hotmail.com>
 Philipp Oettershagen <philipp.oettershagen@mavt.ethz.ch>
 Jacob Walser <jwalser90@gmail.com>
 Beat Küng <beat-kueng@gmx.net>
@@ -53,3 +56,22 @@ Lorenz Meier <lorenz@px4.io> lm <pixhawk@student.ethz.ch>
 Lorenz Meier <lorenz@px4.io> lm <pixhawk@switched.com>
 Lorenz Meier <lorenz@px4.io> pixhawk <pixhawk@student.ethz.ch>
 Todd Stellanova <todd@droneflow.com> tstellanova <tstellanova+github@gmail.com>
+Ramón Roche <mrpollo@gmail.com>
+Julien Lecoeur <julien.lecoeur@gmail.com>
+Julien Lecoeur <julien.lecoeur@gmail.com> Julien Lecoeur <jlecoeur@users.noreply.github.com>
+Julien Lecoeur <julien.lecoeur@gmail.com> Julien Lecoeur <julien.lecoeur@epfl.ch>
+Daniele Pettenuzzo <daniele@px4.io> Daniele Pettenuzzo <dani.pettenuzzo@gmail.com>
+Daniele Pettenuzzo <daniele@px4.io> DanielePettenuzzo <35664507+DanielePettenuzzo@users.noreply.github.com>
+Daniele Pettenuzzo <daniele@px4.io> Daniele Pettenuzzo <35664507+DanielePettenuzzo@users.noreply.github.com>
+Daniele Pettenuzzo <daniele@px4.io> Daniele Pettenuzzo <DanielePettenuzzo@users.noreply.github.com>
+Daniele Pettenuzzo <daniele@px4.io> DanielePettenuzzo <daniele@px4.io>
+PX4 Jenkins Bot <bot@px4.io>
+PX4 Jenkins Bot <bot@px4.io> PX4 Build Bot <bot@px4.io>
+PX4 Jenkins Bot <bot@px4.io> PX4 Build Bot <bot@pixhawk.org>
+PX4 Jenkins Bot <bot@px4.io> PX4 Jenkins <bot@pixhawk.org>
+PX4 Jenkins Bot <bot@px4.io> PX4BuildBot <bot@pixhawk.org>
+PX4 Jenkins Bot <bot@px4.io> PX4BuildBot <bot@px4.io>
+PX4 Jenkins Bot <bot@px4.io> PX4BuildBot <bot@px4.io>
+Sander Smeets <sander@droneslab.com>
+SungTae Moon <munhoney@gmail.com> stmoon <munhoney@gmail.com>
+
