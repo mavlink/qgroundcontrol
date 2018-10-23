@@ -35,7 +35,7 @@ public:
         ActionExporting,
         ActionDone,
     };
-    Q_ENUMS(ImportAction)
+    Q_ENUM(ImportAction)
 
     Q_PROPERTY(int                  tileX0          READ    tileX0          NOTIFY tileX0Changed)
     Q_PROPERTY(int                  tileX1          READ    tileX1          NOTIFY tileX1Changed)

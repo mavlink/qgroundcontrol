@@ -19,7 +19,6 @@ class LinkInterface;
 class LinkConfiguration : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(LinkType)
 
 public:
     LinkConfiguration(const QString& name);
@@ -63,6 +62,7 @@ public:
 #endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
+    Q_ENUM(LinkType)
 
     /*!
      *

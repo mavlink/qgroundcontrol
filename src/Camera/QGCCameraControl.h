@@ -97,10 +97,10 @@ public:
         PHOTO_CAPTURE_TIMELAPSE,
     };
 
-    Q_ENUMS(CameraMode)
-    Q_ENUMS(VideoStatus)
-    Q_ENUMS(PhotoStatus)
-    Q_ENUMS(PhotoMode)
+    Q_ENUM(CameraMode)
+    Q_ENUM(VideoStatus)
+    Q_ENUM(PhotoStatus)
+    Q_ENUM(PhotoMode)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
     Q_PROPERTY(QString      modelName           READ modelName          NOTIFY infoChanged)
