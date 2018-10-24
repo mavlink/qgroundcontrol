@@ -122,7 +122,7 @@ bool FirmwareImage::_ihxLoad(const QString& ihxFilename)
     
     QFile ihxFile(ihxFilename);
     if (!ihxFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit statusMessage(QString("Unable to open firmware file %1, error: %2").arg(ihxFilename).arg(ihxFile.errorString()));
+        emit statusMessage(QString("Unable to open firmware file %1, error: %2").arg(ihxFilename, ihxFile.errorString()));
         return false;
     }
     
@@ -223,7 +223,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     
     QFile px4File(imageFilename);
     if (!px4File.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit statusMessage(tr("Unable to open firmware file %1, error: %2").arg(imageFilename).arg(px4File.errorString()));
+        emit statusMessage(tr("Unable to open firmware file %1, error: %2").arg(imageFilename, px4File.errorString()));
         return false;
     }
     
@@ -292,7 +292,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                 parameterFile.close();
             }
         } else {
-            emit statusMessage(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename).arg(parameterFile.errorString()));
+            emit statusMessage(tr("Unable to open parameter meta data file %1 for writing, error: %2").arg(parameterFilename, parameterFile.errorString()));
         }
 
         // Cache this file with the system
@@ -324,7 +324,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                 airframeFile.close();
             }
         } else {
-            emit statusMessage(tr("Unable to open airframe meta data file %1 for writing, error: %2").arg(airframeFilename).arg(airframeFile.errorString()));
+            emit statusMessage(tr("Unable to open airframe meta data file %1 for writing, error: %2").arg(airframeFilename, airframeFile.errorString()));
         }
     }
     
@@ -350,7 +350,7 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
     
     QFile decompressFile(decompressFilename);
     if (!decompressFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        emit statusMessage(tr("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename).arg(decompressFile.errorString()));
+        emit statusMessage(tr("Unable to open decompressed file %1 for writing, error: %2").arg(decompressFilename, decompressFile.errorString()));
         return false;
     }
     
@@ -449,7 +449,7 @@ bool FirmwareImage::_binLoad(const QString& imageFilename)
 {
     QFile binFile(imageFilename);
     if (!binFile.open(QIODevice::ReadOnly)) {
-        emit statusMessage(tr("Unabled to open firmware file %1, %2").arg(imageFilename).arg(binFile.errorString()));
+        emit statusMessage(tr("Unabled to open firmware file %1, %2").arg(imageFilename, binFile.errorString()));
         return false;
     }
     
