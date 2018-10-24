@@ -71,7 +71,7 @@ void SurveyComplexItemTest::_testDirty(void)
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
     rgFacts << _surveyItem->gridAngle() << _surveyItem->flyAlternateTransects();
-    foreach(Fact* fact, rgFacts) {
+    for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_surveyItem->dirty());
         if (fact->typeIsBool()) {
