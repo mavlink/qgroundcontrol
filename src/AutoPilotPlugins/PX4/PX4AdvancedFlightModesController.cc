@@ -168,7 +168,7 @@ void PX4AdvancedFlightModesController::_validateConfiguration(void)
         for (int j=0; j<switchParams.count(); j++) {
             if (map != 0 && map == switchMappings[j]) {
                 _validConfiguration = false;
-                _configurationErrors += tr("%1 is set to same channel as %2.\n").arg(switchParams[j]).arg(attitudeParams[i]);
+                _configurationErrors += tr("%1 is set to same channel as %2.\n").arg(switchParams[j], attitudeParams[i]);
             }
         }
     }
