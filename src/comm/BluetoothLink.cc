@@ -390,7 +390,7 @@ void BluetoothConfiguration::setDevName(const QString &name)
 QString BluetoothConfiguration::address()
 {
 #ifdef __ios__
-    return QString("");
+    return {};
 #else
     return _device.address;
 #endif
