@@ -198,8 +198,17 @@ SetupPage {
                     property var file:   _oldFW ? "Sub/bluerov2-3_5.params" : "Sub/bluerov2-3_5_2.params"
 
                     onClicked : {
-                        console.log(_oldFW)
-                        console.log(_activeVehicle.firmwarePatchVersion)
+                        controller.loadParameters(file)
+                        hideDialog()
+                    }
+                }
+
+                QGCButton {
+                    width:  parent.width
+                    text:   "Blue Robotics BlueROV2 Heavy"
+                    property var file:  "Sub/bluerov2-heavy-3_5_2.params"
+
+                    onClicked : {
                         controller.loadParameters(file)
                         hideDialog()
                     }
