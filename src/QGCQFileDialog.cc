@@ -159,7 +159,7 @@ QString QGCQFileDialog::getSaveFileName(
             }
             break;
         }
-        return QString("");
+        return {};
     }
 }
 
@@ -190,7 +190,7 @@ QString QGCQFileDialog::_getFirstExtensionInFilter(const QString& filter) {
             return match.captured(0).mid(2);
         }
     }
-    return QString("");
+    return {};
 }
 
 /// @brief Validates and updates the parameters for the file dialog calls
