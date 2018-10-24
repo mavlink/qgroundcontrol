@@ -497,7 +497,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 #endif
 
     // Iterate Comm Ports
-    foreach (QGCSerialPortInfo portInfo, portList) {
+    for (QGCSerialPortInfo portInfo: portList) {
         qCDebug(LinkManagerVerboseLog) << "-----------------------------------------------------";
         qCDebug(LinkManagerVerboseLog) << "portName:          " << portInfo.portName();
         qCDebug(LinkManagerVerboseLog) << "systemLocation:    " << portInfo.systemLocation();
@@ -638,7 +638,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     }
 
     // Now remove all configs that are gone
-    foreach (LinkConfiguration* pDeleteConfig, _confToDelete) {
+    for (LinkConfiguration* pDeleteConfig: _confToDelete) {
         qCDebug(LinkManagerLog) << "Removing unused autoconnect config" << pDeleteConfig->name();
         if (pDeleteConfig->link()) {
             disconnectLink(pDeleteConfig->link());
@@ -703,7 +703,7 @@ void LinkManager::_updateSerialPorts()
     _commPortDisplayList.clear();
 #ifndef NO_SERIAL_LINK
     QList<QSerialPortInfo> portList = QSerialPortInfo::availablePorts();
-    foreach (const QSerialPortInfo &info, portList)
+    for (const QSerialPortInfo &info: portList)
     {
         QString port = info.systemLocation().trimmed();
         _commPortList += port;
