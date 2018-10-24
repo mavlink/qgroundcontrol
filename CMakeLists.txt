@@ -362,15 +362,6 @@ list(APPEND QGC_SRC
 
 	src/FollowMe/FollowMe.cc
 
-	src/GPS/Drivers/src/ashtech.cpp
-	src/GPS/Drivers/src/gps_helper.cpp
-	src/GPS/Drivers/src/mtk.cpp
-	src/GPS/Drivers/src/rtcm.cpp
-	src/GPS/Drivers/src/ubx.cpp
-	src/GPS/GPSManager.cc
-	src/GPS/GPSProvider.cc
-	src/GPS/RTCM/RTCMMavlink.cc
-
 	src/Joystick/Joystick.cc
 	src/Joystick/JoystickManager.cc
 	src/Joystick/JoystickSDL.cc
@@ -754,9 +745,6 @@ list(APPEND QGC_UI
 include_directories(
 
 	src/QtLocationPlugin/QMLControl
-	#src/QtLocationPlugin/qtlocation/include/QtLocation
-	#src/QtLocationPlugin/qtlocation/include/QtLocation/5.5.1
-	#src/QtLocationPlugin/qtlocation/include/QtPositioning/5.5.1
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
 	libs/eigen
@@ -785,7 +773,6 @@ include_directories(
 	src/FlightDisplay
 	src/FlightMap/Widgets
 	src/FollowMe
-	src/GPS
 	src/Joystick
 	src/MissionManager
 	src/PositionManager
@@ -802,6 +789,8 @@ include_directories(
 	src/VideoStreaming
 	src/ViewWidgets
 )
+
+add_subdirectory(src)
 
 if(ANDROID)
 	add_library(QGroundControl SHARED ${QGC_SRC} ${QGC_RESOURCES} ${QGC_UI})
@@ -825,6 +814,10 @@ target_link_libraries(QGroundControl
 	Qt5::Xml
 	Qt5::Widgets
 	)
+
+target_link_libraries(QGroundControl
+	gps
+)
 	
 if(NOT QT_MKSPEC MATCHES "winrt")
 	target_link_libraries(QGroundControl
