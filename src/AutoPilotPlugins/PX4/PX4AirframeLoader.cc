@@ -90,7 +90,6 @@ void PX4AirframeLoader::loadAirframeMetaData(void)
 
     QString         airframeGroup;
     QString         image;
-    QString         errorString;
     int             xmlState = XmlStateNone;
 
     while (!xml.atEnd()) {
