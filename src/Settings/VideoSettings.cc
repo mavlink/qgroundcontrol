@@ -71,7 +71,7 @@ VideoSettings::VideoSettings(QObject* parent)
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    foreach (const QCameraInfo &cameraInfo, cameras) {
+    for (const QCameraInfo &cameraInfo: cameras) {
         videoSourceList.append(cameraInfo.description());
     }
 #endif
@@ -82,7 +82,7 @@ VideoSettings::VideoSettings(QObject* parent)
         videoSourceList.insert(0, videoDisabled);
     }
     QVariantList videoSourceVarList;
-    foreach (const QString& videoSource, videoSourceList) {
+    for (const QString& videoSource: videoSourceList) {
         videoSourceVarList.append(QVariant::fromValue(videoSource));
     }
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);

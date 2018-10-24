@@ -81,7 +81,7 @@ int UnitTest::run(QString& singleTest)
 {
     int ret = 0;
     
-    foreach (QObject* test, _testList()) {
+    for (QObject* test: _testList()) {
         if (singleTest.isEmpty() || singleTest == test->objectName()) {
             QStringList args;
             args << "*" << "-maxwarnings" << "0";
