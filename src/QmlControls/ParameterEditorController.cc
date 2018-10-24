@@ -70,7 +70,7 @@ QStringList ParameterEditorController::searchParameters(const QString& searchTex
 {
     QStringList list;
     
-    foreach(const QString &paramName, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
+    for(const QString &paramName: _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
@@ -168,11 +168,11 @@ void ParameterEditorController::_updateParameters(void)
 
     if (searchItems.isEmpty()) {
         const QMap<QString, QMap<QString, QStringList> >& categoryMap = _vehicle->parameterManager()->getCategoryMap();
-        foreach (const QString& parameter, categoryMap[_currentCategory][_currentGroup]) {
+        for (const QString& parameter: categoryMap[_currentCategory][_currentGroup]) {
             newParameterList.append(_vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter));
         }
     } else {
-        foreach(const QString &parameter, _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
+        for(const QString &parameter: _vehicle->parameterManager()->parameterNames(_vehicle->defaultComponentId())) {
             Fact* fact = _vehicle->parameterManager()->getParameter(_vehicle->defaultComponentId(), parameter);
             bool matched = true;
 

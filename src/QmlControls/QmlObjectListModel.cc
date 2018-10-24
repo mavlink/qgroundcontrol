@@ -183,7 +183,7 @@ void QmlObjectListModel::insert(int i, QList<QObject*> objects)
     }
 
     int j = i;
-    foreach (QObject* object, objects) {
+    for (QObject* object: objects) {
         QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
 
         // Look for a dirtyChanged signal on the object
@@ -233,7 +233,7 @@ void QmlObjectListModel::setDirty(bool dirty)
         _dirty = dirty;
         if (!dirty) {
             // Need to clear dirty from all children
-            foreach(QObject* object, _objectList) {
+            for(QObject* object: _objectList) {
                 if (object->property("dirty").isValid()) {
                     object->setProperty("dirty", false);
                 }
