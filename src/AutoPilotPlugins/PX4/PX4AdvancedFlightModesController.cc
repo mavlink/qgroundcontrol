@@ -56,9 +56,7 @@ void PX4AdvancedFlightModesController::_init(void)
         rcMinParam = QString("RC%1_MIN").arg(channel+1);
         rcMaxParam = QString("RC%1_MAX").arg(channel+1);
         rcRevParam = QString("RC%1_REV").arg(channel+1);
-        
-        QVariant value;
-        
+
         _rgRCMin[channel] = getParameterFact(FactSystem::defaultComponentId, rcMinParam)->rawValue().toInt();
         _rgRCMax[channel] = getParameterFact(FactSystem::defaultComponentId, rcMaxParam)->rawValue().toInt();
         
@@ -220,8 +218,6 @@ void PX4AdvancedFlightModesController::_rcChannelsChanged(int channelCount, int 
 
 double PX4AdvancedFlightModesController::_switchLiveRange(const QString& param)
 {
-    QVariant value;
-    
     int channel = getParameterFact(-1, param)->rawValue().toInt();
     if (channel == 0) {
         return 0.0;

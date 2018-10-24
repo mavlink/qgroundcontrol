@@ -140,7 +140,6 @@ void PowerComponentController::_handleUASTextMessage(int uasId, int compId, int 
         return;
     }
 
-    QString busCompletePrefix("bus conf done:");
     if (text.startsWith(calCompletePrefix)) {
         _stopBusConfig();
         emit calibrationSuccess(_warningMessages);
