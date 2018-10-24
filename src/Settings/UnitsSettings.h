@@ -46,10 +46,10 @@ public:
         TemperatureUnitsFarenheit,
     };
 
-    Q_ENUMS(DistanceUnits)
-    Q_ENUMS(AreaUnits)
-    Q_ENUMS(SpeedUnits)
-    Q_ENUMS(TemperatureUnits)
+    Q_ENUM(DistanceUnits)
+    Q_ENUM(AreaUnits)
+    Q_ENUM(SpeedUnits)
+    Q_ENUM(TemperatureUnits)
 
     Q_PROPERTY(Fact* distanceUnits                      READ distanceUnits                      CONSTANT)
     Q_PROPERTY(Fact* areaUnits                          READ areaUnits                          CONSTANT)
