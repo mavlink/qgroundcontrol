@@ -46,7 +46,7 @@ void TerrainAirMapQuery::requestCoordinateHeights(const QList<QGeoCoordinate>& c
     }
 
     QString points;
-    foreach (const QGeoCoordinate& coord, coordinates) {
+    for (const QGeoCoordinate& coord: coordinates) {
             points += QString::number(coord.latitude(), 'f', 10) + ","
                     + QString::number(coord.longitude(), 'f', 10) + ",";
     }
@@ -236,7 +236,7 @@ void TerrainAirMapQuery::_parsePathData(const QJsonValue& pathJson)
     double lonStep = stepArray[1].toDouble();
 
     QList<double> heights;
-    foreach (const QJsonValue& profileValue, profileArray) {
+    for (const QJsonValue& profileValue: profileArray) {
         heights.append(profileValue.toDouble());
     }
 
@@ -404,7 +404,7 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
 {
     error = false;
 
-    foreach (const QGeoCoordinate& coordinate, coordinates) {
+    for (const QGeoCoordinate& coordinate: coordinates) {
         QString tileHash = _getTileHash(coordinate);
         qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates hash:coordinate" << tileHash << coordinate;
 
@@ -451,7 +451,7 @@ void TerrainTileManager::_tileFailed(void)
 {
     QList<double>    noAltitudes;
 
-    foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
+    for (const QueuedRequestInfo_t& requestInfo: _requestQueue) {
         if (requestInfo.queryMode == QueryMode::QueryModeCoordinates) {
             requestInfo.terrainQueryInterface->_signalCoordinateHeights(false, noAltitudes);
         } else if (requestInfo.queryMode == QueryMode::QueryModePath) {
@@ -584,7 +584,7 @@ void TerrainAtCoordinateBatchManager::_sendNextBatch(void)
     // Convert coordinates to point strings for json query
     QList<QGeoCoordinate> coords;
     int requestQueueAdded = 0;
-    foreach (const QueuedRequestInfo_t& requestInfo, _requestQueue) {
+    for (const QueuedRequestInfo_t& requestInfo: _requestQueue) {
         SentRequestInfo_t sentRequestInfo = { requestInfo.terrainAtCoordinateQuery, false, requestInfo.coordinates.count() };
         _sentRequests.append(sentRequestInfo);
         coords += requestInfo.coordinates;
@@ -604,7 +604,7 @@ void TerrainAtCoordinateBatchManager::_batchFailed(void)
 {
     QList<double> noHeights;
 
-    foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
+    for (const SentRequestInfo_t& sentRequestInfo: _sentRequests) {
         if (!sentRequestInfo.queryObjectDestroyed) {
             disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
             sentRequestInfo.terrainAtCoordinateQuery->_signalTerrainData(false, noHeights);
@@ -663,7 +663,7 @@ void TerrainAtCoordinateBatchManager::_coordinateHeights(bool success, QList<dou
     }
 
     int currentIndex = 0;
-    foreach (const SentRequestInfo_t& sentRequestInfo, _sentRequests) {
+    for (const SentRequestInfo_t& sentRequestInfo: _sentRequests) {
         if (!sentRequestInfo.queryObjectDestroyed) {
             qCDebug(TerrainQueryVerboseLog) << "TerrainAtCoordinateBatchManager::_coordinateHeights returned TerrainCoordinateQuery:count" <<  sentRequestInfo.terrainAtCoordinateQuery << sentRequestInfo.cCoord;
             disconnect(sentRequestInfo.terrainAtCoordinateQuery, &TerrainAtCoordinateQuery::destroyed, this, &TerrainAtCoordinateBatchManager::_queryObjectDestroyed);
@@ -730,7 +730,7 @@ void TerrainPolyPathQuery::requestData(const QVariantList& polyPath)
 {
     QList<QGeoCoordinate> path;
 
-    foreach (const QVariant& geoVar, polyPath) {
+    for (const QVariant& geoVar: polyPath) {
         path.append(geoVar.value<QGeoCoordinate>());
     }
 

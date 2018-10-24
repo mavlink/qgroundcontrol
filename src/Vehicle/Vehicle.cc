@@ -2004,7 +2004,7 @@ bool Vehicle::xConfigMotors(void)
 QString Vehicle::formatedMessages()
 {
     QString messages;
-    foreach(UASMessage* message, _toolbox->uasMessageHandler()->messages()) {
+    for(UASMessage* message: _toolbox->uasMessageHandler()->messages()) {
         messages += message->getFormatedText();
     }
     return messages;
@@ -2281,7 +2281,7 @@ QString Vehicle::priorityLinkName(void) const
 QVariantList Vehicle::links(void) const {
     QVariantList ret;
 
-    foreach( const auto &item, _links )
+    for( const auto &item: _links )
         ret << QVariant::fromValue(item);
 
     return ret;

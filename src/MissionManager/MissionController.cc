@@ -1156,7 +1156,7 @@ void MissionController::_recalcWaypointLines(void)
         // Create a temporary QObjectList and replace the model data
         QObjectList objs;
         objs.reserve(_linesTable.count());
-        foreach(CoordinateVector *vect, _linesTable.values()) {
+        for(CoordinateVector *vect: _linesTable.values()) {
             objs.append(vect);
         }
 

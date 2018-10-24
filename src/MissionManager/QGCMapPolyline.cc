@@ -120,7 +120,7 @@ void QGCMapPolyline::setPath(const QList<QGeoCoordinate>& path)
 {
     _polylinePath.clear();
     _polylineModel.clearAndDeleteContents();
-    foreach (const QGeoCoordinate& coord, path) {
+    for (const QGeoCoordinate& coord: path) {
         _polylinePath.append(QVariant::fromValue(coord));
         _polylineModel.append(new QGCQGeoCoordinate(coord, this));
     }
@@ -382,7 +382,7 @@ void QGCMapPolyline::appendVertices(const QList<QGeoCoordinate>& coordinates)
 {
     QList<QObject*> objects;
 
-    foreach (const QGeoCoordinate& coordinate, coordinates) {
+    for (const QGeoCoordinate& coordinate: coordinates) {
         objects.append(new QGCQGeoCoordinate(coordinate, this));
         _polylinePath.append(QVariant::fromValue(coordinate));
     }

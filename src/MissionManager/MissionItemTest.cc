@@ -301,7 +301,7 @@ void MissionItemTest::_testLoadFromJsonV1(void)
 
     QStringList removeKeys;
     removeKeys << MissionItem::_jsonParam1Key << MissionItem::_jsonParam2Key << MissionItem::_jsonParam3Key << MissionItem::_jsonParam4Key;
-    foreach (const QString& removeKey, removeKeys) {
+    for (const QString& removeKey: removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
@@ -329,7 +329,7 @@ void MissionItemTest::_testLoadFromJsonV2(void)
 
     QStringList removeKeys;
     removeKeys << MissionItem::_jsonCoordinateKey;
-    foreach(const QString& removeKey, removeKeys) {
+    for(const QString& removeKey: removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
@@ -399,7 +399,7 @@ void MissionItemTest::_testLoadFromJsonV3(void)
                   MissionItem::_jsonFrameKey <<
                   MissionItem::_jsonParamsKey <<
                   VisualMissionItem::jsonTypeKey;
-    foreach(const QString& removeKey, removeKeys) {
+    for(const QString& removeKey: removeKeys) {
         QJsonObject badObject = jsonObject;
         badObject.remove(removeKey);
         QCOMPARE(missionItem.load(badObject, _seq, errorString), false);
