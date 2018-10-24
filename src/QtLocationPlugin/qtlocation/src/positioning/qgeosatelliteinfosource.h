@@ -54,7 +54,7 @@ public:
         NoError = 2,
         UnknownSourceError = -1
     };
-    Q_ENUMS(Error)
+    Q_ENUM(Error)
 
     explicit QGeoSatelliteInfoSource(QObject *parent);
     virtual ~QGeoSatelliteInfoSource();

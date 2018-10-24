@@ -33,8 +33,8 @@ public:
         TakeVideo,
         StopTakingVideo,
         TakePhoto
-    };    
-    Q_ENUMS(CameraAction)
+    };
+    Q_ENUM(CameraAction)
 
     Q_PROPERTY(bool     specifyGimbal                   READ specifyGimbal                  WRITE setSpecifyGimbal              NOTIFY specifyGimbalChanged)
     Q_PROPERTY(Fact*    gimbalPitch                     READ gimbalPitch                                                        CONSTANT)
