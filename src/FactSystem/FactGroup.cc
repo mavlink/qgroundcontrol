@@ -120,7 +120,7 @@ void FactGroup::_addFactGroup(FactGroup* factGroup, const QString& name)
 
 void FactGroup::_updateAllValues(void)
 {
-    foreach(Fact* fact, _nameToFactMap) {
+    for(Fact* fact: _nameToFactMap) {
         fact->sendDeferredValueChangedSignal();
     }
 }
