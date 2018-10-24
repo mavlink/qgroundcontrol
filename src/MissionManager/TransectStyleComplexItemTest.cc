@@ -77,7 +77,7 @@ void TransectStyleComplexItemTest::_testDirty(void)
             << _transectStyleItem->cameraTriggerInTurnAround()
             << _transectStyleItem->hoverAndCapture()
             << _transectStyleItem->refly90Degrees();
-    foreach(Fact* fact, rgFacts) {
+    for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_transectStyleItem->dirty());
         changeFactValue(fact);
@@ -102,7 +102,7 @@ void TransectStyleComplexItemTest::_testDirty(void)
 
 void TransectStyleComplexItemTest::_setSurveyAreaPolygon(void)
 {
-    foreach (const QGeoCoordinate vertex, _polygonVertices) {
+    for (const QGeoCoordinate vertex: _polygonVertices) {
         _transectStyleItem->surveyAreaPolygon()->appendVertex(vertex);
     }
 }
@@ -132,7 +132,7 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
             << _transectStyleItem->refly90Degrees()
             << _transectStyleItem->cameraCalc()->frontalOverlap()
             << _transectStyleItem->cameraCalc()->sideOverlap();
-    foreach(Fact* fact, rgFacts) {
+    for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         changeFactValue(fact);
         QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
@@ -175,7 +175,7 @@ void TransectStyleComplexItemTest::_testDistanceSignalling(void)
     rgFacts << _transectStyleItem->turnAroundDistance()
             << _transectStyleItem->hoverAndCapture()
             << _transectStyleItem->refly90Degrees();
-    foreach(Fact* fact, rgFacts) {
+    for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         changeFactValue(fact);
         QVERIFY(_multiSpy->checkSignalsByMask(complexDistanceChangedMask | greatestDistanceToChangedMask));

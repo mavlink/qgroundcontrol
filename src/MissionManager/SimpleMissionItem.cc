@@ -250,7 +250,7 @@ void SimpleMissionItem::_setupMetaData(void)
         enumStrings.clear();
         enumValues.clear();
         MissionCommandTree* commandTree = qgcApp()->toolbox()->missionCommandTree();
-        foreach (const MAV_CMD command, commandTree->allCommandIds()) {
+        for (const MAV_CMD command: commandTree->allCommandIds()) {
             enumStrings.append(commandTree->rawName(command));
             enumValues.append(QVariant((int)command));
         }

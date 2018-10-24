@@ -58,7 +58,7 @@ const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
 
     QVariantList vertices = other.path();
     QList<QGeoCoordinate> rgCoord;
-    foreach (const QVariant& vertexVar, vertices) {
+    for (const QVariant& vertexVar: vertices) {
         rgCoord.append(vertexVar.value<QGeoCoordinate>());
     }
     appendVertices(rgCoord);
@@ -162,7 +162,7 @@ void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
 {
     _polygonPath.clear();
     _polygonModel.clearAndDeleteContents();
-    foreach(const QGeoCoordinate& coord, path) {
+    for(const QGeoCoordinate& coord: path) {
         _polygonPath.append(QVariant::fromValue(coord));
         _polygonModel.append(new QGCQGeoCoordinate(coord, this));
     }
@@ -265,7 +265,7 @@ void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
 {
     QList<QObject*> objects;
 
-    foreach (const QGeoCoordinate& coordinate, coordinates) {
+    for (const QGeoCoordinate& coordinate: coordinates) {
         objects.append(new QGCQGeoCoordinate(coordinate, this));
         _polygonPath.append(QVariant::fromValue(coordinate));
     }
