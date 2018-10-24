@@ -114,7 +114,7 @@ void GeoTagController::startTagging(void)
                 _setErrorMessage(tr("Save folder not empty"));
                 return;
             }
-            foreach(QString dirFile, imageList)
+            for(QString dirFile: imageList)
             {
                 if(!saveDirectory.remove(dirFile)) {
                     _setErrorMessage(tr("Couldn't replace the existing images"));
