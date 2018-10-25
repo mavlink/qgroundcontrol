@@ -7,7 +7,6 @@ include_directories(
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
 	FollowMe
-	PositionManager
 	qgcunittest
 	Terrain
 )
@@ -112,9 +111,6 @@ add_library(qgc
 
 	FollowMe/FollowMe.cc
 
-	PositionManager/PositionManager.cpp
-	PositionManager/SimulatedPosition.cc
-
 	Terrain/TerrainQuery.cc
 
 	CmdLineOptParser.cc
@@ -164,6 +160,7 @@ add_subdirectory(FlightMap)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
+add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
@@ -206,6 +203,7 @@ target_link_libraries(qgc
 	gps
 	Joystick
 	MissionManager
+	PositionManager
 	QmlControls
 	QtLocationPlugin
 	qwt # LinechartWidget
