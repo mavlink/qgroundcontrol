@@ -1,5 +1,4 @@
 
-
 include_directories(
 	.
 	${CMAKE_CURRENT_BINARY_DIR}
@@ -13,17 +12,6 @@ if(MOBILE)
 	list(APPEND EXTRA_SRC
 		MobileScreenMgr.cc
 	)
-
-	if (ANDROID)
-		list(APPEND EXTRA_SRC
-			libs/qtandroidserialport/src/qserialport.cpp
-			libs/qtandroidserialport/src/qserialport_android.cpp
-			libs/qtandroidserialport/src/qserialportinfo.cpp
-			libs/qtandroidserialport/src/qserialportinfo_android.cpp
-
-			Joystick/JoystickAndroid.cc
-		)
-	endif()
 endif()
 
 if(BUILD_TESTING)
@@ -74,9 +62,6 @@ if(BUILD_TESTING)
 	add_qgc_test(TCPLinkTest)
 	add_qgc_test(TransectStyleComplexItemTest)
 
-endif()
-
-if(BUILD_TESTING)
 	list(APPEND QGC_RESOURCES
 		UnitTest.qrc
 	)
@@ -85,7 +70,6 @@ endif()
 add_library(qgc
 
 	${QGC_RESOURCES}
-	${QGC_UI}
 
 	${EXTRA_SRC}
 
