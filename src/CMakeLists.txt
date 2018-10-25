@@ -14,7 +14,6 @@ include_directories(
 	PositionManager
 	qgcunittest
 	Terrain
-	uas
 	Vehicle
 	ViewWidgets
 )
@@ -138,10 +137,6 @@ add_library(qgc
 
 	Terrain/TerrainQuery.cc
 
-	uas/FileManager.cc
-	uas/UAS.cc
-	uas/UASMessageHandler.cc
-
 	Vehicle/ADSBVehicle.cc
 	Vehicle/GPSRTKFactGroup.cc
 	Vehicle/MAVLinkLogManager.cc
@@ -176,11 +171,6 @@ add_library(qgc
 	UTM.cpp
 	main.cc
 
-	# HEADERS
-	# shouldn't be listed here, but aren't named properly for AUTOMOC
-	uas/UAS.h
-	uas/UASInterface.h
-
 	# UI
 	QGCQmlWidgetHolder.ui
 
@@ -203,6 +193,7 @@ add_subdirectory(MissionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
+add_subdirectory(uas)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoStreaming)
 
@@ -239,6 +230,7 @@ target_link_libraries(qgc
 	QmlControls
 	QtLocationPlugin
 	Settings
+	uas
 	ui
 	VehicleSetup
 	VideoStreaming
