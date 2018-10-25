@@ -8,7 +8,6 @@ include_directories(
 
 	FlightMap/Widgets
 	FollowMe
-	Joystick
 	PositionManager
 	qgcunittest
 	Terrain
@@ -117,10 +116,6 @@ add_library(qgc
 
 	FollowMe/FollowMe.cc
 
-	Joystick/Joystick.cc
-	Joystick/JoystickManager.cc
-	Joystick/JoystickSDL.cc
-
 	PositionManager/PositionManager.cpp
 	PositionManager/SimulatedPosition.cc
 
@@ -163,8 +158,8 @@ set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT
 
 add_subdirectory(ui)
 
-add_subdirectory(AnalyzeView)
 add_subdirectory(Airmap)
+add_subdirectory(AnalyzeView)
 add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
@@ -174,6 +169,7 @@ add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlightDisplay)
 add_subdirectory(GPS)
+add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
@@ -190,17 +186,17 @@ target_link_libraries(qgc
 	Qt5::Bluetooth
 	Qt5::Concurrent
 	Qt5::Core
-	Qt5::Quick
-	Qt5::QuickWidgets
 	Qt5::Location
 	Qt5::Multimedia
 	Qt5::Positioning
+	Qt5::Quick
+	Qt5::QuickWidgets
 	Qt5::Sql
 	Qt5::Svg
 	Qt5::Test
 	Qt5::TextToSpeech
-	Qt5::Xml
 	Qt5::Widgets
+	Qt5::Xml
 
 	Airmap
 	AnalyzeView
@@ -213,10 +209,11 @@ target_link_libraries(qgc
 	FirmwarePlugin
 	FlightDisplay
 	gps
-	qwt # LinechartWidget
+	Joystick
 	MissionManager
 	QmlControls
 	QtLocationPlugin
+	qwt # LinechartWidget
 	Settings
 	uas
 	ui
