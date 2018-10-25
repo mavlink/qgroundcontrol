@@ -17,6 +17,8 @@ target_link_libraries(gps
 	Qt5::SerialPort
 	Qt5::Svg
 	Qt5::TextToSpeech
+
+	qgc
 )
 
 target_include_directories(gps INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

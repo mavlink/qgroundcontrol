@@ -7,9 +7,7 @@ include_directories(
 	QtLocationPlugin/QMLControl
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
-	AnalyzeView
 	api
-	Audio
 	AutoPilotPlugins
 	AutoPilotPlugins/APM
 	AutoPilotPlugins/Common
@@ -75,7 +73,6 @@ if(BUILD_TESTING)
 	endfunction()
 
 	list(APPEND QGC_SRC
-		Audio/AudioOutputTest.cc
 
 		comm/MockLink.cc
 		comm/MockLinkFileServer.cc
@@ -223,8 +220,6 @@ add_library(qgc
 	api/QGCOptions.cc
 	api/QGCSettings.cc
 	api/QmlComponentInfo.cc
-
-	Audio/AudioOutput.cc
 
 	AutoPilotPlugins/APM/APMAirframeComponent.cc
 	AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc
@@ -490,6 +485,11 @@ add_library(qgc
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
 
+add_subdirectory(AnalyzeView)
+add_subdirectory(Airmap)
+add_subdirectory(Audio)
+add_subdirectory(GPS)
+
 target_link_libraries(qgc
 
 	PUBLIC
@@ -510,13 +510,13 @@ target_link_libraries(qgc
 	Qt5::Widgets
 
 	Airmap
+	AnalyzeView
+	Audio
 	gps
 	qwt # LinechartWidget
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_subdirectory(AnalyzeView)
-add_subdirectory(Airmap)
-add_subdirectory(GPS)
+
 
