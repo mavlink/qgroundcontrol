@@ -17,7 +17,6 @@ include_directories(
 	FlightMap/Widgets
 	FollowMe
 	Joystick
-	MissionManager
 	PositionManager
 	qgcunittest
 	QmlControls
@@ -77,26 +76,6 @@ if(BUILD_TESTING)
 		FactSystem/FactSystemTestGeneric.cc
 		FactSystem/FactSystemTestPX4.cc
 		FactSystem/ParameterManagerTest.cc
-
-		MissionManager/CameraCalcTest.cc
-		MissionManager/CameraSectionTest.cc
-		MissionManager/CorridorScanComplexItemTest.cc
-		MissionManager/MissionCommandTreeTest.cc
-		MissionManager/MissionControllerManagerTest.cc
-		MissionManager/MissionControllerTest.cc
-		MissionManager/MissionItemTest.cc
-		MissionManager/MissionManagerTest.cc
-		MissionManager/MissionSettingsTest.cc
-		MissionManager/PlanMasterControllerTest.cc
-		MissionManager/QGCMapPolygonTest.cc
-		MissionManager/QGCMapPolylineTest.cc
-		MissionManager/SectionTest.cc
-		MissionManager/SimpleMissionItemTest.cc
-		MissionManager/SpeedSectionTest.cc
-		MissionManager/StructureScanComplexItemTest.cc
-		MissionManager/SurveyComplexItemTest.cc
-		MissionManager/TransectStyleComplexItemTest.cc
-		MissionManager/VisualMissionItemTest.cc
 
 		qgcunittest/FileDialogTest.cc
 		qgcunittest/FileManagerTest.cc
@@ -266,40 +245,6 @@ add_library(qgc
 	Joystick/JoystickManager.cc
 	Joystick/JoystickSDL.cc
 
-	MissionManager/CameraCalc.cc
-	MissionManager/CameraSection.cc
-	MissionManager/CameraSpec.cc
-	MissionManager/ComplexMissionItem.cc
-	MissionManager/CorridorScanComplexItem.cc
-	MissionManager/FixedWingLandingComplexItem.cc
-	MissionManager/GeoFenceController.cc
-	MissionManager/GeoFenceManager.cc
-	MissionManager/KML.cc
-	MissionManager/MissionCommandList.cc
-	MissionManager/MissionCommandTree.cc
-	MissionManager/MissionCommandUIInfo.cc
-	MissionManager/MissionController.cc
-	MissionManager/MissionItem.cc
-	MissionManager/MissionManager.cc
-	MissionManager/MissionSettingsItem.cc
-	MissionManager/PlanElementController.cc
-	MissionManager/PlanManager.cc
-	MissionManager/PlanMasterController.cc
-	MissionManager/QGCFenceCircle.cc
-	MissionManager/QGCFencePolygon.cc
-	MissionManager/QGCMapCircle.cc
-	MissionManager/QGCMapPolygon.cc
-	MissionManager/QGCMapPolyline.cc
-	MissionManager/RallyPoint.cc
-	MissionManager/RallyPointController.cc
-	MissionManager/RallyPointManager.cc
-	MissionManager/SimpleMissionItem.cc
-	MissionManager/SpeedSection.cc
-	MissionManager/StructureScanComplexItem.cc
-	MissionManager/SurveyComplexItem.cc
-	MissionManager/TransectStyleComplexItem.cc
-	MissionManager/VisualMissionItem.cc
-
 	PositionManager/PositionManager.cpp
 	PositionManager/SimulatedPosition.cc
 
@@ -419,7 +364,6 @@ add_library(qgc
 	comm/QGCFlightGearLink.h
 	comm/QGCHilLink.h
 	comm/QGCJSBSimLink.h
-	MissionManager/Section.h
 	QtLocationPlugin/QGCMapEngineData.h
 	uas/UAS.h
 	uas/UASInterface.h
@@ -435,6 +379,7 @@ add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(GPS)
+add_subdirectory(MissionManager)
 
 target_link_libraries(qgc
 
@@ -462,6 +407,7 @@ target_link_libraries(qgc
 	AutoPilotPlugins
 	gps
 	qwt # LinechartWidget
+	MissionManager
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
