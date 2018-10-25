@@ -42,38 +42,6 @@ include_directories(
 
 set(EXTRA_SRC)
 
-if(QGC_AIRMAP)
-
-	list(APPEND EXTRA_SRC
-		Airmap/AirMapAdvisoryManager.cc
-		Airmap/AirMapFlightManager.cc
-		Airmap/AirMapFlightPlanManager.cc
-		Airmap/AirMapManager.cc
-		Airmap/AirMapRestrictionManager.cc
-		Airmap/AirMapRulesetsManager.cc
-		Airmap/AirMapSettings.cc
-		Airmap/AirMapSharedState.cc
-		Airmap/AirMapTelemetry.cc
-		Airmap/AirMapTrafficMonitor.cc
-		Airmap/AirMapVehicleManager.cc
-		Airmap/AirMapWeatherInfoManager.cc
-
-		AirspaceManagement/AirspaceAdvisoryProvider.cc
-		AirspaceManagement/AirspaceFlightPlanProvider.cc
-		AirspaceManagement/AirspaceManager.cc
-		AirspaceManagement/AirspaceRestriction.cc
-		AirspaceManagement/AirspaceRestrictionProvider.cc
-		AirspaceManagement/AirspaceRulesetsProvider.cc
-		AirspaceManagement/AirspaceVehicleManager.cc
-		AirspaceManagement/AirspaceWeatherInfoProvider.cc
-	)
-else()
-	list(APPEND EXTRA_SRC
-		Airmap/dummy/AirspaceManager.cc
-	)
-	include_directories(Airmap/dummy)
-endif()
-
 if(MOBILE)
 	list(APPEND EXTRA_SRC
 		MobileScreenMgr.cc
@@ -215,8 +183,6 @@ set(QGC_RESOURCES)
 list(APPEND QGC_RESOURCES
 	FirmwarePlugin/APM/APMResources.qrc
 	FirmwarePlugin/PX4/PX4Resources.qrc
-
-	Airmap/airmap.qrc
 )
 
 if(BUILD_TESTING)
@@ -525,6 +491,9 @@ add_library(qgc
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
 
 target_link_libraries(qgc
+
+	PUBLIC
+
 	Qt5::Bluetooth
 	Qt5::Concurrent
 	Qt5::Core
@@ -540,6 +509,7 @@ target_link_libraries(qgc
 	Qt5::Xml
 	Qt5::Widgets
 
+	Airmap
 	gps
 	qwt # LinechartWidget
 )
@@ -547,5 +517,6 @@ target_link_libraries(qgc
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(AnalyzeView)
+add_subdirectory(Airmap)
 add_subdirectory(GPS)
 
