@@ -7,7 +7,6 @@ include_directories(
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
 	qgcunittest
-	Terrain
 )
 
 set(EXTRA_SRC)
@@ -108,8 +107,6 @@ add_library(qgc
 
 	${EXTRA_SRC}
 
-	Terrain/TerrainQuery.cc
-
 	CmdLineOptParser.cc
 	JsonHelper.cc
 	KMLFileHelper.cc
@@ -162,6 +159,7 @@ add_subdirectory(PositionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
+add_subdirectory(Terrain)
 add_subdirectory(uas)
 add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
@@ -207,6 +205,7 @@ target_link_libraries(qgc
 	QtLocationPlugin
 	qwt # LinechartWidget
 	Settings
+	Terrain
 	uas
 	ui
 	Vehicle
