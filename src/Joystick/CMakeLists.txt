@@ -1,8 +1,17 @@
 
+set(EXTRA_SRC)
+
+if (ANDROID)
+	list(APPEND EXTRA_SRC
+		JoystickAndroid.cc
+	)
+endif()
+
 add_library(Joystick
 	Joystick.cc
 	JoystickManager.cc
 	JoystickSDL.cc
+	${EXTRA_SRC}
 )
 
 target_link_libraries(Joystick
