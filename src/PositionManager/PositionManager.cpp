@@ -60,7 +60,19 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
-    emit lastPositionUpdated(update.isValid(), QVariant::fromValue(update.coordinate()));
+    QGeoCoordinate newGCSPosition = QGeoCoordinate();
+
+    if (update.isValid()) {
+        // Note that gcsPosition filters out possible crap values
+        if (qAbs(update.coordinate().latitude()) > 0.001 && qAbs(update.coordinate().longitude()) > 0.001) {
+            newGCSPosition = update.coordinate();
+        }
+    }
+    if (newGCSPosition != _gcsPosition) {
+        _gcsPosition = newGCSPosition;
+        emit gcsPositionChanged(_gcsPosition);
+    }
+
     emit positionInfoUpdated(update);
 }
 
