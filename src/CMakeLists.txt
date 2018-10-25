@@ -4,7 +4,6 @@ include_directories(
 	.
 	${CMAKE_CURRENT_BINARY_DIR}
 
-	QtLocationPlugin/QMLControl
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
 	Camera
@@ -14,7 +13,6 @@ include_directories(
 	Joystick
 	PositionManager
 	qgcunittest
-	QtLocationPlugin
 	Settings
 	Terrain
 	uas
@@ -174,18 +172,6 @@ add_library(qgc
 	PositionManager/PositionManager.cpp
 	PositionManager/SimulatedPosition.cc
 
-	QtLocationPlugin/QGCMapEngine.cpp
-	QtLocationPlugin/QGCMapTileSet.cpp
-	QtLocationPlugin/QGCMapUrlEngine.cpp
-	QtLocationPlugin/QGCTileCacheWorker.cpp
-	QtLocationPlugin/QGeoCodeReplyQGC.cpp
-	QtLocationPlugin/QGeoCodingManagerEngineQGC.cpp
-	QtLocationPlugin/QGeoMapReplyQGC.cpp
-	QtLocationPlugin/QGeoServiceProviderPluginQGC.cpp
-	QtLocationPlugin/QGeoTiledMappingManagerEngineQGC.cpp
-	QtLocationPlugin/QGeoTileFetcherQGC.cpp
-	QtLocationPlugin/QMLControl/QGCMapEngineManager.cc
-
 	Settings/AppSettings.cc
 	Settings/AutoConnectSettings.cc
 	Settings/BrandImageSettings.cc
@@ -251,7 +237,6 @@ add_library(qgc
 
 	# HEADERS
 	# shouldn't be listed here, but aren't named properly for AUTOMOC
-	QtLocationPlugin/QGCMapEngineData.h
 	uas/UAS.h
 	uas/UASInterface.h
 
@@ -272,6 +257,7 @@ add_subdirectory(FirmwarePlugin)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
 add_subdirectory(QmlControls)
+add_subdirectory(QtLocationPlugin)
 
 
 target_link_libraries(qgc
@@ -305,6 +291,7 @@ target_link_libraries(qgc
 	qwt # LinechartWidget
 	MissionManager
 	QmlControls
+	QtLocationPlugin
 	ui
 )
 
