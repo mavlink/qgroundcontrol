@@ -179,77 +179,6 @@ endif()
 set(QGC_SRC)
 list(APPEND QGC_SRC
 
-	libs/qwt/qwt_abstract_legend.cpp
-	libs/qwt/qwt_abstract_scale.cpp
-	libs/qwt/qwt_abstract_scale_draw.cpp
-	libs/qwt/qwt_abstract_slider.cpp
-	libs/qwt/qwt_analog_clock.cpp
-	libs/qwt/qwt_arrow_button.cpp
-	libs/qwt/qwt_clipper.cpp
-	libs/qwt/qwt_color_map.cpp
-	libs/qwt/qwt_compass.cpp
-	libs/qwt/qwt_compass_rose.cpp
-	libs/qwt/qwt_counter.cpp
-	libs/qwt/qwt_curve_fitter.cpp
-	libs/qwt/qwt_dial.cpp
-	libs/qwt/qwt_dial_needle.cpp
-	libs/qwt/qwt_dyngrid_layout.cpp
-	libs/qwt/qwt_event_pattern.cpp
-	libs/qwt/qwt_graphic.cpp
-	libs/qwt/qwt_interval.cpp
-	libs/qwt/qwt_knob.cpp
-	libs/qwt/qwt_legend.cpp
-	libs/qwt/qwt_legend_data.cpp
-	libs/qwt/qwt_legend_label.cpp
-	libs/qwt/qwt_magnifier.cpp
-	libs/qwt/qwt_math.cpp
-	libs/qwt/qwt_null_paintdevice.cpp
-	libs/qwt/qwt_painter.cpp
-	libs/qwt/qwt_painter_command.cpp
-	libs/qwt/qwt_panner.cpp
-	libs/qwt/qwt_picker.cpp
-	libs/qwt/qwt_picker_machine.cpp
-	libs/qwt/qwt_pixel_matrix.cpp
-	libs/qwt/qwt_plot.cpp
-	libs/qwt/qwt_plot_axis.cpp
-	libs/qwt/qwt_plot_canvas.cpp
-	libs/qwt/qwt_plot_curve.cpp
-	libs/qwt/qwt_plot_dict.cpp
-	libs/qwt/qwt_plot_grid.cpp
-	libs/qwt/qwt_plot_item.cpp
-	libs/qwt/qwt_plot_layout.cpp
-	libs/qwt/qwt_plot_magnifier.cpp
-	libs/qwt/qwt_plot_marker.cpp
-	libs/qwt/qwt_plot_panner.cpp
-	libs/qwt/qwt_plot_picker.cpp
-	libs/qwt/qwt_plot_rasteritem.cpp
-	libs/qwt/qwt_plot_scaleitem.cpp
-	libs/qwt/qwt_plot_seriesitem.cpp
-	libs/qwt/qwt_plot_spectrogram.cpp
-	libs/qwt/qwt_plot_svgitem.cpp
-	libs/qwt/qwt_plot_xml.cpp
-	libs/qwt/qwt_plot_zoomer.cpp
-	libs/qwt/qwt_point_data.cpp
-	libs/qwt/qwt_point_mapper.cpp
-	libs/qwt/qwt_raster_data.cpp
-	libs/qwt/qwt_round_scale_draw.cpp
-	libs/qwt/qwt_scale_div.cpp
-	libs/qwt/qwt_scale_draw.cpp
-	libs/qwt/qwt_scale_engine.cpp
-	libs/qwt/qwt_scale_map.cpp
-	libs/qwt/qwt_scale_widget.cpp
-	libs/qwt/qwt_series_data.cpp
-	libs/qwt/qwt_slider.cpp
-	libs/qwt/qwt_spline.cpp
-	libs/qwt/qwt_symbol.cpp
-	libs/qwt/qwt_text.cpp
-	libs/qwt/qwt_text_engine.cpp
-	libs/qwt/qwt_text_label.cpp
-	libs/qwt/qwt_thermo.cpp
-	libs/qwt/qwt_transform.cpp
-	libs/qwt/qwt_wheel.cpp
-	libs/qwt/qwt_widget_overlay.cpp
-
 	src/AnalyzeView/ExifParser.cc
 	src/AnalyzeView/GeoTagController.cc
 	src/AnalyzeView/LogDownloadController.cc
@@ -753,8 +682,6 @@ include_directories(
 	libs/mavlink/include/mavlink/v2.0/ardupilotmega
 	libs/mavlink/include/mavlink/v2.0/common
 
-	libs/qwt
-
 	src
 
 	src/AnalyzeView
@@ -790,6 +717,7 @@ include_directories(
 	src/ViewWidgets
 )
 
+add_subdirectory(libs)
 add_subdirectory(src)
 
 if(ANDROID)
@@ -817,6 +745,7 @@ target_link_libraries(QGroundControl
 
 target_link_libraries(QGroundControl
 	gps
+	qwt
 )
 	
 if(NOT QT_MKSPEC MATCHES "winrt")
