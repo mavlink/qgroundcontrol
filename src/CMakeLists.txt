@@ -8,8 +8,6 @@ include_directories(
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
 	Camera
-	FactSystem
-	FactSystem/FactControls
 	FlightDisplay
 	FlightMap/Widgets
 	FollowMe
@@ -61,11 +59,6 @@ if(BUILD_TESTING)
 	endfunction()
 
 	list(APPEND QGC_SRC
-
-		FactSystem/FactSystemTestBase.cc
-		FactSystem/FactSystemTestGeneric.cc
-		FactSystem/FactSystemTestPX4.cc
-		FactSystem/ParameterManagerTest.cc
 
 		qgcunittest/FileDialogTest.cc
 		qgcunittest/FileManagerTest.cc
@@ -167,15 +160,6 @@ add_library(qgc
 	Camera/QGCCameraControl.cc
 	Camera/QGCCameraIO.cc
 	Camera/QGCCameraManager.cc
-
-	FactSystem/Fact.cc
-	FactSystem/FactControls/FactPanelController.cc
-	FactSystem/FactGroup.cc
-	FactSystem/FactMetaData.cc
-	FactSystem/FactSystem.cc
-	FactSystem/FactValueSliderListModel.cc
-	FactSystem/ParameterManager.cc
-	FactSystem/SettingsFact.cc
 
 	FlightDisplay/VideoManager.cc
 
@@ -283,6 +267,7 @@ add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(comm)
+add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
@@ -314,6 +299,7 @@ target_link_libraries(qgc
 	Audio
 	AutoPilotPlugins
 	comm
+	FactSystem
 	FirmwarePlugin
 	gps
 	qwt # LinechartWidget
