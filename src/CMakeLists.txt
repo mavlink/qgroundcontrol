@@ -11,7 +11,6 @@ include_directories(
 	PositionManager
 	qgcunittest
 	Terrain
-	ViewWidgets
 )
 
 set(EXTRA_SRC)
@@ -121,10 +120,6 @@ add_library(qgc
 
 	Terrain/TerrainQuery.cc
 
-	ViewWidgets/CustomCommandWidget.cc
-	ViewWidgets/CustomCommandWidgetController.cc
-	ViewWidgets/ViewWidgetController.cc
-
 	CmdLineOptParser.cc
 	JsonHelper.cc
 	KMLFileHelper.cc
@@ -178,6 +173,7 @@ add_subdirectory(uas)
 add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoStreaming)
+add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
 
@@ -220,6 +216,7 @@ target_link_libraries(qgc
 	Vehicle
 	VehicleSetup
 	VideoStreaming
+	ViewWidgets
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
