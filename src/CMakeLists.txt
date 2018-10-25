@@ -7,7 +7,6 @@ include_directories(
 	QtLocationPlugin/QMLControl
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
-	api
 	AutoPilotPlugins
 	AutoPilotPlugins/APM
 	AutoPilotPlugins/Common
@@ -215,11 +214,6 @@ add_library(qgc
 	${QGC_UI}
 
 	${EXTRA_SRC}
-
-	api/QGCCorePlugin.cc
-	api/QGCOptions.cc
-	api/QGCSettings.cc
-	api/QmlComponentInfo.cc
 
 	AutoPilotPlugins/APM/APMAirframeComponent.cc
 	AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc
@@ -487,6 +481,7 @@ set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT
 
 add_subdirectory(AnalyzeView)
 add_subdirectory(Airmap)
+add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(GPS)
 
@@ -511,6 +506,7 @@ target_link_libraries(qgc
 
 	Airmap
 	AnalyzeView
+	api
 	Audio
 	gps
 	qwt # LinechartWidget
