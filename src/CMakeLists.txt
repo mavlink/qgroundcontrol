@@ -16,7 +16,6 @@ include_directories(
 	Terrain
 	uas
 	Vehicle
-	VideoStreaming
 	ViewWidgets
 )
 
@@ -107,44 +106,11 @@ if(BUILD_TESTING)
 
 endif()
 
-if (VIDEO)
-	list(APPEND QGC_SRC
-		VideoStreaming/gstqtvideosink/delegates/basedelegate.cpp
-		VideoStreaming/gstqtvideosink/delegates/qtquick2videosinkdelegate.cpp
-		VideoStreaming/gstqtvideosink/delegates/qtvideosinkdelegate.cpp
-		VideoStreaming/gstqtvideosink/delegates/qwidgetvideosinkdelegate.cpp
-		VideoStreaming/gstqtvideosink/gstqtglvideosink.cpp
-		VideoStreaming/gstqtvideosink/gstqtglvideosinkbase.cpp
-		VideoStreaming/gstqtvideosink/gstqtquick2videosink.cpp
-		VideoStreaming/gstqtvideosink/gstqtvideosink.cpp
-		VideoStreaming/gstqtvideosink/gstqtvideosinkbase.cpp
-		VideoStreaming/gstqtvideosink/gstqtvideosinkplugin.cpp
-		VideoStreaming/gstqtvideosink/gstqwidgetvideosink.cpp
-		VideoStreaming/gstqtvideosink/painters/genericsurfacepainter.cpp
-		VideoStreaming/gstqtvideosink/painters/openglsurfacepainter.cpp
-		VideoStreaming/gstqtvideosink/painters/videomaterial.cpp
-		VideoStreaming/gstqtvideosink/painters/videonode.cpp
-		VideoStreaming/gstqtvideosink/utils/bufferformat.cpp
-		VideoStreaming/gstqtvideosink/utils/utils.cpp
-	)
-endif()
-
-set(QGC_RESOURCES)
-list(APPEND QGC_RESOURCES
-
-)
-
 if(BUILD_TESTING)
 	list(APPEND QGC_RESOURCES
 		UnitTest.qrc
 	)
 endif()
-
-
-set(QGC_UI)
-list(APPEND QGC_UI
-	QGCQmlWidgetHolder.ui
-)
 
 add_library(qgc
 
@@ -182,11 +148,6 @@ add_library(qgc
 	Vehicle/MultiVehicleManager.cc
 	Vehicle/Vehicle.cc
 
-	VideoStreaming/VideoItem.cc
-	VideoStreaming/VideoReceiver.cc
-	VideoStreaming/VideoStreaming.cc
-	VideoStreaming/VideoSurface.cc
-
 	ViewWidgets/CustomCommandWidget.cc
 	ViewWidgets/CustomCommandWidgetController.cc
 	ViewWidgets/ViewWidgetController.cc
@@ -220,6 +181,9 @@ add_library(qgc
 	uas/UAS.h
 	uas/UASInterface.h
 
+	# UI
+	QGCQmlWidgetHolder.ui
+
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
@@ -240,7 +204,7 @@ add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(VehicleSetup)
-
+add_subdirectory(VideoStreaming)
 
 target_link_libraries(qgc
 
@@ -277,6 +241,7 @@ target_link_libraries(qgc
 	Settings
 	ui
 	VehicleSetup
+	VideoStreaming
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
