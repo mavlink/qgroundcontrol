@@ -16,7 +16,6 @@ include_directories(
 	Terrain
 	uas
 	Vehicle
-	VehicleSetup
 	VideoStreaming
 	ViewWidgets
 )
@@ -183,13 +182,6 @@ add_library(qgc
 	Vehicle/MultiVehicleManager.cc
 	Vehicle/Vehicle.cc
 
-	VehicleSetup/Bootloader.cc
-	VehicleSetup/FirmwareImage.cc
-	VehicleSetup/FirmwareUpgradeController.cc
-	VehicleSetup/JoystickConfigController.cc
-	VehicleSetup/PX4FirmwareUpgradeThread.cc
-	VehicleSetup/VehicleComponent.cc
-
 	VideoStreaming/VideoItem.cc
 	VideoStreaming/VideoReceiver.cc
 	VideoStreaming/VideoStreaming.cc
@@ -247,6 +239,7 @@ add_subdirectory(MissionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
+add_subdirectory(VehicleSetup)
 
 
 target_link_libraries(qgc
@@ -283,6 +276,7 @@ target_link_libraries(qgc
 	QtLocationPlugin
 	Settings
 	ui
+	VehicleSetup
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
