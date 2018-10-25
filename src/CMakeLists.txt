@@ -6,7 +6,6 @@ include_directories(
 
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
-	Camera
 	FlightDisplay
 	FlightMap/Widgets
 	FollowMe
@@ -115,10 +114,6 @@ add_library(qgc
 
 	${EXTRA_SRC}
 
-	Camera/QGCCameraControl.cc
-	Camera/QGCCameraIO.cc
-	Camera/QGCCameraManager.cc
-
 	FlightDisplay/VideoManager.cc
 
 	FlightMap/Widgets/ValuesWidgetController.cc
@@ -176,6 +171,7 @@ add_subdirectory(Airmap)
 add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
+add_subdirectory(Camera)
 add_subdirectory(comm)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
@@ -213,6 +209,7 @@ target_link_libraries(qgc
 	api
 	Audio
 	AutoPilotPlugins
+	Camera
 	comm
 	FactSystem
 	FirmwarePlugin
