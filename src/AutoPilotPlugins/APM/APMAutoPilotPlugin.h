@@ -22,7 +22,7 @@ class APMTuningComponent;
 class APMSafetyComponent;
 class APMSensorsComponent;
 class APMPowerComponent;
-class MotorComponent;
+class APMMotorComponent;
 class APMCameraComponent;
 class APMLightsComponent;
 class APMSubFrameComponent;
@@ -50,7 +50,7 @@ protected:
     APMSubFrameComponent*       _subFrameComponent;
     APMFlightModesComponent*    _flightModesComponent;
     APMPowerComponent*          _powerComponent;
-    MotorComponent*             _motorComponent;
+    APMMotorComponent*          _motorComponent;
     APMRadioComponent*          _radioComponent;
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
