@@ -65,7 +65,7 @@ static QString get_ip_address(const QString& address)
             }
         }
     }
-    return QString("");
+    return {};
 }
 
 static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& address, quint16 port)
