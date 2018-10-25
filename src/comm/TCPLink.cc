@@ -262,7 +262,7 @@ static QString get_ip_address(const QString& address)
             }
         }
     }
-    return QString("");
+    return {};
 }
 
 TCPConfiguration::TCPConfiguration(const QString& name) : LinkConfiguration(name)
