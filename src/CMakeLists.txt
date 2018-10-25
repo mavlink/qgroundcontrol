@@ -13,7 +13,6 @@ include_directories(
 	Joystick
 	PositionManager
 	qgcunittest
-	Settings
 	Terrain
 	uas
 	Vehicle
@@ -172,17 +171,6 @@ add_library(qgc
 	PositionManager/PositionManager.cpp
 	PositionManager/SimulatedPosition.cc
 
-	Settings/AppSettings.cc
-	Settings/AutoConnectSettings.cc
-	Settings/BrandImageSettings.cc
-	Settings/FlightMapSettings.cc
-	Settings/GuidedSettings.cc
-	Settings/RTKSettings.cc
-	Settings/SettingsGroup.cc
-	Settings/SettingsManager.cc
-	Settings/UnitsSettings.cc
-	Settings/VideoSettings.cc
-
 	Terrain/TerrainQuery.cc
 
 	uas/FileManager.cc
@@ -258,6 +246,7 @@ add_subdirectory(GPS)
 add_subdirectory(MissionManager)
 add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
+add_subdirectory(Settings)
 
 
 target_link_libraries(qgc
@@ -292,10 +281,9 @@ target_link_libraries(qgc
 	MissionManager
 	QmlControls
 	QtLocationPlugin
+	Settings
 	ui
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
-
 
