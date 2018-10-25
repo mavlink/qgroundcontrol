@@ -39,6 +39,7 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#include "PositionManager.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
 #endif
@@ -69,6 +70,7 @@ const char* Vehicle::_altitudeAMSLFactName =        "altitudeAMSL";
 const char* Vehicle::_flightDistanceFactName =      "flightDistance";
 const char* Vehicle::_flightTimeFactName =          "flightTime";
 const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
+const char* Vehicle::_distanceToGCSFactName =       "distanceToGCS";
 const char* Vehicle::_hobbsFactName =               "hobbs";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
@@ -192,6 +194,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
+    , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _gpsFactGroup(this)
     , _battery1FactGroup(this)
@@ -385,6 +388,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _flightDistanceFact   (0, _flightDistanceFactName,    FactMetaData::valueTypeDouble)
     , _flightTimeFact       (0, _flightTimeFactName,        FactMetaData::valueTypeElapsedTimeInSeconds)
     , _distanceToHomeFact   (0, _distanceToHomeFactName,    FactMetaData::valueTypeDouble)
+    , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _gpsFactGroup(this)
     , _battery1FactGroup(this)
@@ -405,8 +409,11 @@ void Vehicle::_commonInit(void)
     connect(_firmwarePlugin, &FirmwarePlugin::toolbarIndicatorsChanged, this, &Vehicle::toolBarIndicatorsChanged);
 
     connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceToHome);
+    connect(this, &Vehicle::coordinateChanged,      this, &Vehicle::_updateDistanceToGCS);
     connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceToHome);
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
+
+    connect(_toolbox->qgcPositionManager(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceToGCS);
 
     _missionManager = new MissionManager(this);
     connect(_missionManager, &MissionManager::error,                    this, &Vehicle::_missionManagerError);
@@ -453,6 +460,7 @@ void Vehicle::_commonInit(void)
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
+    _addFact(&_distanceToGCSFact,       _distanceToGCSFactName);
 
     _hobbsFact.setRawValue(QVariant(QString("0000:00:00")));
     _addFact(&_hobbsFact,               _hobbsFactName);
@@ -3595,6 +3603,16 @@ void Vehicle::_updateDistanceToHome(void)
         _distanceToHomeFact.setRawValue(coordinate().distanceTo(homePosition()));
     } else {
         _distanceToHomeFact.setRawValue(qQNaN());
+    }
+}
+
+void Vehicle::_updateDistanceToGCS(void)
+{
+    QGeoCoordinate gcsPosition = _toolbox->qgcPositionManager()->gcsPosition();
+    if (coordinate().isValid() && gcsPosition.isValid()) {
+        _distanceToGCSFact.setRawValue(coordinate().distanceTo(gcsPosition));
+    } else {
+        _distanceToGCSFact.setRawValue(qQNaN());
     }
 }
 
