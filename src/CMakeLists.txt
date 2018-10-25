@@ -5,8 +5,6 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
-
-	qgcunittest
 )
 
 set(EXTRA_SRC)
@@ -43,23 +41,7 @@ if(BUILD_TESTING)
 		add_dependencies(check QGroundControl)
 	endfunction()
 
-	list(APPEND QGC_SRC
-
-		qgcunittest/FileDialogTest.cc
-		qgcunittest/FileManagerTest.cc
-		qgcunittest/FlightGearTest.cc
-		qgcunittest/GeoTest.cc
-		qgcunittest/LinkManagerTest.cc
-		qgcunittest/MainWindowTest.cc
-		qgcunittest/MavlinkLogTest.cc
-		qgcunittest/MessageBoxTest.cc
-		qgcunittest/MultiSignalSpy.cc
-		qgcunittest/RadioConfigTest.cc
-		qgcunittest/TCPLinkTest.cc
-		qgcunittest/TCPLoopBackServer.cc
-		qgcunittest/UnitTest.cc
-		qgcunittest/UnitTestList.cc
-	)
+	add_subdirectory(qgcunittest)
 
 	add_qgc_test(AudioOutputTest)
 	add_qgc_test(CameraCalcTest)
@@ -213,6 +195,10 @@ target_link_libraries(qgc
 	VideoStreaming
 	ViewWidgets
 )
+
+if(BUILD_TESTING)
+	target_link_libraries(qgc PUBLIC qgcunittest)
+endif()
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
