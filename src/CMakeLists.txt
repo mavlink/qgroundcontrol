@@ -14,7 +14,6 @@ include_directories(
 	PositionManager
 	qgcunittest
 	Terrain
-	Vehicle
 	ViewWidgets
 )
 
@@ -68,8 +67,6 @@ if(BUILD_TESTING)
 		qgcunittest/TCPLoopBackServer.cc
 		qgcunittest/UnitTest.cc
 		qgcunittest/UnitTestList.cc
-
-		Vehicle/SendMavCommandTest.cc
 	)
 
 	add_qgc_test(AudioOutputTest)
@@ -137,12 +134,6 @@ add_library(qgc
 
 	Terrain/TerrainQuery.cc
 
-	Vehicle/ADSBVehicle.cc
-	Vehicle/GPSRTKFactGroup.cc
-	Vehicle/MAVLinkLogManager.cc
-	Vehicle/MultiVehicleManager.cc
-	Vehicle/Vehicle.cc
-
 	ViewWidgets/CustomCommandWidget.cc
 	ViewWidgets/CustomCommandWidgetController.cc
 	ViewWidgets/ViewWidgetController.cc
@@ -194,6 +185,7 @@ add_subdirectory(QmlControls)
 add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(uas)
+add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoStreaming)
 
@@ -232,6 +224,7 @@ target_link_libraries(qgc
 	Settings
 	uas
 	ui
+	Vehicle
 	VehicleSetup
 	VideoStreaming
 )
