@@ -6,7 +6,6 @@ include_directories(
 
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
-	FollowMe
 	qgcunittest
 	Terrain
 )
@@ -109,8 +108,6 @@ add_library(qgc
 
 	${EXTRA_SRC}
 
-	FollowMe/FollowMe.cc
-
 	Terrain/TerrainQuery.cc
 
 	CmdLineOptParser.cc
@@ -157,6 +154,7 @@ add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(FlightDisplay)
 add_subdirectory(FlightMap)
+add_subdirectory(FollowMe)
 add_subdirectory(GPS)
 add_subdirectory(Joystick)
 add_subdirectory(MissionManager)
@@ -200,6 +198,7 @@ target_link_libraries(qgc
 	FirmwarePlugin
 	FlightDisplay
 	FlightMap
+	FollowMe
 	gps
 	Joystick
 	MissionManager
