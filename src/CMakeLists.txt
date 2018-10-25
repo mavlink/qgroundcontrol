@@ -16,7 +16,6 @@ include_directories(
 	Joystick
 	PositionManager
 	qgcunittest
-	QmlControls
 	QtLocationPlugin
 	Settings
 	Terrain
@@ -191,19 +190,6 @@ add_library(qgc
 	PositionManager/PositionManager.cpp
 	PositionManager/SimulatedPosition.cc
 
-	QmlControls/AppMessages.cc
-	QmlControls/CoordinateVector.cc
-	QmlControls/EditPositionDialogController.cc
-	QmlControls/ParameterEditorController.cc
-	QmlControls/QGCFileDialogController.cc
-	QmlControls/QGCGeoBoundingCube.cc
-	QmlControls/QGCImageProvider.cc
-	QmlControls/QGroundControlQmlGlobal.cc
-	QmlControls/QmlObjectListModel.cc
-	QmlControls/QmlTestWidget.cc
-	QmlControls/RCChannelMonitorController.cc
-	QmlControls/ScreenToolsController.cc
-
 	QtLocationPlugin/QGCMapEngine.cpp
 	QtLocationPlugin/QGCMapTileSet.cpp
 	QtLocationPlugin/QGCMapUrlEngine.cpp
@@ -300,6 +286,7 @@ add_subdirectory(comm)
 add_subdirectory(FirmwarePlugin)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
+add_subdirectory(QmlControls)
 
 
 target_link_libraries(qgc
@@ -331,6 +318,7 @@ target_link_libraries(qgc
 	gps
 	qwt # LinechartWidget
 	MissionManager
+	QmlControls
 	ui
 )
 
