@@ -130,16 +130,6 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 	add_definitions(-DUNITTEST_BUILD)
 endif()
 
-if(LINUX)
-	find_package(SDL2 REQUIRED)
-	include_directories(${SDL2_INCLUDE_DIRS})
-	string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # work around for cmake warning
-elseif(APPLE)
-	include_directories(libs/lib/Frameworks/SDL2.framework/Headers)
-elseif(WIN32)
-	include_directories(libs/lib/sdl2/msvc/include)
-endif()
-
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	# clang and AppleClang
 	add_compile_options(
@@ -204,12 +194,8 @@ endif()
 target_link_libraries(QGroundControl
 	PUBLIC
 		qgc
-
-		AnalyzeView
-		gps
-		qwt
 )
-	
+
 if(NOT QT_MKSPEC MATCHES "winrt")
 	target_link_libraries(QGroundControl
 		PUBLIC
@@ -218,10 +204,8 @@ if(NOT QT_MKSPEC MATCHES "winrt")
 endif()
 
 if(LINUX)
-	target_link_libraries(QGroundControl PRIVATE ${SDL2_LIBRARIES})
-elseif(APPLE)
-	target_link_libraries(QGroundControl PRIVATE -F${CMAKE_SOURCE_DIR}/libs/lib/Frameworks "-framework SDL2")
-	
+
+elseif(APPLE)	
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 			MACOSX_BUNDLE YES
 	)
@@ -238,17 +222,6 @@ elseif(WIN32)
 			LINK_FLAGS "/ENTRY:mainCRTStartup"
 		)
 	endif()
-
-	# Support both 32 and 64 bit builds
-	if (${CMAKE_SIZEOF_VOID_P} MATCHES 8)
-		set(SDL2_LIBRARIES "${CMAKE_SOURCE_DIR}/libs/lib/sdl2/msvc/lib/x64/SDL2.lib;${CMAKE_SOURCE_DIR}/libs/lib/sdl2/msvc/lib/x64/SDL2main.lib")
-	else ()
-		set(SDL2_LIBRARIES "${CMAKE_SOURCE_DIR}/libs/lib/sdl2/msvc/lib/x86/SDL2.lib;${CMAKE_SOURCE_DIR}/libs/lib/sdl2/msvc/lib/x86/SDL2main.lib")
-	endif ()
-
-	string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
-	
-	target_link_libraries(QGroundControl ${SDL2_LIBRARIES})
 
 	# deploy
 	include(Windeployqt)

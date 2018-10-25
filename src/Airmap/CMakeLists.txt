@@ -33,5 +33,5 @@ target_link_libraries(Airmap
 	qgc
 )
 
-target_include_directories(AnalyzeView INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(Airmap INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
