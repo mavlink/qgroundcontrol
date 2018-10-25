@@ -1289,20 +1289,24 @@ void SurveyComplexItem::_rebuildTransectsPhase2(void)
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
-    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-        _cameraShots = qCeil(_complexDistance / triggerDistance());
-    } else {
+    if (triggerDistance() == 0) {
         _cameraShots = 0;
-        for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-            QGeoCoordinate firstCameraCoord, lastCameraCoord;
-            if (_hasTurnaround()) {
-                firstCameraCoord = transect[1].coord;
-                lastCameraCoord = transect[transect.count() - 2].coord;
-            } else {
-                firstCameraCoord = transect.first().coord;
-                lastCameraCoord = transect.last().coord;
+    } else {
+        if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+            _cameraShots = qCeil(_complexDistance / triggerDistance());
+        } else {
+            _cameraShots = 0;
+            for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
+                QGeoCoordinate firstCameraCoord, lastCameraCoord;
+                if (_hasTurnaround()) {
+                    firstCameraCoord = transect[1].coord;
+                    lastCameraCoord = transect[transect.count() - 2].coord;
+                } else {
+                    firstCameraCoord = transect.first().coord;
+                    lastCameraCoord = transect.last().coord;
+                }
+                _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance());
             }
-            _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance());
         }
     }
 

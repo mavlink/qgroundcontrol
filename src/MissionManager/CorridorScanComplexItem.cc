@@ -466,11 +466,16 @@ void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
-    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-        _cameraShots = qCeil(_complexDistance / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+    double triggerDistance = _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble();
+    if (triggerDistance == 0) {
+        _cameraShots = 0;
     } else {
-        int singleTransectImageCount = qCeil(_corridorPolyline.length() / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
-        _cameraShots = singleTransectImageCount * _transectCount();
+        if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+            _cameraShots = qCeil(_complexDistance / triggerDistance);
+        } else {
+            int singleTransectImageCount = qCeil(_corridorPolyline.length() / triggerDistance);
+            _cameraShots = singleTransectImageCount * _transectCount();
+        }
     }
 
     _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
