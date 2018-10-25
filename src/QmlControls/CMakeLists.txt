@@ -22,6 +22,8 @@ target_link_libraries(QmlControls
 		Qt5::Widgets
 
 		qgc
+
+		FactSystem
 )
 
 target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
