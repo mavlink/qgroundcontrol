@@ -10,8 +10,6 @@ include_directories(
 	Camera
 	FactSystem
 	FactSystem/FactControls
-	FirmwarePlugin
-	FirmwarePlugin/APM
 	FlightDisplay
 	FlightMap/Widgets
 	FollowMe
@@ -145,8 +143,7 @@ endif()
 
 set(QGC_RESOURCES)
 list(APPEND QGC_RESOURCES
-	FirmwarePlugin/APM/APMResources.qrc
-	FirmwarePlugin/PX4/PX4Resources.qrc
+
 )
 
 if(BUILD_TESTING)
@@ -180,22 +177,6 @@ add_library(qgc
 	FactSystem/FactValueSliderListModel.cc
 	FactSystem/ParameterManager.cc
 	FactSystem/SettingsFact.cc
-
-	FirmwarePlugin/APM/APMFirmwarePlugin.cc
-	FirmwarePlugin/APM/APMFirmwarePluginFactory.cc
-	FirmwarePlugin/APM/APMParameterMetaData.cc
-	FirmwarePlugin/APM/ArduCopterFirmwarePlugin.cc
-	FirmwarePlugin/APM/ArduPlaneFirmwarePlugin.cc
-	FirmwarePlugin/APM/ArduRoverFirmwarePlugin.cc
-	FirmwarePlugin/APM/ArduSubFirmwarePlugin.cc
-
-	FirmwarePlugin/CameraMetaData.cc
-	FirmwarePlugin/FirmwarePlugin.cc
-	FirmwarePlugin/FirmwarePluginManager.cc
-
-	FirmwarePlugin/PX4/PX4FirmwarePlugin.cc
-	FirmwarePlugin/PX4/PX4FirmwarePluginFactory.cc
-	FirmwarePlugin/PX4/PX4ParameterMetaData.cc
 
 	FlightDisplay/VideoManager.cc
 
@@ -316,6 +297,7 @@ add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(comm)
+add_subdirectory(FirmwarePlugin)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
 
@@ -345,6 +327,7 @@ target_link_libraries(qgc
 	Audio
 	AutoPilotPlugins
 	comm
+	FirmwarePlugin
 	gps
 	qwt # LinechartWidget
 	MissionManager
