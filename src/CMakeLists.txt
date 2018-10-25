@@ -8,7 +8,6 @@ include_directories(
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
 	Camera
-	comm
 	FactSystem
 	FactSystem/FactControls
 	FirmwarePlugin
@@ -65,10 +64,6 @@ if(BUILD_TESTING)
 	endfunction()
 
 	list(APPEND QGC_SRC
-
-		comm/MockLink.cc
-		comm/MockLinkFileServer.cc
-		comm/MockLinkMissionItemHandler.cc
 
 		FactSystem/FactSystemTestBase.cc
 		FactSystem/FactSystemTestGeneric.cc
@@ -176,22 +171,6 @@ add_library(qgc
 	Camera/QGCCameraControl.cc
 	Camera/QGCCameraIO.cc
 	Camera/QGCCameraManager.cc
-
-	#src/comm/BluetoothLink.cc
-	comm/LinkConfiguration.cc
-	comm/LinkInterface.cc
-	comm/LinkManager.cc
-	comm/LogReplayLink.cc
-	comm/MavlinkMessagesTimer.cc
-	comm/MAVLinkProtocol.cc
-	comm/QGCFlightGearLink.cc
-	comm/QGCJSBSimLink.cc
-	comm/QGCMAVLink.cc
-	comm/QGCSerialPortInfo.cc
-	comm/QGCXPlaneLink.cc
-	comm/SerialLink.cc
-	comm/TCPLink.cc
-	comm/UDPLink.cc
 
 	FactSystem/Fact.cc
 	FactSystem/FactControls/FactPanelController.cc
@@ -321,9 +300,6 @@ add_library(qgc
 
 	# HEADERS
 	# shouldn't be listed here, but aren't named properly for AUTOMOC
-	comm/QGCFlightGearLink.h
-	comm/QGCHilLink.h
-	comm/QGCJSBSimLink.h
 	QtLocationPlugin/QGCMapEngineData.h
 	uas/UAS.h
 	uas/UASInterface.h
@@ -339,6 +315,7 @@ add_subdirectory(Airmap)
 add_subdirectory(api)
 add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
+add_subdirectory(comm)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
 
@@ -367,6 +344,7 @@ target_link_libraries(qgc
 	api
 	Audio
 	AutoPilotPlugins
+	comm
 	gps
 	qwt # LinechartWidget
 	MissionManager
