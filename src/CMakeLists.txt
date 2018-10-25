@@ -24,8 +24,6 @@ include_directories(
 	Settings
 	Terrain
 	uas
-	ui
-	ui/linechart
 	Vehicle
 	VehicleSetup
 	VideoStreaming
@@ -165,22 +163,7 @@ endif()
 
 set(QGC_UI)
 list(APPEND QGC_UI
-	#src/ui/Linechart.ui
 	QGCQmlWidgetHolder.ui
-	ui/MainWindow.ui
-	ui/MultiVehicleDockWidget.ui
-	ui/QGCHilConfiguration.ui
-	ui/QGCHilFlightGearConfiguration.ui
-	ui/QGCHilJSBSimConfiguration.ui
-	ui/QGCHilXPlaneConfiguration.ui
-	ui/QGCMapRCToParamDialog.ui
-	ui/QGCMAVLinkInspector.ui
-	ui/QGCMAVLinkLogPlayer.ui
-	ui/QGCPluginHost.ui
-	ui/QGCUASFileView.ui
-	ui/QGCUASFileViewMulti.ui
-	ui/QMap3D.ui
-	ui/uas/QGCUnconnectedInfoWidget.ui
 )
 
 add_library(qgc
@@ -290,29 +273,6 @@ add_library(qgc
 	uas/UAS.cc
 	uas/UASMessageHandler.cc
 
-	ui/HILDockWidget.cc
-	ui/linechart/ChartPlot.cc
-	ui/linechart/IncrementalPlot.cc
-	ui/linechart/LinechartPlot.cc
-	ui/linechart/Linecharts.cc
-	ui/linechart/LinechartWidget.cc
-	ui/linechart/Scrollbar.cc
-	ui/linechart/ScrollZoomer.cc
-	ui/MainWindow.cc
-	ui/MAVLinkDecoder.cc
-	ui/MultiVehicleDockWidget.cc
-	ui/QGCHilConfiguration.cc
-	ui/QGCHilFlightGearConfiguration.cc
-	ui/QGCHilJSBSimConfiguration.cc
-	ui/QGCHilXPlaneConfiguration.cc
-	ui/QGCMapRCToParamDialog.cpp
-	ui/QGCMAVLinkInspector.cc
-	ui/QGCMAVLinkLogPlayer.cc
-	ui/QGCPluginHost.cc
-	ui/QGCUASFileView.cc
-	ui/QGCUASFileViewMulti.cc
-	ui/uas/QGCUnconnectedInfoWidget.cc
-
 	Vehicle/ADSBVehicle.cc
 	Vehicle/GPSRTKFactGroup.cc
 	Vehicle/MAVLinkLogManager.cc
@@ -367,11 +327,12 @@ add_library(qgc
 	QtLocationPlugin/QGCMapEngineData.h
 	uas/UAS.h
 	uas/UASInterface.h
-	ui/QGCHilFlightGearConfiguration.h
-	ui/QGCHilJSBSimConfiguration.h
+
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
+
+add_subdirectory(ui)
 
 add_subdirectory(AnalyzeView)
 add_subdirectory(Airmap)
@@ -380,6 +341,7 @@ add_subdirectory(Audio)
 add_subdirectory(AutoPilotPlugins)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
+
 
 target_link_libraries(qgc
 
@@ -408,6 +370,7 @@ target_link_libraries(qgc
 	gps
 	qwt # LinechartWidget
 	MissionManager
+	ui
 )
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

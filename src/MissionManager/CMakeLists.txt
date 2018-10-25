@@ -67,6 +67,8 @@ add_library(MissionManager
 target_link_libraries(MissionManager
 	PUBLIC
 		qgc
+	PRIVATE
+		ui
 )
 
 target_include_directories(MissionManager
