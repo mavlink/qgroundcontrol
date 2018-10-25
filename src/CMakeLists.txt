@@ -7,10 +7,6 @@ include_directories(
 	QtLocationPlugin/QMLControl
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
-	AutoPilotPlugins
-	AutoPilotPlugins/APM
-	AutoPilotPlugins/Common
-	AutoPilotPlugins/PX4
 	Camera
 	comm
 	FactSystem
@@ -214,52 +210,6 @@ add_library(qgc
 	${QGC_UI}
 
 	${EXTRA_SRC}
-
-	AutoPilotPlugins/APM/APMAirframeComponent.cc
-	AutoPilotPlugins/APM/APMAirframeComponentAirframes.cc
-	AutoPilotPlugins/APM/APMAirframeComponentController.cc
-	AutoPilotPlugins/APM/APMAirframeLoader.cc
-	AutoPilotPlugins/APM/APMAutoPilotPlugin.cc
-	AutoPilotPlugins/APM/APMCameraComponent.cc
-	AutoPilotPlugins/APM/APMCompassCal.cc
-	AutoPilotPlugins/APM/APMFlightModesComponent.cc
-	AutoPilotPlugins/APM/APMFlightModesComponentController.cc
-	AutoPilotPlugins/APM/APMLightsComponent.cc
-	AutoPilotPlugins/APM/APMPowerComponent.cc
-	AutoPilotPlugins/APM/APMRadioComponent.cc
-	AutoPilotPlugins/APM/APMSafetyComponent.cc
-	AutoPilotPlugins/APM/APMSensorsComponent.cc
-	AutoPilotPlugins/APM/APMSensorsComponentController.cc
-	AutoPilotPlugins/APM/APMSubFrameComponent.cc
-	AutoPilotPlugins/APM/APMTuningComponent.cc
-	AutoPilotPlugins/APM/APMHeliComponent.cc
-
-	AutoPilotPlugins/Common/ESP8266Component.cc
-	AutoPilotPlugins/Common/ESP8266ComponentController.cc
-	AutoPilotPlugins/Common/MotorComponent.cc
-	AutoPilotPlugins/Common/RadioComponentController.cc
-	AutoPilotPlugins/Common/SyslinkComponent.cc
-	AutoPilotPlugins/Common/SyslinkComponentController.cc
-
-	AutoPilotPlugins/PX4/AirframeComponent.cc
-	AutoPilotPlugins/PX4/AirframeComponentAirframes.cc
-	AutoPilotPlugins/PX4/AirframeComponentController.cc
-	AutoPilotPlugins/PX4/CameraComponent.cc
-	AutoPilotPlugins/PX4/FlightModesComponent.cc
-	AutoPilotPlugins/PX4/PowerComponent.cc
-	AutoPilotPlugins/PX4/PowerComponentController.cc
-	AutoPilotPlugins/PX4/PX4AdvancedFlightModesController.cc
-	AutoPilotPlugins/PX4/PX4AirframeLoader.cc
-	AutoPilotPlugins/PX4/PX4AutoPilotPlugin.cc
-	AutoPilotPlugins/PX4/PX4RadioComponent.cc
-	AutoPilotPlugins/PX4/PX4SimpleFlightModesController.cc
-	AutoPilotPlugins/PX4/PX4TuningComponent.cc
-	AutoPilotPlugins/PX4/SafetyComponent.cc
-	AutoPilotPlugins/PX4/SensorsComponent.cc
-	AutoPilotPlugins/PX4/SensorsComponentController.cc
-
-	AutoPilotPlugins/AutoPilotPlugin.cc
-	AutoPilotPlugins/Generic/GenericAutoPilotPlugin.cc
 
 	Camera/QGCCameraControl.cc
 	Camera/QGCCameraIO.cc
@@ -483,6 +433,7 @@ add_subdirectory(AnalyzeView)
 add_subdirectory(Airmap)
 add_subdirectory(api)
 add_subdirectory(Audio)
+add_subdirectory(AutoPilotPlugins)
 add_subdirectory(GPS)
 
 target_link_libraries(qgc
@@ -508,6 +459,7 @@ target_link_libraries(qgc
 	AnalyzeView
 	api
 	Audio
+	AutoPilotPlugins
 	gps
 	qwt # LinechartWidget
 )
