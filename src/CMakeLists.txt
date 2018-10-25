@@ -6,7 +6,6 @@ include_directories(
 
 	${Qt5Location_PRIVATE_INCLUDE_DIRS}
 
-	FlightDisplay
 	FlightMap/Widgets
 	FollowMe
 	Joystick
@@ -114,8 +113,6 @@ add_library(qgc
 
 	${EXTRA_SRC}
 
-	FlightDisplay/VideoManager.cc
-
 	FlightMap/Widgets/ValuesWidgetController.cc
 
 	FollowMe/FollowMe.cc
@@ -175,6 +172,7 @@ add_subdirectory(Camera)
 add_subdirectory(comm)
 add_subdirectory(FactSystem)
 add_subdirectory(FirmwarePlugin)
+add_subdirectory(FlightDisplay)
 add_subdirectory(GPS)
 add_subdirectory(MissionManager)
 add_subdirectory(QmlControls)
@@ -213,6 +211,7 @@ target_link_libraries(qgc
 	comm
 	FactSystem
 	FirmwarePlugin
+	FlightDisplay
 	gps
 	qwt # LinechartWidget
 	MissionManager
