@@ -23,7 +23,7 @@
 #include "APMTuningComponent.h"
 #include "APMSensorsComponent.h"
 #include "APMPowerComponent.h"
-#include "MotorComponent.h"
+#include "APMMotorComponent.h"
 #include "APMCameraComponent.h"
 #include "APMLightsComponent.h"
 #include "APMSubFrameComponent.h"
@@ -88,7 +88,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
 
             int versionInt = _vehicle->firmwareMajorVersion() * 100 + _vehicle->firmwareMinorVersion() * 10 + _vehicle->firmwarePatchVersion();
             if (_vehicle->sub() && versionInt >= 353) {
-                _motorComponent = new MotorComponent(_vehicle, this);
+                _motorComponent = new APMMotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
             }
