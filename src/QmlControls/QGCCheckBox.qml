@@ -70,6 +70,7 @@ CheckBox {
                 radius: ScreenTools.defaultFontPixelHeight * 0.16
                 anchors.fill: parent
                 border.color: control.activeFocus ? "#47b" : "#999"
+                opacity: control.enabled ? 1 : 0.5
             }
 
             Image {
