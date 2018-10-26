@@ -371,7 +371,6 @@ void FirmwareUpgradeController::_initFirmwareHash()
             QString vehicleTypeDir = apmMapVehicleTypeToDir[vehicleType];
             QString px4Dir = apmMapVehicleTypeToPX4Dir[vehicleType];
             QString filename = apmMapVehicleTypeToFilename[vehicleType];
-            qDebug() << firmwareTypeDir << vehicleTypeDir << px4Dir << filename;
             _rgPX4FMUV5Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("5"));
             _rgPX4FMUV4Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("4"));
             _rgPX4FMUV3Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("3"));
@@ -388,7 +387,6 @@ void FirmwareUpgradeController::_initFirmwareHash()
             QString vehicleTypeDir = apmChibiOSMapVehicleTypeToDir[vehicleType];
             QString fmuDir = apmChibiOSMapVehicleTypeToFmuDir[vehicleType];
             QString filename = apmChibiOSMapVehicleTypeToFilename[vehicleType];
-            qDebug() << firmwareTypeDir << vehicleTypeDir << fmuDir << filename;
             _rgPX4FMUV5Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("5").arg(fmuDir).arg(filename));
             _rgPX4FMUV4Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("4").arg(fmuDir).arg(filename));
             _rgPX4FMUV3Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("3").arg(fmuDir).arg(filename));

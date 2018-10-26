@@ -43,7 +43,7 @@ FactPanel {
 
         VehicleSummaryRow {
             labelText:  qsTr("Throttle failsafe:")
-            valueText:  Fact.enumStringValue
+            valueText:  fact.enumStringValue
             visible:    controller.vehicle.multiRotor
 
             property Fact fact: controller.getParameterFact(-1, "FS_THR_ENABLE", false /* reportMissing */)
