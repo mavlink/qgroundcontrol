@@ -180,21 +180,27 @@ include_directories(
 add_subdirectory(libs)
 add_subdirectory(src)
 
-if(ANDROID)
-	add_library(QGroundControl SHARED)
-else()
-	add_executable(QGroundControl
-		#HackAndroidFileDialog.qrc
-		HackFileDialog.qrc
-		qgcresources.qrc
-		qgroundcontrol.qrc
-)
+set(QGC_RESOURCES
+	#HackAndroidFileDialog.qrc
+	HackFileDialog.qrc
+	qgcresources.qrc
+	qgroundcontrol.qrc
+	)
+
+if(BUILD_TESTING)
+	list(APPEND QGC_RESOURCES
+		UnitTest.qrc
+	)
 endif()
 
-target_link_libraries(QGroundControl
-	PUBLIC
-		qgc
-)
+if(ANDROID)
+	add_library(QGroundControl SHARED ${QGC_RESOURCES})
+else()
+	add_executable(QGroundControl ${QGC_RESOURCES}
+	)
+endif()
+
+target_link_libraries(QGroundControl PUBLIC qgc)
 
 if(NOT QT_MKSPEC MATCHES "winrt")
 	target_link_libraries(QGroundControl
