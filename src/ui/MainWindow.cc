@@ -347,7 +347,7 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
 
 void MainWindow::_hideAllDockWidgets(void)
 {
-    foreach(QGCDockWidget* dockWidget, _mapName2DockWidget) {
+    for(QGCDockWidget* dockWidget: _mapName2DockWidget) {
         dockWidget->setVisible(false);
     }
 }
@@ -448,7 +448,7 @@ void MainWindow::_vehicleAdded(Vehicle* vehicle)
 void MainWindow::_storeCurrentViewState(void)
 {
 #ifndef __mobile__
-    foreach(QGCDockWidget* dockWidget, _mapName2DockWidget) {
+    for(QGCDockWidget* dockWidget: _mapName2DockWidget) {
         dockWidget->saveSettings();
     }
 #endif
@@ -482,7 +482,7 @@ void MainWindow::_loadVisibleWidgetsSettings(void)
     if (!widgets.isEmpty()) {
         QStringList nameList = widgets.split(",");
 
-        foreach (const QString &name, nameList) {
+        for (const QString &name: nameList) {
             _showDockWidget(name, true);
         }
     }
@@ -493,7 +493,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
     QString widgetNames;
     bool firstWidget = true;
 
-    foreach (const QString &name, _mapName2DockWidget.keys()) {
+    for (const QString &name: _mapName2DockWidget.keys()) {
         if (_mapName2DockWidget[name]->isVisible()) {
             if (!firstWidget) {
                 widgetNames += ",";

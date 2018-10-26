@@ -221,7 +221,7 @@ int Fact::enumIndex(void)
         //-- Only enums have an index
         if(_metaData->enumValues().count()) {
             int index = 0;
-            foreach (QVariant enumValue, _metaData->enumValues()) {
+            for (QVariant enumValue: _metaData->enumValues()) {
                 if (enumValue == rawValue()) {
                     return index;
                 }

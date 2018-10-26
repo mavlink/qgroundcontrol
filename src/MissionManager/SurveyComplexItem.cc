@@ -819,10 +819,10 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
 
     MAV_FRAME mavFrame = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
-    foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
+    for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
         bool entryPoint = true;
 
-        foreach (const CoordInfo_t& transectCoordInfo, transect) {
+        for (const CoordInfo_t& transectCoordInfo: transect) {
             item = new MissionItem(seqNum++,
                                    MAV_CMD_NAV_WAYPOINT,
                                    mavFrame,
@@ -940,7 +940,7 @@ bool SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
         firstWaypointTrigger = true;
     }
 
-    foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
+    for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
         int pointIndex = 0;
         QGeoCoordinate coord;
         CameraTriggerCode cameraTrigger;
@@ -1182,7 +1182,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
 
     // Convert from NED to Geo
     QList<QList<QGeoCoordinate>> transects;
-    foreach (const QLineF& line, resultLines) {
+    for (const QLineF& line: resultLines) {
         QGeoCoordinate          coord;
         QList<QGeoCoordinate>   transect;
 
@@ -1234,7 +1234,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1Worker(bool refly)
     }
 
     // Convert to CoordInfo transects and append to _transects
-    foreach (const QList<QGeoCoordinate>& transect, transects) {
+    for (const QList<QGeoCoordinate>& transect: transects) {
         QGeoCoordinate                                  coord;
         QList<TransectStyleComplexItem::CoordInfo_t>    coordInfoTransect;
         TransectStyleComplexItem::CoordInfo_t           coordInfo;
@@ -1289,20 +1289,24 @@ void SurveyComplexItem::_rebuildTransectsPhase2(void)
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
-    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-        _cameraShots = qCeil(_complexDistance / triggerDistance());
-    } else {
+    if (triggerDistance() == 0) {
         _cameraShots = 0;
-        foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
-            QGeoCoordinate firstCameraCoord, lastCameraCoord;
-            if (_hasTurnaround()) {
-                firstCameraCoord = transect[1].coord;
-                lastCameraCoord = transect[transect.count() - 2].coord;
-            } else {
-                firstCameraCoord = transect.first().coord;
-                lastCameraCoord = transect.last().coord;
+    } else {
+        if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+            _cameraShots = qCeil(_complexDistance / triggerDistance());
+        } else {
+            _cameraShots = 0;
+            for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
+                QGeoCoordinate firstCameraCoord, lastCameraCoord;
+                if (_hasTurnaround()) {
+                    firstCameraCoord = transect[1].coord;
+                    lastCameraCoord = transect[transect.count() - 2].coord;
+                } else {
+                    firstCameraCoord = transect.first().coord;
+                    lastCameraCoord = transect.last().coord;
+                }
+                _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance());
             }
-            _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance());
         }
     }
 
@@ -1345,7 +1349,7 @@ void SurveyComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& items, QO
 
     int seqNum = _sequenceNumber;
 
-    foreach (const MissionItem* loadedMissionItem, _loadedMissionItems) {
+    for (const MissionItem* loadedMissionItem: _loadedMissionItems) {
         MissionItem* item = new MissionItem(*loadedMissionItem, missionItemParent);
         item->setSequenceNumber(seqNum++);
         items.append(item);

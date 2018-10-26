@@ -433,6 +433,12 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
 
 void StructureScanComplexItem::_recalcCameraShots(void)
 {
+    double triggerDistance = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    if (triggerDistance == 0) {
+        _setCameraShots(0);
+        return;
+    }
+
     if (_flightPolygon.count() < 3) {
         _setCameraShots(0);
         return;
@@ -450,7 +456,7 @@ void StructureScanComplexItem::_recalcCameraShots(void)
         return;
     }
 
-    int cameraShots = distance / _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    int cameraShots = distance / triggerDistance;
     _setCameraShots(cameraShots * _layersFact.rawValue().toInt());
 }
 

@@ -67,9 +67,9 @@ public:
             DefaultVehicleFirmware
         } FirmwareVehicleType_t;
 
-        Q_ENUMS(AutoPilotStackType_t)
-        Q_ENUMS(FirmwareType_t)
-        Q_ENUMS(FirmwareVehicleType_t)
+        Q_ENUM(AutoPilotStackType_t)
+        Q_ENUM(FirmwareType_t)
+        Q_ENUM(FirmwareVehicleType_t)
 
     class FirmwareIdentifier
     {

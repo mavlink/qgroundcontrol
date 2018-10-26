@@ -207,7 +207,7 @@ void RadioConfigTest::_init(MAV_AUTOPILOT firmwareType)
 
     // Find the radio component
     QObject* vehicleComponent = NULL;
-    foreach (const QVariant& varVehicleComponent, _autopilot->vehicleComponents()) {
+    for (const QVariant& varVehicleComponent: _autopilot->vehicleComponents()) {
         if (firmwareType == MAV_AUTOPILOT_PX4) {
             PX4RadioComponent* radioComponent = qobject_cast<PX4RadioComponent*>(varVehicleComponent.value<VehicleComponent*>());
             if (radioComponent) {
@@ -370,7 +370,7 @@ void RadioConfigTest::_fullCalibrationWorker(MAV_AUTOPILOT firmwareType)
                     QStringList switchList;
                     switchList << "RC_MAP_MODE_SW" << "RC_MAP_LOITER_SW" << "RC_MAP_RETURN_SW" << "RC_MAP_POSCTL_SW" << "RC_MAP_ACRO_SW";
 
-                    foreach (const QString &switchParam, switchList) {
+                    for (const QString &switchParam: switchList) {
                         Q_ASSERT(_vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, switchParam)->rawValue().toInt() != channel + 1);
                     }
                 }

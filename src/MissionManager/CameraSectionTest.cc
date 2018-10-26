@@ -421,7 +421,7 @@ void CameraSectionTest::_testItemCount(void)
 
     QList<int> rgCameraActions;
     rgCameraActions << CameraSection::TakePhotosIntervalTime << CameraSection::TakePhotoIntervalDistance << CameraSection::StopTakingPhotos << CameraSection::TakeVideo << CameraSection::StopTakingVideo << CameraSection::TakePhoto;
-    foreach(int cameraAction, rgCameraActions) {
+    for(int cameraAction: rgCameraActions) {
         qDebug() << "camera action" << cameraAction;
 
         // Reset
@@ -1063,8 +1063,8 @@ void CameraSectionTest::_testScanForMultipleItems(void)
     rgActionItems << _validDistanceItem << _validTimeItem <<  _validStartVideoItem <<  _validStopVideoItem << _validTakePhotoItem;
 
     // Camera action followed by gimbal/mode
-    foreach (SimpleMissionItem* actionItem, rgActionItems) {
-        foreach (SimpleMissionItem* cameraItem, rgCameraItems) {
+    for (SimpleMissionItem* actionItem: rgActionItems) {
+        for (SimpleMissionItem* cameraItem: rgCameraItems) {
             SimpleMissionItem* item1 = new SimpleMissionItem(_offlineVehicle, false /* flyView */, this);
             item1->missionItem() = actionItem->missionItem();
             SimpleMissionItem* item2 = new SimpleMissionItem(_offlineVehicle, false /* flyView */, this);
@@ -1084,8 +1084,8 @@ void CameraSectionTest::_testScanForMultipleItems(void)
     }
 
     // Gimbal/Mode followed by camera action
-    foreach (SimpleMissionItem* actionItem, rgCameraItems) {
-        foreach (SimpleMissionItem* cameraItem, rgActionItems) {
+    for (SimpleMissionItem* actionItem: rgCameraItems) {
+        for (SimpleMissionItem* cameraItem: rgActionItems) {
             SimpleMissionItem* item1 = new SimpleMissionItem(_offlineVehicle, false /* flyView */, this);
             item1->missionItem() = actionItem->missionItem();
             SimpleMissionItem* item2 = new SimpleMissionItem(_offlineVehicle, false /* flyView */, this);

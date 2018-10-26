@@ -252,7 +252,7 @@ QList<QGCSerialPortInfo> QGCSerialPortInfo::availablePorts(void)
 {
     QList<QGCSerialPortInfo>    list;
 
-    foreach(QSerialPortInfo portInfo, QSerialPortInfo::availablePorts()) {
+    for(QSerialPortInfo portInfo: QSerialPortInfo::availablePorts()) {
         if (!isSystemPort(&portInfo)) {
             list << *((QGCSerialPortInfo*)&portInfo);
         }
