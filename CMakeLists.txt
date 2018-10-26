@@ -274,6 +274,7 @@ list(APPEND QGC_SRC
 	src/AutoPilotPlugins/APM/APMFlightModesComponent.cc
 	src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc
 	src/AutoPilotPlugins/APM/APMLightsComponent.cc
+	src/AutoPilotPlugins/APM/APMMotorComponent.cc
 	src/AutoPilotPlugins/APM/APMPowerComponent.cc
 	src/AutoPilotPlugins/APM/APMRadioComponent.cc
 	src/AutoPilotPlugins/APM/APMSafetyComponent.cc
