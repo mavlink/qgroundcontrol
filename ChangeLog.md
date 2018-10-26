@@ -11,6 +11,7 @@ Note: This file only contains high level features or important fixes.
 * Added Chinese and Turkish localization and partial German localization. 
 * Make Distance to GCS available for display from instrument panel.
 * Make Heading to Home available for display from instrument panel.
+* Edit Position dialog available on polygon vertices.
 
 ## 3.4
 
