@@ -25,12 +25,16 @@ public:
     QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCPositionManager();
 
+    Q_PROPERTY(QGeoCoordinate gcsPosition READ gcsPosition NOTIFY gcsPositionChanged)
+
     enum QGCPositionSource {
         Simulated,
         InternalGPS,
         Log,
         NmeaGPS
     };
+
+    QGeoCoordinate gcsPosition(void) { return _gcsPosition; }
 
     void setPositionSource(QGCPositionSource source);
 
@@ -45,13 +49,15 @@ private slots:
     void _error(QGeoPositionInfoSource::Error positioningError);
 
 signals:
-    void lastPositionUpdated(bool valid, QVariant lastPosition);
+    void gcsPositionChanged(QGeoCoordinate gcsPosition);
     void positionInfoUpdated(QGeoPositionInfo update);
 
 private:
-    int _updateInterval;
-    QGeoPositionInfoSource * _currentSource;
-    QGeoPositionInfoSource * _defaultSource;
-    QNmeaPositionInfoSource * _nmeaSource;
-    QGeoPositionInfoSource * _simulatedSource;
+    int             _updateInterval;
+    QGeoCoordinate  _gcsPosition;
+
+    QGeoPositionInfoSource*     _currentSource;
+    QGeoPositionInfoSource*     _defaultSource;
+    QNmeaPositionInfoSource*    _nmeaSource;
+    QGeoPositionInfoSource*     _simulatedSource;
 };

@@ -149,7 +149,7 @@ void CorridorScanComplexItem::_appendLoadedMissionItems(QList<MissionItem*>& ite
 
     int seqNum = _sequenceNumber;
 
-    foreach (const MissionItem* loadedMissionItem, _loadedMissionItems) {
+    for (const MissionItem* loadedMissionItem: _loadedMissionItems) {
         MissionItem* item = new MissionItem(*loadedMissionItem, missionItemParent);
         item->setSequenceNumber(seqNum++);
         items.append(item);
@@ -171,11 +171,11 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
     MAV_FRAME mavFrame = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
     //qDebug() << "_buildAndAppendMissionItems";
-    foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
+    for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
         bool entryPoint = true;
 
         //qDebug() << "start transect";
-        foreach (const CoordInfo_t& transectCoordInfo, transect) {
+        for (const CoordInfo_t& transectCoordInfo: transect) {
             //qDebug() << transectCoordInfo.coordType;
 
             item = new MissionItem(seqNum++,
@@ -309,7 +309,7 @@ void CorridorScanComplexItem::_rebuildCorridorPolygon(void)
     _surveyAreaPolygon.clear();
 
     QList<QGeoCoordinate> rgCoord;
-    foreach (const QGeoCoordinate& vertex, firstSideVertices) {
+    for (const QGeoCoordinate& vertex: firstSideVertices) {
         rgCoord.append(vertex);
     }
     for (int i=secondSideVertices.count() - 1; i >= 0; i--) {
@@ -386,7 +386,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
 
 #if 0
             qDebug() << "transect debug";
-            foreach (const TransectStyleComplexItem::CoordInfo_t& coordInfo, transect) {
+            for (const TransectStyleComplexItem::CoordInfo_t& coordInfo: transect) {
                 qDebug() << coordInfo.coordType;
             }
 #endif
@@ -423,7 +423,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
         }
         if (reverseTransects) {
             QList<QList<TransectStyleComplexItem::CoordInfo_t>> reversedTransects;
-            foreach (const QList<TransectStyleComplexItem::CoordInfo_t>& transect, _transects) {
+            for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
                 reversedTransects.prepend(transect);
             }
             _transects = reversedTransects;
@@ -431,7 +431,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
         if (reverseVertices) {
             for (int i=0; i<_transects.count(); i++) {
                 QList<TransectStyleComplexItem::CoordInfo_t> reversedVertices;
-                foreach (const TransectStyleComplexItem::CoordInfo_t& vertex, _transects[i]) {
+                for (const TransectStyleComplexItem::CoordInfo_t& vertex: _transects[i]) {
                     reversedVertices.prepend(vertex);
                 }
                 _transects[i] = reversedVertices;
@@ -466,11 +466,16 @@ void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
 
-    if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-        _cameraShots = qCeil(_complexDistance / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+    double triggerDistance = _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble();
+    if (triggerDistance == 0) {
+        _cameraShots = 0;
     } else {
-        int singleTransectImageCount = qCeil(_corridorPolyline.length() / _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
-        _cameraShots = singleTransectImageCount * _transectCount();
+        if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+            _cameraShots = qCeil(_complexDistance / triggerDistance);
+        } else {
+            int singleTransectImageCount = qCeil(_corridorPolyline.length() / triggerDistance);
+            _cameraShots = singleTransectImageCount * _transectCount();
+        }
     }
 
     _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();

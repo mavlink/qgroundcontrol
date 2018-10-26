@@ -48,7 +48,7 @@ class Q_POSITIONING_EXPORT QGeoShape
     Q_PROPERTY(ShapeType type READ type)
     Q_PROPERTY(bool isValid READ isValid)
     Q_PROPERTY(bool isEmpty READ isEmpty)
-    Q_ENUMS(ShapeType)
+    Q_ENUM(ShapeType)
 
 public:
     QGeoShape();

@@ -162,7 +162,7 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
     QObject* missionItemParent = new QObject();
     QList<MissionItem*> missionItems;
     appendMissionItems(missionItems, missionItemParent);
-    foreach (const MissionItem* missionItem, missionItems) {
+    for (const MissionItem* missionItem: missionItems) {
         QJsonObject missionItemJsonObject;
         missionItem->save(missionItemJsonObject);
         missionItemsJsonArray.append(missionItemJsonObject);
@@ -228,7 +228,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
     // Load generated mission items
     _loadedMissionItemsParent = new QObject(this);
     QJsonArray missionItemsJsonArray = innerObject[_jsonItemsKey].toArray();
-    foreach (const QJsonValue& missionItemJson, missionItemsJsonArray) {
+    for (const QJsonValue& missionItemJson: missionItemsJsonArray) {
         MissionItem* missionItem = new MissionItem(_loadedMissionItemsParent);
         if (!missionItem->load(missionItemJson.toObject(), 0 /* sequenceNumber */, errorString)) {
             _loadedMissionItemsParent->deleteLater();
@@ -371,8 +371,8 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     double top = 0.;
     // Generate the visuals transect representation
     _visualTransectPoints.clear();
-    foreach (const QList<CoordInfo_t>& transect, _transects) {
-        foreach (const CoordInfo_t& coordInfo, transect) {
+    for (const QList<CoordInfo_t>& transect: _transects) {
+        for (const CoordInfo_t& coordInfo: transect) {
             _visualTransectPoints.append(QVariant::fromValue(coordInfo.coord));
             double lat = coordInfo.coord.latitude()  + 90.0;
             double lon = coordInfo.coord.longitude() + 180.0;
@@ -440,8 +440,8 @@ void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 
     QList<QGeoCoordinate> transectPoints;
 
-    foreach (const QList<CoordInfo_t>& transect, _transects) {
-        foreach (const CoordInfo_t& coordInfo, transect) {
+    for (const QList<CoordInfo_t>& transect: _transects) {
+        for (const CoordInfo_t& coordInfo: transect) {
             transectPoints.append(coordInfo.coord);
         }
     }
@@ -645,7 +645,7 @@ void TransectStyleComplexItem::_adjustForTolerance(QList<CoordInfo_t>& transect)
 
 #if 0
     qDebug() << "_adjustForTolerance";
-    foreach (const TransectStyleComplexItem::CoordInfo_t& coordInfo, adjustedPoints) {
+    for (const TransectStyleComplexItem::CoordInfo_t& coordInfo: adjustedPoints) {
         qDebug() << coordInfo.coordType;
     }
 #endif
@@ -698,7 +698,7 @@ void TransectStyleComplexItem::_addInterstitialTerrainPoints(QList<CoordInfo_t>&
 
 #if 0
     qDebug() << "_addInterstitialTerrainPoints";
-    foreach (const TransectStyleComplexItem::CoordInfo_t& coordInfo, adjustedTransect) {
+    for (const TransectStyleComplexItem::CoordInfo_t& coordInfo: adjustedTransect) {
         qDebug() << coordInfo.coordType;
     }
 #endif
@@ -723,7 +723,7 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
         // We have to determine from transects
         int itemCount = 0;
 
-        foreach (const QList<CoordInfo_t>& rgCoordInfo, _transects) {
+        for (const QList<CoordInfo_t>& rgCoordInfo: _transects) {
             itemCount += rgCoordInfo.count() * (hoverAndCaptureEnabled() ? 2 : 1);
         }
 

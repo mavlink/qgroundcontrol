@@ -236,7 +236,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         char buf[11];
         strncpy(buf, debug.name, 10);
         buf[10] = '\0';
-        name = QString("%1.%2").arg(buf).arg(fieldName);
+        name = QString("%1.%2").arg(buf, fieldName);
         time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG_FLOAT_ARRAY)
@@ -246,7 +246,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         char buf[11];
         strncpy(buf, debug.name, 10);
         buf[10] = '\0';
-        name = QString("%1.%2").arg(buf).arg(fieldName);
+        name = QString("%1.%2").arg(buf, fieldName);
         time = getUnixTimeFromMs(msg->sysid, (debug.time_usec+500)/1000); // Scale to milliseconds, round up/down correctly
     }
     else if (msgid == MAVLINK_MSG_ID_DEBUG)
@@ -281,7 +281,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         // XXX this is really ugly, but we do not know a better way to do this
         mavlink_rc_channels_raw_t raw;
         mavlink_msg_rc_channels_raw_decode(msg, &raw);
-        name = name.arg(msgInfo->name).arg(fieldName);
+        name = name.arg(msgInfo->name, fieldName);
         name.prepend(QString("port%1_").arg(raw.port));
     }
     else if (msgid == MAVLINK_MSG_ID_RC_CHANNELS_SCALED)
@@ -289,7 +289,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         // XXX this is really ugly, but we do not know a better way to do this
         mavlink_rc_channels_scaled_t scaled;
         mavlink_msg_rc_channels_scaled_decode(msg, &scaled);
-        name = name.arg(msgInfo->name).arg(fieldName);
+        name = name.arg(msgInfo->name, fieldName);
         name.prepend(QString("port%1_").arg(scaled.port));
     }
     else if (msgid == MAVLINK_MSG_ID_SERVO_OUTPUT_RAW)
@@ -297,12 +297,12 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
         // XXX this is really ugly, but we do not know a better way to do this
         mavlink_servo_output_raw_t servo;
         mavlink_msg_servo_output_raw_decode(msg, &servo);
-        name = name.arg(msgInfo->name).arg(fieldName);
+        name = name.arg(msgInfo->name, fieldName);
         name.prepend(QString("port%1_").arg(servo.port));
     }
     else
     {
-        name = name.arg(msgInfo->name).arg(fieldName);
+        name = name.arg(msgInfo->name, fieldName);
     }
 
     if (multiComponentSourceDetected)

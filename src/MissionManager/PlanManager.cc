@@ -114,7 +114,7 @@ void PlanManager::_writeMissionCount(void)
                                         _dedicatedLink->mavlinkChannel(),
                                         &message,
                                         _vehicle->id(),
-                                        MAV_COMP_ID_MISSIONPLANNER,
+                                        MAV_COMP_ID_AUTOPILOT1,
                                         _writeMissionItems.count(),
                                         _planType);
 
@@ -157,7 +157,7 @@ void PlanManager::_requestList(void)
                                                _dedicatedLink->mavlinkChannel(),
                                                &message,
                                                _vehicle->id(),
-                                               MAV_COMP_ID_MISSIONPLANNER,
+                                               MAV_COMP_ID_AUTOPILOT1,
                                                _planType);
 
     _vehicle->sendMessageOnLink(_dedicatedLink, message);
@@ -296,7 +296,7 @@ void PlanManager::_readTransactionComplete(void)
                                       _dedicatedLink->mavlinkChannel(),
                                       &message,
                                       _vehicle->id(),
-                                      MAV_COMP_ID_MISSIONPLANNER,
+                                      MAV_COMP_ID_AUTOPILOT1,
                                       MAV_MISSION_ACCEPTED,
                                       _planType);
     
@@ -354,7 +354,7 @@ void PlanManager::_requestNextMissionItem(void)
                                                   _dedicatedLink->mavlinkChannel(),
                                                   &message,
                                                   _vehicle->id(),
-                                                  MAV_COMP_ID_MISSIONPLANNER,
+                                                  MAV_COMP_ID_AUTOPILOT1,
                                                   _itemIndicesToRead[0],
                 _planType);
     } else {
@@ -363,7 +363,7 @@ void PlanManager::_requestNextMissionItem(void)
                                               _dedicatedLink->mavlinkChannel(),
                                               &message,
                                               _vehicle->id(),
-                                              MAV_COMP_ID_MISSIONPLANNER,
+                                              MAV_COMP_ID_AUTOPILOT1,
                                               _itemIndicesToRead[0],
                 _planType);
     }
@@ -536,7 +536,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                                _dedicatedLink->mavlinkChannel(),
                                                &messageOut,
                                                _vehicle->id(),
-                                               MAV_COMP_ID_MISSIONPLANNER,
+                                               MAV_COMP_ID_AUTOPILOT1,
                                                missionRequest.seq,
                                                item->frame(),
                                                item->command(),
@@ -556,7 +556,7 @@ void PlanManager::_handleMissionRequest(const mavlink_message_t& message, bool m
                                            _dedicatedLink->mavlinkChannel(),
                                            &messageOut,
                                            _vehicle->id(),
-                                           MAV_COMP_ID_MISSIONPLANNER,
+                                           MAV_COMP_ID_AUTOPILOT1,
                                            missionRequest.seq,
                                            item->frame(),
                                            item->command(),
@@ -897,7 +897,7 @@ void PlanManager::_removeAllWorker(void)
                                             _dedicatedLink->mavlinkChannel(),
                                             &message,
                                             _vehicle->id(),
-                                            MAV_COMP_ID_MISSIONPLANNER,
+                                            MAV_COMP_ID_AUTOPILOT1,
                                             _planType);
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);
     _startAckTimeout(AckMissionClearAll);

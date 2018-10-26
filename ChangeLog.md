@@ -9,6 +9,8 @@ Note: This file only contains high level features or important fixes.
 * Added Airmap integration to QGC
 * Added ESTIMATOR_STATUS values to new estimatorStatus Vehicle FactGroup. These are now available to display in instrument panel.
 * Added Chinese and Turkish localization and partial German localization. 
+* Make Distance to GCS available for display from instrument panel.
+* Make Heading to Home available for display from instrument panel.
 
 ## 3.4
 

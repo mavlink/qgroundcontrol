@@ -435,7 +435,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         int y_max = 26 * pow(2, gap) + (2*gap - 1);
 
         if ( zoom > 19 ) {
-            return QString("");
+            return {};
         }
         else if ( zoom > 5 && x >= x_min && x <= x_max && y >= y_min && y <= y_max ) {
             return QString("http://xdworld.vworld.kr:8080/2d/Base/service/%1/%2/%3.png").arg(zoom).arg(x).arg(y);
@@ -458,7 +458,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         int y_max = 26 * pow(2, gap) + (2*gap - 1);
 
         if ( zoom > 19 ) {
-            return QString("");
+            return {};
         }
         else if ( zoom > 5 && x >= x_min && x <= x_max && y >= y_min && y <= y_max ) {
             return QString("http://xdworld.vworld.kr:8080/2d/Satellite/service/%1/%2/%3.jpeg").arg(zoom).arg(x).arg(y);

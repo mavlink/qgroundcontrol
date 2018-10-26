@@ -146,7 +146,7 @@ public:
         POS_CENTER_LEFT,
         POS_BOTTOM_LEFT
     };
-    Q_ENUMS(Pos)
+    Q_ENUM(Pos)
     CustomInstrumentWidget(QObject* parent = NULL);
     Q_PROPERTY(QUrl     source  READ source CONSTANT)
     Q_PROPERTY(Pos      widgetPosition              READ widgetPosition             NOTIFY widgetPositionChanged)

@@ -24,13 +24,13 @@ QStringList QGCFileDialogController::getFiles(const QString& directoryPath, cons
     QDir fileDir(directoryPath);
 
     QStringList infoListExtensions;
-    foreach (const QString& extension, fileExtensions) {
+    for (const QString& extension: fileExtensions) {
         infoListExtensions.append(QStringLiteral("*.%1").arg(extension));
     }
 
     QFileInfoList fileInfoList = fileDir.entryInfoList(infoListExtensions,  QDir::Files, QDir::Name);
 
-    foreach (const QFileInfo& fileInfo, fileInfoList) {
+    for (const QFileInfo& fileInfo: fileInfoList) {
         qCDebug(QGCFileDialogControllerLog) << "getFiles found" << fileInfo.fileName();
         files << fileInfo.fileName();
     }

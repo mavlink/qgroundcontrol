@@ -181,9 +181,6 @@ void UAS::receiveMessage(mavlink_message_t message)
     // and we already got one attitude packet
     if (message.sysid == uasId && (!attitudeStamped || lastAttitude != 0 || message.msgid == MAVLINK_MSG_ID_ATTITUDE))
     {
-        QString uasState;
-        QString stateDescription;
-
         bool multiComponentSourceDetected = false;
         bool wrongComponent = false;
 

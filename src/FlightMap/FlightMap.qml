@@ -34,7 +34,7 @@ Map {
 
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
-    property var    gcsPosition:                    QtPositioning.coordinate()
+    property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
     property bool   userPanned:                     false   ///< true: the user has manually panned the map
     property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
@@ -80,19 +80,12 @@ Map {
 
     ExclusiveGroup { id: mapTypeGroup }
 
-    // Update ground station position
-    Connections {
-        target: QGroundControl.qgcPositionManger
-
-        onLastPositionUpdated: {
-            if (valid && lastPosition.latitude && Math.abs(lastPosition.latitude)  > 0.001 && lastPosition.longitude && Math.abs(lastPosition.longitude)  > 0.001) {
-                gcsPosition = QtPositioning.coordinate(lastPosition.latitude,lastPosition.longitude)
-                if (!firstGCSPositionReceived && !firstVehiclePositionReceived && allowGCSLocationCenter) {
-                    firstGCSPositionReceived = true
-                    center = gcsPosition
-                    zoomLevel = QGroundControl.flightMapInitialZoom
-                }
-            }
+    // Center map to gcs location
+    onGcsPositionChanged: {
+        if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
+            firstGCSPositionReceived = true
+            center = gcsPosition
+            zoomLevel = QGroundControl.flightMapInitialZoom
         }
     }
 

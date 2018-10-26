@@ -68,14 +68,14 @@ public:
     
     Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
     Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
-    
-    Q_ENUMS(BindModes)
+
     enum BindModes {
         DSM2,
         DSMX7,
         DSMX8
     };
-    
+    Q_ENUM(BindModes)
+
     Q_INVOKABLE void spektrumBindMode(int mode);
     Q_INVOKABLE void cancelButtonClicked(void);
     Q_INVOKABLE void skipButtonClicked(void);
