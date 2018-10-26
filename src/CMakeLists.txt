@@ -31,7 +31,6 @@ if(BUILD_TESTING)
 
 	add_subdirectory(qgcunittest)
 
-	add_qgc_test(AudioOutputTest)
 	add_qgc_test(CameraCalcTest)
 	add_qgc_test(CameraSectionTest)
 	add_qgc_test(CorridorScanComplexItemTest)
@@ -62,9 +61,6 @@ if(BUILD_TESTING)
 	add_qgc_test(TCPLinkTest)
 	add_qgc_test(TransectStyleComplexItemTest)
 
-	list(APPEND QGC_RESOURCES
-		UnitTest.qrc
-	)
 endif()
 
 add_library(qgc
