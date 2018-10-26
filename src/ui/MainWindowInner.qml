@@ -164,7 +164,7 @@ Item {
         onYes: activeConnectionsCloseDialog.check()
 
         function check() {
-            if (planViewLoader.item && planViewLoader.item.syncNeeded) {
+            if (planViewLoader.item && planViewLoader.item.dirty) {
                 unsavedMissionCloseDialog.open()
             } else {
                 activeConnectionsCloseDialog.check()
