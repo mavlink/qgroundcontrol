@@ -117,6 +117,8 @@ public:
 
     void initializeStreamRates(Vehicle* vehicle) override final;
 
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
+
     bool supportsThrottleModeCenterZero(void) final;
 
     bool supportsRadio(void) final;
