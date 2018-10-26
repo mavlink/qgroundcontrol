@@ -1,5 +1,9 @@
 
 add_library(FirmwarePlugin
+	CameraMetaData.cc
+	FirmwarePlugin.cc
+	FirmwarePluginManager.cc
+
 	APM/APMFirmwarePlugin.cc
 	APM/APMFirmwarePluginFactory.cc
 	APM/APMParameterMetaData.cc
@@ -7,28 +11,22 @@ add_library(FirmwarePlugin
 	APM/ArduPlaneFirmwarePlugin.cc
 	APM/ArduRoverFirmwarePlugin.cc
 	APM/ArduSubFirmwarePlugin.cc
-
-	CameraMetaData.cc
-	FirmwarePlugin.cc
-	FirmwarePluginManager.cc
+	APM/APMResources.qrc
 
 	PX4/PX4FirmwarePlugin.cc
 	PX4/PX4FirmwarePluginFactory.cc
 	PX4/PX4ParameterMetaData.cc
-
-	# Resources
-	APM/APMResources.qrc
 	PX4/PX4Resources.qrc
 )
 
 target_link_libraries(FirmwarePlugin
-	PUBLIC
+	PRIVATE
 		qgc
 )
 
 target_include_directories(FirmwarePlugin
-	PUBLIC
+	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}
-		APM
+                APM
 	)
 
