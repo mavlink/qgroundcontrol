@@ -43,6 +43,7 @@ static const char* kReadOnly        = "readonly";
 static const char* kWriteOnly       = "writeonly";
 static const char* kRoption         = "roption";
 static const char* kStep            = "step";
+static const char* kDecimalPlaces   = "decimalPlaces";
 static const char* kStrings         = "strings";
 static const char* kTranslated      = "translated";
 static const char* kType            = "type";
@@ -793,6 +794,22 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                         metaData->setRawIncrement(typedValue.toDouble());
                     } else {
                         qWarning() << "Invalid step value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
+                //-- Check for Decimal Places
+                QString attr;
+                if(read_attribute(parameterNode, kDecimalPlaces, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setDecimalPlaces(typedValue.toInt());
+                    } else {
+                        qWarning() << "Invalid decimal places value for" << factName
                                    << " type:"  << metaData->type()
                                    << " value:" << attr
                                    << " error:" << errorString;
