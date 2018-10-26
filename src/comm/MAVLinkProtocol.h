@@ -108,8 +108,8 @@ protected:
     uint64_t    totalLossCounter[MAVLINK_COMM_NUM_BUFFERS];     ///< Total messages lost during transmission.
     float       runningLossPercent[MAVLINK_COMM_NUM_BUFFERS];   ///< Loss rate
 
-    mavlink_message_t _message = {};
-    mavlink_status_t _status   = {};
+    mavlink_message_t _message;
+    mavlink_status_t _status;
 
     bool        versionMismatchIgnore;
     int         systemId;
