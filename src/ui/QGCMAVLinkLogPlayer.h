@@ -1,5 +1,4 @@
-#ifndef QGCMAVLINKLOGPLAYER_H
-#define QGCMAVLINKLOGPLAYER_H
+#pragma once
 
 #include <QWidget>
 #include <QFile>
@@ -56,4 +55,3 @@ private:
     Ui::QGCMAVLinkLogPlayer* _ui;
 };
 
-#endif

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -16,8 +16,7 @@
  *
  */
 
-#ifndef _LINECHARTPLOT_H_
-#define _LINECHARTPLOT_H_
+#pragma once
 
 #define QUINT64_MIN Q_UINT64_C(0)
 #define QUINT64_MAX Q_UINT64_C(18446744073709551615)
@@ -296,4 +295,3 @@ signals:
     void windowPositionChanged(quint64 position);
 };
 
-#endif // _LINECHARTPLOT_H_
