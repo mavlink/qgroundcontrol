@@ -1,14 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-#ifndef _LINKINTERFACE_H_
-#define _LINKINTERFACE_H_
+#pragma once
 
 #include <QThread>
 #include <QDateTime>
@@ -308,4 +307,3 @@ private:
 
 typedef QSharedPointer<LinkInterface> SharedLinkInterfacePointer;
 
-#endif // _LINKINTERFACE_H_
