@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef BASEDELEGATE_H
-#define BASEDELEGATE_H
+#pragma once
 
 #include <gst/gst.h>
 
@@ -152,4 +151,3 @@ protected:
     GstElement * const m_sink;
 };
 
-#endif // BASEDELEGATE_H

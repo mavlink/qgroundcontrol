@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef __GST_QT_QUICK2_VIDEO_SINK_H__
-#define __GST_QT_QUICK2_VIDEO_SINK_H__
+#pragma once
 
 #include <gst/video/gstvideosink.h>
 #include <QtGlobal>
@@ -60,4 +59,3 @@ struct _GstQtQuick2VideoSinkClass
 
 GType gst_qt_quick2_video_sink_get_type (void);
 
-#endif /* __GST_QT_QUICK2_VIDEO_SINK_H__ */

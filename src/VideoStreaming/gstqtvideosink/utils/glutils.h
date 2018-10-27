@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,8 +14,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef GLUTILS_H
-#define GLUTILS_H
+#pragma once
 
 #if defined(__mobile__) && !defined(Q_OS_MAC)
 #include <QOpenGLFunctions>
@@ -33,6 +32,4 @@
 #include <QOpenGLFunctions_2_0>
 #define getQOpenGLFunctions() QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_2_0>()
 #define QOpenGLFunctionsDef QOpenGLFunctions_2_0
-#endif
-
 #endif

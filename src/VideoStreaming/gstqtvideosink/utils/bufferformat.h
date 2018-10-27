@@ -14,8 +14,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef BUFFERFORMAT_H
-#define BUFFERFORMAT_H
+#pragma once
 
 #include "utils.h"
 #include <QSharedData>
@@ -67,4 +66,3 @@ Q_DECLARE_METATYPE(GstVideoFormat)
 Q_DECLARE_METATYPE(GstVideoColorMatrix)
 Q_DECLARE_METATYPE(BufferFormat)
 
-#endif // BUFFERFORMAT_H

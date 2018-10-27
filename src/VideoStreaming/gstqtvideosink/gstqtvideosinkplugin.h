@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef GST_QT_VIDEO_SINK_PLUGIN_H
-#define GST_QT_VIDEO_SINK_PLUGIN_H
+#pragma once
 
 #include <gst/gst.h>
 #include <QtGlobal>
@@ -74,4 +73,3 @@ inline bool qRealIsDouble() { return sizeof(qreal) == sizeof(double); }
 #define G_TYPE_QREAL qRealIsDouble() ? G_TYPE_DOUBLE : G_TYPE_FLOAT
 
 
-#endif

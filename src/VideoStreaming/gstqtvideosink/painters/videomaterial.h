@@ -22,8 +22,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef VIDEOMATERIAL_H
-#define VIDEOMATERIAL_H
+#pragma once
 
 #include "../utils/bufferformat.h"
 #include <QSize>
@@ -80,4 +79,3 @@ private:
     friend class VideoMaterialShader;
 };
 
-#endif // VIDEOMATERIAL_H
