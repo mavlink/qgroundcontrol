@@ -135,9 +135,8 @@ void MissionControllerTest::_testAddWaypointWorker(MAV_AUTOPILOT firmwareType)
     QCOMPARE((MAV_CMD)simpleItem->command(), MAV_CMD_NAV_TAKEOFF);
     QCOMPARE(simpleItem->childItems()->count(), 0);
 
-    // If the first item added specifies a coordinate, then planned home position will be set
-    bool plannedHomePositionValue = firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? false : true;
-    QCOMPARE(settingsItem->coordinate().isValid(), plannedHomePositionValue);
+    // Planned home position should always be set after first item
+    QVERIFY(settingsItem->coordinate().isValid());
 
     // ArduPilot takeoff command has no coordinate, so should be child item
     QCOMPARE(settingsItem->childItems()->count(), firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 1 : 0);

@@ -215,9 +215,11 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         return false;
     }
 
-    _altitudeFact.setRawValue   (complexObject[altitudeName].toDouble());
-    _layersFact.setRawValue     (complexObject[layersName].toDouble());
-    _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
+    _altitudeFact.setRawValue       (complexObject[altitudeName].toDouble());
+    _layersFact.setRawValue         (complexObject[layersName].toDouble());
+    _structureHeightFact.setRawValue(complexObject[structureHeightName].toDouble());
+
+    _altitudeRelative = complexObject[_jsonAltitudeRelativeKey].toBool(true);
 
     double gimbalPitchValue = 0;
     if (complexObject.contains(gimbalPitchName)) {
