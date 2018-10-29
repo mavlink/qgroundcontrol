@@ -347,12 +347,12 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
             // Add meta data to default component. We need to do this before we setup the group map since group
             // map requires meta data.
             _addMetaDataToDefaultComponent();
-        }
 
-        // When we are getting the very last component param index, reset the group maps to update for the
-        // new params. By handling this here, we can pick up components which finish up later than the default
-        // component param set.
-        _setupCategoryMap();
+            // When we are getting the very last component param index, reset the group maps to update for the
+            // new params. By handling this here, we can pick up components which finish up later than the default
+            // component param set.
+            _setupCategoryMap();
+        }
     }
 
     // Update param cache. The param cache is only used on PX4 Firmware since ArduPilot and Solo have volatile params
