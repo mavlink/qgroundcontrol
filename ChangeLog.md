@@ -9,6 +9,7 @@ Note: This file only contains high level features or important fixes.
 * Orbit: Turn off for PX4 since still not supported
 * Structure Scan: Fix loading of structure scan height
 * ArduPilot: Fix location of planned home position when not connected to vehicle. Issue #6840.
+* Fix loading of parameters from multiple components. Would report download complete too early, thus missing all default component params.
 
 ### 3.4.4 - Stable
 * Stable desktop versions now inform user at boot if newer version is available.
