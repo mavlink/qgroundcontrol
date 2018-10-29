@@ -64,7 +64,7 @@ public:
     QList<QGeoCoordinate> coordinateList(void) const;
 
     /// Returns the QGeoCoordinate for the vertex specified
-    QGeoCoordinate vertexCoordinate(int vertex) const;
+    Q_INVOKABLE QGeoCoordinate vertexCoordinate(int vertex) const;
 
     /// Saves the polygon to the json object.
     ///     @param json Json object to save to
