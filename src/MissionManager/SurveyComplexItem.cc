@@ -1194,7 +1194,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
 
     // Convert from NED to Geo
     QList<QList<QGeoCoordinate>> transects;
-    foreach (const QLineF& line, resultLines) {
+    for (const QLineF& line : resultLines) {
         QGeoCoordinate          coord;
         QList<QGeoCoordinate>   transect;
 
@@ -1246,7 +1246,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
     }
 
     // Convert to CoordInfo transects and append to _transects
-    foreach (const QList<QGeoCoordinate>& transect, transects) {
+    for (const QList<QGeoCoordinate>& transect : transects) {
         QGeoCoordinate                                  coord;
         QList<TransectStyleComplexItem::CoordInfo_t>    coordInfoTransect;
         TransectStyleComplexItem::CoordInfo_t           coordInfo;
