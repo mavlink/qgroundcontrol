@@ -53,6 +53,8 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
 MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , m_enable_version_check(true)
+    , _message({})
+    , _status({})
     , versionMismatchIgnore(false)
     , systemId(255)
     , _current_version(100)
