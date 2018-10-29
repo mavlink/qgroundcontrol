@@ -68,6 +68,8 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     memset(totalLossCounter,    0, sizeof(totalLossCounter));
     memset(runningLossPercent,  0, sizeof(runningLossPercent));
     memset(firstMessage,        1, sizeof(firstMessage));
+    memset(&_status,            0, sizeof(_status));
+    memset(&_message,           0, sizeof(_message));
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()

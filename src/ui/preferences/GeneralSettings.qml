@@ -504,7 +504,7 @@ QGCView {
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCButton {
                                 text:               qsTr("Save Current Base Position")
-                                enabled:            QGroundControl.gpsRtk.valid.value
+                                enabled:            QGroundControl.gpsRtk && QGroundControl.gpsRtk.valid.value
                                 Layout.columnSpan:  2
 
                                 onClicked: {

@@ -669,7 +669,9 @@ void QGCApplication::_missingParamsDisplay(void)
 QObject* QGCApplication::_rootQmlObject()
 {
 #ifdef __mobile__
-    return _qmlAppEngine->rootObjects()[0];
+    if(_qmlAppEngine && _qmlAppEngine->rootObjects().size())
+        return _qmlAppEngine->rootObjects()[0];
+    return nullptr;
 #else
     MainWindow * mainWindow = MainWindow::instance();
     if (mainWindow) {
@@ -711,12 +713,16 @@ void QGCApplication::showMessage(const QString& message)
 
 void QGCApplication::showSetupView(void)
 {
-    QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
+    if(_rootQmlObject()) {
+        QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
+    }
 }
 
 void QGCApplication::qmlAttemptWindowClose(void)
 {
-    QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
+    if(_rootQmlObject()) {
+        QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
+    }
 }
 
 bool QGCApplication::isInternetAvailable()
