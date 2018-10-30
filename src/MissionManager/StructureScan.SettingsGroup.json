@@ -28,6 +28,7 @@
     "name":             "StructureHeight",
     "shortDescription": "Height of structure being scanned.",
     "type":             "double",
+    "decimalPlaces":    2,
     "units":            "m",
     "min":              1,
     "defaultValue":     100

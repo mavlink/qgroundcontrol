@@ -123,8 +123,9 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 
     errorString.clear();
 
-    if (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1) {
-        // We just ignore old version 1 data
+    if (!json.contains(JsonHelper::jsonVersionKey) ||
+            (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1)) {
+        // We just ignore old version 1 or prior data
         return true;
     }
 
