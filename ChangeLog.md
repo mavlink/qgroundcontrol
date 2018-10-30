@@ -13,6 +13,7 @@ Note: This file only contains high level features or important fixes.
 * Make Heading to Home available for display from instrument panel.
 * Edit Position dialog available on polygon vertices.
 * Fixed Wing Landing Pattern: Add stop photo/video support. Defaults to on such that doing an RTL will stop camera.
+* Survey Planning: add mode that supports concave polygons
 
 ## 3.4
 
