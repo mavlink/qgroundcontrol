@@ -2298,6 +2298,7 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
     <parameter default="0" name="FW_LND_USETER" type="INT32">
       <short_desc>Use terrain estimate during landing</short_desc>
+      <long_desc>This is turned off by default and a waypoint or return altitude is normally used (or sea level for an arbitrary land position).</long_desc>
       <boolean />
     </parameter>
     <parameter default="45.0" name="FW_P_LIM_MAX" type="FLOAT">
