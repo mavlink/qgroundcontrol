@@ -18,11 +18,14 @@ APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
 {
     QMap<uint32_t,QString> enumToString;
     enumToString.insert(MANUAL,         "Manual");
-    enumToString.insert(LEARNING,       "Learning");
+    enumToString.insert(ACRO,           "Acro");
     enumToString.insert(STEERING,       "Steering");
     enumToString.insert(HOLD,           "Hold");
+    enumToString.insert(LOITER,         "Loiter");
+    enumToString.insert(SIMPLE,         "Simple");
     enumToString.insert(AUTO,           "Auto");
     enumToString.insert(RTL,            "RTL");
+    enumToString.insert(SMART_RTL,      "Smart RTL");
     enumToString.insert(GUIDED,         "Guided");
     enumToString.insert(INITIALIZING,   "Initializing");
 
@@ -33,11 +36,14 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
 {
     QList<APMCustomMode> supportedFlightModes;
     supportedFlightModes << APMRoverMode(APMRoverMode::MANUAL       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::LEARNING     ,true);
+    supportedFlightModes << APMRoverMode(APMRoverMode::ACRO         ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::STEERING     ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::HOLD         ,true);
+    supportedFlightModes << APMRoverMode(APMRoverMode::LOITER       ,true);
+    supportedFlightModes << APMRoverMode(APMRoverMode::SIMPLE       ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::AUTO         ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::RTL          ,true);
+    supportedFlightModes << APMRoverMode(APMRoverMode::SMART_RTL    ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::GUIDED       ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::INITIALIZING ,false);
     setSupportedModes(supportedFlightModes);
