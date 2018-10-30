@@ -92,14 +92,19 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
         remapV3_2["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
         remapV3_2["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
 
+        FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
+
+        remapV3_5["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
+        remapV3_5["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
+
         _remapParamNameIntialized = true;
     }
 }
 
 int ArduRoverFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.2
-    return majorVersionNumber == 3 ? 2 : Vehicle::versionNotSetValue;
+    // Remapping supports up to 3.5
+    return majorVersionNumber == 3 ? 5 : Vehicle::versionNotSetValue;
 }
 
 void ArduRoverFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)
