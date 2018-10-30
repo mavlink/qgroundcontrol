@@ -121,7 +121,7 @@ SetupPage {
                         anchors.left:       parent.left
                         sourceComponent:    _batt1FullSettings.visible ? powerSetupComponent : undefined
 
-                        property Fact armVoltMin:       controller.getParameterFact(-1, "r.ARMING_VOLT_MIN", false /* reportMissing */)
+                        property Fact armVoltMin:       controller.getParameterFact(-1, "r.BATT_ARM_VOLT", false /* reportMissing */)
                         property Fact battAmpPerVolt:   controller.getParameterFact(-1, "r.BATT_AMP_PERVLT", false /* reportMissing */)
                         property Fact battCapacity:     controller.getParameterFact(-1, "BATT_CAPACITY", false /* reportMissing */)
                         property Fact battCurrPin:      controller.getParameterFact(-1, "BATT_CURR_PIN", false /* reportMissing */)
@@ -205,7 +205,7 @@ SetupPage {
                         anchors.left:       parent.left
                         sourceComponent:    batt2FullSettings.visible ? powerSetupComponent : undefined
 
-                        property Fact armVoltMin:       controller.getParameterFact(-1, "r.ARMING_VOLT2_MIN", false /* reportMissing */)
+                        property Fact armVoltMin:       controller.getParameterFact(-1, "r.BATT2_ARM_VOLT", false /* reportMissing */)
                         property Fact battAmpPerVolt:   controller.getParameterFact(-1, "r.BATT2_AMP_PERVLT", false /* reportMissing */)
                         property Fact battCapacity:     controller.getParameterFact(-1, "BATT2_CAPACITY", false /* reportMissing */)
                         property Fact battCurrPin:      controller.getParameterFact(-1, "BATT2_CURR_PIN", false /* reportMissing */)
