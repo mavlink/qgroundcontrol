@@ -86,7 +86,7 @@ Item {
         west  = west  * 0.9999925
         south = south * 0.9999925
 
-        // Fix the map region to the new bounding rect
+        // Fit the map region to the new bounding rect
         var topLeftCoord      = QtPositioning.coordinate(north - 90.0, west - 180.0)
         var bottomRightCoord  = QtPositioning.coordinate(south - 90.0, east - 180.0)
         map.setVisibleRegion(QtPositioning.rectangle(topLeftCoord, bottomRightCoord))
