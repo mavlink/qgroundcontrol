@@ -20,7 +20,7 @@ ADSBVehicle::ADSBVehicle(mavlink_adsb_vehicle_t& adsbVehicle, QObject* parent)
     , _heading      (NAN)
     , _alert        (false)
 {
-    if (!(adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS)) {
+    if (!(adsbVehicle.flags & ADSB_FLAGS_VALID_COORDS)) {
         qWarning() << "At least coords must be valid";
         return;
     }
@@ -55,7 +55,7 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
         return;
     }
 
-    if (!(adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS)) {
+    if (!(adsbVehicle.flags & ADSB_FLAGS_VALID_COORDS)) {
         return;
     }
 
@@ -73,7 +73,7 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
     }
 
     double newAltitude = NAN;
-    if (adsbVehicle.flags | ADSB_FLAGS_VALID_ALTITUDE) {
+    if (adsbVehicle.flags & ADSB_FLAGS_VALID_ALTITUDE) {
         newAltitude = (double)adsbVehicle.altitude / 1e3;
     }
     if (!(qIsNaN(newAltitude) && qIsNaN(_altitude)) && !qFuzzyCompare(newAltitude, _altitude)) {
@@ -82,7 +82,7 @@ void ADSBVehicle::update(mavlink_adsb_vehicle_t& adsbVehicle)
     }
 
     double newHeading = NAN;
-    if (adsbVehicle.flags | ADSB_FLAGS_VALID_HEADING) {
+    if (adsbVehicle.flags & ADSB_FLAGS_VALID_HEADING) {
         newHeading = (double)adsbVehicle.heading / 100.0;
     }
     if (!(qIsNaN(newHeading) && qIsNaN(_heading)) && !qFuzzyCompare(newHeading, _heading)) {
