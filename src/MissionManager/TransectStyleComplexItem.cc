@@ -41,14 +41,13 @@ const int   TransectStyleComplexItem::_terrainQueryTimeoutMsecs =           1000
 TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyView, QString settingsGroup, QObject* parent)
     : ComplexMissionItem                (vehicle, flyView, parent)
     , _sequenceNumber                   (0)
-    , _dirty                            (false)
-    , _terrainPolyPathQuery             (NULL)
+    , _terrainPolyPathQuery             (nullptr)
     , _ignoreRecalc                     (false)
     , _complexDistance                  (0)
     , _cameraShots                      (0)
     , _cameraCalc                       (vehicle, settingsGroup)
     , _followTerrain                    (false)
-    , _loadedMissionItemsParent         (NULL)
+    , _loadedMissionItemsParent         (nullptr)
     , _metaDataMap                      (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/TransectStyle.SettingsGroup.json"), this))
     , _turnAroundDistanceFact           (settingsGroup, _metaDataMap[_vehicle->multiRotor() ? turnAroundDistanceMultiRotorName : turnAroundDistanceName])
     , _cameraTriggerInTurnAroundFact    (settingsGroup, _metaDataMap[cameraTriggerInTurnAroundName])
@@ -399,14 +398,6 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 
     emit lastSequenceNumberChanged(lastSequenceNumber());
     emit timeBetweenShotsChanged();
-}
-
-void TransectStyleComplexItem::_setBoundingCube(QGCGeoBoundingCube bc)
-{
-    if (bc != _boundingCube) {
-        _boundingCube = bc;
-        emit boundingCubeChanged();
-    }
 }
 
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)

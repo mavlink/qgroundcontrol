@@ -46,12 +46,12 @@ Rectangle {
     property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 3
     property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth
     property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
-    property real   _distance:                  _statusValid ? currentMissionItem.distance : NaN
-    property real   _altDifference:             _statusValid ? currentMissionItem.altDifference : NaN
-    property real   _gradient:                  _statusValid && currentMissionItem.distance > 0 ? Math.atan(currentMissionItem.altDifference / currentMissionItem.distance) : NaN
+    property real   _distance:                  _statusValid && currentMissionItem ? currentMissionItem.distance : NaN
+    property real   _altDifference:             _statusValid && currentMissionItem ? currentMissionItem.altDifference : NaN
+    property real   _gradient:                  _statusValid && currentMissionItem && currentMissionItem.distance > 0 ? Math.atan(currentMissionItem.altDifference / currentMissionItem.distance) : NaN
     property real   _gradientPercent:           isNaN(_gradient) ? NaN : _gradient * 100
-    property real   _azimuth:                   _statusValid ? currentMissionItem.azimuth : NaN
-    property real   _heading:                   _statusValid ? currentMissionItem.missionVehicleYaw : NaN
+    property real   _azimuth:                   _statusValid && currentMissionItem ? currentMissionItem.azimuth : NaN
+    property real   _heading:                   _statusValid && currentMissionItem ? currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
     property real   _missionMaxTelemetry:       _missionValid ? missionMaxTelemetry : NaN
     property real   _missionTime:               _missionValid ? missionTime : NaN

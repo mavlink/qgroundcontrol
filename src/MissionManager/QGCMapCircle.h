@@ -23,9 +23,9 @@ class QGCMapCircle : public QObject
     Q_OBJECT
 
 public:
-    QGCMapCircle(QObject* parent = NULL);
-    QGCMapCircle(const QGeoCoordinate& center, double radius, QObject* parent = NULL);
-    QGCMapCircle(const QGCMapCircle& other, QObject* parent = NULL);
+    QGCMapCircle(QObject* parent = nullptr);
+    QGCMapCircle(const QGeoCoordinate& center, double radius, QObject* parent = nullptr);
+    QGCMapCircle(const QGCMapCircle& other, QObject* parent = nullptr);
 
     const QGCMapCircle& operator=(const QGCMapCircle& other);
 
