@@ -19,6 +19,13 @@ double QGCGeoBoundingCube::MaxWest   = -180.0;
 double QGCGeoBoundingCube::MaxEast   =  180.0;
 
 //-----------------------------------------------------------------------------
+QGCGeoBoundingCube::QGCGeoBoundingCube(QObject* parent)
+    : QObject(parent)
+{
+    reset();
+}
+
+//-----------------------------------------------------------------------------
 bool
 QGCGeoBoundingCube::isValid() const
 {
@@ -30,8 +37,8 @@ QGCGeoBoundingCube::isValid() const
 void
 QGCGeoBoundingCube::reset()
 {
-    pointSE = QGeoCoordinate();
-    pointNW = QGeoCoordinate();
+    pointNW = QGeoCoordinate(MaxSouth, MaxEast, MaxAlt);
+    pointSE = QGeoCoordinate(MaxNorth, MaxWest, MinAlt);
 }
 
 //-----------------------------------------------------------------------------

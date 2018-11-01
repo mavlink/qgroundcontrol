@@ -24,8 +24,8 @@ class QGCMapPolygon : public QObject
     Q_OBJECT
 
 public:
-    QGCMapPolygon(QObject* parent = NULL);
-    QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = NULL);
+    QGCMapPolygon(QObject* parent = nullptr);
+    QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = nullptr);
 
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
