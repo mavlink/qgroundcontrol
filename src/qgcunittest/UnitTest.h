@@ -25,6 +25,7 @@
 #include "QGCMAVLink.h"
 #include "LinkInterface.h"
 #include "Fact.h"
+#include "MissionItem.h"
 
 #define UT_REGISTER_TEST(className) static UnitTestWrapper<className> className(#className);
 
@@ -101,6 +102,10 @@ public:
     ///     @param increment 0 use standard increment, other increment by specified amount if double value
     void changeFactValue(Fact* fact, double increment = 0);
 
+    /// Returns true is the position of the two coordinates is less then a meter from each other.
+    /// Does not check altitude.
+    static bool fuzzyCompareLatLon(const QGeoCoordinate& coord1, const QGeoCoordinate& coord2);
+
 protected slots:
     
     // These are all pure virtuals to force the derived class to implement each one and in turn
@@ -119,6 +124,7 @@ protected:
     void _disconnectMockLink(void);
     void _createMainWindow(void);
     void _closeMainWindow(bool cancelExpected = false);
+    void _missionItemsEqual(MissionItem& actual, MissionItem& expected);
 
     LinkManager*    _linkManager;
     MockLink*       _mockLink;

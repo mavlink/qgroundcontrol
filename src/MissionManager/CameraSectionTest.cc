@@ -20,9 +20,6 @@ CameraSectionTest::CameraSectionTest(void)
     , _validDistanceItem                (NULL)
     , _validTimeItem                    (NULL)
     , _validStartVideoItem              (NULL)
-    , _validStopVideoItem               (NULL)
-    , _validStopDistanceItem            (NULL)
-    , _validStopTimeItem                (NULL)
     , _validCameraPhotoModeItem         (NULL)
     , _validCameraVideoModeItem         (NULL)
     , _validCameraSurveyPhotoModeItem   (NULL)
@@ -75,18 +72,6 @@ void CameraSectionTest::init(void)
                                                              true,                          // autocontinue
                                                              false),                        // isCurrentItem
                                                  this);
-    _validStopVideoItem = new SimpleMissionItem(_offlineVehicle,
-                                                false, // flyView
-                                                MissionItem(0, MAV_CMD_VIDEO_STOP_CAPTURE, MAV_FRAME_MISSION, 0, NAN, NAN, NAN, NAN, NAN, NAN, true, false),
-                                                this);
-    _validStopDistanceItem = new SimpleMissionItem(_offlineVehicle,
-                                                   false, // flyView
-                                                   MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0, true, false),
-                                                   this);
-    _validStopTimeItem = new SimpleMissionItem(_offlineVehicle,
-                                               false, // flyView
-                                               MissionItem(1, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_FRAME_MISSION, 0, NAN, NAN, NAN, NAN, NAN, NAN, true, false),
-                                               this);
     _validCameraPhotoModeItem = new SimpleMissionItem(_offlineVehicle,
                                                       false, // flyView
                                                       MissionItem(0,                               // sequence number
@@ -132,6 +117,10 @@ void CameraSectionTest::init(void)
                                                             true,                           // autoContinue
                                                             false),                         // isCurrentItem
                                                 this);
+
+    _validStopVideoItem =       createValidStopVideoItem(_offlineVehicle, this);
+    _validStopDistanceItem =    createValidStopDistanceItem(_offlineVehicle, this);
+    _validStopTimeItem =        createValidStopTimeItem(_offlineVehicle, this);
 }
 
 void CameraSectionTest::cleanup(void)
@@ -471,8 +460,6 @@ void CameraSectionTest::_testAppendSectionItems(void)
     QCOMPARE(seqNum, 0);
     rgMissionItems.clear();
 
-    // Test specifyGimbal
-
     _cameraSection->setSpecifyGimbal(true);
     _cameraSection->gimbalPitch()->setRawValue(_validGimbalItem->missionItem().param1());
     _cameraSection->gimbalYaw()->setRawValue(_validGimbalItem->missionItem().param3());
@@ -483,8 +470,6 @@ void CameraSectionTest::_testAppendSectionItems(void)
     _cameraSection->setSpecifyGimbal(false);
     rgMissionItems.clear();
     seqNum = 0;
-
-    // Test specifyCameraMode
 
     _cameraSection->setSpecifyCameraMode(true);
     _cameraSection->cameraMode()->setRawValue(CAMERA_MODE_IMAGE);
@@ -910,7 +895,7 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
     /*
     MAV_CMD_VIDEO_STOP_CAPTURE	Stop the current video capture (recording)
     Mission Param #1 Reserved (Set to 0)
-*/
+    */
 
     SimpleMissionItem* newValidStopVideoItem = new SimpleMissionItem(_offlineVehicle, false /* flyView */, this);
     newValidStopVideoItem->missionItem() = _validStopVideoItem->missionItem();
@@ -941,7 +926,7 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
     visualItems.clear();
 }
 
-void CameraSectionTest::_testScanForStopImageSection(void)
+void CameraSectionTest::_testScanForStopPhotoSection(void)
 {
     QCOMPARE(_cameraSection->available(), true);
 
@@ -1123,4 +1108,29 @@ void CameraSectionTest::_testSpecifiedGimbalValuesChanged(void)
     _spyCamera->clearAllSignals();
     _cameraSection->gimbalPitch()->setRawValue(_cameraSection->gimbalPitch()->rawValue().toDouble() + 1);
     QVERIFY(_spyCamera->checkSignalByMask(specifiedGimbalPitchChangedMask));
+}
+
+SimpleMissionItem* CameraSectionTest::createValidStopVideoItem(Vehicle* vehicle, QObject* parent)
+{
+    return new SimpleMissionItem(vehicle,
+                                 false, // flyView
+                                 MissionItem(0, MAV_CMD_VIDEO_STOP_CAPTURE, MAV_FRAME_MISSION, 0, qQNaN(), qQNaN(), qQNaN(), qQNaN(), qQNaN(), qQNaN(), true, false),
+                                 parent);
+}
+
+
+SimpleMissionItem* CameraSectionTest::createValidStopDistanceItem(Vehicle* vehicle, QObject* parent)
+{
+    return new SimpleMissionItem(vehicle,
+                                 false, // flyView
+                                 MissionItem(0, MAV_CMD_DO_SET_CAM_TRIGG_DIST, MAV_FRAME_MISSION, 0, 0, 0, 0, 0, 0, 0, true, false),
+                                 parent);
+}
+
+SimpleMissionItem* CameraSectionTest::createValidStopTimeItem(Vehicle* vehicle, QObject* parent)
+{
+    return new SimpleMissionItem(vehicle,
+                                 false, // flyView
+                                 MissionItem(1, MAV_CMD_IMAGE_STOP_CAPTURE, MAV_FRAME_MISSION, 0, qQNaN(), qQNaN(), qQNaN(), qQNaN(), qQNaN(), qQNaN(), true, false),
+                                 parent);
 }
