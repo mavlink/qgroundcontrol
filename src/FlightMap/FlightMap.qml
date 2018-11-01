@@ -49,6 +49,7 @@ Map {
     property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
+        // TODO: Is this still necessary with Qt 5.11?
         // This works around a bug on Qt where if you set a visibleRegion and then the user moves or zooms the map
         // and then you set the same visibleRegion the map will not move/scale appropriately since it thinks there
         // is nothing to do.

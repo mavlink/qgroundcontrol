@@ -237,6 +237,30 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
 
 void StructureScanComplexItem::_flightPathChanged(void)
 {
+    // Calc bounding cube
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    double bottom = 100000.;
+    double top = 0.;
+    QList<QGeoCoordinate> vertices = _flightPolygon.coordinateList();
+    for (int i = 0; i < vertices.count(); i++) {
+        QGeoCoordinate vertex = vertices[i];
+        double lat = vertex.latitude()  + 90.0;
+        double lon = vertex.longitude() + 180.0;
+        north   = fmax(north, lat);
+        south   = fmin(south, lat);
+        east    = fmax(east,  lon);
+        west    = fmin(west,  lon);
+        bottom  = fmin(bottom, vertex.altitude());
+        top     = fmax(top, vertex.altitude());
+    }
+    //-- Update bounding cube for airspace management control
+    _setBoundingCube(QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, bottom),
+        QGeoCoordinate(south - 90.0, east - 180.0, top)));
+
     emit coordinateChanged(coordinate());
     emit exitCoordinateChanged(exitCoordinate());
     emit greatestDistanceToChanged();
@@ -458,7 +482,7 @@ void StructureScanComplexItem::_recalcCameraShots(void)
         return;
     }
 
-    int cameraShots = distance / triggerDistance;
+    int cameraShots = static_cast<int>(distance / triggerDistance);
     _setCameraShots(cameraShots * _layersFact.rawValue().toInt());
 }
 

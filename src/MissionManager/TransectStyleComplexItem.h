@@ -77,7 +77,6 @@ public:
     int                 lastSequenceNumber  (void) const final;
     QString             mapVisualQML        (void) const override = 0;
     bool                load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) override = 0;
-    QGCGeoBoundingCube  boundingCube        (void) const override { return _boundingCube; }
 
     double          complexDistance     (void) const final { return _complexDistance; }
     double          greatestDistanceTo  (const QGeoCoordinate &other) const final;
@@ -147,14 +146,11 @@ protected:
     double  _triggerDistance                (void) const;
     bool    _hasTurnaround                  (void) const;
     double  _turnaroundDistance             (void) const;
-    void    _setBoundingCube                (QGCGeoBoundingCube bc);
 
     int                 _sequenceNumber;
-    bool                _dirty;
     QGeoCoordinate      _coordinate;
     QGeoCoordinate      _exitCoordinate;
     QGCMapPolygon       _surveyAreaPolygon;
-    QGCGeoBoundingCube  _boundingCube;
 
     enum CoordType {
         CoordTypeInterior,              ///< Interior waypoint for flight path only
