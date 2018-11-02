@@ -52,6 +52,7 @@ public:
     Q_PROPERTY(bool                     disableVehicleConnection        READ disableVehicleConnection       CONSTANT)
     Q_PROPERTY(float                    devicePixelRatio                READ devicePixelRatio               NOTIFY devicePixelRatioChanged)
     Q_PROPERTY(float                    devicePixelDensity              READ devicePixelDensity             NOTIFY devicePixelDensityChanged)
+    Q_PROPERTY(bool                     checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -94,6 +95,7 @@ public:
     virtual bool    showMissionAbsoluteAltitude     () const { return true; }
     virtual bool    showSimpleMissionStart          () const { return false; }
     virtual bool    disableVehicleConnection        () const { return false; }  ///< true: vehicle connection is disabled
+    virtual bool    checkFirmwareVersion            () const { return true; }
 
 #if defined(__mobile__)
     virtual bool    useMobileFileDialog             () const { return true;}
