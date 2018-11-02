@@ -54,21 +54,6 @@ void SectionTest::_createSpy(Section* section, MultiSignalSpy** sectionSpy)
     *sectionSpy = spy;
 }
 
-void SectionTest::_missionItemsEqual(MissionItem& actual, MissionItem& expected)
-{
-    QCOMPARE(actual.command(),      expected.command());
-    QCOMPARE(actual.frame(),        expected.frame());
-    QCOMPARE(actual.autoContinue(), expected.autoContinue());
-
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param1(), expected.param1()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param2(), expected.param2()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param3(), expected.param3()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param4(), expected.param4()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param5(), expected.param5()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param6(), expected.param6()));
-    QVERIFY(UnitTest::doubleNaNCompare(actual.param7(), expected.param7()));
-}
-
 void SectionTest::_commonScanTest(Section* section)
 {
     QCOMPARE(section->available(), true);

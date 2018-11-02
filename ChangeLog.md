@@ -12,6 +12,7 @@ Note: This file only contains high level features or important fixes.
 * Make Distance to GCS available for display from instrument panel.
 * Make Heading to Home available for display from instrument panel.
 * Edit Position dialog available on polygon vertices.
+* Fixed Wing Landing Pattern: Add stop photo/video support. Defaults to on such that doing an RTL will stop camera.
 
 ## 3.4
 
