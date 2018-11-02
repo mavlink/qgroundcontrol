@@ -1,5 +1,4 @@
-#ifndef QGCHILLINK_H
-#define QGCHILLINK_H
+#pragma once
 
 #include <QThread>
 #include <QProcess>
@@ -148,4 +147,3 @@ signals:
     void _invokeWriteBytes(QByteArray);
 };
 
-#endif // QGCHILLINK_H
