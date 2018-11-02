@@ -65,9 +65,6 @@ static const char *kCAM_ISO         = "CAM_ISO";
 static const char* kCAM_SHUTTER     = "CAM_SHUTTER";
 static const char* kCAM_APERTURE    = "CAM_APERTURE";
 static const char* kCAM_WBMODE      = "CAM_WBMODE";
-static const char *kCAM_ZOOMSTEP    = "CAM_ZOOMSTEP";
-static const char *kCAM_ZOOMTELE    = "CAM_ZOOMTELE";
-static const char *kCAM_ZOOMWIDE    = "CAM_ZOOMWIDE";
 
 //-----------------------------------------------------------------------------
 static bool
@@ -479,6 +476,51 @@ QGCCameraControl::formatCard(int id)
             true,                                   // ShowError
             id,                                     // Storage ID (1 for first, 2 for second, etc.)
             1);                                     // Do Format
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::stepZoom(int direction)
+{
+    qCDebug(CameraControlLog) << "stepZoom()" << direction;
+    if(_vehicle) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+            false,                                  // ShowError
+            direction,                              // Direction (-1 wide, 1 tele)
+            0);                                     // Ignored
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::startZoom(int direction)
+{
+    qCDebug(CameraControlLog) << "startZoom()" << direction;
+    if(_vehicle) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+            true,                                   // ShowError
+            0,                                      // Ignored
+            direction);                             // Direction (-1 wide, 1 tele)
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::stopZoom()
+{
+    qCDebug(CameraControlLog) << "stopZoom()";
+    if(_vehicle) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+            true,                                   // ShowError
+            0,                                      // Ignored
+            0);                                     // Direction (0 == stop)
     }
 }
 
@@ -1603,25 +1645,3 @@ QGCCameraControl::wb()
 {
     return (_paramComplete && _activeSettings.contains(kCAM_WBMODE)) ? getFact(kCAM_WBMODE) : nullptr;
 }
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::zoomStep()
-{
-    return (_paramComplete && _activeSettings.contains(kCAM_ZOOMSTEP)) ? getFact(kCAM_ZOOMSTEP) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::zoomTele()
-{
-    return (_paramComplete && _activeSettings.contains(kCAM_ZOOMTELE)) ? getFact(kCAM_ZOOMTELE) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::zoomWide()
-{
-    return (_paramComplete && _activeSettings.contains(kCAM_ZOOMWIDE)) ? getFact(kCAM_ZOOMWIDE) : nullptr;
-}
-

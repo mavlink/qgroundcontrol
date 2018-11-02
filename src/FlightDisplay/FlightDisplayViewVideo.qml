@@ -31,7 +31,7 @@ Item {
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
-    property var    _zoomStepFact:      _camera && _camera.zoomStep
+    property bool   _isZoom:            _camera && _camera.isZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     Rectangle {
         id:             noVideo
@@ -127,11 +127,11 @@ Item {
         }
         PinchArea {
             id:             pinchZoom
-            enabled:        _zoomStepFact
+            enabled:        _isZoom
             anchors.fill:   parent
             onPinchStarted: pinchZoom.zoom = 0
             onPinchUpdated: {
-                if(_zoomStepFact) {
+                if(_isZoom) {
                     var z = 0
                     if(pinch.scale < 1) {
                         z = Math.round(pinch.scale * -10)
@@ -139,7 +139,7 @@ Item {
                         z = Math.round(pinch.scale)
                     }
                     if(pinchZoom.zoom != z) {
-                        _zoomStepFact.rawValue = z
+                        _camera.stepZoom(z)
                     }
                     console.log('Pinch: ' + z + ' ' + pinch.scale)
                 }
