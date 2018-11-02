@@ -53,7 +53,7 @@
 },
 {
     "name":                 "FixedBasePositionAltitude",
-    "shortDescription":     "Base Position Altitude",
+    "shortDescription":     "Base Position Alt (WGS84)",
     "longDescription":      "Defines the altitude of the fixed RTK base position.",
     "type":                 "float",
     "defaultValue":         0,
