@@ -1,6 +1,5 @@
 
-#ifndef __g_cclosure_user_marshal_MARSHAL_H__
-#define __g_cclosure_user_marshal_MARSHAL_H__
+#pragma once
 
 #include	<glib-object.h>
 
@@ -40,5 +39,4 @@ extern void g_cclosure_user_marshal_POINTER__POINTER_DOUBLE_DOUBLE_DOUBLE_DOUBLE
 
 G_END_DECLS
 
-#endif /* __g_cclosure_user_marshal_MARSHAL_H__ */
 

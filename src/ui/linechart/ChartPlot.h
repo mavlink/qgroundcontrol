@@ -1,5 +1,4 @@
-#ifndef CHARTPLOT_H
-#define CHARTPLOT_H
+#pragma once
 
 #include <qwt_plot.h>
 #include <qwt_plot_grid.h>
@@ -42,4 +41,3 @@ protected:
     float _gridWidth;    ///< Width of gridlines in pixels
 };
 
-#endif // CHARTPLOT_H

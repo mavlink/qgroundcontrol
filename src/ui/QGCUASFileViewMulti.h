@@ -1,5 +1,4 @@
-#ifndef QGCUASFILEVIEWMULTI_H
-#define QGCUASFILEVIEWMULTI_H
+#pragma once
 
 #include <QMap>
 
@@ -33,4 +32,3 @@ private:
     Ui::QGCUASFileViewMulti *ui;
 };
 
-#endif // QGCUASFILEVIEWMULTI_H

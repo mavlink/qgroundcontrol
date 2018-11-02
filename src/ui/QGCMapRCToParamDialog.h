@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -12,8 +12,7 @@
 ///     @brief Dialog to configure RC to parameter mapping
 ///     @author Thomas Gubler <thomasgubler@gmail.com>
 
-#ifndef QGCMAPRCTOPARAMDIALOG_H
-#define QGCMAPRCTOPARAMDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QThread>
@@ -57,4 +56,3 @@ private:
     Ui::QGCMapRCToParamDialog*  ui;
 };
 
-#endif // QGCMAPRCTOPARAMDIALOG_H

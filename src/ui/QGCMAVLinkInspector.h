@@ -1,5 +1,4 @@
-#ifndef QGCMAVLINKINSPECTOR_H
-#define QGCMAVLINKINSPECTOR_H
+#pragma once
 
 #include <QMap>
 #include <QTimer>
@@ -72,4 +71,3 @@ private:
     Ui::QGCMAVLinkInspector *ui;
 };
 
-#endif // QGCMAVLINKINSPECTOR_H

@@ -1,5 +1,4 @@
-#ifndef _SCROLLZOOMER_H
-#define _SCROLLZOOMER_H
+#pragma once
 
 #include <qglobal.h>
 #if QT_VERSION < 0x040000
@@ -73,4 +72,3 @@ private:
     bool d_inZoom;
 };
 
-#endif

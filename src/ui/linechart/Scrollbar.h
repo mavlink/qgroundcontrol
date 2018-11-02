@@ -1,5 +1,4 @@
-#ifndef _SCROLLBAR_H
-#define _SCROLLBAR_H 1
+#pragma once
 
 #include <qscrollbar.h>
 
@@ -49,5 +48,3 @@ private:
     double d_maxBase;
     int d_baseTicks;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef QGCHILJSBSIMCONFIGURATION_H
-#define QGCHILJSBSIMCONFIGURATION_H
+#pragma once
 
 #include <QWidget>
 
@@ -29,4 +28,3 @@ private:
     Ui::QGCHilJSBSimConfiguration *ui;
 };
 
-#endif // QGCHILJSBSIMCONFIGURATION_H

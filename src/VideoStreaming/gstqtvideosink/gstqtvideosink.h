@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef GST_QT_VIDEO_SINK_H
-#define GST_QT_VIDEO_SINK_H
+#pragma once
 
 #include "gstqtvideosinkbase.h"
 
@@ -64,4 +63,3 @@ struct GstQtVideoSinkClass
                    qreal x, qreal y, qreal width, qreal height);
 };
 
-#endif
