@@ -52,5 +52,17 @@
     "max":              90,
     "decimalPlaces":    1,
     "defaultValue":     12.0
+},
+{
+    "name":             "StopTakingPhotos",
+    "shortDescription": "Stop taking photos",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "StopTakingVideo",
+    "shortDescription": "Stop taking video",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]

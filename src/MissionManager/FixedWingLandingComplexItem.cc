@@ -27,6 +27,8 @@ const char* FixedWingLandingComplexItem::loiterAltitudeName =       "LoiterAltit
 const char* FixedWingLandingComplexItem::loiterRadiusName =         "LoiterRadius";
 const char* FixedWingLandingComplexItem::landingAltitudeName =      "LandingAltitude";
 const char* FixedWingLandingComplexItem::glideSlopeName =           "GlideSlope";
+const char* FixedWingLandingComplexItem::stopTakingPhotosName =     "StopTakingPhotos";
+const char* FixedWingLandingComplexItem::stopTakingVideoName =      "StopTakingVideo";
 
 const char* FixedWingLandingComplexItem::_jsonLoiterCoordinateKey =         "loiterCoordinate";
 const char* FixedWingLandingComplexItem::_jsonLoiterRadiusKey =             "loiterRadius";
@@ -34,6 +36,8 @@ const char* FixedWingLandingComplexItem::_jsonLoiterClockwiseKey =          "loi
 const char* FixedWingLandingComplexItem::_jsonLandingCoordinateKey =        "landCoordinate";
 const char* FixedWingLandingComplexItem::_jsonValueSetIsDistanceKey =       "valueSetIsDistance";
 const char* FixedWingLandingComplexItem::_jsonAltitudesAreRelativeKey =     "altitudesAreRelative";
+const char* FixedWingLandingComplexItem::_jsonStopTakingPhotosKey =         "stopTakingPhotos";
+const char* FixedWingLandingComplexItem::_jsonStopTakingVideoKey =          "stopVideoPhotos";
 
 // Usage deprecated
 const char* FixedWingLandingComplexItem::_jsonFallRateKey =                 "fallRate";
@@ -53,6 +57,8 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     , _landingHeadingFact       (settingsGroup, _metaDataMap[landingHeadingName])
     , _landingAltitudeFact      (settingsGroup, _metaDataMap[landingAltitudeName])
     , _glideSlopeFact           (settingsGroup, _metaDataMap[glideSlopeName])
+    , _stopTakingPhotosFact     (settingsGroup, _metaDataMap[stopTakingPhotosName])
+    , _stopTakingVideoFact      (settingsGroup, _metaDataMap[stopTakingVideoName])
     , _loiterClockwise          (true)
     , _altitudesAreRelative     (true)
     , _valueSetIsDistance       (true)
@@ -73,15 +79,21 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
 
     connect(&_glideSlopeFact,           &Fact::valueChanged,                                    this, &FixedWingLandingComplexItem::_glideSlopeChanged);
 
+    connect(&_stopTakingPhotosFact,     &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_signalLastSequenceNumberChanged);
+    connect(&_stopTakingVideoFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_signalLastSequenceNumberChanged);
+
     connect(&_loiterAltitudeFact,       &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(&_landingAltitudeFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(&_landingDistanceFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(&_landingHeadingFact,       &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(&_loiterRadiusFact,         &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_stopTakingPhotosFact,     &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_stopTakingVideoFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,          this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged,         this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::loiterClockwiseChanged,           this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::_setDirty);
+    connect(this,                       &FixedWingLandingComplexItem::valueSetIsDistanceChanged,        this, &FixedWingLandingComplexItem::_setDirty);
 
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::exitCoordinateHasRelativeAltitudeChanged);
@@ -89,8 +101,11 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
 {
-    // land start, loiter, land
-    return _sequenceNumber + 2;
+    // Fixed items are:
+    //  land start, loiter, land
+    // Optional items are:
+    //  stop photos/video
+    return _sequenceNumber + 2 + (_stopTakingPhotosFact.rawValue().toBool() ? 2 : 0) + (_stopTakingVideoFact.rawValue().toBool() ? 1 : 0);
 }
 
 void FixedWingLandingComplexItem::setDirty(bool dirty)
@@ -123,6 +138,8 @@ void FixedWingLandingComplexItem::save(QJsonArray&  missionItems)
     saveObject[_jsonLandingCoordinateKey] = jsonCoordinate;
 
     saveObject[_jsonLoiterRadiusKey] =          _loiterRadiusFact.rawValue().toDouble();
+    saveObject[_jsonStopTakingPhotosKey] =      _stopTakingPhotosFact.rawValue().toBool();
+    saveObject[_jsonStopTakingVideoKey] =       _stopTakingVideoFact.rawValue().toBool();
     saveObject[_jsonLoiterClockwiseKey] =       _loiterClockwise;
     saveObject[_jsonAltitudesAreRelativeKey] =  _altitudesAreRelative;
     saveObject[_jsonValueSetIsDistanceKey] =    _valueSetIsDistance;
@@ -149,6 +166,8 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
         { _jsonLoiterRadiusKey,                         QJsonValue::Double, true },
         { _jsonLoiterClockwiseKey,                      QJsonValue::Bool,   true },
         { _jsonLandingCoordinateKey,                    QJsonValue::Array,  true },
+        { _jsonStopTakingPhotosKey,                     QJsonValue::Bool,   false },
+        { _jsonStopTakingVideoKey,                      QJsonValue::Bool,   false },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
@@ -220,6 +239,17 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
     _loiterRadiusFact.setRawValue(complexObject[_jsonLoiterRadiusKey].toDouble());
     _loiterClockwise = complexObject[_jsonLoiterClockwiseKey].toBool();
 
+    if (complexObject.contains(_jsonStopTakingPhotosKey)) {
+        _stopTakingPhotosFact.setRawValue(complexObject[_jsonStopTakingPhotosKey].toBool());
+    } else {
+        _stopTakingPhotosFact.setRawValue(false);
+    }
+    if (complexObject.contains(_jsonStopTakingVideoKey)) {
+        _stopTakingVideoFact.setRawValue(complexObject[_jsonStopTakingVideoKey].toBool());
+    } else {
+        _stopTakingVideoFact.setRawValue(false);
+    }
+
     _calcGlideSlope();
 
     _landingCoordSet = true;
@@ -242,47 +272,75 @@ bool FixedWingLandingComplexItem::specifiesCoordinate(void) const
     return true;
 }
 
+MissionItem* FixedWingLandingComplexItem::createDoLandStartItem(int seqNum, QObject* parent)
+{
+    return new MissionItem(seqNum,                              // sequence number
+                           MAV_CMD_DO_LAND_START,               // MAV_CMD
+                           MAV_FRAME_MISSION,                   // MAV_FRAME
+                           0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   // param 1-7
+                           true,                                // autoContinue
+                           false,                               // isCurrentItem
+                           parent);
+}
+
+MissionItem* FixedWingLandingComplexItem::createLoiterToAltItem(int seqNum, bool altRel, double loiterRadius, double lat, double lon, double alt, QObject* parent)
+{
+    return new MissionItem(seqNum,
+                           MAV_CMD_NAV_LOITER_TO_ALT,
+                           altRel ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
+                           1.0,                             // Heading required = true
+                           loiterRadius,                    // Loiter radius
+                           0.0,                             // param 3 - unused
+                           1.0,                             // Exit crosstrack - tangent of loiter to land point
+                           lat, lon, alt,
+                           true,                            // autoContinue
+                           false,                           // isCurrentItem
+                           parent);
+}
+
+MissionItem* FixedWingLandingComplexItem::createLandItem(int seqNum, bool altRel, double lat, double lon, double alt, QObject* parent)
+{
+    return new MissionItem(seqNum,
+                           MAV_CMD_NAV_LAND,
+                           altRel ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
+                           0.0, 0.0, 0.0, 0.0,
+                           lat, lon, alt,
+                           true,                               // autoContinue
+                           false,                              // isCurrentItem
+                           parent);
+
+}
+
 void FixedWingLandingComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
     int seqNum = _sequenceNumber;
 
     // IMPORTANT NOTE: Any changes here must also be taken into account in scanForItem
 
-    MissionItem* item = new MissionItem(seqNum++,                           // sequence number
-                                        MAV_CMD_DO_LAND_START,              // MAV_CMD
-                                        MAV_FRAME_MISSION,                  // MAV_FRAME
-                                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  // param 1-7
-                                        true,                               // autoContinue
-                                        false,                              // isCurrentItem
-                                        missionItemParent);
+    MissionItem* item = createDoLandStartItem(seqNum++, missionItemParent);
     items.append(item);
 
-    float loiterRadius = _loiterRadiusFact.rawValue().toDouble() * (_loiterClockwise ? 1.0 : -1.0);
-    item = new MissionItem(seqNum++,
-                           MAV_CMD_NAV_LOITER_TO_ALT,
-                           _altitudesAreRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
-                           1.0,                             // Heading required = true
-                           loiterRadius,                    // Loiter radius
-                           0.0,                             // param 3 - unused
-                           1.0,                             // Exit crosstrack - tangent of loiter to land point
-                           _loiterCoordinate.latitude(),
-                           _loiterCoordinate.longitude(),
-                           _loiterAltitudeFact.rawValue().toDouble(),
-                           true,                            // autoContinue
-                           false,                           // isCurrentItem
-                           missionItemParent);
+
+    if (_stopTakingPhotosFact.rawValue().toBool()) {
+        CameraSection::appendStopTakingPhotos(items, seqNum, missionItemParent);
+    }
+
+    if (_stopTakingVideoFact.rawValue().toBool()) {
+        CameraSection::appendStopTakingVideo(items, seqNum, missionItemParent);
+    }
+
+    double loiterRadius = _loiterRadiusFact.rawValue().toDouble() * (_loiterClockwise ? 1.0 : -1.0);
+    item = createLoiterToAltItem(seqNum++,
+                                 _altitudesAreRelative,
+                                 loiterRadius,
+                                 _loiterCoordinate.latitude(), _loiterCoordinate.longitude(), _loiterAltitudeFact.rawValue().toDouble(),
+                                 missionItemParent);
     items.append(item);
 
-    item = new MissionItem(seqNum++,
-                           MAV_CMD_NAV_LAND,
-                           _altitudesAreRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
-                           0.0, 0.0, 0.0, 0.0,                 // param 1-4
-                           _landingCoordinate.latitude(),
-                           _landingCoordinate.longitude(),
-                           _landingAltitudeFact.rawValue().toDouble(),
-                           true,                               // autoContinue
-                           false,                              // isCurrentItem
-                           missionItemParent);
+    item = createLandItem(seqNum++,
+                          _altitudesAreRelative,
+                          _landingCoordinate.latitude(), _landingCoordinate.longitude(), _landingAltitudeFact.rawValue().toDouble(),
+                          missionItemParent);
     items.append(item);
 }
 
@@ -290,13 +348,25 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
 {
     qCDebug(FixedWingLandingComplexItemLog) << "FixedWingLandingComplexItem::scanForItem count" << visualItems->count();
 
-    if (visualItems->count() < 4) {
+    if (visualItems->count() < 3) {
         return false;
     }
 
-    int lastItem = visualItems->count() - 1;
+    // A valid fixed wing landing pattern is comprised of the follow commands in this order at the end of the item list:
+    //  MAV_CMD_DO_LAND_START - required
+    //  Stop taking photos sequence - optional
+    //  Stop taking video sequence - optional
+    //  MAV_CMD_NAV_LOITER_TO_ALT - required
+    //  MAV_CMD_NAV_LAND - required
 
-    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(lastItem--);
+    // Start looking for the commands in reverse order from the end of the list
+
+    int scanIndex = visualItems->count() - 1;
+
+    if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
+        return false;
+    }
+    SimpleMissionItem* item = visualItems->value<SimpleMissionItem*>(scanIndex--);
     if (!item) {
         return false;
     }
@@ -308,7 +378,10 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
     }
     MAV_FRAME landPointFrame = missionItemLand.frame();
 
-    item = visualItems->value<SimpleMissionItem*>(lastItem--);
+    if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
+        return false;
+    }
+    item = visualItems->value<SimpleMissionItem*>(scanIndex);
     if (!item) {
         return false;
     }
@@ -319,7 +392,23 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
         return false;
     }
 
-    item = visualItems->value<SimpleMissionItem*>(lastItem--);
+    scanIndex -= CameraSection::stopTakingVideoCommandCount();
+    bool stopTakingVideo = CameraSection::scanStopTakingVideo(visualItems, scanIndex, false /* removeScannedItems */);
+    if (!stopTakingVideo) {
+        scanIndex += CameraSection::stopTakingVideoCommandCount();
+    }
+
+    scanIndex -= CameraSection::stopTakingPhotosCommandCount();
+    bool stopTakingPhotos = CameraSection::scanStopTakingPhotos(visualItems, scanIndex, false /* removeScannedItems */);
+    if (!stopTakingPhotos) {
+        scanIndex += CameraSection::stopTakingPhotosCommandCount();
+    }
+
+    scanIndex--;
+    if (scanIndex < 0 || scanIndex > visualItems->count() - 1) {
+        return false;
+    }
+    item = visualItems->value<SimpleMissionItem*>(scanIndex);
     if (!item) {
         return false;
     }
@@ -329,7 +418,21 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
         return false;
     }
 
-    // We made it this far so we do have a Fixed Wing Landing Pattern item at the end of the mission
+    // We made it this far so we do have a Fixed Wing Landing Pattern item at the end of the mission.
+    // Since we have scanned it we need to remove the items for it fromt the list
+    int deleteCount = 3;
+    if (stopTakingPhotos) {
+        deleteCount += CameraSection::stopTakingPhotosCommandCount();
+    }
+    if (stopTakingVideo) {
+        deleteCount += CameraSection::stopTakingVideoCommandCount();
+    }
+    int firstItem = visualItems->count() - deleteCount;
+    while (deleteCount--) {
+        visualItems->removeAt(firstItem)->deleteLater();
+    }
+
+    // Now stuff all the scanned information into the item
 
     FixedWingLandingComplexItem* complexItem = new FixedWingLandingComplexItem(vehicle, flyView, visualItems);
 
@@ -345,6 +448,9 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
     complexItem->_landingCoordinate.setLongitude(missionItemLand.param6());
     complexItem->_landingAltitudeFact.setRawValue(missionItemLand.param7());
 
+    complexItem->_stopTakingPhotosFact.setRawValue(stopTakingPhotos);
+    complexItem->_stopTakingVideoFact.setRawValue(stopTakingVideo);
+
     complexItem->_calcGlideSlope();
 
     complexItem->_landingCoordSet = true;
@@ -352,11 +458,6 @@ bool FixedWingLandingComplexItem::scanForItem(QmlObjectListModel* visualItems, b
     complexItem->_ignoreRecalcSignals = false;
     complexItem->_recalcFromCoordinateChange();
     complexItem->setDirty(false);
-
-    lastItem = visualItems->count() - 1;
-    visualItems->removeAt(lastItem--)->deleteLater();
-    visualItems->removeAt(lastItem--)->deleteLater();
-    visualItems->removeAt(lastItem--)->deleteLater();
 
     visualItems->append(complexItem);
 
@@ -585,4 +686,9 @@ void FixedWingLandingComplexItem::_calcGlideSlope(void)
     double landingDistance = _landingDistanceFact.rawValue().toDouble();
 
     _glideSlopeFact.setRawValue(qRadiansToDegrees(qAtan(landingAltDifference / landingDistance)));
+}
+
+void FixedWingLandingComplexItem::_signalLastSequenceNumberChanged(void)
+{
+    emit lastSequenceNumberChanged(lastSequenceNumber());
 }

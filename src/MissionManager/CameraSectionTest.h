@@ -23,6 +23,10 @@ public:
     void init(void) override;
     void cleanup(void) override;
 
+    static SimpleMissionItem* createValidStopVideoItem   (Vehicle* vehicle, QObject* parent);
+    static SimpleMissionItem* createValidStopDistanceItem(Vehicle* vehicle, QObject* parent);
+    static SimpleMissionItem* createValidStopTimeItem    (Vehicle* vehicle, QObject* parent);
+
 private slots:
     void _testDirty                                 (void);
     void _testSettingsAvailable                     (void);
@@ -34,7 +38,7 @@ private slots:
     void _testScanForPhotoIntervalDistanceSection   (void);
     void _testScanForStartVideoSection              (void);
     void _testScanForStopVideoSection               (void);
-    void _testScanForStopImageSection               (void);
+    void _testScanForStopPhotoSection               (void);
     void _testScanForCameraModeSection              (void);
     void _testScanForTakePhotoSection               (void);
     void _testScanForMultipleItems                  (void);

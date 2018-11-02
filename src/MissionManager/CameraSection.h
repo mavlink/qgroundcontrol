@@ -67,6 +67,13 @@ public:
     ///< @return The gimbal pitch specified by this item, NaN if not specified
     double specifiedGimbalPitch(void) const;
 
+    static bool scanStopTakingPhotos(QmlObjectListModel* visualItems, int scanIndex, bool removeScannedItems);
+    static bool scanStopTakingVideo(QmlObjectListModel* visualItems, int scanIndex, bool removeScannedItems);
+    static void appendStopTakingPhotos(QList<MissionItem*>& items, int& seqNum, QObject* missionItemParent);
+    static void appendStopTakingVideo(QList<MissionItem*>& items, int& seqNum, QObject* missionItemParent);
+    static int  stopTakingPhotosCommandCount(void) { return 2; }
+    static int  stopTakingVideoCommandCount(void) { return 1; }
+
     // Overrides from Section
     bool available          (void) const override { return _available; }
     bool dirty              (void) const override { return _dirty; }
@@ -97,11 +104,9 @@ private:
     bool _scanGimbal(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTakePhoto(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTakePhotosIntervalTime(QmlObjectListModel* visualItems, int scanIndex);
-    bool _scanStopTakingPhotos(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTriggerStartDistance(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTriggerStopDistance(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanTakeVideo(QmlObjectListModel* visualItems, int scanIndex);
-    bool _scanStopTakingVideo(QmlObjectListModel* visualItems, int scanIndex);
     bool _scanSetCameraMode(QmlObjectListModel* visualItems, int scanIndex);
 
     bool    _available;
