@@ -13,7 +13,7 @@ FactPanel {
     color:          qgcPal.windowShadeDark
 
     property var _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool _firmware34: _activeVehicle.firmwareMajorVersion == 3 && _activeVehicle.firmwareMinorVersion == 4
+    property bool _firmware34:       _activeVehicle.versionCompare(3, 5, 0) < 0
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; factPanel: panel }

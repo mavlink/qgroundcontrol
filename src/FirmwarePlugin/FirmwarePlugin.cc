@@ -713,25 +713,12 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
     }
 
     qCDebug(FirmwarePluginLog) << "Latest stable version = "  << version;
-    QStringList versionNumbers = version.split(".");
-    if(versionNumbers.size() != 3) {
-        qCWarning(FirmwarePluginLog) << "Error parsing version number: wrong format";
-        return;
-    }
-    int stableMajor = versionNumbers[0].toInt();
-    int stableMinor = versionNumbers[1].toInt();
-    int stablePatch = versionNumbers[2].toInt();
 
-    int currMajor = vehicle->firmwareMajorVersion();
-    int currMinor = vehicle->firmwareMinorVersion();
-    int currPatch = vehicle->firmwarePatchVersion();
     int currType = vehicle->firmwareVersionType();
 
-    if (currMajor < stableMajor
-        || (currMajor == stableMajor && currMinor < stableMinor)
-        || (currMajor == stableMajor && currMinor == stableMinor && currPatch < stablePatch)
-        || (currMajor == stableMajor && currMinor == stableMinor && currPatch == stablePatch && currType != FIRMWARE_VERSION_TYPE_OFFICIAL)
-        )
+    // Check if lower version than stable or same version but different type
+    if (vehicle->versionCompare(version) < 0
+       || (vehicle->versionCompare(version) == 0 && currType != FIRMWARE_VERSION_TYPE_OFFICIAL))
     {
         const static QString currentVersion = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                                                                  .arg(vehicle->firmwareMinorVersion())
@@ -739,4 +726,36 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
         const static QString message = tr("Vehicle is not running latest stable firmware! Running %2-%1, latest stable is %3.");
         qgcApp()->showMessage(message.arg(vehicle->firmwareVersionTypeString(), currentVersion, version));
     }
+}
+
+int FirmwarePlugin::versionCompare(Vehicle* vehicle, int major, int minor, int patch)
+{
+    int currMajor = vehicle->firmwareMajorVersion();
+    int currMinor = vehicle->firmwareMinorVersion();
+    int currPatch = vehicle->firmwarePatchVersion();
+
+    if (currMajor == major && currMinor == minor && currPatch == patch) {
+        return 0;
+    }
+
+    if (currMajor > major
+       || (currMajor == major && currMinor > minor)
+       || (currMajor == major && currMinor == minor && currPatch > patch))
+    {
+        return 1;
+    }
+    return -1;
+}
+
+int FirmwarePlugin::versionCompare(Vehicle* vehicle, QString& compare)
+{
+    QStringList versionNumbers = compare.split(".");
+    if(versionNumbers.size() != 3) {
+        qCWarning(FirmwarePluginLog) << "Error parsing version number: wrong format";
+        return -1;
+    }
+    int major = versionNumbers[0].toInt();
+    int minor = versionNumbers[1].toInt();
+    int patch = versionNumbers[2].toInt();
+    return versionCompare(vehicle, major, minor, patch);
 }
