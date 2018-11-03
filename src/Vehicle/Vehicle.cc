@@ -35,6 +35,7 @@
 #include "SettingsManager.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCCorePlugin.h"
+#include "QGCOptions.h"
 #include "ADSBVehicle.h"
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
@@ -1251,7 +1252,9 @@ void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& me
         // APM Firmware stores the first 8 characters of the git hash as an ASCII character string
         _gitHash = QString::fromUtf8((char*)autopilotVersion.flight_custom_version, 8);
     }
-    _firmwarePlugin->checkIfIsLatestStable(this);
+    if (_toolbox->corePlugin()->options()->checkFirmwareVersion()) {
+        _firmwarePlugin->checkIfIsLatestStable(this);
+    }
     emit gitHashChanged(_gitHash);
 
     _setCapabilities(autopilotVersion.capabilities);
