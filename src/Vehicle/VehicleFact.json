@@ -64,14 +64,14 @@
 },
 {
     "name":             "altitudeRelative",
-    "shortDescription": "Altitude-rel",
+    "shortDescription": "Alt (Rel)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
 },
 {
     "name":             "altitudeAMSL",
-    "shortDescription": "Altitude",
+    "shortDescription": "Alt (AMSL)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
