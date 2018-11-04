@@ -112,13 +112,13 @@ Rectangle {
                         readonly property string    helpText:       qsTr("Relative to home altitude")
 					}
                     QGCRadioButton {
-                        text:           qsTr("Abs")
+                        text:           qsTr("AMSL")
                         exclusiveGroup: altRadios
                         checked:        missionItem.altitudeMode === altModeValue
                         visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || missionItem.altitudeMode === altModeValue
 
                         readonly property int       altModeValue:   _altModeAbsolute
-                        readonly property string    helpText:       qsTr("Absolute WGS84")
+                        readonly property string    helpText:       qsTr("Above Mean Sea Level")
                     }
                     QGCRadioButton {
                         text:           qsTr("AGL")
@@ -126,7 +126,7 @@ Rectangle {
                         checked:        missionItem.altitudeMode === altModeValue
 
                         readonly property int   altModeValue: _altModeAboveTerrain
-                        property string         helpText:     qsTr("Calculated from terrain data\nAbs Alt ") + missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
+                        property string         helpText:     qsTr("Calculated from terrain data\nAMSL Alt ") + missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
                     }
                     QGCRadioButton {
                         text:           qsTr("TerrF")
