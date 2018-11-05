@@ -34,4 +34,7 @@ public:
     static QDomDocument loadFile(const QString& kmlFile, QString& errorString);
     static bool loadPolygonFromFile(const QString& kmlFile, QList<QGeoCoordinate>& vertices, QString& errorString);
     static bool loadPolylineFromFile(const QString& kmlFile, QList<QGeoCoordinate>& coords, QString& errorString);
+
+private:
+    static const char* _errorPrefix;
 };
