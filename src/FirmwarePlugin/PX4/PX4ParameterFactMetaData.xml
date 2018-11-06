@@ -4440,6 +4440,16 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="2">Terrain hold</value>
       </values>
     </parameter>
+    <parameter default="3" name="MPC_AUTO_MODE" type="INT32">
+      <short_desc>Auto sub-mode</short_desc>
+      <long_desc>The supported sub-modes are: 0 Direct line tracking, no smoothing 1 Not used 2 Not used 3 Jerk-limited trajectory</long_desc>
+      <values>
+        <value code="0">Default line tracking</value>
+        <value code="1">N/A</value>
+        <value code="2">N/A</value>
+        <value code="3">Jerk-limited trajectory</value>
+      </values>
+    </parameter>
     <parameter default="3.0" name="MPC_CRUISE_90" type="FLOAT">
       <short_desc>Cruise speed when angle prev-current/current-next setpoint
 is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
@@ -4485,23 +4495,20 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <max>10</max>
       <unit>sec</unit>
     </parameter>
-    <parameter default="0.0" name="MPC_JERK_MAX" type="FLOAT">
-      <short_desc>Maximum jerk in manual controlled mode for BRAKING to zero.
-If this value is below MPC_JERK_MIN, the acceleration limit in xy and z
-is MPC_ACC_HOR_MAX and MPC_ACC_UP_MAX respectively instantaneously when the
-user demands brake (=zero stick input).
-Otherwise the acceleration limit increases from current acceleration limit
-towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
-      <min>0.0</min>
-      <max>15.0</max>
+    <parameter default="20.0" name="MPC_JERK_MAX" type="FLOAT">
+      <short_desc>Maximum jerk limit</short_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
+      <min>0.5</min>
+      <max>500.0</max>
       <unit>m/s/s/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="1.0" name="MPC_JERK_MIN" type="FLOAT">
-      <short_desc>Minimum jerk in manual controlled mode for BRAKING to zero</short_desc>
-      <min>0.5</min>
-      <max>10.0</max>
+    <parameter default="8.0" name="MPC_JERK_MIN" type="FLOAT">
+      <short_desc>Velocity-based jerk limit</short_desc>
+      <long_desc>If this is not zero, a velocity-based maximum jerk limit is used: the applied jerk limit linearly increases with the vehicle's velocity between MPC_JERK_MIN (zero velocity) and MPC_JERK_MAX (maximum velocity). This means that the vehicle's motions are smooth for low velocities, but still allows fast direction changes or breaking at higher velocities. Set this to zero to use a fixed maximum jerk limit (MPC_JERK_MAX). Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
+      <min>0</min>
+      <max>30.0</max>
       <unit>m/s/s/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
@@ -4558,13 +4565,12 @@ Temporary Parameter to enable interface testing</short_desc>
     </parameter>
     <parameter default="1" name="MPC_POS_MODE" type="INT32">
       <short_desc>Manual-Position control sub-mode</short_desc>
-      <long_desc>The supported sub-modes are: 0 Default position control where sticks map to position/velocity directly. Maximum speeds is MPC_VEL_MANUAL. 1 Smooth position control where setpoints are adjusted based on acceleration limits and jerk limits. 2 Sport mode that is the same Default position control but with velocity limits set to the maximum allowed speeds (MPC_XY_VEL_MAX)</long_desc>
-      <min>0</min>
-      <max>2</max>
+      <long_desc>The supported sub-modes are: 0 Default position control where sticks map to position/velocity directly. Maximum speeds is MPC_VEL_MANUAL. 1 Smooth position control where setpoints are adjusted based on acceleration limits and jerk limits. 2 Sport mode that is the same Default position control but with velocity limits set to the maximum allowed speeds (MPC_XY_VEL_MAX) 3 Smooth position control with maximum acceleration and jerk limits (different algorithm than 1).</long_desc>
       <values>
         <value code="0">Default position control</value>
         <value code="1">Smooth position control</value>
         <value code="2">Sport position control</value>
+        <value code="3">Smooth position control (Velocity)</value>
       </values>
     </parameter>
     <parameter default="0" name="MPC_THR_CURVE" type="INT32">
@@ -4670,6 +4676,12 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>2.0</max>
       <decimal>2</decimal>
     </parameter>
+    <parameter default="0.3" name="MPC_XY_TRAJ_P" type="FLOAT">
+      <short_desc>Proportional gain for horizontal trajectory position error</short_desc>
+      <min>0.1</min>
+      <max>5.0</max>
+      <decimal>1</decimal>
+    </parameter>
     <parameter default="0.01" name="MPC_XY_VEL_D" type="FLOAT">
       <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
       <min>0.005</min>
@@ -4717,6 +4729,12 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>1.5</max>
       <decimal>2</decimal>
+    </parameter>
+    <parameter default="0.3" name="MPC_Z_TRAJ_P" type="FLOAT">
+      <short_desc>Proportional gain for vertical trajectory position error</short_desc>
+      <min>0.1</min>
+      <max>5.0</max>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
