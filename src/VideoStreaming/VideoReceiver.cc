@@ -64,6 +64,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _socket(nullptr)
     , _serverPresent(false)
     , _rtspTestInterval_ms(5000)
+    , _udpReconnect_us(5000000)
 #endif
     , _videoSurface(nullptr)
     , _videoRunning(false)
@@ -287,7 +288,7 @@ VideoReceiver::start()
             QUrl url(_uri);
             g_object_set(G_OBJECT(dataSource), "host", qPrintable(url.host()), "port", url.port(), nullptr );
         } else {
-            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", static_cast<guint64>(5000000), NULL);
+            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
         }
 
         // Currently, we expect H264 when using anything except for TCP.  Long term we may want this to be settable

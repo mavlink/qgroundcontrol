@@ -138,6 +138,9 @@ protected:
     bool            _serverPresent;
     int             _rtspTestInterval_ms;
 
+    //-- RTSP UDP reconnect timeout
+    uint64_t        _udpReconnect_us;
+
 #endif
 
     QString         _uri;
