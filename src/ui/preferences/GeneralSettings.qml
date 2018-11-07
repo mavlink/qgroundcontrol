@@ -258,22 +258,6 @@ QGCView {
                                 }
 
                                 FactCheckBox {
-                                    text:       qsTr("Use preflight checklist")
-                                    fact:       _useChecklist
-                                    visible:    _useChecklist.visible
-
-                                    property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
-                                }
-
-                                FactCheckBox {
-                                    text:       qsTr("Virtual Joystick")
-                                    visible:    _virtualJoystick.visible
-                                    fact:       _virtualJoystick
-
-                                    property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
-                                }
-
-                                FactCheckBox {
                                     text:       qsTr("AutoLoad Missions")
                                     fact:       _autoLoad
                                     visible:    _autoLoad.visible
@@ -327,17 +311,6 @@ QGCView {
                                         enabled:                announcePercentCheckbox.checked
                                     }
                                 }
-
-                                RowLayout {
-                                    spacing:    ScreenTools.defaultFontPixelWidth
-                                    visible:    QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude.visible
-
-                                    QGCLabel { text: qsTr("Default Mission Altitude") }
-                                    FactTextField {
-                                        Layout.preferredWidth:  _valueFieldWidth
-                                        fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
-                                    }
-                                }
                             }
                         }
 
@@ -370,6 +343,194 @@ QGCView {
                                     selectFolder:   true
 
                                     onAcceptedForLoad: _savePath.rawValue = file
+                                }
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+
+                    QGCLabel {
+                        id:         flyViewSectionLabel
+                        text:       qsTr("Fly View")
+                        visible:    QGroundControl.settingsManager.flyViewSettings.visible
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: flyViewCol.height + (_margins * 2)
+                        Layout.preferredWidth:  flyViewCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        visible:                flyViewSectionLabel.visible
+                        Layout.fillWidth:       true
+
+                        ColumnLayout {
+                            id:                         flyViewCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins
+
+                            FactCheckBox {
+                                text:       qsTr("Use preflight checklist")
+                                fact:       _useChecklist
+                                visible:    _useChecklist.visible
+
+                                property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Virtual Joystick")
+                                visible:    _virtualJoystick.visible
+                                fact:       _virtualJoystick
+
+                                property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+                            }
+
+                            GridLayout {
+                                columns: 2
+
+                                QGCLabel { text: qsTr("Guided Minimum Altitude") }
+                                FactTextField {
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.guidedMinimumAltitude
+                                }
+
+                                QGCLabel { text: qsTr("Guided Maximum Altitude") }
+                                FactTextField {
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.flyViewSettings.guidedMaximumAltitude
+                                }
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+
+                    QGCLabel {
+                        id:         planViewSectionLabel
+                        text:       qsTr("Plan View")
+                        visible:    QGroundControl.settingsManager.planViewSettings.visible
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: planViewCol.height + (_margins * 2)
+                        Layout.preferredWidth:  planViewCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        visible:                planViewSectionLabel.visible
+                        Layout.fillWidth:       true
+
+                        ColumnLayout {
+                            id:                         planViewCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins
+
+                            RowLayout {
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                visible:    QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude.visible
+
+                                QGCLabel { text: qsTr("Default Mission Altitude") }
+                                FactTextField {
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+                                }
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+
+                    QGCLabel {
+                        id:         autoConnectSectionLabel
+                        text:       qsTr("AutoConnect to the following devices")
+                        visible:    QGroundControl.settingsManager.autoConnectSettings.visible
+                    }
+                    Rectangle {
+                        Layout.preferredWidth:  autoConnectCol.width + (_margins * 2)
+                        Layout.preferredHeight: autoConnectCol.height + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        visible:                autoConnectSectionLabel.visible
+                        Layout.fillWidth:       true
+
+                        ColumnLayout {
+                            id:                 autoConnectCol
+                            anchors.margins:    _margins
+                            anchors.left:       parent.left
+                            anchors.top:        parent.top
+                            spacing:            _margins
+
+                            RowLayout {
+                                spacing: _margins
+
+                                Repeater {
+                                    id:     autoConnectRepeater
+                                    model:  [ QGroundControl.settingsManager.autoConnectSettings.autoConnectPixhawk,
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectSiKRadio,
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow,
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot,
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP,
+                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
+                                    ]
+
+                                    property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("RTK GPS") ]
+
+                                    FactCheckBox {
+                                        text:       autoConnectRepeater.names[index]
+                                        fact:       modelData
+                                        visible:    modelData.visible
+                                    }
+                                }
+                            }
+
+                            GridLayout {
+                                Layout.fillWidth:   false
+                                Layout.alignment:   Qt.AlignHCenter
+                                columns:            2
+                                visible:            !ScreenTools.isMobile
+                                                    && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
+                                                    && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
+
+                                QGCLabel {
+                                    text: qsTr("NMEA GPS Device")
+                                }
+                                QGCComboBox {
+                                    id:                     nmeaPortCombo
+                                    Layout.preferredWidth:  _comboFieldWidth
+
+                                    model:  ListModel {
+                                        ListElement { text: "disabled" }
+                                    }
+
+                                    onActivated: {
+                                        if (index != -1) {
+                                            QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
+                                        }
+                                    }
+                                    Component.onCompleted: {
+                                        for (var i in QGroundControl.linkManager.serialPorts) {
+                                            nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
+                                        }
+                                        var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
+                                        nmeaPortCombo.currentIndex = index;
+                                    }
+                                }
+
+                                QGCLabel {
+                                    text:             qsTr("NMEA GPS Baudrate")
+                                }
+                                QGCComboBox {
+                                    id:                     nmeaBaudCombo
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    model:                  [4800, 9600, 19200, 38400, 57600, 115200]
+
+                                    onActivated: {
+                                        if (index != -1) {
+                                            QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
+                                        }
+                                    }
+                                    Component.onCompleted: {
+                                        var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
+                                        nmeaBaudCombo.currentIndex = index;
+                                    }
                                 }
                             }
                         }
@@ -512,105 +673,6 @@ QGCView {
                                     rtkGrid.rtkSettings.fixedBasePositionLongitude.rawValue =   QGroundControl.gpsRtk.currentLongitude.rawValue
                                     rtkGrid.rtkSettings.fixedBasePositionAltitude.rawValue =    QGroundControl.gpsRtk.currentAltitude.rawValue
                                     rtkGrid.rtkSettings.fixedBasePositionAccuracy.rawValue =    QGroundControl.gpsRtk.currentAccuracy.rawValue
-                                }
-                            }
-                        }
-                    }
-
-                    Item { width: 1; height: _margins }
-
-                    QGCLabel {
-                        id:         autoConnectSectionLabel
-                        text:       qsTr("AutoConnect to the following devices")
-                        visible:    QGroundControl.settingsManager.autoConnectSettings.visible
-                    }
-                    Rectangle {
-                        Layout.preferredWidth:  autoConnectCol.width + (_margins * 2)
-                        Layout.preferredHeight: autoConnectCol.height + (_margins * 2)
-                        color:                  qgcPal.windowShade
-                        visible:                autoConnectSectionLabel.visible
-                        Layout.fillWidth:       true
-
-                        ColumnLayout {
-                            id:                 autoConnectCol
-                            anchors.margins:    _margins
-                            anchors.left:       parent.left
-                            anchors.top:        parent.top
-                            spacing:            _margins
-
-                            RowLayout {
-                                spacing: _margins
-
-                                Repeater {
-                                    id:     autoConnectRepeater
-                                    model:  [ QGroundControl.settingsManager.autoConnectSettings.autoConnectPixhawk,
-                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectSiKRadio,
-                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectPX4Flow,
-                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectLibrePilot,
-                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectUDP,
-                                        QGroundControl.settingsManager.autoConnectSettings.autoConnectRTKGPS
-                                    ]
-
-                                    property var names: [ qsTr("Pixhawk"), qsTr("SiK Radio"), qsTr("PX4 Flow"), qsTr("LibrePilot"), qsTr("UDP"), qsTr("RTK GPS") ]
-
-                                    FactCheckBox {
-                                        text:       autoConnectRepeater.names[index]
-                                        fact:       modelData
-                                        visible:    modelData.visible
-                                    }
-                                }
-                            }
-
-                            GridLayout {
-                                Layout.fillWidth:   false
-                                Layout.alignment:   Qt.AlignHCenter
-                                columns:            2
-                                visible:            !ScreenTools.isMobile
-                                                    && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.visible
-                                                    && QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.visible
-
-                                QGCLabel {
-                                    text: qsTr("NMEA GPS Device")
-                                }
-                                QGCComboBox {
-                                    id:                     nmeaPortCombo
-                                    Layout.preferredWidth:  _comboFieldWidth
-
-                                    model:  ListModel {
-                                        ListElement { text: "disabled" }
-                                    }
-
-                                    onActivated: {
-                                        if (index != -1) {
-                                            QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.value = textAt(index);
-                                        }
-                                    }
-                                    Component.onCompleted: {
-                                        for (var i in QGroundControl.linkManager.serialPorts) {
-                                            nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
-                                        }
-                                        var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
-                                        nmeaPortCombo.currentIndex = index;
-                                    }
-                                }
-
-                                QGCLabel {
-                                    text:             qsTr("NMEA GPS Baudrate")
-                                }
-                                QGCComboBox {
-                                    id:                     nmeaBaudCombo
-                                    Layout.preferredWidth:  _comboFieldWidth
-                                    model:                  [4800, 9600, 19200, 38400, 57600, 115200]
-
-                                    onActivated: {
-                                        if (index != -1) {
-                                            QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.value = textAt(index);
-                                        }
-                                    }
-                                    Component.onCompleted: {
-                                        var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
-                                        nmeaBaudCombo.currentIndex = index;
-                                    }
                                 }
                             }
                         }
