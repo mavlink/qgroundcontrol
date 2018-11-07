@@ -32,8 +32,8 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 //-----------------------------------------------------------------------------
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _videoReceiver(NULL)
-    , _videoSettings(NULL)
+    , _videoReceiver(nullptr)
+    , _videoSettings(nullptr)
     , _fullScreen(false)
 {
 }

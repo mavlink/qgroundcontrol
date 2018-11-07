@@ -44,7 +44,7 @@ public:
     Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
 
-    explicit VideoReceiver(QObject* parent = 0);
+    explicit VideoReceiver(QObject* parent = nullptr);
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
