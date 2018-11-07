@@ -20,7 +20,6 @@
 #include <QPolygonF>
 
 QGC_LOGGING_CATEGORY(SurveyComplexItemLog, "SurveyComplexItemLog")
-QGC_LOGGING_CATEGORY(PolygonDecomposeLog, "PolygonDecomposeLog")
 
 const char* SurveyComplexItem::jsonComplexItemTypeValue =   "survey";
 const char* SurveyComplexItem::jsonV3ComplexItemTypeValue = "survey";
@@ -1344,9 +1343,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSplitPolygons(bool refly)
 
     // Create list of separate polygons
     QList<QPolygonF> polygons{};
-    qCDebug(PolygonDecomposeLog) << "*********_PolygonDecomposeConvex begin of recursion**************";
     _PolygonDecomposeConvex(polygon, polygons);
-    qCDebug(PolygonDecomposeLog) << "polygons.size() " << polygons.size() ;
 
     // iterate over polygons
     for (auto p = polygons.begin(); p != polygons.end(); ++p) {
@@ -1363,7 +1360,6 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSplitPolygons(bool refly)
                    if (vMatch) break;
                 }
             }
-            if (nullptr == vMatch) qCDebug(PolygonDecomposeLog) << "no match found";
 
         }
 
@@ -1380,12 +1376,11 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSplitPolygons(bool refly)
 
 void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons)
 {
-//    qCDebug(SurveyComplexItemLog) << "_PolygonDecomposeConvex polygon.size() " << polygon.size();
+	// this follows "Mark Keil's Algorithm" https://mpen.ca/406/keil
     int decompSize = std::numeric_limits<int>::max();
     if (polygon.size() < 3) return;
     if (polygon.size() == 3) {
         decomposedPolygons << polygon;
-//        qCDebug(PolygonDecomposeLog) << polygon << " polygon of 3";
         return;
     }
 
@@ -1395,7 +1390,6 @@ void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<
     {
         // is vertex reflex?
         bool vertexIsReflex = _VertexIsReflex(polygon, vertex);
-//        qCDebug(SurveyComplexItemLog) << "area " << area << " vertexIsReflex " << vertexIsReflex;
 
         if (!vertexIsReflex) continue;
 
@@ -1407,7 +1401,6 @@ void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<
             if (vertexAfter == vertexOther) continue;
             if (vertexBefore == vertexOther) continue;
             bool canSee = _VertexCanSeeOther(polygon, vertex, vertexOther);
-//            qCDebug(SurveyComplexItemLog) << "canSee " << canSee;
             if (!canSee) continue;
 
             QPolygonF polyLeft;
@@ -1445,11 +1438,9 @@ void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<
 
             // recursion
             QList<QPolygonF> polyLeftDecomposed{};
-//            qCDebug(PolygonDecomposeLog) << " polyLeft "<< polyLeft;
             _PolygonDecomposeConvex(polyLeft, polyLeftDecomposed);
 
             QList<QPolygonF> polyRightDecomposed{};
-//            qCDebug(PolygonDecomposeLog) << " polyRight "<< polyRight;
             _PolygonDecomposeConvex(polyRight, polyRightDecomposed);
 
             // compositon
@@ -1463,13 +1454,6 @@ void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<
             if (subSize < decompSize) {
                 decompSize = subSize;
                 decomposedPolygonsMin = polyLeftDecomposed + polyRightDecomposed;
-//            qCDebug(PolygonDecomposeLog) << "_PolygonDecomposeConvex polygon " << polygon;
-//            qCDebug(PolygonDecomposeLog) << "polyLeft.size() " << polyLeft.size() << " polyRight.size() " << polyRight.size() << " out of " << polygon.size();
-//            qCDebug(PolygonDecomposeLog) << "vertex " << *vertex << " vertexOther " << *vertexOther << " vertexAfter " << *vertexAfter << " vertexBefore " << *vertexBefore;
-//            qCDebug(SurveyComplexItemLog) << "changing decomposedPolygonsMin";
-            }
-            else {
-//                qCDebug(SurveyComplexItemLog) << "NOT changing decomposedPolygonsMin";
             }
         }
 
@@ -1477,13 +1461,9 @@ void SurveyComplexItem::_PolygonDecomposeConvex(const QPolygonF& polygon, QList<
 
     // assemble output
     if (decomposedPolygonsMin.size() > 0) {
-//        qCDebug(SurveyComplexItemLog) << "use decomposed polygon, decomposedPolygonsMin.size() " << decomposedPolygonsMin.size();
         decomposedPolygons << decomposedPolygonsMin;
-//        qCDebug(PolygonDecomposeLog) << decomposedPolygonsMin;
     } else {
-//        qCDebug(SurveyComplexItemLog) << "use default polygon";
         decomposedPolygons << polygon;
-//        qCDebug(PolygonDecomposeLog) << polygon << " empty polygon";
     }
 
     return;
