@@ -717,9 +717,7 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
     int currType = vehicle->firmwareVersionType();
 
     // Check if lower version than stable or same version but different type
-    if (vehicle->versionCompare(version) < 0
-       || (vehicle->versionCompare(version) == 0 && currType != FIRMWARE_VERSION_TYPE_OFFICIAL))
-    {
+    if (currType == FIRMWARE_VERSION_TYPE_OFFICIAL && vehicle->versionCompare(version) < 0) {
         const static QString currentVersion = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
                                                                  .arg(vehicle->firmwareMinorVersion())
                                                                  .arg(vehicle->firmwarePatchVersion());
