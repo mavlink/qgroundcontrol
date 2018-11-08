@@ -9,6 +9,7 @@ import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 import QGroundControl.Controls      1.0
+import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.FlightMap     1.0
@@ -117,6 +118,13 @@ Rectangle {
                 Layout.columnSpan:  2
                 text:               qsTr("Rotate Entry Point")
                 onClicked:          missionItem.rotateEntryPoint();
+            }
+
+            FactCheckBox {
+                text:       qsTr("Split concave polygons")
+                fact:       _splitConcave
+                visible:    _splitConcave.visible
+                property Fact _splitConcave: missionItem.splitConcavePolygons
             }
 
             FactCheckBox {

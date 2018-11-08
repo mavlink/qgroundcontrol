@@ -18,7 +18,7 @@ class AppSettings : public SettingsGroup
     Q_OBJECT
     
 public:
-    AppSettings(QObject* parent = NULL);
+    AppSettings(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* offlineEditingFirmwareType         READ offlineEditingFirmwareType         CONSTANT)
     Q_PROPERTY(Fact* offlineEditingVehicleType          READ offlineEditingVehicleType          CONSTANT)
@@ -87,8 +87,8 @@ public:
     QString parameterSavePath   (void);
     QString telemetrySavePath   (void);
     QString logSavePath         (void);
-    QString videoSavePath         (void);
-    QString crashSavePath         (void);
+    QString videoSavePath       (void);
+    QString crashSavePath       (void);
 
     static MAV_AUTOPILOT offlineEditingFirmwareTypeFromFirmwareType(MAV_AUTOPILOT firmwareType);
     static MAV_TYPE offlineEditingVehicleTypeFromVehicleType(MAV_TYPE vehicleType);
