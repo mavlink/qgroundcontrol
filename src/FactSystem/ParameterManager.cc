@@ -351,7 +351,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
             // When we are getting the very last component param index, reset the group maps to update for the
             // new params. By handling this here, we can pick up components which finish up later than the default
             // component param set.
-            _setupCategoryMap();
+            _setupDefaultComponentCategoryMap();
         }
     }
 
@@ -529,20 +529,20 @@ QStringList ParameterManager::parameterNames(int componentId)
     return names;
 }
 
-void ParameterManager::_setupCategoryMap(void)
+void ParameterManager::_setupDefaultComponentCategoryMap(void)
 {
     // Must be able to handle being called multiple times
-    _categoryMap.clear();
+    _defaultComponentCategoryMap.clear();
 
     for (const QString &name: _mapParameterName2Variant[_vehicle->defaultComponentId()].keys()) {
         Fact* fact = _mapParameterName2Variant[_vehicle->defaultComponentId()][name].value<Fact*>();
-        _categoryMap[fact->category()][fact->group()] += name;
+        _defaultComponentCategoryMap[fact->category()][fact->group()] += name;
     }
 }
 
-const QMap<QString, QMap<QString, QStringList> >& ParameterManager::getCategoryMap(void)
+const QMap<QString, QMap<QString, QStringList> >& ParameterManager::getDefaultComponentCategoryMap(void)
 {
-    return _categoryMap;
+    return _defaultComponentCategoryMap;
 }
 
 /// Requests missing index based parameters from the vehicle.
@@ -1433,7 +1433,7 @@ void ParameterManager::_loadOfflineEditingParams(void)
     }
 
     _addMetaDataToDefaultComponent();
-    _setupCategoryMap();
+    _setupDefaultComponentCategoryMap();
     _parametersReady = true;
     _initialLoadComplete = true;
     _debugCacheCRC.clear();
@@ -1566,4 +1566,9 @@ void ParameterManager::_setLoadProgress(double loadProgress)
 {
     _loadProgress = loadProgress;
     emit loadProgressChanged(loadProgress);
+}
+
+QList<int> ParameterManager::componentIds(void)
+{
+    return _paramCountMap.keys();
 }

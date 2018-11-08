@@ -216,8 +216,8 @@ private:
     bool    _inNSH;
     bool    _mavlinkStarted;
 
-    QMap<int, QMap<QString, QVariant> > _mapParamName2Value;
-    QMap<QString, MAV_PARAM_TYPE>       _mapParamName2MavParamType;
+    QMap<int, QMap<QString, QVariant>>          _mapParamName2Value;
+    QMap<int, QMap<QString, MAV_PARAM_TYPE>>    _mapParamName2MavParamType;
 
     uint8_t     _mavBaseMode;
     uint32_t    _mavCustomMode;
