@@ -28,9 +28,11 @@ public:
 
     Q_PROPERTY(Fact* gridAngle              READ gridAngle              CONSTANT)
     Q_PROPERTY(Fact* flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
+    Q_PROPERTY(Fact* splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
 
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
+    Fact* splitConcavePolygons  (void) { return &_splitConcavePolygonsFact; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -66,6 +68,7 @@ public:
     static const char* gridAngleName;
     static const char* gridEntryLocationName;
     static const char* flyAlternateTransectsName;
+    static const char* splitConcavePolygonsName;
 
     static const char* jsonV3ComplexItemTypeValue;
 
@@ -125,11 +128,13 @@ private:
 
     SettingsFact    _gridAngleFact;
     SettingsFact    _flyAlternateTransectsFact;
+    SettingsFact    _splitConcavePolygonsFact;
     int             _entryPoint;
 
     static const char* _jsonGridAngleKey;
     static const char* _jsonEntryPointKey;
     static const char* _jsonFlyAlternateTransectsKey;
+    static const char* _jsonSplitConcavePolygonsKey;
 
     static const char* _jsonV3GridObjectKey;
     static const char* _jsonV3GridAltitudeKey;

@@ -41,7 +41,6 @@ const char* AppSettings::esriTokenName =                                "EsriTok
 const char* AppSettings::defaultFirmwareTypeName =                      "DefaultFirmwareType";
 const char* AppSettings::gstDebugName =                                 "GstreamerDebugLevel";
 const char* AppSettings::followTargetName =                             "FollowTarget";
-const char* AppSettings::splitConcavePolygonsName =                     "SplitConcavePolygons";
 
 const char* AppSettings::parameterFileExtension =   "params";
 const char* AppSettings::planFileExtension =        "plan";
@@ -62,30 +61,29 @@ const char* AppSettings::crashDirectory =           "CrashLogs";
 
 AppSettings::AppSettings(QObject* parent)
     : SettingsGroup                         (name, settingsGroup, parent)
-    , _offlineEditingFirmwareTypeFact       (NULL)
-    , _offlineEditingVehicleTypeFact        (NULL)
-    , _offlineEditingCruiseSpeedFact        (NULL)
-    , _offlineEditingHoverSpeedFact         (NULL)
-    , _offlineEditingAscentSpeedFact        (NULL)
-    , _offlineEditingDescentSpeedFact       (NULL)
-    , _batteryPercentRemainingAnnounceFact  (NULL)
-    , _defaultMissionItemAltitudeFact       (NULL)
-    , _telemetrySaveFact                    (NULL)
-    , _telemetrySaveNotArmedFact            (NULL)
-    , _audioMutedFact                       (NULL)
-    , _virtualJoystickFact                  (NULL)
-    , _appFontPointSizeFact                 (NULL)
-    , _indoorPaletteFact                    (NULL)
-    , _showLargeCompassFact                 (NULL)
-    , _savePathFact                         (NULL)
-    , _autoLoadMissionsFact                 (NULL)
-    , _useChecklistFact                     (NULL)
-    , _mapboxTokenFact                      (NULL)
-    , _esriTokenFact                        (NULL)
-    , _defaultFirmwareTypeFact              (NULL)
-    , _gstDebugFact                         (NULL)
-    , _followTargetFact                     (NULL)
-    , _splitConcavePolygonsFact             (NULL)
+    , _offlineEditingFirmwareTypeFact       (nullptr)
+    , _offlineEditingVehicleTypeFact        (nullptr)
+    , _offlineEditingCruiseSpeedFact        (nullptr)
+    , _offlineEditingHoverSpeedFact         (nullptr)
+    , _offlineEditingAscentSpeedFact        (nullptr)
+    , _offlineEditingDescentSpeedFact       (nullptr)
+    , _batteryPercentRemainingAnnounceFact  (nullptr)
+    , _defaultMissionItemAltitudeFact       (nullptr)
+    , _telemetrySaveFact                    (nullptr)
+    , _telemetrySaveNotArmedFact            (nullptr)
+    , _audioMutedFact                       (nullptr)
+    , _virtualJoystickFact                  (nullptr)
+    , _appFontPointSizeFact                 (nullptr)
+    , _indoorPaletteFact                    (nullptr)
+    , _showLargeCompassFact                 (nullptr)
+    , _savePathFact                         (nullptr)
+    , _autoLoadMissionsFact                 (nullptr)
+    , _useChecklistFact                     (nullptr)
+    , _mapboxTokenFact                      (nullptr)
+    , _esriTokenFact                        (nullptr)
+    , _defaultFirmwareTypeFact              (nullptr)
+    , _gstDebugFact                         (nullptr)
+    , _followTargetFact                     (nullptr)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
@@ -429,13 +427,3 @@ Fact* AppSettings::followTarget(void)
 
     return _followTargetFact;
 }
-
-Fact* AppSettings::splitConcavePolygons(void)
-{
-    if (!_splitConcavePolygonsFact) {
-        _splitConcavePolygonsFact = _createSettingsFact(splitConcavePolygonsName);
-    }
-
-    return _splitConcavePolygonsFact;
-}
-

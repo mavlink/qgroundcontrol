@@ -28,6 +28,7 @@ const char* SurveyComplexItem::settingsGroup =              "Survey";
 const char* SurveyComplexItem::gridAngleName =              "GridAngle";
 const char* SurveyComplexItem::gridEntryLocationName =      "GridEntryLocation";
 const char* SurveyComplexItem::flyAlternateTransectsName =  "FlyAlternateTransects";
+const char* SurveyComplexItem::splitConcavePolygonsName =   "SplitConcavePolygons";
 
 const char* SurveyComplexItem::_jsonGridAngleKey =          "angle";
 const char* SurveyComplexItem::_jsonEntryPointKey =         "entryLocation";
@@ -58,12 +59,14 @@ const char* SurveyComplexItem::_jsonV3CameraOrientationLandscapeKey =   "orienta
 const char* SurveyComplexItem::_jsonV3FixedValueIsAltitudeKey =         "fixedValueIsAltitude";
 const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90Degrees";
 const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
+const char* SurveyComplexItem::_jsonSplitConcavePolygonsKey =           "splitConcavePolygons";
 
 SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
     : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
     , _flyAlternateTransectsFact(settingsGroup, _metaDataMap[flyAlternateTransectsName])
+    , _splitConcavePolygonsFact (settingsGroup, _metaDataMap[splitConcavePolygonsName])
     , _entryPoint               (EntryLocationTopLeft)
 {
     _editorQml = "qrc:/qml/SurveyItemEditor.qml";
@@ -82,13 +85,13 @@ SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, const QStri
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
     connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
+    connect(&_splitConcavePolygonsFact, &Fact::valueChanged,                        this, &SurveyComplexItem::_setDirty);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_setDirty);
 
     connect(&_gridAngleFact,            &Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
     connect(&_flyAlternateTransectsFact,&Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
+    connect(&_splitConcavePolygonsFact, &Fact::valueChanged,                        this, &SurveyComplexItem::_rebuildTransects);
     connect(this,                       &SurveyComplexItem::refly90DegreesChanged,  this, &SurveyComplexItem::_rebuildTransects);
-
-    connect(qgcApp()->toolbox()->settingsManager()->appSettings()->splitConcavePolygons(), &Fact::valueChanged, this, &SurveyComplexItem::_rebuildTransects);
 
     // FIXME: Shouldn't these be in TransectStyleComplexItem? They are also in CorridorScanComplexItem constructur
     connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::coordinateHasRelativeAltitudeChanged);
@@ -112,6 +115,7 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[_jsonGridAngleKey] =                             _gridAngleFact.rawValue().toDouble();
     saveObject[_jsonFlyAlternateTransectsKey] =                 _flyAlternateTransectsFact.rawValue().toBool();
+    saveObject[_jsonSplitConcavePolygonsKey] =                  _splitConcavePolygonsFact.rawValue().toBool();
     saveObject[_jsonEntryPointKey] =                            _entryPoint;
 
     // Polygon shape
@@ -168,6 +172,7 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
         { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { _jsonGridAngleKey,                            QJsonValue::Double, true },
         { _jsonFlyAlternateTransectsKey,                QJsonValue::Bool,   false },
+        { _jsonSplitConcavePolygonsKey,                 QJsonValue::Bool,   false },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
@@ -196,6 +201,7 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
 
     _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
     _flyAlternateTransectsFact.setRawValue  (complexObject[_jsonFlyAlternateTransectsKey].toBool(false));
+    _splitConcavePolygonsFact.setRawValue   (complexObject[_jsonSplitConcavePolygonsKey].toBool(true));
 
     _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 
@@ -1062,7 +1068,7 @@ bool SurveyComplexItem::_hoverAndCaptureEnabled(void) const
 
 void SurveyComplexItem::_rebuildTransectsPhase1(void)
 {
-	bool split = qgcApp()->toolbox()->settingsManager()->appSettings()->splitConcavePolygons()->rawValue().toBool();
+    bool split = splitConcavePolygons()->rawValue().toBool();
 	if (split) {
 		_rebuildTransectsPhase1WorkerSplitPolygons(false /* refly */);
 	} else {
@@ -1087,7 +1093,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
     if (_loadedMissionItemsParent) {
         _loadedMissionItems.clear();
         _loadedMissionItemsParent->deleteLater();
-        _loadedMissionItemsParent = NULL;
+        _loadedMissionItemsParent = nullptr;
     }
 
     // First pass will clear old transect data, refly will append to existing data
@@ -1260,7 +1266,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSinglePolygon(bool refly)
             double transectLength = transect[0].distanceTo(transect[1]);
             double transectAzimuth = transect[0].azimuthTo(transect[1]);
             if (triggerDistance() < transectLength) {
-                int cInnerHoverPoints = floor(transectLength / triggerDistance());
+                int cInnerHoverPoints = static_cast<int>(floor(transectLength / triggerDistance()));
                 qCDebug(SurveyComplexItemLog) << "cInnerHoverPoints" << cInnerHoverPoints;
                 for (int i=0; i<cInnerHoverPoints; i++) {
                     QGeoCoordinate hoverCoord = transect[0].atDistanceAndAzimuth(triggerDistance() * (i + 1), transectAzimuth);
@@ -1303,7 +1309,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSplitPolygons(bool refly)
     if (_loadedMissionItemsParent) {
         _loadedMissionItems.clear();
         _loadedMissionItemsParent->deleteLater();
-        _loadedMissionItemsParent = NULL;
+        _loadedMissionItemsParent = nullptr;
     }
 
     // First pass will clear old transect data, refly will append to existing data
@@ -1669,7 +1675,7 @@ void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly, const QPolygonF
             double transectLength = transect[0].distanceTo(transect[1]);
             double transectAzimuth = transect[0].azimuthTo(transect[1]);
             if (triggerDistance() < transectLength) {
-                int cInnerHoverPoints = floor(transectLength / triggerDistance());
+                int cInnerHoverPoints = static_cast<int>(floor(transectLength / triggerDistance()));
                 qCDebug(SurveyComplexItemLog) << "cInnerHoverPoints" << cInnerHoverPoints;
                 for (int i=0; i<cInnerHoverPoints; i++) {
                     QGeoCoordinate hoverCoord = transect[0].atDistanceAndAzimuth(triggerDistance() * (i + 1), transectAzimuth);

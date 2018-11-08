@@ -199,12 +199,5 @@
     "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
     "enumValues":       "0,1,2",
     "defaultValue":     0
-},
-{
-    "name":             "SplitConcavePolygons",
-    "shortDescription": "Split mission concave polygons",
-    "longDescription":  "Split mission concave polygons into separate regular, convex polygons",
-    "type":             "bool",
-    "defaultValue":     false
 }
 ]
