@@ -3,6 +3,7 @@
         <file alias="APMAirframeComponent.qml">../../AutoPilotPlugins/APM/APMAirframeComponent.qml</file>
         <file alias="APMAirframeComponentSummary.qml">../../AutoPilotPlugins/APM/APMAirframeComponentSummary.qml</file>
         <file alias="APMCameraComponent.qml">../../AutoPilotPlugins/APM/APMCameraComponent.qml</file>
+        <file alias="APMCameraSubComponent.qml">../../AutoPilotPlugins/APM/APMCameraSubComponent.qml</file>
         <file alias="APMCameraComponentSummary.qml">../../AutoPilotPlugins/APM/APMCameraComponentSummary.qml</file>
         <file alias="APMFlightModesComponent.qml">../../AutoPilotPlugins/APM/APMFlightModesComponent.qml</file>
         <file alias="APMFlightModesComponentSummary.qml">../../AutoPilotPlugins/APM/APMFlightModesComponentSummary.qml</file>
