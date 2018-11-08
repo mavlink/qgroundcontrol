@@ -124,7 +124,7 @@ Rectangle {
                 text:       qsTr("Split concave polygons")
                 fact:       _splitConcave
                 visible:    _splitConcave.visible
-                property Fact _splitConcave: QGroundControl.settingsManager.appSettings.splitConcavePolygons
+                property Fact _splitConcave: missionItem.splitConcavePolygons
             }
 
             FactCheckBox {

@@ -18,7 +18,7 @@ class AppSettings : public SettingsGroup
     Q_OBJECT
     
 public:
-    AppSettings(QObject* parent = NULL);
+    AppSettings(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* offlineEditingFirmwareType         READ offlineEditingFirmwareType         CONSTANT)
     Q_PROPERTY(Fact* offlineEditingVehicleType          READ offlineEditingVehicleType          CONSTANT)
@@ -43,7 +43,6 @@ public:
     Q_PROPERTY(Fact* defaultFirmwareType                READ defaultFirmwareType                CONSTANT)
     Q_PROPERTY(Fact* gstDebug                           READ gstDebug                           CONSTANT)
     Q_PROPERTY(Fact* followTarget                       READ followTarget                       CONSTANT)
-    Q_PROPERTY(Fact* splitConcavePolygons               READ splitConcavePolygons               CONSTANT)
 
     Q_PROPERTY(QString missionSavePath      READ missionSavePath    NOTIFY savePathsChanged)
     Q_PROPERTY(QString parameterSavePath    READ parameterSavePath  NOTIFY savePathsChanged)
@@ -83,7 +82,6 @@ public:
     Fact* defaultFirmwareType               (void);
     Fact* gstDebug                          (void);
     Fact* followTarget                      (void);
-    Fact* splitConcavePolygons              (void);
 
     QString missionSavePath     (void);
     QString parameterSavePath   (void);
@@ -121,7 +119,6 @@ public:
     static const char* defaultFirmwareTypeName;
     static const char* gstDebugName;
     static const char* followTargetName;
-    static const char* splitConcavePolygonsName;
 
     // Application wide file extensions
     static const char* parameterFileExtension;
@@ -173,7 +170,6 @@ private:
     SettingsFact* _defaultFirmwareTypeFact;
     SettingsFact* _gstDebugFact;
     SettingsFact* _followTargetFact;
-    SettingsFact* _splitConcavePolygonsFact;
 };
 
 #endif
