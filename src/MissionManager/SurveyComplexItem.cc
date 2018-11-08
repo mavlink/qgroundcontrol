@@ -110,7 +110,7 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
 
     _save(saveObject);
 
-    saveObject[JsonHelper::jsonVersionKey] =                    4;
+    saveObject[JsonHelper::jsonVersionKey] =                    5;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
     saveObject[ComplexMissionItem::jsonComplexItemTypeKey] =    jsonComplexItemTypeValue;
     saveObject[_jsonGridAngleKey] =                             _gridAngleFact.rawValue().toDouble();
@@ -135,13 +135,13 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
     }
 
     int version = complexObject[JsonHelper::jsonVersionKey].toInt();
-    if (version < 2 || version > 4) {
+    if (version < 2 || version > 5) {
         errorString = tr("Survey items do not support version %1").arg(version);
         return false;
     }
 
-    if (version == 4) {
-        if (!_loadV4(complexObject, sequenceNumber, errorString)) {
+    if (version == 4 || version == 5) {
+        if (!_loadV4V5(complexObject, sequenceNumber, errorString, version)) {
             return false;
         }
     } else {
@@ -164,7 +164,7 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
     return true;
 }
 
-bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
+bool SurveyComplexItem::_loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version)
 {
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
@@ -172,8 +172,13 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
         { _jsonEntryPointKey,                           QJsonValue::Double, true },
         { _jsonGridAngleKey,                            QJsonValue::Double, true },
         { _jsonFlyAlternateTransectsKey,                QJsonValue::Bool,   false },
-        { _jsonSplitConcavePolygonsKey,                 QJsonValue::Bool,   false },
     };
+
+    if(version == 5) {
+        JsonHelper::KeyValidateInfo jSplitPolygon = { _jsonSplitConcavePolygonsKey, QJsonValue::Bool, true };
+        keyInfoList.append(jSplitPolygon);
+    }
+
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
         return false;
     }
@@ -201,7 +206,10 @@ bool SurveyComplexItem::_loadV4(const QJsonObject& complexObject, int sequenceNu
 
     _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
     _flyAlternateTransectsFact.setRawValue  (complexObject[_jsonFlyAlternateTransectsKey].toBool(false));
-    _splitConcavePolygonsFact.setRawValue   (complexObject[_jsonSplitConcavePolygonsKey].toBool(true));
+
+    if(version == 5) {
+        _splitConcavePolygonsFact.setRawValue   (complexObject[_jsonSplitConcavePolygonsKey].toBool(true));
+    }
 
     _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 

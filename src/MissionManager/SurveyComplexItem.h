@@ -112,7 +112,7 @@ private:
     double _turnaroundDistance(void) const;
     bool _hoverAndCaptureEnabled(void) const;
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
-    bool _loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
+    bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version);
     void _rebuildTransectsPhase1Worker(bool refly);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
     void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
