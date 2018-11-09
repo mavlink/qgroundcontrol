@@ -189,6 +189,10 @@ VideoReceiver::_timeout()
         //   attempting a connection on this timer. Once a connection is
         //   found to be working, only then we actually start the stream.
         QUrl url(_uri);
+        //-- If RTSP and no port is defined, set default RTSP port (554)
+        if(_uri.contains("rtsp://") && url.port() <= 0) {
+            url.setPort(554);
+        }
         _socket = new QTcpSocket;
         QNetworkProxy tempProxy;
         tempProxy.setType(QNetworkProxy::DefaultProxy);
