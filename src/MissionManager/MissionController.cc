@@ -428,16 +428,16 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     return _insertComplexMissionItemWorker(newItem, i);
 }
 
-int MissionController::insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i)
+int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i)
 {
     ComplexMissionItem* newItem;
 
     if (itemName == _surveyMissionItemName) {
-        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else if (itemName == _structureScanMissionItemName) {
-        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else if (itemName == _corridorScanMissionItemName) {
-        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
         return _nextSequenceNumber();

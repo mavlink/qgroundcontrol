@@ -87,7 +87,7 @@
 #include "VisualMissionItem.h"
 #include "EditPositionDialogController.h"
 #include "FactValueSliderListModel.h"
-#include "KMLFileHelper.h"
+#include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
 
 #ifndef NO_SERIAL_LINK
@@ -145,9 +145,9 @@ static QObject* qgroundcontrolQmlGlobalSingletonFactory(QQmlEngine*, QJSEngine*)
     return qmlGlobal;
 }
 
-static QObject* kmlFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
+static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 {
-    return new KMLFileHelper;
+    return new ShapeFileHelper;
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
@@ -440,7 +440,7 @@ void QGCApplication::_initCommon(void)
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
     qmlRegisterSingletonType<ScreenToolsController>     ("QGroundControl.ScreenToolsController",    1, 0, "ScreenToolsController",  screenToolsControllerSingletonFactory);
-    qmlRegisterSingletonType<KMLFileHelper>             ("QGroundControl.KMLFileHelper",            1, 0, "KMLFileHelper",          kmlFileHelperSingletonFactory);
+    qmlRegisterSingletonType<ShapeFileHelper>           ("QGroundControl.ShapeFileHelper",          1, 0, "ShapeFileHelper",        shapeFileHelperSingletonFactory);
 }
 
 bool QGCApplication::_initForNormalAppBoot(void)

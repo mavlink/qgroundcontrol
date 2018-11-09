@@ -1,0 +1,71 @@
+
+
+shpproj
+
+
+
+using the projection tools  proj and invproj
+we have implemented a shapefile projection utility
+
+shpproj shp_file new_shp ( -i=in_proj_file | -i="in_params" | -i=geographic ) ( -o=out_info_file | -o="out_params" | -o=geographic ) 
+
+INPUT
+  Input can come from one of three sources.  A projection parameter file, 
+  directly through parameters or geographic. If the shapefile has an associated
+  prj file, name the same as the shapefile but ending in ".prj" it will be used
+  by default ignoring all other parameters.  If input is omitted it defaults to
+  geographic, unless the default prj file exists..
+
+OUTPUT
+  Output can come from one of three sources.  A projection parameter file,
+  directly through parameters or geographic.  If output is omitted it defaults
+  to geographic.
+
+PROJECTION PARAMETER FILE
+  This file MUST end with the extension ".prj".  It has the form of one
+  projection parameter per line.  Parameters can be in any order. 
+
+PROJECTION PARAMETERS
+  Are the same as used by proj and invproj.
+  use      proj -lP   to see available projections
+	   proj -lu   to see available units
+	   proj -le   to see available ellipsoid
+
+
+USAGE
+
+the following example projects file rowtest to row3, moving data from Stateplane NAD83  zone 1002 to utm zone 16 in meters
+ 
+shpproj rowtest row -i="init=nad83:1002 units=us-ft" -o="proj=utm zone=16 units=m"
+
+shpproj rowtest row3 -o="proj=utm zone=18 units=m" -i="zone=16 proj=utm units=us-ft"
+
+shpproj rowtest row3 -o="proj=utm zone=18 units=m" 
+
+shpproj rowtest row3 -i=myfile.prj -o=geographic
+shpproj rowtest row3 -is=myfile.prj
+
+
+Datums
+Stateplane data can be accessed by the init function
+	init=nad83:1003
+which is of the form 
+             datum:FIPSzone
+
+To move from NAD27 to NAD83 or otherwise the shpproj utility moves to 
+geographic coordinates and the back to the desired datum.  proj can handle 
+direct datum to datum conversions but it is umimplemented here.
+
+for a complete listing of FIPSZones by datum read nad/nad.lst in the PROJ4
+library
+
+
+CAUTION
+
+It is possible to get very poor results for projection values when using 
+coordinates VERY far away from the intended scope of the projection.
+
+An example of a poor projection choice would be to move from nad83:1002
+(Georgia West) for data in California into utm.  The resulting data will be
+much less accurate than if it had started as geographic.
+

@@ -31,7 +31,7 @@ const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureSc
 const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
 const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =    "altitudeRelative";
 
-StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
+StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrShpFile, QObject* parent)
     : ComplexMissionItem        (vehicle, flyView, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
@@ -83,8 +83,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
 
     _recalcLayerInfo();
 
-    if (!kmlFile.isEmpty()) {
-        _structurePolygon.loadKMLFile(kmlFile);
+    if (!kmlOrShpFile.isEmpty()) {
+        _structurePolygon.loadKMLOrSHPFile(kmlOrShpFile);
         _structurePolygon.setDirty(false);
     }
 
