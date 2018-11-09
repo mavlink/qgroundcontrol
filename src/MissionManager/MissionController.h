@@ -119,9 +119,10 @@ public:
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param file: kml or shp file to load from shape from
     ///     @param i: index to insert at, -1 for end
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i);
+    Q_INVOKABLE int insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 

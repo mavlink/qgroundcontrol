@@ -61,7 +61,7 @@ const char* SurveyComplexItem::_jsonV3Refly90DegreesKey =               "refly90
 const char* SurveyComplexItem::_jsonFlyAlternateTransectsKey =          "flyAlternateTransects";
 const char* SurveyComplexItem::_jsonSplitConcavePolygonsKey =           "splitConcavePolygons";
 
-SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
+SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrShpFile, QObject* parent)
     : TransectStyleComplexItem  (vehicle, flyView, settingsGroup, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/Survey.SettingsGroup.json"), this))
     , _gridAngleFact            (settingsGroup, _metaDataMap[gridAngleName])
@@ -97,8 +97,8 @@ SurveyComplexItem::SurveyComplexItem(Vehicle* vehicle, bool flyView, const QStri
     connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(&_cameraCalc, &CameraCalc::distanceToSurfaceRelativeChanged, this, &SurveyComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 
-    if (!kmlFile.isEmpty()) {
-        _surveyAreaPolygon.loadKMLFile(kmlFile);
+    if (!kmlOrShpFile.isEmpty()) {
+        _surveyAreaPolygon.loadKMLOrSHPFile(kmlOrShpFile);
         _surveyAreaPolygon.setDirty(false);
     }
     setDirty(false);
