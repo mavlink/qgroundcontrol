@@ -10,5 +10,4 @@ target_link_libraries(ViewWidgets
 		qgc
 )
 
-target_include_directories(ViewWidgets PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
+target_include_directories(ViewWidgets INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

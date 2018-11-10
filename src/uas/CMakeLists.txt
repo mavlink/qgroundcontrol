@@ -11,9 +11,9 @@ add_library(uas
 )
 
 target_link_libraries(uas
-	PUBLIC
+	PRIVATE
 		qgc
 )
 
-target_include_directories(uas PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(uas INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 

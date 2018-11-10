@@ -204,7 +204,7 @@ else()
 	add_executable(QGroundControl ${QGC_RESOURCES})
 endif()
 
-target_link_libraries(QGroundControl PUBLIC qgc)
+target_link_libraries(QGroundControl PRIVATE qgc)
 
 if(NOT QT_MKSPEC MATCHES "winrt")
 	target_link_libraries(QGroundControl
