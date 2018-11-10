@@ -4,7 +4,8 @@ add_library(Settings
 	AutoConnectSettings.cc
 	BrandImageSettings.cc
 	FlightMapSettings.cc
-	GuidedSettings.cc
+	FlyViewSettings.cc
+	PlanViewSettings.cc
 	RTKSettings.cc
 	SettingsGroup.cc
 	SettingsManager.cc
