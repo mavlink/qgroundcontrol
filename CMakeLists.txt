@@ -185,6 +185,11 @@ set(QGC_RESOURCES
 	HackFileDialog.qrc
 	qgcresources.qrc
 	qgroundcontrol.qrc
+
+	src/FirmwarePlugin/APM/APMResources.qrc
+	src/FirmwarePlugin/PX4/PX4Resources.qrc
+	src/Airmap/airmap.qrc
+	src/Airmap/dummy/airmap_dummy.qrc
 	)
 
 if(BUILD_TESTING)
@@ -196,8 +201,7 @@ endif()
 if(ANDROID)
 	add_library(QGroundControl SHARED ${QGC_RESOURCES})
 else()
-	add_executable(QGroundControl ${QGC_RESOURCES}
-	)
+	add_executable(QGroundControl ${QGC_RESOURCES})
 endif()
 
 target_link_libraries(QGroundControl PUBLIC qgc)
