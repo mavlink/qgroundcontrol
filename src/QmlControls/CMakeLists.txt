@@ -15,16 +15,17 @@ add_library(QmlControls
 )
 
 target_link_libraries(QmlControls
+	PRIVATE
+		qgc
+
+		FactSystem
 	PUBLIC
+		Qt5::Concurrent
 		Qt5::Location
 		Qt5::SerialPort
 		Qt5::TextToSpeech
 		Qt5::Widgets
-
-		qgc
-
-		FactSystem
 )
 
-target_include_directories(QmlControls PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(QmlControls INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 

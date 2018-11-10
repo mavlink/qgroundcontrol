@@ -21,14 +21,13 @@ add_library(QtLocationPlugin
 target_link_libraries(QtLocationPlugin
 	PUBLIC
 		Qt5::Location
+		Qt5::Sql
 
 		qgc
 )
 
 target_include_directories(QtLocationPlugin
-	PUBLIC
-		${CMAKE_CURRENT_SOURCE_DIR}
 	INTERFACE
+		${CMAKE_CURRENT_SOURCE_DIR}
 		QMLControl
 )
-

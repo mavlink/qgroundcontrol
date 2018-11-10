@@ -73,6 +73,7 @@ add_library(qgc
 	JsonHelper.cc
 	KMLFileHelper.cc
 	LogCompressor.cc
+	main.cc
 	QGC.cc
 	QGCApplication.cc
 	QGCComboBox.cc
@@ -91,7 +92,6 @@ add_library(qgc
 	RunGuard.cc
 	TerrainTile.cc
 	UTM.cpp
-	main.cc
 
 	# UI
 	QGCQmlWidgetHolder.ui
@@ -99,8 +99,6 @@ add_library(qgc
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
-
-add_subdirectory(ui)
 
 add_subdirectory(Airmap)
 add_subdirectory(AnalyzeView)
@@ -123,57 +121,45 @@ add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
 add_subdirectory(uas)
+add_subdirectory(ui)
 add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoStreaming)
 add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
+        PRIVATE
 
 	PUBLIC
+                Qt5::QuickWidgets
+                Qt5::Widgets
 
-	Qt5::Bluetooth
-	Qt5::Concurrent
-	Qt5::Core
-	Qt5::Location
-	Qt5::Multimedia
-	Qt5::Positioning
-	Qt5::Quick
-	Qt5::QuickWidgets
-	Qt5::Sql
-	Qt5::Svg
-	Qt5::Test
-	Qt5::TextToSpeech
-	Qt5::Widgets
-	Qt5::Xml
-
-	Airmap
-	AnalyzeView
-	api
-	Audio
-	AutoPilotPlugins
-	Camera
-	comm
-	FactSystem
-	FirmwarePlugin
-	FlightDisplay
-	FlightMap
-	FollowMe
-	gps
-	Joystick
-	MissionManager
-	PositionManager
-	QmlControls
-	QtLocationPlugin
-	qwt # LinechartWidget
-	Settings
-	Terrain
-	uas
-	ui
-	Vehicle
-	VehicleSetup
-	VideoStreaming
-	ViewWidgets
+		Airmap
+                AnalyzeView
+		api
+		Audio
+		AutoPilotPlugins
+		Camera
+		comm
+		FactSystem
+		FirmwarePlugin
+		FlightDisplay
+		FlightMap
+		FollowMe
+                gps
+		Joystick
+		MissionManager
+		PositionManager
+		QmlControls
+		QtLocationPlugin
+		Settings
+		Terrain
+		uas
+		ui
+		Vehicle
+		VehicleSetup
+		VideoStreaming
+		ViewWidgets
 )
 
 if(BUILD_TESTING)
@@ -181,4 +167,3 @@ if(BUILD_TESTING)
 endif()
 
 target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-

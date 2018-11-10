@@ -18,17 +18,18 @@ add_library(FactSystem
 	FactValueSliderListModel.cc
 	ParameterManager.cc
 	SettingsFact.cc
+
 	${EXTRA_SRC}
 )
 
 target_link_libraries(FactSystem
-	PUBLIC
+	PRIVATE
 		qgc
 )
 
 target_include_directories(FactSystem
-	PUBLIC
+	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}
+	PUBLIC
 		FactControls
 )
-

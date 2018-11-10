@@ -17,7 +17,7 @@ add_library(qgcunittest
 )
 
 target_link_libraries(qgcunittest
-	PUBLIC
+	PRIVATE
 		qgc
 )
 

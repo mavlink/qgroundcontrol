@@ -4,7 +4,7 @@ add_library(FlightMap
 )
 
 target_link_libraries(FlightMap
-	PUBLIC
+	PRIVATE
 		qgc
 )
 

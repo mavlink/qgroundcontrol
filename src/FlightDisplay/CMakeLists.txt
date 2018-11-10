@@ -4,7 +4,7 @@ add_library(FlightDisplay
 )
 
 target_link_libraries(FlightDisplay
-	PUBLIC
+	PRIVATE
 		qgc
 )
 

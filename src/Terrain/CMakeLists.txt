@@ -4,7 +4,7 @@ add_library(Terrain
 )
 
 target_link_libraries(Terrain
-	PUBLIC
+	PRIVATE
 		qgc
 )
 
