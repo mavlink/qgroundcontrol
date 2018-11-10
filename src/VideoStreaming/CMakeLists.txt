@@ -33,7 +33,8 @@ add_library(VideoStreaming
 target_link_libraries(VideoStreaming
 	PUBLIC
 		qgc
+
+		Qt5::Multimedia
 )
 
-target_include_directories(VideoStreaming PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
+target_include_directories(VideoStreaming INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

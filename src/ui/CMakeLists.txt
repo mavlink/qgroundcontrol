@@ -50,8 +50,9 @@ add_library(ui
 )
 
 target_link_libraries(ui
-	PUBLIC
+	PRIVATE
 		qgc
+		qwt
 )
 
 target_include_directories(ui

@@ -27,6 +27,8 @@ add_library(AutoPilotPlugins
 	Common/SyslinkComponent.cc
 	Common/SyslinkComponentController.cc
 
+	Generic/GenericAutoPilotPlugin.cc
+
 	PX4/AirframeComponent.cc
 	PX4/AirframeComponentAirframes.cc
 	PX4/AirframeComponentController.cc
@@ -45,19 +47,18 @@ add_library(AutoPilotPlugins
 	PX4/SensorsComponentController.cc
 
 	AutoPilotPlugin.cc
-	Generic/GenericAutoPilotPlugin.cc
 )
 
 target_link_libraries(AutoPilotPlugins
-	PUBLIC
+	PRIVATE
 		qgc
 )
 
 target_include_directories(AutoPilotPlugins
-	PUBLIC
+	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}
+	PUBLIC
 		APM
 		Common
 		PX4
 	)
-

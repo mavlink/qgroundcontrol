@@ -35,14 +35,15 @@ add_library(comm
 )
 
 target_link_libraries(comm
+	PRIVATE
+		qgc
 	PUBLIC
 		Qt5::Location
 		Qt5::SerialPort
+		Qt5::Test
 		Qt5::TextToSpeech
 		Qt5::Widgets
-
-		qgc
 )
 
-target_include_directories(comm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(comm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
