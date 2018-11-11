@@ -15,24 +15,26 @@ add_library(Joystick
 )
 
 target_link_libraries(Joystick
+        PRIVATE
+            ui
 	PUBLIC
 		qgc
+		ui
 )
 
 target_include_directories(Joystick PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(LINUX)
-	find_package(SDL2 REQUIRED)
+        find_package(SDL2 REQUIRED)
 	include_directories(${SDL2_INCLUDE_DIRS})
 	string(STRIP ${SDL2_LIBRARIES} SDL2_LIBRARIES) # work around for cmake warning
 	target_link_libraries(Joystick PRIVATE ${SDL2_LIBRARIES})
 elseif(APPLE)
-	include_directories(libs/lib/Frameworks/SDL2.framework/Headers)
-	target_link_libraries(Joystick PRIVATE -F${CMAKE_SOURCE_DIR}/libs/lib/Frameworks "-framework SDL2")
-	
-	set_target_properties(${PROJECT_NAME} PROPERTIES
-			MACOSX_BUNDLE YES
-	)
+        include_directories(${CMAKE_SOURCE_DIR}/libs/lib/Frameworks/SDL2.framework/Headers)
+        target_link_libraries(Joystick PRIVATE -F${CMAKE_SOURCE_DIR}/libs/lib/Frameworks "-framework SDL2")
+        set_target_properties(Joystick PROPERTIES
+                        MACOSX_BUNDLE YES
+        )
 elseif(WIN32)
 	include_directories(libs/lib/sdl2/msvc/include)
 	# Support both 32 and 64 bit builds
