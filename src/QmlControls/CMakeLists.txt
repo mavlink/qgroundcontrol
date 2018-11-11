@@ -15,7 +15,7 @@ add_library(QmlControls
 )
 
 target_link_libraries(QmlControls
-	PRIVATE
+        PUBLIC
 		qgc
 
 		FactSystem

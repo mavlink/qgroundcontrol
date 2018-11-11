@@ -50,15 +50,16 @@ add_library(ui
 )
 
 target_link_libraries(ui
-	PRIVATE
+	PUBLIC
 		qgc
+	PRIVATE
 		qwt
 )
 
 target_include_directories(ui
 	INTERFACE
 		${CMAKE_CURRENT_SOURCE_DIR}
-		${CMAKE_CURRENT_BINARY_DIR}
+                ${CMAKE_CURRENT_BINARY_DIR}
 	PRIVATE
 		linechart
 	)
