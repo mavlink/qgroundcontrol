@@ -16,8 +16,8 @@ if(DEFINED ENV{QT_VERSION})
 endif()
 
 if(NOT QT_VERSION)
-	# try Qt 5.11.0 if none specified
-	set(QT_VERSION "5.11.1")
+	# try Qt 5.11.2 if none specified
+	set(QT_VERSION "5.11.2")
 endif()
 
 if(DEFINED ENV{QT_MKSPEC})
@@ -206,6 +206,10 @@ endif()
 
 target_link_libraries(QGroundControl PRIVATE qgc)
 
+if(BUILD_TESTING)
+        target_link_libraries(QGroundControl PRIVATE Qt5::Test)
+endif()
+
 if(NOT QT_MKSPEC MATCHES "winrt")
 	target_link_libraries(QGroundControl
 		PUBLIC
@@ -215,14 +219,23 @@ endif()
 
 if(LINUX)
 
-elseif(APPLE)	
-	set_target_properties(${PROJECT_NAME} PROPERTIES
-			MACOSX_BUNDLE YES
+elseif(APPLE)
+
+	get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
+	get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
+	find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
+
+	add_custom_command(TARGET QGroundControl
+		POST_BUILD
+		COMMAND
+			${MACDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:QGroundControl>/../.. -appstore-compliant -qmldir=${CMAKE_SOURCE_DIR}/src
+		COMMAND
+			rsync -a ${CMAKE_SOURCE_DIR}/libs/lib/Frameworks $<TARGET_FILE_DIR:QGroundControl>/../../Contents/
+		COMMAND
+			${CMAKE_INSTALL_NAME_TOOL} -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $<TARGET_FILE:QGroundControl>
 	)
 
-	# deploy
-	include(Macdeployqt)
-	macdeployqt(QGroundControl)
+	set_target_properties(QGroundControl PROPERTIES MACOSX_BUNDLE YES)
 
 elseif(WIN32)
 

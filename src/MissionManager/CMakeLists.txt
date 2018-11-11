@@ -67,10 +67,9 @@ add_library(MissionManager
 target_link_libraries(MissionManager
 	PUBLIC
 		Qt5::Xml
-		
+                qgc
 	PRIVATE
 		qgc
-		ui
 )
 
 target_include_directories(MissionManager INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -65,8 +65,6 @@ endif()
 
 add_library(qgc
 
-	${QGC_RESOURCES}
-
 	${EXTRA_SRC}
 
 	CmdLineOptParser.cc
@@ -95,10 +93,12 @@ add_library(qgc
 
 	# UI
 	QGCQmlWidgetHolder.ui
-
+        QGCQmlWidgetHolder.h
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
+
+add_subdirectory(ui)
 
 add_subdirectory(Airmap)
 add_subdirectory(AnalyzeView)
@@ -121,7 +121,6 @@ add_subdirectory(QtLocationPlugin)
 add_subdirectory(Settings)
 add_subdirectory(Terrain)
 add_subdirectory(uas)
-add_subdirectory(ui)
 add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoStreaming)
@@ -166,4 +165,11 @@ if(BUILD_TESTING)
 	target_link_libraries(qgc PUBLIC qgcunittest)
 endif()
 
-target_include_directories(qgc INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(qgc
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include # HACK: AUTOUIC paths not inheriting?
+        ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include_Debug
+        ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include # HACK: AUTOUIC paths not inheriting?
+        ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include_Debug
+        )
