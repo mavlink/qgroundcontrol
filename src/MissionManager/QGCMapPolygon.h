@@ -56,9 +56,9 @@ public:
     /// Offsets the current polygon edges by the specified distance in meters
     Q_INVOKABLE void offset(double distance);
 
-    /// Loads a polygon from a KML file
+    /// Loads a polygon from a KML/SH{ file
     /// @return true: success
-    Q_INVOKABLE bool loadKMLFile(const QString& kmlFile);
+    Q_INVOKABLE bool loadKMLOrSHPFile(const QString& file);
 
     /// Returns the path in a list of QGeoCoordinate's format
     QList<QGeoCoordinate> coordinateList(void) const;

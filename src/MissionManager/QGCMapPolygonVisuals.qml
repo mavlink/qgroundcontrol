@@ -13,11 +13,12 @@ import QtLocation       5.3
 import QtPositioning    5.3
 import QtQuick.Dialogs  1.2
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl                   1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.Palette           1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.FlightMap         1.0
+import QGroundControl.ShapeFileHelper   1.0
 
 /// QGCMapPolygon map visuals
 Item {
@@ -171,16 +172,17 @@ Item {
     QGCPalette { id: qgcPal }
 
     QGCFileDialog {
-        id:             kmlLoadDialog
+        id:             kmlOrSHPLoadDialog
         qgcView:        _root.qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        title:          qsTr("Select KML File")
+        title:          qsTr("Select Polygon File")
         selectExisting: true
-        nameFilters:    [ qsTr("KML files (*.kml)") ]
+        nameFilters:    ShapeFileHelper.fileDialogKMLOrSHPFilters
         fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
+        fileExtension2: QGroundControl.settingsManager.appSettings.shpFileExtension
 
         onAcceptedForLoad: {
-            mapPolygon.loadKMLFile(file)
+            mapPolygon.loadKMLOrSHPFile(file)
             mapFitFunctions.fitMapViewportToMissionItems()
             close()
         }
@@ -245,8 +247,8 @@ Item {
         }
 
         MenuItem {
-            text:           qsTr("Load KML...")
-            onTriggered:    kmlLoadDialog.openForLoad()
+            text:           qsTr("Load KML/SHP...")
+            onTriggered:    kmlOrSHPLoadDialog.openForLoad()
         }
     }
 

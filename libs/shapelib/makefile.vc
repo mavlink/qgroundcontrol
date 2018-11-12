@@ -1,0 +1,90 @@
+
+#CFLAGS	=	/DSHPAPI_CALL=__stdcall
+# 4100: 'identifier' : unreferenced formal parameter
+CFLAGS =	/nologo /Ox /MD /W4 /wd4100 /D_CRT_SECURE_NO_DEPRECATE /DSHAPELIB_DLLEXPORT
+
+IMPORT_LIB	= shapelib_i.lib
+STATIC_LIB	= shapelib.lib
+DLLNAME 	= shapelib.dll
+LINK_LIB 	= $(IMPORT_LIB)
+
+OBJ 		= shpopen.obj dbfopen.obj shptree.obj safileio.obj sbnsearch.obj
+
+all:	$(STATIC_LIB) $(DLLNAME) \
+	shpcreate.exe shpadd.exe shpdump.exe shprewind.exe dbfcreate.exe \
+	dbfadd.exe dbfdump.exe shptest.exe shptreedump.exe
+
+shpopen.obj:	shpopen.c shapefil.h
+	$(CC) $(CFLAGS) -c shpopen.c
+
+shptree.obj:	shptree.c shapefil.h
+	$(CC) $(CFLAGS) -c shptree.c
+
+dbfopen.obj:	dbfopen.c shapefil.h
+	$(CC) $(CFLAGS) -c dbfopen.c
+
+safileio.obj:	safileio.c shapefil.h
+	$(CC) $(CFLAGS) -c safileio.c
+
+sbnsearch.obj:	sbnsearch.c shapefil.h
+	$(CC) $(CFLAGS) -c sbnsearch.c
+
+shpcreate.exe:	shpcreate.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shpcreate.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shpadd.exe:		shpadd.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shpadd.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shpdump.exe:	shpdump.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shpdump.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shprewind.exe:	shprewind.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shprewind.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+dbfcreate.exe:	dbfcreate.c $(LINK_LIB)
+	$(CC) $(CFLAGS) dbfcreate.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+dbfadd.exe:	dbfadd.c $(LINK_LIB)
+	$(CC) $(CFLAGS) dbfadd.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+dbfdump.exe:	dbfdump.c $(LINK_LIB)
+	$(CC) $(CFLAGS) dbfdump.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shptest.exe:	shptest.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shptest.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shputils.exe:	shputils.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shputils.c $(LINK_LIB) $(LINKOPT) 
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shptreedump.exe:	shptreedump.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shptreedump.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+shpdiff.exe:	shpdiff.c $(LINK_LIB)
+	$(CC) $(CFLAGS) shpdiff.c $(LINK_LIB) $(LINKOPT)
+	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
+
+clean:
+	-del *.obj 
+	-del *.exe
+	-del *.lib
+	-del *.dll
+	-del *.manifest
+
+$(STATIC_LIB):	$(OBJ)
+	lib /nologo /out:$(STATIC_LIB) $(OBJ)
+
+$(IMPORT_LIB):	$(DLLNAME)
+
+$(DLLNAME):     $(OBJ)
+	link /nologo /dll /out:$(DLLNAME) /implib:$(IMPORT_LIB) $(OBJ)
+	if exist $(DLLNAME).manifest mt /nologo -manifest $(DLLNAME).manifest -outputresource:$(DLLNAME);2

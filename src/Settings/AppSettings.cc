@@ -50,6 +50,7 @@ const char* AppSettings::fenceFileExtension =       "fence";
 const char* AppSettings::rallyPointFileExtension =  "rally";
 const char* AppSettings::telemetryFileExtension =   "tlog";
 const char* AppSettings::kmlFileExtension =         "kml";
+const char* AppSettings::shpFileExtension =         "shp";
 const char* AppSettings::logFileExtension =         "ulg";
 
 const char* AppSettings::parameterDirectory =       "Parameters";
