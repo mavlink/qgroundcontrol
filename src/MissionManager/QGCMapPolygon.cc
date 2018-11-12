@@ -12,7 +12,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "KMLFileHelper.h"
+#include "ShapeFileHelper.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
@@ -452,11 +452,11 @@ void QGCMapPolygon::offset(double distance)
     appendVertices(rgNewPolygon);
 }
 
-bool QGCMapPolygon::loadKMLFile(const QString& kmlFile)
+bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
 {
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    if (!KMLFileHelper::loadPolygonFromFile(kmlFile, rgCoords, errorString)) {
+    if (!ShapeFileHelper::loadPolygonFromFile(file, rgCoords, errorString)) {
         qgcApp()->showMessage(errorString);
         return false;
     }

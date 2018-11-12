@@ -606,6 +606,8 @@ HEADERS += \
     src/Settings/SettingsManager.h \
     src/Settings/UnitsSettings.h \
     src/Settings/VideoSettings.h \
+    src/ShapeFileHelper.h \
+    src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
     src/Vehicle/MAVLinkLogManager.h \
@@ -805,6 +807,8 @@ SOURCES += \
     src/Settings/SettingsManager.cc \
     src/Settings/UnitsSettings.cc \
     src/Settings/VideoSettings.cc \
+    src/ShapeFileHelper.cc \
+    src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
     src/Vehicle/MAVLinkLogManager.cc \

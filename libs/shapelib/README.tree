@@ -1,0 +1,172 @@
+Venkat,
+
+I have completed the planned Shapefile quadtree mechanism.  The additions
+to the traditional Shapelib are found in shptree.c (functions supporting
+quad tree searching and query).  There are also some new prototypes for
+the tree stuff in shapefil.h ... including some prototypes for functions
+you don't require and hence that I haven't implemented at this time. 
+
+I have also prepared a demonstration program using the API.  That is
+the ``shpdumptree'' program, with the source code in shpdumptree.c.  The
+shpdumptree program has two functions.  One is to dump an ASCII rendering
+of the internal quadtree, and the other is example use of a quad tree
+searching function. 
+
+Dumping the Tree
+----------------
+
+The tree dumping is done as shown below.  The "-maxdepth" commandline
+switch can be used to control the maximum depth, otherwise it internally
+computes a ``reasonable depth'' to use based on the number of structures
+in the shapefile.
+
+warmerda@gdal[207]% shptreedump -maxdepth 6 eg_data/polygon.shp
+( SHPTreeNode
+  Min = (471127.19,4751545.00)
+  Max = (489292.31,4765610.50)
+  Shapes(0): 
+  ( SHPTreeNode
+    Min = (471127.19,4751545.00)
+    Max = (481118.01,4765610.50)
+    Shapes(0): 
+    ( SHPTreeNode
+      Min = (471127.19,4751545.00)
+      Max = (481118.01,4759281.03)
+      Shapes(0): 
+      ( SHPTreeNode
+        Min = (471127.19,4751545.00)
+        Max = (476622.14,4759281.03)
+        Shapes(0): 
+        ( SHPTreeNode
+          Min = (471127.19,4751545.00)
+          Max = (476622.14,4755799.81)
+          Shapes(0): 
+          ( SHPTreeNode
+            Min = (471127.19,4751545.00)
+            Max = (474149.41,4755799.81)
+            Shapes(6): 395 397 402 404 405 422 
+          )
+          ( SHPTreeNode
+            Min = (473599.92,4751545.00)
+            Max = (476622.14,4755799.81)
+            Shapes(10): 392 394 403 413 414 417 426 433 434 447 
+          )
+        )
+...
+
+A structure like the following represents one node in the tree.  In
+this case it cover the region of 473599.92 < X < 476622.14,and 
+4751545.0 < Y < 4755799.81.  There are ten shapes within this region
+who's shapeids are 392, 394 ... 447.  This node has no children nodes.
+
+          ( SHPTreeNode
+            Min = (473599.92,4751545.00)
+            Max = (476622.14,4755799.81)
+            Shapes(10): 392 394 403 413 414 417 426 433 434 447 
+          )
+
+The heirarchy of indentation is intended to show the parent, child 
+relationship between nodes, with the tree being deeper the further to the
+right you go. 
+
+The `-v' flag to the program can be used to expand the report to include
+the full information about shapes, not just their shapeid.  This can result
+in a report looking more like this:
+
+          ...
+          ( SHPTreeNode
+            Min = (478095.78,4751545.00)
+            Max = (481118.01,4755799.81)
+            Shapes(3):
+            ( Shape
+              ShapeId = 448
+              Min = (479988.09,4753300.00)
+              Max = (480705.59,4754236.50)
+              Vertex[0] = (480136.59,4754174.50)
+              Vertex[1] = (480229.97,4754182.00)
+              Vertex[2] = (480370.09,4754200.50)
+              Vertex[3] = (480695.12,4754236.50)
+              Vertex[4] = (480687.97,4754129.50)
+              Vertex[5] = (480650.47,4754075.50)
+              Vertex[6] = (480520.62,4753948.00)
+              Vertex[7] = (480490.00,4753900.00)
+              Vertex[8] = (480499.78,4753840.50)
+              Vertex[9] = (480500.97,4753820.50)
+              Vertex[10] = (480534.75,4753660.50)
+              Vertex[11] = (480560.00,4753565.00)
+              Vertex[12] = (480574.91,4753550.50)
+          ...
+
+While it is possible to part the output of the shptreedump program, and
+insert it into your database, my intention was that the shptreedump program
+would serve as an example of how to pre-order traversal of the quad tree,
+and collect the information you will need to insert into your database. 
+I would then expect you to write a new program based on shptreedump that
+calls a C API for your database to insert objects instead of printing them
+out.  Alternatively there may be an ASCII format for loading tables that
+you could modify the program to output. 
+
+Searching
+---------
+
+The other thing that you can do with the shptreedump program is to 
+perform a search on the quadtree.  For instance the following shows
+searching on a small region.
+
+% shptreedump -search 471127 4751545 476622 4759281 eg_data/polygon.shp
+Shape 17: not in area of interest, but fetched.
+Shape 31: not in area of interest, but fetched.
+Shape 52: not in area of interest, but fetched.
+Shape 76: not in area of interest, but fetched.
+Shape 82: not in area of interest, but fetched.
+Shape 104: not in area of interest, but fetched.
+Shape 124: not in area of interest, but fetched.
+Shape 134: not in area of interest, but fetched.
+Shape 139: not in area of interest, but fetched.
+Shape 154: not in area of interest, but fetched.
+Shape 175: not in area of interest, but fetched.
+Shape 177: not in area of interest, but fetched.
+Shape 185: not in area of interest, but fetched.
+Shape 192: not in area of interest, but fetched.
+Shape 196: appears to be in area of interest.
+....
+
+
+I have included this capability (and the SHPTreeFindLikelyShapes() function)
+so that you can see a working example of how to search this quad tree. 
+Note that searching is a multi-stage affair.  
+
+First a pass is made over the quadtree, collecting the shapeids of all
+shapes contained in a quadtree node for which the bounding rectangle overlaps
+the search rectangle.  This is all accomplished by SHPTreeFindLikelyShapes()
+in shptree.c. 
+
+The second phase is to fetch the actual shapes, and verify if their bounding
+box falls within the area of interest.  This is necessary because the shape 
+will tend to have a significantly smaller bounding rectangle than the tree 
+node in which it is found.  This can result ``false positives'' on the first
+phase search, as indicated by teh ``not in area of interest, but fetched''
+messages above.  This stage is done in the SHPTreeNodeSearchAndDump()
+function in shptreedump.c. 
+
+A possible third phase is to verify that the actualy line segments in the
+shape actually cross the area of interest.  I don't both with this as it
+is complicated, and assuming that the drawing engine takes care of clipping
+it is quite a bit easier to let it fall through. 
+
+Building
+--------
+
+I have added a makefile.vc to the shapelib distribution.  After you have
+unpacked the shapefile you should have a shapelib subdirectory.  If you
+cd to that directory, and enter ``nmake -f makefile.vc'' in a DOS window
+you should be able to build everything with VC++ (assuming it is properly
+installed and in your path). 
+
+You can also create a project in VC just including the files 
+shpopen.c, shptree.c and shptreedump.c, building as a Win32 console
+application. 
+
+For your convenience I am including prebuild .obj files, and .exe files
+in the distribution. 
+
