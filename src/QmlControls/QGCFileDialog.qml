@@ -107,7 +107,7 @@ Item {
                     spacing:        ScreenTools.defaultFontPixelHeight / 2
 
                     Repeater {
-                        id:     fileList
+                        id:     fileRepeater
                         model:  controller.getFiles(folder, _rgExtensions)
 
                         FileButton {
@@ -136,7 +136,10 @@ Item {
 
                                 MenuItem {
                                     text:           qsTr("Delete")
-                                    onTriggered:    controller.deleteFile(hamburgerMenu.fileToDelete);
+                                    onTriggered: {
+                                        controller.deleteFile(hamburgerMenu.fileToDelete)
+                                        fileRepeater.model = controller.getFiles(folder, _rgExtensions)
+                                    }
                                 }
                             }
                         }
@@ -144,7 +147,7 @@ Item {
 
                     QGCLabel {
                         text:       qsTr("No files")
-                        visible:    fileList.model.length === 0
+                        visible:    fileRepeater.model.length === 0
                     }
                 }
             }
@@ -217,9 +220,11 @@ Item {
                     }
 
                     Repeater {
-                        model: controller.getFiles(folder, [ fileExtension ])
+                        id:     fileRepeater
+                        model:  controller.getFiles(folder, [ fileExtension ])
 
                         FileButton {
+                            id:             fileButton
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             text:           modelData
@@ -240,14 +245,14 @@ Item {
 
                                 property string fileToDelete
 
-                                onAboutToHide: {
-                                    fileButton.highlight = false
-                                    hideDialog()
+                                onAboutToHide: fileButton.highlight = false
 
-                                }
                                 MenuItem {
                                     text:           qsTr("Delete")
-                                    onTriggered:    controller.deleteFile(hamburgerMenu.fileToDelete);
+                                    onTriggered: {
+                                        controller.deleteFile(hamburgerMenu.fileToDelete)
+                                        fileRepeater.model = controller.getFiles(folder, [ fileExtension ])
+                                    }
                                 }
                             }
                         }
