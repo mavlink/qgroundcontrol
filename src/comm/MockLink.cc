@@ -1220,16 +1220,10 @@ void MockLink::_sendRCChannels(void)
                                       _mavlinkChannel,
                                       &msg,
                                       0,                     // time_boot_ms
-                                      8,                     // chancount
-                                      1500,                  // chan1_raw
-                                      1500,                  // chan2_raw
-                                      1500,                  // chan3_raw
-                                      1500,                  // chan4_raw
-                                      1500,                  // chan5_raw
-                                      1500,                  // chan6_raw
-                                      1500,                  // chan7_raw
-                                      1500,                  // chan8_raw
-                                      UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX,
+                                      16,                    // chancount
+                                      1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 1-8
+                                      1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 9-16
+                                      UINT16_MAX, UINT16_MAX,
                                       0);                    // rssi
 
     respondWithMavlinkMessage(msg);
