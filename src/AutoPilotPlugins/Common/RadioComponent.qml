@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
+import QtQuick.Layouts  1.11
 
 import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
@@ -348,9 +348,8 @@ SetupPage {
                         }
 
                         Connections {
-                            target: controller
-
-                            onThrottleChannelRCValueChanged: throttleLoader.item.rcValue = rcValue
+                            target:                             controller
+                            onThrottleChannelRCValueChanged:    throttleLoader.item.rcValue = rcValue
                         }
                     }
                 } // Column - Attitude Control labels
@@ -362,15 +361,13 @@ SetupPage {
                     QGCButton {
                         id:         skipButton
                         text:       qsTr("Skip")
-
-                        onClicked: controller.skipButtonClicked()
+                        onClicked:  controller.skipButtonClicked()
                     }
 
                     QGCButton {
                         id:         cancelButton
                         text:       qsTr("Cancel")
-
-                        onClicked: controller.cancelButtonClicked()
+                        onClicked:  controller.cancelButtonClicked()
                     }
 
                     QGCButton {
@@ -395,11 +392,6 @@ SetupPage {
                     wrapMode:   Text.WordWrap
                 }
 
-                Item {
-                    width: 10
-                    height: defaultTextHeight * 4
-                }
-
                 Rectangle {
                     width:          parent.width
                     height:         1
@@ -409,42 +401,50 @@ SetupPage {
 
                 QGCLabel { text: qsTr("Additional Radio setup:") }
 
-                QGCButton {
-                    id:         bindButton
-                    text:       qsTr("Spektrum Bind")
+                GridLayout {
+                    id:                 switchSettingsGrid
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    columns:            2
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
 
-                    onClicked: showDialog(spektrumBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
-                }
+                    Repeater {
+                        model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ?
+                                   (QGroundControl.multiVehicleManager.activeVehicle.multiRotor ?
+                                       [ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"] :
+                                       [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"]) :
+                                   0
 
-                QGCButton {
-                    text:       qsTr("Copy Trims")
-                    onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
-                }
+                        RowLayout {
+                            Layout.fillWidth: true
 
-                Repeater {
-                    model: QGroundControl.multiVehicleManager.activeVehicle.px4Firmware ?
-                               (QGroundControl.multiVehicleManager.activeVehicle.multiRotor ?
-                                   [ "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"] :
-                                   [ "RC_MAP_FLAPS", "RC_MAP_AUX1", "RC_MAP_AUX2", "RC_MAP_PARAM1", "RC_MAP_PARAM2", "RC_MAP_PARAM3"]) :
-                               0
+                            property Fact fact: controller.getParameterFact(-1, modelData)
 
-                    Row {
-                        spacing: ScreenTools.defaultFontPixelWidth
-                        property Fact fact: controller.getParameterFact(-1, modelData)
-
-                        QGCLabel {
-                            anchors.baseline:   optCombo.baseline
-                            text:               fact.shortDescription + ":"
-                        }
-
-                        FactComboBox {
-                            id:         optCombo
-                            width:      ScreenTools.defaultFontPixelWidth * 15
-                            fact:       parent.fact
-                            indexModel: false
+                            QGCLabel {
+                                Layout.fillWidth:   true
+                                text:               fact.shortDescription
+                            }
+                            FactComboBox {
+                                width:      ScreenTools.defaultFontPixelWidth * 15
+                                fact:       parent.fact
+                                indexModel: false
+                            }
                         }
                     }
-                } // Repeater
+                }
+
+                RowLayout {
+                    QGCButton {
+                        id:         bindButton
+                        text:       qsTr("Spektrum Bind")
+                        onClicked:  showDialog(spektrumBindDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    }
+
+                    QGCButton {
+                        text:       qsTr("Copy Trims")
+                        onClicked:  showDialog(copyTrimsDialogComponent, dialogTitle, radioPage.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    }
+                }
             } // Column - Left Column
 
             Item {
@@ -458,7 +458,7 @@ SetupPage {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          Math.min(radioPage.defaultTextWidth * 35, availableWidth * 0.4)
+                width:          ScreenTools.defaultFontPixelWidth * 40
                 spacing:        ScreenTools.defaultFontPixelHeight / 2
 
                 Row {
@@ -491,7 +491,8 @@ SetupPage {
                 }
 
                 RCChannelMonitor {
-                    width: parent.width
+                    width:      parent.width
+                    twoColumn:  true
                 }
             } // Column - Right Column
         } // Item    
