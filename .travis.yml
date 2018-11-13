@@ -189,7 +189,7 @@ after_success:
         ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
     fi
 
-before_deploy:
+  #before_deploy:
   # create linux appimage
   - cd ${TRAVIS_BUILD_DIR}
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "installer" ]]; then
