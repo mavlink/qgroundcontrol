@@ -29,7 +29,15 @@ message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 cmake_minimum_required(VERSION 2.8.5 FATAL_ERROR)
 
 # libraries are all shared by default.
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+
+cmake_policy(SET CMP0026 OLD) # Disallow use of the LOCATION property for build targets
+
+add_compile_options(
+	-Wno-missing-braces
+	-Wno-sign-compare
+	-Wno-return-type
+)
 
 # Use rpath?
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -148,7 +156,7 @@ set(executables
 find_program(BASH_EXECUTABLE bash)
 find_program(SED_EXECUTABLE sed)
 if(BASH_EXECUTABLE AND SED_EXECUTABLE)
-  set(BUILD_TEST ON)
+  #set(BUILD_TEST ON)
 else(BASH_EXECUTABLE AND SED_EXECUTABLE)
   message(STATUS "WARNING: sed or bash not available so disabling testing")
 endif(BASH_EXECUTABLE AND SED_EXECUTABLE)
