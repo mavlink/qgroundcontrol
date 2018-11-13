@@ -137,8 +137,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 		-Wextra
 		-Werror
 
-		-frtti
-
 		-Wno-address-of-packed-member # ignore for mavlink
 	)
 
@@ -152,8 +150,6 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		-Wall
 		-Wextra
 		-Werror
-
-		-frtti
 	)
 	
 elseif (WIN32)
@@ -175,6 +171,8 @@ include_directories(
 	libs/mavlink/include/mavlink/v2.0
 	libs/mavlink/include/mavlink/v2.0/ardupilotmega
 	libs/mavlink/include/mavlink/v2.0/common
+
+	libs/shapelib
 )
 
 add_subdirectory(libs)

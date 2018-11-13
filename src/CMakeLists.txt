@@ -88,6 +88,8 @@ add_library(qgc
 	QGCTemporaryFile.cc
 	QGCToolbox.cc
 	RunGuard.cc
+	ShapeFileHelper.cc
+	SHPFileHelper.cc
 	TerrainTile.cc
 	UTM.cpp
 
@@ -128,6 +130,7 @@ add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
         PRIVATE
+		shp
 
 	PUBLIC
                 Qt5::QuickWidgets
