@@ -117,7 +117,7 @@ private:
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
     void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
     /// Adds to the _transects array from one polygon
-    void _rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
+    void _rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
     // Decompose polygon into list of convex sub polygons
     void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons);
     // return true if vertex a can see vertex b
