@@ -4690,9 +4690,9 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0.02" name="MPC_XY_VEL_I" type="FLOAT">
       <short_desc>Integral gain for horizontal velocity error</short_desc>
-      <long_desc>Non-zero value allows to resist wind.</long_desc>
+      <long_desc>Non-zero value allows to eliminate steady state errors in the presence of disturbances like wind.</long_desc>
       <min>0.0</min>
-      <max>0.1</max>
+      <max>3.0</max>
       <decimal>3</decimal>
     </parameter>
     <parameter default="12.0" name="MPC_XY_VEL_MAX" type="FLOAT">
