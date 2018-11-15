@@ -604,212 +604,6 @@ double SurveyComplexItem::_clampGridAngle90(double gridAngle)
     return gridAngle;
 }
 
-#if 0
-int SurveyComplexItem::_gridGenerator(const QList<QPointF>& polygonPoints,  QList<QList<QPointF>>& transectSegments, bool refly)
-{
-    int cameraShots = 0;
-
-    double gridAngle = _gridAngleFact.rawValue().toDouble();
-    double gridSpacing = _gridSpacingFact.rawValue().toDouble();
-
-    gridAngle = _clampGridAngle90(gridAngle);
-    gridAngle += refly ? 90 : 0;
-    qCDebug(SurveyComplexItemLog) << "Clamped grid angle" << gridAngle;
-
-    qCDebug(SurveyComplexItemLog) << "SurveyComplexItem::_gridGenerator gridSpacing:gridAngle:refly" << gridSpacing << gridAngle << refly;
-
-    transectSegments.clear();
-
-    // Convert polygon to bounding rect
-
-    qCDebug(SurveyComplexItemLog) << "Polygon";
-    QPolygonF polygon;
-    for (int i=0; i<polygonPoints.count(); i++) {
-        qCDebug(SurveyComplexItemLog) << polygonPoints[i];
-        polygon << polygonPoints[i];
-    }
-    polygon << polygonPoints[0];
-    QRectF boundingRect = polygon.boundingRect();
-    QPointF boundingCenter = boundingRect.center();
-    qCDebug(SurveyComplexItemLog) << "Bounding rect" << boundingRect.topLeft().x() << boundingRect.topLeft().y() << boundingRect.bottomRight().x() << boundingRect.bottomRight().y();
-
-    // Create set of rotated parallel lines within the expanded bounding rect. Make the lines larger than the
-    // bounding box to guarantee intersection.
-
-    QList<QLineF> lineList;
-
-    // Transects are generated to be as long as the largest width/height of the bounding rect plus some fudge factor.
-    // This way they will always be guaranteed to intersect with a polygon edge no matter what angle they are rotated to.
-    // They are initially generated with the transects flowing from west to east and then points within the transect north to south.
-    double maxWidth = qMax(boundingRect.width(), boundingRect.height()) + 2000.0;
-    double halfWidth = maxWidth / 2.0;
-    double transectX = boundingCenter.x() - halfWidth;
-    double transectXMax = transectX + maxWidth;
-    while (transectX < transectXMax) {
-        double transectYTop = boundingCenter.y() - halfWidth;
-        double transectYBottom = boundingCenter.y() + halfWidth;
-
-        lineList += QLineF(_rotatePoint(QPointF(transectX, transectYTop), boundingCenter, gridAngle), _rotatePoint(QPointF(transectX, transectYBottom), boundingCenter, gridAngle));
-        transectX += gridSpacing;
-    }
-
-    // Now intersect the lines with the polygon
-    QList<QLineF> intersectLines;
-#if 1
-    _intersectLinesWithPolygon(lineList, polygon, intersectLines);
-#else
-    // This is handy for debugging grid problems, not for release
-    intersectLines = lineList;
-#endif
-
-    // Less than two transects intersected with the polygon:
-    //      Create a single transect which goes through the center of the polygon
-    //      Intersect it with the polygon
-    if (intersectLines.count() < 2) {
-        _mapPolygon.center();
-        QLineF firstLine = lineList.first();
-        QPointF lineCenter = firstLine.pointAt(0.5);
-        QPointF centerOffset = boundingCenter - lineCenter;
-        firstLine.translate(centerOffset);
-        lineList.clear();
-        lineList.append(firstLine);
-        intersectLines = lineList;
-        _intersectLinesWithPolygon(lineList, polygon, intersectLines);
-    }
-
-    // Make sure all lines are going to same direction. Polygon intersection leads to line which
-    // can be in varied directions depending on the order of the intesecting sides.
-    QList<QLineF> resultLines;
-    _adjustLineDirection(intersectLines, resultLines);
-
-    // Calc camera shots here if there are no images in turnaround
-    if (_triggerCamera() && !_imagesEverywhere()) {
-        for (int i=0; i<resultLines.count(); i++) {
-            cameraShots += (int)floor(resultLines[i].length() / _triggerDistance());
-            // Take into account immediate camera trigger at waypoint entry
-            cameraShots++;
-        }
-    }
-
-    // Turn into a path
-    for (int i=0; i<resultLines.count(); i++) {
-        QLineF          transectLine;
-        QList<QPointF>  transectPoints;
-        const QLineF&   line = resultLines[i];
-
-        float turnaroundPosition = _turnaroundDistance() / line.length();
-
-        if (i & 1) {
-            transectLine = QLineF(line.p2(), line.p1());
-        } else {
-            transectLine = QLineF(line.p1(), line.p2());
-        }
-
-        // Build the points along the transect
-
-        if (_hasTurnaround()) {
-            transectPoints.append(transectLine.pointAt(-turnaroundPosition));
-        }
-
-        // Polygon entry point
-        transectPoints.append(transectLine.p1());
-
-        // For hover and capture we need points for each camera location
-        if (_triggerCamera() && _hoverAndCaptureEnabled()) {
-            if (_triggerDistance() < transectLine.length()) {
-                int innerPoints = floor(transectLine.length() / _triggerDistance());
-                qCDebug(SurveyComplexItemLog) << "innerPoints" << innerPoints;
-                float transectPositionIncrement = _triggerDistance() / transectLine.length();
-                for (int i=0; i<innerPoints; i++) {
-                    transectPoints.append(transectLine.pointAt(transectPositionIncrement * (i + 1)));
-                }
-            }
-        }
-
-        // Polygon exit point
-        transectPoints.append(transectLine.p2());
-
-        if (_hasTurnaround()) {
-            transectPoints.append(transectLine.pointAt(1 + turnaroundPosition));
-        }
-
-        transectSegments.append(transectPoints);
-    }
-
-    return cameraShots;
-}
-#endif
-
-#if 0
-int SurveyComplexItem::_appendWaypointToMission(QList<MissionItem*>& items, int seqNum, QGeoCoordinate& coord, CameraTriggerCode cameraTrigger, QObject* missionItemParent)
-{
-    double  altitude =          _gridAltitudeFact.rawValue().toDouble();
-    bool    altitudeRelative =  _gridAltitudeRelativeFact.rawValue().toBool();
-
-    qCDebug(SurveyComplexItemLog) << "_appendWaypointToMission seq:trigger" << seqNum << (cameraTrigger != CameraTriggerNone);
-
-    MissionItem* item = new MissionItem(seqNum++,
-                                        MAV_CMD_NAV_WAYPOINT,
-                                        altitudeRelative ? MAV_FRAME_GLOBAL_RELATIVE_ALT : MAV_FRAME_GLOBAL,
-                                        cameraTrigger == CameraTriggerHoverAndCapture ? _hoverAndCaptureDelaySeconds : 0,  // Hold time (delay for hover and capture to settle vehicle before image is taken)
-                                        0.0, 0.0,
-                                        std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
-                                        coord.latitude(),
-                                        coord.longitude(),
-                                        altitude,
-                                        true,                                       // autoContinue
-                                        false,                                      // isCurrentItem
-                                        missionItemParent);
-    items.append(item);
-
-    switch (cameraTrigger) {
-    case CameraTriggerOff:
-    case CameraTriggerOn:
-        item = new MissionItem(seqNum++,
-                               MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                               MAV_FRAME_MISSION,
-                               cameraTrigger == CameraTriggerOn ? _triggerDistance() : 0,
-                               0,                                           // shutter integration (ignore)
-                               cameraTrigger == CameraTriggerOn ? 1 : 0,    // trigger immediately when starting
-                               0, 0, 0, 0,                                  // param 4-7 unused
-                               true,                                        // autoContinue
-                               false,                                       // isCurrentItem
-                               missionItemParent);
-        items.append(item);
-        break;
-    case CameraTriggerHoverAndCapture:
-        item = new MissionItem(seqNum++,
-                               MAV_CMD_IMAGE_START_CAPTURE,
-                               MAV_FRAME_MISSION,
-                               0,                           // Reserved (Set to 0)
-                               0,                           // Interval (none)
-                               1,                           // Take 1 photo
-                               NAN, NAN, NAN, NAN,          // param 4-7 reserved
-                               true,                        // autoContinue
-                               false,                       // isCurrentItem
-                               missionItemParent);
-        items.append(item);
-#if 0
-        // This generates too many commands. Pulling out for now, to see if image quality is still high enough.
-        item = new MissionItem(seqNum++,
-                               MAV_CMD_NAV_DELAY,
-                               MAV_FRAME_MISSION,
-                               0.5,                // Delay in seconds, give some time for image to be taken
-                               -1, -1, -1,         // No time
-                               0, 0, 0,            // Param 5-7 unused
-                               true,               // autoContinue
-                               false,              // isCurrentItem
-                               missionItemParent);
-        items.append(item);
-#endif
-    default:
-        break;
-    }
-
-    return seqNum;
-}
-#endif
-
 bool SurveyComplexItem::_nextTransectCoord(const QList<QGeoCoordinate>& transectPoints, int pointIndex, QGeoCoordinate& coord)
 {
     if (pointIndex > transectPoints.count()) {
@@ -836,7 +630,7 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
     MAV_FRAME mavFrame = followTerrain() || !_cameraCalc.distanceToSurfaceRelative() ? MAV_FRAME_GLOBAL : MAV_FRAME_GLOBAL_RELATIVE_ALT;
 
     for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-        bool entryPoint = true;
+        bool transectEntry = true;
 
         for (const CoordInfo_t& transectCoordInfo: transect) {
             item = new MissionItem(seqNum++,
@@ -858,12 +652,12 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
                 item = new MissionItem(seqNum++,
                                        MAV_CMD_IMAGE_START_CAPTURE,
                                        MAV_FRAME_MISSION,
-                                       0,                           // Reserved (Set to 0)
-                                       0,                           // Interval (none)
-                                       1,                           // Take 1 photo
-                                       NAN, NAN, NAN, NAN,          // param 4-7 reserved
-                                       true,                        // autoContinue
-                                       false,                       // isCurrentItem
+                                       0,                                   // Reserved (Set to 0)
+                                       0,                                   // Interval (none)
+                                       1,                                   // Take 1 photo
+                                       qQNaN(), qQNaN(), qQNaN(), qQNaN(),  // param 4-7 reserved
+                                       true,                                // autoContinue
+                                       false,                               // isCurrentItem
                                        missionItemParent);
                 items.append(item);
             }
@@ -885,9 +679,12 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
             }
             firstOverallPoint = false;
 
-            if (transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge && triggerCamera() && !hoverAndCaptureEnabled() && !imagesEverywhere) {
-                if (entryPoint) {
-                    // Start of transect, start triggering
+            // Possibly add trigger start/stop to survey area entrance/exit
+            if (triggerCamera() && !hoverAndCaptureEnabled() && transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge) {
+                if (transectEntry) {
+                    // Start of transect, always start triggering. We do this even if we are taking images everywhere.
+                    // This allows a restart of the mission in mid-air without losing images from the entire mission.
+                    // At most you may lose part of a transect.
                     item = new MissionItem(seqNum++,
                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                            MAV_FRAME_MISSION,
@@ -899,7 +696,8 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
                                            false,               // isCurrentItem
                                            missionItemParent);
                     items.append(item);
-                } else {
+                    transectEntry = false;
+                } else if (!imagesEverywhere && !transectEntry){
                     // End of transect, stop triggering
                     item = new MissionItem(seqNum++,
                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
@@ -913,12 +711,11 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
                                            missionItemParent);
                     items.append(item);
                 }
-                entryPoint = !entryPoint;
             }
         }
     }
 
-    if (triggerCamera() && !hoverAndCaptureEnabled() &&  imagesEverywhere) {
+    if (triggerCamera() && !hoverAndCaptureEnabled() && imagesEverywhere) {
         // Stop triggering
         MissionItem* item = new MissionItem(seqNum++,
                                             MAV_CMD_DO_SET_CAM_TRIGG_DIST,
@@ -934,118 +731,6 @@ void SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, 
     }
 }
 
-#if 0
-bool SurveyComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
-{
-    int seqNum = _sequenceNumber;
-    bool firstWaypointTrigger = false;
-
-#if 1
-    // FIXME: Hack
-    bool hasRefly = false;
-    bool buildRefly = false;
-#endif
-
-    qCDebug(SurveyComplexItemLog) << QStringLiteral("hasTurnaround(%1) triggerCamera(%2) hoverAndCapture(%3) imagesEverywhere(%4) hasRefly(%5) buildRefly(%6) ").arg(_hasTurnaround()).arg(_triggerCamera()).arg(_hoverAndCaptureEnabled()).arg(_imagesEverywhere()).arg(hasRefly).arg(buildRefly);
-
-#if 0
-    QList<QList<QGeoCoordinate>>& transectSegments = buildRefly ? _reflyTransectSegments : _transectSegments;
-#endif
-
-    if (!buildRefly && _imagesEverywhere()) {
-        firstWaypointTrigger = true;
-    }
-
-    for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-        int pointIndex = 0;
-        QGeoCoordinate coord;
-        CameraTriggerCode cameraTrigger;
-
-        qCDebug(SurveyComplexItemLog) << "transect.count" << transect.count();
-
-        if (_hasTurnaround()) {
-            // Add entry turnaround point
-            if (!_nextTransectCoord(segment, pointIndex++, coord)) {
-                return false;
-            }
-            seqNum = _appendWaypointToMission(items, seqNum, coord, firstWaypointTrigger ? CameraTriggerOn : CameraTriggerNone, missionItemParent);
-            firstWaypointTrigger = false;
-        }
-
-        // Add polygon entry point
-        if (!_nextTransectCoord(segment, pointIndex++, coord)) {
-            return false;
-        }
-        if (firstWaypointTrigger) {
-            cameraTrigger = CameraTriggerOn;
-        } else {
-            cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerHoverAndCapture : CameraTriggerOn);
-        }
-        seqNum = _appendWaypointToMission(items, seqNum, coord, cameraTrigger, missionItemParent);
-        firstWaypointTrigger = false;
-
-        // Add internal hover and capture points
-        if (_hoverAndCaptureEnabled()) {
-            int lastHoverAndCaptureIndex = segment.count() - 1 - (_hasTurnaround() ? 1 : 0);
-            qCDebug(SurveyComplexItemLog) << "lastHoverAndCaptureIndex" << lastHoverAndCaptureIndex;
-            for (; pointIndex < lastHoverAndCaptureIndex; pointIndex++) {
-                if (!_nextTransectCoord(segment, pointIndex, coord)) {
-                    return false;
-                }
-                seqNum = _appendWaypointToMission(items, seqNum, coord, CameraTriggerHoverAndCapture, missionItemParent);
-            }
-        }
-
-        // Add polygon exit point
-        if (!_nextTransectCoord(segment, pointIndex++, coord)) {
-            return false;
-        }
-        cameraTrigger = _imagesEverywhere() || !_triggerCamera() ? CameraTriggerNone : (_hoverAndCaptureEnabled() ? CameraTriggerNone : CameraTriggerOff);
-        seqNum = _appendWaypointToMission(items, seqNum, coord, cameraTrigger, missionItemParent);
-
-        if (_hasTurnaround()) {
-            // Add exit turnaround point
-            if (!_nextTransectCoord(segment, pointIndex++, coord)) {
-                return false;
-            }
-            seqNum = _appendWaypointToMission(items, seqNum, coord, CameraTriggerNone, missionItemParent);
-        }
-
-        qCDebug(SurveyComplexItemLog) << "last PointIndex" << pointIndex;
-    }
-
-    if (((hasRefly && buildRefly) || !hasRefly) && _imagesEverywhere()) {
-        // Turn off camera at end of survey
-        MissionItem* item = new MissionItem(seqNum++,
-                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
-                                            MAV_FRAME_MISSION,
-                                            0.0,                    // trigger distance (off)
-                                            0, 0, 0, 0, 0, 0,       // param 2-7 unused
-                                            true,                   // autoContinue
-                                            false,                  // isCurrentItem
-                                            missionItemParent);
-        items.append(item);
-    }
-
-    return true;
-}
-#endif
-
-#if 0
-void SurveyComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
-{
-    int seqNum = _sequenceNumber;
-    bool refly = refly90Degrees()->rawValue().toBool();
-
-    if (!_appendMissionItemsWorker(items, missionItemParent, seqNum, refly, false /* buildRefly */)) {
-        return;
-    }
-
-    if (refly) {
-        _appendMissionItemsWorker(items, missionItemParent, seqNum, refly, true /* buildRefly */);
-    }
-}
-#endif
 
 bool SurveyComplexItem::_hasTurnaround(void) const
 {
@@ -1056,23 +741,6 @@ double SurveyComplexItem::_turnaroundDistance(void) const
 {
     return _turnAroundDistanceFact.rawValue().toDouble();
 }
-
-#if 0
-bool SurveyComplexItem::_triggerCamera(void) const
-{
-    return _triggerDistance() > 0;
-}
-
-bool SurveyComplexItem::_imagesEverywhere(void) const
-{
-    return _triggerCamera() && _cameraTriggerInTurnaroundFact.rawValue().toBool();
-}
-
-bool SurveyComplexItem::_hoverAndCaptureEnabled(void) const
-{
-    return hoverAndCaptureAllowed() && !_imagesEverywhere() && _triggerCamera() && _hoverAndCaptureFact.rawValue().toBool();
-}
-#endif
 
 void SurveyComplexItem::_rebuildTransectsPhase1(void)
 {
@@ -1384,7 +1052,7 @@ void SurveyComplexItem::_rebuildTransectsPhase1WorkerSplitPolygons(bool refly)
         // TODO figure out tangent origin
         // TODO improve selection of entry points
 //        qCDebug(SurveyComplexItemLog) << "Transects from polynom p " << p;
-        _rebuildTranscetsFromPolygon(refly, *p, tangentOrigin, vMatch);
+        _rebuildTransectsFromPolygon(refly, *p, tangentOrigin, vMatch);
     }
 }
 
@@ -1535,7 +1203,7 @@ bool SurveyComplexItem::_VertexIsReflex(const QPolygonF& polygon, const QPointF*
 }
 
 
-void SurveyComplexItem::_rebuildTranscetsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint)
+void SurveyComplexItem::_rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint)
 {
     // Generate transects
 
