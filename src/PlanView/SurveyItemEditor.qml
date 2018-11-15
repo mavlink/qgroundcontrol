@@ -80,7 +80,6 @@ Rectangle {
         }
 
         GridLayout {
-            id:             transectsGrid
             anchors.left:   parent.left
             anchors.right:  parent.right
             columnSpacing:  _margin
@@ -94,6 +93,7 @@ Rectangle {
                 Layout.fillWidth:       true
                 onUpdated:              angleSlider.value = missionItem.gridAngle.value
             }
+
             QGCSlider {
                 id:                     angleSlider
                 minimumValue:           0
@@ -113,9 +113,15 @@ Rectangle {
                 fact:               missionItem.turnAroundDistance
                 Layout.fillWidth:   true
             }
+        }
+
+        ColumnLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        _margin
+            visible:        transectsHeader.checked
 
             QGCButton {
-                Layout.columnSpan:  2
                 text:               qsTr("Rotate Entry Point")
                 onClicked:          missionItem.rotateEntryPoint();
             }
@@ -132,7 +138,6 @@ Rectangle {
                 fact:               missionItem.hoverAndCapture
                 visible:            missionItem.hoverAndCaptureAllowed
                 enabled:            !missionItem.followTerrain
-                Layout.columnSpan:  2
                 onClicked: {
                     if (checked) {
                         missionItem.cameraTriggerInTurnAround.rawValue = false
@@ -144,21 +149,18 @@ Rectangle {
                 text:               qsTr("Refly at 90 deg offset")
                 fact:               missionItem.refly90Degrees
                 enabled:            !missionItem.followTerrain
-                Layout.columnSpan:  2
             }
 
             FactCheckBox {
                 text:               qsTr("Images in turnarounds")
                 fact:               missionItem.cameraTriggerInTurnAround
                 enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
-                Layout.columnSpan:  2
             }
 
             FactCheckBox {
                 text:               qsTr("Fly alternate transects")
                 fact:               missionItem.flyAlternateTransects
                 visible:            _vehicle.fixedWing || _vehicle.vtol
-                Layout.columnSpan:  2
             }
 
             QGCCheckBox {
@@ -168,7 +170,6 @@ Rectangle {
                 checked:            missionItem.cameraCalc.distanceToSurfaceRelative
                 enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
                 visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
-                Layout.columnSpan:  2
                 onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
 
                 Connections {
