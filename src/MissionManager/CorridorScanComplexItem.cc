@@ -172,7 +172,7 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
 
     //qDebug() << "_buildAndAppendMissionItems";
     for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-        bool entryPoint = true;
+        bool transectEntry = true;
 
         //qDebug() << "start transect";
         for (const CoordInfo_t& transectCoordInfo: transect) {
@@ -193,7 +193,7 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
                                    missionItemParent);
             items.append(item);
 
-            if (firstOverallPoint && addTriggerAtBeginning) {
+            if (triggerCamera() && firstOverallPoint && addTriggerAtBeginning) {
                 // Start triggering
                 addTriggerAtBeginning = false;
                 item = new MissionItem(seqNum++,
@@ -210,9 +210,12 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
             }
             firstOverallPoint = false;
 
-            if (transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge && !imagesEverywhere) {
-                if (entryPoint) {
-                    // Start of transect, start triggering
+            // Possibly add trigger start/stop to survey area entrance/exit
+            if (triggerCamera() && transectCoordInfo.coordType == TransectStyleComplexItem::CoordTypeSurveyEdge) {
+                if (transectEntry) {
+                    // Start of transect, always start triggering. We do this even if we are taking images everywhere.
+                    // This allows a restart of the mission in mid-air without losing images from the entire mission.
+                    // At most you may lose part of a transect.
                     item = new MissionItem(seqNum++,
                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
                                            MAV_FRAME_MISSION,
@@ -224,7 +227,8 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
                                            false,                                                           // isCurrentItem
                                            missionItemParent);
                     items.append(item);
-                } else {
+                    transectEntry = false;
+                } else if (!imagesEverywhere && !transectEntry){
                     // End of transect, stop triggering
                     item = new MissionItem(seqNum++,
                                            MAV_CMD_DO_SET_CAM_TRIGG_DIST,
@@ -238,7 +242,6 @@ void CorridorScanComplexItem::_buildAndAppendMissionItems(QList<MissionItem*>& i
                                            missionItemParent);
                     items.append(item);
                 }
-                entryPoint = !entryPoint;
             }
         }
     }

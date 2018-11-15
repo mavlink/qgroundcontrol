@@ -719,10 +719,12 @@ int TransectStyleComplexItem::lastSequenceNumber(void) const
         }
 
 
-        if (!hoverAndCaptureEnabled()) {
+        if (!hoverAndCaptureEnabled() && triggerCamera()) {
             if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-                // Only one camera start and on camera stop
+                // One camera start/stop for beginning/end of entire survey
                 itemCount += 2;
+                // One camera start for each transect
+                itemCount += _transects.count();
             } else {
                 // Each transect will have a camera start and stop in it
                 itemCount += _transects.count() * 2;
