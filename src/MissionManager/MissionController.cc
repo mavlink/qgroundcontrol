@@ -375,7 +375,9 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     newItem->setMissionFlightStatus(_missionFlightStatus);
     _visualItems->insert(i, newItem);
 
-    _recalcAll();
+    // We send the click coordinate through here to be able to set the planned home position from the user click location if needed
+    _recalcAllWithClickCoordinate(coordinate);
+
     return newItem->sequenceNumber();
 }
 
@@ -426,16 +428,16 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     return _insertComplexMissionItemWorker(newItem, i);
 }
 
-int MissionController::insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i)
+int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i)
 {
     ComplexMissionItem* newItem;
 
     if (itemName == _surveyMissionItemName) {
-        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+        newItem = new SurveyComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else if (itemName == _structureScanMissionItemName) {
-        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+        newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else if (itemName == _corridorScanMissionItemName) {
-        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, kmlFile, _visualItems);
+        newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
         return _nextSequenceNumber();
@@ -1156,7 +1158,7 @@ void MissionController::_recalcWaypointLines(void)
         // Create a temporary QObjectList and replace the model data
         QObjectList objs;
         objs.reserve(_linesTable.count());
-        foreach(CoordinateVector *vect, _linesTable.values()) {
+        for(CoordinateVector *vect: _linesTable.values()) {
             objs.append(vect);
         }
 
@@ -1526,8 +1528,10 @@ void MissionController::_recalcChildItems(void)
     }
 }
 
-void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
+void MissionController::_setPlannedHomePositionFromFirstCoordinate(const QGeoCoordinate& clickCoordinate)
 {
+    QGeoCoordinate firstCoordinate;
+
     if (_settingsItem->coordinate().isValid()) {
         return;
     }
@@ -1537,23 +1541,39 @@ void MissionController::_setPlannedHomePositionFromFirstCoordinate(void)
         VisualMissionItem* item = _visualItems->value<VisualMissionItem*>(i);
 
         if (item->specifiesCoordinate()) {
-            QGeoCoordinate plannedHomeCoord = item->coordinate().atDistanceAndAzimuth(30, 0);
-            plannedHomeCoord.setAltitude(0);
-            _settingsItem->setCoordinate(plannedHomeCoord);
+            firstCoordinate = item->coordinate();
+            break;
         }
+    }
+
+    // No item specifying a coordinate was found, in this case it we have a clickCoordinate use that
+    if (!firstCoordinate.isValid()) {
+        firstCoordinate = clickCoordinate;
+    }
+
+    if (firstCoordinate.isValid()) {
+        QGeoCoordinate plannedHomeCoord = firstCoordinate.atDistanceAndAzimuth(30, 0);
+        plannedHomeCoord.setAltitude(0);
+        _settingsItem->setCoordinate(plannedHomeCoord);
     }
 }
 
-
-void MissionController::_recalcAll(void)
+/// @param clickCoordinate The location of the user click when inserting a new item
+void MissionController::_recalcAllWithClickCoordinate(QGeoCoordinate& clickCoordinate)
 {
     if (!_flyView) {
-        _setPlannedHomePositionFromFirstCoordinate();
+        _setPlannedHomePositionFromFirstCoordinate(clickCoordinate);
     }
     _recalcSequence();
     _recalcChildItems();
     _recalcWaypointLines();
     _updateTimer.start(UPDATE_TIMEOUT);
+}
+
+void MissionController::_recalcAll(void)
+{
+    QGeoCoordinate emptyCoord;
+    _recalcAllWithClickCoordinate(emptyCoord);
 }
 
 /// Initializes a new set of mission items

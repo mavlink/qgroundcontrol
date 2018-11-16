@@ -12,7 +12,7 @@
 #include "JsonHelper.h"
 #include "QGCQGeoCoordinate.h"
 #include "QGCApplication.h"
-#include "KMLFileHelper.h"
+#include "ShapeFileHelper.h"
 
 #include <QGeoRectangle>
 #include <QDebug>
@@ -58,7 +58,7 @@ const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)
 
     QVariantList vertices = other.path();
     QList<QGeoCoordinate> rgCoord;
-    foreach (const QVariant& vertexVar, vertices) {
+    for (const QVariant& vertexVar: vertices) {
         rgCoord.append(vertexVar.value<QGeoCoordinate>());
     }
     appendVertices(rgCoord);
@@ -92,11 +92,11 @@ void QGCMapPolygon::clear(void)
 void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinate)
 {
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
+    _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     if (!_centerDrag) {
         // When dragging center we don't signal path changed until add vertices are updated
         emit pathChanged();
     }
-    _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     setDirty(true);
 }
 
@@ -162,7 +162,7 @@ void QGCMapPolygon::setPath(const QList<QGeoCoordinate>& path)
 {
     _polygonPath.clear();
     _polygonModel.clearAndDeleteContents();
-    foreach(const QGeoCoordinate& coord, path) {
+    for(const QGeoCoordinate& coord: path) {
         _polygonPath.append(QVariant::fromValue(coord));
         _polygonModel.append(new QGCQGeoCoordinate(coord, this));
     }
@@ -265,7 +265,7 @@ void QGCMapPolygon::appendVertices(const QList<QGeoCoordinate>& coordinates)
 {
     QList<QObject*> objects;
 
-    foreach (const QGeoCoordinate& coordinate, coordinates) {
+    for (const QGeoCoordinate& coordinate: coordinates) {
         objects.append(new QGCQGeoCoordinate(coordinate, this));
         _polygonPath.append(QVariant::fromValue(coordinate));
     }
@@ -452,11 +452,11 @@ void QGCMapPolygon::offset(double distance)
     appendVertices(rgNewPolygon);
 }
 
-bool QGCMapPolygon::loadKMLFile(const QString& kmlFile)
+bool QGCMapPolygon::loadKMLOrSHPFile(const QString& file)
 {
     QString errorString;
     QList<QGeoCoordinate> rgCoords;
-    if (!KMLFileHelper::loadPolygonFromFile(kmlFile, rgCoords, errorString)) {
+    if (!ShapeFileHelper::loadPolygonFromFile(file, rgCoords, errorString)) {
         qgcApp()->showMessage(errorString);
         return false;
     }

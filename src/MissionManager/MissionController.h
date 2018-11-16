@@ -119,9 +119,10 @@ public:
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
+    ///     @param file: kml or shp file to load from shape from
     ///     @param i: index to insert at, -1 for end
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItemFromKML(QString itemName, QString kmlFile, int i);
+    Q_INVOKABLE int insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
@@ -234,12 +235,13 @@ private slots:
     void _managerRemoveAllComplete(bool error);
     void _updateTimeout();
     void _complexBoundingBoxChanged();
+    void _recalcAll(void);
 
 private:
     void _init(void);
     void _recalcSequence(void);
     void _recalcChildItems(void);
-    void _recalcAll(void);
+    void _recalcAllWithClickCoordinate(QGeoCoordinate& clickCoordinate);
     void _initAllVisualItems(void);
     void _deinitAllVisualItems(void);
     void _initVisualItem(VisualMissionItem* item);
@@ -258,7 +260,7 @@ private:
     int _nextSequenceNumber(void);
     void _scanForAdditionalSettings(QmlObjectListModel* visualItems, Vehicle* vehicle);
     static bool _convertToMissionItems(QmlObjectListModel* visualMissionItems, QList<MissionItem*>& rgMissionItems, QObject* missionItemParent);
-    void _setPlannedHomePositionFromFirstCoordinate(void);
+    void _setPlannedHomePositionFromFirstCoordinate(const QGeoCoordinate& clickCoordinate);
     void _resetMissionFlightStatus(void);
     void _addHoverTime(double hoverTime, double hoverDistance, int waypointIndex);
     void _addCruiseTime(double cruiseTime, double cruiseDistance, int wayPointIndex);

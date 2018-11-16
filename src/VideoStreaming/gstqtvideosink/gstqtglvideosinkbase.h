@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef GST_QT_GL_VIDEO_SINK_BASE_H
-#define GST_QT_GL_VIDEO_SINK_BASE_H
+#pragma once
 
 #include "gstqtvideosinkbase.h"
 #include <gst/video/colorbalance.h>
@@ -97,4 +96,3 @@ struct GstQtGLVideoSinkBaseClass
 };
 
 #endif // GST_QT_VIDEO_SINK_NO_OPENGL
-#endif // GST_QT_GL_VIDEO_SINK_BASE_H

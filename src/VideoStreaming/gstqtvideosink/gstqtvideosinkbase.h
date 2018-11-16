@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef GST_QT_VIDEO_SINK_BASE_H
-#define GST_QT_VIDEO_SINK_BASE_H
+#pragma once
 
 #include "gstqtvideosinkplugin.h"
 #include <gst/video/gstvideosink.h>
@@ -81,4 +80,3 @@ struct GstQtVideoSinkBaseClass
     GstVideoSinkClass parent_class;
 };
 
-#endif

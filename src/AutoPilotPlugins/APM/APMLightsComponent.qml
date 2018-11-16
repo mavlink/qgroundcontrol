@@ -34,7 +34,7 @@ SetupPage {
             QGCPalette { id: palette; colorGroupEnabled: true }
 
             property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-            property bool _oldFW:               !(_activeVehicle.firmwareMajorVersion > 3 || _activeVehicle.firmwareMinorVersion > 5 || _activeVehicle.firmwarePatchVersion >= 2)
+            property bool _oldFW:               _activeVehicle.versionCompare(3, 5, 2) < 0
             property Fact _rc5Function:         controller.getParameterFact(-1, "r.SERVO5_FUNCTION")
             property Fact _rc6Function:         controller.getParameterFact(-1, "r.SERVO6_FUNCTION")
             property Fact _rc7Function:         controller.getParameterFact(-1, "r.SERVO7_FUNCTION")

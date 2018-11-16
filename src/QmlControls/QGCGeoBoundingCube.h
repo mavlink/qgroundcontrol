@@ -18,17 +18,13 @@
 class QGCGeoBoundingCube : public QObject {
     Q_OBJECT
 public:
+    QGCGeoBoundingCube(QObject* parent = nullptr);
+
     QGCGeoBoundingCube(const QGCGeoBoundingCube& other)
         : QObject()
     {
         pointNW = other.pointNW;
         pointSE = other.pointSE;
-    }
-
-    QGCGeoBoundingCube()
-        : pointNW(QGeoCoordinate(MaxSouth, MaxEast, MaxAlt))
-        , pointSE(QGeoCoordinate(MaxNorth, MaxWest, MinAlt))
-    {
     }
 
     QGCGeoBoundingCube(QGeoCoordinate p1, QGeoCoordinate p2)
@@ -38,7 +34,7 @@ public:
     }
 
     Q_PROPERTY(QGeoCoordinate pointNW MEMBER pointNW CONSTANT)
-    Q_PROPERTY(QGeoCoordinate pointSE MEMBER pointNW CONSTANT)
+    Q_PROPERTY(QGeoCoordinate pointSE MEMBER pointSE CONSTANT)
 
     Q_INVOKABLE void            reset   ();
     Q_INVOKABLE bool            isValid () const;
@@ -64,7 +60,7 @@ public:
     }
 
     //-- 2D
-    QList<QGeoCoordinate> polygon2D(double clipTo = 0.0) const;
+    Q_INVOKABLE QList<QGeoCoordinate> polygon2D(double clipTo = 0.0) const;
 
     Q_INVOKABLE double width    () const;
     Q_INVOKABLE double height   () const;

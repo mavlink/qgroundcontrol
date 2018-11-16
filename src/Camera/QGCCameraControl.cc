@@ -43,6 +43,7 @@ static const char* kReadOnly        = "readonly";
 static const char* kWriteOnly       = "writeonly";
 static const char* kRoption         = "roption";
 static const char* kStep            = "step";
+static const char* kDecimalPlaces   = "decimalPlaces";
 static const char* kStrings         = "strings";
 static const char* kTranslated      = "translated";
 static const char* kType            = "type";
@@ -834,6 +835,22 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                 }
             }
             {
+                //-- Check for Decimal Places
+                QString attr;
+                if(read_attribute(parameterNode, kDecimalPlaces, attr)) {
+                    QVariant typedValue;
+                    QString  errorString;
+                    if (metaData->convertAndValidateRaw(attr, true /* convertOnly */, typedValue, errorString)) {
+                        metaData->setDecimalPlaces(typedValue.toInt());
+                    } else {
+                        qWarning() << "Invalid decimal places value for" << factName
+                                   << " type:"  << metaData->type()
+                                   << " value:" << attr
+                                   << " error:" << errorString;
+                    }
+                }
+            }
+            {
                 //-- Check for Units
                 QString attr;
                 if(read_attribute(parameterNode, kUnit, attr)) {
@@ -951,7 +968,7 @@ void
 QGCCameraControl::_requestAllParameters()
 {
     //-- Reset receive list
-    foreach(QString paramName, _paramIO.keys()) {
+    for(QString paramName: _paramIO.keys()) {
         if(_paramIO[paramName]) {
             _paramIO[paramName]->setParamRequest();
         } else {
@@ -1018,7 +1035,7 @@ QGCCameraControl::_updateActiveList()
 {
     //-- Clear out excluded parameters based on exclusion rules
     QStringList exclusionList;
-    foreach(QGCCameraOptionExclusion* param, _valueExclusions) {
+    for(QGCCameraOptionExclusion* param: _valueExclusions) {
         Fact* pFact = getFact(param->param);
         if(pFact) {
             QString option = pFact->rawValueString();
@@ -1028,7 +1045,7 @@ QGCCameraControl::_updateActiveList()
         }
     }
     QStringList active;
-    foreach(QString key, _settings) {
+    for(QString key: _settings) {
         if(!exclusionList.contains(key)) {
             active.append(key);
         }
@@ -1132,7 +1149,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
     QStringList resetList;
     QStringList updates;
     //-- Iterate range sets looking for limited ranges
-    foreach(QGCCameraOptionRange* pRange, _optionRanges) {
+    for(QGCCameraOptionRange* pRange: _optionRanges) {
         //-- If this fact or one of its conditions is part of this range set
         if(!changedList.contains(pRange->targetParam) && (pRange->param == pFact->name() || pRange->condition.contains(pFact->name()))) {
             Fact* pRFact = getFact(pRange->param);          //-- This parameter
@@ -1153,7 +1170,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
         }
     }
     //-- Iterate range sets again looking for resets
-    foreach(QGCCameraOptionRange* pRange, _optionRanges) {
+    for(QGCCameraOptionRange* pRange: _optionRanges) {
         if(!changedList.contains(pRange->targetParam) && (pRange->param == pFact->name() || pRange->condition.contains(pFact->name()))) {
             Fact* pTFact = getFact(pRange->targetParam);    //-- The target parameter (the one its range is to change)
             if(!resetList.contains(pRange->targetParam)) {
@@ -1166,7 +1183,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
         }
     }
     //-- Update limited range set
-    foreach (Fact* f, rangesSet.keys()) {
+    for (Fact* f: rangesSet.keys()) {
         f->setEnumInfo(rangesSet[f]->optNames, rangesSet[f]->optVariants);
         if(!updates.contains(f->name())) {
             _paramIO[f->name()]->optNames = rangesSet[f]->optNames;
@@ -1177,7 +1194,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
         }
     }
     //-- Restore full range set
-    foreach (Fact* f, rangesReset.keys()) {
+    for (Fact* f: rangesReset.keys()) {
         f->setEnumInfo(_originalOptNames[rangesReset[f]], _originalOptValues[rangesReset[f]]);
         if(!updates.contains(f->name())) {
             _paramIO[f->name()]->optNames = _originalOptNames[rangesReset[f]];
@@ -1189,7 +1206,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
     }
     //-- Parameter update requests
     if(_requestUpdates.contains(pFact->name())) {
-        foreach(QString param, _requestUpdates[pFact->name()]) {
+        for(QString param: _requestUpdates[pFact->name()]) {
             if(!_updatesToRequest.contains(param)) {
                 _updatesToRequest << param;
             }
@@ -1204,7 +1221,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
 void
 QGCCameraControl::_requestParamUpdates()
 {
-    foreach(QString param, _updatesToRequest) {
+    for(QString param: _updatesToRequest) {
         _paramIO[param]->paramRequest();
     }
     _updatesToRequest.clear();
@@ -1396,7 +1413,7 @@ void
 QGCCameraControl::_processRanges()
 {
     //-- After all parameter are loaded, process parameter ranges
-    foreach(QGCCameraOptionRange* pRange, _optionRanges) {
+    for(QGCCameraOptionRange* pRange: _optionRanges) {
         Fact* pRFact = getFact(pRange->targetParam);
         if(pRFact) {
             for(int i = 0; i < pRange->optNames.size(); i++) {
@@ -1526,7 +1543,7 @@ QGCCameraControl::_dataReady(QByteArray data)
 void
 QGCCameraControl::_paramDone()
 {
-    foreach(QString param, _paramIO.keys()) {
+    for(QString param: _paramIO.keys()) {
         if(!_paramIO[param]->paramDone()) {
             return;
         }

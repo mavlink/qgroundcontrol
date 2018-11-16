@@ -65,7 +65,7 @@ bool SerialLink::_isBootloader()
     if( portList.count() == 0){
         return false;
     }
-    foreach (const QSerialPortInfo &info, portList)
+    for (const QSerialPortInfo &info: portList)
     {
         qCDebug(SerialLinkLog) << "PortName    : " << info.portName() << "Description : " << info.description();
         qCDebug(SerialLinkLog) << "Manufacturer: " << info.manufacturer();

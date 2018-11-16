@@ -71,7 +71,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
 
     // Iterate over MissionCommandUIInfo objects
     QJsonArray jsonArray = jsonValue.toArray();
-    foreach(QJsonValue info, jsonArray) {
+    for(QJsonValue info: jsonArray) {
         if (!info.isObject()) {
             qWarning() << jsonFilename << "mavCmdArray should contain objects";
             return;
@@ -96,7 +96,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
     }
 
     // Build id list
-    foreach (MAV_CMD id, _infoMap.keys()) {
+    for (MAV_CMD id: _infoMap.keys()) {
         _ids << id;
     }
 }

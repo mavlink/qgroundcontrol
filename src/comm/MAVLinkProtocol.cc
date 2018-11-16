@@ -53,6 +53,8 @@ const char* MAVLinkProtocol::_logFileExtension = "mavlink";             ///< Ext
 MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , m_enable_version_check(true)
+    , _message({})
+    , _status({})
     , versionMismatchIgnore(false)
     , systemId(255)
     , _current_version(100)
@@ -68,6 +70,8 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     memset(totalLossCounter,    0, sizeof(totalLossCounter));
     memset(runningLossPercent,  0, sizeof(runningLossPercent));
     memset(firstMessage,        1, sizeof(firstMessage));
+    memset(&_status,            0, sizeof(_status));
+    memset(&_message,           0, sizeof(_message));
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -453,7 +457,7 @@ void MAVLinkProtocol::checkForLostLogFiles(void)
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
     //qDebug() << "Orphaned log file count" << fileInfoList.count();
 
-    foreach(const QFileInfo fileInfo, fileInfoList) {
+    for(const QFileInfo fileInfo: fileInfoList) {
         //qDebug() << "Orphaned log file" << fileInfo.filePath();
         if (fileInfo.size() == 0) {
             // Delete all zero length files
@@ -476,7 +480,7 @@ void MAVLinkProtocol::deleteTempLogFiles(void)
     QString filter(QString("*.%1").arg(_logFileExtension));
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
 
-    foreach(const QFileInfo fileInfo, fileInfoList) {
+    for(const QFileInfo fileInfo: fileInfoList) {
         QFile::remove(fileInfo.filePath());
     }
 }

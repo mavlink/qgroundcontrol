@@ -23,14 +23,16 @@ class SurveyComplexItem : public TransectStyleComplexItem
 public:
     /// @param vehicle Vehicle which this is being contructed for
     /// @param flyView true: Created for use in the Fly View, false: Created for use in the Plan View
-    /// @param kmlFile Polygon comes from this file, empty for default polygon
-    SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent);
+    /// @param kmlOrShpFile Polygon comes from this file, empty for default polygon
+    SurveyComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrShpFile, QObject* parent);
 
     Q_PROPERTY(Fact* gridAngle              READ gridAngle              CONSTANT)
     Q_PROPERTY(Fact* flyAlternateTransects  READ flyAlternateTransects  CONSTANT)
+    Q_PROPERTY(Fact* splitConcavePolygons   READ splitConcavePolygons   CONSTANT)
 
     Fact* gridAngle             (void) { return &_gridAngleFact; }
     Fact* flyAlternateTransects (void) { return &_flyAlternateTransectsFact; }
+    Fact* splitConcavePolygons  (void) { return &_splitConcavePolygonsFact; }
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -66,6 +68,7 @@ public:
     static const char* gridAngleName;
     static const char* gridEntryLocationName;
     static const char* flyAlternateTransectsName;
+    static const char* splitConcavePolygonsName;
 
     static const char* jsonV3ComplexItemTypeValue;
 
@@ -109,18 +112,29 @@ private:
     double _turnaroundDistance(void) const;
     bool _hoverAndCaptureEnabled(void) const;
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
-    bool _loadV4(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
+    bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version);
     void _rebuildTransectsPhase1Worker(bool refly);
+    void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
+    void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);
+    /// Adds to the _transects array from one polygon
+    void _rebuildTransectsFromPolygon(bool refly, const QPolygonF& polygon, const QGeoCoordinate& tangentOrigin, const QPointF* const transitionPoint);
+    // Decompose polygon into list of convex sub polygons
+    void _PolygonDecomposeConvex(const QPolygonF& polygon, QList<QPolygonF>& decomposedPolygons);
+    // return true if vertex a can see vertex b
+    bool _VertexCanSeeOther(const QPolygonF& polygon, const QPointF* vertexA, const QPointF* vertexB);
+    bool _VertexIsReflex(const QPolygonF& polygon, const QPointF* vertex);
 
     QMap<QString, FactMetaData*> _metaDataMap;
 
     SettingsFact    _gridAngleFact;
     SettingsFact    _flyAlternateTransectsFact;
+    SettingsFact    _splitConcavePolygonsFact;
     int             _entryPoint;
 
     static const char* _jsonGridAngleKey;
     static const char* _jsonEntryPointKey;
     static const char* _jsonFlyAlternateTransectsKey;
+    static const char* _jsonSplitConcavePolygonsKey;
 
     static const char* _jsonV3GridObjectKey;
     static const char* _jsonV3GridAltitudeKey;

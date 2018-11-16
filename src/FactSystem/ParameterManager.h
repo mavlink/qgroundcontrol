@@ -49,6 +49,8 @@ public:
 
     /// @return Location of parameter cache file
     static QString parameterCacheFile(int vehicleId, int componentId);
+
+    QList<int> componentIds(void);
     
     /// Re-request the full set of parameters from the autopilot
     void refreshAllParameters(uint8_t componentID = MAV_COMP_ID_ALL);
@@ -75,7 +77,7 @@ public:
     ///     @param name Parameter name
     Fact* getParameter(int componentId, const QString& name);
     
-    const QMap<QString, QMap<QString, QStringList> >& getCategoryMap(void);
+    const QMap<QString, QMap<QString, QStringList> >& getDefaultComponentCategoryMap(void);
     
     /// Returns error messages from loading
     QString readParametersFromStream(QTextStream& stream);
@@ -128,7 +130,7 @@ protected:
 private:
     static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
     int _actualComponentId(int componentId);
-    void _setupCategoryMap(void);
+    void _setupDefaultComponentCategoryMap(void);
     void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
     void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
     void _writeLocalParamCache(int vehicleId, int componentId);
@@ -151,7 +153,7 @@ private:
     QMap<int, QVariantMap>            _mapParameterName2Variant;
 
     // Category map of default component parameters
-    QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _categoryMap;
+    QMap<QString /* category */, QMap<QString /* group */, QStringList /* parameter names */> > _defaultComponentCategoryMap;
     
     double      _loadProgress;                  ///< Parameter load progess, [0.0,1.0]
     bool        _parametersReady;               ///< true: parameter load complete

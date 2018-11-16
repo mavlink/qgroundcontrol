@@ -90,6 +90,13 @@ INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
 #
+# [REQUIRED] shapelib library
+INCLUDEPATH += libs/shapelib
+SOURCES += \
+    libs/shapelib/shpopen.c \
+    libs/shapelib/safileio.c
+
+#
 # [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
 #
 !MobileBuild {

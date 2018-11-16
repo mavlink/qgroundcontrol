@@ -119,7 +119,7 @@ void PX4FirmwareUpgradeThreadWorker::_findBoardOnce(void)
 
 bool PX4FirmwareUpgradeThreadWorker::_findBoardFromPorts(QGCSerialPortInfo& portInfo, QGCSerialPortInfo::BoardType_t& boardType, QString& boardName)
 {
-    foreach (QGCSerialPortInfo info, QGCSerialPortInfo::availablePorts()) {
+    for (QGCSerialPortInfo info: QGCSerialPortInfo::availablePorts()) {
         info.getBoardInfo(boardType, boardName);
 
         qCDebug(FirmwareUpgradeVerboseLog) << "Serial Port --------------";

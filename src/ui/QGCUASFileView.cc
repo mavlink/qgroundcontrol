@@ -227,9 +227,6 @@ Again:
     }
     
     if (childItem) {
-        // Process this item
-        QString text = childItem->text(0);
-        
         // Move to the next item for processing at this level
         _walkIndexStack.last() = ++walkIndex;
         

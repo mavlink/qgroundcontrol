@@ -24,8 +24,8 @@ class QGCMapPolygon : public QObject
     Q_OBJECT
 
 public:
-    QGCMapPolygon(QObject* parent = NULL);
-    QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = NULL);
+    QGCMapPolygon(QObject* parent = nullptr);
+    QGCMapPolygon(const QGCMapPolygon& other, QObject* parent = nullptr);
 
     const QGCMapPolygon& operator=(const QGCMapPolygon& other);
 
@@ -56,15 +56,15 @@ public:
     /// Offsets the current polygon edges by the specified distance in meters
     Q_INVOKABLE void offset(double distance);
 
-    /// Loads a polygon from a KML file
+    /// Loads a polygon from a KML/SH{ file
     /// @return true: success
-    Q_INVOKABLE bool loadKMLFile(const QString& kmlFile);
+    Q_INVOKABLE bool loadKMLOrSHPFile(const QString& file);
 
     /// Returns the path in a list of QGeoCoordinate's format
     QList<QGeoCoordinate> coordinateList(void) const;
 
     /// Returns the QGeoCoordinate for the vertex specified
-    QGeoCoordinate vertexCoordinate(int vertex) const;
+    Q_INVOKABLE QGeoCoordinate vertexCoordinate(int vertex) const;
 
     /// Saves the polygon to the json object.
     ///     @param json Json object to save to

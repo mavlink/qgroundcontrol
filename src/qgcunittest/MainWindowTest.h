@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -13,8 +13,7 @@
 ///
 ///     @author Don Gagne <don@thegagnes.com>
 
-#ifndef MAINWINDOWTEST_H
-#define MAINWINDOWTEST_H
+#pragma once
 
 #include "UnitTest.h"
 #include "MainWindow.h"
@@ -31,4 +30,3 @@ private:
     void _connectWindowClose_test(MAV_AUTOPILOT autopilot);
 };
 
-#endif

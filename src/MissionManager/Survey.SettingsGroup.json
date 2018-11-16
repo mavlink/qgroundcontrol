@@ -14,5 +14,11 @@
     "shortDescription": "Fly every other transect in each pass.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "SplitConcavePolygons",
+    "shortDescription": "Split mission concave polygons into separate regular, convex polygons.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

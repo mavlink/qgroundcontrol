@@ -158,14 +158,19 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_6["PSC_ACCZ_P"] =       QStringLiteral("ACCEL_Z_P");
         remapV3_6["PSC_ACCZ_I"] =       QStringLiteral("ACCEL_Z_I");
 
+        FirmwarePlugin::remapParamNameMap_t& remapV3_7 = _remapParamName[3][7];
+
+        remapV3_7["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
+        remapV3_7["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
+
         _remapParamNameIntialized = true;
     }
 }
 
 int ArduCopterFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
 {
-    // Remapping supports up to 3.5
-    return majorVersionNumber == 3 ? 5 : Vehicle::versionNotSetValue;
+    // Remapping supports up to 3.7
+    return majorVersionNumber == 3 ? 7 : Vehicle::versionNotSetValue;
 }
 
 void ArduCopterFirmwarePlugin::guidedModeLand(Vehicle* vehicle)

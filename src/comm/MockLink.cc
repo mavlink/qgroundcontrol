@@ -257,6 +257,7 @@ void MockLink::_loadParams(void)
         QStringList paramData = line.split("\t");
         Q_ASSERT(paramData.count() == 5);
 
+        int compId = paramData.at(1).toInt();
         QString paramName = paramData.at(2);
         QString valStr = paramData.at(3);
         uint paramType = paramData.at(4).toUInt();
@@ -292,8 +293,8 @@ void MockLink::_loadParams(void)
 
         qCDebug(MockLinkVerboseLog) << "Loading param" << paramName << paramValue;
 
-        _mapParamName2Value[_vehicleComponentId][paramName] = paramValue;
-        _mapParamName2MavParamType[paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
+        _mapParamName2Value[compId][paramName] = paramValue;
+        _mapParamName2MavParamType[compId][paramName] = static_cast<MAV_PARAM_TYPE>(paramType);
     }
 }
 
@@ -515,11 +516,11 @@ void MockLink::_setParamFloatUnionIntoMap(int componentId, const QString& paramN
 
     Q_ASSERT(_mapParamName2Value.contains(componentId));
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramName));
-    Q_ASSERT(_mapParamName2MavParamType.contains(paramName));
+    Q_ASSERT(_mapParamName2MavParamType[componentId].contains(paramName));
 
     valueUnion.param_float = paramFloat;
 
-    MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[paramName];
+    MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[componentId][paramName];
 
     QVariant paramVariant;
 
@@ -569,9 +570,9 @@ float MockLink::_floatUnionForParam(int componentId, const QString& paramName)
 
     Q_ASSERT(_mapParamName2Value.contains(componentId));
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramName));
-    Q_ASSERT(_mapParamName2MavParamType.contains(paramName));
+    Q_ASSERT(_mapParamName2MavParamType[componentId].contains(paramName));
 
-    MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[paramName];
+    MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[componentId][paramName];
     QVariant paramVar = _mapParamName2Value[componentId][paramName];
 
     switch (paramType) {
@@ -677,9 +678,9 @@ void MockLink::_paramRequestListWorker(void)
         mavlink_message_t responseMsg;
 
         Q_ASSERT(_mapParamName2Value[componentId].contains(paramName));
-        Q_ASSERT(_mapParamName2MavParamType.contains(paramName));
+        Q_ASSERT(_mapParamName2MavParamType[componentId].contains(paramName));
 
-        MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[paramName];
+        MAV_PARAM_TYPE paramType = _mapParamName2MavParamType[componentId][paramName];
 
         Q_ASSERT(paramName.length() <= MAVLINK_MSG_ID_PARAM_VALUE_LEN);
         strncpy(paramId, paramName.toLocal8Bit().constData(), MAVLINK_MSG_ID_PARAM_VALUE_LEN);
@@ -726,8 +727,9 @@ void MockLink::_handleParamSet(const mavlink_message_t& msg)
     qCDebug(MockLinkLog) << "_handleParamSet" << componentId << paramId << request.param_type;
 
     Q_ASSERT(_mapParamName2Value.contains(componentId));
+    Q_ASSERT(_mapParamName2MavParamType.contains(componentId));
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
-    Q_ASSERT(request.param_type == _mapParamName2MavParamType[paramId]);
+    Q_ASSERT(request.param_type == _mapParamName2MavParamType[componentId][paramId]);
 
     // Save the new value
     _setParamFloatUnionIntoMap(componentId, paramId, request.param_value);
@@ -795,7 +797,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
     }
 
     Q_ASSERT(_mapParamName2Value[componentId].contains(paramId));
-    Q_ASSERT(_mapParamName2MavParamType.contains(paramId));
+    Q_ASSERT(_mapParamName2MavParamType[componentId].contains(paramId));
 
     if (_failureMode == MockConfiguration::FailMissingParamOnAllRequests && strcmp(paramId, _failParam) == 0) {
         qCDebug(MockLinkLog) << "Ignoring request read for " << _failParam;
@@ -809,7 +811,7 @@ void MockLink::_handleParamRequestRead(const mavlink_message_t& msg)
                                       &responseMsg,                                              // Outgoing message
                                       paramId,                                                   // Parameter name
                                       _floatUnionForParam(componentId, paramId),                 // Parameter value
-                                      _mapParamName2MavParamType[paramId],                       // Parameter type
+                                      _mapParamName2MavParamType[componentId][paramId],          // Parameter type
                                       _mapParamName2Value[componentId].count(),                  // Total number of parameters
                                       _mapParamName2Value[componentId].keys().indexOf(paramId)); // Index of this parameter
     respondWithMavlinkMessage(responseMsg);
@@ -1218,16 +1220,10 @@ void MockLink::_sendRCChannels(void)
                                       _mavlinkChannel,
                                       &msg,
                                       0,                     // time_boot_ms
-                                      8,                     // chancount
-                                      1500,                  // chan1_raw
-                                      1500,                  // chan2_raw
-                                      1500,                  // chan3_raw
-                                      1500,                  // chan4_raw
-                                      1500,                  // chan5_raw
-                                      1500,                  // chan6_raw
-                                      1500,                  // chan7_raw
-                                      1500,                  // chan8_raw
-                                      UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX, UINT16_MAX,
+                                      16,                    // chancount
+                                      1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 1-8
+                                      1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500,   // channel 9-16
+                                      UINT16_MAX, UINT16_MAX,
                                       0);                    // rssi
 
     respondWithMavlinkMessage(msg);

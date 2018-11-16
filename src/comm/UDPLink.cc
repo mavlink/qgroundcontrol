@@ -65,12 +65,12 @@ static QString get_ip_address(const QString& address)
             }
         }
     }
-    return QString("");
+    return {};
 }
 
 static bool contains_target(const QList<UDPCLient*> list, const QHostAddress& address, quint16 port)
 {
-    foreach(UDPCLient* target, list) {
+    for(UDPCLient* target: list) {
         if(target->address == address && target->port == port) {
             return true;
         }
@@ -91,7 +91,7 @@ UDPLink::UDPLink(SharedLinkConfigurationPointer& config)
     if (!_udpConfig) {
         qWarning() << "Internal error";
     }
-    foreach (const QHostAddress &address, QNetworkInterface::allAddresses()) {
+    for (const QHostAddress &address: QNetworkInterface::allAddresses()) {
         _localAddress.append(QHostAddress(address));
     }
     moveToThread(this);
@@ -156,7 +156,7 @@ bool UDPLink::_isIpLocal(const QHostAddress& add)
     // On Windows, this is a very expensive call only Redmond would know
     // why. As such, we make it once and keep the list locally. If a new
     // interface shows up after we start, it won't be on this list.
-    foreach (const QHostAddress &address, _localAddress) {
+    for (const QHostAddress &address: _localAddress) {
         if (address == add) {
             // This is a local address of the same host
             return true;
@@ -171,14 +171,14 @@ void UDPLink::_writeBytes(const QByteArray data)
         return;
     }
     // Send to all manually targeted systems
-    foreach(UDPCLient* target, _udpConfig->targetHosts()) {
+    for(UDPCLient* target: _udpConfig->targetHosts()) {
         // Skip it if it's part of the session clients below
         if(!contains_target(_sessionTargets, target->address, target->port)) {
             _writeDataGram(data, target);
         }
     }
     // Send to all connected systems
-    foreach(UDPCLient* target, _sessionTargets) {
+    for(UDPCLient* target: _sessionTargets) {
         _writeDataGram(data, target);
     }
 }
@@ -401,7 +401,7 @@ void UDPConfiguration::_copyFrom(LinkConfiguration *source)
     if (usource) {
         _localPort = usource->localPort();
         _clearTargetHosts();
-        foreach(UDPCLient* target, usource->targetHosts()) {
+        for(UDPCLient* target: usource->targetHosts()) {
             if(!contains_target(_targetHosts, target->address, target->port)) {
                 UDPCLient* newTarget = new UDPCLient(target);
                 _targetHosts.append(newTarget);

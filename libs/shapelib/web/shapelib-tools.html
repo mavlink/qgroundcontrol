@@ -1,0 +1,352 @@
+<html>
+<head>
+<title>ShapeLib Tools - User Guide</title>
+<link href="maptools.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<h1>ShapeLib Tools - User Guide</h1>
+ShapeLib is maintained by Frank Warmerdam<br>
+This guide was created by <a href="http://www.consultoria.eti.br" target="_show">Eduardo Patto Kanegae</a> &lt;&nbsp;eduardo<i>~at~</i>consultoria<i>~dot~</i>eti<i>~dot~</i>br&nbsp;&gt;
+<ul>
+	<li><a href="#dbfcreate">dbfcreate</a></li>
+	<li><a href="#dbfadd">dbfadd</a></li>
+	<li><a href="#dbfdump">dbfdump</a></li>
+	<li><a href="#shpcreate">shpcreate</a></li>
+	<li><a href="#shpadd">shpadd</a></li>
+	<li><a href="#shpdump">shpdump</a></li>
+	<li><a href="#shprewind">shprewind</a></li>
+	<li><i>Tools from ShapeLib 'contrib' directory</i>
+		<ul>
+			<li><a href="#dbfinfo">dbfinfo</a></li>
+			<li><a href="#dbfcat">dbfcat</a></li>
+			<li><a href="#shpinfo">shpinfo</a></li>
+			<li><a href="#shpcat">shpcat</a></li>
+			<li><a href="#shpcentrd">shpcentrd</a></li>
+			<li><a href="#shpdxf">shpdxf</a></li>
+			<li><a href="#shpfix">shpfix</a></li>
+			<li><a href="#shpproj">shpproj</a></li>
+		</ul>
+	</li>
+
+</ul>
+
+<h2><a name="dbfcreate">dbfcreate</a></h2>
+<b>Purpose</b>: creates a new and empty .dbf file.
+<br>
+<b>Usage</b>: <font face="courier">dbfcreate xbase_file [[-s field_name width],[-n field_name width decimals]]...</font>
+<br>
+<ul>
+	<li><b>xbase_file</b>: the name of xBase file to be created. Doesn't need the extension.</li>
+	<li><b>-s field_name width</b>: creates a string field with name <u>field_name</u> and size <u>width</u>.</li>
+	<li><b>-n field_name width decimals</b>: creates a numeric field with name <u>field_name</u>, width of <u>width</u> and with decimals places sized by <u>decimals</u>.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ dbfcreate testbase -s NAME 20, -n AREA 9 3, -n VALUE 9 2</font>
+<br># this will create a file named testbase.dbf with 3 fields: NAME ( string (20)),
+AREA ( float (9,3)) and VALUE ( float (9,2))
+<br>
+<hr>
+
+<h2><a name="dbfadd">dbfadd</a></h2>
+<b>Purpose</b>: adds a record into an existing .dbf file.
+<br>
+<b>Usage</b>: <font face="courier">dbfadd xbase_file field_values</font>
+<br>
+<ul>
+	<li><b>xbase_file</b>: the name of an existing xBase file.</li>
+	<li><b>field_values</b>: list of values to be inserted into the xBase file.
+	You must specify a number of values equal to the number of fields the xBase file has.
+	The order of values must also reflect the order of fields inside xBase file.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ dbfadd testbase.dbf REGION1 25.656 150.22</font>
+<br># assuming that testbase.dbf has 3 fields( NAME, AREA and VALUE), this command line
+will insert a new record into testbase.dbf with the value "REGION1" for NAME,
+'25.656' for AREA and '150.22' for VALUE field.
+<br>
+<hr>
+
+<h2><a name="dbfdump">dbfdump</a></h2>
+<b>Purpose</b>: dumps the content of a xBase file to the terminal.
+<br>
+<b>Usage</b>: <font face="courier">dbfdump [-h] [-r] [-m] xbase_file</font>
+<br>
+<ul>
+	<li><b>-h</b>: output header info( field descriptions).</li>
+	<li><b>-r</b>: output raw field info, numeric values not reformatted.</li>
+	<li><b>-m</b>: output one line per field.</li>
+	<li><b>xbase_file</b>: the name of an existing xBase file.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ dbfdump -h testbase.dbf</font>
+<br># assuming that testbase.dbf has 1 record( inserted by previous example using 'dbfadd'),
+this command line will produce the following output:<br>
+<font face="courier">
+Field 0: Type=String, Title=`NAME', Width=20, Decimals=0<br>
+Field 1: Type=Double, Title=`AREA', Width=9, Decimals=3<br>
+Field 2: Type=Double, Title=`VALUE', Width=9, Decimals=2<br>
+NAME                      AREA     VALUE<br>
+REGION1                 25.656    150.22
+</font>
+<br>
+<hr>
+
+<h2><a name="shpcreate">shpcreate</a></h2>
+<b>Purpose</b>: creates a new and empty shapefile.
+<br>
+<b>Usage</b>: <font face="courier">shpcreate shp_file [point|arc|polygon|multipoint]</font>
+<br>
+<ul>
+	<li><b>shp_file</b>: the name of shapefile to be created. Doesn't need the extension.</li>
+	<li><b>point/arc/polygon/multipoint</b>: the type of shapefile that you wish to create. You must specify a valid option.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpcreate testpolygon polygon</font>
+<br># this will create a point shapefile named testpolygon( in fact testpolygon.shp and testpolygon.shx will be created).
+<br>
+<hr>
+
+<h2><a name="shpadd">shpadd</a></h2>
+<b>Purpose</b>: adds a shape into an existing shapefile.
+<br>
+<b>Usage</b>: <font face="courier">shpadd shp_file [[x y] [+]]*</font>
+<br>
+<ul>
+	<li><b>shp_file</b>: the name of an existing shapefile.</li>
+	<li><b>x<sub><i>1</i></sub> y<sub><i>1</i></sub> x<sub><i>2</i></sub> y<sub><i>2</i></sub> ... x<sub><i>n</i></sub> y<sub><i>n</i></sub></b>: the set of x,y coordinates that describes the shape that you wish to add. Note that you must specify the correct number of parameters for a given type of shapefile. e.g.: for point shapefiles you have to pass 1 pair of XY coordinates and for a polygon shapefile you should pass at least 4 pairs of XY coordinates( where the first and the last point must have the same coordinates).</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpadd testpolygon 100000 7000000 250000 6500000 200000 6000000 100000 7000000</font>
+<br># assuming that testpolygon is a polygon shapefile, this command line will insert a new shape( a triangle) into testpolygon with the following XY coordinates:<br>
+vertice 0: 100000 7000000 ( this will also be the vertice where the shape starts and ends)<br>
+vertice 1: 250000 6500000<br>
+vertice 2: 200000 6000000<br>
+vertice 3: 100000 7000000<br>
+<hr>
+
+<h2><a name="shpdump">shpdump</a></h2>
+<b>Purpose</b>: dumps content of shapefile showing information like shape type, file extents, total of objects and vertices coordinates.
+<br>
+<b>Usage</b>: <font face="courier">shpdump [-validate] shp_file</font>
+<br>
+<ul>
+	<li><b>-validate</b>: count the number of objects that has invalid ring orderings.</li>
+	<li><b>shp_file</b>: the name of an existing shapefile.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpdump testpolygon</font>
+<br># assuming that testpolygon is an existing shapefile previously created, this command line will output the following result:
+<pre>Shapefile Type: Polygon   # of Shapes: 1
+
+File Bounds: (  100000.000, 6000000.000,0,0)
+         to  (  250000.000, 7000000.000,0,0)
+
+Shape:0 (Polygon)  nVertices=4, nParts=1
+  Bounds:(  100000.000, 6000000.000, 0, 0)
+      to (  250000.000, 7000000.000, 0, 0)
+     (  100000.000, 7000000.000, 0, 0) Ring
+     (  250000.000, 6500000.000, 0, 0)
+     (  200000.000, 6000000.000, 0, 0)
+     (  100000.000, 7000000.000, 0, 0)</pre>
+<hr>
+
+<h2><a name="shprewind">shprewind</a></h2>
+<b>Purpose</b>: validates and resets the winding order of rings in polygon geometries to match the ordering required by shapefile specification. This is useful for shapefiles having troubles when checked with a 'shpdump -validate'.
+<br>
+<b>Usage</b>: <font face="courier">shprewind in_shp_file out_shp_file</font>
+<br>
+<ul>
+	<li><b>in_shp_file</b>: the name of an existing shapefile.</li>
+	<li><b>out_shp_file</b>: the name of the new fixed shapefile that will be created.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shprewind badshapefile newshapefile</font>
+<br>
+<hr>
+
+<h2><a name="dbfinfo">dbfinfo</a></h2>
+<b>Purpose</b>: displays basic information for a given xBase file, like number of columns, number of records and type of each column.
+<br>
+<b>Usage</b>: <font face="courier">dbfinfo xbase_file</font>
+<br>
+<ul>
+	<li><b>xbase_file</b>: the name of an existing xBase file.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ dbfinfo testbase</font>
+<br>
+<pre>Info for testbase.dbf
+3 Columns,  1 Records in file
+           NAME          string  (20,0)
+           AREA           float  (9,3)
+          VALUE           float  (9,2)
+</pre>
+<br>
+<hr>
+
+<h2><a name="dbfcat">dbfcat</a></h2>
+<b>Purpose</b>: appends the records of a source xBase file into a destiny xBase file. Both files must have the same number of fields.
+<br>
+<b>Usage</b>: <font face="courier">dbfcat [-v] [-f] from_DBFfile to_DBFfile</font>
+<br>
+<ul>
+	<li><b>-v</b>: verbose mode.</li>
+	<li><b>-f</b>: forces data conversion if data field types is not the same at both files or if is there any null value into <u>from_DBFfile</u>.</li>
+	<li><b>from_DBFfile</b>: source xBase file.</li>
+	<li><b>to_DBFfile</b>: destiny xBase file.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ dbfcat -v testbase1 testbase2</font>
+<br>
+<hr>
+
+<h2><a name="shpinfo">shpinfo</a></h2>
+<b>Purpose</b>: displays basic information for a given shapefile, like shapefile type, number of objects and its extents.
+<br>
+<b>Usage</b>: <font face="courier">shpinfo shp_file</font>
+<br>
+<ul>
+	<li><b>shp_file</b>: the name of an existing shapefile.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpinfo testpolygon</font>
+<br>
+<pre>Info for testpolygon
+Polygon(5), 1 Records in file
+File Bounds: (         100000,        6000000)
+        (         250000,        7000000)</pre>
+<hr>
+
+<h2><a name="shpcat">shpcat</a></h2>
+<b>Purpose</b>: appends the content of a source shapefile into a destiny shapefile. Both files must be the same shapefile type.
+<br>
+<b>Usage</b>: <font face="courier">shpcat from_shpfile to_shpfile</font>
+<br>
+<ul>
+	<li><b>from_shpfile</b>: source shapefile</li>
+	<li><b>to_shpfile</b>: destiny shapefile</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpcat shapefile1 shapefile2</font>
+<br>
+<hr>
+
+<h2><a name="shpcentrd">shpcentrd</a></h2>
+<b>Purpose</b>: computes XY centroid for polygon shapefiles.
+<br>
+<b>Usage</b>: <font face="courier">shpcentrd shp_file new_shp_file</font>
+<br>
+<ul>
+	<li><b>shp_file</b>: the name of an existing polygon shapefile.</li>
+	<li><b>new_shp_file</b>: the name of the point shapefile that will created.</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpcentrd apolygonfile pointcentrd</font>
+<br>
+<hr>
+
+<h2><a name="shpdxf">shpdxf</a></h2>
+<b>Purpose</b>: creates a DXF file from an existing shapefile.
+<br>
+<b>Usage</b>: <font face="courier">shpdxf shapefile {idfield}</font>
+<br>
+<ul>
+	<li><b>shapefile</b>: the name of an existing shapefile.</li>
+	<li><b>idfield</b>: explain</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpdxf testshapefile IDFIELD</font>
+<br># explain the command
+<br>
+<hr>
+
+<h2><a name="shpfix">shpfix</a></h2>
+<b>Purpose</b>: Utility program to fix nulls and inconsistencies in Shapefiles
+as happens from time to time.
+<br>
+<b>Usage</b>: <font face="courier">shpfix shpfile new_file &lt;Record# to Blank&gt;</font>
+<br>
+<ul>
+	<li><b>shpfile</b>: input file</li>
+	<li><b>new_file</b>: output file</li>
+</ul>
+<b>Example</b>
+<br>
+<font face="courier">$ shpfix broken fixed</font>
+<br>
+<hr>
+
+<h2><a name="shpproj">shpproj</a></h2>
+<b>Purpose</b>: Reproject Shapefiles using PROJ.4
+<br>
+<b>Usage</b>: <font face="courier">shpproj shp_file new_shp ( -i=in_proj_file | -i="in_params" | -i=geographic ) ( -o=out_info_file | -o="out_params" | -o=geographic ) </font>
+<br>
+<ul>
+	<li><b>param1</b>: explain</li>
+	<li><b>param2</b>: explain</li>
+</ul>
+<p>
+
+<b>INPUT</b><br>
+  Input can come from one of three sources.  A projection parameter file, 
+  directly through parameters or geographic. If the shapefile has an associated
+  prj file, name the same as the shapefile but ending in ".prj" it will be used
+  by default ignoring all other parameters.  If input is omitted it defaults to
+  geographic, unless the default prj file exists.<p>
+
+<b>OUTPUT</b><br>
+  Output can come from one of three sources.  A projection parameter file,
+  directly through parameters or geographic.  If output is omitted it defaults
+  to geographic.<p>
+
+<b>PROJECTION PARAMETER FILE</b><br>
+  This file MUST end with the extension ".prj".  It has the form of one
+  projection parameter per line.  Parameters can be in any order.  The
+  projection parameters are those used to define a PROJ.4 projection.<p>
+
+<b>PROJECTION PARAMETERS</b><br>
+  Are the same as used by proj and invproj.<p>
+<pre>
+  use      proj -lP   to see available projections
+	   proj -lu   to see available units
+	   proj -le   to see available ellipsoid
+</pre>
+
+Or visit the PROJ.4 web page at <a href="http://www.remotesensing.org/proj">http://www.remotesensing.org/proj</a> for more details.<p>
+
+<p>
+
+<b>Example</b></br>
+
+the following example projects file rowtest to row3, moving data from Stateplane NAD83  zone 1002 to utm zone 16 in meters<p>
+
+<pre>
+ 
+shpproj rowtest row -i="init=nad83:1002 units=us-ft" -o="proj=utm zone=16 units=m"
+
+shpproj rowtest row3 -o="proj=utm zone=18 units=m" -i="zone=16 proj=utm units=us-ft"
+
+shpproj rowtest row3 -o="proj=utm zone=18 units=m" 
+
+shpproj rowtest row3 -i=myfile.prj -o=geographic
+shpproj rowtest row3 -is=myfile.prj
+</pre>
+
+<hr>
+
+</body>
+</html>
