@@ -42,7 +42,6 @@ Item {
     readonly property string startMissionTitle:             qsTr("Start Mission")
     readonly property string mvStartMissionTitle:           qsTr("Start Mission (MV)")
     readonly property string continueMissionTitle:          qsTr("Continue Mission")
-    readonly property string resumeMissionTitle:            qsTr("Resume Mission")
     readonly property string resumeMissionUploadFailTitle:  qsTr("Resume FAILED")
     readonly property string pauseTitle:                    qsTr("Pause")
     readonly property string mvPauseTitle:                  qsTr("Pause (MV)")
@@ -59,9 +58,7 @@ Item {
     readonly property string takeoffMessage:                    qsTr("Takeoff from ground and hold position.")
     readonly property string startMissionMessage:               qsTr("Takeoff from ground and start the current mission.")
     readonly property string continueMissionMessage:            qsTr("Continue the mission from the current waypoint.")
-             property string resumeMissionMessage:              qsTr("Resume the current mission. This will re-generate the mission from waypoint %1, takeoff and continue the mission.").arg(_resumeMissionIndex)
-             property string resumeMissionUploadFailMessage:    qsTr("Upload of resume mission failed. Confirm to retry upload")
-    readonly property string resumeMissionReadyMessage:         qsTr("Review the modified mission. Confirm if you want to takeoff and begin mission.")
+    readonly property string resumeMissionUploadFailMessage:    qsTr("Upload of resume mission failed. Confirm to retry upload")
     readonly property string landMessage:                       qsTr("Land the vehicle at the current position.")
     readonly property string rtlMessage:                        qsTr("Return to the home position of the vehicle.")
     readonly property string changeAltMessage:                  qsTr("Change the altitude of the vehicle up or down.")
@@ -88,7 +85,7 @@ Item {
     readonly property int actionStartMission:               12
     readonly property int actionContinueMission:            13
     readonly property int actionResumeMission:              14
-    readonly property int actionResumeMissionReady:         15
+    readonly property int _actionUnused:                    15
     readonly property int actionResumeMissionUploadFail:    16
     readonly property int actionPause:                      17
     readonly property int actionMVPause:                    18
@@ -185,6 +182,12 @@ Item {
         }
         _outputState()
     }
+    onShowRTLChanged: {
+        if (_corePlugin.guidedActionsControllerLogging()) {
+            console.log("showRTL", showRTL)
+        }
+        _outputState()
+    }
     // End of hack
 
     on_VehicleFlyingChanged: {
@@ -260,20 +263,12 @@ Item {
             confirmDialog.hideTrigger = Qt.binding(function() { return !showContinueMission })
             break;
         case actionResumeMission:
-            showImmediate = false
-            confirmDialog.title = resumeMissionTitle
-            confirmDialog.message = resumeMissionMessage
-            confirmDialog.hideTrigger = Qt.binding(function() { return !showResumeMission })
-            break;
+            // Resume Mission is handled in mission end dialog
+            return
         case actionResumeMissionUploadFail:
             confirmDialog.title = resumeMissionUploadFailTitle
             confirmDialog.message = resumeMissionUploadFailMessage
             confirmDialog.hideTrigger = Qt.binding(function() { return !showResumeMission })
-            break;
-        case actionResumeMissionReady:
-            confirmDialog.title = resumeMissionTitle
-            confirmDialog.message = resumeMissionReadyMessage
-            confirmDialog.hideTrigger = false
             break;
         case actionLand:
             confirmDialog.title = landTitle
@@ -359,10 +354,6 @@ Item {
         case actionResumeMission:
         case actionResumeMissionUploadFail:
             missionController.resumeMission(missionController.resumeMissionIndex)
-            break
-        case actionResumeMissionReady:
-            _vehicleWasFlying = false
-            _activeVehicle.startMission()
             break
         case actionStartMission:
         case actionContinueMission:
