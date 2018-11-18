@@ -48,10 +48,10 @@ public:
 
     typedef QVariant (*Translator)(const QVariant& from);
 
-    FactMetaData(QObject* parent = NULL);
-    FactMetaData(ValueType_t type, QObject* parent = NULL);
-    FactMetaData(ValueType_t type, const QString name, QObject* parent = NULL);
-    FactMetaData(const FactMetaData& other, QObject* parent = NULL);
+    FactMetaData(QObject* parent = nullptr);
+    FactMetaData(ValueType_t type, QObject* parent = nullptr);
+    FactMetaData(ValueType_t type, const QString name, QObject* parent = nullptr);
+    FactMetaData(const FactMetaData& other, QObject* parent = nullptr);
 
     static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
     static QMap<QString, FactMetaData*> createMapFromJsonArray(const QJsonArray jsonArray, QObject* metaDataParent);
