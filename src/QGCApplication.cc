@@ -321,20 +321,28 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     }
 #endif
 
-    // gstreamer debug settings
+    // Gstreamer debug settings
+#if defined(__ios__) || defined(__android__)
+    // Initialize Video Streaming
+    initializeVideoStreaming(argc, argv, nullptr, nullptr);
+#else
     QString savePath, gstDebugLevel;
     if (settings.contains(AppSettings::savePathName)) {
-         savePath = settings.value("SavePath").toString() + "/Logs/gst"; // hardcode log path here, appsetting is not available yet
-         if (!QDir(savePath).exists()) {
-             QDir().mkdir(savePath);
-         }
+        savePath = settings.value(AppSettings::savePathName).toString();
     }
-    if (settings.contains(AppSettings::gstDebugName)) {
-        gstDebugLevel = "*:" + settings.value("GstreamerDebugLevel").toString();
+    if(savePath.isEmpty()) {
+        savePath = "/tmp";
     }
-
+    savePath = savePath + "/Logs/gst";
+    if (!QDir(savePath).exists()) {
+        QDir().mkpath(savePath);
+    }
+    if (settings.contains(AppSettings::gstDebugLevelName)) {
+        gstDebugLevel = "*:" + settings.value(AppSettings::gstDebugLevelName).toString();
+    }
     // Initialize Video Streaming
     initializeVideoStreaming(argc, argv, savePath.toUtf8().data(), gstDebugLevel.toUtf8().data());
+#endif
 
     _toolbox = new QGCToolbox(this);
     _toolbox->setChildToolboxes();
