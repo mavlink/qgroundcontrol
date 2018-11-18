@@ -178,6 +178,13 @@ VideoEnabled {
         $$PWD/gstqtvideosink/utils/bufferformat.cpp \
         $$PWD/gstqtvideosink/utils/utils.cpp \
 
+    iOSBuild {
+        OBJECTIVE_SOURCES += \
+            $$PWD/ios/gst_ios_init.m
+        INCLUDEPATH += \
+            $$PWD/ios
+    }
+
 } else {
     LinuxBuild|MacBuild|iOSBuild|WindowsBuild|AndroidBuild {
         message("Skipping support for video streaming (GStreamer libraries not installed)")

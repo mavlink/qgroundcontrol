@@ -16,7 +16,7 @@
 
 #pragma once
 
-#if defined(__mobile__) && !defined(Q_OS_MAC)  && !defined(Q_OS_WIN32)
+#if defined(__andoid__) || defined(__ios__)
 #include <QOpenGLFunctions>
 #define getQOpenGLFunctions() QOpenGLContext::currentContext()->functions()
 #define QOpenGLFunctionsDef QOpenGLFunctions
