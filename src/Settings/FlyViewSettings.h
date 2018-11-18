@@ -14,23 +14,9 @@
 class FlyViewSettings : public SettingsGroup
 {
     Q_OBJECT
-    
 public:
-    FlyViewSettings(QObject* parent = NULL);
-
-    Q_PROPERTY(Fact* guidedMinimumAltitude  READ guidedMinimumAltitude  CONSTANT)
-    Q_PROPERTY(Fact* guidedMaximumAltitude  READ guidedMaximumAltitude  CONSTANT)
-
-    Fact* guidedMinimumAltitude(void);
-    Fact* guidedMaximumAltitude(void);
-
-    static const char* name;
-    static const char* settingsGroup;
-
-    static const char* guidedMinimumAltitudeName;
-    static const char* guidedMaximumAltitudeName;
-
-private:
-    SettingsFact* _guidedMinimumAltitudeFact;
-    SettingsFact* _guidedMaximumAltitudeFact;
+    FlyViewSettings(QObject* parent = nullptr);
+    DEFINE_SETTING_NAME_GROUP()
+    DEFINE_SETTINGFACT(guidedMinimumAltitude)
+    DEFINE_SETTINGFACT(guidedMaximumAltitude)
 };

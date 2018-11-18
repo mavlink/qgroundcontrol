@@ -14,13 +14,9 @@
 class PlanViewSettings : public SettingsGroup
 {
     Q_OBJECT
-    
 public:
-    PlanViewSettings(QObject* parent = NULL);
-
+    PlanViewSettings(QObject* parent = nullptr);
+    DEFINE_SETTING_NAME_GROUP()
     // This is currently only used to set custom build visibility of the Plan view settings ui.
     // The settings themselves related to PlanView are in still in AppSettings due to historical reasons.
-
-    static const char* name;
-    static const char* settingsGroup;
 };

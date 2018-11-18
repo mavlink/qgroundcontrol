@@ -17,7 +17,7 @@ class AirMapSettings : public SettingsGroup
 public:
     AirMapSettings(QObject* parent = nullptr);
 
-    DEFINE_SETTINGGROUP(AirMap)
+    DEFINE_SETTING_NAME_GROUP()
 
     DEFINE_SETTINGFACT(usePersonalApiKey)
     DEFINE_SETTINGFACT(apiKey)

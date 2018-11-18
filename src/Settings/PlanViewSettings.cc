@@ -12,12 +12,8 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* PlanViewSettings::name =            "PlanView";
-const char* PlanViewSettings::settingsGroup =   "PlanView";
-
-PlanViewSettings::PlanViewSettings(QObject* parent)
-    : SettingsGroup(name, settingsGroup, parent)
+DECLARE_SETTINGGROUP(PlanView, "PlanView")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<PlanViewSettings>("QGroundControl.SettingsManager", 1, 0, "PlanViewSettings", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
+    qmlRegisterUncreatableType<PlanViewSettings>("QGroundControl.SettingsManager", 1, 0, "PlanViewSettings", "Reference only"); \
 }

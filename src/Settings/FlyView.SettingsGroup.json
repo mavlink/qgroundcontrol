@@ -1,13 +1,13 @@
 [
 {
-    "name":             "GuidedMinimumAltitude",
+    "name":             "guidedMinimumAltitude",
     "shortDescription": "Minimum altitude for guided actions altitude slider.",
     "type":             "double",
     "units":            "m",
     "defaultValue":     2
 },
 {
-    "name":             "GuidedMaximumAltitude",
+    "name":             "guidedMaximumAltitude",
     "shortDescription": "Maximum altitude for guided actions altitude slider.",
     "type":             "double",
     "units":            "m",
