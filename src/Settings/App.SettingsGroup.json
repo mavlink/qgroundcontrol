@@ -1,6 +1,6 @@
 [
 {
-    "name":             "OfflineEditingFirmwareType",
+    "name":             "offlineEditingFirmwareType",
     "shortDescription": "Offline editing firmware type",
     "type":             "uint32",
     "enumStrings":      "ArduPilot,PX4 Pro,Mavlink Generic",
@@ -8,7 +8,7 @@
     "defaultValue":     12
 },
 {
-    "name":             "OfflineEditingVehicleType",
+    "name":             "offlineEditingVehicleType",
     "shortDescription": "Offline editing vehicle type",
     "type":             "uint32",
     "enumStrings":      "Fixed Wing,Multi-Rotor,VTOL,Rover,Sub",
@@ -16,7 +16,7 @@
     "defaultValue":     2
 },
 {
-    "name":             "OfflineEditingCruiseSpeed",
+    "name":             "offlineEditingCruiseSpeed",
     "shortDescription": "Offline editing cruise speed",
     "longDescription":  "This value defines the default cruising speed for forward flight vehicles for use in calculating mission statistics. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
@@ -26,7 +26,7 @@
     "decimalPlaces":    2
 },
 {
-    "name":             "OfflineEditingHoverSpeed",
+    "name":             "offlineEditingHoverSpeed",
     "shortDescription": "Offline editing hover speed",
     "longDescription":  "This value defines the default cruising speed for multi-rotor vehicles for use in calculating mission statistics. It does not modify the flight speed for a specific flight plan.",
     "type":             "double",
@@ -36,7 +36,7 @@
     "decimalPlaces":    2
 },
 {
-    "name":             "OfflineEditingAscentSpeed",
+    "name":             "offlineEditingAscentSpeed",
     "shortDescription": "Offline editing ascent speed",
     "longDescription":  "This value defines the ascent speed for multi-rotor vehicles for use in calculating mission duration.",
     "type":             "double",
@@ -46,7 +46,7 @@
     "decimalPlaces":    2
 },
 {
-    "name":             "OfflineEditingDescentSpeed",
+    "name":             "offlineEditingDescentSpeed",
     "shortDescription": "Offline editing descent speed",
     "longDescription":  "This value defines the cruising speed for multi-rotor vehicles for use in calculating mission duration.",
     "type":             "double",
@@ -66,7 +66,7 @@
     "max":              100
 },
 {
-    "name":             "DefaultMissionItemAltitude",
+    "name":             "defaultMissionItemAltitude",
     "shortDescription": "Default value for altitude",
     "longDescription":  "This value specifies the default altitude for new items added to a mission.",
     "type":             "double",
@@ -76,56 +76,56 @@
     "decimalPlaces":    1
 },
 {
-    "name":             "PromptFLightDataSave",
+    "name":             "telemetrySave",
     "shortDescription": "Save telemetry Log after each flight",
     "longDescription":  "If this option is enabled a telemetry will be saved after each flight completes.",
     "type":             "bool",
     "defaultValue":     true
 },
 {
-    "name":             "PromptFLightDataSaveNotArmed",
+    "name":             "telemetrySaveNotArmed",
     "shortDescription": "Save telemetry log even if vehicle was not armed",
     "longDescription":  "If this option is enabled a telemtry log will be saved even if vehicle was never armed.",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":             "AudioMuted",
+    "name":             "audioMuted",
     "shortDescription": "Mute audio output",
     "longDescription":  "If this option is enabled all audio output will be muted.",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":             "VirtualTabletJoystick",
+    "name":             "virtualJoystick",
     "shortDescription": "Show virtual joystick",
     "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":             "GstreamerDebugLevel",
+    "name":             "gstDebugLevel",
     "shortDescription": "Video streaming debug",
     "longDescription":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
     "type":             "uint8",
     "defaultValue":     0
 },
 {
-    "name":             "AutoLoadMissions",
+    "name":             "autoLoadMissions",
     "shortDescription": "AutoLoad mission on vehicle connect",
     "longDescription":  "Automatically load a mission file named AutoLoad#.mission when a vehicle with id # connects.",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":             "UseChecklist",
+    "name":             "useChecklist",
     "shortDescription": "Use preflight checklist",
     "longDescription":  "If this option is enabled the preflight checklist will be used.",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":                 "BaseDeviceFontPointSize",
+    "name":                 "appFontPointSize",
     "shortDescription":     "Application font size",
     "longDescription":      "The point size for the default font used.",
     "type":                 "uint32",
@@ -136,7 +136,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":             "StyleIsDark",
+    "name":             "indoorPalette",
     "shortDescription": "Application color scheme",
     "longDescription":  "The color scheme for the user interface.",
     "type":             "uint32",
@@ -145,55 +145,55 @@
     "defaultValue":     0
 },
 {
-    "name":             "ShowLargeCompass",
+    "name":             "showLargeCompass",
     "shortDescription": "Show large compass",
     "longDescription":  "Show large compass on instrument panel",
     "type":             "bool",
     "defaultValue":     false
 },
 {
-    "name":             "SavePath",
+    "name":             "savePath",
     "shortDescription": "Application save directory",
     "longDescription":  "Directory to which all data files  are saved/loaded from",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "UserBrandImageIndoor",
+    "name":             "userBrandImageIndoor",
     "shortDescription": "User-selected brand image",
     "longDescription":  "Location in file system of user-selected brand image (indoor)",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "UserBrandImageOutdoor",
+    "name":             "userBrandImageOutdoor",
     "shortDescription": "User-selected brand image",
     "longDescription":  "Location in file system of user-selected brand image (outdoor)",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "MapboxToken",
+    "name":             "mapboxToken",
     "shortDescription": "Access token to Mapbox maps",
     "longDescription":  "Your personal access token for Mapbox maps",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "EsriToken",
+    "name":             "esriToken",
     "shortDescription": "Access token to Esri maps",
     "longDescription":  "Your personal access token for Esri maps",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "DefaultFirmwareType",
+    "name":             "defaultFirmwareType",
     "shortDescription": "Default firmware type for flashing",
     "type":             "uint32",
     "defaultValue":     12
 },
 {
-    "name":             "FollowTarget",
+    "name":             "followTarget",
     "shortDescription": "Stream GCS' coordinates to Autopilot",
     "type":             "uint32",
     "enumStrings":      "Never,Always,When in Follow Me Flight Mode",

@@ -1,13 +1,13 @@
 [
 {
-    "name":             "VideoSource",
+    "name":             "videoSource",
     "shortDescription": "Video source",
     "longDescription":  "Source for video. UDP, TCP, RTSP and UVC Cameras may be supported depending on Vehicle and ground station version.",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "VideoUDPPort",
+    "name":             "udpPort",
     "shortDescription": "Video UDP Port",
     "longDescription":  "UDP port to bind to for video stream.",
     "type":             "uint16",
@@ -15,28 +15,28 @@
     "defaultValue":     5600
 },
 {
-    "name":             "VideoRTSPUrl",
+    "name":             "rtspUrl",
     "shortDescription": "Video RTSP Url",
     "longDescription":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "VideoTCPUrl",
+    "name":             "tcpUrl",
     "shortDescription": "Video TCP Url",
     "longDescription":  "TCP url address and port to bind to for video stream. Example: 192.168.143.200:3001",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "VideoSavePath",
+    "name":             "videoSavePath",
     "shortDescription": "Video save directory",
     "longDescription":  "Directory to save videos to.",
     "type":             "string",
     "defaultValue":     ""
 },
 {
-    "name":             "VideoAspectRatio",
+    "name":             "aspectRatio",
     "shortDescription": "Video Aspect Ratio",
     "longDescription":  "Video Aspect Ratio (width / height). Use 0.0 to ignore it.",
     "type":             "float",
@@ -44,7 +44,7 @@
     "defaultValue":     1.777777
 },
 {
-    "name":             "VideoGridLines",
+    "name":             "gridLines",
     "shortDescription": "Video Grid Lines",
     "longDescription":  "Displays a grid overlaid over the video view.",
     "type":             "uint32",
@@ -53,14 +53,23 @@
     "defaultValue":     0
 },
 {
-    "name":             "ShowRecControl",
+    "name":             "videoFit",
+    "shortDescription": "Video Display Fit",
+    "longDescription":  "Handle Video Aspect Ratio.",
+    "type":             "uint32",
+    "enumStrings":      "Fit Width,Fit Height,Stretch",
+    "enumValues":       "0,1,2",
+    "defaultValue":     1
+},
+{
+    "name":             "showRecControl",
     "shortDescription": "Show Video Record Control",
     "longDescription":  "Show recording control in the UI.",
     "type":             "bool",
     "defaultValue":     true
 },
 {
-    "name":             "RecordingFormat",
+    "name":             "recordingFormat",
     "shortDescription": "Video Recording Format",
     "longDescription":  "Video recording file format.",
     "type":             "uint32",
@@ -69,7 +78,7 @@
     "defaultValue":     0
 },
 {
-    "name":             "MaxVideoSize",
+    "name":             "maxVideoSize",
     "shortDescription": "Max Video Storage Usage",
     "longDescription":  "Maximum amount of disk space used by video recording.",
     "type":             "uint32",
@@ -79,7 +88,7 @@
     "mobileDefaultValue":   2048
 },
 {
-    "name":             "EnableStorageLimit",
+    "name":             "enableStorageLimit",
     "shortDescription": "Enable/Disable Limits on Storage Usage",
     "longDescription":  "When enabled, old video files will be auto-deleted when the total size of QGC-recorded video exceeds the maximum video storage usage.",
     "type":             "bool",
@@ -87,7 +96,7 @@
     "mobileDefaultValue":   true
 },
 {
-    "name":             "RtspTimeout",
+    "name":             "rtspTimeout",
     "shortDescription": "RTSP Video Timeout",
     "longDescription":  "How long to wait before assuming RTSP link is gone.",
     "type":             "uint32",
@@ -96,14 +105,14 @@
     "defaultValue":     2
 },
 {
-    "name":             "StreamEnabled",
+    "name":             "streamEnabled",
     "shortDescription": "Video Stream Enabled",
     "longDescription":  "Start/Stop Video Stream.",
     "type":             "bool",
     "defaultValue":     true
 },
 {
-    "name":             "DisableWhenDisarmed",
+    "name":             "disableWhenDisarmed",
     "shortDescription": "Video Stream Disnabled When Armed",
     "longDescription":  "Disable Video Stream when disarmed.",
     "type":             "bool",
