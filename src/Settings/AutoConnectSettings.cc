@@ -13,110 +13,74 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* AutoConnectSettings::name =                                 "AutoConnect";
-const char* AutoConnectSettings::settingsGroup =                        "LinkManager";
-
-const char* AutoConnectSettings:: autoConnectUDPSettingsName =          "AutoconnectUDP";
-const char* AutoConnectSettings:: autoConnectPixhawkSettingsName =      "AutoconnectPixhawk";
-const char* AutoConnectSettings:: autoConnectSiKRadioSettingsName =     "Autoconnect3DRRadio";
-const char* AutoConnectSettings:: autoConnectPX4FlowSettingsName =      "AutoconnectPX4Flow";
-const char* AutoConnectSettings:: autoConnectRTKGPSSettingsName =       "AutoconnectRTKGPS";
-const char* AutoConnectSettings:: autoConnectLibrePilotSettingsName =   "AutoconnectLibrePilot";
-const char* AutoConnectSettings:: autoConnectNmeaPortName =             "AutoconnectNmeaPort";
-const char* AutoConnectSettings:: autoConnectNmeaBaudName =             "AutoconnectNmeaBaud";
-const char* AutoConnectSettings:: udpListenPortName =                   "AutoconnectUDPListenPort";
-const char* AutoConnectSettings:: udpTargetHostIPName =                 "AutoconnectUDPTargetHostIP";
-const char* AutoConnectSettings:: udpTargetHostPortName =               "AutoconnectUDPTargetHostPort";
-
-
-AutoConnectSettings::AutoConnectSettings(QObject* parent)
-    : SettingsGroup             (name, settingsGroup, parent)
-    , _autoConnectUDPFact       (NULL)
-    , _autoConnectPixhawkFact   (NULL)
-    , _autoConnectSiKRadioFact  (NULL)
-    , _autoConnectPX4FlowFact   (NULL)
-    , _autoConnectRTKGPSFact    (NULL)
-    , _autoConnectLibrePilotFact(NULL)
-    , _autoConnectNmeaPortFact  (NULL)
-    , _autoConnectNmeaBaudFact  (NULL)
-    , _udpListenPortFact        (NULL)
-    , _udpTargetHostIPFact      (NULL)
-    , _udpTargetHostPortFact    (NULL)
+DECLARE_SETTINGGROUP(AutoConnect, "LinkManager")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
+    qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only"); \
 }
 
-Fact* AutoConnectSettings::autoConnectUDP(void)
-{
-    if (!_autoConnectUDPFact) {
-        _autoConnectUDPFact = _createSettingsFact(autoConnectUDPSettingsName);
-    }
+DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectUDP)
+DECLARE_SETTINGSFACT(AutoConnectSettings, udpListenPort)
+DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostIP)
+DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostPort)
+DECLARE_SETTINGSFACT(AutoConnectSettings, autoconnectTaisyncUSB)
 
-    return _autoConnectUDPFact;
-}
-
-Fact* AutoConnectSettings::autoConnectPixhawk(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPixhawk)
 {
     if (!_autoConnectPixhawkFact) {
-        _autoConnectPixhawkFact = _createSettingsFact(autoConnectPixhawkSettingsName);
+        _autoConnectPixhawkFact = _createSettingsFact(autoConnectPixhawkName);
 #ifdef __ios__
         _autoConnectPixhawkFact->setVisible(false);
 #endif
     }
-
     return _autoConnectPixhawkFact;
 }
 
-Fact* AutoConnectSettings::autoConnectSiKRadio(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectSiKRadio)
 {
     if (!_autoConnectSiKRadioFact) {
-        _autoConnectSiKRadioFact = _createSettingsFact(autoConnectSiKRadioSettingsName);
+        _autoConnectSiKRadioFact = _createSettingsFact(autoConnectSiKRadioName);
 #ifdef __ios__
         _autoConnectSiKRadioFact->setVisible(false);
 #endif
     }
-
     return _autoConnectSiKRadioFact;
 }
 
-Fact* AutoConnectSettings::autoConnectPX4Flow(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPX4Flow)
 {
     if (!_autoConnectPX4FlowFact) {
-        _autoConnectPX4FlowFact = _createSettingsFact(autoConnectPX4FlowSettingsName);
+        _autoConnectPX4FlowFact = _createSettingsFact(autoConnectPX4FlowName);
 #ifdef __ios__
         _autoConnectPX4FlowFact->setVisible(false);
 #endif
     }
-
     return _autoConnectPX4FlowFact;
 }
 
-Fact* AutoConnectSettings::autoConnectRTKGPS(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectRTKGPS)
 {
     if (!_autoConnectRTKGPSFact) {
-        _autoConnectRTKGPSFact = _createSettingsFact(autoConnectRTKGPSSettingsName);
+        _autoConnectRTKGPSFact = _createSettingsFact(autoConnectRTKGPSName);
 #ifdef __ios__
         _autoConnectRTKGPSFact->setVisible(false);
 #endif
     }
-
     return _autoConnectRTKGPSFact;
 }
 
-Fact* AutoConnectSettings::autoConnectLibrePilot(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectLibrePilot)
 {
     if (!_autoConnectLibrePilotFact) {
-        _autoConnectLibrePilotFact = _createSettingsFact(autoConnectLibrePilotSettingsName);
+        _autoConnectLibrePilotFact = _createSettingsFact(autoConnectLibrePilotName);
 #ifdef __ios__
         _autoConnectLibrePilotFact->setVisible(false);
 #endif
     }
-
     return _autoConnectLibrePilotFact;
 }
 
-Fact* AutoConnectSettings::autoConnectNmeaPort(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaPort)
 {
     if (!_autoConnectNmeaPortFact) {
         _autoConnectNmeaPortFact = _createSettingsFact(autoConnectNmeaPortName);
@@ -124,11 +88,10 @@ Fact* AutoConnectSettings::autoConnectNmeaPort(void)
         _autoConnectNmeaPortFact->setVisible(false);
 #endif
     }
-
     return _autoConnectNmeaPortFact;
 }
 
-Fact* AutoConnectSettings::autoConnectNmeaBaud(void)
+DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectNmeaBaud)
 {
     if (!_autoConnectNmeaBaudFact) {
         _autoConnectNmeaBaudFact = _createSettingsFact(autoConnectNmeaBaudName);
@@ -136,33 +99,5 @@ Fact* AutoConnectSettings::autoConnectNmeaBaud(void)
         _autoConnectNmeaBaudFact->setVisible(false);
 #endif
     }
-
     return _autoConnectNmeaBaudFact;
-}
-
-Fact* AutoConnectSettings::udpListenPort(void)
-{
-    if (!_udpListenPortFact) {
-        _udpListenPortFact = _createSettingsFact(udpListenPortName);
-    }
-
-    return _udpListenPortFact;
-}
-
-Fact* AutoConnectSettings::udpTargetHostIP(void)
-{
-    if (!_udpTargetHostIPFact) {
-        _udpTargetHostIPFact = _createSettingsFact(udpTargetHostIPName);
-    }
-
-    return _udpTargetHostIPFact;
-}
-
-Fact* AutoConnectSettings::udpTargetHostPort(void)
-{
-    if (!_udpTargetHostPortFact) {
-        _udpTargetHostPortFact = _createSettingsFact(udpTargetHostPortName);
-    }
-
-    return _udpTargetHostPortFact;
 }

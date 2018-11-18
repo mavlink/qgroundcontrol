@@ -17,7 +17,7 @@ class UnitsSettings : public SettingsGroup
     Q_OBJECT
     
 public:
-    UnitsSettings(QObject* parent = NULL);
+    UnitsSettings(QObject* parent = nullptr);
 
     enum DistanceUnits {
         DistanceUnitsFeet = 0,
@@ -51,29 +51,12 @@ public:
     Q_ENUM(SpeedUnits)
     Q_ENUM(TemperatureUnits)
 
-    Q_PROPERTY(Fact* distanceUnits                      READ distanceUnits                      CONSTANT)
-    Q_PROPERTY(Fact* areaUnits                          READ areaUnits                          CONSTANT)
-    Q_PROPERTY(Fact* speedUnits                         READ speedUnits                         CONSTANT)
-    Q_PROPERTY(Fact* temperatureUnits                   READ temperatureUnits                   CONSTANT)
+    DEFINE_SETTING_NAME_GROUP()
 
-    Fact* distanceUnits                     (void);
-    Fact* areaUnits                         (void);
-    Fact* speedUnits                        (void);
-    Fact* temperatureUnits                  (void);
-
-    static const char* name;
-    static const char* settingsGroup;
-
-    static const char* distanceUnitsSettingsName;
-    static const char* areaUnitsSettingsName;
-    static const char* speedUnitsSettingsName;
-    static const char* temperatureUnitsSettingsName;
-
-private:
-    SettingsFact* _distanceUnitsFact;
-    SettingsFact* _areaUnitsFact;
-    SettingsFact* _speedUnitsFact;
-    SettingsFact* _temperatureUnitsFact;
+    DEFINE_SETTINGFACT(distanceUnits)
+    DEFINE_SETTINGFACT(areaUnits)
+    DEFINE_SETTINGFACT(speedUnits)
+    DEFINE_SETTINGFACT(temperatureUnits)
 };
 
 #endif

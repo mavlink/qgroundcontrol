@@ -13,18 +13,10 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-DECLARE_SETTINGGROUP(AirMap)
+DECLARE_SETTINGGROUP(AirMap, "AirMap")
 {
-    INIT_SETTINGFACT(usePersonalApiKey);
-    INIT_SETTINGFACT(apiKey);
-    INIT_SETTINGFACT(clientID);
-    INIT_SETTINGFACT(userName);
-    INIT_SETTINGFACT(password);
-    INIT_SETTINGFACT(enableAirMap);
-    INIT_SETTINGFACT(enableAirspace);
-    INIT_SETTINGFACT(enableTelemetry);
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<AirMapSettings>("QGroundControl.SettingsManager", 1, 0, "AirMapSettings", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
+    qmlRegisterUncreatableType<AirMapSettings>("QGroundControl.SettingsManager", 1, 0, "AirMapSettings", "Reference only"); \
 }
 
 DECLARE_SETTINGSFACT(AirMapSettings, usePersonalApiKey)

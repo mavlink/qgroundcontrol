@@ -17,46 +17,16 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::name =                   "Video";
-const char* VideoSettings::settingsGroup =          ""; // settings are in root group
-
-const char* VideoSettings::videoSourceName =        "VideoSource";
-const char* VideoSettings::udpPortName =            "VideoUDPPort";
-const char* VideoSettings::rtspUrlName =            "VideoRTSPUrl";
-const char* VideoSettings::tcpUrlName =             "VideoTCPUrl";
-const char* VideoSettings::videoAspectRatioName =   "VideoAspectRatio";
-const char* VideoSettings::videoFitName =           "VideoFit";
-const char* VideoSettings::videoGridLinesName =     "VideoGridLines";
-const char* VideoSettings::showRecControlName =     "ShowRecControl";
-const char* VideoSettings::recordingFormatName =    "RecordingFormat";
-const char* VideoSettings::maxVideoSizeName =       "MaxVideoSize";
-const char* VideoSettings::enableStorageLimitName = "EnableStorageLimit";
-const char* VideoSettings::rtspTimeoutName =        "RtspTimeout";
-const char* VideoSettings::streamEnabledName =      "StreamEnabled";
-const char* VideoSettings::disableWhenDisarmedName ="DisableWhenDisarmed";
-
 const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
 const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
 const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
 const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
 const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
+#ifdef QGC_GST_TAISYNC_USB
+const char* VideoSettings::videoSourceTaiSyncUSB =  "Taisync USB";
+#endif
 
-VideoSettings::VideoSettings(QObject* parent)
-    : SettingsGroup(name, settingsGroup, parent)
-    , _videoSourceFact(nullptr)
-    , _udpPortFact(nullptr)
-    , _tcpUrlFact(nullptr)
-    , _rtspUrlFact(nullptr)
-    , _videoAspectRatioFact(nullptr)
-    , _videoFitFact(nullptr)
-    , _gridLinesFact(nullptr)
-    , _showRecControlFact(nullptr)
-    , _recordingFormatFact(nullptr)
-    , _maxVideoSizeFact(nullptr)
-    , _enableStorageLimitFact(nullptr)
-    , _rtspTimeoutFact(nullptr)
-    , _streamEnabledFact(nullptr)
-    , _disableWhenDisarmedFact(nullptr)
+DECLARE_SETTINGGROUP(Video, "Video")
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
@@ -70,6 +40,9 @@ VideoSettings::VideoSettings(QObject* parent)
 #endif
     videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceTCP);
+#ifdef QGC_GST_TAISYNC_USB
+    videoSourceList.append(videoSourceTaiSyncUSB);
+#endif
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -97,7 +70,18 @@ VideoSettings::VideoSettings(QObject* parent)
     }
 }
 
-Fact* VideoSettings::videoSource(void)
+DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
+DECLARE_SETTINGSFACT(VideoSettings, videoFit)
+DECLARE_SETTINGSFACT(VideoSettings, gridLines)
+DECLARE_SETTINGSFACT(VideoSettings, showRecControl)
+DECLARE_SETTINGSFACT(VideoSettings, recordingFormat)
+DECLARE_SETTINGSFACT(VideoSettings, maxVideoSize)
+DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
+DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
+DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
+DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
@@ -106,7 +90,7 @@ Fact* VideoSettings::videoSource(void)
     return _videoSourceFact;
 }
 
-Fact* VideoSettings::udpPort(void)
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
 {
     if (!_udpPortFact) {
         _udpPortFact = _createSettingsFact(udpPortName);
@@ -115,7 +99,7 @@ Fact* VideoSettings::udpPort(void)
     return _udpPortFact;
 }
 
-Fact* VideoSettings::rtspUrl(void)
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)
 {
     if (!_rtspUrlFact) {
         _rtspUrlFact = _createSettingsFact(rtspUrlName);
@@ -124,93 +108,13 @@ Fact* VideoSettings::rtspUrl(void)
     return _rtspUrlFact;
 }
 
-Fact* VideoSettings::tcpUrl(void)
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, tcpUrl)
 {
     if (!_tcpUrlFact) {
         _tcpUrlFact = _createSettingsFact(tcpUrlName);
         connect(_tcpUrlFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _tcpUrlFact;
-}
-
-Fact* VideoSettings::aspectRatio(void)
-{
-    if (!_videoAspectRatioFact) {
-        _videoAspectRatioFact = _createSettingsFact(videoAspectRatioName);
-    }
-    return _videoAspectRatioFact;
-}
-
-Fact* VideoSettings::videoFit(void)
-{
-    if (!_videoFitFact) {
-        _videoFitFact = _createSettingsFact(videoFitName);
-    }
-    return _videoFitFact;
-}
-
-Fact* VideoSettings::gridLines(void)
-{
-    if (!_gridLinesFact) {
-        _gridLinesFact = _createSettingsFact(videoGridLinesName);
-    }
-    return _gridLinesFact;
-}
-
-Fact* VideoSettings::showRecControl(void)
-{
-    if (!_showRecControlFact) {
-        _showRecControlFact = _createSettingsFact(showRecControlName);
-    }
-    return _showRecControlFact;
-}
-
-Fact* VideoSettings::recordingFormat(void)
-{
-    if (!_recordingFormatFact) {
-        _recordingFormatFact = _createSettingsFact(recordingFormatName);
-    }
-    return _recordingFormatFact;
-}
-
-Fact* VideoSettings::maxVideoSize(void)
-{
-    if (!_maxVideoSizeFact) {
-        _maxVideoSizeFact = _createSettingsFact(maxVideoSizeName);
-    }
-    return _maxVideoSizeFact;
-}
-
-Fact* VideoSettings::enableStorageLimit(void)
-{
-    if (!_enableStorageLimitFact) {
-        _enableStorageLimitFact = _createSettingsFact(enableStorageLimitName);
-    }
-    return _enableStorageLimitFact;
-}
-
-Fact* VideoSettings::rtspTimeout(void)
-{
-    if (!_rtspTimeoutFact) {
-        _rtspTimeoutFact = _createSettingsFact(rtspTimeoutName);
-    }
-    return _rtspTimeoutFact;
-}
-
-Fact* VideoSettings::streamEnabled(void)
-{
-    if (!_streamEnabledFact) {
-        _streamEnabledFact = _createSettingsFact(streamEnabledName);
-    }
-    return _streamEnabledFact;
-}
-
-Fact* VideoSettings::disableWhenDisarmed(void)
-{
-    if (!_disableWhenDisarmedFact) {
-        _disableWhenDisarmedFact = _createSettingsFact(disableWhenDisarmedName);
-    }
-    return _disableWhenDisarmedFact;
 }
 
 bool VideoSettings::streamConfigured(void)
@@ -222,6 +126,11 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
         return false;
     }
+#ifdef QGC_GST_TAISYNC_USB
+    if(vSource == videoSourceTaiSyncUSB) {
+        return true;
+    }
+#endif
     //-- If UDP, check if port is set
     if(vSource == videoSourceUDP) {
         return udpPort()->rawValue().toInt() != 0;
