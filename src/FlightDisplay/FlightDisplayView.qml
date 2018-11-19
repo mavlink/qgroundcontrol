@@ -119,7 +119,6 @@ QGCView {
 
     Connections {
         target:                     _missionController
-        onResumeMissionReady:       guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionReady)
         onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
     }
 
@@ -196,6 +195,39 @@ QGCView {
                         Layout.alignment:   Qt.AlignHCenter
                         text:               qsTr("Leave plan on vehicle")
                         onClicked:          hideDialog()
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth:   true
+                        color:              qgcPal.text
+                        height:             1
+                    }
+
+                    QGCButton {
+                        Layout.fillWidth:   true
+                        Layout.alignment:   Qt.AlignHCenter
+                        text:               qsTr("Resume Mission From Waypoint %1").arg(_guidedController._resumeMissionIndex)
+                        visible:            _guidedController.showResumeMission
+
+                        onClicked: {
+                            guidedController.executeAction(_guidedController.actionResumeMission, null, null)
+                            hideDialog()
+                        }
+                    }
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        text:               qsTr("Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.")
+                        visible:            _guidedController.showResumeMission
+                    }
+
+                    QGCLabel {
+                        Layout.fillWidth:   true
+                        wrapMode:           Text.WordWrap
+                        color:              qgcPal.warningText
+                        text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle when communication is lost.")
+                        visible:            _guidedController.showResumeMission
                     }
                 }
             }
@@ -601,7 +633,7 @@ QGCView {
             z:                  _flightVideoPipControl.z + 1
 
             onShowStartMissionChanged: {
-                if (showStartMission && !showResumeMission) {
+                if (showStartMission) {
                     confirmAction(actionStartMission)
                 }
             }
@@ -609,12 +641,6 @@ QGCView {
             onShowContinueMissionChanged: {
                 if (showContinueMission) {
                     confirmAction(actionContinueMission)
-                }
-            }
-
-            onShowResumeMissionChanged: {
-                if (showResumeMission) {
-                    confirmAction(actionResumeMission)
                 }
             }
 
