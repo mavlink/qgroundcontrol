@@ -479,8 +479,8 @@ bool QGCApplication::_initForNormalAppBoot(void)
     toolbox()->joystickManager()->init();
 
     if (_settingsUpgraded) {
-        showMessage(tr("The format for QGroundControl saved settings has been modified. "
-                    "Your saved settings have been reset to defaults."));
+        showMessage(QString(tr("The format for %1 saved settings has been modified. "
+                    "Your saved settings have been reset to defaults.")).arg(applicationName()));
     }
 
     // Connect links with flag AutoconnectLink
