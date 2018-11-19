@@ -15,17 +15,17 @@
 SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 #if defined(QGC_AIRMAP_ENABLED)
-    , _airMapSettings       (NULL)
+    , _airMapSettings       (nullptr)
 #endif
-    , _appSettings          (NULL)
-    , _unitsSettings        (NULL)
-    , _autoConnectSettings  (NULL)
-    , _videoSettings        (NULL)
-    , _flightMapSettings    (NULL)
-    , _rtkSettings          (NULL)
-    , _flyViewSettings      (NULL)
-    , _planViewSettings     (NULL)
-    , _brandImageSettings   (NULL)
+    , _appSettings          (nullptr)
+    , _unitsSettings        (nullptr)
+    , _autoConnectSettings  (nullptr)
+    , _videoSettings        (nullptr)
+    , _flightMapSettings    (nullptr)
+    , _rtkSettings          (nullptr)
+    , _flyViewSettings      (nullptr)
+    , _planViewSettings     (nullptr)
+    , _brandImageSettings   (nullptr)
 {
 
 }
