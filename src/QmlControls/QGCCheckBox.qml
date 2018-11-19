@@ -53,14 +53,24 @@ CheckBox {
 
             Rectangle {
                 id: baserect
-                gradient: Gradient {
+                property var enabledGradient: Gradient {
                     GradientStop {color: "#eee" ; position: 0}
                     GradientStop {color: control.pressed ? "#eee" : "#fff" ; position: 0.1}
                     GradientStop {color: "#fff" ; position: 1}
                 }
+                property var disabledGradient: Gradient {
+                    GradientStop {color: "#999" ; position: 0}
+                    GradientStop {color: __qgcPal.textField ; position: 0.1}
+                    GradientStop {color: __qgcPal.textField ; position: 0.9}
+                    GradientStop {color: "#999" ; position: 1}
+                }
+                gradient: control.enabled ? enabledGradient : disabledGradient
+
+
                 radius: ScreenTools.defaultFontPixelHeight * 0.16
                 anchors.fill: parent
                 border.color: control.activeFocus ? "#47b" : "#999"
+                opacity: control.enabled ? 1 : 0.5
             }
 
             Image {

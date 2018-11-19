@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,8 +15,7 @@
  *
  */
 
-#ifndef INCREMENTALPLOT_H
-#define INCREMENTALPLOT_H
+#pragma once
 
 #include <QTimer>
 #include <qwt_plot.h>
@@ -117,4 +116,3 @@ private:
     void updateStyle(QwtPlotCurve *curve);
 };
 
-#endif /* INCREMENTALPLOT_H */

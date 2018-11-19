@@ -79,6 +79,9 @@ SetupPage {
             property int    _orientationDialogCalType
             property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
             property real   _margins:                       ScreenTools.defaultFontPixelHeight / 2
+            property bool   _compassAutoRotAvailable:       controller.parameterExists(-1, "COMPASS_AUTO_ROT")
+            property Fact   _compassAutoRotFact:            controller.getParameterFact(-1, "COMPASS_AUTO_ROT", false /* reportMissing */)
+            property bool   _compassAutoRot:                _compassAutoRotAvailable ? _compassAutoRotFact.rawValue == 2 : false
 
             function showOrientationsDialog(calType) {
                 var dialogTitle
@@ -346,7 +349,7 @@ SetupPage {
                         }
 
                         Column {
-                            visible: sensorParams.rgCompassExternal[index] && sensorParams.rgCompassRotParamAvailable[index]
+                            visible: !_compassAutoRot && sensorParams.rgCompassExternal[index] && sensorParams.rgCompassRotParamAvailable[index]
 
                             QGCLabel { text: qsTr("Orientation:") }
 

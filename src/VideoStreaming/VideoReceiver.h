@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -14,8 +14,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef VIDEORECEIVER_H
-#define VIDEORECEIVER_H
+#pragma once
 
 #include "QGCLoggingCategory.h"
 #include <QObject>
@@ -45,7 +44,7 @@ public:
     Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
     Q_PROPERTY(bool             showFullScreen      READ    showFullScreen      WRITE   setShowFullScreen     NOTIFY showFullScreenChanged)
 
-    explicit VideoReceiver(QObject* parent = 0);
+    explicit VideoReceiver(QObject* parent = nullptr);
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
@@ -139,6 +138,9 @@ protected:
     bool            _serverPresent;
     int             _rtspTestInterval_ms;
 
+    //-- RTSP UDP reconnect timeout
+    uint64_t        _udpReconnect_us;
+
 #endif
 
     QString         _uri;
@@ -150,4 +152,3 @@ protected:
     VideoSettings*  _videoSettings;
 };
 
-#endif // VIDEORECEIVER_H

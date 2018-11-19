@@ -123,8 +123,9 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
 
     errorString.clear();
 
-    if (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1) {
-        // We just ignore old version 1 data
+    if (!json.contains(JsonHelper::jsonVersionKey) ||
+            (json.contains(JsonHelper::jsonVersionKey) && json[JsonHelper::jsonVersionKey].toInt() == 1)) {
+        // We just ignore old version 1 or prior data
         return true;
     }
 
@@ -143,7 +144,7 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
     }
 
     QJsonArray jsonPolygonArray = json[_jsonPolygonsKey].toArray();
-    foreach (const QJsonValue& jsonPolygonValue, jsonPolygonArray) {
+    for (const QJsonValue& jsonPolygonValue: jsonPolygonArray) {
         if (jsonPolygonValue.type() != QJsonValue::Object) {
             errorString = tr("GeoFence polygon not stored as object");
             return false;
@@ -157,7 +158,7 @@ bool GeoFenceController::load(const QJsonObject& json, QString& errorString)
     }
 
     QJsonArray jsonCircleArray = json[_jsonCirclesKey].toArray();
-    foreach (const QJsonValue& jsonCircleValue, jsonCircleArray) {
+    for (const QJsonValue& jsonCircleValue: jsonCircleArray) {
         if (jsonCircleValue.type() != QJsonValue::Object) {
             errorString = tr("GeoFence circle not stored as object");
             return false;

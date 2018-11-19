@@ -31,7 +31,7 @@ const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureSc
 const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
 const char* StructureScanComplexItem::_jsonAltitudeRelativeKey =    "altitudeRelative";
 
-StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlFile, QObject* parent)
+StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrShpFile, QObject* parent)
     : ComplexMissionItem        (vehicle, flyView, parent)
     , _metaDataMap              (FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/StructureScan.SettingsGroup.json"), this /* QObject parent */))
     , _sequenceNumber           (0)
@@ -83,8 +83,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
 
     _recalcLayerInfo();
 
-    if (!kmlFile.isEmpty()) {
-        _structurePolygon.loadKMLFile(kmlFile);
+    if (!kmlOrShpFile.isEmpty()) {
+        _structurePolygon.loadKMLOrSHPFile(kmlOrShpFile);
         _structurePolygon.setDirty(false);
     }
 
@@ -215,9 +215,11 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         return false;
     }
 
-    _altitudeFact.setRawValue   (complexObject[altitudeName].toDouble());
-    _layersFact.setRawValue     (complexObject[layersName].toDouble());
-    _altitudeRelative =         complexObject[_jsonAltitudeRelativeKey].toBool(true);
+    _altitudeFact.setRawValue       (complexObject[altitudeName].toDouble());
+    _layersFact.setRawValue         (complexObject[layersName].toDouble());
+    _structureHeightFact.setRawValue(complexObject[structureHeightName].toDouble());
+
+    _altitudeRelative = complexObject[_jsonAltitudeRelativeKey].toBool(true);
 
     double gimbalPitchValue = 0;
     if (complexObject.contains(gimbalPitchName)) {
@@ -235,6 +237,30 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
 
 void StructureScanComplexItem::_flightPathChanged(void)
 {
+    // Calc bounding cube
+    double north = 0.0;
+    double south = 180.0;
+    double east  = 0.0;
+    double west  = 360.0;
+    double bottom = 100000.;
+    double top = 0.;
+    QList<QGeoCoordinate> vertices = _flightPolygon.coordinateList();
+    for (int i = 0; i < vertices.count(); i++) {
+        QGeoCoordinate vertex = vertices[i];
+        double lat = vertex.latitude()  + 90.0;
+        double lon = vertex.longitude() + 180.0;
+        north   = fmax(north, lat);
+        south   = fmin(south, lat);
+        east    = fmax(east,  lon);
+        west    = fmin(west,  lon);
+        bottom  = fmin(bottom, vertex.altitude());
+        top     = fmax(top, vertex.altitude());
+    }
+    //-- Update bounding cube for airspace management control
+    _setBoundingCube(QGCGeoBoundingCube(
+        QGeoCoordinate(north - 90.0, west - 180.0, bottom),
+        QGeoCoordinate(south - 90.0, east - 180.0, top)));
+
     emit coordinateChanged(coordinate());
     emit exitCoordinateChanged(exitCoordinate());
     emit greatestDistanceToChanged();
@@ -433,6 +459,12 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
 
 void StructureScanComplexItem::_recalcCameraShots(void)
 {
+    double triggerDistance = _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    if (triggerDistance == 0) {
+        _setCameraShots(0);
+        return;
+    }
+
     if (_flightPolygon.count() < 3) {
         _setCameraShots(0);
         return;
@@ -450,7 +482,7 @@ void StructureScanComplexItem::_recalcCameraShots(void)
         return;
     }
 
-    int cameraShots = distance / _cameraCalc.adjustedFootprintSide()->rawValue().toDouble();
+    int cameraShots = static_cast<int>(distance / triggerDistance);
     _setCameraShots(cameraShots * _layersFact.rawValue().toInt());
 }
 

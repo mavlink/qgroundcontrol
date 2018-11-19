@@ -1,5 +1,4 @@
-#ifndef QGCHILFLIGHTGEARCONFIGURATION_H
-#define QGCHILFLIGHTGEARCONFIGURATION_H
+#pragma once
 
 #include <QWidget>
 
@@ -53,4 +52,3 @@ signals:
      void barometerOffsetChanged(float barometerOffsetkPa);
 };
 
-#endif // QGCHILFLIGHTGEARCONFIGURATION_H

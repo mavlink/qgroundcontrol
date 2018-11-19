@@ -1,5 +1,4 @@
-#ifndef QGCHILXPLANECONFIGURATION_H
-#define QGCHILXPLANECONFIGURATION_H
+#pragma once
 
 #include <QWidget>
 
@@ -31,4 +30,3 @@ private:
     Ui::QGCHilXPlaneConfiguration *ui;
 };
 
-#endif // QGCHILXPLANECONFIGURATION_H

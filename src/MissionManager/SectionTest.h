@@ -25,7 +25,6 @@ public:
 
 protected:
     void _createSpy(Section* section, MultiSignalSpy** sectionSpy);
-    void _missionItemsEqual(MissionItem& actual, MissionItem& expected);
     void _commonScanTest(Section* section);
 
     enum {

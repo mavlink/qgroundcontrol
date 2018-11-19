@@ -340,7 +340,7 @@ void BluetoothConfiguration::deviceDiscovered(QBluetoothDeviceInfo info)
         qDebug() << "Address:        " << info.address().toString();
         qDebug() << "Service Classes:" << info.serviceClasses();
         QList<QBluetoothUuid> uuids = info.serviceUuids();
-        foreach (QBluetoothUuid uuid, uuids) {
+        for (QBluetoothUuid uuid: uuids) {
             qDebug() << "Service UUID:   " << uuid.toString();
         }
 #endif
@@ -373,7 +373,7 @@ void BluetoothConfiguration::doneScanning()
 
 void BluetoothConfiguration::setDevName(const QString &name)
 {
-    foreach(const BluetoothData& data, _deviceList)
+    for(const BluetoothData& data: _deviceList)
     {
         if(data.name == name)
         {
@@ -390,7 +390,7 @@ void BluetoothConfiguration::setDevName(const QString &name)
 QString BluetoothConfiguration::address()
 {
 #ifdef __ios__
-    return QString("");
+    return {};
 #else
     return _device.address;
 #endif

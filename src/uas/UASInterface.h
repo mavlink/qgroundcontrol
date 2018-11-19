@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,8 +11,7 @@
 // UASInterface, UAS.h/cc are deprecated. All new functionality should go into Vehicle.h/cc
 //
 
-#ifndef _UASINTERFACE_H_
-#define _UASINTERFACE_H_
+#pragma once
 
 #include <QObject>
 #include <QList>
@@ -192,4 +191,3 @@ signals:
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
 
-#endif // _UASINTERFACE_H_

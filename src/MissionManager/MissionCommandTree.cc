@@ -47,13 +47,13 @@ void MissionCommandTree::setToolbox(QGCToolbox* toolbox)
     } else {
 #endif
         // Load all levels of hierarchy
-        foreach (MAV_AUTOPILOT firmwareType, _toolbox->firmwarePluginManager()->supportedFirmwareTypes()) {
+        for (MAV_AUTOPILOT firmwareType: _toolbox->firmwarePluginManager()->supportedFirmwareTypes()) {
             FirmwarePlugin* plugin = _toolbox->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
 
             QList<MAV_TYPE> vehicleTypes;
             vehicleTypes << MAV_TYPE_GENERIC << MAV_TYPE_FIXED_WING << MAV_TYPE_QUADROTOR << MAV_TYPE_VTOL_QUADROTOR << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE;
 
-            foreach(MAV_TYPE vehicleType, vehicleTypes) {
+            for(MAV_TYPE vehicleType: vehicleTypes) {
                 QString overrideFile = plugin->missionCommandOverrides(vehicleType);
                 if (!overrideFile.isEmpty()) {
                     _staticCommandTree[firmwareType][vehicleType] = new MissionCommandList(overrideFile, firmwareType == MAV_AUTOPILOT_GENERIC && vehicleType == MAV_TYPE_GENERIC /* baseCommandList */, this);
@@ -105,7 +105,7 @@ void MissionCommandTree::_collapseHierarchy(Vehicle*                            
 
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
 
-    foreach (MAV_CMD command, cmdList->commandIds()) {
+    for (MAV_CMD command: cmdList->commandIds()) {
         // Only add supported command to tree (MAV_CMD_NAV_LAST is used for planned home position)
         if (!qgcApp()->runningUnitTests()
                 && !vehicle->firmwarePlugin()->supportedMissionCommands().isEmpty()
@@ -238,7 +238,7 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
 
     QVariantList list;
     QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _availableCommands[baseFirmwareType][baseVehicleType];
-    foreach (MAV_CMD command, commandMap.keys()) {
+    for (MAV_CMD command: commandMap.keys()) {
         if (command == MAV_CMD_NAV_LAST) {
             // MAV_CMD_NAV_LAST is used for Mission Settings item. Although we want to be able to get command info for it.
             // The user should not be able to use it as a command.

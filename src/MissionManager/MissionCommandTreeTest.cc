@@ -206,8 +206,8 @@ void MissionCommandTreeTest::testAllTrees(void)
     vehicleList << MAV_TYPE_GENERIC << MAV_TYPE_QUADROTOR << MAV_TYPE_FIXED_WING << MAV_TYPE_GROUND_ROVER << MAV_TYPE_SUBMARINE << MAV_TYPE_VTOL_QUADROTOR;
 
     // This will cause all of the variants of collapsed trees to be built
-    foreach(MAV_AUTOPILOT firmwareType, firmwareList) {
-        foreach (MAV_TYPE vehicleType, vehicleList) {
+    for(MAV_AUTOPILOT firmwareType: firmwareList) {
+        for (MAV_TYPE vehicleType: vehicleList) {
             if (firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA && vehicleType == MAV_TYPE_VTOL_QUADROTOR) {
                 // VTOL in ArduPilot shows up as plane so we can test this pair
                 continue;

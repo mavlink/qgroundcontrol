@@ -531,14 +531,6 @@ QStringList PlanMasterController::saveNameFilters(void) const
     return filters;
 }
 
-QStringList PlanMasterController::fileKmlFilters(void) const
-{
-    QStringList filters;
-
-    filters << tr("KML Files (*.%1)").arg(kmlFileExtension()) << tr("All Files (*.*)");
-    return filters;
-}
-
 void PlanMasterController::sendPlanToVehicle(Vehicle* vehicle, const QString& filename)
 {
     // Use a transient PlanMasterController to accomplish this

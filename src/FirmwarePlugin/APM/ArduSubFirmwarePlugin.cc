@@ -112,8 +112,13 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
 
         FirmwarePlugin::remapParamNameMap_t& remapV3_6 = _remapParamName[3][6];
 
-        remapV3_6["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
-        remapV3_6["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
+        remapV3_6["BATT_ARM_VOLT"] = QStringLiteral("ARMING_MIN_VOLT");
+        remapV3_6["BATT2_ARM_VOLT"] = QStringLiteral("ARMING_MIN_VOLT2");
+        remapV3_6["BATT_AMP_PERVLT"] =  QStringLiteral("BATT_AMP_PERVOLT");
+        remapV3_6["BATT2_AMP_PERVLT"] = QStringLiteral("BATT2_AMP_PERVOL");
+        remapV3_6["BATT_LOW_MAH"] = QStringLiteral("FS_BATT_MAH");
+        remapV3_6["BATT_LOW_VOLT"] = QStringLiteral("FS_BATT_VOLTAGE");
+        remapV3_6["BATT_FS_LOW_ACT"] = QStringLiteral("FS_BATT_ENABLE");
 
         _remapParamNameIntialized = true;
     }
@@ -174,6 +179,12 @@ void ArduSubFirmwarePlugin::initializeStreamRates(Vehicle* vehicle) {
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
 }
 
+bool ArduSubFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
+{
+    Q_UNUSED(vehicle);
+    uint32_t available = SetFlightModeCapability | PauseVehicleCapability;
+    return (capabilities & available) == capabilities;
+}
 
 bool ArduSubFirmwarePlugin::supportsThrottleModeCenterZero(void)
 {

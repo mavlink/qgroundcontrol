@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef _MAVLINKMESSAGESTIMER_H_
-#define _MAVLINKMESSAGESTIMER_H_
+#pragma once
 
 #include <QTimer>
 #include <QObject>
@@ -103,4 +102,3 @@ private:
     static const int    _messageReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
 };
 
-#endif // _MAVLINKMESSAGESTIMER_H_

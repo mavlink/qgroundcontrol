@@ -21,6 +21,7 @@
 #include "UASInterface.h"
 #include "FactPanelController.h"
 #include "QmlObjectListModel.h"
+#include "ParameterManager.h"
 
 class ParameterEditorController : public FactPanelController
 {
@@ -37,7 +38,6 @@ public:
     Q_PROPERTY(QStringList          categories          MEMBER _categories          CONSTANT)
 	
     Q_INVOKABLE QStringList getGroupsForCategory(const QString& category);
-    Q_INVOKABLE QStringList getParametersForGroup(const QString& category, const QString& group);
     Q_INVOKABLE QStringList searchParameters(const QString& searchText, bool searchInName=true, bool searchInDescriptions=true);
 	
     Q_INVOKABLE void clearRCToParam(void);
@@ -64,6 +64,8 @@ private:
     QString             _currentCategory;
     QString             _currentGroup;
     QmlObjectListModel* _parameters;
+    ParameterManager*   _parameterMgr;
+    QString             _componentCategoryPrefix;
 };
 
 #endif

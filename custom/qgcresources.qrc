@@ -1,4 +1,9 @@
 <RCC>
+	<qresource prefix="/localization">
+		<file alias="qgc_zh_CN.qm">../localization/qgc_zh-CN.qm</file>
+		<file alias="qgc_de_DE.qm">../localization/qgc_de-DE.qm</file>
+		<file alias="qgc_tr.qm">../localization/qgc_tr.qm</file>
+	</qresource>
 	<qresource prefix="/fonts">
 		<file alias="opensans">../resources/fonts/OpenSans-Regular.ttf</file>
 		<file alias="opensans-demibold">../resources/fonts/OpenSans-Semibold.ttf</file>
@@ -28,6 +33,7 @@
 		<file alias="Airframe/OctoRotorXCoaxial">../src/AutoPilotPlugins/Common/Images/OctoRotorXCoaxial.svg</file>
 		<file alias="Airframe/Plane">../src/AutoPilotPlugins/Common/Images/Plane.svg</file>
 		<file alias="Airframe/PlaneATail">../src/AutoPilotPlugins/Common/Images/PlaneATail.svg</file>
+		<file alias="Airframe/PlaneVTail">../src/AutoPilotPlugins/Common/Images/PlaneVTail.svg</file>
 		<file alias="Airframe/QuadRotorATail">../src/AutoPilotPlugins/Common/Images/QuadRotorATail.svg</file>
 		<file alias="Airframe/QuadRotorH">../src/AutoPilotPlugins/Common/Images/QuadRotorH.svg</file>
 		<file alias="Airframe/QuadRotorPlus">../src/AutoPilotPlugins/Common/Images/QuadRotorPlus.svg</file>
@@ -123,6 +129,7 @@
 		<file alias="ZoomPlus.svg">../src/FlightMap/Images/ZoomPlus.svg</file>
 		<file alias="ZoomMinus.svg">../src/FlightMap/Images/ZoomMinus.svg</file>
 		<file alias="Help.svg">../src/FlightMap/Images/Help.svg</file>
+		<file alias="Home.svg">../src/FlightMap/Images/Home.svg</file>
 		<file alias="HelpBlack.svg">../src/FlightMap/Images/HelpBlack.svg</file>
 		<file alias="MapAddMission.svg">../src/FlightMap/Images/MapAddMission.svg</file>
 		<file alias="MapAddMissionBlack.svg">../src/FlightMap/Images/MapAddMissionBlack.svg</file>
@@ -168,6 +175,8 @@
 		<file alias="ArrowCCW.svg">../src/AutoPilotPlugins/Common/Images/ArrowCCW.svg</file>
 		<file alias="PX4/BrandImage">../src/FirmwarePlugin/PX4/PX4BrandImage.png</file>
 		<file alias="subVehicleArrowOpaque.png">../src/FlightMap/Images/sub.png</file>
+		<file alias="AlertAircraft.svg">../src/FlightMap/Images/AlertAircraft.svg</file>
+		<file alias="AwarenessAircraft.svg">../src/FlightMap/Images/AwarenessAircraft.svg</file>
 		<file alias="check.svg">../resources/check.svg</file>
 	</qresource>
 	<qresource prefix="/res">
@@ -209,6 +218,7 @@
 		<file alias="wind-rose-arrow.svg">../resources/wind-rose-arrow.svg</file>
 		<file alias="XDelete.svg">../resources/XDelete.svg</file>
 		<file alias="XDeleteBlack.svg">../resources/XDeleteBlack.svg</file>
+		<file alias="waypoint.svg">../resources/waypoint.svg</file>
 		<file>../resources/icons/qgroundcontrol.ico</file>
 	</qresource>
 	<qresource prefix="/res/firmware">

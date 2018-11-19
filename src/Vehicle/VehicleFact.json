@@ -64,14 +64,14 @@
 },
 {
     "name":             "altitudeRelative",
-    "shortDescription": "Altitude-rel",
+    "shortDescription": "Alt (Rel)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
 },
 {
     "name":             "altitudeAMSL",
-    "shortDescription": "Altitude",
+    "shortDescription": "Alt (AMSL)",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"
@@ -86,6 +86,20 @@
 {
     "name":             "distanceToHome",
     "shortDescription": "Distance to Home",
+    "type":             "double",
+    "decimalPlaces":    1,
+    "units":            "m"
+},
+{
+    "name":             "headingToHome",
+    "shortDescription": "Heading to Home",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "deg"
+},
+{
+    "name":             "distanceToGCS",
+    "shortDescription": "Distance to GCS",
     "type":             "double",
     "decimalPlaces":    1,
     "units":            "m"

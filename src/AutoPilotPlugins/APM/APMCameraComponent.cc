@@ -54,7 +54,11 @@ QStringList APMCameraComponent::setupCompleteChangedTriggerList(void) const
 
 QUrl APMCameraComponent::setupSource(void) const
 {
+    if (_vehicle->sub()) {
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraSubComponent.qml"));
+    }
     return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMCameraComponent.qml"));
+
 }
 
 QUrl APMCameraComponent::summaryQmlSource(void) const

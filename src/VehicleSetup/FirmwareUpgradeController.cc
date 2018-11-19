@@ -354,7 +354,7 @@ void FirmwareUpgradeController::_initFirmwareHash()
 #endif
 
     // PX4 Firmwares
-    foreach (const FirmwareType_t& firmwareType, px4MapFirmwareTypeToDir.keys()) {
+    for (const FirmwareType_t& firmwareType: px4MapFirmwareTypeToDir.keys()) {
         QString dir = px4MapFirmwareTypeToDir[firmwareType];
         _rgPX4FMUV5Firmware.insert      (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v5"));
         _rgPX4FMUV4PROFirmware.insert   (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4pro"));
@@ -365,13 +365,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
 
 #if !defined(NO_ARDUPILOT_DIALECT)
     // ArduPilot Firmwares
-    foreach (const FirmwareType_t& firmwareType, apmMapFirmwareTypeToDir.keys()) {
+    for (const FirmwareType_t& firmwareType: apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
-        foreach (const FirmwareVehicleType_t& vehicleType, apmMapVehicleTypeToDir.keys()) {
+        for (const FirmwareVehicleType_t& vehicleType: apmMapVehicleTypeToDir.keys()) {
             QString vehicleTypeDir = apmMapVehicleTypeToDir[vehicleType];
             QString px4Dir = apmMapVehicleTypeToPX4Dir[vehicleType];
             QString filename = apmMapVehicleTypeToFilename[vehicleType];
-            qDebug() << firmwareTypeDir << vehicleTypeDir << px4Dir << filename;
             _rgPX4FMUV5Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("5"));
             _rgPX4FMUV4Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("4"));
             _rgPX4FMUV3Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("3"));
@@ -382,13 +381,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
 
 #if !defined(NO_ARDUPILOT_DIALECT)
     // ArduPilot ChibiOS Firmwares
-    foreach (const FirmwareType_t& firmwareType, apmMapFirmwareTypeToDir.keys()) {
+    for (const FirmwareType_t& firmwareType: apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
-        foreach (const FirmwareVehicleType_t& vehicleType, apmChibiOSMapVehicleTypeToDir.keys()) {
+        for (const FirmwareVehicleType_t& vehicleType: apmChibiOSMapVehicleTypeToDir.keys()) {
             QString vehicleTypeDir = apmChibiOSMapVehicleTypeToDir[vehicleType];
             QString fmuDir = apmChibiOSMapVehicleTypeToFmuDir[vehicleType];
             QString filename = apmChibiOSMapVehicleTypeToFilename[vehicleType];
-            qDebug() << firmwareTypeDir << vehicleTypeDir << fmuDir << filename;
             _rgPX4FMUV5Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("5").arg(fmuDir).arg(filename));
             _rgPX4FMUV4Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("4").arg(fmuDir).arg(filename));
             _rgPX4FMUV3Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("3").arg(fmuDir).arg(filename));
@@ -692,7 +690,7 @@ void FirmwareUpgradeController::_loadAPMVersions(uint32_t bootloaderBoardID)
 
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(bootloaderBoardID));
 
-    foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
+    for (FirmwareIdentifier firmwareId: prgFirmware->keys()) {
         if (firmwareId.autopilotStackType == AutoPilotStackAPM) {
             QString versionFile = QFileInfo(prgFirmware->value(firmwareId)).path() + "/git-version.txt";
 
@@ -733,7 +731,7 @@ void FirmwareUpgradeController::_apmVersionDownloadFinished(QString remoteFile, 
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
 
     QString remotePath = QFileInfo(remoteFile).path();
-    foreach (FirmwareIdentifier firmwareId, prgFirmware->keys()) {
+    for (FirmwareIdentifier firmwareId: prgFirmware->keys()) {
         if (remotePath == QFileInfo((*prgFirmware)[firmwareId]).path()) {
             qCDebug(FirmwareUpgradeLog) << "Adding version to map, version:firwmareType:vehicleType" << version << firmwareId.firmwareType << firmwareId.firmwareVehicleType;
             _apmVersionMap[firmwareId.firmwareType][firmwareId.firmwareVehicleType] = version;
@@ -761,7 +759,7 @@ QStringList FirmwareUpgradeController::apmAvailableVersions(void)
 
     _apmVehicleTypeFromCurrentVersionList.clear();
 
-    foreach (FirmwareVehicleType_t vehicleType, vehicleTypes) {
+    for (FirmwareVehicleType_t vehicleType: vehicleTypes) {
         if (_apmVersionMap[_selectedFirmwareType].contains(vehicleType)) {
             QString version;
 

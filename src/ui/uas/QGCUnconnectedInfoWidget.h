@@ -1,5 +1,4 @@
-#ifndef QGCUNCONNECTEDINFOWIDGET_H
-#define QGCUNCONNECTEDINFOWIDGET_H
+#pragma once
 
 #include <QWidget>
 
@@ -35,4 +34,3 @@ public slots:
     void addLink();
 };
 
-#endif // QGCUNCONNECTEDINFOWIDGET_H

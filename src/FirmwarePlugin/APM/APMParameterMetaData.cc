@@ -154,7 +154,6 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
         return;
     }
 
-    QString             errorString;
     bool                badMetaData = true;
     QStack<int>         xmlState;
     APMFactMetaDataRaw* rawMetaData = NULL;

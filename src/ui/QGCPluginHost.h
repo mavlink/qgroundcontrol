@@ -1,5 +1,4 @@
-#ifndef QGCPLUGINHOST_H
-#define QGCPLUGINHOST_H
+#pragma once
 
 #include <QWidget>
 
@@ -19,4 +18,3 @@ private:
     Ui::QGCPluginHost *ui;
 };
 
-#endif // QGCPLUGINHOST_H

@@ -16,7 +16,7 @@ Item {
     height: _valid ? weatherRow.height : 0
     width:  _valid ? weatherRow.width  : 0
     property color  contentColor:       "#ffffff"
-    property var    iconHeight:         ScreenTools.defaultFontPixelHeight * 2
+    property real   iconHeight:         ScreenTools.defaultFontPixelHeight * 2
     property bool   _valid:             QGroundControl.airspaceManager.weatherInfo.valid
     property bool   _celcius:           QGroundControl.settingsManager.unitsSettings.temperatureUnits.rawValue === UnitsSettings.TemperatureUnitsCelsius
     property int    _tempC:             _valid ? QGroundControl.airspaceManager.weatherInfo.temperature : 0

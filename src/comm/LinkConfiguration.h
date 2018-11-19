@@ -1,14 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
 
-#ifndef LINKCONFIGURATION_H
-#define LINKCONFIGURATION_H
+#pragma once
 
 #include <QSettings>
 
@@ -19,7 +18,6 @@ class LinkInterface;
 class LinkConfiguration : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(LinkType)
 
 public:
     LinkConfiguration(const QString& name);
@@ -63,6 +61,7 @@ public:
 #endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
+    Q_ENUM(LinkType)
 
     /*!
      *
@@ -208,4 +207,3 @@ private:
 
 typedef QSharedPointer<LinkConfiguration> SharedLinkConfigurationPointer;
 
-#endif // LINKCONFIGURATION_H

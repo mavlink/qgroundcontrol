@@ -1,0 +1,103 @@
+<html>
+<head>
+<title>Shapelib Release Notes</title>
+<link href="maptools.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+<h1>Shapelib Release Notes</h1>
+
+To get notification of new releases of Shapelib <i>subscribe</i> to 
+the project at www.freshmeat.net.  This is currently the only reliable
+way of finding out about new releases since there is no shapelib specific
+mailing list.<p>
+
+<b>Release 1.4.1</b>:
+<ul>
+<li> Fix a regression regarding re-writing the last shape
+        of a file (<a href="https://trac.osgeo.org/gdal/ticket/7031">GDAL #7031</a>)
+</ul>
+
+<b>Release 1.4.0</b>:
+<ul>
+<li> Old Makefile build replaced by autoconf/automake (by Sandro Mani)
+<li> CMake build system added (by Alan W. Irwin)
+<li> Added read support for ESRI .sbn spatial index
+<li> Resynchronization with GDAL's Shapefile driver. Mostly cleanups.
+     SHPObject and DBFInfo structures extended with new members
+<li> Add DBFSetLastModifiedDate() to modify the update date in the .dbf
+<li> Add SHPSetFastModeReadObject() to read faster (but shapes got that way
+     share state in the handle, so only one shape at a time can be used)
+<li> Add SHPRestoreSHX() to recreate a missing .shx from the .shp and
+     SHPOpenLLEx().
+<li> Write DBF end-of-file character 0x1A by default.
+     This behaviour can be controlled with the DBFSetWriteEndOfFileChar()
+     function.
+</ul>
+
+<b>Release 1.3.0</b>:
+<ul>
+<li> Major rework to us application provided hooks for file io, and error reporting (SAHooks).  
+<li> Added contrib/Shape_PointInPoly.cpp from Marko Podgorsek.  
+<li> Added shapelib tools documentation from Eduardo Patto Kanegae.
+<li> Added dbf deletion support.  
+<li> Added DBFAddNativeFieldType().
+<li> Added DBFDeleteField(), DBFReorderFields() and DBFAlterFields() to 
+rework DBF schema.
+<li> likely a variety of other changes - it has been eight years since 1.2.10!
+</ul>
+
+<b>Release 1.2.10</b>: Added SHPRewindObject() function, and shprewind utility
+program.  Added FTLogical, DBFReadLogicalAttribute() and 
+DBFWriteLogicalAttribute() (thanks to Olek Neyman). <p>
+
+<b>Release 1.2.9</b>: Good support for reading and writing NULL fields 
+in .dbf files, good support for NULL shapes and addition of the
+DBFGetFieldIndex() functions (all contributed by Jim Matthews).<p>
+
+An upgraded shputils.c has been contributed by Bill Miller.  Daniel 
+Morissette contributed DBFGetNativeFieldType().  Better error checking
+for disk errors in dbfopen.c.  Various other bug fixes and safety improvements.
+<p>
+
+<b>Release 1.2.8</b>: Added hacked libtool support (supplied by Jan)
+and "rpm ready" install logic.<p>
+
+<b>Release 1.2.7</b>: Fix record size (was 4 bytes too long).  Modify 
+SHPReadObject() to handle null shapes properly.  Use atof() instead of
+sscanf().  Support .DBF as well as .dbf.<p>
+
+<b>Release 1.2.6</b>: Now available under old MIT style license, or at the
+users option, LGPL.  Added the contrib directory of stuff from Carl Anderson
+and the shptree.c API for quadtree based spatial searches.<p>
+
+<b>Release 1.2.5</b>: SHPOpen() now forcably uses "rb" or "r+b" access string
+to avoid common mistakes on Windows.  Also fixed a serious bug with .dbf
+files with a 'F' field type.<p>
+
+<b>Release 1.2.4</b>: DBFOpen() will now automatically translate a .shp
+extension to .dbf for convenience.  SHPOpen() will try datasets with lower
+and uppercase extension.  DBFAddField() now returns the field number,
+not TRUE/FALSE.<p>
+
+<b>Release 1.2.3</b>: Disable writing measures to multi-patches as ArcView
+seems to puke on them (as reported by Monika Sester).  Add white space 
+trimming, and string/numeric attribute interchangability in DBF API
+as suggested by Steve Lime.  Dbfdump was updated to include several 
+reporting options.<p>
+
+<b>Release 1.2.2</b>: Added proper support for multipatch (reading and 
+writing) - this release just for testing purposes.<p>
+
+<b>Release 1.2</b> is mostly a rewrite of the .shp/.shx access API to account 
+for ArcView 3.x 3D shapes, and to encapsulate the shapes in a structure.  
+Existing code using the shapefile library will require substantial changes
+to use release 1.2.<p>
+
+<b>Release V1.1</b> has been built on a number of platforms, and used by a 
+number of people successfully.  V1.1 is the first release with the xBase API 
+documentation.<p>
+
+
+</body>
+</html>

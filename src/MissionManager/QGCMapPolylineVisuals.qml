@@ -13,11 +13,12 @@ import QtLocation       5.3
 import QtPositioning    5.3
 import QtQuick.Dialogs  1.2
 
-import QGroundControl               1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FlightMap     1.0
+import QGroundControl                   1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.Palette           1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.FlightMap         1.0
+import QGroundControl.ShapeFileHelper   1.0
 
 /// QGCmapPolyline map visuals
 Item {
@@ -118,7 +119,8 @@ Item {
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select KML File")
         selectExisting: true
-        nameFilters:    [ qsTr("KML files (*.kml)") ]
+        nameFilters:    ShapeFileHelper.fileDialogKMLFilters
+        fileExtension:  QGroundControl.settingsManager.appSettings.kmlFileExtension
 
         onAcceptedForLoad: {
             mapPolyline.loadKMLFile(file)

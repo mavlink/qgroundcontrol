@@ -61,6 +61,7 @@ TextField {
 
             Rectangle {
                 anchors.fill:           parent
+                border.width:           enabled ? 1 : 0
                 border.color:           root.activeFocus ? "#47b" : "#999"
                 color:                  qgcPal.textField
             }
