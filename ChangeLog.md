@@ -15,6 +15,7 @@ Note: This file only contains high level features or important fixes.
 * Fixed Wing Landing Pattern: Add stop photo/video support. Defaults to on such that doing an RTL will stop camera.
 * Survey Planning: add mode that supports concave polygons
 * Support loading polygons from SHP files
+* Bumped settings version (now 8). This will cause all settings to be reset to defaults.
 
 ## 3.4
 

@@ -1,6 +1,6 @@
 [
 {
-    "name":                 "SurveyInAccuracyLimit",
+    "name":                 "surveyInAccuracyLimit",
     "shortDescription":     "Survey in accuracy (U-blox only)",
     "longDescription":      "The maximum accuracy allowed prior to completing survey in.",
     "type":                 "double",
@@ -11,7 +11,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":                 "SurveyInMinObservationDuration",
+    "name":                 "surveyInMinObservationDuration",
     "shortDescription":     "Minimum observation time",
     "longDescription":      "Defines the minimum amount of observation time for the position calculation.",
     "type":                 "Uint32",
@@ -22,7 +22,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":                 "UseFixedBasePosition",
+    "name":                 "useFixedBasePosition",
     "shortDescription":     "Use specified base position",
     "longDescription":      "Specify the values for the RTK base position without having to do a survey in.",
     "type":                 "bool",
@@ -30,7 +30,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":                 "FixedBasePositionLatitude",
+    "name":                 "fixedBasePositionLatitude",
     "shortDescription":     "Base Position Latitude",
     "longDescription":      "Defines the latitude of the fixed RTK base position.",
     "type":                 "double",
@@ -41,7 +41,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":                 "FixedBasePositionLongitude",
+    "name":                 "fixedBasePositionLongitude",
     "shortDescription":     "Base Position Longitude",
     "longDescription":      "Defines the longitude of the fixed RTK base position.",
     "type":                 "double",
@@ -52,7 +52,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":                 "FixedBasePositionAltitude",
+    "name":                 "fixedBasePositionAltitude",
     "shortDescription":     "Base Position Alt (WGS84)",
     "longDescription":      "Defines the altitude of the fixed RTK base position.",
     "type":                 "float",
@@ -62,7 +62,7 @@
     "qgcRebootRequired":    true
 },
 {
-    "name":                 "FixedBasePositionAccuracy",
+    "name":                 "fixedBasePositionAccuracy",
     "shortDescription":     "Base Position Accuracy",
     "longDescription":      "Defines the accuracy of the fixed RTK base position.",
     "type":                 "float",

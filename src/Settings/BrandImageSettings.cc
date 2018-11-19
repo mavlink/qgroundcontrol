@@ -12,35 +12,11 @@
 #include <QQmlEngine>
 #include <QtQml>
 
-const char* BrandImageSettings::name =                      "BrandImage";
-const char* BrandImageSettings::settingsGroup =             ""; // settings are in root group
-
-const char* BrandImageSettings::userBrandImageIndoorName =  "UserBrandImageIndoor";
-const char* BrandImageSettings::userBrandImageOutdoorName = "UserBrandImageOutdoor";
-
-BrandImageSettings::BrandImageSettings(QObject* parent)
-    : SettingsGroup(name, settingsGroup, parent)
-    , _userBrandImageIndoorFact(NULL)
-    , _userBrandImageOutdoorFact(NULL)
+DECLARE_SETTINGGROUP(BrandImage, "Branding")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    qmlRegisterUncreatableType<BrandImageSettings>("QGroundControl.SettingsManager", 1, 0, "BrandImageSettings", "Reference only");
+    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
+    qmlRegisterUncreatableType<BrandImageSettings>("QGroundControl.SettingsManager", 1, 0, "BrandImageSettings", "Reference only"); \
 }
 
-Fact* BrandImageSettings::userBrandImageIndoor(void)
-{
-    if (!_userBrandImageIndoorFact) {
-        _userBrandImageIndoorFact = _createSettingsFact(userBrandImageIndoorName);
-    }
-
-    return _userBrandImageIndoorFact;
-}
-
-Fact* BrandImageSettings::userBrandImageOutdoor(void)
-{
-    if (!_userBrandImageOutdoorFact) {
-        _userBrandImageOutdoorFact = _createSettingsFact(userBrandImageOutdoorName);
-    }
-
-    return _userBrandImageOutdoorFact;
-}
+DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageIndoor)
+DECLARE_SETTINGSFACT(BrandImageSettings, userBrandImageOutdoor)

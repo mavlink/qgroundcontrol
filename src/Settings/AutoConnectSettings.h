@@ -7,8 +7,7 @@
  *
  ****************************************************************************/
 
-#ifndef AutoConnectSettings_H
-#define AutoConnectSettings_H
+#pragma once
 
 #include "SettingsGroup.h"
 
@@ -17,59 +16,21 @@ class AutoConnectSettings : public SettingsGroup
     Q_OBJECT
     
 public:
-    AutoConnectSettings(QObject* parent = NULL);
+    AutoConnectSettings(QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact* autoConnectUDP         READ autoConnectUDP         CONSTANT)
-    Q_PROPERTY(Fact* autoConnectPixhawk     READ autoConnectPixhawk     CONSTANT)
-    Q_PROPERTY(Fact* autoConnectSiKRadio    READ autoConnectSiKRadio    CONSTANT)
-    Q_PROPERTY(Fact* autoConnectPX4Flow     READ autoConnectPX4Flow     CONSTANT)
-    Q_PROPERTY(Fact* autoConnectRTKGPS      READ autoConnectRTKGPS      CONSTANT)
-    Q_PROPERTY(Fact* autoConnectLibrePilot  READ autoConnectLibrePilot  CONSTANT)
-    Q_PROPERTY(Fact* autoConnectNmeaPort    READ autoConnectNmeaPort    CONSTANT)
-    Q_PROPERTY(Fact* autoConnectNmeaBaud    READ autoConnectNmeaBaud    CONSTANT)
-    Q_PROPERTY(Fact* udpListenPort          READ udpListenPort          CONSTANT)   ///< Port to listen on for UDP autoconnect
-    Q_PROPERTY(Fact* udpTargetHostIP        READ udpTargetHostIP        CONSTANT)   ///< Target host IP for UDP autoconnect, empty string for none
-    Q_PROPERTY(Fact* udpTargetHostPort      READ udpTargetHostPort      CONSTANT)   ///< Target host post for UDP autoconnect
+    DEFINE_SETTING_NAME_GROUP()
 
-    Fact* autoConnectUDP        (void);
-    Fact* autoConnectPixhawk    (void);
-    Fact* autoConnectSiKRadio   (void);
-    Fact* autoConnectPX4Flow    (void);
-    Fact* autoConnectRTKGPS     (void);
-    Fact* autoConnectLibrePilot (void);
-    Fact* autoConnectNmeaPort   (void);
-    Fact* autoConnectNmeaBaud   (void);
-    Fact* udpListenPort         (void);
-    Fact* udpTargetHostIP       (void);
-    Fact* udpTargetHostPort     (void);
+    DEFINE_SETTINGFACT(autoConnectUDP)
+    DEFINE_SETTINGFACT(autoConnectPixhawk)
+    DEFINE_SETTINGFACT(autoConnectSiKRadio)
+    DEFINE_SETTINGFACT(autoConnectPX4Flow)
+    DEFINE_SETTINGFACT(autoConnectRTKGPS)
+    DEFINE_SETTINGFACT(autoConnectLibrePilot)
+    DEFINE_SETTINGFACT(autoConnectNmeaPort)
+    DEFINE_SETTINGFACT(autoConnectNmeaBaud)
+    DEFINE_SETTINGFACT(udpListenPort)
+    DEFINE_SETTINGFACT(udpTargetHostIP)
+    DEFINE_SETTINGFACT(udpTargetHostPort)
+    DEFINE_SETTINGFACT(autoconnectTaisyncUSB)
 
-    static const char* name;
-    static const char* settingsGroup;
-
-    static const char* autoConnectUDPSettingsName;
-    static const char* autoConnectPixhawkSettingsName;
-    static const char* autoConnectSiKRadioSettingsName;
-    static const char* autoConnectPX4FlowSettingsName;
-    static const char* autoConnectRTKGPSSettingsName;
-    static const char* autoConnectLibrePilotSettingsName;
-    static const char* autoConnectNmeaPortName;
-    static const char* autoConnectNmeaBaudName;
-    static const char* udpListenPortName;
-    static const char* udpTargetHostIPName;
-    static const char* udpTargetHostPortName;
-
-private:
-    SettingsFact* _autoConnectUDPFact;
-    SettingsFact* _autoConnectPixhawkFact;
-    SettingsFact* _autoConnectSiKRadioFact;
-    SettingsFact* _autoConnectPX4FlowFact;
-    SettingsFact* _autoConnectRTKGPSFact;
-    SettingsFact* _autoConnectLibrePilotFact;
-    SettingsFact* _autoConnectNmeaPortFact;
-    SettingsFact* _autoConnectNmeaBaudFact;
-    SettingsFact* _udpListenPortFact;
-    SettingsFact* _udpTargetHostIPFact;
-    SettingsFact* _udpTargetHostPortFact;
 };
-
-#endif
