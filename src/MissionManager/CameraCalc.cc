@@ -264,6 +264,7 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         _sideOverlapFact.setRawValue        (v1Json[sideOverlapName].toDouble());
 
         if (!CameraSpec::load(v1Json, errorString)) {
+            _disableRecalc = false;
             return false;
         }
     }
