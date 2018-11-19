@@ -219,7 +219,8 @@
 		<file alias="CameraSection.FactMetaData.json">../src/MissionManager/CameraSection.FactMetaData.json</file>
 		<file alias="FlightMap.SettingsGroup.json">../src/Settings/FlightMap.SettingsGroup.json</file>
 		<file alias="FWLandingPattern.FactMetaData.json">../src/MissionManager/FWLandingPattern.FactMetaData.json</file>
-		<file alias="Guided.SettingsGroup.json">../src/Settings/Guided.SettingsGroup.json</file>
+		<file alias="FlyView.SettingsGroup.json">../src/Settings/FlyView.SettingsGroup.json</file>
+		<file alias="PlanView.SettingsGroup.json">../src/Settings/PlanView.SettingsGroup.json</file>
 		<file alias="MavCmdInfoCommon.json">../src/MissionManager/MavCmdInfoCommon.json</file>
 		<file alias="MavCmdInfoFixedWing.json">../src/MissionManager/MavCmdInfoFixedWing.json</file>
 		<file alias="MavCmdInfoMultiRotor.json">../src/MissionManager/MavCmdInfoMultiRotor.json</file>
@@ -236,6 +237,7 @@
 		<file alias="Vehicle/BatteryFact.json">../src/Vehicle/BatteryFact.json</file>
 		<file alias="Vehicle/ClockFact.json">../src/Vehicle/ClockFact.json</file>
 		<file alias="Vehicle/DistanceSensorFact.json">../src/Vehicle/DistanceSensorFact.json</file>
+		<file alias="Vehicle/EstimatorStatusFactGroup.json">../src/Vehicle/EstimatorStatusFactGroup.json</file>
 		<file alias="Vehicle/GPSFact.json">../src/Vehicle/GPSFact.json</file>
 		<file alias="Vehicle/GPSRTKFact.json">../src/Vehicle/GPSRTKFact.json</file>
 		<file alias="Vehicle/SetpointFact.json">../src/Vehicle/SetpointFact.json</file>
