@@ -4452,7 +4452,7 @@ the vehicle will accelerate at this rate until the normal position control speed
     </parameter>
     <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
       <short_desc>Minimum distance the vehicle should keep to all obstacles</short_desc>
-      <long_desc>Only used in Position mode. Collision avoidace is disable by setting this parameter to a negative value</long_desc>
+      <long_desc>Only used in Position mode. Collision avoidace is disabled by setting this parameter to a negative value</long_desc>
       <min>-1</min>
       <max>15</max>
       <unit>meters</unit>
