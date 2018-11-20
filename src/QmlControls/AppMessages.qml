@@ -162,6 +162,7 @@ QGCView {
                 anchors.right:       gstCombo.left
                 anchors.rightMargin: ScreenTools.defaultFontPixelWidth
                 text:                qsTr("GStreamer Debug Level:")
+                visible:             QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
             }
 
             FactComboBox {
@@ -172,6 +173,7 @@ QGCView {
                 width:               ScreenTools.defaultFontPixelWidth*20
                 model:               ["disabled", "1", "2", "3", "4", "5", "6", "7", "8"]
                 fact:                QGroundControl.settingsManager.appSettings.gstDebugLevel
+                visible:             QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
             }
 
             BusyIndicator {
