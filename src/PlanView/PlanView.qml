@@ -338,8 +338,13 @@ QGCView {
                 if (retList[0] == ShapeFileHelper.Error) {
                     _qgcView.showMessage("Error", retList[1], StandardButton.Ok)
                 } else if (retList[0] == ShapeFileHelper.Polygon) {
-                    polygonSelectPatternFile = file
-                    _qgcView.showDialog(patternPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                     var editVehicle = _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+                    if (editVehicle.fixedWing) {
+                        insertComplexMissionItemFromKMLOrSHP(_missionController.surveyComplexItemName, file, -1)
+                    } else {
+                        polygonSelectPatternFile = file
+                        _qgcView.showDialog(patternPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                    }
                 } else if (retList[0] == ShapeFileHelper.Polyline) {
                     insertComplexMissionItemFromKMLOrSHP(_missionController.corridorScanComplexItemName, file, -1)
                 }
@@ -353,14 +358,6 @@ QGCView {
         id: patternPolygonSelectDialog
 
         QGCViewDialog {
-            Component.onCompleted: {
-                var editVehicle = _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-                if (editVehicle.fixedWing) {
-                    surveyRadio.checked = true
-                    accept()
-                }
-            }
-
             function accept() {
                 var complexItemName
                 if (surveyRadio.checked) {
