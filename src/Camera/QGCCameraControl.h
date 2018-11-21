@@ -107,6 +107,9 @@ public:
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
     Q_PROPERTY(bool         paramComplete       READ paramComplete      NOTIFY parametersReady)
 
+    Q_PROPERTY(qreal        zoomLevel           READ zoomLevel          WRITE  setZoomLevel         NOTIFY zoomLevelChanged)
+    Q_PROPERTY(qreal        focusLevel          READ focusLevel         WRITE  setFocusLevel        NOTIFY focusLevelChanged)
+
     Q_PROPERTY(Fact*        exposureMode        READ exposureMode       NOTIFY parametersReady)
     Q_PROPERTY(Fact*        ev                  READ ev                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        iso                 READ iso                NOTIFY parametersReady)
@@ -164,6 +167,8 @@ public:
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
     virtual bool        paramComplete       () { return _paramComplete; }
+    virtual qreal       zoomLevel           () { return _zoomLevel; }
+    virtual qreal       focusLevel          () { return _focusLevel; }
 
     virtual Fact*       exposureMode        ();
     virtual Fact*       ev                  ();
@@ -172,6 +177,8 @@ public:
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
 
+    virtual void        setZoomLevel        (qreal level);
+    virtual void        setFocusLevel       (qreal level);
     virtual void        setCameraMode       (CameraMode mode);
     virtual void        setPhotoMode        (PhotoMode mode);
     virtual void        setPhotoLapse       (qreal interval);
@@ -203,6 +210,8 @@ signals:
     void    storageTotalChanged             ();
     void    dataReady                       (QByteArray data);
     void    parametersReady                 ();
+    void    zoomLevelChanged                ();
+    void    focusLevelChanged               ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
@@ -249,6 +258,8 @@ protected:
     int                                 _version;
     bool                                _cached;
     bool                                _paramComplete;
+    qreal                               _zoomLevel;
+    qreal                               _focusLevel;
     uint32_t                            _storageFree;
     uint32_t                            _storageTotal;
     QNetworkAccessManager*              _netManager;

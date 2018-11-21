@@ -213,7 +213,7 @@ Column {
                     _camera.startZoom(-1)
                 }
                 onReleased: {
-                    _camera.startZoom(0)
+                    _camera.stopZoom()
                 }
             }
         }
@@ -234,7 +234,7 @@ Column {
                     _camera.startZoom(1)
                 }
                 onReleased: {
-                    _camera.startZoom(0)
+                    _camera.stopZoom()
                 }
             }
         }
