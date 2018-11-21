@@ -227,7 +227,16 @@ VideoReceiver::start()
     _stop = false;
     qCDebug(VideoReceiverLog) << "start()";
 
-    if (_uri.isEmpty()) {
+#ifdef QGC_GST_TAISYNC_USB
+    bool isTaisyncUSB = _videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceTaiSyncUSB;
+#else
+    bool isTaisyncUSB = false;
+#endif
+    bool isUdp  = _uri.contains("udp://") && !isTaisyncUSB;
+    bool isRtsp = _uri.contains("rtsp://") && !isTaisyncUSB;
+    bool isTCP  = _uri.contains("tcp://") && !isTaisyncUSB;
+
+    if (!isTaisyncUSB && _uri.isEmpty()) {
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
         return;
     }
@@ -241,15 +250,6 @@ VideoReceiver::start()
     }
 
     _starting = true;
-
-#ifdef QGC_GST_TAISYNC_USB
-    bool isTaisyncUSB = _videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceTaiSyncUSB;
-#else
-    bool isTaisyncUSB = false;
-#endif
-    bool isUdp  = _uri.contains("udp://") && !isTaisyncUSB;
-    bool isRtsp = _uri.contains("rtsp://") && !isTaisyncUSB;
-    bool isTCP  = _uri.contains("tcp://") && !isTaisyncUSB;
 
     //-- For RTSP and TCP, check to see if server is there first
     if(!_serverPresent && (isRtsp || isTCP)) {
@@ -293,8 +293,12 @@ VideoReceiver::start()
                 break;
             }
             g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
+#ifdef QGC_GST_TAISYNC_USB
         } else if(isTaisyncUSB) {
-            g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable("0.0.0.0:5000"), nullptr);
+            QString uri = QString("0.0.0.0:%1").arg(TAISYNC_USB_UDP_PORT);
+            qCDebug(VideoReceiverLog) << "Taisync URI:" << uri;
+            g_object_set(static_cast<gpointer>(dataSource), "port", TAISYNC_USB_UDP_PORT, nullptr);
+#endif
         } else if(isTCP) {
             QUrl url(_uri);
             g_object_set(static_cast<gpointer>(dataSource), "host", qPrintable(url.host()), "port", url.port(), nullptr );

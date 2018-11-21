@@ -12,6 +12,10 @@
 
 #include "SettingsGroup.h"
 
+#ifdef QGC_GST_TAISYNC_USB
+#include "TaisyncVideoReceiver.h"
+#endif
+
 class VideoSettings : public SettingsGroup
 {
     Q_OBJECT
@@ -55,6 +59,9 @@ private slots:
     void _configChanged             (QVariant value);
 
 private:
+#ifdef QGC_GST_TAISYNC_USB
+    TaisyncVideoReceiver*              _taiSync = nullptr;
+#endif
 };
 
 #endif

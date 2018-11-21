@@ -9,35 +9,33 @@
 
 #pragma once
 
+#include "QGCLoggingCategory.h"
+
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QUdpSocket>
 
 #define TAISYNC_USB_UDP_PORT    5000
 #define TAISYNC_USB_VIDEO_PORT  8000
-#define TAISYNC_USB_DATA_PORT   8200
 
-class TaisyncUSBHandler : public QObject
+Q_DECLARE_LOGGING_CATEGORY(TaisyncVideoReceiverLog)
+
+class TaisyncVideoReceiver : public QObject
 {
     Q_OBJECT
 public:
 
-    explicit TaisyncUSBHandler  (QObject* parent = nullptr);
-    ~TaisyncUSBHandler          ();
+    explicit TaisyncVideoReceiver  (QObject* parent = nullptr);
+    ~TaisyncVideoReceiver       ();
     void startVideo             ();
-    void startTelemetry         ();
 
 private slots:
     void    _newVideoConnection ();
     void    _readVideoBytes     ();
-    void    _newDataConnection  ();
-    void    _readDataBytes      ();
 
 private:
     QTcpServer*     _tcpVideoServer = nullptr;
     QTcpSocket*     _tcpVideoSocket = nullptr;
-    QTcpServer*     _tcpDataServer  = nullptr;
-    QTcpSocket*     _tcpDataSocket  = nullptr;
     QUdpSocket*     _udpSocket      = nullptr;
 
 };
