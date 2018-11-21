@@ -61,6 +61,10 @@ src/Airmap/Airmap_api_key.h
 *.autosave
 .settings/
 
+#MAVLink Development
+mavlink_dev/
+custom/mavlink_dev/
+
 # iOS Generated files
 ios/iOSForAppStore-Info.plist
 

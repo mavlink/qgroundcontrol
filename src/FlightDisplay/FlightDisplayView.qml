@@ -163,6 +163,12 @@ QGCView {
         id: missionCompleteDialogComponent
 
         QGCViewDialog {
+            property var activeVehicleCopy: _activeVehicle
+            onActiveVehicleCopyChanged:
+                if (!activeVehicleCopy) {
+                    hideDialog()
+                }
+
             QGCFlickable {
                 anchors.fill:   parent
                 contentHeight:  column.height
@@ -172,62 +178,80 @@ QGCView {
                     anchors.margins:    _margins
                     anchors.left:       parent.left
                     anchors.right:      parent.right
-                    spacing:            ScreenTools.defaultFontPixelHeight
 
-                    QGCLabel {
-                        Layout.fillWidth:       true
-                        text:                   qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
-                        horizontalAlignment:    Text.AlignHCenter
-                        visible:                _activeVehicle.cameraTriggerPoints.count != 0
-                    }
-
-                    QGCButton {
+                    ColumnLayout {
                         Layout.fillWidth:   true
-                        text:               qsTr("Remove plan from vehicle")
-                        onClicked: {
-                            _planMasterController.removeAllFromVehicle()
-                            hideDialog()
+                        spacing:            ScreenTools.defaultFontPixelHeight
+                        visible:            !_activeVehicle.connectionLost || !_guidedController.showResumeMission
+
+                        QGCLabel {
+                            Layout.fillWidth:       true
+                            text:                   qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
+                            horizontalAlignment:    Text.AlignHCenter
+                            visible:                _activeVehicle.cameraTriggerPoints.count != 0
+                        }
+
+                        QGCButton {
+                            Layout.fillWidth:   true
+                            text:               qsTr("Remove plan from vehicle")
+                            onClicked: {
+                                _planMasterController.removeAllFromVehicle()
+                                hideDialog()
+                            }
+                        }
+
+                        QGCButton {
+                            Layout.fillWidth:   true
+                            Layout.alignment:   Qt.AlignHCenter
+                            text:               qsTr("Leave plan on vehicle")
+                            onClicked:          hideDialog()
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth:   true
+                            color:              qgcPal.text
+                            height:             1
+                        }
+
+                        QGCButton {
+                            Layout.fillWidth:   true
+                            Layout.alignment:   Qt.AlignHCenter
+                            text:               qsTr("Resume Mission From Waypoint %1").arg(_guidedController._resumeMissionIndex)
+                            visible:            _guidedController.showResumeMission
+
+                            onClicked: {
+                                guidedController.executeAction(_guidedController.actionResumeMission, null, null)
+                                hideDialog()
+                            }
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth:   true
+                            wrapMode:           Text.WordWrap
+                            text:               qsTr("Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.")
+                            visible:            _guidedController.showResumeMission
+                        }
+
+                        QGCLabel {
+                            Layout.fillWidth:   true
+                            wrapMode:           Text.WordWrap
+                            color:              qgcPal.warningText
+                            text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle when communication is lost.")
+                            visible:            _guidedController.showResumeMission
                         }
                     }
 
-                    QGCButton {
+                    ColumnLayout {
                         Layout.fillWidth:   true
-                        Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Leave plan on vehicle")
-                        onClicked:          hideDialog()
-                    }
+                        spacing:            ScreenTools.defaultFontPixelHeight
+                        visible:            _activeVehicle.connectionLost && _guidedController.showResumeMission
 
-                    Rectangle {
-                        Layout.fillWidth:   true
-                        color:              qgcPal.text
-                        height:             1
-                    }
-
-                    QGCButton {
-                        Layout.fillWidth:   true
-                        Layout.alignment:   Qt.AlignHCenter
-                        text:               qsTr("Resume Mission From Waypoint %1").arg(_guidedController._resumeMissionIndex)
-                        visible:            _guidedController.showResumeMission
-
-                        onClicked: {
-                            guidedController.executeAction(_guidedController.actionResumeMission, null, null)
-                            hideDialog()
+                        QGCLabel {
+                            Layout.fillWidth:   true
+                            wrapMode:           Text.WordWrap
+                            color:              qgcPal.warningText
+                            text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle.")
                         }
-                    }
-
-                    QGCLabel {
-                        Layout.fillWidth:   true
-                        wrapMode:           Text.WordWrap
-                        text:               qsTr("Resume Mission will rebuild the current mission from the last flown waypoint and upload it to the vehicle for the next flight.")
-                        visible:            _guidedController.showResumeMission
-                    }
-
-                    QGCLabel {
-                        Layout.fillWidth:   true
-                        wrapMode:           Text.WordWrap
-                        color:              qgcPal.warningText
-                        text:               qsTr("If you are changing batteries for Resume Mission do not disconnect from the vehicle when communication is lost.")
-                        visible:            _guidedController.showResumeMission
                     }
                 }
             }

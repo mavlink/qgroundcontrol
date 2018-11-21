@@ -22,8 +22,14 @@ DEFINES += GIT_VERSION=\"\\\"$$AUTERION_QGC_VERSION\\\"\"
 
 message(Auterion GS Version: $${AUTERION_QGC_VERSION})
 
-#   Disable APM support
+#   MAVLink Development
+exists($$PWD/mavlink_dev) {
+    MAVLINKPATH_REL = $$PWD/mavlink_dev
+    MAVLINKPATH = $$PWD/mavlink_dev
+    message($$sprintf("Using user-supplied mavlink development path '%1'", $$MAVLINKPATH))
+}
 
+#   Disable APM support
 MAVLINK_CONF = common
 CONFIG  += QGC_DISABLE_APM_MAVLINK
 

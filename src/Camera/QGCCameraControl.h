@@ -97,6 +97,8 @@ public:
     Q_PROPERTY(bool         capturesVideo       READ capturesVideo      NOTIFY infoChanged)
     Q_PROPERTY(bool         capturesPhotos      READ capturesPhotos     NOTIFY infoChanged)
     Q_PROPERTY(bool         hasModes            READ hasModes           NOTIFY infoChanged)
+    Q_PROPERTY(bool         hasZoom             READ hasZoom            NOTIFY infoChanged)
+    Q_PROPERTY(bool         hasFocus            READ hasFocus           NOTIFY infoChanged)
     Q_PROPERTY(bool         photosInVideoMode   READ photosInVideoMode  NOTIFY infoChanged)
     Q_PROPERTY(bool         videoInPhotoMode    READ videoInPhotoMode   NOTIFY infoChanged)
     Q_PROPERTY(bool         isBasic             READ isBasic            NOTIFY infoChanged)
@@ -105,15 +107,15 @@ public:
     Q_PROPERTY(quint32      storageTotal        READ storageTotal       NOTIFY storageTotalChanged)
     Q_PROPERTY(bool         paramComplete       READ paramComplete      NOTIFY parametersReady)
 
+    Q_PROPERTY(qreal        zoomLevel           READ zoomLevel          WRITE  setZoomLevel         NOTIFY zoomLevelChanged)
+    Q_PROPERTY(qreal        focusLevel          READ focusLevel         WRITE  setFocusLevel        NOTIFY focusLevelChanged)
+
     Q_PROPERTY(Fact*        exposureMode        READ exposureMode       NOTIFY parametersReady)
     Q_PROPERTY(Fact*        ev                  READ ev                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        iso                 READ iso                NOTIFY parametersReady)
     Q_PROPERTY(Fact*        shutter             READ shutter            NOTIFY parametersReady)
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        zoomStep            READ zoomStep           NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        zoomTele            READ zoomTele           NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        zoomWide            READ zoomWide           NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -133,6 +135,9 @@ public:
     Q_INVOKABLE virtual bool toggleVideo    ();
     Q_INVOKABLE virtual void resetSettings  ();
     Q_INVOKABLE virtual void formatCard     (int id = 1);
+    Q_INVOKABLE virtual void stepZoom       (int direction);
+    Q_INVOKABLE virtual void startZoom      (int direction);
+    Q_INVOKABLE virtual void stopZoom       ();
 
     virtual int         version             () { return _version; }
     virtual QString     modelName           () { return _modelName; }
@@ -144,6 +149,8 @@ public:
     virtual bool        capturesVideo       () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO; }
     virtual bool        capturesPhotos      () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE; }
     virtual bool        hasModes            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
+    virtual bool        hasZoom             () { return _info.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
+    virtual bool        hasFocus            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
     virtual bool        photosInVideoMode   () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
     virtual bool        videoInPhotoMode    () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
 
@@ -160,6 +167,8 @@ public:
     virtual QString     storageFreeStr      ();
     virtual quint32     storageTotal        () { return _storageTotal; }
     virtual bool        paramComplete       () { return _paramComplete; }
+    virtual qreal       zoomLevel           () { return _zoomLevel; }
+    virtual qreal       focusLevel          () { return _focusLevel; }
 
     virtual Fact*       exposureMode        ();
     virtual Fact*       ev                  ();
@@ -167,10 +176,9 @@ public:
     virtual Fact*       shutter             ();
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
-    virtual Fact*       zoomStep            ();
-    virtual Fact*       zoomTele            ();
-    virtual Fact*       zoomWide            ();
 
+    virtual void        setZoomLevel        (qreal level);
+    virtual void        setFocusLevel       (qreal level);
     virtual void        setCameraMode       (CameraMode mode);
     virtual void        setPhotoMode        (PhotoMode mode);
     virtual void        setPhotoLapse       (qreal interval);
@@ -202,6 +210,8 @@ signals:
     void    storageTotalChanged             ();
     void    dataReady                       (QByteArray data);
     void    parametersReady                 ();
+    void    zoomLevelChanged                ();
+    void    focusLevelChanged               ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
@@ -248,6 +258,8 @@ protected:
     int                                 _version;
     bool                                _cached;
     bool                                _paramComplete;
+    qreal                               _zoomLevel;
+    qreal                               _focusLevel;
     uint32_t                            _storageFree;
     uint32_t                            _storageTotal;
     QNetworkAccessManager*              _netManager;

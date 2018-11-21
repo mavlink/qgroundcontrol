@@ -49,8 +49,7 @@ Column {
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
-    property Fact   _zoomTeleFact:          _camera && _camera.zoomTele
-    property Fact   _zoomWideFact:          _camera && _camera.zoomWide
+    property bool   _isZoom:                _camera && _camera.isZoom
 
     function showSettings() {
         qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -192,10 +191,10 @@ Column {
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _zoomTeleFact && _zoomWideFact; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isZoom; }
     Row {
         spacing:    ScreenTools.defaultFontPixelWidth * 4
-        visible:    _zoomTeleFact && _zoomWideFact
+        visible:    _isZoom
         anchors.horizontalCenter: parent.horizontalCenter
         Rectangle {
             color:  qgcPal.button
@@ -211,10 +210,10 @@ Column {
             MouseArea {
                 anchors.fill: parent
                 onPressAndHold: {
-                    _zoomWideFact.rawValue = true
+                    _camera.startZoom(-1)
                 }
                 onReleased: {
-                    _zoomWideFact.rawValue = false
+                    _camera.stopZoom()
                 }
             }
         }
@@ -232,10 +231,10 @@ Column {
             MouseArea {
                 anchors.fill: parent
                 onPressAndHold: {
-                    _zoomTeleFact.rawValue = true
+                    _camera.startZoom(1)
                 }
                 onReleased: {
-                    _zoomTeleFact.rawValue = false
+                    _camera.stopZoom()
                 }
             }
         }
