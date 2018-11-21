@@ -60,7 +60,7 @@ private slots:
 
 private:
 #ifdef QGC_GST_TAISYNC_USB
-    TaisyncVideoReceiver*              _taiSync = nullptr;
+    TaisyncVideoReceiver*           _taiSync = nullptr;
 #endif
 };
 
