@@ -133,7 +133,11 @@ VideoManager::isGStreamer()
 {
 #if defined(QGC_GST_STREAMING)
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
+#ifdef QGC_GST_TAISYNC_USB
+    return videoSource == VideoSettings::videoSourceUDP || videoSource == VideoSettings::videoSourceRTSP || videoSource == VideoSettings::videoSourceTCP || videoSource == VideoSettings::videoSourceTaiSyncUSB;
+#else
     return videoSource == VideoSettings::videoSourceUDP || videoSource == VideoSettings::videoSourceRTSP || videoSource == VideoSettings::videoSourceTCP;
+#endif
 #else
     return false;
 #endif
