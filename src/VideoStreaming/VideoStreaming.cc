@@ -22,6 +22,9 @@
 #ifdef __android__
 //#define ANDDROID_GST_DEBUG
 #endif
+#if defined(__ios__)
+#include "gst_ios_init.h"
+#endif
 #endif
 
 #include "VideoStreaming.h"
@@ -120,8 +123,12 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
         qgcputenv("GST_PLUGIN_PATH", currentDir, "/gstreamer-plugins");
     #endif
 
-        // Initialize GStreamer
-#if !defined(__ios__)
+    // Initialize GStreamer
+    #if defined(__ios__)
+        //-- iOS specific initialization
+        gst_ios_init();
+    #else
+        //-- Generic initialization
         if (logpath) {
             if (debuglevel) {
                 qputenv("GST_DEBUG", debuglevel);
@@ -130,16 +137,20 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
             qputenv("GST_DEBUG_FILE", QString("%1/%2").arg(logpath).arg("gstreamer-log.txt").toUtf8());
             qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
         }
-#endif
         GError* error = nullptr;
         if (!gst_init_check(&argc, &argv, &error)) {
             qCritical() << "gst_init_check() failed: " << error->message;
             g_error_free(error);
         }
+    #endif
         // Our own plugin
         GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
         // The static plugins we use
+<<<<<<< HEAD
     #if defined(__mobile__) && !defined(Q_OS_MAC) && !defined(Q_OS_WIN32)
+=======
+    #if defined(__android__)
+>>>>>>> 80758dfffbad6c184bc893f39a10653f00ebbbc9
         GST_PLUGIN_STATIC_REGISTER(coreelements);
         GST_PLUGIN_STATIC_REGISTER(libav);
         GST_PLUGIN_STATIC_REGISTER(rtp);

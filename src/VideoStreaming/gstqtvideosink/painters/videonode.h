@@ -22,8 +22,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef VIDEONODE_H
-#define VIDEONODE_H
+#pragma once
 
 #include "../utils/bufferformat.h"
 
@@ -53,4 +52,3 @@ private:
     MaterialType m_materialType;
 };
 
-#endif // VIDEONODE_H

@@ -54,8 +54,6 @@ class QGCPalette : public QObject
 {
     Q_OBJECT
 
-    Q_ENUMS(Theme)
-
 public:
     enum ColorGroup {
         ColorGroupDisabled = 0,
@@ -68,6 +66,7 @@ public:
         Dark,
         cMaxTheme
     };
+    Q_ENUM(Theme)
 
     typedef QColor PaletteColorInfo_t[cMaxTheme][cMaxColorGroup];
 

@@ -23,10 +23,10 @@ Fact::Fact(QObject* parent)
     , _componentId              (-1)
     , _rawValue                 (0)
     , _type                     (FactMetaData::valueTypeInt32)
-    , _metaData                 (NULL)
+    , _metaData                 (nullptr)
     , _sendValueChangedSignals  (true)
     , _deferredValueChangeSignal(false)
-    , _valueSliderModel         (NULL)
+    , _valueSliderModel         (nullptr)
 {    
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -40,10 +40,10 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     , _componentId              (componentId)
     , _rawValue                 (0)
     , _type                     (type)
-    , _metaData                 (NULL)
+    , _metaData                 (nullptr)
     , _sendValueChangedSignals  (true)
     , _deferredValueChangeSignal(false)
-    , _valueSliderModel         (NULL)
+    , _valueSliderModel         (nullptr)
 {
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -57,10 +57,10 @@ Fact::Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent
     , _componentId              (0)
     , _rawValue                 (0)
     , _type                     (metaData->type())
-    , _metaData                 (NULL)
+    , _metaData                 (nullptr)
     , _sendValueChangedSignals  (true)
     , _deferredValueChangeSignal(false)
-    , _valueSliderModel         (NULL)
+    , _valueSliderModel         (nullptr)
 {
     qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
@@ -90,11 +90,11 @@ const Fact& Fact::operator=(const Fact& other)
     _type                       = other._type;
     _sendValueChangedSignals    = other._sendValueChangedSignals;
     _deferredValueChangeSignal  = other._deferredValueChangeSignal;
-    _valueSliderModel       = NULL;
+    _valueSliderModel       = nullptr;
     if (_metaData && other._metaData) {
         *_metaData = *other._metaData;
     } else {
-        _metaData = NULL;
+        _metaData = nullptr;
     }
     
     return *this;
@@ -221,7 +221,7 @@ int Fact::enumIndex(void)
         //-- Only enums have an index
         if(_metaData->enumValues().count()) {
             int index = 0;
-            foreach (QVariant enumValue, _metaData->enumValues()) {
+            for (QVariant enumValue: _metaData->enumValues()) {
                 if (enumValue == rawValue()) {
                     return index;
                 }

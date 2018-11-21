@@ -23,7 +23,7 @@
 #include "APMTuningComponent.h"
 #include "APMSensorsComponent.h"
 #include "APMPowerComponent.h"
-#include "MotorComponent.h"
+#include "APMMotorComponent.h"
 #include "APMCameraComponent.h"
 #include "APMLightsComponent.h"
 #include "APMSubFrameComponent.h"
@@ -40,10 +40,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _subFrameComponent        (NULL)
     , _flightModesComponent     (NULL)
     , _powerComponent           (NULL)
-#if 0
-        // Temporarily removed, waiting for new command implementation
     , _motorComponent           (NULL)
-#endif
     , _radioComponent           (NULL)
     , _safetyComponent          (NULL)
     , _sensorsComponent         (NULL)
@@ -75,7 +72,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             }
 
             // No flight modes component for Sub versions 3.5 and up
-            if (!_vehicle->sub() || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() <= 4)) {
+            if (!_vehicle->sub() || (_vehicle->versionCompare(3, 5, 0) < 0)) {
                 _flightModesComponent = new APMFlightModesComponent(_vehicle, this);
                 _flightModesComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_flightModesComponent));
@@ -89,15 +86,11 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _powerComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_powerComponent));
 
-#if 0
-    // Temporarily removed, waiting for new command implementation
-
-            if (_vehicle->multiRotor() || _vehicle->vtol()) {
-                _motorComponent = new MotorComponent(_vehicle, this);
+            if (_vehicle->sub() && _vehicle->versionCompare(3, 5, 3) >= 0) {
+                _motorComponent = new APMMotorComponent(_vehicle, this);
                 _motorComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_motorComponent));
             }
-#endif
 
             _safetyComponent = new APMSafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
@@ -122,7 +115,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
                 _lightsComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue((VehicleComponent*)_lightsComponent));
 
-                if(_vehicle->firmwareMajorVersion() > 3 || (_vehicle->firmwareMajorVersion() == 3 && _vehicle->firmwareMinorVersion() >= 5)) {
+                if(_vehicle->versionCompare(3, 5, 0) >= 0) {
                     _subFrameComponent = new APMSubFrameComponent(_vehicle, this);
                     _subFrameComponent->setupTriggerSignals();
                     _components.append(QVariant::fromValue((VehicleComponent*)_subFrameComponent));

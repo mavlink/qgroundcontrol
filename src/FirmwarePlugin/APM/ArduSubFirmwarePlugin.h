@@ -115,7 +115,7 @@ public:
 
     int defaultJoystickTXMode(void) final { return 3; }
 
-    void initializeStreamRates(Vehicle* vehicle) override final;
+    bool isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities) final;
 
     bool supportsThrottleModeCenterZero(void) final;
 

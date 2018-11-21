@@ -22,7 +22,7 @@ Column  {
 
     property alias _checked: header.checked
 
-    onPassedChanged: parent.groupPassedChanged(ObjectModel.index)
+    onPassedChanged: parent.groupPassedChanged(ObjectModel.index, passed)
 
     Component.onCompleted: {
         enabled = _checked

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,8 +15,7 @@
  *
  */
 
-#ifndef _MAINWINDOW_H_
-#define _MAINWINDOW_H_
+#pragma once
 
 #ifdef __mobile__
 #error Should not be include in mobile build
@@ -181,4 +180,3 @@ private:
     QString _getWindowGeometryKey();
 };
 
-#endif /* _MAINWINDOW_H_ */

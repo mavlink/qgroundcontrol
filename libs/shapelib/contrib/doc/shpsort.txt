@@ -1,0 +1,44 @@
+============================= ABOUT =========================================== 
+
+The program "shpsort" is a standalone program for sorting shapefiles
+on one or more fields (including the pseudofield "SHAPE") and outputing
+the results.  People may find it useful for forcing drawing order.
+
+============================= AUTHOR ==========================================
+
+Eric G. Miller
+California Department of Fish and Game
+2004-06-30
+
+============================= USAGE ===========================================
+
+shpsort <INFILE> <OUTFILE> <SORT_FIELD;SORT_FIELD...> {SORT_ORDER;SORT_ORDER...}
+
+============================= DETAILS =========================================
+
+INFILE		The input shapefile
+
+OUTFILE		The output shapefile
+
+SORT_FIELD	Any attribute field of the shapefile, including "SHAPE"
+
+SORT_ORDER	Specify "ASCENDING" or "DESCENDING" for each SORT_FIELD.
+		This field is optional, and is assumed to be ASCENDING
+		unless the exact word "DESCENDING" is specified (case
+		matters).
+
+	When sorting on the "SHAPE" the records are sorted as follows:
+
+	*  Null shapes are treated as any other null field and will
+	   sort to the top in ASCENDING mode.  A warning is issued
+	   for each null shape encountered.
+	*  POINT, POINTM, POINTZ, MULTIPOINT, MULTIPOINTM, MULTIPOINTZ
+	   and MULTIPATCH are all sorted by the maximum "Y" value of
+	   their envelopes (not particularly useful).
+	*  POLYLINE, POLYLINEZ and POLYLINEM are sorted by total 2d 
+	   shape length.
+	*  POLYGON, POLYGONZ and POLYGONM are sorted by the 2d shape 
+	   area. Shapes are assumed to be in canonical ordering, so that
+	   the area of interior rings (if any) is subtracted from the
+	   area of exterior rings.
+

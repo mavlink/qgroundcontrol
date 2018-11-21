@@ -1,0 +1,403 @@
+
+This table is derived from:<p>
+
+<a href="http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM">http://www.autopark.ru/ASBProgrammerGuide/DBFSTRUC.HTM</a><p>
+
+
+<table border="1" width="100%">
+  <tbody><tr>
+    <th colspan="2" align="left" bgcolor="#c0c0c0">ID</th>
+    <th align="left" bgcolor="#c0c0c0">Codepage</th>
+    <th align="left" bgcolor="#c0c0c0">Description</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>0x01</td>
+    <td>437</td>
+    <td>US MS-DOS</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>0x02</td>
+    <td>850</td>
+    <td>International MS-DOS</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>0x03</td>
+    <td>1252</td>
+    <td>Windows ANSI Latin I</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>0x04</td>
+    <td>10000</td>
+    <td>Standard Macintosh</td>
+  </tr>
+	<tr>
+    <td>8</td>
+    <td>0x08</td>
+    <td>865</td>
+    <td>Danish OEM</td>
+  </tr>
+	<tr>
+    <td>9</td>
+    <td>0x09</td>
+    <td>437</td>
+    <td>Dutch OEM</td>
+  </tr>
+	<tr>
+    <td>10</td>
+    <td>0x0A</td>
+    <td>850</td>
+    <td>Dutch OEM*</td>
+  </tr>
+	<tr>
+    <td>11</td>
+    <td>0x0B</td>
+    <td>437</td>
+    <td>Finnish OEM</td>
+  </tr>
+	<tr>
+    <td>13</td>
+    <td>0x0D</td>
+    <td>437</td>
+    <td>French OEM</td>
+  </tr>
+	<tr>
+    <td>14</td>
+    <td>0x0E</td>
+    <td>850</td>
+    <td>French OEM*</td>
+  </tr>
+	<tr>
+    <td>15</td>
+    <td>0x0F</td>
+    <td>437</td>
+    <td>German OEM</td>
+  </tr>
+	<tr>
+    <td>16</td>
+    <td>0x10</td>
+    <td>850</td>
+    <td>German OEM*</td>
+  </tr>
+	<tr>
+    <td>17</td>
+    <td>0x11</td>
+    <td>437</td>
+    <td>Italian OEM</td>
+  </tr>
+	<tr>
+    <td>18</td>
+    <td>0x12</td>
+    <td>850</td>
+    <td>Italian OEM*</td>
+  </tr>
+	<tr>
+    <td>19</td>
+    <td>0x13</td>
+    <td>932</td>
+    <td>Japanese Shift-JIS</td>
+  </tr>
+	<tr>
+    <td>20</td>
+    <td>0x14</td>
+    <td>850</td>
+    <td>Spanish OEM*</td>
+  </tr>
+	<tr>
+    <td>21</td>
+    <td>0x15</td>
+    <td>437</td>
+    <td>Swedish OEM</td>
+  </tr>
+	<tr>
+    <td>22</td>
+    <td>0x16</td>
+    <td>850</td>
+    <td>Swedish OEM*</td>
+  </tr>
+	<tr>
+    <td>23</td>
+    <td>0x17</td>
+    <td>865</td>
+    <td>Norwegian OEM</td>
+  </tr>
+	<tr>
+    <td>24</td>
+    <td>0x18</td>
+    <td>437</td>
+    <td>Spanish OEM</td>
+  </tr>
+	<tr>
+    <td>25</td>
+    <td>0x19</td>
+    <td>437</td>
+    <td>English OEM (Great Britain)</td>
+  </tr>
+	<tr>
+    <td>26</td>
+    <td>0x1A</td>
+    <td>850</td>
+    <td>English OEM (Great Britain)*</td>
+  </tr>
+	<tr>
+    <td>27</td>
+    <td>0x1B</td>
+    <td>437</td>
+    <td>English OEM (US)</td>
+  </tr>
+	<tr>
+    <td>28</td>
+    <td>0x1C</td>
+    <td>863</td>
+    <td>French OEM (Canada)</td>
+  </tr>
+	<tr>
+    <td>29</td>
+    <td>0x1D</td>
+    <td>850</td>
+    <td>French OEM*</td>
+  </tr>
+	<tr>
+    <td>31</td>
+    <td>0x1F</td>
+    <td>852</td>
+    <td>Czech OEM</td>
+  </tr>
+	<tr>
+    <td>34</td>
+    <td>0x22</td>
+    <td>852</td>
+    <td>Hungarian OEM</td>
+  </tr>
+	<tr>
+    <td>35</td>
+    <td>0x23</td>
+    <td>852</td>
+    <td>Polish OEM</td>
+  </tr>
+	<tr>
+    <td>36</td>
+    <td>0x24</td>
+    <td>860</td>
+    <td>Portuguese OEM</td>
+  </tr>
+	<tr>
+    <td>37</td>
+    <td>0x25</td>
+    <td>850</td>
+    <td>Portuguese OEM*</td>
+  </tr>
+  <tr>
+    <td>38</td>
+    <td>0x26</td>
+    <td>866</td>
+    <td>Russian OEM</td>
+  </tr>
+  <tr>
+    <td>55</td>
+    <td>0x37</td>
+    <td>850</td>
+    <td>English OEM (US)*</td>
+  </tr>
+	<tr>
+    <td>64</td>
+    <td>0x40</td>
+    <td>852</td>
+    <td>Romanian OEM</td>
+  </tr>
+	<tr>
+    <td>77</td>
+    <td>0x4D</td>
+    <td>936</td>
+    <td>Chinese GBK (PRC)</td>
+  </tr>
+	<tr>
+    <td>78</td>
+    <td>0x4E</td>
+    <td>949</td>
+    <td>Korean (ANSI/OEM)</td>
+  </tr>
+	<tr>
+    <td>79</td>
+    <td>0x4F</td>
+    <td>950</td>
+    <td>Chinese Big5 (Taiwan)</td>
+  </tr>
+	<tr>
+    <td>80</td>
+    <td>0x50</td>
+    <td>874</td>
+    <td>Thai (ANSI/OEM)</td>
+  </tr>
+	<tr>
+    <td>87</td>
+    <td>0x57</td>
+    <td>Current ANSI CP</td>
+    <td>ANSI</td>
+  </tr>
+  <tr>
+    <td>88</td>
+    <td>0x58</td>
+    <td>1252</td>
+    <td>Western European ANSI</td>
+  </tr>
+	<tr>
+    <td>89</td>
+    <td>0x59</td>
+    <td>1252</td>
+    <td>Spanish ANSI</td>
+  </tr>
+  <tr>
+    <td>100</td>
+    <td>0x64</td>
+    <td>852</td>
+    <td>Eastern European MS-DOS</td>
+  </tr>
+  <tr>
+    <td>101</td>
+    <td>0x65</td>
+    <td>866</td>
+    <td>Russian MS-DOS</td>
+  </tr>
+  <tr>
+    <td>102</td>
+    <td>0x66</td>
+    <td>865</td>
+    <td>Nordic MS-DOS</td>
+  </tr>
+  <tr>
+    <td>103</td>
+    <td>0x67</td>
+    <td>861</td>
+    <td>Icelandic MS-DOS</td>
+  </tr>
+  <tr>
+    <td>104</td>
+    <td>0x68</td>
+    <td>895</td>
+    <td>Kamenicky (Czech) MS-DOS</td>
+  </tr>
+  <tr>
+    <td>105</td>
+    <td>0x69</td>
+    <td>620</td>
+    <td>Mazovia (Polish) MS-DOS</td>
+  </tr>
+  <tr>
+    <td>106</td>
+    <td>0x6A</td>
+    <td>737</td>
+    <td>Greek MS-DOS (437G)</td>
+  </tr>
+  <tr>
+    <td>107</td>
+    <td>0x6B</td>
+    <td>857</td>
+    <td>Turkish MS-DOS</td>
+  </tr>
+	<tr>
+    <td>108</td>
+    <td>0x6C</td>
+    <td>863</td>
+    <td>French-Canadian MS-DOS</td>
+  </tr>
+	<tr>
+    <td>120</td>
+    <td>0x78</td>
+    <td>950</td>
+    <td>Taiwan Big 5</td>
+  </tr>
+	<tr>
+    <td>121</td>
+    <td>0x79</td>
+    <td>949</td>
+    <td>Hangul (Wansung)</td>
+  </tr>
+	<tr>
+    <td>122</td>
+    <td>0x7A</td>
+    <td>936</td>
+    <td>PRC GBK</td>
+  </tr>
+	<tr>
+    <td>123</td>
+    <td>0x7B</td>
+    <td>932</td>
+    <td>Japanese Shift-JIS</td>
+  </tr>
+	<tr>
+    <td>124</td>
+    <td>0x7C</td>
+    <td>874</td>
+    <td>Thai Windows/MS–DOS</td>
+  </tr>
+	<tr>
+    <td>134</td>
+    <td>0x86</td>
+    <td>737</td>
+    <td>Greek OEM</td>
+  </tr>
+	<tr>
+    <td>135</td>
+    <td>0x87</td>
+    <td>852</td>
+    <td>Slovenian OEM</td>
+  </tr>
+	<tr>
+    <td>136</td>
+    <td>0x88</td>
+    <td>857</td>
+    <td>Turkish OEM</td>
+  </tr>
+  <tr>
+    <td>150</td>
+    <td>0x96</td>
+    <td>10007</td>
+    <td>Russian Macintosh</td>
+  </tr>
+  <tr>
+    <td>151</td>
+    <td>0x97</td>
+    <td>10029</td>
+    <td>Eastern European Macintosh</td>
+  </tr>
+  <tr>
+    <td>152</td>
+    <td>0x98</td>
+    <td>10006</td>
+    <td>Greek Macintosh</td>
+  </tr>
+  <tr>
+    <td>200</td>
+    <td>0xC8</td>
+    <td>1250</td>
+    <td>Eastern European Windows</td>
+  </tr>
+  <tr>
+    <td>201</td>
+    <td>0xC9</td>
+    <td>1251</td>
+    <td>Russian Windows</td>
+  </tr>
+  <tr>
+    <td>202</td>
+    <td>0xCA</td>
+    <td>1254</td>
+    <td>Turkish Windows</td>
+  </tr>
+  <tr>
+    <td>203</td>
+    <td>0xCB</td>
+    <td>1253</td>
+    <td>Greek Windows</td>
+  </tr>
+  <tr>
+    <td>204</td>
+    <td>0xCC</td>
+    <td>1257</td>
+    <td>Baltic Windows</td>
+  </tr>
+</tbody></table>

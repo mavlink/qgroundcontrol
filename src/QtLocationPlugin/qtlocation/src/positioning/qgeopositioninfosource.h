@@ -54,7 +54,7 @@ public:
         UnknownSourceError = 2,
         NoError = 3
     };
-    Q_ENUMS(Error)
+    Q_ENUM(Error)
 
     enum PositioningMethod {
         NoPositioningMethods = 0x00000000,

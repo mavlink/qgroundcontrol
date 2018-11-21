@@ -32,8 +32,8 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 //-----------------------------------------------------------------------------
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _videoReceiver(NULL)
-    , _videoSettings(NULL)
+    , _videoReceiver(nullptr)
+    , _videoSettings(nullptr)
     , _fullScreen(false)
 {
 }
@@ -66,7 +66,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 #ifndef QGC_DISABLE_UVC
    // If we are using a UVC camera setup the device name
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
-    foreach (const QCameraInfo &cameraInfo, cameras) {
+    for (const QCameraInfo &cameraInfo: cameras) {
         if(cameraInfo.description() == videoSource) {
             _videoSourceID = cameraInfo.deviceName();
             emit videoSourceIDChanged();

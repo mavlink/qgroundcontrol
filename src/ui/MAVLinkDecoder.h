@@ -1,5 +1,4 @@
-#ifndef MAVLINKDECODER_H
-#define MAVLINKDECODER_H
+#pragma once
 
 #include <QObject>
 #include <QHash>
@@ -53,4 +52,3 @@ protected:
     QThread* creationThread;                                ///< QThread on which the object is created
 };
 
-#endif // MAVLINKDECODER_H

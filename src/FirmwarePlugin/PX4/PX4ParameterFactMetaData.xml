@@ -1474,7 +1474,7 @@ This parameter is used when the magnetometer fusion method is set automatically 
       <short_desc>Yaw rate threshold used by automatic selection of magnetometer fusion method.
 This parameter is used when the magnetometer fusion method is set automatically (EKF2_MAG_TYPE = 0). If the filtered yaw rate is greater than this parameter value, then the EKF will use 3-axis magnetomer fusion</short_desc>
       <min>0.0</min>
-      <max>0.5</max>
+      <max>1.0</max>
       <unit>rad/s</unit>
       <decimal>2</decimal>
     </parameter>
@@ -2298,6 +2298,7 @@ Set to 0 to disable heading hold</short_desc>
     </parameter>
     <parameter default="0" name="FW_LND_USETER" type="INT32">
       <short_desc>Use terrain estimate during landing</short_desc>
+      <long_desc>This is turned off by default and a waypoint or return altitude is normally used (or sea level for an arbitrary land position).</long_desc>
       <boolean />
     </parameter>
     <parameter default="45.0" name="FW_P_LIM_MAX" type="FLOAT">
@@ -4439,6 +4440,23 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="2">Terrain hold</value>
       </values>
     </parameter>
+    <parameter default="3" name="MPC_AUTO_MODE" type="INT32">
+      <short_desc>Auto sub-mode</short_desc>
+      <long_desc>The supported sub-modes are: 0 Direct line tracking, no smoothing 1 Not used 2 Not used 3 Jerk-limited trajectory</long_desc>
+      <values>
+        <value code="0">Default line tracking</value>
+        <value code="1">N/A</value>
+        <value code="2">N/A</value>
+        <value code="3">Jerk-limited trajectory</value>
+      </values>
+    </parameter>
+    <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
+      <short_desc>Minimum distance the vehicle should keep to all obstacles</short_desc>
+      <long_desc>Only used in Position mode. Collision avoidace is disabled by setting this parameter to a negative value</long_desc>
+      <min>-1</min>
+      <max>15</max>
+      <unit>meters</unit>
+    </parameter>
     <parameter default="3.0" name="MPC_CRUISE_90" type="FLOAT">
       <short_desc>Cruise speed when angle prev-current/current-next setpoint
 is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
@@ -4484,23 +4502,20 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <max>10</max>
       <unit>sec</unit>
     </parameter>
-    <parameter default="0.0" name="MPC_JERK_MAX" type="FLOAT">
-      <short_desc>Maximum jerk in manual controlled mode for BRAKING to zero.
-If this value is below MPC_JERK_MIN, the acceleration limit in xy and z
-is MPC_ACC_HOR_MAX and MPC_ACC_UP_MAX respectively instantaneously when the
-user demands brake (=zero stick input).
-Otherwise the acceleration limit increases from current acceleration limit
-towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
-      <min>0.0</min>
-      <max>15.0</max>
+    <parameter default="20.0" name="MPC_JERK_MAX" type="FLOAT">
+      <short_desc>Maximum jerk limit</short_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
+      <min>0.5</min>
+      <max>500.0</max>
       <unit>m/s/s/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="1.0" name="MPC_JERK_MIN" type="FLOAT">
-      <short_desc>Minimum jerk in manual controlled mode for BRAKING to zero</short_desc>
-      <min>0.5</min>
-      <max>10.0</max>
+    <parameter default="8.0" name="MPC_JERK_MIN" type="FLOAT">
+      <short_desc>Velocity-based jerk limit</short_desc>
+      <long_desc>If this is not zero, a velocity-based maximum jerk limit is used: the applied jerk limit linearly increases with the vehicle's velocity between MPC_JERK_MIN (zero velocity) and MPC_JERK_MAX (maximum velocity). This means that the vehicle's motions are smooth for low velocities, but still allows fast direction changes or breaking at higher velocities. Set this to zero to use a fixed maximum jerk limit (MPC_JERK_MAX). Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
+      <min>0</min>
+      <max>30.0</max>
       <unit>m/s/s/s</unit>
       <decimal>2</decimal>
       <increment>1</increment>
@@ -4557,13 +4572,12 @@ Temporary Parameter to enable interface testing</short_desc>
     </parameter>
     <parameter default="1" name="MPC_POS_MODE" type="INT32">
       <short_desc>Manual-Position control sub-mode</short_desc>
-      <long_desc>The supported sub-modes are: 0 Default position control where sticks map to position/velocity directly. Maximum speeds is MPC_VEL_MANUAL. 1 Smooth position control where setpoints are adjusted based on acceleration limits and jerk limits. 2 Sport mode that is the same Default position control but with velocity limits set to the maximum allowed speeds (MPC_XY_VEL_MAX)</long_desc>
-      <min>0</min>
-      <max>2</max>
+      <long_desc>The supported sub-modes are: 0 Default position control where sticks map to position/velocity directly. Maximum speeds is MPC_VEL_MANUAL. 1 Smooth position control where setpoints are adjusted based on acceleration limits and jerk limits. 2 Sport mode that is the same Default position control but with velocity limits set to the maximum allowed speeds (MPC_XY_VEL_MAX) 3 Smooth position control with maximum acceleration and jerk limits (different algorithm than 1).</long_desc>
       <values>
         <value code="0">Default position control</value>
         <value code="1">Smooth position control</value>
         <value code="2">Sport position control</value>
+        <value code="3">Smooth position control (Velocity)</value>
       </values>
     </parameter>
     <parameter default="0" name="MPC_THR_CURVE" type="INT32">
@@ -4613,7 +4627,7 @@ Temporary Parameter to enable interface testing</short_desc>
       <short_desc>Maximum tilt during landing</short_desc>
       <long_desc>Limits maximum tilt angle on landing.</long_desc>
       <min>0.0</min>
-      <max>90.0</max>
+      <max>180.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
@@ -4657,7 +4671,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <increment>1</increment>
     </parameter>
     <parameter default="0.0" name="MPC_XY_MAN_EXPO" type="FLOAT">
-      <short_desc>Manual control stick exponential curve sensitivity attenuation with small velocity setpoints</short_desc>
+      <short_desc>Manual position control stick exponential curve sensitivity</short_desc>
       <long_desc>The higher the value the less sensitivity the stick has around zero while still reaching the maximum value with full stick deflection. 0 Purely linear input curve (default) 1 Purely cubic input curve</long_desc>
       <min>0</min>
       <max>1</max>
@@ -4669,6 +4683,12 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>2.0</max>
       <decimal>2</decimal>
     </parameter>
+    <parameter default="0.3" name="MPC_XY_TRAJ_P" type="FLOAT">
+      <short_desc>Proportional gain for horizontal trajectory position error</short_desc>
+      <min>0.1</min>
+      <max>5.0</max>
+      <decimal>1</decimal>
+    </parameter>
     <parameter default="0.01" name="MPC_XY_VEL_D" type="FLOAT">
       <short_desc>Differential gain for horizontal velocity error. Small values help reduce fast oscillations. If value is too big oscillations will appear again</short_desc>
       <min>0.005</min>
@@ -4677,9 +4697,9 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
     <parameter default="0.02" name="MPC_XY_VEL_I" type="FLOAT">
       <short_desc>Integral gain for horizontal velocity error</short_desc>
-      <long_desc>Non-zero value allows to resist wind.</long_desc>
+      <long_desc>Non-zero value allows to eliminate steady state errors in the presence of disturbances like wind.</long_desc>
       <min>0.0</min>
-      <max>0.1</max>
+      <max>3.0</max>
       <decimal>3</decimal>
     </parameter>
     <parameter default="12.0" name="MPC_XY_VEL_MAX" type="FLOAT">
@@ -4716,6 +4736,12 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0.0</min>
       <max>1.5</max>
       <decimal>2</decimal>
+    </parameter>
+    <parameter default="0.3" name="MPC_Z_TRAJ_P" type="FLOAT">
+      <short_desc>Proportional gain for vertical trajectory position error</short_desc>
+      <min>0.1</min>
+      <max>5.0</max>
+      <decimal>1</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
       <short_desc>Differential gain for vertical velocity error</short_desc>
@@ -7587,16 +7613,24 @@ to takeoff is reached</short_desc>
   <group name="SD Logging">
     <parameter default="0" name="SDLOG_DIRS_MAX" type="INT32">
       <short_desc>Maximum number of log directories to keep</short_desc>
-      <long_desc>If there are more log directories than this value, the system will delete the oldest directories during startup. In addition, the system will delete old logs if there is not enough free space left. The minimum amount is 300 MB. If this is set to 0, old directories will only be removed if the free space falls below the minimum.</long_desc>
+      <long_desc>If there are more log directories than this value, the system will delete the oldest directories during startup. In addition, the system will delete old logs if there is not enough free space left. The minimum amount is 300 MB. If this is set to 0, old directories will only be removed if the free space falls below the minimum. Note: this does not apply to mission log files.</long_desc>
       <min>0</min>
       <max>1000</max>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter default="1" name="SDLOG_MISSION" type="INT32">
+      <short_desc>Mission Log</short_desc>
+      <long_desc>If enabled, a small additional "mission" log file will be written to the SD card. The log contains just those messages that are useful for tasks like generating flight statistics and geotagging. The different modes can be used to further reduce the logged data (and thus the log file size). For example, choose geotagging mode to only log data required for geotagging. Note that the normal/full log is still created, and contains all the data in the mission log (and more).</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">All mission messages</value>
+        <value code="2">Geotagging messages</value>
+      </values>
+    </parameter>
     <parameter default="0" name="SDLOG_MODE" type="INT32">
       <short_desc>Logging Mode</short_desc>
       <long_desc>Determines when to start and stop logging. By default, logging is started when arming the system, and stopped when disarming.</long_desc>
-      <min>0</min>
-      <max>2</max>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">when armed until disarm (default)</value>
@@ -8286,7 +8320,7 @@ is less than 50% of this value</short_desc>
       <unit>C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.5" name="SENS_IMU_TEMP_FF" type="FLOAT">
+    <parameter default="0.0" name="SENS_IMU_TEMP_FF" type="FLOAT">
       <short_desc>IMU heater controller feedforward value</short_desc>
       <min>0</min>
       <max>1.0</max>

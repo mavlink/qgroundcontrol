@@ -123,11 +123,11 @@ void QGCJSBSimLink::run()
 
     if (_vehicle->vehicleType() == MAV_TYPE_QUADROTOR)
     {
-        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QString("--realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB, rootJSB, script);
     }
     else
     {
-        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB).arg(rootJSB).arg(script);
+        arguments << QString("JSBSim --realtime --suspend --nice --simulation-rate=1000 --logdirectivefile=%s/flightgear.xml --script=%s/%s").arg(rootJSB, rootJSB, script);
     }
 
     process->start(processJSB, arguments);
@@ -285,23 +285,20 @@ void QGCJSBSimLink::readBytes()
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
 
-    QByteArray b(data, s);
-
+    /*
     // Print string
-//    QString state(b);
+    QByteArray b(data, s);
+    QString state(b);
 
-//    // Parse string
-//    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
-//    double lat, lon, alt;
-//    double vx, vy, vz, xacc, yacc, zacc;
+    // Parse string
+    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
+    double lat, lon, alt;
+    double vx, vy, vz, xacc, yacc, zacc;
 
-//    // Send updated state
-//    emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
-//                         pitchspeed, yawspeed, lat, lon, alt,
-//                         vx, vy, vz, xacc, yacc, zacc);
-
-
-
+    // Send updated state
+    emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
+        pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+    */
 
         // Echo data for debugging purposes
         std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;

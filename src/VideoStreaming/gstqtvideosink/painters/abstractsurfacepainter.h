@@ -21,8 +21,7 @@
  *   @author Gus Grubba <mavlink@grubba.com>
  */
 
-#ifndef ABSTRACTSURFACEPAINTER_H
-#define ABSTRACTSURFACEPAINTER_H
+#pragma once
 
 #include "../utils/bufferformat.h"
 #include <QRectF>
@@ -46,4 +45,3 @@ public:
     virtual void updateColors(int brightness, int contrast, int hue, int saturation) = 0;
 };
 
-#endif

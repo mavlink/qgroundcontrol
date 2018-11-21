@@ -13,8 +13,7 @@
     You should have received a copy of the GNU Lesser General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef UTILS_H
-#define UTILS_H
+#pragma once
 
 #include <QRectF>
 #include <QSize>
@@ -75,4 +74,3 @@ struct PaintAreas
 Q_DECLARE_METATYPE(Fraction)
 Q_DECLARE_METATYPE(PaintAreas)
 
-#endif

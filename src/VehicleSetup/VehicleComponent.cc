@@ -54,7 +54,7 @@ void VehicleComponent::addSummaryQmlComponent(QQmlContext* context, QQuickItem* 
 void VehicleComponent::setupTriggerSignals(void)
 {
     // Watch for changed on trigger list params
-    foreach (const QString &paramName, setupCompleteChangedTriggerList()) {
+    for (const QString &paramName: setupCompleteChangedTriggerList()) {
         if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, paramName)) {
             Fact* fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, paramName);
             connect(fact, &Fact::valueChanged, this, &VehicleComponent::_triggerUpdated);

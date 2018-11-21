@@ -311,10 +311,10 @@ VideoReceiver::start()
         } else {
             if(!isTaisyncUSB) {
                 if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == nullptr) {
-                    qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
-                    break;
-                }
+                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
+                break;
             }
+        }
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == nullptr) {

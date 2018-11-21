@@ -11,6 +11,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
+import QtQuick.Layouts  1.11
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -22,6 +23,8 @@ import QGroundControl.Controllers   1.0
 FactPanel {
     id:     _root
     height: monitorColumn.height
+
+    property bool twoColumn: false
 
     readonly property int _pwmMin:      800
     readonly property int _pwmMax:      2200
@@ -39,6 +42,8 @@ FactPanel {
         id: channelMonitorDisplayComponent
 
         Item {
+            height: ScreenTools.defaultFontPixelHeight
+
             property int    rcValue:    1500
 
             property int            __lastRcValue:      1500
@@ -92,12 +97,15 @@ FactPanel {
         }
     } // Component - channelMonitorDisplayComponent
 
-    Column {
+    GridLayout {
         id:         monitorColumn
         width:      parent.width
-        spacing:    ScreenTools.defaultFontPixelHeight / 2
+        columns:    twoColumn ? 2 : 1
 
-        QGCLabel { text: "Channel Monitor" }
+        QGCLabel {
+            Layout.columnSpan:  parent.columns
+            text:               "Channel Monitor"
+        }
 
         Connections {
             target: controller
@@ -110,13 +118,10 @@ FactPanel {
         }
 
         Repeater {
-            id:         channelMonitorRepeater
-            model:      controller.channelCount
+            id:     channelMonitorRepeater
+            model:  controller.channelCount
 
-            Item {
-                width:  monitorColumn.width
-                height: ScreenTools.defaultFontPixelHeight
-
+            RowLayout {
                 // Need this to get to loader from Connections above
                 property Item loader: theLoader
 
@@ -126,12 +131,10 @@ FactPanel {
                 }
 
                 Loader {
-                    id:                     theLoader
-                    anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 2
-                    anchors.left:           channelLabel.right
-                    anchors.verticalCenter: channelLabel.verticalCenter
-                    height:                 ScreenTools.defaultFontPixelHeight
-                    width:                  parent.width - anchors.leftMargin - ScreenTools.defaultFontPixelWidth
+                    id:                 theLoader
+                    Layout.fillWidth:   true
+                    //height:                 ScreenTools.defaultFontPixelHeight
+                    //width:                  parent.width - anchors.leftMargin - ScreenTools.defaultFontPixelWidth
                     sourceComponent:        channelMonitorDisplayComponent
 
                     property bool mapped:               true

@@ -1,5 +1,4 @@
-#ifndef LINECHARTS_H
-#define LINECHARTS_H
+#pragma once
 
 #include <QStackedWidget>
 #include <QMap>
@@ -29,4 +28,3 @@ private:
     MAVLinkDecoder* _mavlinkDecoder;
 };
 
-#endif // LINECHARTS_H

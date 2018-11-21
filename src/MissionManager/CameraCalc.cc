@@ -254,8 +254,8 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
             { sideOverlapName,          QJsonValue::Double, true },
         };
         if (!JsonHelper::validateKeys(v1Json, keyInfoList2, errorString)) {
-            return false;
             _disableRecalc = false;
+            return false;
         }
 
         _valueSetIsDistanceFact.setRawValue (v1Json[valueSetIsDistanceName].toBool());
@@ -264,6 +264,7 @@ bool CameraCalc::load(const QJsonObject& json, QString& errorString)
         _sideOverlapFact.setRawValue        (v1Json[sideOverlapName].toDouble());
 
         if (!CameraSpec::load(v1Json, errorString)) {
+            _disableRecalc = false;
             return false;
         }
     }

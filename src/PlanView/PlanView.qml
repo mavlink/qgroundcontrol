@@ -16,17 +16,17 @@ import QtPositioning    5.3
 import QtQuick.Layouts  1.2
 import QtQuick.Window   2.2
 
-import QGroundControl               1.0
-import QGroundControl.FlightMap     1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Controls      1.0
-import QGroundControl.FactSystem    1.0
-import QGroundControl.FactControls  1.0
-import QGroundControl.Palette       1.0
-import QGroundControl.Controllers   1.0
-import QGroundControl.KMLFileHelper 1.0
-import QGroundControl.Airspace      1.0
-import QGroundControl.Airmap        1.0
+import QGroundControl                   1.0
+import QGroundControl.FlightMap         1.0
+import QGroundControl.ScreenTools       1.0
+import QGroundControl.Controls          1.0
+import QGroundControl.FactSystem        1.0
+import QGroundControl.FactControls      1.0
+import QGroundControl.Palette           1.0
+import QGroundControl.Controllers       1.0
+import QGroundControl.ShapeFileHelper   1.0
+import QGroundControl.Airspace          1.0
+import QGroundControl.Airmap            1.0
 
 /// Mission Editor
 
@@ -36,6 +36,9 @@ QGCView {
     z:          QGroundControl.zOrderTopMost
 
     property bool planControlColapsed: false
+
+    ///< This property is used to determine dirty state for prompting on QGC shutdown
+    readonly property bool dirty: _planMasterController.dirty
 
     readonly property int   _decimalPlaces:             8
     readonly property real  _horizontalMargin:          ScreenTools.defaultFontPixelWidth  * 0.5
@@ -60,6 +63,7 @@ QGCView {
     property real   _toolbarHeight:                     _qgcView.height - ScreenTools.availableHeight
     property int    _editingLayer:                      _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
+    property var    _appSettings:                       QGroundControl.settingsManager.appSettings
 
     readonly property int       _layerMission:              1
     readonly property int       _layerGeoFence:             2
@@ -84,8 +88,8 @@ QGCView {
         _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
     }
 
-    function insertComplexMissionItemFromKML(complexItemName, kmlFile, index) {
-        var sequenceNumber = _missionController.insertComplexMissionItemFromKML(complexItemName, kmlFile, index)
+    function insertComplexMissionItemFromKMLOrSHP(complexItemName, file, index) {
+        var sequenceNumber = _missionController.insertComplexMissionItemFromKMLOrSHP(complexItemName, file, index)
         _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
     }
 
@@ -125,7 +129,7 @@ QGCView {
     }
 
     Connections {
-        target: QGroundControl.settingsManager.appSettings.defaultMissionItemAltitude
+        target: _appSettings.defaultMissionItemAltitude
 
         onRawValueChanged: {
             if (_visualItems.count > 1) {
@@ -223,8 +227,8 @@ QGCView {
             fileDialog.planFiles =      true
             fileDialog.selectExisting = true
             fileDialog.nameFilters =    masterController.loadNameFilters
-            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
-            fileDialog.fileExtension2 = QGroundControl.settingsManager.appSettings.missionFileExtension
+            fileDialog.fileExtension =  _appSettings.planFileExtension
+            fileDialog.fileExtension2 = _appSettings.missionFileExtension
             fileDialog.openForLoad()
         }
 
@@ -237,8 +241,8 @@ QGCView {
             fileDialog.planFiles =      true
             fileDialog.selectExisting = false
             fileDialog.nameFilters =    masterController.saveNameFilters
-            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.planFileExtension
-            fileDialog.fileExtension2 = QGroundControl.settingsManager.appSettings.missionFileExtension
+            fileDialog.fileExtension =  _appSettings.planFileExtension
+            fileDialog.fileExtension2 = _appSettings.missionFileExtension
             fileDialog.openForSave()
         }
 
@@ -246,13 +250,13 @@ QGCView {
             mapFitFunctions.fitMapViewportToMissionItems()
         }
 
-        function loadKmlFromSelectedFile() {
-            fileDialog.title =          qsTr("Load KML")
+        function loadShapeFromSelectedFile() {
+            fileDialog.title =          qsTr("Load Shape")
             fileDialog.planFiles =      false
             fileDialog.selectExisting = true
-            fileDialog.nameFilters =    masterController.fileKmlFilters
-            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.kmlFileExtension
-            fileDialog.fileExtension2 = ""
+            fileDialog.nameFilters =    ShapeFileHelper.fileDialogKMLOrSHPFilters
+            fileDialog.fileExtension =  _appSettings.kmlFileExtension
+            fileDialog.fileExtension2 = _appSettings.shpFileExtension
             fileDialog.openForLoad()
         }
 
@@ -264,8 +268,8 @@ QGCView {
             fileDialog.title =          qsTr("Save KML")
             fileDialog.planFiles =      false
             fileDialog.selectExisting = false
-            fileDialog.nameFilters =    masterController.fileKmlFilters
-            fileDialog.fileExtension =  QGroundControl.settingsManager.appSettings.kmlFileExtension
+            fileDialog.nameFilters =    ShapeFileHelper.fileDialogKMLFilters
+            fileDialog.fileExtension =  _appSettings.kmlFileExtension
             fileDialog.fileExtension2 = ""
             fileDialog.openForSave()
         }
@@ -311,7 +315,7 @@ QGCView {
     QGCFileDialog {
         id:             fileDialog
         qgcView:        _qgcView
-        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
+        folder:         _appSettings.missionSavePath
 
         property bool planFiles: true    ///< true: working with plan files, false: working with kml file
 
@@ -330,30 +334,33 @@ QGCView {
                 masterController.fitViewportToItems()
                 _missionController.setCurrentPlanViewIndex(0, true)
             } else {
-                var retList = KMLFileHelper.determineFileContents(file)
-                if (retList[0] == KMLFileHelper.Error) {
+                var retList = ShapeFileHelper.determineShapeType(file)
+                if (retList[0] == ShapeFileHelper.Error) {
                     _qgcView.showMessage("Error", retList[1], StandardButton.Ok)
-                } else if (retList[0] == KMLFileHelper.Polygon) {
-                    var editVehicle = _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
-                    if (editVehicle.fixedWing) {
-                        insertComplexMissionItemFromKML(_missionController.surveyComplexItemName, file, -1)
-                    } else {
-                        kmlPolygonSelectDialogKMLFile = file
-                        _qgcView.showDialog(kmlPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
-                    }
-                } else if (retList[0] == KMLFileHelper.Polyline) {
-                    insertComplexMissionItemFromKML(_missionController.corridorScanComplexItemName, file, -1)
+                } else if (retList[0] == ShapeFileHelper.Polygon) {
+                    polygonSelectPatternFile = file
+                    _qgcView.showDialog(patternPolygonSelectDialog, fileDialog.title, _qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                } else if (retList[0] == ShapeFileHelper.Polyline) {
+                    insertComplexMissionItemFromKMLOrSHP(_missionController.corridorScanComplexItemName, file, -1)
                 }
             }
             close()
         }
     }
 
-    property string kmlPolygonSelectDialogKMLFile
+    property string polygonSelectPatternFile
     Component {
-        id: kmlPolygonSelectDialog
+        id: patternPolygonSelectDialog
 
         QGCViewDialog {
+            Component.onCompleted: {
+                var editVehicle = _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+                if (editVehicle.fixedWing) {
+                    surveyRadio.checked = true
+                    accept()
+                }
+            }
+
             function accept() {
                 var complexItemName
                 if (surveyRadio.checked) {
@@ -361,7 +368,7 @@ QGCView {
                 } else {
                     complexItemName = _missionController.structureScanComplexItemName
                 }
-                insertComplexMissionItemFromKML(complexItemName, kmlPolygonSelectDialogKMLFile, -1)
+                insertComplexMissionItemFromKMLOrSHP(complexItemName, polygonSelectPatternFile, -1)
                 hideDialog()
             }
 
@@ -378,7 +385,7 @@ QGCView {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     wrapMode:       Text.WordWrap
-                    text:           qsTr("What would you like to create from the polygon specified by the KML file?")
+                    text:           qsTr("Create which pattern type?")
                 }
 
                 QGCRadioButton {
@@ -994,6 +1001,25 @@ QGCView {
                     }
                 }
             }
+
+            Rectangle {
+                width:              parent.width * 0.8
+                height:             1
+                color:              qgcPal.text
+                opacity:            0.5
+                Layout.fillWidth:   true
+                Layout.columnSpan:  2
+            }
+
+            QGCButton {
+                text:               qsTr("Load KML/SHP...")
+                Layout.fillWidth:   true
+                enabled:            !masterController.syncInProgress
+                onClicked: {
+                    masterController.loadShapeFromSelectedFile()
+                    dropPanel.hide()
+                }
+            }
         } // Column
     }
 
@@ -1073,19 +1099,8 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:               qsTr("Load KML...")
-                    Layout.fillWidth:   true
-                    enabled:            !masterController.syncInProgress
-                    onClicked: {
-                        dropPanel.hide()
-                        masterController.loadKmlFromSelectedFile()
-                    }
-                }
-
-
-                QGCButton {
-                    text:               qsTr("Save KML...")
-                    Layout.fillWidth:   true
+                    text:               qsTr("Save Mission Waypoints As KML...")                    
+                    Layout.columnSpan:  2
                     enabled:            !masterController.syncInProgress && _visualItems.count > 1
                     onClicked: {
                         // First point does not count
