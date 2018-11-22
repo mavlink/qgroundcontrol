@@ -9454,6 +9454,15 @@ is less than 50% of this value</short_desc>
     </parameter>
   </group>
   <group name="VTOL Attitude Control">
+    <parameter default="0" name="VT_AIRSPD_RULE" type="INT32">
+      <short_desc>Airspeed rules regarding fixed wing control surface scaling</short_desc>
+      <min>0.0</min>
+      <increment>1</increment>
+      <values>
+        <value code="0">No special rules</value>
+        <value code="1">During hover (excluding transitions) use the lowest possible airspeed value.</value>
+      </values>
+    </parameter>
     <parameter default="8.0" name="VT_ARSP_BLEND" type="FLOAT">
       <short_desc>Transition blending airspeed</short_desc>
       <long_desc>Airspeed at which we can start blending both fw and mc controls. Set to 0 to disable.</long_desc>
