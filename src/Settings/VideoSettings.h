@@ -55,6 +55,11 @@ private slots:
     void _configChanged             (QVariant value);
 
 private:
+    void _setDefaults               ();
+
+private:
+    bool _noVideo = false;
+
 };
 
 #endif
