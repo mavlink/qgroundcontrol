@@ -29,8 +29,8 @@ public:
     static bool loadPolygonFromFile(const QString& shpFile, QList<QGeoCoordinate>& vertices, QString& errorString);
 
 private:
-    static bool _validateSHPFiles(const QString& shpFile, QString& errorString);
-    static SHPHandle _loadShape(const QString& shpFile, QString& errorString);
+    static bool         _validateSHPFiles(const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString);
+    static SHPHandle    _loadShape(const QString& shpFile, int* utmZone, bool* utmSouthernHemisphere, QString& errorString);
 
     static const char* _errorPrefix;
 };

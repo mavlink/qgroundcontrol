@@ -62,6 +62,11 @@ private:
 #ifdef QGC_GST_TAISYNC_USB
     TaisyncVideoReceiver*           _taiSync = nullptr;
 #endif
+    void _setDefaults               ();
+
+private:
+    bool _noVideo = false;
+
 };
 
 #endif
