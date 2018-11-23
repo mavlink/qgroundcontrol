@@ -3,9 +3,6 @@
 // Original Javascript by Chuck Taylor
 // Port to C++ by Alex Hajnal
 //
-// *** THIS CODE USES 32-BIT FLOATS BY DEFAULT ***
-// *** For 64-bit double-precision edit this file: undefine FLOAT_32 and define FLOAT_64 (see below)
-// 
 // This is a simple port of the code on the Geographic/UTM Coordinate Converter (1) page from Javascript to C++.
 // Using this you can easily convert between UTM and WGS84 (latitude and longitude).
 // Accuracy seems to be around 50cm (I suspect rounding errors are limiting precision).
@@ -15,58 +12,18 @@
 // 
 // 1) http://home.hiwaay.net/~taylorc/toolbox/geography/geoutm.html
 
+// QGC Note: This file has been slightly modified to prevent possible conflicts with other parts of the system
+
 #ifndef UTM_H
 #define UTM_H
 
-// Choose floating point precision:
-
-// 32-bit (for Teensy 3.5/3.6 ARM boards, etc.)
-#define FLOAT_64
-
-// 64-bit (for desktop/server use)
-//#define FLOAT_64
-
-#ifdef FLOAT_64
-#define FLOAT double
-#define SIN sin
-#define COS cos
-#define TAN tan
-#define POW pow
-#define SQRT sqrt
-#define FLOOR floor
-
-#else
-#ifdef FLOAT_32
-#define FLOAT float
-#define SIN sinf
-#define COS cosf
-#define TAN tanf
-#define POW powf
-#define SQRT sqrtf
-#define FLOOR floorf
-
-#endif
-#endif
-
-
-#include <math.h>
-
-#define pi 3.14159265358979
-
-/* Ellipsoid model constants (actual values here are for WGS84) */
-#define sm_a 6378137.0
-#define sm_b 6356752.314
-#define sm_EccSquared 6.69437999013e-03
-
-#define UTMScaleFactor 0.9996
-
 // DegToRad
 // Converts degrees to radians.
-FLOAT DegToRad(FLOAT deg);
+double DegToRad(double deg);
 
 // RadToDeg
 // Converts radians to degrees.
-FLOAT RadToDeg(FLOAT rad);
+double RadToDeg(double rad);
 
 // ArcLengthOfMeridian
 // Computes the ellipsoidal distance from the equator to a point at a
@@ -84,7 +41,7 @@ FLOAT RadToDeg(FLOAT rad);
 // 
 // Returns:
 //     The ellipsoidal distance of the point from the equator, in meters.
-FLOAT ArcLengthOfMeridian (FLOAT phi);
+double ArcLengthOfMeridian (double phi);
 
 // UTMCentralMeridian
 // Determines the central meridian for the given UTM zone.
@@ -95,7 +52,7 @@ FLOAT ArcLengthOfMeridian (FLOAT phi);
 // Returns:
 //   The central meridian for the given UTM zone, in radians
 //   Range of the central meridian is the radian equivalent of [-177,+177].
-FLOAT UTMCentralMeridian(int zone);
+double UTMCentralMeridian(int zone);
 
 // FootpointLatitude
 //
@@ -110,7 +67,7 @@ FLOAT UTMCentralMeridian(int zone);
 //
 // Returns:
 //   The footpoint latitude, in radians.
-FLOAT FootpointLatitude(FLOAT y);
+double FootpointLatitude(double y);
 
 // MapLatLonToXY
 // Converts a latitude/longitude pair to x and y coordinates in the
@@ -131,7 +88,7 @@ FLOAT FootpointLatitude(FLOAT y);
 //
 // Returns:
 //    The function does not return a value.
-void MapLatLonToXY (FLOAT phi, FLOAT lambda, FLOAT lambda0, FLOAT &x, FLOAT &y);
+void MapLatLonToXY (double phi, double lambda, double lambda0, double &x, double &y);
 
 // MapXYToLatLon
 // Converts x and y coordinates in the Transverse Mercator projection to
@@ -160,7 +117,7 @@ void MapLatLonToXY (FLOAT phi, FLOAT lambda, FLOAT lambda0, FLOAT &x, FLOAT &y);
 //
 //   x1frac, x2frac, x2poly, x3poly, etc. are to enhance readability and
 //   to optimize computations.
-void MapXYToLatLon (FLOAT x, FLOAT y, FLOAT lambda0, FLOAT& phi, FLOAT& lambda);
+void MapXYToLatLon (double x, double y, double lambda0, double& phi, double& lambda);
 
 // LatLonToUTMXY
 // Converts a latitude/longitude pair to x and y coordinates in the
@@ -179,7 +136,7 @@ void MapXYToLatLon (FLOAT x, FLOAT y, FLOAT lambda0, FLOAT& phi, FLOAT& lambda);
 //
 // Returns:
 //   The UTM zone used for calculating the values of x and y.
-int LatLonToUTMXY (FLOAT lat, FLOAT lon, int zone, FLOAT& x, FLOAT& y);
+int LatLonToUTMXY (double lat, double lon, int zone, double& x, double& y);
 
 // UTMXYToLatLon
 //
@@ -200,7 +157,7 @@ int LatLonToUTMXY (FLOAT lat, FLOAT lon, int zone, FLOAT& x, FLOAT& y);
 // 
 // Returns:
 // The function does not return a value.
-void UTMXYToLatLon (FLOAT x, FLOAT y, int zone, bool southhemi, FLOAT& lat, FLOAT& lon);
+void UTMXYToLatLon (double x, double y, int zone, bool southhemi, double& lat, double& lon);
 
 #endif
 
