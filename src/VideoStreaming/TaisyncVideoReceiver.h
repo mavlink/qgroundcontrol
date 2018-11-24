@@ -25,17 +25,18 @@ class TaisyncVideoReceiver : public QObject
     Q_OBJECT
 public:
 
-    explicit TaisyncVideoReceiver  (QObject* parent = nullptr);
-    ~TaisyncVideoReceiver       ();
-    void startVideo             ();
+    explicit TaisyncVideoReceiver       (QObject* parent = nullptr);
+    ~TaisyncVideoReceiver               ();
+    void startVideo                     ();
+    void close                          ();
 
 private slots:
-    void    _newVideoConnection ();
-    void    _readVideoBytes     ();
+    void    _newVideoConnection         ();
+    void    _readVideoBytes             ();
+    void    _videoSocketDisconnected    ();
 
 private:
-    QTcpServer*     _tcpVideoServer = nullptr;
-    QTcpSocket*     _tcpVideoSocket = nullptr;
-    QUdpSocket*     _udpSocket      = nullptr;
-
+    QTcpServer*     _tcpVideoServer     = nullptr;
+    QTcpSocket*     _tcpVideoSocket     = nullptr;
+    QUdpSocket*     _udpVideoSocket     = nullptr;
 };

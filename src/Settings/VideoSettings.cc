@@ -33,7 +33,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data
-    bool noVideo = false;
     QStringList videoSourceList;
 #ifdef QGC_GST_STREAMING
 #ifndef NO_UDP_VIDEO
@@ -52,7 +51,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     }
 #endif
     if (videoSourceList.count() == 0) {
-        noVideo = true;
+        _noVideo = true;
         videoSourceList.append(videoSourceNoVideo);
     } else {
         videoSourceList.insert(0, videoDisabled);
@@ -64,7 +63,12 @@ DECLARE_SETTINGGROUP(Video, "Video")
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
 
     // Set default value for videoSource
-    if (noVideo) {
+    _setDefaults();
+}
+
+void VideoSettings::_setDefaults()
+{
+    if (_noVideo) {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceNoVideo);
     } else {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
@@ -95,6 +99,14 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
+        //-- Check for sources no longer available
+        if(!_nameToMetaDataMap.contains(_videoSourceFact->rawValue().toString())) {
+            if (_noVideo) {
+                _videoSourceFact->setRawValue(videoSourceNoVideo);
+            } else {
+                _videoSourceFact->setRawValue(videoDisabled);
+            }
+        }
         connect(_videoSourceFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _videoSourceFact;
