@@ -24,13 +24,23 @@ TaisyncVideoReceiver::TaisyncVideoReceiver(QObject* parent)
 //-----------------------------------------------------------------------------
 TaisyncVideoReceiver::~TaisyncVideoReceiver()
 {
+    close();
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncVideoReceiver::close()
+{
+    qCDebug(TaisyncVideoReceiverLog) << "Close Taisync Video Receiver";
     if(_tcpVideoSocket) {
         _tcpVideoSocket->close();
         _tcpVideoSocket->deleteLater();
+        _tcpVideoSocket = nullptr;
     }
-    if(_udpSocket) {
-        _udpSocket->close();
-        _udpSocket->deleteLater();
+    if(_udpVideoSocket) {
+        _udpVideoSocket->close();
+        _udpVideoSocket->deleteLater();
+        _udpVideoSocket = nullptr;
     }
 }
 
@@ -38,8 +48,8 @@ TaisyncVideoReceiver::~TaisyncVideoReceiver()
 void
 TaisyncVideoReceiver::startVideo()
 {
-    qCDebug(TaisyncVideoReceiverLog) << "Start Taisync Video";
-    _udpSocket = new QUdpSocket(this);
+    qCDebug(TaisyncVideoReceiverLog) << "Start Taisync Video Receiver";
+    _udpVideoSocket = new QUdpSocket(this);
     _tcpVideoServer = new QTcpServer(this);
     QObject::connect(_tcpVideoServer, &QTcpServer::newConnection, this, &TaisyncVideoReceiver::_newVideoConnection);
     _tcpVideoServer->listen(QHostAddress::Any, TAISYNC_USB_VIDEO_PORT);
@@ -49,9 +59,26 @@ TaisyncVideoReceiver::startVideo()
 void
 TaisyncVideoReceiver::_newVideoConnection()
 {
-    qCDebug(TaisyncVideoReceiverLog) << "New Taisync Connection";
+    qCDebug(TaisyncVideoReceiverLog) << "New Taisync Video Connection";
+    if(_tcpVideoSocket) {
+        _tcpVideoSocket->close();
+        _tcpVideoSocket->deleteLater();
+    }
     _tcpVideoSocket = _tcpVideoServer->nextPendingConnection();
     QObject::connect(_tcpVideoSocket, &QIODevice::readyRead, this, &TaisyncVideoReceiver::_readVideoBytes);
+    QObject::connect(_tcpVideoSocket, &QAbstractSocket::disconnected, this, &TaisyncVideoReceiver::_videoSocketDisconnected);
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncVideoReceiver::_videoSocketDisconnected()
+{
+    qCDebug(TaisyncVideoReceiverLog) << "Taisync Video Connection Closed";
+    if(_tcpVideoSocket) {
+        _tcpVideoSocket->close();
+        _tcpVideoSocket->deleteLater();
+        _tcpVideoSocket = nullptr;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -59,6 +86,6 @@ void
 TaisyncVideoReceiver::_readVideoBytes()
 {
     QByteArray bytesIn = _tcpVideoSocket->read(_tcpVideoSocket->bytesAvailable());
-    _udpSocket->writeDatagram(bytesIn, QHostAddress::LocalHost, TAISYNC_USB_UDP_PORT);
+    _udpVideoSocket->writeDatagram(bytesIn, QHostAddress::LocalHost, TAISYNC_USB_UDP_PORT);
   //qCDebug(TaisyncVideoReceiverLog) << "Taisync video data:" << bytesIn.size();
 }
