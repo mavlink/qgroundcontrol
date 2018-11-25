@@ -8702,6 +8702,12 @@ is less than 50% of this value</short_desc>
     </parameter>
   </group>
   <group name="System">
+    <parameter default="31" name="LED_RGB1_MAXBRT" type="INT32">
+      <short_desc>RGB Led brightness limit</short_desc>
+      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 31 (max)</long_desc>
+      <min>0</min>
+      <max>31</max>
+    </parameter>
     <parameter default="15" name="LED_RGB_MAXBRT" type="INT32">
       <short_desc>RGB Led brightness limit</short_desc>
       <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
