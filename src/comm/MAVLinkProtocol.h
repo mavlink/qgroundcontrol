@@ -113,7 +113,7 @@ protected:
     bool        versionMismatchIgnore;
     int         systemId;
     unsigned    _current_version;
-    unsigned    _radio_version_mismatch_count;
+    int         _radio_version_mismatch_count;
 
 signals:
     /// Heartbeat received on link
