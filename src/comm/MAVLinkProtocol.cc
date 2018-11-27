@@ -289,10 +289,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
             // Detect if we are talking to an old radio not supporting v2
             mavlink_status_t* mavlinkStatus = mavlink_get_channel_status(mavlinkChannel);
-            if (_message.msgid == MAVLINK_MSG_ID_RADIO_STATUS) {
+            if (_message.msgid == MAVLINK_MSG_ID_RADIO_STATUS && _radio_version_mismatch_count != -1) {
                 if ((mavlinkStatus->flags & MAVLINK_STATUS_FLAG_IN_MAVLINK1)
                 && !(mavlinkStatus->flags & MAVLINK_STATUS_FLAG_OUT_MAVLINK1)) {
-
                     _radio_version_mismatch_count++;
                 }
             }
@@ -300,8 +299,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             if (_radio_version_mismatch_count == 5) {
                 // Warn the user if the radio continues to send v1 while the link uses v2
                 emit protocolStatusMessage(tr("MAVLink Protocol"), tr("Detected radio still using MAVLink v1.0 on a link with MAVLink v2.0 enabled. Please upgrade the radio firmware."));
-                // Ensure the warning can't get stuck
-                _radio_version_mismatch_count++;
+                // Set to flag warning already shown
+                _radio_version_mismatch_count = -1;
                 // Flick link back to v1
                 qDebug() << "Switching outbound to mavlink 1.0 due to incoming mavlink 1.0 packet:" << mavlinkStatus << mavlinkChannel << mavlinkStatus->flags;
                 mavlinkStatus->flags |= MAVLINK_STATUS_FLAG_OUT_MAVLINK1;
