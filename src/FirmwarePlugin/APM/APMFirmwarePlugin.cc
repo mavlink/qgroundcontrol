@@ -249,22 +249,22 @@ void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_mess
 
     switch (paramValue.param_type) {
     case MAV_PARAM_TYPE_UINT8:
-        paramUnion.param_uint8 = (uint8_t)paramValue.param_value;
+        paramUnion.param_uint8 = static_cast<uint8_t>(paramValue.param_value);
         break;
     case MAV_PARAM_TYPE_INT8:
-        paramUnion.param_int8 = (int8_t)paramValue.param_value;
+        paramUnion.param_int8  = static_cast<int8_t>(paramValue.param_value);
         break;
     case MAV_PARAM_TYPE_UINT16:
-        paramUnion.param_uint16 = (uint16_t)paramValue.param_value;
+        paramUnion.param_uint16 = static_cast<uint16_t>(paramValue.param_value);
         break;
     case MAV_PARAM_TYPE_INT16:
-        paramUnion.param_int16 = (int16_t)paramValue.param_value;
+        paramUnion.param_int16 = static_cast<int16_t>(paramValue.param_value);
         break;
     case MAV_PARAM_TYPE_UINT32:
-        paramUnion.param_uint32 = (uint32_t)paramValue.param_value;
+        paramUnion.param_uint32 = static_cast<uint32_t>(paramValue.param_value);
         break;
     case MAV_PARAM_TYPE_INT32:
-        paramUnion.param_int32 = (int32_t)paramValue.param_value;
+        paramUnion.param_int32 = static_cast<int32_t>(paramValue.param_value);
         break;
     case MAV_PARAM_TYPE_REAL32:
         paramUnion.param_float = paramValue.param_value;
@@ -473,6 +473,12 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
         return _handleIncomingStatusText(vehicle, message);
     case MAVLINK_MSG_ID_HEARTBEAT:
         _handleIncomingHeartbeat(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_RC_CHANNELS:
+        _handleRCChannels(vehicle, message);
+        break;
+    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+        _handleRCChannelsRaw(vehicle, message);
         break;
     }
 
@@ -859,20 +865,21 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     memset(&cmd, 0, sizeof(cmd));
 
-    cmd.target_system = vehicle->id();
-    cmd.target_component = vehicle->defaultComponentId();
+    cmd.target_system    = static_cast<uint8_t>(vehicle->id());
+    cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
     cmd.coordinate_frame = MAV_FRAME_LOCAL_OFFSET_NED;
     cmd.type_mask = 0xFFF8; // Only x/y/z valid
     cmd.x = 0.0f;
     cmd.y = 0.0f;
-    cmd.z = -(altitudeChange);
+    cmd.z = static_cast<float>(-(altitudeChange));
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
-    mavlink_msg_set_position_target_local_ned_encode_chan(mavlink->getSystemId(),
-                                                          mavlink->getComponentId(),
-                                                          vehicle->priorityLink()->mavlinkChannel(),
-                                                          &msg,
-                                                          &cmd);
+    mavlink_msg_set_position_target_local_ned_encode_chan(
+        static_cast<uint8_t>(mavlink->getSystemId()),
+        static_cast<uint8_t>(mavlink->getComponentId()),
+        vehicle->priorityLink()->mavlinkChannel(),
+        &msg,
+        &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
@@ -889,7 +896,7 @@ double APMFirmwarePlugin::minimumTakeoffAltitude(Vehicle* vehicle)
     float paramDivisor = vehicle->vtol() ? 1.0 : 100.0; // PILOT_TAKEOFF_ALT is in centimeters
 
     if (vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, takeoffAltParam)) {
-        minTakeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / paramDivisor;
+        minTakeoffAlt = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, takeoffAltParam)->rawValue().toDouble() / static_cast<double>(paramDivisor);
     }
 
     if (minTakeoffAlt == 0) {
@@ -931,7 +938,7 @@ bool APMFirmwarePlugin::_guidedModeTakeoff(Vehicle* vehicle, double altitudeRel)
                             MAV_CMD_NAV_TAKEOFF,
                             true, // show error
                             0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                            takeoffAltRel);                     // Relative altitude
+                            static_cast<float>(takeoffAltRel));                     // Relative altitude
 
     return true;
 }
@@ -990,3 +997,38 @@ QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle)
 QString APMFirmwarePlugin::_versionRegex() {
     return QStringLiteral(" V([0-9,\\.]*)$");
 }
+
+void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* message)
+{
+    mavlink_rc_channels_t channels;
+    mavlink_msg_rc_channels_decode(message, &channels);
+    //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
+    if(channels.rssi) {
+        channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+    }
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_rc_channels_encode_chan(
+        static_cast<uint8_t>(mavlink->getSystemId()),
+        static_cast<uint8_t>(mavlink->getComponentId()),
+        vehicle->priorityLink()->mavlinkChannel(),
+        message,
+        &channels);
+}
+
+void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
+{
+    mavlink_rc_channels_raw_t channels;
+    mavlink_msg_rc_channels_raw_decode(message, &channels);
+    //-- Ardupilot uses 0-255 to indicate 0-100% where QGC expects 0-100
+    if(channels.rssi) {
+        channels.rssi = static_cast<uint8_t>(static_cast<double>(channels.rssi) / 255.0 * 100.0);
+    }
+    MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+    mavlink_msg_rc_channels_raw_encode_chan(
+        static_cast<uint8_t>(mavlink->getSystemId()),
+        static_cast<uint8_t>(mavlink->getComponentId()),
+        vehicle->priorityLink()->mavlinkChannel(),
+        message,
+        &channels);
+}
+
