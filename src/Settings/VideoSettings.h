@@ -14,6 +14,8 @@
 
 #ifdef QGC_GST_TAISYNC_USB
 #include "TaisyncVideoReceiver.h"
+// TODO: Remove it and place it some place else
+#include "TaisyncTelemetry.h"
 #endif
 
 class VideoSettings : public SettingsGroup
@@ -61,6 +63,8 @@ private slots:
 private:
 #ifdef QGC_GST_TAISYNC_USB
     TaisyncVideoReceiver*           _taiSync = nullptr;
+    // TODO: Remove it and place it some place else
+    TaisyncTelemetry*               _taiTelem = nullptr;
 #endif
     void _setDefaults               ();
 
