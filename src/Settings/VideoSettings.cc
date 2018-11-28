@@ -80,6 +80,9 @@ void VideoSettings::_setDefaults()
         qCDebug(VideoReceiverLog) << "Initializing Taisync";
         _taiSync = new TaisyncVideoReceiver(this);
         _taiSync->startVideo();
+        // TODO: Remove it and place it some place else
+        _taiTelem = new TaisyncTelemetry(this);
+        _taiTelem->startTelemetry();
     }
 #endif
 }
@@ -177,10 +180,16 @@ void VideoSettings::_configChanged(QVariant)
             qCDebug(VideoReceiverLog) << "Initializing Taisync";
             _taiSync = new TaisyncVideoReceiver(this);
             _taiSync->startVideo();
+            // TODO: Remove it and place it some place else
+            _taiTelem = new TaisyncTelemetry(this);
+            _taiTelem->startTelemetry();
         } else if(_videoSourceFact->rawValue().toString() != VideoSettings::videoSourceTaiSyncUSB && _taiSync) {
             qCDebug(VideoReceiverLog) << "Closing Taisync";
             delete _taiSync;
             _taiSync = nullptr;
+            // TODO: Remove it and place it some place else
+            delete _taiTelem;
+            _taiTelem = nullptr;
         }
     }
 #endif

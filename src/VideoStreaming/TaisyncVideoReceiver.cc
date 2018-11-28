@@ -52,7 +52,7 @@ TaisyncVideoReceiver::startVideo()
     _udpVideoSocket = new QUdpSocket(this);
     _tcpVideoServer = new QTcpServer(this);
     QObject::connect(_tcpVideoServer, &QTcpServer::newConnection, this, &TaisyncVideoReceiver::_newVideoConnection);
-    _tcpVideoServer->listen(QHostAddress::Any, TAISYNC_USB_VIDEO_PORT);
+    _tcpVideoServer->listen(QHostAddress::AnyIPv4, TAISYNC_USB_VIDEO_PORT);
 }
 
 //-----------------------------------------------------------------------------
