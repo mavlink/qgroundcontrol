@@ -103,7 +103,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
     if (!_videoSourceFact) {
         _videoSourceFact = _createSettingsFact(videoSourceName);
         //-- Check for sources no longer available
-        if(!_nameToMetaDataMap.contains(_videoSourceFact->rawValue().toString())) {
+        if(!_videoSourceFact->enumStrings().contains(_videoSourceFact->rawValue().toString())) {
             if (_noVideo) {
                 _videoSourceFact->setRawValue(videoSourceNoVideo);
             } else {
