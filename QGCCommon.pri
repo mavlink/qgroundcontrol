@@ -56,6 +56,7 @@ linux {
 } else : macx {
     macx-clang | macx-llvm {
         message("Mac build")
+        DEFINES += QGC_GST_TAISYNC_USB
         CONFIG += MacBuild
         CONFIG += x86_64
         CONFIG -= x86

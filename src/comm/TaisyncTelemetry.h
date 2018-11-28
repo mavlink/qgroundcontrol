@@ -14,6 +14,7 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QUdpSocket>
+#include <QTimer>
 
 #define TAISYNC_USB_TELEM_PORT  8400
 
@@ -34,8 +35,10 @@ private slots:
     void    _readTelemetryBytes         ();
     void    _telemetrySocketDisconnected();
     void    _readBytes                  ();
+    void    _sendGCSHeartbeat           ();
 
 private:
+    QTimer          _heartbeatTimer;
     QTcpServer*     _tcpTelemetryServer = nullptr;
     QTcpSocket*     _tcpTelemetrySocket = nullptr;
     QUdpSocket*     _udpTelemetrySocket = nullptr;
