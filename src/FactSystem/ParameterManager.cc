@@ -26,8 +26,6 @@ QGC_LOGGING_CATEGORY(ParameterManagerVerbose1Log,           "ParameterManagerVer
 QGC_LOGGING_CATEGORY(ParameterManagerVerbose2Log,           "ParameterManagerVerbose2Log")
 QGC_LOGGING_CATEGORY(ParameterManagerDebugCacheFailureLog,  "ParameterManagerDebugCacheFailureLog") // Turn on to debug parameter cache crc misses
 
-Fact ParameterManager::_defaultFact;
-
 const char* ParameterManager::_cachedMetaDataFilePrefix =   "ParameterFactMetaData";
 const char* ParameterManager::_jsonParametersKey =          "parameters";
 const char* ParameterManager::_jsonCompIdKey =              "compId";
