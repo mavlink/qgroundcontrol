@@ -201,7 +201,7 @@ private:
     
     QMutex _dataMutex;
     
-    static Fact _defaultFact;   ///< Used to return default fact, when parameter not found
+    Fact _defaultFact;   ///< Used to return default fact, when parameter not found
 
     static const char* _cachedMetaDataFilePrefix;
     static const char* _jsonParametersKey;
