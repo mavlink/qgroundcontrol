@@ -4449,14 +4449,11 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="2">Terrain hold</value>
       </values>
     </parameter>
-    <parameter default="3" name="MPC_AUTO_MODE" type="INT32">
+    <parameter default="1" name="MPC_AUTO_MODE" type="INT32">
       <short_desc>Auto sub-mode</short_desc>
-      <long_desc>The supported sub-modes are: 0 Direct line tracking, no smoothing 1 Not used 2 Not used 3 Jerk-limited trajectory</long_desc>
       <values>
         <value code="0">Default line tracking</value>
-        <value code="1">N/A</value>
-        <value code="2">N/A</value>
-        <value code="3">Jerk-limited trajectory</value>
+        <value code="1">Jerk-limited trajectory</value>
       </values>
     </parameter>
     <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
