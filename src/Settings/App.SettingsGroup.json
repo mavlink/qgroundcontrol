@@ -199,5 +199,11 @@
     "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
     "enumValues":       "0,1,2",
     "defaultValue":     0
+},
+{
+    "name":             "apmStartMavlinkStreams",
+    "shortDescription": "Request start of MAVLink telemetry streams (ArduPilot only)",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]

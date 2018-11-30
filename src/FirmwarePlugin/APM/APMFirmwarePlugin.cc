@@ -17,6 +17,8 @@
 #include "MissionManager.h"
 #include "ParameterManager.h"
 #include "QGCFileDownload.h"
+#include "SettingsManager.h"
+#include "AppSettings.h"
 
 #include <QTcpSocket>
 
@@ -641,8 +643,10 @@ void APMFirmwarePlugin::initializeVehicle(Vehicle* vehicle)
             break;
         }
     } else {
-        // Streams are not started automatically on APM stack
-        initializeStreamRates(vehicle);
+        if (qgcApp()->toolbox()->settingsManager()->appSettings()->apmStartMavlinkStreams()->rawValue().toBool()) {
+            // Streams are not started automatically on APM stack (sort of)
+            initializeStreamRates(vehicle);
+        }
     }
 }
 
