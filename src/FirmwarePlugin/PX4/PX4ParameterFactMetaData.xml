@@ -3864,7 +3864,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <short_desc>Yaw mode</short_desc>
       <long_desc>Specifies the heading in Auto.</long_desc>
       <min>0</min>
-      <max>2</max>
+      <max>3</max>
       <values>
         <value code="0">towards waypoint</value>
         <value code="1">towards home</value>
