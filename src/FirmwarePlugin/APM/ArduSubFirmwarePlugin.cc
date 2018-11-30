@@ -169,6 +169,16 @@ int ArduSubFirmwarePlugin::manualControlReservedButtonCount(void)
     return 0;
 }
 
+void ArduSubFirmwarePlugin::initializeStreamRates(Vehicle* vehicle) {
+    vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,     2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS, 2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,     2);
+    vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,        3);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,          20);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,          10);
+    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
+}
+
 bool ArduSubFirmwarePlugin::isCapable(const Vehicle* vehicle, FirmwareCapabilities capabilities)
 {
     Q_UNUSED(vehicle);
