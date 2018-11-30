@@ -40,6 +40,7 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#include "VideoSettings.h"
 #include "PositionManager.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
@@ -492,6 +493,12 @@ void Vehicle::_commonInit(void)
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
+
+    // Set video stream to udp if running ArduSub and Video is disabled
+    if (sub() && _settingsManager->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled)
+    {
+        _settingsManager->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDP);
+    }
 
     //-- Airspace Management
 #if defined(QGC_AIRMAP_ENABLED)
