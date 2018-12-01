@@ -34,7 +34,7 @@ Rectangle {
             anchors.leftMargin:     _margins
             anchors.left:           parent.left
             anchors.verticalCenter: parent.verticalCenter
-            source:                 qgcPal.globalTheme == QGCPalette.Light ? "/res/gear-black.svg" : "/res/gear-white.svg"
+            source:                 "/res/gear-black.svg"
             mipmap:                 true
             width:                  parent.height -(_margins * 2)
             sourceSize.width:       width
