@@ -319,7 +319,7 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
                                                 0,                                          // No hold time
                                                 0.0,                                        // No acceptance radius specified
                                                 0.0,                                        // Pass through waypoint
-                                                90, //std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
+                                                std::numeric_limits<double>::quiet_NaN(),   // Yaw unchanged
                                                 vertexCoord.latitude(),
                                                 vertexCoord.longitude(),
                                                 layerAltitude,
