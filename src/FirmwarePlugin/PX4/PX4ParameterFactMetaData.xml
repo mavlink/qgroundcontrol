@@ -9522,7 +9522,7 @@ Airbrakes need to be enables for your selected model/mixer</short_desc>
     </parameter>
     <parameter default="3.0" name="VT_B_TRANS_RAMP" type="FLOAT">
       <short_desc>Back transition MC motor ramp up time</short_desc>
-      <long_desc>This sets the duration during wich the MC motors ramp up to the commanded thrust during the back transition stage.</long_desc>
+      <long_desc>This sets the duration during which the MC motors ramp up to the commanded thrust during the back transition stage.</long_desc>
       <min>0.0</min>
       <max>20.0</max>
       <unit>s</unit>
