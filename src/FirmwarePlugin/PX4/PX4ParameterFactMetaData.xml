@@ -8680,24 +8680,6 @@ is less than 50% of this value</short_desc>
       <short_desc>Float Demonstration Parameter in the Example</short_desc>
     </parameter>
   </group>
-  <group name="Syslink">
-    <parameter default="231" name="SLNK_RADIO_ADDR1" type="INT32">
-      <short_desc>Operating address of the NRF51 (most significant byte)</short_desc>
-    </parameter>
-    <parameter default="3890735079" name="SLNK_RADIO_ADDR2" type="INT32">
-      <short_desc>Operating address of the NRF51 (least significant 4 bytes)</short_desc>
-    </parameter>
-    <parameter default="80" name="SLNK_RADIO_CHAN" type="INT32">
-      <short_desc>Operating channel of the NRF51</short_desc>
-      <min>0</min>
-      <max>125</max>
-    </parameter>
-    <parameter default="2" name="SLNK_RADIO_RATE" type="INT32">
-      <short_desc>Operating datarate of the NRF51</short_desc>
-      <min>0</min>
-      <max>2</max>
-    </parameter>
-  </group>
   <group name="System">
     <parameter default="31" name="LED_RGB1_MAXBRT" type="INT32">
       <short_desc>RGB Led brightness limit</short_desc>
