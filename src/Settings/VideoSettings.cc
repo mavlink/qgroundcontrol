@@ -23,7 +23,7 @@ const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
 const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
 const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
 const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
 const char* VideoSettings::videoSourceTaiSyncUSB =  "Taisync USB";
 #endif
 
@@ -40,7 +40,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #endif
     videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceTCP);
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     videoSourceList.append(videoSourceTaiSyncUSB);
 #endif
 #endif
@@ -74,15 +74,17 @@ void VideoSettings::_setDefaults()
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
     }
 
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     //-- Initializa Taisync if set as current video source
     if(videoSource()->rawValue().toString() == VideoSettings::videoSourceTaiSyncUSB && !_taiSync) {
         qCDebug(VideoReceiverLog) << "Initializing Taisync";
-        _taiSync = new TaisyncVideoReceiver(this);
-        _taiSync->startVideo();
         // TODO: Remove it and place it some place else
         _taiTelem = new TaisyncTelemetry(this);
         _taiTelem->startTelemetry();
+        _taiSettings = new TaisyncSettings(this);
+        _taiSettings->startSettings();
+        _taiSync = new TaisyncVideoReceiver(this);
+        _taiSync->startVideo();
     }
 #endif
 }
@@ -151,7 +153,7 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
         return false;
     }
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     if(vSource == videoSourceTaiSyncUSB) {
         return true;
     }
@@ -173,16 +175,18 @@ bool VideoSettings::streamConfigured(void)
 
 void VideoSettings::_configChanged(QVariant)
 {
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     //-- Check to see if we need to enabled/disable the Taisync module
     if(_videoSourceFact) {
         if(_videoSourceFact->rawValue().toString() == VideoSettings::videoSourceTaiSyncUSB && !_taiSync) {
             qCDebug(VideoReceiverLog) << "Initializing Taisync";
-            _taiSync = new TaisyncVideoReceiver(this);
-            _taiSync->startVideo();
             // TODO: Remove it and place it some place else
             _taiTelem = new TaisyncTelemetry(this);
             _taiTelem->startTelemetry();
+            _taiSettings = new TaisyncSettings(this);
+            _taiSettings->startSettings();
+            _taiSync = new TaisyncVideoReceiver(this);
+            _taiSync->startVideo();
         } else if(_videoSourceFact->rawValue().toString() != VideoSettings::videoSourceTaiSyncUSB && _taiSync) {
             qCDebug(VideoReceiverLog) << "Closing Taisync";
             delete _taiSync;
@@ -190,6 +194,8 @@ void VideoSettings::_configChanged(QVariant)
             // TODO: Remove it and place it some place else
             delete _taiTelem;
             _taiTelem = nullptr;
+            delete _taiSettings;
+            _taiSettings = nullptr;
         }
     }
 #endif
