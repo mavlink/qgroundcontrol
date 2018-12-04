@@ -17,26 +17,16 @@ QGC_LOGGING_CATEGORY(TaisyncTelemetryLog, "TaisyncTelemetryLog")
 
 //-----------------------------------------------------------------------------
 TaisyncTelemetry::TaisyncTelemetry(QObject* parent)
-    : QObject (parent)
+    : TaisyncHandler(parent)
 {
-}
-
-//-----------------------------------------------------------------------------
-TaisyncTelemetry::~TaisyncTelemetry()
-{
-    close();
 }
 
 //-----------------------------------------------------------------------------
 void
 TaisyncTelemetry::close()
 {
+    TaisyncHandler::close();
     qCDebug(TaisyncTelemetryLog) << "Close Taisync Telemetry";
-    if(_tcpTelemetrySocket) {
-        _tcpTelemetrySocket->close();
-        _tcpTelemetrySocket->deleteLater();
-        _tcpTelemetrySocket = nullptr;
-    }
     if(_udpTelemetrySocket) {
         _udpTelemetrySocket->close();
         _udpTelemetrySocket->deleteLater();
@@ -52,11 +42,9 @@ TaisyncTelemetry::startTelemetry()
     _udpTelemetrySocket = new QUdpSocket(this);
     _udpTelemetrySocket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    64 * 1024);
     _udpTelemetrySocket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024);
-    QObject::connect(_udpTelemetrySocket, &QUdpSocket::readyRead, this, &TaisyncTelemetry::_readBytes);
+    QObject::connect(_udpTelemetrySocket, &QUdpSocket::readyRead, this, &TaisyncTelemetry::_readUDPBytes);
     _udpTelemetrySocket->bind(QHostAddress::LocalHost, 0, QUdpSocket::ShareAddress);
-    _tcpTelemetryServer = new QTcpServer(this);
-    QObject::connect(_tcpTelemetryServer, &QTcpServer::newConnection, this, &TaisyncTelemetry::_newTelemetryConnection);
-    _tcpTelemetryServer->listen(QHostAddress::AnyIPv4, TAISYNC_USB_TELEM_PORT);
+    _start(TAISYNC_TELEM_PORT);
     _heartbeatTimer.setInterval(1000);
     _heartbeatTimer.setSingleShot(false);
     connect(&_heartbeatTimer, &QTimer::timeout, this, &TaisyncTelemetry::_sendGCSHeartbeat);
@@ -65,35 +53,18 @@ TaisyncTelemetry::startTelemetry()
 
 //-----------------------------------------------------------------------------
 void
-TaisyncTelemetry::_newTelemetryConnection()
+TaisyncTelemetry::_newConnection()
 {
+    TaisyncHandler::_newConnection();
     qCDebug(TaisyncTelemetryLog) << "New Taisync Temeletry Connection";
-    if(_tcpTelemetrySocket) {
-        _tcpTelemetrySocket->close();
-        _tcpTelemetrySocket->deleteLater();
-    }
-    _tcpTelemetrySocket = _tcpTelemetryServer->nextPendingConnection();
-    QObject::connect(_tcpTelemetrySocket, &QIODevice::readyRead, this, &TaisyncTelemetry::_readTelemetryBytes);
     _heartbeatTimer.start();
 }
 
 //-----------------------------------------------------------------------------
 void
-TaisyncTelemetry::_telemetrySocketDisconnected()
+TaisyncTelemetry::_readBytes()
 {
-    qCDebug(TaisyncTelemetryLog) << "Taisync Telemetry Connection Closed";
-    if(_tcpTelemetrySocket) {
-        _tcpTelemetrySocket->close();
-        _tcpTelemetrySocket->deleteLater();
-        _tcpTelemetrySocket = nullptr;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-TaisyncTelemetry::_readTelemetryBytes()
-{
-    QByteArray bytesIn = _tcpTelemetrySocket->read(_tcpTelemetrySocket->bytesAvailable());
+    QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
     _udpTelemetrySocket->writeDatagram(bytesIn, QHostAddress::LocalHost, 14550);
     qCDebug(TaisyncTelemetryLog) << "Taisync telemetry data:" << bytesIn.size();
     _heartbeatTimer.stop();
@@ -101,7 +72,7 @@ TaisyncTelemetry::_readTelemetryBytes()
 
 //-----------------------------------------------------------------------------
 void
-TaisyncTelemetry::_readBytes()
+TaisyncTelemetry::_readUDPBytes()
 {
     if (!_udpTelemetrySocket) {
         return;
@@ -111,8 +82,8 @@ TaisyncTelemetry::_readBytes()
         QByteArray datagram;
         datagram.resize(static_cast<int>(_udpTelemetrySocket->pendingDatagramSize()));
         _udpTelemetrySocket->readDatagram(datagram.data(), datagram.size());
-        if(_tcpTelemetrySocket) {
-            _tcpTelemetrySocket->write(datagram);
+        if(_tcpSocket) {
+            _tcpSocket->write(datagram);
         }
     }
 }
@@ -121,7 +92,8 @@ TaisyncTelemetry::_readBytes()
 void
 TaisyncTelemetry::_sendGCSHeartbeat(void)
 {
-    if(_tcpTelemetrySocket) {
+    //-- TODO: This is temporary. We should not have to send out heartbeats for a link to start.
+    if(_tcpSocket) {
         qCDebug(TaisyncTelemetryLog) << "Taisync heartbeat out";
         MAVLinkProtocol* pMavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
         mavlink_message_t message;
@@ -137,6 +109,6 @@ TaisyncTelemetry::_sendGCSHeartbeat(void)
             MAV_STATE_ACTIVE);       // MAV_STATE
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         int len = mavlink_msg_to_send_buffer(buffer, &message);
-        _tcpTelemetrySocket->write(reinterpret_cast<const char*>(buffer), len);
+        _tcpSocket->write(reinterpret_cast<const char*>(buffer), len);
     }
 }

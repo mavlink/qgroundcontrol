@@ -12,10 +12,11 @@
 
 #include "SettingsGroup.h"
 
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
 #include "TaisyncVideoReceiver.h"
 // TODO: Remove it and place it some place else
 #include "TaisyncTelemetry.h"
+#include "TaisyncSettings.h"
 #endif
 
 class VideoSettings : public SettingsGroup
@@ -50,7 +51,7 @@ public:
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
     static const char* videoSourceTCP;
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     static const char* videoSourceTaiSyncUSB;
 #endif
 
@@ -61,10 +62,11 @@ private slots:
     void _configChanged             (QVariant value);
 
 private:
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     TaisyncVideoReceiver*           _taiSync = nullptr;
     // TODO: Remove it and place it some place else
-    TaisyncTelemetry*               _taiTelem = nullptr;
+    TaisyncTelemetry*               _taiTelem    = nullptr;
+    TaisyncSettings*                _taiSettings = nullptr;
 #endif
     void _setDefaults               ();
 

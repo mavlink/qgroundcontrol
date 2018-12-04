@@ -9,37 +9,28 @@
 
 #pragma once
 
-#include "QGCLoggingCategory.h"
-
-#include <QTcpServer>
-#include <QTcpSocket>
+#include "TaisyncHandler.h"
 #include <QUdpSocket>
 #include <QTimer>
 
-#define TAISYNC_USB_TELEM_PORT  8400
-
 Q_DECLARE_LOGGING_CATEGORY(TaisyncTelemetryLog)
 
-class TaisyncTelemetry : public QObject
+class TaisyncTelemetry : public TaisyncHandler
 {
     Q_OBJECT
 public:
 
     explicit TaisyncTelemetry           (QObject* parent = nullptr);
-    ~TaisyncTelemetry                   ();
+    void close                          () override;
     void startTelemetry                 ();
-    void close                          ();
 
 private slots:
-    void    _newTelemetryConnection     ();
-    void    _readTelemetryBytes         ();
-    void    _telemetrySocketDisconnected();
-    void    _readBytes                  ();
+    void    _newConnection              () override;
+    void    _readBytes                  () override;
+    void    _readUDPBytes               ();
     void    _sendGCSHeartbeat           ();
 
 private:
     QTimer          _heartbeatTimer;
-    QTcpServer*     _tcpTelemetryServer = nullptr;
-    QTcpSocket*     _tcpTelemetrySocket = nullptr;
     QUdpSocket*     _udpTelemetrySocket = nullptr;
 };

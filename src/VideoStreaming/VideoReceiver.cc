@@ -227,7 +227,7 @@ VideoReceiver::start()
     _stop = false;
     qCDebug(VideoReceiverLog) << "start()";
 
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
     bool isTaisyncUSB = _videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceTaiSyncUSB;
 #else
     bool isTaisyncUSB = false;
@@ -293,11 +293,11 @@ VideoReceiver::start()
                 break;
             }
             g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
-#ifdef QGC_GST_TAISYNC_USB
+#ifdef QGC_GST_TAISYNC_ENABLED
         } else if(isTaisyncUSB) {
-            QString uri = QString("0.0.0.0:%1").arg(TAISYNC_USB_UDP_PORT);
+            QString uri = QString("0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
             qCDebug(VideoReceiverLog) << "Taisync URI:" << uri;
-            g_object_set(static_cast<gpointer>(dataSource), "port", TAISYNC_USB_UDP_PORT, nullptr);
+            g_object_set(static_cast<gpointer>(dataSource), "port", TAISYNC_VIDEO_UDP_PORT, nullptr);
 #endif
         } else if(isTCP) {
             QUrl url(_uri);
