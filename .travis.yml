@@ -89,7 +89,7 @@ install:
         mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         wget --quiet https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip &&
-        unzip android-ndk-r16g-linux-x86_64.zip -d 'pwd' &&
+        unzip android-ndk-r16b-linux-x86_64.zip -d 'pwd' &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r16b &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
         export PATH=/tmp/Qt5.11-android_armv7/5.11.0/android_armv7/bin:`pwd`/android-ndk-r16b:$PATH && echo $PATH
