@@ -479,6 +479,28 @@ void LinkManager::_updateAutoConnectLinks(void)
         createConnectedLink(config);
         emit linkConfigurationsChanged();
     }
+#ifndef __mobile__
+    // check to see if nmea gps is configured for UDP input, if so, set it up to connect
+    if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port")
+    {
+        if (_nmeaSocket.localPort() != _autoConnectSettings->nmeaUdpPort()->cookedValue().toUInt()
+                || _nmeaSocket.state() != UdpIODevice::BoundState) {
+            qCDebug(LinkManagerLog) << "Changing port for UDP NMEA stream";
+            _nmeaSocket.close();
+            _nmeaSocket.bind(QHostAddress::AnyIPv4, _autoConnectSettings->nmeaUdpPort()->cookedValue().toUInt());
+            _toolbox->qgcPositionManager()->setNmeaSourceDevice(&_nmeaSocket);
+        }
+        //close serial port
+        if (_nmeaPort) {
+            _nmeaPort->close();
+            delete _nmeaPort;
+            _nmeaPort = nullptr;
+            _nmeaDeviceName = "";
+        }
+    } else {
+        _nmeaSocket.close();
+    }
+#endif
 
 #ifndef NO_SERIAL_LINK
     QStringList currentPorts;
@@ -513,6 +535,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
 #ifndef NO_SERIAL_LINK
 #ifndef __mobile__
+        // check to see if nmea gps is configured for current Serial port, if so, set it up to connect
         if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
                 _nmeaDeviceName = portInfo.systemLocation().trimmed();
