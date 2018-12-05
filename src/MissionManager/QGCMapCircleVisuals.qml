@@ -127,7 +127,7 @@ Item {
 
             sourceItem: QGCColoredImage {
                 anchors.centerIn:   parent
-                width:              ScreenTools.defaultFontPixelHeight / 2
+                width:              ScreenTools.defaultFontPixelHeight * 0.66
                 height:             ScreenTools.defaultFontPixelHeight
                 source:             "/qmlimages/arrow-down.png"
                 color:              borderColor
