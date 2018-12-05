@@ -319,12 +319,13 @@ FlightMap {
     }
 
     QGCMapCircleVisuals {
-        id:         orbitMapCircle
-        mapControl: parent
-        mapCircle:  _mapCircle
-        visible:    false
+        id:             orbitMapCircle
+        mapControl:     parent
+        mapCircle:      _mapCircle
+        visible:        false
 
-        property alias center:  _mapCircle.center
+        property alias center:              _mapCircle.center
+        property alias clockwiseRotation:   _mapCircle.clockwiseRotation
 
         readonly property real defaultRadius: 30
 
@@ -348,6 +349,8 @@ FlightMap {
             id:                 _mapCircle
             interactive:        true
             radius.rawValue:    30
+            showRotation:       true
+            clockwiseRotation:  true
         }
     }
 
