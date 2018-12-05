@@ -16,6 +16,7 @@ Note: This file only contains high level features or important fixes.
 * Survey Planning: add mode that supports concave polygons
 * Support loading polygons from SHP files
 * Bumped settings version (now 8). This will cause all settings to be reset to defaults.
+* Orbit visuals support changing rotation direction
 
 ## 3.4
 
