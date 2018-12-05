@@ -383,7 +383,7 @@
       <output name="MAIN3">motor 3</output>
       <output name="MAIN4">motor 4</output>
     </airframe>
-    <airframe id="4900" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;" name="Crazyflie 2.0">
+    <airframe id="4900" maintainer="Dennis Shtatov &lt;densht@gmail.com&gt;" name="Crazyflie 2">
       <class>Copter</class>
       <maintainer>Dennis Shtatov &lt;densht@gmail.com&gt;</maintainer>
       <type>Quadrotor x</type>
