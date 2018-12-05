@@ -14,6 +14,7 @@
 QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool           (app, toolbox)
     , _updateInterval   (0)
+    , _gcsHeading       (NAN)
     , _currentSource    (NULL)
     , _defaultSource    (NULL)
     , _nmeaSource       (NULL)
@@ -61,6 +62,7 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
     QGeoCoordinate newGCSPosition = QGeoCoordinate();
+    qreal newGCSHeading = update.attribute(QGeoPositionInfo::Direction);
 
     if (update.isValid()) {
         // Note that gcsPosition filters out possible crap values
@@ -71,6 +73,10 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
     if (newGCSPosition != _gcsPosition) {
         _gcsPosition = newGCSPosition;
         emit gcsPositionChanged(_gcsPosition);
+    }
+    if (newGCSHeading != _gcsHeading) {
+        _gcsHeading = newGCSHeading;
+        emit gcsHeadingChanged(_gcsHeading);
     }
 
     emit positionInfoUpdated(update);
