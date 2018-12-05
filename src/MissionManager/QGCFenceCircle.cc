@@ -20,7 +20,7 @@ QGCFenceCircle::QGCFenceCircle(QObject* parent)
 }
 
 QGCFenceCircle::QGCFenceCircle(const QGeoCoordinate& center, double radius, bool inclusion, QObject* parent)
-    : QGCMapCircle  (center, radius, parent)
+    : QGCMapCircle  (center, radius, false /* showRotation */, true /* clockwiseRotation */, parent)
     , _inclusion    (inclusion)
 {
     _init();
