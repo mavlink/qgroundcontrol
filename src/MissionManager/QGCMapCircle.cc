@@ -22,30 +22,36 @@ const char* QGCMapCircle::_jsonRadiusKey =  "radius";
 const char* QGCMapCircle::_radiusFactName = "Radius";
 
 QGCMapCircle::QGCMapCircle(QObject* parent)
-    : QObject       (parent)
-    , _dirty        (false)
-    , _interactive  (false)
+    : QObject           (parent)
+    , _dirty            (false)
+    , _interactive      (false)
+    , _showRotation     (false)
+    , _clockwiseRotation(true)
 {
     _init();
 }
 
-QGCMapCircle::QGCMapCircle(const QGeoCoordinate& center, double radius, QObject* parent)
-    : QObject       (parent)
-    , _dirty        (false)
-    , _center       (center)
-    , _radius       (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
-    , _interactive  (false)
+QGCMapCircle::QGCMapCircle(const QGeoCoordinate& center, double radius, bool showRotation, bool clockwiseRotation, QObject* parent)
+    : QObject           (parent)
+    , _dirty            (false)
+    , _center           (center)
+    , _radius           (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
+    , _interactive      (false)
+    , _showRotation     (showRotation)
+    , _clockwiseRotation(clockwiseRotation)
 {
     _radius.setRawValue(radius);
     _init();
 }
 
 QGCMapCircle::QGCMapCircle(const QGCMapCircle& other, QObject* parent)
-    : QObject       (parent)
-    , _dirty        (false)
-    , _center       (other._center)
-    , _radius       (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
-    , _interactive  (false)
+    : QObject           (parent)
+    , _dirty            (false)
+    , _center           (other._center)
+    , _radius           (FactSystem::defaultComponentId, _radiusFactName, FactMetaData::valueTypeDouble)
+    , _interactive      (false)
+    , _showRotation     (other._showRotation)
+    , _clockwiseRotation(other._clockwiseRotation)
 {
     _radius.setRawValue(other._radius.rawValue());
     _init();
@@ -117,6 +123,10 @@ bool QGCMapCircle::loadFromJson(const QJsonObject& json, QString& errorString)
     setCenter(center);
     _radius.setRawValue(circleObject[_jsonRadiusKey].toDouble());
 
+    _interactive =          false;
+    _showRotation =         false;
+    _clockwiseRotation =    true;
+
     return true;
 }
 
@@ -142,3 +152,18 @@ void QGCMapCircle::setInteractive(bool interactive)
     }
 }
 
+void QGCMapCircle::setShowRotation(bool showRotation)
+{
+    if (showRotation != _showRotation) {
+        _showRotation = showRotation;
+        emit showRotationChanged(showRotation);
+    }
+}
+
+void QGCMapCircle::setClockwiseRotation(bool clockwiseRotation)
+{
+    if (clockwiseRotation != _clockwiseRotation) {
+        _clockwiseRotation = clockwiseRotation;
+        emit clockwiseRotationChanged(clockwiseRotation);
+    }
+}
