@@ -40,9 +40,10 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(const QString& title, QAction* action, 
 
     connect(ui->clearButton, &QPushButton::clicked, this, &QGCMAVLinkInspector::clearView);
 
-    // Connect external connections
-    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &QGCMAVLinkInspector::_vehicleAdded);
-    connect(protocol, &MAVLinkProtocol::messageReceived, this, &QGCMAVLinkInspector::receiveMessage);
+    MultiVehicleManager* multiVehicleManager = qgcApp()->toolbox()->multiVehicleManager();
+    connect(multiVehicleManager,    &MultiVehicleManager::vehicleAdded,     this, &QGCMAVLinkInspector::_vehicleAdded);
+    connect(multiVehicleManager,    &MultiVehicleManager::vehicleRemoved,   this, &QGCMAVLinkInspector::_vehicleRemoved);
+    connect(protocol,               &MAVLinkProtocol::messageReceived,      this, &QGCMAVLinkInspector::receiveMessage);
 
     // Attach the UI's refresh rate to a timer.
     connect(&updateTimer, &QTimer::timeout, this, &QGCMAVLinkInspector::refreshView);
@@ -56,7 +57,12 @@ void QGCMAVLinkInspector::_vehicleAdded(Vehicle* vehicle)
     ui->systemComboBox->addItem(tr("Vehicle %1").arg(vehicle->id()), vehicle->id());
 
     // Add a tree for a new UAS
-    addUAStoTree(vehicle->id());
+    addVehicleToTree(vehicle->id());
+}
+
+void QGCMAVLinkInspector::_vehicleRemoved(Vehicle* vehicle)
+{
+    removeVehicleFromTree(vehicle->id());
 }
 
 void QGCMAVLinkInspector::selectDropDownMenuSystem(int dropdownid)
@@ -165,8 +171,6 @@ void QGCMAVLinkInspector::clearView()
     }
     uasLastMessageUpdate.clear();
 
-    onboardMessageInterval.clear();
-
     ui->treeWidget->clear();
 }
 
@@ -230,7 +234,7 @@ void QGCMAVLinkInspector::refreshView()
         QString messageName("%1 (%2 Hz, #%3)");
         messageName = messageName.arg(msgInfo->name).arg(msgHz, 3, 'f', 1).arg(msg->msgid);
 
-        addUAStoTree(msg->sysid);
+        addVehicleToTree(msg->sysid);
 
         // Look for the tree for the UAS sysid
         QMap<int, QTreeWidgetItem*>* msgTreeItems = uasMsgTreeItems.value(msg->sysid);
@@ -271,24 +275,26 @@ void QGCMAVLinkInspector::refreshView()
     }
 }
 
-void QGCMAVLinkInspector::addUAStoTree(int sysId)
+void QGCMAVLinkInspector::addVehicleToTree(int vehicleId)
 {
-    if(!uasTreeWidgetItems.contains(sysId))
-    {
-        // Add the UAS to the main tree after it has been created
-        Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->getVehicleById(sysId);
-        if (vehicle)
-        {
-            UASInterface* uas = vehicle->uas();
-            QStringList idstring;
-            idstring << QString("Vehicle %1").arg(uas->getUASID());
-            QTreeWidgetItem* uasWidget = new QTreeWidgetItem(idstring);
-            uasWidget->setFirstColumnSpanned(true);
-            uasTreeWidgetItems.insert(sysId,uasWidget);
-            ui->treeWidget->addTopLevelItem(uasWidget);
-            uasMsgTreeItems.insert(sysId,new QMap<int, QTreeWidgetItem*>());
-        }
+    if (!uasTreeWidgetItems.contains(vehicleId)) {
+        QStringList idstring;
+        idstring << tr("Vehicle %1").arg(vehicleId);
+        QTreeWidgetItem* uasWidget = new QTreeWidgetItem(idstring);
+        uasWidget->setFirstColumnSpanned(true);
+        uasTreeWidgetItems.insert(vehicleId, uasWidget);
+        ui->treeWidget->addTopLevelItem(uasWidget);
+        uasMsgTreeItems.insert(vehicleId, new QMap<int, QTreeWidgetItem*>());
     }
+}
+
+void QGCMAVLinkInspector::removeVehicleFromTree(int vehicleId)
+{
+    Q_UNUSED(vehicleId);
+
+    // This doesn't work with multi-vehicle. But this code is so screwed up and crufty it's not worth the effort making that work.
+    // Especially since mult-vehicle support here has been broken for ages. Better to at least get single vehicle working.
+    clearView();
 }
 
 void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t message)
@@ -396,22 +402,6 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
         lastMsgUpdate->insert(message.msgid,receiveTime);
     }
 
-    if (selectedSystemID == 0 || selectedComponentID == 0)
-    {
-        return;
-    }
-
-    switch (message.msgid)
-    {
-        case MAVLINK_MSG_ID_DATA_STREAM:
-            {
-                mavlink_data_stream_t stream;
-                mavlink_msg_data_stream_decode(&message, &stream);
-                onboardMessageInterval.insert(stream.stream_id, stream.message_rate);
-            }
-            break;
-
-    }
 }
 
 QGCMAVLinkInspector::~QGCMAVLinkInspector()
