@@ -105,8 +105,7 @@ Item {
         id: rotationIndicatorComponent
 
         MapQuickItem {
-            z:          QGroundControl.zOrderMapItems + 2
-            visible:    mapCircle.showRotation
+            visible: mapCircle.showRotation
 
             property bool topIndicator: true
 
