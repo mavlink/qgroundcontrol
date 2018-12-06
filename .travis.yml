@@ -82,12 +82,13 @@ install:
     fi
 
   # android dependencies: qt, gstreamer, android-ndk
+# gstreamer support temporarily disable until we figure the crash/build problems
+#wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
+#mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
+#tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
   - if [ "${SPEC}" = "android-g++" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-android_armv7-min.tar.bz2 &&
         tar jxf Qt5.11.0-android_armv7-min.tar.bz2 -C /tmp &&
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-armv7-1.5.2.tar.bz2 &&
-        mkdir -p ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
-        tar jxf gstreamer-1.0-android-armv7-1.5.2.tar.bz2 -C ${TRAVIS_BUILD_DIR}/gstreamer-1.0-android-armv7-1.5.2 &&
         wget --quiet https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip &&
         unzip android-ndk-r16b-linux-x86_64.zip > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r16b &&
