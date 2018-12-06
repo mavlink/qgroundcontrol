@@ -354,6 +354,13 @@ FlightMap {
         }
     }
 
+    // Used to show orbit status telemetry from the vehicle
+    QGCMapCircleVisuals {
+        mapControl:     parent
+        mapCircle:      _activeVehicle.orbitMapCircle
+        visible:        _activeVehicle ? _activeVehicle.orbitActive : false
+    }
+
     // Handle guided mode clicks
     MouseArea {
         anchors.fill: parent

@@ -20,6 +20,7 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
+#include "QGCMapCircle.h"
 
 class UAS;
 class UASInterface;
@@ -630,6 +631,10 @@ public:
     Q_PROPERTY(quint64              mavlinkLossCount        READ mavlinkLossCount                                       NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent      READ mavlinkLossPercent                                     NOTIFY mavlinkStatusChanged)
 
+    // The following properties relate to Orbit status
+    Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
+    Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
+
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
     Q_PROPERTY(bool landing                 READ landing NOTIFY landingChanged)                             ///< Vehicle is in landing pattern (DO_LAND_START)
@@ -931,6 +936,9 @@ public:
     int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
     bool            highLatencyLink         () const { return _highLatencyLink; }
+    bool            orbitActive             () const { return _orbitActive; }
+    QGCMapCircle*   orbitMapCircle          () { return &_orbitMapCircle; }
+
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
@@ -1130,6 +1138,7 @@ signals:
     void sensorsEnabledBitsChanged  (int sensorsEnabledBits);
     void sensorsHealthBitsChanged   (int sensorsHealthBits);
     void sensorsUnhealthyBitsChanged(int sensorsUnhealthyBits);
+    void orbitActiveChanged         (bool orbitActive);
 
     void firmwareVersionChanged(void);
     void firmwareCustomVersionChanged(void);
@@ -1203,6 +1212,7 @@ private slots:
 
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _adsbTimerTimeout      ();
+    void _orbitTelemetryTimeout (void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -1241,6 +1251,7 @@ private:
     void _handleDistanceSensor(mavlink_message_t& message);
     void _handleEstimatorStatus(mavlink_message_t& message);
     void _handleStatusText(mavlink_message_t& message);
+    void _handleOrbitExecutionStatus(const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1442,6 +1453,12 @@ private:
     float       _mavlinkLossPercent     = 0.0f;
 
     QMap<QString, QTime> _noisySpokenPrearmMap; ///< Used to prevent PreArm messages from being spoken too often
+
+    // Orbit status values
+    bool            _orbitActive;
+    QGCMapCircle    _orbitMapCircle;
+    QTimer          _orbitTelemetryTimer;
+    static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
 
     // FactGroup facts
 
