@@ -47,8 +47,9 @@ ParameterEditorController::ParameterEditorController(void)
     }
     _updateParameters();
 
-    connect(this, &ParameterEditorController::searchTextChanged, this, &ParameterEditorController::_updateParameters);
-    connect(this, &ParameterEditorController::currentGroupChanged, this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::searchTextChanged,        this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentCategoryChanged,   this, &ParameterEditorController::_updateParameters);
+    connect(this, &ParameterEditorController::currentGroupChanged,      this, &ParameterEditorController::_updateParameters);
 }
 
 ParameterEditorController::~ParameterEditorController()
