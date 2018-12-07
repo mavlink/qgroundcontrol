@@ -1714,15 +1714,20 @@ void MissionController::managerVehicleChanged(Vehicle* managerVehicle)
 void MissionController::_managerVehicleHomePositionChanged(const QGeoCoordinate& homePosition)
 {
     if (_visualItems) {
+        bool currentDirtyBit = dirty();
+
         MissionSettingsItem* settingsItem = qobject_cast<MissionSettingsItem*>(_visualItems->get(0));
         if (settingsItem) {
             settingsItem->setHomePositionFromVehicle(homePosition);
         } else {
             qWarning() << "First item is not MissionSettingsItem";
         }
-        // Don't let this trip the dirty bit. Otherwise plan will keep getting marked dirty if vehicle home
-        // changes.
-        _visualItems->setDirty(false);
+
+        if (!currentDirtyBit) {
+            // Don't let this trip the dirty bit. Otherwise plan will keep getting marked dirty if vehicle home
+            // changes.
+            _visualItems->setDirty(false);
+        }
     }
 }
 
