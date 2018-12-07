@@ -3032,7 +3032,7 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
         return;
     }
 
-    if (capabilityBits() && MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+    if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
         sendMavCommandInt(defaultComponentId(),
                           MAV_CMD_DO_ORBIT,
                           MAV_FRAME_GLOBAL,
