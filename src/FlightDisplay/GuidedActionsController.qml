@@ -384,7 +384,7 @@ Item {
             _activeVehicle.setCurrentMissionSequence(actionData)
             break
         case actionOrbit:
-            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius() * (orbitMapCircle.clockWiseRotation ? 1 : -1), _activeVehicle.altitudeAMSL.rawValue + actionAltitudeChange)
+            _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius() * (orbitMapCircle.clockwiseRotation ? 1 : -1), _activeVehicle.altitudeAMSL.rawValue + actionAltitudeChange)
             orbitMapCircle.hide()
             break
         case actionLandAbort:
