@@ -49,7 +49,8 @@ public:
     Q_INVOKABLE void start(bool flyView);
 
     /// Starts the controller using a single static active vehicle. Will not track global active vehicle changes.
-    Q_INVOKABLE void startStaticActiveVehicle(Vehicle* vehicle);
+    ///     @param deleteWhenSendCmplete The PlanMasterController object should be deleted after the first send is completed.
+    Q_INVOKABLE void startStaticActiveVehicle(Vehicle* vehicle, bool deleteWhenSendCompleted = false);
 
     /// Determines if the plan has all data needed to be saved or sent to the vehicle. Currently the only case where this
     /// would return false is when it is still waiting on terrain data to determine correct altitudes.
@@ -127,5 +128,6 @@ private:
     bool                    _sendGeoFence;
     bool                    _sendRallyPoints;
     QString                 _currentPlanFile;
+    bool                    _deleteWhenSendCompleted;
 
 };
