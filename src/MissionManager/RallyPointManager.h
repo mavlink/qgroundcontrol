@@ -62,13 +62,14 @@ public:
     } ErrorCode_t;
     
 signals:
-    void loadComplete       (const QList<QGeoCoordinate> rgPoints);
+    void loadComplete       (void);
     void inProgressChanged  (bool inProgress);
     void error              (int errorCode, const QString& errorMsg);
     void removeAllComplete  (bool error);
     void sendComplete       (bool error);
 
 private slots:
+    void _sendComplete              (bool error);
     void _planManagerLoadComplete   (bool removeAllRequested);
 
 protected:
@@ -77,6 +78,7 @@ protected:
     Vehicle*                _vehicle;
     PlanManager             _planManager;
     QList<QGeoCoordinate>   _rgPoints;
+    QList<QGeoCoordinate>   _rgSendPoints;
 };
 
 #endif
