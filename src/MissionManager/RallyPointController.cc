@@ -203,15 +203,15 @@ QString RallyPointController::editorQml(void) const
     return _rallyPointManager->editorQml();
 }
 
-void RallyPointController::_managerLoadComplete(const QList<QGeoCoordinate> rgPoints)
+void RallyPointController::_managerLoadComplete(void)
 {
     // Fly view always reloads on _loadComplete
     // Plan view only reloads on _loadComplete if specifically requested
     if (_flyView || _itemsRequested) {
         _points.clearAndDeleteContents();
         QObjectList pointList;
-        for (int i=0; i<rgPoints.count(); i++) {
-            pointList.append(new RallyPoint(rgPoints[i], this));
+        for (int i=0; i<_rallyPointManager->points().count(); i++) {
+            pointList.append(new RallyPoint(_rallyPointManager->points()[i], this));
         }
         _points.swapObjectList(pointList);
         setDirty(false);
@@ -224,7 +224,7 @@ void RallyPointController::_managerLoadComplete(const QList<QGeoCoordinate> rgPo
 void RallyPointController::_managerSendComplete(bool error)
 {
     // Fly view always reloads after send
-    if (!error && !_flyView) {
+    if (!error && _flyView) {
         showPlanFromManagerVehicle();
     }
 }
@@ -317,6 +317,7 @@ bool RallyPointController::showPlanFromManagerVehicle (void)
         } else {
             qCDebug(RallyPointControllerLog) << "showPlanFromManagerVehicle: sync complete";
             _itemsRequested = true;
+            _managerLoadComplete();
             return false;
         }
     }
