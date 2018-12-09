@@ -52,7 +52,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
     , _autoConnectSettings(NULL)
     , _mavlinkProtocol(NULL)
 #ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     , _nmeaPort(NULL)
+#endif
 #endif
 {
     qmlRegisterUncreatableType<LinkManager>         ("QGroundControl", 1, 0, "LinkManager",         "Reference only");
@@ -69,7 +71,9 @@ LinkManager::LinkManager(QGCApplication* app, QGCToolbox* toolbox)
 LinkManager::~LinkManager()
 {
 #ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     delete _nmeaPort;
+#endif
 #endif
 }
 
@@ -513,6 +517,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         QGCSerialPortInfo::BoardType_t boardType;
         QString boardName;
 
+#ifndef NO_SERIAL_LINK
 #ifndef __mobile__
         if (portInfo.systemLocation().trimmed() == _autoConnectSettings->autoConnectNmeaPort()->cookedValueString()) {
             if (portInfo.systemLocation().trimmed() != _nmeaDeviceName) {
@@ -538,6 +543,7 @@ void LinkManager::_updateAutoConnectLinks(void)
                 qCDebug(LinkManagerLog) << "Configuring nmea baudrate" << _nmeaBaud;
             }
         } else
+#endif
 #endif
         if (portInfo.getBoardInfo(boardType, boardName)) {
             if (portInfo.isBootloader()) {

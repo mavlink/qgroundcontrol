@@ -237,9 +237,11 @@ private:
 
     // NMEA GPS device for GCS position
 #ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     QString      _nmeaDeviceName;
     QSerialPort* _nmeaPort;
     uint32_t     _nmeaBaud;
+#endif
 #endif
 };
 
