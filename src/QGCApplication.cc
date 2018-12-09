@@ -440,7 +440,9 @@ void QGCApplication::_initCommon(void)
 #ifndef __mobile__
     qmlRegisterType<ViewWidgetController>           (kQGCControllers,                       1, 0, "ViewWidgetController");
     qmlRegisterType<CustomCommandWidgetController>  (kQGCControllers,                       1, 0, "CustomCommandWidgetController");
+#ifndef NO_SERIAL_LINK
     qmlRegisterType<FirmwareUpgradeController>      (kQGCControllers,                       1, 0, "FirmwareUpgradeController");
+#endif
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
 #endif

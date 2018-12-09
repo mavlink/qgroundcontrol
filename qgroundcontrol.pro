@@ -922,13 +922,13 @@ HEADERS+= \
     src/Vehicle/Vehicle.h \
     src/VehicleSetup/VehicleComponent.h \
 
-!MobileBuild {
+!MobileBuild { !NoSerialBuild {
     HEADERS += \
         src/VehicleSetup/Bootloader.h \
         src/VehicleSetup/FirmwareImage.h \
         src/VehicleSetup/FirmwareUpgradeController.h \
         src/VehicleSetup/PX4FirmwareUpgradeThread.h \
-}
+}}
 
 SOURCES += \
     src/AutoPilotPlugins/AutoPilotPlugin.cc \
@@ -948,13 +948,13 @@ SOURCES += \
     src/Vehicle/Vehicle.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
-!MobileBuild {
+!MobileBuild { !NoSerialBuild {
     SOURCES += \
         src/VehicleSetup/Bootloader.cc \
         src/VehicleSetup/FirmwareImage.cc \
         src/VehicleSetup/FirmwareUpgradeController.cc \
         src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
-}
+}}
 
 # ArduPilot FirmwarePlugin
 
