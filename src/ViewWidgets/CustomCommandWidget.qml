@@ -34,7 +34,7 @@ QGCView {
         "So make sure to test your changes thoroughly before using them in flight.</p>" +
         "<p>Click 'Load Custom Qml file' to provide your custom qml file.</p>" +
         "<p>Click 'Reset' to reset to none.</p>" +
-        "<p>Example usage: <a href='https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html'>https://dev.qgroundcontrol.com/en/tools/custom_command_widget.html</a></p>"
+        "<p>Example usage: <a href='https://docs.qgroundcontrol.com/en/app_menu/custom_command_widget.html'>https://docs.qgroundcontrol.com/en/app_menu/custom_command_widget.html</a></p>"
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
