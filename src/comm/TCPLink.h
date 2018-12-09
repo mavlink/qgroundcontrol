@@ -101,6 +101,7 @@ public:
     void        saveSettings    (QSettings& settings, const QString& root);
     void        updateSettings  ();
     QString     settingsURL     () { return "TcpSettings.qml"; }
+    QString     settingsTitle   () { return tr("TCP Link Settings"); }
 
 signals:
     void portChanged();
