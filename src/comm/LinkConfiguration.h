@@ -31,6 +31,7 @@ public:
     Q_PROPERTY(bool             autoConnect         READ isAutoConnect  WRITE setAutoConnect    NOTIFY autoConnectChanged)
     Q_PROPERTY(bool             autoConnectAllowed  READ isAutoConnectAllowed                   CONSTANT)
     Q_PROPERTY(QString          settingsURL         READ settingsURL                            CONSTANT)
+    Q_PROPERTY(QString          settingsTitle       READ settingsTitle                          CONSTANT)
     Q_PROPERTY(bool             highLatency         READ isHighLatency  WRITE setHighLatency    NOTIFY highLatencyChanged)
     Q_PROPERTY(bool             highLatencyAllowed  READ isHighLatencyAllowed                   CONSTANT)
 
@@ -146,7 +147,14 @@ public:
      *
      * Pure virtual method providing the URL for the (QML) settings dialog
      */
-    virtual QString settingsURL() = 0;
+    virtual QString settingsURL     () = 0;
+
+    /*!
+     * @brief Settings Title
+     *
+     * Pure virtual method providing the Title for the (QML) settings dialog
+     */
+    virtual QString settingsTitle   () = 0;
 
     /*!
      * @brief Update settings

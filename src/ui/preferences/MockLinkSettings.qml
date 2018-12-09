@@ -17,11 +17,10 @@ import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
-Item {
-    id:     mockLinkSettings
-    width:  parent ? parent.width : 0
-    height: mockColumn.height
-
+Column {
+    id:                 mockLinkSettings
+    spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+    anchors.margins:    ScreenTools.defaultFontPixelWidth
     function saveSettings() {
         if(px4Firmware.checked)
             subEditConfig.firmware = 12         // Hardcoded MAV_AUTOPILOT_PX4
@@ -35,9 +34,7 @@ Item {
         else
             subEditConfig.firmware = 0
         subEditConfig.sendStatus = sendStatus.checked
-        subEditConfig.highLatency = highLatency.checked
     }
-
     Component.onCompleted: {
         if(subEditConfig.firmware === 12)       // Hardcoded MAV_AUTOPILOT_PX4
             px4Firmware.checked = true
@@ -50,78 +47,59 @@ Item {
         else
             copterVehicle.checked = true
         sendStatus.checked = subEditConfig.sendStatus
-        highLatency.checked = subEditConfig.highLatency
     }
-
-    Column {
-        id:         mockColumn
-        width:      mockLinkSettings.width
-        spacing:    ScreenTools.defaultFontPixelHeight / 2
-        QGCLabel {
-            text:   qsTr("Mock Link Settings")
-        }
-        Item {
-            height: ScreenTools.defaultFontPixelHeight / 2
-            width:  parent.width
-        }
-        QGCCheckBox {
-            id:         sendStatus
-            text:       qsTr("Send Status Text and Voice")
+    QGCCheckBox {
+        id:             sendStatus
+        text:           qsTr("Send Status Text and Voice")
+        checked:        false
+    }
+    Item {
+        height: ScreenTools.defaultFontPixelHeight / 2
+        width:  parent.width
+    }
+    ColumnLayout {
+        ExclusiveGroup { id: autoPilotGroup }
+        QGCRadioButton {
+            id:         px4Firmware
+            text:       qsTr("PX4 Firmware")
             checked:    false
+            exclusiveGroup: autoPilotGroup
         }
-        QGCCheckBox {
-            id:         highLatency
-            text:       qsTr("High latency")
+        QGCRadioButton {
+            id:         apmFirmware
+            text:       qsTr("APM Firmware")
             checked:    false
+            exclusiveGroup: autoPilotGroup
         }
-        Item {
-            height: ScreenTools.defaultFontPixelHeight / 2
-            width:  parent.width
+        QGCRadioButton {
+            id:         genericFirmware
+            text:       qsTr("Generic Firmware")
+            checked:    false
+            exclusiveGroup: autoPilotGroup
         }
-        ColumnLayout {
-            ExclusiveGroup { id: autoPilotGroup }
-            QGCRadioButton {
-                id:         px4Firmware
-                text:       qsTr("PX4 Firmware")
-                checked:    false
-                exclusiveGroup: autoPilotGroup
-            }
-            QGCRadioButton {
-                id:         apmFirmware
-                text:       qsTr("APM Firmware")
-                checked:    false
-                exclusiveGroup: autoPilotGroup
-            }
-            QGCRadioButton {
-                id:         genericFirmware
-                text:       qsTr("Generic Firmware")
-                checked:    false
-                exclusiveGroup: autoPilotGroup
-            }
+    }
+    Item {
+        height: ScreenTools.defaultFontPixelHeight / 2
+        width:  parent.width
+    }
+    QGCLabel {
+        text:           qsTr("APM Vehicle Type")
+        visible:        apmFirmware.checked
+    }
+    ColumnLayout {
+        visible:        apmFirmware.checked
+        ExclusiveGroup { id: apmVehicleGroup }
+        QGCRadioButton {
+            id:         copterVehicle
+            text:       qsTr("ArduCopter")
+            checked:    false
+            exclusiveGroup: apmVehicleGroup
         }
-        Item {
-            height: ScreenTools.defaultFontPixelHeight / 2
-            width:  parent.width
-        }
-        QGCLabel {
-            text:       qsTr("APM Vehicle Type")
-            visible:    apmFirmware.checked
-        }
-        ColumnLayout {
-            visible:    apmFirmware.checked
-            ExclusiveGroup { id: apmVehicleGroup }
-            QGCRadioButton {
-                id:     copterVehicle
-                text:   qsTr("ArduCopter")
-                checked:    false
-                exclusiveGroup: apmVehicleGroup
-            }
-            QGCRadioButton {
-                id:     planeVehicle
-                text:   qsTr("ArduPlane")
-                checked:    false
-                exclusiveGroup: apmVehicleGroup
-            }
+        QGCRadioButton {
+            id:         planeVehicle
+            text:       qsTr("ArduPlane")
+            checked:    false
+            exclusiveGroup: apmVehicleGroup
         }
     }
 }
