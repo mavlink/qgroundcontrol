@@ -15,6 +15,7 @@
 #include <QTimer>
 #include <QUrl>
 
+#include "QGCMAVLink.h"
 #include "QGCLoggingCategory.h"
 #include "VideoReceiver.h"
 #include "QGCToolbox.h"
@@ -22,6 +23,7 @@
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class VideoSettings;
+class Vehicle;
 
 class VideoManager : public QGCTool
 {
@@ -33,15 +35,20 @@ public:
 
     Q_PROPERTY(bool             hasVideo            READ    hasVideo                                    NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer         READ    isGStreamer                                 NOTIFY isGStreamerChanged)
+    Q_PROPERTY(bool             isAutoStream        READ    isAutoStream                                NOTIFY isAutoStreamChanged)
     Q_PROPERTY(QString          videoSourceID       READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen          READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver                               CONSTANT)
+    Q_PROPERTY(double           aspectRatio         READ    aspectRatio                                 NOTIFY aspectRatioChanged)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
+    bool        isAutoStream        ();
     bool        fullScreen          () { return _fullScreen; }
     QString     videoSourceID       () { return _videoSourceID; }
+    QString     autoURL             () { return QString(_streamInfo.uri); }
+    double      aspectRatio         ();
 
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
 
@@ -64,6 +71,8 @@ signals:
     void isGStreamerChanged         ();
     void videoSourceIDChanged       ();
     void fullScreenChanged          ();
+    void isAutoStreamChanged        ();
+    void aspectRatioChanged         ();
 
 private slots:
     void _videoSourceChanged        ();
@@ -71,6 +80,9 @@ private slots:
     void _rtspUrlChanged            ();
     void _tcpUrlChanged             ();
     void _updateUVC                 ();
+    void _aspectRatioChanged        ();
+    void _setActiveVehicle          (Vehicle* vehicle);
+    void _vehicleMessageReceived    (const mavlink_message_t& message);
 
 private:
     void _updateSettings            ();
@@ -80,6 +92,8 @@ private:
     VideoSettings*  _videoSettings;
     QString         _videoSourceID;
     bool            _fullScreen;
+    Vehicle*        _activeVehicle;
+    mavlink_video_stream_information_t _streamInfo;
 };
 
 #endif
