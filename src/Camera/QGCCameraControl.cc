@@ -59,6 +59,27 @@ static const char* kPhotoLapse      = "PhotoLapse";
 static const char* kPhotoLapseCount = "PhotoLapseCount";
 
 //-----------------------------------------------------------------------------
+QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
+    : QObject(parent)
+    , param(param_)
+    , value(value_)
+    , exclusions(exclusions_)
+{
+}
+
+//-----------------------------------------------------------------------------
+QGCCameraOptionRange::QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_)
+    : QObject(parent)
+    , param(param_)
+    , value(value_)
+    , targetParam(targetParam_)
+    , condition(condition_)
+    , optNames(optNames_)
+    , optValues(optValues_)
+{
+}
+
+//-----------------------------------------------------------------------------
 static bool
 read_attribute(QDomNode& node, const char* tagName, bool& target)
 {
@@ -127,7 +148,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _cached(false)
     , _storageFree(0)
     , _storageTotal(0)
-    , _netManager(NULL)
+    , _netManager(nullptr)
     , _cameraMode(CAM_MODE_UNDEFINED)
     , _photoMode(PHOTO_CAPTURE_SINGLE)
     , _photoLapse(1.0)
@@ -140,9 +161,9 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
     connect(this, &QGCCameraControl::dataReady, this, &QGCCameraControl::_dataReady);
-    _vendor = QString((const char*)(void*)&info->vendor_name[0]);
-    _modelName = QString((const char*)(void*)&info->model_name[0]);
-    int ver = (int)_info.cam_definition_version;
+    _vendor = QString(reinterpret_cast<const char*>(info->vendor_name));
+    _modelName = QString(reinterpret_cast<const char*>(info->model_name));
+    int ver = static_cast<int>(_info.cam_definition_version);
     _cacheFile.sprintf("%s/%s_%s_%03d.xml",
         qgcApp()->toolbox()->settingsManager()->appSettings()->parameterSavePath().toStdString().c_str(),
         _vendor.toStdString().c_str(),
@@ -155,7 +176,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
         _initWhenReady();
     }
     QSettings settings;
-    _photoMode = (PhotoMode)settings.value(kPhotoMode, (int)PHOTO_CAPTURE_SINGLE).toInt();
+    _photoMode  = static_cast<PhotoMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
     _photoLapse = settings.value(kPhotoLapse, 1.0).toDouble();
     _photoLapseCount = settings.value(kPhotoLapseCount, 0).toInt();
 }
@@ -189,7 +210,7 @@ QGCCameraControl::_initWhenReady()
     emit infoChanged();
     if(_netManager) {
         delete _netManager;
-        _netManager = NULL;
+        _netManager = nullptr;
     }
 }
 
@@ -223,7 +244,7 @@ QGCCameraControl::photoStatus()
 QString
 QGCCameraControl::storageFreeStr()
 {
-    return QGCMapEngine::bigSizeToString((quint64)_storageFree * 1024 * 1024);
+    return QGCMapEngine::bigSizeToString(static_cast<quint64>(_storageFree * 1024 * 1024));
 }
 
 //-----------------------------------------------------------------------------
@@ -247,7 +268,7 @@ QGCCameraControl::setPhotoMode(PhotoMode mode)
 {
     _photoMode = mode;
     QSettings settings;
-    settings.setValue(kPhotoMode, (int)mode);
+    settings.setValue(kPhotoMode, static_cast<int>(mode));
     emit photoModeChanged();
 }
 
@@ -312,12 +333,12 @@ QGCCameraControl::takePhoto()
     }
     if(capturesPhotos()) {
         _vehicle->sendMavCommand(
-            _compID,                                                    // Target component
-            MAV_CMD_IMAGE_START_CAPTURE,                                // Command id
-            false,                                                      // ShowError
-            0,                                                          // Reserved (Set to 0)
-            _photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse,       // Duration between two consecutive pictures (in seconds--ignored if single image)
-            _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount); // Number of images to capture total - 0 for unlimited capture
+            _compID,                                                                    // Target component
+            MAV_CMD_IMAGE_START_CAPTURE,                                                // Command id
+            false,                                                                      // ShowError
+            0,                                                                          // Reserved (Set to 0)
+            static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
+            _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
         _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
         _captureInfoRetries = 0;
         //-- Capture local image as well
@@ -944,12 +965,12 @@ QGCCameraControl::_requestAllParameters()
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_message_t msg;
     mavlink_msg_param_ext_request_list_pack_chan(
-        mavlink->getSystemId(),
-        mavlink->getComponentId(),
+        static_cast<uint8_t>(mavlink->getSystemId()),
+        static_cast<uint8_t>(mavlink->getComponentId()),
         _vehicle->priorityLink()->mavlinkChannel(),
         &msg,
-        _vehicle->id(),
-        compID());
+        static_cast<uint8_t>(_vehicle->id()),
+        static_cast<uint8_t>(compID()));
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     qCDebug(CameraControlLogVerbose) << "Request all parameters";
 }
@@ -1223,7 +1244,7 @@ void
 QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
     qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
-    _setCameraMode((CameraMode)settings.mode_id);
+    _setCameraMode(static_cast<CameraMode>(settings.mode_id));
 }
 
 //-----------------------------------------------------------------------------
@@ -1231,13 +1252,15 @@ void
 QGCCameraControl::handleStorageInfo(const mavlink_storage_information_t& st)
 {
     qCDebug(CameraControlLog) << "_handleStorageInfo:" << st.available_capacity << st.status << st.storage_count << st.storage_id << st.total_capacity << st.used_capacity;
-    if(_storageTotal != st.total_capacity) {
-        _storageTotal = st.total_capacity;
+    uint32_t t = static_cast<uint32_t>(st.total_capacity);
+    if(_storageTotal != t) {
+        _storageTotal = t;
     }
     //-- Always emit this
     emit storageTotalChanged();
-    if(_storageFree != st.available_capacity) {
-        _storageFree = st.available_capacity;
+    uint32_t a = static_cast<uint32_t>(st.available_capacity);
+    if(_storageFree != a) {
+        _storageFree = a;
         emit storageFreeChanged();
     }
 }
@@ -1249,15 +1272,16 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
     //-- This is a response to MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS
     qCDebug(CameraControlLog) << "handleCaptureStatus:" << cap.available_capacity << cap.image_interval << cap.image_status << cap.recording_time_ms << cap.video_status;
     //-- Disk Free Space
-    if(_storageFree != cap.available_capacity) {
-        _storageFree = cap.available_capacity;
+    uint32_t a = static_cast<uint32_t>(cap.available_capacity);
+    if(_storageFree != a) {
+        _storageFree = a;
         emit storageFreeChanged();
     }
     //-- Video/Image Capture Status
-    uint8_t vs = cap.video_status < (uint8_t)VIDEO_CAPTURE_STATUS_LAST ? cap.video_status : (uint8_t)VIDEO_CAPTURE_STATUS_UNDEFINED;
-    uint8_t ps = cap.image_status < (uint8_t)PHOTO_CAPTURE_LAST ? cap.image_status : (uint8_t)PHOTO_CAPTURE_STATUS_UNDEFINED;
-    _setVideoStatus((VideoStatus)vs);
-    _setPhotoStatus((PhotoStatus)ps);
+    uint8_t vs = cap.video_status < static_cast<uint8_t>(VIDEO_CAPTURE_STATUS_LAST) ? cap.video_status : static_cast<uint8_t>(VIDEO_CAPTURE_STATUS_UNDEFINED);
+    uint8_t ps = cap.image_status < static_cast<uint8_t>(PHOTO_CAPTURE_LAST) ? cap.image_status : static_cast<uint8_t>(PHOTO_CAPTURE_STATUS_UNDEFINED);
+    _setVideoStatus(static_cast<VideoStatus>(vs));
+    _setPhotoStatus(static_cast<PhotoStatus>(ps));
     //-- Keep asking for it once in a while when recording
     if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
         _captureStatusTimer.start(5000);
