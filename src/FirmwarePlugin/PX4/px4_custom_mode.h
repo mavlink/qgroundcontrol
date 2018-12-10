@@ -34,7 +34,7 @@
 /**
  * @file px4_custom_mode.h
  * PX4 custom flight modes
- * Copied from PX4 2018-04-07 - https://github.com/PX4/Firmware/blob/master/src/modules/commander/px4_custom_mode.h#L45
+ *
  */
 
 #ifndef PX4_CUSTOM_MODE_H_
@@ -66,18 +66,23 @@ enum PX4_CUSTOM_SUB_MODE_AUTO {
 	PX4_CUSTOM_SUB_MODE_AUTO_PRECLAND
 };
 
+enum PX4_CUSTOM_SUB_MODE_POSCTL {
+    PX4_CUSTOM_SUB_MODE_POSCTL_POSCTL = 0,
+    PX4_CUSTOM_SUB_MODE_POSCTL_ORBIT
+};
+
 union px4_custom_mode {
 	struct {
 		uint16_t reserved;
 		uint8_t main_mode;
 		uint8_t sub_mode;
 	};
-    struct {
-        uint16_t reserved_hl;
-        uint16_t custom_mode_hl;
-    };
-    uint32_t data;
+	uint32_t data;
 	float data_float;
+	struct {
+		uint16_t reserved_hl;
+		uint16_t custom_mode_hl;
+	};
 };
 
 #endif /* PX4_CUSTOM_MODE_H_ */
