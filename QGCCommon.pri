@@ -21,6 +21,7 @@ linux {
         message("Linux build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_ENABLE_GAMEPAD
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
@@ -29,6 +30,7 @@ linux {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
+        DEFINES += QGC_ENABLE_GAMEPAD
     } else : android-g++ {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
@@ -83,6 +85,7 @@ linux {
     DEFINES += QGC_NO_GOOGLE_MAPS
     DEFINES += NO_SERIAL_LINK
     DEFINES += QGC_DISABLE_UVC
+    DEFINES += QGC_ENABLE_GAMEPAD
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie

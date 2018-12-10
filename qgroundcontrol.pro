@@ -238,7 +238,8 @@ QT += \
     svg \
     widgets \
     xml \
-    texttospeech
+    texttospeech \
+    gamepad
 
 # Multimedia only used if QVC is enabled
 !contains (DEFINES, QGC_DISABLE_UVC) {
@@ -527,6 +528,7 @@ HEADERS += \
     src/FlightMap/Widgets/ValuesWidgetController.h \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
+    src/Joystick/JoystickQGamepad.h \
     src/Joystick/JoystickManager.h \
     src/JsonHelper.h \
     src/KMLFileHelper.h \
@@ -731,6 +733,7 @@ SOURCES += \
     src/FlightMap/Widgets/ValuesWidgetController.cc \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
+    src/Joystick/JoystickQGamepad.cc \
     src/Joystick/JoystickManager.cc \
     src/JsonHelper.cc \
     src/KMLFileHelper.cc \

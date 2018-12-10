@@ -7,19 +7,22 @@
  *
  ****************************************************************************/
 
-
 #include "JoystickManager.h"
 #include "QGCApplication.h"
 
 #include <QQmlEngine>
 
-#ifndef __mobile__
-    #include "JoystickSDL.h"
-    #define __sdljoystick__
-#endif
+#ifdef QGC_ENABLE_GAMEPAD
+    #include "JoystickQGamepad.h"
+#else
+    #ifndef __mobile__
+        #include "JoystickSDL.h"
+        #define __sdljoystick__
+    #endif
 
-#ifdef __android__
-    #include "JoystickAndroid.h"
+    #ifdef __android__
+        #include "JoystickAndroid.h"
+    #endif
 #endif
 
 QGC_LOGGING_CATEGORY(JoystickManagerLog, "JoystickManagerLog")
@@ -29,14 +32,13 @@ const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
 
 JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _activeJoystick(NULL)
-    , _multiVehicleManager(NULL)
+    , _activeJoystick(nullptr)
+    , _multiVehicleManager(nullptr)
 {
 }
 
 JoystickManager::~JoystickManager() {
-    QMap<QString, Joystick*>::iterator i;
-    for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
+    for (auto i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
         qDebug() << "Releasing joystick:" << i.key();
         delete i.value();
     }
@@ -53,7 +55,10 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 }
 
 void JoystickManager::init() {
-#ifdef __sdljoystick__
+#ifdef QGC_ENABLE_GAMEPAD
+    connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_setActiveJoystickFromSettings);
+    _joystickCheckTimer.start(1000);
+#elif __sdljoystick__
     if (JoystickSDL::init()) {
         _setActiveJoystickFromSettings();
         connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
@@ -67,9 +72,56 @@ void JoystickManager::init() {
 
 void JoystickManager::_setActiveJoystickFromSettings(void)
 {
+#ifdef QGC_ENABLE_GAMEPAD
+    QList<QString> names;
+    bool changed = false;
+
+    auto gamepads = QGamepadManager::instance()->connectedGamepads();
+    for (const int& id : gamepads) {
+        QString name = QGamepadManager::instance()->gamepadName(id);
+        names.append(name);
+        if (!_name2JoystickMap.contains(name)) {
+            qCDebug(JoystickManagerLog) << "New joystick added: " << name;
+            _name2JoystickMap[name] = new JoystickQGamepad(id, name, _multiVehicleManager, this);
+            changed = true;
+        }
+    }
+
+    for (auto j : _name2JoystickMap.toStdMap()) {
+        bool found = false;
+        for (const QString& name : names) {
+            if (name == j.first) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            qCDebug(JoystickManagerLog) << "Releasing joystick: " << j.first;
+            if (_activeJoystick == j.second) {
+                qCDebug(JoystickManagerLog) << "Active joystick removed";
+                setActiveJoystick(nullptr);
+                changed = true;
+            }
+            delete(j.second);
+            _name2JoystickMap.remove(j.first);
+        }
+    }
+
+    if (!changed) {
+        return;
+    }
+
+    emit availableJoysticksChanged();
+
+    if (_activeJoystick != nullptr) {
+        return;
+    }
+
+#else
     QMap<QString,Joystick*> newMap;
 
-#ifdef __sdljoystick__
+#if __sdljoystick__
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
@@ -100,6 +152,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
         setActiveJoystick(NULL);
         return;
     }
+#endif
 
     QSettings settings;
     
@@ -123,7 +176,7 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
 {
     QSettings settings;
 
-    if (joystick != NULL && !_name2JoystickMap.contains(joystick->name())) {
+    if (joystick != nullptr && !_name2JoystickMap.contains(joystick->name())) {
         qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
         return;
     }
@@ -138,7 +191,7 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
     
     _activeJoystick = joystick;
     
-    if (_activeJoystick != NULL) {
+    if (_activeJoystick != nullptr) {
         qCDebug(JoystickManagerLog) << "Set active:" << _activeJoystick->name();
 
         settings.beginGroup(_settingsGroup);
