@@ -58,7 +58,7 @@ void JoystickManager::init() {
 #ifdef QGC_ENABLE_GAMEPAD
     connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_setActiveJoystickFromSettings);
     _joystickCheckTimer.start(1000);
-#elif __sdljoystick__
+#elif defined(__sdljoystick__)
     if (JoystickSDL::init()) {
         _setActiveJoystickFromSettings();
         connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
@@ -121,7 +121,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 #else
     QMap<QString,Joystick*> newMap;
 
-#if __sdljoystick__
+#ifdef __sdljoystick__
     // Get the latest joystick mapping
     newMap = JoystickSDL::discover(_multiVehicleManager);
 #elif defined(__android__)
