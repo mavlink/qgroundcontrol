@@ -70,6 +70,7 @@ public:
     void        saveSettings    (QSettings& settings, const QString& root);
     void        updateSettings  (void);
     QString     settingsURL     () { return "MockLinkSettings.qml"; }
+    QString     settingsTitle   () { return tr("Mock Link Settings"); }
 
 signals:
     void firmwareChanged    ();

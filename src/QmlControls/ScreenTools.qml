@@ -69,18 +69,19 @@ Item {
         return Screen.pixelDensity
     }
 
-    property bool isAndroid:        ScreenToolsController.isAndroid
-    property bool isiOS:            ScreenToolsController.isiOS
-    property bool isMobile:         ScreenToolsController.isMobile
-    property bool isWindows:        ScreenToolsController.isWindows
-    property bool isDebug:          ScreenToolsController.isDebug
-    property bool isMac:            ScreenToolsController.isMacOS
-    property bool isTinyScreen:     (Screen.width / realPixelDensity) < 120 // 120mm
-    property bool isShortScreen:    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
-    property bool isHugeScreen:     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
+    property bool isAndroid:                        ScreenToolsController.isAndroid
+    property bool isiOS:                            ScreenToolsController.isiOS
+    property bool isMobile:                         ScreenToolsController.isMobile
+    property bool isWindows:                        ScreenToolsController.isWindows
+    property bool isDebug:                          ScreenToolsController.isDebug
+    property bool isMac:                            ScreenToolsController.isMacOS
+    property bool isTinyScreen:                     (Screen.width / realPixelDensity) < 120 // 120mm
+    property bool isShortScreen:                    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
+    property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
+    property bool isSerialAvailable:                ScreenToolsController.isSerialAvailable
 
-    readonly property real minTouchMillimeters: 10      ///< Minimum touch size in millimeters
-    property real minTouchPixels:               0       ///< Minimum touch size in pixels
+    readonly property real minTouchMillimeters:     10      ///< Minimum touch size in millimeters
+    property real minTouchPixels:                   0       ///< Minimum touch size in pixels
 
     // The implicit heights/widths for our custom control set
     property real implicitButtonWidth:              Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
