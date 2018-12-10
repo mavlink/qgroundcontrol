@@ -137,18 +137,22 @@ bool VideoSettings::streamConfigured(void)
     }
     //-- If UDP, check if port is set
     if(vSource == videoSourceUDP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
     }
     //-- If RTSP, check for URL
     if(vSource == videoSourceRTSP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for RTSP Stream:" << rtspUrl()->rawValue().toString();
         return !rtspUrl()->rawValue().toString().isEmpty();
     }
-    //-- If Auto, check for URL
-    if(vSource == videoSourceAuto) {
-        return !rtspUrl()->rawValue().toString().isEmpty();
+    //-- If TCP, check for URL
+    if(vSource == videoSourceTCP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for TCP Stream:" << tcpUrl()->rawValue().toString();
+        return !tcpUrl()->rawValue().toString().isEmpty();
     }
     //-- If Auto, check for received URL
-    if(vSource == videoSourceTCP) {
+    if(vSource == videoSourceAuto) {
+        qCDebug(VideoManagerLog) << "Testing configuration for Auto Stream:" << qgcApp()->toolbox()->videoManager()->autoURL();
         return !qgcApp()->toolbox()->videoManager()->autoURL().isEmpty();
     }
     return false;

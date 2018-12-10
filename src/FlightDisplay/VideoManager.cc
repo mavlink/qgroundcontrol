@@ -238,8 +238,9 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
         }
         //-- Video Stream Discovery
         connect(_activeVehicle, &Vehicle::mavlinkMessageReceived, this, &VideoManager::_vehicleMessageReceived);
+        qCDebug(VideoManagerLog) << "Requesting video stream info";
         _activeVehicle->sendMavCommand(
-            0,                                                    // Target component
+            MAV_COMP_ID_ALL,                                      // Target component
             MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,             // Command id
             false,                                                // ShowError
             1,                                                    // First camera only
@@ -254,6 +255,7 @@ VideoManager::_vehicleMessageReceived(const mavlink_message_t& message)
     //-- For now we only handle one stream. There is no UI to pick different streams.
     if(message.msgid == MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION) {
         mavlink_msg_video_stream_information_decode(&message, &_streamInfo);
+        qCDebug(VideoManagerLog) << "Received video stream info:" << _streamInfo.uri;
         _restartVideo();
         emit aspectRatioChanged();
     }
