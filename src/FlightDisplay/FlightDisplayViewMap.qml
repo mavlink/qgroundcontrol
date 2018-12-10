@@ -357,7 +357,7 @@ FlightMap {
     // Used to show orbit status telemetry from the vehicle
     QGCMapCircleVisuals {
         mapControl:     parent
-        mapCircle:      _activeVehicle.orbitMapCircle
+        mapCircle:      _activeVehicle ? _activeVehicle.orbitMapCircle : null
         visible:        _activeVehicle ? _activeVehicle.orbitActive : false
     }
 
@@ -396,7 +396,7 @@ FlightMap {
         onClicked: {
             if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit)) {
                 return
-            }            
+            }
             orbitMapCircle.hide()
             gotoLocationItem.hide()
             var clickCoord = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
