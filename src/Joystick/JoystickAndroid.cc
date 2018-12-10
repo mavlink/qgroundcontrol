@@ -39,16 +39,22 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
 
     env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
 
-    //set axis mapping (number->code)
+    // set axis mapping (number->code)
     axisValue = new int[_axisCount];
     axisCode = new int[_axisCount];
     QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
-    for (i=0;i<_axisCount;i++) {
+    for (i = 0; i < _axisCount; i++) {
         QAndroidJniObject range = rangeListNative.callObjectMethod("get", "(I)Ljava/lang/Object;",i);
         axisCode[i] = range.callMethod<jint>("getAxis");
+        // Don't allow two axis with the same code
+        for (int j = 0; j < i; j++) {
+            if (axisCode[i] == axisCode[j]) {
+                axisCode[i] = -1;
+                break;
+            }
+        }
         axisValue[i] = 0;
     }
-
 
     qCDebug(JoystickLog) << "axis:" <<_axisCount << "buttons:" <<_buttonCount;
     QtAndroidPrivate::registerGenericMotionEventListener(this);
