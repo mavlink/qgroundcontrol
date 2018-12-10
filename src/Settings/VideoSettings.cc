@@ -8,6 +8,8 @@
  ****************************************************************************/
 
 #include "VideoSettings.h"
+#include "QGCApplication.h"
+#include "VideoManager.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -17,14 +19,12 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
-const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
-const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
-const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
-const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
-#ifdef QGC_GST_TAISYNC_USB
-const char* VideoSettings::videoSourceTaiSyncUSB =  "Taisync USB";
-#endif
+const char* VideoSettings::videoSourceNoVideo   = "No Video Available";
+const char* VideoSettings::videoDisabled        = "Video Stream Disabled";
+const char* VideoSettings::videoSourceAuto      = "Automatic Video Stream";
+const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
+const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
+const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -34,14 +34,12 @@ DECLARE_SETTINGGROUP(Video, "Video")
     // Setup enum values for videoSource settings into meta data
     QStringList videoSourceList;
 #ifdef QGC_GST_STREAMING
+    videoSourceList.append(videoSourceAuto);
+    videoSourceList.append(videoSourceRTSP);
 #ifndef NO_UDP_VIDEO
     videoSourceList.append(videoSourceUDP);
 #endif
-    videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceTCP);
-#ifdef QGC_GST_TAISYNC_USB
-    videoSourceList.append(videoSourceTaiSyncUSB);
-#endif
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -60,7 +58,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
         videoSourceVarList.append(QVariant::fromValue(videoSource));
     }
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
-
     // Set default value for videoSource
     _setDefaults();
 }
@@ -138,11 +135,6 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
         return false;
     }
-#ifdef QGC_GST_TAISYNC_USB
-    if(vSource == videoSourceTaiSyncUSB) {
-        return true;
-    }
-#endif
     //-- If UDP, check if port is set
     if(vSource == videoSourceUDP) {
         return udpPort()->rawValue().toInt() != 0;
@@ -151,9 +143,13 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceRTSP) {
         return !rtspUrl()->rawValue().toString().isEmpty();
     }
-    //-- If TCP, check for URL
+    //-- If Auto, check for URL
+    if(vSource == videoSourceAuto) {
+        return !rtspUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If Auto, check for received URL
     if(vSource == videoSourceTCP) {
-        return !tcpUrl()->rawValue().toString().isEmpty();
+        return !qgcApp()->toolbox()->videoManager()->autoURL().isEmpty();
     }
     return false;
 }
