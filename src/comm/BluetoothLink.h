@@ -104,6 +104,7 @@ public:
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
     QString     settingsURL             () { return "BluetoothSettings.qml"; }
+    QString     settingsTitle           ();
 
 public slots:
     void        deviceDiscovered        (QBluetoothDeviceInfo info);
