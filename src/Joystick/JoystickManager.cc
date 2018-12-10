@@ -78,7 +78,12 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 
     auto gamepads = QGamepadManager::instance()->connectedGamepads();
     for (const int& id : gamepads) {
+#ifdef __ios__
+        // ios does not have gamepadName because it uses QT < 5.11.0
+        QString name = "gamepad" + QString::number(id);
+#else
         QString name = QGamepadManager::instance()->gamepadName(id);
+#endif
         names.append(name);
         if (!_name2JoystickMap.contains(name)) {
             qCDebug(JoystickManagerLog) << "New joystick added: " << name;
