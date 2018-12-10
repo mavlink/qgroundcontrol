@@ -21,13 +21,7 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLogVerbose)
 class QGCCameraOptionExclusion : public QObject
 {
 public:
-    QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
-        : QObject(parent)
-        , param(param_)
-        , value(value_)
-        , exclusions(exclusions_)
-    {
-    }
+    QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_);
     QString param;
     QString value;
     QStringList exclusions;
@@ -37,16 +31,7 @@ public:
 class QGCCameraOptionRange : public QObject
 {
 public:
-    QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_)
-        : QObject(parent)
-        , param(param_)
-        , value(value_)
-        , targetParam(targetParam_)
-        , condition(condition_)
-        , optNames(optNames_)
-        , optValues(optValues_)
-    {
-    }
+    QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_);
     QString param;
     QString value;
     QString targetParam;
@@ -62,7 +47,7 @@ class QGCCameraControl : public FactGroup
     Q_OBJECT
     friend class QGCCameraParamIO;
 public:
-    QGCCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL);
+    QGCCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
     virtual ~QGCCameraControl();
 
     //-- cam_mode
@@ -142,8 +127,8 @@ public:
     virtual QString     modelName           () { return _modelName; }
     virtual QString     vendor              () { return _vendor; }
     virtual QString     firmwareVersion     ();
-    virtual qreal       focalLength         () { return (qreal)_info.focal_length; }
-    virtual QSizeF      sensorSize          () { return QSizeF(_info.sensor_size_h, _info.sensor_size_v); }
+    virtual qreal       focalLength         () { return static_cast<qreal>(_info.focal_length); }
+    virtual QSizeF      sensorSize          () { return QSizeF(static_cast<qreal>(_info.sensor_size_h), static_cast<qreal>(_info.sensor_size_v)); }
     virtual QSize       resolution          () { return QSize(_info.resolution_h, _info.resolution_v); }
     virtual bool        capturesVideo       () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_VIDEO; }
     virtual bool        capturesPhotos      () { return _info.flags & CAMERA_CAP_FLAGS_CAPTURE_IMAGE; }
