@@ -318,6 +318,8 @@ FlightMap {
         }
     }
 
+    // Orbit visuals
+
     QGCMapCircleVisuals {
         id:             orbitMapCircle
         mapControl:     parent
@@ -354,11 +356,27 @@ FlightMap {
         }
     }
 
-    // Used to show orbit status telemetry from the vehicle
+    // Orbit telemetry visuals
+
     QGCMapCircleVisuals {
+        id:             orbitTelemetryCircle
         mapControl:     parent
         mapCircle:      _activeVehicle ? _activeVehicle.orbitMapCircle : null
         visible:        _activeVehicle ? _activeVehicle.orbitActive : false
+    }
+
+    MapQuickItem {
+        id:             orbitCenterIndicator
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+        coordinate:     _activeVehicle ? _activeVehicle.orbitMapCircle.center : undefined
+        visible:        orbitTelemetryCircle.visible
+
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("Orbit", "Orbit waypoint")
+        }
     }
 
     // Handle guided mode clicks
