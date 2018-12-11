@@ -157,6 +157,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _photo_status(PHOTO_CAPTURE_STATUS_UNDEFINED)
     , _storageInfoRetries(0)
     , _captureInfoRetries(0)
+    , _resetting(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
@@ -251,14 +252,16 @@ QGCCameraControl::storageFreeStr()
 void
 QGCCameraControl::setCameraMode(CameraMode mode)
 {
-    qCDebug(CameraControlLog) << "setCameraMode(" << mode << ")";
-    if(mode == CAM_MODE_VIDEO) {
-        setVideoMode();
-    } else if(mode == CAM_MODE_PHOTO) {
-        setPhotoMode();
-    } else {
-        qCDebug(CameraControlLog) << "setCameraMode() Invalid mode:" << mode;
-        return;
+    if(!_resetting) {
+        qCDebug(CameraControlLog) << "setCameraMode(" << mode << ")";
+        if(mode == CAM_MODE_VIDEO) {
+            setVideoMode();
+        } else if(mode == CAM_MODE_PHOTO) {
+            setPhotoMode();
+        } else {
+            qCDebug(CameraControlLog) << "setCameraMode() Invalid mode:" << mode;
+            return;
+        }
     }
 }
 
@@ -266,10 +269,12 @@ QGCCameraControl::setCameraMode(CameraMode mode)
 void
 QGCCameraControl::setPhotoMode(PhotoMode mode)
 {
-    _photoMode = mode;
-    QSettings settings;
-    settings.setValue(kPhotoMode, static_cast<int>(mode));
-    emit photoModeChanged();
+    if(!_resetting) {
+        _photoMode = mode;
+        QSettings settings;
+        settings.setValue(kPhotoMode, static_cast<int>(mode));
+        emit photoModeChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -304,10 +309,12 @@ QGCCameraControl::_setCameraMode(CameraMode mode)
 void
 QGCCameraControl::toggleMode()
 {
-    if(cameraMode() == CAM_MODE_PHOTO || cameraMode() == CAM_MODE_SURVEY) {
-        setVideoMode();
-    } else if(cameraMode() == CAM_MODE_VIDEO) {
-        setPhotoMode();
+    if(!_resetting) {
+        if(cameraMode() == CAM_MODE_PHOTO || cameraMode() == CAM_MODE_SURVEY) {
+            setVideoMode();
+        } else if(cameraMode() == CAM_MODE_VIDEO) {
+            setPhotoMode();
+        }
     }
 }
 
@@ -315,11 +322,14 @@ QGCCameraControl::toggleMode()
 bool
 QGCCameraControl::toggleVideo()
 {
-    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        return stopVideo();
-    } else {
-        return startVideo();
+    if(!_resetting) {
+        if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+            return stopVideo();
+        } else {
+            return startVideo();
+        }
     }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -331,22 +341,24 @@ QGCCameraControl::takePhoto()
     if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) || photoStatus() != PHOTO_CAPTURE_IDLE) {
         return false;
     }
-    if(capturesPhotos()) {
-        _vehicle->sendMavCommand(
-            _compID,                                                                    // Target component
-            MAV_CMD_IMAGE_START_CAPTURE,                                                // Command id
-            false,                                                                      // ShowError
-            0,                                                                          // Reserved (Set to 0)
-            static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
-            _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
-        _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
-        _captureInfoRetries = 0;
-        //-- Capture local image as well
-        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-        QDir().mkpath(photoPath);
-        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-        qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
-        return true;
+    if(!_resetting) {
+        if(capturesPhotos()) {
+            _vehicle->sendMavCommand(
+                _compID,                                                                    // Target component
+                MAV_CMD_IMAGE_START_CAPTURE,                                                // Command id
+                false,                                                                      // ShowError
+                0,                                                                          // Reserved (Set to 0)
+                static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
+                _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
+            _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
+            _captureInfoRetries = 0;
+            //-- Capture local image as well
+            QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+            QDir().mkpath(photoPath);
+            photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+            qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+            return true;
+        }
     }
     return false;
 }
@@ -355,19 +367,21 @@ QGCCameraControl::takePhoto()
 bool
 QGCCameraControl::stopTakePhoto()
 {
-    qCDebug(CameraControlLog) << "stopTakePhoto()";
-    if(photoStatus() == PHOTO_CAPTURE_IDLE || (photoStatus() != PHOTO_CAPTURE_INTERVAL_IDLE && photoStatus() != PHOTO_CAPTURE_INTERVAL_IN_PROGRESS)) {
-        return false;
-    }
-    if(capturesPhotos()) {
-        _vehicle->sendMavCommand(
-            _compID,                                                    // Target component
-            MAV_CMD_IMAGE_STOP_CAPTURE,                                 // Command id
-            false,                                                      // ShowError
-            0);                                                         // Reserved (Set to 0)
-        _setPhotoStatus(PHOTO_CAPTURE_IDLE);
-        _captureInfoRetries = 0;
-        return true;
+    if(!_resetting) {
+        qCDebug(CameraControlLog) << "stopTakePhoto()";
+        if(photoStatus() == PHOTO_CAPTURE_IDLE || (photoStatus() != PHOTO_CAPTURE_INTERVAL_IDLE && photoStatus() != PHOTO_CAPTURE_INTERVAL_IN_PROGRESS)) {
+            return false;
+        }
+        if(capturesPhotos()) {
+            _vehicle->sendMavCommand(
+                _compID,                                                    // Target component
+                MAV_CMD_IMAGE_STOP_CAPTURE,                                 // Command id
+                false,                                                      // ShowError
+                0);                                                         // Reserved (Set to 0)
+            _setPhotoStatus(PHOTO_CAPTURE_IDLE);
+            _captureInfoRetries = 0;
+            return true;
+        }
     }
     return false;
 }
@@ -376,19 +390,21 @@ QGCCameraControl::stopTakePhoto()
 bool
 QGCCameraControl::startVideo()
 {
-    qCDebug(CameraControlLog) << "startVideo()";
-    //-- Check if camera can capture videos or if it can capture it while in Photo Mode
-    if(!capturesVideo() || (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
-        return false;
-    }
-    if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
-        _vehicle->sendMavCommand(
-            _compID,                                    // Target component
-            MAV_CMD_VIDEO_START_CAPTURE,                // Command id
-            true,                                       // ShowError
-            0,                                          // Reserved (Set to 0)
-            0);                                         // CAMERA_CAPTURE_STATUS Frequency
-        return true;
+    if(!_resetting) {
+        qCDebug(CameraControlLog) << "startVideo()";
+        //-- Check if camera can capture videos or if it can capture it while in Photo Mode
+        if(!capturesVideo() || (cameraMode() == CAM_MODE_PHOTO && !videoInPhotoMode())) {
+            return false;
+        }
+        if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
+            _vehicle->sendMavCommand(
+                _compID,                                    // Target component
+                MAV_CMD_VIDEO_START_CAPTURE,                // Command id
+                true,                                       // ShowError
+                0,                                          // Reserved (Set to 0)
+                0);                                         // CAMERA_CAPTURE_STATUS Frequency
+            return true;
+        }
     }
     return false;
 }
@@ -397,14 +413,16 @@ QGCCameraControl::startVideo()
 bool
 QGCCameraControl::stopVideo()
 {
-    qCDebug(CameraControlLog) << "stopVideo()";
-    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        _vehicle->sendMavCommand(
-            _compID,                                    // Target component
-            MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
-            true,                                       // ShowError
-            0);                                         // Reserved (Set to 0)
-        return true;
+    if(!_resetting) {
+        qCDebug(CameraControlLog) << "stopVideo()";
+        if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
+            _vehicle->sendMavCommand(
+                _compID,                                    // Target component
+                MAV_CMD_VIDEO_STOP_CAPTURE,                 // Command id
+                true,                                       // ShowError
+                0);                                         // Reserved (Set to 0)
+            return true;
+        }
     }
     return false;
 }
@@ -413,16 +431,18 @@ QGCCameraControl::stopVideo()
 void
 QGCCameraControl::setVideoMode()
 {
-    if(hasModes() && _cameraMode != CAM_MODE_VIDEO) {
-        qCDebug(CameraControlLog) << "setVideoMode()";
-        //-- Use basic MAVLink message
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_SET_CAMERA_MODE,                // Command id
-            true,                                   // ShowError
-            0,                                      // Reserved (Set to 0)
-            CAM_MODE_VIDEO);                        // Camera mode (0: photo, 1: video)
-        _setCameraMode(CAM_MODE_VIDEO);
+    if(!_resetting) {
+        if(hasModes() && _cameraMode != CAM_MODE_VIDEO) {
+            qCDebug(CameraControlLog) << "setVideoMode()";
+            //-- Use basic MAVLink message
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_SET_CAMERA_MODE,                // Command id
+                true,                                   // ShowError
+                0,                                      // Reserved (Set to 0)
+                CAM_MODE_VIDEO);                        // Camera mode (0: photo, 1: video)
+            _setCameraMode(CAM_MODE_VIDEO);
+        }
     }
 }
 
@@ -430,16 +450,18 @@ QGCCameraControl::setVideoMode()
 void
 QGCCameraControl::setPhotoMode()
 {
-    if(hasModes() && _cameraMode != CAM_MODE_PHOTO) {
-        qCDebug(CameraControlLog) << "setPhotoMode()";
-        //-- Use basic MAVLink message
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_SET_CAMERA_MODE,                // Command id
-            true,                                   // ShowError
-            0,                                      // Reserved (Set to 0)
-            CAM_MODE_PHOTO);                        // Camera mode (0: photo, 1: video)
-        _setCameraMode(CAM_MODE_PHOTO);
+    if(!_resetting) {
+        if(hasModes() && _cameraMode != CAM_MODE_PHOTO) {
+            qCDebug(CameraControlLog) << "setPhotoMode()";
+            //-- Use basic MAVLink message
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_SET_CAMERA_MODE,                // Command id
+                true,                                   // ShowError
+                0,                                      // Reserved (Set to 0)
+                CAM_MODE_PHOTO);                        // Camera mode (0: photo, 1: video)
+            _setCameraMode(CAM_MODE_PHOTO);
+        }
     }
 }
 
@@ -447,26 +469,31 @@ QGCCameraControl::setPhotoMode()
 void
 QGCCameraControl::resetSettings()
 {
-    qCDebug(CameraControlLog) << "resetSettings()";
-    _vehicle->sendMavCommand(
-        _compID,                                // Target component
-        MAV_CMD_RESET_CAMERA_SETTINGS,          // Command id
-        true,                                   // ShowError
-        1);                                     // Do Reset
+    if(!_resetting) {
+        qCDebug(CameraControlLog) << "resetSettings()";
+        _resetting = true;
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_RESET_CAMERA_SETTINGS,          // Command id
+            true,                                   // ShowError
+            1);                                     // Do Reset
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
 QGCCameraControl::formatCard(int id)
 {
-    qCDebug(CameraControlLog) << "formatCard()";
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_STORAGE_FORMAT,                 // Command id
-            true,                                   // ShowError
-            id,                                     // Storage ID (1 for first, 2 for second, etc.)
-            1);                                     // Do Format
+    if(!_resetting) {
+        qCDebug(CameraControlLog) << "formatCard()";
+        if(_vehicle) {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_STORAGE_FORMAT,                 // Command id
+                true,                                   // ShowError
+                id,                                     // Storage ID (1 for first, 2 for second, etc.)
+                1);                                     // Do Format
+        }
     }
 }
 
@@ -504,6 +531,7 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
     }else if(!noReponseFromVehicle && result == MAV_RESULT_ACCEPTED) {
         switch(command) {
             case MAV_CMD_RESET_CAMERA_SETTINGS:
+                _resetting = false;
                 if(isBasic()) {
                     _requestCameraSettings();
                 } else {

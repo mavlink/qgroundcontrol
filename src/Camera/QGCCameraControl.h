@@ -246,6 +246,7 @@ protected:
     QMap<QString, QGCCameraParamIO*>    _paramIO;
     int                                 _storageInfoRetries;
     int                                 _captureInfoRetries;
+    bool                                _resetting;
     //-- Parameters that require a full update
     QMap<QString, QStringList>          _requestUpdates;
     QStringList                         _updatesToRequest;
