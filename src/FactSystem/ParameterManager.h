@@ -140,7 +140,7 @@ private:
     void _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
     void _loadOfflineEditingParams(void);
-    QString _logVehiclePrefix(int componentId = -1);
+    QString _logVehiclePrefix(int componentId);
     void _setLoadProgress(double loadProgress);
     bool _fillIndexBatchQueue(bool waitingParamTimeout);
 
