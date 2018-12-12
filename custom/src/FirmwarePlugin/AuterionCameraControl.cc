@@ -81,12 +81,19 @@ AuterionCameraControl::stopTakePhoto()
 bool
 AuterionCameraControl::startVideo()
 {
+    // Disabled for now
+    _errorSound.setLoopCount(2);
+    _errorSound.play();
+    return false;
+
+    /*
     bool res = QGCCameraControl::startVideo();
     if(!res) {
         _errorSound.setLoopCount(1);
         _errorSound.play();
     }
     return res;
+    */
 }
 
 //-----------------------------------------------------------------------------
