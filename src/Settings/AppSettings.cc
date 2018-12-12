@@ -84,6 +84,7 @@ DECLARE_SETTINGSFACT(AppSettings, esriToken)
 DECLARE_SETTINGSFACT(AppSettings, defaultFirmwareType)
 DECLARE_SETTINGSFACT(AppSettings, gstDebugLevel)
 DECLARE_SETTINGSFACT(AppSettings, followTarget)
+DECLARE_SETTINGSFACT(AppSettings, apmStartMavlinkStreams)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

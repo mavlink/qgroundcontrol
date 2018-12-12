@@ -20,6 +20,7 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
+#include "QGCMapCircle.h"
 
 class UAS;
 class UASInterface;
@@ -500,7 +501,7 @@ public:
     Vehicle(MAV_AUTOPILOT           firmwareType,
             MAV_TYPE                vehicleType,
             FirmwarePluginManager*  firmwarePluginManager,
-            QObject*                parent = NULL);
+            QObject*                parent = nullptr);
 
     ~Vehicle();
 
@@ -629,6 +630,10 @@ public:
     Q_PROPERTY(quint64              mavlinkReceivedCount    READ mavlinkReceivedCount                                   NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkLossCount        READ mavlinkLossCount                                       NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent      READ mavlinkLossPercent                                     NOTIFY mavlinkStatusChanged)
+
+    // The following properties relate to Orbit status
+    Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
+    Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
 
     // Vehicle state used for guided control
     Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
@@ -887,9 +892,9 @@ public:
     QString         formatedMessages        ();
     QString         formatedMessage         () { return _formatedMessage; }
     QString         latestError             () { return _latestError; }
-    float           latitude                () { return _coordinate.latitude(); }
-    float           longitude               () { return _coordinate.longitude(); }
-    bool            mavPresent              () { return _mav != NULL; }
+    float           latitude                () { return static_cast<float>(_coordinate.latitude()); }
+    float           longitude               () { return static_cast<float>(_coordinate.longitude()); }
+    bool            mavPresent              () { return _mav != nullptr; }
     int             rcRSSI                  () { return _rcRSSI; }
     bool            px4Firmware             () const { return _firmwareType == MAV_AUTOPILOT_PX4; }
     bool            apmFirmware             () const { return _firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA; }
@@ -931,6 +936,9 @@ public:
     int             telemetryRNoise         () { return _telemetryRNoise; }
     bool            autoDisarm              ();
     bool            highLatencyLink         () const { return _highLatencyLink; }
+    bool            orbitActive             () const { return _orbitActive; }
+    QGCMapCircle*   orbitMapCircle          () { return &_orbitMapCircle; }
+
     /// Get the maximum MAVLink protocol version supported
     /// @return the maximum version
     unsigned        maxProtoVersion         () const { return _maxProtoVersion; }
@@ -982,8 +990,19 @@ public:
     void sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame, bool showError, float param1, float param2, float param3, float param4, double param5, double param6, float param7);
 
     /// Same as sendMavCommand but available from Qml.
-    Q_INVOKABLE void sendCommand(int component, int command, bool showError, double param1 = 0.0f, double param2 = 0.0f, double param3 = 0.0f, double param4 = 0.0f, double param5 = 0.0f, double param6 = 0.0f, double param7 = 0.0f)
-        { sendMavCommand(component, (MAV_CMD)command, showError, param1, param2, param3, param4, param5, param6, param7); }
+    Q_INVOKABLE void sendCommand(int component, int command, bool showError, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0, double param5 = 0.0, double param6 = 0.0, double param7 = 0.0)
+    {
+        sendMavCommand(
+            component, static_cast<MAV_CMD>(command),
+            showError,
+            static_cast<float>(param1),
+            static_cast<float>(param2),
+            static_cast<float>(param3),
+            static_cast<float>(param4),
+            static_cast<float>(param5),
+            static_cast<float>(param6),
+            static_cast<float>(param7));
+    }
 
     int firmwareMajorVersion(void) const { return _firmwareMajorVersion; }
     int firmwareMinorVersion(void) const { return _firmwareMinorVersion; }
@@ -1130,6 +1149,7 @@ signals:
     void sensorsEnabledBitsChanged  (int sensorsEnabledBits);
     void sensorsHealthBitsChanged   (int sensorsHealthBits);
     void sensorsUnhealthyBitsChanged(int sensorsUnhealthyBits);
+    void orbitActiveChanged         (bool orbitActive);
 
     void firmwareVersionChanged(void);
     void firmwareCustomVersionChanged(void);
@@ -1203,6 +1223,7 @@ private slots:
 
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _adsbTimerTimeout      ();
+    void _orbitTelemetryTimeout (void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -1241,6 +1262,7 @@ private:
     void _handleDistanceSensor(mavlink_message_t& message);
     void _handleEstimatorStatus(mavlink_message_t& message);
     void _handleStatusText(mavlink_message_t& message);
+    void _handleOrbitExecutionStatus(const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1442,6 +1464,12 @@ private:
     float       _mavlinkLossPercent     = 0.0f;
 
     QMap<QString, QTime> _noisySpokenPrearmMap; ///< Used to prevent PreArm messages from being spoken too often
+
+    // Orbit status values
+    bool            _orbitActive;
+    QGCMapCircle    _orbitMapCircle;
+    QTimer          _orbitTelemetryTimer;
+    static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
 
     // FactGroup facts
 

@@ -26,6 +26,7 @@
 #include <QtBluetooth/QBluetoothUuid>
 #include <QtBluetooth/QBluetoothSocket>
 
+#include "QGCApplication.h"
 #include "BluetoothLink.h"
 #include "QGC.h"
 
@@ -33,9 +34,9 @@ BluetoothLink::BluetoothLink(SharedLinkConfigurationPointer& config)
     : LinkInterface(config)
     , _config(qobject_cast<BluetoothConfiguration*>(config.data()))
     , _connectState(false)
-    , _targetSocket(NULL)
+    , _targetSocket(nullptr)
 #ifdef __ios__
-    , _discoveryAgent(NULL)
+    , _discoveryAgent(nullptr)
 #endif
     , _shutDown(false)
 {
@@ -50,7 +51,7 @@ BluetoothLink::~BluetoothLink()
         _shutDown = true;
         _discoveryAgent->stop();
         _discoveryAgent->deleteLater();
-        _discoveryAgent = NULL;
+        _discoveryAgent = nullptr;
     }
 #endif
 }
@@ -104,13 +105,13 @@ void BluetoothLink::_disconnect(void)
         _shutDown = true;
         _discoveryAgent->stop();
         _discoveryAgent->deleteLater();
-        _discoveryAgent = NULL;
+        _discoveryAgent = nullptr;
     }
 #endif
     if(_targetSocket)
     {
         _targetSocket->deleteLater();
-        _targetSocket = NULL;
+        _targetSocket = nullptr;
         emit disconnected();
     }
     _connectState = false;
@@ -129,7 +130,7 @@ bool BluetoothLink::_hardwareConnect()
         _shutDown = true;
         _discoveryAgent->stop();
         _discoveryAgent->deleteLater();
-        _discoveryAgent = NULL;
+        _discoveryAgent = nullptr;
     }
     _discoveryAgent = new QBluetoothServiceDiscoveryAgent(this);
     QObject::connect(_discoveryAgent, &QBluetoothServiceDiscoveryAgent::serviceDiscovered, this, &BluetoothLink::serviceDiscovered);
@@ -149,7 +150,7 @@ void BluetoothLink::_createSocket()
     if(_targetSocket)
     {
         delete _targetSocket;
-        _targetSocket = NULL;
+        _targetSocket = nullptr;
     }
     _targetSocket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
     QObject::connect(_targetSocket, &QBluetoothSocket::connected, this, &BluetoothLink::deviceConnected);
@@ -182,7 +183,7 @@ void BluetoothLink::discoveryFinished()
     {
         _shutDown = true;
         _discoveryAgent->deleteLater();
-        _discoveryAgent = NULL;
+        _discoveryAgent = nullptr;
         if(!_targetSocket)
         {
             _connectState = false;
@@ -236,14 +237,14 @@ qint64 BluetoothLink::getCurrentOutDataRate() const
 
 BluetoothConfiguration::BluetoothConfiguration(const QString& name)
     : LinkConfiguration(name)
-    , _deviceDiscover(NULL)
+    , _deviceDiscover(nullptr)
 {
 
 }
 
 BluetoothConfiguration::BluetoothConfiguration(BluetoothConfiguration* source)
     : LinkConfiguration(source)
-    , _deviceDiscover(NULL)
+    , _deviceDiscover(nullptr)
     , _device(source->device())
 {
 }
@@ -257,11 +258,20 @@ BluetoothConfiguration::~BluetoothConfiguration()
     }
 }
 
+QString BluetoothConfiguration::settingsTitle()
+{
+    if(qgcApp()->toolbox()->linkManager()->isBluetoothAvailable()) {
+        return tr("Bluetooth Link Settings");
+    } else {
+        return tr("Bluetooth Not Available");
+    }
+}
+
 void BluetoothConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     BluetoothConfiguration* usource = dynamic_cast<BluetoothConfiguration*>(source);
-    Q_ASSERT(usource != NULL);
+    Q_ASSERT(usource != nullptr);
     _device = usource->device();
 }
 
@@ -306,7 +316,7 @@ void BluetoothConfiguration::stopScan()
     {
         _deviceDiscover->stop();
         _deviceDiscover->deleteLater();
-        _deviceDiscover = NULL;
+        _deviceDiscover = nullptr;
         emit scanningChanged();
     }
 }
@@ -366,7 +376,7 @@ void BluetoothConfiguration::doneScanning()
     if(_deviceDiscover)
     {
         _deviceDiscover->deleteLater();
-        _deviceDiscover = NULL;
+        _deviceDiscover = nullptr;
         emit scanningChanged();
     }
 }

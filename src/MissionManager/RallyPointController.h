@@ -61,7 +61,7 @@ signals:
     void loadComplete(void);
 
 private slots:
-    void _managerLoadComplete(const QList<QGeoCoordinate> rgPoints);
+    void _managerLoadComplete(void);
     void _managerSendComplete(bool error);
     void _managerRemoveAllComplete(bool error);
     void _setFirstPointCurrent(void);

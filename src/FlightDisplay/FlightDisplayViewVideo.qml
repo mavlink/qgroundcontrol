@@ -22,7 +22,7 @@ import QGroundControl.Controllers       1.0
 
 Item {
     id: root
-    property double _ar:                QGroundControl.settingsManager.videoSettings.aspectRatio.rawValue
+    property double _ar:                QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
     property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle

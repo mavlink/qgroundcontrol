@@ -22,21 +22,30 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var    mapControl                                  ///< Map control to place item in
-    property var    mapCircle                                   ///< QGCMapCircle object
-    property bool   interactive:        mapCircle.interactive   /// true: user can manipulate polygon
+    property var    mapControl                                                  ///< Map control to place item in
+    property var    mapCircle                                                   ///< QGCMapCircle object
+    property bool   interactive:        mapCircle ? mapCircle.interactive : 0   /// true: user can manipulate polygon
     property color  interiorColor:      "transparent"
     property real   interiorOpacity:    1
     property int    borderWidth:        2
     property color  borderColor:        "orange"
 
-    property var _circleComponent
-    property var _dragHandlesComponent
+    property var    _circleComponent
+    property var    _topRotationIndicatorComponent
+    property var    _bottomRotationIndicatorComponent
+    property var    _dragHandlesComponent
+    property real   _radius:            mapCircle ? mapCircle.radius.rawValue : 0
 
     function addVisuals() {
         if (!_circleComponent) {
             _circleComponent = circleComponent.createObject(mapControl)
             mapControl.addMapItem(_circleComponent)
+        }
+        if (!_topRotationIndicatorComponent) {
+            _topRotationIndicatorComponent = rotationIndicatorComponent.createObject(mapControl, { "topIndicator": true })
+            _bottomRotationIndicatorComponent = rotationIndicatorComponent.createObject(mapControl, { "topIndicator": false })
+            mapControl.addMapItem(_topRotationIndicatorComponent)
+            mapControl.addMapItem(_bottomRotationIndicatorComponent)
         }
     }
 
@@ -44,6 +53,12 @@ Item {
         if (_circleComponent) {
             _circleComponent.destroy()
             _circleComponent = undefined
+        }
+        if (_topRotationIndicatorComponent) {
+            _topRotationIndicatorComponent.destroy()
+            _bottomRotationIndicatorComponent.destroy()
+            _topRotationIndicatorComponent = undefined
+            _bottomRotationIndicatorComponent = undefined
         }
     }
 
@@ -74,13 +89,61 @@ Item {
         }
     }
 
-    Component.onCompleted:  updateInternalComponents()
-    onInteractiveChanged:   updateInternalComponents()
-    onVisibleChanged:       updateInternalComponents()
+    Component.onCompleted: {
+        updateInternalComponents()
+    }
 
     Component.onDestruction: {
         removeVisuals()
         removeDragHandles()
+    }
+
+    onInteractiveChanged:   updateInternalComponents()
+    onVisibleChanged:       updateInternalComponents()
+
+    Component {
+        id: rotationIndicatorComponent
+
+        MapQuickItem {
+            visible: mapCircle.showRotation
+
+            property bool topIndicator: true
+
+            property real _rotationRadius: _radius
+
+            function updateCoordinate() {
+                coordinate = mapCircle.center.atDistanceAndAzimuth(_radius, topIndicator ? 0 : 180)
+            }
+
+            Component.onCompleted: updateCoordinate()
+
+            on_RotationRadiusChanged: updateCoordinate()
+
+            Connections {
+                target:             mapCircle
+                onCenterChanged:    updateCoordinate()
+            }
+
+            sourceItem: QGCColoredImage {
+                anchors.centerIn:   parent
+                width:              ScreenTools.defaultFontPixelHeight * 0.66
+                height:             ScreenTools.defaultFontPixelHeight
+                source:             "/qmlimages/arrow-down.png"
+                color:              borderColor
+
+                transform: Rotation {
+                    origin.x:   width / 2
+                    origin.y:   height / 2
+                    angle:      (mapCircle.clockwiseRotation ? 1 : -1) * (topIndicator ? -90 : 90)
+                }
+
+                QGCMouseArea {
+                    fillItem:   parent
+                    onClicked:  mapCircle.clockwiseRotation = !mapCircle.clockwiseRotation
+                    visible:    mapCircle.interactive
+                }
+            }
+        }
     }
 
     Component {
@@ -92,7 +155,7 @@ Item {
             border.color:   borderColor
             border.width:   borderWidth
             center:         mapCircle.center
-            radius:         mapCircle.radius.rawValue
+            radius:         _radius
         }
     }
 
@@ -146,7 +209,7 @@ Item {
             property var radiusDragArea
             property var radiusDragCoord:       QtPositioning.coordinate()
             property var circleCenterCoord:     mapCircle.center
-            property real circleRadius:         mapCircle.radius.rawValue
+            property real circleRadius:         _radius
 
             function calcRadiusDragCoord() {
                 radiusDragCoord = mapCircle.center.atDistanceAndAzimuth(circleRadius, 90)

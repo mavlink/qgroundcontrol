@@ -40,6 +40,7 @@ public:
     void        saveSettings            (QSettings& settings, const QString& root);
     void        updateSettings          ();
     QString     settingsURL             () { return "LogReplaySettings.qml"; }
+    QString     settingsTitle           () { return tr("Log Replay Link Settings"); }
 signals:
     void fileNameChanged();
 
