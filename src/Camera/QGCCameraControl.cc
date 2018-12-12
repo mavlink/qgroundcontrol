@@ -149,27 +149,6 @@ read_value(QDomNode& element, const char* tagName, QString& target)
 }
 
 //-----------------------------------------------------------------------------
-QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
-    : QObject(parent)
-    , param(param_)
-    , value(value_)
-    , exclusions(exclusions_)
-{
-}
-
-//-----------------------------------------------------------------------------
-QGCCameraOptionRange::QGCCameraOptionRange(QObject* parent, QString param_, QString value_, QString targetParam_, QString condition_, QStringList optNames_, QStringList optValues_)
-    : QObject(parent)
-    , param(param_)
-    , value(value_)
-    , targetParam(targetParam_)
-    , condition(condition_)
-    , optNames(optNames_)
-    , optValues(optValues_)
-{
-}
-
-//-----------------------------------------------------------------------------
 QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
     : FactGroup(0, parent)
     , _vehicle(vehicle)

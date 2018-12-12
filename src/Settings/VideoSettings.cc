@@ -26,13 +26,8 @@ const char* VideoSettings::videoSourceAuto      = "Automatic Video Stream";
 const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
 const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
 const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
-const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
-const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
-const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
-const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
-const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
 #ifdef QGC_GST_TAISYNC_ENABLED
-const char* VideoSettings::videoSourceTaiSyncUSB =  "Taisync USB";
+const char* VideoSettings::videoSourceTaiSyncUSB=  "Taisync USB";
 #endif
 
 DECLARE_SETTINGGROUP(Video, "Video")
