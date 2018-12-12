@@ -318,13 +318,16 @@ FlightMap {
         }
     }
 
-    QGCMapCircleVisuals {
-        id:         orbitMapCircle
-        mapControl: parent
-        mapCircle:  _mapCircle
-        visible:    false
+    // Orbit visuals
 
-        property alias center:  _mapCircle.center
+    QGCMapCircleVisuals {
+        id:             orbitMapCircle
+        mapControl:     parent
+        mapCircle:      _mapCircle
+        visible:        false
+
+        property alias center:              _mapCircle.center
+        property alias clockwiseRotation:   _mapCircle.clockwiseRotation
 
         readonly property real defaultRadius: 30
 
@@ -348,6 +351,31 @@ FlightMap {
             id:                 _mapCircle
             interactive:        true
             radius.rawValue:    30
+            showRotation:       true
+            clockwiseRotation:  true
+        }
+    }
+
+    // Orbit telemetry visuals
+
+    QGCMapCircleVisuals {
+        id:             orbitTelemetryCircle
+        mapControl:     parent
+        mapCircle:      _activeVehicle ? _activeVehicle.orbitMapCircle : null
+        visible:        _activeVehicle ? _activeVehicle.orbitActive : false
+    }
+
+    MapQuickItem {
+        id:             orbitCenterIndicator
+        anchorPoint.x:  sourceItem.anchorPointX
+        anchorPoint.y:  sourceItem.anchorPointY
+        coordinate:     _activeVehicle ? _activeVehicle.orbitMapCircle.center : undefined
+        visible:        orbitTelemetryCircle.visible
+
+        sourceItem: MissionItemIndexLabel {
+            checked:    true
+            index:      -1
+            label:      qsTr("Orbit", "Orbit waypoint")
         }
     }
 
@@ -386,7 +414,7 @@ FlightMap {
         onClicked: {
             if (guidedActionsController.guidedUIVisible || (!guidedActionsController.showGotoLocation && !guidedActionsController.showOrbit)) {
                 return
-            }            
+            }
             orbitMapCircle.hide()
             gotoLocationItem.hide()
             var clickCoord = flightMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)

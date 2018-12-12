@@ -8,6 +8,8 @@
  ****************************************************************************/
 
 #include "VideoSettings.h"
+#include "QGCApplication.h"
+#include "VideoManager.h"
 #include "VideoReceiver.h"
 
 #include <QQmlEngine>
@@ -18,13 +20,14 @@
 #include <QCameraInfo>
 #endif
 
-const char* VideoSettings::videoSourceNoVideo =     "No Video Available";
-const char* VideoSettings::videoDisabled =          "Video Stream Disabled";
-const char* VideoSettings::videoSourceUDP =         "UDP Video Stream";
-const char* VideoSettings::videoSourceRTSP =        "RTSP Video Stream";
-const char* VideoSettings::videoSourceTCP =         "TCP-MPEG2 Video Stream";
+const char* VideoSettings::videoSourceNoVideo   = "No Video Available";
+const char* VideoSettings::videoDisabled        = "Video Stream Disabled";
+const char* VideoSettings::videoSourceAuto      = "Automatic Video Stream";
+const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
+const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
+const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
 #ifdef QGC_GST_TAISYNC_ENABLED
-const char* VideoSettings::videoSourceTaiSyncUSB =  "Taisync USB";
+const char* VideoSettings::videoSourceTaiSyncUSB=  "Taisync USB";
 #endif
 
 DECLARE_SETTINGGROUP(Video, "Video")
@@ -35,10 +38,11 @@ DECLARE_SETTINGGROUP(Video, "Video")
     // Setup enum values for videoSource settings into meta data
     QStringList videoSourceList;
 #ifdef QGC_GST_STREAMING
+    videoSourceList.append(videoSourceAuto);
+    videoSourceList.append(videoSourceRTSP);
 #ifndef NO_UDP_VIDEO
     videoSourceList.append(videoSourceUDP);
 #endif
-    videoSourceList.append(videoSourceRTSP);
     videoSourceList.append(videoSourceTCP);
 #ifdef QGC_GST_TAISYNC_ENABLED
     videoSourceList.append(videoSourceTaiSyncUSB);
@@ -61,7 +65,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
         videoSourceVarList.append(QVariant::fromValue(videoSource));
     }
     _nameToMetaDataMap[videoSourceName]->setEnumInfo(videoSourceList, videoSourceVarList);
-
     // Set default value for videoSource
     _setDefaults();
 }
@@ -160,15 +163,23 @@ bool VideoSettings::streamConfigured(void)
 #endif
     //-- If UDP, check if port is set
     if(vSource == videoSourceUDP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for UDP Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
     }
     //-- If RTSP, check for URL
     if(vSource == videoSourceRTSP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for RTSP Stream:" << rtspUrl()->rawValue().toString();
         return !rtspUrl()->rawValue().toString().isEmpty();
     }
     //-- If TCP, check for URL
     if(vSource == videoSourceTCP) {
+        qCDebug(VideoManagerLog) << "Testing configuration for TCP Stream:" << tcpUrl()->rawValue().toString();
         return !tcpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If Auto, check for received URL
+    if(vSource == videoSourceAuto) {
+        qCDebug(VideoManagerLog) << "Testing configuration for Auto Stream:" << qgcApp()->toolbox()->videoManager()->autoURL();
+        return !qgcApp()->toolbox()->videoManager()->autoURL().isEmpty();
     }
     return false;
 }

@@ -42,7 +42,7 @@ DEFINES += __mobile__
 DEFINES += CUSTOMHEADER=\"\\\"AuterionPlugin.h\\\"\"
 DEFINES += CUSTOMCLASS=AuterionPlugin
 
-CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY
+CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY QGC_DISABLE_PX4_PLUGIN_FACTORY
 
 TARGET   = AuterionGS
 DEFINES += QGC_APPLICATION_NAME=\"\\\"AuterionGS\\\"\"
@@ -117,15 +117,26 @@ HEADERS += \
 INCLUDEPATH += \
     $$PWD/src \
 
-#equals(QT_MAJOR_VERSION, 5) {
-#    greaterThan(QT_MINOR_VERSION, 5) {
-#        ReleaseBuild {
-#            QT      += qml-private
-#            CONFIG  += qtquickcompiler
-#            message("Using Qt Quick Compiler")
-#        }
-#    }
-#}
+#-------------------------------------------------------------------------------------
+# Firmware/AutoPilot Plugin
+
+INCLUDEPATH += \
+    $$QGCROOT/custom/src/FirmwarePlugin \
+    $$QGCROOT/custom/src/AutoPilotPlugin
+
+HEADERS+= \
+    $$QGCROOT/custom/src/AutoPilotPlugin/AuterionAutoPilotPlugin.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraControl.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraManager.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePlugin.h \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePluginFactory.h \
+
+SOURCES += \
+    $$QGCROOT/custom/src/AutoPilotPlugin/AuterionAutoPilotPlugin.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraControl.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraManager.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePlugin.cc \
+    $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePluginFactory.cc \
 
 #-------------------------------------------------------------------------------------
 # Android

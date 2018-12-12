@@ -26,4 +26,9 @@
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/QGCToolBarButton.qml">res/AuterionToolBarButton.qml</file>
     </qresource>
+    <qresource prefix="/auterion/wav">
+        <file alias="beep.wav">res/audio/beep.wav</file>
+        <file alias="boop.wav">res/audio/boop.wav</file>
+        <file alias="camera.wav">res/audio/camera.wav</file>
+    </qresource>
 </RCC>

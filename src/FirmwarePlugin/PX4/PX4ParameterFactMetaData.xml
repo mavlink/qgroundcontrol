@@ -399,7 +399,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="56" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
-      <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6 on px4fmu-v2 and the rail pins on px4fmu-v4). The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6. For GPIO mode Pin 6 will be triggered followed by 5. With a value of 65 pin 5 will be triggered followed by 6. Pins may be non contiguous. I.E. 16 or 61. In GPIO mode the delay pin to pin is &lt; .2 uS.</long_desc>
+      <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6 on px4_fmu-v2 and the rail pins on px4_fmu-v4). The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6. For GPIO mode Pin 6 will be triggered followed by 5. With a value of 65 pin 5 will be triggered followed by 6. Pins may be non contiguous. I.E. 16 or 61. In GPIO mode the delay pin to pin is &lt; .2 uS.</long_desc>
       <min>1</min>
       <max>123456</max>
       <decimal>0</decimal>
@@ -3864,7 +3864,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <short_desc>Yaw mode</short_desc>
       <long_desc>Specifies the heading in Auto.</long_desc>
       <min>0</min>
-      <max>2</max>
+      <max>3</max>
       <values>
         <value code="0">towards waypoint</value>
         <value code="1">towards home</value>
@@ -4449,14 +4449,11 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="2">Terrain hold</value>
       </values>
     </parameter>
-    <parameter default="3" name="MPC_AUTO_MODE" type="INT32">
+    <parameter default="1" name="MPC_AUTO_MODE" type="INT32">
       <short_desc>Auto sub-mode</short_desc>
-      <long_desc>The supported sub-modes are: 0 Direct line tracking, no smoothing 1 Not used 2 Not used 3 Jerk-limited trajectory</long_desc>
       <values>
         <value code="0">Default line tracking</value>
-        <value code="1">N/A</value>
-        <value code="2">N/A</value>
-        <value code="3">Jerk-limited trajectory</value>
+        <value code="1">Jerk-limited trajectory</value>
       </values>
     </parameter>
     <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
@@ -7649,9 +7646,9 @@ to takeoff is reached</short_desc>
     </parameter>
     <parameter default="3" name="SDLOG_PROFILE" type="INT32">
       <short_desc>Logging topic profile (integer bitmask)</short_desc>
-      <long_desc>This integer bitmask controls the set and rates of logged topics. The default allows for general log analysis and estimator replay, while keeping the log file size reasonably small. Enabling multiple sets leads to higher bandwidth requirements and larger log files. Set bits true to enable: 0 : Default set (used for general log analysis) 1 : Full rate estimator (EKF2) replay topics 2 : Topics for thermal calibration (high rate raw IMU and Baro sensor data) 3 : Topics for system identification (high rate actuator control and IMU data) 4 : Full rates for analysis of fast maneuvers (RC, attitude, rates and actuators) 5 : Debugging topics (debug_*.msg topics, for custom code) 6 : Topics for sensor comparison (low rate raw IMU, Baro and Magnetomer data)</long_desc>
+      <long_desc>This integer bitmask controls the set and rates of logged topics. The default allows for general log analysis and estimator replay, while keeping the log file size reasonably small. Enabling multiple sets leads to higher bandwidth requirements and larger log files. Set bits true to enable: 0 : Default set (used for general log analysis) 1 : Full rate estimator (EKF2) replay topics 2 : Topics for thermal calibration (high rate raw IMU and Baro sensor data) 3 : Topics for system identification (high rate actuator control and IMU data) 4 : Full rates for analysis of fast maneuvers (RC, attitude, rates and actuators) 5 : Debugging topics (debug_*.msg topics, for custom code) 6 : Topics for sensor comparison (low rate raw IMU, Baro and Magnetomer data) 7 : Topics for computer vision and collision avoidance</long_desc>
       <min>0</min>
-      <max>127</max>
+      <max>255</max>
       <reboot_required>true</reboot_required>
       <bitmask>
         <bit index="0">Default set (general log analysis)</bit>
@@ -7661,6 +7658,7 @@ to takeoff is reached</short_desc>
         <bit index="4">High rate</bit>
         <bit index="5">Debug</bit>
         <bit index="6">Sensor comparison</bit>
+        <bit index="7">Computer Vision and Avoidance</bit>
       </bitmask>
     </parameter>
     <parameter default="0" name="SDLOG_UTC_OFFSET" type="INT32">
@@ -8241,6 +8239,11 @@ is less than 50% of this value</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
       <unit>deg</unit>
     </parameter>
+    <parameter default="0" name="SENS_EN_BATT" type="INT32">
+      <short_desc>SMBUS Smart battery driver (BQ40Z50)</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="SENS_EN_LL40LS" type="INT32">
       <short_desc>Lidar-Lite (LL40LS)</short_desc>
       <min>0</min>
@@ -8683,25 +8686,13 @@ is less than 50% of this value</short_desc>
       <short_desc>Float Demonstration Parameter in the Example</short_desc>
     </parameter>
   </group>
-  <group name="Syslink">
-    <parameter default="231" name="SLNK_RADIO_ADDR1" type="INT32">
-      <short_desc>Operating address of the NRF51 (most significant byte)</short_desc>
-    </parameter>
-    <parameter default="3890735079" name="SLNK_RADIO_ADDR2" type="INT32">
-      <short_desc>Operating address of the NRF51 (least significant 4 bytes)</short_desc>
-    </parameter>
-    <parameter default="80" name="SLNK_RADIO_CHAN" type="INT32">
-      <short_desc>Operating channel of the NRF51</short_desc>
-      <min>0</min>
-      <max>125</max>
-    </parameter>
-    <parameter default="2" name="SLNK_RADIO_RATE" type="INT32">
-      <short_desc>Operating datarate of the NRF51</short_desc>
-      <min>0</min>
-      <max>2</max>
-    </parameter>
-  </group>
   <group name="System">
+    <parameter default="31" name="LED_RGB1_MAXBRT" type="INT32">
+      <short_desc>RGB Led brightness limit</short_desc>
+      <long_desc>Set to 0 to disable, 1 for minimum brightness up to 31 (max)</long_desc>
+      <min>0</min>
+      <max>31</max>
+    </parameter>
     <parameter default="15" name="LED_RGB_MAXBRT" type="INT32">
       <short_desc>RGB Led brightness limit</short_desc>
       <long_desc>Set to 0 to disable, 1 for minimum brightness up to 15 (max)</long_desc>
@@ -9519,7 +9510,7 @@ Airbrakes need to be enables for your selected model/mixer</short_desc>
     </parameter>
     <parameter default="3.0" name="VT_B_TRANS_RAMP" type="FLOAT">
       <short_desc>Back transition MC motor ramp up time</short_desc>
-      <long_desc>This sets the duration during wich the MC motors ramp up to the commanded thrust during the back transition stage.</long_desc>
+      <long_desc>This sets the duration during which the MC motors ramp up to the commanded thrust during the back transition stage.</long_desc>
       <min>0.0</min>
       <max>20.0</max>
       <unit>s</unit>

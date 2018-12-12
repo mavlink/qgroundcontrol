@@ -42,14 +42,23 @@ public:
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
 
-    Q_PROPERTY(bool  streamConfigured       READ streamConfigured       NOTIFY streamConfiguredChanged)
+    Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
+    Q_PROPERTY(QString  autoVideoSource         READ autoVideoSource        CONSTANT)
+    Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
+    Q_PROPERTY(QString  udpVideoSource          READ udpVideoSource         CONSTANT)
+    Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
 
-    bool  streamConfigured          ();
+    bool     streamConfigured       ();
+    QString  autoVideoSource        () { return videoSourceAuto; }
+    QString  rtspVideoSource        () { return videoSourceRTSP; }
+    QString  udpVideoSource         () { return videoSourceUDP; }
+    QString  tcpVideoSource         () { return videoSourceTCP; }
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
+    static const char* videoSourceAuto;
     static const char* videoSourceTCP;
 #ifdef QGC_GST_TAISYNC_ENABLED
     static const char* videoSourceTaiSyncUSB;

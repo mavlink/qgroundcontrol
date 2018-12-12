@@ -150,18 +150,21 @@ Rectangle {
     Component {
         id: commSettings
         Rectangle {
+            id:             settingsRect
             color:          qgcPal.window
             anchors.fill:   parent
+            property real   _panelWidth:    width * 0.8
             Component.onCompleted: {
                 // If editing, create copy for editing
                 if(linkConfig) {
                     editConfig = QGroundControl.linkManager.startConfigurationEditing(linkConfig)
                 } else {
                     // Create new link configuration
-                    if(ScreenTools.isiOS)
-                        editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeUdp, "Unnamed")
-                    else
+                    if(ScreenTools.isSerialAvailable) {
                         editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeSerial, "Unnamed")
+                    } else {
+                        editConfig = QGroundControl.linkManager.createConfiguration(LinkConfiguration.TypeUdp,    "Unnamed")
+                    }
                 }
             }
             Component.onDestruction: {
@@ -170,12 +173,25 @@ Rectangle {
                     editConfig = null
                 }
             }
+            Column {
+                id:                 settingsTitle
+                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                QGCLabel {
+                    text:   linkConfig ? qsTr("Edit Link Configuration Settings") : qsTr("Create New Link Configuration")
+                    font.pointSize: ScreenTools.mediumFontPointSize
+                }
+                Rectangle {
+                    height: 1
+                    width:  settingsRect.width
+                    color:  qgcPal.button
+                }
+            }
             QGCFlickable {
                 id:                 settingsFlick
                 clip:               true
-                anchors.top:        parent.top
+                anchors.top:        settingsTitle.bottom
+                anchors.bottom:     commButtonRow.top
                 width:              parent.width
-                height:             parent.height - commButtonRow.height
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 contentHeight:      commSettingsColumn.height
                 contentWidth:       _linkRoot.width
@@ -185,116 +201,168 @@ Rectangle {
                     id:                 commSettingsColumn
                     width:              _linkRoot.width
                     anchors.margins:    ScreenTools.defaultFontPixelWidth
-                    spacing:            ScreenTools.defaultFontPixelHeight / 2
-                    QGCLabel {
-                        text:   linkConfig ? qsTr("Edit Link Configuration Settings (WIP)") : qsTr("Create New Link Configuration (WIP)")
-                        font.pointSize: ScreenTools.mediumFontPointSize
+                    spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                    //-----------------------------------------------------------------
+                    //-- General
+                    Item {
+                        width:                      _panelWidth
+                        height:                     generalLabel.height
+                        anchors.margins:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        QGCLabel {
+                            id:                     generalLabel
+                            text:                   qsTr("General")
+                            font.family:            ScreenTools.demiboldFontFamily
+                        }
                     }
                     Rectangle {
-                        height: 1
-                        width:  parent.width
-                        color:  qgcPal.button
-                    }
-                    Item {
-                        height: ScreenTools.defaultFontPixelHeight / 2
-                        width:  parent.width
-                    }
-                    Row {
-                        spacing:    ScreenTools.defaultFontPixelWidth
-                        QGCLabel {
-                            text:   qsTr("Name:")
-                            width:  _firstColumn
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        QGCTextField {
-                            id:     nameField
-                            text:   editConfig ? editConfig.name : ""
-                            width:  _secondColumn
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                    }
-                    Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth
-                        QGCLabel {
-                            text:       qsTr("Type:")
-                            width:      _firstColumn
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-                        //-----------------------------------------------------
-                        // When editing, you can't change the link type
-                        QGCLabel {
-                            text:       linkConfig ? QGroundControl.linkManager.linkTypeStrings[linkConfig.linkType] : ""
-                            visible:    linkConfig != null
-                            width:      _secondColumn
-                            anchors.verticalCenter: parent.verticalCenter
-                            Component.onCompleted: {
-                                if(linkConfig != null) {
-                                    linkSettingLoader.source  = linkConfig.settingsURL
-                                    linkSettingLoader.visible = true
+                        height:                     generalCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                        width:                      _panelWidth
+                        color:                      qgcPal.windowShade
+                        anchors.margins:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        Column {
+                            id:                     generalCol
+                            anchors.centerIn:       parent
+                            anchors.margins:        ScreenTools.defaultFontPixelWidth
+                            spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                            Row {
+                                spacing:    ScreenTools.defaultFontPixelWidth
+                                QGCLabel {
+                                    text:   qsTr("Name:")
+                                    width:  _firstColumn
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                QGCTextField {
+                                    id:     nameField
+                                    text:   editConfig ? editConfig.name : ""
+                                    width:  _secondColumn
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
-                        }
-                        //-----------------------------------------------------
-                        // When creating, select a link type
-                        QGCComboBox {
-                            id:             linkTypeCombo
-                            width:          _secondColumn
-                            visible:        linkConfig == null
-                            model:          QGroundControl.linkManager.linkTypeStrings
-                            anchors.verticalCenter: parent.verticalCenter
-                            onActivated: {
-                                if (index != -1 && index !== editConfig.linkType) {
-                                    // Destroy current panel
-                                    linkSettingLoader.source = ""
-                                    linkSettingLoader.visible = false
-                                    // Save current name
-                                    var name = editConfig.name
-                                    // Discard link configuration (old type)
-                                    QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
-                                    // Create new link configuration
-                                    editConfig = QGroundControl.linkManager.createConfiguration(index, name)
-                                    // Load appropriate configuration panel
-                                    linkSettingLoader.source  = editConfig.settingsURL
-                                    linkSettingLoader.visible = true
+                            Row {
+                                spacing:            ScreenTools.defaultFontPixelWidth
+                                QGCLabel {
+                                    text:           qsTr("Type:")
+                                    width:          _firstColumn
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                //-----------------------------------------------------
+                                // When editing, you can't change the link type
+                                QGCLabel {
+                                    text:           linkConfig ? QGroundControl.linkManager.linkTypeStrings[linkConfig.linkType] : ""
+                                    visible:        linkConfig != null
+                                    width:          _secondColumn
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    Component.onCompleted: {
+                                        if(linkConfig != null) {
+                                            linkSettingLoader.source  = linkConfig.settingsURL
+                                            linkSettingLoader.visible = true
+                                        }
+                                    }
+                                }
+                                //-----------------------------------------------------
+                                // When creating, select a link type
+                                QGCComboBox {
+                                    id:             linkTypeCombo
+                                    width:          _secondColumn
+                                    visible:        linkConfig == null
+                                    model:          QGroundControl.linkManager.linkTypeStrings
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    onActivated: {
+                                        if (index != -1 && index !== editConfig.linkType) {
+                                            // Destroy current panel
+                                            linkSettingLoader.source = ""
+                                            linkSettingLoader.visible = false
+                                            // Save current name
+                                            var name = editConfig.name
+                                            // Discard link configuration (old type)
+                                            QGroundControl.linkManager.cancelConfigurationEditing(editConfig)
+                                            // Create new link configuration
+                                            editConfig = QGroundControl.linkManager.createConfiguration(index, name)
+                                            // Load appropriate configuration panel
+                                            linkSettingLoader.source  = editConfig.settingsURL
+                                            linkSettingLoader.visible = true
+                                        }
+                                    }
+                                    Component.onCompleted: {
+                                        if(linkConfig == null) {
+                                            linkTypeCombo.currentIndex = 0
+                                            linkSettingLoader.source   = editConfig.settingsURL
+                                            linkSettingLoader.visible  = true
+                                        }
+                                    }
                                 }
                             }
-                            Component.onCompleted: {
-                                if(linkConfig == null) {
-                                    linkTypeCombo.currentIndex = 0
-                                    linkSettingLoader.source   = editConfig.settingsURL
-                                    linkSettingLoader.visible  = true
+                            Item {
+                                height: ScreenTools.defaultFontPixelHeight * 0.5
+                                width:  parent.width
+                            }
+                            //-- Auto Connect on Start
+                            QGCCheckBox {
+                                text:               qsTr("Automatically Connect on Start")
+                                checked:            false
+                                enabled:            editConfig ? editConfig.autoConnectAllowed : false
+                                onCheckedChanged: {
+                                    if(editConfig) {
+                                        editConfig.autoConnect = checked
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    if(editConfig)
+                                        checked = editConfig.autoConnect
                                 }
                             }
-                        }
-                    }
-                    Item {
-                        height: ScreenTools.defaultFontPixelHeight * 0.5
-                        width:  parent.width
-                    }
-                    //-- Auto Connect on Start
-                    QGCCheckBox {
-                        text:       "Automatically Connect on Start"
-                        checked:    false
-                        visible:    editConfig ? editConfig.autoConnectAllowed : false
-                        onCheckedChanged: {
-                            if(editConfig) {
-                                editConfig.autoConnect = checked
+                            QGCCheckBox {
+                                text:               qsTr("High Latency")
+                                checked:            false
+                                enabled:            editConfig ? editConfig.highLatencyAllowed : false
+                                onCheckedChanged: {
+                                    if(editConfig) {
+                                        editConfig.highLatency = checked
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    if(editConfig)
+                                        checked = editConfig.highLatency
+                                }
                             }
-                        }
-                        Component.onCompleted: {
-                            if(editConfig)
-                                checked = editConfig.autoConnect
                         }
                     }
                     Item {
                         height: ScreenTools.defaultFontPixelHeight
                         width:  parent.width
                     }
-                    Loader {
-                        id:             linkSettingLoader
-                        width:          parent.width
-                        visible:        false
-                        property var subEditConfig: editConfig
+                    //-----------------------------------------------------------------
+                    //-- Link Specific Settings
+                    Item {
+                        width:                      _panelWidth
+                        height:                     linkLabel.height
+                        anchors.margins:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        QGCLabel {
+                            id:                     linkLabel
+                            text:                   editConfig ? editConfig.settingsTitle : ""
+                            visible:                linkSettingLoader.source != ""
+                            font.family:            ScreenTools.demiboldFontFamily
+                        }
+                    }
+                    Rectangle {
+                        height:                     linkSettingLoader.height + (ScreenTools.defaultFontPixelHeight * 2)
+                        width:                      _panelWidth
+                        color:                      qgcPal.windowShade
+                        anchors.margins:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        Item {
+                            height:                 linkSettingLoader.height
+                            width:                  linkSettingLoader.width
+                            anchors.centerIn:       parent
+                            Loader {
+                                id:                 linkSettingLoader
+                                visible:            false
+                                property var subEditConfig: editConfig
+                            }
+                        }
                     }
                 }
             }

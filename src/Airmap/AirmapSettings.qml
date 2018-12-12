@@ -69,7 +69,6 @@ QGCView {
                     height:                     generalLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    QGroundControl.settingsManager.unitsSettings.visible
                     QGCLabel {
                         id:             generalLabel
                         text:           qsTr("General")

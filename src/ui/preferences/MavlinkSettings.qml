@@ -15,6 +15,7 @@ import QtQuick.Dialogs          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
+import QGroundControl.FactControls          1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.MultiVehicleManager   1.0
@@ -132,8 +133,7 @@ Rectangle {
                             }
                         }
                     }
-                    //-----------------------------------------------------------------
-                    //-- Mavlink Heartbeats
+
                     QGCCheckBox {
                         text:       qsTr("Emit heartbeat")
                         checked:    QGroundControl.multiVehicleManager.gcsHeartBeatEnabled
@@ -141,8 +141,12 @@ Rectangle {
                             QGroundControl.multiVehicleManager.gcsHeartBeatEnabled = checked
                         }
                     }
-                    //-----------------------------------------------------------------
-                    //-- Mavlink Version Check
+
+                    FactCheckBox {
+                        text:   fact.shortDescription
+                        fact:   QGroundControl.settingsManager.appSettings.apmStartMavlinkStreams
+                    }
+
                     QGCCheckBox {
                         text:       qsTr("Only accept MAVs with same protocol version")
                         checked:    QGroundControl.isVersionCheckEnabled
