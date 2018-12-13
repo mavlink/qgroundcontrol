@@ -56,9 +56,10 @@ linux {
 } else : macx {
     macx-clang | macx-llvm {
         message("Mac build")
-        CONFIG += MacBuild
-        CONFIG += x86_64
-        CONFIG -= x86
+        CONFIG  += MacBuild
+        CONFIG  += x86_64
+        CONFIG  -= x86
+        DEFINES += QGC_GST_TAISYNC_ENABLED
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
         } else {
@@ -83,6 +84,7 @@ linux {
     DEFINES += QGC_NO_GOOGLE_MAPS
     DEFINES += NO_SERIAL_LINK
     DEFINES += QGC_DISABLE_UVC
+    DEFINES += QGC_GST_TAISYNC_ENABLED
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie
