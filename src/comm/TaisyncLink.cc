@@ -15,6 +15,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "VideoSettings.h"
+#include "VideoManager.h"
 
 #include "TaisyncTelemetry.h"
 #include "TaisyncSettings.h"
@@ -102,6 +103,9 @@ TaisyncLink::_disconnect()
         _hardwareDisconnect();
         emit disconnected();
     }
+#if defined(__ios__) || defined(__android__)
+    qgcApp()->toolbox()->videoManager()->setIsTaisync(false);
+#endif
     //-- Restore video settings
     if(!_savedVideoSource.isNull()) {
         VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
@@ -129,6 +133,10 @@ TaisyncLink::_connect(void)
         _savedVideoUDP    = pVSettings->udpPort()->rawValue();
         _savedAR          = pVSettings->aspectRatio()->rawValue();
         _savedVideoState  = pVSettings->visible();
+#if defined(__ios__) || defined(__android__)
+        //-- iOS and Android receive raw h.264 and need a different pipeline
+        qgcApp()->toolbox()->videoManager()->setIsTaisync(true);
+#endif
         pVSettings->setVisible(false);
         pVSettings->udpPort()->setRawValue(5600);
         pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
