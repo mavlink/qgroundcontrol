@@ -54,13 +54,19 @@
 class SettingsGroup : public QObject
 {
     Q_OBJECT
-    
+
 public:
     /// @param name Name for this Settings group
     /// @param settingsGroup Group to place settings in for QSettings::setGroup
     SettingsGroup(const QString &name, const QString &settingsGroup, QObject* parent = nullptr);
 
-    Q_PROPERTY(bool visible MEMBER _visible CONSTANT)
+    Q_PROPERTY(bool visible READ visible WRITE setVisible NOTIFY visibleChanged)
+
+    virtual bool    visible             () { return _visible; }
+    virtual void    setVisible          (bool vis) { _visible = vis; emit visibleChanged(); }
+
+signals:
+    void            visibleChanged      ();
 
 protected:
     SettingsFact*   _createSettingsFact(const QString& factName);

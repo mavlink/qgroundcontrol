@@ -29,11 +29,14 @@
 #ifdef QT_DEBUG
 #include "MockLink.h"
 #endif
+#if defined(QGC_GST_TAISYNC_ENABLED)
+#include "TaisyncLink.h"
+#endif
 
 #define LINK_SETTING_ROOT "LinkConfigurations"
 
 LinkConfiguration::LinkConfiguration(const QString& name)
-    : _link(NULL)
+    : _link(nullptr)
     , _name(name)
     , _dynamic(false)
     , _autoConnect(false)
@@ -80,7 +83,7 @@ const QString LinkConfiguration::settingsRoot()
 */
 LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& name)
 {
-    LinkConfiguration* config = NULL;
+    LinkConfiguration* config = nullptr;
     switch(type) {
 #ifndef NO_SERIAL_LINK
         case LinkConfiguration::TypeSerial:
@@ -108,6 +111,11 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
             config = new MockConfiguration(name);
             break;
 #endif
+#if defined(QGC_GST_TAISYNC_ENABLED)
+        case LinkConfiguration::TypeTaisync:
+            config = new TaisyncConfiguration(name);
+            break;
+#endif
     }
     return config;
 }
@@ -118,7 +126,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
 */
 LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* source)
 {
-    LinkConfiguration* dupe = NULL;
+    LinkConfiguration* dupe = nullptr;
     switch(source->type()) {
 #ifndef NO_SERIAL_LINK
         case TypeSerial:
@@ -146,8 +154,12 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             dupe = new MockConfiguration(dynamic_cast<MockConfiguration*>(source));
             break;
 #endif
+#if defined(QGC_GST_TAISYNC_ENABLED)
+        case TypeTaisync:
+            dupe = new TaisyncConfiguration(dynamic_cast<TaisyncConfiguration*>(source));
+            break;
+#endif
         case TypeLast:
-        default:
             break;
     }
     return dupe;

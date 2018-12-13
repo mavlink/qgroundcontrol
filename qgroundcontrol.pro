@@ -628,7 +628,7 @@ HEADERS += \
 
 AndroidBuild {
 HEADERS += \
-	src/Joystick/JoystickAndroid.h \
+    src/Joystick/JoystickAndroid.h \
 }
 
 DebugBuild {
@@ -714,7 +714,7 @@ iOSBuild {
 
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
-	src/Joystick/JoystickAndroid.cc \
+    src/Joystick/JoystickAndroid.cc \
 }
 
 SOURCES += \
@@ -1105,6 +1105,27 @@ SOURCES += \
     src/FactSystem/FactValueSliderListModel.cc \
     src/FactSystem/ParameterManager.cc \
     src/FactSystem/SettingsFact.cc \
+
+#-------------------------------------------------------------------------------------
+# Taisync
+contains (DEFINES, QGC_GST_TAISYNC_ENABLED) {
+    INCLUDEPATH += \
+        src/Taisync
+
+    HEADERS += \
+        src/comm/TaisyncLink.h \
+        src/Taisync/TaisyncHandler.h \
+        src/Taisync/TaisyncSettings.h \
+        src/Taisync/TaisyncTelemetry.h \
+        src/Taisync/TaisyncVideoReceiver.h \
+
+    SOURCES += \
+        src/comm/TaisyncLink.cc \
+        src/Taisync/TaisyncHandler.cc \
+        src/Taisync/TaisyncSettings.cc \
+        src/Taisync/TaisyncTelemetry.cc \
+        src/Taisync/TaisyncVideoReceiver.cc \
+}
 
 #-------------------------------------------------------------------------------------
 # AirMap
