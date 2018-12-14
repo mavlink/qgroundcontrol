@@ -60,6 +60,7 @@ TaisyncHandler::_newConnection()
     }
     _tcpSocket = _tcpServer->nextPendingConnection();
     QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &TaisyncHandler::_readBytes);
+    emit connected();
 }
 
 //-----------------------------------------------------------------------------

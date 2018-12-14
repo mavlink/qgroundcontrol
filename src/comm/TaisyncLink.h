@@ -81,6 +81,8 @@ public:
     bool    isConnected             () const override;
     QString getName                 () const override;
 
+    TaisyncSettings*taisyncSettings () { return _taiSettings; }
+
     // Extensive statistics for scientific purposes
     qint64  getConnectionSpeed      () const override;
     qint64  getCurrentInDataRate    () const;
@@ -97,6 +99,8 @@ public:
 private slots:
     void    _writeBytes             (const QByteArray data) override;
     void    _readBytes              (QByteArray bytes);
+    void    _telemetryReady         ();
+    void    _settingsReady          ();
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
@@ -121,6 +125,7 @@ private:
     TaisyncVideoReceiver*   _taiVideo           = nullptr;
 #endif
     bool                    _savedVideoState    = true;
+    bool                    _connected          = false;
     QVariant                _savedVideoSource;
     QVariant                _savedVideoUDP;
     QVariant                _savedAR;

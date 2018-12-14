@@ -39,6 +39,9 @@ protected slots:
     virtual void    _socketDisconnected ();
     virtual void    _readBytes          () = 0;
 
+signals:
+    void connected                      ();
+
 protected:
     QTcpServer*     _tcpServer = nullptr;
     QTcpSocket*     _tcpSocket = nullptr;
