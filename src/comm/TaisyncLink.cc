@@ -50,6 +50,7 @@ TaisyncLink::~TaisyncLink()
 void
 TaisyncLink::run()
 {
+    // Thread
     if(_hardwareConnect()) {
         exec();
     }
@@ -96,9 +97,11 @@ TaisyncLink::_readBytes(QByteArray bytes)
 void
 TaisyncLink::_disconnect()
 {
+    //-- Stop thread
     _running = false;
     quit();
     wait();
+    //-- Kill Taisync handlers
     if (_taiTelemetery) {
         _hardwareDisconnect();
         emit disconnected();
@@ -129,6 +132,7 @@ TaisyncLink::_connect(void)
     if(_taiConfig->videoEnabled()) {
         //-- Hide video selection as we will be fixed to Taisync video and set the way we need it.
         VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
+        //-- First save current state
         _savedVideoSource = pVSettings->videoSource()->rawValue();
         _savedVideoUDP    = pVSettings->udpPort()->rawValue();
         _savedAR          = pVSettings->aspectRatio()->rawValue();
@@ -137,6 +141,7 @@ TaisyncLink::_connect(void)
         //-- iOS and Android receive raw h.264 and need a different pipeline
         qgcApp()->toolbox()->videoManager()->setIsTaisync(true);
 #endif
+        //-- Now set it up the way we need it do be
         pVSettings->setVisible(false);
         pVSettings->udpPort()->setRawValue(5600);
         pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
@@ -167,6 +172,7 @@ TaisyncLink::_hardwareDisconnect()
         _taiVideo = nullptr;
     }
 #endif
+    _connected = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -176,9 +182,11 @@ TaisyncLink::_hardwareConnect()
     _hardwareDisconnect();
     _taiTelemetery = new TaisyncTelemetry(this);
     QObject::connect(_taiTelemetery, &TaisyncTelemetry::bytesReady, this, &TaisyncLink::_readBytes);
+    QObject::connect(_taiTelemetery, &TaisyncTelemetry::connected,  this, &TaisyncLink::_telemetryReady);
     _taiTelemetery->start();
     _taiSettings = new TaisyncSettings(this);
     _taiSettings->start();
+    QObject::connect(_taiSettings,   &TaisyncSettings::connected,   this, &TaisyncLink::_settingsReady);
 #if defined(__ios__) || defined(__android__)
     if(_taiConfig->videoEnabled()) {
         _taiVideo = new TaisyncVideoReceiver(this);
@@ -192,7 +200,7 @@ TaisyncLink::_hardwareConnect()
 bool
 TaisyncLink::isConnected() const
 {
-    return _taiTelemetery != nullptr;
+    return _connected;
 }
 
 //-----------------------------------------------------------------------------
@@ -214,6 +222,25 @@ qint64
 TaisyncLink::getCurrentOutDataRate() const
 {
     return 0;
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncLink::_telemetryReady()
+{
+    qCDebug(TaisyncLog) << "Taisync telemetry ready";
+    if(!_connected) {
+        _connected = true;
+        emit connected();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncLink::_settingsReady()
+{
+    qCDebug(TaisyncLog) << "Taisync settings ready";
+    _taiSettings->requestSettings();
 }
 
 //--------------------------------------------------------------------------
