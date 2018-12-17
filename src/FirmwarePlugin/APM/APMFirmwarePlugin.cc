@@ -462,8 +462,8 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_messa
 
 bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
-    //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
-    if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
+    // Only translate messages which come from the autopilot. All other components are expected to follow current mavlink spec.
+    if (message->compid != MAV_COMP_ID_AUTOPILOT1) {
         return true;
     }
 
