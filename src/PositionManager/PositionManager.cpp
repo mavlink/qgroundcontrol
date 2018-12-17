@@ -51,8 +51,19 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
 
 void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 {
+    // stop and release _nmeaSource
     if (_nmeaSource) {
+        _nmeaSource->stopUpdates();
+        disconnect(_nmeaSource);
+
+        // if _currentSource is pointing there, point to null
+        if (_currentSource == _nmeaSource){
+            _currentSource = nullptr;
+        }
+
         delete _nmeaSource;
+        _nmeaSource = nullptr;
+
     }
     _nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
     _nmeaSource->setDevice(device);
