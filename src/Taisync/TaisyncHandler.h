@@ -15,10 +15,11 @@
 #include <QTcpSocket>
 
 #if defined(__ios__) || defined(__android__)
-#define TAISYNC_VIDEO_UDP_PORT  5600
-#define TAISYNC_VIDEO_TCP_PORT  8000
-#define TAISYNC_SETTINGS_PORT   8200
-#define TAISYNC_TELEM_PORT      8400
+#define TAISYNC_VIDEO_UDP_PORT      5600
+#define TAISYNC_VIDEO_TCP_PORT      8000
+#define TAISYNC_SETTINGS_PORT       8200
+#define TAISYNC_TELEM_PORT          8400
+#define TAISYNC_TELEM_TARGET_PORT   14550
 #else
 #define TAISYNC_SETTINGS_PORT   80
 #define TAISYNC_SETTINGS_TARGET "192.168.1.99"
