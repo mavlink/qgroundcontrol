@@ -18,8 +18,9 @@ public:
     explicit TaisyncSettings            (QObject* parent = nullptr);
     bool    start                       () override;
     bool    requestLinkStatus           ();
-    bool    requestDevInfo             ();
+    bool    requestDevInfo              ();
     bool    requestFreqScan             ();
+    bool    requestVideoSettings        ();
 
 signals:
     void    updateSettings              (QByteArray jSonData);

@@ -19,6 +19,11 @@ TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     connect(&_workTimer, &QTimer::timeout, this, &TaisyncManager::_checkTaisync);
     _workTimer.setSingleShot(true);
+    _decodeList.append(tr("Stream"));
+    _decodeList.append(tr("HDMI Port"));
+    _rateList.append(tr("Low"));
+    _rateList.append(tr("Medium"));
+    _rateList.append(tr("High"));
 }
 
 //-----------------------------------------------------------------------------
@@ -63,6 +68,20 @@ TaisyncManager::setToolbox(QGCToolbox* toolbox)
     if(_enabled) {
         _setVideoEnabled();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncManager::setDecodeIndex(int idx)
+{
+    (void)idx;
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncManager::setRateIndex(int idx)
+{
+    (void)idx;
 }
 
 //-----------------------------------------------------------------------------
@@ -199,6 +218,9 @@ TaisyncManager::_checkTaisync()
             case REQ_FREQ_SCAN:
                 _taiSettings->requestFreqScan();
                 break;
+            case REQ_VIDEO_SETTINGS:
+                _taiSettings->requestVideoSettings();
+                break;
             }
         }
         _workTimer.start(1000);
@@ -228,5 +250,10 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     } else if(jSonData.contains("\"firmwareversion\":")) {
         _fwVersion      = jObj["firmwareversion"].toString(_fwVersion);
         _serialNumber   = jObj["sn"].toString(_serialNumber);
+    //-- Video Settings?
+    } else if(jSonData.contains("\"maxbitrate\":")) {
+
+
+
     }
 }
