@@ -14,7 +14,7 @@
 class AutoConnectSettings : public SettingsGroup
 {
     Q_OBJECT
-    
+
 public:
     AutoConnectSettings(QObject* parent = nullptr);
 
@@ -31,6 +31,5 @@ public:
     DEFINE_SETTINGFACT(udpListenPort)
     DEFINE_SETTINGFACT(udpTargetHostIP)
     DEFINE_SETTINGFACT(udpTargetHostPort)
-    DEFINE_SETTINGFACT(autoconnectTaisyncUSB)
 
 };
