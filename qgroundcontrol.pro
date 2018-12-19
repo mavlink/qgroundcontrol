@@ -1107,6 +1107,33 @@ SOURCES += \
     src/FactSystem/SettingsFact.cc \
 
 #-------------------------------------------------------------------------------------
+# Taisync
+contains (DEFINES, QGC_GST_TAISYNC_ENABLED) {
+    INCLUDEPATH += \
+        src/Taisync
+
+    HEADERS += \
+        src/Taisync/TaisyncManager.h \
+        src/Taisync/TaisyncHandler.h \
+        src/Taisync/TaisyncSettings.h \
+
+    SOURCES += \
+        src/Taisync/TaisyncManager.cc \
+        src/Taisync/TaisyncHandler.cc \
+        src/Taisync/TaisyncSettings.cc \
+
+    iOSBuild | AndroidBuild {
+        HEADERS += \
+            src/Taisync/TaisyncTelemetry.h \
+            src/Taisync/TaisyncVideoReceiver.h \
+
+        SOURCES += \
+            src/Taisync/TaisyncTelemetry.cc \
+            src/Taisync/TaisyncVideoReceiver.cc \
+    }
+}
+
+#-------------------------------------------------------------------------------------
 # AirMap
 
 contains (DEFINES, QGC_AIRMAP_ENABLED) {
