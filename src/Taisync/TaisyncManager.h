@@ -59,6 +59,10 @@ private slots:
     void    _updateSettings                 (QByteArray jSonData);
     void    _setEnabled                     ();
     void    _setVideoEnabled                ();
+#if defined(__ios__) || defined(__android__)
+    void    _readUDPBytes                   ();
+    void    _readTelemBytes                 (QByteArray bytesIn);
+#endif
 
 private:
 
@@ -78,6 +82,7 @@ private:
 #if defined(__ios__) || defined(__android__)
     TaisyncTelemetry*       _taiTelemetery  = nullptr;
     TaisyncVideoReceiver*   _taiVideo       = nullptr;
+    QUdpSocket*             _telemetrySocket= nullptr;
 #endif
     bool        _enableVideo                = true;
     bool        _enabled                    = true;

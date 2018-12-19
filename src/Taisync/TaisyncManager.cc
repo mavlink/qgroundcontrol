@@ -35,6 +35,11 @@ TaisyncManager::~TaisyncManager()
         _taiTelemetery->deleteLater();
         _taiTelemetery = nullptr;
     }
+    if(_telemetrySocket) {
+        _telemetrySocket->close();
+        _telemetrySocket->deleteLater();
+        _telemetrySocket = nullptr;
+    }
     if (_taiVideo) {
         _taiVideo->close();
         _taiVideo->deleteLater();
@@ -69,6 +74,11 @@ TaisyncManager::_setEnabled()
 #if defined(__ios__) || defined(__android__)
         _taiTelemetery = new TaisyncTelemetry(this);
         QObject::connect(_taiTelemetery, &TaisyncTelemetry::bytesReady, this, &TaisyncManager::_readTelemBytes);
+        _telemetrySocket = new QUdpSocket(this);
+        _telemetrySocket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    64 * 1024);
+        _telemetrySocket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024);
+        QObject::connect(_telemetrySocket, &QUdpSocket::readyRead, this, &TaisyncManager::_readUDPBytes);
+        _telemetrySocket->bind(QHostAddress::LocalHost, 0, QUdpSocket::ShareAddress);
 #endif
         _workTimer.start(1000);
     } else {
@@ -129,6 +139,35 @@ TaisyncManager::_setVideoEnabled()
     }
     _enableVideo = enable;
 }
+
+//-----------------------------------------------------------------------------
+#if defined(__ios__) || defined(__android__)
+void
+TaisyncManager::_readTelemBytes(QByteArray bytesIn)
+{
+    //-- Send telemetry from vehicle to QGC (using normal UDP)
+    _telemetrySocket->writeDatagram(bytesIn, QHostAddress::LocalHost, TAISYNC_TELEM_TARGET_PORT);
+}
+#endif
+
+//-----------------------------------------------------------------------------
+#if defined(__ios__) || defined(__android__)
+void
+TaisyncManager::_readUDPBytes()
+{
+    if (!_telemetrySocket || !_taiTelemetery) {
+        return;
+    }
+    //-- Read UDP data from QGC
+    while (_telemetrySocket->hasPendingDatagrams()) {
+        QByteArray datagram;
+        datagram.resize(static_cast<int>(_telemetrySocket->pendingDatagramSize()));
+        _telemetrySocket->readDatagram(datagram.data(), datagram.size());
+        //-- Send it to vehicle
+        _taiTelemetery->writeBytes(datagram);
+    }
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void
