@@ -81,6 +81,7 @@ DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+DECLARE_SETTINGSFACT(VideoSettings, audioEnabled)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
@@ -106,6 +107,24 @@ DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, udpPort)
         connect(_udpPortFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
     }
     return _udpPortFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, audioVolume)
+{
+    if (!_audioVolumeFact) {
+        _audioVolumeFact = _createSettingsFact(audioVolumeName);
+        connect(_audioVolumeFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _audioVolumeFact;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, audioUdpPort)
+{
+    if (!_audioUdpPortFact) {
+        _audioUdpPortFact = _createSettingsFact(audioUdpPortName);
+        connect(_audioUdpPortFact, &Fact::valueChanged, this, &VideoSettings::_configChanged);
+    }
+    return _audioUdpPortFact;
 }
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, rtspUrl)

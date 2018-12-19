@@ -779,6 +779,28 @@ QGCView {
                             }
 
                             QGCLabel {
+                                text:                   qsTr("Enable Audio")
+                                visible:                _videoSettings.audioEnabled.visible
+                            }
+                            FactCheckBox {
+                                text:                   ""
+                                fact:                   _videoSettings.audioEnabled
+                                visible:                _videoSettings.audioEnabled.visible
+                            }
+
+                            QGCLabel {
+                                text:                   qsTr("Audio UDP Port")
+                                visible:                _videoSettings.audioEnabled.rawValue
+                                                        && _videoSettings.audioUdpPort.visible
+                            }
+                            FactTextField {
+                                Layout.preferredWidth:  _comboFieldWidth
+                                fact:                   _videoSettings.audioUdpPort
+                                visible:                _videoSettings.audioEnabled.rawValue
+                                                        && _videoSettings.audioUdpPort.visible
+                            }
+
+                            QGCLabel {
                                 text:                   qsTr("Disable When Disarmed")
                                 visible:                _isGst && QGroundControl.settingsManager.videoSettings.disableWhenDisarmed.visible
                             }

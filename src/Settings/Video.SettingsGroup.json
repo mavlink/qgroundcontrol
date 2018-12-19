@@ -15,6 +15,30 @@
     "defaultValue":     5600
 },
 {
+    "name":             "audioEnabled",
+    "shortDescription": "Audio Stream Enabled",
+    "longDescription":  "This enables or disables receiving an audio stream.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
+    "name":             "audioUdpPort",
+    "shortDescription": "Audio UDP Port",
+    "longDescription":  "UDP port to bind to for audio stream.",
+    "type":             "uint16",
+    "min":              1025,
+    "defaultValue":     5601
+},
+{
+    "name":             "audioVolume",
+    "shortDescription": "Audio Stream Volume",
+    "longDescription":  "Volume level for audio stream.",
+    "type":             "float",
+    "min":              0,
+    "max":              1,
+    "defaultValue":     1
+},
+{
     "name":             "rtspUrl",
     "shortDescription": "Video RTSP Url",
     "longDescription":  "RTSP url address and port to bind to for video stream. Example: rtsp://192.168.42.1:554/live",
