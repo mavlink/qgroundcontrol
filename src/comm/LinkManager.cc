@@ -24,9 +24,6 @@
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-#include "TaisyncLink.h"
-#endif
 
 #ifndef __mobile__
 #include "GPSManager.h"
@@ -150,11 +147,6 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
 #ifdef QT_DEBUG
     case LinkConfiguration::TypeMock:
         pLink = new MockLink(config);
-        break;
-#endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-    case LinkConfiguration::TypeTaisync:
-        pLink = new TaisyncLink(config);
         break;
 #endif
     case LinkConfiguration::TypeLast:
@@ -409,11 +401,6 @@ void LinkManager::loadLinkConfigurationList()
 #ifdef QT_DEBUG
                             case LinkConfiguration::TypeMock:
                                 pLink = dynamic_cast<LinkConfiguration*>(new MockConfiguration(name));
-                                break;
-#endif
-#if defined(QGC_GST_TAISYNC_ENABLED)
-                            case LinkConfiguration::TypeTaisync:
-                                pLink = dynamic_cast<LinkConfiguration*>(new TaisyncConfiguration(name));
                                 break;
 #endif
                             case LinkConfiguration::TypeLast:
@@ -686,9 +673,6 @@ QStringList LinkManager::linkTypeStrings(void) const
 #endif
         list += tr("UDP");
         list += tr("TCP");
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        list += tr("Taisync");
-#endif
 #ifdef QGC_ENABLE_BLUETOOTH
         list += "Bluetooth";
 #endif
@@ -830,15 +814,6 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                 }
             }
                 break;
-#if defined(QGC_GST_TAISYNC_ENABLED)
-            case LinkConfiguration::TypeTaisync: {
-                TaisyncConfiguration* tconfig = dynamic_cast<TaisyncConfiguration*>(config);
-                if(tconfig) {
-                    config->setName(QString("Taisync Link"));
-                }
-            }
-                break;
-#endif
 #ifdef QGC_ENABLE_BLUETOOTH
             case LinkConfiguration::TypeBluetooth: {
                 BluetoothConfiguration* tconfig = dynamic_cast<BluetoothConfiguration*>(config);

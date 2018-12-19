@@ -30,11 +30,10 @@ TaisyncTelemetry::close()
 }
 
 //-----------------------------------------------------------------------------
-void
-TaisyncTelemetry::start()
+bool TaisyncTelemetry::start()
 {
     qCDebug(TaisyncTelemetryLog) << "Start Taisync Telemetry";
-    _start(TAISYNC_TELEM_PORT);
+    return _start(TAISYNC_TELEM_PORT);
 }
 
 //-----------------------------------------------------------------------------

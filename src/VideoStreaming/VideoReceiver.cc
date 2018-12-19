@@ -229,7 +229,8 @@ VideoReceiver::start()
     _stop = false;
     qCDebug(VideoReceiverLog) << "start()";
 
-#ifdef QGC_GST_TAISYNC_ENABLED
+#if  defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
+    //-- Taisync on iOS or Android sends a raw h.264 stream
     bool isTaisyncUSB = qgcApp()->toolbox()->videoManager()->isTaisync();
 #else
     bool isTaisyncUSB = false;
@@ -295,7 +296,7 @@ VideoReceiver::start()
                 break;
             }
             g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
-#ifdef QGC_GST_TAISYNC_ENABLED
+#if  defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
         } else if(isTaisyncUSB) {
             QString uri = QString("0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
             qCDebug(VideoReceiverLog) << "Taisync URI:" << uri;

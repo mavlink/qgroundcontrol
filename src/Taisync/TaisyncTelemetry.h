@@ -22,7 +22,7 @@ public:
 
     explicit TaisyncTelemetry           (QObject* parent = nullptr);
     void    close                       () override;
-    void    start                       () override;
+    bool    start                       () override;
     void    writeBytes                  (QByteArray bytes);
 
 signals:

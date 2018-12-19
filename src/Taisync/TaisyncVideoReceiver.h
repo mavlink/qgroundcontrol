@@ -20,7 +20,7 @@ class TaisyncVideoReceiver : public TaisyncHandler
 public:
 
     explicit TaisyncVideoReceiver       (QObject* parent = nullptr);
-    void start                          () override;
+    bool start                          () override;
     void close                          () override;
 
 private slots:

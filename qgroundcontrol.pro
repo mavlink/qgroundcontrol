@@ -1113,18 +1113,24 @@ contains (DEFINES, QGC_GST_TAISYNC_ENABLED) {
         src/Taisync
 
     HEADERS += \
-        src/comm/TaisyncLink.h \
+        src/Taisync/TaisyncManager.h \
         src/Taisync/TaisyncHandler.h \
         src/Taisync/TaisyncSettings.h \
-        src/Taisync/TaisyncTelemetry.h \
-        src/Taisync/TaisyncVideoReceiver.h \
 
     SOURCES += \
-        src/comm/TaisyncLink.cc \
+        src/Taisync/TaisyncManager.cc \
         src/Taisync/TaisyncHandler.cc \
         src/Taisync/TaisyncSettings.cc \
-        src/Taisync/TaisyncTelemetry.cc \
-        src/Taisync/TaisyncVideoReceiver.cc \
+
+    iOSBuild | AndroidBuild {
+        HEADERS += \
+            src/Taisync/TaisyncTelemetry.h \
+            src/Taisync/TaisyncVideoReceiver.h \
+
+        SOURCES += \
+            src/Taisync/TaisyncTelemetry.cc \
+            src/Taisync/TaisyncVideoReceiver.cc \
+    }
 }
 
 #-------------------------------------------------------------------------------------

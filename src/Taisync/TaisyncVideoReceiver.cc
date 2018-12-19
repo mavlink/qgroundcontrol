@@ -35,12 +35,12 @@ TaisyncVideoReceiver::close()
 }
 
 //-----------------------------------------------------------------------------
-void
+bool
 TaisyncVideoReceiver::start()
 {
     qCDebug(TaisyncVideoReceiverLog) << "Start Taisync Video Receiver";
     _udpVideoSocket = new QUdpSocket(this);
-    _start(TAISYNC_VIDEO_TCP_PORT);
+    return _start(TAISYNC_VIDEO_TCP_PORT);
 }
 
 //-----------------------------------------------------------------------------

@@ -51,9 +51,6 @@ public:
 #endif
         TypeUdp,        ///< UDP Link
         TypeTcp,        ///< TCP Link
-#if defined(QGC_GST_TAISYNC_ENABLED)
-        TypeTaisync,
-#endif
 #ifdef QGC_ENABLE_BLUETOOTH
         TypeBluetooth,  ///< Bluetooth Link
 #endif
