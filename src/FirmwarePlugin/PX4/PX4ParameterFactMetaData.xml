@@ -4151,8 +4151,12 @@ default 1.5 turns per second</short_desc>
     </parameter>
     <parameter default="0" name="MC_AIRMODE" type="INT32">
       <short_desc>Multicopter air-mode</short_desc>
-      <long_desc>The air-mode enables the mixer to increase the total thrust of the multirotor in order to keep attitude and rate control even at low and high throttle. This function should be disabled during tuning as it will help the controller to diverge if the closed-loop is unstable.</long_desc>
-      <boolean />
+      <long_desc>The air-mode enables the mixer to increase the total thrust of the multirotor in order to keep attitude and rate control even at low and high throttle. This function should be disabled during tuning as it will help the controller to diverge if the closed-loop is unstable (i.e. the vehicle is not tuned yet). Enabling air-mode for yaw requires the use of an arming switch.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Roll/Pitch</value>
+        <value code="2">Roll/Pitch/Yaw</value>
+      </values>
     </parameter>
     <parameter default="0" name="MC_BAT_SCALE_EN" type="INT32">
       <short_desc>Battery power level scaler</short_desc>
