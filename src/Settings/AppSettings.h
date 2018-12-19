@@ -14,7 +14,7 @@
 class AppSettings : public SettingsGroup
 {
     Q_OBJECT
-    
+
 public:
     AppSettings(QObject* parent = nullptr);
 
@@ -43,6 +43,8 @@ public:
     DEFINE_SETTINGFACT(defaultFirmwareType)
     DEFINE_SETTINGFACT(gstDebugLevel)
     DEFINE_SETTINGFACT(followTarget)
+    DEFINE_SETTINGFACT(enableTaisync)
+    DEFINE_SETTINGFACT(enableTaisyncVideo)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
     DEFINE_SETTINGFACT(apmStartMavlinkStreams)
