@@ -19,8 +19,9 @@
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
-        CONFIG += LinuxBuild
+        CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_GST_TAISYNC_ENABLED
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics

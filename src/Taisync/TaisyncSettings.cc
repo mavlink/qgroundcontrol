@@ -13,12 +13,13 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
-
+/*
 static const char* kPostReq =
     "POST %1 HTTP/1.1\r\n"
     "Content-Type: application/json\r\n"
     "Content-Length: %2\r\n\r\n"
     "%3";
+*/
 
 static const char* kGetReq = "GET %1 HTTP/1.1\r\n\r\n";
 
@@ -71,6 +72,19 @@ TaisyncSettings::requestFreqScan()
 {
     if(_tcpSocket) {
         QString req = QString(kGetReq).arg("/v1/freqscan.json");
+        //qCDebug(TaisyncVerbose) << "Request" << req;
+        _tcpSocket->write(req.toUtf8());
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::requestVideoSettings()
+{
+    if(_tcpSocket) {
+        QString req = QString(kGetReq).arg("/v1/video.json");
         //qCDebug(TaisyncVerbose) << "Request" << req;
         _tcpSocket->write(req.toUtf8());
         return true;
