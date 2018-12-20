@@ -59,6 +59,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
    connect(_videoSettings->videoSource(),   &Fact::rawValueChanged, this, &VideoManager::_videoSourceChanged);
    connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
+   connect(_videoSettings->audioVolume(),   &Fact::rawValueChanged, this, &VideoManager::_updateAudioVolume);
+   connect(_videoSettings->audioUdpPort(),  &Fact::rawValueChanged, this, &VideoManager::_updateAudioPipeline);
+   connect(_videoSettings->audioEnabled(),  &Fact::rawValueChanged, this, &VideoManager::_updateAudioPipeline);
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
    connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
    connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
@@ -246,6 +249,28 @@ VideoManager::_restartVideo()
     _videoReceiver->stop();
     _updateSettings();
     _videoReceiver->start();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_updateAudioPipeline()
+{
+#if defined(QGC_GST_STREAMING)
+    if(!_videoReceiver)
+        return;
+    _videoReceiver->updateAudioPipeline();
+#endif
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::_updateAudioVolume()
+{
+#if defined(QGC_GST_STREAMING)
+    if(!_videoReceiver)
+        return;
+    _videoReceiver->setVolume(_videoSettings->audioVolume()->rawValue().toFloat());
 #endif
 }
 
