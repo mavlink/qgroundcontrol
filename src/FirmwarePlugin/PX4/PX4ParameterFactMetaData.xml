@@ -3645,6 +3645,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <long_desc>The mavlink hearbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
       <boolean />
     </parameter>
+    <parameter default="0" name="MAV_ODOM_LP" type="INT32">
+      <short_desc>Activate ODOMETRY loopback</short_desc>
+      <long_desc>If set, it gets the data from 'vehicle_visual_odometry' instead of 'vehicle_odometry' serving as a loopback of the received ODOMETRY messages on the Mavlink receiver.</long_desc>
+      <boolean />
+    </parameter>
     <parameter default="0" name="MAV_PROTO_VER" type="INT32">
       <short_desc>MAVLink protocol version</short_desc>
       <values>
