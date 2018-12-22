@@ -39,7 +39,7 @@ QGCView {
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
     property Fact _taisyncEnabledFact:          QGroundControl.settingsManager.appSettings.enableTaisync
     property Fact _taisyncVideoEnabledFact:     QGroundControl.settingsManager.appSettings.enableTaisyncVideo
-    property bool _taisyncEnabled:              _taisyncVideoEnabledFact.rawValue
+    property bool _taisyncEnabled:              _taisyncEnabledFact.rawValue
 
     readonly property real _internalWidthRatio:          0.8
 

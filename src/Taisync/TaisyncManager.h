@@ -29,12 +29,12 @@ class TaisyncManager : public QGCTool
 public:
 
     Q_PROPERTY(bool         connected           READ connected                                  NOTIFY connectedChanged)
-    Q_PROPERTY(bool         linkConnected       READ linkConnected                              NOTIFY linkChanged)
+    Q_PROPERTY(bool         linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
     Q_PROPERTY(QString      linkVidFormat       READ linkVidFormat                              NOTIFY linkChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                 NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
-    Q_PROPERTY(QString      serialNumber        READ serialNumber                               NOTIFY linkChanged)
-    Q_PROPERTY(QString      fwVersion           READ fwVersion                                  NOTIFY linkChanged)
+    Q_PROPERTY(QString      serialNumber        READ serialNumber                               NOTIFY infoChanged)
+    Q_PROPERTY(QString      fwVersion           READ fwVersion                                  NOTIFY infoChanged)
     Q_PROPERTY(QStringList  decodeList          READ decodeList                                 NOTIFY decodeIndexChanged)
     Q_PROPERTY(int          decodeIndex         READ decodeIndex        WRITE setDecodeIndex    NOTIFY decodeIndexChanged)
     Q_PROPERTY(QStringList  rateList            READ rateList                                   NOTIFY rateIndexChanged)
@@ -61,12 +61,15 @@ public:
 
 signals:
     void    linkChanged                     ();
+    void    linkConnectedChanged            ();
+    void    infoChanged                     ();
     void    connectedChanged                ();
     void    decodeIndexChanged              ();
     void    rateIndexChanged                ();
 
 private slots:
     void    _connected                      ();
+    void    _disconnected                   ();
     void    _checkTaisync                   ();
     void    _updateSettings                 (QByteArray jSonData);
     void    _setEnabled                     ();
@@ -77,12 +80,17 @@ private slots:
 #endif
 
 private:
+    void    _close                          ();
+    void    _reset                          ();
+
+private:
 
     enum {
         REQ_LINK_STATUS,
         REQ_DEV_INFO,
         REQ_FREQ_SCAN,
         REQ_VIDEO_SETTINGS,
+        REQ_RADIO_SETTINGS,
         REQ_LAST
     };
 

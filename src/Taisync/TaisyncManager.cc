@@ -29,6 +29,13 @@ TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
 //-----------------------------------------------------------------------------
 TaisyncManager::~TaisyncManager()
 {
+    _close();
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncManager::_close()
+{
     if(_taiSettings) {
         _taiSettings->close();
         _taiSettings->deleteLater();
@@ -55,19 +62,30 @@ TaisyncManager::~TaisyncManager()
 
 //-----------------------------------------------------------------------------
 void
-TaisyncManager::setToolbox(QGCToolbox* toolbox)
+TaisyncManager::_reset()
 {
-    QGCTool::setToolbox(toolbox);
+    _close();
     _taiSettings = new TaisyncSettings(this);
     connect(_taiSettings, &TaisyncSettings::updateSettings, this, &TaisyncManager::_updateSettings);
     connect(_taiSettings, &TaisyncSettings::connected,      this, &TaisyncManager::_connected);
-    _appSettings = toolbox->settingsManager()->appSettings();
-    connect(_appSettings->enableTaisync(),      &Fact::rawValueChanged, this, &TaisyncManager::_setEnabled);
-    connect(_appSettings->enableTaisyncVideo(), &Fact::rawValueChanged, this, &TaisyncManager::_setVideoEnabled);
+    connect(_taiSettings, &TaisyncSettings::disconnected,   this, &TaisyncManager::_disconnected);
+    if(!_appSettings) {
+        _appSettings = _toolbox->settingsManager()->appSettings();
+        connect(_appSettings->enableTaisync(),      &Fact::rawValueChanged, this, &TaisyncManager::_setEnabled);
+        connect(_appSettings->enableTaisyncVideo(), &Fact::rawValueChanged, this, &TaisyncManager::_setVideoEnabled);
+    }
     _setEnabled();
     if(_enabled) {
         _setVideoEnabled();
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+TaisyncManager::setToolbox(QGCToolbox* toolbox)
+{
+    QGCTool::setToolbox(toolbox);
+    _reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -91,24 +109,22 @@ TaisyncManager::_setEnabled()
     bool enable = _appSettings->enableTaisync()->rawValue().toBool();
     if(enable) {
 #if defined(__ios__) || defined(__android__)
-        _taiTelemetery = new TaisyncTelemetry(this);
-        QObject::connect(_taiTelemetery, &TaisyncTelemetry::bytesReady, this, &TaisyncManager::_readTelemBytes);
-        _telemetrySocket = new QUdpSocket(this);
-        _telemetrySocket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    64 * 1024);
-        _telemetrySocket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024);
-        QObject::connect(_telemetrySocket, &QUdpSocket::readyRead, this, &TaisyncManager::_readUDPBytes);
-        _telemetrySocket->bind(QHostAddress::LocalHost, 0, QUdpSocket::ShareAddress);
+        if(!_taiTelemetery) {
+            _taiTelemetery = new TaisyncTelemetry(this);
+            QObject::connect(_taiTelemetery, &TaisyncTelemetry::bytesReady, this, &TaisyncManager::_readTelemBytes);
+            _telemetrySocket = new QUdpSocket(this);
+            _telemetrySocket->setSocketOption(QAbstractSocket::SendBufferSizeSocketOption,    64 * 1024);
+            _telemetrySocket->setSocketOption(QAbstractSocket::ReceiveBufferSizeSocketOption, 64 * 1024);
+            QObject::connect(_telemetrySocket, &QUdpSocket::readyRead, this, &TaisyncManager::_readUDPBytes);
+            _telemetrySocket->bind(QHostAddress::LocalHost, 0, QUdpSocket::ShareAddress);
+            _taiTelemetery->start();
+        }
 #endif
         _workTimer.start(1000);
     } else {
-#if defined(__ios__) || defined(__android__)
-        if (_taiTelemetery) {
-            _taiTelemetery->close();
-            _taiTelemetery->deleteLater();
-            _taiTelemetery = nullptr;
-        }
-#endif
+        //-- Stop everything
         _workTimer.stop();
+        _close();
     }
     _enabled = enable;
 }
@@ -119,23 +135,27 @@ TaisyncManager::_setVideoEnabled()
 {
     bool enable = _appSettings->enableTaisyncVideo()->rawValue().toBool();
     if(enable) {
-        //-- Hide video selection as we will be fixed to Taisync video and set the way we need it.
-        VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
-        //-- First save current state
-        _savedVideoSource = pVSettings->videoSource()->rawValue();
-        _savedVideoUDP    = pVSettings->udpPort()->rawValue();
-        _savedAR          = pVSettings->aspectRatio()->rawValue();
-        _savedVideoState  = pVSettings->visible();
-        //-- Now set it up the way we need it do be
-        pVSettings->setVisible(false);
-        pVSettings->udpPort()->setRawValue(5600);
-        pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
-        pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDP));
+        if(!_savedVideoSource.isValid()) {
+            //-- Hide video selection as we will be fixed to Taisync video and set the way we need it.
+            VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
+            //-- First save current state
+            _savedVideoSource = pVSettings->videoSource()->rawValue();
+            _savedVideoUDP    = pVSettings->udpPort()->rawValue();
+            _savedAR          = pVSettings->aspectRatio()->rawValue();
+            _savedVideoState  = pVSettings->visible();
+            //-- Now set it up the way we need it do be
+            pVSettings->setVisible(false);
+            pVSettings->udpPort()->setRawValue(5600);
+            pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
+            pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDP));
+        }
 #if defined(__ios__) || defined(__android__)
-        //-- iOS and Android receive raw h.264 and need a different pipeline
-        qgcApp()->toolbox()->videoManager()->setIsTaisync(true);
-        _taiVideo = new TaisyncVideoReceiver(this);
-        _taiVideo->start();
+        if(!_taiVideo) {
+            //-- iOS and Android receive raw h.264 and need a different pipeline
+            qgcApp()->toolbox()->videoManager()->setIsTaisync(true);
+            _taiVideo = new TaisyncVideoReceiver(this);
+            _taiVideo->start();
+        }
 #endif
     } else {
         //-- Restore video settings
@@ -199,11 +219,23 @@ TaisyncManager::_connected()
 
 //-----------------------------------------------------------------------------
 void
+TaisyncManager::_disconnected()
+{
+    qCDebug(TaisyncLog) << "Taisync Settings Disconnected";
+    _isConnected = false;
+    emit connectedChanged();
+    _reset();
+}
+
+//-----------------------------------------------------------------------------
+void
 TaisyncManager::_checkTaisync()
 {
     if(_enabled) {
         if(!_isConnected) {
-            _taiSettings->start();
+            if(!_taiSettings->isServerRunning()) {
+                _taiSettings->start();
+            }
         } else {
             if(++_currReq >= REQ_LAST) {
                 _currReq = REQ_LINK_STATUS;
@@ -221,9 +253,12 @@ TaisyncManager::_checkTaisync()
             case REQ_VIDEO_SETTINGS:
                 _taiSettings->requestVideoSettings();
                 break;
+            case REQ_RADIO_SETTINGS:
+                _taiSettings->requestRadioSettings();
+                break;
             }
         }
-        _workTimer.start(1000);
+        _workTimer.start(_isConnected ? 500 : 5000);
     }
 }
 
@@ -241,18 +276,37 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     QJsonObject jObj = doc.object();
     //-- Link Status?
     if(jSonData.contains("\"flight\":")) {
-        _linkConnected  = jObj["flight"].toString("") == "online";
-        _linkVidFormat  = jObj["videoformat"].toString(_linkVidFormat);
-        _downlinkRSSI   = jObj["radiorssi"].toInt(_downlinkRSSI);
-        _uplinkRSSI     = jObj["hdrssi"].toInt(_uplinkRSSI);
-        emit linkChanged();
+        bool tlinkConnected  = jObj["flight"].toString("") == "online";
+        if(tlinkConnected != _linkConnected) {
+           _linkConnected = tlinkConnected;
+           emit linkConnectedChanged();
+        }
+        QString tlinkVidFormat  = jObj["videoformat"].toString(_linkVidFormat);
+        int     tdownlinkRSSI   = jObj["radiorssi"].toInt(_downlinkRSSI);
+        int     tuplinkRSSI     = jObj["hdrssi"].toInt(_uplinkRSSI);
+        if(_linkVidFormat != tlinkVidFormat || _downlinkRSSI != tdownlinkRSSI || _uplinkRSSI != tuplinkRSSI) {
+            _linkVidFormat  = tlinkVidFormat;
+            _downlinkRSSI   = tdownlinkRSSI;
+            _uplinkRSSI     = tuplinkRSSI;
+            emit linkChanged();
+        }
     //-- Device Info?
     } else if(jSonData.contains("\"firmwareversion\":")) {
-        _fwVersion      = jObj["firmwareversion"].toString(_fwVersion);
-        _serialNumber   = jObj["sn"].toString(_serialNumber);
+        QString tfwVersion      = jObj["firmwareversion"].toString(_fwVersion);
+        QString tserialNumber   = jObj["sn"].toString(_serialNumber);
+        if(tfwVersion != _fwVersion || tserialNumber != _serialNumber) {
+            _fwVersion      = tfwVersion;
+            _serialNumber   = tserialNumber;
+            emit infoChanged();
+        }
+    //-- Radio Settings?
+    } else if(jSonData.contains("\"freq\":")) {
+        // {\"mode\":\"auto\",\"freq\":\"ch12\"}
+
+
     //-- Video Settings?
     } else if(jSonData.contains("\"maxbitrate\":")) {
-
+        //{\"decode\":\"phone\",\"mode\":\"h264\",\"maxbitrate\":\"high\"}
 
 
     }

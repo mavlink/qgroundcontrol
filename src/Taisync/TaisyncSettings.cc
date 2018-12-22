@@ -44,47 +44,43 @@ bool TaisyncSettings::start()
 bool
 TaisyncSettings::requestLinkStatus()
 {
-    if(_tcpSocket) {
-        QString req = QString(kGetReq).arg("/v1/baseband.json");
-        //qCDebug(TaisyncVerbose) << "Request" << req;
-        _tcpSocket->write(req.toUtf8());
-        return true;
-    }
-    return false;
+    return _request("/v1/baseband.json");
 }
 
 //-----------------------------------------------------------------------------
 bool
 TaisyncSettings::requestDevInfo()
 {
-    if(_tcpSocket) {
-        QString req = QString(kGetReq).arg("/v1/device.json");
-        //qCDebug(TaisyncVerbose) << "Request" << req;
-        _tcpSocket->write(req.toUtf8());
-        return true;
-    }
-    return false;
+    return _request("/v1/device.json");
 }
 
 //-----------------------------------------------------------------------------
 bool
 TaisyncSettings::requestFreqScan()
 {
-    if(_tcpSocket) {
-        QString req = QString(kGetReq).arg("/v1/freqscan.json");
-        //qCDebug(TaisyncVerbose) << "Request" << req;
-        _tcpSocket->write(req.toUtf8());
-        return true;
-    }
-    return false;
+    return _request("/v1/freqscan.json");
 }
 
 //-----------------------------------------------------------------------------
 bool
 TaisyncSettings::requestVideoSettings()
 {
+    return _request("/v1/video.json");
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::requestRadioSettings()
+{
+    return _request("/v1/radio.json");
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::_request(const QString& request)
+{
     if(_tcpSocket) {
-        QString req = QString(kGetReq).arg("/v1/video.json");
+        QString req = QString(kGetReq).arg(request);
         //qCDebug(TaisyncVerbose) << "Request" << req;
         _tcpSocket->write(req.toUtf8());
         return true;
