@@ -21,6 +21,7 @@ public:
     bool    requestDevInfo              ();
     bool    requestFreqScan             ();
     bool    requestVideoSettings        ();
+    bool    requestRadioSettings        ();
 
 signals:
     void    updateSettings              (QByteArray jSonData);
@@ -28,4 +29,6 @@ signals:
 protected slots:
     void    _readBytes                  () override;
 
+private:
+    bool    _request                    (const QString& request);
 };

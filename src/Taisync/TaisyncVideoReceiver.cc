@@ -12,9 +12,6 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
-
-QGC_LOGGING_CATEGORY(TaisyncVideoReceiverLog, "TaisyncVideoReceiverLog")
-
 //-----------------------------------------------------------------------------
 TaisyncVideoReceiver::TaisyncVideoReceiver(QObject* parent)
     : TaisyncHandler(parent)
@@ -22,31 +19,39 @@ TaisyncVideoReceiver::TaisyncVideoReceiver(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-void
+bool
 TaisyncVideoReceiver::close()
 {
-    TaisyncHandler::close();
-    qCDebug(TaisyncVideoReceiverLog) << "Close Taisync Video Receiver";
-    if(_udpVideoSocket) {
-        _udpVideoSocket->close();
-        _udpVideoSocket->deleteLater();
-        _udpVideoSocket = nullptr;
+    if(TaisyncHandler::close() || _udpVideoSocket) {
+        qCDebug(TaisyncLog) << "Close Taisync Video Receiver";
+        if(_udpVideoSocket) {
+            _udpVideoSocket->close();
+            _udpVideoSocket->deleteLater();
+            _udpVideoSocket = nullptr;
+        }
+        return true;
     }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
 bool
 TaisyncVideoReceiver::start()
 {
-    qCDebug(TaisyncVideoReceiverLog) << "Start Taisync Video Receiver";
-    _udpVideoSocket = new QUdpSocket(this);
-    return _start(TAISYNC_VIDEO_TCP_PORT);
+    qCDebug(TaisyncLog) << "Start Taisync Video Receiver";
+    if(_start(TAISYNC_VIDEO_TCP_PORT)) {
+        _udpVideoSocket = new QUdpSocket(this);
+        return true;
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
 void
 TaisyncVideoReceiver::_readBytes()
 {
-    QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
-    _udpVideoSocket->writeDatagram(bytesIn, QHostAddress::LocalHost, TAISYNC_VIDEO_UDP_PORT);
+    if(_udpVideoSocket) {
+        QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
+        _udpVideoSocket->writeDatagram(bytesIn, QHostAddress::LocalHost, TAISYNC_VIDEO_UDP_PORT);
+    }
 }

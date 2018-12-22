@@ -29,15 +29,22 @@ TaisyncHandler::~TaisyncHandler()
 }
 
 //-----------------------------------------------------------------------------
-void
-TaisyncHandler::close()
+bool TaisyncHandler::close()
 {
+    bool res = (_tcpSocket || _tcpServer);
     if(_tcpSocket) {
-        qCDebug(TaisyncLog) << "Close Taisync TCP";
+        qCDebug(TaisyncLog) << "Close Taisync TCP socket on port" << _tcpSocket->localPort();
         _tcpSocket->close();
         _tcpSocket->deleteLater();
         _tcpSocket = nullptr;
     }
+    if(_tcpServer) {
+        qCDebug(TaisyncLog) << "Close Taisync TCP server on port" << _tcpServer->serverPort();;
+        _tcpServer->close();
+        _tcpServer->deleteLater();
+        _tcpServer = nullptr;
+    }
+    return res;
 }
 
 //-----------------------------------------------------------------------------
@@ -47,10 +54,12 @@ TaisyncHandler::_start(uint16_t port, QHostAddress addr)
     close();
     _serverMode = addr == QHostAddress::AnyIPv4;
     if(_serverMode) {
-        qCDebug(TaisyncLog) << "Listen for Taisync TCP on port" << port;
-        _tcpServer = new QTcpServer(this);
-        QObject::connect(_tcpServer, &QTcpServer::newConnection, this, &TaisyncHandler::_newConnection);
-        _tcpServer->listen(QHostAddress::AnyIPv4, port);
+        if(!_tcpServer) {
+            qCDebug(TaisyncLog) << "Listen for Taisync TCP on port" << port;
+            _tcpServer = new QTcpServer(this);
+            QObject::connect(_tcpServer, &QTcpServer::newConnection, this, &TaisyncHandler::_newConnection);
+            _tcpServer->listen(QHostAddress::AnyIPv4, port);
+        }
     } else {
         _tcpSocket = new QTcpSocket();
         QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &TaisyncHandler::_readBytes);
@@ -69,24 +78,30 @@ TaisyncHandler::_start(uint16_t port, QHostAddress addr)
 void
 TaisyncHandler::_newConnection()
 {
-    qCDebug(TaisyncLog) << "New Taisync TCP Connection";
+    qCDebug(TaisyncLog) << "New Taisync TCP Connection on port" << _tcpServer->serverPort();
     if(_tcpSocket) {
         _tcpSocket->close();
         _tcpSocket->deleteLater();
     }
     _tcpSocket = _tcpServer->nextPendingConnection();
-    QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &TaisyncHandler::_readBytes);
-    emit connected();
+    if(_tcpSocket) {
+        QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &TaisyncHandler::_readBytes);
+        QObject::connect(_tcpSocket, &QAbstractSocket::disconnected, this, &TaisyncHandler::_socketDisconnected);
+        emit connected();
+    } else {
+        qCWarning(TaisyncLog) << "New Taisync TCP Connection provided no socket";
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
 TaisyncHandler::_socketDisconnected()
 {
-    qCDebug(TaisyncLog) << "Taisync Telemetry Connection Closed";
+    qCDebug(TaisyncLog) << "Taisync TCP Connection Closed on port" << _tcpSocket->localPort();
     if(_tcpSocket) {
         _tcpSocket->close();
         _tcpSocket->deleteLater();
         _tcpSocket = nullptr;
     }
+    emit disconnected();
 }
