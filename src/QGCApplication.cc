@@ -89,6 +89,7 @@
 #include "FactValueSliderListModel.h"
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
+#include "FirmwareImage.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
