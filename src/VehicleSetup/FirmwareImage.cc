@@ -215,6 +215,21 @@ bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId) {
     return result;
 }
 
+QString FirmwareImage::cachedParameterMetaDataFile(void)
+{
+    QSettings settings;
+    QDir parameterDir = QFileInfo(settings.fileName()).dir();
+    return parameterDir.filePath(QStringLiteral("ParameterFactMetaData.xml"));
+}
+
+QString FirmwareImage::cachedAirframeMetaDataFile(void)
+{
+    QSettings settings;
+    QDir airframeDir = QFileInfo(settings.fileName()).dir();
+    return airframeDir.filePath(QStringLiteral("PX4AirframeFactMetaData.xml"));
+}
+
+
 bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     _imageSize = 0;
@@ -275,12 +290,8 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         _jsonParamXmlKey,      // key which holds compressed bytes
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
-        // Use settings location as our work directory, this way is something goes wrong the file is still there
-        // sitting next to the cache files.
-        QSettings settings;
-        QDir parameterDir = QFileInfo(settings.fileName()).dir();
-        QString parameterFilename = parameterDir.filePath("ParameterFactMetaData.xml");
-        QFile parameterFile(parameterFilename);
+        QString parameterFilename = cachedParameterMetaDataFile();
+        QFile parameterFile(cachedParameterMetaDataFile());
 
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
@@ -306,12 +317,9 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         _jsonAirframeXmlKey,        // key which holds compressed bytes
                                         decompressedBytes);         // Returned decompressed bytes
     if (success) {
-        // We cache the airframe xml in the same location as settings and parameters
-        QSettings settings;
-        QDir airframeDir = QFileInfo(settings.fileName()).dir();
-        QString airframeFilename = airframeDir.filePath("PX4AirframeFactMetaData.xml");
+        QString airframeFilename = cachedAirframeMetaDataFile();
         //qDebug() << airframeFilename;
-        QFile airframeFile(airframeFilename);
+        QFile airframeFile(cachedAirframeMetaDataFile());
 
         if (airframeFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = airframeFile.write(decompressedBytes);

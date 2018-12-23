@@ -236,11 +236,13 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     // Parse command line options
 
     bool fClearSettingsOptions = false; // Clear stored settings
+    bool fClearCache = false;           // Clear parameter/airframe caches
     bool logging = false;               // Turn on logging
     QString loggingOptions;
 
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--clear-settings",   &fClearSettingsOptions, nullptr },
+        { "--clear-cache",      &fClearCache,           nullptr },
         { "--logging",          &logging,               &loggingOptions },
         { "--fake-mobile",      &_fakeMobile,           nullptr },
         { "--log-output",       &_logOutput,            nullptr },
@@ -308,6 +310,15 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
         }
     }
     settings.setValue(_settingsVersionKey, QGC_SETTINGS_VERSION);
+
+    if (fClearCache) {
+        QDir dir(ParameterManager::parameterCacheDir());
+        dir.removeRecursively();
+        QFile airframe(FirmwareImage::cachedAirframeMetaDataFile());
+        airframe.remove();
+        QFile parameter(FirmwareImage::cachedParameterMetaDataFile());
+        parameter.remove();
+    }
 
     // Set up our logging filters
     QGCLoggingCategoryRegister::instance()->setFilterRulesFromSettings(loggingOptions);
