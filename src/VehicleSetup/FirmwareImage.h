@@ -59,6 +59,9 @@ public:
     /// @return true: actual boardId is compatible with firmware boardId
     bool isCompatible(uint32_t boardId, uint32_t firmwareId);
 
+    static QString cachedParameterMetaDataFile(void);
+    static QString cachedAirframeMetaDataFile(void);
+
 signals:
     void errorMessage(const QString& errorString);
     void statusMessage(const QString& warningtring);
