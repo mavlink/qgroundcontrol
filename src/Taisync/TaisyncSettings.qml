@@ -207,6 +207,59 @@ QGCView {
                         }
                     }
                 }
+                //-----------------------------------------------------------------
+                //-- Radio Settings
+                Item {
+                    width:                      _panelWidth
+                    height:                     radioSettingsLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    _taisyncEnabled
+                    QGCLabel {
+                        id:                     radioSettingsLabel
+                        text:                   qsTr("Radio Settings")
+                        font.family:            ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     radioSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    visible:                    _taisyncEnabled
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    Column {
+                        id:                     radioSettingsCol
+                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                        width:                  parent.width
+                        anchors.centerIn:       parent
+                        GridLayout {
+                            anchors.margins:    ScreenTools.defaultFontPixelHeight
+                            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            columns: 2
+                            QGCLabel {
+                                text:           qsTr("Radio Mode:")
+                                Layout.minimumWidth: _labelWidth
+                            }
+                            FactComboBox {
+                                fact:           QGroundControl.taisyncManager.radioMode
+                                indexModel:     true
+                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Radio Frequency:")
+                            }
+                            FactComboBox {
+                                fact:           QGroundControl.taisyncManager.radioChannel
+                                indexModel:     true
+                                enabled:        QGroundControl.taisyncManager.linkConnected && QGroundControl.taisyncManager.radioMode.rawValue > 0
+                                Layout.minimumWidth: _valueWidth
+                            }
+                        }
+                    }
+                }
             }
         }
     }

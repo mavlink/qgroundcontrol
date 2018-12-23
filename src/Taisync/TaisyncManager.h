@@ -12,6 +12,7 @@
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "TaisyncSettings.h"
+#include "Fact.h"
 #if defined(__ios__) || defined(__android__)
 #include "TaisyncTelemetry.h"
 #include "TaisyncVideoReceiver.h"
@@ -39,6 +40,8 @@ public:
     Q_PROPERTY(int          decodeIndex         READ decodeIndex        WRITE setDecodeIndex    NOTIFY decodeIndexChanged)
     Q_PROPERTY(QStringList  rateList            READ rateList                                   NOTIFY rateIndexChanged)
     Q_PROPERTY(int          rateIndex           READ rateIndex          WRITE setRateIndex      NOTIFY rateIndexChanged)
+    Q_PROPERTY(Fact*        radioMode           READ radioMode                                  CONSTANT)
+    Q_PROPERTY(Fact*        radioChannel        READ radioChannel                               CONSTANT)
 
     explicit TaisyncManager                 (QGCApplication* app, QGCToolbox* toolbox);
     ~TaisyncManager                         () override;
@@ -58,6 +61,8 @@ public:
     QStringList rateList                        () { return _rateList; }
     int         rateIndex                       () { return _rateIndex; }
     void        setRateIndex                    (int idx);
+    Fact*       radioMode                       () { return _radioMode; }
+    Fact*       radioChannel                    () { return _radioChannel; }
 
 signals:
     void    linkChanged                     ();
@@ -74,6 +79,7 @@ private slots:
     void    _updateSettings                 (QByteArray jSonData);
     void    _setEnabled                     ();
     void    _setVideoEnabled                ();
+    void    _radioSettingsChanged           (QVariant);
 #if defined(__ios__) || defined(__android__)
     void    _readUDPBytes                   ();
     void    _readTelemBytes                 (QByteArray bytesIn);
@@ -105,21 +111,23 @@ private:
     TaisyncVideoReceiver*   _taiVideo       = nullptr;
     QUdpSocket*             _telemetrySocket= nullptr;
 #endif
-    bool        _enableVideo                = true;
-    bool        _enabled                    = true;
-    bool        _linkConnected              = false;
-    QTimer      _workTimer;
-    QString     _linkVidFormat;
-    int         _downlinkRSSI               = 0;
-    int         _uplinkRSSI                 = 0;
-    QStringList _decodeList;
-    int         _decodeIndex                = 0;
-    QStringList _rateList;
-    int         _rateIndex                  = 0;
-    bool        _savedVideoState            = true;
-    QVariant    _savedVideoSource;
-    QVariant    _savedVideoUDP;
-    QVariant    _savedAR;
-    QString     _serialNumber;
-    QString     _fwVersion;
+    bool            _enableVideo            = true;
+    bool            _enabled                = true;
+    bool            _linkConnected          = false;
+    QTimer          _workTimer;
+    QString         _linkVidFormat;
+    int             _downlinkRSSI           = 0;
+    int             _uplinkRSSI             = 0;
+    QStringList     _decodeList;
+    int             _decodeIndex            = 0;
+    QStringList     _rateList;
+    int             _rateIndex              = 0;
+    bool            _savedVideoState        = true;
+    QVariant        _savedVideoSource;
+    QVariant        _savedVideoUDP;
+    QVariant        _savedAR;
+    QString         _serialNumber;
+    QString         _fwVersion;
+    Fact*           _radioMode              = nullptr;
+    Fact*           _radioChannel           = nullptr;
 };

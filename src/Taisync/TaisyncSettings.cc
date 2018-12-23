@@ -13,15 +13,14 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
-/*
 static const char* kPostReq =
     "POST %1 HTTP/1.1\r\n"
     "Content-Type: application/json\r\n"
     "Content-Length: %2\r\n\r\n"
     "%3";
-*/
 
-static const char* kGetReq = "GET %1 HTTP/1.1\r\n\r\n";
+static const char* kGetReq      = "GET %1 HTTP/1.1\r\n\r\n";
+static const char* kRadioURI    = "/v1/radio.json";
 
 //-----------------------------------------------------------------------------
 TaisyncSettings::TaisyncSettings(QObject* parent)
@@ -72,7 +71,7 @@ TaisyncSettings::requestVideoSettings()
 bool
 TaisyncSettings::requestRadioSettings()
 {
-    return _request("/v1/radio.json");
+    return _request(kRadioURI);
 }
 
 //-----------------------------------------------------------------------------
@@ -86,6 +85,28 @@ TaisyncSettings::_request(const QString& request)
         return true;
     }
     return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::_post(const QString& post, const QString &postPayload)
+{
+    if(_tcpSocket) {
+        QString req = QString(kPostReq).arg(post).arg(postPayload.size()).arg(postPayload);
+        qCDebug(TaisyncVerbose) << "Request" << req;
+        _tcpSocket->write(req.toUtf8());
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::setRadioSettings(const QString& mode, const QString& channel)
+{
+    static const char* kRadioPost = "{\"mode\":\"%1\",\"freq\":\"%2\"}";
+    QString post = QString(kRadioPost).arg(mode.size()).arg(channel);
+    return _post(kRadioURI, post);
 }
 
 //-----------------------------------------------------------------------------

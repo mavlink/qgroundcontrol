@@ -22,6 +22,7 @@ public:
     bool    requestFreqScan             ();
     bool    requestVideoSettings        ();
     bool    requestRadioSettings        ();
+    bool    setRadioSettings            (const QString& mode, const QString& channel);
 
 signals:
     void    updateSettings              (QByteArray jSonData);
@@ -31,4 +32,5 @@ protected slots:
 
 private:
     bool    _request                    (const QString& request);
+    bool    _post                       (const QString& post, const QString& postPayload);
 };
