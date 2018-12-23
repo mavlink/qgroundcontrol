@@ -36,12 +36,11 @@ public:
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
     Q_PROPERTY(QString      serialNumber        READ serialNumber                               NOTIFY infoChanged)
     Q_PROPERTY(QString      fwVersion           READ fwVersion                                  NOTIFY infoChanged)
-    Q_PROPERTY(QStringList  decodeList          READ decodeList                                 NOTIFY decodeIndexChanged)
-    Q_PROPERTY(int          decodeIndex         READ decodeIndex        WRITE setDecodeIndex    NOTIFY decodeIndexChanged)
-    Q_PROPERTY(QStringList  rateList            READ rateList                                   NOTIFY rateIndexChanged)
-    Q_PROPERTY(int          rateIndex           READ rateIndex          WRITE setRateIndex      NOTIFY rateIndexChanged)
     Q_PROPERTY(Fact*        radioMode           READ radioMode                                  CONSTANT)
     Q_PROPERTY(Fact*        radioChannel        READ radioChannel                               CONSTANT)
+    Q_PROPERTY(Fact*        videoOutput         READ videoOutput                                CONSTANT)
+    Q_PROPERTY(Fact*        videoMode           READ videoMode                                  CONSTANT)
+    Q_PROPERTY(Fact*        videoRate           READ videoRate                                  CONSTANT)
 
     explicit TaisyncManager                 (QGCApplication* app, QGCToolbox* toolbox);
     ~TaisyncManager                         () override;
@@ -55,14 +54,11 @@ public:
     int         downlinkRSSI                    () { return _uplinkRSSI; }
     QString     serialNumber                    () { return _serialNumber; }
     QString     fwVersion                       () { return _fwVersion; }
-    QStringList decodeList                      () { return _decodeList; }
-    int         decodeIndex                     () { return _decodeIndex; }
-    void        setDecodeIndex                  (int idx);
-    QStringList rateList                        () { return _rateList; }
-    int         rateIndex                       () { return _rateIndex; }
-    void        setRateIndex                    (int idx);
     Fact*       radioMode                       () { return _radioMode; }
     Fact*       radioChannel                    () { return _radioChannel; }
+    Fact*       videoOutput                     () { return _videoOutput; }
+    Fact*       videoMode                       () { return _videoMode; }
+    Fact*       videoRate                       () { return _videoRate; }
 
 signals:
     void    linkChanged                     ();
@@ -80,6 +76,7 @@ private slots:
     void    _setEnabled                     ();
     void    _setVideoEnabled                ();
     void    _radioSettingsChanged           (QVariant);
+    void    _videoSettingsChanged           (QVariant);
 #if defined(__ios__) || defined(__android__)
     void    _readUDPBytes                   ();
     void    _readTelemBytes                 (QByteArray bytesIn);
@@ -88,6 +85,7 @@ private slots:
 private:
     void    _close                          ();
     void    _reset                          ();
+    FactMetaData *_createMetadata           (const char *name, QStringList enums);
 
 private:
 
@@ -130,4 +128,10 @@ private:
     QString         _fwVersion;
     Fact*           _radioMode              = nullptr;
     Fact*           _radioChannel           = nullptr;
+    Fact*           _videoOutput            = nullptr;
+    Fact*           _videoMode              = nullptr;
+    Fact*           _videoRate              = nullptr;
+    QStringList     _radioModeList;
+    QStringList     _videoOutputList;
+    QStringList     _videoRateList;
 };

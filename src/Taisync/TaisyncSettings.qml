@@ -166,7 +166,7 @@ QGCView {
                     height:                     devInfoLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    _taisyncEnabled
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.connected
                     QGCLabel {
                         id:                     devInfoLabel
                         text:                   qsTr("Device Info")
@@ -177,7 +177,7 @@ QGCView {
                     height:                     devInfoCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade
-                    visible:                    _taisyncEnabled
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.connected
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     Column {
@@ -214,7 +214,7 @@ QGCView {
                     height:                     radioSettingsLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    _taisyncEnabled
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
                     QGCLabel {
                         id:                     radioSettingsLabel
                         text:                   qsTr("Radio Settings")
@@ -225,7 +225,7 @@ QGCView {
                     height:                     radioSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade
-                    visible:                    _taisyncEnabled
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     Column {
@@ -255,6 +255,68 @@ QGCView {
                                 fact:           QGroundControl.taisyncManager.radioChannel
                                 indexModel:     true
                                 enabled:        QGroundControl.taisyncManager.linkConnected && QGroundControl.taisyncManager.radioMode.rawValue > 0
+                                Layout.minimumWidth: _valueWidth
+                            }
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- Video Settings
+                Item {
+                    width:                      _panelWidth
+                    height:                     videoSettingsLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
+                    QGCLabel {
+                        id:                     videoSettingsLabel
+                        text:                   qsTr("Video Settings")
+                        font.family:            ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     videoSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    Column {
+                        id:                     videoSettingsCol
+                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                        width:                  parent.width
+                        anchors.centerIn:       parent
+                        GridLayout {
+                            anchors.margins:    ScreenTools.defaultFontPixelHeight
+                            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            columns: 2
+                            QGCLabel {
+                                text:           qsTr("Video Output:")
+                                Layout.minimumWidth: _labelWidth
+                            }
+                            FactComboBox {
+                                fact:           QGroundControl.taisyncManager.videoOutput
+                                indexModel:     true
+                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Encoder:")
+                            }
+                            FactComboBox {
+                                fact:           QGroundControl.taisyncManager.videoMode
+                                indexModel:     true
+                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Bit Rate:")
+                            }
+                            FactComboBox {
+                                fact:           QGroundControl.taisyncManager.videoRate
+                                indexModel:     true
+                                enabled:        QGroundControl.taisyncManager.linkConnected
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
