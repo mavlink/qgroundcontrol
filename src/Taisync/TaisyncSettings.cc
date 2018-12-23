@@ -21,6 +21,7 @@ static const char* kPostReq =
 
 static const char* kGetReq      = "GET %1 HTTP/1.1\r\n\r\n";
 static const char* kRadioURI    = "/v1/radio.json";
+static const char* kVideoURI    = "/v1/video.json";
 
 //-----------------------------------------------------------------------------
 TaisyncSettings::TaisyncSettings(QObject* parent)
@@ -64,7 +65,7 @@ TaisyncSettings::requestFreqScan()
 bool
 TaisyncSettings::requestVideoSettings()
 {
-    return _request("/v1/video.json");
+    return _request(kVideoURI);
 }
 
 //-----------------------------------------------------------------------------
@@ -93,7 +94,7 @@ TaisyncSettings::_post(const QString& post, const QString &postPayload)
 {
     if(_tcpSocket) {
         QString req = QString(kPostReq).arg(post).arg(postPayload.size()).arg(postPayload);
-        qCDebug(TaisyncVerbose) << "Request" << req;
+        qCDebug(TaisyncVerbose) << "Post" << req;
         _tcpSocket->write(req.toUtf8());
         return true;
     }
@@ -105,8 +106,17 @@ bool
 TaisyncSettings::setRadioSettings(const QString& mode, const QString& channel)
 {
     static const char* kRadioPost = "{\"mode\":\"%1\",\"freq\":\"%2\"}";
-    QString post = QString(kRadioPost).arg(mode.size()).arg(channel);
+    QString post = QString(kRadioPost).arg(mode).arg(channel);
     return _post(kRadioURI, post);
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::setVideoSettings(const QString& output, const QString& mode, const QString& rate)
+{
+    static const char* kVideoPost = "{\"decode\":\"%1\",\"mode\":\"%2\",\"maxbitrate\":\"%3\"}";
+    QString post = QString(kVideoPost).arg(output).arg(mode).arg(rate);
+    return _post(kVideoURI, post);
 }
 
 //-----------------------------------------------------------------------------

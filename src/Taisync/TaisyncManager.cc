@@ -13,13 +13,12 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
+static const char *kTAISYNC_GROUP       = "Taisync";
 static const char *kRADIO_MODE          = "RadioMode";
-static const char *kRadioModeValues[] = {
-    "auto",
-    "manual"
-};
-
 static const char *kRADIO_CHANNEL       = "RadioChannel";
+static const char *kVIDEO_OUTPUT        = "VideoOutput";
+static const char *kVIDEO_MODE          = "VideoMode";
+static const char *kVIDEO_RATE          = "VideoRate";
 
 //-----------------------------------------------------------------------------
 TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -27,20 +26,6 @@ TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     connect(&_workTimer, &QTimer::timeout, this, &TaisyncManager::_checkTaisync);
     _workTimer.setSingleShot(true);
-    _decodeList.append(tr("Stream"));
-    _decodeList.append(tr("HDMI Port"));
-    _rateList.append(tr("Low"));
-    _rateList.append(tr("Medium"));
-    _rateList.append(tr("High"));
-}
-
-//-----------------------------------------------------------------------------
-void
-TaisyncManager::_radioSettingsChanged(QVariant)
-{
-    if(_taiSettings) {
-        _taiSettings->setRadioSettings(kRadioModeValues[_radioMode->rawValue().toInt()], _radioChannel->enumStringValue());
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -98,56 +83,112 @@ TaisyncManager::_reset()
 }
 
 //-----------------------------------------------------------------------------
+FactMetaData*
+TaisyncManager::_createMetadata(const char* name, QStringList enums)
+{
+    FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, name, this);
+    QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
+    metaData->setShortDescription(name);
+    metaData->setLongDescription(name);
+    metaData->setRawDefaultValue(QVariant(0));
+    metaData->setHasControl(true);
+    metaData->setReadOnly(false);
+    for(int i = 0; i < enums.size(); i++) {
+        metaData->addEnumInfo(enums[i], QVariant(i));
+    }
+    metaData->setRawMin(0);
+    metaData->setRawMin(enums.size() - 1);
+    return metaData;
+}
+
+//-----------------------------------------------------------------------------
 void
 TaisyncManager::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
     {
         //-- Radio Mode
-        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kRADIO_MODE, this);
-        QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
-        metaData->setShortDescription(kRADIO_MODE);
-        metaData->setLongDescription(kRADIO_MODE);
-        metaData->setRawDefaultValue(QVariant(0));
-        metaData->setHasControl(true);
-        metaData->setReadOnly(false);
-        metaData->addEnumInfo(tr("Auto"),   QVariant(0));
-        metaData->addEnumInfo(tr("Manual"), QVariant(1));
-        _radioMode = new Fact("Taisync", metaData, this);
+        QStringList enums;
+        enums.append(tr("Auto"));
+        enums.append(tr("Manual"));
+        FactMetaData* metaData = _createMetadata(kRADIO_MODE, enums);
+        _radioMode = new Fact(kTAISYNC_GROUP, metaData, this);
         QQmlEngine::setObjectOwnership(_radioMode, QQmlEngine::CppOwnership);
-        connect(_radioMode, &Fact::rawValueChanged, this, &TaisyncManager::_radioSettingsChanged);
+        _radioModeList.append("auto");
+        _radioModeList.append("manual");
+        connect(_radioMode, &Fact::_containerRawValueChanged, this, &TaisyncManager::_radioSettingsChanged);
     }
     {
         //-- Radio Channel
-        FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, kRADIO_CHANNEL, this);
-        QQmlEngine::setObjectOwnership(metaData, QQmlEngine::CppOwnership);
-        metaData->setShortDescription(kRADIO_CHANNEL);
-        metaData->setLongDescription(kRADIO_CHANNEL);
-        metaData->setRawDefaultValue(QVariant(0));
-        metaData->setHasControl(true);
-        metaData->setReadOnly(false);
+        QStringList enums;
         for(int i = 0; i < 13; i++) {
-            metaData->addEnumInfo(QString("ch%1").arg(i), QVariant(i));
+            enums.append(QString("ch%1").arg(i));
         }
-        _radioChannel = new Fact("Taisync", metaData, this);
+        FactMetaData* metaData = _createMetadata(kRADIO_CHANNEL, enums);
+        _radioChannel = new Fact(kTAISYNC_GROUP, metaData, this);
         QQmlEngine::setObjectOwnership(_radioChannel, QQmlEngine::CppOwnership);
-        connect(_radioChannel, &Fact::rawValueChanged, this, &TaisyncManager::_radioSettingsChanged);
+        connect(_radioChannel, &Fact::_containerRawValueChanged, this, &TaisyncManager::_radioSettingsChanged);
+    }
+    {
+        //-- Video Output
+        QStringList enums;
+        enums.append(tr("Stream"));
+        enums.append(tr("HDMI Port"));
+        FactMetaData* metaData = _createMetadata(kVIDEO_OUTPUT, enums);
+        _videoOutput = new Fact(kTAISYNC_GROUP, metaData, this);
+        QQmlEngine::setObjectOwnership(_videoOutput, QQmlEngine::CppOwnership);
+        _videoOutputList.append("phone");
+        _videoOutputList.append("hdmi");
+        connect(_videoOutput, &Fact::_containerRawValueChanged, this, &TaisyncManager::_videoSettingsChanged);
+    }
+    {
+        //-- Video Mode
+        QStringList enums;
+        enums.append("H264");
+        enums.append("H265");
+        FactMetaData* metaData = _createMetadata(kVIDEO_MODE, enums);
+        _videoMode = new Fact(kTAISYNC_GROUP, metaData, this);
+        QQmlEngine::setObjectOwnership(_videoMode, QQmlEngine::CppOwnership);
+        connect(_videoMode, &Fact::_containerRawValueChanged, this, &TaisyncManager::_videoSettingsChanged);
+    }
+    {
+        //-- Video Rate
+        QStringList enums;
+        enums.append(tr("Low"));
+        enums.append(tr("Medium"));
+        enums.append(tr("High"));
+        FactMetaData* metaData = _createMetadata(kVIDEO_RATE, enums);
+        _videoRate = new Fact(kTAISYNC_GROUP, metaData, this);
+        QQmlEngine::setObjectOwnership(_videoRate, QQmlEngine::CppOwnership);
+        _videoRateList.append("low");
+        _videoRateList.append("middle");
+        _videoRateList.append("high");
+        connect(_videoRate, &Fact::_containerRawValueChanged, this, &TaisyncManager::_videoSettingsChanged);
     }
     _reset();
 }
 
 //-----------------------------------------------------------------------------
 void
-TaisyncManager::setDecodeIndex(int idx)
+TaisyncManager::_radioSettingsChanged(QVariant)
 {
-    (void)idx;
+    if(_taiSettings) {
+        _taiSettings->setRadioSettings(
+            _radioModeList[_radioMode->rawValue().toInt()],
+            _radioChannel->enumStringValue());
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
-TaisyncManager::setRateIndex(int idx)
+TaisyncManager::_videoSettingsChanged(QVariant)
 {
-    (void)idx;
+    if(_taiSettings) {
+        _taiSettings->setVideoSettings(
+            _videoOutputList[_videoOutput->rawValue().toInt()],
+            _videoMode->enumStringValue(),
+            _videoRateList[_videoRate->rawValue().toInt()]);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -314,6 +355,7 @@ TaisyncManager::_checkTaisync()
 void
 TaisyncManager::_updateSettings(QByteArray jSonData)
 {
+    qCDebug(TaisyncVerbose) << jSonData;
     QJsonParseError jsonParseError;
     QJsonDocument doc = QJsonDocument::fromJson(jSonData, &jsonParseError);
     if (jsonParseError.error != QJsonParseError::NoError) {
@@ -348,14 +390,20 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         }
     //-- Radio Settings?
     } else if(jSonData.contains("\"freq\":")) {
-        QString mode    = jObj["mode"].toString(_radioMode->enumStringValue());
-        QString channel = jObj["freq"].toString(_radioChannel->enumStringValue());
-        _radioMode->_containerSetRawValue(mode);
-        _radioChannel->_containerSetRawValue(channel);
+        int idx = _radioModeList.indexOf(jObj["mode"].toString(_radioMode->enumStringValue()));
+        if(idx >= 0) _radioMode->_containerSetRawValue(idx);
+        idx = _radioChannel->valueIndex(jObj["freq"].toString(_radioChannel->enumStringValue()));
+        if(idx < 0) idx = 0;
+        _radioChannel->_containerSetRawValue(idx);
     //-- Video Settings?
     } else if(jSonData.contains("\"maxbitrate\":")) {
-        //{\"decode\":\"phone\",\"mode\":\"h264\",\"maxbitrate\":\"high\"}
-
-
+        int idx;
+        idx = _videoMode->valueIndex(jObj["mode"].toString(_videoMode->enumStringValue()));
+        if(idx < 0) idx = 0;
+        _videoMode->_containerSetRawValue(idx);
+        idx = _videoRateList.indexOf(jObj["maxbitrate"].toString(_videoMode->enumStringValue()));
+        if(idx >= 0) _videoRate->_containerSetRawValue(idx);
+        idx = _videoOutputList.indexOf(jObj["decode"].toString(_videoOutput->enumStringValue()));
+        if(idx >= 0) _videoOutput->_containerSetRawValue(idx);
     }
 }

@@ -23,6 +23,7 @@ public:
     bool    requestVideoSettings        ();
     bool    requestRadioSettings        ();
     bool    setRadioSettings            (const QString& mode, const QString& channel);
+    bool    setVideoSettings            (const QString& output, const QString& mode, const QString& rate);
 
 signals:
     void    updateSettings              (QByteArray jSonData);
