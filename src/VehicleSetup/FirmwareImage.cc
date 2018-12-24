@@ -215,21 +215,6 @@ bool FirmwareImage::isCompatible(uint32_t boardId, uint32_t firmwareId) {
     return result;
 }
 
-QString FirmwareImage::cachedParameterMetaDataFile(void)
-{
-    QSettings settings;
-    QDir parameterDir = QFileInfo(settings.fileName()).dir();
-    return parameterDir.filePath(QStringLiteral("ParameterFactMetaData.xml"));
-}
-
-QString FirmwareImage::cachedAirframeMetaDataFile(void)
-{
-    QSettings settings;
-    QDir airframeDir = QFileInfo(settings.fileName()).dir();
-    return airframeDir.filePath(QStringLiteral("PX4AirframeFactMetaData.xml"));
-}
-
-
 bool FirmwareImage::_px4Load(const QString& imageFilename)
 {
     _imageSize = 0;
@@ -290,8 +275,8 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         _jsonParamXmlKey,      // key which holds compressed bytes
                                         decompressedBytes);    // Returned decompressed bytes
     if (success) {
-        QString parameterFilename = cachedParameterMetaDataFile();
-        QFile parameterFile(cachedParameterMetaDataFile());
+        QString parameterFilename = QGCApplication::cachedParameterMetaDataFile();
+        QFile parameterFile(QGCApplication::cachedParameterMetaDataFile());
 
         if (parameterFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = parameterFile.write(decompressedBytes);
@@ -317,9 +302,9 @@ bool FirmwareImage::_px4Load(const QString& imageFilename)
                                         _jsonAirframeXmlKey,        // key which holds compressed bytes
                                         decompressedBytes);         // Returned decompressed bytes
     if (success) {
-        QString airframeFilename = cachedAirframeMetaDataFile();
+        QString airframeFilename = QGCApplication::cachedAirframeMetaDataFile();
         //qDebug() << airframeFilename;
-        QFile airframeFile(cachedAirframeMetaDataFile());
+        QFile airframeFile(QGCApplication::cachedAirframeMetaDataFile());
 
         if (airframeFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             qint64 bytesWritten = airframeFile.write(decompressedBytes);
