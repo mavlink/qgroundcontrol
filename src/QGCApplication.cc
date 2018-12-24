@@ -315,9 +315,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     if (fClearCache) {
         QDir dir(ParameterManager::parameterCacheDir());
         dir.removeRecursively();
-        QFile airframe(FirmwareImage::cachedAirframeMetaDataFile());
+        QFile airframe(cachedAirframeMetaDataFile());
         airframe.remove();
-        QFile parameter(FirmwareImage::cachedParameterMetaDataFile());
+        QFile parameter(cachedParameterMetaDataFile());
         parameter.remove();
     }
 
@@ -851,3 +851,16 @@ void QGCApplication::_gpsNumSatellites(int numSatellites)
     _gpsRtkFactGroup->numSatellites()->setRawValue(numSatellites);
 }
 
+QString QGCApplication::cachedParameterMetaDataFile(void)
+{
+    QSettings settings;
+    QDir parameterDir = QFileInfo(settings.fileName()).dir();
+    return parameterDir.filePath(QStringLiteral("ParameterFactMetaData.xml"));
+}
+
+QString QGCApplication::cachedAirframeMetaDataFile(void)
+{
+    QSettings settings;
+    QDir airframeDir = QFileInfo(settings.fileName()).dir();
+    return airframeDir.filePath(QStringLiteral("PX4AirframeFactMetaData.xml"));
+}
