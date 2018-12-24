@@ -188,6 +188,15 @@
       <output name="MAIN5">feed-through of RC AUX1 channel</output>
       <output name="MAIN6">feed-through of RC AUX2 channel</output>
     </airframe>
+    <airframe id="4041" maintainer="Beat Kueng &lt;beat-kueng@gmx.net&gt;" name="BetaFPV Beta75X 2S Brushless Whoop">
+      <class>Copter</class>
+      <maintainer>Beat Kueng &lt;beat-kueng@gmx.net&gt;</maintainer>
+      <type>Quadrotor H</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+    </airframe>
   </airframe_group>
   <airframe_group image="QuadRotorWide" name="Quadrotor Wide">
     <airframe id="10015" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Team Blacksheep Discovery">
