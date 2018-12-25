@@ -169,13 +169,38 @@ TaisyncManager::setToolbox(QGCToolbox* toolbox)
 }
 
 //-----------------------------------------------------------------------------
+bool
+TaisyncManager::setRTSPSettings(QString uri, QString account, QString password)
+{
+    if(_taiSettings) {
+        return _taiSettings->setRTSPSettings(uri, account, password);
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncManager::setIPSettings(QString localIP, QString remoteIP, QString netMask)
+{
+#if !defined(__ios__) && !defined(__android__)
+    if(_taiSettings) {
+        return _taiSettings->setIPSettings(localIP, remoteIP, netMask);
+    }
+#endif
+    return false;
+}
+
+//-----------------------------------------------------------------------------
 void
 TaisyncManager::_radioSettingsChanged(QVariant)
 {
     if(_taiSettings) {
+        _workTimer.stop();
         _taiSettings->setRadioSettings(
             _radioModeList[_radioMode->rawValue().toInt()],
             _radioChannel->enumStringValue());
+        _reqMask |= REQ_RADIO_SETTINGS;
+        _workTimer.start(3000);
     }
 }
 
@@ -184,10 +209,13 @@ void
 TaisyncManager::_videoSettingsChanged(QVariant)
 {
     if(_taiSettings) {
+        _workTimer.stop();
         _taiSettings->setVideoSettings(
             _videoOutputList[_videoOutput->rawValue().toInt()],
             _videoMode->enumStringValue(),
             _videoRateList[_videoRate->rawValue().toInt()]);
+        _reqMask |= REQ_VIDEO_SETTINGS;
+        _workTimer.start(500);
     }
 }
 
@@ -209,6 +237,7 @@ TaisyncManager::_setEnabled()
             _taiTelemetery->start();
         }
 #endif
+        _reqMask = REQ_ALL;
         _workTimer.start(1000);
     } else {
         //-- Stop everything
@@ -326,24 +355,38 @@ TaisyncManager::_checkTaisync()
                 _taiSettings->start();
             }
         } else {
-            if(++_currReq >= REQ_LAST) {
-                _currReq = REQ_LINK_STATUS;
-            }
-            switch(_currReq) {
-            case REQ_LINK_STATUS:
-                _taiSettings->requestLinkStatus();
-                break;
-            case REQ_DEV_INFO:
-                _taiSettings->requestDevInfo();
-                break;
-            case REQ_FREQ_SCAN:
-                _taiSettings->requestFreqScan();
-                break;
-            case REQ_VIDEO_SETTINGS:
-                _taiSettings->requestVideoSettings();
-                break;
-            case REQ_RADIO_SETTINGS:
-                _taiSettings->requestRadioSettings();
+            while(true) {
+                if (_reqMask & REQ_LINK_STATUS) {
+                    _taiSettings->requestLinkStatus();
+                    break;
+                }
+                if (_reqMask & REQ_DEV_INFO) {
+                    _taiSettings->requestDevInfo();
+                    break;
+                }
+                if (_reqMask & REQ_FREQ_SCAN) {
+                    _reqMask |= ~static_cast<uint32_t>(REQ_FREQ_SCAN);
+                    _taiSettings->requestFreqScan();
+                    break;
+                }
+                if (_reqMask & REQ_VIDEO_SETTINGS) {
+                    _taiSettings->requestVideoSettings();
+                    break;
+                }
+                if (_reqMask & REQ_RADIO_SETTINGS) {
+                    _taiSettings->requestRadioSettings();
+                    break;
+                }
+                if (_reqMask & REQ_RTSP_SETTINGS) {
+                    _reqMask |= ~static_cast<uint32_t>(REQ_RTSP_SETTINGS);
+                    _taiSettings->requestRTSPURISettings();
+                    break;
+                }
+                if (_reqMask & REQ_IP_SETTINGS) {
+                    _reqMask |= ~static_cast<uint32_t>(REQ_IP_SETTINGS);
+                    _taiSettings->requestIPSettings();
+                    break;
+                }
                 break;
             }
         }
@@ -365,6 +408,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     QJsonObject jObj = doc.object();
     //-- Link Status?
     if(jSonData.contains("\"flight\":")) {
+        _reqMask |= ~static_cast<uint32_t>(REQ_LINK_STATUS);
         bool tlinkConnected  = jObj["flight"].toString("") == "online";
         if(tlinkConnected != _linkConnected) {
            _linkConnected = tlinkConnected;
@@ -381,6 +425,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         }
     //-- Device Info?
     } else if(jSonData.contains("\"firmwareversion\":")) {
+        _reqMask |= ~static_cast<uint32_t>(REQ_DEV_INFO);
         QString tfwVersion      = jObj["firmwareversion"].toString(_fwVersion);
         QString tserialNumber   = jObj["sn"].toString(_serialNumber);
         if(tfwVersion != _fwVersion || tserialNumber != _serialNumber) {
@@ -390,6 +435,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         }
     //-- Radio Settings?
     } else if(jSonData.contains("\"freq\":")) {
+        _reqMask |= ~static_cast<uint32_t>(REQ_RADIO_SETTINGS);
         int idx = _radioModeList.indexOf(jObj["mode"].toString(_radioMode->enumStringValue()));
         if(idx >= 0) _radioMode->_containerSetRawValue(idx);
         idx = _radioChannel->valueIndex(jObj["freq"].toString(_radioChannel->enumStringValue()));
@@ -397,6 +443,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         _radioChannel->_containerSetRawValue(idx);
     //-- Video Settings?
     } else if(jSonData.contains("\"maxbitrate\":")) {
+        _reqMask |= ~static_cast<uint32_t>(REQ_VIDEO_SETTINGS);
         int idx;
         idx = _videoMode->valueIndex(jObj["mode"].toString(_videoMode->enumStringValue()));
         if(idx < 0) idx = 0;
@@ -405,5 +452,41 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         if(idx >= 0) _videoRate->_containerSetRawValue(idx);
         idx = _videoOutputList.indexOf(jObj["decode"].toString(_videoOutput->enumStringValue()));
         if(idx >= 0) _videoOutput->_containerSetRawValue(idx);
+    //-- IP Address Settings?
+    } else if(jSonData.contains("\"usbEthIp\":")) {
+        QString value;
+        value = jObj["ipaddr"].toString(_localIPAddr);
+        if(value != _localIPAddr) {
+            _localIPAddr = value;
+            emit localIPAddrChanged();
+        }
+        value = jObj["netmask"].toString(_netMask);
+        if(value != _netMask) {
+            _netMask = value;
+            emit netMaskChanged();
+        }
+        value = jObj["usbEthIp"].toString(_remoteIPAddr);
+        if(value != _remoteIPAddr) {
+            _remoteIPAddr = value;
+            emit remoteIPAddrChanged();
+        }
+    //-- RTSP URI Settings?
+    } else if(jSonData.contains("\"rtspURI\":")) {
+        QString value;
+        value = jObj["rtspURI"].toString(_rtspURI);
+        if(value != _rtspURI) {
+            _rtspURI = value;
+            emit rtspURIChanged();
+        }
+        value = jObj["account"].toString(_rtspAccount);
+        if(value != _rtspAccount) {
+            _rtspAccount = value;
+            emit rtspAccountChanged();
+        }
+        value = jObj["passwd"].toString(_rtspPassword);
+        if(value != _rtspPassword) {
+            _rtspPassword = value;
+            emit rtspPasswordChanged();
+        }
     }
 }

@@ -29,10 +29,5 @@ signals:
 private slots:
     void    _newConnection              () override;
     void    _readBytes                  () override;
-    void    _sendGCSHeartbeat           ();
-
-private:
-    int     _mavlinkChannel             = -1;
-    QTimer  _heartbeatTimer;
 
 };

@@ -41,6 +41,15 @@ public:
     Q_PROPERTY(Fact*        videoOutput         READ videoOutput                                CONSTANT)
     Q_PROPERTY(Fact*        videoMode           READ videoMode                                  CONSTANT)
     Q_PROPERTY(Fact*        videoRate           READ videoRate                                  CONSTANT)
+    Q_PROPERTY(QString      rtspURI             READ rtspURI                                    NOTIFY rtspURIChanged)
+    Q_PROPERTY(QString      rtspAccount         READ rtspAccount                                NOTIFY rtspAccountChanged)
+    Q_PROPERTY(QString      rtspPassword        READ rtspPassword                               NOTIFY rtspPasswordChanged)
+    Q_PROPERTY(QString      localIPAddr         READ localIPAddr                                NOTIFY localIPAddrChanged)
+    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr                               NOTIFY remoteIPAddrChanged)
+    Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
+
+    Q_INVOKABLE bool setRTSPSettings            (QString uri, QString account, QString password);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask);
 
     explicit TaisyncManager                 (QGCApplication* app, QGCToolbox* toolbox);
     ~TaisyncManager                         () override;
@@ -59,6 +68,12 @@ public:
     Fact*       videoOutput                     () { return _videoOutput; }
     Fact*       videoMode                       () { return _videoMode; }
     Fact*       videoRate                       () { return _videoRate; }
+    QString     rtspURI                         () { return _rtspURI; }
+    QString     rtspAccount                     () { return _rtspAccount; }
+    QString     rtspPassword                    () { return _rtspPassword; }
+    QString     localIPAddr                     () { return _localIPAddr; }
+    QString     remoteIPAddr                    () { return _remoteIPAddr; }
+    QString     netMask                         () { return _netMask; }
 
 signals:
     void    linkChanged                     ();
@@ -67,6 +82,12 @@ signals:
     void    connectedChanged                ();
     void    decodeIndexChanged              ();
     void    rateIndexChanged                ();
+    void    rtspURIChanged                  ();
+    void    rtspAccountChanged              ();
+    void    rtspPasswordChanged             ();
+    void    localIPAddrChanged              ();
+    void    remoteIPAddrChanged             ();
+    void    netMaskChanged                  ();
 
 private slots:
     void    _connected                      ();
@@ -90,15 +111,17 @@ private:
 private:
 
     enum {
-        REQ_LINK_STATUS,
-        REQ_DEV_INFO,
-        REQ_FREQ_SCAN,
-        REQ_VIDEO_SETTINGS,
-        REQ_RADIO_SETTINGS,
-        REQ_LAST
+        REQ_LINK_STATUS         = 1,
+        REQ_DEV_INFO            = 2,
+        REQ_FREQ_SCAN           = 4,
+        REQ_VIDEO_SETTINGS      = 8,
+        REQ_RADIO_SETTINGS      = 16,
+        REQ_RTSP_SETTINGS       = 32,
+        REQ_IP_SETTINGS         = 64,
+        REQ_ALL                 = 0xFFFFFFFF,
     };
 
-    int                     _currReq        = REQ_LAST;
+    uint32_t                _reqMask        = REQ_ALL;
     bool                    _running        = false;
     bool                    _isConnected    = false;
     AppSettings*            _appSettings    = nullptr;
@@ -134,4 +157,10 @@ private:
     QStringList     _radioModeList;
     QStringList     _videoOutputList;
     QStringList     _videoRateList;
+    QString         _rtspURI;
+    QString         _rtspAccount;
+    QString         _rtspPassword;
+    QString         _localIPAddr;
+    QString         _remoteIPAddr;
+    QString         _netMask;
 };
