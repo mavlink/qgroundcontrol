@@ -22,6 +22,10 @@ static const char* kPostReq =
 static const char* kGetReq      = "GET %1 HTTP/1.1\r\n\r\n";
 static const char* kRadioURI    = "/v1/radio.json";
 static const char* kVideoURI    = "/v1/video.json";
+static const char* kRTSPURI     = "/v1/rtspuri.json";
+#if !defined(__ios__) && !defined(__android__)
+static const char* kIPAddrURI   = "/v1/ipaddr.json";
+#endif
 
 //-----------------------------------------------------------------------------
 TaisyncSettings::TaisyncSettings(QObject* parent)
@@ -76,6 +80,22 @@ TaisyncSettings::requestRadioSettings()
 }
 
 //-----------------------------------------------------------------------------
+#if !defined(__ios__) && !defined(__android__)
+bool
+TaisyncSettings::requestIPSettings()
+{
+    return _request(kIPAddrURI);
+}
+#endif
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::requestRTSPURISettings()
+{
+    return _request(kRTSPURI);
+}
+
+//-----------------------------------------------------------------------------
 bool
 TaisyncSettings::_request(const QString& request)
 {
@@ -118,6 +138,26 @@ TaisyncSettings::setVideoSettings(const QString& output, const QString& mode, co
     QString post = QString(kVideoPost).arg(output).arg(mode).arg(rate);
     return _post(kVideoURI, post);
 }
+
+//-----------------------------------------------------------------------------
+bool
+TaisyncSettings::setRTSPSettings(const QString& uri, const QString& account, const QString& password)
+{
+    static const char* kRTSPPost = "{\"rtspURI\":\"%1\",\"account\":\"%2\",\"passwd\":\"%3\"}";
+    QString post = QString(kRTSPPost).arg(uri).arg(account).arg(password);
+    return _post(kRTSPURI, post);
+}
+
+//-----------------------------------------------------------------------------
+#if !defined(__ios__) && !defined(__android__)
+bool
+TaisyncSettings::setIPSettings(const QString& localIP, const QString& remoteIP, const QString& netMask)
+{
+    static const char* kRTSPPost = "{\"ipaddr\":\"%1\",\"netmask\":\"%2\",\"usbEthIp\":\"%3\"}";
+    QString post = QString(kRTSPPost).arg(localIP).arg(netMask).arg(remoteIP);
+    return _post(kIPAddrURI, post);
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void
