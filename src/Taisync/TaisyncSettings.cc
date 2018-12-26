@@ -23,9 +23,7 @@ static const char* kGetReq      = "GET %1 HTTP/1.1\r\n\r\n";
 static const char* kRadioURI    = "/v1/radio.json";
 static const char* kVideoURI    = "/v1/video.json";
 static const char* kRTSPURI     = "/v1/rtspuri.json";
-#if !defined(__ios__) && !defined(__android__)
 static const char* kIPAddrURI   = "/v1/ipaddr.json";
-#endif
 
 //-----------------------------------------------------------------------------
 TaisyncSettings::TaisyncSettings(QObject* parent)
@@ -40,7 +38,7 @@ bool TaisyncSettings::start()
 #if defined(__ios__) || defined(__android__)
     return _start(TAISYNC_SETTINGS_PORT);
 #else
-    return _start(80, QHostAddress(TAISYNC_SETTINGS_TARGET));
+    return _start(TAISYNC_SETTINGS_PORT, QHostAddress(qgcApp()->toolbox()->taisyncManager()->remoteIPAddr()));
 #endif
 }
 
@@ -80,13 +78,11 @@ TaisyncSettings::requestRadioSettings()
 }
 
 //-----------------------------------------------------------------------------
-#if !defined(__ios__) && !defined(__android__)
 bool
 TaisyncSettings::requestIPSettings()
 {
     return _request(kIPAddrURI);
 }
-#endif
 
 //-----------------------------------------------------------------------------
 bool
@@ -149,7 +145,6 @@ TaisyncSettings::setRTSPSettings(const QString& uri, const QString& account, con
 }
 
 //-----------------------------------------------------------------------------
-#if !defined(__ios__) && !defined(__android__)
 bool
 TaisyncSettings::setIPSettings(const QString& localIP, const QString& remoteIP, const QString& netMask)
 {
@@ -157,7 +152,6 @@ TaisyncSettings::setIPSettings(const QString& localIP, const QString& remoteIP, 
     QString post = QString(kRTSPPost).arg(localIP).arg(netMask).arg(remoteIP);
     return _post(kIPAddrURI, post);
 }
-#endif
 
 //-----------------------------------------------------------------------------
 void

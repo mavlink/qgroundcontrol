@@ -195,14 +195,14 @@ QGCView {
                                 Layout.minimumWidth: _labelWidth
                             }
                             QGCLabel {
-                                text:           QGroundControl.taisyncManager.linkConnected ? QGroundControl.taisyncManager.serialNumber : qsTr("")
+                                text:           QGroundControl.taisyncManager.connected ? QGroundControl.taisyncManager.serialNumber : qsTr("")
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
                                 text:           qsTr("Firmware Version:")
                             }
                             QGCLabel {
-                                text:           QGroundControl.taisyncManager.linkConnected ? QGroundControl.taisyncManager.fwVersion : qsTr("")
+                                text:           QGroundControl.taisyncManager.connected ? QGroundControl.taisyncManager.fwVersion : qsTr("")
                             }
                         }
                     }
@@ -318,6 +318,188 @@ QGCView {
                                 indexModel:     true
                                 enabled:        QGroundControl.taisyncManager.linkConnected
                                 Layout.minimumWidth: _valueWidth
+                            }
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- RTSP Settings
+                Item {
+                    width:                      _panelWidth
+                    height:                     rtspSettingsLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
+                    QGCLabel {
+                        id:                     rtspSettingsLabel
+                        text:                   qsTr("Streaming Settings")
+                        font.family:            ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     rtspSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    Column {
+                        id:                     rtspSettingsCol
+                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                        width:                  parent.width
+                        anchors.centerIn:       parent
+                        GridLayout {
+                            anchors.margins:    ScreenTools.defaultFontPixelHeight
+                            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            columns: 2
+                            QGCLabel {
+                                text:           qsTr("RTSP URI:")
+                                Layout.minimumWidth: _labelWidth
+                            }
+                            QGCTextField {
+                                id:             rtspURI
+                                text:           QGroundControl.taisyncManager.rtspURI
+                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                inputMethodHints:    Qt.ImhUrlCharactersOnly
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Account:")
+                            }
+                            QGCTextField {
+                                id:             rtspAccount
+                                text:           QGroundControl.taisyncManager.rtspAccount
+                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Password:")
+                            }
+                            QGCTextField {
+                                id:             rtspPassword
+                                text:           QGroundControl.taisyncManager.rtspPassword
+                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                inputMethodHints:    Qt.ImhHiddenText
+                                Layout.minimumWidth: _valueWidth
+                            }
+                        }
+                        QGCButton {
+                            function testEnabled() {
+                                if(!QGroundControl.taisyncManager.linkConnected)
+                                    return false
+                                if(rtspPassword.text === QGroundControl.taisyncManager.rtspPassword &&
+                                    rtspAccount === QGroundControl.taisyncManager.rtspAccount &&
+                                    rtspURI ===  QGroundControl.taisyncManager.rtspURI)
+                                    return false
+                                if(rtspURI === "")
+                                    return false
+                                return true
+                            }
+                            enabled:            testEnabled()
+                            text:               qsTr("Apply")
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            onClicked: {
+
+                            }
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- IP Settings
+                Item {
+                    width:                      _panelWidth
+                    height:                     ipSettingsLabel.height
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                    _taisyncEnabled
+                    QGCLabel {
+                        id:                     ipSettingsLabel
+                        text:                   qsTr("Network Settings")
+                        font.family:            ScreenTools.demiboldFontFamily
+                    }
+                }
+                Rectangle {
+                    height:                     ipSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    width:                      _panelWidth
+                    color:                      qgcPal.windowShade
+                    visible:                    _taisyncEnabled
+                    anchors.margins:            ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                    Column {
+                        id:                     ipSettingsCol
+                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                        width:                  parent.width
+                        anchors.centerIn:       parent
+                        GridLayout {
+                            anchors.margins:    ScreenTools.defaultFontPixelHeight
+                            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            columns: 2
+                            QGCLabel {
+                                text:           qsTr("Local IP Address:")
+                                Layout.minimumWidth: _labelWidth
+                            }
+                            QGCTextField {
+                                id:             localIP
+                                text:           QGroundControl.taisyncManager.localIPAddr
+                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Ground Unit IP Address:")
+                            }
+                            QGCTextField {
+                                id:             remoteIP
+                                text:           QGroundControl.taisyncManager.remoteIPAddr
+                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                                Layout.minimumWidth: _valueWidth
+                            }
+                            QGCLabel {
+                                text:           qsTr("Network Mask:")
+                            }
+                            QGCTextField {
+                                id:             netMask
+                                text:           QGroundControl.taisyncManager.netMask
+                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                                Layout.minimumWidth: _valueWidth
+                            }
+                        }
+                        QGCButton {
+                            function validateIPaddress(ipaddress) {
+                                if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
+                                    return true
+                                return false
+                            }
+                            function testEnabled() {
+                                if(localIP.text   === QGroundControl.taisyncManager.localIPAddr &&
+                                    remoteIP.text === QGroundControl.taisyncManager.remoteIPAddr &&
+                                    netMask.text  === QGroundControl.taisyncManager.netMask)
+                                    return false
+                                if(!validateIPaddress(localIP.text))  return false
+                                if(!validateIPaddress(remoteIP.text)) return false
+                                if(!validateIPaddress(netMask.text))  return false
+                                return true
+                            }
+                            enabled:            testEnabled()
+                            text:               qsTr("Apply")
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            onClicked: {
+                                setIPDialog.open()
+                            }
+                            MessageDialog {
+                                id:                 setIPDialog
+                                icon:               StandardIcon.Warning
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                title:              qsTr("Set Network Settings")
+                                text:               qsTr("Once changed, you will need to reboot the ground unit for the changes to take effect. The local IP address must match the one entered (%1).\n\nConfirm change?").arg(localIP.text)
+                                onYes: {
+                                    QGroundControl.taisyncManager.setIPSettings(localIP.text, remoteIP.text, netMask.text)
+                                    setIPDialog.close()
+                                }
+                                onNo: {
+                                    setIPDialog.close()
+                                }
                             }
                         }
                     }
