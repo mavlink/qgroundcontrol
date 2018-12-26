@@ -12,6 +12,7 @@ import QtPositioning            5.2
 import QtQuick.Layouts          1.2
 import QtQuick.Controls         2.4
 import QtQuick.Dialogs          1.2
+import QtQuick.Controls.Styles  1.4
 import QtGraphicalEffects       1.0
 
 import QGroundControl                   1.0
@@ -36,6 +37,7 @@ Item {
     property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _videoRunning:          _videoReceiver && _videoReceiver.videoRunning
     property bool   _streamingEnabled:      QGroundControl.settingsManager.videoSettings.streamConfigured
+    property bool   _audioEnabled:          QGroundControl.settingsManager.videoSettings.audioEnabled.rawValue
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
@@ -70,6 +72,43 @@ Item {
                     QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 0
                     _videoReceiver.stop()
                 }
+            }
+        }
+        // Control Audio Volume
+        QGCLabel {
+           text:            qsTr("Volume")
+           font.pointSize:  ScreenTools.smallFontPointSize
+           visible:         _audioEnabled
+        }
+        QGCSlider {
+            id:                             volumeSlider
+            visible:                        _audioEnabled
+            property Fact _volume:          QGroundControl.settingsManager.videoSettings.audioVolume
+            stepSize:                       _volume.increment ? _volume.increment : 0.05
+            property bool _loadComplete:    false
+
+            // Override style to make handles smaller than default
+            style: SliderStyle {
+                handle: Rectangle {
+                    anchors.centerIn:   parent
+                    color:              qgcPal.button
+                    border.color:       qgcPal.buttonText
+                    border.width:       1
+                    implicitWidth:      _radius * 2
+                    implicitHeight:     _radius * 2
+                    radius:             _radius
+
+                    property real _radius: Math.round(ScreenTools.defaultFontPixelHeight * 0.35)
+                }
+            }
+            onValueChanged: {
+                if (_loadComplete) {
+                    _volume.value = value
+                }
+            }
+            Component.onCompleted: {
+                volumeSlider.value = volumeSlider._volume.value
+                volumeSlider._loadComplete = true
             }
         }
         // Grid Lines
