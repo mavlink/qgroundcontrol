@@ -158,12 +158,18 @@ void
 TaisyncSettings::_readBytes()
 {
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
-    //qCDebug(TaisyncVerbose) << "Taisync settings data:" << bytesIn.size();
-    //qCDebug(TaisyncVerbose) << QString(bytesIn);
     //-- Go straight to Json payload
     int idx = bytesIn.indexOf('{');
-    if(idx > 0) {
-        emit updateSettings(bytesIn.mid(idx));
+    //-- We may receive more than one response within one TCP packet.
+    while(idx >= 0) {
+        bytesIn = bytesIn.mid(idx);
+        idx = bytesIn.indexOf('}');
+        if(idx > 0) {
+            QByteArray data = bytesIn.left(idx + 1);
+            emit updateSettings(data);
+            bytesIn = bytesIn.mid(idx+1);
+            idx = bytesIn.indexOf('{');
+        }
     }
 }
 

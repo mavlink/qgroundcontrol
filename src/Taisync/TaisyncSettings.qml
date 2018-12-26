@@ -58,6 +58,13 @@ QGCView {
                 width:              _qgcView.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
+                QGCLabel {
+                    text:           qsTr("Reboot ground unit for changes to take effect.")
+                    color:          qgcPal.colorOrange
+                    visible:        QGroundControl.taisyncManager.needReboot
+                    font.family:    ScreenTools.demiboldFontFamily
+                    anchors.horizontalCenter:   parent.horizontalCenter
+                }
                 //-----------------------------------------------------------------
                 //-- General
                 Item {
@@ -86,13 +93,14 @@ QGCView {
                             FactCheckBox {
                                 text:       qsTr("Enable Taisync")
                                 fact:       _taisyncEnabledFact
+                                enabled:    !QGroundControl.taisyncManager.needReboot
                                 visible:    _taisyncEnabledFact.visible
                             }
                             FactCheckBox {
                                 text:       qsTr("Enable Taisync Video")
                                 fact:       _taisyncVideoEnabledFact
                                 visible:    _taisyncVideoEnabledFact.visible
-                                enabled:    _taisyncEnabled
+                                enabled:    _taisyncEnabled && !QGroundControl.taisyncManager.needReboot
                             }
                         }
                     }
@@ -245,7 +253,7 @@ QGCView {
                             FactComboBox {
                                 fact:           QGroundControl.taisyncManager.radioMode
                                 indexModel:     true
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.linkConnected && !QGroundControl.taisyncManager.needReboot
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -254,7 +262,7 @@ QGCView {
                             FactComboBox {
                                 fact:           QGroundControl.taisyncManager.radioChannel
                                 indexModel:     true
-                                enabled:        QGroundControl.taisyncManager.linkConnected && QGroundControl.taisyncManager.radioMode.rawValue > 0
+                                enabled:        QGroundControl.taisyncManager.linkConnected && QGroundControl.taisyncManager.radioMode.rawValue > 0 && !QGroundControl.taisyncManager.needReboot
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
@@ -298,7 +306,7 @@ QGCView {
                             FactComboBox {
                                 fact:           QGroundControl.taisyncManager.videoOutput
                                 indexModel:     true
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.linkConnected && !QGroundControl.taisyncManager.needReboot
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -307,7 +315,7 @@ QGCView {
                             FactComboBox {
                                 fact:           QGroundControl.taisyncManager.videoMode
                                 indexModel:     true
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.linkConnected && !QGroundControl.taisyncManager.needReboot
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -316,7 +324,7 @@ QGCView {
                             FactComboBox {
                                 fact:           QGroundControl.taisyncManager.videoRate
                                 indexModel:     true
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.linkConnected && !QGroundControl.taisyncManager.needReboot
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
@@ -329,7 +337,7 @@ QGCView {
                     height:                     rtspSettingsLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.connected
                     QGCLabel {
                         id:                     rtspSettingsLabel
                         text:                   qsTr("Streaming Settings")
@@ -340,7 +348,7 @@ QGCView {
                     height:                     rtspSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade
-                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.linkConnected
+                    visible:                    _taisyncEnabled && QGroundControl.taisyncManager.connected
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     Column {
@@ -360,7 +368,7 @@ QGCView {
                             QGCTextField {
                                 id:             rtspURI
                                 text:           QGroundControl.taisyncManager.rtspURI
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.connected && !QGroundControl.taisyncManager.needReboot
                                 inputMethodHints:    Qt.ImhUrlCharactersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -370,7 +378,7 @@ QGCView {
                             QGCTextField {
                                 id:             rtspAccount
                                 text:           QGroundControl.taisyncManager.rtspAccount
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.connected && !QGroundControl.taisyncManager.needReboot
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -379,28 +387,46 @@ QGCView {
                             QGCTextField {
                                 id:             rtspPassword
                                 text:           QGroundControl.taisyncManager.rtspPassword
-                                enabled:        QGroundControl.taisyncManager.linkConnected
+                                enabled:        QGroundControl.taisyncManager.connected && !QGroundControl.taisyncManager.needReboot
                                 inputMethodHints:    Qt.ImhHiddenText
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
+                        Item {
+                            width:  1
+                            height: ScreenTools.defaultFontPixelHeight
+                        }
                         QGCButton {
                             function testEnabled() {
-                                if(!QGroundControl.taisyncManager.linkConnected)
+                                if(!QGroundControl.taisyncManager.connected)
                                     return false
                                 if(rtspPassword.text === QGroundControl.taisyncManager.rtspPassword &&
-                                    rtspAccount === QGroundControl.taisyncManager.rtspAccount &&
-                                    rtspURI ===  QGroundControl.taisyncManager.rtspURI)
+                                    rtspAccount.text === QGroundControl.taisyncManager.rtspAccount &&
+                                    rtspURI.text     === QGroundControl.taisyncManager.rtspURI)
                                     return false
                                 if(rtspURI === "")
                                     return false
                                 return true
                             }
-                            enabled:            testEnabled()
+                            enabled:            testEnabled() && !QGroundControl.taisyncManager.needReboot
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
                             onClicked: {
-
+                                setRTSPDialog.open()
+                            }
+                            MessageDialog {
+                                id:                 setRTSPDialog
+                                icon:               StandardIcon.Warning
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                title:              qsTr("Set Streaming Settings")
+                                text:               qsTr("Once changed, you will need to reboot the ground unit for the changes to take effect.\n\nConfirm change?")
+                                onYes: {
+                                    QGroundControl.taisyncManager.setRTSPSettings(rtspURI.text, rtspAccount.text, rtspPassword.text)
+                                    setRTSPDialog.close()
+                                }
+                                onNo: {
+                                    setRTSPDialog.close()
+                                }
                             }
                         }
                     }
@@ -443,6 +469,7 @@ QGCView {
                             QGCTextField {
                                 id:             localIP
                                 text:           QGroundControl.taisyncManager.localIPAddr
+                                enabled:        !QGroundControl.taisyncManager.needReboot
                                 inputMethodHints:    Qt.ImhFormattedNumbersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -452,6 +479,7 @@ QGCView {
                             QGCTextField {
                                 id:             remoteIP
                                 text:           QGroundControl.taisyncManager.remoteIPAddr
+                                enabled:        !QGroundControl.taisyncManager.needReboot
                                 inputMethodHints:    Qt.ImhFormattedNumbersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -461,9 +489,14 @@ QGCView {
                             QGCTextField {
                                 id:             netMask
                                 text:           QGroundControl.taisyncManager.netMask
+                                enabled:        !QGroundControl.taisyncManager.needReboot
                                 inputMethodHints:    Qt.ImhFormattedNumbersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
+                        }
+                        Item {
+                            width:  1
+                            height: ScreenTools.defaultFontPixelHeight
                         }
                         QGCButton {
                             function validateIPaddress(ipaddress) {
@@ -481,7 +514,7 @@ QGCView {
                                 if(!validateIPaddress(netMask.text))  return false
                                 return true
                             }
-                            enabled:            testEnabled()
+                            enabled:            testEnabled() && !QGroundControl.taisyncManager.needReboot
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
                             onClicked: {

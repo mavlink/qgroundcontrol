@@ -19,6 +19,7 @@
 #endif
 
 #include <QTimer>
+#include <QTime>
 
 class AppSettings;
 class QGCApplication;
@@ -31,6 +32,7 @@ public:
 
     Q_PROPERTY(bool         connected           READ connected                                  NOTIFY connectedChanged)
     Q_PROPERTY(bool         linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
+    Q_PROPERTY(bool         needReboot          READ needReboot                                 NOTIFY needRebootChanged)
     Q_PROPERTY(QString      linkVidFormat       READ linkVidFormat                              NOTIFY linkChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                 NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
@@ -58,6 +60,7 @@ public:
 
     bool        connected                       () { return _isConnected; }
     bool        linkConnected                   () { return _linkConnected; }
+    bool        needReboot                      () { return _needReboot; }
     QString     linkVidFormat                   () { return _linkVidFormat; }
     int         uplinkRSSI                      () { return _downlinkRSSI; }
     int         downlinkRSSI                    () { return _uplinkRSSI; }
@@ -88,6 +91,7 @@ signals:
     void    localIPAddrChanged              ();
     void    remoteIPAddrChanged             ();
     void    netMaskChanged                  ();
+    void    needRebootChanged               ();
 
 private slots:
     void    _connected                      ();
@@ -135,6 +139,7 @@ private:
     bool            _enableVideo            = true;
     bool            _enabled                = true;
     bool            _linkConnected          = false;
+    bool            _needReboot             = false;
     QTimer          _workTimer;
     QString         _linkVidFormat;
     int             _downlinkRSSI           = 0;
@@ -163,4 +168,5 @@ private:
     QString         _localIPAddr;
     QString         _remoteIPAddr;
     QString         _netMask;
+    QTime           _timeoutTimer;
 };

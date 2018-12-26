@@ -24,6 +24,9 @@ static const char *kVIDEO_RATE          = "VideoRate";
 static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
 static const char *kNET_MASK            = "NetMask";
+static const char *kRTSP_URI            = "RTSPURI";
+static const char *kRTSP_ACCOUNT        = "RTSPAccount";
+static const char *kRTSP_PASSWORD       = "RTSPPassword";
 
 //-----------------------------------------------------------------------------
 TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -33,9 +36,12 @@ TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
     _workTimer.setSingleShot(true);
     QSettings settings;
     settings.beginGroup(kTAISYNC_GROUP);
-    _localIPAddr  = settings.value(kLOCAL_IP,  QString("192.168.199.33")).toString();
-    _remoteIPAddr = settings.value(kREMOTE_IP, QString("192.168.199.16")).toString();
-    _netMask      = settings.value(kNET_MASK,  QString("255.255.255.0")).toString();
+    _localIPAddr  = settings.value(kLOCAL_IP,       QString("192.168.199.33")).toString();
+    _remoteIPAddr = settings.value(kREMOTE_IP,      QString("192.168.199.16")).toString();
+    _netMask      = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
+    _rtspURI      = settings.value(kRTSP_URI,       QString("rtsp://192.168.0.2")).toString();
+    _rtspAccount  = settings.value(kRTSP_ACCOUNT,   QString("admin")).toString();
+    _rtspPassword = settings.value(kRTSP_PASSWORD,  QString("12345678")).toString();
     settings.endGroup();
 }
 
@@ -80,6 +86,8 @@ TaisyncManager::_reset()
     _close();
     _isConnected = false;
     emit connectedChanged();
+    _linkConnected = false;
+    emit linkConnectedChanged();
     _taiSettings = new TaisyncSettings(this);
     connect(_taiSettings, &TaisyncSettings::updateSettings, this, &TaisyncManager::_updateSettings);
     connect(_taiSettings, &TaisyncSettings::connected,      this, &TaisyncManager::_connected);
@@ -186,7 +194,23 @@ bool
 TaisyncManager::setRTSPSettings(QString uri, QString account, QString password)
 {
     if(_taiSettings) {
-        return _taiSettings->setRTSPSettings(uri, account, password);
+        if(_taiSettings->setRTSPSettings(uri, account, password)) {
+            _rtspURI      = uri;
+            _rtspAccount  = account;
+            _rtspPassword = password;
+            QSettings settings;
+            settings.beginGroup(kTAISYNC_GROUP);
+            settings.setValue(kRTSP_URI,      _rtspURI);
+            settings.setValue(kRTSP_ACCOUNT,  _rtspAccount);
+            settings.setValue(kRTSP_PASSWORD, _rtspPassword);
+            settings.endGroup();
+            emit rtspURIChanged();
+            emit rtspAccountChanged();
+            emit rtspPasswordChanged();
+            _needReboot = true;
+            emit needRebootChanged();
+            return true;
+        }
     }
     return false;
 }
@@ -198,10 +222,14 @@ TaisyncManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMa
     bool res = false;
     if(_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_) {
         //-- If we are connected to the Taisync
-        if(_linkConnected) {
+        if(_isConnected) {
             if(_taiSettings) {
                 //-- Change IP settings
                 res = _taiSettings->setIPSettings(localIP_, remoteIP_, netMask_);
+                if(res) {
+                    _needReboot = true;
+                    emit needRebootChanged();
+                }
             }
         } else {
             //-- We're not connected. Record the change and restart.
@@ -369,6 +397,8 @@ TaisyncManager::_connected()
     qCDebug(TaisyncLog) << "Taisync Settings Connected";
     _isConnected = true;
     emit connectedChanged();
+    _needReboot = false;
+    emit needRebootChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -378,6 +408,10 @@ TaisyncManager::_disconnected()
     qCDebug(TaisyncLog) << "Taisync Settings Disconnected";
     _isConnected = false;
     emit connectedChanged();
+    _needReboot = false;
+    emit needRebootChanged();
+    _linkConnected = false;
+    emit linkConnectedChanged();
     _reset();
 }
 
@@ -424,6 +458,17 @@ TaisyncManager::_checkTaisync()
                     _taiSettings->requestIPSettings();
                     break;
                 }
+                //-- Check link status
+                if(_timeoutTimer.elapsed() > 3000) {
+                    //-- Give up and restart
+                    _disconnected();
+                    break;
+                }
+                //-- If it's been too long since we last heard, ping it.
+                if(_timeoutTimer.elapsed() > 1000) {
+                    _taiSettings->requestLinkStatus();
+                    break;
+                }
                 break;
             }
         }
@@ -435,6 +480,7 @@ TaisyncManager::_checkTaisync()
 void
 TaisyncManager::_updateSettings(QByteArray jSonData)
 {
+    _timeoutTimer.start();
     qCDebug(TaisyncVerbose) << jSonData;
     QJsonParseError jsonParseError;
     QJsonDocument doc = QJsonDocument::fromJson(jSonData, &jsonParseError);
@@ -522,20 +568,32 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     //-- RTSP URI Settings?
     } else if(jSonData.contains("\"rtspURI\":")) {
         QString value;
+        bool changed = false;
         value = jObj["rtspURI"].toString(_rtspURI);
         if(value != _rtspURI) {
             _rtspURI = value;
+            changed = true;
             emit rtspURIChanged();
         }
         value = jObj["account"].toString(_rtspAccount);
         if(value != _rtspAccount) {
             _rtspAccount = value;
+            changed = true;
             emit rtspAccountChanged();
         }
         value = jObj["passwd"].toString(_rtspPassword);
         if(value != _rtspPassword) {
             _rtspPassword = value;
+            changed = true;
             emit rtspPasswordChanged();
+        }
+        if(changed) {
+            QSettings settings;
+            settings.beginGroup(kTAISYNC_GROUP);
+            settings.setValue(kRTSP_URI,      _rtspURI);
+            settings.setValue(kRTSP_ACCOUNT,  _rtspAccount);
+            settings.setValue(kRTSP_PASSWORD, _rtspPassword);
+            settings.endGroup();
         }
     }
 }
