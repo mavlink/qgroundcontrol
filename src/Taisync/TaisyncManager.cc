@@ -13,12 +13,17 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
+#include <QSettings>
+
 static const char *kTAISYNC_GROUP       = "Taisync";
 static const char *kRADIO_MODE          = "RadioMode";
 static const char *kRADIO_CHANNEL       = "RadioChannel";
 static const char *kVIDEO_OUTPUT        = "VideoOutput";
 static const char *kVIDEO_MODE          = "VideoMode";
 static const char *kVIDEO_RATE          = "VideoRate";
+static const char *kLOCAL_IP            = "LocalIP";
+static const char *kREMOTE_IP           = "RemoteIP";
+static const char *kNET_MASK            = "NetMask";
 
 //-----------------------------------------------------------------------------
 TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -26,6 +31,12 @@ TaisyncManager::TaisyncManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     connect(&_workTimer, &QTimer::timeout, this, &TaisyncManager::_checkTaisync);
     _workTimer.setSingleShot(true);
+    QSettings settings;
+    settings.beginGroup(kTAISYNC_GROUP);
+    _localIPAddr  = settings.value(kLOCAL_IP,  QString("192.168.199.33")).toString();
+    _remoteIPAddr = settings.value(kREMOTE_IP, QString("192.168.199.16")).toString();
+    _netMask      = settings.value(kNET_MASK,  QString("255.255.255.0")).toString();
+    settings.endGroup();
 }
 
 //-----------------------------------------------------------------------------
@@ -67,6 +78,8 @@ void
 TaisyncManager::_reset()
 {
     _close();
+    _isConnected = false;
+    emit connectedChanged();
     _taiSettings = new TaisyncSettings(this);
     connect(_taiSettings, &TaisyncSettings::updateSettings, this, &TaisyncManager::_updateSettings);
     connect(_taiSettings, &TaisyncSettings::connected,      this, &TaisyncManager::_connected);
@@ -180,14 +193,37 @@ TaisyncManager::setRTSPSettings(QString uri, QString account, QString password)
 
 //-----------------------------------------------------------------------------
 bool
-TaisyncManager::setIPSettings(QString localIP, QString remoteIP, QString netMask)
+TaisyncManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_)
 {
-#if !defined(__ios__) && !defined(__android__)
-    if(_taiSettings) {
-        return _taiSettings->setIPSettings(localIP, remoteIP, netMask);
+    bool res = false;
+    if(_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_) {
+        //-- If we are connected to the Taisync
+        if(_linkConnected) {
+            if(_taiSettings) {
+                //-- Change IP settings
+                res = _taiSettings->setIPSettings(localIP_, remoteIP_, netMask_);
+            }
+        } else {
+            //-- We're not connected. Record the change and restart.
+            _localIPAddr  = localIP_;
+            _remoteIPAddr = remoteIP_;
+            _netMask      = netMask_;
+            _reset();
+            res = true;
+        }
+        if(res) {
+            QSettings settings;
+            settings.beginGroup(kTAISYNC_GROUP);
+            settings.setValue(kLOCAL_IP, localIP_);
+            settings.setValue(kREMOTE_IP, remoteIP_);
+            settings.setValue(kNET_MASK, netMask_);
+            settings.endGroup();
+        }
+    } else {
+        //-- Nothing to change
+        res = true;
     }
-#endif
-    return false;
+    return res;
 }
 
 //-----------------------------------------------------------------------------
@@ -355,6 +391,7 @@ TaisyncManager::_checkTaisync()
                 _taiSettings->start();
             }
         } else {
+            //qCDebug(TaisyncVerbose) << bin << _reqMask;
             while(true) {
                 if (_reqMask & REQ_LINK_STATUS) {
                     _taiSettings->requestLinkStatus();
@@ -365,7 +402,7 @@ TaisyncManager::_checkTaisync()
                     break;
                 }
                 if (_reqMask & REQ_FREQ_SCAN) {
-                    _reqMask |= ~static_cast<uint32_t>(REQ_FREQ_SCAN);
+                    _reqMask &= ~static_cast<uint32_t>(REQ_FREQ_SCAN);
                     _taiSettings->requestFreqScan();
                     break;
                 }
@@ -378,12 +415,12 @@ TaisyncManager::_checkTaisync()
                     break;
                 }
                 if (_reqMask & REQ_RTSP_SETTINGS) {
-                    _reqMask |= ~static_cast<uint32_t>(REQ_RTSP_SETTINGS);
+                    _reqMask &= ~static_cast<uint32_t>(REQ_RTSP_SETTINGS);
                     _taiSettings->requestRTSPURISettings();
                     break;
                 }
                 if (_reqMask & REQ_IP_SETTINGS) {
-                    _reqMask |= ~static_cast<uint32_t>(REQ_IP_SETTINGS);
+                    _reqMask &= ~static_cast<uint32_t>(REQ_IP_SETTINGS);
                     _taiSettings->requestIPSettings();
                     break;
                 }
@@ -408,7 +445,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     QJsonObject jObj = doc.object();
     //-- Link Status?
     if(jSonData.contains("\"flight\":")) {
-        _reqMask |= ~static_cast<uint32_t>(REQ_LINK_STATUS);
+        _reqMask &= ~static_cast<uint32_t>(REQ_LINK_STATUS);
         bool tlinkConnected  = jObj["flight"].toString("") == "online";
         if(tlinkConnected != _linkConnected) {
            _linkConnected = tlinkConnected;
@@ -425,7 +462,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         }
     //-- Device Info?
     } else if(jSonData.contains("\"firmwareversion\":")) {
-        _reqMask |= ~static_cast<uint32_t>(REQ_DEV_INFO);
+        _reqMask &= ~static_cast<uint32_t>(REQ_DEV_INFO);
         QString tfwVersion      = jObj["firmwareversion"].toString(_fwVersion);
         QString tserialNumber   = jObj["sn"].toString(_serialNumber);
         if(tfwVersion != _fwVersion || tserialNumber != _serialNumber) {
@@ -435,7 +472,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         }
     //-- Radio Settings?
     } else if(jSonData.contains("\"freq\":")) {
-        _reqMask |= ~static_cast<uint32_t>(REQ_RADIO_SETTINGS);
+        _reqMask &= ~static_cast<uint32_t>(REQ_RADIO_SETTINGS);
         int idx = _radioModeList.indexOf(jObj["mode"].toString(_radioMode->enumStringValue()));
         if(idx >= 0) _radioMode->_containerSetRawValue(idx);
         idx = _radioChannel->valueIndex(jObj["freq"].toString(_radioChannel->enumStringValue()));
@@ -443,7 +480,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
         _radioChannel->_containerSetRawValue(idx);
     //-- Video Settings?
     } else if(jSonData.contains("\"maxbitrate\":")) {
-        _reqMask |= ~static_cast<uint32_t>(REQ_VIDEO_SETTINGS);
+        _reqMask &= ~static_cast<uint32_t>(REQ_VIDEO_SETTINGS);
         int idx;
         idx = _videoMode->valueIndex(jObj["mode"].toString(_videoMode->enumStringValue()));
         if(idx < 0) idx = 0;
@@ -455,20 +492,32 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     //-- IP Address Settings?
     } else if(jSonData.contains("\"usbEthIp\":")) {
         QString value;
+        bool changed = false;
         value = jObj["ipaddr"].toString(_localIPAddr);
         if(value != _localIPAddr) {
             _localIPAddr = value;
+            changed = true;
             emit localIPAddrChanged();
         }
         value = jObj["netmask"].toString(_netMask);
         if(value != _netMask) {
             _netMask = value;
+            changed = true;
             emit netMaskChanged();
         }
         value = jObj["usbEthIp"].toString(_remoteIPAddr);
         if(value != _remoteIPAddr) {
             _remoteIPAddr = value;
+            changed = true;
             emit remoteIPAddrChanged();
+        }
+        if(changed) {
+            QSettings settings;
+            settings.beginGroup(kTAISYNC_GROUP);
+            settings.setValue(kLOCAL_IP,  _localIPAddr);
+            settings.setValue(kREMOTE_IP, _remoteIPAddr);
+            settings.setValue(kNET_MASK,  _netMask);
+            settings.endGroup();
         }
     //-- RTSP URI Settings?
     } else if(jSonData.contains("\"rtspURI\":")) {

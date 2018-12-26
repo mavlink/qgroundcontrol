@@ -22,16 +22,12 @@ public:
     bool    requestFreqScan             ();
     bool    requestVideoSettings        ();
     bool    requestRadioSettings        ();
-#if !defined(__ios__) && !defined(__android__)
     bool    requestIPSettings           ();
-#endif
     bool    requestRTSPURISettings      ();
     bool    setRadioSettings            (const QString& mode, const QString& channel);
     bool    setVideoSettings            (const QString& output, const QString& mode, const QString& rate);
     bool    setRTSPSettings             (const QString& uri, const QString& account, const QString& password);
-#if !defined(__ios__) && !defined(__android__)
     bool    setIPSettings               (const QString& localIP, const QString& remoteIP, const QString& netMask);
-#endif
 
 signals:
     void    updateSettings              (QByteArray jSonData);
