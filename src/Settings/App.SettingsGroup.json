@@ -205,5 +205,19 @@
     "shortDescription": "Request start of MAVLink telemetry streams (ArduPilot only)",
     "type":             "bool",
     "defaultValue":     true
+},
+{
+    "name":             "enableTaisync",
+    "shortDescription": "Enable Taisync Module Support",
+    "longDescription":  "Enable Taisync Module Support",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "enableTaisyncVideo",
+    "shortDescription": "Enable Taisync Video Support",
+    "longDescription":  "Enable Taisync Video Support",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]
