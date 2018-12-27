@@ -220,6 +220,9 @@ VideoReceiver::_timeout()
 void
 VideoReceiver::start()
 {
+    if(!qgcApp()->runningUnitTests()) {
+        return;
+    }
     if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
        !_videoSettings->streamConfigured()) {
         qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
@@ -465,6 +468,9 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
+    if(!qgcApp()->runningUnitTests()) {
+        return;
+    }
 #if defined(QGC_GST_STREAMING)
     _stop = true;
     qCDebug(VideoReceiverLog) << "stop()";
