@@ -2,5 +2,6 @@
 <resources>
     <!-- Allow anything connected -->
     <usb-device />
+    <usb-accessory />
 </resources>
 
