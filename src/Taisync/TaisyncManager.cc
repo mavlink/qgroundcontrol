@@ -98,9 +98,6 @@ TaisyncManager::_reset()
         connect(_appSettings->enableTaisyncVideo(), &Fact::rawValueChanged, this, &TaisyncManager::_setVideoEnabled);
     }
     _setEnabled();
-    if(_enabled) {
-        _setVideoEnabled();
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -309,13 +306,15 @@ TaisyncManager::_setEnabled()
         _close();
     }
     _enabled = enable;
+    //-- Now handle video support
+    _setVideoEnabled();
 }
 
 //-----------------------------------------------------------------------------
 void
 TaisyncManager::_setVideoEnabled()
 {
-    bool enable = _appSettings->enableTaisyncVideo()->rawValue().toBool();
+    bool enable = _appSettings->enableTaisyncVideo()->rawValue().toBool() && _appSettings->enableTaisync()->rawValue().toBool();
     if(enable) {
         if(!_savedVideoSource.isValid()) {
             //-- Hide video selection as we will be fixed to Taisync video and set the way we need it.
