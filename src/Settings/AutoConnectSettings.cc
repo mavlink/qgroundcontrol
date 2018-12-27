@@ -23,7 +23,6 @@ DECLARE_SETTINGSFACT(AutoConnectSettings, autoConnectUDP)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpListenPort)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostIP)
 DECLARE_SETTINGSFACT(AutoConnectSettings, udpTargetHostPort)
-DECLARE_SETTINGSFACT(AutoConnectSettings, autoconnectTaisyncUSB)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AutoConnectSettings, autoConnectPixhawk)
 {

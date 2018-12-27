@@ -147,15 +147,20 @@ void Fact::setCookedValue(const QVariant& value)
     }
 }
 
-void Fact::setEnumStringValue(const QString& value)
+int Fact::valueIndex(const QString& value)
 {
     if (_metaData) {
-        int index = _metaData->enumStrings().indexOf(value);
-        if (index != -1) {
-            setCookedValue(_metaData->enumValues()[index]);
-        }
-    } else {
-        qWarning() << kMissingMetadata << name();
+        return _metaData->enumStrings().indexOf(value);
+    }
+    qWarning() << kMissingMetadata << name();
+    return -1;
+}
+
+void Fact::setEnumStringValue(const QString& value)
+{
+    int index = valueIndex(value);
+    if (index != -1) {
+        setCookedValue(_metaData->enumValues()[index]);
     }
 }
 
