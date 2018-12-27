@@ -190,7 +190,7 @@ TaisyncManager::setToolbox(QGCToolbox* toolbox)
 bool
 TaisyncManager::setRTSPSettings(QString uri, QString account, QString password)
 {
-    if(_taiSettings) {
+    if(_taiSettings && _isConnected) {
         if(_taiSettings->setRTSPSettings(uri, account, password)) {
             _rtspURI      = uri;
             _rtspAccount  = account;
@@ -255,7 +255,7 @@ TaisyncManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMa
 void
 TaisyncManager::_radioSettingsChanged(QVariant)
 {
-    if(_taiSettings) {
+    if(_taiSettings && _isConnected) {
         _workTimer.stop();
         _taiSettings->setRadioSettings(
             _radioModeList[_radioMode->rawValue().toInt()],
@@ -269,7 +269,7 @@ TaisyncManager::_radioSettingsChanged(QVariant)
 void
 TaisyncManager::_videoSettingsChanged(QVariant)
 {
-    if(_taiSettings) {
+    if(_taiSettings && _isConnected) {
         _workTimer.stop();
         _taiSettings->setVideoSettings(
             _videoOutputList[_videoOutput->rawValue().toInt()],
@@ -314,17 +314,19 @@ TaisyncManager::_setEnabled()
 void
 TaisyncManager::_setVideoEnabled()
 {
+    //-- Check both if video is enabled and Taisync support itself is enabled as well.
     bool enable = _appSettings->enableTaisyncVideo()->rawValue().toBool() && _appSettings->enableTaisync()->rawValue().toBool();
     if(enable) {
+        //-- If we haven't already saved the previous settings...
         if(!_savedVideoSource.isValid()) {
             //-- Hide video selection as we will be fixed to Taisync video and set the way we need it.
             VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
-            //-- First save current state
+            //-- First save current state.
             _savedVideoSource = pVSettings->videoSource()->rawValue();
             _savedVideoUDP    = pVSettings->udpPort()->rawValue();
             _savedAR          = pVSettings->aspectRatio()->rawValue();
             _savedVideoState  = pVSettings->visible();
-            //-- Now set it up the way we need it do be
+            //-- Now set it up the way we need it do be.
             pVSettings->setVisible(false);
             pVSettings->udpPort()->setRawValue(5600);
             pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
@@ -339,7 +341,7 @@ TaisyncManager::_setVideoEnabled()
         }
 #endif
     } else {
-        //-- Restore video settings
+        //-- Restore video settings.
 #if defined(__ios__) || defined(__android__)
         qgcApp()->toolbox()->videoManager()->setIsTaisync(false);
         if (_taiVideo) {
