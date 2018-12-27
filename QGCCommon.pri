@@ -30,6 +30,7 @@ linux {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
+        DEFINES += QGC_GST_TAISYNC_ENABLED
     } else : android-g++ {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
@@ -51,6 +52,7 @@ linux {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_GST_TAISYNC_ENABLED
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2015 is supported")
     }
