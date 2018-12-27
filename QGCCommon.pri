@@ -19,7 +19,7 @@
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
-        CONFIG += LinuxBuild
+        CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
         linux-clang {
             message("Linux clang")
@@ -29,7 +29,7 @@ linux {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
-    } else : android-g++ {
+    } else : android-g++ | android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
@@ -56,9 +56,9 @@ linux {
 } else : macx {
     macx-clang | macx-llvm {
         message("Mac build")
-        CONFIG += MacBuild
-        CONFIG += x86_64
-        CONFIG -= x86
+        CONFIG  += MacBuild
+        CONFIG  += x86_64
+        CONFIG  -= x86
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
         } else {
