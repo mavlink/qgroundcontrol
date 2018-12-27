@@ -220,7 +220,8 @@ VideoReceiver::_timeout()
 void
 VideoReceiver::start()
 {
-    if(!qgcApp()->runningUnitTests()) {
+    qCDebug(VideoReceiverLog) << "start():" << _uri;
+    if(qgcApp()->runningUnitTests()) {
         return;
     }
     if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
