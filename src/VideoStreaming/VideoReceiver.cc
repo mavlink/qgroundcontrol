@@ -535,7 +535,8 @@ VideoReceiver::_shutdownPipeline() {
 void
 VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
-    _shutdownPipeline();
+    stop();
+    start();
 }
 #endif
 
@@ -550,7 +551,8 @@ VideoReceiver::_handleEOS() {
         _shutdownRecordingBranch();
     } else {
         qWarning() << "VideoReceiver: Unexpected EOS!";
-        _shutdownPipeline();
+        stop();
+        start();
     }
 }
 #endif
