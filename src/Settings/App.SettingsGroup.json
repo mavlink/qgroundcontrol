@@ -211,7 +211,7 @@
     "shortDescription": "Enable Taisync Module Support",
     "longDescription":  "Enable Taisync Module Support",
     "type":             "bool",
-    "defaultValue":     true
+    "defaultValue":     false
 },
 {
     "name":             "enableTaisyncVideo",
