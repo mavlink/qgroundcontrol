@@ -310,10 +310,17 @@ FlightMap {
         }
 
         property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
+        property var activeVehicle: _activeVehicle
 
         onInGotoFlightModeChanged: {
             if (!inGotoFlightMode && visible) {
                 // Hide goto indicator when vehicle falls out of guided mode
+                visible = false
+            }
+        }
+
+        onActiveVehicleChanged: {
+            if (!_activeVehicle) {
                 visible = false
             }
         }
@@ -345,8 +352,15 @@ FlightMap {
 
         property alias center:              _mapCircle.center
         property alias clockwiseRotation:   _mapCircle.clockwiseRotation
+        property var   activeVehicle:       _activeVehicle
 
         readonly property real defaultRadius: 30
+
+        onActiveVehicleChanged: {
+            if (!_activeVehicle) {
+                visible = false
+            }
+        }
 
         function show(coord) {
             _mapCircle.radius.rawValue = defaultRadius
