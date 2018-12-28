@@ -114,6 +114,9 @@ public:
     /// Returns whether the vehicle is in guided mode or not.
     virtual bool isGuidedMode(const Vehicle* vehicle) const;
 
+    /// Returns the flight mode which the vehicle will be in if it is performing a goto location
+    virtual QString gotoFlightMode(void) const;
+
     /// Set guided flight mode
     virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
 

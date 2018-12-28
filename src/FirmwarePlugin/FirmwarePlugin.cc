@@ -757,3 +757,8 @@ int FirmwarePlugin::versionCompare(Vehicle* vehicle, QString& compare)
     int patch = versionNumbers[2].toInt();
     return versionCompare(vehicle, major, minor, patch);
 }
+
+QString FirmwarePlugin::gotoFlightMode(void) const
+{
+    return QString();
+}
