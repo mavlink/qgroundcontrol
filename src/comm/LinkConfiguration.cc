@@ -33,7 +33,7 @@
 #define LINK_SETTING_ROOT "LinkConfigurations"
 
 LinkConfiguration::LinkConfiguration(const QString& name)
-    : _link(NULL)
+    : _link(nullptr)
     , _name(name)
     , _dynamic(false)
     , _autoConnect(false)
@@ -80,7 +80,7 @@ const QString LinkConfiguration::settingsRoot()
 */
 LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& name)
 {
-    LinkConfiguration* config = NULL;
+    LinkConfiguration* config = nullptr;
     switch(type) {
 #ifndef NO_SERIAL_LINK
         case LinkConfiguration::TypeSerial:
@@ -118,7 +118,7 @@ LinkConfiguration* LinkConfiguration::createSettings(int type, const QString& na
 */
 LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* source)
 {
-    LinkConfiguration* dupe = NULL;
+    LinkConfiguration* dupe = nullptr;
     switch(source->type()) {
 #ifndef NO_SERIAL_LINK
         case TypeSerial:
@@ -147,7 +147,6 @@ LinkConfiguration* LinkConfiguration::duplicateSettings(LinkConfiguration* sourc
             break;
 #endif
         case TypeLast:
-        default:
             break;
     }
     return dupe;
