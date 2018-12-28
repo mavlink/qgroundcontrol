@@ -110,6 +110,7 @@ private slots:
 private:
     void    _close                          ();
     void    _reset                          ();
+    void    _restoreVideoSettings           (Fact* setting);
     FactMetaData *_createMetadata           (const char *name, QStringList enums);
 
 private:
@@ -122,10 +123,10 @@ private:
         REQ_RADIO_SETTINGS      = 16,
         REQ_RTSP_SETTINGS       = 32,
         REQ_IP_SETTINGS         = 64,
-        REQ_ALL                 = 0xFFFFFFFF,
+        REQ_ALL                 = 0xFFFFFFF,
     };
 
-    uint32_t                _reqMask        = REQ_ALL;
+    uint32_t                _reqMask        = static_cast<uint32_t>(REQ_ALL);
     bool                    _running        = false;
     bool                    _isConnected    = false;
     AppSettings*            _appSettings    = nullptr;
@@ -148,10 +149,6 @@ private:
     int             _decodeIndex            = 0;
     QStringList     _rateList;
     int             _rateIndex              = 0;
-    bool            _savedVideoState        = true;
-    QVariant        _savedVideoSource;
-    QVariant        _savedVideoUDP;
-    QVariant        _savedAR;
     QString         _serialNumber;
     QString         _fwVersion;
     Fact*           _radioMode              = nullptr;

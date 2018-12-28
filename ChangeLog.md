@@ -17,6 +17,7 @@ Note: This file only contains high level features or important fixes.
 * Support loading polygons from SHP files
 * Bumped settings version (now 8). This will cause all settings to be reset to defaults.
 * Orbit visuals support changing rotation direction
+* Added support for the Taisync 2.4GHz ViUlinx digital HD wireless link.
 
 ## 3.4
 

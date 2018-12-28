@@ -31,7 +31,7 @@ linux {
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
         DEFINES += QGC_GST_TAISYNC_ENABLED
-    } else : android-g++ {
+    } else : android-g++ | android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS

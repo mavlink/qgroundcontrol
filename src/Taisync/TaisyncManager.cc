@@ -11,6 +11,7 @@
 #include "TaisyncHandler.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
+#include "QGCCorePlugin.h"
 #include "VideoManager.h"
 
 #include <QSettings>
@@ -88,10 +89,6 @@ TaisyncManager::_reset()
     emit connectedChanged();
     _linkConnected = false;
     emit linkConnectedChanged();
-    _taiSettings = new TaisyncSettings(this);
-    connect(_taiSettings, &TaisyncSettings::updateSettings, this, &TaisyncManager::_updateSettings);
-    connect(_taiSettings, &TaisyncSettings::connected,      this, &TaisyncManager::_connected);
-    connect(_taiSettings, &TaisyncSettings::disconnected,   this, &TaisyncManager::_disconnected);
     if(!_appSettings) {
         _appSettings = _toolbox->settingsManager()->appSettings();
         connect(_appSettings->enableTaisync(),      &Fact::rawValueChanged, this, &TaisyncManager::_setEnabled);
@@ -183,6 +180,7 @@ TaisyncManager::setToolbox(QGCToolbox* toolbox)
         _videoRateList.append("high");
         connect(_videoRate, &Fact::_containerRawValueChanged, this, &TaisyncManager::_videoSettingsChanged);
     }
+    //-- Start it all
     _reset();
 }
 
@@ -190,7 +188,7 @@ TaisyncManager::setToolbox(QGCToolbox* toolbox)
 bool
 TaisyncManager::setRTSPSettings(QString uri, QString account, QString password)
 {
-    if(_taiSettings) {
+    if(_taiSettings && _isConnected) {
         if(_taiSettings->setRTSPSettings(uri, account, password)) {
             _rtspURI      = uri;
             _rtspAccount  = account;
@@ -255,7 +253,7 @@ TaisyncManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMa
 void
 TaisyncManager::_radioSettingsChanged(QVariant)
 {
-    if(_taiSettings) {
+    if(_taiSettings && _isConnected) {
         _workTimer.stop();
         _taiSettings->setRadioSettings(
             _radioModeList[_radioMode->rawValue().toInt()],
@@ -269,7 +267,7 @@ TaisyncManager::_radioSettingsChanged(QVariant)
 void
 TaisyncManager::_videoSettingsChanged(QVariant)
 {
-    if(_taiSettings) {
+    if(_taiSettings && _isConnected) {
         _workTimer.stop();
         _taiSettings->setVideoSettings(
             _videoOutputList[_videoOutput->rawValue().toInt()],
@@ -286,6 +284,12 @@ TaisyncManager::_setEnabled()
 {
     bool enable = _appSettings->enableTaisync()->rawValue().toBool();
     if(enable) {
+        if(!_taiSettings) {
+            _taiSettings = new TaisyncSettings(this);
+            connect(_taiSettings, &TaisyncSettings::updateSettings, this, &TaisyncManager::_updateSettings);
+            connect(_taiSettings, &TaisyncSettings::connected,      this, &TaisyncManager::_connected);
+            connect(_taiSettings, &TaisyncSettings::disconnected,   this, &TaisyncManager::_disconnected);
+        }
 #if defined(__ios__) || defined(__android__)
         if(!_taiTelemetery) {
             _taiTelemetery = new TaisyncTelemetry(this);
@@ -298,7 +302,7 @@ TaisyncManager::_setEnabled()
             _taiTelemetery->start();
         }
 #endif
-        _reqMask = REQ_ALL;
+        _reqMask = static_cast<uint32_t>(REQ_ALL);
         _workTimer.start(1000);
     } else {
         //-- Stop everything
@@ -312,24 +316,28 @@ TaisyncManager::_setEnabled()
 
 //-----------------------------------------------------------------------------
 void
+TaisyncManager::_restoreVideoSettings(Fact* setting)
+{
+    SettingsFact* pFact = dynamic_cast<SettingsFact*>(setting);
+    if(pFact) {
+        pFact->setVisible(qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(VideoSettings::settingsGroup, *setting->metaData()));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 TaisyncManager::_setVideoEnabled()
 {
+    //-- Check both if video is enabled and Taisync support itself is enabled as well.
     bool enable = _appSettings->enableTaisyncVideo()->rawValue().toBool() && _appSettings->enableTaisync()->rawValue().toBool();
     if(enable) {
-        if(!_savedVideoSource.isValid()) {
-            //-- Hide video selection as we will be fixed to Taisync video and set the way we need it.
-            VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
-            //-- First save current state
-            _savedVideoSource = pVSettings->videoSource()->rawValue();
-            _savedVideoUDP    = pVSettings->udpPort()->rawValue();
-            _savedAR          = pVSettings->aspectRatio()->rawValue();
-            _savedVideoState  = pVSettings->visible();
-            //-- Now set it up the way we need it do be
-            pVSettings->setVisible(false);
-            pVSettings->udpPort()->setRawValue(5600);
-            pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
-            pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDP));
-        }
+        //-- Set it up the way we need it do be.
+        VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
+        pVSettings->setVisible(false);
+        pVSettings->udpPort()->setRawValue(5600);
+        //-- TODO: this AR must come from somewhere
+        pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
+        pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDP));
 #if defined(__ios__) || defined(__android__)
         if(!_taiVideo) {
             //-- iOS and Android receive raw h.264 and need a different pipeline
@@ -339,7 +347,7 @@ TaisyncManager::_setVideoEnabled()
         }
 #endif
     } else {
-        //-- Restore video settings
+        //-- Restore video settings.
 #if defined(__ios__) || defined(__android__)
         qgcApp()->toolbox()->videoManager()->setIsTaisync(false);
         if (_taiVideo) {
@@ -348,14 +356,11 @@ TaisyncManager::_setVideoEnabled()
             _taiVideo = nullptr;
         }
 #endif
-        if(!_savedVideoSource.isValid()) {
-            VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
-            pVSettings->videoSource()->setRawValue(_savedVideoSource);
-            pVSettings->udpPort()->setRawValue(_savedVideoUDP);
-            pVSettings->aspectRatio()->setRawValue(_savedAR);
-            pVSettings->setVisible(_savedVideoState);
-            _savedVideoSource.clear();
-        }
+        VideoSettings* pVSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
+        _restoreVideoSettings(pVSettings->videoSource());
+        _restoreVideoSettings(pVSettings->aspectRatio());
+        _restoreVideoSettings(pVSettings->udpPort());
+        pVSettings->setVisible(true);
     }
     _enableVideo = enable;
 }
@@ -420,8 +425,10 @@ TaisyncManager::_checkTaisync()
 {
     if(_enabled) {
         if(!_isConnected) {
-            if(!_taiSettings->isServerRunning()) {
-                _taiSettings->start();
+            if(_taiSettings) {
+                if(!_taiSettings->isServerRunning()) {
+                    _taiSettings->start();
+                }
             }
         } else {
             //qCDebug(TaisyncVerbose) << bin << _reqMask;
