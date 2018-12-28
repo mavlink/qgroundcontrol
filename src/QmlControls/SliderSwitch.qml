@@ -14,7 +14,6 @@ Rectangle {
     color:          qgcPal.windowShade
 
     signal accept   ///< Action confirmed
-    signal reject   ///< Action rejected
 
     property string confirmText                         ///< Text for slider
     property alias  fontPointSize: label.font.pointSize ///< Point size for text
@@ -69,12 +68,6 @@ Rectangle {
         property real _maxXDrag:    _root.width - (_diameter + _border)
         property bool dragActive:   drag.active
         property real _dragOffset:  1
-
-        //Component.onCompleted: console.log(height, ScreenTools.minTouchPixels)
-
-        onPressed: {
-            mouse.x
-        }
 
         onDragActiveChanged: {
             if (!sliderDragArea.drag.active) {
