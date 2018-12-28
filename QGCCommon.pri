@@ -21,6 +21,7 @@ linux {
         message("Linux build")
         CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_GST_TAISYNC_ENABLED
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
@@ -29,6 +30,7 @@ linux {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
+        DEFINES += QGC_GST_TAISYNC_ENABLED
     } else : android-g++ | android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
@@ -50,6 +52,7 @@ linux {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_GST_TAISYNC_ENABLED
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2015 is supported")
     }
@@ -59,6 +62,7 @@ linux {
         CONFIG  += MacBuild
         CONFIG  += x86_64
         CONFIG  -= x86
+        DEFINES += QGC_GST_TAISYNC_ENABLED
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
         } else {
@@ -83,6 +87,7 @@ linux {
     DEFINES += QGC_NO_GOOGLE_MAPS
     DEFINES += NO_SERIAL_LINK
     DEFINES += QGC_DISABLE_UVC
+    DEFINES += QGC_GST_TAISYNC_ENABLED
     QMAKE_IOS_DEPLOYMENT_TARGET = 8.0
     QMAKE_APPLE_TARGETED_DEVICE_FAMILY = 1,2 # Universal
     QMAKE_LFLAGS += -Wl,-no_pie

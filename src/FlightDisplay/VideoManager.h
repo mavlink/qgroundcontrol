@@ -36,6 +36,7 @@ public:
     Q_PROPERTY(bool             hasVideo            READ    hasVideo                                    NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer         READ    isGStreamer                                 NOTIFY isGStreamerChanged)
     Q_PROPERTY(bool             isAutoStream        READ    isAutoStream                                NOTIFY isAutoStreamChanged)
+    Q_PROPERTY(bool             isTaisync           READ    isTaisync       WRITE   setIsTaisync        NOTIFY isTaisyncChanged)
     Q_PROPERTY(QString          videoSourceID       READ    videoSourceID                               NOTIFY videoSourceIDChanged)
     Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen          READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
@@ -45,6 +46,7 @@ public:
     bool        hasVideo            ();
     bool        isGStreamer         ();
     bool        isAutoStream        ();
+    bool        isTaisync           () { return _isTaisync; }
     bool        fullScreen          () { return _fullScreen; }
     QString     videoSourceID       () { return _videoSourceID; }
     QString     autoURL             () { return QString(_streamInfo.uri); }
@@ -59,6 +61,7 @@ public:
 #endif
 
     void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
+    void        setIsTaisync        (bool t) { _isTaisync = t; emit isTaisyncChanged(); }
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
@@ -73,6 +76,7 @@ signals:
     void fullScreenChanged          ();
     void isAutoStreamChanged        ();
     void aspectRatioChanged         ();
+    void isTaisyncChanged           ();
 
 private slots:
     void _videoSourceChanged        ();
@@ -88,11 +92,13 @@ private:
     void _updateSettings            ();
     void _restartVideo              ();
 
-    VideoReceiver*  _videoReceiver;
-    VideoSettings*  _videoSettings;
+private:
+    bool            _isTaisync          = false;
+    VideoReceiver*  _videoReceiver      = nullptr;
+    VideoSettings*  _videoSettings      = nullptr;
     QString         _videoSourceID;
-    bool            _fullScreen;
-    Vehicle*        _activeVehicle;
+    bool            _fullScreen         = false;
+    Vehicle*        _activeVehicle      = nullptr;
     mavlink_video_stream_information_t _streamInfo;
 };
 

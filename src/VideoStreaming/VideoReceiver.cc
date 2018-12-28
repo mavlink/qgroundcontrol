@@ -18,7 +18,9 @@
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
-
+#ifdef QGC_GST_TAISYNC_ENABLED
+#include "TaisyncHandler.h"
+#endif
 #include <QDebug>
 #include <QUrl>
 #include <QDir>
@@ -218,6 +220,10 @@ VideoReceiver::_timeout()
 void
 VideoReceiver::start()
 {
+    qCDebug(VideoReceiverLog) << "start():" << _uri;
+    if(qgcApp()->runningUnitTests()) {
+        return;
+    }
     if(!_videoSettings->streamEnabled()->rawValue().toBool() ||
        !_videoSettings->streamConfigured()) {
         qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
@@ -227,7 +233,17 @@ VideoReceiver::start()
     _stop = false;
     qCDebug(VideoReceiverLog) << "start()";
 
-    if (_uri.isEmpty()) {
+#if  defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
+    //-- Taisync on iOS or Android sends a raw h.264 stream
+    bool isTaisyncUSB = qgcApp()->toolbox()->videoManager()->isTaisync();
+#else
+    bool isTaisyncUSB = false;
+#endif
+    bool isUdp  = _uri.contains("udp://")  && !isTaisyncUSB;
+    bool isRtsp = _uri.contains("rtsp://") && !isTaisyncUSB;
+    bool isTCP  = _uri.contains("tcp://")  && !isTaisyncUSB;
+
+    if (!isTaisyncUSB && _uri.isEmpty()) {
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
         return;
     }
@@ -242,17 +258,13 @@ VideoReceiver::start()
 
     _starting = true;
 
-    bool isUdp  = _uri.contains("udp://");
-    bool isRtsp = _uri.contains("rtsp://");
-    bool isTCP  = _uri.contains("tcp://");
-
     //-- For RTSP and TCP, check to see if server is there first
     if(!_serverPresent && (isRtsp || isTCP)) {
         _timer.start(100);
         return;
     }
 
-    bool running = false;
+    bool running    = false;
     bool pipelineUp = false;
 
     GstElement*     dataSource  = nullptr;
@@ -269,7 +281,7 @@ VideoReceiver::start()
             break;
         }
 
-        if(isUdp) {
+        if(isUdp || isTaisyncUSB) {
             dataSource = gst_element_factory_make("udpsrc", "udp-source");
         } else if(isTCP) {
             dataSource = gst_element_factory_make("tcpclientsrc", "tcpclient-source");
@@ -287,12 +299,18 @@ VideoReceiver::start()
                 qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
                 break;
             }
-            g_object_set(G_OBJECT(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
+            g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
+#if  defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
+        } else if(isTaisyncUSB) {
+            QString uri = QString("0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
+            qCDebug(VideoReceiverLog) << "Taisync URI:" << uri;
+            g_object_set(static_cast<gpointer>(dataSource), "port", TAISYNC_VIDEO_UDP_PORT, nullptr);
+#endif
         } else if(isTCP) {
             QUrl url(_uri);
-            g_object_set(G_OBJECT(dataSource), "host", qPrintable(url.host()), "port", url.port(), nullptr );
+            g_object_set(static_cast<gpointer>(dataSource), "host", qPrintable(url.host()), "port", url.port(), nullptr );
         } else {
-            g_object_set(G_OBJECT(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
+            g_object_set(static_cast<gpointer>(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
         }
 
         // Currently, we expect H264 when using anything except for TCP.  Long term we may want this to be settable
@@ -302,10 +320,12 @@ VideoReceiver::start()
                 break;
             }
         } else {
-            if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == nullptr) {
+            if(!isTaisyncUSB) {
+                if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == nullptr) {
                 qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
                 break;
             }
+        }
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == nullptr) {
@@ -335,13 +355,23 @@ VideoReceiver::start()
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+        if(isTaisyncUSB) {
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+        } else {
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+        }
         pipelineUp = true;
 
         if(isUdp) {
             // Link the pipeline in front of the tee
             if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
                 qCritical() << "Unable to link UDP elements.";
+                break;
+            }
+        } else if(isTaisyncUSB) {
+            // Link the pipeline in front of the tee
+            if(!gst_element_link_many(dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+                qCritical() << "Unable to link Taisync USB elements.";
                 break;
             }
         } else if (isTCP) {
@@ -439,6 +469,9 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
+    if(!qgcApp()->runningUnitTests()) {
+        return;
+    }
 #if defined(QGC_GST_STREAMING)
     _stop = true;
     qCDebug(VideoReceiverLog) << "stop()";
@@ -666,7 +699,7 @@ VideoReceiver::startRecording(const QString &videoFile)
     }
     emit videoFileChanged();
 
-    g_object_set(G_OBJECT(_sink->filesink), "location", qPrintable(_videoFile), nullptr);
+    g_object_set(static_cast<gpointer>(_sink->filesink), "location", qPrintable(_videoFile), nullptr);
     qCDebug(VideoReceiverLog) << "New video file:" << _videoFile;
 
     gst_object_ref(_sink->queue);
