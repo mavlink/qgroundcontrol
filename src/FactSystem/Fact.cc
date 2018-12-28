@@ -733,11 +733,13 @@ FactValueSliderListModel* Fact::valueSliderModel(void)
 
 void Fact::_checkForRebootMessaging(void)
 {
-    if (!qgcApp()->runningUnitTests()) {
-        if (vehicleRebootRequired()) {
-            qgcApp()->showMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
-        } else if (qgcRebootRequired()) {
-            qgcApp()->showMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
+    if(qgcApp()) {
+        if (!qgcApp()->runningUnitTests()) {
+            if (vehicleRebootRequired()) {
+                qgcApp()->showMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
+            } else if (qgcRebootRequired()) {
+                qgcApp()->showMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
+            }
         }
     }
 }
