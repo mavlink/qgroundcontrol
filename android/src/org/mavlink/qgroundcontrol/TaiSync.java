@@ -3,6 +3,8 @@ package org.mavlink.qgroundcontrol;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -10,6 +12,7 @@ import java.io.IOException;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Socket;
 import java.net.InetAddress;
 
 import android.os.ParcelFileDescriptor;
@@ -17,15 +20,24 @@ import android.util.Log;
 
 public class TaiSync
 {
-    private static final int PROTOCOL_VERSION = 0x1;
-    private static final int PROTOCOL_CHANNEL = 0x02;
-    private static final int PROTOCOL_DATA = 0x03;
+    private static final int HEADER_SIZE = 0x1C;
+
+    private static final byte PROTOCOL_REQUEST_CONNECTION = 0x00;
+    private static final byte PROTOCOL_VERSION = 0x01;
+    private static final byte PROTOCOL_CHANNEL = 0x02;
+    private static final byte PROTOCOL_DATA = 0x03;
 
     private static final int TELEM_PORT = 14550;
     private static final int VIDEO_PORT = 5000;
+    private static final int TAISYNC_VIDEO_PORT = 8000;
+    private static final int TAISYNC_SETTINGS_PORT = 8200;
+    private static final int TAISYNC_TELEMETRY_PORT = 8400;
 
     private boolean running = false;
-    private DatagramSocket socket = null;
+    private DatagramSocket udpSocket = null;
+    private Socket tcpSocket = null;
+    private InputStream tcpInStream = null;
+    private OutputStream tcpOutStream = null;
     private ParcelFileDescriptor mParcelFileDescriptor;
     private FileInputStream mFileInputStream;
     private FileOutputStream mFileOutputStream;
@@ -40,8 +52,7 @@ public class TaiSync
 
     public boolean isRunning()
     {
-        synchronized (this)
-        {
+        synchronized (this) {
             return running;
         }
     }
@@ -50,8 +61,7 @@ public class TaiSync
     {
 //        Log.i("QGC_TaiSync", "Open");
 
-        synchronized (this)
-        {
+        synchronized (this) {
             if (running) {
                 return;
             }
@@ -67,19 +77,17 @@ public class TaiSync
         mFileInputStream = new FileInputStream(fileDescriptor);
         mFileOutputStream = new FileOutputStream(fileDescriptor);
 
-        socket = new DatagramSocket();
+        udpSocket = new DatagramSocket();
         final InetAddress address = InetAddress.getByName("localhost");
+        tcpSocket = new Socket(address, TAISYNC_SETTINGS_PORT);
+        tcpInStream = tcpSocket.getInputStream();
+        tcpOutStream = tcpSocket.getOutputStream();
 
         // Request connection packet
-        byte[] conn = { 0x00, 0x00, 0x00, 0x00,   // uint32 - protocol
-                        0x00, 0x00, 0x00, 0x00,   // uint32 - dport
-                        0x00, 0x00, 0x00, 0x1C,   // uint32 - length
-                        0x00, 0x00, 0x00, 0x00,   // uint32 - magic
-                        0x00, 0x00, 0x00, 0x00,   // uint32 - version major
-                        0x00, 0x00, 0x00, 0x00,   // uint32 - version minor
-                        0x00, 0x00, 0x00, 0x00 }; // uint32 - padding
-        mFileOutputStream.write(conn);
+        byte[] msg = constructTaiSyncMessage(PROTOCOL_REQUEST_CONNECTION, 0, null, 0);
+        mFileOutputStream.write(msg);
 
+        // Read multiplexed data stream coming from TaiSync accessory
         mThreadPool.execute(new Runnable() {
             @Override
             public void run()
@@ -88,8 +96,7 @@ public class TaiSync
 
                 try {
                     while (bytesRead >= 0) {
-                        synchronized (this)
-                        {
+                        synchronized (this) {
                             if (!running) {
                                 break;
                             }
@@ -103,54 +110,34 @@ public class TaiSync
                             {
                                 vMaj = mBytes[19];
                                 Log.i("QGC_TaiSync", "Got protocol version message vMaj = " + mBytes[19]);
-                                byte[] data = { 0x00, 0x00, 0x00, 0x01,   // uint32 - protocol
-                                                0x00, 0x00, 0x00, 0x00,   // uint32 - dport
-                                                0x00, 0x00, 0x00, 0x1C,   // uint32 - length
-                                                0x00, 0x00, 0x00, 0x00,   // uint32 - magic
-                                                0x00, 0x00, 0x00, vMaj,   // uint32 - version major
-                                                0x00, 0x00, 0x00, 0x00,   // uint32 - version minor
-                                                0x00, 0x00, 0x00, 0x00 }; // uint32 - padding
-                                mFileOutputStream.write(data);
+                                byte[] msg = constructTaiSyncMessage(PROTOCOL_VERSION, 0, null, 0);
+                                mFileOutputStream.write(msg);
                             }
                             else if (mBytes[3] == PROTOCOL_CHANNEL) {
                                 int dPort = ((mBytes[4] & 0xff)<< 24) | ((mBytes[5]&0xff) << 16) | ((mBytes[6]&0xff) << 8) | (mBytes[7] &0xff);
                                 int dLength = ((mBytes[8] & 0xff)<< 24) | ((mBytes[9]&0xff) << 16) | ((mBytes[10]&0xff) << 8) | (mBytes[11] &0xff);
                                 Log.i("QGC_TaiSync", "Read 2 port = " + dPort + " length = " + dLength);
-                                byte[] data = { 0x00, 0x00, 0x00, 0x02,       // uint32 - protocol
-                                                0x00, 0x00, mBytes[6], mBytes[7], // uint32 - dport
-                                                0x00, 0x00, 0x00, 0x1C,       // uint32 - length
-                                                0x00, 0x00, 0x00, 0x00,       // uint32 - magic
-                                                0x00, 0x00, 0x00, vMaj,       // uint32 - version major
-                                                0x00, 0x00, 0x00, 0x00,       // uint32 - version minor
-                                                0x00, 0x00, 0x00, 0x00 };     // uint32 - padding
-                                 mFileOutputStream.write(data);
+                                byte[] msg = constructTaiSyncMessage(PROTOCOL_CHANNEL, dPort, null, 0);
+                                mFileOutputStream.write(msg);
                             }
                             else if (mBytes[3] == PROTOCOL_DATA) {
                                 int dPort = ((mBytes[4] & 0xff)<< 24) | ((mBytes[5]&0xff) << 16) | ((mBytes[6]&0xff) << 8) | (mBytes[7] &0xff);
                                 int dLength = ((mBytes[8] & 0xff)<< 24) | ((mBytes[9]&0xff) << 16) | ((mBytes[10]&0xff) << 8) | (mBytes[11] &0xff);
 
-                                int payloadOffset = 28;
+                                int payloadOffset = HEADER_SIZE;
                                 int payloadLength = bytesRead - payloadOffset;
 
-                                if (dPort == 8000) { // Video
-                                    byte[] sBytes = new byte[payloadLength];
-                                    System.arraycopy(mBytes, payloadOffset, sBytes, 0, payloadLength);
-                                    DatagramPacket packet = new DatagramPacket(sBytes, sBytes.length, address, VIDEO_PORT);
-                                    socket.send(packet);
+                                byte[] sBytes = new byte[payloadLength];
+                                System.arraycopy(mBytes, payloadOffset, sBytes, 0, payloadLength);
 
-                                } else if (dPort == 8200) { // Command
-/*
-                                    StringBuilder sb = new StringBuilder();
-                                    for (int i = 0; i < dLength; i++) {
-                                        sb.append(String.format("%02X ", mBytes[i]));
-                                    }
-                                    Log.i("QGC_TaiSync", "Read 3 port = " + dPort + " length = " + dLength + " - " + sb.toString());
-*/
-                                } else if (dPort == 8400) { // Telemetry
-                                    byte[] sBytes = new byte[payloadLength];
-                                    System.arraycopy(mBytes, payloadOffset, sBytes, 0, payloadLength);
+                                if (dPort == TAISYNC_VIDEO_PORT) {
+                                    DatagramPacket packet = new DatagramPacket(sBytes, sBytes.length, address, VIDEO_PORT);
+                                    udpSocket.send(packet);
+                                } else if (dPort == TAISYNC_SETTINGS_PORT) {
+                                    tcpOutStream.write(sBytes);
+                                } else if (dPort == TAISYNC_TELEMETRY_PORT) {
                                     DatagramPacket packet = new DatagramPacket(sBytes, sBytes.length, address, TELEM_PORT);
-                                    socket.send(packet);
+                                    udpSocket.send(packet);
                                 }
                             }
                         }
@@ -164,6 +151,7 @@ public class TaiSync
             }
         });
 
+        // Read command & control packets to be sent to telemetry port
         mThreadPool.execute(new Runnable() {
             @Override
             public void run()
@@ -172,40 +160,46 @@ public class TaiSync
 
                 try {
                     while (true) {
-                        synchronized (this)
-                        {
+                        synchronized (this) {
                             if (!running) {
                                 break;
                             }
                         }
 
                         DatagramPacket packet = new DatagramPacket(inbuf, inbuf.length);
-                        socket.receive(packet);
+                        udpSocket.receive(packet);
+                        byte[] msg = constructTaiSyncMessage(PROTOCOL_DATA, TAISYNC_TELEMETRY_PORT, packet.getData(), packet.getLength());
+                        mFileOutputStream.write(msg);
+                    }
+                } catch (IOException e) {
+                    Log.e("QGC_TaiSync", "Exception: " + e);
+                    e.printStackTrace();
+                } finally {
+                    close();
+                }
+            }
+        });
 
-                        int dataPort = 8400;
-                        byte portMSB = (byte)((dataPort >> 8) & 0xFF);
-                        byte portLSB = (byte)(dataPort & 0xFF);
+        // Read incoming requests for settings socket
+        mThreadPool.execute(new Runnable() {
+            @Override
+            public void run()
+            {
+                byte[] inbuf = new byte[1024];
 
-                        byte[] lA = new byte[4];
-                        int len = 28 + packet.getLength();
-                        byte[] buffer = new byte[len];
-
-                        for (int i = 3; i >= 0; i--) {
-                            lA[i] = (byte)(len & 0xFF);
-                            len >>= 8;
+                try {
+                    while (true) {
+                        synchronized (this) {
+                            if (!running) {
+                                break;
+                            }
                         }
 
-                        byte[] header = { 0x00, 0x00, 0x00, PROTOCOL_DATA, // uint32 - protocol
-                                        0x00, 0x00, portMSB, portLSB,      // uint32 - dport
-                                        lA[0], lA[1], lA[2], lA[3],        // uint32 - length
-                                        0x00, 0x00, 0x00, 0x00,            // uint32 - magic
-                                        0x00, 0x00, 0x00, vMaj,            // uint32 - version major
-                                        0x00, 0x00, 0x00, 0x00,            // uint32 - version minor
-                                        0x00, 0x00, 0x00, 0x00 };          // uint32 - padding
-
-                        System.arraycopy(header, 0, buffer, 0, header.length);
-                        System.arraycopy(packet.getData(), 0, buffer, header.length, packet.getLength());
-                        mFileOutputStream.write(buffer);
+                        int bytesRead = tcpInStream.read(inbuf, 0, inbuf.length);
+                        if (bytesRead > 0) {
+                            byte[] msg = constructTaiSyncMessage(PROTOCOL_DATA, TAISYNC_SETTINGS_PORT, inbuf, bytesRead);
+                            mFileOutputStream.write(msg);
+                        }
                     }
                 } catch (IOException e) {
                     Log.e("QGC_TaiSync", "Exception: " + e);
@@ -217,24 +211,64 @@ public class TaiSync
         });
     }
 
+    private byte[] constructTaiSyncMessage(byte protocol, int dataPort, byte[] data, int dataLen)
+    {
+        byte portMSB = (byte)((dataPort >> 8) & 0xFF);
+        byte portLSB = (byte)(dataPort & 0xFF);
+
+        byte[] lA = new byte[4];
+        int len = HEADER_SIZE + dataLen;
+        byte[] buffer = new byte[len];
+
+        for (int i = 3; i >= 0; i--) {
+            lA[i] = (byte)(len & 0xFF);
+            len >>= 8;
+        }
+
+        byte[] header = { 0x00, 0x00, 0x00, protocol,   // uint32 - protocol
+                          0x00, 0x00, portMSB, portLSB, // uint32 - dport
+                          lA[0], lA[1], lA[2], lA[3],   // uint32 - length
+                          0x00, 0x00, 0x00, 0x00,       // uint32 - magic
+                          0x00, 0x00, 0x00, vMaj,       // uint32 - version major
+                          0x00, 0x00, 0x00, 0x00,       // uint32 - version minor
+                          0x00, 0x00, 0x00, 0x00 };     // uint32 - padding
+
+        System.arraycopy(header, 0, buffer, 0, header.length);
+        if (data != null && dataLen > 0) {
+            System.arraycopy(data, 0, buffer, header.length, dataLen);
+        }
+
+        return buffer;
+    }
+
     public void close()
     {
 //        Log.i("QGC_TaiSync", "Close");
-        synchronized (this)
-        {
+        synchronized (this) {
             running = false;
         }
         try {
-            if (socket != null) {
-                socket.close();
-                socket = null;
-            }
-            if (mParcelFileDescriptor != null) {
-                mParcelFileDescriptor.close();
-                mParcelFileDescriptor = null;
+            if (udpSocket != null) {
+                udpSocket.close();
             }
         } catch (Exception e) {
         }
-        socket = null;
+        try {
+            if (tcpSocket != null) {
+                tcpSocket.close();
+            }
+        } catch (Exception e) {
+        }
+        try {
+            if (mParcelFileDescriptor != null) {
+                mParcelFileDescriptor.close();
+            }
+        } catch (Exception e) {
+        }
+        udpSocket = null;
+        tcpSocket = null;
+        tcpInStream = null;
+        tcpOutStream = null;
+        mParcelFileDescriptor = null;
     }
 }
