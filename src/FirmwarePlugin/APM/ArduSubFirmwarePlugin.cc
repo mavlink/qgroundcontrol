@@ -127,6 +127,9 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
 
     _factRenameMap[QStringLiteral("altitudeRelative")] = QStringLiteral("Depth");
     _factRenameMap[QStringLiteral("flightTime")] = QStringLiteral("Dive Time");
+    _factRenameMap[QStringLiteral("altitudeAMSL")] = QStringLiteral("");
+    _factRenameMap[QStringLiteral("hobbs")] = QStringLiteral("");
+    _factRenameMap[QStringLiteral("airSpeed")] = QStringLiteral("");
 }
 
 QList<MAV_CMD> ArduSubFirmwarePlugin::supportedMissionCommands(void)
