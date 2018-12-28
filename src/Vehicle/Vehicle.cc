@@ -2962,6 +2962,11 @@ bool Vehicle::takeoffVehicleSupported() const
     return _firmwarePlugin->isCapable(this, FirmwarePlugin::TakeoffVehicleCapability);
 }
 
+QString Vehicle::gotoFlightMode() const
+{
+    return _firmwarePlugin->gotoFlightMode();
+}
+
 void Vehicle::guidedModeRTL(void)
 {
     if (!guidedModeSupported()) {
