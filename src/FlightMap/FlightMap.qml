@@ -37,7 +37,7 @@ Map {
     property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
     property var    gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
     property bool   userPanned:                     false   ///< true: the user has manually panned the map
-    property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
+    property bool   allowGCSLocationCenter:         true   ///< true: map will center/zoom to gcs location one time
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
     property bool   firstGCSPositionReceived:       false   ///< true: first gcs position update was responded to
     property bool   firstVehiclePositionReceived:   false   ///< true: first vehicle position update was responded to
@@ -84,10 +84,11 @@ Map {
 
     // Center map to gcs location
     onGcsPositionChanged: {
-        if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
-            firstGCSPositionReceived = true
+ //       if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
+        if (allowGCSLocationCenter) {
+            //firstGCSPositionReceived = true
             center = gcsPosition
-            zoomLevel = QGroundControl.flightMapInitialZoom
+            //zoomLevel = QGroundControl.flightMapInitialZoom
         }
     }
 
@@ -135,8 +136,8 @@ Map {
         coordinate:     gcsPosition
 
         sourceItem: Image {
-            id:             mapItemImage
-            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull" : "/res/QGCLogoArrow"
+            //source:         "/res/QGCLogoFull"
+            source:         "/res/PlanckTag"
             mipmap:         true
             antialiasing:   true
             fillMode:       Image.PreserveAspectFit
