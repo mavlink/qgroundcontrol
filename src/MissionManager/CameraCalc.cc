@@ -127,8 +127,8 @@ void CameraCalc::_cameraNameChanged(void)
             // These values are unknown for these types
             fixedOrientation()->setRawValue(false);
             minTriggerInterval()->setRawValue(0);
-            if (isManualCamera()) {
-                valueSetIsDistance()->setRawValue(false);
+            if (isManualCamera() && !valueSetIsDistance()->rawValue().toBool()) {
+                valueSetIsDistance()->setRawValue(true);
             }
         } else {
             qWarning() << "Internal Error: Not known camera, but now manual or custom either";
