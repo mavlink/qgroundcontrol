@@ -37,7 +37,7 @@ QGCView {
     property Fact _userBrandImageIndoor:        QGroundControl.settingsManager.brandImageSettings.userBrandImageIndoor
     property Fact _userBrandImageOutdoor:       QGroundControl.settingsManager.brandImageSettings.userBrandImageOutdoor
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
-    property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 25
+    property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 28
     property real _valueFieldWidth:             ScreenTools.defaultFontPixelWidth * 10
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
@@ -51,6 +51,7 @@ QGCView {
     property bool   _isUDP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udpVideoSource
     property bool   _isRTSP:                    _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
     property bool   _isTCP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
+    property bool   _isMPEGTS:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
 
     readonly property real _internalWidthRatio: 0.8
 
@@ -707,7 +708,6 @@ QGCView {
                             Layout.fillWidth:           false
                             Layout.fillHeight:          false
                             columns:                    2
-
                             QGCLabel {
                                 text:                   qsTr("Video Source")
                                 visible:                QGroundControl.settingsManager.videoSettings.videoSource.visible
@@ -722,12 +722,12 @@ QGCView {
 
                             QGCLabel {
                                 text:                   qsTr("UDP Port")
-                                visible:                _isUDP && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP || _isMPEGTS)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.udpPort
-                                visible:                _isUDP && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP || _isMPEGTS) && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
 
                             QGCLabel {
