@@ -29,6 +29,7 @@
 #include "QGCQGeoCoordinate.h"
 #include "PlanMasterController.h"
 #include "KML.h"
+#include "QGCCorePlugin.h"
 
 #ifndef __mobile__
 #include "MainWindow.h"
@@ -56,22 +57,22 @@ const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 const int   MissionController::_missionFileVersion =            2;
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
-    : PlanElementController         (masterController, parent)
-    , _missionManager               (_managerVehicle->missionManager())
-    , _missionItemCount             (0)
-    , _visualItems                  (nullptr)
-    , _settingsItem                 (nullptr)
-    , _firstItemsFromVehicle        (false)
-    , _itemsRequested               (false)
-    , _inRecalcSequence             (false)
-    , _surveyMissionItemName        (tr("Survey"))
-    , _fwLandingMissionItemName     (tr("Fixed Wing Landing"))
-    , _structureScanMissionItemName (tr("Structure Scan"))
-    , _corridorScanMissionItemName  (tr("Corridor Scan"))
-    , _appSettings                  (qgcApp()->toolbox()->settingsManager()->appSettings())
-    , _progressPct                  (0)
-    , _currentPlanViewIndex         (-1)
-    , _currentPlanViewItem          (nullptr)
+    : PlanElementController     (masterController, parent)
+    , patternFWLandingName      (tr("Fixed Wing Landing"))
+    , patternStructureScanName  (tr("Structure Scan"))
+    , patternCorridorScanName   (tr("Corridor Scan"))
+    , _missionManager           (_managerVehicle->missionManager())
+    , _missionItemCount         (0)
+    , _visualItems              (nullptr)
+    , _settingsItem             (nullptr)
+    , _firstItemsFromVehicle    (false)
+    , _itemsRequested           (false)
+    , _inRecalcSequence         (false)
+    , _surveyMissionItemName    (tr("Survey"))
+    , _appSettings              (qgcApp()->toolbox()->settingsManager()->appSettings())
+    , _progressPct              (0)
+    , _currentPlanViewIndex     (-1)
+    , _currentPlanViewItem      (nullptr)
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
@@ -414,11 +415,11 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     if (itemName == _surveyMissionItemName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
         newItem->setCoordinate(mapCenterCoordinate);
-    } else if (itemName == _fwLandingMissionItemName) {
+    } else if (itemName == patternFWLandingName) {
         newItem = new FixedWingLandingComplexItem(_controllerVehicle, _flyView, _visualItems /* parent */);
-    } else if (itemName == _structureScanMissionItemName) {
+    } else if (itemName == patternStructureScanName) {
         newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
-    } else if (itemName == _corridorScanMissionItemName) {
+    } else if (itemName == patternCorridorScanName) {
         newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
@@ -434,9 +435,9 @@ int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QS
 
     if (itemName == _surveyMissionItemName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, file, _visualItems);
-    } else if (itemName == _structureScanMissionItemName) {
+    } else if (itemName == patternStructureScanName) {
         newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
-    } else if (itemName == _corridorScanMissionItemName) {
+    } else if (itemName == patternCorridorScanName) {
         newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
@@ -1951,15 +1952,15 @@ QStringList MissionController::complexMissionItemNames(void) const
     QStringList complexItems;
 
     complexItems.append(_surveyMissionItemName);
-    complexItems.append(_corridorScanMissionItemName);
+    complexItems.append(patternCorridorScanName);
     if (_controllerVehicle->fixedWing()) {
-        complexItems.append(_fwLandingMissionItemName);
+        complexItems.append(patternFWLandingName);
     }
     if (_controllerVehicle->multiRotor() || _controllerVehicle->vtol()) {
-        complexItems.append(_structureScanMissionItemName);
+        complexItems.append(patternStructureScanName);
     }
 
-    return complexItems;
+    return qgcApp()->toolbox()->corePlugin()->complexMissionItemNames(_controllerVehicle, complexItems);
 }
 
 void MissionController::resumeMission(int resumeIndex)

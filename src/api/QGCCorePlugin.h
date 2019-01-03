@@ -139,6 +139,11 @@ public:
     /// Custom builds must override to provide their own location.
     virtual QString stableDownloadLocation(void) const { return QString("qgroundcontrol.com"); }
 
+    /// Returns the complex mission items to display in the Plan UI
+    ///     @param complexMissionItemNames Default set of complex items
+    /// @return Complex items to be made available to user
+    virtual QStringList complexMissionItemNames(Vehicle* vehicle, const QStringList& complexMissionItemNames) { Q_UNUSED(vehicle); return complexMissionItemNames; }
+
     bool showTouchAreas(void) const { return _showTouchAreas; }
     bool showAdvancedUI(void) const { return _showAdvancedUI; }
     void setShowTouchAreas(bool show);
