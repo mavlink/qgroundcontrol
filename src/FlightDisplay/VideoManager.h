@@ -61,7 +61,7 @@ public:
 #endif
 
     void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
-    void        setIsTaisync        (bool t) { _isTaisync = t; emit isTaisyncChanged(); }
+    void        setIsTaisync        (bool t) { _isTaisync = t;  emit isTaisyncChanged(); }
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
