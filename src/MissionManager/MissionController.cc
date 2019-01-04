@@ -56,11 +56,12 @@ const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 
 const int   MissionController::_missionFileVersion =            2;
 
+const QString MissionController::patternFWLandingName      (tr("Fixed Wing Landing"));
+const QString MissionController::patternStructureScanName  (tr("Structure Scan"));
+const QString MissionController::patternCorridorScanName   (tr("Corridor Scan"));
+
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController     (masterController, parent)
-    , patternFWLandingName      (tr("Fixed Wing Landing"))
-    , patternStructureScanName  (tr("Structure Scan"))
-    , patternCorridorScanName   (tr("Corridor Scan"))
     , _missionManager           (_managerVehicle->missionManager())
     , _missionItemCount         (0)
     , _visualItems              (nullptr)
