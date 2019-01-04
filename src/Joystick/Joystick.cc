@@ -535,6 +535,7 @@ void Joystick::run(void)
 
             qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
 
+            // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub.
             emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
 
