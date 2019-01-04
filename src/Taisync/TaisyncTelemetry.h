@@ -13,15 +13,13 @@
 #include <QUdpSocket>
 #include <QTimer>
 
-Q_DECLARE_LOGGING_CATEGORY(TaisyncTelemetryLog)
-
 class TaisyncTelemetry : public TaisyncHandler
 {
     Q_OBJECT
 public:
 
     explicit TaisyncTelemetry           (QObject* parent = nullptr);
-    void    close                       () override;
+    bool    close                       () override;
     bool    start                       () override;
     void    writeBytes                  (QByteArray bytes);
 

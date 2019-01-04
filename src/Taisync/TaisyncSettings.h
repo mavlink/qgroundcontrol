@@ -21,6 +21,13 @@ public:
     bool    requestDevInfo              ();
     bool    requestFreqScan             ();
     bool    requestVideoSettings        ();
+    bool    requestRadioSettings        ();
+    bool    requestIPSettings           ();
+    bool    requestRTSPURISettings      ();
+    bool    setRadioSettings            (const QString& mode, const QString& channel);
+    bool    setVideoSettings            (const QString& output, const QString& mode, const QString& rate);
+    bool    setRTSPSettings             (const QString& uri, const QString& account, const QString& password);
+    bool    setIPSettings               (const QString& localIP, const QString& remoteIP, const QString& netMask);
 
 signals:
     void    updateSettings              (QByteArray jSonData);
@@ -28,4 +35,7 @@ signals:
 protected slots:
     void    _readBytes                  () override;
 
+private:
+    bool    _request                    (const QString& request);
+    bool    _post                       (const QString& post, const QString& postPayload);
 };

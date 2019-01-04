@@ -138,6 +138,7 @@ public:
     void setCookedValue     (const QVariant& value);
     void setEnumIndex       (int index);
     void setEnumStringValue (const QString& value);
+    int  valueIndex         (const QString& value);
 
     // The following methods allow you to defer sending of the valueChanged signals in order to implement
     // rate limited signalling for ui performance. Used by FactGroup for example.

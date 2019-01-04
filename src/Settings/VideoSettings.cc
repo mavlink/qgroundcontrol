@@ -26,6 +26,7 @@ const char* VideoSettings::videoSourceAuto      = "Automatic Video Stream";
 const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
 const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
 const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
+const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -41,6 +42,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
     videoSourceList.append(videoSourceUDP);
 #endif
     videoSourceList.append(videoSourceTCP);
+    videoSourceList.append(videoSourceMPEGTS);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -150,6 +152,11 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceTCP) {
         qCDebug(VideoManagerLog) << "Testing configuration for TCP Stream:" << tcpUrl()->rawValue().toString();
         return !tcpUrl()->rawValue().toString().isEmpty();
+    }
+    //-- If MPEG-TS, check if port is set
+    if(vSource == videoSourceMPEGTS) {
+        qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
+        return udpPort()->rawValue().toInt() != 0;
     }
     //-- If Auto, check for received URL
     if(vSource == videoSourceAuto) {

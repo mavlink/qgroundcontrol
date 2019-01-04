@@ -12,9 +12,6 @@
 #include "QGCApplication.h"
 #include "VideoManager.h"
 
-
-QGC_LOGGING_CATEGORY(TaisyncTelemetryLog, "TaisyncTelemetryLog")
-
 //-----------------------------------------------------------------------------
 TaisyncTelemetry::TaisyncTelemetry(QObject* parent)
     : TaisyncHandler(parent)
@@ -22,17 +19,20 @@ TaisyncTelemetry::TaisyncTelemetry(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-void
+bool
 TaisyncTelemetry::close()
 {
-    TaisyncHandler::close();
-    qCDebug(TaisyncTelemetryLog) << "Close Taisync Telemetry";
+    if(TaisyncHandler::close()) {
+        qCDebug(TaisyncLog) << "Close Taisync Telemetry";
+        return true;
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
 bool TaisyncTelemetry::start()
 {
-    qCDebug(TaisyncTelemetryLog) << "Start Taisync Telemetry";
+    qCDebug(TaisyncLog) << "Start Taisync Telemetry";
     return _start(TAISYNC_TELEM_PORT);
 }
 
@@ -50,7 +50,7 @@ void
 TaisyncTelemetry::_newConnection()
 {
     TaisyncHandler::_newConnection();
-    qCDebug(TaisyncTelemetryLog) << "New Taisync Temeletry Connection";
+    qCDebug(TaisyncLog) << "New Taisync Temeletry Connection";
 }
 
 //-----------------------------------------------------------------------------

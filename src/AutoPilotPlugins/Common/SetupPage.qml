@@ -35,10 +35,12 @@ QGCView {
     property alias  advanced:           advancedCheckBox.checked
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property bool   _vehicleIsRover:        _activeVehicle ? _activeVehicle.rover : false
     property bool   _vehicleArmed:          _activeVehicle ? _activeVehicle.armed : false
     property bool   _vehicleFlying:         _activeVehicle ? _activeVehicle.flying : false
     property bool   _disableDueToArmed:     vehicleComponent ? (!vehicleComponent.allowSetupWhileArmed && _vehicleArmed) : false
-    property bool   _disableDueToFlying:    vehicleComponent ? (!vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false
+    // FIXME: The _vehicleIsRover checkl is a hack to work around https://github.com/PX4/Firmware/issues/10969
+    property bool   _disableDueToFlying:    vehicleComponent ? (!_vehicleIsRover && !vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false
     property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
 
     property real _margins:             ScreenTools.defaultFontPixelHeight * 0.5

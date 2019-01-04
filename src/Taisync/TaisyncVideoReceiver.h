@@ -12,8 +12,6 @@
 #include "TaisyncHandler.h"
 #include <QUdpSocket>
 
-Q_DECLARE_LOGGING_CATEGORY(TaisyncVideoReceiverLog)
-
 class TaisyncVideoReceiver : public TaisyncHandler
 {
     Q_OBJECT
@@ -21,7 +19,7 @@ public:
 
     explicit TaisyncVideoReceiver       (QObject* parent = nullptr);
     bool start                          () override;
-    void close                          () override;
+    bool close                          () override;
 
 private slots:
     void    _readBytes                  () override;

@@ -22,7 +22,6 @@
 #define TAISYNC_TELEM_TARGET_PORT   14550
 #else
 #define TAISYNC_SETTINGS_PORT   80
-#define TAISYNC_SETTINGS_TARGET "192.168.1.99"
 #endif
 
 Q_DECLARE_LOGGING_CATEGORY(TaisyncLog)
@@ -36,7 +35,8 @@ public:
     explicit TaisyncHandler             (QObject* parent = nullptr);
     ~TaisyncHandler                     ();
     virtual bool start                  () = 0;
-    virtual void close                  ();
+    virtual bool close                  ();
+    virtual bool isServerRunning        () { return (_serverMode && _tcpServer); }
 
 protected:
     virtual bool    _start              (uint16_t port, QHostAddress addr = QHostAddress::AnyIPv4);
@@ -48,6 +48,7 @@ protected slots:
 
 signals:
     void connected                      ();
+    void disconnected                   ();
 
 protected:
     bool            _serverMode = true;
