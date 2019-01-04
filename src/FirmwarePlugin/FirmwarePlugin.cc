@@ -115,13 +115,6 @@ bool FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_mode
     return false;
 }
 
-int FirmwarePlugin::manualControlReservedButtonCount(void)
-{
-    // We don't know whether the firmware is going to used any of these buttons.
-    // So reserve them all.
-    return -1;
-}
-
 int FirmwarePlugin::defaultJoystickTXMode(void)
 {
     return 2;
