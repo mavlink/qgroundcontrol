@@ -520,12 +520,9 @@ void Joystick::run(void)
                         // Button was up last time through, but is now down which indicates a button press
                         qCDebug(JoystickLog) << "button triggered" << buttonIndex;
 
-                        if (buttonIndex >= _totalButtonCount) {
-                            // Button is above firmware reserved set
-                            QString buttonAction =_rgButtonActions[buttonIndex];
-                            if (!buttonAction.isEmpty()) {
-                                _buttonAction(buttonAction);
-                            }
+                        QString buttonAction =_rgButtonActions[buttonIndex];
+                        if (!buttonAction.isEmpty()) {
+                            _buttonAction(buttonAction);
                         }
                     }
 
