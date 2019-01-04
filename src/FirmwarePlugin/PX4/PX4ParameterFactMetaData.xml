@@ -3645,6 +3645,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <long_desc>The mavlink hearbeat message will not be forwarded if this parameter is set to 'disabled'. The main reason for disabling heartbeats to be forwarded is because they confuse dronekit.</long_desc>
       <boolean />
     </parameter>
+    <parameter default="0" name="MAV_ODOM_LP" type="INT32">
+      <short_desc>Activate ODOMETRY loopback</short_desc>
+      <long_desc>If set, it gets the data from 'vehicle_visual_odometry' instead of 'vehicle_odometry' serving as a loopback of the received ODOMETRY messages on the Mavlink receiver.</long_desc>
+      <boolean />
+    </parameter>
     <parameter default="0" name="MAV_PROTO_VER" type="INT32">
       <short_desc>MAVLink protocol version</short_desc>
       <values>
@@ -4151,8 +4156,12 @@ default 1.5 turns per second</short_desc>
     </parameter>
     <parameter default="0" name="MC_AIRMODE" type="INT32">
       <short_desc>Multicopter air-mode</short_desc>
-      <long_desc>The air-mode enables the mixer to increase the total thrust of the multirotor in order to keep attitude and rate control even at low and high throttle. This function should be disabled during tuning as it will help the controller to diverge if the closed-loop is unstable.</long_desc>
-      <boolean />
+      <long_desc>The air-mode enables the mixer to increase the total thrust of the multirotor in order to keep attitude and rate control even at low and high throttle. This function should be disabled during tuning as it will help the controller to diverge if the closed-loop is unstable (i.e. the vehicle is not tuned yet). Enabling air-mode for yaw requires the use of an arming switch.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Roll/Pitch</value>
+        <value code="2">Roll/Pitch/Yaw</value>
+      </values>
     </parameter>
     <parameter default="0" name="MC_BAT_SCALE_EN" type="INT32">
       <short_desc>Battery power level scaler</short_desc>

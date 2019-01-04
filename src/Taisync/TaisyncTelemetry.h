@@ -13,24 +13,21 @@
 #include <QUdpSocket>
 #include <QTimer>
 
-Q_DECLARE_LOGGING_CATEGORY(TaisyncTelemetryLog)
-
 class TaisyncTelemetry : public TaisyncHandler
 {
     Q_OBJECT
 public:
 
     explicit TaisyncTelemetry           (QObject* parent = nullptr);
-    void close                          () override;
-    void startTelemetry                 ();
+    bool    close                       () override;
+    bool    start                       () override;
+    void    writeBytes                  (QByteArray bytes);
+
+signals:
+    void    bytesReady                   (QByteArray bytes);
 
 private slots:
     void    _newConnection              () override;
     void    _readBytes                  () override;
-    void    _readUDPBytes               ();
-    void    _sendGCSHeartbeat           ();
 
-private:
-    QTimer          _heartbeatTimer;
-    QUdpSocket*     _udpTelemetrySocket = nullptr;
 };

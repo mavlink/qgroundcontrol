@@ -147,15 +147,20 @@ void Fact::setCookedValue(const QVariant& value)
     }
 }
 
-void Fact::setEnumStringValue(const QString& value)
+int Fact::valueIndex(const QString& value)
 {
     if (_metaData) {
-        int index = _metaData->enumStrings().indexOf(value);
-        if (index != -1) {
-            setCookedValue(_metaData->enumValues()[index]);
-        }
-    } else {
-        qWarning() << kMissingMetadata << name();
+        return _metaData->enumStrings().indexOf(value);
+    }
+    qWarning() << kMissingMetadata << name();
+    return -1;
+}
+
+void Fact::setEnumStringValue(const QString& value)
+{
+    int index = valueIndex(value);
+    if (index != -1) {
+        setCookedValue(_metaData->enumValues()[index]);
     }
 }
 
@@ -728,11 +733,13 @@ FactValueSliderListModel* Fact::valueSliderModel(void)
 
 void Fact::_checkForRebootMessaging(void)
 {
-    if (!qgcApp()->runningUnitTests()) {
-        if (vehicleRebootRequired()) {
-            qgcApp()->showMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
-        } else if (qgcRebootRequired()) {
-            qgcApp()->showMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
+    if(qgcApp()) {
+        if (!qgcApp()->runningUnitTests()) {
+            if (vehicleRebootRequired()) {
+                qgcApp()->showMessage(tr("Change of parameter %1 requires a Vehicle reboot to take effect.").arg(name()));
+            } else if (qgcRebootRequired()) {
+                qgcApp()->showMessage(tr("Change of '%1' value requires restart of %2 to take effect.").arg(shortDescription()).arg(qgcApp()->applicationName()));
+            }
         }
     }
 }

@@ -12,13 +12,6 @@
 
 #include "SettingsGroup.h"
 
-#ifdef QGC_GST_TAISYNC_ENABLED
-#include "TaisyncVideoReceiver.h"
-// TODO: Remove it and place it some place else
-#include "TaisyncTelemetry.h"
-#include "TaisyncSettings.h"
-#endif
-
 class VideoSettings : public SettingsGroup
 {
     Q_OBJECT
@@ -47,12 +40,14 @@ public:
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udpVideoSource          READ udpVideoSource         CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
+    Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
 
     bool     streamConfigured       ();
     QString  autoVideoSource        () { return videoSourceAuto; }
     QString  rtspVideoSource        () { return videoSourceRTSP; }
     QString  udpVideoSource         () { return videoSourceUDP; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
+    QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
@@ -60,9 +55,7 @@ public:
     static const char* videoSourceRTSP;
     static const char* videoSourceAuto;
     static const char* videoSourceTCP;
-#ifdef QGC_GST_TAISYNC_ENABLED
-    static const char* videoSourceTaiSyncUSB;
-#endif
+    static const char* videoSourceMPEGTS;
 
 signals:
     void streamConfiguredChanged    ();
@@ -71,12 +64,6 @@ private slots:
     void _configChanged             (QVariant value);
 
 private:
-#ifdef QGC_GST_TAISYNC_ENABLED
-    TaisyncVideoReceiver*           _taiSync = nullptr;
-    // TODO: Remove it and place it some place else
-    TaisyncTelemetry*               _taiTelem    = nullptr;
-    TaisyncSettings*                _taiSettings = nullptr;
-#endif
     void _setDefaults               ();
 
 private:

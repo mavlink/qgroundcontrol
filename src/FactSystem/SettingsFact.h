@@ -17,9 +17,9 @@ class SettingsFact : public Fact
     Q_OBJECT
     
 public:
-    SettingsFact(QObject* parent = NULL);
-    SettingsFact(QString settingsGroup, FactMetaData* metaData, QObject* parent = NULL);
-    SettingsFact(const SettingsFact& other, QObject* parent = NULL);
+    SettingsFact(QObject* parent = nullptr);
+    SettingsFact(QString settingsGroup, FactMetaData* metaData, QObject* parent = nullptr);
+    SettingsFact(const SettingsFact& other, QObject* parent = nullptr);
 
     const SettingsFact& operator=(const SettingsFact& other);
 

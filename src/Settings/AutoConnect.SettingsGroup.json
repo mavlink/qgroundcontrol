@@ -72,12 +72,5 @@
     "shortDescription": "UDP target host port for autoconnect",
     "type":             "uint32",
     "defaultValue":     14550
-},
-{
-    "name":             "autoConnectTaisyncUSB",
-    "shortDescription": "Automatically connect to a Taisync Ground Module",
-    "longDescription":  "If this option is enabled GroundControl will automatically connect to a Taisync Ground Module which is connected via USB.",
-    "type":             "bool",
-    "defaultValue":     false
 }
 ]

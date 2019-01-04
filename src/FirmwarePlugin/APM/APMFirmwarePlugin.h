@@ -84,6 +84,7 @@ public:
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
+    QString             gotoFlightMode                  (void) const override { return QStringLiteral("Guided"); }
     QString             rtlFlightMode                   (void) const override { return QString("RTL"); }
     QString             missionFlightMode               (void) const override { return QString("Auto"); }
     void                pauseVehicle                    (Vehicle* vehicle) override;

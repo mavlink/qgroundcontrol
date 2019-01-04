@@ -19,8 +19,9 @@
 linux {
     linux-g++ | linux-g++-64 | linux-g++-32 | linux-clang {
         message("Linux build")
-        CONFIG += LinuxBuild
+        CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_GST_TAISYNC_ENABLED
         linux-clang {
             message("Linux clang")
             QMAKE_CXXFLAGS += -Qunused-arguments -fcolor-diagnostics
@@ -29,7 +30,8 @@ linux {
         message("Linux R-Pi2 build")
         CONFIG += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS __rasp_pi2__
-    } else : android-g++ {
+        DEFINES += QGC_GST_TAISYNC_ENABLED
+    } else : android-g++ | android-clang {
         CONFIG += AndroidBuild MobileBuild
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
@@ -50,16 +52,17 @@ linux {
         message("Windows build")
         CONFIG += WindowsBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_GST_TAISYNC_ENABLED
     } else {
         error("Unsupported Windows toolchain, only Visual Studio 2015 is supported")
     }
 } else : macx {
     macx-clang | macx-llvm {
         message("Mac build")
+        CONFIG  += MacBuild
+        CONFIG  += x86_64
+        CONFIG  -= x86
         DEFINES += QGC_GST_TAISYNC_ENABLED
-        CONFIG += MacBuild
-        CONFIG += x86_64
-        CONFIG -= x86
         equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
                 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
         } else {

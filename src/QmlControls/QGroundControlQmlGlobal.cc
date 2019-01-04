@@ -29,23 +29,9 @@ double           QGroundControlQmlGlobal::_zoom = 2;
 
 QGroundControlQmlGlobal::QGroundControlQmlGlobal(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool               (app, toolbox)
-    , _flightMapInitialZoom (17.0)
-    , _linkManager          (NULL)
-    , _multiVehicleManager  (NULL)
-    , _mapEngineManager     (NULL)
-    , _qgcPositionManager   (NULL)
-    , _missionCommandTree   (NULL)
-    , _videoManager         (NULL)
-    , _mavlinkLogManager    (NULL)
-    , _corePlugin           (NULL)
-    , _firmwarePluginManager(NULL)
-    , _settingsManager      (NULL)
-    , _gpsRtkFactGroup      (nullptr)
-    , _airspaceManager      (NULL)
-    , _skipSetupPage        (false)
 {
     // We clear the parent on this object since we run into shutdown problems caused by hybrid qml app. Instead we let it leak on shutdown.
-    setParent(NULL);
+    setParent(nullptr);
     // Load last coordinates and zoom from config file
     QSettings settings;
     settings.beginGroup(_flightMapPositionSettingsGroup);
@@ -80,6 +66,9 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _settingsManager        = toolbox->settingsManager();
     _gpsRtkFactGroup        = qgcApp()->gpsRtkFactGroup();
     _airspaceManager        = toolbox->airspaceManager();
+#if defined(QGC_GST_TAISYNC_ENABLED)
+    _taisyncManager         = toolbox->taisyncManager();
+#endif
 }
 
 void QGroundControlQmlGlobal::saveGlobalSetting (const QString& key, const QString& value)

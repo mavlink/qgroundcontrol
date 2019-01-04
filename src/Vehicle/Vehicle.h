@@ -636,13 +636,14 @@ public:
     Q_PROPERTY(QGCMapCircle*    orbitMapCircle  READ orbitMapCircle     CONSTANT)
 
     // Vehicle state used for guided control
-    Q_PROPERTY(bool flying                  READ flying NOTIFY flyingChanged)                               ///< Vehicle is flying
-    Q_PROPERTY(bool landing                 READ landing NOTIFY landingChanged)                             ///< Vehicle is in landing pattern (DO_LAND_START)
-    Q_PROPERTY(bool guidedMode              READ guidedMode WRITE setGuidedMode NOTIFY guidedModeChanged)   ///< Vehicle is in Guided mode and can respond to guided commands
-    Q_PROPERTY(bool guidedModeSupported     READ guidedModeSupported CONSTANT)                              ///< Guided mode commands are supported by this vehicle
-    Q_PROPERTY(bool pauseVehicleSupported   READ pauseVehicleSupported CONSTANT)                            ///< Pause vehicle command is supported
-    Q_PROPERTY(bool orbitModeSupported      READ orbitModeSupported CONSTANT)                               ///< Orbit mode is supported by this vehicle
-    Q_PROPERTY(bool takeoffVehicleSupported READ takeoffVehicleSupported CONSTANT)                          ///< Guided takeoff supported
+    Q_PROPERTY(bool     flying                  READ flying                                         NOTIFY flyingChanged)       ///< Vehicle is flying
+    Q_PROPERTY(bool     landing                 READ landing                                        NOTIFY landingChanged)      ///< Vehicle is in landing pattern (DO_LAND_START)
+    Q_PROPERTY(bool     guidedMode              READ guidedMode                 WRITE setGuidedMode NOTIFY guidedModeChanged)   ///< Vehicle is in Guided mode and can respond to guided commands
+    Q_PROPERTY(bool     guidedModeSupported     READ guidedModeSupported                            CONSTANT)                   ///< Guided mode commands are supported by this vehicle
+    Q_PROPERTY(bool     pauseVehicleSupported   READ pauseVehicleSupported                          CONSTANT)                   ///< Pause vehicle command is supported
+    Q_PROPERTY(bool     orbitModeSupported      READ orbitModeSupported                             CONSTANT)                   ///< Orbit mode is supported by this vehicle
+    Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Guided takeoff supported
+    Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
 
     Q_PROPERTY(ParameterManager* parameterManager READ parameterManager CONSTANT)
 
@@ -761,10 +762,11 @@ public:
     ///     @param percent 0-no power, 100-full power
     Q_INVOKABLE void motorTest(int motor, int percent);
 
-    bool guidedModeSupported    (void) const;
-    bool pauseVehicleSupported  (void) const;
-    bool orbitModeSupported     (void) const;
-    bool takeoffVehicleSupported(void) const;
+    bool    guidedModeSupported     (void) const;
+    bool    pauseVehicleSupported   (void) const;
+    bool    orbitModeSupported      (void) const;
+    bool    takeoffVehicleSupported (void) const;
+    QString gotoFlightMode          (void) const;
 
     // Property accessors
 

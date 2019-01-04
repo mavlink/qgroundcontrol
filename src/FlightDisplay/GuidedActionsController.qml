@@ -209,12 +209,13 @@ Item {
     }
 
     // Called when an action is about to be executed in order to confirm
-    function confirmAction(actionCode, actionData) {
+    function confirmAction(actionCode, actionData, mapIndicator) {
         var showImmediate = true
         closeAll()
         confirmDialog.action = actionCode
         confirmDialog.actionData = actionData
         confirmDialog.hideTrigger = true
+        confirmDialog.mapIndicator = mapIndicator
         _actionData = actionData
         switch (actionCode) {
         case actionArm:
@@ -385,7 +386,6 @@ Item {
             break
         case actionOrbit:
             _activeVehicle.guidedModeOrbit(orbitMapCircle.center, orbitMapCircle.radius() * (orbitMapCircle.clockwiseRotation ? 1 : -1), _activeVehicle.altitudeAMSL.rawValue + actionAltitudeChange)
-            orbitMapCircle.hide()
             break
         case actionLandAbort:
             _activeVehicle.abortLanding(50)     // hardcoded value for climbOutAltitude that is currently ignored
