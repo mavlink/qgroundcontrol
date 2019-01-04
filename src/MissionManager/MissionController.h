@@ -196,9 +196,9 @@ public:
 
     // These are the names shown in the UI for the pattern items. They are public so custom builds can remove the ones
     // they don't want through the QGCCorePlugin::
-    QString patternFWLandingName;
-    QString patternStructureScanName;
-    QString patternCorridorScanName;
+    static const QString patternFWLandingName;
+    static const QString patternStructureScanName;
+    static const QString patternCorridorScanName;
 
 signals:
     void visualItemsChanged             (void);
