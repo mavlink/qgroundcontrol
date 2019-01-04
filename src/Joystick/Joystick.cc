@@ -507,7 +507,6 @@ void Joystick::run(void)
             // Set up button pressed information
 
             quint16 newButtonBits = 0;      // New set of button which are down
-            quint16 buttonPressedBits = 0;  // Buttons pressed for manualControl signal
 
             for (int buttonIndex=0; buttonIndex<_totalButtonCount; buttonIndex++) {
                 quint16 buttonBit = 1 << buttonIndex;
@@ -525,9 +524,6 @@ void Joystick::run(void)
                             _buttonAction(buttonAction);
                         }
                     }
-
-                    // Mark the button as pressed as long as its pressed
-                    buttonPressedBits |= buttonBit;
                 }
             }
 
@@ -535,7 +531,7 @@ void Joystick::run(void)
 
             qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
 
-            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
+            emit manualControl(roll, -pitch, yaw, throttle, 0, _activeVehicle->joystickMode());
         }
 
         // Sleep. Update rate of joystick is by default 25 Hz
