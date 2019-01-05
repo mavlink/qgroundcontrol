@@ -488,13 +488,13 @@ QGCView {
                 exclusiveGroup: multiVehicleSelectorGroup
                 text:           qsTr("Single")
                 checked:        true
-                color:          mapPal.text
+                textColor:      mapPal.text
             }
 
             QGCRadioButton {
                 exclusiveGroup: multiVehicleSelectorGroup
                 text:           qsTr("Multi-Vehicle")
-                color:          mapPal.text
+                textColor:      mapPal.text
             }
         }
 
