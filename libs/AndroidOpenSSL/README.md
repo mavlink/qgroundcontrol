@@ -1,0 +1,1 @@
+These OpenSLL libraries foir Android are built using the scripts found here: https://github.com/esutton/android-openssl
