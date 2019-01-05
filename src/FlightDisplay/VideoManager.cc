@@ -262,7 +262,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,             // Command id
             false,                                                // ShowError
             1,                                                    // First camera only
-            0);                                                   // Reserved (Set to 0)
+            1);                                                   // Request video stream information
     }
 }
 
