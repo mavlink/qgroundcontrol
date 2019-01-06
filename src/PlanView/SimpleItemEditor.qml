@@ -27,9 +27,9 @@ Rectangle {
     property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
     property bool _supportsTerrainFrame:    missionItem
 
-    property string _altModeRelativeHelpText:       qsTr("Relative to home altitude")
-    property string _altModeAbsoluteHelpText:       qsTr("Above Mean Sea Level")
-    property string _altModeAboveTerrainHelpText:   qsTr("Calculated from terrain data\nAMSL Alt ") + missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
+    property string _altModeRelativeHelpText:       qsTr("Altitude relative to home altitude")
+    property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
+    property string _altModeAboveTerrainHelpText:   qsTr("Altitude above terrain\nActual AMSL altitude: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
     property string _altModeTerrainFrameHelpText:   qsTr("Using terrain reference frame")
 
     function updateAltitudeModeText() {
@@ -148,21 +148,31 @@ Rectangle {
 
                         MenuItem {
                             text:           qsTr("Altitude Relative To Home")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeRelative
                             onTriggered:    missionItem.altitudeMode = _altModeRelative
                         }
 
                         MenuItem {
-                            text:           qsTr("Height Above Mean Sea Level")
+                            text:           qsTr("Altitude Above Mean Sea Level")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeAbsolute
+                            visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude
                             onTriggered:    missionItem.altitudeMode = _altModeAbsolute
                         }
 
                         MenuItem {
-                            text:           qsTr("Height Above Terrain")
+                            text:           qsTr("Altitude Above Terrain")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeAboveTerrain
                             onTriggered:    missionItem.altitudeMode = _altModeAboveTerrain
                         }
 
                         MenuItem {
                             text:           qsTr("Terrain Frame")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeTerrainFrame
+                            visible:        missionItem.altitudeMode === _altModeTerrainFrame
                             onTriggered:    missionItem.altitudeMode = _altModeTerrainFrame
                         }
                     }
