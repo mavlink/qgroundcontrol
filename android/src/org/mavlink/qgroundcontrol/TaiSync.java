@@ -47,7 +47,7 @@ public class TaiSync
 
     public TaiSync()
     {
-        mThreadPool = Executors.newFixedThreadPool(2);
+        mThreadPool = Executors.newFixedThreadPool(3);
     }
 
     public boolean isRunning()
