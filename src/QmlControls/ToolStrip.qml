@@ -65,7 +65,7 @@ Rectangle {
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             text:                       title
-            font.pointSize:             ScreenTools.smallFontPointSize
+            font.pointSize:             ScreenTools.mobile ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
         }
 
         Rectangle {
