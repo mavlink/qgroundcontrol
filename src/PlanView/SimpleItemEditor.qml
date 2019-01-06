@@ -18,21 +18,44 @@ Rectangle {
     color:  qgcPal.windowShadeDark
     radius: _radius
 
-    property bool _specifiesAltitude:       missionItem.specifiesAltitude
-    property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
-    property bool _supportsTerrainFrame:    missionItem
-
     readonly property int _altModeRelative:     0
     readonly property int _altModeAbsolute:     1
     readonly property int _altModeAboveTerrain: 2
     readonly property int _altModeTerrainFrame: 3
 
-    ExclusiveGroup {
-        id: altRadios
-        onCurrentChanged: {
-            altModeLabel.text = Qt.binding(function() { return current.helpText })
-            missionItem.altitudeMode = current.altModeValue
+    property bool _specifiesAltitude:       missionItem.specifiesAltitude
+    property real _margin:                  ScreenTools.defaultFontPixelHeight / 2
+    property bool _supportsTerrainFrame:    missionItem
+
+    property string _altModeRelativeHelpText:       qsTr("Altitude relative to home altitude")
+    property string _altModeAbsoluteHelpText:       qsTr("Altitude above mean sea level")
+    property string _altModeAboveTerrainHelpText:   qsTr("Altitude above terrain\nActual AMSL altitude: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
+    property string _altModeTerrainFrameHelpText:   qsTr("Using terrain reference frame")
+
+    function updateAltitudeModeText() {
+        if (missionItem.altitudeMode === _altModeRelative) {
+            altModeLabel.text = qsTr("Altitude")
+            altModeHelp.text = _altModeRelativeHelpText
+        } else if (missionItem.altitudeMode === _altModeAbsolute) {
+            altModeLabel.text = qsTr("Above Mean Sea Level")
+            altModeHelp.text = _altModeAbsoluteHelpText
+        } else if (missionItem.altitudeMode === _altModeAboveTerrain) {
+            altModeLabel.text = qsTr("Above Terrain")
+            altModeHelp.text = Qt.binding(function() { return _altModeAboveTerrainHelpText })
+        } else if (missionItem.altitudeMode === _altModeTerrainFrame) {
+            altModeLabel.text = qsTr("Terrain Frame")
+            altModeHelp.text = _altModeTerrainFrameHelpText
+        } else {
+            altModeLabel.text = qsTr("Internal Error")
+            altModeHelp.text = ""
         }
+    }
+
+    Component.onCompleted: updateAltitudeModeText()
+
+    Connections {
+        target:                 missionItem
+        onAltitudeModeChanged:  updateAltitudeModeText()
     }
 
     Column {
@@ -97,56 +120,70 @@ Rectangle {
                 anchors.right:      parent.right
                 spacing:            _margin
 
+                Item {
+                    width:  altHamburger.x + altHamburger.width
+                    height: altModeLabel.height
+
+                    QGCLabel { id: altModeLabel }
+
+                    QGCColoredImage {
+                        id:                     altHamburger
+                        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 4
+                        anchors.left:           altModeLabel.right
+                        anchors.top:            altModeLabel.top
+                        width:                  height
+                        height:                 altModeLabel.height
+                        sourceSize.height:      height
+                        source:                 "qrc:/qmlimages/Hamburger.svg"
+                        color:                  qgcPal.text
+                    }
+
+                    QGCMouseArea {
+                        anchors.fill:   parent
+                        onClicked:      altHamburgerMenu.popup()
+                    }
+
+                    Menu {
+                        id: altHamburgerMenu
+
+                        MenuItem {
+                            text:           qsTr("Altitude Relative To Home")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeRelative
+                            onTriggered:    missionItem.altitudeMode = _altModeRelative
+                        }
+
+                        MenuItem {
+                            text:           qsTr("Altitude Above Mean Sea Level")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeAbsolute
+                            visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude
+                            onTriggered:    missionItem.altitudeMode = _altModeAbsolute
+                        }
+
+                        MenuItem {
+                            text:           qsTr("Altitude Above Terrain")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeAboveTerrain
+                            onTriggered:    missionItem.altitudeMode = _altModeAboveTerrain
+                        }
+
+                        MenuItem {
+                            text:           qsTr("Terrain Frame")
+                            checkable:      true
+                            checked:        missionItem.altitudeMode === _altModeTerrainFrame
+                            visible:        missionItem.altitudeMode === _altModeTerrainFrame
+                            onTriggered:    missionItem.altitudeMode = _altModeTerrainFrame
+                        }
+                    }
+                }
+
+                FactTextField {
+                    fact: missionItem.altitude
+                }
+
                 QGCLabel {
-                    font.pointSize: ScreenTools.smallFontPointSize
-                    text:           qsTr("Altitude")
-                }
-
-                RowLayout {
-                    QGCRadioButton {
-                        text:           qsTr("Rel")
-                        exclusiveGroup: altRadios
-                        checked:        missionItem.altitudeMode === altModeValue
-
-                        readonly property int       altModeValue:   _altModeRelative
-                        readonly property string    helpText:       qsTr("Relative to home altitude")
-					}
-                    QGCRadioButton {
-                        text:           qsTr("AMSL")
-                        exclusiveGroup: altRadios
-                        checked:        missionItem.altitudeMode === altModeValue
-                        visible:        QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || missionItem.altitudeMode === altModeValue
-
-                        readonly property int       altModeValue:   _altModeAbsolute
-                        readonly property string    helpText:       qsTr("Above Mean Sea Level")
-                    }
-                    QGCRadioButton {
-                        text:           qsTr("AGL")
-                        exclusiveGroup: altRadios
-                        checked:        missionItem.altitudeMode === altModeValue
-
-                        readonly property int   altModeValue: _altModeAboveTerrain
-                        property string         helpText:     qsTr("Calculated from terrain data\nAMSL Alt ") + missionItem.amslAltAboveTerrain.valueString + " " + missionItem.amslAltAboveTerrain.units
-                    }
-                    QGCRadioButton {
-                        text:           qsTr("TerrF")
-                        exclusiveGroup: altRadios
-                        checked:        missionItem.altitudeMode === altModeValue
-                        visible:        missionItem.altitudeMode === altModeValue
-
-                        readonly property int       altModeValue:   _altModeTerrainFrame
-                        readonly property string    helpText:       qsTr("Using terrain reference frame")
-                    }
-                }
-
-                FactValueSlider {
-                    fact:           missionItem.altitude
-                    digitCount:     3
-                    incrementSlots: 1
-                }
-
-                QGCLabel {
-                    id:             altModeLabel
+                    id:             altModeHelp
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     wrapMode:       Text.WordWrap
