@@ -130,11 +130,13 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     #else
         //-- Generic initialization
         if (logpath) {
+            QString gstDebugFile = QString("%1/%2").arg(logpath).arg("gstreamer-log.txt");
+            qDebug() << "GStreamer debug output:" << gstDebugFile;
             if (debuglevel) {
                 qputenv("GST_DEBUG", debuglevel);
             }
             qputenv("GST_DEBUG_NO_COLOR", "1");
-            qputenv("GST_DEBUG_FILE", QString("%1/%2").arg(logpath).arg("gstreamer-log.txt").toUtf8());
+            qputenv("GST_DEBUG_FILE", gstDebugFile.toUtf8());
             qputenv("GST_DEBUG_DUMP_DOT_DIR", logpath);
         }
         GError* error = nullptr;

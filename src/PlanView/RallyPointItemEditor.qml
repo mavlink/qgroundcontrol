@@ -50,7 +50,7 @@ Rectangle {
             color:                  _outerTextColor
         }
 
-        Image {
+        QGCColoredImage {
             id:                     hamburger
             anchors.rightMargin:    _margin
             anchors.right:          parent.right
@@ -59,6 +59,7 @@ Rectangle {
             height:                 width
             sourceSize.height:      height
             source:                 "qrc:/qmlimages/Hamburger.svg"
+            color:                  qgcPal.text
 
             MouseArea {
                 anchors.fill:   parent

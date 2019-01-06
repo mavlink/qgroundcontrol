@@ -239,9 +239,10 @@ VideoReceiver::start()
 #else
     bool isTaisyncUSB = false;
 #endif
-    bool isUdp  = _uri.contains("udp://")  && !isTaisyncUSB;
-    bool isRtsp = _uri.contains("rtsp://") && !isTaisyncUSB;
-    bool isTCP  = _uri.contains("tcp://")  && !isTaisyncUSB;
+    bool isUdp      = _uri.contains("udp://")  && !isTaisyncUSB;
+    bool isRtsp     = _uri.contains("rtsp://") && !isTaisyncUSB;
+    bool isTCP      = _uri.contains("tcp://")  && !isTaisyncUSB;
+    bool isMPEGTS   = _uri.contains("mpegts://")  && !isTaisyncUSB;
 
     if (!isTaisyncUSB && _uri.isEmpty()) {
         qCritical() << "VideoReceiver::start() failed because URI is not specified";
@@ -281,7 +282,7 @@ VideoReceiver::start()
             break;
         }
 
-        if(isUdp || isTaisyncUSB) {
+        if(isUdp || isMPEGTS || isTaisyncUSB) {
             dataSource = gst_element_factory_make("udpsrc", "udp-source");
         } else if(isTCP) {
             dataSource = gst_element_factory_make("tcpclientsrc", "tcpclient-source");
@@ -309,23 +310,25 @@ VideoReceiver::start()
         } else if(isTCP) {
             QUrl url(_uri);
             g_object_set(static_cast<gpointer>(dataSource), "host", qPrintable(url.host()), "port", url.port(), nullptr );
+        } else if(isMPEGTS) {
+            QUrl url(_uri);
+            g_object_set(static_cast<gpointer>(dataSource), "port", url.port(), nullptr);
         } else {
             g_object_set(static_cast<gpointer>(dataSource), "location", qPrintable(_uri), "latency", 17, "udp-reconnect", 1, "timeout", _udpReconnect_us, NULL);
         }
 
-        // Currently, we expect H264 when using anything except for TCP.  Long term we may want this to be settable
-        if (isTCP) {
-            if ((demux = gst_element_factory_make("tsdemux", "mpeg2-ts-demuxer")) == nullptr) {
+        if (isTCP || isMPEGTS) {
+            if ((demux = gst_element_factory_make("tsdemux", "mpeg-ts-demuxer")) == nullptr) {
                 qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('tsdemux')";
                 break;
             }
         } else {
             if(!isTaisyncUSB) {
                 if ((demux = gst_element_factory_make("rtph264depay", "rtp-h264-depacketizer")) == nullptr) {
-                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
-                break;
+                   qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('rtph264depay')";
+                    break;
+                }
             }
-        }
         }
 
         if ((parser = gst_element_factory_make("h264parse", "h264-parser")) == nullptr) {
@@ -374,13 +377,13 @@ VideoReceiver::start()
                 qCritical() << "Unable to link Taisync USB elements.";
                 break;
             }
-        } else if (isTCP) {
+        } else if (isTCP || isMPEGTS) {
             if(!gst_element_link(dataSource, demux)) {
-                qCritical() << "Unable to link TCP dataSource to Demux.";
+                qCritical() << "Unable to link TCP/MPEG-TS dataSource to Demux.";
                 break;
             }
             if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
-                qCritical() << "Unable to link TCP pipline to parser.";
+                qCritical() << "Unable to link TCP/MPEG-TS pipline to parser.";
                 break;
             }
             g_signal_connect(demux, "pad-added", G_CALLBACK(newPadCB), parser);
@@ -469,7 +472,7 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
-    if(!qgcApp()->runningUnitTests()) {
+    if(qgcApp()->runningUnitTests()) {
         return;
     }
 #if defined(QGC_GST_STREAMING)

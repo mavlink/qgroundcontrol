@@ -35,6 +35,7 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
+    _streamInfo = {};
 }
 
 //-----------------------------------------------------------------------------
@@ -164,7 +165,8 @@ VideoManager::isGStreamer()
         videoSource == VideoSettings::videoSourceUDP ||
         videoSource == VideoSettings::videoSourceRTSP ||
         videoSource == VideoSettings::videoSourceAuto ||
-        videoSource == VideoSettings::videoSourceTCP;
+        videoSource == VideoSettings::videoSourceTCP ||
+        videoSource == VideoSettings::videoSourceMPEGTS;
 #else
     return false;
 #endif
@@ -197,14 +199,33 @@ VideoManager::_updateSettings()
 {
     if(!_videoSettings || !_videoReceiver)
         return;
-    if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceUDP)
+    QString source = _videoSettings->videoSource()->rawValue().toString();
+    if (source == VideoSettings::videoSourceUDP)
         _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
-    else if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceRTSP)
+    else if (source == VideoSettings::videoSourceMPEGTS)
+        _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+    else if (source == VideoSettings::videoSourceRTSP)
         _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
-    else if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceTCP)
+    else if (source == VideoSettings::videoSourceTCP)
         _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
-    else if (isAutoStream())
-        _videoReceiver->setUri(QString(_streamInfo.uri));
+    //-- Auto discovery
+    else if (isAutoStream()) {
+        switch(_streamInfo.type) {
+            case VIDEO_STREAM_TYPE_RTSP:
+            case VIDEO_STREAM_TYPE_TCP_MPEG:
+                _videoReceiver->setUri(QString(_streamInfo.uri));
+                break;
+            case VIDEO_STREAM_TYPE_RTPUDP:
+                _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(atoi(_streamInfo.uri)));
+                break;
+            case VIDEO_STREAM_TYPE_MPEG_TS_H264:
+                _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(atoi(_streamInfo.uri)));
+                break;
+            default:
+                _videoReceiver->setUri(QString(_streamInfo.uri));
+                break;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -212,6 +233,7 @@ void
 VideoManager::_restartVideo()
 {
 #if defined(QGC_GST_STREAMING)
+    qCDebug(VideoManagerLog) << "Restart video streaming";
     if(!_videoReceiver)
         return;
     _videoReceiver->stop();
@@ -240,7 +262,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,             // Command id
             false,                                                // ShowError
             1,                                                    // First camera only
-            0);                                                   // Reserved (Set to 0)
+            1);                                                   // Request video stream information
     }
 }
 

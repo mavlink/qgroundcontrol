@@ -15,7 +15,7 @@ import QGroundControl.Palette       1.0
 /// Mission item edit control
 Rectangle {
     id:     _root
-    height: editorLoader.y + (editorLoader.visible ? editorLoader.height : 0) + (_margin * 2)
+    height: editorLoader.visible ? (editorLoader.y + editorLoader.height + (_margin * 2)) : (commandPicker.y + commandPicker.height + _margin / 2)
     color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius: _radius
 
@@ -90,8 +90,7 @@ Rectangle {
         sourceSize.height:      _hamburgerSize
         source:                 "qrc:/qmlimages/Hamburger.svg"
         visible:                missionItem.isCurrentItem && missionItem.sequenceNumber !== 0
-        color:                  qgcPal.windowShade
-
+        color:                  qgcPal.text
     }
 
     QGCMouseArea {
