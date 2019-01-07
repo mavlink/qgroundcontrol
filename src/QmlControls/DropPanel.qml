@@ -37,10 +37,7 @@ Item {
 
     readonly property real _arrowBaseHeight:    radius             // Height of vertical side of arrow
     readonly property real _arrowPointWidth:    radius * 0.666     // Distance from vertical side to point
-    readonly property real _dropCornerRadius:   ScreenTools.defaultFontPixelWidth * 0.5
-    readonly property real _dropCornerRadiusX2: _dropCornerRadius * 2
-    readonly property real _dropMargin:         _dropCornerRadius
-    readonly property real _dropMarginX2:       _dropMargin * 2
+    readonly property real _dropMargin:         ScreenTools.defaultFontPixelWidth
 
     property var    _dropEdgeTopPoint
     property real   _dropEdgeHeight
@@ -74,8 +71,8 @@ Item {
         var panelComponentWidth  = panelLoader.item.width
         var panelComponentHeight = panelLoader.item.height
 
-        dropDownItem.width  = panelComponentWidth  + (_dropMarginX2 * 2) + _arrowPointWidth
-        dropDownItem.height = panelComponentHeight + (_dropMarginX2 * 2)
+        dropDownItem.width  = panelComponentWidth  + (_dropMargin * 2) + _arrowPointWidth
+        dropDownItem.height = panelComponentHeight + (_dropMargin * 2)
 
         dropDownItem.x = _dropEdgeTopPoint.x + _dropMargin
         dropDownItem.y = _dropEdgeTopPoint.y -(dropDownItem.height / 2) + radius

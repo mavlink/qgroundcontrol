@@ -28,6 +28,7 @@
 #include "MultiVehicleManager.h"
 #include "Settings/SettingsManager.h"
 #include "Vehicle.h"
+#include "JoystickManager.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -36,6 +37,8 @@ VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
     _streamInfo = {};
+    _lastZoomChange.start();
+    _lastStreamChange.start();
 }
 
 //-----------------------------------------------------------------------------
@@ -61,9 +64,11 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
    connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
-   connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
-   MultiVehicleManager *manager = qgcApp()->toolbox()->multiVehicleManager();
-   connect(manager, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
+   connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_streamInfoChanged);
+   MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
+   connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
+   JoystickManager *pJoyMgr = qgcApp()->toolbox()->joystickManager();
+   connect(pJoyMgr, &JoystickManager::activeJoystickChanged, this, &VideoManager::_activeJoystickChanged);
 
 #if defined(QGC_GST_STREAMING)
 #ifndef QGC_DISABLE_UVC
@@ -262,7 +267,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,             // Command id
             false,                                                // ShowError
             1,                                                    // First camera only
-            0);                                                   // Reserved (Set to 0)
+            1);                                                   // Request video stream information
     }
 }
 
@@ -272,16 +277,91 @@ VideoManager::_vehicleMessageReceived(const mavlink_message_t& message)
 {
     //-- For now we only handle one stream. There is no UI to pick different streams.
     if(message.msgid == MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION) {
+        _videoStreamCompID = message.compid;
         mavlink_msg_video_stream_information_decode(&message, &_streamInfo);
+        _hasAutoStream = true;
         qCDebug(VideoManagerLog) << "Received video stream info:" << _streamInfo.uri;
         _restartVideo();
-        emit aspectRatioChanged();
+        emit streamInfoChanged();
     }
 }
 
 //----------------------------------------------------------------------------------------
 void
-VideoManager::_aspectRatioChanged()
+VideoManager::_activeJoystickChanged(Joystick* joystick)
 {
-    emit aspectRatioChanged();
+    if(_activeJoystick) {
+        disconnect(_activeJoystick, &Joystick::stepZoom,   this, &VideoManager::stepZoom);
+        disconnect(_activeJoystick, &Joystick::stepStream, this, &VideoManager::stepStream);
+    }
+    _activeJoystick = joystick;
+    if(_activeJoystick) {
+        connect(_activeJoystick, &Joystick::stepZoom,   this, &VideoManager::stepZoom);
+        connect(_activeJoystick, &Joystick::stepStream, this, &VideoManager::stepStream);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::stepZoom(int direction)
+{
+    if(_lastZoomChange.elapsed() > 250) {
+        _lastZoomChange.start();
+        qCDebug(VideoManagerLog) << "Step Stream Zoom" << direction;
+        if(_activeVehicle && hasZoom()) {
+            _activeVehicle->sendMavCommand(
+                _videoStreamCompID,                     // Target component
+                MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+                false,                                  // ShowError
+                ZOOM_TYPE_STEP,                         // Zoom type
+                direction);                             // Direction (-1 wide, 1 tele)
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::stepStream(int direction)
+{
+    if(_lastStreamChange.elapsed() > 250) {
+        _lastStreamChange.start();
+        int s = _currentStream + direction;
+        if(s < 1) s = _streamInfo.count;
+        if(s > _streamInfo.count) s = 1;
+        setCurrentStream(s);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::setCurrentStream(int stream)
+{
+    qCDebug(VideoManagerLog) << "Set Stream" << stream;
+    //-- TODO: Handle multiple streams
+    if(_hasAutoStream && stream <= _streamInfo.count && stream > 0 && _activeVehicle) {
+        if(_currentStream != stream) {
+            //-- Stop current stream
+            _activeVehicle->sendMavCommand(
+                _videoStreamCompID,                     // Target component
+                MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+                false,                                  // ShowError
+                _currentStream);                        // Stream ID
+            //-- Start new stream
+            _currentStream = stream;
+            _activeVehicle->sendMavCommand(
+                _videoStreamCompID,                     // Target component
+                MAV_CMD_VIDEO_START_STREAMING,          // Command id
+                false,                                  // ShowError
+                _currentStream);                        // Stream ID
+            _currentStream = stream;
+            emit currentStreamChanged();
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------------
+void
+VideoManager::_streamInfoChanged()
+{
+    emit streamInfoChanged();
 }
