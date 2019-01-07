@@ -7,20 +7,20 @@
 
 #include "QGCApplication.h"
 #include "QGCCameraManager.h"
+#include "JoystickManager.h"
 
 QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
 
 //-----------------------------------------------------------------------------
 QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
     : _vehicle(vehicle)
-    , _vehicleReadyState(false)
-    , _currentTask(0)
-    , _currentCamera(0)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &QGCCameraManager::_mavlinkMessageReceived);
+    _lastZoomChange.start();
+    _lastCameraChange.start();
 }
 
 //-----------------------------------------------------------------------------
@@ -46,6 +46,9 @@ QGCCameraManager::_vehicleReady(bool ready)
     if(ready) {
         if(qgcApp()->toolbox()->multiVehicleManager()->activeVehicle() == _vehicle) {
             _vehicleReadyState = true;
+            JoystickManager *pJoyMgr = qgcApp()->toolbox()->joystickManager();
+            _activeJoystickChanged(pJoyMgr->activeJoystick());
+            connect(pJoyMgr, &JoystickManager::activeJoystickChanged, this, &QGCCameraManager::_activeJoystickChanged);
         }
     }
 }
@@ -114,7 +117,7 @@ QGCCameraManager::_findCamera(int id)
         }
     }
     qWarning() << "Camera component id not found:" << id;
-    return NULL;
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -127,7 +130,7 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
         _cameraInfoRequested[message.compid] = false;
         mavlink_camera_information_t info;
         mavlink_msg_camera_information_decode(&message, &info);
-        qCDebug(CameraManagerLog) << "_handleCameraInfo:" << (const char*)(void*)&info.model_name[0] << (const char*)(void*)&info.vendor_name[0] << "Comp ID:" << message.compid;
+        qCDebug(CameraManagerLog) << "_handleCameraInfo:" << reinterpret_cast<const char*>(info.model_name) << reinterpret_cast<const char*>(info.vendor_name) << "Comp ID:" << message.compid;
         QGCCameraControl* pCamera = _vehicle->firmwarePlugin()->createCameraControl(&info, _vehicle, message.compid, this);
         if(pCamera) {
             QQmlEngine::setObjectOwnership(pCamera, QQmlEngine::CppOwnership);
@@ -212,3 +215,51 @@ QGCCameraManager::_requestCameraInfo(int compID)
             1);                                     // Do Request
     }
 }
+
+//----------------------------------------------------------------------------------------
+void
+QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
+{
+    qCDebug(CameraManagerLog) << "Joystick changed";
+    if(_activeJoystick) {
+        disconnect(_activeJoystick, &Joystick::stepZoom,   this, &QGCCameraManager::_stepZoom);
+        disconnect(_activeJoystick, &Joystick::stepCamera, this, &QGCCameraManager::_stepCamera);
+    }
+    _activeJoystick = joystick;
+    if(_activeJoystick) {
+        connect(_activeJoystick, &Joystick::stepZoom,   this, &QGCCameraManager::_stepZoom);
+        connect(_activeJoystick, &Joystick::stepCamera, this, &QGCCameraManager::_stepCamera);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_stepZoom(int direction)
+{
+    if(_lastZoomChange.elapsed() > 250) {
+        _lastZoomChange.start();
+        qCDebug(CameraManagerLog) << "Step Camera Zoom" << direction;
+        if(_cameras.count() && _cameras[_currentCamera]) {
+            QGCCameraControl* pCamera = qobject_cast<QGCCameraControl*>(_cameras[_currentCamera]);
+            if(pCamera) {
+                pCamera->stepZoom(direction);
+            }
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_stepCamera(int direction)
+{
+    if(_lastCameraChange.elapsed() > 1000) {
+        _lastCameraChange.start();
+        qCDebug(CameraManagerLog) << "Step Camera" << direction;
+        int c = _currentCamera + direction;
+        if(c < 0) c = _cameras.count() - 1;
+        if(c >= _cameras.count()) c = 0;
+        setCurrentCamera(c);
+    }
+}
+
+
