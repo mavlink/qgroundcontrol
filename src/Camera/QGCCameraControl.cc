@@ -59,6 +59,15 @@ static const char* kPhotoLapse      = "PhotoLapse";
 static const char* kPhotoLapseCount = "PhotoLapseCount";
 
 //-----------------------------------------------------------------------------
+// Known Parameters
+static const char *kCAM_EV          = "CAM_EV";
+static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
+static const char *kCAM_ISO         = "CAM_ISO";
+static const char* kCAM_SHUTTER     = "CAM_SHUTTER";
+static const char* kCAM_APERTURE    = "CAM_APERTURE";
+static const char* kCAM_WBMODE      = "CAM_WBMODE";
+
+//-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
     : QObject(parent)
     , param(param_)
@@ -146,6 +155,7 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     , _compID(compID)
     , _version(0)
     , _cached(false)
+    , _paramComplete(false)
     , _storageFree(0)
     , _storageTotal(0)
     , _netManager(nullptr)
@@ -467,6 +477,44 @@ QGCCameraControl::setPhotoMode()
 
 //-----------------------------------------------------------------------------
 void
+QGCCameraControl::setZoomLevel(qreal level)
+{
+    qCDebug(CameraControlLog) << "setZoomLevel()" << level;
+    if(hasZoom()) {
+        //-- Limit
+        level = std::min(std::max(level, 0.0), 100.0);
+        if(_vehicle) {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+                false,                                  // ShowError
+                ZOOM_TYPE_RANGE,                        // Zoom type
+                static_cast<float>(level));             // Level
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setFocusLevel(qreal level)
+{
+    qCDebug(CameraControlLog) << "setFocusLevel()" << level;
+    if(hasFocus()) {
+        //-- Limit
+        level = std::min(std::max(level, 0.0), 100.0);
+        if(_vehicle) {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_SET_CAMERA_FOCUS,               // Command id
+                false,                                  // ShowError
+                FOCUS_TYPE_RANGE,                       // Focus type
+                static_cast<float>(level));             // Level
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCCameraControl::resetSettings()
 {
     if(!_resetting) {
@@ -494,6 +542,51 @@ QGCCameraControl::formatCard(int id)
                 id,                                     // Storage ID (1 for first, 2 for second, etc.)
                 1);                                     // Do Format
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::stepZoom(int direction)
+{
+    qCDebug(CameraControlLog) << "stepZoom()" << direction;
+    if(_vehicle && hasZoom()) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+            false,                                  // ShowError
+            ZOOM_TYPE_STEP,                         // Zoom type
+            direction);                             // Direction (-1 wide, 1 tele)
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::startZoom(int direction)
+{
+    qCDebug(CameraControlLog) << "startZoom()" << direction;
+    if(_vehicle && hasZoom()) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+            true,                                   // ShowError
+            ZOOM_TYPE_CONTINUOUS,                   // Zoom type
+            direction);                             // Direction (-1 wide, 1 tele)
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::stopZoom()
+{
+    qCDebug(CameraControlLog) << "stopZoom()";
+    if(_vehicle && hasZoom()) {
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+            true,                                   // ShowError
+            ZOOM_TYPE_CONTINUOUS,                   // Zoom type
+            0);                                     // Direction (-1 wide, 1 tele)
     }
 }
 
@@ -1069,6 +1162,10 @@ QGCCameraControl::_updateActiveList()
         qCDebug(CameraControlLogVerbose) << "Excluding" << exclusionList;
         _activeSettings = active;
         emit activeSettingsChanged();
+        //-- Force validity of "Facts" based on active set
+        if(_paramComplete) {
+            emit parametersReady();
+        }
     }
 }
 
@@ -1273,6 +1370,16 @@ QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
     qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
     _setCameraMode(static_cast<CameraMode>(settings.mode_id));
+    qreal z = static_cast<qreal>(settings.zoomLevel);
+    qreal f = static_cast<qreal>(settings.focusLevel);
+    if(std::isfinite(z) && z != _zoomLevel) {
+        _zoomLevel = z;
+        emit zoomLevelChanged();
+    }
+    if(std::isfinite(f) && f != _focusLevel) {
+        _focusLevel = f;
+        emit focusLevelChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -1563,6 +1670,7 @@ QGCCameraControl::_paramDone()
         }
     }
     //-- All parameters loaded (or timed out)
+    _paramComplete = true;
     emit parametersReady();
 }
 
@@ -1590,4 +1698,46 @@ QGCCameraControl::activeSettings()
 {
     qCDebug(CameraControlLog) << "Active:" << _activeSettings;
     return _activeSettings;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::exposureMode()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_EXPMODE)) ? getFact(kCAM_EXPMODE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::ev()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_EV)) ? getFact(kCAM_EV) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::iso()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_ISO)) ? getFact(kCAM_ISO) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::shutter()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_SHUTTER)) ? getFact(kCAM_SHUTTER) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::aperture()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_APERTURE)) ? getFact(kCAM_APERTURE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::wb()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_WBMODE)) ? getFact(kCAM_WBMODE) : nullptr;
 }

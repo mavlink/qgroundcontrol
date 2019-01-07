@@ -13,6 +13,7 @@
 
 #include <QObject>
 #include <QTimer>
+#include <QTime>
 #include <QUrl>
 
 #include "QGCMAVLink.h"
@@ -24,6 +25,7 @@ Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
 class VideoSettings;
 class Vehicle;
+class Joystick;
 
 class VideoManager : public QGCTool
 {
@@ -41,7 +43,10 @@ public:
     Q_PROPERTY(bool             uvcEnabled          READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen          READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
     Q_PROPERTY(VideoReceiver*   videoReceiver       READ    videoReceiver                               CONSTANT)
-    Q_PROPERTY(double           aspectRatio         READ    aspectRatio                                 NOTIFY aspectRatioChanged)
+    Q_PROPERTY(double           aspectRatio         READ    aspectRatio                                 NOTIFY streamInfoChanged)
+    Q_PROPERTY(bool             hasZoom             READ    hasZoom                                     NOTIFY streamInfoChanged)
+    Q_PROPERTY(int              streamCount         READ    streamCount                                 NOTIFY streamCountChanged)
+    Q_PROPERTY(int              currentStream       READ    currentStream   WRITE setCurrentStream      NOTIFY currentStreamChanged)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
@@ -51,6 +56,9 @@ public:
     QString     videoSourceID       () { return _videoSourceID; }
     QString     autoURL             () { return QString(_streamInfo.uri); }
     double      aspectRatio         ();
+    bool        hasZoom             () { return _streamInfo.flags & VIDEO_STREAM_HAS_BASIC_ZOOM; }
+    int         currentStream       () { return _currentStream; }
+    int         streamCount         () { return _streamInfo.count; }
 
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
 
@@ -62,12 +70,15 @@ public:
 
     void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
     void        setIsTaisync        (bool t) { _isTaisync = t;  emit isTaisyncChanged(); }
+    void        setCurrentStream    (int stream);
 
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
 
-    Q_INVOKABLE void startVideo()   {_videoReceiver->start();}
-    Q_INVOKABLE void stopVideo()    {_videoReceiver->stop(); }
+    Q_INVOKABLE void startVideo     () { _videoReceiver->start(); }
+    Q_INVOKABLE void stopVideo      () { _videoReceiver->stop();  }
+    Q_INVOKABLE void stepZoom       (int direction);
+    Q_INVOKABLE void stepStream     (int direction);
 
 signals:
     void hasVideoChanged            ();
@@ -75,8 +86,10 @@ signals:
     void videoSourceIDChanged       ();
     void fullScreenChanged          ();
     void isAutoStreamChanged        ();
-    void aspectRatioChanged         ();
+    void streamInfoChanged          ();
     void isTaisyncChanged           ();
+    void currentStreamChanged       ();
+    void streamCountChanged         ();
 
 private slots:
     void _videoSourceChanged        ();
@@ -84,8 +97,9 @@ private slots:
     void _rtspUrlChanged            ();
     void _tcpUrlChanged             ();
     void _updateUVC                 ();
-    void _aspectRatioChanged        ();
+    void _streamInfoChanged         ();
     void _setActiveVehicle          (Vehicle* vehicle);
+    void _activeJoystickChanged     (Joystick* joystick);
     void _vehicleMessageReceived    (const mavlink_message_t& message);
 
 private:
@@ -99,7 +113,13 @@ private:
     QString         _videoSourceID;
     bool            _fullScreen         = false;
     Vehicle*        _activeVehicle      = nullptr;
+    Joystick*       _activeJoystick     = nullptr;
     mavlink_video_stream_information_t _streamInfo;
+    bool            _hasAutoStream      = false;
+    uint8_t         _videoStreamCompID  = 0;
+    int             _currentStream      = 1;
+    QTime           _lastZoomChange;
+    QTime           _lastStreamChange;
 };
 
 #endif
