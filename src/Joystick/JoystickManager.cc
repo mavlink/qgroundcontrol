@@ -60,8 +60,11 @@ void JoystickManager::init() {
         _joystickCheckTimer.start(250);
     }
 #elif defined(__android__)
-    _setActiveJoystickFromSettings();
-    //TODO: Investigate Android events for Joystick hot plugging & run _joystickCheckTimer if possible
+    if (JoystickAndroid::init()) {
+        _setActiveJoystickFromSettings();
+        connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
+        _joystickCheckTimer.start(250);
+    }
 #endif
 }
 

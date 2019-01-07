@@ -76,8 +76,6 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
     bool joystickFound = false;
     static QMap<QString, Joystick*> ret;
 
-    _initStatic(); //it's enough to run it once, should be in a static constructor
-
     QMutexLocker lock(&m_mutex);
 
     QAndroidJniEnvironment env;
@@ -194,7 +192,7 @@ uint8_t JoystickAndroid::_getHat(int hat,int i) {
 }
 
 //helper method
-void JoystickAndroid::_initStatic() {
+bool JoystickAndroid::init() {
     //this gets list of all possible buttons - this is needed to check how many buttons our gamepad supports
     //instead of the whole logic below we could have just a simple array of hardcoded int values as these 'should' not change
 
@@ -229,5 +227,7 @@ void JoystickAndroid::_initStatic() {
 
     ACTION_DOWN = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_DOWN");
     ACTION_UP = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", "ACTION_UP");
+
+    return true;
 }
 
