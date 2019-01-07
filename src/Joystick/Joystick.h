@@ -164,7 +164,10 @@ signals:
 
     void buttonActionTriggered(int action);
 
-    void frequencyChanged();
+    void frequencyChanged   ();
+    void stepZoom           (int direction);
+    void stepCamera         (int direction);
+    void stepStream         (int direction);
 
 protected:
     void    _setDefaultCalibration(void);
@@ -252,6 +255,12 @@ private:
     static const char* _buttonActionDisarm;
     static const char* _buttonActionVTOLFixedWing;
     static const char* _buttonActionVTOLMultiRotor;
+    static const char* _buttonActionZoomIn;
+    static const char* _buttonActionZoomOut;
+    static const char* _buttonActionNextStream;
+    static const char* _buttonActionPreviousStream;
+    static const char* _buttonActionNextCamera;
+    static const char* _buttonActionPreviousCamera;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
