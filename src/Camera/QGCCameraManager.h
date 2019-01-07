@@ -17,6 +17,8 @@
 
 Q_DECLARE_LOGGING_CATEGORY(CameraManagerLog)
 
+class Joystick;
+
 //-----------------------------------------------------------------------------
 class QGCCameraManager : public QObject
 {
@@ -46,6 +48,9 @@ signals:
 protected slots:
     virtual void    _vehicleReady           (bool ready);
     virtual void    _mavlinkMessageReceived (const mavlink_message_t& message);
+    virtual void    _activeJoystickChanged  (Joystick* joystick);
+    virtual void    _stepZoom               (int direction);
+    virtual void    _stepCamera             (int direction);
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);
@@ -59,11 +64,14 @@ protected:
     virtual void    _handleCaptureStatus    (const mavlink_message_t& message);
 
 protected:
-    Vehicle*            _vehicle;
-    bool                _vehicleReadyState;
-    int                 _currentTask;
+    Vehicle*            _vehicle            = nullptr;
+    Joystick*           _activeJoystick     = nullptr;
+    bool                _vehicleReadyState  = false;
+    int                 _currentTask        = 0;
     QmlObjectListModel  _cameras;
     QStringList         _cameraLabels;
     QMap<int, bool>     _cameraInfoRequested;
-    int                 _currentCamera;
+    int                 _currentCamera      = 0;
+    QTime               _lastZoomChange;
+    QTime               _lastCameraChange;
 };
