@@ -2,6 +2,6 @@
 <resources>
     <!-- Allow anything connected -->
     <usb-device />
-    <usb-accessory />
+    <usb-accessory model="android.usbaoa" manufacturer="taisync" version="1.0"/>
 </resources>
 
