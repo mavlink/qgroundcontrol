@@ -8355,13 +8355,6 @@ is less than 50% of this value</short_desc>
       <unit>C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.0" name="SENS_IMU_TEMP_FF" type="FLOAT">
-      <short_desc>IMU heater controller feedforward value</short_desc>
-      <min>0</min>
-      <max>1.0</max>
-      <unit>microseconds</unit>
-      <decimal>3</decimal>
-    </parameter>
     <parameter default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
       <short_desc>IMU heater controller integrator gain value</short_desc>
       <min>0</min>
@@ -8369,10 +8362,10 @@ is less than 50% of this value</short_desc>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.25" name="SENS_IMU_TEMP_P" type="FLOAT">
+    <parameter default="1.0" name="SENS_IMU_TEMP_P" type="FLOAT">
       <short_desc>IMU heater controller proportional gain value</short_desc>
       <min>0</min>
-      <max>1.0</max>
+      <max>2.0</max>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
