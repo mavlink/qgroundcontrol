@@ -153,7 +153,7 @@
             "param1": {
                 "label":            "Abort Alt",
                 "units":            "m",
-                "default":          25.0,
+                "default":          0,
                 "decimalPlaces":    2
             },
             "param4": {
