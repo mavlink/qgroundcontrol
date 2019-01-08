@@ -73,7 +73,6 @@ JoystickAndroid::~JoystickAndroid() {
 
 
 QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVehicleManager) {
-    bool joystickFound = false;
     static QMap<QString, Joystick*> ret;
 
     QMutexLocker lock(&m_mutex);
@@ -87,27 +86,29 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
     int SOURCE_GAMEPAD = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_GAMEPAD");
     int SOURCE_JOYSTICK = QAndroidJniObject::getStaticField<jint>("android/view/InputDevice", "SOURCE_JOYSTICK");
 
+    QList<QString> names;
+
     for (int i = 0; i < sz; ++i) {
         QAndroidJniObject inputDevice = QAndroidJniObject::callStaticObjectMethod("android/view/InputDevice", "getDevice", "(I)Landroid/view/InputDevice;", buff[i]);
         int sources = inputDevice.callMethod<jint>("getSources", "()I");
         if (((sources & SOURCE_GAMEPAD) != SOURCE_GAMEPAD) //check if the input device is interesting to us
                 && ((sources & SOURCE_JOYSTICK) != SOURCE_JOYSTICK)) continue;
 
-        //get id and name
+        // get id and name
         QString id = inputDevice.callObjectMethod("getDescriptor", "()Ljava/lang/String;").toString();
         QString name = inputDevice.callObjectMethod("getName", "()Ljava/lang/String;").toString();
 
+        names.push_back(name);
 
-        if (joystickFound) { //skipping {
-            qWarning() << "Skipping joystick:" << name;
+        if (ret.contains(name)) {
             continue;
         }
 
-        //get number of axis
+        // get number of axis
         QAndroidJniObject rangeListNative = inputDevice.callObjectMethod("getMotionRanges", "()Ljava/util/List;");
         int axisCount = rangeListNative.callMethod<jint>("size");
 
-        //get number of buttons
+        // get number of buttons
         jintArray a = env->NewIntArray(_androidBtnListCount);
         env->SetIntArrayRegion(a,0,_androidBtnListCount,_androidBtnList);
         QAndroidJniObject btns = inputDevice.callObjectMethod("hasKeys", "([I)[Z", a);
@@ -121,7 +122,14 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
         qCDebug(JoystickLog) << "\t" << name << "id:" << buff[i] << "axes:" << axisCount << "buttons:" << buttonCount;
 
         ret[name] = new JoystickAndroid(name, axisCount, buttonCount, buff[i], _multiVehicleManager);
-        joystickFound = true;
+    }
+
+    for (auto i = ret.begin(); i != ret.end();) {
+        if (!names.contains(i.key())) {
+            i = ret.erase(i);
+        } else {
+            i++;
+        }
     }
 
     env->ReleaseIntArrayElements(jarr, buff, 0);
