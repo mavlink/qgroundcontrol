@@ -36,7 +36,6 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    if(!_defaultSource) {
        //-- Otherwise, create a default one
        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
-       qDebug() << _defaultSource;
    }
    _simulatedSource = new SimulatedPosition();
 

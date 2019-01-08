@@ -7,8 +7,8 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
+import QtQuick          2.11
+import QtQuick.Controls 1.4
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -17,7 +17,7 @@ Rectangle {
     id:         _root
     color:      qgcPal.window
     width:      ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 7
-    height:     buttonStripColumn.height + (buttonStripColumn.anchors.margins * 2)
+    height:     toolStripColumn.height + (toolStripColumn.anchors.margins * 2)
     radius:     _radius
     border.width:   1
     border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)
@@ -35,9 +35,7 @@ Rectangle {
 
     readonly property real  _radius:                ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _margin:                ScreenTools.defaultFontPixelWidth / 2
-    readonly property real  _buttonSpacing:         ScreenTools.defaultFontPixelWidth
-
-    property bool _showOptionalElements: !ScreenTools.isTinyScreen
+    readonly property real  _buttonSpacing:         ScreenTools.defaultFontPixelHeight / 4
 
     QGCPalette { id: qgcPal }
     ExclusiveGroup { id: dropButtonsExclusiveGroup }
@@ -57,129 +55,141 @@ Rectangle {
     }
 
     Column {
-        id:                 buttonStripColumn
+        id:                 toolStripColumn
         anchors.margins:    ScreenTools.defaultFontPixelWidth  / 2
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
+        spacing:            _buttonSpacing
 
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
             text:                       title
-            visible:                    _showOptionalElements
+            font.pointSize:             ScreenTools.mobile ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
         }
-
-        Item { width: 1; height: _buttonSpacing; visible: _showOptionalElements }
 
         Rectangle {
             anchors.left:       parent.left
             anchors.right:      parent.right
             height:             1
             color:              qgcPal.text
-            visible:            _showOptionalElements
         }
 
-        Repeater {
-            id: repeater
+        Column {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        _buttonSpacing
 
-            delegate: Column {
-                id:         buttonColumn
-                width:      buttonStripColumn.width
-                visible:    _root.buttonVisible ? _root.buttonVisible[index] : true
+            Repeater {
+                id: repeater
 
-                property bool checked: false
-                property ExclusiveGroup exclusiveGroup: dropButtonsExclusiveGroup
+                delegate: FocusScope {
+                    id:         scope
+                    width:      toolStripColumn.width
+                    height:     buttonRect.height
+                    visible:    _root.buttonVisible ? _root.buttonVisible[index] : true
 
-                QGCPalette { id: _repeaterPal; colorGroupEnabled: _buttonEnabled }
+                    property bool checked: false
+                    property ExclusiveGroup exclusiveGroup: dropButtonsExclusiveGroup
 
-                property bool   _buttonEnabled:         _root.buttonEnabled ? _root.buttonEnabled[index] : true
-                property var    _iconSource:            modelData.iconSource
-                property var    _alternateIconSource:   modelData.alternateIconSource
-                property var    _source:                (_root.showAlternateIcon && _root.showAlternateIcon[index]) ? _alternateIconSource : _iconSource
-                property bool   rotateImage:            _root.rotateImage ? _root.rotateImage[index] : false
-                property bool   animateImage:           _root.animateImage ? _root.animateImage[index] : false
+                    property bool   _buttonEnabled:         _root.buttonEnabled ? _root.buttonEnabled[index] : true
+                    property var    _iconSource:            modelData.iconSource
+                    property var    _alternateIconSource:   modelData.alternateIconSource
+                    property var    _source:                (_root.showAlternateIcon && _root.showAlternateIcon[index]) ? _alternateIconSource : _iconSource
+                    property bool   rotateImage:            _root.rotateImage ? _root.rotateImage[index] : false
+                    property bool   animateImage:           _root.animateImage ? _root.animateImage[index] : false
+                    property bool   _hovered:               false
+                    property bool   _showHighlight:         checked || (_buttonEnabled && _hovered)
 
-                onExclusiveGroupChanged: {
-                    if (exclusiveGroup) {
-                        exclusiveGroup.bindCheckable(buttonColumn)
+                    QGCPalette { id: _repeaterPal; colorGroupEnabled: _buttonEnabled }
+
+                    onExclusiveGroupChanged: {
+                        if (exclusiveGroup) {
+                            exclusiveGroup.bindCheckable(scope)
+                        }
                     }
-                }
 
-                onRotateImageChanged: {
-                    if (rotateImage) {
-                        imageRotation.running = true
-                    } else {
-                        imageRotation.running = false
-                        button.rotation = 0
+                    onRotateImageChanged: {
+                        if (rotateImage) {
+                            imageRotation.running = true
+                        } else {
+                            imageRotation.running = false
+                            buttonImage.rotation = 0
+                        }
                     }
-                }
 
-                onAnimateImageChanged: {
-                    if (animateImage) {
-                        opacityAnimation.running = true
-                    } else {
-                        opacityAnimation.running = false
-                        button.opacity = 1
+                    onAnimateImageChanged: {
+                        if (animateImage) {
+                            opacityAnimation.running = true
+                        } else {
+                            opacityAnimation.running = false
+                            buttonImage.opacity = 1
+                        }
                     }
-                }
-
-                Item {
-                    width:      1
-                    height:     _buttonSpacing
-                    visible:    index == 0 ? _showOptionalElements : true
-                }
-
-                FocusScope {
-                    id:             scope
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    height:         width * 0.8
 
                     Rectangle {
-                        anchors.fill:   parent
-                        color:          checked ? _repeaterPal.buttonHighlight : _repeaterPal.button
+                        id:             buttonRect
+                        anchors.left:   parent.left
+                        anchors.right:  parent.right
+                        height:         buttonColumn.height
+                        color:          _showHighlight ? _repeaterPal.buttonHighlight : _repeaterPal.window
 
-                        QGCColoredImage {
-                            id:                 button
-                            height:             parent.height
-                            width:              height
-                            anchors.centerIn:   parent
-                            source:             _source
-                            sourceSize.height:  height
-                            fillMode:           Image.PreserveAspectFit
-                            mipmap:             true
-                            smooth:             true
-                            color:              checked ? _repeaterPal.buttonHighlightText : _repeaterPal.buttonText
+                        Column {
+                            id:             buttonColumn
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            spacing:        -buttonImage.height / 8
 
-                            RotationAnimation on rotation {
-                                id:             imageRotation
-                                loops:          Animation.Infinite
-                                from:           0
-                                to:             360
-                                duration:       500
-                                running:        false
+                            QGCColoredImage {
+                                id:             buttonImage
+                                anchors.left:   parent.left
+                                anchors.right:  parent.right
+                                height:         width * 0.8
+                                //anchors.centerIn:   parent
+                                source:             _source
+                                sourceSize.height:  height
+                                fillMode:           Image.PreserveAspectFit
+                                mipmap:             true
+                                smooth:             true
+                                color:              _showHighlight ? _repeaterPal.buttonHighlightText : _repeaterPal.text
+
+                                RotationAnimation on rotation {
+                                    id:             imageRotation
+                                    loops:          Animation.Infinite
+                                    from:           0
+                                    to:             360
+                                    duration:       500
+                                    running:        false
+                                }
+
+                                NumberAnimation on opacity {
+                                    id:         opacityAnimation
+                                    running:    false
+                                    from:       0
+                                    to:         1.0
+                                    loops:      Animation.Infinite
+                                    duration:   2000
+                                }
                             }
 
-                            NumberAnimation on opacity {
-                                id:         opacityAnimation
-                                running:    false
-                                from:       0
-                                to:         1.0
-                                loops:      Animation.Infinite
-                                duration:   2000
+                            QGCLabel {
+                                id:                         buttonLabel
+                                anchors.horizontalCenter:   parent.horizontalCenter
+                                font.pointSize:             ScreenTools.smallFontPointSize
+                                text:                       modelData.name
+                                color:                      _showHighlight ? _repeaterPal.buttonHighlightText : _repeaterPal.text
+                                enabled:                    _buttonEnabled
                             }
-                        }
+                        }  // Column
 
                         QGCMouseArea {
-                            // Size of mouse area is expanded to make touch easier
-                            anchors.leftMargin:     -buttonStripColumn.anchors.margins
-                            anchors.rightMargin:    -buttonStripColumn.anchors.margins
-                            anchors.left:           parent.left
-                            anchors.right:          parent.right
-                            anchors.top:            parent.top
-                            height:                 parent.height + (_showOptionalElements? buttonLabel.height + buttonColumn.spacing : 0)
-                            visible:                _buttonEnabled
-                            preventStealing:        true
+                            anchors.fill:       parent
+                            visible:            _buttonEnabled
+                            hoverEnabled:       true
+                            preventStealing:    true
+
+                            onContainsMouseChanged: _hovered = containsMouse
+                            onContainsPressChanged: _hovered = containsPress
 
                             onClicked: {
                                 scope.focus = true
@@ -205,23 +215,8 @@ Rectangle {
                                 }
                             }
                         }
-                    }
-                }
-
-                Item {
-                    width:      1
-                    height:     ScreenTools.defaultFontPixelHeight * 0.25
-                    visible:    _showOptionalElements
-                }
-
-                QGCLabel {
-                    id:                         buttonLabel
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    font.pointSize:             ScreenTools.smallFontPointSize
-                    text:                       modelData.name
-                    visible:                    _showOptionalElements
-                    enabled:                    _buttonEnabled
-                }
+                    } // Rectangle
+                } // FocusScope
             }
         }
     }

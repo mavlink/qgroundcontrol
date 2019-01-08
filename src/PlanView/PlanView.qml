@@ -760,14 +760,6 @@ QGCView {
                                 anchors.left:           parent.left
                                 anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
                                 readonly property real _buttonRadius: ScreenTools.defaultFontPixelHeight * 0.75
-                                QGCColoredImage {
-                                    width:                  height
-                                    height:                 ScreenTools.defaultFontPixelWidth * 2.5
-                                    sourceSize.height:      height
-                                    source:                 "qrc:/res/waypoint.svg"
-                                    color:                  qgcPal.text
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
                                 QGCLabel {
                                     text:           qsTr("Plan")
                                     color:          qgcPal.text
@@ -831,7 +823,7 @@ QGCView {
                 QGCListView {
                     id:             missionItemEditorListView
                     anchors.fill:   parent
-                    spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+                    spacing:        ScreenTools.defaultFontPixelHeight / 4
                     orientation:    ListView.Vertical
                     model:          _missionController.visualItems
                     cacheBuffer:    Math.max(height * 2, 0)
@@ -865,9 +857,9 @@ QGCView {
             GeoFenceEditor {
                 anchors.top:            rightControls.bottom
                 anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.5
+                anchors.bottom:         parent.bottom
                 anchors.left:           parent.left
                 anchors.right:          parent.right
-                availableHeight:        ScreenTools.availableHeight
                 myGeoFenceController:   _geoFenceController
                 flightMap:              editorMap
                 visible:                _editingLayer == _layerGeoFence

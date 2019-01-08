@@ -480,15 +480,17 @@ void
 QGCCameraControl::setZoomLevel(qreal level)
 {
     qCDebug(CameraControlLog) << "setZoomLevel()" << level;
-    //-- Limit
-    level = std::min(std::max(level, 0.0), 100.0);
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_SET_CAMERA_ZOOM,                // Command id
-            false,                                  // ShowError
-            ZOOM_TYPE_RANGE,                        // Zoom type
-            static_cast<float>(level));             // Level
+    if(hasZoom()) {
+        //-- Limit
+        level = std::min(std::max(level, 0.0), 100.0);
+        if(_vehicle) {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_SET_CAMERA_ZOOM,                // Command id
+                false,                                  // ShowError
+                ZOOM_TYPE_RANGE,                        // Zoom type
+                static_cast<float>(level));             // Level
+        }
     }
 }
 
@@ -497,15 +499,17 @@ void
 QGCCameraControl::setFocusLevel(qreal level)
 {
     qCDebug(CameraControlLog) << "setFocusLevel()" << level;
-    //-- Limit
-    level = std::min(std::max(level, 0.0), 100.0);
-    if(_vehicle) {
-        _vehicle->sendMavCommand(
-            _compID,                                // Target component
-            MAV_CMD_SET_CAMERA_FOCUS,               // Command id
-            false,                                  // ShowError
-            FOCUS_TYPE_RANGE,                       // Focus type
-            static_cast<float>(level));             // Level
+    if(hasFocus()) {
+        //-- Limit
+        level = std::min(std::max(level, 0.0), 100.0);
+        if(_vehicle) {
+            _vehicle->sendMavCommand(
+                _compID,                                // Target component
+                MAV_CMD_SET_CAMERA_FOCUS,               // Command id
+                false,                                  // ShowError
+                FOCUS_TYPE_RANGE,                       // Focus type
+                static_cast<float>(level));             // Level
+        }
     }
 }
 
@@ -546,7 +550,7 @@ void
 QGCCameraControl::stepZoom(int direction)
 {
     qCDebug(CameraControlLog) << "stepZoom()" << direction;
-    if(_vehicle) {
+    if(_vehicle && hasZoom()) {
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
@@ -561,7 +565,7 @@ void
 QGCCameraControl::startZoom(int direction)
 {
     qCDebug(CameraControlLog) << "startZoom()" << direction;
-    if(_vehicle) {
+    if(_vehicle && hasZoom()) {
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
@@ -576,7 +580,7 @@ void
 QGCCameraControl::stopZoom()
 {
     qCDebug(CameraControlLog) << "stopZoom()";
-    if(_vehicle) {
+    if(_vehicle && hasZoom()) {
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id

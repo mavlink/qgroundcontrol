@@ -415,6 +415,20 @@ Set to 2 to use heading from motion capture</short_desc>
         <value code="1">Active high</value>
       </values>
     </parameter>
+    <parameter default="1500" name="TRIG_PWM_NEUTRAL" type="INT32">
+      <short_desc>PWM neutral output on trigger pin</short_desc>
+      <min>1000</min>
+      <max>2000</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="1900" name="TRIG_PWM_SHOOT" type="INT32">
+      <short_desc>PWM output to trigger shot</short_desc>
+      <min>1000</min>
+      <max>2000</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="Circuit Breaker">
     <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
