@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -29,8 +29,8 @@ const char * JoystickManager::_settingsKeyActiveJoystick =  "ActiveJoystick";
 
 JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _activeJoystick(NULL)
-    , _multiVehicleManager(NULL)
+    , _activeJoystick(nullptr)
+    , _multiVehicleManager(nullptr)
 {
 }
 
@@ -54,18 +54,17 @@ void JoystickManager::setToolbox(QGCToolbox *toolbox)
 
 void JoystickManager::init() {
 #ifdef __sdljoystick__
-    if (JoystickSDL::init()) {
-        _setActiveJoystickFromSettings();
-        connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
-        _joystickCheckTimer.start(250);
+    if (!JoystickSDL::init()) {
+        return;
     }
+    _setActiveJoystickFromSettings();
 #elif defined(__android__)
-    if (JoystickAndroid::init()) {
-        _setActiveJoystickFromSettings();
-        connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
-        _joystickCheckTimer.start(250);
+    if (!JoystickAndroid::init()) {
+        return;
     }
 #endif
+    connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
+    _joystickCheckTimer.start(1000);
 }
 
 void JoystickManager::_setActiveJoystickFromSettings(void)
@@ -81,7 +80,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
 
     if (_activeJoystick && !newMap.contains(_activeJoystick->name())) {
         qCDebug(JoystickManagerLog) << "Active joystick removed";
-        setActiveJoystick(NULL);
+        setActiveJoystick(nullptr);
     }
 
     // Check to see if our current mapping contains any joysticks that are not in the new mapping
@@ -100,7 +99,7 @@ void JoystickManager::_setActiveJoystickFromSettings(void)
     emit availableJoysticksChanged();
 
     if (!_name2JoystickMap.count()) {
-        setActiveJoystick(NULL);
+        setActiveJoystick(nullptr);
         return;
     }
 
@@ -126,7 +125,7 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
 {
     QSettings settings;
 
-    if (joystick != NULL && !_name2JoystickMap.contains(joystick->name())) {
+    if (joystick != nullptr && !_name2JoystickMap.contains(joystick->name())) {
         qCWarning(JoystickManagerLog) << "Set active not in map" << joystick->name();
         return;
     }
@@ -141,7 +140,7 @@ void JoystickManager::setActiveJoystick(Joystick* joystick)
     
     _activeJoystick = joystick;
     
-    if (_activeJoystick != NULL) {
+    if (_activeJoystick != nullptr) {
         qCDebug(JoystickManagerLog) << "Set active:" << _activeJoystick->name();
 
         settings.beginGroup(_settingsGroup);
@@ -208,8 +207,6 @@ void JoystickManager::_updateAvailableJoysticks(void)
         }
     }
 #elif defined(__android__)
-    /*
-     * TODO: Investigate Android events for Joystick hot plugging
-     */
+    _setActiveJoystickFromSettings();
 #endif
 }
