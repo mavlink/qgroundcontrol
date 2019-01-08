@@ -164,11 +164,6 @@ int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersi
     return majorVersionNumber == 3 ? 6 : Vehicle::versionNotSetValue;
 }
 
-int ArduSubFirmwarePlugin::manualControlReservedButtonCount(void)
-{
-    return 0;
-}
-
 void ArduSubFirmwarePlugin::initializeStreamRates(Vehicle* vehicle) {
     vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,     2);
     vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS, 2);

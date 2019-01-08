@@ -691,12 +691,6 @@ public:
     /// Resets link status counters
     Q_INVOKABLE void resetCounters  ();
 
-    /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
-    /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
-    /// The remainder can be assigned to Vehicle actions.
-    /// @return -1: reserver all buttons, >0 number of buttons to reserve
-    Q_PROPERTY(int manualControlReservedButtonCount READ manualControlReservedButtonCount CONSTANT)
-
     // Called when the message drop-down is invoked to clear current count
     Q_INVOKABLE void        resetMessages();
 
@@ -820,8 +814,6 @@ public:
 
     /// Provides access to the Firmware Plugin for this Vehicle
     FirmwarePlugin* firmwarePlugin(void) { return _firmwarePlugin; }
-
-    int manualControlReservedButtonCount(void);
 
     MissionManager*     missionManager(void)    { return _missionManager; }
     GeoFenceManager*    geoFenceManager(void)   { return _geoFenceManager; }

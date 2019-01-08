@@ -516,12 +516,6 @@ void Joystick::run(void)
 
             // Set up button pressed information
 
-            // We only send the buttons the firmwware has reserved
-            int reservedButtonCount = _activeVehicle->manualControlReservedButtonCount();
-            if (reservedButtonCount == -1) {
-                reservedButtonCount = _totalButtonCount;
-            }
-
             quint16 newButtonBits = 0;      // New set of button which are down
             quint16 buttonPressedBits = 0;  // Buttons pressed for manualControl signal
 
@@ -536,12 +530,9 @@ void Joystick::run(void)
                         // Button was up last time through, but is now down which indicates a button press
                         qCDebug(JoystickLog) << "button triggered" << buttonIndex;
 
-                        if (buttonIndex >= reservedButtonCount) {
-                            // Button is above firmware reserved set
-                            QString buttonAction =_rgButtonActions[buttonIndex];
-                            if (!buttonAction.isEmpty()) {
-                                _buttonAction(buttonAction);
-                            }
+                        QString buttonAction =_rgButtonActions[buttonIndex];
+                        if (!buttonAction.isEmpty()) {
+                            _buttonAction(buttonAction);
                         }
                     }
 
@@ -554,6 +545,7 @@ void Joystick::run(void)
 
             qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
 
+            // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub.
             emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
 
