@@ -32,22 +32,32 @@ Rectangle {
     property string _altModeAboveTerrainHelpText:   qsTr("Altitude above terrain\nActual AMSL altitude: %1 %2").arg(missionItem.amslAltAboveTerrain.valueString).arg(missionItem.amslAltAboveTerrain.units)
     property string _altModeTerrainFrameHelpText:   qsTr("Using terrain reference frame")
 
+    readonly property string _altModeRelativeExtraUnits:        qsTr(" (Rel)")
+    readonly property string _altModeAbsoluteExtraUnits:        qsTr(" (AMSL)")
+    readonly property string _altModeAboveTerrainExtraUnits:    qsTr(" (Abv Terr)")
+    readonly property string _altModeTerrainFrameExtraUnits:    qsTr(" (TerrF)")
+
     function updateAltitudeModeText() {
         if (missionItem.altitudeMode === _altModeRelative) {
             altModeLabel.text = qsTr("Altitude")
             altModeHelp.text = _altModeRelativeHelpText
+            altField.extraUnits = _altModeRelativeExtraUnits
         } else if (missionItem.altitudeMode === _altModeAbsolute) {
             altModeLabel.text = qsTr("Above Mean Sea Level")
             altModeHelp.text = _altModeAbsoluteHelpText
+            altField.extraUnits = _altModeAbsoluteExtraUnits
         } else if (missionItem.altitudeMode === _altModeAboveTerrain) {
             altModeLabel.text = qsTr("Above Terrain")
             altModeHelp.text = Qt.binding(function() { return _altModeAboveTerrainHelpText })
+            altField.extraUnits = _altModeAboveTerrainExtraUnits
         } else if (missionItem.altitudeMode === _altModeTerrainFrame) {
             altModeLabel.text = qsTr("Terrain Frame")
             altModeHelp.text = _altModeTerrainFrameHelpText
+            altField.extraUnits = _altModeTerrainFrameExtraUnits
         } else {
             altModeLabel.text = qsTr("Internal Error")
             altModeHelp.text = ""
+            altField.extraUnits = ""
         }
     }
 
@@ -130,11 +140,11 @@ Rectangle {
                         id:                     altHamburger
                         anchors.leftMargin:     ScreenTools.defaultFontPixelWidth / 4
                         anchors.left:           altModeLabel.right
-                        anchors.top:            altModeLabel.top
-                        width:                  height
-                        height:                 altModeLabel.height
+                        anchors.verticalCenter: altModeLabel.verticalCenter
+                        width:                  ScreenTools.defaultFontPixelHeight / 2
+                        height:                 width
                         sourceSize.height:      height
-                        source:                 "qrc:/qmlimages/Hamburger.svg"
+                        source:                 "/res/DropArrow.svg"
                         color:                  qgcPal.text
                     }
 
@@ -166,6 +176,7 @@ Rectangle {
                             checkable:      true
                             checked:        missionItem.altitudeMode === _altModeAboveTerrain
                             onTriggered:    missionItem.altitudeMode = _altModeAboveTerrain
+                            visible:        missionItem.specifiesCoordinate
                         }
 
                         MenuItem {
@@ -179,15 +190,21 @@ Rectangle {
                 }
 
                 FactTextField {
-                    fact: missionItem.altitude
+                    id:                 altField
+                    fact:               missionItem.altitude
+                    unitsLabel:         fact.units + extraUnits
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+
+                    property string extraUnits
                 }
 
                 QGCLabel {
-                    id:             altModeHelp
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    wrapMode:       Text.WordWrap
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    id:                 altModeHelp
+                    wrapMode:           Text.WordWrap
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
                 }
             }
         }
