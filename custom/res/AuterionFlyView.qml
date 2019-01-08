@@ -112,7 +112,7 @@ Item {
     Connections {
         target: QGroundControl.qgcPositionManger
         onGcsPositionChanged: {
-            if (_activeVehicle && valid && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
+            if (_activeVehicle && gcsPosition.latitude && Math.abs(gcsPosition.latitude)  > 0.001 && gcsPosition.longitude && Math.abs(gcsPosition.longitude)  > 0.001) {
                 var gcs = QtPositioning.coordinate(gcsPosition.latitude, gcsPosition.longitude)
                 var veh = _activeVehicle.coordinate;
                 _distance = QGroundControl.metersToAppSettingsDistanceUnits(gcs.distanceTo(veh));
