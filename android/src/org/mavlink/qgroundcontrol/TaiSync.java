@@ -27,17 +27,19 @@ public class TaiSync
     private static final byte PROTOCOL_CHANNEL = 0x02;
     private static final byte PROTOCOL_DATA = 0x03;
 
-    private static final int TELEM_PORT = 14550;
-    private static final int VIDEO_PORT = 5000;
+    private static final int VIDEO_PORT = 5600;
     private static final int TAISYNC_VIDEO_PORT = 8000;
     private static final int TAISYNC_SETTINGS_PORT = 8200;
     private static final int TAISYNC_TELEMETRY_PORT = 8400;
 
     private boolean running = false;
     private DatagramSocket udpSocket = null;
-    private Socket tcpSocket = null;
-    private InputStream tcpInStream = null;
-    private OutputStream tcpOutStream = null;
+    private Socket tcpSettingsSocket = null;
+    private InputStream settingsInStream = null;
+    private OutputStream settingsOutStream = null;
+    private Socket tcpTelemetrySocket = null;
+    private InputStream telemetryInStream = null;
+    private OutputStream telemetryOutStream = null;
     private ParcelFileDescriptor mParcelFileDescriptor;
     private FileInputStream mFileInputStream;
     private FileOutputStream mFileOutputStream;
@@ -79,9 +81,12 @@ public class TaiSync
 
         udpSocket = new DatagramSocket();
         final InetAddress address = InetAddress.getByName("localhost");
-        tcpSocket = new Socket(address, TAISYNC_SETTINGS_PORT);
-        tcpInStream = tcpSocket.getInputStream();
-        tcpOutStream = tcpSocket.getOutputStream();
+        tcpTelemetrySocket = new Socket(address, TAISYNC_TELEMETRY_PORT);
+        telemetryInStream = tcpTelemetrySocket.getInputStream();
+        telemetryOutStream = tcpTelemetrySocket.getOutputStream();
+        tcpSettingsSocket = new Socket(address, TAISYNC_SETTINGS_PORT);
+        settingsInStream = tcpSettingsSocket.getInputStream();
+        settingsOutStream = tcpSettingsSocket.getOutputStream();
 
         // Request connection packet
         sendTaiSyncMessage(PROTOCOL_REQUEST_CONNECTION, 0, null, 0);
@@ -131,10 +136,9 @@ public class TaiSync
                                     DatagramPacket packet = new DatagramPacket(sBytes, sBytes.length, address, VIDEO_PORT);
                                     udpSocket.send(packet);
                                 } else if (dPort == TAISYNC_SETTINGS_PORT) {
-                                    tcpOutStream.write(sBytes);
+                                    settingsOutStream.write(sBytes);
                                 } else if (dPort == TAISYNC_TELEMETRY_PORT) {
-                                    DatagramPacket packet = new DatagramPacket(sBytes, sBytes.length, address, TELEM_PORT);
-                                    udpSocket.send(packet);
+                                    telemetryOutStream.write(sBytes);
                                 }
                             }
                         }
@@ -163,9 +167,10 @@ public class TaiSync
                             }
                         }
 
-                        DatagramPacket packet = new DatagramPacket(inbuf, inbuf.length);
-                        udpSocket.receive(packet);
-                        sendTaiSyncMessage(PROTOCOL_DATA, TAISYNC_TELEMETRY_PORT, packet.getData(), packet.getLength());
+                        int bytesRead = telemetryInStream.read(inbuf, 0, inbuf.length);
+                        if (bytesRead > 0) {
+                            sendTaiSyncMessage(PROTOCOL_DATA, TAISYNC_TELEMETRY_PORT, inbuf, bytesRead);
+                        }
                     }
                 } catch (IOException e) {
                     Log.e("QGC_TaiSync", "Exception: " + e);
@@ -191,7 +196,7 @@ public class TaiSync
                             }
                         }
 
-                        int bytesRead = tcpInStream.read(inbuf, 0, inbuf.length);
+                        int bytesRead = settingsInStream.read(inbuf, 0, inbuf.length);
                         if (bytesRead > 0) {
                             sendTaiSyncMessage(PROTOCOL_DATA, TAISYNC_SETTINGS_PORT, inbuf, bytesRead);
                         }
@@ -213,6 +218,7 @@ public class TaiSync
 
         byte[] lA = new byte[4];
         int len = HEADER_SIZE + dataLen;
+        Log.i("QGC_TaiSync", "Sending to " + dataPort + " length = " + len);
         byte[] buffer = new byte[len];
 
         for (int i = 3; i >= 0; i--) {
@@ -251,8 +257,14 @@ public class TaiSync
         } catch (Exception e) {
         }
         try {
-            if (tcpSocket != null) {
-                tcpSocket.close();
+            if (tcpTelemetrySocket != null) {
+                tcpTelemetrySocket.close();
+            }
+        } catch (Exception e) {
+        }
+        try {
+            if (tcpSettingsSocket != null) {
+                tcpSettingsSocket.close();
             }
         } catch (Exception e) {
         }
@@ -263,9 +275,10 @@ public class TaiSync
         } catch (Exception e) {
         }
         udpSocket = null;
-        tcpSocket = null;
-        tcpInStream = null;
-        tcpOutStream = null;
+        tcpSettingsSocket = null;
+        tcpTelemetrySocket = null;
+        settingsInStream = null;
+        settingsOutStream = null;
         mParcelFileDescriptor = null;
     }
 }
