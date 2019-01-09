@@ -7647,7 +7647,7 @@ to takeoff is reached</short_desc>
       <max>1000</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter default="1" name="SDLOG_MISSION" type="INT32">
+    <parameter default="0" name="SDLOG_MISSION" type="INT32">
       <short_desc>Mission Log</short_desc>
       <long_desc>If enabled, a small additional "mission" log file will be written to the SD card. The log contains just those messages that are useful for tasks like generating flight statistics and geotagging. The different modes can be used to further reduce the logged data (and thus the log file size). For example, choose geotagging mode to only log data required for geotagging. Note that the normal/full log is still created, and contains all the data in the mission log (and more).</long_desc>
       <reboot_required>true</reboot_required>
