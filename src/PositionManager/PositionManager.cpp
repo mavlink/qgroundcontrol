@@ -19,6 +19,7 @@ QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
     , _defaultSource    (NULL)
     , _nmeaSource       (NULL)
     , _simulatedSource  (NULL)
+    , _landingPadSource (NULL)
 {
 
 }
@@ -39,13 +40,14 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
    }
    _simulatedSource = new SimulatedPosition();
+   _landingPadSource = qgcApp()->toolbox()->landingPadManager();
 
    // Enable this to get a simulated target on desktop
    // if (_defaultSource == nullptr) {
    //     _defaultSource = _simulatedSource;
    // }
 
-   setPositionSource(QGCPositionSource::InternalGPS);
+   setPositionSource(QGCPositionSource::LandingPad);
 }
 
 void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
@@ -114,6 +116,9 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         break;
     case QGCPositionManager::Simulated:
         _currentSource = _simulatedSource;
+        break;
+    case QGCPositionManager::LandingPad:
+        _currentSource = _landingPadSource;
         break;
     case QGCPositionManager::NmeaGPS:
         _currentSource = _nmeaSource;
