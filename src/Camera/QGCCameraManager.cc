@@ -35,6 +35,7 @@ QGCCameraManager::setCurrentCamera(int sel)
     if(sel != _currentCamera && sel >= 0 && sel < _cameras.count()) {
         _currentCamera = sel;
         emit currentCameraChanged();
+        emit streamChanged();
     }
 }
 
@@ -80,6 +81,12 @@ QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             case MAVLINK_MSG_ID_PARAM_EXT_VALUE:
                 _handleParamValue(message);
                 break;
+            case MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION:
+                _handleVideoStreamInfo(message);
+                break;
+            case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
+                _handleVideoStreamStatus(message);
+                break;
         }
     }
 }
@@ -98,6 +105,29 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
             _requestCameraInfo(message.compid);
         }
     }
+}
+
+//-----------------------------------------------------------------------------
+QGCCameraControl*
+QGCCameraManager::currentCameraInstance()
+{
+    if(_currentCamera < _cameras.count() && _cameras.count()) {
+        QGCCameraControl* pCamera = qobject_cast<QGCCameraControl*>(_cameras[_currentCamera]);
+        return pCamera;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraManager::currentStreamInstance()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        QGCVideoStreamInfo* pInfo = pCamera->currentStreamInstance();
+        return pInfo;
+    }
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -204,6 +234,30 @@ QGCCameraManager::_handleParamValue(const mavlink_message_t& message)
 
 //-----------------------------------------------------------------------------
 void
+QGCCameraManager::_handleVideoStreamInfo(const mavlink_message_t& message)
+{
+    QGCCameraControl* pCamera = _findCamera(message.compid);
+    if(pCamera) {
+        mavlink_video_stream_information_t streamInfo;
+        mavlink_msg_video_stream_information_decode(&message, &streamInfo);
+        pCamera->handleVideoInfo(&streamInfo);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_handleVideoStreamStatus(const mavlink_message_t& message)
+{
+    QGCCameraControl* pCamera = _findCamera(message.compid);
+    if(pCamera) {
+        mavlink_video_stream_status_t streamStatus;
+        mavlink_msg_video_stream_status_decode(&message, &streamStatus);
+        pCamera->handleVideoStatus(&streamStatus);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
 QGCCameraManager::_requestCameraInfo(int compID)
 {
     qCDebug(CameraManagerLog) << "_requestCameraInfo(" << compID << ")";
@@ -224,11 +278,13 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
     if(_activeJoystick) {
         disconnect(_activeJoystick, &Joystick::stepZoom,   this, &QGCCameraManager::_stepZoom);
         disconnect(_activeJoystick, &Joystick::stepCamera, this, &QGCCameraManager::_stepCamera);
+        disconnect(_activeJoystick, &Joystick::stepStream, this, &QGCCameraManager::_stepStream);
     }
     _activeJoystick = joystick;
     if(_activeJoystick) {
         connect(_activeJoystick, &Joystick::stepZoom,   this, &QGCCameraManager::_stepZoom);
         connect(_activeJoystick, &Joystick::stepCamera, this, &QGCCameraManager::_stepCamera);
+        connect(_activeJoystick, &Joystick::stepStream, this, &QGCCameraManager::_stepStream);
     }
 }
 
@@ -239,11 +295,9 @@ QGCCameraManager::_stepZoom(int direction)
     if(_lastZoomChange.elapsed() > 250) {
         _lastZoomChange.start();
         qCDebug(CameraManagerLog) << "Step Camera Zoom" << direction;
-        if(_cameras.count() && _cameras[_currentCamera]) {
-            QGCCameraControl* pCamera = qobject_cast<QGCCameraControl*>(_cameras[_currentCamera]);
-            if(pCamera) {
-                pCamera->stepZoom(direction);
-            }
+        QGCCameraControl* pCamera = currentCameraInstance();
+        if(pCamera) {
+            pCamera->stepZoom(direction);
         }
     }
 }
@@ -259,6 +313,23 @@ QGCCameraManager::_stepCamera(int direction)
         if(c < 0) c = _cameras.count() - 1;
         if(c >= _cameras.count()) c = 0;
         setCurrentCamera(c);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_stepStream(int direction)
+{
+    if(_lastCameraChange.elapsed() > 1000) {
+        _lastCameraChange.start();
+        QGCCameraControl* pCamera = currentCameraInstance();
+        if(pCamera) {
+            qCDebug(CameraManagerLog) << "Step Camera Stream" << direction;
+            int c = pCamera->currentStream() + direction;
+            if(c < 0) c = pCamera->streams()->count() - 1;
+            if(c >= pCamera->streams()->count()) c = 0;
+            pCamera->setCurrentStream(c);
+        }
     }
 }
 

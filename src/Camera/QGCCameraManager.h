@@ -27,9 +27,10 @@ public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
 
-    Q_PROPERTY(QmlObjectListModel*  cameras             READ cameras            NOTIFY camerasChanged)
-    Q_PROPERTY(QStringList          cameraLabels        READ cameraLabels       NOTIFY cameraLabelsChanged)
-    Q_PROPERTY(int                  currentCamera       READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
+    Q_PROPERTY(QmlObjectListModel*  cameras                 READ cameras            NOTIFY camerasChanged)
+    Q_PROPERTY(QStringList          cameraLabels            READ cameraLabels       NOTIFY cameraLabelsChanged)
+    Q_PROPERTY(int                  currentCamera           READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
+    Q_PROPERTY(QGCCameraControl*    currentCameraInstance   READ currentCameraInstance                          NOTIFY currentCameraChanged)
 
     //-- Return a list of cameras provided by this vehicle
     virtual QmlObjectListModel* cameras             () { return &_cameras; }
@@ -37,13 +38,17 @@ public:
     virtual QStringList          cameraLabels       () { return _cameraLabels; }
     //-- Current selected camera
     virtual int                 currentCamera       () { return _currentCamera; }
+    virtual QGCCameraControl*   currentCameraInstance();
     //-- Set current camera
     virtual void                setCurrentCamera    (int sel);
+    //-- Current stream
+    virtual QGCVideoStreamInfo* currentStreamInstance();
 
 signals:
     void    camerasChanged          ();
     void    cameraLabelsChanged     ();
     void    currentCameraChanged    ();
+    void    streamChanged           ();
 
 protected slots:
     virtual void    _vehicleReady           (bool ready);
@@ -51,6 +56,7 @@ protected slots:
     virtual void    _activeJoystickChanged  (Joystick* joystick);
     virtual void    _stepZoom               (int direction);
     virtual void    _stepCamera             (int direction);
+    virtual void    _stepStream             (int direction);
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);
@@ -62,6 +68,8 @@ protected:
     virtual void    _handleParamAck         (const mavlink_message_t& message);
     virtual void    _handleParamValue       (const mavlink_message_t& message);
     virtual void    _handleCaptureStatus    (const mavlink_message_t& message);
+    virtual void    _handleVideoStreamInfo  (const mavlink_message_t& message);
+    virtual void    _handleVideoStreamStatus(const mavlink_message_t& message);
 
 protected:
     Vehicle*            _vehicle            = nullptr;

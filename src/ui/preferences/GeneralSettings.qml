@@ -47,7 +47,6 @@ QGCView {
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
-    property bool   _isAutoStream:              QGroundControl.videoManager.isAutoStream
     property bool   _isUDP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udpVideoSource
     property bool   _isRTSP:                    _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
     property bool   _isTCP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
@@ -691,7 +690,7 @@ QGCView {
                     QGCLabel {
                         id:         videoSectionLabel
                         text:       qsTr("Video")
-                        visible:    QGroundControl.settingsManager.videoSettings.visible
+                        visible:    QGroundControl.settingsManager.videoSettings.visible && !QGroundControl.videoManager.autoStreamConfigured
                     }
                     Rectangle {
                         Layout.preferredWidth:  videoGrid.width + (_margins * 2)
@@ -751,12 +750,12 @@ QGCView {
                             }
                             QGCLabel {
                                 text:                   qsTr("Aspect Ratio")
-                                visible:                !_isAutoStream && _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.aspectRatio
-                                visible:                !_isAutoStream && _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
+                                visible:                _isGst && QGroundControl.settingsManager.videoSettings.aspectRatio.visible
                             }
 
                             QGCLabel {
@@ -776,10 +775,10 @@ QGCView {
                     QGCLabel {
                         id:                             videoRecSectionLabel
                         text:                           qsTr("Video Recording")
-                        visible:                        QGroundControl.settingsManager.videoSettings.visible && _isGst
+                        visible:                        (QGroundControl.settingsManager.videoSettings.visible && _isGst) || QGroundControl.videoManager.autoStreamConfigured
                     }
                     Rectangle {
-                        Layout.preferredWidth:          videoRecCol.width + (_margins * 2)
+                        Layout.preferredWidth:          videoRecCol.width  + (_margins * 2)
                         Layout.preferredHeight:         videoRecCol.height + (_margins * 2)
                         Layout.fillWidth:               true
                         color:                          qgcPal.windowShade
