@@ -10,6 +10,7 @@
 #include "SettingsManager.h"
 #include "VideoManager.h"
 #include "QGCMapEngine.h"
+#include "QGCCameraManager.h"
 
 #include <QDir>
 #include <QStandardPaths>
@@ -153,21 +154,6 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     : FactGroup(0, parent)
     , _vehicle(vehicle)
     , _compID(compID)
-    , _version(0)
-    , _cached(false)
-    , _paramComplete(false)
-    , _storageFree(0)
-    , _storageTotal(0)
-    , _netManager(nullptr)
-    , _cameraMode(CAM_MODE_UNDEFINED)
-    , _photoMode(PHOTO_CAPTURE_SINGLE)
-    , _photoLapse(1.0)
-    , _photoLapseCount(0)
-    , _video_status(VIDEO_CAPTURE_STATUS_UNDEFINED)
-    , _photo_status(PHOTO_CAPTURE_STATUS_UNDEFINED)
-    , _storageInfoRetries(0)
-    , _captureInfoRetries(0)
-    , _resetting(false)
 {
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     memcpy(&_info, info, sizeof(mavlink_camera_information_t));
@@ -190,6 +176,16 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
     _photoMode  = static_cast<PhotoMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
     _photoLapse = settings.value(kPhotoLapse, 1.0).toDouble();
     _photoLapseCount = settings.value(kPhotoLapseCount, 0).toInt();
+    //-- Check for video streaming
+    if(_info.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM) {
+        connect(&_streamInfoTimer,   &QTimer::timeout, this, &QGCCameraControl::_streamTimeout);
+        _streamInfoTimer.setSingleShot(false);
+        connect(&_streamStatusTimer, &QTimer::timeout, this, &QGCCameraControl::_streamStatusTimeout);
+        _streamStatusTimer.setSingleShot(true);
+        //-- Request all streams
+        _requestStreamInfo(0);
+        _streamInfoTimer.start(2000);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -270,7 +266,11 @@ QGCCameraControl::setCameraMode(CameraMode mode)
             setPhotoMode();
         } else {
             qCDebug(CameraControlLog) << "setCameraMode() Invalid mode:" << mode;
-            return;
+        }
+        //-- Update stream status
+        QGCVideoStreamInfo* pInfo = currentStreamInstance();
+        if(pInfo) {
+            _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
         }
     }
 }
@@ -1386,7 +1386,7 @@ QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 void
 QGCCameraControl::handleStorageInfo(const mavlink_storage_information_t& st)
 {
-    qCDebug(CameraControlLog) << "_handleStorageInfo:" << st.available_capacity << st.status << st.storage_count << st.storage_id << st.total_capacity << st.used_capacity;
+    qCDebug(CameraControlLog) << "handleStorageInfo:" << st.available_capacity << st.status << st.storage_count << st.storage_id << st.total_capacity << st.used_capacity;
     uint32_t t = static_cast<uint32_t>(st.total_capacity);
     if(_storageTotal != t) {
         _storageTotal = t;
@@ -1431,6 +1431,201 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
         QDir().mkpath(photoPath);
         photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
         qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
+{
+    qCDebug(CameraControlLog) << "handleVideoInfo:" << vi->stream_id << vi->uri;
+    _expectedCount = vi->count;
+    if(!_findStream(vi->stream_id)) {
+        QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(this, vi);
+        QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);
+        _streams.append(pStream);
+        emit streamsChanged();
+    }
+    //-- Check for missing count
+    if(_streams.count() < _expectedCount) {
+        _streamInfoTimer.start(1000);
+    } else {
+        //-- Done
+        _streamInfoTimer.stop();
+        emit autoStreamChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
+{
+    _streamStatusTimer.stop();
+    qCDebug(CameraControlLog) << "handleVideoStatus:" << vs->stream_id;
+    QGCVideoStreamInfo* pInfo = _findStream(vs->stream_id);
+    if(pInfo) {
+        if(pInfo->update(vs)) {
+            emit _vehicle->dynamicCameras()->streamChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setCurrentStream(int stream)
+{
+    if(stream != _currentStream && stream >= 0 && stream < _streams.count()) {
+        if(_currentStream != stream) {
+            QGCVideoStreamInfo* pInfo = currentStreamInstance();
+            if(pInfo) {
+                //-- Stop current stream
+                _vehicle->sendMavCommand(
+                    _compID,                                // Target component
+                    MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+                    false,                                  // ShowError
+                    pInfo->streamID());                     // Stream ID
+            }
+            _currentStream = stream;
+            pInfo = currentStreamInstance();
+            if(pInfo) {
+                //-- Start new stream
+                _vehicle->sendMavCommand(
+                    _compID,                                // Target component
+                    MAV_CMD_VIDEO_START_STREAMING,          // Command id
+                    false,                                  // ShowError
+                    pInfo->streamID());                     // Stream ID
+                //-- Update stream status
+                _requestStreamStatus(static_cast<uint8_t>(pInfo->streamID()));
+            }
+            emit currentStreamChanged();
+            emit _vehicle->dynamicCameras()->streamChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::stopStream()
+{
+    QGCVideoStreamInfo* pInfo = currentStreamInstance();
+    if(pInfo) {
+        //-- Stop current stream
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
+            false,                                  // ShowError
+            pInfo->streamID());                     // Stream ID
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::resumeStream()
+{
+    QGCVideoStreamInfo* pInfo = currentStreamInstance();
+    if(pInfo) {
+        //-- Start new stream
+        _vehicle->sendMavCommand(
+            _compID,                                // Target component
+            MAV_CMD_VIDEO_START_STREAMING,          // Command id
+            false,                                  // ShowError
+            pInfo->streamID());                     // Stream ID
+    }
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCCameraControl::autoStream()
+{
+    if(hasVideoStream()) {
+        return _streams.count() > 0;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraControl::currentStreamInstance()
+{
+    if(_currentStream < _streams.count() && _streams.count()) {
+        QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[_currentStream]);
+        return pStream;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_requestStreamInfo(uint8_t streamID)
+{
+    qCDebug(CameraControlLog) << "Requesting video stream info for:" << streamID;
+    _vehicle->sendMavCommand(
+        _compID,                                            // Target component
+        MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,           // Command id
+        false,                                              // ShowError
+        streamID);                                          // Stream ID
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_requestStreamStatus(uint8_t streamID)
+{
+    qCDebug(CameraControlLog) << "Requesting video stream status for:" << streamID;
+    _vehicle->sendMavCommand(
+        _compID,                                            // Target component
+        MAV_CMD_REQUEST_VIDEO_STREAM_STATUS,                // Command id
+        false,                                              // ShowError
+        streamID);                                          // Stream ID
+    _streamStatusTimer.start(1000);                         // Wait up to a second for it
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraControl::_findStream(uint8_t id)
+{
+    for(int i = 0; i < _streams.count(); i++) {
+        if(_streams[i]) {
+            QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[i]);
+            if(pStream) {
+                if(pStream->streamID() == id) {
+                    return pStream;
+                }
+            } else {
+                qCritical() << "Null QGCVideoStreamInfo instance";
+            }
+        }
+    }
+    qWarning() << "Stream id not found:" << id;
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_streamTimeout()
+{
+    _requestCount++;
+    int count = _expectedCount * 3;
+    if(_requestCount > count) {
+        qCWarning(CameraControlLog) << "Giving up requesting video stream info";
+        _streamInfoTimer.stop();
+        return;
+    }
+    for(uint8_t i = 0; i < _expectedCount; i++) {
+        //-- Stream ID starts at 1
+        if(!_findStream(i+1)) {
+            _requestStreamInfo(i+1);
+            return;
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::_streamStatusTimeout()
+{
+    QGCVideoStreamInfo* pStream = currentStreamInstance();
+    if(pStream) {
+        _requestStreamStatus(static_cast<uint8_t>(pStream->streamID()));
     }
 }
 
@@ -1740,4 +1935,60 @@ Fact*
 QGCCameraControl::wb()
 {
     return (_paramComplete && _activeSettings.contains(kCAM_WBMODE)) ? getFact(kCAM_WBMODE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo::QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t *si)
+    : QObject(parent)
+{
+    memcpy(&_streamInfo, si, sizeof(mavlink_video_stream_information_t));
+}
+
+//-----------------------------------------------------------------------------
+qreal
+QGCVideoStreamInfo::aspectRatio()
+{
+    if(_streamInfo.resolution_h && _streamInfo.resolution_v) {
+        return static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
+    }
+    return 1.0;
+}
+
+//-----------------------------------------------------------------------------
+bool
+QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
+{
+    bool changed = false;
+    if(_streamInfo.hfov != vs->hfov) {
+        changed = true;
+        _streamInfo.hfov = vs->hfov;
+    }
+    if(_streamInfo.flags != vs->flags) {
+        changed = true;
+        _streamInfo.flags = vs->flags;
+    }
+    if(_streamInfo.bitrate != vs->bitrate) {
+        changed = true;
+        _streamInfo.bitrate = vs->bitrate;
+    }
+    if(_streamInfo.rotation != vs->rotation) {
+        changed = true;
+        _streamInfo.rotation = vs->rotation;
+    }
+    if(_streamInfo.framerate != vs->framerate) {
+        changed = true;
+        _streamInfo.framerate = vs->framerate;
+    }
+    if(_streamInfo.resolution_h != vs->resolution_h) {
+        changed = true;
+        _streamInfo.resolution_h = vs->resolution_h;
+    }
+    if(_streamInfo.resolution_v != vs->resolution_v) {
+        changed = true;
+        _streamInfo.resolution_v = vs->resolution_v;
+    }
+    if(changed) {
+        emit infoChanged();
+    }
+    return changed;
 }
