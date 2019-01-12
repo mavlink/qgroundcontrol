@@ -4,6 +4,7 @@
         <file alias="QGCLogoWhite">res/images/toolbar_logo.svg</file>
     </qresource>
     <qresource prefix="/auterion">
+        <file alias="AuterionArmedIndicator.qml">res/AuterionArmedIndicator.qml</file>
         <file alias="AuterionBatteryIndicator.qml">res/AuterionBatteryIndicator.qml</file>
         <file alias="AuterionCameraControl.qml">res/AuterionCameraControl.qml</file>
         <file alias="AuterionFlyView.qml">res/AuterionFlyView.qml</file>
@@ -19,6 +20,7 @@
         <file alias="label_left_edge.svg">res/images/label_left_edge.svg</file>
         <file alias="label_right_edge.svg">res/images/label_right_edge.svg</file>
         <file alias="menu_battery.svg">res/images/menu_battery.svg</file>
+        <file alias="menu_dropdown.svg">res/images/menu_dropdown.svg</file>
         <file alias="menu_flight.svg">res/images/menu_flight.svg</file>
         <file alias="menu_gear.svg">res/images/menu_gear.svg</file>
         <file alias="menu_gps.svg">res/images/menu_gps.svg</file>
@@ -36,8 +38,10 @@
         <file alias="void.png">res/images/void.png</file>
     </qresource>
     <qresource prefix="/Auterion/Widgets">
+        <file alias="Auterion/Widgets/AuterionComboBox.qml">res/Auterion/Widgets/AuterionComboBox.qml</file>
         <file alias="Auterion/Widgets/AuterionFactCombo.qml">res/Auterion/Widgets/AuterionFactCombo.qml</file>
         <file alias="Auterion/Widgets/AuterionLabel.qml">res/Auterion/Widgets/AuterionLabel.qml</file>
+        <file alias="Auterion/Widgets/AuterionMenu.qml">res/Auterion/Widgets/AuterionMenu.qml</file>
         <file alias="Auterion/Widgets/AuterionSignalStrength.qml">res/Auterion/Widgets/AuterionSignalStrength.qml</file>
         <file alias="Auterion/Widgets/AuterionToolBarButton.qml">res/Auterion/Widgets/AuterionToolBarButton.qml</file>
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>

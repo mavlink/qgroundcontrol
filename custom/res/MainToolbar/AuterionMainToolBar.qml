@@ -152,9 +152,31 @@ Rectangle {
         text:                       qsTr("Waiting For Vehicle")
         level:                      0.5
         pointSize:                  ScreenTools.smallFontPointSize
+        visible:                    !_activeVehicle
         anchors.top:                parent.top
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
+    }
+
+    Row {
+        spacing:                    0
+        visible:                    _activeVehicle
+        anchors.top:                parent.top
+        anchors.bottom:             parent.bottom
+        anchors.horizontalCenter:   parent.horizontalCenter
+        AuterionMenu {
+            level:                  0.5
+            text:                   qsTr("Mode:")
+            pointSize:              ScreenTools.smallFontPointSize
+            model:                  _activeVehicle ? _activeVehicle.flightModes : [ ]
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+        }
+        Loader {
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            source:                 "/auterion/AuterionArmedIndicator.qml"
+        }
     }
 
     Row {
