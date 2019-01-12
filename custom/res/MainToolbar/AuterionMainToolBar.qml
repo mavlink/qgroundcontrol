@@ -154,13 +154,11 @@ Rectangle {
         level:                      0.5
         pointSize:                  ScreenTools.smallFontPointSize
         visible:                    !_activeVehicle
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
-        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.centerIn:           parent
     }
 
     Row {
-        spacing:                    0
+        spacing:                    ScreenTools.defaultFontPixelWidth
         visible:                    _activeVehicle
         anchors.top:                parent.top
         anchors.bottom:             parent.bottom
@@ -170,8 +168,7 @@ Rectangle {
             text:                   qsTr("Mode:")
             pointSize:              ScreenTools.smallFontPointSize
             model:                  _activeVehicle ? _activeVehicle.flightModes : [ ]
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
+            anchors.verticalCenter: parent.verticalCenter
         }
         Loader {
             anchors.top:            parent.top

@@ -17,57 +17,31 @@ import QGroundControl.Controls              1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 
+import Auterion.Widgets             1.0
+
 Item {
-    id:     _root
-    width:  labelBackground.width
-    clip:   true
+    id:         _root
+    width:      background.width
+    height:     background.height
 
     property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
     property bool _armed:           _activeVehicle ? _activeVehicle.armed : false
 
-    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight * 0.5
-
     QGCPalette { id: qgcPal }
 
-    Row {
-        id:                         labelBackground
-        spacing:                    0
+    AuterionTextBackground {
+        id:                         background
+        contentWidth:               labelRow.width
+        contentHeight:              labelText.height * 2
         opacity:                    0.5
-        anchors.top:                parent.top
-        anchors.topMargin:          _topBottomMargins
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       _topBottomMargins
-        Image {
-            id:                     edge
-            source:                 "/auterion/img/label_left_edge.svg"
-            width:                  height
-            antialiasing:           true
-            sourceSize.height:      height
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            fillMode:               Image.PreserveAspectFit
-        }
-        Rectangle {
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            width:                  labelRow.width * 1.15
-            color:                  "#000"
-        }
-        Image {
-            source:                 "/auterion/img/label_right_edge.svg"
-            width:                  height
-            antialiasing:           true
-            sourceSize.height:      height
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            fillMode:               Image.PreserveAspectFit
-        }
+        anchors.verticalCenter:     parent.verticalCenter
     }
     Row {
         id:                         labelRow
         spacing:                    ScreenTools.defaultFontPixelWidth
         anchors.centerIn:           parent
         QGCLabel {
+            id:                     labelText
             text:                   _armed ? qsTr("Armed") : qsTr("Disarmed")
             color:                  "#FFF"
             font.pointSize:         ScreenTools.smallFontPointSize

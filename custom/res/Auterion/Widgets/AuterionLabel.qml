@@ -8,60 +8,44 @@
  ****************************************************************************/
 
 
-import QtQuick          2.11
-import QtQuick.Controls 1.2
+import QtQuick                      2.11
+import QtQuick.Controls             1.2
 
 import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
+import Auterion.Widgets             1.0
+
 Item {
-    id:     _root
-    width:  labelBackground.width
-    clip:   true
-
-    property alias      pointSize:  labelText.font.pointSize
+    id:                 _root
+    width:              background.width
+    height:             background.height
+    property real       pointSize:  ScreenTools.defaultFontPointSize
     property alias      text:       labelText.text
-    property real       level:      1
-
-    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight * 0.5
-
-    Row {
-        id:                         labelBackground
-        spacing:                    0
-        opacity:                    _root.level
-        anchors.top:                parent.top
-        anchors.topMargin:          _topBottomMargins
-        anchors.bottom:             parent.bottom
-        anchors.bottomMargin:       _topBottomMargins
-        Image {
-            source:                 "/auterion/img/label_left_edge.svg"
-            width:                  height
-            antialiasing:           true
-            sourceSize.height:      height
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            fillMode:               Image.PreserveAspectFit
-        }
-        Rectangle {
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            width:                  labelText.width * 1.15
-            color:                  "#000000"
-        }
-        Image {
-            source:                 "/auterion/img/label_right_edge.svg"
-            width:                  height
-            antialiasing:           true
-            sourceSize.height:      height
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            fillMode:               Image.PreserveAspectFit
-        }
+    property color      color:      "#FFF"
+    property real       level:      0.5
+    property string     title:      ""
+    AuterionTextBackground {
+        id:                         background
+        contentWidth:               labelRow.width
+        contentHeight:              labelText.height * 2
+        opacity:                    parent.level
     }
-    QGCLabel {
-        id:                         labelText
-        color:                      "#FFFFFF"
-        anchors.centerIn:           parent
+    Row {
+        id:                         labelRow
+        spacing:                    _root.title !== "" ? ScreenTools.defaultFontPixelWidth : 0
+        anchors.centerIn:           background
+        QGCLabel {
+            id:                     labelTitle
+            color:                  "#AAAAAA"
+            text:                   _root.title
+            visible:                _root.title !== ""
+            font.pointSize:         _root.pointSize
+        }
+        QGCLabel {
+            id:                     labelText
+            color:                  _root.color
+            font.pointSize:         _root.pointSize
+        }
     }
 }

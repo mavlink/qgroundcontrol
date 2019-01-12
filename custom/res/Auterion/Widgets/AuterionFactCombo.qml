@@ -1,49 +1,65 @@
 /****************************************************************************
  *
- * (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
  ****************************************************************************/
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
 
-import QGroundControl.Controls 1.0
-import QGroundControl.FactSystem 1.0
-import QGroundControl.Palette 1.0
-import QGroundControl.ScreenTools 1.0
 
-QGCComboBox {
-    property Fact fact: Fact { }
-    property bool indexModel: true  ///< true: model must be specifed, selected index is fact value, false: use enum meta data
-    QGCPalette { id: _qgcPal }
-    model: fact ? fact.enumStrings : []
-    currentIndex: fact ? (indexModel ? fact.value : fact.enumIndex) : 0
-    onActivated: {
-        if (indexModel) {
-            fact.value = index
-        } else {
-            fact.value = fact.enumValues[index]
-        }
+import QtQuick                      2.11
+import QtQuick.Controls             1.2
+import QtQuick.Controls.Styles      1.4
+
+import QGroundControl.FactSystem    1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
+
+import Auterion.Widgets             1.0
+
+Item {
+    id:                 _root
+    width:              background.width
+    height:             background.height
+
+    property Fact       fact:           Fact { }
+    property bool       indexModel:     true  ///< true: model must be specifed, selected index is fact value, false: use enum meta data
+    property real       pointSize:      ScreenTools.smallFontPointSize
+    property string     text:           ""
+    property int        currentIndex:   comboBox.currentIndex
+    property real       level:          0.5
+
+    AuterionTextBackground {
+        id:                         background
+        contentWidth:               menuRow.width
+        contentHeight:              labelText.height * 2
+        opacity:                    parent.level
     }
-    style: ButtonStyle {
-        background: Rectangle {
-            implicitWidth:  ScreenTools.implicitComboBoxWidth
-            implicitHeight: ScreenTools.implicitComboBoxHeight
-            color:          Qt.rgba(0,0,0,0)
+    Row {
+        id:                         menuRow
+        spacing:                    _root.text !== "" ? ScreenTools.defaultFontPixelWidth : 0
+        anchors.centerIn:           parent
+        QGCLabel {
+            id:                     labelText
+            color:                  "#AAAAAA"
+            text:                   _root.text
+            visible:                _root.text !== ""
+            font.pointSize:         _root.pointSize
+            anchors.verticalCenter: parent.verticalCenter
         }
-        label: Item {
-            implicitWidth:  text.implicitWidth
-            implicitHeight: text.implicitHeight
-            baselineOffset: text.y + text.baselineOffset
-            QGCLabel {
-                id:                     text
-                horizontalAlignment:    Text.AlignHCenter
-                anchors.verticalCenter: parent.verticalCenter
-                text:                   control.currentText
-                color:                  control._qgcPal.buttonText
+        AuterionComboBox {
+            id:                     comboBox
+            model:                  _root.fact ? _root.fact.enumStrings : []
+            centeredLabel:          true
+            pointSize:              _root.pointSize
+            currentIndex:           _root.fact ? (_root.indexModel ? _root.fact.value : _root.fact.enumIndex) : 0
+            onActivated: {
+                if (_root.indexModel) {
+                    _root.fact.value = index
+                } else {
+                    _root.fact.value = _root.fact.enumValues[index]
+                }
             }
         }
     }

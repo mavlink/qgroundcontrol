@@ -159,105 +159,87 @@ Item {
     }
 
     //-- Camera Status
-    Rectangle {
-        id:             camStatus
-        width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
-        height:         camRow.height * 1.25
-        color:          "#000"
+    Row {
+        spacing:        ScreenTools.defaultFontPixelWidth
         visible:        !_mainIsMap && _cameraPresent && _camera.paramComplete
-        radius:         3
-        border.width:   1
-        border.color:   _indicatorsColor
+        height:         ScreenTools.defaultFontPixelHeight
         anchors.top:    parent.top
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter: parent.horizontalCenter
-        Row {
-            id: camRow
-            spacing: ScreenTools.defaultFontPixelWidth
-            anchors.centerIn: parent
-            //-- AE
-            QGCLabel { text: qsTr("AE:"); anchors.verticalCenter: parent.verticalCenter; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                indexModel: false
-                fact:       _expModeFact
-                enabled:    _cameraIdle
+        //-- AE
+        AuterionFactCombo {
+            text:       qsTr("AE:")
+            visible:    _expModeFact
+            indexModel: false
+            fact:       _expModeFact
+            enabled:    _cameraIdle
+        }
+        //-- EV
+        AuterionFactCombo {
+            text:       qsTr("EV:")
+            visible:    _evFact;
+            indexModel: false
+            fact:       _evFact
+            enabled:    _cameraIdle
+        }
+        //-- ISO
+        AuterionFactCombo {
+            text:       qsTr("ISO:")
+            visible:    _isoFact;
+            indexModel: false
+            fact:       _isoFact
+            enabled:    _cameraIdle
+        }
+        //-- Shutter Speed
+        AuterionFactCombo {
+            text:       qsTr("Shutter:")
+            visible:    _shutterFact;
+            indexModel: false
+            fact:       _shutterFact
+            enabled:    _cameraIdle
+        }
+        //-- Aperture
+        AuterionFactCombo {
+            text:       qsTr("Aperture:")
+            visible:    _apertureFact;
+            indexModel: false
+            fact:       _apertureFact
+            enabled:    _cameraIdle
+        }
+        //-- WB
+        AuterionFactCombo {
+            text:       qsTr("WB:")
+            indexModel: false
+            fact:       _wbFact
+            enabled:    _cameraIdle
+            visible:    _wbFact
+        }
+        //-- Metering
+        AuterionFactCombo {
+            text:       qsTr("Metering:")
+            visible:    _meteringFact;
+            indexModel: false
+            fact:       _meteringFact
+            enabled:    _cameraIdle
+        }
+        //-- Video Res
+        AuterionFactCombo {
+            visible:    _cameraVideoMode && _videoResFact;
+            indexModel: false
+            enabled:    !_recordingVideo
+            fact:       _videoResFact
+        }
+        //-- SD Card
+        AuterionLabel {
+            title:      qsTr("SD:")
+            level:      0.5
+            pointSize:  ScreenTools.smallFontPointSize
+            color:      (_noSdCard || _fullSD) ? qgcPal.colorOrange : "#FFF"
+            text: {
+                if(_noSdCard) return qsTr("NONE")
+                if(_fullSD) return qsTr("FULL")
+                return _camera ? _camera.storageFreeStr : ""
             }
-            //-- EV
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _evFact; }
-            QGCLabel { text: qsTr("EV:"); visible: _evFact; anchors.verticalCenter: parent.verticalCenter; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                visible:    _evFact;
-                indexModel: false
-                fact:       _evFact
-                enabled:    _cameraIdle
-            }
-            //-- ISO
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _isoFact; }
-            QGCLabel { text: qsTr("ISO:"); visible: _isoFact; anchors.verticalCenter: parent.verticalCenter; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                visible:    _isoFact;
-                indexModel: false
-                fact:       _isoFact
-                enabled:    _cameraIdle
-            }
-            //-- Shutter Speed
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: _shutterFact; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel {text: qsTr("Shutter:"); visible: _shutterFact; anchors.verticalCenter: parent.verticalCenter; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                visible:    _shutterFact;
-                indexModel: false
-                fact:       _shutterFact
-                enabled:    _cameraIdle
-            }
-            //-- Aperture
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; visible: _apertureFact; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel {text: qsTr("Aperture:"); visible: _apertureFact; anchors.verticalCenter: parent.verticalCenter; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                visible:    _apertureFact;
-                indexModel: false
-                fact:       _apertureFact
-                enabled:    _cameraIdle
-            }
-            //-- WB
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _wbFact; }
-            QGCLabel { text: qsTr("WB:"); anchors.verticalCenter: parent.verticalCenter; visible: _wbFact; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                indexModel: false
-                fact:       _wbFact
-                enabled:    _cameraIdle
-                visible:    _wbFact
-            }
-            //-- Metering
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _meteringFact; }
-            QGCLabel { text: qsTr("Metering:"); anchors.verticalCenter: parent.verticalCenter; visible: _meteringFact; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                visible:    _meteringFact;
-                indexModel: false
-                fact:       _meteringFact
-                enabled:    _cameraIdle
-            }
-            //-- Video Res
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; visible: _cameraVideoMode && _videoResFact; }
-            AuterionFactCombo {
-                anchors.verticalCenter: parent.verticalCenter
-                visible:    _cameraVideoMode && _videoResFact;
-                indexModel: false
-                enabled:    !_recordingVideo
-                fact:       _videoResFact
-            }
-            //-- SD Card
-            Rectangle { width: 1; height: camRow.height * 0.75; color: _sepColor; anchors.verticalCenter: parent.verticalCenter; }
-            QGCLabel { text: qsTr("SD:"); anchors.verticalCenter: parent.verticalCenter;}
-            QGCLabel { text: _camera ? _camera.storageFreeStr : ""; anchors.verticalCenter: parent.verticalCenter; visible: !_noSdCard && !_fullSD}
-            QGCLabel { text: qsTr("NONE"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _noSdCard}
-            QGCLabel { text: qsTr("FULL"); color: qgcPal.colorOrange; anchors.verticalCenter: parent.verticalCenter; visible: _fullSD}
         }
     }
 
@@ -277,7 +259,7 @@ Item {
         id:                     vehicleStatusEdge
         source:                 "/auterion/img/label_left_edge.svg"
         height:                 vehicleStatus.height
-        width:                  height
+        width:                  height * 0.5
         antialiasing:           true
         sourceSize.height:      height
         anchors.top:            vehicleStatus.top
@@ -308,7 +290,6 @@ Item {
         id:                     vehicleStatus
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
         height:                 vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
-        radius:                 ScreenTools.defaultFontPixelWidth * 0.5
         color:                  Qt.rgba(0,0,0,0.5)
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
@@ -325,7 +306,7 @@ Item {
         rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.25
         columns:                5
         anchors.verticalCenter: vehicleStatus.verticalCenter
-        x:                      vehicleStatusEdge.x + (vehicleStatus.width * 0.275)
+        x:                      vehicleStatusEdge.x + vehicleStatusEdge.width
         visible:                vehicleStatus.visible
         //-- Odometer
         QGCLabel {
@@ -450,7 +431,7 @@ Item {
             Layout.columnSpan: 4
         }
         Item {
-            width:          _indicatorDiameter * 0.5
+            width:          _indicatorDiameter * 0.4
             height:         1
         }
     }

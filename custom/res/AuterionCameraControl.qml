@@ -45,7 +45,7 @@ Rectangle {
     property real _labelFieldWidth:         ScreenTools.defaultFontPixelWidth * 36
     property real _editFieldWidth:          ScreenTools.defaultFontPixelWidth * 30
 
-    property color  _borderColor:           AuterionQuickInterface.borderColor
+    property color  _borderColor:           AuterionQuickInterface.colorIndicators
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
