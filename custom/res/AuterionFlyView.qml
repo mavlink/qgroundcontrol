@@ -35,12 +35,11 @@ Item {
 
     readonly property string scaleState:            "topMode"
     readonly property string noGPS:                 qsTr("NO GPS")
-    readonly property real   indicatorValueWidth:   ScreenTools.defaultFontPixelWidth * 8
+    readonly property real   indicatorValueWidth:   ScreenTools.defaultFontPixelWidth * 7
 
-    property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 16
+    property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 18
     property var    _sepColor:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-    property color  _indicatorColor:        qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-    property color  _borderColor:           AuterionQuickInterface.borderColor
+    property color  _indicatorsColor:       AuterionQuickInterface.colorIndicators
 
     property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
@@ -71,16 +70,11 @@ Item {
     property real   _heading:               _activeVehicle   ? _activeVehicle.heading.rawValue : 0
 
     property real   _distance:              0.0
-    property bool   _showAttitude:          false
     property string _messageTitle:          ""
     property string _messageText:           ""
 
     function indicatorClicked() {
         vehicleStatus.visible = !vehicleStatus.visible
-    }
-
-    function indicatorDoubleClicked() {
-        _showAttitude = !_showAttitude
     }
 
     Timer {
@@ -169,11 +163,11 @@ Item {
         id:             camStatus
         width:          camRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         camRow.height * 1.25
-        color:          _indicatorColor
+        color:          "#000"
         visible:        !_mainIsMap && _cameraPresent && _camera.paramComplete
         radius:         3
         border.width:   1
-        border.color:   _borderColor
+        border.color:   _indicatorsColor
         anchors.top:    parent.top
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 0.5
         anchors.horizontalCenter: parent.horizontalCenter
@@ -279,157 +273,198 @@ Item {
     }
 
     //-- Vehicle Status
+    Image {
+        id:                     vehicleStatusEdge
+        source:                 "/auterion/img/label_left_edge.svg"
+        height:                 vehicleStatus.height
+        width:                  height
+        antialiasing:           true
+        sourceSize.height:      height
+        anchors.top:            vehicleStatus.top
+        anchors.right:          vehicleStatus.left
+        fillMode:               Image.PreserveAspectFit
+        opacity:                0.5
+        visible:                vehicleStatus.visible
+        Image {
+            source:                 "/auterion/img/chevron_right.svg"
+            height:                 ScreenTools.defaultFontPixelHeight
+            width:                  height
+            antialiasing:           true
+            sourceSize.height:      height
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.right:          parent.right
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+            fillMode:               Image.PreserveAspectFit
+            opacity:                0.5
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                indicatorClicked()
+            }
+        }
+    }
     Rectangle {
         id:                     vehicleStatus
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
         height:                 vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
         radius:                 ScreenTools.defaultFontPixelWidth * 0.5
-        color:                  qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-        border.width:           1
-        border.color:           _borderColor
+        color:                  Qt.rgba(0,0,0,0.5)
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
         anchors.rightMargin:    _indicatorDiameter * 0.5
         anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.5
-        GridLayout {
-            id:                 vehicleStatusGrid
-            columnSpacing:      ScreenTools.defaultFontPixelWidth  * 1.5
-            rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
-            columns:            5
-            anchors.centerIn:   parent
-            //-- Odometer
-            QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight
-                width:                  height
-                sourceSize.height:      height
-                source:                 "/auterion/img/odometer.svg"
-                fillMode:               Image.PreserveAspectFit
-                color:                  _borderColor
-            }
-            QGCLabel {
-                text:                   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000"
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
-            //-- Chronometer
-            QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight
-                width:                  height
-                sourceSize.height:      height
-                source:                 "/auterion/img/time.svg"
-                fillMode:               Image.PreserveAspectFit
-                color:                  _borderColor
-            }
-            QGCLabel {
-                text:                   _activeVehicle ? _activeVehicle.getFact("flightTime").value : "00:00:00"
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
-            Item { width: 1; height: 1; }
-            //-- Separator
-            Rectangle {
-                height:                 1
-                width:                  parent.width
-                color:                  _borderColor
-                Layout.fillWidth:       true
-                Layout.columnSpan:      5
-            }
-            //-- Latitude
-            QGCLabel {
-                text:                   qsTr("Lat:")
-            }
-            QGCLabel {
-                text:                   _isVehicleGps ? _activeVehicle.latitude.toFixed(6) : noGPS
-                color:                  _isVehicleGps ? qgcPal.text : qgcPal.colorOrange
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    _isVehicleGps ? Text.AlignRight : Text.AlignHCenter
-            }
-            //-- Longitude
-            QGCLabel {
-                text:                   qsTr("Lon:")
-            }
-            QGCLabel {
-                text:                   _isVehicleGps ? _activeVehicle.longitude.toFixed(6) : noGPS
-                color:                  _isVehicleGps ? qgcPal.text : qgcPal.colorOrange
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    _isVehicleGps ? Text.AlignRight : Text.AlignHCenter
-            }
-            Item { width: 1; height: 1; }
-            //-- Altitude
-            QGCLabel {
-                text:                   qsTr("H:")
-                visible:                _showAttitude
-            }
-            QGCLabel {
-                text:                   _altitude
-                visible:                _showAttitude
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
-            //-- Ground Speed
-            QGCLabel {
-                text:                   qsTr("H.S:")
-                visible:                _showAttitude
-            }
-            QGCLabel {
-                text:                   _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0"
-                visible:                _showAttitude
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
-            Item { width: 1; height: 1; visible: _showAttitude; }
-            //-- Distance
-            QGCLabel {
-                text:                   qsTr("D:")
-            }
-            QGCLabel {
-                text:                   _distance ? _distanceStr : noGPS
-                color:                  _distance ? qgcPal.text : qgcPal.colorOrange
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    _distance ? Text.AlignRight : Text.AlignHCenter
-            }
-            //-- Vertical Speed
-            QGCLabel {
-                text:                   qsTr("V.S:")
-            }
-            QGCLabel {
-                text:                   _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0"
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
-            Item { width: 1; height: 1; }
-            //-- Right edge, under indicator thingy
-            Item {
-                width:          1
-                height:         1
-                Layout.columnSpan: 4
-            }
-            Item {
-                width:          _indicatorDiameter * 0.5
-                height:         1
-            }
+        DeadMouseArea {
+            anchors.fill:   parent
         }
     }
+    GridLayout {
+        id:                     vehicleStatusGrid
+        columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
+        rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.25
+        columns:                5
+        anchors.verticalCenter: vehicleStatus.verticalCenter
+        x:                      vehicleStatusEdge.x + (vehicleStatus.width * 0.275)
+        visible:                vehicleStatus.visible
+        //-- Odometer
+        QGCLabel {
+            text:                   qsTr("Odom:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _activeVehicle ? ('00000' + _activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + _activeVehicle.flightDistance.units : "00000"
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        //-- Chronometer
+        QGCLabel {
+            text:                   qsTr("Elap:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _activeVehicle ? _activeVehicle.getFact("flightTime").value : "00:00:00"
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        Item { width: 1; height: 1; }
+        //-- Latitude
+        QGCLabel {
+            text:                   qsTr("Lat:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _isVehicleGps ? _activeVehicle.latitude.toFixed(6) : noGPS
+            color:                  _isVehicleGps ? _indicatorsColor : qgcPal.colorOrange
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        //-- Longitude
+        QGCLabel {
+            text:                   qsTr("Lon:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _isVehicleGps ? _activeVehicle.longitude.toFixed(6) : noGPS
+            color:                  _isVehicleGps ? _indicatorsColor : qgcPal.colorOrange
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        Item { width: 1; height: 1; }
+        //-- Altitude
+        QGCLabel {
+            text:                   qsTr("H:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _altitude
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        //-- Ground Speed
+        QGCLabel {
+            text:                   qsTr("H.S:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _activeVehicle ? _activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + _activeVehicle.groundSpeed.units : "0.0"
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        Item { width: 1; height: 1; }
+        //-- Distance
+        QGCLabel {
+            text:                   qsTr("D:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _distance ? _distanceStr : noGPS
+            color:                  _distance ? _indicatorsColor : qgcPal.colorOrange
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        //-- Vertical Speed
+        QGCLabel {
+            text:                   qsTr("V.S:")
+            color:                  "#FFF"
+            font.pointSize:         ScreenTools.smallFontPointSize
+        }
+        QGCLabel {
+            text:                   _activeVehicle ? _activeVehicle.climbRate.value.toFixed(1) + ' ' + _activeVehicle.climbRate.units : "0.0"
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        Item { width: 1; height: 1; }
+        //-- Right edge, under indicator thingy
+        Item {
+            width:          1
+            height:         1
+            Layout.columnSpan: 4
+        }
+        Item {
+            width:          _indicatorDiameter * 0.5
+            height:         1
+        }
+    }
+
 
     //-- Heading
     Rectangle {
         width:   headingCol.width  * 1.5
         height:  headingCol.height * 1.25
         radius:  ScreenTools.defaultFontPixelWidth * 0.5
-        color:   "black"
-        visible: !_showAttitude
-        anchors.bottom: compassAttitudeCombo.top
-        anchors.bottomMargin: -ScreenTools.defaultFontPixelHeight
-        anchors.horizontalCenter: compassAttitudeCombo.horizontalCenter
+        color:   "#000"
+        anchors.bottom:             compassAttitudeComboAlt.top
+        anchors.bottomMargin:       -ScreenTools.defaultFontPixelHeight
+        anchors.horizontalCenter:   compassAttitudeComboAlt.horizontalCenter
         Column {
             id: headingCol
             anchors.centerIn: parent
@@ -449,20 +484,19 @@ Item {
         id:             compassAttitudeComboAlt
         width:          _indicatorDiameter
         height:         outerCompassAlt.height
-        visible:        _showAttitude
         anchors.bottom: vehicleStatus.bottom
         anchors.right:  parent.right
         anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
-        CompassRing {
+        AuterionCompassRing {
             id:             outerCompassAlt
             size:           parent.width * 1.05
             vehicle:        _activeVehicle
             anchors.horizontalCenter: parent.horizontalCenter
-            QGCAttitudeWidget {
+            AuterionAttitudeWidget {
                 id:                 attitudeWidget
-                size:               parent.width * 0.85
+                size:               parent.width * 0.8
                 vehicle:            _activeVehicle
-                showHeading:        true
+                showHeading:        false
                 anchors.centerIn:   outerCompassAlt
             }
         }
@@ -470,65 +504,6 @@ Item {
             anchors.fill: parent
             onClicked: {
                 indicatorClicked()
-            }
-            onDoubleClicked: {
-                indicatorDoubleClicked()
-            }
-        }
-    }
-
-    Item {
-        id:             compassAttitudeCombo
-        width:          _indicatorDiameter
-        height:         outerCompass.height
-        visible:        !_showAttitude
-        anchors.bottom: vehicleStatus.bottom
-        anchors.right:  parent.right
-        anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
-        CompassRing {
-            id:                 outerCompass
-            size:               parent.width * 1.05
-            vehicle:            _activeVehicle
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-        Rectangle {
-            width:  outerCompass.width
-            height: width
-            radius: width * 0.5
-            color:  Qt.rgba(0,0,0,0)
-            border.color: _borderColor
-            border.width: 1
-            anchors.centerIn:   outerCompass
-        }
-        Column {
-            spacing: ScreenTools.defaultFontPixelHeight * 0.5
-            anchors.centerIn:   outerCompass
-            Label {
-                text:           _activeVehicle ? _activeVehicle.groundSpeed.value.toFixed(0) + ' ' + _activeVehicle.groundSpeed.units : "0 m/s"
-                color:          "white"
-                width:          compassAttitudeCombo.width * 0.8
-                font.family:    ScreenTools.demiboldFontFamily
-                fontSizeMode:   Text.HorizontalFit
-                horizontalAlignment: Text.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Label {
-                text:           _altitude
-                color:          "white"
-                width:          compassAttitudeCombo.width * 0.8
-                font.family:    ScreenTools.demiboldFontFamily
-                fontSizeMode:   Text.HorizontalFit
-                horizontalAlignment: Text.AlignHCenter
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                indicatorClicked()
-            }
-            onDoubleClicked: {
-                indicatorDoubleClicked()
             }
         }
     }

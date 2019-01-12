@@ -12,11 +12,17 @@
         <file alias="AuterionRCRSSIIndicator.qml">res/AuterionRCRSSIIndicator.qml</file>
     </qresource>
     <qresource prefix="/auterion/img">
+        <file alias="attitude_crosshair.svg">res/images/attitude_crosshair.svg</file>
+        <file alias="attitude_dial.svg">res/images/attitude_dial.svg</file>
+        <file alias="attitude_pointer.svg">res/images/attitude_pointer.svg</file>
         <file alias="camera_switch_elapsed_mode.svg">res/images/camera_switch_elapsed_mode.svg</file>
         <file alias="camera_switch_photo.svg">res/images/camera_switch_photo.svg</file>
         <file alias="camera_switch_photo_mode.svg">res/images/camera_switch_photo_mode.svg</file>
         <file alias="camera_switch_video.svg">res/images/camera_switch_video.svg</file>
         <file alias="camera_switch_video_mode.svg">res/images/camera_switch_video_mode.svg</file>
+        <file alias="chevron_right.svg">res/images/chevron_right.svg</file>
+        <file alias="compass_dial.svg">res/images/compass_dial.svg</file>
+        <file alias="compass_pointer.svg">res/images/compass_pointer.svg</file>
         <file alias="label_left_edge.svg">res/images/label_left_edge.svg</file>
         <file alias="label_right_edge.svg">res/images/label_right_edge.svg</file>
         <file alias="menu_battery.svg">res/images/menu_battery.svg</file>
@@ -38,7 +44,10 @@
         <file alias="void.png">res/images/void.png</file>
     </qresource>
     <qresource prefix="/Auterion/Widgets">
+        <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
+        <file alias="Auterion/Widgets/AuterionAttitudeWidget.qml">res/Auterion/Widgets/AuterionAttitudeWidget.qml</file>
         <file alias="Auterion/Widgets/AuterionComboBox.qml">res/Auterion/Widgets/AuterionComboBox.qml</file>
+        <file alias="Auterion/Widgets/AuterionCompassRing.qml">res/Auterion/Widgets/AuterionCompassRing.qml</file>
         <file alias="Auterion/Widgets/AuterionFactCombo.qml">res/Auterion/Widgets/AuterionFactCombo.qml</file>
         <file alias="Auterion/Widgets/AuterionLabel.qml">res/Auterion/Widgets/AuterionLabel.qml</file>
         <file alias="Auterion/Widgets/AuterionMenu.qml">res/Auterion/Widgets/AuterionMenu.qml</file>

@@ -8,12 +8,14 @@
  ****************************************************************************/
 
 
-import QtQuick          2.11
-import QtQuick.Controls 1.2
+import QtQuick                      2.11
+import QtQuick.Controls             1.2
 
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
+
+import AuterionQuickInterface       1.0
 
 Item {
     id:     _root
@@ -43,7 +45,7 @@ Item {
         anchors.bottom:             parent.bottom
         QGCColoredImage {
             source:                 _root.source
-            color:                  checked ? "#5FCDF3" : "#FFFFFF"
+            color:                  checked ? AuterionQuickInterface.colorIndicators : "#FFF"
             width:                  height
             sourceSize.height:      height
             anchors.top:            parent.top
@@ -66,7 +68,7 @@ Item {
         }
         QGCLabel {
             id:                     logoLabel
-            color:                  "#5FCDF3"
+            color:                  AuterionQuickInterface.colorIndicators
             text:                   _root.text
             visible:                checked && !logo
             font.pointSize:         ScreenTools.smallFontPointSize

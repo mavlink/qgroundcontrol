@@ -22,7 +22,7 @@ class AuterionQuickInterface : public QObject
 public:
     AuterionQuickInterface(QObject* parent = nullptr);
     ~AuterionQuickInterface();
-    Q_PROPERTY(QColor   borderColor READ    borderColor CONSTANT)
+    Q_PROPERTY(QColor   colorIndicators READ    colorIndicators CONSTANT)
     void    init            ();
-    QColor  borderColor     () { return QColor(0,224,75,80); }
+    QColor  colorIndicators () { return QColor(72,214,255); }
 };

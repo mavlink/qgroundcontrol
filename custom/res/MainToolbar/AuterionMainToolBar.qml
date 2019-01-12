@@ -25,10 +25,11 @@ Rectangle {
     visible:    !QGroundControl.videoManager.fullScreen
     gradient: Gradient {
         GradientStop { position: 0;    color: toolBar.gradient1 }
+        GradientStop { position: 0.25; color: toolBar.gradient1 }
         GradientStop { position: 1;    color: toolBar.gradient2 }
     }
 
-    property color gradient1: flyButton.checked ? Qt.rgba(0,0,0,0.85) : Qt.rgba(0,0,0,0.75)
+    property color gradient1: flyButton.checked ? Qt.rgba(0,0,0,0.65) : Qt.rgba(0,0,0,0.75)
     property color gradient2: flyButton.checked ? Qt.rgba(0,0,0,0)    : Qt.rgba(0,0,0,0.75)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
