@@ -1,4 +1,7 @@
 Module Auterion.Widgets
 
 AuterionFactCombo       1.0     AuterionFactCombo.qml
+AuterionLabel           1.0     AuterionLabel.qml
+AuterionSignalStrength  1.0     AuterionSignalStrength.qml
+AuterionToolBarButton   1.0     AuterionToolBarButton.qml
 OnOffSwitch             1.0     OnOffSwitch.qml

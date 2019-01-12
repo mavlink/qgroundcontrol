@@ -516,7 +516,7 @@ Rectangle {
                         //-- Video Fit
                         Row {
                             spacing:        ScreenTools.defaultFontPixelWidth
-                            visible:        _camera && !_camera.isThermal
+                            visible:        _camera
                             anchors.horizontalCenter: parent.horizontalCenter
                             QGCLabel {
                                 text:       qsTr("Video Screen Fit")

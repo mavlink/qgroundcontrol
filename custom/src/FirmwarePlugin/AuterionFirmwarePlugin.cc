@@ -34,3 +34,17 @@ AuterionFirmwarePlugin::createCameraControl(const mavlink_camera_information_t* 
 {
     return new AuterionCameraControl(info, vehicle, compID, parent);
 }
+
+//-----------------------------------------------------------------------------
+const QVariantList&
+AuterionFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
+{
+    Q_UNUSED(vehicle);
+    if(_toolBarIndicatorList.size() == 0) {
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/auterion/AuterionRCRSSIIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/auterion/AuterionGPSIndicator.qml")));
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/auterion/AuterionBatteryIndicator.qml")));
+    }
+    return _toolBarIndicatorList;
+}
+

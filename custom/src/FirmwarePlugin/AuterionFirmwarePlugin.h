@@ -21,4 +21,7 @@ public:
     AutoPilotPlugin*    autopilotPlugin                     (Vehicle* vehicle) final;
     QGCCameraManager*   createCameraManager                 (Vehicle *vehicle) override final;
     QGCCameraControl*   createCameraControl                 (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr) override final;
+    const QVariantList& toolBarIndicators                   (const Vehicle* vehicle) override final;
+private:
+    QVariantList _toolBarIndicatorList;
 };
