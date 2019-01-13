@@ -3,17 +3,6 @@
 		<file alias="FactSystemTest.qml">../src/FactSystem/FactSystemTest.qml</file>
 	</qresource>
 	<qresource prefix="/toolbar">
-		<file alias="ArmedIndicator.qml">../src/ui/toolbar/ArmedIndicator.qml</file>
-		<file alias="BatteryIndicator.qml">../src/ui/toolbar/BatteryIndicator.qml</file>
-		<file alias="GPSIndicator.qml">../src/ui/toolbar/GPSIndicator.qml</file>
-		<file alias="GPSRTKIndicator.qml">../src/ui/toolbar/GPSRTKIndicator.qml</file>
-		<file alias="MessageIndicator.qml">../src/ui/toolbar/MessageIndicator.qml</file>
-		<file alias="ModeIndicator.qml">../src/ui/toolbar/ModeIndicator.qml</file>
-		<file alias="VTOLModeIndicator.qml">../src/ui/toolbar/VTOLModeIndicator.qml</file>
-		<file alias="RCRSSIIndicator.qml">../src/ui/toolbar/RCRSSIIndicator.qml</file>
-		<file alias="TelemetryRSSIIndicator.qml">../src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
-		<file alias="JoystickIndicator.qml">../src/ui/toolbar/JoystickIndicator.qml</file>
-		<file alias="LinkIndicator.qml">../src/ui/toolbar/LinkIndicator.qml</file>
 	</qresource>
 	<qresource prefix="/qml">
 		<file alias="CorridorScanEditor.qml">../src/PlanView/CorridorScanEditor.qml</file>
@@ -74,7 +63,6 @@
 		<file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">../src/PlanView/GeoFenceMapVisuals.qml</file>
 		<file alias="QGroundControl/Controls/IndicatorButton.qml">../src/QmlControls/IndicatorButton.qml</file>
 		<file alias="QGroundControl/Controls/JoystickThumbPad.qml">../src/QmlControls/JoystickThumbPad.qml</file>
-		<file alias="QGroundControl/Controls/MainToolBar.qml">../src/ui/toolbar/MainToolBar.qml</file>
 		<file alias="QGroundControl/Controls/MainToolBarIndicators.qml">../src/ui/toolbar/MainToolBarIndicators.qml</file>
 		<file alias="QGroundControl/Controls/MissionCommandDialog.qml">../src/QmlControls/MissionCommandDialog.qml</file>
 		<file alias="QGroundControl/Controls/MissionItemEditor.qml">../src/PlanView/MissionItemEditor.qml</file>
@@ -113,6 +101,7 @@
 		<file alias="QGroundControl/Controls/QGCSlider.qml">../src/QmlControls/QGCSlider.qml</file>
 		<file alias="QGroundControl/Controls/QGCSwitch.qml">../src/QmlControls/QGCSwitch.qml</file>
 		<file alias="QGroundControl/Controls/QGCTextField.qml">../src/QmlControls/QGCTextField.qml</file>
+		<file alias="QGroundControl/Controls/QGCToolBarButton.qml">../src/QmlControls/QGCToolBarButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCView.qml">../src/QmlControls/QGCView.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewDialog.qml">../src/QmlControls/QGCViewDialog.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewDialogContainer.qml">../src/QmlControls/QGCViewDialogContainer.qml</file>
