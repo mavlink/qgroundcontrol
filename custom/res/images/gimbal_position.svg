@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#48D6FF;}
+	.st1{fill-rule:evenodd;clip-rule:evenodd;fill:url(#Rectangle_1_);}
+</style>
+<title>gimbal position</title>
+<desc>Created with Sketch.</desc>
+<g id="Camera-focused">
+	<g transform="translate(-972.000000, -253.000000)">
+		<g id="middle" transform="translate(29.000000, 162.000000)">
+			<g id="right" transform="translate(841.000000, 0.000000)">
+				<g id="gimbal" transform="translate(102.000000, 53.000000)">
+					<g id="gimbal-position" transform="translate(0.000000, 38.000000)">
+						<ellipse id="Oval" class="st0" cx="36" cy="56.4" rx="16.138" ry="15.6"/>
+						
+							<linearGradient id="Rectangle_1_" gradientUnits="userSpaceOnUse" x1="13.9583" y1="60.4176" x2="13.9583" y2="57.4522" gradientTransform="matrix(24 0 0 -20.082 -299 1214.0039)">
+							<stop  offset="0" style="stop-color:#48D6FF;stop-opacity:0"/>
+							<stop  offset="1" style="stop-color:#48D6FF"/>
+						</linearGradient>
+						<polygon id="Rectangle" class="st1" points="0,0 72,0 51.645,60.246 20.308,60.057 						"/>
+					</g>
+				</g>
+			</g>
+		</g>
+	</g>
+</g>
+</svg>

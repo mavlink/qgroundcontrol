@@ -33,7 +33,7 @@ Item {
         id:                         background
         contentWidth:               labelRow.width
         contentHeight:              labelText.height * 2
-        opacity:                    0.5
+        opacity:                    0.75
         anchors.verticalCenter:     parent.verticalCenter
     }
     Row {

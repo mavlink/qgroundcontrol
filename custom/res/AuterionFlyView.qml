@@ -55,6 +55,9 @@ Item {
     property bool   _isVehicleGps:          _activeVehicle && _activeVehicle.gps && _activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
     property bool   _recordingVideo:        _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _cameraIdle:            !_cameraPhotoMode || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
+    property real   _gimbalPitch:           _camera ? -_camera.gimbalPitch : 0
+    property real   _gimbalYaw:             _camera ? _camera.gimbalYaw : 0
+    property bool   _gimbalVisible:         _camera ? _camera.gimbalData && camControlLoader.visible : false
 
     property var    _expModeFact:           _camera && _camera.exposureMode ? _camera.exposureMode : null
     property var    _evFact:                _camera && _camera.ev ? _camera.ev : null
@@ -246,7 +249,7 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        //visible:                !_mainIsMap && _cameraPresent && _camera.paramComplete
+        visible:                !_mainIsMap && _cameraPresent && _camera.paramComplete
         source:                 visible ? "/auterion/AuterionCameraControl.qml" : ""
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
@@ -254,11 +257,75 @@ Item {
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 4
     }
 
+    //-- Gimbal Indicator
+    Rectangle {
+        width:                  ScreenTools.defaultFontPixelWidth * 6
+        height:                 gimbalCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+        visible:                _gimbalVisible
+        color:                  Qt.rgba(0,0,0,0.5)
+        radius:                 ScreenTools.defaultFontPixelWidth * 0.5
+        anchors.right:          camControlLoader.left
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter: camControlLoader.verticalCenter
+        Column {
+            id:                 gimbalCol
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.75
+            anchors.centerIn:   parent
+            Image {
+                source:         "/auterion/img/gimbal_icon.svg"
+                width:          ScreenTools.defaultFontPixelWidth * 2
+                height:         width
+                smooth:         true
+                mipmap:         true
+                antialiasing:   true
+                fillMode:       Image.PreserveAspectFit
+                sourceSize.width: width
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Image {
+                id:                 pitchScale
+                height:             camControlLoader.height * 0.65
+                source:             "/auterion/img/gimbal_pitch.svg"
+                fillMode:           Image.PreserveAspectFit
+                sourceSize.height:  height
+                smooth:             true
+                mipmap:             true
+                antialiasing:       true
+                anchors.horizontalCenter: parent.horizontalCenter
+                Image {
+                    id:                 yawIndicator
+                    width:              ScreenTools.defaultFontPixelWidth * 4
+                    source:             "/auterion/img/gimbal_position.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    sourceSize.width:   width
+                    y:                  (parent.height * _pitch / 105)
+                    smooth:             true
+                    mipmap:             true
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    transform: Rotation {
+                        origin.x:       yawIndicator.width  / 2
+                        origin.y:       yawIndicator.height / 2
+                        angle:          _gimbalYaw
+                    }
+                    property real _pitch: _gimbalPitch < -15 ? -15  : (_gimbalPitch > 90 ? 90 : _gimbalPitch)
+                }
+            }
+            QGCLabel {
+                id:             gimbalLabel
+                text:           _gimbalPitch ? _gimbalPitch.toFixed(0) : 0
+                color:          "#FFF"
+                font.pointSize:  ScreenTools.smallFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
+
+
     //-- Vehicle Status
     Image {
         id:                     vehicleStatusEdge
         source:                 "/auterion/img/label_left_edge.svg"
-        height:                 vehicleStatus.height
+        height:                 Math.round(vehicleStatus.height)
         width:                  Math.round(height * 0.5)
         antialiasing:           true
         sourceSize.height:      height
@@ -269,13 +336,13 @@ Item {
         visible:                vehicleStatus.visible
         Image {
             source:                 "/auterion/img/chevron_right.svg"
-            height:                 ScreenTools.defaultFontPixelHeight
+            height:                 ScreenTools.defaultFontPixelHeight * 0.75
             width:                  height
             antialiasing:           true
             sourceSize.height:      height
             anchors.verticalCenter: parent.verticalCenter
             anchors.right:          parent.right
-            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
             fillMode:               Image.PreserveAspectFit
             opacity:                0.75
         }
@@ -289,7 +356,7 @@ Item {
     Rectangle {
         id:                     vehicleStatus
         width:                  Math.round(vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4))
-        height:                 vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
+        height:                 Math.round(vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.75)
         color:                  Qt.rgba(0,0,0,0.75)
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right

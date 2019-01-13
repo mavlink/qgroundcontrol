@@ -23,14 +23,20 @@ import Auterion.Widgets                     1.0
 Rectangle {
     id:         toolBar
     visible:    !QGroundControl.videoManager.fullScreen
-    gradient: Gradient {
-        GradientStop { position: 0;    color: toolBar.gradient1 }
-        GradientStop { position: 0.25; color: toolBar.gradient1 }
-        GradientStop { position: 1;    color: toolBar.gradient2 }
-    }
+    color:      flyButton.checked ? Qt.rgba(0,0,0,0) : Qt.rgba(0,0,0,0.75)
 
-    property color gradient1: flyButton.checked ? Qt.rgba(0,0,0,0.65) : Qt.rgba(0,0,0,0.75)
-    property color gradient2: flyButton.checked ? Qt.rgba(0,0,0,0)    : Qt.rgba(0,0,0,0.75)
+    Rectangle {
+        anchors.top:    parent.top
+        anchors.right:  parent.right
+        anchors.left:   parent.left
+        height:         parent.height * 1.5
+        visible:        flyButton.checked
+        gradient: Gradient {
+            GradientStop { position: 0;    color: Qt.rgba(0,0,0,0.85) }
+            GradientStop { position: 0.25; color: Qt.rgba(0,0,0,0.65) }
+            GradientStop { position: 1;    color: Qt.rgba(0,0,0,0) }
+        }
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -151,7 +157,7 @@ Rectangle {
 
     AuterionLabel {
         text:                       qsTr("Waiting For Vehicle")
-        level:                      0.5
+        level:                      0.75
         pointSize:                  ScreenTools.smallFontPointSize
         visible:                    !_activeVehicle
         anchors.centerIn:           parent
@@ -164,7 +170,7 @@ Rectangle {
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
         AuterionMenu {
-            level:                  0.5
+            level:                  0.75
             text:                   qsTr("Mode:")
             pointSize:              ScreenTools.smallFontPointSize
             model:                  _activeVehicle ? _activeVehicle.flightModes : [ ]
