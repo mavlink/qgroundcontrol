@@ -15,11 +15,10 @@
         <file alias="attitude_crosshair.svg">res/images/attitude_crosshair.svg</file>
         <file alias="attitude_dial.svg">res/images/attitude_dial.svg</file>
         <file alias="attitude_pointer.svg">res/images/attitude_pointer.svg</file>
+        <file alias="camera_photo.svg">res/images/camera_photo.svg</file>
+        <file alias="camera_video.svg">res/images/camera_video.svg</file>
         <file alias="camera_switch_elapsed_mode.svg">res/images/camera_switch_elapsed_mode.svg</file>
-        <file alias="camera_switch_photo.svg">res/images/camera_switch_photo.svg</file>
-        <file alias="camera_switch_photo_mode.svg">res/images/camera_switch_photo_mode.svg</file>
-        <file alias="camera_switch_video.svg">res/images/camera_switch_video.svg</file>
-        <file alias="camera_switch_video_mode.svg">res/images/camera_switch_video_mode.svg</file>
+        <file alias="camera_settings.svg">res/images/camera_settings.svg</file>
         <file alias="chevron_right.svg">res/images/chevron_right.svg</file>
         <file alias="compass_dial.svg">res/images/compass_dial.svg</file>
         <file alias="compass_pointer.svg">res/images/compass_pointer.svg</file>

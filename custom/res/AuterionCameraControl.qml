@@ -27,15 +27,10 @@ import QGroundControl.Vehicle           1.0
 import AuterionQuickInterface           1.0
 import Auterion.Widgets                 1.0
 
-Rectangle {
-    id:             mainRect
+Item {
     height:         mainCol.height
     width:          _indicatorDiameter
     visible:        !QGroundControl.videoManager.fullScreen
-    radius:         ScreenTools.defaultFontPixelWidth * 0.5
-    color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-    border.width:   1
-    border.color:   _borderColor
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -86,30 +81,91 @@ Rectangle {
             width:      1
         }
         //-----------------------------------------------------------------
-        QGCLabel {
-            id:             cameraLabel
-            text:           _activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
-            font.family:    ScreenTools.demiboldFontFamily
+        //-- Camera Name
+        AuterionLabel {
+            text:               _activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
+            pointSize:          ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
-        //-- Camera Mode
-        Item {
-            width:  ScreenTools.defaultFontPixelHeight * 4
-            height: ScreenTools.defaultFontPixelHeight * 4
+        //-----------------------------------------------------------------
+        //-- Settings
+        Rectangle {
+            width:              ScreenTools.defaultFontPixelHeight * 2
+            height:             width
+            radius:             width * 0.5
+            color:              "#000"
             anchors.horizontalCenter: parent.horizontalCenter
-            opacity: _cameraModeUndefined ? 0.5 : 1
-            QGCColoredImage {
-                anchors.fill:       parent
-                source:             (_cameraModeUndefined || _cameraVideoMode) ? "/auterion/img/camera_switch_video.svg" : "/auterion/img/camera_switch_photo.svg"
-                fillMode:           Image.PreserveAspectFit
-                sourceSize.height:  height
-                color:              qgcPal.text
-                QGCColoredImage {
-                    anchors.fill:       parent
-                    source:             (_cameraModeUndefined || _cameraVideoMode) ? "/auterion/img/camera_switch_video_mode.svg" : (_cameraElapsedMode ? "/auterion/img/camera_switch_elapsed_mode.svg" : "/auterion/img/camera_switch_photo_mode.svg")
-                    fillMode:           Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    color:              _cameraModeUndefined ? qgcPal.text : (_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING ? qgcPal.colorRed : qgcPal.colorGreen)
+            Image {
+                width:          ScreenTools.defaultFontPixelHeight
+                height:         width
+                sourceSize.width: width
+                source:         "qrc:/auterion/img/camera_settings.svg"
+                fillMode:       Image.PreserveAspectFit
+                opacity:        _settingsEnabled ? 1 : 0.5
+                anchors.centerIn: parent
+            }
+            MouseArea {
+                anchors.fill:   parent
+                enabled:        _settingsEnabled
+                onClicked: {
+                    rootLoader.sourceComponent = cameraSettingsComponent
+                }
+            }
+        }
+        //-----------------------------------------------------------------
+        //-- Camera Mode
+        Rectangle {
+            width:              ScreenTools.defaultFontPixelWidth  * 10
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            radius:             width * 0.5
+            color:              "#000"
+            anchors.horizontalCenter: parent.horizontalCenter
+            Rectangle {
+                height:             parent.height
+                width:              height
+                radius:             width * 0.5
+                color:              Qt.rgba(0,0,0,0)
+                anchors.left:       parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                Rectangle {
+                    height:             parent.height * 0.8
+                    width:              height
+                    radius:             width * 0.5
+                    color:              (_cameraModeUndefined || _cameraPhotoMode) ? "#000" : qgcPal.colorGreen
+                    anchors.centerIn:   parent
+                    QGCColoredImage {
+                        height:         parent.height * 0.65
+                        width:          height
+                        source:         "/auterion/img/camera_video.svg"
+                        color:          (_cameraModeUndefined || _cameraPhotoMode) ? "#808080" : "#000"
+                        fillMode:       Image.PreserveAspectFit
+                        sourceSize.height:  height
+                        anchors.centerIn:   parent
+                    }
+                }
+            }
+            Rectangle {
+                height:             parent.height
+                width:              height
+                radius:             width * 0.5
+                color:              Qt.rgba(0,0,0,0)
+                anchors.right:      parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                Rectangle {
+                    height:             parent.height * 0.8
+                    width:              height
+                    radius:             width * 0.5
+                    color:              (_cameraModeUndefined || _cameraVideoMode) ? "#000" : qgcPal.colorGreen
+                    anchors.centerIn:   parent
+                    QGCColoredImage {
+                        height:         parent.height * 0.65
+                        width:          height
+                        source:         "/auterion/img/camera_photo.svg"
+                        color:          (_cameraModeUndefined || _cameraVideoMode) ? "#808080" : "#000"
+                        fillMode:       Image.PreserveAspectFit
+                        sourceSize.height:  height
+                        anchors.centerIn:   parent
+                    }
                 }
             }
             MouseArea {
@@ -215,51 +271,19 @@ Rectangle {
                 }
             }
         }
+        //-----------------------------------------------------------------
         //-- Recording Time / Images Captured
-        Item {
-            width:  1
-            height: ScreenTools.defaultFontPixelHeight * 0.15
-        }
-        QGCLabel {
-            text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
-            visible: _cameraVideoMode
+        AuterionLabel {
+            text:               (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
+            visible:            _cameraVideoMode
+            pointSize:          ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
-        QGCLabel {
-            text: _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-            visible: _cameraPhotoMode
+        AuterionLabel {
+            text:               _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+            visible:            _cameraPhotoMode
+            pointSize:          ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
-        }
-        Item {
-            width:  1
-            height: ScreenTools.defaultFontPixelHeight * 0.15
-        }
-        Rectangle {
-            height: 1
-            width:  parent.width * 0.85
-            color:  qgcPal.globalTheme === QGCPalette.Dark ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-        //-- Settings
-        QGCColoredImage {
-            width:              ScreenTools.defaultFontPixelHeight * 2.5
-            height:             width
-            sourceSize.width:   width
-            source:             "qrc:/auterion/img/sliders.svg"
-            fillMode:           Image.PreserveAspectFit
-            color:              _settingsEnabled ? qgcPal.text : qgcPal.colorGrey
-            anchors.horizontalCenter: parent.horizontalCenter
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        _settingsEnabled
-                onClicked: {
-                    rootLoader.sourceComponent = cameraSettingsComponent
-                }
-            }
-        }
-        Item {
-            height:     ScreenTools.defaultFontPixelHeight
-            width:      1
         }
     }
 

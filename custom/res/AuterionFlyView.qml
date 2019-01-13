@@ -160,7 +160,7 @@ Item {
 
     //-- Camera Status
     Row {
-        spacing:        ScreenTools.defaultFontPixelWidth
+        spacing:        ScreenTools.defaultFontPixelWidth * 0.75
         visible:        !_mainIsMap && _cameraPresent && _camera.paramComplete
         height:         ScreenTools.defaultFontPixelHeight
         anchors.top:    parent.top
@@ -246,12 +246,12 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                !_mainIsMap && _cameraPresent && _camera.paramComplete
+        //visible:                !_mainIsMap && _cameraPresent && _camera.paramComplete
         source:                 visible ? "/auterion/AuterionCameraControl.qml" : ""
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 4
     }
 
     //-- Vehicle Status
@@ -259,13 +259,13 @@ Item {
         id:                     vehicleStatusEdge
         source:                 "/auterion/img/label_left_edge.svg"
         height:                 vehicleStatus.height
-        width:                  height * 0.5
+        width:                  Math.round(height * 0.5)
         antialiasing:           true
         sourceSize.height:      height
         anchors.top:            vehicleStatus.top
         anchors.right:          vehicleStatus.left
         fillMode:               Image.PreserveAspectFit
-        opacity:                0.5
+        opacity:                0.75
         visible:                vehicleStatus.visible
         Image {
             source:                 "/auterion/img/chevron_right.svg"
@@ -277,7 +277,7 @@ Item {
             anchors.right:          parent.right
             anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
             fillMode:               Image.PreserveAspectFit
-            opacity:                0.5
+            opacity:                0.75
         }
         MouseArea {
             anchors.fill: parent
@@ -288,9 +288,9 @@ Item {
     }
     Rectangle {
         id:                     vehicleStatus
-        width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4)
+        width:                  Math.round(vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth * 4))
         height:                 vehicleStatusGrid.height + ScreenTools.defaultFontPixelHeight * 0.5
-        color:                  Qt.rgba(0,0,0,0.5)
+        color:                  Qt.rgba(0,0,0,0.75)
         anchors.bottom:         parent.bottom
         anchors.right:          parent.right
         anchors.rightMargin:    _indicatorDiameter * 0.5

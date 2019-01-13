@@ -66,6 +66,7 @@ static const char *kCAM_ISO         = "CAM_ISO";
 static const char* kCAM_SHUTTER     = "CAM_SHUTTER";
 static const char* kCAM_APERTURE    = "CAM_APERTURE";
 static const char* kCAM_WBMODE      = "CAM_WBMODE";
+static const char* kCAM_VIDRES      = "CAM_VIDRES";
 
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
@@ -1740,4 +1741,11 @@ Fact*
 QGCCameraControl::wb()
 {
     return (_paramComplete && _activeSettings.contains(kCAM_WBMODE)) ? getFact(kCAM_WBMODE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::videoRes()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_VIDRES)) ? getFact(kCAM_VIDRES) : nullptr;
 }
