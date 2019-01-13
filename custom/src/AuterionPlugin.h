@@ -36,6 +36,7 @@ public:
     bool        wifiReliableForCalibration      () const final { return true; }
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionFlyView.qml"); }
     CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
+    double      toolbarHeightMultiplier         () final;
 };
 
 
@@ -54,6 +55,7 @@ public:
     bool                    overrideSettingsGroupVisibility (QString name) final;
     VideoReceiver*          createVideoReceiver             (QObject* parent) final;
     QQmlApplicationEngine*  createRootWindow                (QObject* parent) final;
+    bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
 
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);

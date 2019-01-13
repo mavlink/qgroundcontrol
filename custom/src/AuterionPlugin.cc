@@ -55,6 +55,17 @@ AuterionOptions::AuterionOptions(AuterionPlugin*, QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
+double
+AuterionOptions::toolbarHeightMultiplier()
+{
+#if defined(WIN32)
+    return 0.85;
+#else
+    return 1.0;
+#endif
+}
+
+//-----------------------------------------------------------------------------
 AuterionPlugin::AuterionPlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCCorePlugin(app, toolbox)
 {
@@ -129,3 +140,17 @@ AuterionPlugin::createRootWindow(QObject *parent)
     return pEngine;
 }
 
+//-----------------------------------------------------------------------------
+bool
+AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
+{
+    if (settingsGroup == AppSettings::settingsGroup) {
+        if (metaData.name() == AppSettings::appFontPointSizeName) {
+        #if defined(WIN32)
+            int defaultFontPointSize = 8;
+            metaData.setRawDefaultValue(defaultFontPointSize);
+        #endif
+        }
+    }
+    return true;
+}
