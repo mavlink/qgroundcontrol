@@ -48,13 +48,20 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
         }
         Rectangle {
-            height:                 ScreenTools.defaultFontPixelHeight * 0.75
+            height:                 Math.round(ScreenTools.defaultFontPixelHeight * 0.75)
             width:                  height
             radius:                 height * 0.5
-            color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
+            color:                  Qt.rgba(0,0,0,0)
             border.color:           "#FFF"
             border.width:           1
             anchors.verticalCenter: parent.verticalCenter
+            Rectangle {
+                height:                 Math.round(parent.height * 0.5)
+                width:                  height
+                radius:                 height * 0.5
+                color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
+                anchors.centerIn:       parent
+            }
         }
     }
     QGCMouseArea {

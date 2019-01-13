@@ -64,8 +64,7 @@ Item {
             width:  battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height: battCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  qgcPal.window
-            border.color:   qgcPal.text
+            color:  Qt.rgba(0,0,0,0.75)
 
             Column {
                 id:                 battCol
@@ -99,6 +98,9 @@ Item {
                 var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
                 x = pos.x
                 y = pos.y + ScreenTools.defaultFontPixelHeight
+                if((x + width) > toolBar.width) {
+                    x = toolBar.width - width - ScreenTools.defaultFontPixelWidth
+                }
             }
         }
     }
