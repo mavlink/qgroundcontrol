@@ -160,7 +160,7 @@ Rectangle {
     AuterionLabel {
         text:                       qsTr("Waiting For Vehicle")
         level:                      0.75
-        pointSize:                  ScreenTools.smallFontPointSize
+        pointSize:                  ScreenTools.defaultFontPointSize
         visible:                    !_activeVehicle
         anchors.centerIn:           parent
     }
@@ -174,7 +174,7 @@ Rectangle {
         AuterionMenu {
             level:                  0.75
             text:                   qsTr("Mode:")
-            pointSize:              ScreenTools.smallFontPointSize
+            pointSize:              ScreenTools.defaultFontPointSize
             model:                  _activeVehicle ? _activeVehicle.flightModes : [ ]
             anchors.verticalCenter: parent.verticalCenter
         }

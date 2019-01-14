@@ -44,7 +44,7 @@ Item {
             id:                     labelText
             text:                   _armed ? qsTr("Armed") : qsTr("Disarmed")
             color:                  "#FFF"
-            font.pointSize:         ScreenTools.smallFontPointSize
+            font.pointSize:         ScreenTools.defaultFontPointSize
             anchors.verticalCenter: parent.verticalCenter
         }
         Rectangle {

@@ -21,9 +21,11 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- Battery Indicator
 Item {
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
-    width:          batteryIndicatorRow.width
+    width:                  batteryIndicatorRow.width
+    anchors.top:            parent.top
+    anchors.bottom:         parent.bottom
+    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
+    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
 
     property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
