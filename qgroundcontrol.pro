@@ -405,7 +405,8 @@ HEADERS += \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
-    src/comm/MavlinkMessagesTimer.h
+    src/comm/MavlinkMessagesTimer.h \
+    src/GPS/Drivers/src/base_station.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
@@ -664,6 +665,7 @@ HEADERS += \
     src/GPS/Drivers/src/rtcm.h \
     src/GPS/Drivers/src/ashtech.h \
     src/GPS/Drivers/src/ubx.h \
+    src/GPS/Drivers/src/sbf.h \
     src/GPS/GPSManager.h \
     src/GPS/GPSPositionMessage.h \
     src/GPS/GPSProvider.h \
@@ -851,6 +853,7 @@ SOURCES += \
     src/GPS/Drivers/src/rtcm.cpp \
     src/GPS/Drivers/src/ashtech.cpp \
     src/GPS/Drivers/src/ubx.cpp \
+    src/GPS/Drivers/src/sbf.cpp \
     src/GPS/GPSManager.cc \
     src/GPS/GPSProvider.cc \
     src/GPS/RTCM/RTCMMavlink.cc \
