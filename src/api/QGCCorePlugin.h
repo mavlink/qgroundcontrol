@@ -34,6 +34,12 @@ class QmlObjectListModel;
 class VideoReceiver;
 class PlanMasterController;
 
+#if !defined(__mobile__)
+class QLayout;
+class QMainWindow;
+class QGCQmlWidgetHolder;
+#endif
+
 class QGCCorePlugin : public QGCTool
 {
     Q_OBJECT
@@ -101,6 +107,11 @@ public:
 
     /// Allows the plugin to override the creation of the root (native) window.
     virtual QQmlApplicationEngine* createRootWindow(QObject* parent);
+
+    /// Allows the plugin to have a chance to initialize the creation of the root (non native) window.
+#if !defined(__mobile__)
+    virtual QGCQmlWidgetHolder* createMainQmlWidgetHolder(QLayout* mainLayout, QWidget *parent);
+#endif
 
     /// Allows the plugin to override the creation of VideoReceiver.
     virtual VideoReceiver* createVideoReceiver(QObject* parent);
