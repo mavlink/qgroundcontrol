@@ -61,4 +61,10 @@ Item {
             pointSize:              _root.pointSize
         }
     }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            comboBox.clicked()
+        }
+    }
 }
