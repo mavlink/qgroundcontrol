@@ -143,6 +143,7 @@ Rectangle {
             onClicked:          toolBar.showSetupView()
         }
 
+        /* Disabled for now
         AuterionToolBarButton {
             id:                 analyzeButton
             anchors.top:        parent.top
@@ -152,6 +153,7 @@ Rectangle {
             visible:            !ScreenTools.isMobile && QGroundControl.corePlugin.showAdvancedUI
             onClicked:          toolBar.showAnalyzeView()
         }
+        */
 
     }
 

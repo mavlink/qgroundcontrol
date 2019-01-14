@@ -17,6 +17,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppMessages.h"
+#include "QGCQmlWidgetHolder.h"
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
@@ -154,3 +155,20 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
     }
     return true;
 }
+
+//-----------------------------------------------------------------------------
+#if !defined(__mobile__)
+QGCQmlWidgetHolder*
+AuterionPlugin::createMainQmlWidgetHolder(QLayout *mainLayout, QWidget* parent)
+{
+    QGCQmlWidgetHolder* pMainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), nullptr, parent);
+    mainLayout->addWidget(pMainQmlWidgetHolder);
+    pMainQmlWidgetHolder->setVisible(true);
+    QQmlEngine::setObjectOwnership(parent, QQmlEngine::CppOwnership);
+    pMainQmlWidgetHolder->setContextPropertyObject("controller", parent);
+    pMainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
+    pMainQmlWidgetHolder->getRootContext()->engine()->addImportPath("qrc:/Auterion/Widgets");
+    pMainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
+    return pMainQmlWidgetHolder;
+}
+#endif

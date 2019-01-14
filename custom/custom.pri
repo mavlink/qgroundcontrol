@@ -34,8 +34,8 @@ MAVLINK_CONF = common
 CONFIG  += QGC_DISABLE_APM_MAVLINK
 
 #   We are a native QML app
-CONFIG  += MobileBuild
-DEFINES += __mobile__
+#CONFIG  += MobileBuild
+#DEFINES += __mobile__
 
 #   Branding
 
