@@ -56,17 +56,6 @@ AuterionOptions::AuterionOptions(AuterionPlugin*, QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-double
-AuterionOptions::toolbarHeightMultiplier()
-{
-#if defined(WIN32)
-    return 0.85;
-#else
-    return 1.0;
-#endif
-}
-
-//-----------------------------------------------------------------------------
 AuterionPlugin::AuterionPlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCCorePlugin(app, toolbox)
 {

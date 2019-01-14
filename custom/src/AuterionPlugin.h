@@ -36,7 +36,6 @@ public:
     bool        wifiReliableForCalibration      () const final { return true; }
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionFlyView.qml"); }
     CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
-    double      toolbarHeightMultiplier         () final;
 };
 
 
