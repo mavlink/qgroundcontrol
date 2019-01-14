@@ -23,10 +23,12 @@ import Auterion.Widgets                     1.0
 //-------------------------------------------------------------------------
 //-- RC RSSI Indicator
 Item {
-    width:          rssiRow.width * 1.1
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
-    visible:        _activeVehicle ? _activeVehicle.supportsRadio : true
+    width:                  visible ? rssiRow.width : 0
+    anchors.top:            parent.top
+    anchors.bottom:         parent.bottom
+    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
+    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
+    visible:                _activeVehicle ? _activeVehicle.supportsRadio : true
 
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property bool   _rcRSSIAvailable:   _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false

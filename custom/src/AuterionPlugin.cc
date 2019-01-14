@@ -17,6 +17,7 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppMessages.h"
+#include "QGCQmlWidgetHolder.h"
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
@@ -129,3 +130,34 @@ AuterionPlugin::createRootWindow(QObject *parent)
     return pEngine;
 }
 
+//-----------------------------------------------------------------------------
+bool
+AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
+{
+    if (settingsGroup == AppSettings::settingsGroup) {
+        if (metaData.name() == AppSettings::appFontPointSizeName) {
+        #if defined(WIN32)
+            int defaultFontPointSize = 8;
+            metaData.setRawDefaultValue(defaultFontPointSize);
+        #endif
+        }
+    }
+    return true;
+}
+
+//-----------------------------------------------------------------------------
+#if !defined(__mobile__)
+QGCQmlWidgetHolder*
+AuterionPlugin::createMainQmlWidgetHolder(QLayout *mainLayout, QWidget* parent)
+{
+    QGCQmlWidgetHolder* pMainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), nullptr, parent);
+    mainLayout->addWidget(pMainQmlWidgetHolder);
+    pMainQmlWidgetHolder->setVisible(true);
+    QQmlEngine::setObjectOwnership(parent, QQmlEngine::CppOwnership);
+    pMainQmlWidgetHolder->setContextPropertyObject("controller", parent);
+    pMainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
+    pMainQmlWidgetHolder->getRootContext()->engine()->addImportPath("qrc:/Auterion/Widgets");
+    pMainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
+    return pMainQmlWidgetHolder;
+}
+#endif

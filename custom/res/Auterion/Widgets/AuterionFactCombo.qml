@@ -36,9 +36,20 @@ Item {
         contentHeight:              labelText.height * 2
         opacity:                    parent.level
     }
+    Image {
+        source:                     "/auterion/img/menu_dropdown.svg"
+        height:                     background.height * 0.25
+        width:                      height
+        antialiasing:               true
+        sourceSize.height:          height
+        fillMode:                   Image.PreserveAspectFit
+        anchors.right:              background.right
+        anchors.rightMargin:        background.height * 0.25
+        anchors.verticalCenter:     background.verticalCenter
+    }
     Row {
         id:                         menuRow
-        spacing:                    _root.text !== "" ? ScreenTools.defaultFontPixelWidth : 0
+        spacing:                    _root.text !== "" ? ScreenTools.defaultFontPixelWidth * 0.25 : 0
         anchors.centerIn:           parent
         QGCLabel {
             id:                     labelText
@@ -61,6 +72,12 @@ Item {
                     _root.fact.value = _root.fact.enumValues[index]
                 }
             }
+        }
+    }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            comboBox.clicked()
         }
     }
 }

@@ -34,9 +34,20 @@ Item {
         contentHeight:              labelText.height * 2
         opacity:                    parent.level
     }
+    Image {
+        source:                     "/auterion/img/menu_dropdown.svg"
+        height:                     background.height * 0.25
+        width:                      height
+        antialiasing:               true
+        sourceSize.height:          height
+        fillMode:                   Image.PreserveAspectFit
+        anchors.right:              background.right
+        anchors.rightMargin:        background.height * 0.25
+        anchors.verticalCenter:     background.verticalCenter
+    }
     Row {
         id:                         menuRow
-        spacing:                    ScreenTools.defaultFontPixelWidth
+        spacing:                    ScreenTools.defaultFontPixelWidth * 0.25
         anchors.centerIn:           parent
         QGCLabel {
             id:                     labelText
@@ -48,6 +59,12 @@ Item {
             id:                     comboBox
             centeredLabel:          true
             pointSize:              _root.pointSize
+        }
+    }
+    MouseArea {
+        anchors.fill: parent
+        onClicked: {
+            comboBox.clicked()
         }
     }
 }

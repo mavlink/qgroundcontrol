@@ -23,10 +23,12 @@ import Auterion.Widgets                     1.0
 //-------------------------------------------------------------------------
 //-- GPS Indicator
 Item {
-    id:             satelitte
-    width:          gpsRow.width * 1.1
-    anchors.top:    parent.top
-    anchors.bottom: parent.bottom
+    id:                     satelitte
+    width:                  gpsRow.width
+    anchors.top:            parent.top
+    anchors.bottom:         parent.bottom
+    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
+    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
 
     function getGPSSignal() {
         if(!activeVehicle || activeVehicle.gps.count.rawValue < 1 || activeVehicle.gps.hdop.rawValue > 1.4) {
