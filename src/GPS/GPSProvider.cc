@@ -18,6 +18,7 @@
 #include <QDebug>
 
 #include "Drivers/src/ubx.h"
+#include "Drivers/src/sbf.h"
 #include "Drivers/src/ashtech.h"
 #include "Drivers/src/base_station.h"
 #include "definitions.h"
@@ -81,6 +82,9 @@ void GPSProvider::run()
         if (_type == GPSType::trimble) {
             gpsDriver = new GPSDriverAshtech(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
             baudrate = 115200;
+        } else if (_type == GPSType::septentrio) {
+            gpsDriver = new GPSDriverSBF(&callbackEntry, this, &_reportGpsPos, _pReportSatInfo, 5);
+            baudrate = 0; // auto-configure
         } else {
             gpsDriver = new GPSDriverUBX(GPSDriverUBX::Interface::UART, &callbackEntry, this, &_reportGpsPos, _pReportSatInfo);
             baudrate = 0; // auto-configure
