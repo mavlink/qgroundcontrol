@@ -27,10 +27,10 @@ public:
     QGCCameraManager(Vehicle* vehicle);
     virtual ~QGCCameraManager();
 
-    Q_PROPERTY(QmlObjectListModel*  cameras                 READ cameras            NOTIFY camerasChanged)
-    Q_PROPERTY(QStringList          cameraLabels            READ cameraLabels       NOTIFY cameraLabelsChanged)
-    Q_PROPERTY(int                  currentCamera           READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
+    Q_PROPERTY(QmlObjectListModel*  cameras                 READ cameras                                        NOTIFY camerasChanged)
+    Q_PROPERTY(QStringList          cameraLabels            READ cameraLabels                                   NOTIFY cameraLabelsChanged)
     Q_PROPERTY(QGCCameraControl*    currentCameraInstance   READ currentCameraInstance                          NOTIFY currentCameraChanged)
+    Q_PROPERTY(int                  currentCamera           READ currentCamera      WRITE  setCurrentCamera     NOTIFY currentCameraChanged)
 
     //-- Return a list of cameras provided by this vehicle
     virtual QmlObjectListModel* cameras             () { return &_cameras; }
@@ -57,6 +57,7 @@ protected slots:
     virtual void    _stepZoom               (int direction);
     virtual void    _stepCamera             (int direction);
     virtual void    _stepStream             (int direction);
+    virtual void    _cameraTimeout          ();
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);
@@ -72,14 +73,25 @@ protected:
     virtual void    _handleVideoStreamStatus(const mavlink_message_t& message);
 
 protected:
+
+    class CameraStruct : public QObject {
+    public:
+        CameraStruct(QObject* parent);
+        QTime   lastHeartbeat;
+        bool    infoReceived = false;
+        bool    gaveUp       = false;
+        int     tryCount     = 0;
+    };
+
     Vehicle*            _vehicle            = nullptr;
     Joystick*           _activeJoystick     = nullptr;
     bool                _vehicleReadyState  = false;
     int                 _currentTask        = 0;
     QmlObjectListModel  _cameras;
     QStringList         _cameraLabels;
-    QMap<int, bool>     _cameraInfoRequested;
     int                 _currentCamera      = 0;
     QTime               _lastZoomChange;
     QTime               _lastCameraChange;
+    QTimer              _cameraTimer;
+    QMap<int, CameraStruct*> _cameraInfoRequest;
 };

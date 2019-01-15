@@ -147,6 +147,7 @@ public:
     Q_PROPERTY(Fact*        shutter             READ shutter            NOTIFY parametersReady)
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        mode                READ mode               NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -159,6 +160,8 @@ public:
     Q_PROPERTY(bool         autoStream          READ autoStream                                     NOTIFY autoStreamChanged)
     Q_PROPERTY(QmlObjectListModel* streams      READ streams                                        NOTIFY streamsChanged)
     Q_PROPERTY(QGCVideoStreamInfo* currentStreamInstance READ currentStreamInstance                 NOTIFY currentStreamChanged)
+    Q_PROPERTY(quint32      recordTime          READ recordTime                                     NOTIFY recordTimeChanged)
+    Q_PROPERTY(QString      recordTimeStr       READ recordTimeStr                                  NOTIFY recordTimeChanged)
 
     Q_INVOKABLE virtual void setVideoMode   ();
     Q_INVOKABLE virtual void setPhotoMode   ();
@@ -213,6 +216,8 @@ public:
     virtual int          currentStream      () { return _currentStream; }
     virtual void         setCurrentStream   (int stream);
     virtual bool         autoStream         ();
+    virtual quint32      recordTime         () { return _recordTime; }
+    virtual QString      recordTimeStr      ();
 
     virtual Fact*       exposureMode        ();
     virtual Fact*       ev                  ();
@@ -220,6 +225,7 @@ public:
     virtual Fact*       shutter             ();
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
+    virtual Fact*       mode                ();
 
     virtual void        setZoomLevel        (qreal level);
     virtual void        setFocusLevel       (qreal level);
@@ -261,6 +267,7 @@ signals:
     void    streamsChanged                  ();
     void    currentStreamChanged            ();
     void    autoStreamChanged               ();
+    void    recordTimeChanged               ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
@@ -283,6 +290,8 @@ protected slots:
     virtual void    _paramDone              ();
     virtual void    _streamTimeout          ();
     virtual void    _streamStatusTimeout    ();
+    virtual void    _recTimerHandler        ();
+    virtual void    _checkForVideoStreams   ();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
@@ -336,6 +345,9 @@ protected:
     int                                 _storageInfoRetries = 0;
     int                                 _captureInfoRetries = 0;
     bool                                _resetting          = false;
+    QTimer                              _recTimer;
+    QTime                               _recTime;
+    uint32_t                            _recordTime         = 0;
     //-- Parameters that require a full update
     QMap<QString, QStringList>          _requestUpdates;
     QStringList                         _updatesToRequest;

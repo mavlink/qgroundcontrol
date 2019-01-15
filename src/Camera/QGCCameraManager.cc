@@ -12,6 +12,12 @@
 QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
 
 //-----------------------------------------------------------------------------
+QGCCameraManager::CameraStruct::CameraStruct(QObject* parent)
+    : QObject(parent)
+{
+}
+
+//-----------------------------------------------------------------------------
 QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
     : _vehicle(vehicle)
 {
@@ -19,8 +25,11 @@ QGCCameraManager::QGCCameraManager(Vehicle *vehicle)
     qCDebug(CameraManagerLog) << "QGCCameraManager Created";
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::parameterReadyVehicleAvailableChanged, this, &QGCCameraManager::_vehicleReady);
     connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &QGCCameraManager::_mavlinkMessageReceived);
+    connect(&_cameraTimer, &QTimer::timeout, this, &QGCCameraManager::_cameraTimeout);
+    _cameraTimer.setSingleShot(false);
     _lastZoomChange.start();
     _lastCameraChange.start();
+    _cameraTimer.start(500);
 }
 
 //-----------------------------------------------------------------------------
@@ -97,12 +106,36 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
-    //-- If this heartbeat is from a different node within the vehicle
+    //-- If this heartbeat is from a different component within the vehicle
     if(_vehicleReadyState && _vehicle->id() == message.sysid && _vehicle->defaultComponentId() != message.compid) {
-        if(!_cameraInfoRequested.contains(message.compid)) {
-            _cameraInfoRequested[message.compid] = true;
+        //-- First time hearing from this one?
+        if(!_cameraInfoRequest.contains(message.compid)) {
+            CameraStruct* pInfo = new CameraStruct(this);
+            pInfo->lastHeartbeat.start();
+            _cameraInfoRequest[message.compid] = pInfo;
             //-- Request camera info
             _requestCameraInfo(message.compid);
+        } else {
+            //-- Check if we have indeed received the camera info
+            if(_cameraInfoRequest[message.compid]->infoReceived) {
+                //-- We have it. Just update the heartbeat timeout
+                _cameraInfoRequest[message.compid]->lastHeartbeat.start();
+            } else {
+                //-- Try again. Maybe.
+                if(_cameraInfoRequest[message.compid]->lastHeartbeat.elapsed() > 2000) {
+                    if(_cameraInfoRequest[message.compid]->tryCount > 3) {
+                        if(!_cameraInfoRequest[message.compid]->gaveUp) {
+                            _cameraInfoRequest[message.compid]->gaveUp = true;
+                            qWarning() << "Giving up requesting camera info from" << _vehicle->id() << message.compid;
+                        }
+                    } else {
+                        _cameraInfoRequest[message.compid]->tryCount++;
+                        //-- Request camera info. Again. It could be something other than a camera, in which
+                        //   case, we won't ever receive it.
+                        _requestCameraInfo(message.compid);
+                    }
+                }
+            }
         }
     }
 }
@@ -155,9 +188,9 @@ void
 QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
 {
     //-- Have we requested it?
-    if(_cameraInfoRequested.contains(message.compid) && _cameraInfoRequested[message.compid]) {
+    if(_cameraInfoRequest.contains(message.compid) && !_cameraInfoRequest[message.compid]->infoReceived) {
         //-- Flag it as done
-        _cameraInfoRequested[message.compid] = false;
+        _cameraInfoRequest[message.compid]->infoReceived = true;
         mavlink_camera_information_t info;
         mavlink_msg_camera_information_decode(&message, &info);
         qCDebug(CameraManagerLog) << "_handleCameraInfo:" << reinterpret_cast<const char*>(info.model_name) << reinterpret_cast<const char*>(info.vendor_name) << "Comp ID:" << message.compid;
@@ -168,6 +201,51 @@ QGCCameraManager::_handleCameraInfo(const mavlink_message_t& message)
             _cameraLabels << pCamera->modelName();
             emit camerasChanged();
             emit cameraLabelsChanged();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_cameraTimeout()
+{
+    //-- Iterate cameras
+    for(int i = 0; i < _cameraInfoRequest.count(); i++) {
+        if(_cameraInfoRequest[i]) {
+            //-- Have we received a camera info message?
+            if(_cameraInfoRequest[i]->infoReceived) {
+                //-- Has the camera stopped talking to us?
+                if(_cameraInfoRequest[i]->lastHeartbeat.elapsed() > 5000) {
+                    //-- Camera is gone. Remove it.
+                    QGCCameraControl* pCamera = _findCamera(i);
+                    qWarning() << "Camera" << pCamera->modelName() << "stopped transmitting. Removing from list.";
+                    int idx = _cameraLabels.indexOf(pCamera->modelName());
+                    if(idx >= 0) {
+                        _cameraLabels.removeAt(idx);
+                    }
+                    idx = _cameras.indexOf(pCamera);
+                    if(idx >= 0) {
+                        _cameras.removeAt(idx);
+                    }
+                    bool autoStream = pCamera->autoStream();
+                    pCamera->deleteLater();
+                    delete _cameraInfoRequest[i];
+                    _cameraInfoRequest.remove(i);
+                    emit cameraLabelsChanged();
+                    //-- If we have another camera, switch current camera.
+                    if(_cameras.count()) {
+                        setCurrentCamera(0);
+                    } else {
+                        //-- We're out of cameras
+                        emit camerasChanged();
+                        if(autoStream) {
+                            emit streamChanged();
+                        }
+                    }
+                    //-- Exit loop.
+                    return;
+                }
+            }
         }
     }
 }
