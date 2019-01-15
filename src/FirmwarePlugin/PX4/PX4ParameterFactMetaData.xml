@@ -8262,6 +8262,21 @@ is less than 50% of this value</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
       <unit>deg</unit>
     </parameter>
+    <parameter default="0" name="SENS_CM8JL65_CFG" type="INT32">
+      <short_desc>Serial Configuration for Lanbao PSK-CM8JL65-CC5</short_desc>
+      <long_desc>Configure on which serial port to run Lanbao PSK-CM8JL65-CC5.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
     <parameter default="0" name="SENS_EN_BATT" type="INT32">
       <short_desc>SMBUS Smart battery driver (BQ40Z50)</short_desc>
       <boolean />
