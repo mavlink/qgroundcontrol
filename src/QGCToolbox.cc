@@ -29,6 +29,7 @@
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
 #include "SettingsManager.h"
+#include "PlanckListener.h"
 #include "QGCApplication.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirMapManager.h"
@@ -55,19 +56,20 @@ QGCToolbox::QGCToolbox(QGCApplication* app)
 #ifndef __mobile__
     _gpsManager             = new GPSManager                (app, this);
 #endif
-    _imageProvider          = new QGCImageProvider          (app, this);
-    _joystickManager        = new JoystickManager           (app, this);
-    _linkManager            = new LinkManager               (app, this);
-    _mavlinkProtocol        = new MAVLinkProtocol           (app, this);
-    _missionCommandTree     = new MissionCommandTree        (app, this);
-    _multiVehicleManager    = new MultiVehicleManager       (app, this);
-    _mapEngineManager       = new QGCMapEngineManager       (app, this);
-    _uasMessageHandler      = new UASMessageHandler         (app, this);
-    _qgcPositionManager     = new QGCPositionManager        (app, this);
-    _followMe               = new FollowMe                  (app, this);
-    _videoManager           = new VideoManager              (app, this);
-    _mavlinkLogManager      = new MAVLinkLogManager         (app, this);
-    _landingPadManager      = new LandingPadPosition        (app, this);
+    _imageProvider =            new QGCImageProvider        (app, this);
+    _joystickManager =          new JoystickManager         (app, this);
+    _linkManager =              new LinkManager             (app, this);
+    _mavlinkProtocol =          new MAVLinkProtocol         (app, this);
+    _missionCommandTree =       new MissionCommandTree      (app, this);
+    _multiVehicleManager =      new MultiVehicleManager     (app, this);
+    _mapEngineManager =         new QGCMapEngineManager     (app, this);
+    _uasMessageHandler =        new UASMessageHandler       (app, this);
+    _qgcPositionManager =       new QGCPositionManager      (app, this);
+    _followMe =                 new FollowMe                (app, this);
+    _videoManager =             new VideoManager            (app, this);
+    _mavlinkLogManager =        new MAVLinkLogManager       (app, this);
+    _planckListener =           new PlanckListener          (app, this);
+    _landingPadManager =        new LandingPadPosition      (app, this);
     //-- Airmap Manager
     //-- This should be "pluggable" so an arbitrary AirSpace manager can be used
     //-- For now, we instantiate the one and only AirMap provider
@@ -105,6 +107,7 @@ void QGCToolbox::setChildToolboxes(void)
     _videoManager->setToolbox(this);
     _mavlinkLogManager->setToolbox(this);
     _airspaceManager->setToolbox(this);
+    _planckListener->setToolbox(this);
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager->setToolbox(this);
 #endif

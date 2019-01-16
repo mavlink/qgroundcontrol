@@ -31,7 +31,6 @@ public:
     {
         lat_int = lat;
         lon_int = lon;
-        //emit updatePosition();
     }
 
 public slots:

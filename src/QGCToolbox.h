@@ -34,6 +34,7 @@ class QGCCorePlugin;
 class SettingsManager;
 class AirspaceManager;
 class LandingPadPosition;
+class PlanckListener;
 #if defined(QGC_GST_TAISYNC_ENABLED)
 class TaisyncManager;
 #endif
@@ -63,6 +64,7 @@ public:
     SettingsManager*            settingsManager         () { return _settingsManager; }
     AirspaceManager*            airspaceManager         () { return _airspaceManager; }
     LandingPadPosition*         landingPadManager       () { return _landingPadManager; }
+    PlanckListener*             planckListener          () { return _planckListener; }
 #ifndef __mobile__
     GPSManager*                 gpsManager              () { return _gpsManager; }
 #endif
@@ -97,6 +99,7 @@ private:
     SettingsManager*            _settingsManager        = nullptr;
     AirspaceManager*            _airspaceManager        = nullptr;
     LandingPadPosition*         _landingPadManager      = nullptr;
+    PlanckListener*             _planckListener         = nullptr;
 #if defined(QGC_GST_TAISYNC_ENABLED)
     TaisyncManager*             _taisyncManager         = nullptr;
 #endif

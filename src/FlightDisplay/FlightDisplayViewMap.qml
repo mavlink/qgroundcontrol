@@ -54,7 +54,7 @@ FlightMap {
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
 
     property bool   _disableVehicleTracking:    false
-    property bool   _keepVehicleCentered:       _mainIsMap ? false : true
+    property bool   _keepVehicleCentered:       false //_mainIsMap ? false : true
 
     function updateAirspace(reset) {
         if(_airspaceEnabled) {
@@ -145,7 +145,7 @@ FlightMap {
         }
     }
 
-    Timer {
+/*    Timer {
         id:         panRecenterTimer
         interval:   10000
         running:    false
@@ -154,14 +154,14 @@ FlightMap {
             _disableVehicleTracking = false
             updateMapToVehiclePosition()
         }
-    }
+    }*/
 
-    Timer {
+/*    Timer {
         interval:       500
         running:        true
         repeat:         true
         onTriggered:    updateMapToVehiclePosition()
-    }
+    }*/
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }

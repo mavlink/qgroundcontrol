@@ -1015,23 +1015,4 @@ void LinkManager::_freeMavlinkChannel(int channel)
 
 void LinkManager::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message) {
     link->startMavlinkMessagesTimer(message.sysid);
-
-    if (message.msgid == MAVLINK_MSG_ID_PLANCK_LANDING_PLATFORM_STATE) {
-        mavlink_planck_landing_platform_state_t lps;
-        mavlink_msg_planck_landing_platform_state_decode(&message, &lps);
-
-        QDateTime timestamp = QDateTime::currentDateTime();
-
-        QGeoCoordinate position(lps.latitude, lps.longitude);
-        QGeoPositionInfo info(position, timestamp);
-
-        LandingPadPosition* pos = qgcApp()->toolbox()->landingPadManager();
-
-        if(pos)
-        {
-            pos->setPosition(lps.latitude, lps.longitude);
-        }
-    }
-
-
 }
