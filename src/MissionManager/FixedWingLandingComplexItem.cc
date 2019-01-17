@@ -29,6 +29,7 @@ const char* FixedWingLandingComplexItem::landingAltitudeName =      "LandingAlti
 const char* FixedWingLandingComplexItem::glideSlopeName =           "GlideSlope";
 const char* FixedWingLandingComplexItem::stopTakingPhotosName =     "StopTakingPhotos";
 const char* FixedWingLandingComplexItem::stopTakingVideoName =      "StopTakingVideo";
+const char* FixedWingLandingComplexItem::valueSetIsDistanceName =   "ValueSetIsDistance";
 
 const char* FixedWingLandingComplexItem::_jsonLoiterCoordinateKey =         "loiterCoordinate";
 const char* FixedWingLandingComplexItem::_jsonLoiterRadiusKey =             "loiterRadius";
@@ -59,9 +60,9 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     , _glideSlopeFact           (settingsGroup, _metaDataMap[glideSlopeName])
     , _stopTakingPhotosFact     (settingsGroup, _metaDataMap[stopTakingPhotosName])
     , _stopTakingVideoFact      (settingsGroup, _metaDataMap[stopTakingVideoName])
+    , _valueSetIsDistanceFact   (settingsGroup, _metaDataMap[valueSetIsDistanceName])
     , _loiterClockwise          (true)
     , _altitudesAreRelative     (true)
-    , _valueSetIsDistance       (true)
 {
     _editorQml = "qrc:/qml/FWLandingPatternEditor.qml";
 
@@ -97,6 +98,12 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
 
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::exitCoordinateHasRelativeAltitudeChanged);
+
+    if (_valueSetIsDistanceFact.rawValue().toBool()) {
+        _recalcFromHeadingAndDistanceChange();
+    } else {
+        _glideSlopeChanged();
+    }
 }
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
@@ -142,7 +149,7 @@ void FixedWingLandingComplexItem::save(QJsonArray&  missionItems)
     saveObject[_jsonStopTakingVideoKey] =       _stopTakingVideoFact.rawValue().toBool();
     saveObject[_jsonLoiterClockwiseKey] =       _loiterClockwise;
     saveObject[_jsonAltitudesAreRelativeKey] =  _altitudesAreRelative;
-    saveObject[_jsonValueSetIsDistanceKey] =    _valueSetIsDistance;
+    saveObject[_jsonValueSetIsDistanceKey] =    _valueSetIsDistanceFact.rawValue().toBool();
 
     missionItems.append(saveObject);
 }
@@ -204,7 +211,7 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
         } else {
             _altitudesAreRelative = loiterAltitudeRelative;
         }
-        _valueSetIsDistance = true;
+        _valueSetIsDistanceFact.setRawValue(true);
     } else if (version == 2) {
         QList<JsonHelper::KeyValidateInfo> v2KeyInfoList = {
             { _jsonAltitudesAreRelativeKey, QJsonValue::Bool,  true },
@@ -216,7 +223,7 @@ bool FixedWingLandingComplexItem::load(const QJsonObject& complexObject, int seq
         }
 
         _altitudesAreRelative = complexObject[_jsonAltitudesAreRelativeKey].toBool();
-        _valueSetIsDistance = complexObject[_jsonValueSetIsDistanceKey].toBool();
+        _valueSetIsDistanceFact.setRawValue(complexObject[_jsonValueSetIsDistanceKey].toBool());
     } else {
         errorString = tr("%1 complex item version %2 not supported").arg(jsonComplexItemTypeValue).arg(version);
         _ignoreRecalcSignals = false;

@@ -325,16 +325,20 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
     mavlink_msg_param_set_encode_chan(message->sysid, message->compid, outgoingLink->mavlinkChannel(), message, &paramSet);
 }
 
-bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message)
+bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_message_t* message, bool longVersion)
 {
     QString messageText;
     APMFirmwarePluginInstanceData* instanceData = qobject_cast<APMFirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
 
-    mavlink_statustext_t statusText;
-    mavlink_msg_statustext_decode(message, &statusText);
+    int severity;
+    if (longVersion) {
+        severity = mavlink_msg_statustext_long_get_severity(message);
+    } else {
+        severity = mavlink_msg_statustext_get_severity(message);
+    }
 
-    if (vehicle->firmwareMajorVersion() == Vehicle::versionNotSetValue || statusText.severity < MAV_SEVERITY_NOTICE) {
-        messageText = _getMessageText(message);
+    if (vehicle->firmwareMajorVersion() == Vehicle::versionNotSetValue || severity < MAV_SEVERITY_NOTICE) {
+        messageText = _getMessageText(message, longVersion);
         qCDebug(APMFirmwarePluginLog) << messageText;
 
         if (!messageText.contains(APM_SOLO_REXP)) {
@@ -400,14 +404,14 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
     }
 
     if (messageText.isEmpty()) {
-        messageText = _getMessageText(message);
+        messageText = _getMessageText(message, longVersion);
     }
 
     // The following messages are incorrectly labeled as warning message.
     // Fixed in newer firmware (unreleased at this point), but still in older firmware.
     if (messageText.contains(APM_COPTER_REXP) || messageText.contains(APM_PLANE_REXP) || messageText.contains(APM_ROVER_REXP) || messageText.contains(APM_SUB_REXP) ||
             messageText.contains(APM_PX4NUTTX_REXP) || messageText.contains(APM_FRAME_REXP) || messageText.contains(APM_SYSID_REXP)) {
-        _setInfoSeverity(message);
+        _setInfoSeverity(message, longVersion);
     }
 
     if (messageText.contains(APM_SOLO_REXP)) {
@@ -415,7 +419,7 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
         vehicle->setSoloFirmware(true);
 
         // Fix up severity
-        _setInfoSeverity(message);
+        _setInfoSeverity(message, longVersion);
 
         // Start TCP video handshake with ARTOO
         _soloVideoHandshake(vehicle, true /* originalSoloFirmware */);
@@ -465,7 +469,9 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
         _handleIncomingParamValue(vehicle, message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
-        return _handleIncomingStatusText(vehicle, message);
+        return _handleIncomingStatusText(vehicle, message, false /* longVersion */);
+    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
+        return _handleIncomingStatusText(vehicle, message, true /* longVersion */);
     case MAVLINK_MSG_ID_HEARTBEAT:
         _handleIncomingHeartbeat(vehicle, message);
         break;
@@ -494,12 +500,17 @@ void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInter
     }
 }
 
-QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message) const
+QString APMFirmwarePlugin::_getMessageText(mavlink_message_t* message, bool longVersion) const
 {
     QByteArray b;
 
-    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-    mavlink_msg_statustext_get_text(message, b.data());
+    if (longVersion) {
+        b.resize(MAVLINK_MSG_STATUSTEXT_LONG_FIELD_TEXT_LEN+1);
+        mavlink_msg_statustext_long_get_text(message, b.data());
+    } else {
+        b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
+        mavlink_msg_statustext_get_text(message, b.data());
+    }
 
     // Ensure NUL-termination
     b[b.length()-1] = '\0';
@@ -561,20 +572,33 @@ void APMFirmwarePlugin::_adjustSeverity(mavlink_message_t* message) const
                                        &statusText);
 }
 
-void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message) const
+void APMFirmwarePlugin::_setInfoSeverity(mavlink_message_t* message, bool longVersion) const
 {
-    mavlink_statustext_t statusText;
-    mavlink_msg_statustext_decode(message, &statusText);
-
     // Re-Encoding is always done using mavlink 1.0
     mavlink_status_t* mavlinkStatusReEncode = mavlink_get_channel_status(0);
     mavlinkStatusReEncode->flags |= MAVLINK_STATUS_FLAG_IN_MAVLINK1;
-    statusText.severity = MAV_SEVERITY_INFO;
-    mavlink_msg_statustext_encode_chan(message->sysid,
-                                       message->compid,
-                                       0,                  // Re-encoding uses reserved channel 0
-                                       message,
-                                       &statusText);
+
+    if (longVersion) {
+        mavlink_statustext_long_t statusTextLong;
+        mavlink_msg_statustext_long_decode(message, &statusTextLong);
+
+        statusTextLong.severity = MAV_SEVERITY_INFO;
+        mavlink_msg_statustext_long_encode_chan(message->sysid,
+                                                message->compid,
+                                                0,                  // Re-encoding uses reserved channel 0
+                                                message,
+                                                &statusTextLong);
+    } else {
+        mavlink_statustext_t statusText;
+        mavlink_msg_statustext_decode(message, &statusText);
+
+        statusText.severity = MAV_SEVERITY_INFO;
+        mavlink_msg_statustext_encode_chan(message->sysid,
+                                           message->compid,
+                                           0,                  // Re-encoding uses reserved channel 0
+                                           message,
+                                           &statusText);
+    }
 }
 
 void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* message) const

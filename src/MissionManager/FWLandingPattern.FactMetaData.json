@@ -51,7 +51,13 @@
     "min":              0.1,
     "max":              90,
     "decimalPlaces":    1,
-    "defaultValue":     12.0
+    "defaultValue":     6.0
+},
+{
+    "name":             "ValueSetIsDistance",
+    "shortDescription": "Value controller loiter point is distance",
+    "type":             "bool",
+    "defaultValue":     false
 },
 {
     "name":             "StopTakingPhotos",
