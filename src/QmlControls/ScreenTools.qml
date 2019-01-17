@@ -181,7 +181,9 @@ Item {
                 } else {
                     baseSize = _defaultFont.font.pointSize;
                 }
+                _appFontPointSizeFact._setIgnoreQGCRebootRequired(true)
                 _appFontPointSizeFact.value = baseSize
+                _appFontPointSizeFact._setIgnoreQGCRebootRequired(false)
                 //-- Release build doesn't get signal
                 if(!ScreenToolsController.isDebug)
                     _screenTools._setBasePointSize(baseSize);

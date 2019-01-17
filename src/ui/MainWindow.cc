@@ -504,7 +504,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
 
 QObject* MainWindow::rootQmlObject(void)
 {
-    return _mainQmlWidgetHolder->getRootObject();
+    return _mainQmlWidgetHolder ? _mainQmlWidgetHolder->getRootObject() : nullptr;
 }
 
 void MainWindow::_showAdvancedUIChanged(bool advanced)
