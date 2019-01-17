@@ -87,7 +87,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 //-----------------------------------------------------------------------------
 double VideoManager::aspectRatio()
 {
-    if(_activeVehicle) {
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             return pInfo->aspectRatio();
@@ -100,7 +100,7 @@ double VideoManager::aspectRatio()
 bool
 VideoManager::autoStreamConfigured()
 {
-    if(_activeVehicle) {
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             return !pInfo->uri().isEmpty();
@@ -203,7 +203,7 @@ VideoManager::_updateSettings()
     if(!_videoSettings || !_videoReceiver)
         return;
     //-- Auto discovery
-    if(_activeVehicle) {
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             switch(pInfo->type()) {
