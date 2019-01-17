@@ -97,7 +97,7 @@ Rectangle {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 exclusiveGroup:     mainActionGroup
-                source:             "/res/QGCLogoWhite"
+                source:             "/res/PlanckIcon"
                 logo:               true
                 onClicked:          toolBar.showSettingsView()
                 visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup

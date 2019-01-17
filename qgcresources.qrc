@@ -227,6 +227,7 @@
         <file alias="waypoint.svg">resources/waypoint.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
         <file alias="PlanckTag">resources/plancktag.png</file>
+        <file alias="PlanckIcon">resources/plancklogo.svg</file>
     </qresource>
     <qresource prefix="/res/firmware">
         <file alias="px4.png">resources/firmware/px4.png</file>
