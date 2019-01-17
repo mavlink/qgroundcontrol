@@ -32,6 +32,7 @@ public class TaiSync
     private static final int TAISYNC_SETTINGS_PORT = 8200;
     private static final int TAISYNC_TELEMETRY_PORT = 8400;
 
+    private Object runLock;
     private boolean running = false;
     private DatagramSocket udpSocket = null;
     private Socket tcpSettingsSocket = null;
@@ -49,12 +50,13 @@ public class TaiSync
 
     public TaiSync()
     {
+        runLock = new Object();
         mThreadPool = Executors.newFixedThreadPool(3);
     }
 
     public boolean isRunning()
     {
-        synchronized (this) {
+        synchronized (runLock) {
             return running;
         }
     }
@@ -63,7 +65,7 @@ public class TaiSync
     {
 //        Log.i("QGC_TaiSync", "Open");
 
-        synchronized (this) {
+        synchronized (runLock) {
             if (running) {
                 return;
             }
@@ -100,7 +102,7 @@ public class TaiSync
 
                 try {
                     while (bytesRead >= 0) {
-                        synchronized (this) {
+                        synchronized (runLock) {
                             if (!running) {
                                 break;
                             }
@@ -161,7 +163,7 @@ public class TaiSync
 
                 try {
                     while (true) {
-                        synchronized (this) {
+                        synchronized (runLock) {
                             if (!running) {
                                 break;
                             }
@@ -190,7 +192,7 @@ public class TaiSync
 
                 try {
                     while (true) {
-                        synchronized (this) {
+                        synchronized (runLock) {
                             if (!running) {
                                 break;
                             }
@@ -209,7 +211,7 @@ public class TaiSync
                 }
             }
         });
-    }
+   }
 
     private void sendTaiSyncMessage(byte protocol, int dataPort, byte[] data, int dataLen) throws IOException
     {
@@ -239,7 +241,7 @@ public class TaiSync
             System.arraycopy(data, 0, buffer, header.length, dataLen);
         }
 
-        synchronized (this) {
+        synchronized (runLock) {
             mFileOutputStream.write(buffer);
         }
     }
@@ -247,7 +249,7 @@ public class TaiSync
     public void close()
     {
 //        Log.i("QGC_TaiSync", "Close");
-        synchronized (this) {
+        synchronized (runLock) {
             running = false;
         }
         try {
