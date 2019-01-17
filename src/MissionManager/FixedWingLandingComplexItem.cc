@@ -90,6 +90,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     connect(&_loiterRadiusFact,         &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(&_stopTakingPhotosFact,     &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(&_stopTakingVideoFact,      &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
+    connect(&_valueSetIsDistanceFact,   &Fact::valueChanged,                                            this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::loiterCoordinateChanged,          this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::landingCoordinateChanged,         this, &FixedWingLandingComplexItem::_setDirty);
     connect(this,                       &FixedWingLandingComplexItem::loiterClockwiseChanged,           this, &FixedWingLandingComplexItem::_setDirty);
@@ -104,6 +105,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     } else {
         _glideSlopeChanged();
     }
+    setDirty(false);
 }
 
 int FixedWingLandingComplexItem::lastSequenceNumber(void) const
