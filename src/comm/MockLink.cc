@@ -1065,6 +1065,14 @@ void MockLink::_sendStatusTextMessages(void)
                                          status->severity,
                                          status->msg);
         respondWithMavlinkMessage(msg);
+
+        mavlink_msg_statustext_long_pack_chan(_vehicleSystemId,
+                                              _vehicleComponentId,
+                                              _mavlinkChannel,
+                                              &msg,
+                                              status->severity,
+                                              status->msg);
+        respondWithMavlinkMessage(msg);
     }
 }
 
