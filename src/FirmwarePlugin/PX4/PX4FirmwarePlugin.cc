@@ -425,7 +425,7 @@ void PX4FirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
         return;
     }
 
-    if (vehicle->capabilityBits() && MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+    if (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
         vehicle->sendMavCommandInt(vehicle->defaultComponentId(),
                                    MAV_CMD_DO_REPOSITION,
                                    MAV_FRAME_GLOBAL,
