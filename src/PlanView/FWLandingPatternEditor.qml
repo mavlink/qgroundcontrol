@@ -119,9 +119,9 @@ Rectangle {
                 QGCRadioButton {
                     id:                 specifyLandingDistance
                     text:               qsTr("Landing Dist")
-                    checked:            missionItem.valueSetIsDistance
+                    checked:            missionItem.valueSetIsDistance.rawValue
                     exclusiveGroup:     distanceGlideGroup
-                    onClicked:          missionItem.valueSetIsDistance = checked
+                    onClicked:          missionItem.valueSetIsDistance.rawValue = checked
                     Layout.fillWidth:   true
                 }
 
@@ -134,9 +134,9 @@ Rectangle {
                 QGCRadioButton {
                     id:                 specifyGlideSlope
                     text:               qsTr("Glide Slope")
-                    checked:            !missionItem.valueSetIsDistance
+                    checked:            !missionItem.valueSetIsDistance.rawValue
                     exclusiveGroup:     distanceGlideGroup
-                    onClicked:          missionItem.valueSetIsDistance = !checked
+                    onClicked:          missionItem.valueSetIsDistance.rawValue = !checked
                     Layout.fillWidth:   true
                 }
 
