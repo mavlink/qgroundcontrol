@@ -149,7 +149,8 @@ void FWLandingPatternTest::_testDirty(void)
             << _fwItem->landingDistance()
             << _fwItem->glideSlope()
             << _fwItem->stopTakingPhotos()
-            << _fwItem->stopTakingVideo();
+            << _fwItem->stopTakingVideo()
+            << _fwItem->valueSetIsDistance();
     for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_fwItem->dirty());
@@ -167,8 +168,7 @@ void FWLandingPatternTest::_testDirty(void)
 
     // These bool properties should set dirty when changed
     QList<const char*> rgBoolNames;
-    rgBoolNames << "valueSetIsDistance"
-                << "loiterClockwise"
+    rgBoolNames << "loiterClockwise"
                 << "altitudesAreRelative";
     const QMetaObject* metaObject = _fwItem->metaObject();
     for(const char* boolName: rgBoolNames) {
