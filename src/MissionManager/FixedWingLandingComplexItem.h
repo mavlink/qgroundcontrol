@@ -103,6 +103,7 @@ public:
 
     static const char* jsonComplexItemTypeValue;
 
+    static const char* settingsGroup;
     static const char* loiterToLandDistanceName;
     static const char* loiterAltitudeName;
     static const char* loiterRadiusName;
@@ -161,7 +162,6 @@ private:
     bool            _loiterClockwise;
     bool            _altitudesAreRelative;
 
-    static const char* settingsGroup;
     static const char* _jsonLoiterCoordinateKey;
     static const char* _jsonLoiterRadiusKey;
     static const char* _jsonLoiterClockwiseKey;
