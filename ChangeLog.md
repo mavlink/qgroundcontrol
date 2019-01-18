@@ -18,6 +18,7 @@ Note: This file only contains high level features or important fixes.
 * Bumped settings version (now 8). This will cause all settings to be reset to defaults.
 * Orbit visuals support changing rotation direction
 * Added support for the Taisync 2.4GHz ViUlinx digital HD wireless link.
+* Added UDP Port option for NMEA GPS Device.
 
 ## 3.4
 
