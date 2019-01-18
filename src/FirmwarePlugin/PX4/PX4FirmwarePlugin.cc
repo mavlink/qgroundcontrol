@@ -225,11 +225,6 @@ bool PX4FirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
     return found;
 }
 
-int PX4FirmwarePlugin::manualControlReservedButtonCount(void)
-{
-    return 0;   // 0 buttons reserved for rc switch simulation
-}
-
 bool PX4FirmwarePlugin::isCapable(const Vehicle *vehicle, FirmwareCapabilities capabilities)
 {
     int available = SetFlightModeCapability | PauseVehicleCapability | GuidedModeCapability;

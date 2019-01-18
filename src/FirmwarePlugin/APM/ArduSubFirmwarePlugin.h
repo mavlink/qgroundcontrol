@@ -110,9 +110,6 @@ public:
 
     QList<MAV_CMD> supportedMissionCommands(void) final;
 
-    // Overrides from FirmwarePlugin
-    int manualControlReservedButtonCount(void) final;
-
     int defaultJoystickTXMode(void) final { return 3; }
 
     void initializeStreamRates(Vehicle* vehicle) override final;

@@ -27,8 +27,6 @@ public:
     Q_PROPERTY(qreal        gimbalPitch     READ    gimbalPitch         NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal        gimbalYaw       READ    gimbalYaw           NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool         gimbalData      READ    gimbalData          NOTIFY gimbalDataChanged)
-    Q_PROPERTY(quint32      recordTime      READ    recordTime          NOTIFY recordTimeChanged)
-    Q_PROPERTY(QString      recordTimeStr   READ    recordTimeStr       NOTIFY recordTimeChanged)
 
     bool        takePhoto           () override;
     bool        stopTakePhoto       () override;
@@ -42,15 +40,11 @@ public:
     qreal       gimbalPitch         () { return static_cast<qreal>(_gimbalPitch); }
     qreal       gimbalYaw           () { return static_cast<qreal>(_gimbalYaw); }
     bool        gimbalData          () { return _gimbalData; }
-    quint32     recordTime          () { return _recordTime; }
-    QString     recordTimeStr       ();
 
 private slots:
-    void    _recTimerHandler        ();
     void    _mavlinkMessageReceived (const mavlink_message_t& message);
 
 signals:
-    void    recordTimeChanged       ();
     void    gimbalRollChanged       ();
     void    gimbalPitchChanged      ();
     void    gimbalYawChanged        ();
@@ -66,12 +60,9 @@ private:
     QSoundEffect            _cameraSound;
     QSoundEffect            _videoSound;
     QSoundEffect            _errorSound;
-    QTimer                  _recTimer;
-    QTime                   _recTime;
     float                   _gimbalRoll         = 0.0;
     float                   _gimbalPitch        = 0.0;
     float                   _gimbalYaw          = 0.0;
-    uint32_t                _recordTime         = 0;
     bool                    _firstPhotoLapse    = false;
     bool                    _gimbalData         = false;
 };

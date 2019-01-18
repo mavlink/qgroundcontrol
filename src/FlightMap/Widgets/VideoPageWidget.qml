@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.4
+import QtQuick                  2.11
 import QtPositioning            5.2
 import QtQuick.Layouts          1.2
-import QtQuick.Controls         1.4
+import QtQuick.Controls         2.4
 import QtQuick.Dialogs          1.2
 import QtGraphicalEffects       1.0
 
@@ -54,13 +54,14 @@ Item {
         }
         // Enable/Disable Video Streaming
         QGCLabel {
-           text:            qsTr("Enable Stream")
-           font.pointSize:  ScreenTools.smallFontPointSize
+           text:                qsTr("Enable Stream")
+           font.pointSize:      ScreenTools.smallFontPointSize
         }
         QGCSwitch {
-            id:             enableSwitch
-            enabled:        _streamingEnabled
-            checked:        QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
+            id:                 enableSwitch
+            enabled:            _streamingEnabled
+            checked:            QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
+            Layout.alignment:   Qt.AlignHCenter
             onClicked: {
                 if(checked) {
                     QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 1
@@ -73,14 +74,15 @@ Item {
         }
         // Grid Lines
         QGCLabel {
-           text:            qsTr("Grid Lines")
-           font.pointSize:  ScreenTools.smallFontPointSize
-           visible:         QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
+           text:                qsTr("Grid Lines")
+           font.pointSize:      ScreenTools.smallFontPointSize
+           visible:             QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
         }
         QGCSwitch {
-            enabled:        _streamingEnabled && _activeVehicle
-            checked:        QGroundControl.settingsManager.videoSettings.gridLines.rawValue
-            visible:        QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
+            enabled:            _streamingEnabled && _activeVehicle
+            checked:            QGroundControl.settingsManager.videoSettings.gridLines.rawValue
+            visible:            QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
+            Layout.alignment:   Qt.AlignHCenter
             onClicked: {
                 if(checked) {
                     QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 1
@@ -89,6 +91,17 @@ Item {
                 }
             }
         }
+        //-- Video Fit
+        QGCLabel {
+            text:               qsTr("Video Screen Fit")
+            font.pointSize:     ScreenTools.smallFontPointSize
+        }
+        FactComboBox {
+            fact:               QGroundControl.settingsManager.videoSettings.videoFit
+            indexModel:         false
+            Layout.alignment:   Qt.AlignHCenter
+        }
+        //-- Video Recording
         QGCLabel {
            text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
            font.pointSize:  ScreenTools.smallFontPointSize
