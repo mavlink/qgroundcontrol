@@ -25,18 +25,7 @@ AuterionCameraControl::AuterionCameraControl(const mavlink_camera_information_t 
     _errorSound.setSource(QUrl::fromUserInput("qrc:/auterion/wav/boop.wav"));
     _errorSound.setVolume(0.9);
 
-    _recTimer.setSingleShot(false);
-    _recTimer.setInterval(333);
-
-    connect(&_recTimer, &QTimer::timeout,                   this, &AuterionCameraControl::_recTimerHandler);
     connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &AuterionCameraControl::_mavlinkMessageReceived);
-}
-
-//-----------------------------------------------------------------------------
-QString
-AuterionCameraControl::recordTimeStr()
-{
-    return QTime(0, 0).addMSecs(static_cast<int>(recordTime())).toString("hh:mm:ss");
 }
 
 //-----------------------------------------------------------------------------
@@ -144,15 +133,9 @@ AuterionCameraControl::_setVideoStatus(VideoStatus status)
     QGCCameraControl::_setVideoStatus(status);
     if(oldStatus != status) {
         if(status == VIDEO_CAPTURE_STATUS_RUNNING) {
-            _recordTime = 0;
-            _recTime.start();
-            _recTimer.start();
             _videoSound.setLoopCount(1);
             _videoSound.play();
         } else {
-            _recTimer.stop();
-            _recordTime = 0;
-            emit recordTimeChanged();
             if(oldStatus == VIDEO_CAPTURE_STATUS_UNDEFINED) {
                 //-- System just booted and it's ready
                 _videoSound.setLoopCount(1);
@@ -202,23 +185,11 @@ AuterionCameraControl::_handleGimbalOrientation(const mavlink_message_t& message
 
 //-----------------------------------------------------------------------------
 void
-AuterionCameraControl::_recTimerHandler()
-{
-    _recordTime = static_cast<uint32_t>(_recTime.elapsed());
-    emit recordTimeChanged();
-}
-
-//-----------------------------------------------------------------------------
-void
 AuterionCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap)
 {
     QGCCameraControl::handleCaptureStatus(cap);
     //-- Update recording time
-    if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
-        _recordTime = cap.recording_time_ms;
-        _recTime = _recTime.addMSecs(_recTime.elapsed() - static_cast<int>(cap.recording_time_ms));
-        emit recordTimeChanged();
-    } else if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+    if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
         //-- Skip camera sound on first response (already did it when the user clicked it)
         if(_firstPhotoLapse) {
             _firstPhotoLapse = false;
