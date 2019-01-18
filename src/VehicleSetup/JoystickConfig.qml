@@ -620,20 +620,13 @@ SetupPage {
                             width:      parent.width
                             spacing:    ScreenTools.defaultFontPixelHeight / 3
 
-                            QGCLabel {
-                                visible: _activeVehicle.manualControlReservedButtonCount != 0
-                                text: qsTr("Buttons 0-%1 reserved for firmware use").arg(reservedButtonCount)
-
-                                property int reservedButtonCount: _activeVehicle.manualControlReservedButtonCount == -1 ? _activeJoystick.totalButtonCount : _activeVehicle.manualControlReservedButtonCount
-                            }
-
                             Repeater {
                                 id:     buttonActionRepeater
                                 model:  _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-                                    visible: (_activeVehicle.manualControlReservedButtonCount == -1 ? false : modelData >= _activeVehicle.manualControlReservedButtonCount) && !_activeVehicle.supportsJSButton
+                                    visible: !_activeVehicle.supportsJSButton
 
                                     property bool pressed
 

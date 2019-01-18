@@ -146,14 +146,6 @@ public:
     ///     @param altitudeChange If > 0, go up by amount specified, if < 0, go down by amount specified
     virtual void guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange);
 
-    /// FIXME: This isn't quite correct being here. All code for Joystick suvehicleTypepport is currently firmware specific
-    /// not just this. I'm going to try to change that. If not, this will need to be removed.
-    /// Returns the number of buttons which are reserved for firmware use in the MANUAL_CONTROL mavlink
-    /// message. For example PX4 Flight Stack reserves the first 8 buttons to simulate rc switches.
-    /// The remainder can be assigned to Vehicle actions.
-    /// @return -1: reserver all buttons, >0 number of buttons to reserve
-    virtual int manualControlReservedButtonCount(void);
-
     /// Default tx mode to apply to joystick axes
     /// TX modes are as outlined here: http://www.rc-airplane-world.com/rc-transmitter-modes.html
     virtual int defaultJoystickTXMode(void);

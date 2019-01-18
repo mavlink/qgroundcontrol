@@ -228,13 +228,6 @@ bool APMFirmwarePlugin::setFlightMode(const QString& flightMode, uint8_t* base_m
     return found;
 }
 
-int APMFirmwarePlugin::manualControlReservedButtonCount(void)
-{
-    // We don't know whether the firmware is going to used any of these buttons.
-    // So reserve them all.
-    return -1;
-}
-
 void APMFirmwarePlugin::_handleIncomingParamValue(Vehicle* vehicle, mavlink_message_t* message)
 {
     Q_UNUSED(vehicle);

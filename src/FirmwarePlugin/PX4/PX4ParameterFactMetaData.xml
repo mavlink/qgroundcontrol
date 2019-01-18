@@ -415,6 +415,20 @@ Set to 2 to use heading from motion capture</short_desc>
         <value code="1">Active high</value>
       </values>
     </parameter>
+    <parameter default="1500" name="TRIG_PWM_NEUTRAL" type="INT32">
+      <short_desc>PWM neutral output on trigger pin</short_desc>
+      <min>1000</min>
+      <max>2000</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="1900" name="TRIG_PWM_SHOOT" type="INT32">
+      <short_desc>PWM output to trigger shot</short_desc>
+      <min>1000</min>
+      <max>2000</max>
+      <unit>us</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
   </group>
   <group name="Circuit Breaker">
     <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
@@ -7633,7 +7647,7 @@ to takeoff is reached</short_desc>
       <max>1000</max>
       <reboot_required>true</reboot_required>
     </parameter>
-    <parameter default="1" name="SDLOG_MISSION" type="INT32">
+    <parameter default="0" name="SDLOG_MISSION" type="INT32">
       <short_desc>Mission Log</short_desc>
       <long_desc>If enabled, a small additional "mission" log file will be written to the SD card. The log contains just those messages that are useful for tasks like generating flight statistics and geotagging. The different modes can be used to further reduce the logged data (and thus the log file size). For example, choose geotagging mode to only log data required for geotagging. Note that the normal/full log is still created, and contains all the data in the mission log (and more).</long_desc>
       <reboot_required>true</reboot_required>
@@ -8248,6 +8262,21 @@ is less than 50% of this value</short_desc>
       <long_desc>This parameter defines a rotational offset in degrees around the Z (Yaw) axis. It allows the user to fine tune the board offset in the event of misalignment.</long_desc>
       <unit>deg</unit>
     </parameter>
+    <parameter default="0" name="SENS_CM8JL65_CFG" type="INT32">
+      <short_desc>Serial Configuration for Lanbao PSK-CM8JL65-CC5</short_desc>
+      <long_desc>Configure on which serial port to run Lanbao PSK-CM8JL65-CC5.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+      </values>
+    </parameter>
     <parameter default="0" name="SENS_EN_BATT" type="INT32">
       <short_desc>SMBUS Smart battery driver (BQ40Z50)</short_desc>
       <boolean />
@@ -8341,13 +8370,6 @@ is less than 50% of this value</short_desc>
       <unit>C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.0" name="SENS_IMU_TEMP_FF" type="FLOAT">
-      <short_desc>IMU heater controller feedforward value</short_desc>
-      <min>0</min>
-      <max>1.0</max>
-      <unit>microseconds</unit>
-      <decimal>3</decimal>
-    </parameter>
     <parameter default="0.025" name="SENS_IMU_TEMP_I" type="FLOAT">
       <short_desc>IMU heater controller integrator gain value</short_desc>
       <min>0</min>
@@ -8355,10 +8377,10 @@ is less than 50% of this value</short_desc>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
-    <parameter default="0.25" name="SENS_IMU_TEMP_P" type="FLOAT">
+    <parameter default="1.0" name="SENS_IMU_TEMP_P" type="FLOAT">
       <short_desc>IMU heater controller proportional gain value</short_desc>
       <min>0</min>
-      <max>1.0</max>
+      <max>2.0</max>
       <unit>microseconds/C</unit>
       <decimal>3</decimal>
     </parameter>
