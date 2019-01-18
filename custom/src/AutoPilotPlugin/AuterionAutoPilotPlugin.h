@@ -18,4 +18,8 @@ class AuterionAutoPilotPlugin : public PX4AutoPilotPlugin
     Q_OBJECT
 public:
     AuterionAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
+    const QVariantList& vehicleComponents() override;
+private:
+    QVariantList _components;
+
 };
