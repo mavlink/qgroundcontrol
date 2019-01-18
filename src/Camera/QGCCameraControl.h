@@ -18,6 +18,36 @@ Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
 Q_DECLARE_LOGGING_CATEGORY(CameraControlLogVerbose)
 
 //-----------------------------------------------------------------------------
+class QGCVideoStreamInfo : public QObject
+{
+    Q_OBJECT
+public:
+    QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t* si);
+
+    Q_PROPERTY(QString      uri                 READ uri                NOTIFY infoChanged)
+    Q_PROPERTY(int          streamID            READ streamID           NOTIFY infoChanged)
+    Q_PROPERTY(int          type                READ type               NOTIFY infoChanged)
+    Q_PROPERTY(qreal        aspectRatio         READ aspectRatio        NOTIFY infoChanged)
+    Q_PROPERTY(qreal        hfov                READ hfov               NOTIFY infoChanged)
+    Q_PROPERTY(bool         isThermal           READ isThermal          NOTIFY infoChanged)
+
+    QString uri             () { return QString(_streamInfo.uri); }
+    qreal   aspectRatio     ();
+    qreal   hfov            () { return _streamInfo.hfov; }
+    int     type            () { return _streamInfo.type; }
+    int     streamID        () { return _streamInfo.stream_id; }
+    bool    isThermal       () { return _streamInfo.flags & VIDEO_STREAM_STATUS_FLAGS_THERMAL; }
+
+    bool    update          (const mavlink_video_stream_status_t* vs);
+
+signals:
+    void    infoChanged     ();
+
+private:
+    mavlink_video_stream_information_t _streamInfo;
+};
+
+//-----------------------------------------------------------------------------
 class QGCCameraOptionExclusion : public QObject
 {
 public:
@@ -99,6 +129,7 @@ public:
     Q_PROPERTY(bool         hasModes            READ hasModes           NOTIFY infoChanged)
     Q_PROPERTY(bool         hasZoom             READ hasZoom            NOTIFY infoChanged)
     Q_PROPERTY(bool         hasFocus            READ hasFocus           NOTIFY infoChanged)
+    Q_PROPERTY(bool         hasVideoStream      READ hasVideoStream     NOTIFY infoChanged)
     Q_PROPERTY(bool         photosInVideoMode   READ photosInVideoMode  NOTIFY infoChanged)
     Q_PROPERTY(bool         videoInPhotoMode    READ videoInPhotoMode   NOTIFY infoChanged)
     Q_PROPERTY(bool         isBasic             READ isBasic            NOTIFY infoChanged)
@@ -116,6 +147,7 @@ public:
     Q_PROPERTY(Fact*        shutter             READ shutter            NOTIFY parametersReady)
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        mode                READ mode               NOTIFY parametersReady)
     Q_PROPERTY(Fact*        videoRes            READ videoRes           NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
@@ -125,6 +157,12 @@ public:
     Q_PROPERTY(qreal        photoLapse          READ photoLapse         WRITE   setPhotoLapse       NOTIFY photoLapseChanged)
     Q_PROPERTY(int          photoLapseCount     READ photoLapseCount    WRITE   setPhotoLapseCount  NOTIFY photoLapseCountChanged)
     Q_PROPERTY(PhotoMode    photoMode           READ photoMode          WRITE   setPhotoMode        NOTIFY photoModeChanged)
+    Q_PROPERTY(int          currentStream       READ currentStream      WRITE   setCurrentStream    NOTIFY currentStreamChanged)
+    Q_PROPERTY(bool         autoStream          READ autoStream                                     NOTIFY autoStreamChanged)
+    Q_PROPERTY(QmlObjectListModel* streams      READ streams                                        NOTIFY streamsChanged)
+    Q_PROPERTY(QGCVideoStreamInfo* currentStreamInstance READ currentStreamInstance                 NOTIFY currentStreamChanged)
+    Q_PROPERTY(quint32      recordTime          READ recordTime                                     NOTIFY recordTimeChanged)
+    Q_PROPERTY(QString      recordTimeStr       READ recordTimeStr                                  NOTIFY recordTimeChanged)
 
     Q_INVOKABLE virtual void setVideoMode   ();
     Q_INVOKABLE virtual void setPhotoMode   ();
@@ -139,6 +177,8 @@ public:
     Q_INVOKABLE virtual void stepZoom       (int direction);
     Q_INVOKABLE virtual void startZoom      (int direction);
     Q_INVOKABLE virtual void stopZoom       ();
+    Q_INVOKABLE virtual void stopStream     ();
+    Q_INVOKABLE virtual void resumeStream   ();
 
     virtual int         version             () { return _version; }
     virtual QString     modelName           () { return _modelName; }
@@ -152,6 +192,7 @@ public:
     virtual bool        hasModes            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_MODES; }
     virtual bool        hasZoom             () { return _info.flags & CAMERA_CAP_FLAGS_HAS_BASIC_ZOOM; }
     virtual bool        hasFocus            () { return _info.flags & CAMERA_CAP_FLAGS_HAS_BASIC_FOCUS; }
+    virtual bool        hasVideoStream      () { return _info.flags & CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM; }
     virtual bool        photosInVideoMode   () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_IMAGE_IN_VIDEO_MODE; }
     virtual bool        videoInPhotoMode    () { return _info.flags & CAMERA_CAP_FLAGS_CAN_CAPTURE_VIDEO_IN_IMAGE_MODE; }
 
@@ -171,12 +212,21 @@ public:
     virtual qreal       zoomLevel           () { return _zoomLevel; }
     virtual qreal       focusLevel          () { return _focusLevel; }
 
+    virtual QmlObjectListModel* streams     () { return &_streams; }
+    virtual QGCVideoStreamInfo* currentStreamInstance();
+    virtual int          currentStream      () { return _currentStream; }
+    virtual void         setCurrentStream   (int stream);
+    virtual bool         autoStream         ();
+    virtual quint32      recordTime         () { return _recordTime; }
+    virtual QString      recordTimeStr      ();
+
     virtual Fact*       exposureMode        ();
     virtual Fact*       ev                  ();
     virtual Fact*       iso                 ();
     virtual Fact*       shutter             ();
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
+    virtual Fact*       mode                ();
     virtual Fact*       videoRes            ();
 
     virtual void        setZoomLevel        (qreal level);
@@ -191,6 +241,8 @@ public:
     virtual void        handleParamAck      (const mavlink_param_ext_ack_t& ack);
     virtual void        handleParamValue    (const mavlink_param_ext_value_t& value);
     virtual void        handleStorageInfo   (const mavlink_storage_information_t& st);
+    virtual void        handleVideoInfo     (const mavlink_video_stream_information_t *vi);
+    virtual void        handleVideoStatus   (const mavlink_video_stream_status_t *vs);
 
     //-- Notify controller a parameter has changed
     virtual void        factChanged         (Fact* pFact);
@@ -214,11 +266,18 @@ signals:
     void    parametersReady                 ();
     void    zoomLevelChanged                ();
     void    focusLevelChanged               ();
+    void    streamsChanged                  ();
+    void    currentStreamChanged            ();
+    void    autoStreamChanged               ();
+    void    recordTimeChanged               ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
     virtual void    _setPhotoStatus         (PhotoStatus status);
     virtual void    _setCameraMode          (CameraMode mode);
+    virtual void    _requestStreamInfo      (uint8_t streamID);
+    virtual void    _requestStreamStatus    (uint8_t streamID);
+    virtual QGCVideoStreamInfo* _findStream (uint8_t streamID);
 
 protected slots:
     virtual void    _initWhenReady          ();
@@ -231,7 +290,10 @@ protected slots:
     virtual void    _mavCommandResult       (int vehicleId, int component, int command, int result, bool noReponseFromVehicle);
     virtual void    _dataReady              (QByteArray data);
     virtual void    _paramDone              ();
-
+    virtual void    _streamTimeout          ();
+    virtual void    _streamStatusTimeout    ();
+    virtual void    _recTimerHandler        ();
+    virtual void    _checkForVideoStreams   ();
 
 private:
     bool    _handleLocalization             (QByteArray& bytes);
@@ -254,26 +316,26 @@ private:
     QString         _getParamName           (const char* param_id);
 
 protected:
-    Vehicle*                            _vehicle;
-    int                                 _compID;
+    Vehicle*                            _vehicle            = nullptr;
+    int                                 _compID             = 0;
     mavlink_camera_information_t        _info;
-    int                                 _version;
-    bool                                _cached;
-    bool                                _paramComplete;
-    qreal                               _zoomLevel;
-    qreal                               _focusLevel;
-    uint32_t                            _storageFree;
-    uint32_t                            _storageTotal;
-    QNetworkAccessManager*              _netManager;
+    int                                 _version            = 0;
+    bool                                _cached             = false;
+    bool                                _paramComplete      = false;
+    qreal                               _zoomLevel          = 0.0;
+    qreal                               _focusLevel         = 0.0;
+    uint32_t                            _storageFree        = 0;
+    uint32_t                            _storageTotal       = 0;
+    QNetworkAccessManager*              _netManager         = nullptr;
     QString                             _modelName;
     QString                             _vendor;
     QString                             _cacheFile;
-    CameraMode                          _cameraMode;
-    PhotoMode                           _photoMode;
-    qreal                               _photoLapse;
-    int                                 _photoLapseCount;
-    VideoStatus                         _video_status;
-    PhotoStatus                         _photo_status;
+    CameraMode                          _cameraMode         = CAM_MODE_UNDEFINED;
+    PhotoMode                           _photoMode          = PHOTO_CAPTURE_SINGLE;
+    qreal                               _photoLapse         = 1.0;
+    int                                 _photoLapseCount    = 0;
+    VideoStatus                         _video_status       = VIDEO_CAPTURE_STATUS_UNDEFINED;
+    PhotoStatus                         _photo_status       = PHOTO_CAPTURE_STATUS_UNDEFINED;
     QStringList                         _activeSettings;
     QStringList                         _settings;
     QTimer                              _captureStatusTimer;
@@ -282,10 +344,20 @@ protected:
     QMap<QString, QStringList>          _originalOptNames;
     QMap<QString, QVariantList>         _originalOptValues;
     QMap<QString, QGCCameraParamIO*>    _paramIO;
-    int                                 _storageInfoRetries;
-    int                                 _captureInfoRetries;
-    bool                                _resetting;
+    int                                 _storageInfoRetries = 0;
+    int                                 _captureInfoRetries = 0;
+    bool                                _resetting          = false;
+    QTimer                              _recTimer;
+    QTime                               _recTime;
+    uint32_t                            _recordTime         = 0;
     //-- Parameters that require a full update
     QMap<QString, QStringList>          _requestUpdates;
     QStringList                         _updatesToRequest;
+    //-- Video Streams
+    int                                 _requestCount       = 0;
+    int                                 _currentStream      = 0;
+    int                                 _expectedCount      = 1;
+    QTimer                              _streamInfoTimer;
+    QTimer                              _streamStatusTimer;
+    QmlObjectListModel                  _streams;
 };

@@ -2214,11 +2214,6 @@ void Vehicle::resetMessages()
     }
 }
 
-int Vehicle::manualControlReservedButtonCount(void)
-{
-    return _firmwarePlugin->manualControlReservedButtonCount();
-}
-
 void Vehicle::_loadSettings(void)
 {
     if (!_active) {
