@@ -472,7 +472,7 @@ VideoReceiver::start()
 void
 VideoReceiver::stop()
 {
-    if(qgcApp()->runningUnitTests()) {
+    if(qgcApp() && qgcApp()->runningUnitTests()) {
         return;
     }
 #if defined(QGC_GST_STREAMING)

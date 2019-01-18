@@ -52,7 +52,6 @@ public:
     double              minimumTakeoffAltitude          (Vehicle* vehicle) override;
     void                startMission                    (Vehicle* vehicle) override;
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
-    int                 manualControlReservedButtonCount(void) override;
     void                initializeVehicle               (Vehicle* vehicle) override;
     bool                sendHomePositionToVehicle       (void) override;
     void                addMetaDataToFact               (QObject* parameterMetaData, Fact* fact, MAV_TYPE vehicleType) override;

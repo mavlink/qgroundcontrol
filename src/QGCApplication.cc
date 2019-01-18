@@ -414,6 +414,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterUncreatableType<ParameterManager>    (kQGCVehicle,                           1, 0, "ParameterManager",           kRefOnly);
     qmlRegisterUncreatableType<QGCCameraManager>    (kQGCVehicle,                           1, 0, "QGCCameraManager",           kRefOnly);
     qmlRegisterUncreatableType<QGCCameraControl>    (kQGCVehicle,                           1, 0, "QGCCameraControl",           kRefOnly);
+    qmlRegisterUncreatableType<QGCVideoStreamInfo>  (kQGCVehicle,                           1, 0, "QGCVideoStreamInfo",         kRefOnly);
     qmlRegisterUncreatableType<LinkInterface>       (kQGCVehicle,                           1, 0, "LinkInterface",              kRefOnly);
     qmlRegisterUncreatableType<MissionController>   (kQGCControllers,                       1, 0, "MissionController",          kRefOnly);
     qmlRegisterUncreatableType<GeoFenceController>  (kQGCControllers,                       1, 0, "GeoFenceController",         kRefOnly);

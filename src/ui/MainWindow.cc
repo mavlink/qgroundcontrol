@@ -84,7 +84,7 @@ static const char *rgDockWidgetNames[] = {
 static const char* _visibleWidgetsKey = "VisibleWidgets";
 #endif
 
-static MainWindow* _instance = NULL;   ///< @brief MainWindow singleton
+static MainWindow* _instance = nullptr;   ///< @brief MainWindow singleton
 
 MainWindow* MainWindow::_create()
 {
@@ -106,10 +106,10 @@ void MainWindow::deleteInstance(void)
 ///         by MainWindow::_create method. Hence no other code should have access to
 ///         constructor.
 MainWindow::MainWindow()
-    : _mavlinkDecoder       (NULL)
+    : _mavlinkDecoder       (nullptr)
     , _lowPowerMode         (false)
     , _showStatusBar        (false)
-    , _mainQmlWidgetHolder  (NULL)
+    , _mainQmlWidgetHolder  (nullptr)
     , _forceClose           (false)
 {
     _instance = this;
@@ -138,21 +138,15 @@ MainWindow::MainWindow()
     _centralLayout->setContentsMargins(0, 0, 0, 0);
     centralWidget()->setLayout(_centralLayout);
 
-    _mainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), NULL, this);
-    _centralLayout->addWidget(_mainQmlWidgetHolder);
-    _mainQmlWidgetHolder->setVisible(true);
-
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
-    _mainQmlWidgetHolder->setContextPropertyObject("controller", this);
-    _mainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
-    _mainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
+    //-- Allow plugin to initialize main QML Widget
+    _mainQmlWidgetHolder = qgcApp()->toolbox()->corePlugin()->createMainQmlWidgetHolder(_centralLayout, this);
 
     // Image provider
     QQuickImageProvider* pImgProvider = dynamic_cast<QQuickImageProvider*>(qgcApp()->toolbox()->imageProvider());
     _mainQmlWidgetHolder->getEngine()->addImageProvider(QStringLiteral("QGCImages"), pImgProvider);
 
     // Set dock options
-    setDockOptions(0);
+    setDockOptions(nullptr);
     // Setup corners
     setCorner(Qt::BottomRightCorner, Qt::BottomDockWidgetArea);
 
@@ -162,7 +156,7 @@ MainWindow::MainWindow()
 #endif
 
 #ifdef UNITTEST_BUILD
-    QAction* qmlTestAction = new QAction("Test QML palette and controls", NULL);
+    QAction* qmlTestAction = new QAction("Test QML palette and controls", nullptr);
     connect(qmlTestAction, &QAction::triggered, this, &MainWindow::_showQmlTestWidget);
     _ui.menuWidgets->addAction(qmlTestAction);
 #endif
@@ -246,14 +240,14 @@ MainWindow::~MainWindow()
         _mavlinkDecoder->finish();
         _mavlinkDecoder->wait(1000);
         _mavlinkDecoder->deleteLater();
-        _mavlinkDecoder = NULL;
+        _mavlinkDecoder = nullptr;
     }
 
     // This needs to happen before we get into the QWidget dtor
     // otherwise  the QML engine reads freed data and tries to
     // destroy MainWindow a second time.
     delete _mainQmlWidgetHolder;
-    _instance = NULL;
+    _instance = nullptr;
 }
 
 QString MainWindow::_getWindowGeometryKey()
@@ -315,7 +309,7 @@ void MainWindow::_showDockWidget(const QString& name, bool show)
 /// Creates the specified inner dock widget and adds to the QDockWidget
 bool MainWindow::_createInnerDockWidget(const QString& widgetName)
 {
-    QGCDockWidget* widget = NULL;
+    QGCDockWidget* widget = nullptr;
     QAction *action = _mapName2Action[widgetName];
     if(action) {
         switch(action->data().toInt()) {
@@ -339,7 +333,7 @@ bool MainWindow::_createInnerDockWidget(const QString& widgetName)
             _mapName2DockWidget[widgetName] = widget;
         }
     }
-    return widget != NULL;
+    return widget != nullptr;
 }
 
 void MainWindow::_hideAllDockWidgets(void)
@@ -510,7 +504,7 @@ void MainWindow::_storeVisibleWidgetsSettings(void)
 
 QObject* MainWindow::rootQmlObject(void)
 {
-    return _mainQmlWidgetHolder->getRootObject();
+    return _mainQmlWidgetHolder ? _mainQmlWidgetHolder->getRootObject() : nullptr;
 }
 
 void MainWindow::_showAdvancedUIChanged(bool advanced)

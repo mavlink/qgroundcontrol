@@ -18,6 +18,10 @@
 #include "VideoReceiver.h"
 #include "QGCLoggingCategory.h"
 
+#if !defined(__mobile__)
+#include "QGCQmlWidgetHolder.h"
+#endif
+
 #include <QtQml>
 #include <QQmlEngine>
 
@@ -324,3 +328,17 @@ QString QGCCorePlugin::stableVersionCheckFileUrl(void) const
     return QString("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt");
 #endif
 }
+
+#if !defined(__mobile__)
+QGCQmlWidgetHolder* QGCCorePlugin::createMainQmlWidgetHolder(QLayout *mainLayout, QWidget* parent)
+{
+    QGCQmlWidgetHolder* pMainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), nullptr, parent);
+    mainLayout->addWidget(pMainQmlWidgetHolder);
+    pMainQmlWidgetHolder->setVisible(true);
+    QQmlEngine::setObjectOwnership(parent, QQmlEngine::CppOwnership);
+    pMainQmlWidgetHolder->setContextPropertyObject("controller", parent);
+    pMainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
+    pMainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
+    return pMainQmlWidgetHolder;
+}
+#endif
