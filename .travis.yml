@@ -49,8 +49,7 @@ android:
 addons:
   apt:
     packages:
-    - espeak
-    - libespeak-dev
+    - speech-dispatcher
     - libgstreamer-plugins-base1.0-dev
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
