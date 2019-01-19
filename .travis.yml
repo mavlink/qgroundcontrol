@@ -158,7 +158,7 @@ script:
   - if [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
     	mkdir -p ~/.config/QtProject/ && 
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-        ./debug/QGroundControl/Contents/MacOS/QGroundControl --unittest;
+        ${SHADOW_BUILD_DIR}/debug/qgroundcontrol.app/Contents/MacOS/qgroundcontrol --unittest;
     fi
 
 after_success:
