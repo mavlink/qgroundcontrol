@@ -34,11 +34,10 @@ matrix:
           osx_image: xcode9.2
           env: SPEC=macx-ios-clang CONFIG=release
           sudo: false
-# OSX builds pared back to installer only since travis sucks so bad we can't afford more than one'
-#        - os: osx
-#          osx_image: xcode8
-#          env: SPEC=macx-clang CONFIG=debug
-#          sudo: required
+        - os: osx
+          osx_image: xcode8
+          env: SPEC=macx-clang CONFIG=debug
+          sudo: required
 
 android:
   components:
@@ -160,12 +159,11 @@ script:
     fi
   #- ccache -s
 
-  # unit tests linux
-  - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
+  # unit tests OSX
+  - if [[ "${SPEC}" = "macx-clang" && "${CONFIG}" = "debug" ]]; then
     	mkdir -p ~/.config/QtProject/ && 
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-        speech-dispatcher &&
-        ./debug/qgroundcontrol-start.sh --unittest;
+        ./debug/QGroundControl/Contents/MacOS/QGroundControl --unittest;
     fi
 
 after_success:
