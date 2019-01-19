@@ -387,7 +387,7 @@ void UnitTest::_connectMockLink(MAV_AUTOPILOT autopilot)
 
     // Wait for the Vehicle to get created
     QSignalSpy spyVehicle(qgcApp()->toolbox()->multiVehicleManager(), SIGNAL(parameterReadyVehicleAvailableChanged(bool)));
-    QCOMPARE(spyVehicle.wait(20000), true);
+    QCOMPARE(spyVehicle.wait(10000), true);
     QVERIFY(qgcApp()->toolbox()->multiVehicleManager()->parameterReadyVehicleAvailable());
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     QVERIFY(_vehicle);
