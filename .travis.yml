@@ -162,8 +162,10 @@ script:
 
   # unit tests linux
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
-    	mkdir -p ~/.config/QtProject/ && cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-            ./debug/qgroundcontrol-start.sh --unittest;
+    	mkdir -p ~/.config/QtProject/ && 
+        cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
+        speech-dispatcher &&
+        ./debug/qgroundcontrol-start.sh --unittest;
     fi
 
 after_success:
