@@ -678,6 +678,9 @@ void SimpleMissionItem::_altitudeModeChanged(void)
     case QGroundControlQmlGlobal::AltitudeModeRelative:
         _missionItem.setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
         break;
+    case QGroundControlQmlGlobal::AltitudeModeNone:
+        qWarning() << "Internal Error SimpleMissionItem::_altitudeModeChanged: Invalid altitudeMode == AltitudeModeNone";
+        break;
     }
 
     // We always call _altitudeChanged to make sure that param7 is always setup correctly on mode change
