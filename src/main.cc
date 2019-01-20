@@ -97,6 +97,21 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
 }
 #endif
 
+#ifdef __android__
+#include <QtAndroid>
+bool checkAndroidWritePermission() {
+    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+    if(r == QtAndroid::PermissionResult::Denied) {
+        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+        if(r == QtAndroid::PermissionResult::Denied) {
+             return false;
+        }
+   }
+   return true;
+}
+#endif
+
 /**
  * @brief Starts the application
  *
@@ -254,6 +269,10 @@ int main(int argc, char *argv[])
     } else
 #endif
     {
+
+#ifdef __android__
+        checkAndroidWritePermission();
+#endif
         if (!app->_initForNormalAppBoot()) {
             return -1;
         }
