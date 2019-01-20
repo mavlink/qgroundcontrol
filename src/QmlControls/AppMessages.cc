@@ -76,6 +76,8 @@ void AppLogModel::writeMessages(const QString dest_file)
             QTextStream out(&file);
             out << writebuffer;
             success = out.status() == QTextStream::Ok;
+        } else {
+            qWarning() << "AppLogModel::writeMessages write failed:" << file.errorString();
         }
         emit debug_model->writeFinished(success);
     });
