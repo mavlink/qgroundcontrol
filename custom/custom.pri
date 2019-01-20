@@ -103,6 +103,12 @@ iOSBuild {
     QMAKE_BUNDLE_DATA    += BUNDLE
 }
 
+# Multimedia is disabled for non UVC builds but we need it.
+contains (DEFINES, QGC_DISABLE_UVC) {
+    QT += \
+        multimedia
+}
+
 QML_IMPORT_PATH += \
     $$QGCROOT/custom/res
 
