@@ -157,31 +157,23 @@ QGCView {
             }
 
             QGCLabel {
-                id:                  gstLabel
-                anchors.baseline:    gstCombo.baseline
-                anchors.right:       gstCombo.left
-                anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-                text:                qsTr("GStreamer Debug Level:")
-                visible:             QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
+                id:                 gstLabel
+                anchors.left:       writeButton.right
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+                anchors.baseline:   gstCombo.baseline
+                text:               qsTr("GStreamer Debug")
+                visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
             }
 
             FactComboBox {
-                id:                  gstCombo
-                anchors.right:       followTail.left
-                anchors.rightMargin: ScreenTools.defaultFontPixelWidth*20
-                anchors.bottom:      parent.bottom
-                width:               ScreenTools.defaultFontPixelWidth*20
-                model:               ["disabled", "1", "2", "3", "4", "5", "6", "7", "8"]
-                fact:                QGroundControl.settingsManager.appSettings.gstDebugLevel
-                visible:             QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
-            }
-
-            BusyIndicator {
-                id:              writeBusy
-                anchors.bottom:  writeButton.bottom
-                anchors.left:    writeButton.right
-                height:          writeButton.height
-                visible:        !writeButton.enabled
+                id:                 gstCombo
+                anchors.left:       gstLabel.right
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                anchors.bottom:     parent.bottom
+                width:              ScreenTools.defaultFontPixelWidth * 10
+                model:              ["Disabled", "1", "2", "3", "4", "5", "6", "7", "8"]
+                fact:               QGroundControl.settingsManager.appSettings.gstDebugLevel
+                visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible
             }
 
             QGCButton {
@@ -204,7 +196,7 @@ QGCView {
                 id:             filterButton
                 anchors.bottom: parent.bottom
                 anchors.right:  parent.right
-                text:           qsTr("Set logging")
+                text:           qsTr("Set Logging")
                 onClicked:      showDialog(filtersDialogComponent, qsTr("Turn on logging categories"), qgcView.showDialogDefaultWidth, StandardButton.Close)
             }
         }
