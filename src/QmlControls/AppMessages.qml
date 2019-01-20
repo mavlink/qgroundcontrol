@@ -133,6 +133,7 @@ QGCView {
                 id:             writeDialog
                 folder:         QGroundControl.settingsManager.appSettings.logSavePath
                 nameFilters:    [qsTr("Log files (*.txt)"), qsTr("All Files (*)")]
+                fileExtension:  qsTr("txt")
                 selectExisting: false
                 title:          qsTr("Select log save file")
                 qgcView:        _qgcView
