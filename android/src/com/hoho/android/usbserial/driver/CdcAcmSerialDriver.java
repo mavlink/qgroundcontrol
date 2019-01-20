@@ -304,6 +304,18 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
                     UsbId.DEVICE_SPARKY2,
                     UsbId.DEVICE_OPLINK,
                 });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ARDUPILOT_CHIBIOS1),
+                new int[] {
+                    UsbId.DEVICE_ARDUPILOT_CHIBIOS,
+                });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ARDUPILOT_CHIBIOS2),
+                new int[] {
+                    UsbId.DEVICE_ARDUPILOT_CHIBIOS,
+                });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_DRAGONLINK),
+                new int[] {
+                    UsbId.DEVICE_DRAGONLINK,
+                });
         return supportedDevices;
     }
 
