@@ -5,6 +5,7 @@ add_library(gps
 	Drivers/src/gps_helper.cpp
 	Drivers/src/mtk.cpp
 	Drivers/src/rtcm.cpp
+	Drivers/src/sbf.cpp
 	Drivers/src/ubx.cpp
 	GPSManager.cc
 	GPSProvider.cc
