@@ -74,8 +74,8 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     QGCCorePlugin::setToolbox(toolbox);
     qmlRegisterSingletonType<AuterionQuickInterface>("AuterionQuickInterface", 1, 0, "AuterionQuickInterface", auterionQuickInterfaceSingletonFactory);
     //-- Enable automatic logging
-    toolbox->mavlinkLogManager()->setEnableAutoStart(true);
-    toolbox->mavlinkLogManager()->setEnableAutoUpload(true);
+    toolbox->mavlinkLogManager()->setEnableAutoStart(false);
+    toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
     toolbox->mavlinkLogManager()->setUploadURL("https://airlango.auterion.com/upload");
 }
 
