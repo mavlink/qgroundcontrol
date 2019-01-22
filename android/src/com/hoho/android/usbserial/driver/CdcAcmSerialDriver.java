@@ -41,8 +41,8 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
     private static final int SET_CONTROL_LINE_STATE = 0x22;
     private static final int SEND_BREAK = 0x23;
 
-    public CdcAcmSerialDriver(UsbDevice device, UsbDeviceConnection connection) {
-        super(device, connection);
+    public CdcAcmSerialDriver(UsbDevice device) {
+        super(device);
     }
 
     @Override
