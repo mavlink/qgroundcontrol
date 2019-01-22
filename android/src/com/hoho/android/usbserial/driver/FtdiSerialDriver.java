@@ -211,8 +211,8 @@ public class FtdiSerialDriver extends CommonUsbSerialDriver {
      * @throws UsbSerialRuntimeException if the given device is incompatible
      *             with this driver
      */
-    public FtdiSerialDriver(UsbDevice usbDevice, UsbDeviceConnection usbConnection) {
-        super(usbDevice, usbConnection);
+    public FtdiSerialDriver(UsbDevice usbDevice) {
+        super(usbDevice);
         mType = null;
     }
 
