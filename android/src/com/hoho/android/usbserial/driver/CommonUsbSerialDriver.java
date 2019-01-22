@@ -35,11 +35,13 @@ abstract class CommonUsbSerialDriver implements UsbSerialDriver {
     public static final int DEFAULT_READ_BUFFER_SIZE = 16 * 1024;
     public static final int DEFAULT_WRITE_BUFFER_SIZE = 16 * 1024;
 
-    protected final UsbDevice mDevice;
-    protected final UsbDeviceConnection mConnection;
+    protected final UsbDevice   mDevice;
+    protected final Object      mReadBufferLock = new Object();
+    protected final Object      mWriteBufferLock = new Object();
 
-    protected final Object mReadBufferLock = new Object();
-    protected final Object mWriteBufferLock = new Object();
+    protected UsbDeviceConnection mConnection = null;
+
+    private int _permissionStatus = permissionStatusRequestRequired;
 
     /** Internal read buffer.  Guarded by {@link #mReadBufferLock}. */
     protected byte[] mReadBuffer;
@@ -47,12 +49,26 @@ abstract class CommonUsbSerialDriver implements UsbSerialDriver {
     /** Internal write buffer.  Guarded by {@link #mWriteBufferLock}. */
     protected byte[] mWriteBuffer;
 
-    public CommonUsbSerialDriver(UsbDevice device, UsbDeviceConnection connection) {
+    public CommonUsbSerialDriver(UsbDevice device) {
         mDevice = device;
-        mConnection = connection;
 
         mReadBuffer = new byte[DEFAULT_READ_BUFFER_SIZE];
         mWriteBuffer = new byte[DEFAULT_WRITE_BUFFER_SIZE];
+    }
+
+    @Override
+    public void setConnection(UsbDeviceConnection connection) {
+        mConnection = connection;
+    }
+
+    @Override
+    public int permissionStatus() {
+        return _permissionStatus;
+    }
+
+    @Override
+    public void setPermissionStatus(int permissionStatus) {
+        _permissionStatus = permissionStatus;
     }
 
     /**
