@@ -83,6 +83,16 @@ public interface UsbSerialDriver {
     /** 2 stop bits. */
     public static final int STOPBITS_2 = 2;
 
+    public static final int permissionStatusSuccess =           0;
+    public static final int permissionStatusDenied =            1;
+    public static final int permissionStatusRequested =         2;
+    public static final int permissionStatusRequestRequired =   3;
+    public static final int permissionStatusOpen =              4;
+    public int permissionStatus();
+    public void setPermissionStatus(int permissionStatus);
+
+    public void setConnection(UsbDeviceConnection connection);
+
     /**
      * Returns the currently-bound USB device.
      *

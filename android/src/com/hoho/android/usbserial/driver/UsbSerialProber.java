@@ -65,11 +65,7 @@ public enum UsbSerialProber {
             if (!testIfSupported(usbDevice, FtdiSerialDriver.getSupportedDevices())) {
                 return Collections.emptyList();
             }
-            final UsbDeviceConnection connection = manager.openDevice(usbDevice);
-            if (connection == null) {
-                return Collections.emptyList();
-            }
-            final UsbSerialDriver driver = new FtdiSerialDriver(usbDevice, connection);
+            final UsbSerialDriver driver = new FtdiSerialDriver(usbDevice);
             return Collections.singletonList(driver);
         }
     },
@@ -80,11 +76,7 @@ public enum UsbSerialProber {
             if (!testIfSupported(usbDevice, CdcAcmSerialDriver.getSupportedDevices())) {
                return Collections.emptyList();
             }
-            final UsbDeviceConnection connection = manager.openDevice(usbDevice);
-            if (connection == null) {
-                return Collections.emptyList();
-            }
-            final UsbSerialDriver driver = new CdcAcmSerialDriver(usbDevice, connection);
+            final UsbSerialDriver driver = new CdcAcmSerialDriver(usbDevice);
             return Collections.singletonList(driver);
         }
     },
@@ -95,11 +87,7 @@ public enum UsbSerialProber {
             if (!testIfSupported(usbDevice, Cp2102SerialDriver.getSupportedDevices())) {
                 return Collections.emptyList();
             }
-            final UsbDeviceConnection connection = manager.openDevice(usbDevice);
-            if (connection == null) {
-                return Collections.emptyList();
-            }
-            final UsbSerialDriver driver = new Cp2102SerialDriver(usbDevice, connection);
+            final UsbSerialDriver driver = new Cp2102SerialDriver(usbDevice);
             return Collections.singletonList(driver);
         }
     },
@@ -110,11 +98,7 @@ public enum UsbSerialProber {
             if (!testIfSupported(usbDevice, ProlificSerialDriver.getSupportedDevices())) {
                 return Collections.emptyList();
             }
-            final UsbDeviceConnection connection = manager.openDevice(usbDevice);
-            if (connection == null) {
-                return Collections.emptyList();
-            }
-            final UsbSerialDriver driver = new ProlificSerialDriver(usbDevice, connection);
+            final UsbSerialDriver driver = new ProlificSerialDriver(usbDevice);
             return Collections.singletonList(driver);
         }
     };
