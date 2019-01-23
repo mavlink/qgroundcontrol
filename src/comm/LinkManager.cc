@@ -480,6 +480,7 @@ void LinkManager::_updateAutoConnectLinks(void)
         emit linkConfigurationsChanged();
     }
 #ifndef __mobile__
+#ifndef NO_SERIAL_LINK
     // check to see if nmea gps is configured for UDP input, if so, set it up to connect
     if (_autoConnectSettings->autoConnectNmeaPort()->cookedValueString() == "UDP Port") {
         if (_nmeaSocket.localPort() != _autoConnectSettings->nmeaUdpPort()->rawValue().toUInt()
@@ -499,6 +500,7 @@ void LinkManager::_updateAutoConnectLinks(void)
     } else {
         _nmeaSocket.close();
     }
+#endif
 #endif
 
 #ifndef NO_SERIAL_LINK
