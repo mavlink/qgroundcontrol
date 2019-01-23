@@ -8708,15 +8708,6 @@ is less than 50% of this value</short_desc>
       <short_desc>Motor 4 Mapping</short_desc>
     </parameter>
   </group>
-  <group name="Subscriber Example">
-    <parameter default="100" name="SUB_INTERV" type="INT32">
-      <short_desc>Interval of one subscriber in the example in ms</short_desc>
-      <unit>ms</unit>
-    </parameter>
-    <parameter default="3.14" name="SUB_TESTF" type="FLOAT">
-      <short_desc>Float Demonstration Parameter in the Example</short_desc>
-    </parameter>
-  </group>
   <group name="System">
     <parameter default="31" name="LED_RGB1_MAXBRT" type="INT32">
       <short_desc>RGB Led brightness limit</short_desc>
