@@ -25,6 +25,7 @@
 #include "MAVLinkProtocol.h"
 #if !defined(__mobile__)
 #include "LogReplayLink.h"
+#include "UdpIODevice.h"
 #endif
 #include "QmlObjectListModel.h"
 
@@ -241,6 +242,7 @@ private:
     QString      _nmeaDeviceName;
     QSerialPort* _nmeaPort;
     uint32_t     _nmeaBaud;
+    UdpIODevice  _nmeaSocket;
 #endif
 #endif
 };

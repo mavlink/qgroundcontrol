@@ -16,6 +16,7 @@
 #include "MissionCommandTree.h"
 #include "CameraSection.h"
 #include "SpeedSection.h"
+#include "QGroundControlQmlGlobal.h"
 
 /// A SimpleMissionItem is used to represent a single MissionItem to the ui.
 class SimpleMissionItem : public VisualMissionItem
@@ -29,21 +30,12 @@ public:
 
     ~SimpleMissionItem();
 
-    enum AltitudeMode {
-        AltitudeRelative,       // MAV_FRAME_GLOBAL_RELATIVE_ALT
-        AltitudeAbsolute,       // MAV_FRAME_GLOBAL
-        AltitudeAboveTerrain,   // Absolute altitude above terrain calculated from terrain data
-        AltitudeTerrainFrame    // MAV_FRAME_GLOBAL_TERRAIN_ALT
-    };
-
-    Q_ENUM(AltitudeMode)
-    
     Q_PROPERTY(QString          category                READ category                                           NOTIFY commandChanged)
     Q_PROPERTY(bool             friendlyEditAllowed     READ friendlyEditAllowed                                NOTIFY friendlyEditAllowedChanged)
     Q_PROPERTY(bool             rawEdit                 READ rawEdit                WRITE setRawEdit            NOTIFY rawEditChanged)              ///< true: raw item editing with all params
     Q_PROPERTY(bool             specifiesAltitude       READ specifiesAltitude                                  NOTIFY commandChanged)
     Q_PROPERTY(Fact*            altitude                READ altitude                                           CONSTANT)                           ///< Altitude as specified by altitudeMode. Not necessarily true mission item altitude
-    Q_PROPERTY(AltitudeMode     altitudeMode            READ altitudeMode           WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
+    Q_PROPERTY(QGroundControlQmlGlobal::AltitudeMode altitudeMode READ altitudeMode WRITE setAltitudeMode       NOTIFY altitudeModeChanged)
     Q_PROPERTY(Fact*            amslAltAboveTerrain     READ amslAltAboveTerrain                                CONSTANT)                           ///< Actual AMSL altitude for item if altitudeMode == AltitudeAboveTerrain
     Q_PROPERTY(int              command                 READ command                WRITE setCommand            NOTIFY commandChanged)
     Q_PROPERTY(bool             supportsTerrainFrame    READ supportsTerrainFrame                               NOTIFY supportsTerrainFrameChanged)
@@ -71,7 +63,7 @@ public:
     bool            friendlyEditAllowed (void) const;
     bool            rawEdit             (void) const;
     bool            specifiesAltitude   (void) const;
-    AltitudeMode    altitudeMode        (void) const { return _altitudeMode; }
+    QGroundControlQmlGlobal::AltitudeMode altitudeMode(void) const { return _altitudeMode; }
     Fact*           altitude            (void) { return &_altitudeFact; }
     Fact*           amslAltAboveTerrain (void) { return &_amslAltAboveTerrainFact; }
     bool            supportsTerrainFrame(void) const { return _vehicle->supportsTerrainFrame(); }
@@ -84,7 +76,7 @@ public:
     QmlObjectListModel* comboboxFacts   (void) { return &_comboboxFacts; }
 
     void setRawEdit(bool rawEdit);
-    void setAltitudeMode(AltitudeMode altitudeMode);
+    void setAltitudeMode(QGroundControlQmlGlobal::AltitudeMode altitudeMode);
     
     void setCommandByIndex(int index);
 
@@ -178,9 +170,9 @@ private:
 
     Fact                _supportedCommandFact;
 
-    AltitudeMode    _altitudeMode;
-    Fact            _altitudeFact;
-    Fact            _amslAltAboveTerrainFact;
+    QGroundControlQmlGlobal::AltitudeMode   _altitudeMode;
+    Fact                                    _altitudeFact;
+    Fact                                    _amslAltAboveTerrainFact;
 
     QmlObjectListModel  _textFieldFacts;
     QmlObjectListModel  _nanFacts;

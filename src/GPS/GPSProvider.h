@@ -32,7 +32,8 @@ public:
 
     enum class GPSType {
         u_blox,
-        trimble
+        trimble,
+        septentrio
     };
 
     GPSProvider(const QString& device,
