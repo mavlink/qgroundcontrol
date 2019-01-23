@@ -93,7 +93,7 @@ Rectangle {
 
             CameraSection {
                 id:         cameraSection
-                checked:    missionItem.cameraSection.settingsSpecified
+                checked:    !_waypointsOnlyMode && missionItem.cameraSection.settingsSpecified
                 visible:    _showCameraSection
             }
 
