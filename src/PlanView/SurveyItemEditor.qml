@@ -126,12 +126,15 @@ Rectangle {
                 onClicked:          missionItem.rotateEntryPoint();
             }
 
+            /*
+              Temporarily removed due to bug https://github.com/mavlink/qgroundcontrol/issues/7005
             FactCheckBox {
                 text:       qsTr("Split concave polygons")
                 fact:       _splitConcave
                 visible:    _splitConcave.visible
                 property Fact _splitConcave: missionItem.splitConcavePolygons
             }
+            */
 
             FactCheckBox {
                 text:               qsTr("Hover and capture image")

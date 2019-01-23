@@ -52,6 +52,9 @@ QGCView {
     property bool   _isTCP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
     property bool   _isMPEGTS:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
 
+    property string gpsDisabled: "Disabled"
+    property string gpsUdpPort:  "UDP Port"
+
     readonly property real _internalWidthRatio: 0.8
 
     QGCPalette { id: qgcPal }
@@ -504,7 +507,6 @@ QGCView {
                                     Layout.preferredWidth:  _comboFieldWidth
 
                                     model:  ListModel {
-                                        ListElement { text: "disabled" }
                                     }
 
                                     onActivated: {
@@ -513,18 +515,26 @@ QGCView {
                                         }
                                     }
                                     Component.onCompleted: {
+                                        model.append({text: gpsDisabled})
+                                        model.append({text: gpsUdpPort})
+
                                         for (var i in QGroundControl.linkManager.serialPorts) {
                                             nmeaPortCombo.model.append({text:QGroundControl.linkManager.serialPorts[i]})
                                         }
                                         var index = nmeaPortCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaPort.valueString);
                                         nmeaPortCombo.currentIndex = index;
+                                        if (QGroundControl.linkManager.serialPorts.length === 0) {
+                                            nmeaPortCombo.model.append({text: "Serial <none available>"})
+                                        }
                                     }
                                 }
 
                                 QGCLabel {
+                                    visible:          nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
                                     text:             qsTr("NMEA GPS Baudrate")
                                 }
                                 QGCComboBox {
+                                    visible:                nmeaPortCombo.currentText !== gpsUdpPort && nmeaPortCombo.currentText !== gpsDisabled
                                     id:                     nmeaBaudCombo
                                     Layout.preferredWidth:  _comboFieldWidth
                                     model:                  [4800, 9600, 19200, 38400, 57600, 115200]
@@ -538,6 +548,16 @@ QGCView {
                                         var index = nmeaBaudCombo.find(QGroundControl.settingsManager.autoConnectSettings.autoConnectNmeaBaud.valueString);
                                         nmeaBaudCombo.currentIndex = index;
                                     }
+                                }
+
+                                QGCLabel {
+                                    text:       qsTr("NMEA stream UDP port")
+                                    visible:    nmeaPortCombo.currentText === gpsUdpPort
+                                }
+                                FactTextField {
+                                    visible:                nmeaPortCombo.currentText === gpsUdpPort
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    fact:                   QGroundControl.settingsManager.autoConnectSettings.nmeaUdpPort
                                 }
                             }
                         }

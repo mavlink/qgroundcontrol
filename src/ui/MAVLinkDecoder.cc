@@ -15,6 +15,7 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol) :
 //    messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
 //    messageFilter.insert(MAVLINK_MSG_ID_SYS_STATUS, false);
     messageFilter.insert(MAVLINK_MSG_ID_STATUSTEXT, false);
+    messageFilter.insert(MAVLINK_MSG_ID_STATUSTEXT_LONG, false);
     messageFilter.insert(MAVLINK_MSG_ID_COMMAND_LONG, false);
     messageFilter.insert(MAVLINK_MSG_ID_COMMAND_ACK, false);
     messageFilter.insert(MAVLINK_MSG_ID_PARAM_SET, false);

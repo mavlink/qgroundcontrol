@@ -61,8 +61,8 @@ public class Cp2102SerialDriver extends CommonUsbSerialDriver {
     private UsbEndpoint mReadEndpoint;
     private UsbEndpoint mWriteEndpoint; 
     
-    public Cp2102SerialDriver(UsbDevice device, UsbDeviceConnection connection) {
-        super(device, connection);
+    public Cp2102SerialDriver(UsbDevice device) {
+        super(device);
     }
     
     private int setConfigSingle(int request, int value) {
