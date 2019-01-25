@@ -37,6 +37,13 @@ LinuxBuild {
         CONFIG      += VideoEnabled
         INCLUDEPATH += $$GST_ROOT/Headers
         LIBS        += -F/Library/Frameworks -framework GStreamer
+    } else {
+        CONFIG      += link_pkgconfig
+        packagesExist(gstreamer-1.0) {
+            #- gstremaer framework in pkg-config
+            CONFIG    += VideoEnabled
+            PKGCONFIG += gstreamer-1.0 gstreamer-video-1.0
+        }
     }
 } else:iOSBuild {
     #- gstreamer framework installed by the gstreamer iOS SDK installer (default to home directory)
