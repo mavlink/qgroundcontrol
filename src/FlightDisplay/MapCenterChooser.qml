@@ -12,7 +12,7 @@ Rectangle {
     readonly property int centerNONE:               0 // N/A
     readonly property int centerDRONE:              1 // Drone
     readonly property int centerLP:                 2 // Landing Pad
-    property int    centerMode:                     centerNONE
+    property int    centerMode:                     centerLP
 
     // Button attributes
     readonly property int buttonWidth: 50
@@ -43,7 +43,7 @@ Rectangle {
         id: rectFree
         anchors.top: rectLabel.bottom
         width: buttonWidth; height: buttonHeight
-        color: colorSel
+        color: colorBG
         border { width: 1; color: colorBorder }
         Text {
             anchors.verticalCenter: parent.verticalCenter
@@ -105,7 +105,7 @@ Rectangle {
         id: rectPad
         anchors.top: rectDrone.bottom
         width: buttonWidth; height: buttonHeight
-        color: colorBG
+        color: colorSel
         border { width: 1; color: colorBorder }
         Text {
             anchors.verticalCenter: parent.verticalCenter
