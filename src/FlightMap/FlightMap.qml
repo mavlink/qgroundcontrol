@@ -92,6 +92,43 @@ Map {
         }
     }
 
+    // 10m range ring
+    MapCircle {
+        center: gcsPosition
+        radius: 10
+        color: "transparent"
+        border.color: "green"
+        border.width: 1
+    }
+
+    // 25m range ring
+    MapCircle {
+        center: gcsPosition
+        radius: 25
+        color: "transparent"
+        border.color: "orange"
+        border.width: 1
+    }
+
+    // 50m range ring
+    MapCircle {
+        center: gcsPosition
+        radius: 50
+        color: "transparent"
+        border.color: "yellow"
+        border.width: 1
+    }
+
+    // 100m range ring
+    MapCircle {
+        center: gcsPosition
+        radius: 100
+        color: "transparent"
+        border.color: "red"
+        border.width: 1
+    }
+
+
     // We track whether the user has panned or not to correctly handle automatic map positioning
     Connections {
         target: gesture
