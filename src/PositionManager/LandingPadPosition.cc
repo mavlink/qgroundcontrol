@@ -35,7 +35,7 @@ LandingPadPosition::PositioningMethods LandingPadPosition::supportedPositioningM
 
 int LandingPadPosition::minimumUpdateInterval() const
 {
-    return 200; // 5Hz
+    return 1000; // 1Hz
 }
 
 void LandingPadPosition::startUpdates()
