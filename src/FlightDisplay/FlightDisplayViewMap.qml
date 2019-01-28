@@ -28,8 +28,8 @@ FlightMap {
     id:                         flightMap
     anchors.fill:               parent
     mapName:                    _mapName
-    allowGCSLocationCenter:     !userPanned
-    allowVehicleLocationCenter: !_keepVehicleCentered
+    allowGCSLocationCenter:     MapCenterChooser.centerMode===MapCenterChooser.centerLP //!userPanned
+    allowVehicleLocationCenter: MapCenterChooser.centerMode===MapCenterChooser.centerLP //!_keepVehicleCentered
     planView:                   false
 
     property alias  scaleState: mapScale.state
@@ -54,6 +54,7 @@ FlightMap {
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
 
     property bool   _disableVehicleTracking:    false
+    property bool   _disablePadTracking:        false
     property bool   _keepVehicleCentered:       false //_mainIsMap ? false : true
 
     function updateAirspace(reset) {
@@ -78,12 +79,26 @@ FlightMap {
     }
 
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
-    onUserPannedChanged: {
+    /*onUserPannedChanged: {
         if (userPanned) {
             console.log("user panned")
             userPanned = false
             _disableVehicleTracking = true
+            _disablePadTracking = true
             panRecenterTimer.restart()
+        }
+    }*/
+
+    onUserPanningChanged: {
+        if(userPanning)
+        {
+            _disableVehicleTracking = true
+            _disablePadTracking = true
+        }
+        else
+        {
+            _disableVehicleTracking = false
+            _disablePadTracking = false
         }
     }
 
@@ -110,6 +125,15 @@ FlightMap {
 
     NumberAnimation on animatedLatitude { id: animateLat; from: _animatedLatitudeStart; to: _animatedLatitudeStop; duration: 1000 }
     NumberAnimation on animatedLongitude { id: animateLong; from: _animatedLongitudeStart; to: _animatedLongitudeStop; duration: 1000 }
+
+    MapCenterChooser {
+        id: mapcenterchooser
+
+        onCenterModeChanged:
+        {
+            updateMapAnimated()
+        }
+    }
 
     function animatedMapRecenter(fromCoord, toCoord) {
         _animatedLatitudeStart = fromCoord.latitude
@@ -145,23 +169,58 @@ FlightMap {
         }
     }
 
-/*    Timer {
+    function updateMapToPadPosition() {
+        if(firstGCSPositionReceived && gcsPosition.isValid && !_disablePadTracking) {
+            flightMap.center = gcsPosition
+        }
+    }
+
+    function updateMap() {
+        if (mapcenterchooser.centerMode===mapcenterchooser.centerDRONE && !_disableVehicleTracking)
+        {
+            updateMapToVehiclePosition()
+        }
+        else if (mapcenterchooser.centerMode===mapcenterchooser.centerLP && !_disablePadTracking)
+        {
+            updateMapToPadPosition()
+        }
+    }
+
+    function updateMapAnimated() {
+        if (mapcenterchooser.centerMode===mapcenterchooser.centerDRONE && !_disableVehicleTracking)
+        {
+            animatedMapRecenter(flightMap.center, _activeVehicleCoordinate)
+        }
+        else if (mapcenterchooser.centerMode===mapcenterchooser.centerLP && !_disablePadTracking)
+        {
+            animatedMapRecenter(flightMap.center, gcsPosition)
+        }
+    }
+
+    /*onGcsPositionChanged: {
+        if(mapCenterchooser.centerMode===mapCenterchooser.centerLP)
+        {
+            animatedMapRecenter(flightMap.center, gcsPosition)
+        }
+    }*/
+
+    Timer {
         id:         panRecenterTimer
         interval:   10000
         running:    false
 
         onTriggered: {
             _disableVehicleTracking = false
-            updateMapToVehiclePosition()
+            updateMap()
         }
-    }*/
+    }
 
-/*    Timer {
+    Timer {
         interval:       500
         running:        true
         repeat:         true
-        onTriggered:    updateMapToVehiclePosition()
-    }*/
+        onTriggered:    updateMap()
+    }
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
