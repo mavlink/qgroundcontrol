@@ -81,6 +81,7 @@ protected:
         bool    infoReceived = false;
         bool    gaveUp       = false;
         int     tryCount     = 0;
+        uint8_t compID       = 0;
     };
 
     Vehicle*            _vehicle            = nullptr;
@@ -93,5 +94,5 @@ protected:
     QTime               _lastZoomChange;
     QTime               _lastCameraChange;
     QTimer              _cameraTimer;
-    QMap<int, CameraStruct*> _cameraInfoRequest;
+    QMap<QString, CameraStruct*> _cameraInfoRequest;
 };

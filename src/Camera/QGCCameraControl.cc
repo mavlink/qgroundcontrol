@@ -61,14 +61,13 @@ static const char* kPhotoLapseCount = "PhotoLapseCount";
 
 //-----------------------------------------------------------------------------
 // Known Parameters
-static const char *kCAM_EV          = "CAM_EV";
-static const char *kCAM_EXPMODE     = "CAM_EXPMODE";
-static const char *kCAM_ISO         = "CAM_ISO";
-static const char* kCAM_SHUTTER     = "CAM_SHUTTER";
-static const char* kCAM_APERTURE    = "CAM_APERTURE";
-static const char* kCAM_WBMODE      = "CAM_WBMODE";
-static const char* kCAM_MODE        = "CAM_MODE";
-static const char* kCAM_VIDRES      = "CAM_VIDRES";
+const char* QGCCameraControl::kCAM_EV          = "CAM_EV";
+const char* QGCCameraControl::kCAM_EXPMODE     = "CAM_EXPMODE";
+const char* QGCCameraControl::kCAM_ISO         = "CAM_ISO";
+const char* QGCCameraControl::kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
+const char* QGCCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
+const char* QGCCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
+const char* QGCCameraControl::kCAM_MODE        = "CAM_MODE";
 
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
@@ -1991,9 +1990,9 @@ QGCCameraControl::iso()
 
 //-----------------------------------------------------------------------------
 Fact*
-QGCCameraControl::shutter()
+QGCCameraControl::shutterSpeed()
 {
-    return (_paramComplete && _activeSettings.contains(kCAM_SHUTTER)) ? getFact(kCAM_SHUTTER) : nullptr;
+    return (_paramComplete && _activeSettings.contains(kCAM_SHUTTERSPD)) ? getFact(kCAM_SHUTTERSPD) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -2008,13 +2007,6 @@ Fact*
 QGCCameraControl::wb()
 {
     return (_paramComplete && _activeSettings.contains(kCAM_WBMODE)) ? getFact(kCAM_WBMODE) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::videoRes()
-{
-    return (_paramComplete && _activeSettings.contains(kCAM_VIDRES)) ? getFact(kCAM_VIDRES) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
