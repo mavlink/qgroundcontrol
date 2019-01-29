@@ -148,7 +148,6 @@ public:
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        mode                READ mode               NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        videoRes            READ videoRes           NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -227,7 +226,6 @@ public:
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
     virtual Fact*       mode                ();
-    virtual Fact*       videoRes            ();
 
     virtual void        setZoomLevel        (qreal level);
     virtual void        setFocusLevel       (qreal level);

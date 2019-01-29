@@ -11,7 +11,7 @@
 QGC_LOGGING_CATEGORY(AuterionCameraLog, "AuterionCameraLog")
 QGC_LOGGING_CATEGORY(AuterionCameraLogVerbose, "AuterionCameraLogVerbose")
 
-static const char *kCAM_MODE = "CAM_MODE";
+static const char* kCAM_VIDEORES = "CAM_VIDEORES";
 
 //-----------------------------------------------------------------------------
 AuterionCameraControl::AuterionCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -199,3 +199,11 @@ AuterionCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t
         }
     }
 }
+
+//-----------------------------------------------------------------------------
+Fact*
+AuterionCameraControl::videoRes()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_VIDEORES)) ? getFact(kCAM_VIDEORES) : nullptr;
+}
+
