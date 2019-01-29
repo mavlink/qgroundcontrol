@@ -27,6 +27,7 @@ public:
     Q_PROPERTY(qreal        gimbalPitch     READ    gimbalPitch         NOTIFY gimbalPitchChanged)
     Q_PROPERTY(qreal        gimbalYaw       READ    gimbalYaw           NOTIFY gimbalYawChanged)
     Q_PROPERTY(bool         gimbalData      READ    gimbalData          NOTIFY gimbalDataChanged)
+    Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY parametersReady)
 
     bool        takePhoto           () override;
     bool        stopTakePhoto       () override;
@@ -40,6 +41,7 @@ public:
     qreal       gimbalPitch         () { return static_cast<qreal>(_gimbalPitch); }
     qreal       gimbalYaw           () { return static_cast<qreal>(_gimbalYaw); }
     bool        gimbalData          () { return _gimbalData; }
+    Fact*       videoRes            ();
 
 private slots:
     void    _mavlinkMessageReceived (const mavlink_message_t& message);

@@ -144,11 +144,10 @@ public:
     Q_PROPERTY(Fact*        exposureMode        READ exposureMode       NOTIFY parametersReady)
     Q_PROPERTY(Fact*        ev                  READ ev                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        iso                 READ iso                NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        shutter             READ shutter            NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        shutterSpeed        READ shutterSpeed       NOTIFY parametersReady)
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        mode                READ mode               NOTIFY parametersReady)
-    Q_PROPERTY(Fact*        videoRes            READ videoRes           NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -223,11 +222,10 @@ public:
     virtual Fact*       exposureMode        ();
     virtual Fact*       ev                  ();
     virtual Fact*       iso                 ();
-    virtual Fact*       shutter             ();
+    virtual Fact*       shutterSpeed        ();
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
     virtual Fact*       mode                ();
-    virtual Fact*       videoRes            ();
 
     virtual void        setZoomLevel        (qreal level);
     virtual void        setFocusLevel       (qreal level);
@@ -250,6 +248,16 @@ public:
     virtual bool        incomingParameter   (Fact* pFact, QVariant& newValue);
     //-- Allow controller to modify or invalidate parameter change
     virtual bool        validateParameter   (Fact* pFact, QVariant& newValue);
+
+
+    // Known Parameters
+    static const char* kCAM_EV;
+    static const char* kCAM_EXPMODE;
+    static const char* kCAM_ISO;
+    static const char* kCAM_SHUTTERSPD;
+    static const char* kCAM_APERTURE;
+    static const char* kCAM_WBMODE;
+    static const char* kCAM_MODE;
 
 signals:
     void    infoChanged                     ();
