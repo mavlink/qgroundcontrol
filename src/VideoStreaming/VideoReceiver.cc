@@ -480,6 +480,7 @@ VideoReceiver::_startAudio()
 {
     // Run audio
     uint32_t port = _videoSettings->audioUdpPort()->rawValue().toUInt();
+    GError* error = nullptr;
 
     QString pipeline = QStringLiteral("udpsrc port=%1 "
         "! application/x-rtp, media=audio, clock-rate=44100, encoding-name=L16, encoding-params=1, channels=1, payload=96 "
@@ -491,14 +492,26 @@ VideoReceiver::_startAudio()
 
     qCDebug(VideoReceiverLog) << "Opening audio pipeline: " << pipeline;
 
-    _audioPipeline = gst_parse_launch(static_cast<char*>(pipeline.arg(port).toLocal8Bit().data()) , nullptr);
+    _audioPipeline = gst_parse_launch(static_cast<char*>(pipeline.arg(port).toLocal8Bit().data()) , &error);
+
+    if(error != nullptr) {
+        qCWarning(VideoReceiverLog) << "Failed to create audio pipeline: " << error->message;
+        g_error_free(error);
+        return;
+    }
 
     if (_audioPipeline) {
         gst_element_set_state(_audioPipeline, GST_STATE_PLAYING);
 
         _gstVolume = gst_bin_get_by_name(GST_BIN(_audioPipeline), "volume0");
+        if(!_gstVolume) {
+            qCWarning(VideoReceiverLog) << "Failed to get volume0 element";
+            return;
+        }
         qCDebug(VideoReceiverLog) << "volume0:" << _gstVolume;
         setVolume(_videoSettings->audioVolume()->rawValue().toFloat());
+    } else {
+        qCWarning(VideoReceiverLog) << "Failed to create audio pipeline";
     }
 }
 
