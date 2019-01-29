@@ -4524,13 +4524,6 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.0" name="MPC_IDLE_TKO" type="FLOAT">
-      <short_desc>Delay from idle state to arming state</short_desc>
-      <long_desc>For altitude controlled modes, the transition from idle to armed state is delayed by MPC_IDLE_TKO time to ensure that the propellers have reached idle speed before attempting a takeoff. This delay is particularly useful for vehicles with large propellers.</long_desc>
-      <min>0</min>
-      <max>10</max>
-      <unit>sec</unit>
-    </parameter>
     <parameter default="20.0" name="MPC_JERK_MAX" type="FLOAT">
       <short_desc>Maximum jerk limit</short_desc>
       <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
@@ -4608,6 +4601,13 @@ Temporary Parameter to enable interface testing</short_desc>
         <value code="2">Sport position control</value>
         <value code="3">Smooth position control (Velocity)</value>
       </values>
+    </parameter>
+    <parameter default="0.0" name="MPC_SPOOLUP_TIME" type="FLOAT">
+      <short_desc>Enforced delay between arming and takeoff</short_desc>
+      <long_desc>For altitude controlled modes the time from arming the motors until a takeoff is possible gets forced to be at least MPC_SPOOLUP_TIME seconds to ensure the motors and propellers can sppol up and reach idle speed before getting commanded to spin faster. This delay is particularly useful for vehicles with slow motor spin-up e.g. because of large propellers.</long_desc>
+      <min>0</min>
+      <max>10</max>
+      <unit>s</unit>
     </parameter>
     <parameter default="0" name="MPC_THR_CURVE" type="INT32">
       <short_desc>Thrust curve in Manual Mode</short_desc>
