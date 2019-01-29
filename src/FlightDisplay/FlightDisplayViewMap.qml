@@ -211,13 +211,14 @@ FlightMap {
 
         onTriggered: {
             _disableVehicleTracking = false
+            _disablePadTracking = false
             updateMap()
         }
     }
 
     Timer {
         interval:       500
-        running:        true
+        running:        !userPanning//true
         repeat:         true
         onTriggered:    updateMap()
     }
