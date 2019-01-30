@@ -33,6 +33,9 @@ exists($$PWD/mavlink_dev) {
 MAVLINK_CONF = common
 CONFIG  += QGC_DISABLE_APM_MAVLINK
 
+#   Disable UVC support
+DEFINES += QGC_DISABLE_UVC
+
 #   We are a native QML app
 #CONFIG  += MobileBuild
 #DEFINES += __mobile__
@@ -60,10 +63,9 @@ QGC_APP_DESCRIPTION = "Auterion Ground Station"
 QGC_APP_COPYRIGHT   = "Copyright (C) 2018 Auterion AG. All rights reserved."
 
 MacBuild {
-    QMAKE_INFO_PLIST    = $$PWD/macOS/Info.plist
+    QMAKE_INFO_PLIST    = $$PWD/macOS/AGSInfo.plist
     ICON                = $$PWD/macOS/icon.icns
-    OTHER_FILES        -= $$QGCROOT/Custom-Info.plist
-    OTHER_FILES        += $$PWD/macOS/Info.plist
+    OTHER_FILES        += $$PWD/macOS/AGSInfo.plist
 }
 
 WindowsBuild {
