@@ -99,7 +99,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
     static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
-    static const char* msgComplete =        "All settings have been captured. Click Next to enable the joystick.";
+    static const char* msgComplete =        "Calibration complete. Click next to save and then check 'enable joystick' to begin sending joystick updates to the vehicle.";
     
     static const stateMachineEntry rgStateMachine[] = {
         //Function
@@ -572,11 +572,6 @@ void JoystickConfigController::_writeCalibration(void)
     
     _stopCalibration();
     _setInternalCalibrationValuesFromSettings();
-
-    Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-    if (vehicle) {
-        vehicle->setJoystickEnabled(true);
-    }
 }
 
 /// @brief Starts the calibration process
