@@ -364,9 +364,12 @@ SetupPage {
 
                             QGCCheckBox {
                                 id:         enabledCheckBox
-                                enabled:    _activeJoystick ? _activeJoystick.calibrated : false
-                                text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
-                                onClicked:  _activeVehicle.joystickEnabled = checked
+                                enabled:    _activeJoystick ? (_activeJoystick.calibrated && !controller.calibrating): false
+                                text:       _activeJoystick ? (_activeJoystick.calibrated && !controller.calibrating) ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
+                                onClicked:  {
+                                    _activeVehicle.joystickEnabled = checked
+                                    statusText.text = ""
+                                }
                                 Component.onCompleted: checked = _activeVehicle.joystickEnabled
 
                                 Connections {
