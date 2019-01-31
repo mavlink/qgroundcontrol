@@ -1476,3 +1476,16 @@ double SurveyComplexItem::timeBetweenShots(void)
 {
     return _cruiseSpeed == 0 ? 0 : triggerDistance() / _cruiseSpeed;
 }
+
+double SurveyComplexItem::additionalTimeDelay (void) const
+{
+    double hoverTime = 0;
+
+    if (hoverAndCaptureEnabled()) {
+        for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
+            hoverTime += _hoverAndCaptureDelaySeconds * transect.count();
+        }
+    }
+
+    return hoverTime;
+}

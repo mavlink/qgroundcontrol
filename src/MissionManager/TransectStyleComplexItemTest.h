@@ -94,6 +94,7 @@ public:
     bool    specifiesCoordinate (void) const final { return true; }
     void    appendMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent) final { Q_UNUSED(items); Q_UNUSED(missionItemParent); }
     void    applyNewAltitude    (double newAltitude) final { Q_UNUSED(newAltitude); }
+    double  additionalTimeDelay (void) const final { return 0; }
 
     bool rebuildTransectsPhase1Called;
     bool rebuildTransectsPhase2Called;
