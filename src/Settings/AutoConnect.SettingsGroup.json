@@ -46,7 +46,7 @@
     "shortDescription": "NMEA GPS device for GCS position",
     "longDescription":  "NMEA GPS device for GCS position",
     "type":             "string",
-    "defaultValue":     "disabled"
+    "defaultValue":     "Disabled"
 },
 {
     "name":             "autoConnectNmeaBaud",
