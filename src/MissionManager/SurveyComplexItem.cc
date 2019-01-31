@@ -157,9 +157,10 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
         if (!_loadV3(complexObject, sequenceNumber, errorString)) {
             return false;
         }
-    }
 
-    _rebuildTransects();
+        // V2/3 doesn't include individual items so we need to rebuild manually
+        _rebuildTransects();
+    }
 
     return true;
 }
