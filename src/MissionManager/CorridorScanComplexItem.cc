@@ -124,8 +124,6 @@ bool CorridorScanComplexItem::load(const QJsonObject& complexObject, int sequenc
 
     _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 
-    _rebuildTransects();
-
     _ignoreRecalc = false;
 
     return true;
