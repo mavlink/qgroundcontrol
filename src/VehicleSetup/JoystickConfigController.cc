@@ -99,10 +99,10 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
     static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
-    static const char* msgComplete =        "Calibration complete. Click next to save and then check 'enable joystick' to begin sending joystick updates to the vehicle.";
+    static const char* msgComplete =        "Calibration complete. Check \"Enable joystick input\" to begin sending joystick commands to the vehicle.";
     
     static const stateMachineEntry rgStateMachine[] = {
-        //Function
+        //AxisFunction                 Text                Image               rcInputFn                                           nextFn                                          skipFn
         { Joystick::maxFunction,       msgBegin,           _imageCenter,       &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,       NULL },
         { Joystick::throttleFunction,  msgThrottleUp,      _imageThrottleUp,   &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
         { Joystick::throttleFunction,  msgThrottleDown,    _imageThrottleDown, &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
@@ -113,7 +113,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::pitchFunction,     msgPitchUp,         _imagePitchUp,      &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
         { Joystick::pitchFunction,     msgPitchDown,       _imagePitchDown,    &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
         { Joystick::pitchFunction,     msgPitchCenter,     _imageCenter,       &JoystickConfigController::_inputCenterWait,        NULL,                                           NULL },
-        { Joystick::maxFunction,       msgComplete,        _imageCenter,       NULL,                                               &JoystickConfigController::_writeCalibration,   NULL },
+        { Joystick::maxFunction,       msgComplete,        _imageCenter,       &JoystickConfigController::_calibrationComplete,    NULL,                                           NULL },
     };
     
     Q_ASSERT(step >=0 && step < (int)(sizeof(rgStateMachine) / sizeof(rgStateMachine[0])));
@@ -543,6 +543,14 @@ void JoystickConfigController::_validateCalibration(void)
     }
 }
 
+/// @brief Run by the state machine when calibration is complete.
+void JoystickConfigController::_calibrationComplete(Joystick::AxisFunction_t function, int axis, int value)
+{
+    Q_UNUSED(function)
+    Q_UNUSED(axis)
+    Q_UNUSED(value)
+    _writeCalibration();
+}
 
 /// @brief Saves the rc calibration values to the board parameters.
 void JoystickConfigController::_writeCalibration(void)
@@ -570,7 +578,7 @@ void JoystickConfigController::_writeCalibration(void)
         joystick->setFunctionAxis((Joystick::AxisFunction_t)function, _rgFunctionAxisMapping[function]);
     }
     
-    _stopCalibration();
+    _stopCalibration(true);
     _setInternalCalibrationValuesFromSettings();
 }
 
@@ -589,14 +597,16 @@ void JoystickConfigController::_startCalibration(void)
 }
 
 /// @brief Cancels the calibration process, setting things back to initial state.
-void JoystickConfigController::_stopCalibration(void)
+void JoystickConfigController::_stopCalibration(bool successful)
 {
     _currentStep = -1;
     
     _activeJoystick->setCalibrationMode(false);
     _setInternalCalibrationValuesFromSettings();
     
-    _statusText->setProperty("text", "");
+    if(!successful) {
+        _statusText->setProperty("text", "");
+    }
 
     _nextButton->setProperty("text", tr("Calibrate"));
     _nextButton->setEnabled(true);

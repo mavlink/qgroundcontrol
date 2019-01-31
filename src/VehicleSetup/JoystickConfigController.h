@@ -177,12 +177,13 @@ private:
     bool _stickSettleComplete(int axis, int value);
     
     void _validateCalibration(void);
+    void _calibrationComplete(Joystick::AxisFunction_t function, int axis, int value);
     void _writeCalibration(void);
     void _resetInternalCalibrationValues(void);
     void _setInternalCalibrationValuesFromSettings(void);
     
     void _startCalibration(void);
-    void _stopCalibration(void);
+    void _stopCalibration(bool successful = false);
     void _calSave(void);
 
     void _calSaveCurrentValues(void);
