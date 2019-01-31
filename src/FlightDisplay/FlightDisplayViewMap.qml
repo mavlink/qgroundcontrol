@@ -128,6 +128,10 @@ FlightMap {
 
     MapCenterChooser {
         id: mapcenterchooser
+        anchors.right: flightMap.right
+        anchors.rightMargin: 10
+        anchors.bottom: flightMap.bottom
+        anchors.bottomMargin: 100
 
         onCenterModeChanged:
         {

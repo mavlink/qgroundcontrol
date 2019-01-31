@@ -2,7 +2,6 @@ import QtQuick 2.0
 
 Rectangle {
     id: viewChooser
-    anchors.bottom: parent.bottom
     color: colorBG
     width: buttonWidth
     height: buttonHeight * 4
