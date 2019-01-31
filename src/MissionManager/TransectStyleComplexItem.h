@@ -197,6 +197,8 @@ protected:
     static const char* _jsonVisualTransectPointsKey;
     static const char* _jsonItemsKey;
     static const char* _jsonFollowTerrainKey;
+    static const char* _jsonCameraShotsKey;
+    static const char* _jsonComplexDistanceKey;
 
     static const int _terrainQueryTimeoutMsecs;
 

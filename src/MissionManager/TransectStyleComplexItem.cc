@@ -35,6 +35,8 @@ const char* TransectStyleComplexItem::_jsonCameraCalcKey =                  "Cam
 const char* TransectStyleComplexItem::_jsonVisualTransectPointsKey =        "VisualTransectPoints";
 const char* TransectStyleComplexItem::_jsonItemsKey =                       "Items";
 const char* TransectStyleComplexItem::_jsonFollowTerrainKey =               "FollowTerrain";
+const char* TransectStyleComplexItem::_jsonCameraShotsKey =                 "CameraShots";
+const char* TransectStyleComplexItem::_jsonComplexDistanceKey =             "ComplexDistance";
 
 const int   TransectStyleComplexItem::_terrainQueryTimeoutMsecs =           1000;
 
@@ -139,6 +141,8 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
     innerObject[hoverAndCaptureName] =              _hoverAndCaptureFact.rawValue().toBool();
     innerObject[refly90DegreesName] =               _refly90DegreesFact.rawValue().toBool();
     innerObject[_jsonFollowTerrainKey] =            _followTerrain;
+    innerObject[_jsonCameraShotsKey] =              _cameraShots;
+    innerObject[_jsonComplexDistanceKey] =          _complexDistance;
 
     if (_followTerrain) {
         innerObject[terrainAdjustToleranceName] =       _terrainAdjustToleranceFact.rawValue().toDouble();
@@ -209,9 +213,11 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
         { hoverAndCaptureName,              QJsonValue::Bool,   true },
         { refly90DegreesName,               QJsonValue::Bool,   true },
         { _jsonCameraCalcKey,               QJsonValue::Object, true },
-        { _jsonVisualTransectPointsKey,           QJsonValue::Array,  true },
+        { _jsonVisualTransectPointsKey,     QJsonValue::Array,  true },
         { _jsonItemsKey,                    QJsonValue::Array,  true },
         { _jsonFollowTerrainKey,            QJsonValue::Bool,   true },
+        { _jsonCameraShotsKey,              QJsonValue::Double, false },    // Not required since it was missing from initial implementation
+        { _jsonComplexDistanceKey,          QJsonValue::Double, false },    // Not required since it was missing from initial implementation
     };
     if (!JsonHelper::validateKeys(innerObject, innerKeyInfoList, errorString)) {
         return false;
@@ -248,6 +254,15 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
     _hoverAndCaptureFact.setRawValue            (innerObject[hoverAndCaptureName].toBool());
     _refly90DegreesFact.setRawValue             (innerObject[refly90DegreesName].toBool());
     _followTerrain = innerObject[_jsonFollowTerrainKey].toBool();
+
+    // These two keys where not included in initial implementation so they are optional. Without them the values will be
+    // incorrect when loaded though.
+    if (innerObject.contains(_jsonCameraShotsKey)) {
+        _cameraShots = innerObject[_jsonCameraShotsKey].toInt();
+    }
+    if (innerObject.contains(_jsonComplexDistanceKey)) {
+        _complexDistance = innerObject[_jsonComplexDistanceKey].toDouble();
+    }
 
     if (_followTerrain) {
         QList<JsonHelper::KeyValidateInfo> followTerrainKeyInfoList = {
