@@ -128,6 +128,15 @@ Map {
         border.width: 2
     }
 
+    // 1000m range ring
+    MapCircle {
+        center: gcsPosition
+        radius: 1000
+        color: "transparent"
+        border.color: "greenyellow"
+        border.width: 2
+    }
+
     // We track whether the user has panned or not to correctly handle automatic map positioning
     Connections {
         target: gesture
