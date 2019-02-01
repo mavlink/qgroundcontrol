@@ -398,6 +398,7 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 
     emit lastSequenceNumberChanged(lastSequenceNumber());
     emit timeBetweenShotsChanged();
+    emit additionalTimeDelayChanged();
 }
 
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
