@@ -94,7 +94,7 @@ void QGCMapPolygon::adjustVertex(int vertexIndex, const QGeoCoordinate coordinat
     _polygonPath[vertexIndex] = QVariant::fromValue(coordinate);
     _polygonModel.value<QGCQGeoCoordinate*>(vertexIndex)->setCoordinate(coordinate);
     if (!_centerDrag) {
-        // When dragging center we don't signal path changed until add vertices are updated
+        // When dragging center we don't signal path changed until all vertices are updated
         emit pathChanged();
     }
     setDirty(true);
@@ -340,7 +340,7 @@ void QGCMapPolygon::setCenter(QGeoCoordinate newCenter)
         }
 
         if (_centerDrag) {
-            // When center dragging signals are delayed until all vertices are updated
+            // When center dragging, signals from adjustVertext are not sent. So we need to signal here when all adjusting is complete.
             emit pathChanged();
         }
 
@@ -485,4 +485,31 @@ double QGCMapPolygon::area(void) const
         }
     }
     return 0.5 * fabs(coveredArea);
+}
+
+void QGCMapPolygon::verifyClockwiseWinding(void)
+{
+    if (_polygonPath.count() <= 2) {
+        return;
+    }
+
+    double sum = 0;
+    for (int i=0; i<_polygonPath.count(); i++) {
+        QGeoCoordinate coord1 = _polygonPath[i].value<QGeoCoordinate>();
+        QGeoCoordinate coord2 = (i == _polygonPath.count() - 1) ? _polygonPath[0].value<QGeoCoordinate>() : _polygonPath[i+1].value<QGeoCoordinate>();
+
+        sum += (coord2.longitude() - coord1.longitude()) * (coord2.latitude() + coord1.latitude());
+    }
+
+    if (sum < 0.0) {
+        // Winding is counter-clockwise and needs reversal
+
+        QList<QGeoCoordinate> rgReversed;
+        for (const QVariant& varCoord: _polygonPath) {
+            rgReversed.prepend(varCoord.value<QGeoCoordinate>());
+        }
+
+        clear();
+        appendVertices(rgReversed);
+    }
 }
