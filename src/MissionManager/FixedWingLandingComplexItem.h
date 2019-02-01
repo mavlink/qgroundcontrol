@@ -91,6 +91,7 @@ public:
     double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
+    double          additionalTimeDelay     (void) const final { return 0; }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _altitudesAreRelative; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return _altitudesAreRelative; }
