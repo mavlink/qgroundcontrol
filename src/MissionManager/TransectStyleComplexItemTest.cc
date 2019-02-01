@@ -115,10 +115,12 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
     //  lastSequenceNumberChanged signal
     _adjustSurveAreaPolygon();
     QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
-    QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
+    QVERIFY(_transectStyleItem->recalcCameraShotsCalled);
+    QVERIFY(_transectStyleItem->recalcComplexDistanceCalled);
     QVERIFY(_multiSpy->checkSignalsByMask(coveredAreaChangedMask | lastSequenceNumberChangedMask));
     _transectStyleItem->rebuildTransectsPhase1Called = false;
-    _transectStyleItem->rebuildTransectsPhase2Called = false;
+    _transectStyleItem->recalcCameraShotsCalled = false;
+    _transectStyleItem->recalcComplexDistanceCalled = false;
     _transectStyleItem->setDirty(false);
     _multiSpy->clearAllSignals();
 
@@ -136,30 +138,36 @@ void TransectStyleComplexItemTest::_testRebuildTransects(void)
         qDebug() << fact->name();
         changeFactValue(fact);
         QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
-        QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
+        QVERIFY(_transectStyleItem->recalcCameraShotsCalled);
+        QVERIFY(_transectStyleItem->recalcComplexDistanceCalled);
         QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
         _transectStyleItem->setDirty(false);
         _multiSpy->clearAllSignals();
         _transectStyleItem->rebuildTransectsPhase1Called = false;
-        _transectStyleItem->rebuildTransectsPhase2Called = false;
+        _transectStyleItem->recalcCameraShotsCalled = false;
+        _transectStyleItem->recalcComplexDistanceCalled = false;
     }
     rgFacts.clear();
 
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(false);
     _transectStyleItem->rebuildTransectsPhase1Called = false;
-    _transectStyleItem->rebuildTransectsPhase2Called = false;
+    _transectStyleItem->recalcCameraShotsCalled = false;
+    _transectStyleItem->recalcComplexDistanceCalled = false;
     changeFactValue(_transectStyleItem->cameraCalc()->imageDensity());
     QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
-    QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
+    QVERIFY(_transectStyleItem->recalcCameraShotsCalled);
+    QVERIFY(_transectStyleItem->recalcComplexDistanceCalled);
     QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
     _multiSpy->clearAllSignals();
 
     _transectStyleItem->cameraCalc()->valueSetIsDistance()->setRawValue(true);
     _transectStyleItem->rebuildTransectsPhase1Called = false;
-    _transectStyleItem->rebuildTransectsPhase2Called = false;
+    _transectStyleItem->recalcCameraShotsCalled = false;
+    _transectStyleItem->recalcComplexDistanceCalled = false;
     changeFactValue(_transectStyleItem->cameraCalc()->distanceToSurface());
     QVERIFY(_transectStyleItem->rebuildTransectsPhase1Called);
-    QVERIFY(_transectStyleItem->rebuildTransectsPhase2Called);
+    QVERIFY(_transectStyleItem->recalcCameraShotsCalled);
+    QVERIFY(_transectStyleItem->recalcComplexDistanceCalled);
     QVERIFY(_multiSpy->checkSignalsByMask(lastSequenceNumberChangedMask));
     _multiSpy->clearAllSignals();
 }
@@ -219,7 +227,8 @@ void TransectStyleComplexItemTest::_testAltMode(void)
 TransectStyleItem::TransectStyleItem(Vehicle* vehicle, QObject* parent)
     : TransectStyleComplexItem      (vehicle, false /* flyView */, QStringLiteral("UnitTestTransect"), parent)
     , rebuildTransectsPhase1Called  (false)
-    , rebuildTransectsPhase2Called  (false)
+    , recalcComplexDistanceCalled   (false)
+    , recalcCameraShotsCalled       (false)
 {
 
 }
@@ -229,7 +238,12 @@ void TransectStyleItem::_rebuildTransectsPhase1(void)
     rebuildTransectsPhase1Called = true;
 }
 
-void TransectStyleItem::_rebuildTransectsPhase2(void)
+void TransectStyleItem::_recalcComplexDistance(void)
 {
-    rebuildTransectsPhase2Called = true;
+    recalcComplexDistanceCalled = true;
+}
+
+void TransectStyleItem::_recalcCameraShots(void)
+{
+    recalcCameraShotsCalled = true;
 }

@@ -78,8 +78,9 @@ signals:
 
 private slots:
     // Overrides from TransectStyleComplexItem
-    void _rebuildTransectsPhase1(void) final;
-    void _rebuildTransectsPhase2(void) final;
+    void _rebuildTransectsPhase1    (void) final;
+    void _recalcComplexDistance     (void) final;
+    void _recalcCameraShots         (void) final;
 
 private:
     enum CameraTriggerCode {

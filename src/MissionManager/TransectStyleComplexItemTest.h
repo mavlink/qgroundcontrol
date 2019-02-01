@@ -97,10 +97,12 @@ public:
     double  additionalTimeDelay (void) const final { return 0; }
 
     bool rebuildTransectsPhase1Called;
-    bool rebuildTransectsPhase2Called;
+    bool recalcComplexDistanceCalled;
+    bool recalcCameraShotsCalled;
 
 private slots:
     // Overrides from TransectStyleComplexItem
-    void _rebuildTransectsPhase1(void) final;
-    void _rebuildTransectsPhase2(void) final;
+    void _rebuildTransectsPhase1    (void) final;
+    void _recalcComplexDistance     (void) final;
+    void _recalcCameraShots         (void) final;
 };

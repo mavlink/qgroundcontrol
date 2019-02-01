@@ -144,6 +144,12 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
         if (!_loadV4V5(complexObject, sequenceNumber, errorString, version)) {
             return false;
         }
+
+        _recalcComplexDistance();
+        if (_cameraShots == 0) {
+            // Shot count was possibly not available from plan file
+            _recalcCameraShots();
+        }
     } else {
         // Must be v2 or v3
         QJsonObject v3ComplexObject = complexObject;
@@ -157,9 +163,10 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
         if (!_loadV3(complexObject, sequenceNumber, errorString)) {
             return false;
         }
-    }
 
-    _rebuildTransects();
+        // V2/3 doesn't include individual items so we need to rebuild manually
+        _rebuildTransects();
+    }
 
     return true;
 }
@@ -1384,42 +1391,78 @@ void SurveyComplexItem::_rebuildTransectsFromPolygon(bool refly, const QPolygonF
     qCDebug(SurveyComplexItemLog) << "_transects.size() " << _transects.size();
 }
 
-void SurveyComplexItem::_rebuildTransectsPhase2(void)
+void SurveyComplexItem::_recalcComplexDistance(void)
 {
-    // Calculate distance flown for complex item
     _complexDistance = 0;
     for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
+    emit complexDistanceChanged();
+}
 
-    if (triggerDistance() == 0) {
+void SurveyComplexItem::_recalcCameraShots(void)
+{
+    double triggerDistance = this->triggerDistance();
+
+    if (triggerDistance == 0) {
         _cameraShots = 0;
     } else {
         if (_cameraTriggerInTurnAroundFact.rawValue().toBool()) {
-            _cameraShots = qCeil(_complexDistance / triggerDistance());
+            _cameraShots = qCeil(_complexDistance / triggerDistance);
         } else {
             _cameraShots = 0;
-            for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
-                QGeoCoordinate firstCameraCoord, lastCameraCoord;
-                if (_hasTurnaround()) {
-                    firstCameraCoord = transect[1].coord;
-                    lastCameraCoord = transect[transect.count() - 2].coord;
+
+            if (_loadedMissionItemsParent) {
+                // We have to do it the hard way based on the mission items themselves
+                if (hoverAndCaptureEnabled()) {
+                    // Count the number of camera triggers in the mission items
+                    for (const MissionItem* missionItem: _loadedMissionItems) {
+                        _cameraShots += missionItem->command() == MAV_CMD_IMAGE_START_CAPTURE ? 1 : 0;
+                    }
                 } else {
-                    firstCameraCoord = transect.first().coord;
-                    lastCameraCoord = transect.last().coord;
+                    bool waitingForTriggerStop = false;
+                    QGeoCoordinate distanceStartCoord;
+                    QGeoCoordinate distanceEndCoord;
+                    for (const MissionItem* missionItem: _loadedMissionItems) {
+                        if (missionItem->command() == MAV_CMD_NAV_WAYPOINT) {
+                            if (waitingForTriggerStop) {
+                                distanceEndCoord = QGeoCoordinate(missionItem->param5(), missionItem->param6());
+                            } else {
+                                distanceStartCoord = QGeoCoordinate(missionItem->param5(), missionItem->param6());
+                            }
+                        } else if (missionItem->command() == MAV_CMD_DO_SET_CAM_TRIGG_DIST) {
+                            if (missionItem->param1() > 0) {
+                                // Trigger start
+                                waitingForTriggerStop = true;
+                            } else {
+                                // Trigger stop
+                                waitingForTriggerStop = false;
+                                _cameraShots += qCeil(distanceEndCoord.distanceTo(distanceStartCoord) / triggerDistance);
+                                distanceStartCoord = QGeoCoordinate();
+                                distanceEndCoord = QGeoCoordinate();
+                            }
+                        }
+                    }
+
                 }
-                _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance());
+            } else {
+                // We have transects available, calc from those
+                for (const QList<TransectStyleComplexItem::CoordInfo_t>& transect: _transects) {
+                    QGeoCoordinate firstCameraCoord, lastCameraCoord;
+                    if (_hasTurnaround() && !hoverAndCaptureEnabled()) {
+                        firstCameraCoord = transect[1].coord;
+                        lastCameraCoord = transect[transect.count() - 2].coord;
+                    } else {
+                        firstCameraCoord = transect.first().coord;
+                        lastCameraCoord = transect.last().coord;
+                    }
+                    _cameraShots += qCeil(firstCameraCoord.distanceTo(lastCameraCoord) / triggerDistance);
+                }
             }
         }
     }
 
-    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
-    _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
-
     emit cameraShotsChanged();
-    emit complexDistanceChanged();
-    emit coordinateChanged(_coordinate);
-    emit exitCoordinateChanged(_exitCoordinate);
 }
 
 // FIXME: This same exact code is in Corridor Scan. Move to TransectStyleComplex?
