@@ -36,7 +36,6 @@ const char* TransectStyleComplexItem::_jsonVisualTransectPointsKey =        "Vis
 const char* TransectStyleComplexItem::_jsonItemsKey =                       "Items";
 const char* TransectStyleComplexItem::_jsonFollowTerrainKey =               "FollowTerrain";
 const char* TransectStyleComplexItem::_jsonCameraShotsKey =                 "CameraShots";
-const char* TransectStyleComplexItem::_jsonComplexDistanceKey =             "ComplexDistance";
 
 const int   TransectStyleComplexItem::_terrainQueryTimeoutMsecs =           1000;
 
@@ -142,7 +141,6 @@ void TransectStyleComplexItem::_save(QJsonObject& complexObject)
     innerObject[refly90DegreesName] =               _refly90DegreesFact.rawValue().toBool();
     innerObject[_jsonFollowTerrainKey] =            _followTerrain;
     innerObject[_jsonCameraShotsKey] =              _cameraShots;
-    innerObject[_jsonComplexDistanceKey] =          _complexDistance;
 
     if (_followTerrain) {
         innerObject[terrainAdjustToleranceName] =       _terrainAdjustToleranceFact.rawValue().toDouble();
@@ -217,7 +215,6 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
         { _jsonItemsKey,                    QJsonValue::Array,  true },
         { _jsonFollowTerrainKey,            QJsonValue::Bool,   true },
         { _jsonCameraShotsKey,              QJsonValue::Double, false },    // Not required since it was missing from initial implementation
-        { _jsonComplexDistanceKey,          QJsonValue::Double, false },    // Not required since it was missing from initial implementation
     };
     if (!JsonHelper::validateKeys(innerObject, innerKeyInfoList, errorString)) {
         return false;
@@ -259,9 +256,6 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
     // incorrect when loaded though.
     if (innerObject.contains(_jsonCameraShotsKey)) {
         _cameraShots = innerObject[_jsonCameraShotsKey].toInt();
-    }
-    if (innerObject.contains(_jsonComplexDistanceKey)) {
-        _complexDistance = innerObject[_jsonComplexDistanceKey].toDouble();
     }
 
     if (_followTerrain) {
@@ -409,7 +403,8 @@ void TransectStyleComplexItem::_rebuildTransects(void)
     emit coordinateChanged(_coordinate);
     emit exitCoordinateChanged(_exitCoordinate);
 
-    _rebuildTransectsPhase2();
+    _recalcComplexDistance();
+    _recalcCameraShots();
 
     emit lastSequenceNumberChanged(lastSequenceNumber());
     emit timeBetweenShotsChanged();
