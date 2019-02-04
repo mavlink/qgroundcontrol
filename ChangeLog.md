@@ -4,7 +4,12 @@ Note: This file only contains high level features or important fixes.
 
 ## 3.5
 
-### 3.5.0 - Daily Build
+### 3.5.0 - Stable
+* Plan GeoFence: Fix loading of fence from intermediate 3.4 code
+* Structure Scan: Fix loading of structure scan height
+* ArduPilot: Fix location of planned home position when not connected to vehicle. Issue #6840.
+* Fix loading of parameters from multiple components. Would report download complete too early, thus missing all default component params.
+* Fix file delete in mobile file dialogs
 * Add support for specifying fixed RTK based station location in Settings/General.
 * Added Airmap integration to QGC
 * Added ESTIMATOR_STATUS values to new estimatorStatus Vehicle FactGroup. These are now available to display in instrument panel.
@@ -13,7 +18,6 @@ Note: This file only contains high level features or important fixes.
 * Make Heading to Home available for display from instrument panel.
 * Edit Position dialog available on polygon vertices.
 * Fixed Wing Landing Pattern: Add stop photo/video support. Defaults to on such that doing an RTL will stop camera.
-* Survey Planning: add mode that supports concave polygons
 * Support loading polygons from SHP files
 * Bumped settings version (now 8). This will cause all settings to be reset to defaults.
 * Orbit visuals support changing rotation direction
@@ -22,15 +26,7 @@ Note: This file only contains high level features or important fixes.
 
 ## 3.4
 
-### 3.4.5 - Not yet released
-* Plan GeoFence: Fix loading of fence from intermediate 3.4 code
-* Orbit: Turn off for PX4 since still not supported
-* Structure Scan: Fix loading of structure scan height
-* ArduPilot: Fix location of planned home position when not connected to vehicle. Issue #6840.
-* Fix loading of parameters from multiple components. Would report download complete too early, thus missing all default component params.
-* Fix file delete in mobile file dialogs
-
-### 3.4.4 - Stable
+### 3.4.4
 * Stable desktop versions now inform user at boot if newer version is available.
 * Multi-Vehicle Start Mission and Pause now work correctly. Issue #6864.
 
