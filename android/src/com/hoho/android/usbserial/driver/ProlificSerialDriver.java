@@ -231,8 +231,8 @@ public class ProlificSerialDriver extends CommonUsbSerialDriver {
         return ((getStatus() & flag) == flag);
     }
 
-    public ProlificSerialDriver(UsbDevice device, UsbDeviceConnection connection) {
-        super(device, connection);
+    public ProlificSerialDriver(UsbDevice device) {
+        super(device);
     }
 
     @Override

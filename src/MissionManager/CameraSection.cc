@@ -578,7 +578,7 @@ void CameraSection::_cameraActionChanged(void)
 
 bool CameraSection::cameraModeSupported(void) const
 {
-    return _vehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_SET_CAMERA_MODE);
+    return _specifyCameraMode || _vehicle->firmwarePlugin()->supportedMissionCommands().contains(MAV_CMD_SET_CAMERA_MODE);
 }
 
 void CameraSection::_dirtyIfSpecified(void)

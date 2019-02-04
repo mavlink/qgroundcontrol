@@ -25,7 +25,8 @@ public:
     QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox);
     ~QGCPositionManager();
 
-    Q_PROPERTY(QGeoCoordinate gcsPosition READ gcsPosition NOTIFY gcsPositionChanged)
+    Q_PROPERTY(QGeoCoordinate gcsPosition  READ gcsPosition  NOTIFY gcsPositionChanged)
+    Q_PROPERTY(qreal          gcsHeading   READ gcsHeading   NOTIFY gcsHeadingChanged)
 
     enum QGCPositionSource {
         Simulated,
@@ -35,6 +36,8 @@ public:
     };
 
     QGeoCoordinate gcsPosition(void) { return _gcsPosition; }
+
+    qreal gcsHeading() { return _gcsHeading; }
 
     void setPositionSource(QGCPositionSource source);
 
@@ -50,11 +53,13 @@ private slots:
 
 signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);
+    void gcsHeadingChanged(qreal gcsHeading);
     void positionInfoUpdated(QGeoPositionInfo update);
 
 private:
     int             _updateInterval;
     QGeoCoordinate  _gcsPosition;
+    qreal           _gcsHeading;
 
     QGeoPositionInfoSource*     _currentSource;
     QGeoPositionInfoSource*     _defaultSource;

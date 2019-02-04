@@ -30,7 +30,7 @@ public:
     Q_PROPERTY(Fact*            loiterRadius            READ    loiterRadius                                            CONSTANT)
     Q_PROPERTY(Fact*            landingAltitude         READ    landingAltitude                                         CONSTANT)
     Q_PROPERTY(Fact*            landingHeading          READ    landingHeading                                          CONSTANT)
-    Q_PROPERTY(bool             valueSetIsDistance      MEMBER  _valueSetIsDistance                                     NOTIFY valueSetIsDistanceChanged)
+    Q_PROPERTY(Fact*            valueSetIsDistance      READ    valueSetIsDistance                                      CONSTANT)
     Q_PROPERTY(Fact*            landingDistance         READ    landingDistance                                         CONSTANT)
     Q_PROPERTY(Fact*            glideSlope              READ    glideSlope                                              CONSTANT)
     Q_PROPERTY(bool             loiterClockwise         MEMBER  _loiterClockwise                                        NOTIFY loiterClockwiseChanged)
@@ -50,6 +50,7 @@ public:
     Fact*           glideSlope              (void) { return &_glideSlopeFact; }
     Fact*           stopTakingPhotos        (void) { return &_stopTakingPhotosFact; }
     Fact*           stopTakingVideo         (void) { return &_stopTakingVideoFact; }
+    Fact*           valueSetIsDistance      (void) { return &_valueSetIsDistanceFact; }
     QGeoCoordinate  landingCoordinate       (void) const { return _landingCoordinate; }
     QGeoCoordinate  loiterCoordinate        (void) const { return _loiterCoordinate; }
     QGeoCoordinate  loiterTangentCoordinate (void) const { return _loiterTangentCoordinate; }
@@ -90,6 +91,7 @@ public:
     double          specifiedGimbalPitch    (void) final { return std::numeric_limits<double>::quiet_NaN(); }
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
+    double          additionalTimeDelay     (void) const final { return 0; }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _altitudesAreRelative; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return _altitudesAreRelative; }
@@ -102,6 +104,7 @@ public:
 
     static const char* jsonComplexItemTypeValue;
 
+    static const char* settingsGroup;
     static const char* loiterToLandDistanceName;
     static const char* loiterAltitudeName;
     static const char* loiterRadiusName;
@@ -110,6 +113,7 @@ public:
     static const char* glideSlopeName;
     static const char* stopTakingPhotosName;
     static const char* stopTakingVideoName;
+    static const char* valueSetIsDistanceName;
 
 signals:
     void loiterCoordinateChanged        (QGeoCoordinate coordinate);
@@ -154,12 +158,11 @@ private:
     Fact            _glideSlopeFact;
     Fact            _stopTakingPhotosFact;
     Fact            _stopTakingVideoFact;
+    Fact            _valueSetIsDistanceFact;
 
     bool            _loiterClockwise;
     bool            _altitudesAreRelative;
-    bool            _valueSetIsDistance;
 
-    static const char* settingsGroup;
     static const char* _jsonLoiterCoordinateKey;
     static const char* _jsonLoiterRadiusKey;
     static const char* _jsonLoiterClockwiseKey;

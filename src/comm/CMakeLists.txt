@@ -24,6 +24,7 @@ add_library(comm
 	SerialLink.cc
 	TCPLink.cc
 	UDPLink.cc
+	UdpIODevice.cc
 
 	${EXTRA_SRC}
 

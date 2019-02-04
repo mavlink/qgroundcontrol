@@ -28,7 +28,7 @@
 #include "MultiVehicleManager.h"
 #include "Settings/SettingsManager.h"
 #include "Vehicle.h"
-#include "JoystickManager.h"
+#include "QGCCameraManager.h"
 
 QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 
@@ -36,9 +36,6 @@ QGC_LOGGING_CATEGORY(VideoManagerLog, "VideoManagerLog")
 VideoManager::VideoManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
-    _streamInfo = {};
-    _lastZoomChange.start();
-    _lastStreamChange.start();
 }
 
 //-----------------------------------------------------------------------------
@@ -64,11 +61,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    connect(_videoSettings->udpPort(),       &Fact::rawValueChanged, this, &VideoManager::_udpPortChanged);
    connect(_videoSettings->rtspUrl(),       &Fact::rawValueChanged, this, &VideoManager::_rtspUrlChanged);
    connect(_videoSettings->tcpUrl(),        &Fact::rawValueChanged, this, &VideoManager::_tcpUrlChanged);
-   connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_streamInfoChanged);
+   connect(_videoSettings->aspectRatio(),   &Fact::rawValueChanged, this, &VideoManager::_aspectRatioChanged);
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
-   JoystickManager *pJoyMgr = qgcApp()->toolbox()->joystickManager();
-   connect(pJoyMgr, &JoystickManager::activeJoystickChanged, this, &VideoManager::_activeJoystickChanged);
 
 #if defined(QGC_GST_STREAMING)
 #ifndef QGC_DISABLE_UVC
@@ -92,14 +87,26 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 //-----------------------------------------------------------------------------
 double VideoManager::aspectRatio()
 {
-    if(isAutoStream()) {
-        if(_streamInfo.resolution_h && _streamInfo.resolution_v) {
-            return static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+        if(pInfo) {
+            return pInfo->aspectRatio();
         }
-        return 1.0;
-    } else {
-        return _videoSettings->aspectRatio()->rawValue().toDouble();
     }
+    return _videoSettings->aspectRatio()->rawValue().toDouble();
+}
+
+//-----------------------------------------------------------------------------
+bool
+VideoManager::autoStreamConfigured()
+{
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+        if(pInfo) {
+            return !pInfo->uri().isEmpty();
+        }
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -156,6 +163,9 @@ VideoManager::_tcpUrlChanged()
 bool
 VideoManager::hasVideo()
 {
+    if(autoStreamConfigured()) {
+        return true;
+    }
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
     return !videoSource.isEmpty() && videoSource != VideoSettings::videoSourceNoVideo && videoSource != VideoSettings::videoDisabled;
 }
@@ -169,21 +179,9 @@ VideoManager::isGStreamer()
     return
         videoSource == VideoSettings::videoSourceUDP ||
         videoSource == VideoSettings::videoSourceRTSP ||
-        videoSource == VideoSettings::videoSourceAuto ||
         videoSource == VideoSettings::videoSourceTCP ||
-        videoSource == VideoSettings::videoSourceMPEGTS;
-#else
-    return false;
-#endif
-}
-
-//-----------------------------------------------------------------------------
-bool
-VideoManager::isAutoStream()
-{
-#if defined(QGC_GST_STREAMING)
-    QString videoSource = _videoSettings->videoSource()->rawValue().toString();
-    return  videoSource == VideoSettings::videoSourceAuto;
+        videoSource == VideoSettings::videoSourceMPEGTS ||
+        autoStreamConfigured();
 #else
     return false;
 #endif
@@ -204,6 +202,28 @@ VideoManager::_updateSettings()
 {
     if(!_videoSettings || !_videoReceiver)
         return;
+    //-- Auto discovery
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+        if(pInfo) {
+            switch(pInfo->type()) {
+                case VIDEO_STREAM_TYPE_RTSP:
+                case VIDEO_STREAM_TYPE_TCP_MPEG:
+                    _videoReceiver->setUri(pInfo->uri());
+                    break;
+                case VIDEO_STREAM_TYPE_RTPUDP:
+                    _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()));
+                    break;
+                case VIDEO_STREAM_TYPE_MPEG_TS_H264:
+                    _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
+                    break;
+                default:
+                    _videoReceiver->setUri(pInfo->uri());
+                    break;
+            }
+            return;
+        }
+    }
     QString source = _videoSettings->videoSource()->rawValue().toString();
     if (source == VideoSettings::videoSourceUDP)
         _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
@@ -213,24 +233,6 @@ VideoManager::_updateSettings()
         _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
     else if (source == VideoSettings::videoSourceTCP)
         _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
-    //-- Auto discovery
-    else if (isAutoStream()) {
-        switch(_streamInfo.type) {
-            case VIDEO_STREAM_TYPE_RTSP:
-            case VIDEO_STREAM_TYPE_TCP_MPEG:
-                _videoReceiver->setUri(QString(_streamInfo.uri));
-                break;
-            case VIDEO_STREAM_TYPE_RTPUDP:
-                _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(atoi(_streamInfo.uri)));
-                break;
-            case VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(atoi(_streamInfo.uri)));
-                break;
-            default:
-                _videoReceiver->setUri(QString(_streamInfo.uri));
-                break;
-        }
-    }
 }
 
 //-----------------------------------------------------------------------------
@@ -252,116 +254,31 @@ void
 VideoManager::_setActiveVehicle(Vehicle* vehicle)
 {
     if(_activeVehicle) {
-        disconnect(_activeVehicle, &Vehicle::mavlinkMessageReceived, this, &VideoManager::_vehicleMessageReceived);
+        if(_activeVehicle->dynamicCameras()) {
+            QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
+            if(pCamera) {
+                pCamera->stopStream();
+            }
+            disconnect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
+        }
     }
     _activeVehicle = vehicle;
     if(_activeVehicle) {
-        if(isAutoStream()) {
-            _videoReceiver->stop();
+        if(_activeVehicle->dynamicCameras()) {
+            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
+            QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
+            if(pCamera) {
+                pCamera->resumeStream();
+            }
         }
-        //-- Video Stream Discovery
-        connect(_activeVehicle, &Vehicle::mavlinkMessageReceived, this, &VideoManager::_vehicleMessageReceived);
-        qCDebug(VideoManagerLog) << "Requesting video stream info";
-        _activeVehicle->sendMavCommand(
-            MAV_COMP_ID_ALL,                                      // Target component
-            MAV_CMD_REQUEST_VIDEO_STREAM_INFORMATION,             // Command id
-            false,                                                // ShowError
-            1,                                                    // First camera only
-            1);                                                   // Request video stream information
     }
+    emit autoStreamConfiguredChanged();
+    _restartVideo();
 }
 
 //----------------------------------------------------------------------------------------
 void
-VideoManager::_vehicleMessageReceived(const mavlink_message_t& message)
+VideoManager::_aspectRatioChanged()
 {
-    //-- For now we only handle one stream. There is no UI to pick different streams.
-    if(message.msgid == MAVLINK_MSG_ID_VIDEO_STREAM_INFORMATION) {
-        _videoStreamCompID = message.compid;
-        mavlink_msg_video_stream_information_decode(&message, &_streamInfo);
-        _hasAutoStream = true;
-        qCDebug(VideoManagerLog) << "Received video stream info:" << _streamInfo.uri;
-        _restartVideo();
-        emit streamInfoChanged();
-    }
-}
-
-//----------------------------------------------------------------------------------------
-void
-VideoManager::_activeJoystickChanged(Joystick* joystick)
-{
-    if(_activeJoystick) {
-        disconnect(_activeJoystick, &Joystick::stepZoom,   this, &VideoManager::stepZoom);
-        disconnect(_activeJoystick, &Joystick::stepStream, this, &VideoManager::stepStream);
-    }
-    _activeJoystick = joystick;
-    if(_activeJoystick) {
-        connect(_activeJoystick, &Joystick::stepZoom,   this, &VideoManager::stepZoom);
-        connect(_activeJoystick, &Joystick::stepStream, this, &VideoManager::stepStream);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::stepZoom(int direction)
-{
-    if(_lastZoomChange.elapsed() > 250) {
-        _lastZoomChange.start();
-        qCDebug(VideoManagerLog) << "Step Stream Zoom" << direction;
-        if(_activeVehicle && hasZoom()) {
-            _activeVehicle->sendMavCommand(
-                _videoStreamCompID,                     // Target component
-                MAV_CMD_SET_CAMERA_ZOOM,                // Command id
-                false,                                  // ShowError
-                ZOOM_TYPE_STEP,                         // Zoom type
-                direction);                             // Direction (-1 wide, 1 tele)
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::stepStream(int direction)
-{
-    if(_lastStreamChange.elapsed() > 250) {
-        _lastStreamChange.start();
-        int s = _currentStream + direction;
-        if(s < 1) s = _streamInfo.count;
-        if(s > _streamInfo.count) s = 1;
-        setCurrentStream(s);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-VideoManager::setCurrentStream(int stream)
-{
-    qCDebug(VideoManagerLog) << "Set Stream" << stream;
-    //-- TODO: Handle multiple streams
-    if(_hasAutoStream && stream <= _streamInfo.count && stream > 0 && _activeVehicle) {
-        if(_currentStream != stream) {
-            //-- Stop current stream
-            _activeVehicle->sendMavCommand(
-                _videoStreamCompID,                     // Target component
-                MAV_CMD_VIDEO_STOP_STREAMING,           // Command id
-                false,                                  // ShowError
-                _currentStream);                        // Stream ID
-            //-- Start new stream
-            _currentStream = stream;
-            _activeVehicle->sendMavCommand(
-                _videoStreamCompID,                     // Target component
-                MAV_CMD_VIDEO_START_STREAMING,          // Command id
-                false,                                  // ShowError
-                _currentStream);                        // Stream ID
-            _currentStream = stream;
-            emit currentStreamChanged();
-        }
-    }
-}
-
-//----------------------------------------------------------------------------------------
-void
-VideoManager::_streamInfoChanged()
-{
-    emit streamInfoChanged();
+    emit aspectRatioChanged();
 }

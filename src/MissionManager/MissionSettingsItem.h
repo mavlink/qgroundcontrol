@@ -77,6 +77,7 @@ public:
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final { Q_UNUSED(newAltitude); /* no action */ }
     double          specifiedFlightSpeed    (void) final;
+    double          additionalTimeDelay     (void) const final { return 0; }
 
     bool coordinateHasRelativeAltitude      (void) const final { return false; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return false; }
