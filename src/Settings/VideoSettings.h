@@ -36,14 +36,12 @@ public:
     DEFINE_SETTINGFACT(disableWhenDisarmed)
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
-    Q_PROPERTY(QString  autoVideoSource         READ autoVideoSource        CONSTANT)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udpVideoSource          READ udpVideoSource         CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
 
     bool     streamConfigured       ();
-    QString  autoVideoSource        () { return videoSourceAuto; }
     QString  rtspVideoSource        () { return videoSourceRTSP; }
     QString  udpVideoSource         () { return videoSourceUDP; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
@@ -53,7 +51,6 @@ public:
     static const char* videoDisabled;
     static const char* videoSourceUDP;
     static const char* videoSourceRTSP;
-    static const char* videoSourceAuto;
     static const char* videoSourceTCP;
     static const char* videoSourceMPEGTS;
 

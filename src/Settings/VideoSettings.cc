@@ -21,7 +21,6 @@
 
 const char* VideoSettings::videoSourceNoVideo   = "No Video Available";
 const char* VideoSettings::videoDisabled        = "Video Stream Disabled";
-const char* VideoSettings::videoSourceAuto      = "Automatic Video Stream";
 const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
 const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
 const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
@@ -35,7 +34,6 @@ DECLARE_SETTINGGROUP(Video, "Video")
     // Setup enum values for videoSource settings into meta data
     QStringList videoSourceList;
 #ifdef QGC_GST_STREAMING
-    videoSourceList.append(videoSourceAuto);
     videoSourceList.append(videoSourceRTSP);
 #ifndef NO_UDP_VIDEO
     videoSourceList.append(videoSourceUDP);
@@ -133,9 +131,15 @@ bool VideoSettings::streamConfigured(void)
 #if !defined(QGC_GST_STREAMING)
     return false;
 #endif
+    //-- First, check if it's disabled
     QString vSource = videoSource()->rawValue().toString();
     if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
         return false;
+    }
+    //-- Check if it's autoconfigured
+    if(qgcApp()->toolbox()->videoManager()->autoStreamConfigured()) {
+        qCDebug(VideoManagerLog) << "Stream auto configured";
+        return true;
     }
     //-- If UDP, check if port is set
     if(vSource == videoSourceUDP) {
@@ -156,11 +160,6 @@ bool VideoSettings::streamConfigured(void)
     if(vSource == videoSourceMPEGTS) {
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
-    }
-    //-- If Auto, check for received URL
-    if(vSource == videoSourceAuto) {
-        qCDebug(VideoManagerLog) << "Testing configuration for Auto Stream:" << qgcApp()->toolbox()->videoManager()->autoURL();
-        return !qgcApp()->toolbox()->videoManager()->autoURL().isEmpty();
     }
     return false;
 }

@@ -783,7 +783,10 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         _handleEstimatorStatus(message);
         break;
     case MAVLINK_MSG_ID_STATUSTEXT:
-        _handleStatusText(message);
+        _handleStatusText(message, false /* longVersion */);
+        break;
+    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
+        _handleStatusText(message, true /* longVersion */);
         break;
     case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
         _handleOrbitExecutionStatus(message);
@@ -881,15 +884,23 @@ void Vehicle::_handleCameraImageCaptured(const mavlink_message_t& message)
     }
 }
 
-void Vehicle::_handleStatusText(mavlink_message_t& message)
+void Vehicle::_handleStatusText(mavlink_message_t& message, bool longVersion)
 {
-    QByteArray b;
+    QByteArray  b;
+    QString     messageText;
+    int         severity;
 
-    b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-    mavlink_msg_statustext_get_text(&message, b.data());
+    if (longVersion) {
+        b.resize(MAVLINK_MSG_STATUSTEXT_LONG_FIELD_TEXT_LEN+1);
+        mavlink_msg_statustext_long_get_text(&message, b.data());
+        severity = mavlink_msg_statustext_long_get_severity(&message);
+    } else {
+        b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
+        mavlink_msg_statustext_get_text(&message, b.data());
+        severity = mavlink_msg_statustext_get_severity(&message);
+    }
     b[b.length()-1] = '\0';
-    QString messageText = QString(b);
-    int severity = mavlink_msg_statustext_get_severity(&message);
+    messageText = QString(b);
 
     bool skipSpoken = false;
     bool ardupilotPrearm = messageText.startsWith(QStringLiteral("PreArm"));

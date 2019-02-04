@@ -14,6 +14,7 @@
 QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool           (app, toolbox)
     , _updateInterval   (0)
+    , _gcsHeading       (NAN)
     , _currentSource    (NULL)
     , _defaultSource    (NULL)
     , _nmeaSource       (NULL)
@@ -49,8 +50,19 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
 
 void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 {
+    // stop and release _nmeaSource
     if (_nmeaSource) {
+        _nmeaSource->stopUpdates();
+        disconnect(_nmeaSource);
+
+        // if _currentSource is pointing there, point to null
+        if (_currentSource == _nmeaSource){
+            _currentSource = nullptr;
+        }
+
         delete _nmeaSource;
+        _nmeaSource = nullptr;
+
     }
     _nmeaSource = new QNmeaPositionInfoSource(QNmeaPositionInfoSource::RealTimeMode, this);
     _nmeaSource->setDevice(device);
@@ -60,6 +72,7 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
     QGeoCoordinate newGCSPosition = QGeoCoordinate();
+    qreal newGCSHeading = update.attribute(QGeoPositionInfo::Direction);
 
     if (update.isValid()) {
         // Note that gcsPosition filters out possible crap values
@@ -70,6 +83,10 @@ void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
     if (newGCSPosition != _gcsPosition) {
         _gcsPosition = newGCSPosition;
         emit gcsPositionChanged(_gcsPosition);
+    }
+    if (newGCSHeading != _gcsHeading) {
+        _gcsHeading = newGCSHeading;
+        emit gcsHeadingChanged(_gcsHeading);
     }
 
     emit positionInfoUpdated(update);

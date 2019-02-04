@@ -31,9 +31,7 @@ Item {
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
-    property bool   _hasCameraZoom:     _camera && _camera.hasZoom
-    property bool   _hasVideoZoom:      QGroundControl.videoManager.hasZoom
-    property bool   _hasZoom:           _hasCameraZoom || _hasVideoZoom
+    property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
     Rectangle {
         id:             noVideo
@@ -141,13 +139,7 @@ Item {
                         z = Math.round(pinch.scale)
                     }
                     if(pinchZoom.zoom != z) {
-                        //-- Camera zoom takes predence
-                        if(_hasCameraZoom) {
-                            _camera.stepZoom(z)
-                        } else if (_hasVideoZoom) {
-                            //-- Video zoom is for dumb cameras that only stream (do not present a camera interface)
-                            QGroundControl.videoManager.stepZoom(z)
-                        }
+                        _camera.stepZoom(z)
                     }
                 }
             }

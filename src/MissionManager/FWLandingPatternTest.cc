@@ -149,7 +149,8 @@ void FWLandingPatternTest::_testDirty(void)
             << _fwItem->landingDistance()
             << _fwItem->glideSlope()
             << _fwItem->stopTakingPhotos()
-            << _fwItem->stopTakingVideo();
+            << _fwItem->stopTakingVideo()
+            << _fwItem->valueSetIsDistance();
     for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_fwItem->dirty());
@@ -167,8 +168,7 @@ void FWLandingPatternTest::_testDirty(void)
 
     // These bool properties should set dirty when changed
     QList<const char*> rgBoolNames;
-    rgBoolNames << "valueSetIsDistance"
-                << "loiterClockwise"
+    rgBoolNames << "loiterClockwise"
                 << "altitudesAreRelative";
     const QMetaObject* metaObject = _fwItem->metaObject();
     for(const char* boolName: rgBoolNames) {
@@ -223,16 +223,16 @@ void FWLandingPatternTest::_validateItem(FixedWingLandingComplexItem* newItem)
     QVERIFY(fuzzyCompareLatLon(newItem->loiterTangentCoordinate(),  _fwItem->loiterTangentCoordinate()));
     QVERIFY(fuzzyCompareLatLon(newItem->landingCoordinate(),        _fwItem->landingCoordinate()));
 
-    QCOMPARE(newItem->stopTakingPhotos()->rawValue().toBool(),  _fwItem->stopTakingPhotos()->rawValue().toBool());
-    QCOMPARE(newItem->stopTakingVideo()->rawValue().toBool(),   _fwItem->stopTakingVideo()->rawValue().toBool());
-    QCOMPARE(newItem->loiterAltitude()->rawValue().toInt(),     _fwItem->loiterAltitude()->rawValue().toInt());
-    QCOMPARE(newItem->loiterRadius()->rawValue().toInt(),       _fwItem->loiterRadius()->rawValue().toInt());
-    QCOMPARE(newItem->landingAltitude()->rawValue().toInt(),    _fwItem->landingAltitude()->rawValue().toInt());
-    QCOMPARE(newItem->landingHeading()->rawValue().toInt(),     _fwItem->landingHeading()->rawValue().toInt());
-    QCOMPARE(newItem->landingDistance()->rawValue().toInt(),    _fwItem->landingDistance()->rawValue().toInt());
-    QCOMPARE(newItem->glideSlope()->rawValue().toInt(),         _fwItem->glideSlope()->rawValue().toInt());
-    QCOMPARE(newItem->_valueSetIsDistance,                      _fwItem->_valueSetIsDistance);
-    QCOMPARE(newItem->_loiterClockwise,                         _fwItem->_loiterClockwise);
-    QCOMPARE(newItem->_altitudesAreRelative,                    _fwItem->_altitudesAreRelative);
-    QCOMPARE(newItem->_landingCoordSet,                         _fwItem->_landingCoordSet);
+    QCOMPARE(newItem->stopTakingPhotos()->rawValue().toBool(),      _fwItem->stopTakingPhotos()->rawValue().toBool());
+    QCOMPARE(newItem->stopTakingVideo()->rawValue().toBool(),       _fwItem->stopTakingVideo()->rawValue().toBool());
+    QCOMPARE(newItem->loiterAltitude()->rawValue().toInt(),         _fwItem->loiterAltitude()->rawValue().toInt());
+    QCOMPARE(newItem->loiterRadius()->rawValue().toInt(),           _fwItem->loiterRadius()->rawValue().toInt());
+    QCOMPARE(newItem->landingAltitude()->rawValue().toInt(),        _fwItem->landingAltitude()->rawValue().toInt());
+    QCOMPARE(newItem->landingHeading()->rawValue().toInt(),         _fwItem->landingHeading()->rawValue().toInt());
+    QCOMPARE(newItem->landingDistance()->rawValue().toInt(),        _fwItem->landingDistance()->rawValue().toInt());
+    QCOMPARE(newItem->glideSlope()->rawValue().toInt(),             _fwItem->glideSlope()->rawValue().toInt());
+    QCOMPARE(newItem->valueSetIsDistance()->rawValue().toBool(),    _fwItem->valueSetIsDistance()->rawValue().toBool());
+    QCOMPARE(newItem->_loiterClockwise,                             _fwItem->_loiterClockwise);
+    QCOMPARE(newItem->_altitudesAreRelative,                        _fwItem->_altitudesAreRelative);
+    QCOMPARE(newItem->_landingCoordSet,                             _fwItem->_landingCoordSet);
 }

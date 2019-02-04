@@ -27,6 +27,7 @@ Fact::Fact(QObject* parent)
     , _sendValueChangedSignals  (true)
     , _deferredValueChangeSignal(false)
     , _valueSliderModel         (nullptr)
+    , _ignoreQGCRebootRequired  (false)
 {    
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -44,6 +45,7 @@ Fact::Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObjec
     , _sendValueChangedSignals  (true)
     , _deferredValueChangeSignal(false)
     , _valueSliderModel         (nullptr)
+    , _ignoreQGCRebootRequired  (false)
 {
     FactMetaData* metaData = new FactMetaData(_type, this);
     setMetaData(metaData);
@@ -61,6 +63,7 @@ Fact::Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent
     , _sendValueChangedSignals  (true)
     , _deferredValueChangeSignal(false)
     , _valueSliderModel         (nullptr)
+    , _ignoreQGCRebootRequired  (false)
 {
     qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(settingsGroup, *metaData);
     setMetaData(metaData, true /* setDefaultFromMetaData */);
@@ -90,7 +93,8 @@ const Fact& Fact::operator=(const Fact& other)
     _type                       = other._type;
     _sendValueChangedSignals    = other._sendValueChangedSignals;
     _deferredValueChangeSignal  = other._deferredValueChangeSignal;
-    _valueSliderModel       = nullptr;
+    _valueSliderModel           = nullptr;
+    _ignoreQGCRebootRequired    = other._ignoreQGCRebootRequired;
     if (_metaData && other._metaData) {
         *_metaData = *other._metaData;
     } else {
@@ -615,7 +619,9 @@ bool Fact::vehicleRebootRequired(void) const
 
 bool Fact::qgcRebootRequired(void) const
 {
-    if (_metaData) {
+    if (_ignoreQGCRebootRequired) {
+        return false;
+    } else if (_metaData) {
         return _metaData->qgcRebootRequired();
     } else {
         qWarning() << kMissingMetadata << name();
@@ -742,4 +748,9 @@ void Fact::_checkForRebootMessaging(void)
             }
         }
     }
+}
+
+void Fact::_setIgnoreQGCRebootRequired(bool ignore)
+{
+    _ignoreQGCRebootRequired = ignore;
 }
