@@ -2,7 +2,11 @@
 
 Note: This file only contains high level features or important fixes.
 
-## 3.5
+## 3.6
+
+### 3.6.0 - Daily Build
+
+* No changes yet
 
 ### 3.5.0 - Stable
 * Plan GeoFence: Fix loading of fence from intermediate 3.4 code
