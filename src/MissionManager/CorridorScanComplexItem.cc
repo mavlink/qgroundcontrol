@@ -124,9 +124,13 @@ bool CorridorScanComplexItem::load(const QJsonObject& complexObject, int sequenc
 
     _entryPoint = complexObject[_jsonEntryPointKey].toInt();
 
-    _rebuildTransects();
-
     _ignoreRecalc = false;
+
+    _recalcComplexDistance();
+    if (_cameraShots == 0) {
+        // Shot count was possibly not available from plan file
+        _recalcCameraShots();
+    }
 
     return true;
 }
@@ -461,14 +465,17 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
     }
 }
 
-void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
+void CorridorScanComplexItem::_recalcComplexDistance(void)
 {
-    // Calculate distance flown for complex item
     _complexDistance = 0;
     for (int i=0; i<_visualTransectPoints.count() - 1; i++) {
         _complexDistance += _visualTransectPoints[i].value<QGeoCoordinate>().distanceTo(_visualTransectPoints[i+1].value<QGeoCoordinate>());
     }
+    emit complexDistanceChanged();
+}
 
+void CorridorScanComplexItem::_recalcCameraShots(void)
+{
     double triggerDistance = _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble();
     if (triggerDistance == 0) {
         _cameraShots = 0;
@@ -480,14 +487,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase2(void)
             _cameraShots = singleTransectImageCount * _transectCount();
         }
     }
-
-    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
-    _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
-
     emit cameraShotsChanged();
-    emit complexDistanceChanged();
-    emit coordinateChanged(_coordinate);
-    emit exitCoordinateChanged(_exitCoordinate);
 }
 
 bool CorridorScanComplexItem::readyForSave(void) const

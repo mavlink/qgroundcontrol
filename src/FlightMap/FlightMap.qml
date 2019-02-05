@@ -35,6 +35,7 @@ Map {
     property string mapName:                        'defaultMap'
     property bool   isSatelliteMap:                 activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
     property var    gcsPosition:                    QGroundControl.qgcPositionManger.gcsPosition
+    property var    gcsHeading:                     QGroundControl.qgcPositionManger.gcsHeading
     property bool   userPanned:                     false   ///< true: the user has manually panned the map
     property bool   allowGCSLocationCenter:         false   ///< true: map will center/zoom to gcs location one time
     property bool   allowVehicleLocationCenter:     false   ///< true: map will center/zoom to vehicle location one time
@@ -134,12 +135,18 @@ Map {
         coordinate:     gcsPosition
 
         sourceItem: Image {
-            source:         "/res/QGCLogoFull"
+            id:             mapItemImage
+            source:         isNaN(gcsHeading) ? "/res/QGCLogoFull" : "/res/QGCLogoArrow"
             mipmap:         true
             antialiasing:   true
             fillMode:       Image.PreserveAspectFit
-            height:         ScreenTools.defaultFontPixelHeight * 1.75
+            height:         ScreenTools.defaultFontPixelHeight * (isNaN(gcsHeading) ? 1.75 : 2.5 )
             sourceSize.height: height
+            transform: Rotation {
+                origin.x:       mapItemImage.width  / 2
+                origin.y:       mapItemImage.height / 2
+                angle:          isNaN(gcsHeading) ? 0 : gcsHeading
+            }
         }
     }
 } // Map

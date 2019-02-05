@@ -84,6 +84,7 @@ public:
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
     void            applyNewAltitude        (double newAltitude) final;
+    double          additionalTimeDelay     (void) const final { return 0; }
 
     bool coordinateHasRelativeAltitude      (void) const final { return _altitudeRelative; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return _altitudeRelative; }

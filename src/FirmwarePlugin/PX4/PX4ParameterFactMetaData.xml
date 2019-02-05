@@ -513,7 +513,7 @@ Set to 2 to use heading from motion capture</short_desc>
 * the MSB bit is not used to avoid problems in the conversion between int and uint</short_desc>
       <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
     </parameter>
-    <parameter default="2.4e-3" name="COM_ARM_EKF_AB" type="FLOAT">
+    <parameter default="1.73e-3" name="COM_ARM_EKF_AB" type="FLOAT">
       <short_desc>Maximum value of EKF accelerometer delta velocity bias estimate that will allow arming.
 Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than EKF2_ABL_LIM * FILTER_UPDATE_PERIOD_MS * 0.001 so this parameter must be less than that to be useful</short_desc>
       <min>0.001</min>
@@ -3845,7 +3845,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
     <parameter default="0" name="MIS_MNT_YAW_CTL" type="INT32">
       <short_desc>Enable yaw control of the mount. (Only affects multicopters and ROI mission items)</short_desc>
-      <long_desc>If enabled, yaw commands will be sent to the mount and the vehicle will follow its heading mode as specified by MIS_YAWMODE. If disabled, the vehicle will yaw towards the ROI.</long_desc>
+      <long_desc>If enabled, yaw commands will be sent to the mount and the vehicle will follow its heading towards the flight direction. If disabled, the vehicle will yaw towards the ROI.</long_desc>
       <min>0</min>
       <max>1</max>
       <values>
@@ -4524,13 +4524,6 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.0" name="MPC_IDLE_TKO" type="FLOAT">
-      <short_desc>Delay from idle state to arming state</short_desc>
-      <long_desc>For altitude controlled modes, the transition from idle to armed state is delayed by MPC_IDLE_TKO time to ensure that the propellers have reached idle speed before attempting a takeoff. This delay is particularly useful for vehicles with large propellers.</long_desc>
-      <min>0</min>
-      <max>10</max>
-      <unit>sec</unit>
-    </parameter>
     <parameter default="20.0" name="MPC_JERK_MAX" type="FLOAT">
       <short_desc>Maximum jerk limit</short_desc>
       <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
@@ -4608,6 +4601,13 @@ Temporary Parameter to enable interface testing</short_desc>
         <value code="2">Sport position control</value>
         <value code="3">Smooth position control (Velocity)</value>
       </values>
+    </parameter>
+    <parameter default="0.0" name="MPC_SPOOLUP_TIME" type="FLOAT">
+      <short_desc>Enforced delay between arming and takeoff</short_desc>
+      <long_desc>For altitude controlled modes the time from arming the motors until a takeoff is possible gets forced to be at least MPC_SPOOLUP_TIME seconds to ensure the motors and propellers can sppol up and reach idle speed before getting commanded to spin faster. This delay is particularly useful for vehicles with slow motor spin-up e.g. because of large propellers.</long_desc>
+      <min>0</min>
+      <max>10</max>
+      <unit>s</unit>
     </parameter>
     <parameter default="0" name="MPC_THR_CURVE" type="INT32">
       <short_desc>Thrust curve in Manual Mode</short_desc>
@@ -8708,15 +8708,6 @@ is less than 50% of this value</short_desc>
       <short_desc>Motor 4 Mapping</short_desc>
     </parameter>
   </group>
-  <group name="Subscriber Example">
-    <parameter default="100" name="SUB_INTERV" type="INT32">
-      <short_desc>Interval of one subscriber in the example in ms</short_desc>
-      <unit>ms</unit>
-    </parameter>
-    <parameter default="3.14" name="SUB_TESTF" type="FLOAT">
-      <short_desc>Float Demonstration Parameter in the Example</short_desc>
-    </parameter>
-  </group>
   <group name="System">
     <parameter default="31" name="LED_RGB1_MAXBRT" type="INT32">
       <short_desc>RGB Led brightness limit</short_desc>
@@ -8789,7 +8780,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="0" name="SYS_COMPANION" type="INT32">
       <short_desc>TELEM2 as companion computer link (deprecated)</short_desc>
-      <long_desc>This parameter is deprecated. Do not change it, use the more generic serial configuration parameters instead.</long_desc>
+      <long_desc>This parameter is deprecated and will be removed after 1.9.0. Use the generic serial configuration parameters instead (e.g. MAV_0_CONFIG, MAV_0_MODE, etc.).</long_desc>
       <min>0</min>
       <max>6460800</max>
       <reboot_required>true</reboot_required>

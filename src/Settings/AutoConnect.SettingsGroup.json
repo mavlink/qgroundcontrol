@@ -46,7 +46,7 @@
     "shortDescription": "NMEA GPS device for GCS position",
     "longDescription":  "NMEA GPS device for GCS position",
     "type":             "string",
-    "defaultValue":     "disabled"
+    "defaultValue":     "Disabled"
 },
 {
     "name":             "autoConnectNmeaBaud",
@@ -72,5 +72,11 @@
     "shortDescription": "UDP target host port for autoconnect",
     "type":             "uint32",
     "defaultValue":     14550
+},
+{
+    "name":             "nmeaUdpPort",
+    "shortDescription": "Udp port to receive NMEA streams",
+    "type":             "uint32",
+    "defaultValue":     14401
 }
 ]
