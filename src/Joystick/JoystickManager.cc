@@ -59,11 +59,13 @@ void JoystickManager::init() {
     }
     _setActiveJoystickFromSettings();
 #elif defined(__android__)
-    if (!JoystickAndroid::init()) {
+    if (!JoystickAndroid::init(this)) {
         return;
     }
+    connect(this, &JoystickManager::updateAvailableJoysticksSignal, this, &JoystickManager::restartJoystickCheckTimer);
 #endif
     connect(&_joystickCheckTimer, &QTimer::timeout, this, &JoystickManager::_updateAvailableJoysticks);
+    _joystickCheckTimerCounter = 5;
     _joystickCheckTimer.start(1000);
 }
 
@@ -185,7 +187,7 @@ void JoystickManager::setActiveJoystickName(const QString& name)
 /*
  * TODO: move this to the right place: JoystickSDL.cc and JoystickAndroid.cc respectively and call through Joystick.cc
  */
-void JoystickManager::_updateAvailableJoysticks(void)
+void JoystickManager::_updateAvailableJoysticks()
 {
 #ifdef __sdljoystick__
     SDL_Event event;
@@ -207,6 +209,16 @@ void JoystickManager::_updateAvailableJoysticks(void)
         }
     }
 #elif defined(__android__)
+    _joystickCheckTimerCounter--;
     _setActiveJoystickFromSettings();
+    if (_joystickCheckTimerCounter <= 0) {
+        _joystickCheckTimer.stop();
+    }
 #endif
+}
+
+void JoystickManager::restartJoystickCheckTimer()
+{
+    _joystickCheckTimerCounter = 5;
+    _joystickCheckTimer.start(1000);
 }

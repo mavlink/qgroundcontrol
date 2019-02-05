@@ -55,6 +55,8 @@ import android.os.PowerManager;
 import android.os.Bundle;
 import android.app.PendingIntent;
 import android.view.WindowManager;
+import android.os.Bundle;
+import android.bluetooth.BluetoothDevice;
 
 import com.hoho.android.usbserial.driver.*;
 import org.qtproject.qt5.android.bindings.QtActivity;
@@ -162,6 +164,12 @@ public class QGCActivity extends QtActivity
                         }
                     }
                 }
+
+                try {
+                    nativeUpdateAvailableJoysticks();
+                } catch(Exception e) {
+                    Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()");
+                }
             }
         };
 
@@ -169,6 +177,7 @@ public class QGCActivity extends QtActivity
     private static native void nativeDeviceHasDisconnected(int userData);
     private static native void nativeDeviceException(int userData, String messageA);
     private static native void nativeDeviceNewData(int userData, byte[] dataA);
+    private static native void nativeUpdateAvailableJoysticks();
 
     // Native C++ functions called to log output
     public static native void qgcLogDebug(String message);
@@ -200,8 +209,11 @@ public class QGCActivity extends QtActivity
 
         // Register for USB Detach and USB Permission intent
         IntentFilter filter = new IntentFilter();
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         filter.addAction(ACTION_USB_PERMISSION);
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         _instance.registerReceiver(_instance._usbReceiver, filter);
 
         // Create intent for usb permission request
