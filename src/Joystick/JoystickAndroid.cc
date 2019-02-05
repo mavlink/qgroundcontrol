@@ -134,7 +134,6 @@ QMap<QString, Joystick*> JoystickAndroid::discover(MultiVehicleManager* _multiVe
 
     env->ReleaseIntArrayElements(jarr, buff, 0);
 
-
     return ret;
 }
 
@@ -171,7 +170,6 @@ bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
     return true;
 }
 
-
 bool JoystickAndroid::_open(void) {
     return true;
 }
@@ -199,8 +197,14 @@ uint8_t JoystickAndroid::_getHat(int hat,int i) {
     return 0;
 }
 
+static JoystickManager *_manager = nullptr;
+
 //helper method
-bool JoystickAndroid::init() {
+bool JoystickAndroid::init(JoystickManager *manager) {
+    if (_manager == nullptr) {
+        setNativeMethods(manager);
+    }
+
     //this gets list of all possible buttons - this is needed to check how many buttons our gamepad supports
     //instead of the whole logic below we could have just a simple array of hardcoded int values as these 'should' not change
 
@@ -239,3 +243,52 @@ bool JoystickAndroid::init() {
     return true;
 }
 
+static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
+
+static void jniUpdateAvailableJoysticks(JNIEnv *envA, jobject thizA)
+{
+    Q_UNUSED(envA);
+    Q_UNUSED(thizA);
+
+    if (_manager != nullptr) {
+        qCDebug(JoystickLog) << "jniUpdateAvailableJoysticks triggered";
+        emit _manager->updateAvailableJoysticksSignal();
+    }
+}
+
+void JoystickAndroid::setNativeMethods(JoystickManager *manager)
+{
+    qCDebug(JoystickLog) << "Registering Native Functions";
+
+    _manager = manager;
+
+    //  REGISTER THE C++ FUNCTION WITH JNI
+    JNINativeMethod javaMethods[] {
+        {"nativeUpdateAvailableJoysticks", "()V", reinterpret_cast<void *>(jniUpdateAvailableJoysticks)}
+    };
+
+    QAndroidJniEnvironment jniEnv;
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+
+    jclass objectClass = jniEnv->FindClass(kJniClassName);
+    if(!objectClass) {
+        qWarning() << "Couldn't find class:" << kJniClassName;
+        return;
+    }
+
+    jint val = jniEnv->RegisterNatives(objectClass, javaMethods, sizeof(javaMethods) / sizeof(javaMethods[0]));
+
+    if (val < 0) {
+        qWarning() << "Error registering methods: " << val;
+    } else {
+        qCDebug(JoystickLog) << "Native Functions Registered";
+    }
+
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+}
