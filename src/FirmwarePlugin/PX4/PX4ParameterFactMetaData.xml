@@ -8780,7 +8780,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="0" name="SYS_COMPANION" type="INT32">
       <short_desc>TELEM2 as companion computer link (deprecated)</short_desc>
-      <long_desc>This parameter is deprecated. Do not change it, use the more generic serial configuration parameters instead.</long_desc>
+      <long_desc>This parameter is deprecated and will be removed after 1.9.0. Use the generic serial configuration parameters instead (e.g. MAV_0_CONFIG, MAV_0_MODE, etc.).</long_desc>
       <min>0</min>
       <max>6460800</max>
       <reboot_required>true</reboot_required>
