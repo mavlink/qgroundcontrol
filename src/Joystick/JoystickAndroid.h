@@ -19,13 +19,15 @@ public:
 
     ~JoystickAndroid();
 
-    static bool init();
+    static bool init(JoystickManager *manager);
 
     static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager);
 
 private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
+
+    static void setNativeMethods(JoystickManager *manager);
 
     virtual bool _open();
     virtual void _close();
