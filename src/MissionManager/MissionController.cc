@@ -56,9 +56,9 @@ const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 
 const int   MissionController::_missionFileVersion =            2;
 
-const QString MissionController::patternFWLandingName      (tr("Fixed Wing Landing"));
-const QString MissionController::patternStructureScanName  (tr("Structure Scan"));
-const QString MissionController::patternCorridorScanName   (tr("Corridor Scan"));
+const QString MissionController::patternFWLandingName      (QT_TRANSLATE_NOOP("MissionController", "Fixed Wing Landing"));
+const QString MissionController::patternStructureScanName  (QT_TRANSLATE_NOOP("MissionController", "Structure Scan"));
+const QString MissionController::patternCorridorScanName   (QT_TRANSLATE_NOOP("MissionController", "Corridor Scan"));
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController     (masterController, parent)
@@ -226,7 +226,7 @@ void MissionController::_warnIfTerrainFrameUsed(void)
 {
     for (int i=1; i<_visualItems->count(); i++) {
         SimpleMissionItem* simpleItem = qobject_cast<SimpleMissionItem*>(_visualItems->get(i));
-        if (simpleItem && simpleItem->altitudeMode() == SimpleMissionItem::AltitudeTerrainFrame) {
+        if (simpleItem && simpleItem->altitudeMode() == QGroundControlQmlGlobal::AltitudeModeTerrainFrame) {
             qgcApp()->showMessage(tr("Warning: You are using MAV_FRAME_GLOBAL_TERRAIN_ALT in a mission. %1 does not support sending terrain tiles to vehicle.").arg(qgcApp()->applicationName()));
             break;
         }
@@ -371,7 +371,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
 
         if (_findPreviousAltitude(i, &prevAltitude, &prevAltitudeMode)) {
             newItem->altitude()->setRawValue(prevAltitude);
-            newItem->setAltitudeMode(static_cast<SimpleMissionItem::AltitudeMode>(prevAltitudeMode));
+            newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
@@ -399,7 +399,7 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
 
     if (_findPreviousAltitude(i, &prevAltitude, &prevAltitudeMode)) {
         newItem->altitude()->setRawValue(prevAltitude);
-        newItem->setAltitudeMode(static_cast<SimpleMissionItem::AltitudeMode>(prevAltitudeMode));
+        newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
     }
     _visualItems->insert(i, newItem);
 

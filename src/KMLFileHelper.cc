@@ -100,7 +100,7 @@ bool KMLFileHelper::loadPolygonFromFile(const QString& kmlFile, QList<QGeoCoordi
         rgCoords.append(coord);
     }
 
-    // Determine winding, reverse if needed
+    // Determine winding, reverse if needed. QGC wants clockwise winding
     double sum = 0;
     for (int i=0; i<rgCoords.count(); i++) {
         QGeoCoordinate coord1 = rgCoords[i];

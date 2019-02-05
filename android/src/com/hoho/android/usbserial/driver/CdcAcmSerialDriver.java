@@ -41,8 +41,8 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
     private static final int SET_CONTROL_LINE_STATE = 0x22;
     private static final int SEND_BREAK = 0x23;
 
-    public CdcAcmSerialDriver(UsbDevice device, UsbDeviceConnection connection) {
-        super(device, connection);
+    public CdcAcmSerialDriver(UsbDevice device) {
+        super(device);
     }
 
     @Override
@@ -303,6 +303,18 @@ public class CdcAcmSerialDriver extends CommonUsbSerialDriver {
                     UsbId.DEVICE_REVOLUTION,
                     UsbId.DEVICE_SPARKY2,
                     UsbId.DEVICE_OPLINK,
+                });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ARDUPILOT_CHIBIOS1),
+                new int[] {
+                    UsbId.DEVICE_ARDUPILOT_CHIBIOS,
+                });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_ARDUPILOT_CHIBIOS2),
+                new int[] {
+                    UsbId.DEVICE_ARDUPILOT_CHIBIOS,
+                });
+        supportedDevices.put(Integer.valueOf(UsbId.VENDOR_DRAGONLINK),
+                new int[] {
+                    UsbId.DEVICE_DRAGONLINK,
                 });
         return supportedDevices;
     }

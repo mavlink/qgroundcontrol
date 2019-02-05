@@ -344,6 +344,7 @@ Item {
             mapControl: _root.mapControl
             z:          _zorderDragHandle
             visible:    !_circle
+            onDragStop: mapPolygon.verifyClockwiseWinding()
 
             property int polygonVertex
 
@@ -466,7 +467,10 @@ Item {
 
         EditPositionDialog {
             coordinate:             mapPolygon.vertexCoordinate(menu._editingVertexIndex)
-            onCoordinateChanged:    mapPolygon.adjustVertex(menu._editingVertexIndex, coordinate)
+            onCoordinateChanged: {
+                mapPolygon.adjustVertex(menu._editingVertexIndex, coordinate)
+                mapPolygon.verifyClockwiseWinding()
+            }
         }
     }
 

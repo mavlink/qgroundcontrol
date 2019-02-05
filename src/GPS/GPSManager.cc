@@ -34,6 +34,9 @@ void GPSManager::connectGPS(const QString& device, const QString& gps_type)
     if (gps_type.contains("trimble",  Qt::CaseInsensitive)) {
         type = GPSProvider::GPSType::trimble;
         qCDebug(RTKGPSLog) << "Connecting Trimble device";
+    } else if (gps_type.contains("septentrio",  Qt::CaseInsensitive)) {
+        type = GPSProvider::GPSType::septentrio;
+        qCDebug(RTKGPSLog) << "Connecting Septentrio device";
     } else {
         type = GPSProvider::GPSType::u_blox;
         qCDebug(RTKGPSLog) << "Connecting U-blox device";

@@ -74,7 +74,7 @@ private:
         size_t                          cFactValues;
         const FactValue_t*              rgFactValues;
         double                          altValue;
-        SimpleMissionItem::AltitudeMode altMode;
+        QGroundControlQmlGlobal::AltitudeMode altMode;
     } ItemExpected_t;
 
     SimpleMissionItem*  _simpleItem;

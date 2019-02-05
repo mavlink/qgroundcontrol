@@ -71,7 +71,7 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _rgCalibration(nullptr)
     , _rgButtonValues(nullptr)
     , _lastButtonBits(0)
-    , _throttleMode(ThrottleModeCenterZero)
+    , _throttleMode(ThrottleModeDownZero)
     , _negativeThrust(false)
     , _exponential(0)
     , _accumulator(false)
@@ -140,7 +140,7 @@ void Joystick::_setDefaultCalibration(void) {
     _deadband = false;
     _circleCorrection = false;
     _frequency = 25.0f;
-    _throttleMode = ThrottleModeCenterZero;
+    _throttleMode = ThrottleModeDownZero;
     _calibrated = true;
 
     _saveSettings();
@@ -207,7 +207,7 @@ void Joystick::_loadSettings(void)
     _circleCorrection = settings.value(_circleCorrectionSettingsKey, false).toBool();
     _frequency = settings.value(_frequencySettingsKey, 25.0f).toFloat();
 
-    _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeCenterZero).toInt(&convertOk);
+    _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk);
     badSettings |= !convertOk;
 
     qCDebug(JoystickLog) << "_loadSettings calibrated:txmode:throttlemode:exponential:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;

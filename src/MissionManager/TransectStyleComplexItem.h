@@ -129,9 +129,6 @@ signals:
     void followTerrainChanged           (bool followTerrain);
 
 protected slots:
-    virtual void _rebuildTransectsPhase1    (void) = 0; ///< Rebuilds the _transects array
-    virtual void _rebuildTransectsPhase2    (void) = 0; ///< Adjust values associated with _transects array
-
     void _setDirty                          (void);
     void _setIfDirty                        (bool dirty);
     void _updateCoordinateAltitudes         (void);
@@ -139,6 +136,10 @@ protected slots:
     void _rebuildTransects                  (void);
 
 protected:
+    virtual void _rebuildTransectsPhase1    (void) = 0; ///< Rebuilds the _transects array
+    virtual void _recalcComplexDistance     (void) = 0;
+    virtual void _recalcCameraShots         (void) = 0;
+
     void    _save                           (QJsonObject& saveObject);
     bool    _load                           (const QJsonObject& complexObject, QString& errorString);
     void    _setExitCoordinate              (const QGeoCoordinate& coordinate);
@@ -197,6 +198,7 @@ protected:
     static const char* _jsonVisualTransectPointsKey;
     static const char* _jsonItemsKey;
     static const char* _jsonFollowTerrainKey;
+    static const char* _jsonCameraShotsKey;
 
     static const int _terrainQueryTimeoutMsecs;
 

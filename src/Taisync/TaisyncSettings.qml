@@ -438,7 +438,7 @@ QGCView {
                     height:                     ipSettingsLabel.height
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    _taisyncEnabled
+                    visible:                    _taisyncEnabled && (!ScreenTools.isiOS && !ScreenTools.isAndroid)
                     QGCLabel {
                         id:                     ipSettingsLabel
                         text:                   qsTr("Network Settings")
@@ -449,7 +449,7 @@ QGCView {
                     height:                     ipSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
                     width:                      _panelWidth
                     color:                      qgcPal.windowShade
-                    visible:                    _taisyncEnabled
+                    visible:                    _taisyncEnabled && (!ScreenTools.isiOS && !ScreenTools.isAndroid)
                     anchors.margins:            ScreenTools.defaultFontPixelWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     Column {
