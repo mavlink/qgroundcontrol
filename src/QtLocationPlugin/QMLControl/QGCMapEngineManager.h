@@ -37,10 +37,6 @@ public:
     };
     Q_ENUM(ImportAction)
 
-    Q_PROPERTY(int                  tileX0          READ    tileX0          NOTIFY tileX0Changed)
-    Q_PROPERTY(int                  tileX1          READ    tileX1          NOTIFY tileX1Changed)
-    Q_PROPERTY(int                  tileY0          READ    tileY0          NOTIFY tileY0Changed)
-    Q_PROPERTY(int                  tileY1          READ    tileY1          NOTIFY tileY1Changed)
     Q_PROPERTY(quint64              tileCount       READ    tileCount       NOTIFY tileCountChanged)
     Q_PROPERTY(QString              tileCountStr    READ    tileCountStr    NOTIFY tileCountChanged)
     Q_PROPERTY(quint64              tileSize        READ    tileSize        NOTIFY tileSizeChanged)
@@ -76,13 +72,9 @@ public:
     Q_INVOKABLE bool                importSets              (QString path = QString());
     Q_INVOKABLE void                resetAction             ();
 
-    int                             tileX0                  () { return _totalSet.tileX0; }
-    int                             tileX1                  () { return _totalSet.tileX1; }
-    int                             tileY0                  () { return _totalSet.tileY0; }
-    int                             tileY1                  () { return _totalSet.tileY1; }
-    quint64                         tileCount               () { return _totalSet.tileCount; }
+    quint64                         tileCount               () { return _imageSet.tileCount + _elevationSet.tileCount; }
     QString                         tileCountStr            ();
-    quint64                         tileSize                () { return _totalSet.tileSize; }
+    quint64                         tileSize                () { return _imageSet.tileSize + _elevationSet.tileSize; }
     QString                         tileSizeStr             ();
     QStringList                     mapList                 ();
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
@@ -108,10 +100,6 @@ public:
     void setToolbox(QGCToolbox *toolbox);
 
 signals:
-    void tileX0Changed          ();
-    void tileX1Changed          ();
-    void tileY0Changed          ();
-    void tileY1Changed          ();
     void tileCountChanged       ();
     void tileSizeChanged        ();
     void tileSetsChanged        ();
@@ -141,7 +129,8 @@ private:
     void _updateDiskFreeSpace   ();
 
 private:
-    QGCTileSet  _totalSet;
+    QGCTileSet  _imageSet;
+    QGCTileSet  _elevationSet;
     double      _topleftLat;
     double      _topleftLon;
     double      _bottomRightLat;
