@@ -4,6 +4,9 @@ Note: This file only contains high level features or important fixes.
 
 ## 3.5
 
+### 3.5.1 - Not yet released
+* Fix tile set count but in OfflineMaps which would cause image and elevation tile set to have incorrect counts and be incorrectly marked as download incomplete.
+
 ### 3.5.0 - Stable
 * Plan GeoFence: Fix loading of fence from intermediate 3.4 code
 * Structure Scan: Fix loading of structure scan height
