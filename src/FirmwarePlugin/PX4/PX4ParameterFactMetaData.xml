@@ -336,15 +336,39 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>8</decimal>
     </parameter>
   </group>
+  <group name="Camera Capture">
+    <parameter default="0.0" name="CAM_CAP_DELAY" type="FLOAT">
+      <short_desc>Camera strobe delay</short_desc>
+      <long_desc>This parameter sets the delay between image integration start and strobe firing</long_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <unit>ms</unit>
+      <decimal>1</decimal>
+    </parameter>
+  </group>
   <group name="Camera Control">
-    <parameter default="0" name="CAM_FBACK_MODE" type="INT32">
-      <short_desc>Camera feedback mode</short_desc>
-      <long_desc>Sets the camera feedback mode.</long_desc>
-      <min>0</min>
-      <max>1</max>
+    <parameter default="0" name="CAM_CAP_EDGE" type="INT32">
+      <short_desc>Camera capture edge</short_desc>
+      <reboot_required>true</reboot_required>
       <values>
-        <value code="0">Disabled</value>
-        <value code="1">Feedback on trigger</value>
+        <value code="0">Falling edge</value>
+        <value code="1">Rising edge</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="CAM_CAP_FBACK" type="INT32">
+      <short_desc>Camera capture feedback</short_desc>
+      <long_desc>Enables camera capture feedback</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="0" name="CAM_CAP_MODE" type="INT32">
+      <short_desc>Camera capture timestamping mode</short_desc>
+      <long_desc>Change time measurement</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Get absolute timestamp</value>
+        <value code="1">Get timestamp of mid exposure (active high)</value>
+        <value code="2">Get timestamp of mid exposure (active low)</value>
       </values>
     </parameter>
   </group>
