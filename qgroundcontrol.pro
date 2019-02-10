@@ -59,12 +59,13 @@ WindowsBuild {
 QGC_APP_NAME        = "QGroundControl"
 QGC_ORG_NAME        = "QGroundControl.org"
 QGC_ORG_DOMAIN      = "org.qgroundcontrol"
-QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
+QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl Dev Team"
 QGC_APP_COPYRIGHT   = "Copyright (C) 2017 QGroundControl Development Team. All rights reserved."
 
 WindowsBuild {
     QGC_INSTALLER_ICON          = "WindowsQGC.ico"
     QGC_INSTALLER_HEADER_BITMAP = "installheader.bmp"
+    QGC_INSTALLER_PUBLISHER     = "QGroundControl Dev Team"
 }
 
 # Load additional config flags from user_config.pri

@@ -67,36 +67,14 @@ WindowsBuild {
     DebugBuild: DLL_QT_DEBUGCHAR = "d"
     ReleaseBuild: DLL_QT_DEBUGCHAR = ""
     COPY_FILE_LIST = \
-        $$BASEDIR\\libs\\lib\\sdl2\\msvc\\lib\\x86\\SDL2.dll \
-        $$BASEDIR\\deploy\\libeay32.dll \
-        $$BASEDIR_WIN\\deploy\\ssleay32.dll
+        $$BASEDIR_WIN\\libs\\lib\\sdl2\\msvc\\lib\\x64\\SDL2.dll \
+        $$BASEDIR_WIN\\deploy\\libeay32.dll \
+        $$BASEDIR_WIN\\deploy\\ssleay32.dll \
+        $$BASEDIR_WIN\\deploy\\msvcp140.dll \
+        $$BASEDIR_WIN\\deploy\\vcruntime140.dll
 
     for(COPY_FILE, COPY_FILE_LIST) {
         QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"$$COPY_FILE\" \"$$DESTDIR_WIN\"
-    }
-
-    ReleaseBuild {
-        # Copy Visual Studio DLLs
-        # Note that this is only done for release because the debugging versions of these DLLs cannot be redistributed.
-        win32-msvc2010 {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp100.dll\"  \"$$DESTDIR_WIN\"
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr100.dll\"  \"$$DESTDIR_WIN\"
-
-        } else:win32-msvc2012 {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp110.dll\"  \"$$DESTDIR_WIN\"
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr110.dll\"  \"$$DESTDIR_WIN\"
-
-        } else:win32-msvc2013 {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp120.dll\"  \"$$DESTDIR_WIN\"
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcr120.dll\"  \"$$DESTDIR_WIN\"
-
-        } else:win32-msvc2015 {
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\msvcp140.dll\"  \"$$DESTDIR_WIN\"
-            QMAKE_POST_LINK += $$escape_expand(\\n) $$QMAKE_COPY \"C:\\Windows\\System32\\vcruntime140.dll\"  \"$$DESTDIR_WIN\"
-
-        } else {
-            error("Visual studio version not supported, installation cannot be completed.")
-        }
     }
 
     DEPLOY_TARGET = $$shell_quote($$shell_path($$DESTDIR_WIN\\$${TARGET}.exe))

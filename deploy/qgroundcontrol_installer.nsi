@@ -38,16 +38,19 @@
 !macroend
 
 Name "${APPNAME}"
+BrandingText "${APPNAME} ${VERSION}"
 Var StartMenuFolder
 
-InstallDir "$PROGRAMFILES\${APPNAME}"
+InstallDir "$PROGRAMFILES64\${APPNAME}"
 
 SetCompressor /SOLID /FINAL lzma
 
 !define MUI_HEADERIMAGE
-!define MUI_HEADERIMAGE_BITMAP "${HEADER_BITMAP}";
-!define MUI_ICON "${INSTALLER_ICON}";
-!define MUI_UNICON "${INSTALLER_ICON}";
+!define MUI_HEADERIMAGE_BITMAP "${HEADER_BITMAP}"
+!define MUI_ICON "${INSTALLER_ICON}"
+!define MUI_UNICON "${INSTALLER_ICON}"
+
+!define ARP "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
 
 !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
 !insertmacro MUI_PAGE_DIRECTORY
@@ -59,67 +62,73 @@ SetCompressor /SOLID /FINAL lzma
 !insertmacro MUI_LANGUAGE "English"
 
 Section
+  DetailPrint "Checking for uninstall of previous version"
+
+  # Check uninstall of previous 32 bit version
+  SetRegView 32
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
-  StrCmp $R0 "" doinstall
 
-  ExecWait "$R0 /S _?=$INSTDIR -LEAVE_DATA=1"
-  IntCmp $0 0 doinstall
+  # Remainder of installer takes place in 64 bit space
+  SetRegView 64
 
-  MessageBox MB_OK|MB_ICONEXCLAMATION \
-        "Could not remove a previously installed ${APPNAME} version.$\n$\nPlease remove it before continuing."
-  Abort
+  # Check uninstall of previous 64 bit version
+  ${If} $R0 == ""
+    ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
+  ${EndIf}
 
-doinstall:
+  # Uninstall previous version
+  ${If} $R0 != ""
+    DetailPrint "Uninstalling previous version $R0 from $R1"
+    ExecWait "$R0 /S -LEAVE_DATA=1" $0
+    ${If} $0 <> 0
+      MessageBox MB_OK|MB_ICONEXCLAMATION "Could not remove a previously installed ${APPNAME} version.$\n$\nPlease remove it before continuing."
+      Abort
+    ${EndIf}
+  ${Else}
+    DetailPrint "No previous version found"
+  ${EndIf}
+
+  # Install new QGC version
   SetOutPath $INSTDIR
   File /r /x ${EXENAME}.pdb /x ${EXENAME}.lib /x ${EXENAME}.exp ${DESTDIR}\*.*
+  File ${INSTALLER_ICON}
   File deploy\px4driver.msi
+
+  # Create the uninstaller
   WriteUninstaller $INSTDIR\${EXENAME}-Uninstall.exe
-  WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
-  WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
-  SetRegView 64
+
+  # Write the uninstaller reg keys
+  WriteRegStr HKLM "${ARP}" "DisplayName" "${APPNAME}"
+  WriteRegStr HKLM "${ARP}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
+  WriteRegStr HKLM "${ARP}" "InstallLocation" "$\"$INSTDIR$\""
+  WriteRegStr HKLM "${ARP}" "DisplayIcon" "$\"$INSTDIR\${INSTALLER_ICON}$\""
+  WriteRegStr HKLM "${ARP}" "Publisher" "${INSTALLER_PUBLISHER}"
+  WriteRegStr HKLM "${ARP}" "Version" "${VERSION}"
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  IntFmt $0 "0x%08X" $0
+  WriteRegDWORD HKLM "${ARP}" "EstimatedSize" "$0"
+
+  # Write reg keys for crash dump reporting
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpCount" 5 
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 2 
   WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
 
-  ; Only attempt to install the PX4 driver if the version isn't present
+  # Install PX4 USB Driver if not already installed
   !define ROOTKEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\434608CF2B6E31F0DDBA5C511053F957B55F098E"
-
-  SetRegView 64
   ReadRegStr $0 HKLM "${ROOTKEY}" "Publisher"
-  StrCmp     $0 "3D Robotics" found_provider notfound
+  DetailPrint "Checking for USB driver already installed"
+  StrCpy $1 ""
+  ${If} $0 == "3D Robotics"
+    ReadRegStr $1 HKLM "${ROOTKEY}" "DisplayVersion"
+  ${EndIf}
+  ${If} $1 != "04/11/2013 2.0.0.4"
+    DetailPrint "USB Driver not found, installing"
+    ExecWait '"msiexec" /i "px4driver.msi"'
+  ${Else}
+    DetailPrint "USB Driver already installed"
+  ${EndIf}
 
-found_provider:
-  ReadRegStr $0 HKLM "${ROOTKEY}" "DisplayVersion"
-  DetailPrint "Checking USB driver version... $0"
-  StrCmp     $0 "04/11/2013 2.0.0.4" skip_driver notfound
-
-notfound:
-  DetailPrint "USB Driver not found... installing"
-  ExecWait '"msiexec" /i "px4driver.msi"'
-  goto done
-
-skip_driver:
-  DetailPrint "USB Driver found... skipping install"
-done:
-  SetRegView lastused
-SectionEnd 
-
-Section "Uninstall"
-  ${GetParameters} $R0
-  ${GetOptions} $R0 "-LEAVE_DATA=" $R1
-  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
-  SetShellVarContext all
-  RMDir /r /REBOOTOK $INSTDIR
-  RMDir /r /REBOOTOK "$SMPROGRAMS\$StartMenuFolder\"
-  SetShellVarContext current
-  ${If} $R1 != 1
-    RMDir /r /REBOOTOK "$APPDATA\${ORGNAME}\"
-  ${Endif}
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe"
-SectionEnd
-
-Section "create Start Menu Shortcuts"
+  # Create Start menu shortcuts
   SetShellVarContext all
   CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME}.lnk" "$INSTDIR\${EXENAME}.exe" "" "$INSTDIR\${EXENAME}.exe" 0
@@ -127,5 +136,25 @@ Section "create Start Menu Shortcuts"
   !insertmacro DemoteShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Compatibility Mode).lnk"
   CreateShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Safe Mode).lnk" "$INSTDIR\${EXENAME}.exe" "-swrast" "$INSTDIR\${EXENAME}.exe" 0
   !insertmacro DemoteShortCut "$SMPROGRAMS\$StartMenuFolder\${APPNAME} (GPU Safe Mode).lnk"
-SectionEnd
 
+  # Create Desktop shortcuts
+  SetShellVarContext all
+  CreateShortCut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\${EXENAME}.exe"
+SectionEnd 
+
+Section "Uninstall"
+  SetRegView 64
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "-LEAVE_DATA=" $R1
+  !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
+  SetShellVarContext all
+  RMDir /r /REBOOTOK $INSTDIR
+  RMDir /r /REBOOTOK "$SMPROGRAMS\$StartMenuFolder\"
+  Delete "$DESKTOP\${APPNAME}.lnk"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe"
+  SetShellVarContext current
+  ${If} $R1 != 1
+    RMDir /r /REBOOTOK "$APPDATA\${ORGNAME}\"
+  ${Endif}
+SectionEnd
