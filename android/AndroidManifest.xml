@@ -7,10 +7,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
                 <action android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"/>
+                <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"/>
             </intent-filter>
 
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"/>
             <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_DEVICE_DETACHED"/>
+            <meta-data android:resource="@xml/device_filter" android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED"/>
             <!-- Rest of Standard Manifest -->
             <meta-data android:name="android.app.lib_name" android:value="-- %%INSERT_APP_LIB_NAME%% --"/>
             <meta-data android:name="android.app.qt_sources_resource_id" android:resource="@array/qt_sources"/>
@@ -60,13 +62,14 @@
     <!-- Support devices without USB host mode since there are other connection types -->
     <uses-feature android:name="android.hardware.usb.host" android:required="false"/>
 	
-	<!-- Support devices without Bluetooth since there are other connection types -->
-	<uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
+    <!-- Support devices without Bluetooth since there are other connection types -->
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false"/>
 	
-	<!-- Support devices that don't have location services -->
+    <!-- Support devices that don't have location services -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-	<uses-feature android:name="android.hardware.location.network" android:required="false"/>
-	<uses-feature android:name="android.hardware.location" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.network" android:required="false"/>
+    <uses-feature android:name="android.hardware.location" android:required="false"/>
+    <uses-feature android:name="android.hardware.usb.accessory"/>
 	
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />

@@ -36,6 +36,7 @@ linux {
         DEFINES += __android__
         DEFINES += __STDC_LIMIT_MACROS
         DEFINES += QGC_ENABLE_BLUETOOTH
+        DEFINES += QGC_GST_TAISYNC_ENABLED
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
