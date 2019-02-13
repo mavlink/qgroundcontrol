@@ -76,7 +76,7 @@ protected:
 
     class CameraStruct : public QObject {
     public:
-        CameraStruct(QObject* parent);
+        CameraStruct(QObject* parent, uint8_t compID_);
         QTime   lastHeartbeat;
         bool    infoReceived = false;
         bool    gaveUp       = false;
