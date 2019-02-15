@@ -100,6 +100,14 @@ Rectangle {
                 rowSpacing:     _margin
                 columns:        2
 
+                FactComboBox {
+                    fact:               missionItem.startFromTop
+                    indexModel:         true
+                    model:              [ qsTr("Start Scan From Bottom"), qsTr("Start Scan From Top") ]
+                    Layout.columnSpan:  2
+                    Layout.fillWidth:   true
+                }
+
                 QGCLabel {
                     text:       qsTr("Structure height")
                     visible:    !missionItem.cameraCalc.isManualCamera
@@ -165,13 +173,19 @@ Rectangle {
             columnSpacing:  ScreenTools.defaultFontPixelWidth
             visible:        statsHeader.checked
 
+            QGCLabel { text: qsTr("Layers") }
+            QGCLabel { text: missionItem.layers.valueString }
+
+            QGCLabel { text: qsTr("Layer height") }
+            QGCLabel { text: missionItem.cameraCalc.adjustedFootprintFrontal.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
+
             QGCLabel { text: qsTr("Photo count") }
             QGCLabel { text: missionItem.cameraShots }
 
             QGCLabel { text: qsTr("Photo interval") }
             QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs") }
 
-            QGCLabel { text: qsTr("Trigger Distance") }
+            QGCLabel { text: qsTr("Trigger distance") }
             QGCLabel { text: missionItem.cameraCalc.adjustedFootprintSide.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
         }
     } // Column
