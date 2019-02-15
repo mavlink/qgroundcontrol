@@ -994,7 +994,7 @@ void LinkManager::startAutoConnectedLinks(void)
 int LinkManager::_reserveMavlinkChannel(void)
 {
     // Find a mavlink channel to use for this link, Channel 0 is reserved for internal use.
-    for (uint8_t mavlinkChannel = 1; mavlinkChannel < 32; mavlinkChannel++) {
+    for (uint8_t mavlinkChannel = 1; mavlinkChannel < MAVLINK_COMM_NUM_BUFFERS; mavlinkChannel++) {
         if (!(_mavlinkChannelsUsedBitMask & 1 << mavlinkChannel)) {
             mavlink_reset_channel_status(mavlinkChannel);
             // Start the channel on Mav 1 protocol
