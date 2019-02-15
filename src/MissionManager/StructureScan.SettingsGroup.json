@@ -32,5 +32,11 @@
     "units":            "m",
     "min":              1,
     "defaultValue":     100
+},
+{
+    "name":             "StartFromTop",
+    "shortDescription": "Start scan from top of structure.",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]
