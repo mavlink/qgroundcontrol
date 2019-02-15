@@ -26,6 +26,7 @@ const char* StructureScanComplexItem::altitudeName =                "Altitude";
 const char* StructureScanComplexItem::structureHeightName =         "StructureHeight";
 const char* StructureScanComplexItem::layersName =                  "Layers";
 const char* StructureScanComplexItem::gimbalPitchName =             "GimbalPitch";
+const char* StructureScanComplexItem::startFromTopName =            "StartFromTop";
 
 const char* StructureScanComplexItem::jsonComplexItemTypeValue =    "StructureScan";
 const char* StructureScanComplexItem::_jsonCameraCalcKey =          "CameraCalc";
@@ -46,6 +47,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     , _structureHeightFact      (settingsGroup, _metaDataMap[structureHeightName])
     , _layersFact               (settingsGroup, _metaDataMap[layersName])
     , _gimbalPitchFact          (settingsGroup, _metaDataMap[gimbalPitchName])
+    , _startFromTopFact         (settingsGroup, _metaDataMap[startFromTopName])
 {
     _editorQml = "qrc:/qml/StructureScanEditor.qml";
 
@@ -54,6 +56,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     connect(&_altitudeFact,     &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
     connect(&_layersFact,       &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
     connect(&_gimbalPitchFact,  &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
+    connect(&_startFromTopFact, &Fact::valueChanged, this, &StructureScanComplexItem::_setDirty);
 
     connect(&_layersFact,                           &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
     connect(&_structureHeightFact,                  &Fact::valueChanged,    this, &StructureScanComplexItem::_recalcLayerInfo);
@@ -156,6 +159,7 @@ void StructureScanComplexItem::save(QJsonArray&  missionItems)
     saveObject[_jsonAltitudeRelativeKey] =  _altitudeRelative;
     saveObject[layersName] =                _layersFact.rawValue().toDouble();
     saveObject[gimbalPitchName] =           _gimbalPitchFact.rawValue().toDouble();
+    saveObject[startFromTopName] =          _startFromTopFact.rawValue().toBool();
 
     QJsonObject cameraCalcObject;
     _cameraCalc.save(cameraCalcObject);
@@ -187,6 +191,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
         { _jsonAltitudeRelativeKey,                     QJsonValue::Bool,   true },
         { layersName,                                   QJsonValue::Double, true },
         { gimbalPitchName,                              QJsonValue::Double, false },    // This value was added after initial implementation so may be missing from older files
+        { startFromTopName,                             QJsonValue::Bool,   false },    // This value was added after initial implementation so may be missing from older files
         { _jsonCameraCalcKey,                           QJsonValue::Object, true },
     };
     if (!JsonHelper::validateKeys(complexObject, keyInfoList, errorString)) {
@@ -218,6 +223,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     _altitudeFact.setRawValue       (complexObject[altitudeName].toDouble());
     _layersFact.setRawValue         (complexObject[layersName].toDouble());
     _structureHeightFact.setRawValue(complexObject[structureHeightName].toDouble());
+    _startFromTopFact.setRawValue   (complexObject[startFromTopName].toBool(false));    // Set the false if doesn't exist, which matches previous functionality prior to setting
 
     _altitudeRelative = complexObject[_jsonAltitudeRelativeKey].toBool(true);
 
@@ -289,8 +295,9 @@ bool StructureScanComplexItem::specifiesCoordinate(void) const
 
 void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
 {
-    int seqNum = _sequenceNumber;
-    double baseAltitude = _altitudeFact.rawValue().toDouble();
+    int     seqNum =        _sequenceNumber;
+    bool    startFromTop =  _startFromTopFact.rawValue().toBool();
+    double  startAltitude = _altitudeFact.rawValue().toDouble() + (startFromTop ? _structureHeightFact.rawValue().toDouble() : 0);
 
     MissionItem* item = new MissionItem(seqNum++,
                                         MAV_CMD_DO_SET_ROI_WPNEXT_OFFSET,
@@ -305,10 +312,15 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
     items.append(item);
 
     for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
-        bool addTriggerStart = true;
-        // baseAltitude is the bottom of the first layer. Hence we need to move up half the distance of the camera footprint to center the camera
-        // within the layer.
-        double layerAltitude = baseAltitude + (_cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / 2.0) + (layer * _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+        bool    addTriggerStart = true;
+        double  layerIncrement = (_cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / 2.0) + (layer * _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble());
+        double  layerAltitude;
+
+        if (startFromTop) {
+            layerAltitude = startAltitude - layerIncrement;
+        } else {
+            layerAltitude = startAltitude + layerIncrement;
+        }
 
         for (int i=0; i<_flightPolygon.count(); i++) {
             QGeoCoordinate vertexCoord = _flightPolygon.vertexCoordinate(i);
