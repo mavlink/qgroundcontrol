@@ -37,7 +37,7 @@ JoystickManager::JoystickManager(QGCApplication* app, QGCToolbox* toolbox)
 JoystickManager::~JoystickManager() {
     QMap<QString, Joystick*>::iterator i;
     for (i = _name2JoystickMap.begin(); i != _name2JoystickMap.end(); ++i) {
-        qDebug() << "Releasing joystick:" << i.key();
+        qCDebug(JoystickManagerLog) << "Releasing joystick:" << i.key();
         delete i.value();
     }
     qDebug() << "Done";
