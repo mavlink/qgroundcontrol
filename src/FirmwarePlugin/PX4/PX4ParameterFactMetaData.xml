@@ -870,7 +870,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     </parameter>
     <parameter default="5" name="COM_POS_FS_EPH" type="FLOAT">
       <short_desc>Horizontal position error threshold</short_desc>
-      <long_desc>This is the horizontal position error (EPV) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
+      <long_desc>This is the horizontal position error (EPH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m</unit>
     </parameter>
     <parameter default="10" name="COM_POS_FS_EPV" type="FLOAT">
