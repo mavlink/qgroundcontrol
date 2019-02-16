@@ -61,7 +61,7 @@ for:
 -
   branches:
     only:
-      - Stable_V3.4
+      - Stable_V3.5
   artifacts:
     - path: QGroundControl-installer.exe
       name: qgcinstaller
