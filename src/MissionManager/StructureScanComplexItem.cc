@@ -327,18 +327,17 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
                            missionItemParent);
     items.append(item);
 
-    // Fly a layer pattern
-    for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
-        bool    addTriggerStart = true;
-        double  halfLayerHeight = _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / 2.0;
-        double  layerAltitude = startAltitude;
+    // Set up for the first layer
+    double  layerAltitude = startAltitude;
+    double  halfLayerHeight = _cameraCalc.adjustedFootprintFrontal()->rawValue().toDouble() / 2.0;
+    if (startFromTop) {
+        layerAltitude -= halfLayerHeight;
+    } else {
+        layerAltitude += halfLayerHeight;
+    }
 
-        // Move down to the middle of the layer
-        if (startFromTop) {
-            layerAltitude -= halfLayerHeight;
-        } else {
-            layerAltitude += halfLayerHeight;
-        }
+    for (int layer=0; layer<_layersFact.rawValue().toInt(); layer++) {
+        bool addTriggerStart = true;
 
         bool done = false;
         int currentVertex = _entryVertex;
