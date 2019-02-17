@@ -18,8 +18,8 @@
     "defaultValue":     50
 },
 {
-    "name":             "Altitude",
-    "shortDescription": "Altitude for the bottom layer of the structure scan.",
+    "name":             "ScanBottomAlt",
+    "shortDescription": "Altitude for the bottomost covered area of the scan. You can adjust this value such that the Bottom Layer Alt will fly above obstacles on the ground.",
     "type":             "double",
     "units":            "m",
     "decimalPlaces":    1,
@@ -43,7 +43,7 @@
 },
 {
     "name":             "StartFromTop",
-    "shortDescription": "Start scan from top of structure.",
+    "shortDescription": "Start scanning from top of structure.",
     "type":             "bool",
     "defaultValue":     true
 }

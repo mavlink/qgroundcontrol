@@ -110,51 +110,32 @@ Rectangle {
 
                 QGCLabel {
                     text:       qsTr("Structure height")
-                    visible:    !missionItem.cameraCalc.isManualCamera
                 }
                 FactTextField {
                     fact:               missionItem.structureHeight
                     Layout.fillWidth:   true
-                    visible:            !missionItem.cameraCalc.isManualCamera
                 }
 
-                QGCLabel {
-                    text:       qsTr("# Layers")
-                    visible:    missionItem.cameraCalc.isManualCamera
-                }
-                FactTextField {
-                    fact:               missionItem.layers
-                    Layout.fillWidth:   true
-                    visible:            missionItem.cameraCalc.isManualCamera
-                }
-
-                QGCLabel { text: qsTr("Scan bottom alt") }
+                QGCLabel { text: qsTr("Scan Bottom Alt") }
                 FactTextField {
                     fact:               missionItem.scanBottomAlt
                     Layout.fillWidth:   true
                 }
 
-                QGCLabel { text: qsTr("Entrance/Exit alt") }
+                QGCLabel { text: qsTr("Entrance/Exit Alt") }
                 FactTextField {
                     fact:               missionItem.entranceAlt
                     Layout.fillWidth:   true
                 }
 
                 QGCLabel {
-                    text:       qsTr("Gimbal pitch")
+                    text:       qsTr("Gimbal Pitch")
                     visible:    missionItem.cameraCalc.isManualCamera
                 }
                 FactTextField {
                     fact:               missionItem.gimbalPitch
                     Layout.fillWidth:   true
                     visible:            missionItem.cameraCalc.isManualCamera
-                }
-
-                QGCCheckBox {
-                    text:               qsTr("Relative altitude")
-                    checked:            missionItem.altitudeRelative
-                    Layout.columnSpan:  2
-                    onClicked:          missionItem.altitudeRelative = checked
                 }
             }
 
@@ -182,16 +163,22 @@ Rectangle {
             QGCLabel { text: qsTr("Layers") }
             QGCLabel { text: missionItem.layers.valueString }
 
-            QGCLabel { text: qsTr("Layer height") }
+            QGCLabel { text: qsTr("Layer Height") }
             QGCLabel { text: missionItem.cameraCalc.adjustedFootprintFrontal.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
 
-            QGCLabel { text: qsTr("Photo count") }
+            QGCLabel { text: qsTr("Top Layer Alt") }
+            QGCLabel { text: QGroundControl.metersToAppSettingsDistanceUnits(missionItem.topFlightAlt).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString }
+
+            QGCLabel { text: qsTr("Bottom Layer Alt") }
+            QGCLabel { text: QGroundControl.metersToAppSettingsDistanceUnits(missionItem.bottomFlightAlt).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString }
+
+            QGCLabel { text: qsTr("Photo Count") }
             QGCLabel { text: missionItem.cameraShots }
 
-            QGCLabel { text: qsTr("Photo interval") }
+            QGCLabel { text: qsTr("Photo Interval") }
             QGCLabel { text: missionItem.timeBetweenShots.toFixed(1) + " " + qsTr("secs") }
 
-            QGCLabel { text: qsTr("Trigger distance") }
+            QGCLabel { text: qsTr("Trigger Distance") }
             QGCLabel { text: missionItem.cameraCalc.adjustedFootprintSide.valueString + " " + QGroundControl.appSettingsDistanceUnitsString }
         }
     } // Column
