@@ -32,12 +32,13 @@ public:
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
     Q_PROPERTY(Fact*            entranceAlt                 READ entranceAlt                                                CONSTANT)
-    Q_PROPERTY(Fact*            scanBottomAlt               READ scanBottomAlt                                              CONSTANT)
     Q_PROPERTY(Fact*            structureHeight             READ structureHeight                                            CONSTANT)
+    Q_PROPERTY(Fact*            scanBottomAlt               READ scanBottomAlt                                              CONSTANT)
     Q_PROPERTY(Fact*            layers                      READ layers                                                     CONSTANT)
     Q_PROPERTY(Fact*            gimbalPitch                 READ gimbalPitch                                                CONSTANT)
     Q_PROPERTY(Fact*            startFromTop                READ startFromTop                                               CONSTANT)
-    Q_PROPERTY(bool             altitudeRelative            READ altitudeRelative           WRITE setAltitudeRelative       NOTIFY altitudeRelativeChanged)
+    Q_PROPERTY(double           bottomFlightAlt             READ bottomFlightAlt                                            NOTIFY bottomFlightAltChanged)
+    Q_PROPERTY(double           topFlightAlt                READ topFlightAlt                                               NOTIFY topFlightAltChanged)
     Q_PROPERTY(int              cameraShots                 READ cameraShots                                                NOTIFY cameraShotsChanged)
     Q_PROPERTY(double           timeBetweenShots            READ timeBetweenShots                                           NOTIFY timeBetweenShotsChanged)
     Q_PROPERTY(QGCMapPolygon*   structurePolygon            READ structurePolygon                                           CONSTANT)
@@ -51,13 +52,12 @@ public:
     Fact* gimbalPitch       (void) { return &_gimbalPitchFact; }
     Fact* startFromTop      (void) { return &_startFromTopFact; }
 
-    bool            altitudeRelative        (void) const { return _altitudeRelative; }
+    double          bottomFlightAlt         (void);
+    double          topFlightAlt            (void);
     int             cameraShots             (void) const;
     double          timeBetweenShots        (void);
     QGCMapPolygon*  structurePolygon        (void) { return &_structurePolygon; }
     QGCMapPolygon*  flightPolygon           (void) { return &_flightPolygon; }
-
-    void setAltitudeRelative        (bool altitudeRelative);
 
     Q_INVOKABLE void rotateEntryPoint(void);
 
@@ -90,8 +90,8 @@ public:
     void            applyNewAltitude        (double newAltitude) final;
     double          additionalTimeDelay     (void) const final { return 0; }
 
-    bool coordinateHasRelativeAltitude      (void) const final { return _altitudeRelative; }
-    bool exitCoordinateHasRelativeAltitude  (void) const final { return _altitudeRelative; }
+    bool coordinateHasRelativeAltitude      (void) const final { return true; }
+    bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }
     bool exitCoordinateSameAsEntry          (void) const final { return true; }
 
     void setDirty           (bool dirty) final;
@@ -111,7 +111,8 @@ public:
 signals:
     void cameraShotsChanged             (int cameraShots);
     void timeBetweenShotsChanged        (void);
-    void altitudeRelativeChanged        (bool altitudeRelative);
+    void bottomFlightAltChanged         (void);
+    void topFlightAltChanged            (void);
 
 private slots:
     void _setDirty(void);
@@ -124,7 +125,7 @@ private slots:
     void _recalcLayerInfo           (void);
     void _updateLastSequenceNumber  (void);
     void _updateGimbalPitch         (void);
-    void _validateEntryVertex       (void);
+    void _signalTopBottomAltChanged  (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
@@ -135,10 +136,8 @@ private:
     QMap<QString, FactMetaData*> _metaDataMap;
 
     int             _sequenceNumber;
-    bool            _dirty;
     QGCMapPolygon   _structurePolygon;
     QGCMapPolygon   _flightPolygon;
-    bool            _altitudeRelative;
     int             _entryVertex;       // Polygon vertext which is used as the mission entry point
 
     bool            _ignoreRecalc;
@@ -157,7 +156,6 @@ private:
     SettingsFact    _entranceAltFact;
 
     static const char* _jsonCameraCalcKey;
-    static const char* _jsonAltitudeRelativeKey;
 
     static const char* _entranceAltName; // This value cannot be overriden
 

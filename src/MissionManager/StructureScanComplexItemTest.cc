@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 
 StructureScanComplexItemTest::StructureScanComplexItemTest(void)
-    : _offlineVehicle(NULL)
+    : _offlineVehicle(nullptr)
 {
     _polyPoints << QGeoCoordinate(47.633550640000003, -122.08982199) << QGeoCoordinate(47.634129020000003, -122.08887249) <<
                    QGeoCoordinate(47.633619320000001, -122.08811074) << QGeoCoordinate(47.633189139999999, -122.08900124);
@@ -74,13 +74,6 @@ void StructureScanComplexItemTest::_testDirty(void)
         _multiSpy->clearAllSignals();
     }
     rgFacts.clear();
-
-    QVERIFY(!_structureScanItem->dirty());
-    _structureScanItem->setAltitudeRelative(!_structureScanItem->altitudeRelative());
-    QVERIFY(_multiSpy->checkSignalByMask(dirtyChangedMask));
-    QVERIFY(_multiSpy->pullBoolFromSignalIndex(dirtyChangedIndex));
-    _structureScanItem->setDirty(false);
-    _multiSpy->clearAllSignals();
 }
 
 void StructureScanComplexItemTest::_initItem(void)
