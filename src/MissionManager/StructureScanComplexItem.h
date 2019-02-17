@@ -31,7 +31,8 @@ public:
     StructureScanComplexItem(Vehicle* vehicle, bool flyView, const QString& kmlOrSHPFile, QObject* parent);
 
     Q_PROPERTY(CameraCalc*      cameraCalc                  READ cameraCalc                                                 CONSTANT)
-    Q_PROPERTY(Fact*            altitude                    READ altitude                                                   CONSTANT)
+    Q_PROPERTY(Fact*            entranceAlt                 READ entranceAlt                                                CONSTANT)
+    Q_PROPERTY(Fact*            scanBottomAlt               READ scanBottomAlt                                              CONSTANT)
     Q_PROPERTY(Fact*            structureHeight             READ structureHeight                                            CONSTANT)
     Q_PROPERTY(Fact*            layers                      READ layers                                                     CONSTANT)
     Q_PROPERTY(Fact*            gimbalPitch                 READ gimbalPitch                                                CONSTANT)
@@ -43,7 +44,8 @@ public:
     Q_PROPERTY(QGCMapPolygon*   flightPolygon               READ flightPolygon                                              CONSTANT)
 
     CameraCalc* cameraCalc  (void) { return &_cameraCalc; }
-    Fact* altitude          (void) { return &_altitudeFact; }
+    Fact* entranceAlt       (void) { return &_entranceAltFact; }
+    Fact* scanBottomAlt     (void) { return &_scanBottomAltFact; }
     Fact* structureHeight   (void) { return &_structureHeightFact; }
     Fact* layers            (void) { return &_layersFact; }
     Fact* gimbalPitch       (void) { return &_gimbalPitchFact; }
@@ -100,7 +102,7 @@ public:
     static const char* jsonComplexItemTypeValue;
 
     static const char* settingsGroup;
-    static const char* altitudeName;
+    static const char* scanBottomAltName;
     static const char* structureHeightName;
     static const char* layersName;
     static const char* gimbalPitchName;
@@ -122,6 +124,7 @@ private slots:
     void _recalcLayerInfo           (void);
     void _updateLastSequenceNumber  (void);
     void _updateGimbalPitch         (void);
+    void _validateEntryVertex       (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
@@ -146,14 +149,17 @@ private:
     CameraCalc      _cameraCalc;
 
 
-    SettingsFact    _altitudeFact;
+    SettingsFact    _scanBottomAltFact;
     SettingsFact    _structureHeightFact;
     SettingsFact    _layersFact;
     SettingsFact    _gimbalPitchFact;
     SettingsFact    _startFromTopFact;
+    SettingsFact    _entranceAltFact;
 
     static const char* _jsonCameraCalcKey;
     static const char* _jsonAltitudeRelativeKey;
+
+    static const char* _entranceAltName; // This value cannot be overriden
 
     friend class StructureScanComplexItemTest;
 };

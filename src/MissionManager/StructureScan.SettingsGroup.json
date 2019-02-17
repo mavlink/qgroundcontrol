@@ -10,6 +10,14 @@
     "defaultValue":     0
 },
 {
+    "name":             "EntranceAltitude",
+    "shortDescription": "Vehicle will fly to/from the structure at this altitude.",
+    "type":             "double",
+    "units":            "m",
+    "decimalPlaces":    1,
+    "defaultValue":     50
+},
+{
     "name":             "Altitude",
     "shortDescription": "Altitude for the bottom layer of the structure scan.",
     "type":             "double",

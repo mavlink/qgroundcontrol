@@ -128,9 +128,15 @@ Rectangle {
                     visible:            missionItem.cameraCalc.isManualCamera
                 }
 
-                QGCLabel { text: qsTr("Bottom layer alt") }
+                QGCLabel { text: qsTr("Scan bottom alt") }
                 FactTextField {
-                    fact:               missionItem.altitude
+                    fact:               missionItem.scanBottomAlt
+                    Layout.fillWidth:   true
+                }
+
+                QGCLabel { text: qsTr("Entrance/Exit alt") }
+                FactTextField {
+                    fact:               missionItem.entranceAlt
                     Layout.fillWidth:   true
                 }
 

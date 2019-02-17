@@ -59,7 +59,7 @@ void StructureScanComplexItemTest::_testDirty(void)
 
     // These facts should set dirty when changed
     QList<Fact*> rgFacts;
-    rgFacts << _structureScanItem->altitude() << _structureScanItem->layers();
+    rgFacts << _structureScanItem->entranceAlt() << _structureScanItem->layers();
     for(Fact* fact: rgFacts) {
         qDebug() << fact->name();
         QVERIFY(!_structureScanItem->dirty());
