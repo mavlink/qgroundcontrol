@@ -12,7 +12,6 @@ CheckBox {
 
     property var    _qgcPal: QGCPalette { colorGroupEnabled: enabled }
     property bool   _noText: text === ""
-    property real   _radius: ScreenTools.defaultFontPixelHeight * 0.16
 
     activeFocusOnPress: true
 
@@ -35,19 +34,22 @@ CheckBox {
         indicator:  Item {
             implicitWidth:  ScreenTools.checkBoxIndicatorSize
             implicitHeight: implicitWidth
-
             Rectangle {
                 anchors.fill:   parent
-                radius:         _radius
-                border.color:   "black"
+                color:          _qgcPal.window
+                border.color:   _qgcPal.text
+                border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
-
-                Rectangle {
-                    anchors.margins:    parent.height / 4
-                    anchors.fill:       parent
-                    radius:             _radius
-                    color:              "black"
-                    visible:            control.checkedState === Qt.Checked
+                QGCColoredImage {
+                    source: "/qmlimages/checkbox-check.svg"
+                    color:      _qgcPal.text
+                    opacity:    control.checkedState === Qt.Checked ? control.enabled ? 1 : 0.5 : 0
+                    mipmap:     true
+                    fillMode:   Image.PreserveAspectFit
+                    width:      parent.width * 0.75
+                    height:     width
+                    sourceSize.height: height
+                    anchors.centerIn:  parent
                 }
             }
         }
