@@ -109,7 +109,7 @@ Rectangle {
                 }
 
                 QGCLabel {
-                    text:       qsTr("Structure height")
+                    text:       qsTr("Structure Height")
                 }
                 FactTextField {
                     fact:               missionItem.structureHeight
