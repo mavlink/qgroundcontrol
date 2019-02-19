@@ -4847,6 +4847,18 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <unit>deg/s</unit>
     </parameter>
   </group>
+  <group name="OSD">
+    <parameter default="0" name="OSD_ATXXXX_CFG" type="INT32">
+      <short_desc>Enable/Disable the ATXXX OSD Chip</short_desc>
+      <long_desc>Configure the ATXXXX OSD Chip (mounted on the OmnibusF4SD board) and select the transmission standard.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">NTSC</value>
+        <value code="2">PAL</value>
+      </values>
+    </parameter>
+  </group>
   <group name="PWM Outputs">
     <parameter default="0" name="MOT_ORDERING" type="INT32">
       <short_desc>Motor Ordering</short_desc>
