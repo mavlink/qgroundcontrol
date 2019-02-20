@@ -7252,7 +7252,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_KILL_SW" type="INT32">
-      <short_desc>Kill switch channel</short_desc>
+      <short_desc>Emergency Kill switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
