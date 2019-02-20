@@ -181,6 +181,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #if defined (__macos__)
     locale = QLocale(locale.name());
 #endif
+    qDebug() << "System reported locale:" << locale << locale.name();
     //-- Our localization
     if(_QGCTranslator.load(locale, "qgc_", "", ":/localization"))
         _app->installTranslator(&_QGCTranslator);
