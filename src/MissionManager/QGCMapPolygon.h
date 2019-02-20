@@ -66,6 +66,9 @@ public:
     /// Returns the QGeoCoordinate for the vertex specified
     Q_INVOKABLE QGeoCoordinate vertexCoordinate(int vertex) const;
 
+    /// Adjust polygon winding order to be clockwise (if needed)
+    Q_INVOKABLE void verifyClockwiseWinding(void);
+
     /// Saves the polygon to the json object.
     ///     @param json Json object to save to
     void saveToJson(QJsonObject& json);

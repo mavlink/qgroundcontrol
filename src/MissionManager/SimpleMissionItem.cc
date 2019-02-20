@@ -781,6 +781,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
 
     case MAV_CMD_NAV_LAND:
     case MAV_CMD_NAV_VTOL_LAND:
+    case MAV_CMD_DO_SET_ROI_LOCATION:
         _altitudeFact.setRawValue(0);
         _missionItem.setParam7(0);
         break;

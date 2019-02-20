@@ -29,11 +29,14 @@ package org.mavlink.qgroundcontrol;
 //
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.io.IOException;
 
 import android.app.Activity;
@@ -42,12 +45,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.usb.*;
+import android.hardware.usb.UsbAccessory;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
 import android.widget.Toast;
 import android.util.Log;
 import android.os.PowerManager;
+import android.os.Bundle;
+import android.app.PendingIntent;
 import android.view.WindowManager;
 import android.os.Bundle;
+import android.bluetooth.BluetoothDevice;
 
 import com.hoho.android.usbserial.driver.*;
 import org.qtproject.qt5.android.bindings.QtActivity;
@@ -63,8 +72,10 @@ public class QGCActivity extends QtActivity
     private static HashMap<Integer, Integer>            _userDataHashByDeviceId;
     private static final String                         TAG = "QGC_QGCActivity";
     private static PowerManager.WakeLock                _wakeLock;
-    private static final String                         ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+//    private static final String                         ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
+    private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
     private static PendingIntent                        _usbPermissionIntent = null;
+    private TaiSync                                     taiSync = null;
 
     public static Context m_context;
 
@@ -86,6 +97,26 @@ public class QGCActivity extends QtActivity
                     nativeDeviceNewData(userData, dataA);
                 }
             };
+
+    private final BroadcastReceiver mOpenAccessoryReceiver =
+        new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                if (ACTION_USB_PERMISSION.equals(action)) {
+                    UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                        openAccessory(accessory);
+                    }
+                } else if( UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
+                    UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
+                    if (accessory != null) {
+                        closeAccessory(accessory);
+                    }
+                }
+            }
+        };
 
     private static UsbSerialDriver _findDriverByDeviceId(int deviceId) {
         for (UsbSerialDriver driver: _drivers) {
@@ -133,6 +164,12 @@ public class QGCActivity extends QtActivity
                         }
                     }
                 }
+
+                try {
+                    nativeUpdateAvailableJoysticks();
+                } catch(Exception e) {
+                    Log.e(TAG, "Exception nativeUpdateAvailableJoysticks()");
+                }
             }
         };
 
@@ -140,6 +177,7 @@ public class QGCActivity extends QtActivity
     private static native void nativeDeviceHasDisconnected(int userData);
     private static native void nativeDeviceException(int userData, String messageA);
     private static native void nativeDeviceNewData(int userData, byte[] dataA);
+    private static native void nativeUpdateAvailableJoysticks();
 
     // Native C++ functions called to log output
     public static native void qgcLogDebug(String message);
@@ -169,19 +207,35 @@ public class QGCActivity extends QtActivity
 
         _usbManager = (UsbManager)_instance.getSystemService(Context.USB_SERVICE);
 
-        //  Register for USB Detach and USB Permission intent
+        // Register for USB Detach and USB Permission intent
         IntentFilter filter = new IntentFilter();
+        filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         filter.addAction(ACTION_USB_PERMISSION);
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         _instance.registerReceiver(_instance._usbReceiver, filter);
 
         // Create intent for usb permission request
         _usbPermissionIntent = PendingIntent.getBroadcast(_instance, 0, new Intent(ACTION_USB_PERMISSION), 0);
+
+        try {
+            taiSync = new TaiSync();
+
+            IntentFilter accessoryFilter = new IntentFilter(ACTION_USB_PERMISSION);
+            filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
+            registerReceiver(mOpenAccessoryReceiver, accessoryFilter);
+
+            probeAccessories();
+        } catch(Exception e) {
+           Log.e(TAG, "Exception: " + e);
+        }
     }
 
     @Override
     protected void onDestroy()
     {
+        unregisterReceiver(mOpenAccessoryReceiver);
         try {
             if(_wakeLock != null) {
                 _wakeLock.release();
@@ -610,6 +664,62 @@ public class QGCActivity extends QtActivity
             return -1;
         else
             return connectL.getFileDescriptor();
+    }
+
+    UsbAccessory openUsbAccessory = null;
+    Object openAccessoryLock = new Object();
+
+    private void openAccessory(UsbAccessory usbAccessory)
+    {
+        Log.i(TAG, "openAccessory: " + usbAccessory.getSerial());
+        try {
+            synchronized(openAccessoryLock) {
+                if ((openUsbAccessory != null && !taiSync.isRunning()) || openUsbAccessory == null) {
+                    openUsbAccessory = usbAccessory;
+                    taiSync.open(_usbManager.openAccessory(usbAccessory));
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "openAccessory exception: " + e);
+            taiSync.close();
+            closeAccessory(openUsbAccessory);
+        }
+    }
+
+    private void closeAccessory(UsbAccessory usbAccessory)
+    {
+        Log.i(TAG, "closeAccessory");
+
+        synchronized(openAccessoryLock) {
+            if (openUsbAccessory != null && usbAccessory == openUsbAccessory && taiSync.isRunning()) {
+                taiSync.close();
+                openUsbAccessory = null;
+            }
+        }
+    }
+
+    private void probeAccessories()
+    {
+        final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+           @Override
+           public void run()
+           {
+//               Log.i(TAG, "probeAccessories");
+               UsbAccessory[] accessories = _usbManager.getAccessoryList();
+               if (accessories != null) {
+                   for (UsbAccessory usbAccessory : accessories) {
+                       if (_usbManager.hasPermission(usbAccessory)) {
+                           openAccessory(usbAccessory);
+                       } else {
+                           Log.i(TAG, "requestPermission");
+                           _usbManager.requestPermission(usbAccessory, pendingIntent);
+                       }
+                   }
+               }
+           }
+        }, 0, 3000);
     }
 }
 

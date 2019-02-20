@@ -124,6 +124,12 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
     }
 
     _nameToFactGroupMap.insert("APMSubInfo", &_infoFactGroup);
+
+    _factRenameMap[QStringLiteral("altitudeRelative")] = QStringLiteral("Depth");
+    _factRenameMap[QStringLiteral("flightTime")] = QStringLiteral("Dive Time");
+    _factRenameMap[QStringLiteral("altitudeAMSL")] = QStringLiteral("");
+    _factRenameMap[QStringLiteral("hobbs")] = QStringLiteral("");
+    _factRenameMap[QStringLiteral("airSpeed")] = QStringLiteral("");
 }
 
 QList<MAV_CMD> ArduSubFirmwarePlugin::supportedMissionCommands(void)
@@ -309,4 +315,15 @@ QString ArduSubFirmwarePlugin::vehicleImageOpaque(const Vehicle* vehicle) const
 QString ArduSubFirmwarePlugin::vehicleImageOutline(const Vehicle* vehicle) const
 {
     return vehicleImageOpaque(vehicle);
+}
+
+void ArduSubFirmwarePlugin::adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData)
+{
+    Q_UNUSED(vehicleType);
+    if (!metaData) {
+        return;
+    }
+    if (_factRenameMap.contains(metaData->name())) {
+        metaData->setShortDescription(QString(_factRenameMap[metaData->name()]));
+    }
 }

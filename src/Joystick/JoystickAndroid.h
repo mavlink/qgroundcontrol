@@ -16,13 +16,18 @@ class JoystickAndroid : public Joystick, public QtAndroidPrivate::GenericMotionE
 {
 public:
     JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager);
+
     ~JoystickAndroid();
 
-    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
+    static bool init(JoystickManager *manager);
+
+    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager);
 
 private:
     bool handleKeyEvent(jobject event);
     bool handleGenericMotionEvent(jobject event);
+
+    static void setNativeMethods(JoystickManager *manager);
 
     virtual bool _open();
     virtual void _close();
@@ -37,7 +42,6 @@ private:
     bool *btnValue;
     int *axisValue;
 
-    static void _initStatic();
     static int * _androidBtnList; //list of all possible android buttons
     static int _androidBtnListCount;
 

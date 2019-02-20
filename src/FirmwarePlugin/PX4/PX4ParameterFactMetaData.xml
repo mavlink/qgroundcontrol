@@ -336,15 +336,39 @@ Set to 2 to use heading from motion capture</short_desc>
       <decimal>8</decimal>
     </parameter>
   </group>
+  <group name="Camera Capture">
+    <parameter default="0.0" name="CAM_CAP_DELAY" type="FLOAT">
+      <short_desc>Camera strobe delay</short_desc>
+      <long_desc>This parameter sets the delay between image integration start and strobe firing</long_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <unit>ms</unit>
+      <decimal>1</decimal>
+    </parameter>
+  </group>
   <group name="Camera Control">
-    <parameter default="0" name="CAM_FBACK_MODE" type="INT32">
-      <short_desc>Camera feedback mode</short_desc>
-      <long_desc>Sets the camera feedback mode.</long_desc>
-      <min>0</min>
-      <max>1</max>
+    <parameter default="0" name="CAM_CAP_EDGE" type="INT32">
+      <short_desc>Camera capture edge</short_desc>
+      <reboot_required>true</reboot_required>
       <values>
-        <value code="0">Disabled</value>
-        <value code="1">Feedback on trigger</value>
+        <value code="0">Falling edge</value>
+        <value code="1">Rising edge</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="CAM_CAP_FBACK" type="INT32">
+      <short_desc>Camera capture feedback</short_desc>
+      <long_desc>Enables camera capture feedback</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="0" name="CAM_CAP_MODE" type="INT32">
+      <short_desc>Camera capture timestamping mode</short_desc>
+      <long_desc>Change time measurement</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Get absolute timestamp</value>
+        <value code="1">Get timestamp of mid exposure (active high)</value>
+        <value code="2">Get timestamp of mid exposure (active low)</value>
       </values>
     </parameter>
   </group>
@@ -513,7 +537,7 @@ Set to 2 to use heading from motion capture</short_desc>
 * the MSB bit is not used to avoid problems in the conversion between int and uint</short_desc>
       <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
     </parameter>
-    <parameter default="2.4e-3" name="COM_ARM_EKF_AB" type="FLOAT">
+    <parameter default="1.73e-3" name="COM_ARM_EKF_AB" type="FLOAT">
       <short_desc>Maximum value of EKF accelerometer delta velocity bias estimate that will allow arming.
 Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than EKF2_ABL_LIM * FILTER_UPDATE_PERIOD_MS * 0.001 so this parameter must be less than that to be useful</short_desc>
       <min>0.001</min>
@@ -846,7 +870,7 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
     </parameter>
     <parameter default="5" name="COM_POS_FS_EPH" type="FLOAT">
       <short_desc>Horizontal position error threshold</short_desc>
-      <long_desc>This is the horizontal position error (EPV) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
+      <long_desc>This is the horizontal position error (EPH) threshold that will trigger a failsafe. The default is appropriate for a multicopter. Can be increased for a fixed-wing.</long_desc>
       <unit>m</unit>
     </parameter>
     <parameter default="10" name="COM_POS_FS_EPV" type="FLOAT">
@@ -4662,8 +4686,8 @@ Temporary Parameter to enable interface testing</short_desc>
     </parameter>
     <parameter default="0.4" name="MPC_TKO_RAMP_T" type="FLOAT">
       <short_desc>Position control smooth takeoff ramp time constant</short_desc>
-      <long_desc>Increasing this value will make automatic and manual takeoff slower. If it's too slow the drone might scratch the ground and tip over.</long_desc>
-      <min>0.1</min>
+      <long_desc>Increasing this value will make automatic and manual takeoff slower. If it's too slow the drone might scratch the ground and tip over. A time constant of 0 disables the ramp</long_desc>
+      <min>0</min>
       <max>1</max>
     </parameter>
     <parameter default="1.5" name="MPC_TKO_SPEED" type="FLOAT">
@@ -4821,6 +4845,18 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>0</min>
       <max>120</max>
       <unit>deg/s</unit>
+    </parameter>
+  </group>
+  <group name="OSD">
+    <parameter default="0" name="OSD_ATXXXX_CFG" type="INT32">
+      <short_desc>Enable/Disable the ATXXX OSD Chip</short_desc>
+      <long_desc>Configure the ATXXXX OSD Chip (mounted on the OmnibusF4SD board) and select the transmission standard.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">NTSC</value>
+        <value code="2">PAL</value>
+      </values>
     </parameter>
   </group>
   <group name="PWM Outputs">
@@ -8780,7 +8816,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="0" name="SYS_COMPANION" type="INT32">
       <short_desc>TELEM2 as companion computer link (deprecated)</short_desc>
-      <long_desc>This parameter is deprecated. Do not change it, use the more generic serial configuration parameters instead.</long_desc>
+      <long_desc>This parameter is deprecated and will be removed after 1.9.0. Use the generic serial configuration parameters instead (e.g. MAV_0_CONFIG, MAV_0_MODE, etc.).</long_desc>
       <min>0</min>
       <max>6460800</max>
       <reboot_required>true</reboot_required>

@@ -52,6 +52,7 @@ public:
     QString commandName         (void) const final { return tr("Corridor Scan"); }
     QString abbreviation        (void) const final { return tr("C"); }
     bool    readyForSave        (void) const;
+    double  additionalTimeDelay (void) const final { return 0; }
 
     static const char* jsonComplexItemTypeValue;
 
@@ -64,7 +65,8 @@ private slots:
 
     // Overrides from TransectStyleComplexItem
     void _rebuildTransectsPhase1    (void) final;
-    void _rebuildTransectsPhase2    (void) final;
+    void _recalcComplexDistance     (void) final;
+    void _recalcCameraShots         (void) final;
 
 private:
     int _transectCount              (void) const;

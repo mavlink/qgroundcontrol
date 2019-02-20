@@ -222,6 +222,7 @@ Column {
 
                     RowLayout {
                         spacing: _margins
+                        visible: factGroup.getFact(modelData).shortDescription !== ""
 
                         property string propertyName: factGroupName + "." + modelData
 

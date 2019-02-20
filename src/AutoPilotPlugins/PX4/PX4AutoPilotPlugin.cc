@@ -134,14 +134,10 @@ void PX4AutoPilotPlugin::parametersReadyPreChecks(void)
     // Base class must be called
     AutoPilotPlugin::parametersReadyPreChecks();
 
-    // Check for older parameter version set
-    // FIXME: Firmware is moving to version stamp parameter set. Once that is complete the version stamp
-    // should be used instead.
-    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "SENS_GYRO_XOFF") ||
-            _vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "COM_DL_LOSS_EN")) {
-        _incorrectParameterVersion = true;
-        qgcApp()->showMessage(tr("This version of GroundControl can only perform vehicle setup on a newer version of firmware. "
-                              "Please perform a Firmware Upgrade if you wish to use Vehicle Setup."));
+    QString hitlParam("SYS_HITL");
+    if (_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, hitlParam) &&
+            _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, hitlParam)->rawValue().toBool()) {
+        qgcApp()->showMessage(tr("Warning: Hardware In The Loop (HITL) simulation is enabled for this vehicle."));
     }
 }
 

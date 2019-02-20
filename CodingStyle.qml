@@ -39,7 +39,7 @@ Item {
     }
 
     QGCPalette {
-        id:                 qgcPal  // Not how id does not use an underscore
+        id:                 qgcPal  // Note how id does not use an underscore
         colorGroupEnabled:  enabled
     }
 
