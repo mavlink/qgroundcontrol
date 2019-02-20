@@ -36,14 +36,14 @@ CheckBox {
             implicitHeight: implicitWidth
             Rectangle {
                 anchors.fill:   parent
-                color:          _qgcPal.window
-                border.color:   _qgcPal.text
+                color:          "white"
+                border.color:   qgcPal.text
                 border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
                 QGCColoredImage {
                     source: "/qmlimages/checkbox-check.svg"
-                    color:      _qgcPal.text
-                    opacity:    control.checkedState === Qt.Checked ? control.enabled ? 1 : 0.5 : 0
+                    color:      "black"
+                    opacity:    control.checkedState === Qt.Checked ? (control.enabled ? 1 : 0.5) : 0
                     mipmap:     true
                     fillMode:   Image.PreserveAspectFit
                     width:      parent.width * 0.75
