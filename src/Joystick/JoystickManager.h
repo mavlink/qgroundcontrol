@@ -45,6 +45,8 @@ public:
     QString activeJoystickName(void);
     void setActiveJoystickName(const QString& name);
 
+    void restartJoystickCheckTimer(void);
+
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
 
@@ -55,6 +57,7 @@ signals:
     void activeJoystickChanged(Joystick* joystick);
     void activeJoystickNameChanged(const QString& name);
     void availableJoysticksChanged(void);
+    void updateAvailableJoysticksSignal();
 
 private slots:
     void _updateAvailableJoysticks(void);
@@ -70,6 +73,7 @@ private:
     static const char * _settingsGroup;
     static const char * _settingsKeyActiveJoystick;
 
+    int _joystickCheckTimerCounter;
     QTimer _joystickCheckTimer;
 };
 

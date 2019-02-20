@@ -12,8 +12,9 @@
 QGC_LOGGING_CATEGORY(CameraManagerLog, "CameraManagerLog")
 
 //-----------------------------------------------------------------------------
-QGCCameraManager::CameraStruct::CameraStruct(QObject* parent)
+QGCCameraManager::CameraStruct::CameraStruct(QObject* parent, uint8_t compID_)
     : QObject(parent)
+    , compID(compID_)
 {
 }
 
@@ -112,7 +113,7 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
         QString sCompID = QString::number(message.compid);
         if(!_cameraInfoRequest.contains(sCompID)) {
             qCDebug(CameraManagerLog) << "Hearbeat from " << message.compid;
-            CameraStruct* pInfo = new CameraStruct(this);
+            CameraStruct* pInfo = new CameraStruct(this, message.compid);
             pInfo->lastHeartbeat.start();
             _cameraInfoRequest[sCompID] = pInfo;
             //-- Request camera info
@@ -226,19 +227,22 @@ QGCCameraManager::_cameraTimeout()
                 //-- Has the camera stopped talking to us?
                 if(pInfo->lastHeartbeat.elapsed() > 5000) {
                     //-- Camera is gone. Remove it.
+                    bool autoStream = false;
                     QGCCameraControl* pCamera = _findCamera(pInfo->compID);
-                    qWarning() << "Camera" << pCamera->modelName() << "stopped transmitting. Removing from list.";
-                    int idx = _cameraLabels.indexOf(pCamera->modelName());
-                    if(idx >= 0) {
-                        _cameraLabels.removeAt(idx);
+                    if(pCamera) {
+                        qWarning() << "Camera" << pCamera->modelName() << "stopped transmitting. Removing from list.";
+                        int idx = _cameraLabels.indexOf(pCamera->modelName());
+                        if(idx >= 0) {
+                            _cameraLabels.removeAt(idx);
+                        }
+                        idx = _cameras.indexOf(pCamera);
+                        if(idx >= 0) {
+                            _cameras.removeAt(idx);
+                        }
+                        autoStream = pCamera->autoStream();
+                        pCamera->deleteLater();
+                        delete pInfo;
                     }
-                    idx = _cameras.indexOf(pCamera);
-                    if(idx >= 0) {
-                        _cameras.removeAt(idx);
-                    }
-                    bool autoStream = pCamera->autoStream();
-                    pCamera->deleteLater();
-                    delete pInfo;
                     _cameraInfoRequest.remove(sCompID);
                     emit cameraLabelsChanged();
                     //-- If we have another camera, switch current camera.

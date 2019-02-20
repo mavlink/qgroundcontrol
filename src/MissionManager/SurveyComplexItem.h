@@ -52,6 +52,7 @@ public:
     QString commandName         (void) const final { return tr("Survey"); }
     QString abbreviation        (void) const final { return tr("S"); }
     bool    readyForSave        (void) const final;
+    double  additionalTimeDelay (void) const final;
 
     // Must match json spec for GridEntryLocation
     enum EntryLocation {
@@ -77,8 +78,9 @@ signals:
 
 private slots:
     // Overrides from TransectStyleComplexItem
-    void _rebuildTransectsPhase1(void) final;
-    void _rebuildTransectsPhase2(void) final;
+    void _rebuildTransectsPhase1    (void) final;
+    void _recalcComplexDistance     (void) final;
+    void _recalcCameraShots         (void) final;
 
 private:
     enum CameraTriggerCode {
