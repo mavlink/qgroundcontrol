@@ -77,7 +77,6 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     //-- Enable automatic logging
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
-    toolbox->mavlinkLogManager()->setUploadURL("https://airlango.auterion.com/upload");
 }
 
 
