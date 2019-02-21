@@ -18,6 +18,7 @@
 #include "SettingsManager.h"
 #include "AppMessages.h"
 #include "QGCQmlWidgetHolder.h"
+#include "QmlComponentInfo.h"
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
@@ -77,6 +78,51 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
     toolbox->mavlinkLogManager()->setUploadURL("https://airlango.auterion.com/upload");
+}
+
+
+void
+AuterionPlugin::addSettingsEntry(const QString& title,
+                               const char* qmlFile,
+                               const char* iconFile/*= nullptr*/)
+{
+    Q_CHECK_PTR(qmlFile);
+    // 'this' instance will take ownership on the QmlComponentInfo instance
+    _auterionSettingsList.append(QVariant::fromValue(
+        new QmlComponentInfo(title,
+                QUrl::fromUserInput(qmlFile),
+                iconFile == nullptr ? QUrl() : QUrl::fromUserInput(iconFile),
+                this)));
+}
+
+//-----------------------------------------------------------------------------
+QVariantList&
+AuterionPlugin::settingsPages()
+{
+    if(_auterionSettingsList.isEmpty()) {
+        addSettingsEntry(tr("General"),
+                       "qrc:/qml/GeneralSettings.qml","qrc:/res/gear-white.svg");
+        addSettingsEntry(tr("Comm Links"),
+                       "qrc:/qml/LinkSettings.qml", "qrc:/res/waves.svg");
+        addSettingsEntry(tr("Offline Maps"),
+                       "qrc:/qml/OfflineMap.qml", "qrc:/res/waves.svg");
+#if defined(QGC_GST_TAISYNC_ENABLED)
+        addSettingsEntry(tr("Taisync"), "qrc:/qml/TaisyncSettings.qml");
+#endif
+#if defined(QGC_AIRMAP_ENABLED)
+        buildComponent(tr("AirMap"), "qrc:/qml/AirmapSettings.qml");
+#endif
+        addSettingsEntry(tr("MAVLink"),
+                       "qrc:/qml/MavlinkSettings.qml", "qrc:/res/waves.svg");
+        addSettingsEntry(tr("Console"),
+                       "qrc:/qml/QGroundControl/Controls/AppMessages.qml");
+#if defined(QT_DEBUG)
+        //-- These are always present on Debug builds
+        addSettingsEntry(tr("Mock Link"), "qrc:/qml/MockLink.qml");
+        addSettingsEntry(tr("Debug"), "qrc:/qml/DebugWindow.qml");
+#endif
+    }
+    return _auterionSettingsList;
 }
 
 //-----------------------------------------------------------------------------

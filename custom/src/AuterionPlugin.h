@@ -48,6 +48,7 @@ public:
     ~AuterionPlugin();
 
     // Overrides from QGCCorePlugin
+    QVariantList&           settingsPages                   () final;
     QGCOptions*             options                         () final;
     QString                 brandImageIndoor                () const final;
     QString                 brandImageOutdoor               () const final;
@@ -62,5 +63,12 @@ public:
     void                    setToolbox                      (QGCToolbox* toolbox);
 
 private:
+    void
+    addSettingsEntry(const QString& title,
+                   const char* qmlFile,
+                   const char* iconFile = nullptr);
+
+private:
     AuterionOptions*     _pOptions;
+    QVariantList         _auterionSettingsList; // Not to be mixed up with QGCCorePlugin implementation
 };
