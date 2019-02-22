@@ -10,6 +10,7 @@
         <file alias="AuterionFlyView.qml">res/AuterionFlyView.qml</file>
         <file alias="AuterionGPSIndicator.qml">res/AuterionGPSIndicator.qml</file>
         <file alias="AuterionRCRSSIIndicator.qml">res/AuterionRCRSSIIndicator.qml</file>
+        <file alias="AuterionModeIndicator.qml">res/AuterionModeIndicator.qml</file>
     </qresource>
     <qresource prefix="/auterion/img">
         <file alias="attitude_crosshair.svg">res/images/attitude_crosshair.svg</file>

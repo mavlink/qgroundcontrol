@@ -19,6 +19,8 @@ import QGroundControl.ScreenTools           1.0
 
 import Auterion.Widgets             1.0
 
+//-------------------------------------------------------------------------
+//-- Armed Indicator
 Item {
     id:         _root
     width:      background.width
