@@ -51,7 +51,6 @@
         <file alias="Auterion/Widgets/AuterionCompassRing.qml">res/Auterion/Widgets/AuterionCompassRing.qml</file>
         <file alias="Auterion/Widgets/AuterionFactCombo.qml">res/Auterion/Widgets/AuterionFactCombo.qml</file>
         <file alias="Auterion/Widgets/AuterionLabel.qml">res/Auterion/Widgets/AuterionLabel.qml</file>
-        <file alias="Auterion/Widgets/AuterionMenu.qml">res/Auterion/Widgets/AuterionMenu.qml</file>
         <file alias="Auterion/Widgets/AuterionSignalStrength.qml">res/Auterion/Widgets/AuterionSignalStrength.qml</file>
         <file alias="Auterion/Widgets/AuterionTextBackground.qml">res/Auterion/Widgets/AuterionTextBackground.qml</file>
         <file alias="Auterion/Widgets/AuterionToolBarButton.qml">res/Auterion/Widgets/AuterionToolBarButton.qml</file>
