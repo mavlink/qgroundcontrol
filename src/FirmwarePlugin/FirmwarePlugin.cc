@@ -347,185 +347,322 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
     if (_cameraList.size() == 0) {
         CameraMetaData* metaData;
 
-        metaData = new CameraMetaData(tr("Sony NEX-5R 20mm"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
-                                      23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
-                                      15.4,
-                                      4912,
-                                      3264,
-                                      20,
-                                      true,
-                                      false,
-                                      1,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Canon S100 @ 5.2mm f/2"),
+            7.6,                 // sensorWidth
+            5.7,                 // sensorHeight
+            4000,                // imageWidth
+            3000,                // imageHeight
+            5.2,                 // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            0,                   // minimum trigger interval
+            this);               // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Sony ILCE-QX1"),  //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
-                                      23.2,                 //http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
-                                      15.4,
-                                      5456,
-                                      3632,
-                                      16,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Canon EOS-M 22mm f/2"),
+            22.3,                // sensorWidth
+            14.9,                // sensorHeight
+            5184,                // imageWidth
+            3456,                // imageHeight
+            22,                  // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            0,                   // minimum trigger interval
+            this);               // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Canon S100 PowerShot"),
-                                      7.6,
-                                      5.7,
-                                      4000,
-                                      3000,
-                                      5.2,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Canon G9X @ 10.2mm f/2"),
+            13.2,                // sensorWidth
+            8.8,                 // sensorHeight
+            5488,                // imageWidth
+            3680,                // imageHeight
+            10.2,                // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            0,                   // minimum trigger interval
+            this);               // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Canon G9 X PowerShot"),
-                                      13.2,
-                                      8.8,
-                                      5488,
-                                      3680,
-                                      10.2,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Canon SX260 HS @ 4.5mm f/3.5"),
+            6.17,                // sensorWidth
+            4.55,                // sensorHeight
+            4000,                // imageWidth
+            3000,                // imageHeight
+            4.5,                 // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            0,                   // minimum trigger interval
+            this);               // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Canon SX260 HS PowerShot"),
-                                      6.17,
-                                      4.55,
-                                      4000,
-                                      3000,
-                                      4.5,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("GoPro Hero 4"),
+            6.17,               // sensorWidth
+            4.55,               // sendsorHeight
+            4000,               // imageWidth
+            3000,               // imageHeight
+            2.98,               // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            0,                  // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Canon EOS-M 22mm"),
-                                      22.3,
-                                      14.9,
-                                      5184,
-                                      3456,
-                                      22,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Parrot Sequioa RGB"),
+            6.17,               // sensorWidth
+            4.63,               // sendsorHeight
+            4608,               // imageWidth
+            3456,               // imageHeight
+            4.9,                // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            1,                  // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Sony a6000 16mm"),    //http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-6000-body-kit#product_details_default
-                                      23.5,
-                                      15.6,
-                                      6000,
-                                      4000,
-                                      16,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Parrot Sequioa Monochrome"),
+            4.8,                // sensorWidth
+            3.6,                // sendsorHeight
+            1280,               // imageWidth
+            960,                // imageHeight
+            4.0,                // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            0.8,                // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Sony RX100 II 28mm"),
-                                      13.2,
-                                      8.8,
-                                      5472,
-                                      3648,
-                                      10.4,
-                                      true,
-                                      false,
-                                      0,
-                                      this);
+        metaData = new CameraMetaData(
+            tr("RedEdge"),
+            4.8,                // sensorWidth
+            3.6,                // sendsorHeight
+            1280,               // imageWidth
+            960,                // imageHeight
+            5.5,                // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            0,                  // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Ricoh GR II"),
-                                      23.7,     // sensorWidth
-                                      15.7,     // sendsorHeight
-                                      4928,     // imageWidth
-                                      3264,     // imageHeight
-                                      18.3,     // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      0,        // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Ricoh GR II 18.3mm f/2.8"),
+            23.7,               // sensorWidth
+            15.7,               // sendsorHeight
+            4928,               // imageWidth
+            3264,               // imageHeight
+            18.3,               // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            0,                  // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("RedEdge"),
-                                      4.8,      // sensorWidth
-                                      3.6,      // sendsorHeight
-                                      1280,     // imageWidth
-                                      960,      // imageHeight
-                                      5.5,      // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      0,        // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Sentera Double 4K Sensor"),
+            6.2,                // sensorWidth
+            4.65,               // sendsorHeight
+            4000,               // imageWidth
+            3000,               // imageHeight
+            5.4,                // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            0,                  // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Parrot Sequioa RGB"),
-                                      6.17,     // sensorWidth
-                                      4.63,     // sendsorHeight
-                                      4608,     // imageWidth
-                                      3456,     // imageHeight
-                                      4.9,      // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      1,        // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Sentera NDVI Single Sensor"),
+            4.68,               // sensorWidth
+            3.56,               // sendsorHeight
+            1248,               // imageWidth
+            952,                // imageHeight
+            4.14,               // focalLength
+            true,               // landscape
+            false,              // fixedOrientation
+            0,                  // minTriggerInterval
+            this);
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Parrot Sequioa Monochrome"),
-                                      4.8,      // sensorWidth
-                                      3.6,      // sendsorHeight
-                                      1280,     // imageWidth
-                                      960,      // imageHeight
-                                      4.0,      // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      0.8,      // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            //-- http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-6000-body-kit#product_details_default
+            tr("Sony a6000 Sony 16mm f/2.8"),
+            23.5,               // sensorWidth
+            15.6,               // sensorHeight
+            6000,               // imageWidth
+            4000,               // imageHeight
+            16,                 // focalLength
+            true,               // true: landscape orientation
+            false,              // true: camera is fixed orientation
+            2.0,                // minimum trigger interval
+            this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("GoPro Hero 4"),
-                                      6.17,     // sensorWidth
-                                      4.55,     // sendsorHeight
-                                      4000,     // imageWidth
-                                      3000,     // imageHeight
-                                      2.98,     // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      0,        // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Sony a6300 Zeiss 21mm f/2.8"),
+            23.5,               // sensorWidth
+            15.6,               // sensorHeight
+            6000,               // imageWidth
+            4000,               // imageHeight
+            21,                 // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            2.0,                // minimum trigger interval
+            this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Sentera NDVI Single Sensor"),
-                                      4.68,     // sensorWidth
-                                      3.56,     // sendsorHeight
-                                      1248,     // imageWidth
-                                      952,      // imageHeight
-                                      4.14,     // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      0,        // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Sony a6300 Sony 28mm f/2.0"),
+            23.5,               // sensorWidth
+            15.6,               // sensorHeight
+            6000,               // imageWidth
+            4000,               // imageHeight
+            28,                 // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            2.0,                // minimum trigger interval
+            this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
 
-        metaData = new CameraMetaData(tr("Sentera Double 4K Sensor"),
-                                      6.2,      // sensorWidth
-                                      4.65,     // sendsorHeight
-                                      4000,     // imageWidth
-                                      3000,     // imageHeight
-                                      5.4,      // focalLength
-                                      true,     // landscape
-                                      false,    // fixedOrientation
-                                      0,        // minTriggerInterval
-                                      this);
+        metaData = new CameraMetaData(
+            tr("Sony a7R II Zeiss 21mm f/2.8"),
+            35.814,             // sensorWidth
+            23.876,             // sensorHeight
+            7952,               // imageWidth
+            5304,               // imageHeight
+            21,                 // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            2.0,                // minimum trigger interval
+            this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Sony a7R II Sony 28mm f/2.0"),
+            35.814,             // sensorWidth
+            23.876,             // sensorHeight
+            7952,               // imageWidth
+            5304,               // imageHeight
+            28,                 // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            2.0,                // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Sony DSC-QX30U @ 4.3mm f/3.5"),
+            7.82,               // sensorWidth
+            5.865,              // sensorHeight
+            5184,               // imageWidth
+            3888,               // imageHeight
+            4.3,                // focalLength
+            true,               // true: landscape orientation
+            false,              // true: camera is fixed orientation
+            2.0,                // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            //-- http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
+            //-- http://www.sony.com/electronics/camera-lenses/sel16f28/specifications
+            tr("Sony ILCE-QX1 Sony 16mm f/2.8"),
+            23.2,                // sensorWidth
+            15.4,                // sensorHeight
+            5456,                // imageWidth
+            3632,                // imageHeight
+            16,                  // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            0,                   // minimum trigger interval
+            this);               // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            //-- http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
+            tr("Sony NEX-5R Sony 20mm f/2.8"),
+            23.2,                // sensorWidth
+            15.4,                // sensorHeight
+            4912,                // imageWidth
+            3264,                // imageHeight
+            20,                  // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            1,                   // minimum trigger interval
+            this);               // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Sony RX100 II @ 10.4mm f/1.8"),
+            13.2,                // sensorWidth
+            8.8,                 // sensorHeight
+            5472,                // imageWidth
+            3648,                // imageHeight
+            10.4,                // focalLength
+            true,                // true: landscape orientation
+            false,               // true: camera is fixed orientation
+            0,                   // minimum trigger interval
+            this);               // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Yuneec CGOET"),
+            5.6405,             // sensorWidth
+            3.1813,             // sensorHeight
+            1920,               // imageWidth
+            1080,               // imageHeight
+            3.5,                // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            1.3,                // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Yuneec E10T"),
+            5.6405,             // sensorWidth
+            3.1813,             // sensorHeight
+            1920,               // imageWidth
+            1080,               // imageHeight
+            23,                 // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            1.3,                // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Yuneec E50"),
+            6.2372,             // sensorWidth
+            4.7058,             // sensorHeight
+            4000,               // imageWidth
+            3000,               // imageHeight
+            7.2,                // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            1.3,                // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
+        metaData = new CameraMetaData(
+            tr("Yuneec E90"),
+            13.3056,            // sensorWidth
+            8.656,              // sensorHeight
+            5472,               // imageWidth
+            3648,               // imageHeight
+            8.29,               // focalLength
+            true,               // true: landscape orientation
+            true,               // true: camera is fixed orientation
+            1.3,                // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
+
     }
 
     return _cameraList;
@@ -533,7 +670,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
 
 QMap<QString, FactGroup*>* FirmwarePlugin::factGroups(void) {
     // Generic plugin has no FactGroups
-    return NULL;
+    return nullptr;
 }
 
 bool FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
@@ -642,7 +779,7 @@ bool FirmwarePlugin::isVtol(const Vehicle* vehicle) const
 QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
-    return NULL;
+    return nullptr;
 }
 
 QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
@@ -651,7 +788,7 @@ QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_infor
     Q_UNUSED(vehicle);
     Q_UNUSED(compID);
     Q_UNUSED(parent);
-    return NULL;
+    return nullptr;
 }
 
 uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
