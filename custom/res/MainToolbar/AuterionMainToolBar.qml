@@ -171,12 +171,10 @@ Rectangle {
         anchors.top:                parent.top
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
-        AuterionMenu {
-            level:                  0.75
-            text:                   qsTr("Mode:")
-            pointSize:              ScreenTools.defaultFontPointSize
-            model:                  _activeVehicle ? _activeVehicle.flightModes : [ ]
-            anchors.verticalCenter: parent.verticalCenter
+        Loader {
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            source:                 "/auterion/AuterionModeIndicator.qml"
         }
         Loader {
             anchors.top:            parent.top
