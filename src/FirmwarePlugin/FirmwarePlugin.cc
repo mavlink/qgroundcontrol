@@ -413,7 +413,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
         _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
-            tr("Parrot Sequioa RGB"),
+            tr("Parrot Sequoia RGB"),
             6.17,               // sensorWidth
             4.63,               // sendsorHeight
             4608,               // imageWidth
@@ -426,7 +426,7 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
         _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
-            tr("Parrot Sequioa Monochrome"),
+            tr("Parrot Sequoia Monochrome"),
             4.8,                // sensorWidth
             3.6,                // sendsorHeight
             1280,               // imageWidth
