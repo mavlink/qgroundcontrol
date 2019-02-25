@@ -3560,6 +3560,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="4">Magic</value>
         <value code="5">Config</value>
         <value code="7">Minimal</value>
+        <value code="8">External Vision</value>
       </values>
     </parameter>
     <parameter default="1200" name="MAV_0_RATE" type="INT32">
@@ -3602,6 +3603,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="4">Magic</value>
         <value code="5">Config</value>
         <value code="7">Minimal</value>
+        <value code="8">External Vision</value>
       </values>
     </parameter>
     <parameter default="0" name="MAV_1_RATE" type="INT32">
@@ -3644,6 +3646,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="4">Magic</value>
         <value code="5">Config</value>
         <value code="7">Minimal</value>
+        <value code="8">External Vision</value>
       </values>
     </parameter>
     <parameter default="0" name="MAV_2_RATE" type="INT32">
@@ -7252,7 +7255,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       </values>
     </parameter>
     <parameter default="0" name="RC_MAP_KILL_SW" type="INT32">
-      <short_desc>Kill switch channel</short_desc>
+      <short_desc>Emergency Kill switch channel</short_desc>
       <min>0</min>
       <max>18</max>
       <values>
