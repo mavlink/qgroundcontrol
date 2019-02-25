@@ -454,6 +454,12 @@
       <class>Plane</class>
       <maintainer />
       <type>Flying Wing</type>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
     <airframe id="3030" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="IO Camflyer">
       <class>Plane</class>
@@ -505,11 +511,23 @@
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
       <type>Flying Wing</type>
+      <output name="MAIN1">right aileron</output>
+      <output name="MAIN2">left aileron</output>
+      <output name="MAIN4">throttle</output>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
     <airframe id="3035" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Viper">
       <class>Plane</class>
       <maintainer>Simon Wilks &lt;simon@uaventure.com&gt;</maintainer>
       <type>Flying Wing</type>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
     <airframe id="3036" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Sparkle Tech Pigeon">
       <class>Plane</class>
@@ -539,6 +557,12 @@
       <class>Plane</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Flying Wing</type>
+      <output name="MAIN1">left aileron</output>
+      <output name="MAIN2">right aileron</output>
+      <output name="MAIN4">throttle</output>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+      <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
   </airframe_group>
   <airframe_group image="PlaneATail" name="Plane A-Tail">
