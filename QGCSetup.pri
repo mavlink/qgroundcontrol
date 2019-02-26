@@ -132,12 +132,12 @@ LinuxBuild {
         libQt5Widgets.so.5 \
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
+        libicui18n.so \
         libQt5TextToSpeech.so.5
 
     !contains(DEFINES, __rasp_pi2__) {
         QT_LIB_LIST += \
             libicudata.so \
-            libicui18n.so \
             libicuuc.so
     }
 
