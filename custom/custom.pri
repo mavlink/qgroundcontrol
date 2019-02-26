@@ -169,7 +169,8 @@ AndroidBuild {
         $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/UsbSerialProber.java \
         $$QGCROOT/custom/android/src/com/hoho/android/usbserial/driver/UsbSerialRuntimeException.java \
         $$QGCROOT/custom/android/src/org/mavlink/qgroundcontrol/QGCActivity.java \
-        $$QGCROOT/custom/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java
+        $$QGCROOT/custom/android/src/org/mavlink/qgroundcontrol/UsbIoManager.java \
+        $$QGCROOT/custom/android/src/org/mavlink/qgroundcontrol/TaiSync.java
 
     DISTFILES += \
         $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.jar \
