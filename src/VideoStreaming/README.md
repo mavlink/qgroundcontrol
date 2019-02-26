@@ -2,7 +2,7 @@
 
 ## Video Streaming
 
-For supported platforms, QGroundControl implements an UDP RTP and RSTP video streaming receiver in its Main Flight Display. It uses GStreamer and a stripped down version of QtGstreamer. We've standardized on **GStreamer 1.5.2**. It has been reliable and we will be using it until a reason to change it surfaces. Newer versions of GStreamer will break the build as some dependent libraries changed.
+For supported platforms, QGroundControl implements an UDP RTP and RSTP video streaming receiver in its Main Flight Display. It uses GStreamer and a stripped down version of QtGstreamer. We've standardized on **GStreamer 1.14.4**. It has been reliable and we will be using it until a good reason to change it surfaces. Newer versions of GStreamer may break the build as some dependent libraries may change.
 To build video streaming support, you will need to install the GStreamer development packages for the desired target platform.
 
 If you do have the proper GStreamer development libraries installed where QGC looks for it, the QGC build system will automatically use it and build video streaming support. If you would like to disable video streaming support, you can add **DISABLE_VIDEOSTREAMING** to the **DEFINES** build variable.
@@ -48,11 +48,11 @@ The build system is setup to use pkgconfig and it will find the necessary header
 
 ### Mac OS
 
-Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/osx. Supported version is 1.5.2. QGC may work with newer version, but it is untested.
+Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/osx. Supported version is 1.14.4. QGC may work with newer version, but it is untested.
 
 You need two packages:
-- [gstreamer-1.0-devel-1.5.2-x86_64.pkg](http://gstreamer.freedesktop.org/data/pkg/osx/1.5.2/gstreamer-1.0-devel-1.5.2-x86_64.pkg)
-- [gstreamer-1.0-1.5.2-x86_64.pkg](http://gstreamer.freedesktop.org/data/pkg/osx/1.5.2/gstreamer-1.0-1.5.2-x86_64.pkg)
+- [gstreamer-1.0-devel-1.14.4-x86_64.pkg](https://gstreamer.freedesktop.org/data/pkg/osx/1.14.4/gstreamer-1.0-devel-1.14.4-x86_64.pkg)
+- [gstreamer-1.0-1.14.4-x86_64.pkg](https://gstreamer.freedesktop.org/data/pkg/osx/1.14.4/gstreamer-1.0-1.14.4-x86_64.pkg)
 
 The installer places them under /Library/Frameworks/GStreamer.framework, which is where the QGC build system will look for it. That's all that is needed. When you build QGC and it finds the gstreamer framework, it automatically builds video streaming support.
 
@@ -63,14 +63,13 @@ export PATH=$PATH:/Library/Frameworks/GStreamer.framework/Commands
 
 ### iOS
 
-Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/ios
+Download the gstreamer framework from here: [gstreamer-1.0-devel-1.14.4-ios-universal.pkg](https://gstreamer.freedesktop.org/data/pkg/ios/1.14.4/gstreamer-1.0-devel-1.14.4-ios-universal.pkg)
 
 The installer places them under ~/Library/Developer/GStreamer/iPhone.sdk/GStreamer.framework, which is where the QGC build system will look for it. That's all that is needed. When you build QGC and it finds the gstreamer framework, it automatically builds video streaming support.
 
 ### Android
 
-Binaries found in http://gstreamer.freedesktop.org/data/pkg/android
-Download the [gstreamer-1.0-android-universal-1.14.4.tar.bz2](https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2) archive. 
+Download the gstreamer from here: [gstreamer-1.0-android-universal-1.14.4.tar.bz2](https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2)
 
 Create a directory named "gstreamer-1.0-android-universal-1.14.4" under the root qgroundcontrol directory (the same directory qgroundcontrol.pro is located). Extract the downloaded archive under this directory. That's where the build system will look for it. Make sure your archive tool doesn't create any additional top level directories. The structure after extracting the archive should look like this:
 ```
@@ -78,6 +77,7 @@ qgroundcontrol
 ├── gstreamer-1.0-android-universal-1.14.4
 │   │
 │   ├──armv7
+│   │   ├── bin
 │   │   ├── etc
 │   │   ├── include
 │   │   ├── lib
@@ -86,10 +86,16 @@ qgroundcontrol
 ```
 ### Windows
 
-Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/windows. Supported version is 1.5.2. QGC may work with newer version, but it is untested.
+Download the gstreamer framework from here: http://gstreamer.freedesktop.org/data/pkg/windows. Supported version is 1.4.14. QGC may work with newer version, but it is untested.
 
 You need two packages:
-- [gstreamer-1.0-devel-x86-1.5.2.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.5.2/gstreamer-1.0-devel-x86-1.5.2.msi)
-- [gstreamer-1.0-x86-1.5.2.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.5.2/gstreamer-1.0-x86-1.5.2.msi)
+
+#### 32-Bit: 
+- [gstreamer-1.0-devel-x86-1.14.4.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.14.4/gstreamer-1.0-devel-x86-1.14.4.msi)
+- [gstreamer-1.0-x86-1.14.4.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.14.4/gstreamer-1.0-x86-1.14.4.msi)
+
+#### 64-Bit: 
+- [gstreamer-1.0-devel-x86_64-1.14.4.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.14.4/gstreamer-1.0-devel-x86_64-1.14.4.msi)
+- [gstreamer-1.0-x86_64-1.14.4.msi](https://gstreamer.freedesktop.org/data/pkg/windows/1.14.4/gstreamer-1.0-x86_64-1.14.4.msi)
 
 Make sure you select "Complete" installation instead of "Typical" installation during the install process. The installer places them under c:\gstreamer, which is where the QGC build system will look for it.
