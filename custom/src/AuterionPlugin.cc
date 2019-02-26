@@ -185,6 +185,10 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
             int defaultFontPointSize = 8;
             metaData.setRawDefaultValue(defaultFontPointSize);
         #endif
+        } else if (metaData.name() == AppSettings::indoorPaletteName) {
+            QVariant indoorPalette = 1;
+            metaData.setRawDefaultValue(indoorPalette);
+            return true;
         }
     }
     return true;
