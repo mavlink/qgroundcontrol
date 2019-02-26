@@ -1,8 +1,13 @@
 <RCC>
     <qresource prefix="/localization">
-        <file alias="qgc_zh_CN.qm">localization/qgc_zh-CN.qm</file>
+        <file alias="qgc_bg.qm">localization/qgc_bg.qm</file>
         <file alias="qgc_de_DE.qm">localization/qgc_de-DE.qm</file>
+        <file alias="qgc_fr_FR.qm">localization/qgc_fr_FR.qm</file>
+        <file alias="qgc_it.qm">localization/qgc_it.qm</file>
+        <file alias="qgc_ko.qm">localization/qgc_ko.qm</file>
+        <file alias="qgc_ru.qm">localization/qgc_ru.qm</file>
         <file alias="qgc_tr.qm">localization/qgc_tr.qm</file>
+        <file alias="qgc_zh_CN.qm">localization/qgc_zh-CN.qm</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="opensans">resources/fonts/OpenSans-Regular.ttf</file>
