@@ -74,6 +74,13 @@ public final class UsbId {
     public static final int DEVICE_SPARKY2 = 0x41D0;
     public static final int DEVICE_CC3D = 0x415D;
 
+    public static final int VENDOR_ARDUPILOT_CHIBIOS1 = 0x0483;
+    public static final int VENDOR_ARDUPILOT_CHIBIOS2 = 0x1209;
+    public static final int DEVICE_ARDUPILOT_CHIBIOS =  0x5740;
+
+    public static final int VENDOR_DRAGONLINK = 0x1FC9;
+    public static final int DEVICE_DRAGONLINK = 0x0083;
+
     private UsbId() {
         throw new IllegalAccessError("Non-instantiable class.");
     }
