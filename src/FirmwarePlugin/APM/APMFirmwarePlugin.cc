@@ -19,6 +19,7 @@
 #include "QGCFileDownload.h"
 #include "SettingsManager.h"
 #include "AppSettings.h"
+#include "APMMavlinkStreamRateSettings.h"
 
 #include <QTcpSocket>
 
@@ -614,13 +615,30 @@ void APMFirmwarePlugin::_adjustCalibrationMessageSeverity(mavlink_message_t* mes
 
 void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
 {
-    vehicle->requestDataStream(MAV_DATA_STREAM_RAW_SENSORS,     2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTENDED_STATUS, 2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_RC_CHANNELS,     2);
-    vehicle->requestDataStream(MAV_DATA_STREAM_POSITION,        3);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA1,          10);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA2,          10);
-    vehicle->requestDataStream(MAV_DATA_STREAM_EXTRA3,          3);
+    APMMavlinkStreamRateSettings* streamRates = qgcApp()->toolbox()->settingsManager()->apmMavlinkStreamRateSettings();
+
+    struct StreamInfo_s {
+        MAV_DATA_STREAM mavStream;
+        int             streamRate;
+    };
+
+    StreamInfo_s rgStreamInfo[] = {
+        { MAV_DATA_STREAM_RAW_SENSORS,      streamRates->streamRateRawSensors()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTENDED_STATUS,  streamRates->streamRateExtendedStatus()->rawValue().toInt() },
+        { MAV_DATA_STREAM_RC_CHANNELS,      streamRates->streamRateRCChannels()->rawValue().toInt() },
+        { MAV_DATA_STREAM_POSITION,         streamRates->streamRatePosition()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTRA1,           streamRates->streamRateExtra1()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTRA2,           streamRates->streamRateExtra2()->rawValue().toInt() },
+        { MAV_DATA_STREAM_EXTRA3,           streamRates->streamRateExtra3()->rawValue().toInt() },
+    };
+
+    for (size_t i=0; i<sizeof(rgStreamInfo)/sizeof(rgStreamInfo[0]); i++) {
+        const StreamInfo_s& streamInfo = rgStreamInfo[i];
+
+        if (streamInfo.streamRate >= 0) {
+            vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
+        }
+    }
 }
 
 
@@ -733,22 +751,16 @@ QString APMFirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
     switch (vehicleType) {
     case MAV_TYPE_GENERIC:
         return QStringLiteral(":/json/APM/MavCmdInfoCommon.json");
-        break;
     case MAV_TYPE_FIXED_WING:
         return QStringLiteral(":/json/APM/MavCmdInfoFixedWing.json");
-        break;
     case MAV_TYPE_QUADROTOR:
         return QStringLiteral(":/json/APM/MavCmdInfoMultiRotor.json");
-        break;
     case MAV_TYPE_VTOL_QUADROTOR:
         return QStringLiteral(":/json/APM/MavCmdInfoVTOL.json");
-        break;
     case MAV_TYPE_SUBMARINE:
         return QStringLiteral(":/json/APM/MavCmdInfoSub.json");
-        break;
     case MAV_TYPE_GROUND_ROVER:
         return QStringLiteral(":/json/APM/MavCmdInfoRover.json");
-        break;
     default:
         qWarning() << "APMFirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
         return QString();

@@ -70,6 +70,8 @@ public:
     Q_PROPERTY(bool                 taisyncSupported    READ taisyncSupported       CONSTANT)
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
+    Q_PROPERTY(bool     px4ProFirmwareSupported         READ px4ProFirmwareSupported CONSTANT)
+    Q_PROPERTY(int      apmFirmwareSupported            READ apmFirmwareSupported CONSTANT)
 
     Q_PROPERTY(qreal zOrderTopMost              READ zOrderTopMost              CONSTANT) ///< z order for top most items, toolbar, main window sub view
     Q_PROPERTY(qreal zOrderWidgets              READ zOrderWidgets              CONSTANT) ///< z order value to widgets, for example: zoom controls, hud widgetss
@@ -180,6 +182,8 @@ public:
     int     mavlinkSystemID         () { return _toolbox->mavlinkProtocol()->getSystemId(); }
 
     int     supportedFirmwareCount  ();
+    bool    px4ProFirmwareSupported ();
+    bool    apmFirmwareSupported    ();
     bool    skipSetupPage           () { return _skipSetupPage; }
     void    setSkipSetupPage        (bool skip);
 

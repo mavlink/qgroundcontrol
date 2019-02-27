@@ -201,10 +201,11 @@
     "defaultValue":     0
 },
 {
-    "name":             "apmStartMavlinkStreams",
-    "shortDescription": "Request start of MAVLink telemetry streams (ArduPilot only)",
-    "type":             "bool",
-    "defaultValue":     true
+    "name":                 "apmStartMavlinkStreams",
+    "shortDescription":     "Request start of MAVLink telemetry streams (ArduPilot only)",
+    "type":                 "bool",
+    "defaultValue":         true,
+    "qgcRebootRequired":    true
 },
 {
     "name":             "enableTaisync",
