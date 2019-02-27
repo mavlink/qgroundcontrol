@@ -122,6 +122,7 @@ public:
                             QJsonArray&         polygonArray);  ///< Array to save into
 
     static bool parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName = QString());
+    static bool parseEnum(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName = QString());
 
     /// Returns NaN if the value is null, or if not, the double value
     static double possibleNaNJsonValue(const QJsonValue& value);
@@ -142,6 +143,7 @@ private:
                                    bool                     writeAltitude,
                                    QJsonValue&              jsonValue,
                                    bool                     geoJsonFormat);
+    static bool _parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName);
 
     static const char*  _enumStringsJsonKey;
     static const char*  _enumValuesJsonKey;
