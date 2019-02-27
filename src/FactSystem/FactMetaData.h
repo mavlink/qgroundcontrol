@@ -54,9 +54,9 @@ public:
     FactMetaData(const FactMetaData& other, QObject* parent = nullptr);
 
     static QMap<QString, FactMetaData*> createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent);
-    static QMap<QString, FactMetaData*> createMapFromJsonArray(const QJsonArray jsonArray, QObject* metaDataParent);
+    static QMap<QString, FactMetaData*> createMapFromJsonArray(const QJsonArray jsonArray, QMap<QString, QString>& defineMap, QObject* metaDataParent);
 
-    static FactMetaData* createFromJsonObject(const QJsonObject& json, QObject* metaDataParent);
+    static FactMetaData* createFromJsonObject(const QJsonObject& json, QMap<QString, QString>& defineMap, QObject* metaDataParent);
 
     const FactMetaData& operator=(const FactMetaData& other);
 
@@ -229,6 +229,8 @@ private:
     static const AppSettingsTranslation_s* _findAppSettingsDistanceUnitsTranslation(const QString& rawUnits);
     static const AppSettingsTranslation_s* _findAppSettingsAreaUnitsTranslation(const QString& rawUnits);
 
+    static void _loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap);
+
     ValueType_t     _type;                  // must be first for correct constructor init
     int             _decimalPlaces;
     QVariant        _rawDefaultValue;
@@ -292,6 +294,9 @@ private:
     static const char* _incrementJsonKey;
     static const char* _hasControlJsonKey;
     static const char* _qgcRebootRequiredJsonKey;
+
+    static const char* _jsonMetaDataDefinesName;
+    static const char* _jsonMetaDataFactsName;
 };
 
 #endif

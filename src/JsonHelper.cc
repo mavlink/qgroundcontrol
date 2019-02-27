@@ -152,7 +152,7 @@ bool JsonHelper::validateKeyTypes(const QJsonObject& jsonObject, const QStringLi
     return true;
 }
 
-bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
+bool JsonHelper::_parseEnumWorker(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
 {
     if(jsonObject.value(_enumStringsJsonKey).isArray()) {
         // "enumStrings": ["Auto" , "Manual", "Shutter Priority", "Aperture Priority"],
@@ -162,7 +162,8 @@ bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrin
         }
     } else {
         // "enumStrings": "Auto,Manual,Shutter Priority,Aperture Priority",
-        enumStrings = jsonObject.value(_enumStringsJsonKey).toString().split(",", QString::SkipEmptyParts);
+        QString value = jsonObject.value(_enumStringsJsonKey).toString();
+        enumStrings = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
     }
 
     if(jsonObject.value(_enumValuesJsonKey).isArray()) {
@@ -177,7 +178,8 @@ bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrin
         }
     } else {
         // "enumValues": "0,1,2,3,4,5",
-        enumValues = jsonObject.value(_enumValuesJsonKey).toString().split(",", QString::SkipEmptyParts);
+        QString value = jsonObject.value(_enumValuesJsonKey).toString();
+        enumValues = defineMap.value(value, value).split(",", QString::SkipEmptyParts);
     }
 
     if (enumStrings.count() != enumValues.count()) {
@@ -186,6 +188,17 @@ bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrin
     }
 
     return true;
+}
+
+bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QMap<QString, QString>& defineMap, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
+{
+    return _parseEnumWorker(jsonObject, defineMap, enumStrings, enumValues, errorString, valueName);
+}
+
+bool JsonHelper::parseEnum(const QJsonObject& jsonObject, QStringList& enumStrings, QStringList& enumValues, QString& errorString, QString valueName)
+{
+    QMap<QString, QString> defineMap;
+    return _parseEnumWorker(jsonObject, defineMap, enumStrings, enumValues, errorString, valueName);
 }
 
 bool JsonHelper::isJsonFile(const QByteArray& bytes, QJsonDocument& jsonDoc, QString& errorString)
