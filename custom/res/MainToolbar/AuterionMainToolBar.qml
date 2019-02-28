@@ -130,6 +130,13 @@ Rectangle {
             onClicked:          toolBar.showSetupView()
         }
 
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/toolbar/MessageIndicator.qml"
+        }
+
         /* Disabled for now
         AuterionToolBarButton {
             id:                 analyzeButton
