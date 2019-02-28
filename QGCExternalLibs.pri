@@ -53,6 +53,9 @@ isEmpty(MAVLINK_CONF) {
 contains (CONFIG, QGC_DISABLE_APM_MAVLINK) {
     message("Disable APM MAVLink support")
     DEFINES += NO_ARDUPILOT_DIALECT
+    CONFIG  += ArdupilotDisabled
+} else {
+    CONFIG  += ArdupilotEnabled
 }
 
 # First we select the dialect, checking for valid user selection
