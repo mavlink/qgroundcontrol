@@ -169,23 +169,23 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, DISABLE_AIRMAP) {
     message("Skipping support for AirMap (manual override from user_config.pri)")
 } else {
-    AIRMAPD_PATH = $$PWD/libs/airmapd
-    contains(QT_VERSION, ˆ5\\.11\..*) {
-        MacBuild {
-            exists($${AIRMAPD_PATH}/macOS/Qt.5.11.0) {
-                message("Including support for AirMap for macOS")
-                LIBS += -L$${AIRMAPD_PATH}/macOS/Qt.5.11.0 -lairmap-qt
-                DEFINES += QGC_AIRMAP_ENABLED
-            }
-        } else:LinuxBuild {
-            exists($${AIRMAPD_PATH}/linux/Qt.5.11.0) {
-                message("Including support for AirMap for Linux")
-                LIBS += -L$${AIRMAPD_PATH}/linux/Qt.5.11.0 -lairmap-qt
-                DEFINES += QGC_AIRMAP_ENABLED
-            }
-        } else {
-            message("Skipping support for Airmap (unsupported platform)")
+    AIRMAPD_PATH    = $$PWD/libs/airmapd
+    AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
+    message(Looking for Airmap in $$AIRMAP_QT_PATH)
+    MacBuild {
+        exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
+            message("Including support for AirMap for macOS")
+            LIBS += -L$${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
         }
+    } else:LinuxBuild {
+        exists($${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH) {
+            message("Including support for AirMap for Linux")
+            LIBS += -L$${AIRMAPD_PATH}/linux/$$AIRMAP_QT_PATH -lairmap-qt
+            DEFINES += QGC_AIRMAP_ENABLED
+        }
+    } else {
+        message("Skipping support for Airmap (unsupported platform)")
     }
     contains (DEFINES, QGC_AIRMAP_ENABLED) {
         INCLUDEPATH += \
