@@ -963,6 +963,14 @@ SOURCES += \
 
 # ArduPilot FirmwarePlugin
 
+!ArdupilotDisabled {
+    INCLUDEPATH += \
+        src/Settings/APMMavlinkStreamRateSettings.h \
+
+    SOURCES += \
+        src/Settings/APMMavlinkStreamRateSettings.cc \
+}
+
 APMFirmwarePlugin {
     RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc
 

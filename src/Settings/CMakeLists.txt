@@ -1,5 +1,6 @@
 
 add_library(Settings
+	APMMavlinkStreamRateSettings.cc
 	AppSettings.cc
 	AutoConnectSettings.cc
 	BrandImageSettings.cc

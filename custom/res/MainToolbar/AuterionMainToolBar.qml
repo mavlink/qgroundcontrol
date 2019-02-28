@@ -23,20 +23,7 @@ import Auterion.Widgets                     1.0
 Rectangle {
     id:         toolBar
     visible:    !QGroundControl.videoManager.fullScreen
-    color:      flyButton.checked ? Qt.rgba(0,0,0,0) : Qt.rgba(0,0,0,0.75)
-
-    Rectangle {
-        anchors.top:    parent.top
-        anchors.right:  parent.right
-        anchors.left:   parent.left
-        height:         parent.height * 1.5
-        visible:        flyButton.checked
-        gradient: Gradient {
-            GradientStop { position: 0;    color: Qt.rgba(0,0,0,0.85) }
-            GradientStop { position: 0.25; color: Qt.rgba(0,0,0,0.65) }
-            GradientStop { position: 1;    color: Qt.rgba(0,0,0,0) }
-        }
-    }
+    color:      flyButton.checked ? Qt.rgba(0.04314,0.086275,0.1607843,0.85) : Qt.rgba(0,0,0,0.75)
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 

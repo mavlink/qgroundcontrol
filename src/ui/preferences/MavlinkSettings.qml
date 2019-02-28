@@ -12,6 +12,7 @@ import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
 import QtQuick.Dialogs          1.2
+import QtQuick.Layouts          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.FactSystem            1.0
@@ -33,6 +34,7 @@ Rectangle {
     property bool _uploadedSelected:    false
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property var  _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
+    property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible
 
     QGCPalette { id: qgcPal }
 
@@ -143,16 +145,102 @@ Rectangle {
                         }
                     }
 
-                    FactCheckBox {
-                        text:   fact.shortDescription
-                        fact:   QGroundControl.settingsManager.appSettings.apmStartMavlinkStreams
-                    }
-
                     QGCCheckBox {
                         text:       qsTr("Only accept MAVs with same protocol version")
                         checked:    QGroundControl.isVersionCheckEnabled
                         onClicked: {
                             QGroundControl.isVersionCheckEnabled = checked
+                        }
+                    }
+                }
+            }
+            //-----------------------------------------------------------------
+            //-- Stream Rates
+            Item {
+                id:                         apmStreamRatesLabel
+                width:                      __mavlinkRoot.width * 0.8
+                height:                     streamRatesLabel.height
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                visible:                    _showAPMStreamRates
+                QGCLabel {
+                    id:             streamRatesLabel
+                    text:           qsTr("Telemetry Stream Rates (ArduPilot Only)")
+                    font.family:    ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:                     streamRatesColumn.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:                      __mavlinkRoot.width * 0.8
+                color:                      qgcPal.windowShade
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                visible:                    _showAPMStreamRates
+
+                ColumnLayout {
+                    id:                 streamRatesColumn
+                    spacing:            ScreenTools.defaultFontPixelHeight / 2
+                    anchors.centerIn:   parent
+
+                    property bool allStreamsControlledByVehicle: !QGroundControl.settingsManager.appSettings.apmStartMavlinkStreams.rawValue
+
+                    QGCCheckBox {
+                        text:               qsTr("All Streams Controlled By Vehicle Settings")
+                        checked:            streamRatesColumn.allStreamsControlledByVehicle
+                        onClicked:          QGroundControl.settingsManager.appSettings.apmStartMavlinkStreams.rawValue = !checked
+                    }
+
+                    GridLayout {
+                        columns:    2
+                        enabled:    !streamRatesColumn.allStreamsControlledByVehicle
+
+                        QGCLabel { text:  qsTr("Raw Sensors") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRawSensors
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extended Status") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtendedStatus
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("RC Channel") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRCChannels
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Position") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRatePosition
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extra 1") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra1
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extra 2") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra2
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
+                        }
+
+                        QGCLabel { text:  qsTr("Extra 3") }
+                        FactComboBox {
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra3
+                            indexModel:             false
+                            Layout.preferredWidth:  _valueWidth
                         }
                     }
                 }
@@ -253,7 +341,7 @@ Rectangle {
                 visible:            _showMavlinkLog
                 QGCLabel {
                     id:             mavlogLabel
-                    text:           qsTr("MAVLink 2.0 Logging (PX4 Firmware Only)")
+                    text:           qsTr("MAVLink 2.0 Logging (PX4 Pro Only)")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }
@@ -315,7 +403,7 @@ Rectangle {
                 visible:            _showMavlinkLog
                 QGCLabel {
                     id:             logLabel
-                    text:           qsTr("MAVLink 2.0 Log Uploads (PX4 Firmware Only)")
+                    text:           qsTr("MAVLink 2.0 Log Uploads (PX4 Pro Only)")
                     font.family:    ScreenTools.demiboldFontFamily
                 }
             }
