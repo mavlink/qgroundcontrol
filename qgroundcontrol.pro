@@ -596,7 +596,6 @@ HEADERS += \
     src/QmlControls/RCChannelMonitorController.h \
     src/QmlControls/ScreenToolsController.h \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.h \
-    src/Settings/APMMavlinkStreamRateSettings.h \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
@@ -800,7 +799,6 @@ SOURCES += \
     src/QmlControls/RCChannelMonitorController.cc \
     src/QmlControls/ScreenToolsController.cc \
     src/QtLocationPlugin/QMLControl/QGCMapEngineManager.cc \
-    src/Settings/APMMavlinkStreamRateSettings.cc \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \
@@ -964,6 +962,14 @@ SOURCES += \
 }}
 
 # ArduPilot FirmwarePlugin
+
+!ArdupilotDisabled {
+    INCLUDEPATH += \
+        src/Settings/APMMavlinkStreamRateSettings.h \
+
+    SOURCES += \
+        src/Settings/APMMavlinkStreamRateSettings.cc \
+}
 
 APMFirmwarePlugin {
     RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc

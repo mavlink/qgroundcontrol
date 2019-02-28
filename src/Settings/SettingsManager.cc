@@ -26,7 +26,9 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _flyViewSettings              (nullptr)
     , _planViewSettings             (nullptr)
     , _brandImageSettings           (nullptr)
+#if !defined(NO_ARDUPILOT_DIALECT)
     , _apmMavlinkStreamRateSettings (nullptr)
+#endif
 {
 
 }
@@ -46,7 +48,9 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _flyViewSettings =              new FlyViewSettings     (this);
     _planViewSettings =             new PlanViewSettings    (this);
     _brandImageSettings =           new BrandImageSettings  (this);
+#if !defined(NO_ARDUPILOT_DIALECT)
     _apmMavlinkStreamRateSettings = new APMMavlinkStreamRateSettings     (this);
+#endif
 #if defined(QGC_AIRMAP_ENABLED)
     _airMapSettings =               new AirMapSettings      (this);
 #endif
