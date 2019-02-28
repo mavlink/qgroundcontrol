@@ -109,7 +109,7 @@ AuterionPlugin::settingsPages()
         addSettingsEntry(tr("Taisync"), "qrc:/qml/TaisyncSettings.qml");
 #endif
 #if defined(QGC_AIRMAP_ENABLED)
-        buildComponent(tr("AirMap"), "qrc:/qml/AirmapSettings.qml");
+        addSettingsEntry(tr("AirMap"), "qrc:/qml/AirmapSettings.qml");
 #endif
         addSettingsEntry(tr("MAVLink"),
                        "qrc:/qml/MavlinkSettings.qml", "qrc:/res/waves.svg");
