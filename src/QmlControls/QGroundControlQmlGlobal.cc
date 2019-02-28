@@ -178,6 +178,15 @@ int QGroundControlQmlGlobal::supportedFirmwareCount()
     return _firmwarePluginManager->supportedFirmwareTypes().count();
 }
 
+bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
+{
+    return _firmwarePluginManager->supportedFirmwareTypes().contains(MAV_AUTOPILOT_PX4);
+}
+
+bool QGroundControlQmlGlobal::apmFirmwareSupported()
+{
+    return _firmwarePluginManager->supportedFirmwareTypes().contains(MAV_AUTOPILOT_ARDUPILOTMEGA);
+}
 
 bool QGroundControlQmlGlobal::linesIntersect(QPointF line1A, QPointF line1B, QPointF line2A, QPointF line2B)
 {

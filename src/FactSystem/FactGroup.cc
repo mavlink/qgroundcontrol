@@ -37,7 +37,8 @@ FactGroup::FactGroup(int updateRateMsecs, QObject* parent)
 
 void FactGroup::_loadFromJsonArray(const QJsonArray jsonArray)
 {
-    _nameToFactMetaDataMap = FactMetaData::createMapFromJsonArray(jsonArray, this);
+    QMap<QString, QString> defineMap;
+    _nameToFactMetaDataMap = FactMetaData::createMapFromJsonArray(jsonArray, defineMap, this);
 }
 
 void FactGroup::_setupTimer()

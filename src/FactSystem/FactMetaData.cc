@@ -35,6 +35,9 @@ const qreal FactMetaData::UnitConsts_s::inchesToCentimeters =   2.54;
 static const char* kDefaultCategory = QT_TRANSLATE_NOOP("FactMetaData", "Other");
 static const char* kDefaultGroup    = QT_TRANSLATE_NOOP("FactMetaData", "Misc");
 
+const char* FactMetaData::_jsonMetaDataDefinesName =    "QGC.MetaData.Defines";
+const char* FactMetaData::_jsonMetaDataFactsName =      "QGC.MetaData.Facts";
+
 // Built in translations for all Facts
 const FactMetaData::BuiltInTranslation_s FactMetaData::_rgBuiltInTranslations[] = {
     { "centi-degrees",  "deg",  FactMetaData::_centiDegreesToDegrees,                   FactMetaData::_degreesToCentiDegrees },
@@ -1057,7 +1060,7 @@ int FactMetaData::decimalPlaces(void) const
     return actualDecimalPlaces;
 }
 
-FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObject* metaDataParent)
+FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QMap<QString, QString>& defineMap, QObject* metaDataParent)
 {
     QString         errorString;
 
@@ -1098,7 +1101,7 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     metaData->_name = json[_nameJsonKey].toString();
 
     QStringList enumValues, enumStrings;
-    if (JsonHelper::parseEnum(json, enumStrings, enumValues, errorString, metaData->name())) {
+    if (JsonHelper::parseEnum(json, defineMap, enumStrings, enumValues, errorString, metaData->name())) {
         for (int i=0; i<enumValues.count(); i++) {
             QVariant    enumVariant;
             QString     errorString;
@@ -1204,6 +1207,14 @@ FactMetaData* FactMetaData::createFromJsonObject(const QJsonObject& json, QObjec
     return metaData;
 }
 
+void FactMetaData::_loadJsonDefines(const QJsonObject& jsonDefinesObject, QMap<QString, QString>& defineMap)
+{
+    for (const QString& defineName: jsonDefinesObject.keys()) {
+        QString mapKey = _jsonMetaDataDefinesName + QString(".") + defineName;
+        defineMap[mapKey] = jsonDefinesObject[defineName].toString();
+    }
+}
+
 QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& jsonFilename, QObject* metaDataParent)
 {
     QMap<QString, FactMetaData*> metaDataMap;
@@ -1223,16 +1234,34 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonFile(const QString& 
         return metaDataMap;
     }
 
-    if (!doc.isArray()) {
-        qWarning() << "json document is not array";
+    QJsonArray factArray;
+    QMap<QString /* define name */, QString /* define value */> defineMap;
+
+    if (doc.isObject()) {
+        // Check for Defines/Facts format
+        QString errorString;
+        QList<JsonHelper::KeyValidateInfo> keyInfoList = {
+            { FactMetaData::_jsonMetaDataDefinesName,   QJsonValue::Object, true },
+            { FactMetaData::_jsonMetaDataFactsName,     QJsonValue::Array, true },
+        };
+        if (!JsonHelper::validateKeys(doc.object(), keyInfoList, errorString)) {
+            qWarning() << "Json document incorrect format:" << errorString;
+            return metaDataMap;
+        }
+
+        _loadJsonDefines(doc.object()[FactMetaData::_jsonMetaDataDefinesName].toObject(), defineMap);
+        factArray = doc.object()[FactMetaData::_jsonMetaDataFactsName].toArray();
+    } else if (doc.isArray()) {
+        factArray = doc.array();
+    } else {
+        qWarning() << "Json document is neither array nor object";
         return metaDataMap;
     }
 
-    QJsonArray jsonArray = doc.array();
-    return createMapFromJsonArray(jsonArray, metaDataParent);
+    return createMapFromJsonArray(factArray, defineMap, metaDataParent);
 }
 
-QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonArray(const QJsonArray jsonArray, QObject* metaDataParent)
+QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonArray(const QJsonArray jsonArray, QMap<QString, QString>& defineMap, QObject* metaDataParent)
 {
     QMap<QString, FactMetaData*> metaDataMap;
     for (int i=0; i<jsonArray.count(); i++) {
@@ -1242,7 +1271,7 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonArray(const QJsonArr
             continue;
         }
         QJsonObject jsonObject = jsonValue.toObject();
-        FactMetaData* metaData = createFromJsonObject(jsonObject, metaDataParent);
+        FactMetaData* metaData = createFromJsonObject(jsonObject, defineMap, metaDataParent);
         if (metaDataMap.contains(metaData->name())) {
             qWarning() << QStringLiteral("Duplicate fact name:") << metaData->name();
             delete metaData;
