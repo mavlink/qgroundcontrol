@@ -961,15 +961,17 @@ SOURCES += \
         src/VehicleSetup/PX4FirmwareUpgradeThread.cc \
 }}
 
-# ArduPilot FirmwarePlugin
+# ArduPilot Specific
 
-!ArdupilotDisabled {
-    INCLUDEPATH += \
+ArdupilotEnabled {
+    HEADERS += \
         src/Settings/APMMavlinkStreamRateSettings.h \
 
     SOURCES += \
         src/Settings/APMMavlinkStreamRateSettings.cc \
 }
+
+# ArduPilot FirmwarePlugin
 
 APMFirmwarePlugin {
     RESOURCES *= src/FirmwarePlugin/APM/APMResources.qrc
