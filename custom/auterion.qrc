@@ -34,6 +34,7 @@
         <file alias="menu_gear.svg">res/images/menu_gear.svg</file>
         <file alias="menu_gps.svg">res/images/menu_gps.svg</file>
         <file alias="menu_logo.svg">res/images/menu_logo.svg</file>
+        <file alias="menu_logo_advanced.svg">res/images/menu_logo_advanced.svg</file>
         <file alias="menu_plan.svg">res/images/menu_plan.svg</file>
         <file alias="menu_rc.svg">res/images/menu_rc.svg</file>
         <file alias="menu_signal_0.svg">res/images/menu_signal_0.svg</file>

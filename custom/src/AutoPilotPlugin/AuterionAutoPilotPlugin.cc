@@ -9,10 +9,22 @@
 
 #include "AuterionAutoPilotPlugin.h"
 
+#include "QGCApplication.h"
+#include "QGCCorePlugin.h"
+
 //-----------------------------------------------------------------------------
 AuterionAutoPilotPlugin::AuterionAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
 {
+    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &AuterionAutoPilotPlugin::_advancedChanged);
+}
+
+//-----------------------------------------------------------------------------
+void
+AuterionAutoPilotPlugin::_advancedChanged(bool)
+{
+    _components.clear();
+    emit vehicleComponentsChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -21,6 +33,8 @@ AuterionAutoPilotPlugin::vehicleComponents()
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle) {
+            bool showAdvanced = qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+            qDebug() << "Loading components:" << showAdvanced;
             if (_vehicle->parameterManager()->parametersReady()) {
                 _airframeComponent = new AirframeComponent(_vehicle, this);
                 _airframeComponent->setupTriggerSignals();
@@ -42,9 +56,11 @@ AuterionAutoPilotPlugin::vehicleComponents()
                 _powerComponent->setupTriggerSignals();
                 _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_powerComponent)));
 
-                _motorComponent = new MotorComponent(_vehicle, this);
-                _motorComponent->setupTriggerSignals();
-                _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_motorComponent)));
+                if(showAdvanced) {
+                    _motorComponent = new MotorComponent(_vehicle, this);
+                    _motorComponent->setupTriggerSignals();
+                    _components.append(QVariant::fromValue(reinterpret_cast<VehicleComponent*>(_motorComponent)));
+                }
 
                 _safetyComponent = new SafetyComponent(_vehicle, this);
                 _safetyComponent->setupTriggerSignals();

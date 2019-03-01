@@ -37,7 +37,7 @@ public:
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionFlyView.qml"); }
     CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
     bool        showMavlinkLogOptions           () const final { return false; }
-    bool        showFirmwareUpgrade             () const final { return false; }
+    bool        showFirmwareUpgrade             () const final;
 };
 
 
@@ -64,11 +64,15 @@ public:
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);
 
+private slots:
+    void                    _advancedChanged                (bool advanced);
+
 private:
     void
-    addSettingsEntry(const QString& title,
-                   const char* qmlFile,
-                   const char* iconFile = nullptr);
+    addSettingsEntry(
+        const QString& title,
+        const char* qmlFile,
+        const char* iconFile = nullptr);
 
 private:
     AuterionOptions*     _pOptions;

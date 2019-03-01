@@ -19,6 +19,8 @@ class AuterionAutoPilotPlugin : public PX4AutoPilotPlugin
 public:
     AuterionAutoPilotPlugin(Vehicle* vehicle, QObject* parent);
     const QVariantList& vehicleComponents() override;
+private slots:
+    void         _advancedChanged        (bool advanced);
 private:
     QVariantList _components;
 
