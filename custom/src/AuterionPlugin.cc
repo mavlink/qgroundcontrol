@@ -57,10 +57,18 @@ AuterionOptions::AuterionOptions(AuterionPlugin*, QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
+bool
+AuterionOptions::showFirmwareUpgrade() const
+{
+    return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+}
+
+//-----------------------------------------------------------------------------
 AuterionPlugin::AuterionPlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCCorePlugin(app, toolbox)
 {
     _pOptions = new AuterionOptions(this, this);
+    _showAdvancedUI = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -77,9 +85,17 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     //-- Enable automatic logging
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
+    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &AuterionPlugin::_advancedChanged);
 }
 
+//-----------------------------------------------------------------------------
+void
+AuterionPlugin::_advancedChanged(bool changed)
+{
+    emit _pOptions->showFirmwareUpgradeChanged(changed);
+}
 
+//-----------------------------------------------------------------------------
 void
 AuterionPlugin::addSettingsEntry(const QString& title,
                                const char* qmlFile,

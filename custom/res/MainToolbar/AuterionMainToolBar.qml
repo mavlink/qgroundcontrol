@@ -96,9 +96,23 @@ Rectangle {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
-            source:             "/auterion/img/menu_logo.svg"
-            onClicked:          toolBar.showSettingsView()
+            source:             QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
             visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+            onClicked: {
+                // Easter egg mechanism
+                toolBar.showSettingsView()
+                _clickCount++
+                eggTimer.restart()
+                if (_clickCount == 5) {
+                    QGroundControl.corePlugin.showAdvancedUI = !QGroundControl.corePlugin.showAdvancedUI
+                }
+            }
+            property int _clickCount: 0
+            Timer {
+                id:             eggTimer
+                interval:       1000
+                onTriggered:    parent._clickCount = 0
+            }
         }
 
         AuterionToolBarButton {
@@ -130,16 +144,9 @@ Rectangle {
             onClicked:          toolBar.showSetupView()
         }
 
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/toolbar/MessageIndicator.qml"
-        }
-
-        /* Disabled for now
         AuterionToolBarButton {
             id:                 analyzeButton
+            text:               qsTr("Analyze")
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
@@ -147,7 +154,13 @@ Rectangle {
             visible:            !ScreenTools.isMobile && QGroundControl.corePlugin.showAdvancedUI
             onClicked:          toolBar.showAnalyzeView()
         }
-        */
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/toolbar/MessageIndicator.qml"
+        }
 
     }
 
