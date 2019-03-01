@@ -144,13 +144,6 @@ Rectangle {
             onClicked:          toolBar.showSetupView()
         }
 
-        Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/toolbar/MessageIndicator.qml"
-        }
-
         AuterionToolBarButton {
             id:                 analyzeButton
             text:               qsTr("Analyze")
@@ -160,6 +153,13 @@ Rectangle {
             source:             "/qmlimages/Analyze.svg"
             visible:            !ScreenTools.isMobile && QGroundControl.corePlugin.showAdvancedUI
             onClicked:          toolBar.showAnalyzeView()
+        }
+
+        Loader {
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+            source:             "/toolbar/MessageIndicator.qml"
         }
 
     }
