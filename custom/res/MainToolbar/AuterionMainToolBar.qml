@@ -151,9 +151,9 @@ Rectangle {
             source:             "/toolbar/MessageIndicator.qml"
         }
 
-        /* Disabled for now
         AuterionToolBarButton {
             id:                 analyzeButton
+            text:               qsTr("Analyze")
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             exclusiveGroup:     mainActionGroup
@@ -161,7 +161,6 @@ Rectangle {
             visible:            !ScreenTools.isMobile && QGroundControl.corePlugin.showAdvancedUI
             onClicked:          toolBar.showAnalyzeView()
         }
-        */
 
     }
 
