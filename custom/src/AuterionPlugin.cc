@@ -198,7 +198,7 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::appFontPointSizeName) {
         #if defined(WIN32)
-            int defaultFontPointSize = 8;
+            int defaultFontPointSize = 11;
             metaData.setRawDefaultValue(defaultFontPointSize);
         #endif
         } else if (metaData.name() == AppSettings::indoorPaletteName) {
