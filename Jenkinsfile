@@ -8,12 +8,18 @@ pipeline {
         stage('Android Release') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
-            QGC_CONFIG = 'release'
+            QGC_CONFIG = 'installer'
             QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
           }
           agent {
+            /*
             docker {
               image 'mavlink/qgc-build-android:2019-02-03'
+              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+            }
+            */
+            dockerfile {
+              dir 'custom/deploy/ci/android'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
           }
@@ -28,12 +34,17 @@ pipeline {
             sh 'ccache -s'
           }
           post {
+            always {
+              archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+              archiveArtifacts artifacts: 'build/release/package/**/*', onlyIfSuccessful: true
+            }
             cleanup {
               sh 'git clean -ff -x -d .'
             }
           }
         }
 
+        /*
         stage('Linux Debug') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
@@ -92,6 +103,7 @@ pipeline {
             }
           }
         }
+        */
 
         stage('Linux Release') {
           environment {
@@ -100,9 +112,16 @@ pipeline {
             QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
           }
           agent {
-            docker {
+            /*docker {
               image 'mavlink/qgc-build-linux:2019-02-03'
-              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
+            }*/
+            // TODO: remove after sync upstream
+            // Custom docker file that extends on the upstream one in order to provide unmerged features
+            dockerfile {
+              dir 'custom/deploy/ci/linux'
+              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
+
             }
           }
           steps {
@@ -111,20 +130,35 @@ pipeline {
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
+            // TODO: Airmap feature is not used, for now. However find a way to be optional,
+            //  or provide a dummy one not to diverge too much from upstream
+            /*
             withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
               sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
             }
+            */
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
+
+            // Create AppImg
+            sh 'custom/deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
+            sh 'chmod +x AuterionGS.AppImage'
+
+            // Cache build files
             sh 'ccache -s'
           }
           post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: 'AuterionGS.AppImage', onlyIfSuccessful: true
+            }
             cleanup {
               sh 'git clean -ff -x -d .'
             }
           }
         }
 
+        /*
         stage('Linux Release (cmake)') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
@@ -250,7 +284,9 @@ pipeline {
               steps {
                 sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
                 sh 'cd build; make -j`sysctl -n hw.ncpu`'
-                archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+                */
+                //archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+                /*
                 sh 'ccache -s'
               }
             }
@@ -289,6 +325,7 @@ pipeline {
             }
           }
         }
+        */
 
       } // parallel
     } // stage('build')

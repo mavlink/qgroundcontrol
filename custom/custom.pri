@@ -67,6 +67,7 @@ exists($$PWD/custom/custom.pri) {
         $$QGCROOT/custom/auterion.qrc
 
     QGC_APP_NAME        = "Auterion GS"
+    QGC_BINARY_NAME     = "AuterionGS"
     QGC_ORG_NAME        = "Auterion"
     QGC_ORG_DOMAIN      = "com.auterion"
     QGC_APP_DESCRIPTION = "Auterion Ground Station"
@@ -161,6 +162,7 @@ exists($$PWD/custom/custom.pri) {
 
     AndroidBuild {
         CONFIG += DISABLE_BUILTIN_ANDROID
+        CONFIG += QGC_DISABLE_INSTALLER_SETUP
         ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
         include($$QGCROOT/libs/qtandroidserialport/src/qtandroidserialport.pri)
         message("Adding Custom Serial Java Classes")
