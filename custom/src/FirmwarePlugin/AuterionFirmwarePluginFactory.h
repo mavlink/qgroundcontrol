@@ -15,10 +15,10 @@ class AuterionFirmwarePluginFactory : public FirmwarePluginFactory
 {
     Q_OBJECT
 public:
-    AuterionFirmwarePluginFactory(void);
-    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      (void) const final;
-    FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) final;
-    QList<MAV_TYPE>         supportedVehicleTypes       (void) const final;
+    AuterionFirmwarePluginFactory();
+    QList<MAV_AUTOPILOT>    supportedFirmwareTypes      () const override;
+    FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) override;
+    QList<MAV_TYPE>         supportedVehicleTypes       () const override;
 private:
     AuterionFirmwarePlugin*   _pluginInstance;
 };

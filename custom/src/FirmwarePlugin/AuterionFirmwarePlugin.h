@@ -18,10 +18,10 @@ class AuterionFirmwarePlugin : public PX4FirmwarePlugin
 public:
     AuterionFirmwarePlugin();
     // FirmwarePlugin overrides
-    AutoPilotPlugin*    autopilotPlugin                     (Vehicle* vehicle) final;
-    QGCCameraManager*   createCameraManager                 (Vehicle *vehicle) override final;
-    QGCCameraControl*   createCameraControl                 (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr) override final;
-    const QVariantList& toolBarIndicators                   (const Vehicle* vehicle) override final;
+    AutoPilotPlugin*    autopilotPlugin                     (Vehicle* vehicle) override;
+    QGCCameraManager*   createCameraManager                 (Vehicle *vehicle) override;
+    QGCCameraControl*   createCameraControl                 (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr) override;
+    const QVariantList& toolBarIndicators                   (const Vehicle* vehicle) override;
 private:
     QVariantList _toolBarIndicatorList;
 };
