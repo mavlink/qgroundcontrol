@@ -1,4 +1,4 @@
-## AGS Release Changelog
+## AGS Changelog
 
 ### March 5 2019
 
