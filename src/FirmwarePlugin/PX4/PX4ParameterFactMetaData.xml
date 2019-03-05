@@ -7602,8 +7602,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-  </group>
-  <group name="Return To Land">
     <parameter default="0" name="RTL_TYPE" type="INT32">
       <short_desc>Return type</short_desc>
       <long_desc>Fly straight to the home location or planned mission landing and land there or use the planned mission to get to those points.</long_desc>
