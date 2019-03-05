@@ -2,6 +2,20 @@
     <qresource prefix="/res">
         <file alias="QGCLogoFull">res/images/toolbar_logo.svg</file>
         <file alias="QGCLogoWhite">res/images/toolbar_logo.svg</file>
+        <file alias="takeoff.svg">res/ToolStrip/takeoff.svg</file>
+        <file alias="land.svg">res/ToolStrip/land.svg</file>
+        <file alias="rtl.svg">res/ToolStrip/rtl.svg</file>
+        <file alias="pause-mission.svg">res/ToolStrip/pause-mission.svg</file>
+        <file alias="action.svg">res/ToolStrip/action.svg</file>
+    </qresource>
+    <qresource prefix="/qmlimages">
+        <file alias="MapSync.svg">res/ToolStrip/MapSync.svg</file>
+        <file alias="MapAddMission.svg">res/ToolStrip/MapAddMission.svg</file>
+        <file alias="MapDrawShape.svg">res/ToolStrip/MapDrawShape.svg</file>
+        <file alias="MapCenter.svg">res/ToolStrip/MapCenter.svg</file>
+        <file alias="ZoomPlus.svg">res/ToolStrip/ZoomPlus.svg</file>
+        <file alias="ZoomMinus.svg">res/ToolStrip/ZoomMinus.svg</file>
+        <file alias="check.svg">res/ToolStrip/check.svg</file>
     </qresource>
     <qresource prefix="/auterion">
         <file alias="AuterionArmedIndicator.qml">res/AuterionArmedIndicator.qml</file>
@@ -60,6 +74,7 @@
     </qresource>
     <qresource prefix="/qml">
         <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolbar/AuterionMainToolBar.qml</file>
+        <file alias="QGroundControl/Controls/ToolStrip.qml">res/ToolStrip/AuterionToolStrip.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
