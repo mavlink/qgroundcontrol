@@ -10,12 +10,12 @@
 
 AuterionFirmwarePluginFactory AuterionFirmwarePluginFactoryImp;
 
-AuterionFirmwarePluginFactory::AuterionFirmwarePluginFactory(void)
-    : _pluginInstance(NULL)
+AuterionFirmwarePluginFactory::AuterionFirmwarePluginFactory()
+    : _pluginInstance(nullptr)
 {
 }
 
-QList<MAV_AUTOPILOT> AuterionFirmwarePluginFactory::supportedFirmwareTypes(void) const
+QList<MAV_AUTOPILOT> AuterionFirmwarePluginFactory::supportedFirmwareTypes() const
 {
     QList<MAV_AUTOPILOT> list;
     list.append(MAV_AUTOPILOT_PX4);
@@ -31,10 +31,10 @@ FirmwarePlugin* AuterionFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AU
         }
         return _pluginInstance;
     }
-    return NULL;
+    return nullptr;
 }
 
-QList<MAV_TYPE> AuterionFirmwarePluginFactory::supportedVehicleTypes(void) const
+QList<MAV_TYPE> AuterionFirmwarePluginFactory::supportedVehicleTypes() const
 {
     QList<MAV_TYPE> mavTypes;
     mavTypes.append(MAV_TYPE_HEXAROTOR);
