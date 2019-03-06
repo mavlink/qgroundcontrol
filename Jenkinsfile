@@ -110,6 +110,13 @@ pipeline {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
             QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
+
+            QGC_CUSTOM_APP_NAME = "AGS"
+            QGC_CUSTOM_GENERIC_NAME = "Auterion Ground Station"
+            QGC_CUSTOM_BINARY_NAME = "AuterionGS"
+            QGC_CUSTOM_LINUX_START_SH = "${env.WORKSPACE}/custom/deploy/qgroundcontrol-start.sh"
+            QGC_CUSTOM_APP_ICON = "${env.WORKSPACE}/custom/res/src/Auterion_Icon.png"
+            QGC_CUSTOM_APP_ICON_NAME = "Auterion_Icon"
           }
           agent {
             /*docker {
@@ -121,7 +128,6 @@ pipeline {
             dockerfile {
               dir 'custom/deploy/ci/linux'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
-
             }
           }
           steps {
@@ -141,7 +147,7 @@ pipeline {
             sh 'cd build; make -j`nproc --all`'
 
             // Create AppImg
-            sh 'custom/deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
+            sh 'deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
             sh 'chmod +x AuterionGS.AppImage'
 
             // Cache build files

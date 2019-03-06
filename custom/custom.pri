@@ -191,6 +191,8 @@ exists($$PWD/custom/custom.pri) {
             $$QGCROOT/custom/android/build.gradle \
             $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.properties \
             $$QGCROOT/custom/android/gradlew.bat
+
+        include(customQGCInstaller.pri)
     }
 
 }
