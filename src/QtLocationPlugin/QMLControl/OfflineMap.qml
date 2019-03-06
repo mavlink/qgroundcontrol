@@ -340,7 +340,7 @@ QGCView {
                          anchors.left:   parent.left
                          anchors.right:  parent.right
                          wrapMode:       Text.WordWrap
-                         text:           qsTr("To enable styled Mapbox maps, enter your mapbox account name.")
+                         text:           qsTr("Enter your Mapbox account name to enable use of Mapbox styled maps.")
                          visible:        _mapboxAccountFact ? _mapboxAccountFact.visible : false
                          font.pointSize: _adjustableFontPointSize
                     }
@@ -357,7 +357,7 @@ QGCView {
                           anchors.left:   parent.left
                           anchors.right:  parent.right
                           wrapMode:       Text.WordWrap
-                          text:           qsTr("To enable styled Mapbox maps, enter your mapbox style ID.")
+                          text:           qsTr("To override map type and use a styled Mapbox map, also enter the style ID (available in Mapbox Studio - the end of the style URL).")
                           visible:        _mapboxStyleFact ? _mapboxStyleFact.visible : false
                           font.pointSize: _adjustableFontPointSize
                      }

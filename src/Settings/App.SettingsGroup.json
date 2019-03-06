@@ -188,8 +188,8 @@
 },
 {
     "name":             "mapboxStyle",
-    "shortDescription": "Mapbox style identificator",
-    "longDescription":  "Mapbox design style for Mapbox maps",
+    "shortDescription": "Mapbox style ID",
+    "longDescription":  "Mapbox design style ID for Mapbox maps",
     "type":             "string",
     "defaultValue":     ""
 },
