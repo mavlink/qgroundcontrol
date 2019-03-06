@@ -225,11 +225,19 @@ public class QGCActivity extends QtActivity
             IntentFilter accessoryFilter = new IntentFilter(ACTION_USB_PERMISSION);
             filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
             registerReceiver(mOpenAccessoryReceiver, accessoryFilter);
-
             probeAccessories();
         } catch(Exception e) {
            Log.e(TAG, "Exception: " + e);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Plug in of USB ACCESSORY triggers only onResume event.
+        // Then we scan if there is actually anything new
+        probeAccessories();
     }
 
     @Override
@@ -701,14 +709,11 @@ public class QGCActivity extends QtActivity
     private void probeAccessories()
     {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-           @Override
-           public void run()
-           {
-//               Log.i(TAG, "probeAccessories");
-               UsbAccessory[] accessories = _usbManager.getAccessoryList();
-               if (accessories != null) {
+        new Thread(new Runnable() {
+            public void run() {
+                Log.i(TAG, "probeAccessories");
+                UsbAccessory[] accessories = _usbManager.getAccessoryList();
+                if (accessories != null) {
                    for (UsbAccessory usbAccessory : accessories) {
                        if (_usbManager.hasPermission(usbAccessory)) {
                            openAccessory(usbAccessory);
@@ -717,9 +722,9 @@ public class QGCActivity extends QtActivity
                            _usbManager.requestPermission(usbAccessory, pendingIntent);
                        }
                    }
-               }
-           }
-        }, 0, 3000);
+                }
+            }
+        }).start();
     }
 }
 
