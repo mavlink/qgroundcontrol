@@ -7,6 +7,8 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
+QGC_SRC=$1
+
 QGC_CUSTOM_APP_NAME="${QGC_CUSTOM_APP_NAME:-QGroundControl}"
 QGC_CUSTOM_GENERIC_NAME="${QGC_CUSTOM_GENERIC_NAME:-Ground Control Station}"
 QGC_CUSTOM_BINARY_NAME="${QGC_CUSTOM_BINARY_NAME:-QGroundControl}"
@@ -14,7 +16,6 @@ QGC_CUSTOM_LINUX_START_SH="${QGC_CUSTOM_LINUX_START_SH:-${QGC_SRC}/deploy/qgroun
 QGC_CUSTOM_APP_ICON="${QGC_CUSTOM_APP_ICON:-${QGC_SRC}/resources/icons/qgroundcontrol.png}"
 QGC_CUSTOM_APP_ICON_NAME="${QGC_CUSTOM_APP_ICON_NAME:-QGroundControl}"
 
-QGC_SRC=$1
 if [ ! -f ${QGC_SRC}/qgroundcontrol.pro ]; then
   echo "please specify path to $(QGC_CUSTOM_APP_NAME) source as the 1st argument"
   exit 1
