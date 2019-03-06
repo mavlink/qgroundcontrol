@@ -180,6 +180,20 @@
     "defaultValue":     ""
 },
 {
+    "name":             "mapboxAccount",
+    "shortDescription": "User account for Mapbox maps",
+    "longDescription":  "Your personal user account for Mapbox maps",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
+    "name":             "mapboxStyle",
+    "shortDescription": "Mapbox style identificator",
+    "longDescription":  "Mapbox design style for Mapbox maps",
+    "type":             "string",
+    "defaultValue":     ""
+},
+{
     "name":             "esriToken",
     "shortDescription": "Access token to Esri maps",
     "longDescription":  "Your personal access token for Esri maps",

@@ -34,6 +34,8 @@ QGCView {
     property string mapKey:             "lastMapType"
 
     property Fact   _mapboxFact:        QGroundControl.settingsManager.appSettings.mapboxToken
+    property Fact _mapboxAccountFact:   QGroundControl.settingsManager.appSettings.mapboxAccount
+    property Fact _mapboxStyleFact:     QGroundControl.settingsManager.appSettings.mapboxStyle
     property Fact   _esriFact:          QGroundControl.settingsManager.appSettings.esriToken
 
     property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
@@ -325,6 +327,40 @@ QGCView {
                         visible:        _mapboxFact ? _mapboxFact.visible : false
                         font.pointSize: _adjustableFontPointSize
                     }
+
+                    Item { width: 1; height: 1; visible: _mapboxAccountFact ? _mapboxAccountFact.visible : false }
+                    QGCLabel { text: qsTr("Mapbox User Name"); visible: _mapboxAccountFact ? _mapboxAccountFact.visible : false }
+                    FactTextField {
+                         fact:               _mapboxAccountFact
+                         visible:            _mapboxAccountFact ? _mapboxAccountFact.visible : false
+                         maximumLength:      256
+                         width:              ScreenTools.defaultFontPixelWidth * 30
+                    }
+                    QGCLabel {
+                         anchors.left:   parent.left
+                         anchors.right:  parent.right
+                         wrapMode:       Text.WordWrap
+                         text:           qsTr("To enable styled Mapbox maps, enter your mapbox account name.")
+                         visible:        _mapboxAccountFact ? _mapboxAccountFact.visible : false
+                         font.pointSize: _adjustableFontPointSize
+                    }
+
+                    Item { width: 1; height: 1; visible: _mapboxStyleFact ? _mapboxStyleFact.visible : false }
+                    QGCLabel { text: qsTr("Mapbox Style ID"); visible: _mapboxStyleFact ? _mapboxStyleFact.visible : false }
+                    FactTextField {
+                          fact:               _mapboxStyleFact
+                          visible:            _mapboxStyleFact ? _mapboxStyleFact.visible : false
+                          maximumLength:      256
+                          width:              ScreenTools.defaultFontPixelWidth * 30
+                     }
+                     QGCLabel {
+                          anchors.left:   parent.left
+                          anchors.right:  parent.right
+                          wrapMode:       Text.WordWrap
+                          text:           qsTr("To enable styled Mapbox maps, enter your mapbox style ID.")
+                          visible:        _mapboxStyleFact ? _mapboxStyleFact.visible : false
+                          font.pointSize: _adjustableFontPointSize
+                     }
 
                     Item { width: 1; height: 1; visible: _esriFact ? _esriFact.visible : false }
                     QGCLabel { text: qsTr("Esri Access Token"); visible: _esriFact ? _esriFact.visible : false }

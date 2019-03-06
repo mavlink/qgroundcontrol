@@ -364,7 +364,19 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     case MapboxHighContrast:
     {
         QString mapBoxToken = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString();
+        QString mapBoxAccount = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxAccount()->rawValue().toString();
+        QString mapBoxStyle = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxStyle()->rawValue().toString();
         if(!mapBoxToken.isEmpty()) {
+
+            if(!mapBoxStyle.isEmpty()) {
+               QString server = "https://api.mapbox.com/styles/v1";
+               server += QString("/%1/%2/tiles/256").arg(mapBoxAccount).arg(mapBoxStyle);
+               server += QString("/%1/%2/%3?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
+               return server;
+            }
+
+            else {
+
             QString server = "https://api.mapbox.com/v4/";
             switch(type) {
                 case MapboxStreets:
@@ -414,7 +426,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
             }
             server += QString("/%1/%2/%3.jpg80?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
             return server;
-        }
+        }}
     }
     break;
     case AirmapElevation:
