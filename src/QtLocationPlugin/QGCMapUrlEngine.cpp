@@ -368,7 +368,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         QString mapBoxStyle = qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxStyle()->rawValue().toString();
         if(!mapBoxToken.isEmpty()) {
 
-            if(!mapBoxStyle.isEmpty()) {
+            if(!mapBoxStyle.isEmpty() && !mapBoxAccount.isEmpty()) {
                QString server = "https://api.mapbox.com/styles/v1";
                server += QString("/%1/%2/tiles/256").arg(mapBoxAccount).arg(mapBoxStyle);
                server += QString("/%1/%2/%3?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
