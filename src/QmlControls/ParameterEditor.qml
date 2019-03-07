@@ -28,9 +28,9 @@ QGCView {
 
     property Fact   _editorDialogFact: Fact { }
     property int    _rowHeight:         ScreenTools.defaultFontPixelHeight * 2
-    property int    _rowWidth:          10      // Dynamic adjusted at runtime
+    property int    _rowWidth:          10 // Dynamic adjusted at runtime
     property bool   _searchFilter:      searchText.text.trim() != ""   ///< true: showing results of search
-    property var    _searchResults              ///< List of parameter names from search results
+    property var    _searchResults      ///< List of parameter names from search results
     property bool   _showRCToParam:     !ScreenTools.isMobile && QGroundControl.multiVehicleManager.activeVehicle.px4Firmware
     property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
     property var    _appSettings:       QGroundControl.settingsManager.appSettings
@@ -69,25 +69,34 @@ QGCView {
             }
 
             QGCLabel {
-                anchors.baseline:   clearButton.baseline
+                anchors.verticalCenter: parent.verticalCenter
                 text:               qsTr("Search:")
             }
 
             QGCTextField {
                 id:                 searchText
-                anchors.baseline:   clearButton.baseline
                 text:               controller.searchText
                 onDisplayTextChanged: controller.searchText = displayText
+                anchors.verticalCenter: parent.verticalCenter
             }
 
             QGCButton {
-                id:         clearButton
                 text:       qsTr("Clear")
                 onClicked: {
                     if(ScreenTools.isMobile) {
                         Qt.inputMethod.hide();
                     }
                     clearTimer.start()
+                }
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            QGCCheckBox {
+                text:       qsTr("Show modified only")
+                checked:    controller.showModifiedOnly
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: {
+                    controller.showModifiedOnly = !controller.showModifiedOnly
                 }
             }
         } // Row - Header
@@ -152,7 +161,7 @@ QGCView {
             pixelAligned:       true
             contentHeight:      groupedViewCategoryColumn.height
             flickableDirection: Flickable.VerticalFlick
-            visible:            !_searchFilter
+            visible:            !_searchFilter && !controller.showModifiedOnly
 
             ColumnLayout {
                 id:             groupedViewCategoryColumn
@@ -172,7 +181,7 @@ QGCView {
                         SectionHeader {
                             id:             categoryHeader
                             text:           category
-                            checked:        controller.currentCategory == text
+                            checked:        controller.currentCategory === text
                             exclusiveGroup: sectionGroup
 
                             onCheckedChanged: {
@@ -192,7 +201,7 @@ QGCView {
                                 width:          ScreenTools.defaultFontPixelWidth * 25
                                 text:           groupName
                                 height:         _rowHeight
-                                checked:        controller.currentGroup == text
+                                checked:        controller.currentGroup === text
                                 exclusiveGroup: buttonGroup
 
                                 readonly property string groupName: modelData
@@ -214,7 +223,7 @@ QGCView {
         QGCListView {
             id:                 editorListView
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-            anchors.left:       _searchFilter ? parent.left : groupScroll.right
+            anchors.left:       (_searchFilter || controller.showModifiedOnly) ? parent.left : groupScroll.right
             anchors.right:      parent.right
             anchors.top:        header.bottom
             anchors.bottom:     parent.bottom
