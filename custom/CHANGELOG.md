@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### March 6 2019
+
+*   Merge upstream master. That brings in the ability to filter paramaters to show only those that changed.
+
 ### March 5 2019
 
 *   Added support for nested customization
