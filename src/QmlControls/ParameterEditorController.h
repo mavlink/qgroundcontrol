@@ -36,7 +36,8 @@ public:
     Q_PROPERTY(QString              currentGroup        MEMBER _currentGroup        NOTIFY currentGroupChanged)
     Q_PROPERTY(QmlObjectListModel*  parameters          MEMBER _parameters          CONSTANT)
     Q_PROPERTY(QStringList          categories          MEMBER _categories          CONSTANT)
-	
+    Q_PROPERTY(bool                 showModifiedOnly    MEMBER _showModifiedOnly    NOTIFY showModifiedOnlyChanged)
+
     Q_INVOKABLE QStringList getGroupsForCategory(const QString& category);
     Q_INVOKABLE QStringList searchParameters(const QString& searchText, bool searchInName=true, bool searchInDescriptions=true);
 	
@@ -54,9 +55,13 @@ signals:
     void currentCategoryChanged(QString category);
     void currentGroupChanged(QString group);
     void showErrorMessage(const QString& errorMsg);
+    void showModifiedOnlyChanged();
 
 private slots:
     void _updateParameters(void);
+
+private:
+    bool _shouldShow(Fact *fact);
 
 private:
     QStringList         _categories;
@@ -66,6 +71,7 @@ private:
     QmlObjectListModel* _parameters;
     ParameterManager*   _parameterMgr;
     QString             _componentCategoryPrefix;
+    bool                _showModifiedOnly;
 };
 
 #endif

@@ -10,6 +10,15 @@ int JoystickAndroid::ACTION_DOWN;
 int JoystickAndroid::ACTION_UP;
 QMutex JoystickAndroid::m_mutex;
 
+static void clear_jni_exception()
+{
+    QAndroidJniEnvironment jniEnv;
+    if (jniEnv->ExceptionCheck()) {
+        jniEnv->ExceptionDescribe();
+        jniEnv->ExceptionClear();
+    }
+}
+
 JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonCount, int id, MultiVehicleManager* multiVehicleManager)
     : Joystick(name,axisCount,buttonCount,0,multiVehicleManager)
     , deviceId(id)
@@ -30,12 +39,13 @@ JoystickAndroid::JoystickAndroid(const QString& name, int axisCount, int buttonC
     btnValue = new bool[_buttonCount];
     btnCode = new int[_buttonCount];
     int c = 0;
-    for (i=0;i<_androidBtnListCount;i++)
+    for (i = 0; i < _androidBtnListCount; i++) {
         if (supportedButtons[i]) {
             btnValue[c] = false;
             btnCode[c] = _androidBtnList[i];
             c++;
         }
+    }
 
     env->ReleaseBooleanArrayElements(jSupportedButtons, supportedButtons, 0);
 
@@ -147,10 +157,10 @@ bool JoystickAndroid::handleKeyEvent(jobject event) {
     const int action = ev.callMethod<jint>("getAction", "()I");
     const int keyCode = ev.callMethod<jint>("getKeyCode", "()I");
 
-    for (int i=0;i<_buttonCount;i++) {
-        if (btnCode[i]==keyCode) {
-            if (action==ACTION_DOWN) btnValue[i] = true;
-            if (action==ACTION_UP) btnValue[i] = false;
+    for (int i = 0; i <_buttonCount; i++) {
+        if (btnCode[i] == keyCode) {
+            if (action == ACTION_DOWN) btnValue[i] = true;
+            if (action == ACTION_UP)   btnValue[i] = false;
             return true;
         }
     }
@@ -163,9 +173,9 @@ bool JoystickAndroid::handleGenericMotionEvent(jobject event) {
     const int _deviceId = ev.callMethod<jint>("getDeviceId", "()I");
     if (_deviceId!=deviceId) return false;
  
-    for (int i=0;i<_axisCount;i++) {
+    for (int i = 0; i <_axisCount; i++) {
         const float v = ev.callMethod<jfloat>("getAxisValue", "(I)F",axisCode[i]);
-        axisValue[i] = (int)(v*32767.f);
+        axisValue[i] = static_cast<int>((v*32767.f));
     }
     return true;
 }
@@ -215,7 +225,8 @@ bool JoystickAndroid::init(JoystickManager *manager) {
     //int *JoystickAndroid::
     _androidBtnList = ret;
 
-    for (i=1;i<=16;i++) {
+    clear_jni_exception();
+    for (i = 1; i <= 16; i++) {
         QString name = "KEYCODE_BUTTON_"+QString::number(i);
         ret[i-1] = QAndroidJniObject::getStaticField<jint>("android/view/KeyEvent", name.toStdString().c_str());
     }
@@ -267,14 +278,11 @@ void JoystickAndroid::setNativeMethods(JoystickManager *manager)
         {"nativeUpdateAvailableJoysticks", "()V", reinterpret_cast<void *>(jniUpdateAvailableJoysticks)}
     };
 
+    clear_jni_exception();
     QAndroidJniEnvironment jniEnv;
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
-
     jclass objectClass = jniEnv->FindClass(kJniClassName);
     if(!objectClass) {
+        clear_jni_exception();
         qWarning() << "Couldn't find class:" << kJniClassName;
         return;
     }
@@ -286,9 +294,5 @@ void JoystickAndroid::setNativeMethods(JoystickManager *manager)
     } else {
         qCDebug(JoystickLog) << "Native Functions Registered";
     }
-
-    if (jniEnv->ExceptionCheck()) {
-        jniEnv->ExceptionDescribe();
-        jniEnv->ExceptionClear();
-    }
+    clear_jni_exception();
 }
