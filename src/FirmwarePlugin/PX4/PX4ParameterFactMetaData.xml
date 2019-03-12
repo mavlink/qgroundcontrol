@@ -647,15 +647,6 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter default="0" name="COM_DL_REG_T" type="INT32">
-      <short_desc>Datalink regain time threshold</short_desc>
-      <long_desc>After a data link loss: after this this amount of seconds with a healthy datalink the 'datalink loss' flag is set back to false</long_desc>
-      <min>0</min>
-      <max>3</max>
-      <unit>s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
     <parameter default="5.0" name="COM_EF_C2T" type="FLOAT">
       <short_desc>Engine Failure Current/Throttle Threshold</short_desc>
       <long_desc>Engine failure triggers only below this current value</long_desc>
@@ -3825,6 +3816,11 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="5">Hold mode</value>
       </values>
     </parameter>
+    <parameter default="0" name="COM_OBS_AVOID" type="INT32">
+      <short_desc>Flag to enable obstacle avoidance
+Temporary Parameter to enable interface testing</short_desc>
+      <boolean />
+    </parameter>
     <parameter default="0" name="COM_POSCTL_NAVL" type="INT32">
       <short_desc>Position control navigation loss response</short_desc>
       <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
@@ -4626,11 +4622,6 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <max>400</max>
       <unit>deg/s</unit>
       <decimal>1</decimal>
-    </parameter>
-    <parameter default="0" name="MPC_OBS_AVOID" type="INT32">
-      <short_desc>Flag to enable obstacle avoidance
-Temporary Parameter to enable interface testing</short_desc>
-      <boolean />
     </parameter>
     <parameter default="1" name="MPC_POS_MODE" type="INT32">
       <short_desc>Manual-Position control sub-mode</short_desc>
