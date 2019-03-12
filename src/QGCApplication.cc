@@ -90,6 +90,7 @@
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
 #include "FirmwareImage.h"
+#include "MavlinkConsoleController.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -101,7 +102,6 @@
 #include "FirmwareUpgradeController.h"
 #include "MainWindow.h"
 #include "GeoTagController.h"
-#include "MavlinkConsoleController.h"
 #include "GPS/GPSManager.h"
 #endif
 
@@ -458,8 +458,8 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<FirmwareUpgradeController>      (kQGCControllers,                       1, 0, "FirmwareUpgradeController");
 #endif
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
-    qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
 #endif
+    qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
 
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
