@@ -136,7 +136,7 @@ TaisyncManager::setToolbox(QGCToolbox* toolbox)
     {
         //-- Radio Channel
         QStringList enums;
-        for(int i = 0; i < 13; i++) {
+        for(int i = 0; i < 14; i++) {
             enums.append(QString("ch%1").arg(i));
         }
         FactMetaData* metaData = _createMetadata(kRADIO_CHANNEL, enums);
