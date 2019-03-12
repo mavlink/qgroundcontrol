@@ -28,6 +28,10 @@ AnalyzePage {
 
     property bool isLoaded: false
 
+    MavlinkConsoleController {
+        id: conController
+    }
+
     Component {
         id: pageComponent
 
@@ -90,6 +94,7 @@ AnalyzePage {
                     id:               command
                     Layout.fillWidth: true
                     placeholderText:  "Enter Commands here..."
+                    inputMethodHints: Qt.ImhNoAutoUppercase
 
                     function sendCommand() {
                         conController.sendCommand(text)
@@ -98,10 +103,10 @@ AnalyzePage {
                     onAccepted: sendCommand()
 
                     Keys.onPressed: {
-                        if (event.key == Qt.Key_Up) {
+                        if (event.key === Qt.Key_Up) {
                             text = conController.historyUp(text);
                             event.accepted = true;
-                        } else if (event.key == Qt.Key_Down) {
+                        } else if (event.key === Qt.Key_Down) {
                             text = conController.historyDown(text);
                             event.accepted = true;
                         }
