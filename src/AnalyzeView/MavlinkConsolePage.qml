@@ -90,10 +90,13 @@ AnalyzePage {
                     id:               command
                     Layout.fillWidth: true
                     placeholderText:  "Enter Commands here..."
-                    onAccepted: {
+
+                    function sendCommand() {
                         conController.sendCommand(text)
                         text = ""
                     }
+                    onAccepted: sendCommand()
+
                     Keys.onPressed: {
                         if (event.key == Qt.Key_Up) {
                             text = conController.historyUp(text);
@@ -103,6 +106,14 @@ AnalyzePage {
                             event.accepted = true;
                         }
                     }
+                }
+
+                QGCButton {
+                    id:        sendButton
+                    text:      qsTr("Send")
+                    visible:   ScreenTools.isMobile
+
+                    onClicked: command.sendCommand()
                 }
 
                 QGCButton {
