@@ -38,7 +38,7 @@ Item {
     readonly property string _settingsViewSource:   "AppSettings.qml"
     readonly property string _setupViewSource:      "SetupView.qml"
     readonly property string _planViewSource:       "PlanView.qml"
-    readonly property string _analyzeViewSource:    "AnalyzeView.qml"
+    readonly property string _analyzeViewSource:    !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
 
     onHeightChanged: {
         //-- We only deal with the available height if within the Fly or Plan view
