@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### March 11 2019
+
+*   Merge upstream master. That brings Taisync fixes and additions from Matej.
+
 ### March 6 2019
 
 *   Merge upstream master. That brings in the ability to filter paramaters to show only those that changed.
