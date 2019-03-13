@@ -1149,6 +1149,23 @@ contains (DEFINES, QGC_GST_TAISYNC_ENABLED) {
 }
 
 #-------------------------------------------------------------------------------------
+# Microhard
+contains (DEFINES, QGC_GST_MICROHARD_ENABLED) {
+    INCLUDEPATH += \
+        src/Microhard
+
+    HEADERS += \
+        src/Microhard/MicrohardManager.h \
+        src/Microhard/MicrohardHandler.h \
+        src/Microhard/MicrohardSettings.h \
+
+    SOURCES += \
+        src/Microhard/MicrohardManager.cc \
+        src/Microhard/MicrohardHandler.cc \
+        src/Microhard/MicrohardSettings.cc \
+}
+
+#-------------------------------------------------------------------------------------
 # AirMap
 
 contains (DEFINES, QGC_AIRMAP_ENABLED) {

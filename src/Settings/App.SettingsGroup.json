@@ -221,4 +221,18 @@
     "type":             "bool",
     "defaultValue":     true
 }
-]
+,
+{
+    "name":             "enableMicrohard",
+    "shortDescription": "Enable Microhard Module Support",
+    "longDescription":  "Enable Microhard Module Support",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "enableMicrohardVideo",
+    "shortDescription": "Enable Microhard Video Support",
+    "longDescription":  "Enable Microhard Video Support",
+    "type":             "bool",
+    "defaultValue":     true
+}]
