@@ -80,6 +80,17 @@ Item {
         vehicleStatus.visible = !vehicleStatus.visible
     }
 
+    function secondsToHHMMSS(timeS) {
+        var sec_num = parseInt(timeS, 10);
+        var hours   = Math.floor(sec_num / 3600);
+        var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+        var seconds = sec_num - (hours * 3600) - (minutes * 60);
+        if (hours   < 10) {hours   = "0"+hours;}
+        if (minutes < 10) {minutes = "0"+minutes;}
+        if (seconds < 10) {seconds = "0"+seconds;}
+        return hours+':'+minutes+':'+seconds;
+    }
+
     Timer {
         id:        connectionTimer
         interval:  5000
@@ -396,7 +407,11 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
         }
         QGCLabel {
-            text:                   _activeVehicle ? _activeVehicle.getFact("flightTime").value : "00:00:00"
+            text: {
+                if(_activeVehicle)
+                    return secondsToHHMMSS(_activeVehicle.getFact("flightTime").value)
+                return "00:00:00"
+            }
             color:                  _indicatorsColor
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
