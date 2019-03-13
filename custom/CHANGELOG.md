@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### March 13 2019
+
+*   Formatting elapsed time as hh:mm:ss instead of sss.s
+
 ### March 11 2019
 
 *   Merge upstream master. That brings Taisync fixes and additions from Matej.
