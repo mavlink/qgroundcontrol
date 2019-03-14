@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -8,6 +8,7 @@
  ****************************************************************************/
 
 #include "MicrohardSettings.h"
+#include "MicrohardManager.h"
 #include "SettingsManager.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
@@ -19,11 +20,11 @@ MicrohardSettings::MicrohardSettings(QObject* parent)
 }
 
 //-----------------------------------------------------------------------------
-bool MicrohardSettings::start()
+bool
+MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
-    return false;
-//    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(qgcApp()->toolbox()->microhardManager()->remoteIPAddr()));
+    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(qgcApp()->toolbox()->microhardManager()->remoteIPAddr()));
 }
 
 //-----------------------------------------------------------------------------
@@ -31,52 +32,6 @@ bool
 MicrohardSettings::requestLinkStatus()
 {
     return _request("/v1/baseband.json");
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestDevInfo()
-{
-    return _request("/v1/device.json");
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestFreqScan()
-{
-    return _request("/v1/freqscan.json");
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestVideoSettings()
-{
-    return false;
-//    return _request(kVideoURI);
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestRadioSettings()
-{
-    return false;
-//    return _request(kRadioURI);
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestIPSettings()
-{
-    return false;
-//    return _request(kIPAddrURI);
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestRTSPURISettings()
-{
-    return false;
-//    return _request(kRTSPURI);
 }
 
 //-----------------------------------------------------------------------------
@@ -111,38 +66,6 @@ MicrohardSettings::_post(const QString& post, const QString &postPayload)
 
 //-----------------------------------------------------------------------------
 bool
-MicrohardSettings::setRadioSettings(const QString& mode, const QString& channel)
-{
-//    static const char* kRadioPost = "{\"mode\":\"%1\",\"freq\":\"%2\"}";
-//    QString post = QString(kRadioPost).arg(mode).arg(channel);
-    return false;
-//    return _post(kRadioURI, post);
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::setVideoSettings(const QString& output, const QString& mode, const QString& rate)
-{
-    return false;
-/*
-    static const char* kVideoPost = "{\"decode\":\"%1\",\"mode\":\"%2\",\"maxbitrate\":\"%3\"}";
-    QString post = QString(kVideoPost).arg(output).arg(mode).arg(rate);
-    return _post(kVideoURI, post);
-    */
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::setRTSPSettings(const QString& uri, const QString& account, const QString& password)
-{
-    return false;
-//    static const char* kRTSPPost = "{\"rtspURI\":\"%1\",\"account\":\"%2\",\"passwd\":\"%3\"}";
-//    QString post = QString(kRTSPPost).arg(uri).arg(account).arg(password);
-//    return _post(kRTSPURI, post);
-}
-
-//-----------------------------------------------------------------------------
-bool
 MicrohardSettings::setIPSettings(const QString& localIP, const QString& remoteIP, const QString& netMask)
 {
     return false;
@@ -156,6 +79,8 @@ void
 MicrohardSettings::_readBytes()
 {
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
+    QString s_data = QString::fromStdString(bytesIn.toStdString());
+
     //-- Go straight to Json payload
     int idx = bytesIn.indexOf('{');
     //-- We may receive more than one response within one TCP packet.
