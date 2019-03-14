@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -11,7 +11,7 @@
 
 #include "QGCLoggingCategory.h"
 
-#include <QTcpServer>
+#include <QHostAddress>
 #include <QTcpSocket>
 
 #define MICROHARD_SETTINGS_PORT   23
@@ -28,13 +28,11 @@ public:
     ~MicrohardHandler                   ();
     virtual bool start                  () = 0;
     virtual bool close                  ();
-    virtual bool isServerRunning        () { return (_serverMode && _tcpServer); }
 
 protected:
     virtual bool    _start              (uint16_t port, QHostAddress addr = QHostAddress::AnyIPv4);
 
 protected slots:
-    virtual void    _newConnection      ();
     virtual void    _socketDisconnected ();
     virtual void    _readBytes          () = 0;
 
@@ -43,7 +41,5 @@ signals:
     void disconnected                   ();
 
 protected:
-    bool            _serverMode = true;
-    QTcpServer*     _tcpServer  = nullptr;
     QTcpSocket*     _tcpSocket  = nullptr;
 };

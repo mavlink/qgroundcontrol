@@ -104,7 +104,7 @@ private:
     TaisyncManager*             _taisyncManager         = nullptr;
 #endif
 #if defined(QGC_GST_MICROHARD_ENABLED)
-    MicrohardManager*             _microhardManager         = nullptr;
+    MicrohardManager*           _microhardManager       = nullptr;
 #endif
     friend class QGCApplication;
 };

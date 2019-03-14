@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -15,18 +15,9 @@ class MicrohardSettings : public MicrohardHandler
 {
     Q_OBJECT
 public:
-    explicit MicrohardSettings            (QObject* parent = nullptr);
+    explicit MicrohardSettings          (QObject* parent = nullptr);
     bool    start                       () override;
     bool    requestLinkStatus           ();
-    bool    requestDevInfo              ();
-    bool    requestFreqScan             ();
-    bool    requestVideoSettings        ();
-    bool    requestRadioSettings        ();
-    bool    requestIPSettings           ();
-    bool    requestRTSPURISettings      ();
-    bool    setRadioSettings            (const QString& mode, const QString& channel);
-    bool    setVideoSettings            (const QString& output, const QString& mode, const QString& rate);
-    bool    setRTSPSettings             (const QString& uri, const QString& account, const QString& password);
     bool    setIPSettings               (const QString& localIP, const QString& remoteIP, const QString& netMask);
 
 signals:
