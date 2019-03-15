@@ -36,7 +36,6 @@ pipeline {
           post {
             always {
               archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-              archiveArtifacts artifacts: 'build/release/package/**/*', onlyIfSuccessful: true
             }
             cleanup {
               sh 'git clean -ff -x -d .'

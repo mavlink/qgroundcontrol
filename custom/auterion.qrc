@@ -7,6 +7,7 @@
         <file alias="rtl.svg">res/ToolStrip/rtl.svg</file>
         <file alias="pause-mission.svg">res/ToolStrip/pause-mission.svg</file>
         <file alias="action.svg">res/ToolStrip/action.svg</file>
+        <file alias="resources/icons/qgroundcontrol.ico">Windows/icon.ico</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="MapSync.svg">res/ToolStrip/MapSync.svg</file>

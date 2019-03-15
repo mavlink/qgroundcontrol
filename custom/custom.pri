@@ -195,4 +195,13 @@ exists($$PWD/custom/custom.pri) {
         include(customQGCInstaller.pri)
     }
 
+    #-------------------------------------------------------------------------------------
+    # Custom setup
+    CONFIG += QGC_DISABLE_BUILD_SETUP
+    include($$QGCROOT/QGCSetup.pri)
+    LinxuBuild {
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/deploy/qgroundcontrol.desktop $$DESTDIR
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/res/src/Auterion_Icon.png $$DESTDIR/qgroundcontrol.png
+    }
 }
