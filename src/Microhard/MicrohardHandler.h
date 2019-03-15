@@ -33,12 +33,11 @@ protected:
     virtual bool    _start              (uint16_t port, QHostAddress addr = QHostAddress::AnyIPv4);
 
 protected slots:
-    virtual void    _socketDisconnected ();
     virtual void    _readBytes          () = 0;
 
 signals:
     void connected                      ();
-    void disconnected                   ();
+    void rssiUpdated                    (int rssi);
 
 protected:
     QTcpSocket*     _tcpSocket  = nullptr;

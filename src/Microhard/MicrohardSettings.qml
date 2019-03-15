@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -57,13 +57,6 @@ QGCView {
                 width:              _qgcView.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
-                QGCLabel {
-                    text:           qsTr("Reboot ground unit for changes to take effect.")
-                    color:          qgcPal.colorOrange
-                    visible:        QGroundControl.microhardManager.needReboot
-                    font.family:    ScreenTools.demiboldFontFamily
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                }
                 //-----------------------------------------------------------------
                 //-- General
                 Item {
@@ -92,7 +85,7 @@ QGCView {
                             FactCheckBox {
                                 text:       qsTr("Enable Microhard")
                                 fact:       _microhardEnabledFact
-                                enabled:    !QGroundControl.microhardManager.needReboot
+                                enabled:    true
                                 visible:    _microhardEnabledFact.visible
                             }
                         }
@@ -198,7 +191,7 @@ QGCView {
                             QGCTextField {
                                 id:             localIP
                                 text:           QGroundControl.microhardManager.localIPAddr
-                                enabled:        !QGroundControl.microhardManager.needReboot
+                                enabled:        true
                                 inputMethodHints:    Qt.ImhFormattedNumbersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -208,7 +201,7 @@ QGCView {
                             QGCTextField {
                                 id:             remoteIP
                                 text:           QGroundControl.microhardManager.remoteIPAddr
-                                enabled:        !QGroundControl.microhardManager.needReboot
+                                enabled:        true
                                 inputMethodHints:    Qt.ImhFormattedNumbersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -218,7 +211,7 @@ QGCView {
                             QGCTextField {
                                 id:             netMask
                                 text:           QGroundControl.microhardManager.netMask
-                                enabled:        !QGroundControl.microhardManager.needReboot
+                                enabled:        true
                                 inputMethodHints:    Qt.ImhFormattedNumbersOnly
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -228,7 +221,7 @@ QGCView {
                             QGCTextField {
                                 id:             configPassword
                                 text:           QGroundControl.microhardManager.configPassword
-                                enabled:        !QGroundControl.microhardManager.needReboot
+                                enabled:        true
                                 inputMethodHints:    Qt.ImhHiddenText
                                 Layout.minimumWidth: _valueWidth
                             }
@@ -244,35 +237,19 @@ QGCView {
                                 return false
                             }
                             function testEnabled() {
-                                if(localIP.text   === QGroundControl.microhardManager.localIPAddr &&
-                                    remoteIP.text === QGroundControl.microhardManager.remoteIPAddr &&
-                                    netMask.text  === QGroundControl.microhardManager.netMask)
+                                if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
+                                    remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
+                                    netMask.text         === QGroundControl.microhardManager.netMask &&
+                                    configPassword.text  === QGroundControl.microhardManager.configPassword)
                                     return false
                                 if(!validateIPaddress(localIP.text))  return false
                                 if(!validateIPaddress(remoteIP.text)) return false
                                 if(!validateIPaddress(netMask.text))  return false
                                 return true
                             }
-                            enabled:            testEnabled() && !QGroundControl.microhardManager.needReboot
+                            enabled:            testEnabled()
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
-                            onClicked: {
-                                setIPDialog.open()
-                            }
-                            MessageDialog {
-                                id:                 setIPDialog
-                                icon:               StandardIcon.Warning
-                                standardButtons:    StandardButton.Yes | StandardButton.No
-                                title:              qsTr("Set Network Settings")
-                                text:               qsTr("Once changed, you will need to reboot the ground unit for the changes to take effect. The local IP address must match the one entered (%1).\n\nConfirm change?").arg(localIP.text)
-                                onYes: {
-                                    QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, netMask.text)
-                                    setIPDialog.close()
-                                }
-                                onNo: {
-                                    setIPDialog.close()
-                                }
-                            }
                         }
                     }
                 }

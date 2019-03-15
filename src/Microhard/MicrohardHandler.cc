@@ -60,16 +60,3 @@ MicrohardHandler::_start(uint16_t port, QHostAddress addr)
 
     return true;
 }
-
-//-----------------------------------------------------------------------------
-void
-MicrohardHandler::_socketDisconnected()
-{
-    if(_tcpSocket) {
-        qCDebug(MicrohardLog) << "Microhard TCP Connection Closed on port" << _tcpSocket->localPort();
-        _tcpSocket->close();
-        _tcpSocket->deleteLater();
-        _tcpSocket = nullptr;
-    }
-    emit disconnected();
-}

@@ -15,6 +15,8 @@
 
 #include <QSettings>
 
+#define LONG_TIMEOUT 5000
+
 static const char *kMICROHARD_GROUP     = "Microhard";
 static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
@@ -27,6 +29,8 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
 {
     connect(&_workTimer, &QTimer::timeout, this, &MicrohardManager::_checkMicrohard);
     _workTimer.setSingleShot(true);
+    connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout);
+    connect(&_remTimer, &QTimer::timeout, this, &MicrohardManager::_remTimeout);
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
     _localIPAddr    = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
@@ -46,10 +50,15 @@ MicrohardManager::~MicrohardManager()
 void
 MicrohardManager::_close()
 {
-    if(_mhSettings) {
-        _mhSettings->close();
-        _mhSettings->deleteLater();
-        _mhSettings = nullptr;
+    if(_mhSettingsLoc) {
+        _mhSettingsLoc->close();
+        _mhSettingsLoc->deleteLater();
+        _mhSettingsLoc = nullptr;
+    }
+    if(_mhSettingsRem) {
+        _mhSettingsRem->close();
+        _mhSettingsRem->deleteLater();
+        _mhSettingsRem = nullptr;
     }
 }
 
@@ -99,41 +108,28 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 
 //-----------------------------------------------------------------------------
 bool
-MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_)
+MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_, QString cfgPassword_)
 {
-    bool res = false;
-    if(_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_) {
-        //-- If we are connected to the Microhard
-        if(_isConnected) {
-            if(_mhSettings) {
-                //-- Change IP settings
-                res = _mhSettings->setIPSettings(localIP_, remoteIP_, netMask_);
-                if(res) {
-                    _needReboot = true;
-                    emit needRebootChanged();
-                }
-            }
-        } else {
-            //-- We're not connected. Record the change and restart.
-            _localIPAddr  = localIP_;
-            _remoteIPAddr = remoteIP_;
-            _netMask      = netMask_;
-            _reset();
-            res = true;
-        }
-        if(res) {
-            QSettings settings;
-            settings.beginGroup(kMICROHARD_GROUP);
-            settings.setValue(kLOCAL_IP, localIP_);
-            settings.setValue(kREMOTE_IP, remoteIP_);
-            settings.setValue(kNET_MASK, netMask_);
-            settings.endGroup();
-        }
-    } else {
-        //-- Nothing to change
-        res = true;
+    if (_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_ || _configPassword != cfgPassword_) {
+        _localIPAddr    = localIP_;
+        _remoteIPAddr   = remoteIP_;
+        _netMask        = netMask_;
+        _configPassword = cfgPassword_;
+
+        QSettings settings;
+        settings.beginGroup(kMICROHARD_GROUP);
+        settings.setValue(kLOCAL_IP, localIP_);
+        settings.setValue(kREMOTE_IP, remoteIP_);
+        settings.setValue(kNET_MASK, netMask_);
+        settings.setValue(kCFG_PASSWORD, cfgPassword_);
+        settings.endGroup();
+
+        _reset();
+
+        return true;
     }
-    return res;
+
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -142,13 +138,16 @@ MicrohardManager::_setEnabled()
 {
     bool enable = _appSettings->enableMicrohard()->rawValue().toBool();
     if(enable) {
-        if(!_mhSettings) {
-            _mhSettings = new MicrohardSettings(this);
-            connect(_mhSettings, &MicrohardSettings::updateSettings, this, &MicrohardManager::_updateSettings);
-            connect(_mhSettings, &MicrohardSettings::connected,      this, &MicrohardManager::_connected);
-            connect(_mhSettings, &MicrohardSettings::disconnected,   this, &MicrohardManager::_disconnected);
+        if(!_mhSettingsLoc) {
+            _mhSettingsLoc = new MicrohardSettings(localIPAddr(), this);
+            connect(_mhSettingsLoc, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedLoc);
+            connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedLoc);
         }
-        _reqMask = static_cast<uint32_t>(REQ_ALL);
+        if(!_mhSettingsRem) {
+            _mhSettingsRem = new MicrohardSettings(remoteIPAddr(), this);
+            connect(_mhSettingsRem, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedRem);
+            connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedRem);
+        }
         _workTimer.start(1000);
     } else {
         //-- Stop everything
@@ -160,27 +159,70 @@ MicrohardManager::_setEnabled()
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::_connected()
+MicrohardManager::_connectedLoc()
 {
-    qCDebug(MicrohardLog) << "Microhard Settings Connected";
+    qCDebug(MicrohardLog) << "GND Microhard Settings Connected";
     _isConnected = true;
+    _locTimer.start(LONG_TIMEOUT);
     emit connectedChanged();
-    _needReboot = false;
-    emit needRebootChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::_disconnected()
+MicrohardManager::_connectedRem()
 {
-    qCDebug(MicrohardLog) << "Microhard Settings Disconnected";
-    _isConnected = false;
-    emit connectedChanged();
-    _needReboot = false;
-    emit needRebootChanged();
-    _linkConnected = false;
+    qCDebug(MicrohardLog) << "AIR Microhard Settings Connected";
+    _linkConnected = true;
+    _remTimer.start(LONG_TIMEOUT);
     emit linkConnectedChanged();
-    _reset();
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::_rssiUpdatedLoc(int rssi)
+{
+    _downlinkRSSI = rssi;
+    _locTimer.stop();
+    _locTimer.start(LONG_TIMEOUT);
+    emit linkChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::_rssiUpdatedRem(int rssi)
+{
+    _uplinkRSSI = rssi;
+    _remTimer.stop();
+    _remTimer.start(LONG_TIMEOUT);
+    emit linkChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::_locTimeout()
+{
+    _locTimer.stop();
+    _isConnected = false;
+    if(_mhSettingsLoc) {
+        _mhSettingsLoc->close();
+        _mhSettingsLoc->deleteLater();
+        _mhSettingsLoc = nullptr;
+    }
+    emit connectedChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::_remTimeout()
+{
+    _remTimer.stop();
+    _linkConnected = false;
+    if(_mhSettingsRem) {
+        _mhSettingsRem->close();
+        _mhSettingsRem->deleteLater();
+        _mhSettingsRem = nullptr;
+    }
+    emit linkConnectedChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -188,93 +230,21 @@ void
 MicrohardManager::_checkMicrohard()
 {
     if(_enabled) {
-        if(!_isConnected) {
-            if(_mhSettings) {
-               _mhSettings->start();
-            }
-        } else {
-            //qCDebug(MicrohardVerbose) << bin << _reqMask;
-            while(true) {
-                if (_reqMask & REQ_LINK_STATUS) {
-                    _mhSettings->requestLinkStatus();
-                    break;
-                }
-                //-- Check link status
-                if(_timeoutTimer.elapsed() > 3000) {
-                    //-- Give up and restart
-                    _disconnected();
-                    break;
-                }
-                //-- If it's been too long since we last heard, ping it.
-                if(_timeoutTimer.elapsed() > 1000) {
-                    _mhSettings->requestLinkStatus();
-                    break;
-                }
-                break;
-            }
+        if(!_mhSettingsLoc || !_mhSettingsRem) {
+            _setEnabled();
+            return;
         }
-        _workTimer.start(_isConnected ? 500 : 5000);
-    }
-}
 
-//-----------------------------------------------------------------------------
-void
-MicrohardManager::_updateSettings(QByteArray jSonData)
-{
-    _timeoutTimer.start();
-    qCDebug(MicrohardVerbose) << jSonData;
-    QJsonParseError jsonParseError;
-    QJsonDocument doc = QJsonDocument::fromJson(jSonData, &jsonParseError);
-    if (jsonParseError.error != QJsonParseError::NoError) {
-        qWarning() <<  "Unable to parse Microhard response:" << jsonParseError.errorString() << jsonParseError.offset;
-        return;
-    }
-    QJsonObject jObj = doc.object();
-    //-- Link Status?
-    if(jSonData.contains("\"flight\":")) {
-        _reqMask &= ~static_cast<uint32_t>(REQ_LINK_STATUS);
-        bool tlinkConnected  = jObj["flight"].toString("") == "online";
-        if(tlinkConnected != _linkConnected) {
-           _linkConnected = tlinkConnected;
-           emit linkConnectedChanged();
+        if(!_isConnected) {
+            _mhSettingsLoc->start();
+        } else {
+            _mhSettingsLoc->getStatus();
         }
-        int     tdownlinkRSSI   = jObj["radiorssi"].toInt(_downlinkRSSI);
-        int     tuplinkRSSI     = jObj["hdrssi"].toInt(_uplinkRSSI);
-        if(_downlinkRSSI != tdownlinkRSSI || _uplinkRSSI != tuplinkRSSI) {
-            _downlinkRSSI   = tdownlinkRSSI;
-            _uplinkRSSI     = tuplinkRSSI;
-            emit linkChanged();
-        }
-    //-- IP Address Settings?
-    } else if(jSonData.contains("\"usbEthIp\":")) {
-        QString value;
-        bool changed = false;
-        value = jObj["ipaddr"].toString(_localIPAddr);
-        if(value != _localIPAddr) {
-            _localIPAddr = value;
-            changed = true;
-            emit localIPAddrChanged();
-        }
-        value = jObj["netmask"].toString(_netMask);
-        if(value != _netMask) {
-            _netMask = value;
-            changed = true;
-            emit netMaskChanged();
-        }
-        value = jObj["usbEthIp"].toString(_remoteIPAddr);
-        if(value != _remoteIPAddr) {
-            _remoteIPAddr = value;
-            changed = true;
-            emit remoteIPAddrChanged();
-        }
-        if(changed) {
-            QSettings settings;
-            settings.beginGroup(kMICROHARD_GROUP);
-            settings.setValue(kLOCAL_IP,     _localIPAddr);
-            settings.setValue(kREMOTE_IP,    _remoteIPAddr);
-            settings.setValue(kNET_MASK,     _netMask);
-            settings.setValue(kCFG_PASSWORD, _configPassword);
-            settings.endGroup();
+        if(!_linkConnected) {
+            _mhSettingsRem->start();
+        } else {
+            _mhSettingsRem->getStatus();
         }
     }
+    _workTimer.start(_isConnected ? 1000 : LONG_TIMEOUT);
 }

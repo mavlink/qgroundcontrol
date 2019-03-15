@@ -28,7 +28,6 @@ public:
 
     Q_PROPERTY(bool         connected           READ connected                                  NOTIFY connectedChanged)
     Q_PROPERTY(bool         linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
-    Q_PROPERTY(bool         needReboot          READ needReboot                                 NOTIFY needRebootChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                 NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
     Q_PROPERTY(QString      localIPAddr         READ localIPAddr                                NOTIFY localIPAddrChanged)
@@ -36,7 +35,7 @@ public:
     Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
 
-    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgPassword);
 
     explicit MicrohardManager                   (QGCApplication* app, QGCToolbox* toolbox);
     ~MicrohardManager                           () override;
@@ -45,7 +44,6 @@ public:
 
     bool        connected                       () { return _isConnected; }
     bool        linkConnected                   () { return _linkConnected; }
-    bool        needReboot                      () { return _needReboot; }
     int         uplinkRSSI                      () { return _downlinkRSSI; }
     int         downlinkRSSI                    () { return _uplinkRSSI; }
     QString     localIPAddr                     () { return _localIPAddr; }
@@ -63,15 +61,17 @@ signals:
     void    localIPAddrChanged              ();
     void    remoteIPAddrChanged             ();
     void    netMaskChanged                  ();
-    void    needRebootChanged               ();
     void    configPasswordChanged           ();
 
 private slots:
-    void    _connected                      ();
-    void    _disconnected                   ();
+    void    _connectedLoc                   ();
+    void    _rssiUpdatedLoc                 (int rssi);
+    void    _connectedRem                   ();
+    void    _rssiUpdatedRem                 (int rssi);
     void    _checkMicrohard                 ();
-    void    _updateSettings                 (QByteArray jSonData);
     void    _setEnabled                     ();
+    void    _locTimeout                     ();
+    void    _remTimeout                     ();
 
 private:
     void    _close                          ();
@@ -79,27 +79,16 @@ private:
     FactMetaData *_createMetadata           (const char *name, QStringList enums);
 
 private:
-
-    enum {
-        REQ_LINK_STATUS         = 1,
-        REQ_DEV_INFO            = 2,
-        REQ_FREQ_SCAN           = 4,
-        REQ_VIDEO_SETTINGS      = 8,
-        REQ_RADIO_SETTINGS      = 16,
-        REQ_RTSP_SETTINGS       = 32,
-        REQ_IP_SETTINGS         = 64,
-        REQ_ALL                 = 0xFFFFFFF,
-    };
-
-    uint32_t                _reqMask        = static_cast<uint32_t>(REQ_ALL);
     bool                    _running        = false;
     bool                    _isConnected    = false;
     AppSettings*            _appSettings    = nullptr;
-    MicrohardSettings*      _mhSettings     = nullptr;
+    MicrohardSettings*      _mhSettingsLoc  = nullptr;
+    MicrohardSettings*      _mhSettingsRem  = nullptr;
     bool            _enabled                = true;
     bool            _linkConnected          = false;
-    bool            _needReboot             = false;
     QTimer          _workTimer;
+    QTimer          _locTimer;
+    QTimer          _remTimer;
     int             _downlinkRSSI           = 0;
     int             _uplinkRSSI             = 0;
     QString         _localIPAddr;
