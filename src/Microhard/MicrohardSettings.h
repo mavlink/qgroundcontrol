@@ -15,18 +15,19 @@ class MicrohardSettings : public MicrohardHandler
 {
     Q_OBJECT
 public:
-    explicit MicrohardSettings          (QObject* parent = nullptr);
+    explicit MicrohardSettings          (QString address, QObject* parent = nullptr);
     bool    start                       () override;
-    bool    requestLinkStatus           ();
-    bool    setIPSettings               (const QString& localIP, const QString& remoteIP, const QString& netMask);
+    void    getStatus                   ();
 
-signals:
-    void    updateSettings              (QByteArray jSonData);
 
 protected slots:
     void    _readBytes                  () override;
 
+signals:
+    void    updateRSSI                  (int rssi);
+
 private:
-    bool    _request                    (const QString& request);
-    bool    _post                       (const QString& post, const QString& postPayload);
+    int     _connectionState;
+    int     _rssiVal;
+    QString _address;
 };

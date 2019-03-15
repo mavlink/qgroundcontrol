@@ -14,9 +14,10 @@
 #include "VideoManager.h"
 
 //-----------------------------------------------------------------------------
-MicrohardSettings::MicrohardSettings(QObject* parent)
+MicrohardSettings::MicrohardSettings(QString address, QObject* parent)
     : MicrohardHandler(parent)
 {
+    _address = address;
 }
 
 //-----------------------------------------------------------------------------
@@ -24,54 +25,17 @@ bool
 MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
-    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(qgcApp()->toolbox()->microhardManager()->remoteIPAddr()));
+    _connectionState = 0;
+    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
 }
 
 //-----------------------------------------------------------------------------
-bool
-MicrohardSettings::requestLinkStatus()
+void
+MicrohardSettings::getStatus()
 {
-    return _request("/v1/baseband.json");
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::_request(const QString& request)
-{
-    /*
-    if(_tcpSocket) {
-        QString req = QString(kGetReq).arg(request);
-        //qCDebug(MicrohardVerbose) << "Request" << req;
-        _tcpSocket->write(req.toUtf8());
-        return true;
+    if (_connectionState == 1) {
+        _tcpSocket->write("AT+MWSTATUS\n");
     }
-    */
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::_post(const QString& post, const QString &postPayload)
-{
-    /*
-    if(_tcpSocket) {
-        QString req = QString(kPostReq).arg(post).arg(postPayload.size()).arg(postPayload);
-        qCDebug(MicrohardVerbose) << "Post" << req;
-        _tcpSocket->write(req.toUtf8());
-        return true;
-    }
-    */
-    return false;
-}
-
-//-----------------------------------------------------------------------------
-bool
-MicrohardSettings::setIPSettings(const QString& localIP, const QString& remoteIP, const QString& netMask)
-{
-    return false;
-//    static const char* kRTSPPost = "{\"ipaddr\":\"%1\",\"netmask\":\"%2\",\"usbEthIp\":\"%3\"}";
-//    QString post = QString(kRTSPPost).arg(localIP).arg(netMask).arg(remoteIP);
-//    return _post(kIPAddrURI, post);
 }
 
 //-----------------------------------------------------------------------------
@@ -79,20 +43,31 @@ void
 MicrohardSettings::_readBytes()
 {
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
-    QString s_data = QString::fromStdString(bytesIn.toStdString());
 
-    //-- Go straight to Json payload
-    int idx = bytesIn.indexOf('{');
-    //-- We may receive more than one response within one TCP packet.
-    while(idx >= 0) {
-        bytesIn = bytesIn.mid(idx);
-        idx = bytesIn.indexOf('}');
-        if(idx > 0) {
-            QByteArray data = bytesIn.left(idx + 1);
-            emit updateSettings(data);
-            bytesIn = bytesIn.mid(idx+1);
-            idx = bytesIn.indexOf('{');
+    qCDebug(MicrohardVerbose) << "Read bytes: " << bytesIn;
+
+    if (_connectionState == 1) {
+        int i1 = bytesIn.indexOf("RSSI (dBm)");
+        if (i1 > 0) {
+            int i2 = bytesIn.indexOf(": ", i1);
+            if (i2 > 0) {
+                i2 += 2;
+                int i3 = bytesIn.indexOf(" ", i2);
+                int val = bytesIn.mid(i2, i3 - i2).toInt();
+                if (val < 0) {
+                    _rssiVal = val;
+                }
+            }
         }
+    } else if (bytesIn.contains("UserDevice login:")) {
+        _tcpSocket->write("admin\n");
+    } else if (bytesIn.contains("Password:")) {
+        std::string pwd = qgcApp()->toolbox()->microhardManager()->configPassword().toStdString() + "\n";
+        _tcpSocket->write(pwd.c_str());
+    }  else if (bytesIn.contains("UserDevice>")) {
+        _connectionState = 1;
     }
+
+    emit rssiUpdated(_rssiVal);
 }
 
