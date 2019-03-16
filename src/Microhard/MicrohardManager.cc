@@ -22,6 +22,7 @@ static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
 static const char *kNET_MASK            = "NetMask";
 static const char *kCFG_PASSWORD        = "ConfigPassword";
+static const char *kENC_KEY             = "EncryptionKey";
 
 //-----------------------------------------------------------------------------
 MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -37,6 +38,7 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     _remoteIPAddr   = settings.value(kREMOTE_IP,      QString("192.168.168.2")).toString();
     _netMask        = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
     _configPassword = settings.value(kCFG_PASSWORD,   QString("admin")).toString();
+    _encryptionKey  = settings.value(kENC_KEY,        QString("1234567890")).toString();
     settings.endGroup();
 }
 
@@ -50,6 +52,9 @@ MicrohardManager::~MicrohardManager()
 void
 MicrohardManager::_close()
 {
+    _workTimer.stop();
+    _locTimer.stop();
+    _remTimer.stop();
     if(_mhSettingsLoc) {
         _mhSettingsLoc->close();
         _mhSettingsLoc->deleteLater();
@@ -108,13 +113,20 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 
 //-----------------------------------------------------------------------------
 bool
-MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_, QString cfgPassword_)
+MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_, QString cfgPassword_, QString encryptionKey_)
 {
-    if (_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_ || _configPassword != cfgPassword_) {
+    if (_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_ ||
+        _configPassword != cfgPassword_ || _encryptionKey != encryptionKey_)
+    {
+        if (_mhSettingsLoc && _encryptionKey != encryptionKey_) {
+            _mhSettingsLoc->setEncryptionKey(encryptionKey_);
+        }
+
         _localIPAddr    = localIP_;
         _remoteIPAddr   = remoteIP_;
         _netMask        = netMask_;
         _configPassword = cfgPassword_;
+        _encryptionKey  = encryptionKey_;
 
         QSettings settings;
         settings.beginGroup(kMICROHARD_GROUP);
@@ -122,6 +134,7 @@ MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString net
         settings.setValue(kREMOTE_IP, remoteIP_);
         settings.setValue(kNET_MASK, netMask_);
         settings.setValue(kCFG_PASSWORD, cfgPassword_);
+        settings.setValue(kENC_KEY, encryptionKey_);
         settings.endGroup();
 
         _reset();
@@ -139,7 +152,7 @@ MicrohardManager::_setEnabled()
     bool enable = _appSettings->enableMicrohard()->rawValue().toBool();
     if(enable) {
         if(!_mhSettingsLoc) {
-            _mhSettingsLoc = new MicrohardSettings(localIPAddr(), this);
+            _mhSettingsLoc = new MicrohardSettings(localIPAddr(), this, true);
             connect(_mhSettingsLoc, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedLoc);
             connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedLoc);
         }
@@ -151,7 +164,6 @@ MicrohardManager::_setEnabled()
         _workTimer.start(1000);
     } else {
         //-- Stop everything
-        _workTimer.stop();
         _close();
     }
     _enabled = enable;
@@ -184,6 +196,7 @@ MicrohardManager::_rssiUpdatedLoc(int rssi)
     _downlinkRSSI = rssi;
     _locTimer.stop();
     _locTimer.start(LONG_TIMEOUT);
+    emit connectedChanged();
     emit linkChanged();
 }
 
@@ -194,6 +207,7 @@ MicrohardManager::_rssiUpdatedRem(int rssi)
     _uplinkRSSI = rssi;
     _remTimer.stop();
     _remTimer.start(LONG_TIMEOUT);
+    emit linkConnectedChanged();
     emit linkChanged();
 }
 

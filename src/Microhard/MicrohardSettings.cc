@@ -14,10 +14,11 @@
 #include "VideoManager.h"
 
 //-----------------------------------------------------------------------------
-MicrohardSettings::MicrohardSettings(QString address, QObject* parent)
+MicrohardSettings::MicrohardSettings(QString address_, QObject* parent, bool setEncryptionKey)
     : MicrohardHandler(parent)
 {
-    _address = address;
+    _address = address_;
+    _setEncryptionKey = setEncryptionKey;
 }
 
 //-----------------------------------------------------------------------------
@@ -25,7 +26,7 @@ bool
 MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
-    _connectionState = 0;
+    _loggedIn = false;
     return _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
 }
 
@@ -33,9 +34,18 @@ MicrohardSettings::start()
 void
 MicrohardSettings::getStatus()
 {
-    if (_connectionState == 1) {
+    if (_loggedIn) {
         _tcpSocket->write("AT+MWSTATUS\n");
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardSettings::setEncryptionKey(QString key)
+{
+    QString cmd = "AT+MWVENCRYPT=1," + key + "\n";
+    _tcpSocket->write(cmd.toStdString().c_str());
+    qCDebug(MicrohardLog) << "setEncryptionKey: " << cmd;
 }
 
 //-----------------------------------------------------------------------------
@@ -46,7 +56,7 @@ MicrohardSettings::_readBytes()
 
     qCDebug(MicrohardVerbose) << "Read bytes: " << bytesIn;
 
-    if (_connectionState == 1) {
+    if (_loggedIn) {
         int i1 = bytesIn.indexOf("RSSI (dBm)");
         if (i1 > 0) {
             int i2 = bytesIn.indexOf(": ", i1);
@@ -65,7 +75,10 @@ MicrohardSettings::_readBytes()
         std::string pwd = qgcApp()->toolbox()->microhardManager()->configPassword().toStdString() + "\n";
         _tcpSocket->write(pwd.c_str());
     }  else if (bytesIn.contains("UserDevice>")) {
-        _connectionState = 1;
+        if (!loggedIn() && _setEncryptionKey) {
+            setEncryptionKey(qgcApp()->toolbox()->microhardManager()->encryptionKey());
+        }
+        _loggedIn = true;
     }
 
     emit rssiUpdated(_rssiVal);
