@@ -67,8 +67,6 @@ public:
     QString             brandImageOutdoor               (const Vehicle* vehicle) const override { Q_UNUSED(vehicle); return QStringLiteral("/qmlimages/PX4/BrandImage"); }
     bool                vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const override;
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
-    QGCCameraManager*   createCameraManager             (Vehicle* vehicle) override;
-    QGCCameraControl*   createCameraControl             (const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = NULL) override;
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
     bool                supportsTerrainFrame            (void) const override { return false; }
 

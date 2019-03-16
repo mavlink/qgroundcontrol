@@ -14,13 +14,14 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "QGCFileDownload.h"
+#include "QGCCameraManager.h"
 
 #include <QRegularExpression>
 #include <QDebug>
 
 QGC_LOGGING_CATEGORY(FirmwarePluginLog, "FirmwarePluginLog")
 
-static FirmwarePluginFactoryRegister* _instance = NULL;
+static FirmwarePluginFactoryRegister* _instance = nullptr;
 
 const QString guided_mode_not_supported_by_vehicle = QObject::tr("Guided mode not supported by Vehicle.");
 
@@ -195,22 +196,16 @@ QString FirmwarePlugin::missionCommandOverrides(MAV_TYPE vehicleType) const
     switch (vehicleType) {
     case MAV_TYPE_GENERIC:
         return QStringLiteral(":/json/MavCmdInfoCommon.json");
-        break;
     case MAV_TYPE_FIXED_WING:
         return QStringLiteral(":/json/MavCmdInfoFixedWing.json");
-        break;
     case MAV_TYPE_QUADROTOR:
         return QStringLiteral(":/json/MavCmdInfoMultiRotor.json");
-        break;
     case MAV_TYPE_VTOL_QUADROTOR:
         return QStringLiteral(":/json/MavCmdInfoVTOL.json");
-        break;
     case MAV_TYPE_SUBMARINE:
         return QStringLiteral(":/json/MavCmdInfoSub.json");
-        break;
     case MAV_TYPE_GROUND_ROVER:
         return QStringLiteral(":/json/MavCmdInfoRover.json");
-        break;
     default:
         qWarning() << "FirmwarePlugin::missionCommandOverrides called with bad MAV_TYPE:" << vehicleType;
         return QString();
@@ -603,9 +598,9 @@ bool FirmwarePlugin::_setFlightModeAndValidate(Vehicle* vehicle, const QString& 
 void FirmwarePlugin::batteryConsumptionData(Vehicle* vehicle, int& mAhBattery, double& hoverAmps, double& cruiseAmps) const
 {
     Q_UNUSED(vehicle);
-    mAhBattery = 0;
-    hoverAmps = 0;
-    cruiseAmps = 0;
+    mAhBattery  = 0;
+    hoverAmps   = 0;
+    cruiseAmps  = 0;
 }
 
 QString FirmwarePlugin::autoDisarmParameter(Vehicle* vehicle)
@@ -641,17 +636,12 @@ bool FirmwarePlugin::isVtol(const Vehicle* vehicle) const
 
 QGCCameraManager* FirmwarePlugin::createCameraManager(Vehicle* vehicle)
 {
-    Q_UNUSED(vehicle);
-    return NULL;
+    return new QGCCameraManager(vehicle);
 }
 
 QGCCameraControl* FirmwarePlugin::createCameraControl(const mavlink_camera_information_t *info, Vehicle *vehicle, int compID, QObject* parent)
 {
-    Q_UNUSED(info);
-    Q_UNUSED(vehicle);
-    Q_UNUSED(compID);
-    Q_UNUSED(parent);
-    return NULL;
+    return new QGCCameraControl(info, vehicle, compID, parent);
 }
 
 uint32_t FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
