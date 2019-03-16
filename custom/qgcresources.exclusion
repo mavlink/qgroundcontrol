@@ -16,3 +16,4 @@
         <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="action.svg">resources/action.svg</file>
+        <file>resources/icons/qgroundcontrol.ico</file>
