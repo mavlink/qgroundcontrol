@@ -54,7 +54,7 @@ MicrohardSettings::_readBytes()
 {
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
 
-    qCDebug(MicrohardVerbose) << "Read bytes: " << bytesIn;
+//    qCDebug(MicrohardVerbose) << "Read bytes: " << bytesIn;
 
     if (_loggedIn) {
         int i1 = bytesIn.indexOf("RSSI (dBm)");
