@@ -32,11 +32,13 @@ public:
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
     Q_PROPERTY(QString      localIPAddr         READ localIPAddr                                NOTIFY localIPAddrChanged)
     Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr                               NOTIFY remoteIPAddrChanged)
+    Q_PROPERTY(QString      groundIPAddr        READ groundIPAddr                               NOTIFY groundIPAddrChanged)
+    Q_PROPERTY(QString      airIPAddr           READ airIPAddr                                  NOTIFY airIPAddrChanged)
     Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
 
-    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgPassword, QString encyrptionKey);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString groundIP, QString airIP, QString netMask, QString cfgPassword, QString encyrptionKey);
 
     explicit MicrohardManager                   (QGCApplication* app, QGCToolbox* toolbox);
     ~MicrohardManager                           () override;
@@ -49,6 +51,8 @@ public:
     int         downlinkRSSI                    () { return _uplinkRSSI; }
     QString     localIPAddr                     () { return _localIPAddr; }
     QString     remoteIPAddr                    () { return _remoteIPAddr; }
+    QString     airIPAddr                       () { return _airIPAddr; }
+    QString     groundIPAddr                    () { return _groundIPAddr; }
     QString     netMask                         () { return _netMask; }
     QString     configPassword                  () { return _configPassword; }
     QString     encryptionKey                   () { return _encryptionKey; }
@@ -59,6 +63,8 @@ signals:
     void    connectedChanged                ();
     void    localIPAddrChanged              ();
     void    remoteIPAddrChanged             ();
+    void    airIPAddrChanged                ();
+    void    groundIPAddrChanged             ();
     void    netMaskChanged                  ();
     void    configPasswordChanged           ();
     void    encryptionKeyChanged            ();
@@ -92,6 +98,8 @@ private:
     int             _uplinkRSSI             = 0;
     QString         _localIPAddr;
     QString         _remoteIPAddr;
+    QString         _groundIPAddr;
+    QString         _airIPAddr;
     QString         _netMask;
     QString         _configPassword;
     QString         _encryptionKey;
