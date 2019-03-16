@@ -142,13 +142,13 @@ QGCView {
                                 text:           qsTr("Uplink RSSI:")
                             }
                             QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected ? QGroundControl.microhardManager.uplinkRSSI : ""
+                                text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.uplinkRSSI < 0 ? QGroundControl.microhardManager.uplinkRSSI : ""
                             }
                             QGCLabel {
                                 text:           qsTr("Downlink RSSI:")
                             }
                             QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected ? QGroundControl.microhardManager.downlinkRSSI : ""
+                                text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.downlinkRSSI < 0 ? QGroundControl.microhardManager.downlinkRSSI : ""
                             }
                         }
                     }
@@ -225,6 +225,16 @@ QGCView {
                                 inputMethodHints:    Qt.ImhHiddenText
                                 Layout.minimumWidth: _valueWidth
                             }
+                            QGCLabel {
+                                text:           qsTr("Encryption key:")
+                            }
+                            QGCTextField {
+                                id:             encryptionKey
+                                text:           QGroundControl.microhardManager.encryptionKey
+                                enabled:        true
+                                inputMethodHints:    Qt.ImhHiddenText
+                                Layout.minimumWidth: _valueWidth
+                            }
                         }
                         Item {
                             width:  1
@@ -240,7 +250,8 @@ QGCView {
                                 if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
                                     remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
                                     netMask.text         === QGroundControl.microhardManager.netMask &&
-                                    configPassword.text  === QGroundControl.microhardManager.configPassword)
+                                    configPassword.text  === QGroundControl.microhardManager.configPassword &&
+                                    encryptionKey.text   === QGroundControl.microhardManager.encryptionKey)
                                     return false
                                 if(!validateIPaddress(localIP.text))  return false
                                 if(!validateIPaddress(remoteIP.text)) return false
@@ -250,6 +261,10 @@ QGCView {
                             enabled:            testEnabled()
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
+                            onClicked: {
+                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, netMask.text, configPassword.text, encryptionKey.text)
+                            }
+
                         }
                     }
                 }

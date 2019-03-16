@@ -34,34 +34,34 @@ public:
     Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr                               NOTIFY remoteIPAddrChanged)
     Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
+    Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
 
-    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgPassword);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgPassword, QString encyrptionKey);
 
     explicit MicrohardManager                   (QGCApplication* app, QGCToolbox* toolbox);
     ~MicrohardManager                           () override;
 
     void        setToolbox                      (QGCToolbox* toolbox) override;
 
-    bool        connected                       () { return _isConnected; }
-    bool        linkConnected                   () { return _linkConnected; }
+    bool        connected                       () { return _isConnected && _mhSettingsLoc && _mhSettingsLoc->loggedIn(); }
+    bool        linkConnected                   () { return _linkConnected && _mhSettingsRem && _mhSettingsRem->loggedIn(); }
     int         uplinkRSSI                      () { return _downlinkRSSI; }
     int         downlinkRSSI                    () { return _uplinkRSSI; }
     QString     localIPAddr                     () { return _localIPAddr; }
     QString     remoteIPAddr                    () { return _remoteIPAddr; }
     QString     netMask                         () { return _netMask; }
     QString     configPassword                  () { return _configPassword; }
+    QString     encryptionKey                   () { return _encryptionKey; }
 
 signals:
     void    linkChanged                     ();
     void    linkConnectedChanged            ();
-    void    infoChanged                     ();
     void    connectedChanged                ();
-    void    decodeIndexChanged              ();
-    void    rateIndexChanged                ();
     void    localIPAddrChanged              ();
     void    remoteIPAddrChanged             ();
     void    netMaskChanged                  ();
     void    configPasswordChanged           ();
+    void    encryptionKeyChanged            ();
 
 private slots:
     void    _connectedLoc                   ();
@@ -79,7 +79,6 @@ private:
     FactMetaData *_createMetadata           (const char *name, QStringList enums);
 
 private:
-    bool                    _running        = false;
     bool                    _isConnected    = false;
     AppSettings*            _appSettings    = nullptr;
     MicrohardSettings*      _mhSettingsLoc  = nullptr;
@@ -95,5 +94,6 @@ private:
     QString         _remoteIPAddr;
     QString         _netMask;
     QString         _configPassword;
+    QString         _encryptionKey;
     QTime           _timeoutTimer;
 };
