@@ -28,6 +28,11 @@
 #else
 class TaisyncManager;
 #endif
+#if defined(QGC_GST_MICROHARD_ENABLED)
+#include "MicrohardManager.h"
+#else
+class MicrohardManager;
+#endif
 
 #ifdef QT_DEBUG
 #include "MockLink.h"
@@ -68,6 +73,8 @@ public:
     Q_PROPERTY(bool                 airmapSupported     READ airmapSupported        CONSTANT)
     Q_PROPERTY(TaisyncManager*      taisyncManager      READ taisyncManager         CONSTANT)
     Q_PROPERTY(bool                 taisyncSupported    READ taisyncSupported       CONSTANT)
+    Q_PROPERTY(MicrohardManager*    microhardManager    READ microhardManager       CONSTANT)
+    Q_PROPERTY(bool                 microhardSupported  READ microhardSupported     CONSTANT)
 
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
     Q_PROPERTY(bool     px4ProFirmwareSupported         READ px4ProFirmwareSupported CONSTANT)
@@ -170,6 +177,13 @@ public:
     bool                    taisyncSupported    () { return false; }
 #endif
 
+    MicrohardManager*       microhardManager    ()  { return _microhardManager; }
+#if defined(QGC_GST_TAISYNC_ENABLED)
+    bool                    microhardSupported  () { return true; }
+#else
+    bool                    microhardSupported  () { return false; }
+#endif
+
     qreal zOrderTopMost             () { return 1000; }
     qreal zOrderWidgets             () { return 100; }
     qreal zOrderMapItems            () { return 50; }
@@ -230,6 +244,7 @@ private:
     FactGroup*              _gpsRtkFactGroup        = nullptr;
     AirspaceManager*        _airspaceManager        = nullptr;
     TaisyncManager*         _taisyncManager         = nullptr;
+    MicrohardManager*       _microhardManager       = nullptr;
 
     bool                    _skipSetupPage          = false;
 

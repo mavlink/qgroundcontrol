@@ -48,6 +48,10 @@ public:
         if(pTaisync)
             delete pTaisync;
 #endif
+#if defined(QGC_GST_MICROHARD_ENABLED)
+        if(pMicrohard)
+            delete pMicrohard;
+#endif
 #if defined(QGC_AIRMAP_ENABLED)
         if(pAirmap)
             delete pAirmap;
@@ -71,6 +75,9 @@ public:
     QmlComponentInfo* pOfflineMaps              = nullptr;
 #if defined(QGC_GST_TAISYNC_ENABLED)
     QmlComponentInfo* pTaisync                  = nullptr;
+#endif
+#if defined(QGC_GST_MICROHARD_ENABLED)
+    QmlComponentInfo* pMicrohard                = nullptr;
 #endif
 #if defined(QGC_AIRMAP_ENABLED)
     QmlComponentInfo* pAirmap                   = nullptr;
@@ -139,6 +146,12 @@ QVariantList &QGCCorePlugin::settingsPages()
             QUrl::fromUserInput("qrc:/qml/TaisyncSettings.qml"),
             QUrl::fromUserInput(""));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pTaisync)));
+#endif
+#if defined(QGC_GST_MICROHARD_ENABLED)
+        _p->pMicrohard = new QmlComponentInfo(tr("Microhard"),
+            QUrl::fromUserInput("qrc:/qml/MicrohardSettings.qml"),
+            QUrl::fromUserInput(""));
+        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pMicrohard)));
 #endif
 #if defined(QGC_AIRMAP_ENABLED)
         _p->pAirmap = new QmlComponentInfo(tr("AirMap"),

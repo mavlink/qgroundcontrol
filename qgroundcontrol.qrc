@@ -201,6 +201,7 @@
         <file alias="SyslinkComponent.qml">src/AutoPilotPlugins/Common/SyslinkComponent.qml</file>
         <file alias="TcpSettings.qml">src/ui/preferences/TcpSettings.qml</file>
         <file alias="TaisyncSettings.qml">src/Taisync/TaisyncSettings.qml</file>
+        <file alias="MicrohardSettings.qml">src/Microhard/MicrohardSettings.qml</file>
         <file alias="test.qml">src/test.qml</file>
         <file alias="UdpSettings.qml">src/ui/preferences/UdpSettings.qml</file>
         <file alias="ValuePageWidget.qml">src/FlightMap/Widgets/ValuePageWidget.qml</file>

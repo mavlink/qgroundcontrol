@@ -45,6 +45,7 @@ public:
     DEFINE_SETTINGFACT(followTarget)
     DEFINE_SETTINGFACT(enableTaisync)
     DEFINE_SETTINGFACT(enableTaisyncVideo)
+    DEFINE_SETTINGFACT(enableMicrohard)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
     DEFINE_SETTINGFACT(apmStartMavlinkStreams)
