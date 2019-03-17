@@ -42,10 +42,6 @@ Rectangle {
 
     LogDownloadController {
         id: logController
-	}
-
-    MavlinkConsoleController {
-        id: conController
     }
 
     QGCFlickable {

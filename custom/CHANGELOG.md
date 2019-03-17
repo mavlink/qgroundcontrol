@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### March 17 2019
+
+*   Merging upstream master. It brings in support for the Microhard modem and fixes for MAVLink console on mobile platforms.
+
 ### March 13 2019
 
 *   Formatting elapsed time as hh:mm:ss instead of sss.s

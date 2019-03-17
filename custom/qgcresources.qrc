@@ -213,7 +213,6 @@
 		<file alias="XDelete.svg">../resources/XDelete.svg</file>
 		<file alias="XDeleteBlack.svg">../resources/XDeleteBlack.svg</file>
 		<file alias="waypoint.svg">../resources/waypoint.svg</file>
-                <file alias="resources/icons/qgroundcontrol.ico">Windows/icon.ico</file>
 	</qresource>
 	<qresource prefix="/res/firmware">
 		<file alias="px4.png">../resources/firmware/px4.png</file>
