@@ -268,13 +268,14 @@ VideoReceiver::start()
     bool running    = false;
     bool pipelineUp = false;
 
-    GstElement*     dataSource  = nullptr;
-    GstCaps*        caps        = nullptr;
-    GstElement*     demux       = nullptr;
-    GstElement*     parser      = nullptr;
-    GstElement*     queue       = nullptr;
-    GstElement*     decoder     = nullptr;
-    GstElement*     queue1      = nullptr;
+    GstElement*     dataSource   = nullptr;
+    GstCaps*        caps         = nullptr;
+    GstElement*     demux        = nullptr;
+    GstElement*     parser       = nullptr;
+    GstElement*     queue        = nullptr;
+    GstElement*     decoder      = nullptr;
+    GstElement*     queue1       = nullptr;
+    GstElement*     videoconvert = nullptr;
 
     do {
         if ((_pipeline = gst_pipeline_new("receiver")) == nullptr) {
@@ -358,16 +359,22 @@ VideoReceiver::start()
             break;
         }
 
-        if(isTaisyncUSB) {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
-        } else {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+        if ((videoconvert = gst_element_factory_make("videoconvert", NULL)) == NULL) {
+            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('videoconvert') [1]";
+            break;
         }
+
+        if(isTaisyncUSB) {
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, videoconvert, _videoSink, nullptr);
+        } else {
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, videoconvert, _videoSink, nullptr);
+        }
+
         pipelineUp = true;
 
         if(isUdp) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, videoconvert, _videoSink, nullptr)) {
                 qCritical() << "Unable to link UDP elements.";
                 break;
             }
@@ -382,7 +389,7 @@ VideoReceiver::start()
                 qCritical() << "Unable to link TCP/MPEG-TS dataSource to Demux.";
                 break;
             }
-            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, videoconvert, _videoSink, nullptr)) {
                 qCritical() << "Unable to link TCP/MPEG-TS pipline to parser.";
                 break;
             }
@@ -395,7 +402,7 @@ VideoReceiver::start()
             }
         }
 
-        dataSource = demux = parser = queue = decoder = queue1 = nullptr;
+        dataSource = demux = parser = queue = decoder = queue1 = videoconvert = nullptr;
 
         GstBus* bus = nullptr;
 
