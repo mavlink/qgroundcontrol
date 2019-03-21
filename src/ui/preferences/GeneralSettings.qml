@@ -142,6 +142,17 @@ QGCView {
                                 columns:                    2
 
                                 QGCLabel {
+                                    text:           qsTr("Language")
+                                    visible: QGroundControl.settingsManager.appSettings.language.visible
+                                }
+                                FactComboBox {
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    fact:                   QGroundControl.settingsManager.appSettings.language
+                                    indexModel:             false
+                                    visible:                QGroundControl.settingsManager.appSettings.language.visible
+                                }
+
+                                QGCLabel {
                                     text:           qsTr("Color Scheme")
                                     visible: QGroundControl.settingsManager.appSettings.indoorPalette.visible
                                 }
