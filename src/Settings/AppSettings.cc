@@ -59,7 +59,11 @@ DECLARE_SETTINGGROUP(App, "")
 
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::savePathsChanged);
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
+
     _checkSavePathDirectories();
+    //-- Same for language
+    SettingsFact* languageFact = qobject_cast<SettingsFact*>(language());
+    connect(languageFact, &Fact::rawValueChanged, this, &AppSettings::_languageChanged);
 }
 
 DECLARE_SETTINGSFACT(AppSettings, offlineEditingFirmwareType)
@@ -88,6 +92,7 @@ DECLARE_SETTINGSFACT(AppSettings, apmStartMavlinkStreams)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
 DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
+DECLARE_SETTINGSFACT(AppSettings, language)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -96,6 +101,11 @@ DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
         connect(_indoorPaletteFact, &Fact::rawValueChanged, this, &AppSettings::_indoorPaletteChanged);
     }
     return _indoorPaletteFact;
+}
+
+void AppSettings::_languageChanged()
+{
+    qgcApp()->setLanguage();
 }
 
 void AppSettings::_checkSavePathDirectories(void)

@@ -101,6 +101,8 @@ public:
     static QString cachedParameterMetaDataFile(void);
     static QString cachedAirframeMetaDataFile(void);
 
+    void setLanguage();
+
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);

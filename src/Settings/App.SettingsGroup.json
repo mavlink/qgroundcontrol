@@ -220,12 +220,20 @@
     "longDescription":  "Enable Taisync Video Support",
     "type":             "bool",
     "defaultValue":     true
-}
-,
+},
 {
     "name":             "enableMicrohard",
     "shortDescription": "Enable Microhard Module Support",
     "longDescription":  "Enable Microhard Module Support",
     "type":             "bool",
     "defaultValue":     false
-}]
+},
+{
+    "name":             "language",
+    "shortDescription": "Language",
+    "type":             "uint32",
+    "enumStrings":      "System,български (Bulgarian),Deutsche (German),Français (French),Italiano (Italian),한국어 (Korean),Pусский (Russian),Türk (Turkish),中文 (Chinese)",
+    "enumValues":       "0,1,2,3,4,5,6,7,8",
+    "defaultValue":     0
+}
+]
