@@ -364,6 +364,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 void QGCApplication::setLanguage()
 {
     QLocale locale = QLocale::system();
+    qDebug() << "System reported locale:" << locale << locale.name();
     //-- See App.SettinsGroup.json for index
     int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
     if(langID) {
@@ -394,7 +395,6 @@ void QGCApplication::setLanguage()
             break;
         }
     }
-    qDebug() << "System reported locale:" << locale << locale.name();
     //-- Our localization
     if(_QGCTranslator.load(locale, "qgc_", "", ":/localization"))
         _app->installTranslator(&_QGCTranslator);
