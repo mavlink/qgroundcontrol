@@ -365,32 +365,35 @@ void QGCApplication::setLanguage()
 {
     QLocale locale = QLocale::system();
     qDebug() << "System reported locale:" << locale << locale.name();
-    //-- See App.SettinsGroup.json for index
     int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
+    //-- See App.SettinsGroup.json for index
     if(langID) {
         switch(langID) {
         case 1:
-            locale = QLocale(QLocale::Bulgarian);
+            locale = QLocale(QLocale::English);
             break;
         case 2:
-            locale = QLocale(QLocale::German);
+            locale = QLocale(QLocale::Bulgarian);
             break;
         case 3:
-            locale = QLocale(QLocale::French);
+            locale = QLocale(QLocale::German);
             break;
         case 4:
-            locale = QLocale(QLocale::Italian);
+            locale = QLocale(QLocale::French);
             break;
         case 5:
-            locale = QLocale(QLocale::Korean);
+            locale = QLocale(QLocale::Italian);
             break;
         case 6:
-            locale = QLocale(QLocale::Russian);
+            locale = QLocale(QLocale::Korean);
             break;
         case 7:
-            locale = QLocale(QLocale::Turkish);
+            locale = QLocale(QLocale::Russian);
             break;
         case 8:
+            locale = QLocale(QLocale::Turkish);
+            break;
+        case 9:
             locale = QLocale(QLocale::Chinese);
             break;
         }

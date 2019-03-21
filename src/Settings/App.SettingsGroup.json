@@ -232,8 +232,8 @@
     "name":             "language",
     "shortDescription": "Language",
     "type":             "uint32",
-    "enumStrings":      "System,български (Bulgarian),Deutsche (German),Français (French),Italiano (Italian),한국어 (Korean),Pусский (Russian),Türk (Turkish),中文 (Chinese)",
-    "enumValues":       "0,1,2,3,4,5,6,7,8",
+    "enumStrings":      "System,English,български (Bulgarian),Deutsche (German),Français (French),Italiano (Italian),한국어 (Korean),Pусский (Russian),Türk (Turkish),中文 (Chinese)",
+    "enumValues":       "0,1,2,3,4,5,6,7,8,9",
     "defaultValue":     0
 }
 ]
