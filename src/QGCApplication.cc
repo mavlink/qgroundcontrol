@@ -172,20 +172,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 {
     _app = this;
 
-
-    QLocale locale = QLocale::system();
-    //-- Some forced locales for testing
-    //QLocale locale = QLocale(QLocale::German);
-    //QLocale locale = QLocale(QLocale::French);
-    //QLocale locale = QLocale(QLocale::Chinese);
-#if defined (__macos__)
-    locale = QLocale(locale.name());
-#endif
-    qDebug() << "System reported locale:" << locale << locale.name();
-    //-- Our localization
-    if(_QGCTranslator.load(locale, "qgc_", "", ":/localization"))
-        _app->installTranslator(&_QGCTranslator);
-
     // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
 #ifndef __android__
     setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
@@ -371,7 +357,47 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
    }
 #endif /* __mobile__ */
 
+   setLanguage();
     _checkForNewVersion();
+}
+
+void QGCApplication::setLanguage()
+{
+    QLocale locale = QLocale::system();
+    //-- See App.SettinsGroup.json for index
+    int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
+    if(langID) {
+        switch(langID) {
+        case 1:
+            locale = QLocale(QLocale::Bulgarian);
+            break;
+        case 2:
+            locale = QLocale(QLocale::German);
+            break;
+        case 3:
+            locale = QLocale(QLocale::French);
+            break;
+        case 4:
+            locale = QLocale(QLocale::Italian);
+            break;
+        case 5:
+            locale = QLocale(QLocale::Korean);
+            break;
+        case 6:
+            locale = QLocale(QLocale::Russian);
+            break;
+        case 7:
+            locale = QLocale(QLocale::Turkish);
+            break;
+        case 8:
+            locale = QLocale(QLocale::Chinese);
+            break;
+        }
+    }
+    qDebug() << "System reported locale:" << locale << locale.name();
+    //-- Our localization
+    if(_QGCTranslator.load(locale, "qgc_", "", ":/localization"))
+        _app->installTranslator(&_QGCTranslator);
 }
 
 void QGCApplication::_shutdown(void)
