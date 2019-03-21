@@ -7703,6 +7703,7 @@ to takeoff is reached</short_desc>
       <long_desc>Determines when to start and stop logging. By default, logging is started when arming the system, and stopped when disarming.</long_desc>
       <reboot_required>true</reboot_required>
       <values>
+        <value code="-1">disabled</value>
         <value code="0">when armed until disarm (default)</value>
         <value code="1">from boot until disarm</value>
         <value code="2">from boot until shutdown</value>
