@@ -64,7 +64,7 @@ public:
     static const int boardIDPX4FMUV1 = 5;       ///< PX4 V1 board, as from USB PID
     static const int boardIDPX4FMUV2 = 9;       ///< PX4 V2 board, as from USB PID
     static const int boardIDPX4FMUV4 = 11;      ///< PX4 V4 board, as from USB PID
-    static const int boardIDPX4FMUV4PRO = 13;      ///< PX4 V4PRO board, as from USB PID
+    static const int boardIDPX4FMUV4PRO = 13;   ///< PX4 V4PRO board, as from USB PID
     static const int boardIDPX4FMUV5 = 50;      ///< PX4 V5 board, as from USB PID
     static const int boardIDPX4Flow = 6;        ///< PX4 Flow board, as from USB PID
     static const int boardIDAeroCore = 98;      ///< Gumstix AeroCore board, as from USB PID

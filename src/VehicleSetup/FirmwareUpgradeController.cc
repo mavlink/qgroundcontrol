@@ -363,48 +363,44 @@ void FirmwareUpgradeController::_initFirmwareHash()
     // PX4 Firmwares
     for (const FirmwareType_t& firmwareType: px4MapFirmwareTypeToDir.keys()) {
         QString dir = px4MapFirmwareTypeToDir[firmwareType];
-        _rgFMUV5Firmware.insert      (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v5"));
-        _rgFMUV4PROFirmware.insert   (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4pro"));
-        _rgFMUV4Firmware.insert      (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4"));
-        _rgFMUV3Firmware.insert      (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v3"));
-        _rgPX4FMUV2Firmware.insert      (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v2"));
+        _rgFMUV5Firmware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v5"));
+        _rgFMUV4PROFirmware.insert  (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4pro"));
+        _rgFMUV4Firmware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v4"));
+        _rgFMUV3Firmware.insert     (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v3"));
+        _rgPX4FMUV2Firmware.insert  (FirmwareIdentifier(AutoPilotStackPX4, firmwareType, DefaultVehicleFirmware), px4Url.arg(dir).arg("v2"));
     }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
-    // ArduPilot Firmwares
+    // ArduPilot non-ChibiOS Firmwares for direct board id to fmu mappings
     for (const FirmwareType_t& firmwareType: apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
         for (const FirmwareVehicleType_t& vehicleType: apmMapVehicleTypeToDir.keys()) {
             QString vehicleTypeDir = apmMapVehicleTypeToDir[vehicleType];
             QString px4Dir = apmMapVehicleTypeToPX4Dir[vehicleType];
             QString filename = apmMapVehicleTypeToFilename[vehicleType];
-            _rgFMUV5Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("5"));
-            _rgFMUV4Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("4"));
-            _rgFMUV3Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("3"));
+            _rgFMUV5Firmware.insert     (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("5"));
+            _rgFMUV4Firmware.insert     (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("4"));
+            _rgFMUV3Firmware.insert     (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("3"));
             _rgPX4FMUV2Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg(px4Dir).arg(filename).arg("2"));
         }
     }
-#endif
 
-#if !defined(NO_ARDUPILOT_DIALECT)
-    // ArduPilot ChibiOS Firmwares when board id is is a known type. These are added directly into the various board type hashes.
+    // ArduPilot ChibiOS Firmwares for direct board id to fmu mappings. Used when bootloader is not new ArduPilot bootloader.
     for (const FirmwareType_t& firmwareType: apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
         for (const FirmwareVehicleType_t& vehicleType: apmChibiOSMapVehicleTypeToDir.keys()) {
             QString vehicleTypeDir = apmChibiOSMapVehicleTypeToDir[vehicleType];
             QString fmuDir = apmChibiOSMapVehicleTypeToFmuDir[vehicleType];
             QString filename = apmChibiOSMapVehicleTypeToFilename[vehicleType];
-            _rgFMUV5Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("5").arg(fmuDir).arg(filename));
-            _rgFMUV4Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("4").arg(fmuDir).arg(filename));
-            _rgFMUV3Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("3").arg(fmuDir).arg(filename));
-            _rgPX4FMUV2Firmware.insert      (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("2").arg(fmuDir).arg(filename));
+            _rgFMUV5Firmware.insert     (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("5").arg(fmuDir).arg(filename));
+            _rgFMUV4Firmware.insert     (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("4").arg(fmuDir).arg(filename));
+            _rgFMUV3Firmware.insert     (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("3").arg(fmuDir).arg(filename));
+            _rgPX4FMUV2Firmware.insert  (FirmwareIdentifier(AutoPilotStackAPM, firmwareType, vehicleType), apmChibiOSUrl.arg(vehicleTypeDir).arg(firmwareTypeDir).arg("2").arg(fmuDir).arg(filename));
         }
     }
-#endif
 
-#if !defined(NO_ARDUPILOT_DIALECT)
     // ArduPilot ChibiOS Firmwares when board id is an unknown type but follows ArduPilot port info naming conventions.
-    // This is only used if the board using the ArduPilot port naming scheme.
+    // This is only used if the board is using the new ArduPilot bootloader port naming scheme.
     for (const FirmwareType_t& firmwareType: apmMapFirmwareTypeToDir.keys()) {
         QString firmwareTypeDir = apmMapFirmwareTypeToDir[firmwareType];
         for (const FirmwareVehicleType_t& vehicleType: apmChibiOSMapVehicleTypeToDir.keys()) {
@@ -487,85 +483,75 @@ void FirmwareUpgradeController::_bootloaderSyncFailed(void)
 
 QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeController::_firmwareHashForBoardId(int boardId)
 {
-    QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* rgFirmware;
+
+    _rgFirmwareDynamic.clear();
 
     switch (boardId) {
     case Bootloader::boardIDPX4Flow:
-        rgFirmware = &_rgPX4FLowFirmware;
+        _rgFirmwareDynamic = _rgPX4FLowFirmware;
         break;
     case Bootloader::boardIDPX4FMUV2:
-        rgFirmware = &_rgPX4FMUV2Firmware;
+        _rgFirmwareDynamic = _rgPX4FMUV2Firmware;
         break;
     case Bootloader::boardIDPX4FMUV3:
-        rgFirmware = &_rgFMUV3Firmware;
+        _rgFirmwareDynamic = _rgFMUV3Firmware;
         break;
     case Bootloader::boardIDPX4FMUV4:
-        rgFirmware = &_rgFMUV4Firmware;
+        _rgFirmwareDynamic = _rgFMUV4Firmware;
         break;
     case Bootloader::boardIDPX4FMUV4PRO:
-        rgFirmware = &_rgFMUV4PROFirmware;
+        _rgFirmwareDynamic = _rgFMUV4PROFirmware;
         break;
     case Bootloader::boardIDPX4FMUV5:
-        rgFirmware = &_rgFMUV5Firmware;
+        _rgFirmwareDynamic = _rgFMUV5Firmware;
         break;
     case Bootloader::boardIDAeroCore:
-        rgFirmware = &_rgAeroCoreFirmware;
+        _rgFirmwareDynamic = _rgAeroCoreFirmware;
         break;
     case Bootloader::boardIDAUAVX2_1:
-        rgFirmware = &_rgAUAVX2_1Firmware;
+        _rgFirmwareDynamic = _rgAUAVX2_1Firmware;
         break;
     case Bootloader::boardIDMINDPXFMUV2:
-        rgFirmware = &_rgMindPXFMUV2Firmware;
+        _rgFirmwareDynamic = _rgMindPXFMUV2Firmware;
         break;
     case Bootloader::boardIDTAPV1:
-        rgFirmware = &_rgTAPV1Firmware;
+        _rgFirmwareDynamic = _rgTAPV1Firmware;
         break;
     case Bootloader::boardIDASCV1:
-        rgFirmware = &_rgASCV1Firmware;
+        _rgFirmwareDynamic = _rgASCV1Firmware;
         break;
     case Bootloader::boardIDCrazyflie2:
-        rgFirmware = &_rgCrazyflie2Firmware;
+        _rgFirmwareDynamic = _rgCrazyflie2Firmware;
         break;
     case Bootloader::boardIDOmnibusF4SD:
-        rgFirmware = &_rgOmnibusF4SDFirmware;
+        _rgFirmwareDynamic = _rgOmnibusF4SDFirmware;
         break;
     case Bootloader::boardIDNXPHliteV3:
-        rgFirmware = &_rgNXPHliteV3Firmware;
+        _rgFirmwareDynamic = _rgNXPHliteV3Firmware;
         break;
     case Bootloader::boardID3DRRadio:
-        rgFirmware = &_rg3DRRadioFirmware;
+        _rgFirmwareDynamic = _rg3DRRadioFirmware;
         break;
     default:
-        rgFirmware = Q_NULLPTR;
+        // Unknown board id
+        break;
     }
 
-    if (rgFirmware) {
-        _rgFirmwareDynamic = *rgFirmware;
-    } else {
-        _rgFirmwareDynamic.clear();
-    }
+    // Check for ArduPilot ChibiOS bootloader
+    QStringList rgManufacturers = { QStringLiteral("ArduPilot"), QStringLiteral("Hex/ProfiCNC"), QStringLiteral("Holybro") };
+    QString apmDescriptionSuffix("-BL");
+    if (rgManufacturers.contains(_foundBoardInfo.manufacturer()) && _foundBoardInfo.description().endsWith(apmDescriptionSuffix)) {
+        // Board ios using a ChibiOS bootloader. Prefer naming scheme from that over board ids for ArduPilot entries.
 
-    // Special case handling for ArduPilot named ChibiOS board
-    if (_foundBoardInfo.manufacturer() == QStringLiteral("ArduPilot") || _foundBoardInfo.manufacturer() == QStringLiteral("Hex/ProfiCNC")) {
-        // Remove the ChibiOS by board id entries from the list
-        for (const FirmwareIdentifier& firmwareId: _rgFirmwareDynamic.keys()) {
-            switch (firmwareId.firmwareVehicleType) {
-            case CopterChibiOSFirmware:
-            case HeliChibiOSFirmware:
-            case PlaneChibiOSFirmware:
-            case RoverChibiOSFirmware:
-            case SubChibiOSFirmware:
-                _rgAPMChibiosReplaceNamedBoardFirmware.remove(firmwareId);
-                break;
-            default:
-                break;
-            }
+        // First remove the ChibiOS by board id entries from the list
+        for (const FirmwareIdentifier& firmwareId: _rgAPMChibiosReplaceNamedBoardFirmware.keys()) {
+            _rgFirmwareDynamic.remove(firmwareId);
         }
 
-        // Add the ChibiOS by board description entries to the list
+        // Now add the ChibiOS by board description entries to the list
         for (const FirmwareIdentifier& firmwareId: _rgAPMChibiosReplaceNamedBoardFirmware.keys()) {
             QString namedUrl = _rgAPMChibiosReplaceNamedBoardFirmware[firmwareId];
-            _rgFirmwareDynamic.insert(firmwareId, namedUrl.replace(_apmBoardDescriptionReplaceText, _foundBoardInfo.description().left(_foundBoardInfo.description().length() - 3)));
+            _rgFirmwareDynamic.insert(firmwareId, namedUrl.replace(_apmBoardDescriptionReplaceText, _foundBoardInfo.description().left(_foundBoardInfo.description().length() - apmDescriptionSuffix.length())));
         }
     }
 
@@ -577,21 +563,16 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
     
-    if (!prgFirmware && firmwareId.firmwareType != CustomFirmware) {
-        _errorCancel(tr("Attempting to flash an unknown board type, you must select 'Custom firmware file'"));
-        return;
-    }
-    
     if (firmwareId.firmwareType == CustomFirmware) {
         _firmwareFilename = QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
                                                             tr("Select Firmware File"),                                             // Dialog Caption
                                                             QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
-                                                            tr("Firmware Files (*.px4 *.bin *.ihx)"));                              // File filter
+                                                            tr("Firmware Files (*.px4 *.apj *.bin *.ihx)"));                              // File filter
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
         } else {
-            _errorCancel(tr("Unable to find specified firmware download location"));
+            _errorCancel(tr("Unable to find specified firmware for board type"));
             return;
         }
     }
