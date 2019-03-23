@@ -18,16 +18,17 @@
 
 QGC_LOGGING_CATEGORY(QGCSerialPortInfoLog, "QGCSerialPortInfoLog")
 
-bool         QGCSerialPortInfo::_jsonLoaded =           false;
-const char*  QGCSerialPortInfo::_jsonFileTypeValue =    "USBBoardInfo";
-const char*  QGCSerialPortInfo::_jsonBoardInfoKey =     "boardInfo";
-const char*  QGCSerialPortInfo::_jsonBoardFallbackKey = "boardFallback";
-const char*  QGCSerialPortInfo::_jsonVendorIDKey =      "vendorID";
-const char*  QGCSerialPortInfo::_jsonProductIDKey =     "productID";
-const char*  QGCSerialPortInfo::_jsonBoardClassKey =    "boardClass";
-const char*  QGCSerialPortInfo::_jsonNameKey =          "name";
-const char*  QGCSerialPortInfo::_jsonRegExpKey =        "regExp";
-const char*  QGCSerialPortInfo::_jsonAndroidOnlyKey =   "androidOnly";
+bool         QGCSerialPortInfo::_jsonLoaded =                       false;
+const char*  QGCSerialPortInfo::_jsonFileTypeValue =                "USBBoardInfo";
+const char*  QGCSerialPortInfo::_jsonBoardInfoKey =                 "boardInfo";
+const char*  QGCSerialPortInfo::_jsonBoardDescriptionFallbackKey =  "boardDescriptionFallback";
+const char*  QGCSerialPortInfo::_jsonBoardManufacturerFallbackKey = "boardManufacturerFallback";
+const char*  QGCSerialPortInfo::_jsonVendorIDKey =                  "vendorID";
+const char*  QGCSerialPortInfo::_jsonProductIDKey =                 "productID";
+const char*  QGCSerialPortInfo::_jsonBoardClassKey =                "boardClass";
+const char*  QGCSerialPortInfo::_jsonNameKey =                      "name";
+const char*  QGCSerialPortInfo::_jsonRegExpKey =                    "regExp";
+const char*  QGCSerialPortInfo::_jsonAndroidOnlyKey =               "androidOnly";
 
 const QGCSerialPortInfo::BoardClassString2BoardType_t QGCSerialPortInfo::_rgBoardClass2BoardType[] = {
     { "Pixhawk",    QGCSerialPortInfo::BoardTypePixhawk },
@@ -37,8 +38,9 @@ const QGCSerialPortInfo::BoardClassString2BoardType_t QGCSerialPortInfo::_rgBoar
     { "OpenPilot",  QGCSerialPortInfo::BoardTypeOpenPilot },
 };
 
-QList<QGCSerialPortInfo::BoardInfo_t>       QGCSerialPortInfo::_boardInfoList;
-QList<QGCSerialPortInfo::BoardFallback_t>   QGCSerialPortInfo::_boardFallbackList;
+QList<QGCSerialPortInfo::BoardInfo_t>           QGCSerialPortInfo::_boardInfoList;
+QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardDescriptionFallbackList;
+QList<QGCSerialPortInfo::BoardRegExpFallback_t> QGCSerialPortInfo::_boardManufacturerFallbackList;
 
 QGCSerialPortInfo::QGCSerialPortInfo(void) :
     QSerialPortInfo()
@@ -90,8 +92,9 @@ void QGCSerialPortInfo::_loadJsonData(void)
 
     // Validate root object keys
     QList<JsonHelper::KeyValidateInfo> rootKeyInfoList = {
-        { _jsonBoardInfoKey,        QJsonValue::Array, true },
-        { _jsonBoardFallbackKey,    QJsonValue::Array, true },
+        { _jsonBoardInfoKey,                    QJsonValue::Array, true },
+        { _jsonBoardDescriptionFallbackKey,     QJsonValue::Array, true },
+        { _jsonBoardManufacturerFallbackKey,    QJsonValue::Array, true },
     };
     if (!JsonHelper::validateKeys(json, rootKeyInfoList, errorString)) {
         qWarning() << errorString;
@@ -143,7 +146,7 @@ void QGCSerialPortInfo::_loadJsonData(void)
         { _jsonAndroidOnlyKey,  QJsonValue::Bool,   false },
     };
 
-    QJsonArray rgBoardFallback = json[_jsonBoardFallbackKey].toArray();
+    QJsonArray rgBoardFallback = json[_jsonBoardDescriptionFallbackKey].toArray();
     for (int i=0; i<rgBoardFallback.count(); i++) {
         const QJsonValue& jsonValue = rgBoardFallback[i];
         if (!jsonValue.isObject()) {
@@ -157,17 +160,44 @@ void QGCSerialPortInfo::_loadJsonData(void)
             return;
         }
 
-        BoardFallback_t boardFallback;
-        boardFallback.regExp = fallbackObject[_jsonRegExpKey].toString();
+        BoardRegExpFallback_t boardFallback;
+        boardFallback.regExp =      fallbackObject[_jsonRegExpKey].toString();
         boardFallback.androidOnly = fallbackObject[_jsonAndroidOnlyKey].toBool(false);
-        boardFallback.boardType = _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString());
+        boardFallback.boardType =   _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString());
 
         if (boardFallback.boardType == BoardTypeUnknown) {
             qWarning() << "Bad board class" << fallbackObject[_jsonBoardClassKey].toString();
             return;
         }
 
-        _boardFallbackList.append(boardFallback);
+        _boardDescriptionFallbackList.append(boardFallback);
+    }
+
+    rgBoardFallback = json[_jsonBoardManufacturerFallbackKey].toArray();
+    for (int i=0; i<rgBoardFallback.count(); i++) {
+        const QJsonValue& jsonValue = rgBoardFallback[i];
+        if (!jsonValue.isObject()) {
+            qWarning() << "Entry in boardFallback array is not object";
+            return;
+        }
+
+        QJsonObject  fallbackObject = jsonValue.toObject();
+        if (!JsonHelper::validateKeys(fallbackObject, fallbackKeyInfoList, errorString)) {
+            qWarning() << errorString;
+            return;
+        }
+
+        BoardRegExpFallback_t boardFallback;
+        boardFallback.regExp =      fallbackObject[_jsonRegExpKey].toString();
+        boardFallback.androidOnly = fallbackObject[_jsonAndroidOnlyKey].toBool(false);
+        boardFallback.boardType =   _boardClassStringToType(fallbackObject[_jsonBoardClassKey].toString());
+
+        if (boardFallback.boardType == BoardTypeUnknown) {
+            qWarning() << "Bad board class" << fallbackObject[_jsonBoardClassKey].toString();
+            return;
+        }
+
+        _boardManufacturerFallbackList.append(boardFallback);
     }
 }
 
@@ -176,7 +206,6 @@ QGCSerialPortInfo::BoardType_t QGCSerialPortInfo::_boardClassStringToType(const 
     for (size_t j=0; j<sizeof(_rgBoardClass2BoardType)/sizeof(_rgBoardClass2BoardType[0]); j++) {
         if (boardClass == _rgBoardClass2BoardType[j].classString) {
             return _rgBoardClass2BoardType[j].boardType;
-            break;
         }
     }
 
@@ -204,12 +233,27 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
     }
 
     if (boardType == BoardTypeUnknown) {
-        // Fall back to port name matching which could lead to incorrect board mapping. But in some cases the
-        // vendor and product id do not come through correctly so this is used as a last chance detection method.
-        for (int i=0; i<_boardFallbackList.count(); i++) {
-            const BoardFallback_t& boardFallback = _boardFallbackList[i];
+        // Fall back to port description matching and then manufactrure name matching
+
+        for (int i=0; i<_boardDescriptionFallbackList.count(); i++) {
+            const BoardRegExpFallback_t& boardFallback = _boardDescriptionFallbackList[i];
 
             if (description().contains(QRegExp(boardFallback.regExp, Qt::CaseInsensitive))) {
+#ifndef __android
+                if (boardFallback.androidOnly) {
+                    continue;
+                }
+#endif
+                boardType = boardFallback.boardType;
+                name = _boardTypeToString(boardType);
+                return true;
+            }
+        }
+
+        for (int i=0; i<_boardManufacturerFallbackList.count(); i++) {
+            const BoardRegExpFallback_t& boardFallback = _boardManufacturerFallbackList[i];
+
+            if (manufacturer().contains(QRegExp(boardFallback.regExp, Qt::CaseInsensitive))) {
 #ifndef __android
                 if (boardFallback.androidOnly) {
                     continue;
