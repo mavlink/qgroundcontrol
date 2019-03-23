@@ -23,9 +23,14 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
 SetupPage {
-    id:            firmwarePage
-    pageComponent: firmwarePageComponent
-    pageName:      "Firmware" // For building setup page title: 'Firmware Setup'
+    id:             firmwarePage
+    pageComponent:  firmwarePageComponent
+    pageName:       qsTr("Firmware")
+    showAdvanced:   _activeVehicle && _activeVehicle.apmFirmware
+
+    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+
+    signal cancelDialog
 
     Component {
         id: firmwarePageComponent
@@ -40,7 +45,7 @@ SetupPage {
             // a better way to hightlight them, or use less highlights.
 
             // User visible strings
-            readonly property string title:   "Firmware Setup" // Popup dialog title
+            readonly property string title:   qsTr("Firmware Setup") // Popup dialog title
 
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
@@ -124,8 +129,8 @@ SetupPage {
                 }
 
                 onError: {
-                    hideDialog()
                     statusTextArea.append(flashFailText)
+                    firmwarePage.cancelDialog()
                 }
             }
 
@@ -165,7 +170,11 @@ SetupPage {
                         px4FlightStackRadio2.text = qsTr("PX4 Flight Stack ") + versionString
                     }
 
-                    Component.onCompleted: updatePX4VersionDisplay()
+                    Component.onCompleted: {
+                        firmwarePage.advanced = false
+                        firmwarePage.showAdvanced = false
+                        updatePX4VersionDisplay()
+                    }
 
                     function accept() {
                         hideDialog()
@@ -193,6 +202,12 @@ SetupPage {
                     function reject() {
                         hideDialog()
                         cancelFlash()
+                    }
+
+
+                    Connections {
+                        target:         firmwarePage
+                        onCancelDialog: reject()
                     }
 
                     ExclusiveGroup {
@@ -438,8 +453,16 @@ SetupPage {
             }
 
             ProgressBar {
-                id:                 progressBar
-                Layout.preferredWidth:              parent.width
+                id:                     progressBar
+                Layout.preferredWidth:  parent.width
+                visible:                !flashBootloaderButton.visible
+            }
+
+            QGCButton {
+                id:         flashBootloaderButton
+                text:       qsTr("Flash ChibiOS Bootloader")
+                visible:    firmwarePage.advanced
+                onClicked:  _activeVehicle.flashBootloader()
             }
 
             TextArea {
