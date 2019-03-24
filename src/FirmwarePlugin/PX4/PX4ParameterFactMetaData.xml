@@ -4694,16 +4694,16 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     <parameter default="45.0" name="MPC_TILTMAX_AIR" type="FLOAT">
       <short_desc>Maximum tilt angle in air</short_desc>
       <long_desc>Limits maximum tilt in AUTO and POSCTRL modes during flight.</long_desc>
-      <min>0.0</min>
-      <max>90.0</max>
+      <min>20.0</min>
+      <max>180.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
     <parameter default="12.0" name="MPC_TILTMAX_LND" type="FLOAT">
       <short_desc>Maximum tilt during landing</short_desc>
       <long_desc>Limits maximum tilt angle on landing.</long_desc>
-      <min>0.0</min>
-      <max>180.0</max>
+      <min>10.0</min>
+      <max>90.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
     </parameter>
