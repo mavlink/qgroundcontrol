@@ -225,7 +225,7 @@ bool QGCSerialPortInfo::getBoardInfo(QGCSerialPortInfo::BoardType_t& boardType, 
     for (int i=0; i<_boardInfoList.count(); i++) {
         const BoardInfo_t& boardInfo = _boardInfoList[i];
 
-        if (vendorIdentifier() == boardInfo.vendorId && productIdentifier() == boardInfo.productId) {
+        if (vendorIdentifier() == boardInfo.vendorId && (productIdentifier() == boardInfo.productId || boardInfo.productId == 0)) {
             boardType = boardInfo.boardType;
             name = boardInfo.name;
             return true;
