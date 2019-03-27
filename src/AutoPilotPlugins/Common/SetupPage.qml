@@ -86,7 +86,7 @@ QGCView {
                         anchors.right:  parent.right
                         wrapMode:       Text.WordWrap
                         text:           pageDescription
-                        visible:        !ScreenTools.isShortScreen
+                        visible:        pageDescription !== "" && !ScreenTools.isShortScreen
                     }
                 }
             }
