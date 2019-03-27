@@ -25,13 +25,15 @@ public:
     QGCVideoStreamInfo(QObject* parent, const mavlink_video_stream_information_t* si);
 
     Q_PROPERTY(QString      uri                 READ uri                NOTIFY infoChanged)
+    Q_PROPERTY(QString      name                READ name               NOTIFY infoChanged)
     Q_PROPERTY(int          streamID            READ streamID           NOTIFY infoChanged)
     Q_PROPERTY(int          type                READ type               NOTIFY infoChanged)
     Q_PROPERTY(qreal        aspectRatio         READ aspectRatio        NOTIFY infoChanged)
     Q_PROPERTY(qreal        hfov                READ hfov               NOTIFY infoChanged)
     Q_PROPERTY(bool         isThermal           READ isThermal          NOTIFY infoChanged)
 
-    QString uri             () { return QString(_streamInfo.uri); }
+    QString uri             () { return QString(_streamInfo.uri);  }
+    QString name            () { return QString(_streamInfo.name); }
     qreal   aspectRatio     ();
     qreal   hfov            () { return _streamInfo.hfov; }
     int     type            () { return _streamInfo.type; }
@@ -162,6 +164,7 @@ public:
     Q_PROPERTY(QGCVideoStreamInfo* currentStreamInstance READ currentStreamInstance                 NOTIFY currentStreamChanged)
     Q_PROPERTY(quint32      recordTime          READ recordTime                                     NOTIFY recordTimeChanged)
     Q_PROPERTY(QString      recordTimeStr       READ recordTimeStr                                  NOTIFY recordTimeChanged)
+    Q_PROPERTY(QStringList  streamLabels        READ streamLabels                                   NOTIFY streamLabelsChanged)
 
     Q_INVOKABLE virtual void setVideoMode   ();
     Q_INVOKABLE virtual void setPhotoMode   ();
@@ -227,6 +230,9 @@ public:
     virtual Fact*       wb                  ();
     virtual Fact*       mode                ();
 
+    //-- Stream names to show the user (for selection)
+    virtual QStringList          streamLabels       () { return _streamLabels; }
+
     virtual void        setZoomLevel        (qreal level);
     virtual void        setFocusLevel       (qreal level);
     virtual void        setCameraMode       (CameraMode mode);
@@ -278,6 +284,7 @@ signals:
     void    currentStreamChanged            ();
     void    autoStreamChanged               ();
     void    recordTimeChanged               ();
+    void    streamLabelsChanged             ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
@@ -368,4 +375,5 @@ protected:
     QTimer                              _streamInfoTimer;
     QTimer                              _streamStatusTimer;
     QmlObjectListModel                  _streams;
+    QStringList                         _streamLabels;
 };

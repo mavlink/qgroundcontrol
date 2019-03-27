@@ -1489,7 +1489,10 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
         QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(this, vi);
         QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);
         _streams.append(pStream);
+        _streamLabels.append(pStream->name());
         emit streamsChanged();
+        emit streamLabelsChanged();
+        qDebug() << _streamLabels;
     }
     //-- Check for missing count
     if(_streams.count() < _expectedCount) {
@@ -1525,6 +1528,7 @@ QGCCameraControl::setCurrentStream(int stream)
         if(_currentStream != stream) {
             QGCVideoStreamInfo* pInfo = currentStreamInstance();
             if(pInfo) {
+                qCDebug(CameraControlLog) << "Stopping stream:" << pInfo->uri();
                 //-- Stop current stream
                 _vehicle->sendMavCommand(
                     _compID,                                // Target component
@@ -1536,6 +1540,7 @@ QGCCameraControl::setCurrentStream(int stream)
             pInfo = currentStreamInstance();
             if(pInfo) {
                 //-- Start new stream
+                qCDebug(CameraControlLog) << "Starting stream:" << pInfo->uri();
                 _vehicle->sendMavCommand(
                     _compID,                                // Target component
                     MAV_CMD_VIDEO_START_STREAMING,          // Command id
@@ -2027,10 +2032,11 @@ QGCVideoStreamInfo::QGCVideoStreamInfo(QObject* parent, const mavlink_video_stre
 qreal
 QGCVideoStreamInfo::aspectRatio()
 {
+    qreal ar = 1.0;
     if(_streamInfo.resolution_h && _streamInfo.resolution_v) {
-        return static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
+        ar = static_cast<double>(_streamInfo.resolution_h) / static_cast<double>(_streamInfo.resolution_v);
     }
-    return 1.0;
+    return ar;
 }
 
 //-----------------------------------------------------------------------------
