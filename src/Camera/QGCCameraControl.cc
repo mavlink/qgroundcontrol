@@ -669,6 +669,9 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 _storageInfoRetries = 0;
                 break;
+            case MAV_CMD_IMAGE_START_CAPTURE:
+                _captureStatusTimer.start(1000);
+                break;
         }
     } else {
         if(noReponseFromVehicle || result == MAV_RESULT_TEMPORARILY_REJECTED || result == MAV_RESULT_FAILED) {
