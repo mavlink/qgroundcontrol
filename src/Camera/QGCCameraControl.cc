@@ -364,10 +364,12 @@ QGCCameraControl::takePhoto()
             _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
-            QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-            QDir().mkpath(photoPath);
-            photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-            qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+                QDir().mkpath(photoPath);
+                photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+                qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+            }
             return true;
         }
     }
@@ -1471,10 +1473,12 @@ QGCCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap
     //-- Time Lapse
     if(photoStatus() == PHOTO_CAPTURE_INTERVAL_IDLE || photoStatus() == PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
         //-- Capture local image as well
-        QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
-        QDir().mkpath(photoPath);
-        photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
-        qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+        if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+            QString photoPath = qgcApp()->toolbox()->settingsManager()->appSettings()->savePath()->rawValue().toString() + QStringLiteral("/Photo");
+            QDir().mkpath(photoPath);
+            photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
+            qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+        }
     }
 }
 
