@@ -1640,9 +1640,11 @@ void Vehicle::_updateArmed(bool armed)
         } else {
             _mapTrajectoryStop();
             // Also handle Video Streaming
-            if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
-                _settingsManager->videoSettings()->streamEnabled()->setRawValue(false);
-                qgcApp()->toolbox()->videoManager()->videoReceiver()->stop();
+            if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
+                if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
+                    _settingsManager->videoSettings()->streamEnabled()->setRawValue(false);
+                    qgcApp()->toolbox()->videoManager()->videoReceiver()->stop();
+                }
             }
         }
     }
@@ -1654,8 +1656,8 @@ void Vehicle::_handlePing(LinkInterface* link, mavlink_message_t& message)
     mavlink_message_t   msg;
 
     mavlink_msg_ping_decode(&message, &ping);
-    mavlink_msg_ping_pack_chan(_mavlink->getSystemId(),
-                               _mavlink->getComponentId(),
+    mavlink_msg_ping_pack_chan(static_cast<uint8_t>(_mavlink->getSystemId()),
+                               static_cast<uint8_t>(_mavlink->getComponentId()),
                                priorityLink()->mavlinkChannel(),
                                &msg,
                                ping.time_usec,
