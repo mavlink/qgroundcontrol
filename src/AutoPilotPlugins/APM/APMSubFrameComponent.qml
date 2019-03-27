@@ -104,6 +104,12 @@ SetupPage {
                     resource: "qrc:///qmlimages/Frames/SimpleROV-4.png"
                     paramValue: 5
                 }
+
+                ListElement {
+                    name: "SimpleROV-5"
+                    resource: "qrc:///qmlimages/Frames/SimpleROV-5.png"
+                    paramValue: 6
+                }
             }
 
             Item {
