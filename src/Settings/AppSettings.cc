@@ -10,6 +10,7 @@
 #include "AppSettings.h"
 #include "QGCPalette.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -61,7 +62,7 @@ DECLARE_SETTINGGROUP(App, "")
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
 
     _checkSavePathDirectories();
-    //-- Same for language
+    //-- Keep track of language changes
     SettingsFact* languageFact = qobject_cast<SettingsFact*>(language());
     connect(languageFact, &Fact::rawValueChanged, this, &AppSettings::_languageChanged);
 }
@@ -93,6 +94,7 @@ DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
 DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
 DECLARE_SETTINGSFACT(AppSettings, language)
+DECLARE_SETTINGSFACT(AppSettings, disableLocalLogging)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {

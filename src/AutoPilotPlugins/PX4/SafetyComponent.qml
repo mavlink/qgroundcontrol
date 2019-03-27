@@ -43,6 +43,7 @@ SetupPage {
             property real _imageWidth:      ScreenTools.defaultFontPixelWidth * 15
             property real _imageHeight:     ScreenTools.defaultFontPixelHeight * 3
 
+            property Fact _disableLogging:  controller.getParameterFact(-1, "SDLOG_MODE")
             property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
             property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
             property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
@@ -98,11 +99,19 @@ SetupPage {
             }
 
             Rectangle {
-                id:     otherLastRect
                 x:      landModeGrid.x + outerGrid.x - _margins
                 y:      landModeGrid.y + outerGrid.y - _margins
                 width:  landModeGrid.width + (_margins * 2)
                 height: landModeGrid.height + (_margins * 2)
+                color:  qgcPal.windowShade
+            }
+
+            Rectangle {
+                id:     otherLastRect
+                x:      loggingGrid.x + outerGrid.x - _margins
+                y:      loggingGrid.y + outerGrid.y - _margins
+                width:  loggingGrid.width + (_margins * 2)
+                height: loggingGrid.height + (_margins * 2)
                 color:  qgcPal.windowShade
             }
 
@@ -486,6 +495,48 @@ SetupPage {
                     }
                 }
 
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                QGCLabel {
+                    text:               qsTr("Vehicle Logging")
+                    Layout.columnSpan:  3
+                }
+
+                Item { width: 1; height: _margins; Layout.columnSpan: 3 }
+
+                Item { width: _margins; height: 1 }
+
+                GridLayout {
+                    id:         loggingGrid
+                    columns:    4
+                    Item {
+                        Layout.fillWidth:   true
+                    }
+                    Image {
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/no-logging-light.svg" : "/qmlimages/no-logging.svg"
+                        Layout.maximumWidth:    _imageWidth
+                        Layout.maximumHeight:   _imageHeight
+                        width:                  _imageWidth
+                        height:                 _imageHeight
+                    }
+                    QGCCheckBox {
+                        text:                   qsTr("Disable vehicle logging")
+                        checkedState:           _disableLogging ? (_disableLogging.value < 0 ? Qt.Checked : Qt.Unchecked) : Qt.Unchecked
+                        Layout.minimumWidth:    _editFieldWidth
+                        Layout.alignment:       Qt.AlignVCenter
+                        onClicked:  {
+                            if(_disableLogging) {
+                                _disableLogging.value = checked ? -1 : 0
+                            }
+                        }
+                    }
+                    Item {
+                        Layout.fillWidth:   true
+                    }
+                }
+
                 Item { width: 1; height: _margins; Layout.columnSpan: 3; visible: _hitlAvailable }
 
                 QGCLabel {
@@ -504,10 +555,10 @@ SetupPage {
                     visible:    _hitlAvailable
 
                     Image {
-                        mipmap:             true
-                        fillMode:           Image.PreserveAspectFit
-                        source:             qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/VehicleSummaryIcon.png" : "/qmlimages/VehicleSummaryIcon.png"
-                        Layout.rowSpan:     3
+                        mipmap:                 true
+                        fillMode:               Image.PreserveAspectFit
+                        source:                 qgcPal.globalTheme === qgcPal.Light ? "/qmlimages/VehicleSummaryIcon.png" : "/qmlimages/VehicleSummaryIcon.png"
+                        Layout.rowSpan:         3
                         Layout.maximumWidth:    _imageWidth
                         Layout.maximumHeight:   _imageHeight
                         width:                  _imageWidth
@@ -524,6 +575,7 @@ SetupPage {
                         Layout.minimumWidth:    _editFieldWidth
                     }
                 }
+
             }
         }
     }
