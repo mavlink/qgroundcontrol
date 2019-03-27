@@ -912,10 +912,10 @@ public:
     QString         brandImageIndoor        () const;
     QString         brandImageOutdoor       () const;
     QStringList     unhealthySensors        () const;
-    int             sensorsPresentBits      () const { return _onboardControlSensorsPresent; }
-    int             sensorsEnabledBits      () const { return _onboardControlSensorsEnabled; }
-    int             sensorsHealthBits       () const { return _onboardControlSensorsHealth; }
-    int             sensorsUnhealthyBits    () const { return _onboardControlSensorsUnhealthy; }
+    int             sensorsPresentBits      () const { return static_cast<int>(_onboardControlSensorsPresent); }
+    int             sensorsEnabledBits      () const { return static_cast<int>(_onboardControlSensorsEnabled); }
+    int             sensorsHealthBits       () const { return static_cast<int>(_onboardControlSensorsHealth); }
+    int             sensorsUnhealthyBits    () const { return static_cast<int>(_onboardControlSensorsUnhealthy); }
     QString         missionFlightMode       () const;
     QString         pauseFlightMode         () const;
     QString         rtlFlightMode           () const;

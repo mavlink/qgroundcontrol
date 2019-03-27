@@ -44,6 +44,7 @@ QGCView {
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
+    property var  _activeVehicle:               QGroundControl.multiVehicleManager.activeVehicle
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
@@ -263,10 +264,19 @@ QGCView {
                                 }
 
                                 FactCheckBox {
+                                    id:         disableLogging
+                                    text:       qsTr("Disable local logging")
+                                    fact:       _disableLogging
+                                    visible:    _disableLogging.visible
+                                    property Fact _disableLogging: QGroundControl.settingsManager.appSettings.disableLocalLogging
+                                }
+
+                                FactCheckBox {
                                     id:         promptSaveLog
                                     text:       qsTr("Save telemetry log after each flight")
                                     fact:       _telemetrySave
                                     visible:    _telemetrySave.visible
+                                    enabled:    !disableLogging.checked
                                     property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                                 }
 
@@ -274,7 +284,7 @@ QGCView {
                                     text:       qsTr("Save telemetry log even if vehicle was not armed")
                                     fact:       _telemetrySaveNotArmed
                                     visible:    _telemetrySaveNotArmed.visible
-                                    enabled:    promptSaveLog.checked
+                                    enabled:    promptSaveLog.checked && !disableLogging.checked
                                     property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                                 }
 
