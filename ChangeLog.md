@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* ArduCopter: Handle 3.7 parameter name change from CH#_OPT to RC#_OPTION.
 * Improved support for flashing/connecting to ChibiOS bootloaders boards.
 * Making the camera API available to all firmwares, not just PX4.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
