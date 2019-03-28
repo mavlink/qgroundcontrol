@@ -375,11 +375,27 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                             QGCComboBox {
-                                id:             cameraSelector
                                 model:          _isCamera ? _dynamicCameras.cameraLabels : []
                                 width:          _editFieldWidth
                                 onActivated:    _dynamicCameras.currentCamera = index
                                 currentIndex:   _dynamicCameras ? _dynamicCameras.currentCamera : 0
+                            }
+                        }
+                        //-------------------------------------------
+                        //-- Stream Selector
+                        Row {
+                            spacing:        ScreenTools.defaultFontPixelWidth
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCLabel {
+                                text:           qsTr("Stream Selector:")
+                                width:          _labelFieldWidth
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            QGCComboBox {
+                                model:          _camera ? _camera.streamLabels : []
+                                width:          _editFieldWidth
+                                onActivated:    _camera.currentStream = index
+                                currentIndex:   _camera ? _camera.currentStream : 0
                             }
                         }
                         Rectangle {

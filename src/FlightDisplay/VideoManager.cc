@@ -246,6 +246,7 @@ VideoManager::_restartVideo()
     _videoReceiver->stop();
     _updateSettings();
     _videoReceiver->start();
+    emit aspectRatioChanged();
 #endif
 }
 
