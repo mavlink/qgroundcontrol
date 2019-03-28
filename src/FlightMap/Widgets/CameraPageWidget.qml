@@ -203,6 +203,8 @@ Column {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     spacing:        _margins
+                    //-------------------------------------------
+                    //-- Camera Selector
                     Row {
                         visible:    _isCamera
                         spacing:    ScreenTools.defaultFontPixelWidth
@@ -220,6 +222,24 @@ Column {
                             currentIndex:   _dynamicCameras.currentCamera
                         }
                     }
+                    //-------------------------------------------
+                    //-- Stream Selector
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:           qsTr("Stream Selector:")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            model:          _camera ? _camera.streamLabels : []
+                            width:          _editFieldWidth
+                            onActivated:    _camera.currentStream = index
+                            currentIndex:   _camera ? _camera.currentStream : 0
+                        }
+                    }
+
                     //-------------------------------------------
                     //-- Camera Settings
                     Repeater {
