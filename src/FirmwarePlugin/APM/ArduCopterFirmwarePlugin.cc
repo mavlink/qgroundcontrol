@@ -162,6 +162,12 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
 
         remapV3_7["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
         remapV3_7["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
+        remapV3_7["RC7_OPTION"] =       QStringLiteral("CH7_OPT");
+        remapV3_7["RC8_OPTION"] =       QStringLiteral("CH8_OPT");
+        remapV3_7["RC9_OPTION"] =       QStringLiteral("CH9_OPT");
+        remapV3_7["RC10_OPTION"] =      QStringLiteral("CH10_OPT");
+        remapV3_7["RC11_OPTION"] =      QStringLiteral("CH11_OPT");
+        remapV3_7["RC12_OPTION"] =      QStringLiteral("CH12_OPT");
 
         _remapParamNameIntialized = true;
     }
