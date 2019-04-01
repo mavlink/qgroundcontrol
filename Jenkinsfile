@@ -29,13 +29,16 @@ pipeline {
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
+            sh 'ln -s $CI_ANDROID_GSTREAMER_LOCATION ${WORKSPACE}/'
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
+            sh 'cp build/release/package/AuterionGS.apk ${WORKSPACE}/'
           }
           post {
             always {
-              archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+              archiveArtifacts artifacts: 'build/release/**/*'
+              archiveArtifacts artifacts: 'AuterionGS.apk', onlyIfSuccessful: true
             }
             cleanup {
               sh 'git clean -ff -x -d .'
@@ -135,13 +138,6 @@ pipeline {
             sh 'git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
             sh 'git submodule update --init --recursive --force'
-            // TODO: Airmap feature is not used, for now. However find a way to be optional,
-            //  or provide a dummy one not to diverge too much from upstream
-            /*
-            withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
-              sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
-            }
-            */
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
 
