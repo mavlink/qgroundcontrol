@@ -2,7 +2,7 @@ installer {
     DEFINES += QGC_INSTALL_RELEASE
     AndroidBuild {
         # We don't sign our build yet
-        QMAKE_POST_LINK += mkdir -p $${DESTDIR}/package
+        QMAKE_POST_LINK += && mkdir -p $${DESTDIR}/package
         QMAKE_POST_LINK += && make install INSTALL_ROOT=$${DESTDIR}/android-build/
         # We don't sign our build yet
         QMAKE_POST_LINK += && androiddeployqt --input android-lib$${QGC_BINARY_NAME}.so-deployment-settings.json --output $${DESTDIR}/android-build --deployment bundled --gradle

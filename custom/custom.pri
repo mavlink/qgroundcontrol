@@ -162,6 +162,7 @@ exists($$PWD/custom/custom.pri) {
 
     AndroidBuild {
         CONFIG += DISABLE_BUILTIN_ANDROID
+        CONFIG += QGC_DISABLE_BUILD_SETUP
         CONFIG += QGC_DISABLE_INSTALLER_SETUP
         ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
         include($$QGCROOT/libs/qtandroidserialport/src/qtandroidserialport.pri)
@@ -192,6 +193,8 @@ exists($$PWD/custom/custom.pri) {
             $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.properties \
             $$QGCROOT/custom/android/gradlew.bat
 
+        # It's important to keep the right order
+        include($$QGCROOT/QGCSetup.pri)
         include(customQGCInstaller.pri)
     }
 
