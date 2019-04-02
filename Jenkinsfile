@@ -33,12 +33,12 @@ pipeline {
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
             sh 'ccache -s'
-            sh 'cp build/release/package/AuterionGS.apk ${WORKSPACE}/'
+            sh 'cp build/release/package/*.apk ${WORKSPACE}/'
           }
           post {
             always {
               archiveArtifacts artifacts: 'build/release/**/*'
-              archiveArtifacts artifacts: 'AuterionGS.apk', onlyIfSuccessful: true
+              archiveArtifacts artifacts: '*.apk', onlyIfSuccessful: true
             }
             cleanup {
               sh 'git clean -ff -x -d .'
