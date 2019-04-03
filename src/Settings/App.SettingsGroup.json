@@ -238,7 +238,7 @@
 },
 {
     "name":             "disableLocalLogging",
-    "shortDescription": "Disable all logging",
+    "shortDescription": "Disable local logging",
     "longDescription":  "If this option is enabled nothing will be stored to disk.",
     "type":             "bool",
     "defaultValue":     false
