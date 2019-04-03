@@ -44,7 +44,6 @@ QGCView {
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _qgcView.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
-    property var  _activeVehicle:               QGroundControl.multiVehicleManager.activeVehicle
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
