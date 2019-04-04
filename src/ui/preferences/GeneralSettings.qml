@@ -371,14 +371,14 @@ QGCView {
                             spacing:                    _margins
                             FactCheckBox {
                                 id:         enableLogging
-                                text:       qsTr("Save telemetry logs to disk")
+                                text:       qsTr("Save logs to disk")
                                 fact:       _enableLogging
                                 visible:    _enableLogging.visible
                                 property Fact _enableLogging: QGroundControl.settingsManager.appSettings.enableLocalLogging
                             }
                             FactCheckBox {
                                 id:         promptSaveLog
-                                text:       qsTr("Save telemetry log after each flight")
+                                text:       qsTr("Save log after each flight")
                                 fact:       _telemetrySave
                                 visible:    _telemetrySave.visible
                                 enabled:    enableLogging.checked
@@ -386,7 +386,7 @@ QGCView {
                             }
                             FactCheckBox {
                                 id:         logIfNotArmed
-                                text:       qsTr("Save telemetry logs even if vehicle was not armed")
+                                text:       qsTr("Save logs even if vehicle was not armed")
                                 fact:       _telemetrySaveNotArmed
                                 visible:    _telemetrySaveNotArmed.visible
                                 enabled:    promptSaveLog.checked && enableLogging.checked
