@@ -94,7 +94,7 @@ DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
 DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
 DECLARE_SETTINGSFACT(AppSettings, language)
-DECLARE_SETTINGSFACT(AppSettings, disableLocalLogging)
+DECLARE_SETTINGSFACT(AppSettings, enableLocalLogging)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
