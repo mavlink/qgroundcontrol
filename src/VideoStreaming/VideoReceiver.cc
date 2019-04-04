@@ -130,14 +130,12 @@ VideoReceiver::grabImage(QString imageFile)
 static void
 newPadCB(GstElement* element, GstPad* pad, gpointer data)
 {
-    gchar* name;
-    name = gst_pad_get_name(pad);
-    //g_print("A new pad %s was created\n", name);
+    gchar* name = gst_object_get_name(reinterpret_cast<GstObject*>(pad));
     GstCaps* p_caps = gst_pad_get_pad_template_caps (pad);
     gchar* description = gst_caps_to_string(p_caps);
-    qCDebug(VideoReceiverLog) << p_caps << ", " << description;
+    qCDebug(VideoReceiverLog) << "A new pad was created - name: " << name << ", caps: " << description;
     g_free(description);
-    GstElement* sink = GST_ELEMENT(data);
+    GstElement* sink = reinterpret_cast<GstElement*>(data);
     if(gst_element_link_pads(element, name, sink, "sink") == false)
         qCritical() << "newPadCB : failed to link elements\n";
     g_free(name);
@@ -342,11 +340,10 @@ VideoReceiver::start()
         }
 
         if((queue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
-            // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
-            //       We should compare gstreamer scripts to QGroundControl to determine the need
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
             break;
         }
+        g_object_set(static_cast<gpointer>(queue), "leaky", 2, "max-size-buffers", 1, "silent", true, nullptr);
 
         if ((decoder = gst_element_factory_make("avdec_h264", "h264-decoder")) == nullptr) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('avdec_h264')";
@@ -359,9 +356,9 @@ VideoReceiver::start()
         }
 
         if(isTaisyncUSB) {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+            gst_bin_add_many(reinterpret_cast<GstBin *>(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
         } else {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+            gst_bin_add_many(reinterpret_cast<GstBin *>(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
         }
         pipelineUp = true;
 
@@ -484,7 +481,7 @@ VideoReceiver::stop()
         qCDebug(VideoReceiverLog) << "Stopping _pipeline";
         gst_element_send_event(_pipeline, gst_event_new_eos());
         _stopping = true;
-        GstBus* bus = gst_pipeline_get_bus(GST_PIPELINE(_pipeline));
+        GstBus* bus = gst_pipeline_get_bus(reinterpret_cast<GstPipeline*>(_pipeline));
         GstMessage* message = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, (GstMessageType)(GST_MESSAGE_EOS|GST_MESSAGE_ERROR));
         gst_object_unref(bus);
         if(GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
@@ -705,7 +702,7 @@ VideoReceiver::startRecording(const QString &videoFile)
     emit videoFileChanged();
 
     g_object_set(static_cast<gpointer>(_sink->filesink), "location", qPrintable(_videoFile), nullptr);
-    qCDebug(VideoReceiverLog) << "New video file:" << _videoFile;
+    qCDebug(VideoReceiverLog) << "New video file: " << _videoFile;
 
     gst_object_ref(_sink->queue);
     gst_object_ref(_sink->parse);
@@ -719,13 +716,6 @@ VideoReceiver::startRecording(const QString &videoFile)
     gst_element_sync_state_with_parent(_sink->parse);
     gst_element_sync_state_with_parent(_sink->mux);
     gst_element_sync_state_with_parent(_sink->filesink);
-
-    // Install a probe on the recording branch to drop buffers until we hit our first keyframe
-    // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
-    // This will ensure the first frame is a keyframe at t=0, and decoding can begin immediately on playback
-    GstPad* probepad = gst_element_get_static_pad(_sink->queue, "src");
-    gst_pad_add_probe(probepad, (GstPadProbeType)(GST_PAD_PROBE_TYPE_BUFFER /* | GST_PAD_PROBE_TYPE_BLOCK */), _keyframeWatch, this, nullptr); // to drop the buffer or to block the buffer?
-    gst_object_unref(probepad);
 
     // Link the recording branch to the pipeline
     GstPad* sinkpad = gst_element_get_static_pad(_sink->queue, "sink");
@@ -852,33 +842,6 @@ VideoReceiver::_unlinkCallBack(GstPad* pad, GstPadProbeInfo* info, gpointer user
             pThis->_detachRecordingBranch(info);
         }
     }
-    return GST_PAD_PROBE_REMOVE;
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#if defined(QGC_GST_STREAMING)
-GstPadProbeReturn
-VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_data)
-{
-    Q_UNUSED(pad);
-    if(info != nullptr && user_data != nullptr) {
-        GstBuffer* buf = gst_pad_probe_info_get_buffer(info);
-        if(GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT)) { // wait for a keyframe
-            return GST_PAD_PROBE_DROP;
-        } else {
-            VideoReceiver* pThis = static_cast<VideoReceiver*>(user_data);
-            // reset the clock
-            GstClock* clock = gst_pipeline_get_clock(GST_PIPELINE(pThis->_pipeline));
-            GstClockTime time = gst_clock_get_time(clock);
-            gst_object_unref(clock);
-            gst_element_set_base_time(pThis->_pipeline, time); // offset pipeline timestamps to start at zero again
-            buf->dts = 0; // The offset will not apply to this current buffer, our first frame, timestamp is zero
-            buf->pts = 0;
-            qCDebug(VideoReceiverLog) << "Got keyframe, stop dropping buffers";
-        }
-    }
-
     return GST_PAD_PROBE_REMOVE;
 }
 #endif
