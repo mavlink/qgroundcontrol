@@ -43,7 +43,7 @@ SetupPage {
             property real _imageWidth:      ScreenTools.defaultFontPixelWidth * 15
             property real _imageHeight:     ScreenTools.defaultFontPixelHeight * 3
 
-            property Fact _disableLogging:  controller.getParameterFact(-1, "SDLOG_MODE")
+            property Fact _enableLogging:   controller.getParameterFact(-1, "SDLOG_MODE")
             property Fact _fenceAction:     controller.getParameterFact(-1, "GF_ACTION")
             property Fact _fenceRadius:     controller.getParameterFact(-1, "GF_MAX_HOR_DIST")
             property Fact _fenceAlt:        controller.getParameterFact(-1, "GF_MAX_VER_DIST")
@@ -498,7 +498,7 @@ SetupPage {
                 Item { width: 1; height: _margins; Layout.columnSpan: 3 }
 
                 QGCLabel {
-                    text:               qsTr("Vehicle Logging")
+                    text:               qsTr("Vehicle Telemetry Logging")
                     Layout.columnSpan:  3
                 }
 
@@ -507,10 +507,11 @@ SetupPage {
                 Item { width: _margins; height: 1 }
 
                 GridLayout {
-                    id:         loggingGrid
-                    columns:    4
+                    id:                         loggingGrid
+                    columns:                    4
+                    columnSpacing:              ScreenTools.defaultFontPixelWidth * 4
                     Item {
-                        Layout.fillWidth:   true
+                        Layout.fillWidth:       true
                     }
                     Image {
                         mipmap:                 true
@@ -522,13 +523,13 @@ SetupPage {
                         height:                 _imageHeight
                     }
                     QGCCheckBox {
-                        text:                   qsTr("Disable vehicle logging")
-                        checkedState:           _disableLogging ? (_disableLogging.value < 0 ? Qt.Checked : Qt.Unchecked) : Qt.Unchecked
+                        text:                   qsTr("Enable telemetry logging to vehicle storage")
+                        checkedState:           _enableLogging ? (_enableLogging.value >= 0 ? Qt.Checked : Qt.Unchecked) : Qt.Unchecked
                         Layout.minimumWidth:    _editFieldWidth
                         Layout.alignment:       Qt.AlignVCenter
                         onClicked:  {
-                            if(_disableLogging) {
-                                _disableLogging.value = checked ? -1 : 0
+                            if(_enableLogging) {
+                                _enableLogging.value = checked ? 0 : -1
                             }
                         }
                     }

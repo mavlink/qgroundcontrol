@@ -263,31 +263,6 @@ QGCView {
                                 }
 
                                 FactCheckBox {
-                                    id:         disableLogging
-                                    text:       qsTr("Disable local logging")
-                                    fact:       _disableLogging
-                                    visible:    _disableLogging.visible
-                                    property Fact _disableLogging: QGroundControl.settingsManager.appSettings.disableLocalLogging
-                                }
-
-                                FactCheckBox {
-                                    id:         promptSaveLog
-                                    text:       qsTr("Save telemetry log after each flight")
-                                    fact:       _telemetrySave
-                                    visible:    _telemetrySave.visible
-                                    enabled:    !disableLogging.checked
-                                    property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
-                                }
-
-                                FactCheckBox {
-                                    text:       qsTr("Save telemetry log even if vehicle was not armed")
-                                    fact:       _telemetrySaveNotArmed
-                                    visible:    _telemetrySaveNotArmed.visible
-                                    enabled:    promptSaveLog.checked && !disableLogging.checked
-                                    property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
-                                }
-
-                                FactCheckBox {
                                     text:       qsTr("AutoLoad Missions")
                                     fact:       _autoLoad
                                     visible:    _autoLoad.visible
@@ -374,6 +349,48 @@ QGCView {
 
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+                    QGCLabel {
+                        id:         loggingSectionLabel
+                        text:       qsTr("Telemetry Logs from Vehicle")
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: loggingCol.height + (_margins * 2)
+                        Layout.preferredWidth:  loggingCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        Layout.fillWidth:       true
+                        ColumnLayout {
+                            id:                         loggingCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins
+                            FactCheckBox {
+                                id:         enableLogging
+                                text:       qsTr("Save telemetry logs to disk")
+                                fact:       _enableLogging
+                                visible:    _enableLogging.visible
+                                property Fact _enableLogging: QGroundControl.settingsManager.appSettings.enableLocalLogging
+                            }
+                            FactCheckBox {
+                                id:         promptSaveLog
+                                text:       qsTr("Save telemetry log after each flight")
+                                fact:       _telemetrySave
+                                visible:    _telemetrySave.visible
+                                enabled:    enableLogging.checked
+                                property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
+                            }
+                            FactCheckBox {
+                                id:         logIfNotArmed
+                                text:       qsTr("Save telemetry logs even if vehicle was not armed")
+                                fact:       _telemetrySaveNotArmed
+                                visible:    _telemetrySaveNotArmed.visible
+                                enabled:    promptSaveLog.checked && enableLogging.checked
+                                property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                             }
                         }
                     }

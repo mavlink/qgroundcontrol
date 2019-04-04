@@ -35,8 +35,8 @@ Rectangle {
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property bool _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
     property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible
-    property Fact _disableLoggingFact:  QGroundControl.settingsManager.appSettings.disableLocalLogging
-    property bool _disableLogging:      _disableLogging ? _disableLogging.rawValue : false
+    property Fact _enableLoggingFact:   QGroundControl.settingsManager.appSettings.enableLocalLogging
+    property bool _enableLogging:       _enableLoggingFact ? _enableLoggingFact.rawValue : true
 
     QGCPalette { id: qgcPal }
 
@@ -372,14 +372,14 @@ Rectangle {
                         QGCButton {
                             text:               qsTr("Start Logging")
                             width:              (_valueWidth * 0.5) - (ScreenTools.defaultFontPixelWidth * 0.5)
-                            enabled:            !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog && !_disableLogging
+                            enabled:            !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog && _enableLogging
                             onClicked:          QGroundControl.mavlinkLogManager.startLogging()
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QGCButton {
                             text:               qsTr("Stop Logging")
                             width:              (_valueWidth * 0.5) - (ScreenTools.defaultFontPixelWidth * 0.5)
-                            enabled:            QGroundControl.mavlinkLogManager.logRunning && !_disableLogging
+                            enabled:            QGroundControl.mavlinkLogManager.logRunning && _enableLogging
                             onClicked:          QGroundControl.mavlinkLogManager.stopLogging()
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -389,7 +389,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Enable automatic logging")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoStart
-                        enabled:     !_disableLogging
+                        enabled:    _enableLogging
                         onClicked: {
                             QGroundControl.mavlinkLogManager.enableAutoStart = checked
                         }
@@ -434,7 +434,7 @@ Rectangle {
                             id:         emailField
                             text:       QGroundControl.mavlinkLogManager.emailAddress
                             width:      _valueWidth
-                            enabled:    !_disableLogging
+                            enabled:    _enableLogging
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhEmailCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
@@ -455,7 +455,7 @@ Rectangle {
                             id:         descField
                             text:       QGroundControl.mavlinkLogManager.description
                             width:      _valueWidth
-                            enabled:    !_disableLogging
+                            enabled:    _enableLogging
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
                                 saveItems();
@@ -475,7 +475,7 @@ Rectangle {
                             id:         urlField
                             text:       QGroundControl.mavlinkLogManager.uploadURL
                             width:      _valueWidth
-                            enabled:    !_disableLogging
+                            enabled:    _enableLogging
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
@@ -496,7 +496,7 @@ Rectangle {
                             id:         videoUrlField
                             text:       QGroundControl.mavlinkLogManager.videoURL
                             width:      _valueWidth
-                            enabled:    !_disableLogging
+                            enabled:    _enableLogging
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -513,7 +513,7 @@ Rectangle {
                         QGCComboBox {
                             id:         windCombo
                             width:      _valueWidth
-                            enabled:    !_disableLogging
+                            enabled:    _enableLogging
                             model: ListModel {
                                 id: windItems
                                 ListElement { text: "Please Select"; value: -1 }
@@ -550,7 +550,7 @@ Rectangle {
                         QGCComboBox {
                             id:         ratingCombo
                             width:      _valueWidth
-                            enabled:    !_disableLogging
+                            enabled:    _enableLogging
                             model: ListModel {
                                 id: ratingItems
                                 ListElement { text: "Please Select";            value: "notset"}
@@ -591,7 +591,7 @@ Rectangle {
                             frameVisible:       false
                             font.pointSize:     ScreenTools.defaultFontPointSize
                             text:               QGroundControl.mavlinkLogManager.feedback
-                            enabled:            !_disableLogging
+                            enabled:            _enableLogging
                             style: TextAreaStyle {
                                 textColor:          qgcPal.windowShade
                                 backgroundColor:    qgcPal.text
@@ -603,7 +603,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Make this log publicly available")
                         checked:    QGroundControl.mavlinkLogManager.publicLog
-                        enabled:    !_disableLogging
+                        enabled:    _enableLogging
                         onClicked: {
                             QGroundControl.mavlinkLogManager.publicLog = checked
                         }
@@ -614,7 +614,7 @@ Rectangle {
                         id:         autoUploadCheck
                         text:       qsTr("Enable automatic log uploads")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoUpload
-                        enabled:    !_disableLogging
+                        enabled:    _enableLogging
                         onClicked: {
                             saveItems();
                             if(checked && QGroundControl.mavlinkLogManager.emailAddress === "")
@@ -626,7 +626,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Delete log file after uploading")
                         checked:    QGroundControl.mavlinkLogManager.deleteAfterUpload
-                        enabled:    autoUploadCheck.checked && !_disableLogging
+                        enabled:    autoUploadCheck.checked && _enableLogging
                         onClicked: {
                             QGroundControl.mavlinkLogManager.deleteAfterUpload = checked
                         }

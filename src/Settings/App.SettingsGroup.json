@@ -237,10 +237,10 @@
     "defaultValue":     0
 },
 {
-    "name":             "disableLocalLogging",
-    "shortDescription": "Disable local logging",
-    "longDescription":  "If this option is enabled nothing will be stored to disk.",
+    "name":             "enableLocalLogging",
+    "shortDescription": "Enable local telemetry logging",
+    "longDescription":  "If this option is enabled telemetry logs from vehicle will be stored to disk.",
     "type":             "bool",
-    "defaultValue":     false
+    "defaultValue":     true
 }
 ]
