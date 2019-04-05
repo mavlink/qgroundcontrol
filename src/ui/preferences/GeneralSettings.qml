@@ -356,7 +356,7 @@ QGCView {
                     Item { width: 1; height: _margins }
                     QGCLabel {
                         id:         loggingSectionLabel
-                        text:       qsTr("Telemetry Logs from Vehicle")
+                        text:       qsTr("Data Persistence")
                     }
                     Rectangle {
                         Layout.preferredHeight: loggingCol.height + (_margins * 2)
@@ -370,18 +370,18 @@ QGCView {
                             anchors.horizontalCenter:   parent.horizontalCenter
                             spacing:                    _margins
                             FactCheckBox {
-                                id:         enableLogging
-                                text:       qsTr("Save logs to disk")
-                                fact:       _enableLogging
-                                visible:    _enableLogging.visible
-                                property Fact _enableLogging: QGroundControl.settingsManager.appSettings.enableLocalLogging
+                                id:         disableDataPersistence
+                                text:       qsTr("Disable all data persistence")
+                                fact:       _disableDataPersistence
+                                visible:    _disableDataPersistence.visible
+                                property Fact _disableDataPersistence: QGroundControl.settingsManager.appSettings.disableAllPersistence
                             }
                             FactCheckBox {
                                 id:         promptSaveLog
                                 text:       qsTr("Save log after each flight")
                                 fact:       _telemetrySave
                                 visible:    _telemetrySave.visible
-                                enabled:    enableLogging.checked
+                                enabled:    !disableDataPersistence.checked
                                 property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                             }
                             FactCheckBox {
@@ -389,7 +389,7 @@ QGCView {
                                 text:       qsTr("Save logs even if vehicle was not armed")
                                 fact:       _telemetrySaveNotArmed
                                 visible:    _telemetrySaveNotArmed.visible
-                                enabled:    promptSaveLog.checked && enableLogging.checked
+                                enabled:    promptSaveLog.checked && !disableDataPersistence.checked
                                 property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                             }
                         }
