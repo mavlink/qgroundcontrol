@@ -405,7 +405,7 @@ void MAVLinkProtocol::_startLogging(void)
         return;
     }
     AppSettings* appSettings = _app->toolbox()->settingsManager()->appSettings();
-    if(!appSettings->enableLocalLogging()->rawValue().toBool()) {
+    if(appSettings->disableAllPersistence()->rawValue().toBool()) {
         return;
     }
 #ifdef __mobile__
@@ -440,7 +440,7 @@ void MAVLinkProtocol::_stopLogging(void)
         if (_closeLogFile()) {
             if ((_vehicleWasArmed || _app->toolbox()->settingsManager()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool()) &&
                 _app->toolbox()->settingsManager()->appSettings()->telemetrySave()->rawValue().toBool() &&
-                _app->toolbox()->settingsManager()->appSettings()->enableLocalLogging()->rawValue().toBool()) {
+                !_app->toolbox()->settingsManager()->appSettings()->disableAllPersistence()->rawValue().toBool()) {
                 emit saveTelemetryLog(_tempLogFile.fileName());
             } else {
                 QFile::remove(_tempLogFile.fileName());

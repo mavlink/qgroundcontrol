@@ -237,10 +237,10 @@
     "defaultValue":     0
 },
 {
-    "name":             "enableLocalLogging",
-    "shortDescription": "Enable local telemetry logging",
-    "longDescription":  "If this option is enabled telemetry logs from vehicle will be stored to disk.",
+    "name":             "disableAllPersistence",
+    "shortDescription": "Disable all data persistence",
+    "longDescription":  "If this option is set, nothing will be saved to disk.",
     "type":             "bool",
-    "defaultValue":     true
+    "defaultValue":     false
 }
 ]
