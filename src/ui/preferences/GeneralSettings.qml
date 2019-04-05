@@ -359,6 +359,37 @@ QGCView {
                         text:       qsTr("Data Persistence")
                     }
                     Rectangle {
+                        Layout.preferredHeight: dataPersistCol.height + (_margins * 2)
+                        Layout.preferredWidth:  dataPersistCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        Layout.fillWidth:       true
+                        ColumnLayout {
+                            id:                         dataPersistCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins * 1.5
+                            FactCheckBox {
+                                id:         disableDataPersistence
+                                text:       qsTr("Disable all data persistence")
+                                fact:       _disableDataPersistence
+                                visible:    _disableDataPersistence.visible
+                                property Fact _disableDataPersistence: QGroundControl.settingsManager.appSettings.disableAllPersistence
+                            }
+                            QGCLabel {
+                                text:       qsTr("When Data Persistence is disabled, all telemetry logging and map tile caching is disabled and not written to disk.")
+                                wrapMode:   Text.WordWrap
+                                font.pointSize:       ScreenTools.smallFontPointSize
+                                Layout.maximumWidth:  logIfNotArmed.visible ? logIfNotArmed.width : disableDataPersistence.width * 1.5
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
+                    QGCLabel {
+                        text:       qsTr("Telemetry Logs from Vehicle")
+                    }
+                    Rectangle {
                         Layout.preferredHeight: loggingCol.height + (_margins * 2)
                         Layout.preferredWidth:  loggingCol.width + (_margins * 2)
                         color:                  qgcPal.windowShade
@@ -369,13 +400,6 @@ QGCView {
                             anchors.top:                parent.top
                             anchors.horizontalCenter:   parent.horizontalCenter
                             spacing:                    _margins
-                            FactCheckBox {
-                                id:         disableDataPersistence
-                                text:       qsTr("Disable all data persistence")
-                                fact:       _disableDataPersistence
-                                visible:    _disableDataPersistence.visible
-                                property Fact _disableDataPersistence: QGroundControl.settingsManager.appSettings.disableAllPersistence
-                            }
                             FactCheckBox {
                                 id:         promptSaveLog
                                 text:       qsTr("Save log after each flight")
@@ -396,7 +420,6 @@ QGCView {
                     }
 
                     Item { width: 1; height: _margins }
-
                     QGCLabel {
                         id:         flyViewSectionLabel
                         text:       qsTr("Fly View")
