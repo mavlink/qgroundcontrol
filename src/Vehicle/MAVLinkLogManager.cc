@@ -113,13 +113,13 @@ MAVLinkLogFiles::setUploaded(bool uploaded)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 MAVLinkLogProcessor::MAVLinkLogProcessor()
-    : _fd(NULL)
+    : _fd(nullptr)
     , _written(0)
     , _sequence(-1)
     , _numDrops(0)
     , _gotHeader(false)
     , _error(false)
-    , _record(NULL)
+    , _record(nullptr)
 {
 }
 
@@ -135,7 +135,7 @@ MAVLinkLogProcessor::close()
 {
     if(_fd) {
         fclose(_fd);
-        _fd = NULL;
+        _fd = nullptr;
     }
 }
 
@@ -143,7 +143,7 @@ MAVLinkLogProcessor::close()
 bool
 MAVLinkLogProcessor::valid()
 {
-    return (_fd != NULL) && (_record != NULL);
+    return (_fd != nullptr) && (_record != nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -300,12 +300,12 @@ MAVLinkLogManager::MAVLinkLogManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _enableAutoUpload(true)
     , _enableAutoStart(false)
-    , _nam(NULL)
-    , _currentLogfile(NULL)
-    , _vehicle(NULL)
+    , _nam(nullptr)
+    , _currentLogfile(nullptr)
+    , _vehicle(nullptr)
     , _logRunning(false)
     , _loggingDisabled(false)
-    , _logProcessor(NULL)
+    , _logProcessor(nullptr)
     , _deleteAfterUpload(false)
     , _windSpeed(-1)
     , _publicLog(false)
@@ -487,7 +487,7 @@ MAVLinkLogManager::setPublicLog(bool pub)
 bool
 MAVLinkLogManager::uploading()
 {
-    return _currentLogfile != NULL;
+    return _currentLogfile != nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -515,7 +515,7 @@ MAVLinkLogManager::uploadLog()
             qWarning() << "Internal error";
         }
     }
-    _currentLogfile = NULL;
+    _currentLogfile = nullptr;
     emit uploadingChanged();
 }
 
@@ -614,11 +614,15 @@ MAVLinkLogManager::cancelUpload()
 void
 MAVLinkLogManager::startLogging()
 {
-    if(_vehicle && _vehicle->px4Firmware() && !_logginDenied) {
-        if(_createNewLog()) {
-            _vehicle->startMavlinkLog();
-            _logRunning = true;
-            emit logRunningChanged();
+    //-- If we are allowed to persist data
+    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    if(!appSettings->disableAllPersistence()->rawValue().toBool()) {
+        if(_vehicle && _vehicle->px4Firmware() && !_logginDenied) {
+            if(_createNewLog()) {
+                _vehicle->startMavlinkLog();
+                _logRunning = true;
+                emit logRunningChanged();
+            }
         }
     }
 }
@@ -644,7 +648,7 @@ MAVLinkLogManager::stopLogging()
             }
         }
         delete _logProcessor;
-        _logProcessor = NULL;
+        _logProcessor = nullptr;
         _logRunning = false;
         emit logRunningChanged();
     }
@@ -790,7 +794,7 @@ MAVLinkLogManager::_uploadFinished()
         if(_deleteAfterUpload) {
             if(_currentLogfile) {
                 _deleteLog(_currentLogfile);
-                _currentLogfile = NULL;
+                _currentLogfile = nullptr;
             }
         } else {
             if(_currentLogfile) {
@@ -818,7 +822,7 @@ void
 MAVLinkLogManager::_uploadProgress(qint64 bytesSent, qint64 bytesTotal)
 {
     if(bytesTotal) {
-        qreal progress = (qreal)bytesSent / (qreal)bytesTotal;
+        qreal progress = static_cast<qreal>(bytesSent) / static_cast<qreal>(bytesTotal);
         if(_currentLogfile) {
             _currentLogfile->setProgress(progress);
         }
@@ -834,13 +838,14 @@ MAVLinkLogManager::_activeVehicleChanged(Vehicle* vehicle)
     //   connects/disconnects. In reality, if QGC is connected to multiple vehicles,
     //   this is called each time the user switches from one vehicle to another. So
     //   far, I'm working on the assumption that multiple vehicles is a rare exception.
-    //   For now, we only handle one log download at a time.
+    //   For now, we only handle one log download at a time. The proper way is to have
+    //   each vehicle with their own instance of this "log manager".
     // Disconnect the previous one (if any)
     if(_vehicle && _vehicle->px4Firmware()) {
         disconnect(_vehicle, &Vehicle::armedChanged,        this, &MAVLinkLogManager::_armedChanged);
         disconnect(_vehicle, &Vehicle::mavlinkLogData,      this, &MAVLinkLogManager::_mavlinkLogData);
         disconnect(_vehicle, &Vehicle::mavCommandResult,    this, &MAVLinkLogManager::_mavCommandResult);
-        _vehicle = NULL;
+        _vehicle = nullptr;
         //-- Stop logging (if that's the case)
         stopLogging();
         emit canStartLogChanged();
@@ -865,7 +870,7 @@ MAVLinkLogManager::_mavlinkLogData(Vehicle* /*vehicle*/, uint8_t /*target_system
         if(!_logProcessor->processStreamData(sequence, first_message, data)) {
             qCWarning(MAVLinkLogManagerLog) << "Error writing MAVLink log file:" << _logProcessor->fileName();
             delete _logProcessor;
-            _logProcessor = NULL;
+            _logProcessor = nullptr;
             _logRunning = false;
             _vehicle->stopMavlinkLog();
             emit logRunningChanged();
@@ -914,7 +919,7 @@ MAVLinkLogManager::_discardLog()
             _deleteLog(_logProcessor->record());
         }
         delete _logProcessor;
-        _logProcessor = NULL;
+        _logProcessor = nullptr;
     }
     _logRunning = false;
     emit logRunningChanged();
@@ -926,18 +931,18 @@ MAVLinkLogManager::_createNewLog()
 {
     if(_logProcessor) {
         delete _logProcessor;
-        _logProcessor = NULL;
+        _logProcessor = nullptr;
     }
     _logProcessor = new MAVLinkLogProcessor;
-    if(_logProcessor->create(this, _logPath, _vehicle->id())) {
+    if(_logProcessor->create(this, _logPath, static_cast<uint8_t>(_vehicle->id()))) {
         _insertNewLog(_logProcessor->record());
         emit logFilesChanged();
     } else {
         qCWarning(MAVLinkLogManagerLog) << "Could not create MAVLink log file:" << _logProcessor->fileName();
         delete _logProcessor;
-        _logProcessor = NULL;
+        _logProcessor = nullptr;
     }
-    return _logProcessor != NULL;
+    return _logProcessor != nullptr;
 }
 
 //-----------------------------------------------------------------------------
