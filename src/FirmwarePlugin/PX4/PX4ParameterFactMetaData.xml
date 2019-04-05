@@ -8839,11 +8839,10 @@ is less than 50% of this value</short_desc>
     <parameter default="0" name="SYS_AUTOCONFIG" type="INT32">
       <short_desc>Automatically configure default values</short_desc>
       <long_desc>Set to 1 to reset parameters on next system startup (setting defaults). Platform-specific values are used if available. RC* parameters are preserved.</long_desc>
-      <min>0</min>
-      <max>1</max>
       <values>
         <value code="0">Keep parameters</value>
         <value code="1">Reset parameters</value>
+        <value code="2">Reload airframe parameters</value>
       </values>
     </parameter>
     <parameter default="0" name="SYS_AUTOSTART" type="INT32">
@@ -8958,7 +8957,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="1" name="SYS_PARAM_VER" type="INT32">
       <short_desc>Parameter version</short_desc>
-      <long_desc>This monotonically increasing number encodes the parameter compatibility set. whenever it increases parameters might not be backwards compatible and ground control stations should suggest a fresh configuration.</long_desc>
+      <long_desc>This is used internally only: an airframe configuration might set an expected parameter version value via PARAM_DEFAULTS_VER. This is checked on bootup against SYS_PARAM_VER, and if they do not match, parameters from the airframe configuration are reloaded.</long_desc>
       <min>0</min>
     </parameter>
     <parameter category="System" default="2" name="SYS_RESTART_TYPE" type="INT32" volatile="true">
