@@ -58,7 +58,7 @@ int QGeoTiledMapReplyQGC::_requestCount = 0;
 //-----------------------------------------------------------------------------
 QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager, const QNetworkRequest &request, const QGeoTileSpec &spec, QObject *parent)
     : QGeoTiledMapReply(spec, parent)
-    , _reply(NULL)
+    , _reply(nullptr)
     , _request(request)
     , _networkManager(networkManager)
 {
@@ -73,7 +73,7 @@ QGeoTiledMapReplyQGC::QGeoTiledMapReplyQGC(QNetworkAccessManager *networkManager
         setFinished(true);
         setCached(false);
     } else {
-        QGCFetchTileTask* task = getQGCMapEngine()->createFetchTileTask((UrlFactory::MapType)spec.mapId(), spec.x(), spec.y(), spec.zoom());
+        QGCFetchTileTask* task = getQGCMapEngine()->createFetchTileTask(static_cast<UrlFactory::MapType>(spec.mapId()), spec.x(), spec.y(), spec.zoom());
         connect(task, &QGCFetchTileTask::tileFetched, this, &QGeoTiledMapReplyQGC::cacheReply);
         connect(task, &QGCMapTask::error, this, &QGeoTiledMapReplyQGC::cacheError);
         getQGCMapEngine()->addTask(task);
@@ -93,7 +93,7 @@ QGeoTiledMapReplyQGC::_clearReply()
     _timer.stop();
     if (_reply) {
         _reply->deleteLater();
-        _reply = 0;
+        _reply = nullptr;
         _requestCount--;
     }
 }
@@ -122,9 +122,9 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         return;
     }
     QByteArray a = _reply->readAll();
-    QString format = getQGCMapEngine()->urlFactory()->getImageFormat((UrlFactory::MapType)tileSpec().mapId(), a);
+    QString format = getQGCMapEngine()->urlFactory()->getImageFormat(static_cast<UrlFactory::MapType>(tileSpec().mapId()), a);
     //-- Test for a specialized, elevation data (not map tile)
-    if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
+    if (static_cast<UrlFactory::MapType>(tileSpec().mapId()) == UrlFactory::MapType::AirmapElevation) {
         a = TerrainTile::serialize(a);
         //-- Cache it if valid
         if(!a.isEmpty()) {
@@ -136,7 +136,7 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
         setMapImageData(a);
         if(!format.isEmpty()) {
             setMapImageFormat(format);
-            getQGCMapEngine()->cacheTile((UrlFactory::MapType)tileSpec().mapId(), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
+            getQGCMapEngine()->cacheTile(static_cast<UrlFactory::MapType>(tileSpec().mapId()), tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
         }
         setFinished(true);
     }
@@ -152,7 +152,7 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
         return;
     }
     //-- Test for a specialized, elevation data (not map tile)
-    if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
+    if (static_cast<UrlFactory::MapType>(tileSpec().mapId()) == UrlFactory::MapType::AirmapElevation) {
         emit terrainDone(QByteArray(), error);
     } else {
         //-- Regular map tile
@@ -170,7 +170,7 @@ void
 QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorString*/)
 {
     if(!getQGCMapEngine()->isInternetActive()) {
-        if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
+        if (static_cast<UrlFactory::MapType>(tileSpec().mapId()) == UrlFactory::MapType::AirmapElevation) {
             emit terrainDone(QByteArray(), QNetworkReply::NetworkSessionFailedError);
         } else {
             setError(QGeoTiledMapReply::CommunicationError, "Network not available");
@@ -188,8 +188,8 @@ QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorStrin
         _networkManager->setProxy(tProxy);
 #endif
         _reply = _networkManager->get(_request);
-        _reply->setParent(0);
-        connect(_reply, &QNetworkReply::finished,                         this, &QGeoTiledMapReplyQGC::networkReplyFinished);
+        _reply->setParent(nullptr);
+        connect(_reply, &QNetworkReply::finished, this, &QGeoTiledMapReplyQGC::networkReplyFinished);
         connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(networkReplyError(QNetworkReply::NetworkError)));
 #if !defined(__mobile__)
         _networkManager->setProxy(proxy);
@@ -207,7 +207,7 @@ void
 QGeoTiledMapReplyQGC::cacheReply(QGCCacheTile* tile)
 {
     //-- Test for a specialized, elevation data (not map tile)
-    if ((UrlFactory::MapType)tileSpec().mapId() == UrlFactory::MapType::AirmapElevation) {
+    if (static_cast<UrlFactory::MapType>(tileSpec().mapId()) == UrlFactory::MapType::AirmapElevation) {
         emit terrainDone(tile->img(), QNetworkReply::NoError);
     } else {
         //-- Regular map tile

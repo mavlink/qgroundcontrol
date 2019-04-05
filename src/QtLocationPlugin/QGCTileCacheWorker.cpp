@@ -29,9 +29,9 @@
 
 #include "time.h"
 
-const char* kDefaultSet = "Default Tile Set";
-const QString kSession          = QStringLiteral("QGeoTileWorkerSession");
-const QString kExportSession    = QStringLiteral("QGeoTileExportSession");
+static const char*      kDefaultSet     = "Default Tile Set";
+static const QString    kSession        = QStringLiteral("QGeoTileWorkerSession");
+static const QString    kExportSession  = QStringLiteral("QGeoTileExportSession");
 
 QGC_LOGGING_CATEGORY(QGCTileCacheLog, "QGCTileCacheLog")
 
@@ -42,7 +42,7 @@ QGC_LOGGING_CATEGORY(QGCTileCacheLog, "QGCTileCacheLog")
 
 //-----------------------------------------------------------------------------
 QGCCacheWorker::QGCCacheWorker()
-    : _db(NULL)
+    : _db(nullptr)
     , _valid(false)
     , _failed(false)
     , _defaultSet(UINT64_MAX)
@@ -54,13 +54,11 @@ QGCCacheWorker::QGCCacheWorker()
     , _updateTimeout(SHORT_TIMEOUT)
     , _hostLookupID(0)
 {
-
 }
 
 //-----------------------------------------------------------------------------
 QGCCacheWorker::~QGCCacheWorker()
 {
-
 }
 
 //-----------------------------------------------------------------------------
@@ -173,13 +171,13 @@ QGCCacheWorker::run()
             }
             task->deleteLater();
             //-- Check for update timeout
-            size_t count = _taskQueue.count();
+            size_t count = static_cast<size_t>(_taskQueue.count());
             if(count > 100) {
                 _updateTimeout = LONG_TIMEOUT;
             } else if(count < 25) {
                 _updateTimeout = SHORT_TIMEOUT;
             }
-            if(!count || (time(0) - _lastUpdate > _updateTimeout)) {
+            if(!count || (time(nullptr) - _lastUpdate > _updateTimeout)) {
                 if(_valid) {
                     _updateTotals();
                 }
@@ -187,7 +185,7 @@ QGCCacheWorker::run()
         } else {
             //-- Wait a bit before shutting things down
             _waitmutex.lock();
-            int timeout = 5000;
+            unsigned long timeout = 5000;
             _waitc.wait(&_waitmutex, timeout);
             _waitmutex.unlock();
             _mutex.lock();
@@ -201,7 +199,7 @@ QGCCacheWorker::run()
     }
     if(_db) {
         delete _db;
-        _db = NULL;
+        _db = nullptr;
         QSqlDatabase::removeDatabase(kSession);
     }
 }
@@ -284,7 +282,7 @@ QGCCacheWorker::_getTile(QGCMapTask* mtask)
         if(query.next()) {
             QByteArray ar   = query.value(0).toByteArray();
             QString format  = query.value(1).toString();
-            UrlFactory::MapType type = (UrlFactory::MapType)query.value(2).toInt();
+            UrlFactory::MapType type = static_cast<UrlFactory::MapType>(query.value(2).toInt());
             qCDebug(QGCTileCacheLog) << "_getTile() (Found in DB) HASH:" << task->hash();
             QGCCacheTile* tile = new QGCCacheTile(task->hash(), ar, format, type);
             task->setTileFetched(tile);
@@ -320,7 +318,7 @@ QGCCacheWorker::_getTileSets(QGCMapTask* mtask)
             set->setBottomRightLon(query.value("bottomRightLon").toDouble());
             set->setMinZoom(query.value("minZoom").toInt());
             set->setMaxZoom(query.value("maxZoom").toInt());
-            set->setType((UrlFactory::MapType)query.value("type").toInt());
+            set->setType(static_cast<UrlFactory::MapType>(query.value("type").toInt()));
             set->setTotalTileCount(query.value("numTiles").toUInt());
             set->setDefaultSet(query.value("defaultSet").toInt() != 0);
             set->setCreationDate(QDateTime::fromTime_t(query.value("date").toUInt()));
@@ -413,7 +411,7 @@ QGCCacheWorker::_updateTotals()
         }
     }
     emit updateTotals(_totalCount, _totalSize, _defaultCount, _defaultSize);
-    _lastUpdate = time(0);
+    _lastUpdate = time(nullptr);
 }
 
 //-----------------------------------------------------------------------------
@@ -526,14 +524,14 @@ QGCCacheWorker::_getTileDownloadList(QGCMapTask* mtask)
         while(query.next()) {
             QGCTile* tile = new QGCTile;
             tile->setHash(query.value("hash").toString());
-            tile->setType((UrlFactory::MapType)query.value("type").toInt());
+            tile->setType(static_cast<UrlFactory::MapType>(query.value("type").toInt()));
             tile->setX(query.value("x").toInt());
             tile->setY(query.value("y").toInt());
             tile->setZ(query.value("z").toInt());
             tiles.append(tile);
         }
         for(int i = 0; i < tiles.size(); i++) {
-            s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2 and hash = \"%3\"").arg((int)QGCTile::StateDownloading).arg(task->setID()).arg(tiles[i]->hash());
+            s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2 and hash = \"%3\"").arg(static_cast<int>(QGCTile::StateDownloading)).arg(task->setID()).arg(tiles[i]->hash());
             if(!query.exec(s)) {
                 qWarning() << "Map Cache SQL error (set TilesDownload state):" << query.lastError().text();
             }
@@ -556,9 +554,9 @@ QGCCacheWorker::_updateTileDownloadState(QGCMapTask* mtask)
         s = QString("DELETE FROM TilesDownload WHERE setID = %1 AND hash = \"%2\"").arg(task->setID()).arg(task->hash());
     } else {
         if(task->hash() == "*") {
-            s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2").arg((int)task->state()).arg(task->setID());
+            s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2").arg(static_cast<int>(task->state())).arg(task->setID());
         } else {
-            s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2 AND hash = \"%3\"").arg((int)task->state()).arg(task->setID()).arg(task->hash());
+            s = QString("UPDATE TilesDownload SET state = %1 WHERE setID = %2 AND hash = \"%3\"").arg(static_cast<int>(task->state())).arg(task->setID()).arg(task->hash());
         }
     }
     if(!query.exec(s)) {
