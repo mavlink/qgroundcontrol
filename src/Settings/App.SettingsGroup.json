@@ -235,5 +235,12 @@
     "enumStrings":      "System,English,български (Bulgarian),Deutsche (German),Français (French),Italiano (Italian),한국어 (Korean),Pусский (Russian),Türk (Turkish),中文 (Chinese)",
     "enumValues":       "0,1,2,3,4,5,6,7,8,9",
     "defaultValue":     0
+},
+{
+    "name":             "disableAllPersistence",
+    "shortDescription": "Disable all data persistence",
+    "longDescription":  "If this option is set, nothing will be saved to disk.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
