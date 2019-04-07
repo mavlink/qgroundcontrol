@@ -293,7 +293,7 @@ void StructureScanComplexItem::appendMissionItems(QList<MissionItem*>& items, QO
 {
     int     seqNum =        _sequenceNumber;
     bool    startFromTop =  _startFromTopFact.rawValue().toBool();
-    double  startAltitude = _scanBottomAltFact.rawValue().toDouble() + (startFromTop ? _structureHeightFact.rawValue().toDouble() : 0);
+    double  startAltitude = (startFromTop ? _structureHeightFact.rawValue().toDouble() : _scanBottomAltFact.rawValue().toDouble());
 
     MissionItem* item = nullptr;
 
