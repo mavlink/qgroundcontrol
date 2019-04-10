@@ -31,11 +31,6 @@
 #include "KML.h"
 #include "QGCCorePlugin.h"
 
-#ifndef __mobile__
-#include "MainWindow.h"
-#include "QGCQFileDialog.h"
-#endif
-
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")

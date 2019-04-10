@@ -41,7 +41,6 @@
 
 // Work around circular header includes
 class QGCSingleton;
-class MainWindow;
 class QGCToolbox;
 class QGCFileDownload;
 
@@ -52,12 +51,7 @@ class QGCFileDownload;
  * the central management unit of the groundstation application.
  *
  **/
-class QGCApplication : public
-#ifdef __mobile__
-    QGuiApplication // Native Qml based application
-#else
-    QApplication    // QtWidget based application
-#endif
+class QGCApplication : public QGuiApplication
 {
     Q_OBJECT
 
@@ -143,8 +137,6 @@ public:
     ///         unit tests. Although public should only be called by main.
     bool _initForUnitTests(void);
 
-    void _loadCurrentStyleSheet(void);
-
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
 public:
@@ -169,9 +161,7 @@ private:
     QObject* _rootQmlObject(void);
     void _checkForNewVersion(void);
 
-#ifdef __mobile__
     QQmlApplicationEngine* _qmlAppEngine;
-#endif
 
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
     bool _logOutput;        ///< true: Log Qt debug output to file

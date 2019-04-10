@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "APMSafetyComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
 

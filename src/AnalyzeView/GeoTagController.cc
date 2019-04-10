@@ -8,14 +8,14 @@
  ****************************************************************************/
 
 #include "GeoTagController.h"
-#include "QGCQFileDialog.h"
+//#include "QGCQFileDialog.h"
 #include "QGCLoggingCategory.h"
-#include "MainWindow.h"
 #include <math.h>
 #include <QtEndian>
 #include <QMessageBox>
 #include <QDebug>
 #include <cfloat>
+#include <QDir>
 
 #include "ExifParser.h"
 #include "ULogParser.h"
@@ -38,7 +38,7 @@ GeoTagController::~GeoTagController()
 
 void GeoTagController::pickLogFile(void)
 {
-    QString filename = QGCQFileDialog::getOpenFileName(MainWindow::instance(), tr("Select log file load"), QString(), tr("ULog file (*.ulg);;PX4 log file (*.px4log);;All Files (*.*)"));
+    QString filename = QString(); //--TODO: QGCQFileDialog::getOpenFileName(MainWindow::instance(), tr("Select log file load"), QString(), tr("ULog file (*.ulg);;PX4 log file (*.px4log);;All Files (*.*)"));
     if (!filename.isEmpty()) {
         _worker.setLogFile(filename);
         emit logFileChanged(filename);
@@ -47,7 +47,7 @@ void GeoTagController::pickLogFile(void)
 
 void GeoTagController::pickImageDirectory(void)
 {
-    QString dir = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select image directory"));
+    QString dir = QString(); //--TODO: QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select image directory"));
     if (!dir.isEmpty()) {
         _worker.setImageDirectory(dir);
         emit imageDirectoryChanged(dir);
@@ -56,7 +56,7 @@ void GeoTagController::pickImageDirectory(void)
 
 void GeoTagController::pickSaveDirectory(void)
 {
-    QString dir = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select save directory"));
+    QString dir = QString(); //--TODO: QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select save directory"));
     if (!dir.isEmpty()) {
         _worker.setSaveDirectory(dir);
         emit saveDirectoryChanged(dir);
@@ -75,6 +75,8 @@ void GeoTagController::startTagging(void)
     }
     if(_worker.saveDirectory() == "") {
         if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
+            //--TODO:
+            /*
             QMessageBox msgBox(QMessageBox::Question,
                                tr("Images have alreay been tagged."),
                                tr("The images have already been tagged. Do you want to replace the previously tagged images?"),
@@ -85,6 +87,7 @@ void GeoTagController::startTagging(void)
                 _setErrorMessage(tr("Images have already been tagged"));
                 return;
             }
+            */
             QDir oldTaggedFolder = QDir(_worker.imageDirectory() + "/TAGGED");
             oldTaggedFolder.removeRecursively();
             if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
@@ -104,6 +107,8 @@ void GeoTagController::startTagging(void)
         saveDirectory.setNameFilters(nameFilters);
         QStringList imageList = saveDirectory.entryList();
         if(!imageList.isEmpty()) {
+            //--TODO:
+            /*
             QMessageBox msgBox(QMessageBox::Question,
                                tr("Save folder not empty."),
                                tr("The save folder already contains images. Do you want to replace them?"),
@@ -114,6 +119,7 @@ void GeoTagController::startTagging(void)
                 _setErrorMessage(tr("Save folder not empty"));
                 return;
             }
+            */
             for(QString dirFile: imageList)
             {
                 if(!saveDirectory.remove(dirFile)) {

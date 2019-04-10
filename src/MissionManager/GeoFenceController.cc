@@ -22,11 +22,6 @@
 #include "AppSettings.h"
 #include "PlanMasterController.h"
 
-#ifndef __mobile__
-#include "MainWindow.h"
-#include "QGCQFileDialog.h"
-#endif
-
 #include <QJsonDocument>
 #include <QJsonArray>
 

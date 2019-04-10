@@ -13,7 +13,6 @@
 
 #include "SensorsComponent.h"
 #include "PX4AutoPilotPlugin.h"
-#include "QGCQmlWidgetHolder.h"
 #include "SensorsComponentController.h"
 
 const char* SensorsComponent::_airspeedBreakerParam =   "CBRK_AIRSPD_CHK";

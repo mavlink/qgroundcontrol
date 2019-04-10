@@ -13,7 +13,6 @@
 
 #include "FlightModesComponent.h"
 #include "PX4AutoPilotPlugin.h"
-#include "QGCQmlWidgetHolder.h"
 
 struct SwitchListItem {
     const char* param;

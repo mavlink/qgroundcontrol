@@ -14,9 +14,7 @@
 #include "AppSettings.h"
 
 #ifndef __mobile__
-#include "QGCQFileDialog.h"
 #include "QGCMapRCToParamDialog.h"
-#include "MainWindow.h"
 #endif
 
 #include <QStandardPaths>
@@ -159,8 +157,9 @@ void ParameterEditorController::setRCToParam(const QString& paramName)
     Q_UNUSED(paramName)
 #else
     if (_uas) {
-        QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
-        d->exec();
+        Q_UNUSED(paramName)
+        //-- TODO QGCMapRCToParamDialog * d = new QGCMapRCToParamDialog(paramName, _uas, qgcApp()->toolbox()->multiVehicleManager(), MainWindow::instance());
+        //d->exec();
     }
 #endif
 }

@@ -35,7 +35,6 @@ FlightMap {
     property alias  scaleState: mapScale.state
 
     // The following properties must be set by the consumer
-    property var    planMasterController
     property var    guidedActionsController
     property var    flightWidgets
     property var    rightPanelWidth
@@ -44,12 +43,10 @@ FlightMap {
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
 
-    property var    _planMasterController:      planMasterController
-    property var    _missionController:         _planMasterController.missionController
-    property var    _geoFenceController:        _planMasterController.geoFenceController
-    property var    _rallyPointController:      _planMasterController.rallyPointController
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
-    property var    _activeVehicleCoordinate:   _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    _missionController:         planMasterController.missionController
+    property var    _geoFenceController:        planMasterController.geoFenceController
+    property var    _rallyPointController:      planMasterController.rallyPointController
+    property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
 
@@ -186,14 +183,12 @@ FlightMap {
         id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        _flightMap
         usePlannedHomePosition:     false
-        planMasterController:       _planMasterController
-
         property real leftToolWidth:    toolStrip.x + toolStrip.width
     }
 
     // Add trajectory points to the map
     MapItemView {
-        model: _mainIsMap ? _activeVehicle ? _activeVehicle.trajectoryPoints : 0 : 0
+        model: _mainIsMap ? activeVehicle ? activeVehicle.trajectoryPoints : 0 : 0
 
         delegate: MapPolyline {
             line.width: 3
@@ -221,8 +216,8 @@ FlightMap {
 
     // Add ADSB vehicles to the map
     MapItemView {
-        model: _activeVehicle ? _activeVehicle.adsbVehicles : []
-        property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+        model: activeVehicle ? activeVehicle.adsbVehicles : []
+        property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
         delegate: VehicleMapItem {
             coordinate:     object.coordinate
             altitude:       object.altitude
@@ -264,7 +259,7 @@ FlightMap {
         myGeoFenceController:   _geoFenceController
         interactive:            false
         planView:               false
-        homePosition:           _activeVehicle && _activeVehicle.homePosition.isValid ? _activeVehicle.homePosition :  QtPositioning.coordinate()
+        homePosition:           activeVehicle && activeVehicle.homePosition.isValid ? activeVehicle.homePosition :  QtPositioning.coordinate()
     }
 
     // Rally points on map
@@ -287,7 +282,7 @@ FlightMap {
 
     // Camera trigger points
     MapItemView {
-        model: _activeVehicle ? _activeVehicle.cameraTriggerPoints : 0
+        model: activeVehicle ? activeVehicle.cameraTriggerPoints : 0
 
         delegate: CameraTriggerIndicator {
             coordinate:     object.coordinate
@@ -302,15 +297,13 @@ FlightMap {
         z:              QGroundControl.zOrderMapItems
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
-
         sourceItem: MissionItemIndexLabel {
             checked:    true
             index:      -1
             label:      qsTr("Goto here", "Goto here waypoint")
         }
 
-        property bool inGotoFlightMode: _activeVehicle ? _activeVehicle.flightMode === _activeVehicle.gotoFlightMode : false
-        property var activeVehicle: _activeVehicle
+        property bool inGotoFlightMode: activeVehicle ? activeVehicle.flightMode === activeVehicle.gotoFlightMode : false
 
         onInGotoFlightModeChanged: {
             if (!inGotoFlightMode && visible) {
@@ -319,9 +312,12 @@ FlightMap {
             }
         }
 
-        onActiveVehicleChanged: {
-            if (!_activeVehicle) {
-                visible = false
+        Connections {
+            target: mainWindow
+            onActiveVehicleChanged: {
+                if (!activeVehicle) {
+                    visible = false
+                }
             }
         }
 
@@ -352,13 +348,14 @@ FlightMap {
 
         property alias center:              _mapCircle.center
         property alias clockwiseRotation:   _mapCircle.clockwiseRotation
-        property var   activeVehicle:       _activeVehicle
-
         readonly property real defaultRadius: 30
 
-        onActiveVehicleChanged: {
-            if (!_activeVehicle) {
-                visible = false
+        Connections {
+            target: mainWindow
+            onActiveVehicleChanged: {
+                if (!activeVehicle) {
+                    visible = false
+                }
             }
         }
 
@@ -400,15 +397,15 @@ FlightMap {
     QGCMapCircleVisuals {
         id:             orbitTelemetryCircle
         mapControl:     parent
-        mapCircle:      _activeVehicle ? _activeVehicle.orbitMapCircle : null
-        visible:        _activeVehicle ? _activeVehicle.orbitActive : false
+        mapCircle:      activeVehicle ? activeVehicle.orbitMapCircle : null
+        visible:        activeVehicle ? activeVehicle.orbitActive : false
     }
 
     MapQuickItem {
         id:             orbitCenterIndicator
         anchorPoint.x:  sourceItem.anchorPointX
         anchorPoint.y:  sourceItem.anchorPointY
-        coordinate:     _activeVehicle ? _activeVehicle.orbitMapCircle.center : QtPositioning.coordinate()
+        coordinate:     activeVehicle ? activeVehicle.orbitMapCircle.center : QtPositioning.coordinate()
         visible:        orbitTelemetryCircle.visible
 
         sourceItem: MissionItemIndexLabel {

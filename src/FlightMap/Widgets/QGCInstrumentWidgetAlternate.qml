@@ -37,7 +37,6 @@ Rectangle {
     property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (width * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (root.height + _valuesItem.anchors.topMargin)
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
     // Prevent all clicks from going through to lower layers
     DeadMouseArea {
@@ -51,7 +50,7 @@ Rectangle {
         anchors.leftMargin: _topBottomMargin
         anchors.left:       parent.left
         size:               _innerRadius * 2
-        vehicle:            _activeVehicle
+        vehicle:            activeVehicle
         anchors.verticalCenter: parent.verticalCenter
     }
 
@@ -60,7 +59,7 @@ Rectangle {
         anchors.leftMargin: _spacing
         anchors.left:       attitude.right
         size:               _innerRadius * 2
-        vehicle:            _activeVehicle
+        vehicle:            activeVehicle
         anchors.verticalCenter: parent.verticalCenter
     }
 
