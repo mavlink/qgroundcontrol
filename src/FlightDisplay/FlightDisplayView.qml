@@ -36,15 +36,18 @@ QGCView {
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
+    PlanMasterController {
+        id:                     planMasterController
+        Component.onCompleted:  start(true /* flyView */)
+    }
+
     property alias  guidedController:   guidedActionsController
 
-    property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
+    property bool   activeVehicleJoystickEnabled: activeVehicle ? activeVehicle.joystickEnabled : false
 
-    property var    _planMasterController:  masterController
-    property var    _missionController:     _planMasterController.missionController
-    property var    _geoFenceController:    _planMasterController.geoFenceController
-    property var    _rallyPointController:  _planMasterController.rallyPointController
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
+    property var    _missionController:     planMasterController.missionController
+    property var    _geoFenceController:    planMasterController.geoFenceController
+    property var    _rallyPointController:  planMasterController.rallyPointController
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:          QGroundControl.settingsManager.appSettings.useChecklist.rawValue
@@ -54,7 +57,7 @@ QGCView {
     property alias  _guidedController:      guidedActionsController
     property alias  _altitudeSlider:        altitudeSlider
 
-    readonly property var       _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
@@ -131,9 +134,9 @@ QGCView {
 
     // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
 
-    property bool vehicleArmed:                 _activeVehicle ? _activeVehicle.armed : true // true here prevents pop up from showing during shutdown
+    property bool vehicleArmed:                 activeVehicle ? activeVehicle.armed : true // true here prevents pop up from showing during shutdown
     property bool vehicleWasArmed:              false
-    property bool vehicleInMissionFlightMode:   _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
+    property bool vehicleInMissionFlightMode:   activeVehicle ? (activeVehicle.flightMode === activeVehicle.missionFlightMode) : false
     property bool promptForMissionRemove:       false
 
     onVehicleArmedChanged: {
@@ -145,7 +148,7 @@ QGCView {
         } else {
             if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
                 // ArduPilot has a strange bug which prevents mission clear from working at certain times, so we can't show this dialog
-                if (!_activeVehicle.apmFirmware) {
+                if (!activeVehicle.apmFirmware) {
                     root.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), showDialogDefaultWidth, StandardButton.Close)
                 }
             }
@@ -163,7 +166,7 @@ QGCView {
         id: missionCompleteDialogComponent
 
         QGCViewDialog {
-            property var activeVehicleCopy: _activeVehicle
+            property var activeVehicleCopy: activeVehicle
             onActiveVehicleCopyChanged:
                 if (!activeVehicleCopy) {
                     hideDialog()
@@ -182,20 +185,20 @@ QGCView {
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            !_activeVehicle.connectionLost || !_guidedController.showResumeMission
+                        visible:            !activeVehicle.connectionLost || !_guidedController.showResumeMission
 
                         QGCLabel {
                             Layout.fillWidth:       true
-                            text:                   qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
+                            text:                   qsTr("%1 Images Taken").arg(activeVehicle.cameraTriggerPoints.count)
                             horizontalAlignment:    Text.AlignHCenter
-                            visible:                _activeVehicle.cameraTriggerPoints.count != 0
+                            visible:                activeVehicle.cameraTriggerPoints.count != 0
                         }
 
                         QGCButton {
                             Layout.fillWidth:   true
                             text:               qsTr("Remove plan from vehicle")
                             onClicked: {
-                                _planMasterController.removeAllFromVehicle()
+                                planMasterController.removeAllFromVehicle()
                                 hideDialog()
                             }
                         }
@@ -244,7 +247,7 @@ QGCView {
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            _activeVehicle.connectionLost && _guidedController.showResumeMission
+                        visible:            activeVehicle.connectionLost && _guidedController.showResumeMission
 
                         QGCLabel {
                             Layout.fillWidth:   true
@@ -328,7 +331,6 @@ QGCView {
             FlightDisplayViewMap {
                 id:                         _flightMap
                 anchors.fill:               parent
-                planMasterController:       masterController
                 guidedActionsController:    _guidedController
                 flightWidgets:              flightDisplayViewWidgets
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
@@ -542,12 +544,12 @@ QGCView {
             z:                          _panel.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
             height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen && !(_activeVehicle ? _activeVehicle.highLatencyLink : false)
+            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen && !(activeVehicle ? activeVehicle.highLatencyLink : false)
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
-            active:                     (_virtualJoystick ? _virtualJoystick.value : false) && !(_activeVehicle ? _activeVehicle.highLatencyLink : false)
+            active:                     (_virtualJoystick ? _virtualJoystick.value : false) && !(activeVehicle ? activeVehicle.highLatencyLink : false)
 
             property bool useLightColors: isBackgroundDark
 
@@ -555,7 +557,7 @@ QGCView {
         }
 
         ToolStrip {
-            visible:            (_activeVehicle ? _activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
+            visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
             anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth : undefined
             anchors.left:       isInstrumentRight() ? _panel.left : undefined
@@ -567,7 +569,7 @@ QGCView {
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
             buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
-            buttonEnabled:      [ _useChecklist && _activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
+            buttonEnabled:      [ _useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [

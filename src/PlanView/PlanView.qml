@@ -44,7 +44,6 @@ QGCView {
     readonly property real  _horizontalMargin:          ScreenTools.defaultFontPixelWidth  * 0.5
     readonly property real  _margin:                    ScreenTools.defaultFontPixelHeight * 0.5
     readonly property real  _radius:                    ScreenTools.defaultFontPixelWidth  * 0.5
-    readonly property var   _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     readonly property real  _rightPanelWidth:           Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
     readonly property real  _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
@@ -175,7 +174,7 @@ QGCView {
                 QGCButton {
                     text:       qsTr("Pause and Upload")
                     onClicked: {
-                        _activeVehicle.flightMode = _activeVehicle.pauseFlightMode
+                        activeVehicle.flightMode = activeVehicle.pauseFlightMode
                         _planMasterController.sendToVehicle()
                         hideDialog()
                     }
@@ -215,7 +214,7 @@ QGCView {
                 waitingOnDataMessage()
                 return
             }
-            if (_activeVehicle && _activeVehicle.armed && _activeVehicle.flightMode === _activeVehicle.missionFlightMode) {
+            if (activeVehicle && activeVehicle.armed && activeVehicle.flightMode === activeVehicle.missionFlightMode) {
                 _qgcView.showDialog(activeMissionUploadDialogComponent, qsTr("Plan Upload"), _qgcView.showDialogDefaultWidth, StandardButton.Cancel)
             } else {
                 sendToVehicle()
@@ -338,7 +337,7 @@ QGCView {
                 if (retList[0] == ShapeFileHelper.Error) {
                     _qgcView.showMessage("Error", retList[1], StandardButton.Ok)
                 } else if (retList[0] == ShapeFileHelper.Polygon) {
-                     var editVehicle = _activeVehicle ? _activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
+                     var editVehicle = activeVehicle ? activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
                     if (editVehicle.fixedWing) {
                         insertComplexMissionItemFromKMLOrSHP(_missionController.surveyComplexItemName, file, -1)
                     } else {
@@ -1025,7 +1024,7 @@ QGCView {
                 width:      sendSaveGrid.width
                 wrapMode:   Text.WordWrap
                 text:       masterController.dirty ?
-                                (_activeVehicle ?
+                                (activeVehicle ?
                                      qsTr("You have unsaved changes. You should upload to your vehicle, or save to a file:") :
                                      qsTr("You have unsaved changes.")
                                 ) :
@@ -1088,7 +1087,7 @@ QGCView {
                 }
 
                 QGCButton {
-                    text:               qsTr("Save Mission Waypoints As KML...")                    
+                    text:               qsTr("Save Mission Waypoints As KML...")
                     Layout.columnSpan:  2
                     enabled:            !masterController.syncInProgress && _visualItems.count > 1
                     onClicked: {

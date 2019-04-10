@@ -14,7 +14,7 @@
 
 #include "FirmwareUpgradeController.h"
 #include "Bootloader.h"
-#include "QGCQFileDialog.h"
+//-- TODO: #include "QGCQFileDialog.h"
 #include "QGCApplication.h"
 #include "QGCFileDownload.h"
 #include "QGCOptions.h"
@@ -564,10 +564,10 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
     
     if (firmwareId.firmwareType == CustomFirmware) {
-        _firmwareFilename = QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
-                                                            tr("Select Firmware File"),                                             // Dialog Caption
-                                                            QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
-                                                            tr("Firmware Files (*.px4 *.apj *.bin *.ihx)"));                              // File filter
+        _firmwareFilename = QString(); //-- TODO: QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
+                                                  //          tr("Select Firmware File"),                                             // Dialog Caption
+                                                  //          QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
+                                                  //          tr("Firmware Files (*.px4 *.apj *.bin *.ihx)"));                              // File filter
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);

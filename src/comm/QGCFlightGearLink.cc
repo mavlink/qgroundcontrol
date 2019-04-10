@@ -30,7 +30,7 @@
 
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
-#include "QGCQFileDialog.h"
+//-- TODO: #include "QGCQFileDialog.h"
 #include "QGCMessageBox.h"
 #include "QGCApplication.h"
 #include "Vehicle.h"
@@ -725,6 +725,8 @@ bool QGCFlightGearLink::connectSimulation()
     // Validate the FlightGear application directory location. Linux runs from path so we don't validate on that OS.
     Q_ASSERT(!fgAppName.isEmpty());
     QString fgAppFullyQualified = fgAppDir.absoluteFilePath(fgAppName);
+    //-- TODO:
+    /*
     while (!QFileInfo(fgAppFullyQualified).exists()) {
         QMessageBox msgBox(QMessageBox::Critical,
                            tr("FlightGear application not found"),
@@ -738,13 +740,14 @@ bool QGCFlightGearLink::connectSimulation()
         }
 
         // Let the user pick the right directory
-        QString dirPath = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
+        QString dirPath = QString(); //-- TODO: QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
         if (dirPath.isEmpty()) {
             return false;
         }
         fgAppDir.setPath(dirPath);
         fgAppFullyQualified = fgAppDir.absoluteFilePath(fgAppName);
     }
+    */
 #endif
 
     // If we have an --fg-root coming in from the ui options, that setting overrides any internal searching of

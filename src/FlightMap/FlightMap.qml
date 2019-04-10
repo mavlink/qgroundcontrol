@@ -46,8 +46,7 @@ Map {
 
     readonly property real  maxZoomLevel: 20
 
-    property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
-    property var    activeVehicleCoordinate:        _activeVehicle ? _activeVehicle.coordinate : QtPositioning.coordinate()
+    property var    activeVehicleCoordinate:        activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
 
     function setVisibleRegion(region) {
         // TODO: Is this still necessary with Qt 5.11?

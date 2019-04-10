@@ -30,8 +30,7 @@ Column {
 
     property bool   showSettingsIcon:       _camera !== null
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
@@ -42,7 +41,7 @@ Column {
     property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
-    property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
+    property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property bool   _hasModes:              _isCamera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
@@ -57,8 +56,8 @@ Column {
         anchors.horizontalCenter:   parent.horizontalCenter
         text:                       qsTr("Trigger Camera")
         visible:                    !_isCamera
-        onClicked:                  _activeVehicle.triggerCamera()
-        enabled:                    _activeVehicle
+        onClicked:                  activeVehicle.triggerCamera()
+        enabled:                    activeVehicle
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     //-- Actual controller
@@ -183,7 +182,7 @@ Column {
         anchors.horizontalCenter: parent.horizontalCenter
     }
     QGCLabel {
-        text: _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+        text: activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
         font.pointSize: ScreenTools.smallFontPointSize
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter

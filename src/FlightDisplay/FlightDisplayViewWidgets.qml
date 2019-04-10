@@ -32,7 +32,6 @@ Item {
     property var    missionController
     property bool   showValues:             !QGroundControl.airspaceManager.airspaceVisible
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     property bool   _lightWidgetBorders:    _isSatellite
     property bool   _airspaceEnabled:       QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
@@ -120,8 +119,8 @@ Item {
         anchors.top:                parent.verticalCenter
         spacing:                    ScreenTools.defaultFontPixelHeight
 
-        property bool noGPSLockVisible:     _activeVehicle && !_activeVehicle.coordinate.isValid && _mainIsMap
-        property bool prearmErrorVisible:   _activeVehicle && _activeVehicle.prearmError
+        property bool noGPSLockVisible:     activeVehicle && !activeVehicle.coordinate.isValid && _mainIsMap
+        property bool prearmErrorVisible:   activeVehicle && activeVehicle.prearmError
 
         QGCLabel {
             anchors.horizontalCenter:   parent.horizontalCenter
@@ -138,7 +137,7 @@ Item {
             z:                          QGroundControl.zOrderTopMost
             color:                      "black"
             font.pointSize:             ScreenTools.largeFontPointSize
-            text:                       _activeVehicle ? _activeVehicle.prearmError : ""
+            text:                       activeVehicle ? activeVehicle.prearmError : ""
         }
 
         QGCLabel {

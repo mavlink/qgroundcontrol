@@ -60,7 +60,7 @@ Item {
 
     QGCLabel {
         id:                     waitForVehicle
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.centerIn:       parent
         text:                   qsTr("Waiting For Vehicle Connection")
         font.pointSize:         ScreenTools.mediumFontPointSize
         font.family:            ScreenTools.demiboldFontFamily

@@ -10,7 +10,6 @@
 
 #include "QGCQFileDialog.h"
 #include "QGCApplication.h"
-#include "MainWindow.h"
 
 #ifdef UNITTEST_BUILD
     #include "UnitTest.h"
