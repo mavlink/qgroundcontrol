@@ -21,7 +21,7 @@
 #include "ULogParser.h"
 #include "PX4LogParser.h"
 
-GeoTagController::GeoTagController(void)
+GeoTagController::GeoTagController()
     : _progress(0)
     , _inProgress(false)
 {
@@ -36,34 +36,34 @@ GeoTagController::~GeoTagController()
 
 }
 
-void GeoTagController::pickLogFile(void)
+void GeoTagController::setLogFile(QString filename)
 {
-    QString filename = QString(); //--TODO: QGCQFileDialog::getOpenFileName(MainWindow::instance(), tr("Select log file load"), QString(), tr("ULog file (*.ulg);;PX4 log file (*.px4log);;All Files (*.*)"));
+    filename.replace("file://","");
     if (!filename.isEmpty()) {
         _worker.setLogFile(filename);
         emit logFileChanged(filename);
     }
 }
 
-void GeoTagController::pickImageDirectory(void)
+void GeoTagController::setImageDirectory(QString dir)
 {
-    QString dir = QString(); //--TODO: QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select image directory"));
+    dir.replace("file://","");
     if (!dir.isEmpty()) {
         _worker.setImageDirectory(dir);
         emit imageDirectoryChanged(dir);
     }
 }
 
-void GeoTagController::pickSaveDirectory(void)
+void GeoTagController::setSaveDirectory(QString dir)
 {
-    QString dir = QString(); //--TODO: QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select save directory"));
+    dir.replace("file://","");
     if (!dir.isEmpty()) {
         _worker.setSaveDirectory(dir);
         emit saveDirectoryChanged(dir);
     }
 }
 
-void GeoTagController::startTagging(void)
+void GeoTagController::startTagging()
 {
     _errorMessage.clear();
     emit errorMessageChanged(_errorMessage);
@@ -151,7 +151,7 @@ void GeoTagController::_setErrorMessage(const QString& error)
     emit errorMessageChanged(error);
 }
 
-GeoTagWorker::GeoTagWorker(void)
+GeoTagWorker::GeoTagWorker()
     : _cancel(false)
     , _logFile("")
     , _imageDirectory("")
@@ -160,7 +160,7 @@ GeoTagWorker::GeoTagWorker(void)
 
 }
 
-void GeoTagWorker::run(void)
+void GeoTagWorker::run()
 {
     _cancel = false;
     emit progressChanged(1);
