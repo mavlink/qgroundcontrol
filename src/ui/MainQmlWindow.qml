@@ -27,27 +27,29 @@ ApplicationWindow {
     height:     768
     visible:    true
 
-    Component.onCompleted: {
-        toolbarIndicators.source = _mainToolbarIndicators
-    }
-
-    readonly property real      _topBottomMargins:      ScreenTools.defaultFontPixelHeight * 0.5
-    readonly property string    _mainToolbarIndicators: QGroundControl.corePlugin.options.mainToolbarIndicatorsUrl
-    readonly property string    _settingsViewSource:    "AppSettings.qml"
-    readonly property string    _setupViewSource:       "SetupView.qml"
-    readonly property string    _planViewSource:        "PlanView.qml"
-    readonly property string    _analyzeViewSource:     !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
+    readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
+    readonly property string    _mainToolbarIndicators:     QGroundControl.corePlugin.options.mainToolbarIndicatorsUrl
+    readonly property string    _planToolbarIndicators:     QGroundControl.corePlugin.options.planToolbarIndicatorsUrl
+    readonly property string    _settingsViewSource:        "AppSettings.qml"
+    readonly property string    _setupViewSource:           "SetupView.qml"
+    readonly property string    _planViewSource:            "PlanView.qml"
+    readonly property string    _analyzeViewSource:         !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
 
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
 
-    property var                activeVehicle:          QGroundControl.multiVehicleManager.activeVehicle
-    property bool               communicationLost:      activeVehicle ? activeVehicle.connectionLost : false
-    property string             formatedMessage:        activeVehicle ? activeVehicle.formatedMessage : ""
-    property real               availableHeight:        mainWindow.height - mainWindow.header.height
-    readonly property string    navButtonWidth:         ScreenTools.defaultFontPixelWidth * 24
-    readonly property real      defaultTextHeight:      ScreenTools.defaultFontPixelHeight
-    readonly property real      defaultTextWidth:       ScreenTools.defaultFontPixelWidth
+    property var                activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
+    property bool               communicationLost:          activeVehicle ? activeVehicle.connectionLost : false
+    property string             formatedMessage:            activeVehicle ? activeVehicle.formatedMessage : ""
+    property real               availableHeight:            mainWindow.height - mainWindow.header.height
+
+    property var                currentPlanMissionItem:     null
+    property var                planMasterControllerPlan:   null
+    property var                planMasterControllerView:   null
+
+    readonly property string    navButtonWidth:             ScreenTools.defaultFontPixelWidth * 24
+    readonly property real      defaultTextHeight:          ScreenTools.defaultFontPixelHeight
+    readonly property real      defaultTextWidth:           ScreenTools.defaultFontPixelWidth
 
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
@@ -74,8 +76,14 @@ ApplicationWindow {
         enableToolbar()
         drawer.close()
         if(isPlanView) {
-
+            rootBackground.visible = false
+            planViewLoader.visible = true
+            if(toolbarIndicators.source !== _planToolbarIndicators) {
+                toolbarIndicators.source  = _planToolbarIndicators
+            }
         } else {
+            rootBackground.visible = true
+            planViewLoader.visible = false
             if(toolbarIndicators.source !== _mainToolbarIndicators) {
                 toolbarIndicators.source  = _mainToolbarIndicators
             }
@@ -190,13 +198,6 @@ ApplicationWindow {
 
     property bool _forceClose: false
 
-    onClosing: {
-        if (!_forceClose) {
-            activeConnectionsCloseDialog.check()
-            close.accepted = false
-        }
-    }
-
     function reallyClose() {
         _forceClose = true
         mainWindow.close()
@@ -242,14 +243,57 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //-- Main, full window background
+    //-- Check for unsaved missions
+
+    onClosing: {
+        if (!_forceClose) {
+            unsavedMissionCloseDialog.check()
+            close.accepted = false
+        }
+    }
+
+    MessageDialog {
+        id:                 unsavedMissionCloseDialog
+        title:              qsTr("%1 close").arg(QGroundControl.appName)
+        text:               qsTr("You have a mission edit in progress which has not been saved/sent. If you close you will lose changes. Are you sure you want to close?")
+        standardButtons:    StandardButton.Yes | StandardButton.No
+        modality:           Qt.ApplicationModal
+        visible:            false
+        onYes:              activeConnectionsCloseDialog.check()
+        function check() {
+            if (planViewLoader.item && planViewLoader.item.dirty) {
+                unsavedMissionCloseDialog.open()
+            } else {
+                activeConnectionsCloseDialog.check()
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Main, full window background (Fly View)
     background: Item {
         id:             rootBackground
         anchors.fill:   parent
         FlightDisplayView {
             id:             flightView
             anchors.fill:   parent
+            //-----------------------------------------------------------------
+            //-- Loader helper for any child, no matter how deep can display an
+            //   element on top of the video window.
+            Loader {
+                id:             rootVideoLoader
+                anchors.centerIn: parent
+            }
         }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Plan View
+    Loader {
+        id:                 planViewLoader
+        anchors.fill:       parent
+        visible:            false
+        source:             "PlanView.qml"
     }
 
     //-------------------------------------------------------------------------
@@ -262,6 +306,7 @@ ApplicationWindow {
         }
         RowLayout {
             anchors.fill:               parent
+            spacing:                    0
             Rectangle {
                 height:                 parent.height
                 width:                  height
@@ -286,13 +331,10 @@ ApplicationWindow {
                     }
                 }
             }
-            Item {
-                height:             1
-                width:              ScreenTools.defaultFontPixelWidth * 2
-            }
             Loader {
                 id:                 toolbarIndicators
                 height:             parent.height
+                source:             _mainToolbarIndicators
                 Layout.fillWidth:   true
             }
         }

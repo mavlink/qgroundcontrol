@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget                READ instrumentWidget               CONSTANT)
     Q_PROPERTY(QUrl                     flyViewOverlay                  READ flyViewOverlay                 CONSTANT)
     Q_PROPERTY(QUrl                     mainToolbarIndicatorsUrl        READ mainToolbarIndicatorsUrl       CONSTANT)
+    Q_PROPERTY(QUrl                     planToolbarIndicatorsUrl        READ planToolbarIndicatorsUrl       CONSTANT)
     Q_PROPERTY(bool                     showSensorCalibrationCompass    READ showSensorCalibrationCompass   NOTIFY showSensorCalibrationCompassChanged)
     Q_PROPERTY(bool                     showSensorCalibrationGyro       READ showSensorCalibrationGyro      NOTIFY showSensorCalibrationGyroChanged)
     Q_PROPERTY(bool                     showSensorCalibrationAccel      READ showSensorCalibrationAccel     NOTIFY showSensorCalibrationAccelChanged)
@@ -80,6 +81,8 @@ public:
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
     /// Allows replacing the toolbar container
     virtual QUrl    mainToolbarIndicatorsUrl        () const;
+    /// Allows replacing the Plan View toolbar container
+    virtual QUrl    planToolbarIndicatorsUrl        () const;
     /// By returning false you can hide the following sensor calibration pages
     virtual bool    showSensorCalibrationCompass    () const { return true; }
     virtual bool    showSensorCalibrationGyro       () const { return true; }

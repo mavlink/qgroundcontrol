@@ -36,6 +36,12 @@ QGCOptions::mainToolbarIndicatorsUrl() const
     return QUrl(QStringLiteral("qrc:/toolbar/MainToolBarIndicators.qml"));
 }
 
+QUrl
+QGCOptions::planToolbarIndicatorsUrl() const
+{
+    return QUrl(QStringLiteral("PlanToolBar.qml"));
+}
+
 
 CustomInstrumentWidget::CustomInstrumentWidget(QObject* parent)
     : QObject(parent)

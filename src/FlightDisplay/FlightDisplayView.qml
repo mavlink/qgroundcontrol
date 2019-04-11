@@ -33,16 +33,19 @@ import QGroundControl.Vehicle       1.0
 Item {
 
     PlanMasterController {
-        id:                     planMasterController
-        Component.onCompleted:  start(true /* flyView */)
+        id: _planController
+        Component.onCompleted: {
+            start(true /* flyView */)
+            mainWindow.planMasterControllerView = _planController
+        }
     }
 
     property alias  guidedController:               guidedActionsController
     property bool   activeVehicleJoystickEnabled:   activeVehicle ? activeVehicle.joystickEnabled : false
 
-    property var    _missionController:     planMasterController.missionController
-    property var    _geoFenceController:    planMasterController.geoFenceController
-    property var    _rallyPointController:  planMasterController.rallyPointController
+    property var    _missionController:     _planController.missionController
+    property var    _geoFenceController:    _planController.geoFenceController
+    property var    _rallyPointController:  _planController.rallyPointController
     property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
     property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
     property bool   _useChecklist:          QGroundControl.settingsManager.appSettings.useChecklist.rawValue
@@ -195,14 +198,14 @@ Item {
                             Layout.fillWidth:       true
                             text:                   qsTr("%1 Images Taken").arg(activeVehicle.cameraTriggerPoints.count)
                             horizontalAlignment:    Text.AlignHCenter
-                            visible:                activeVehicle.cameraTriggerPoints.count != 0
+                            visible:                activeVehicle.cameraTriggerPoints.count !== 0
                         }
 
                         QGCButton {
                             Layout.fillWidth:   true
                             text:               qsTr("Remove plan from vehicle")
                             onClicked: {
-                                planMasterController.removeAllFromVehicle()
+                                _planController.removeAllFromVehicle()
                                 hideDialog()
                             }
                         }
@@ -334,6 +337,7 @@ Item {
                 id:                         _flightMap
                 anchors.fill:               parent
                 guidedActionsController:    _guidedController
+                missionController:          _planController
                 flightWidgets:              flightDisplayViewWidgets
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
                 multiVehicleView:           !singleVehicleView.checked
