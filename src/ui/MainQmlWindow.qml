@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 
-import QtQuick          2.12
+import QtQuick          2.11
 import QtQuick.Controls 2.4
 import QtQuick.Dialogs  1.3
-import QtQuick.Layouts  1.12
+import QtQuick.Layouts  1.11
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -23,8 +23,8 @@ import QGroundControl.FlightMap     1.0
 /// Native QML top level window
 ApplicationWindow {
     id:         mainWindow
-    width:      1024
-    height:     768
+    width:      1280
+    height:     1024
     visible:    true
 
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
@@ -517,8 +517,9 @@ ApplicationWindow {
         height:             mainWindow.height * 0.666
         modal:              true
         focus:              true
+        x:                  Math.round((mainWindow.width  - width)  * 0.5)
+        y:                  Math.round((mainWindow.height - height) * 0.5)
         closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        anchors.centerIn:   parent
         background: Rectangle {
             anchors.fill:   parent
             color:          qgcPal.window
@@ -613,9 +614,9 @@ ApplicationWindow {
     Popup {
         id:                 systemMessageArea
         y:                  ScreenTools.defaultFontPixelHeight
-        x:                  (mainWindow.width - width) * 0.5
+        x:                  Math.round((mainWindow.width - width) * 0.5)
         width:              mainWindow.width  * 0.55
-        height:             ScreenTools.defaultFontPixelHeight * 6
+        height:             ScreenTools.defaultFontPixelHeight * 4
         modal:              false
         focus:              true
         closePolicy:        Popup.CloseOnEscape
@@ -651,7 +652,7 @@ ApplicationWindow {
 
         Flickable {
             id:                 systemMessageFlick
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.fill:       parent
             contentHeight:      systemMessageText.height
             contentWidth:       systemMessageText.width
@@ -739,7 +740,6 @@ ApplicationWindow {
             id:             loader
             onLoaded: {
                 indicatorDropdown.x = mapFromGlobal(indicatorDropdown.centerX, 0).x
-                console.log(indicatorDropdown.x)
             }
         }
         onOpened: {
