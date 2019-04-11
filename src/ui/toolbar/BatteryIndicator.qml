@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.12
+import QtQuick.Layouts  1.12
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -94,12 +92,6 @@ Item {
                     QGCLabel { text: (_activeVehicle && _activeVehicle.battery.mahConsumed.value != -1) ? (_activeVehicle.battery.mahConsumed.valueString + " " + _activeVehicle.battery.mahConsumed.units) : "N/A" }
                 }
             }
-
-            Component.onCompleted: {
-                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
-                x = pos.x
-                y = pos.y + ScreenTools.defaultFontPixelHeight
-            }
         }
     }
 
@@ -126,6 +118,9 @@ Item {
     }
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showPopUp(batteryInfo, mapToItem(toolBar, x, y).x + (width / 2))
+        onClicked: {
+            var centerX = mapToGlobal(x + (width / 2), 0).x
+            mainWindow.showPopUp(batteryInfo, centerX)
+        }
     }
 }

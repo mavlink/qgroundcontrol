@@ -38,7 +38,6 @@ FlightMap {
     property var    guidedActionsController
     property var    flightWidgets
     property var    rightPanelWidth
-    property var    qgcView                             ///< QGCView control which contains this map
     property var    multiVehicleView                    ///< true: multi-vehicle view, false: single vehicle view
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)

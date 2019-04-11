@@ -108,7 +108,7 @@ SetupPage {
                     break
                 }
 
-                showDialog(orientationsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, buttons)
+                mainWindow.showDialog(orientationsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, buttons)
             }
 
             APMSensorParams {
@@ -118,7 +118,6 @@ SetupPage {
 
             APMSensorsComponentController {
                 id:                         controller
-                factPanel:                  sensorsPage.viewPanel
                 statusLog:                  statusTextArea
                 progressBar:                progressBar
                 nextButton:                 nextButton
@@ -131,20 +130,20 @@ SetupPage {
 
                 onWaitingForCancelChanged: {
                     if (controller.waitingForCancel) {
-                        showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), qgcView.showDialogDefaultWidth, 0)
+                        mainWindow.showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), mainWindow.showDialogDefaultWidth, 0)
                     }
                 }
 
                 onCalibrationComplete: {
                     switch (calType) {
                     case APMSensorsComponentController.CalTypeAccel:
-                        showDialog(postCalibrationComponent, qsTr("Accelerometer calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        mainWindow.showDialog(postCalibrationComponent, qsTr("Accelerometer calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOffboardCompass:
-                        showDialog(postCalibrationComponent, qsTr("Compass calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        mainWindow.showDialog(postCalibrationComponent, qsTr("Compass calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOnboardCompass:
-                        showDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        mainWindow.showDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     }
                 }
@@ -158,7 +157,7 @@ SetupPage {
                 var usingUDP = controller.usingUDPLink()
                 var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
                 if (usingUDP && !isSub) {
-                    showMessage(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."), StandardButton.Ok)
+                    mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."))
                 }
             }
 
@@ -556,7 +555,7 @@ SetupPage {
 
                         onClicked: {
                             if (controller.accelSetupNeeded) {
-                                showMessage(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."), StandardButton.Ok)
+                                mainWindow.showMessageDialog(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."))
                             } else {
                                 showOrientationsDialog(_calTypeCompass)
                             }
@@ -571,9 +570,9 @@ SetupPage {
 
                         onClicked: {
                             if (controller.accelSetupNeeded) {
-                                showMessage(_levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."), StandardButton.Ok)
+                                mainWindow.showMessageDialog(_levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."))
                             } else {
-                                showDialog(levelHorizonDialogComponent, _levelHorizonText, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                                mainWindow.showDialog(levelHorizonDialogComponent, _levelHorizonText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                             }
                         }
                     }
@@ -581,7 +580,7 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       _calibratePressureText
-                        onClicked:  showDialog(calibratePressureDialogComponent, _calibratePressureText, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked:  mainWindow.showDialog(calibratePressureDialogComponent, _calibratePressureText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
 
                         readonly property string _calibratePressureText: _activeVehicle.fixedWing ? qsTr("Cal Baro/Airspeed") : qsTr("Calibrate Pressure")
                     }
@@ -591,7 +590,7 @@ SetupPage {
                         text:       qsTr("CompassMot")
                         visible:    _activeVehicle ? _activeVehicle.supportsMotorInterference : false
 
-                        onClicked:  showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), qgcView.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked:  mainWindow.showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), mainWindow.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
 
                     QGCButton {

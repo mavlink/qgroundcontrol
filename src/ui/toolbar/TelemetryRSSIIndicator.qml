@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.12
+import QtQuick.Layouts  1.12
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -71,11 +69,6 @@ Item {
                     QGCLabel { text: _activeVehicle.telemetryRNoise }
                 }
             }
-            Component.onCompleted: {
-                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
-                x = pos.x
-                y = pos.y + ScreenTools.defaultFontPixelHeight
-            }
         }
     }
     QGCColoredImage {
@@ -91,7 +84,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            var centerX = mapToItem(toolBar, x, y).x + (width / 2)
+            var centerX = mapToGlobal(x + (width / 2), 0).x
             mainWindow.showPopUp(telemRSSIInfo, centerX)
         }
     }

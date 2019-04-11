@@ -13,10 +13,9 @@ import QtQuick.Controls 1.2
 import QGroundControl.FactSystem 1.0
 import QGroundControl.FactControls 1.0
 
-FactPanel {
-    id: panel
+Item {
 
-    FactPanelController { id: controller; factPanel: panel }
+    FactPanelController { id: controller; }
 
     // Use default component id
     TextInput {

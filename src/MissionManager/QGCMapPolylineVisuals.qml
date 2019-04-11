@@ -24,7 +24,6 @@ import QGroundControl.ShapeFileHelper   1.0
 Item {
     id: _root
 
-    property var    qgcView                     ///< QGCView for popping dialogs
     property var    mapControl                  ///< Map control to place item in
     property var    mapPolyline                 ///< QGCMapPolyline object
     property bool   interactive:    mapPolyline.interactive
@@ -115,7 +114,6 @@ Item {
 
     QGCFileDialog {
         id:             kmlLoadDialog
-        qgcView:        _root.qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select KML File")
         selectExisting: true
@@ -150,7 +148,7 @@ Item {
 
         MenuItem {
             text:           qsTr("Edit position..." )
-            onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+            onTriggered:    mainWindow.showDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
         }
 
         MenuItem {

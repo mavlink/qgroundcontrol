@@ -37,7 +37,6 @@ SetupPage {
 
             SyslinkComponentController {
                 id:         controller
-                factPanel:  syslinkPage.viewPanel
             }
 
             QGCLabel {

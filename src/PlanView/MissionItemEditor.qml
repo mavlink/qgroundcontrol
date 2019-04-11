@@ -147,7 +147,7 @@ Rectangle {
             MenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
-                onTriggered:    qgcView.showDialog(editPositionDialog, qsTr("Edit Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                onTriggered:    mainWindow.showDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
             }
 
             MenuSeparator {
@@ -165,7 +165,7 @@ Rectangle {
                         if (missionItem.friendlyEditAllowed) {
                             missionItem.rawEdit = false
                         } else {
-                            qgcView.showMessage(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"), StandardButton.Ok)
+                            mainWindow.showMessageDialog(qsTr("Mission Edit"), qsTr("You have made changes to the mission item which cannot be shown in Simple Mode"))
                         }
                     } else {
                         missionItem.rawEdit = true
@@ -194,7 +194,7 @@ Rectangle {
             }
         }
 
-        onClicked: qgcView.showDialog(commandDialog, qsTr("Select Mission Command"), qgcView.showDialogDefaultWidth, StandardButton.Cancel)
+        onClicked: mainWindow.showDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
     }
 
     QGCLabel {

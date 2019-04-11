@@ -87,10 +87,7 @@ SetupPage {
 
                 Component.onCompleted: {
                     controllerCompleted = true
-                    if (qgcView.completedSignalled) {
-                        // We can only start the board search when the Qml and Controller are completely done loading
-                        controller.startBoardSearch()
-                    }
+                    controller.startBoardSearch()
                 }
 
                 onActiveVehicleChanged: {
@@ -123,7 +120,7 @@ SetupPage {
                         // We end up here when we detect a board plugged in after we've started upgrade
                         statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
                         if (controller.pixhawkBoard || controller.px4FlowBoard) {
-                            showDialog(pixhawkFirmwareSelectDialogComponent, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                            mainWindow.showDialog(pixhawkFirmwareSelectDialogComponent, title, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                         }
                     }
                 }

@@ -25,7 +25,6 @@ SetupPage {
 
     FactPanelController {
         id:         controller
-        factPanel:  powerPage.viewPanel
     }
 
     Component {
@@ -388,7 +387,7 @@ SetupPage {
                     onClicked: {
                         _calcVoltageDlgVehicleVoltage = vehicleVoltage
                         _calcVoltageDlgBattVoltMultParam = battVoltMult
-                        showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
 
                 }
@@ -420,7 +419,7 @@ SetupPage {
                     onClicked: {
                         _calcAmpsPerVoltDlgVehicleCurrent = vehicleCurrent
                         _calcAmpsPerVoltDlgBattAmpPerVoltParam = battAmpPerVolt
-                        showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
                 }
 

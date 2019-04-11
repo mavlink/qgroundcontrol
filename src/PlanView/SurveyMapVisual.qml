@@ -23,7 +23,6 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
-    property var qgcView    ///< QGCView to use for popping dialogs
 
     property var _missionItem:      object
     property var _mapPolygon:       object.surveyAreaPolygon
@@ -90,7 +89,6 @@ Item {
 
     QGCMapPolygonVisuals {
         id:                 mapPolygonVisuals
-        qgcView:            _root.qgcView
         mapControl:         map
         mapPolygon:         _mapPolygon
         interactive:        _missionItem.isCurrentItem

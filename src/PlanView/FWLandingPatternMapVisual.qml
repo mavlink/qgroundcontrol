@@ -23,7 +23,6 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
-    property var qgcView    ///< QGCView to use for popping dialogs
 
     signal clicked(int sequenceNumber)
 
