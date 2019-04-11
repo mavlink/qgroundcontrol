@@ -128,7 +128,6 @@ Item {
                 fileExtension:  qsTr("txt")
                 selectExisting: false
                 title:          qsTr("Select log save file")
-                root:           _root
                 onAcceptedForSave: {
                     debugMessageModel.writeMessages(file);
                     visible = false;

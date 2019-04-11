@@ -429,7 +429,7 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //-- System Messages
+    //-- Vehicle Messages
 
     function formatMessage(message) {
         message = message.replace(new RegExp("<#E>", "g"), "color: " + qgcPal.warningText + "; font: " + (ScreenTools.defaultFontPointSize.toFixed(0) - 1) + "pt monospace;");
@@ -438,8 +438,8 @@ ApplicationWindow {
         return message;
     }
 
-    function showMessageArea() {
-        if(!messageArea.visible) {
+    function showVehicleMessages() {
+        if(!vehicleMessageArea.visible) {
             if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
                 messageText.text = formatMessage(activeVehicle.formatedMessages)
                 //-- Hack to scroll to last message
@@ -449,12 +449,12 @@ ApplicationWindow {
             } else {
                 messageText.text = qsTr("No Messages")
             }
-            messageArea.open()
+            vehicleMessageArea.open()
         }
     }
 
     onFormatedMessageChanged: {
-        if(messageArea.visible) {
+        if(vehicleMessageArea.visible) {
             messageText.append(formatMessage(formatedMessage))
             //-- Hack to scroll down
             messageFlick.flick(0,-500)
@@ -462,7 +462,7 @@ ApplicationWindow {
     }
 
     Popup {
-        id:                 messageArea
+        id:                 vehicleMessageArea
         width:              mainWindow.width  * 0.666
         height:             mainWindow.height * 0.666
         modal:              true
@@ -490,7 +490,7 @@ ApplicationWindow {
                 color:          qgcPal.text
             }
         }
-        //-- Dismiss System Message
+        //-- Dismiss Vehicle Messages
         QGCColoredImage {
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.top:        parent.top
@@ -507,7 +507,7 @@ ApplicationWindow {
                 anchors.fill:       parent
                 anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
                 onClicked: {
-                    messageArea.close()
+                    vehicleMessageArea.close()
                 }
             }
         }
@@ -529,7 +529,7 @@ ApplicationWindow {
                 onClicked: {
                     if(QGroundControl.multiVehicleManager.activeVehicleAvailable) {
                         activeVehicle.clearMessages();
-                        messageArea.close()
+                        vehicleMessageArea.close()
                     }
                 }
             }
@@ -537,17 +537,18 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //-- Critical System Messages
+    //-- System Messages
 
     property var    _messageQueue:      []
-    property string _criticalMessage:   ""
+    property string _systemMessage:   ""
 
     function showMessage(message) {
-        if(criticalMmessageArea.visible || QGroundControl.videoManager.fullScreen) {
+        vehicleMessageArea.close()
+        if(systemMessageArea.visible || QGroundControl.videoManager.fullScreen) {
             _messageQueue.push(message)
         } else {
-            _criticalMessage = message
-            criticalMmessageArea.open()
+            _systemMessage = message
+            systemMessageArea.open()
         }
     }
 
@@ -560,11 +561,11 @@ ApplicationWindow {
     }
 
     Popup {
-        id:                 criticalMmessageArea
+        id:                 systemMessageArea
         y:                  ScreenTools.defaultFontPixelHeight
         x:                  (mainWindow.width - width) * 0.5
         width:              mainWindow.width  * 0.55
-        height:             Math.min(criticalMessageText.height + (ScreenTools.defaultFontPixelHeight * 2), ScreenTools.defaultFontPixelHeight * 6)
+        height:             ScreenTools.defaultFontPixelHeight * 6
         modal:              false
         focus:              true
         closePolicy:        Popup.CloseOnEscape
@@ -578,40 +579,39 @@ ApplicationWindow {
         }
 
         onOpened: {
-            console.log('Critical Message: ' + mainWindow._criticalMessage)
-            criticalMessageText.text = mainWindow._criticalMessage
+            systemMessageText.text = mainWindow._systemMessage
         }
 
         onClosed: {
             //-- Are there messages in the waiting queue?
             if(mainWindow._messageQueue.length) {
-                mainWindow._criticalMessage = ""
+                mainWindow._systemMessage = ""
                 //-- Show all messages in queue
                 for (var i = 0; i < mainWindow._messageQueue.length; i++) {
                     var text = mainWindow._messageQueue[i]
-                    mainWindow._criticalMessage.append(text)
+                    mainWindow._systemMessage.append(text)
                 }
                 //-- Clear it
                 mainWindow._messageQueue = []
-                criticalMmessageArea.open()
+                systemMessageArea.open()
             } else {
-                mainWindow._criticalMessage = ""
+                mainWindow._systemMessage = ""
             }
         }
 
         Flickable {
-            id:                 criticalMessageFlick
+            id:                 systemMessageFlick
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             anchors.fill:       parent
-            contentHeight:      criticalMessageText.height
-            contentWidth:       criticalMessageText.width
+            contentHeight:      systemMessageText.height
+            contentWidth:       systemMessageText.width
             boundsBehavior:     Flickable.StopAtBounds
             pixelAligned:       true
             clip:               true
             TextEdit {
-                id:             criticalMessageText
-                width:          criticalMmessageArea.width - criticalClose.width - (ScreenTools.defaultFontPixelHeight * 2)
-                anchors.left:   parent.left
+                id:             systemMessageText
+                width:          systemMessageArea.width - systemMessageClose.width - (ScreenTools.defaultFontPixelHeight * 2)
+                anchors.centerIn: parent
                 readOnly:       true
                 textFormat:     TextEdit.RichText
                 font.pointSize: ScreenTools.defaultFontPointSize
@@ -623,7 +623,7 @@ ApplicationWindow {
 
         //-- Dismiss Critical Message
         QGCColoredImage {
-            id:                 criticalClose
+            id:                 systemMessageClose
             anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
             anchors.top:        parent.top
             anchors.right:      parent.right
@@ -637,7 +637,7 @@ ApplicationWindow {
                 anchors.fill:       parent
                 anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
                 onClicked: {
-                    criticalMmessageArea.close()
+                    systemMessageArea.close()
                 }
             }
         }
@@ -652,12 +652,12 @@ ApplicationWindow {
             sourceSize.height:  width
             source:             "/res/ArrowDown.svg"
             fillMode:           Image.PreserveAspectFit
-            visible:            criticalMessageText.lineCount > 5
+            visible:            systemMessageText.lineCount > 5
             color:              qgcPal.alertText
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
-                    criticalMessageFlick.flick(0,-500)
+                    systemMessageFlick.flick(0,-500)
                 }
             }
         }

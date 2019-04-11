@@ -27,7 +27,7 @@ import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.SettingsManager       1.0
 
-Item {
+Rectangle {
     id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent

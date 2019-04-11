@@ -67,6 +67,6 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showMessageArea()
+        onClicked:      mainWindow.showVehicleMessages()
     }
 }
