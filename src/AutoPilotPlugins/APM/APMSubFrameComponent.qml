@@ -24,8 +24,7 @@ SetupPage {
     id:                 subFramePage
     pageComponent:      subFramePageComponent
 
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _oldFW:   _activeVehicle.versionCompare(3 ,5 ,2) < 0
+    property bool _oldFW:   activeVehicle.versionCompare(3 ,5 ,2) < 0
 
     APMAirframeComponentController { id: controller; }
 

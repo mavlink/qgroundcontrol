@@ -16,9 +16,9 @@ Rectangle {
                                   parent.flickableDirection === Flickable.HorizontalAndVerticalFlick) &&
                                  (parent.contentHeight > parent.height)
 
-    Component.onCompleted:  animateOpacity.restart()
-    onVisibleChanged:       animateOpacity.restart()
-    onHeightChanged:        animateOpacity.restart()
+    Component.onCompleted:  { if(animateOpacity) animateOpacity.restart() }
+    onVisibleChanged:       { if(animateOpacity) animateOpacity.restart() }
+    onHeightChanged:        { if(animateOpacity) animateOpacity.restart() }
 
     Connections {
         target:                    verticalIndicator.parent

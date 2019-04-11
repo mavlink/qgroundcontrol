@@ -59,8 +59,6 @@ QGCButton {
                                           _pendingColor :
                                           _failedColor))
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
     width:      40 * ScreenTools.defaultFontPixelWidth
 
     style: ButtonStyle {

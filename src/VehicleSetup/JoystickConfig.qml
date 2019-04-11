@@ -51,7 +51,6 @@ SetupPage {
 
             readonly property real labelToMonitorMargin: ScreenTools.defaultFontPixelWidth * 3
 
-            property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
             property var _activeJoystick:   joystickManager.activeJoystick
 
             JoystickConfigController {
@@ -188,7 +187,7 @@ SetupPage {
                         QGCLabel {
                             id:     rollLabel
                             width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
+                            text:   activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         }
 
                         Loader {
@@ -218,7 +217,7 @@ SetupPage {
                         QGCLabel {
                             id:     pitchLabel
                             width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
+                            text:   activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                         }
 
                         Loader {
@@ -365,14 +364,14 @@ SetupPage {
                                 id:         enabledCheckBox
                                 enabled:    _activeJoystick ? _activeJoystick.calibrated : false
                                 text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
-                                onClicked:  _activeVehicle.joystickEnabled = checked
-                                Component.onCompleted: checked = _activeVehicle.joystickEnabled
+                                onClicked:  activeVehicle.joystickEnabled = checked
+                                Component.onCompleted: checked = activeVehicle.joystickEnabled
 
                                 Connections {
-                                    target: _activeVehicle
+                                    target: activeVehicle
 
                                     onJoystickEnabledChanged: {
-                                        enabledCheckBox.checked = _activeVehicle.joystickEnabled
+                                        enabledCheckBox.checked = activeVehicle.joystickEnabled
                                     }
                                 }
 
@@ -381,7 +380,7 @@ SetupPage {
 
                                     onActiveJoystickChanged: {
                                         if(_activeJoystick) {
-                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && _activeVehicle.joystickEnabled })
+                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && activeVehicle.joystickEnabled })
                                         }
                                     }
                                 }
@@ -427,7 +426,7 @@ SetupPage {
 
                             Column {
                                 spacing: ScreenTools.defaultFontPixelHeight / 3
-                                visible: _activeVehicle.supportsThrottleModeCenterZero
+                                visible: activeVehicle.supportsThrottleModeCenterZero
 
                                 ExclusiveGroup { id: throttleModeExclusiveGroup }
 
@@ -463,10 +462,10 @@ SetupPage {
                                 }
 
                                 QGCCheckBox {
-                                    visible:        _activeVehicle.supportsNegativeThrust
+                                    visible:        activeVehicle.supportsNegativeThrust
                                     id:             negativeThrust
                                     text:           qsTr("Allow negative Thrust")
-                                    enabled:        _activeJoystick.negativeThrust = _activeVehicle.supportsNegativeThrust
+                                    enabled:        _activeJoystick.negativeThrust = activeVehicle.supportsNegativeThrust
                                     checked:        _activeJoystick ? _activeJoystick.negativeThrust : false
                                     onClicked:      _activeJoystick.negativeThrust = checked
                                 }
@@ -499,12 +498,12 @@ SetupPage {
 
                             QGCCheckBox {
                                 id:         advancedSettings
-                                checked:    _activeVehicle.joystickMode != 0
+                                checked:    activeVehicle.joystickMode != 0
                                 text:       qsTr("Advanced settings (careful!)")
 
                                 onClicked: {
                                     if (!checked) {
-                                        _activeVehicle.joystickMode = 0
+                                        activeVehicle.joystickMode = 0
                                     }
                                 }
                             }
@@ -522,11 +521,11 @@ SetupPage {
 
                                 QGCComboBox {
                                     id:             joystickModeCombo
-                                    currentIndex:   _activeVehicle.joystickMode
+                                    currentIndex:   activeVehicle.joystickMode
                                     width:          ScreenTools.defaultFontPixelWidth * 20
-                                    model:          _activeVehicle.joystickModes
+                                    model:          activeVehicle.joystickModes
 
-                                    onActivated: _activeVehicle.joystickMode = index
+                                    onActivated: activeVehicle.joystickMode = index
                                 }
                             }
 
@@ -554,7 +553,7 @@ SetupPage {
                                 visible:    advancedSettings.checked
                                 QGCCheckBox {
                                     id:         joystickCircleCorrection
-                                    checked:    _activeVehicle.joystickMode != 0
+                                    checked:    activeVehicle.joystickMode != 0
                                     text:       qsTr("Enable circle correction")
 
                                     Component.onCompleted: checked = _activeJoystick.circleCorrection
@@ -625,7 +624,7 @@ SetupPage {
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-                                    visible: !_activeVehicle.supportsJSButton
+                                    visible: !activeVehicle.supportsJSButton
 
                                     property bool pressed
 
@@ -667,7 +666,7 @@ SetupPage {
 
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
-                                visible: _activeVehicle.supportsJSButton
+                                visible: activeVehicle.supportsJSButton
 
                                 QGCLabel {
                                     horizontalAlignment:    Text.AlignHCenter
@@ -692,7 +691,7 @@ SetupPage {
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-                                    visible: _activeVehicle.supportsJSButton
+                                    visible: activeVehicle.supportsJSButton
 
                                     property bool pressed
 

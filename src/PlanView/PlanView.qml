@@ -44,7 +44,7 @@ Item {
     readonly property real  _margin:                    ScreenTools.defaultFontPixelHeight * 0.5
     readonly property real  _radius:                    ScreenTools.defaultFontPixelWidth  * 0.5
     readonly property real  _rightPanelWidth:           Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
-    readonly property real  _toolButtonTopMargin:       parent.height - ScreenTools.availableHeight + (ScreenTools.defaultFontPixelHeight / 2)
+    readonly property real  _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
@@ -58,7 +58,7 @@ Item {
     property bool   _addWaypointOnClick:                false
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
-    property real   _toolbarHeight:                     _root.height - ScreenTools.availableHeight
+    property real   _toolbarHeight:                     _root.height - mainWindow.height
     property int    _editingLayer:                      _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
@@ -476,7 +476,7 @@ Item {
                     editorMap.focus = true
 
                     //-- Don't pay attention to items beneath the toolbar.
-                    var topLimit = parent.height - ScreenTools.availableHeight
+                    var topLimit = parent.height - mainWindow.height
                     if(mouse.y < topLimit) {
                         return
                     }
@@ -653,7 +653,7 @@ Item {
         // Right pane for mission editing controls
         Rectangle {
             id:                 rightPanel
-            height:             ScreenTools.availableHeight
+            height:             mainWindow.height
             width:              _rightPanelWidth
             color:              qgcPal.window
             opacity:            planExpanded.visible ? 0.2 : 0

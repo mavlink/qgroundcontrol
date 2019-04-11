@@ -27,13 +27,12 @@ QGCLabel {
     font.pointSize:     ScreenTools.mediumFontPointSize
     color:              qgcPal.buttonText
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _armed:         _activeVehicle ? _activeVehicle.armed : false
+    property bool   _armed:         activeVehicle ? activeVehicle.armed : false
 
     QGCPalette { id: qgcPal }
 
     QGCMouseArea {
         fillItem: parent
-        onClicked: _armed ? toolBar.disarmVehicle() : toolBar.armVehicle()
+        onClicked: _armed ? mainWindow.disarmVehicle() : mainWindow.armVehicle()
     }
 }

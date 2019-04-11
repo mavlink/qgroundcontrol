@@ -38,7 +38,6 @@ Item {
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
 
     QGCMapPalette { id: mapPal; lightColors: useLightColors }
-    QGCPalette    { id: qgcPal }
 
     function getPreferredInstrumentWidth() {
         // Don't allow instrument panel to chew more than 1/4 of full window
@@ -180,8 +179,8 @@ Item {
                         target:                 instrumentsLoader
                         anchors.verticalCenter: undefined
                         anchors.bottom:         undefined
-                        anchors.top:            _root ? _root.top : undefined
-                        anchors.right:          _root ? _root.right : undefined
+                        anchors.top:            widgetRoot ? widgetRoot.top : undefined
+                        anchors.right:          widgetRoot ? widgetRoot.right : undefined
                         anchors.left:           undefined
                     }
                 },
@@ -191,8 +190,8 @@ Item {
                         target:                 instrumentsLoader
                         anchors.top:            undefined
                         anchors.bottom:         undefined
-                        anchors.verticalCenter: _root ? _root.verticalCenter : undefined
-                        anchors.right:          _root ? _root.right : undefined
+                        anchors.verticalCenter: widgetRoot ? widgetRoot.verticalCenter : undefined
+                        anchors.right:          widgetRoot ? widgetRoot.right : undefined
                         anchors.left:           undefined
                     }
                 },
@@ -202,8 +201,8 @@ Item {
                         target:                 instrumentsLoader
                         anchors.top:            undefined
                         anchors.verticalCenter: undefined
-                        anchors.bottom:         _root ? _root.bottom : undefined
-                        anchors.right:          _root ? _root.right : undefined
+                        anchors.bottom:         widgetRoot ? widgetRoot.bottom : undefined
+                        anchors.right:          widgetRoot ? widgetRoot.right : undefined
                         anchors.left:           undefined
                     }
                 },
@@ -213,9 +212,9 @@ Item {
                         target:                 instrumentsLoader
                         anchors.verticalCenter: undefined
                         anchors.bottom:         undefined
-                        anchors.top:            _root ? _root.top : undefined
+                        anchors.top:            widgetRoot ? widgetRoot.top : undefined
                         anchors.right:          undefined
-                        anchors.left:           _root ? _root.left : undefined
+                        anchors.left:           widgetRoot ? widgetRoot.left : undefined
                     }
                 },
                 State {
@@ -224,9 +223,9 @@ Item {
                         target:                 instrumentsLoader
                         anchors.top:            undefined
                         anchors.bottom:         undefined
-                        anchors.verticalCenter: _root ? _root.verticalCenter : undefined
+                        anchors.verticalCenter: widgetRoot ? widgetRoot.verticalCenter : undefined
                         anchors.right:          undefined
-                        anchors.left:           _root ? _root.left : undefined
+                        anchors.left:           widgetRoot ? widgetRoot.left : undefined
                     }
                 },
                 State {
@@ -235,9 +234,9 @@ Item {
                         target:                 instrumentsLoader
                         anchors.top:            undefined
                         anchors.verticalCenter: undefined
-                        anchors.bottom:         _root ? _root.bottom : undefined
+                        anchors.bottom:         widgetRoot ? widgetRoot.bottom : undefined
                         anchors.right:          undefined
-                        anchors.left:           _root ? _root.left : undefined
+                        anchors.left:           widgetRoot ? widgetRoot.left : undefined
                     }
                 }
             ]
