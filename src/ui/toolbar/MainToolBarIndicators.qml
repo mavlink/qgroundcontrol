@@ -74,11 +74,13 @@ Item {
     //-------------------------------------------------------------------------
     //-- Toolbar Indicators
     Row {
-        id:             indicatorRow
-        anchors.top:    parent.top
-        anchors.bottom: parent.bottom
-        spacing:        ScreenTools.defaultFontPixelWidth * 1.5
-        visible:        activeVehicle && !communicationLost
+        id:                 indicatorRow
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        anchors.left:       parent.left
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+        spacing:            ScreenTools.defaultFontPixelWidth * 1.5
+        visible:            activeVehicle && !communicationLost
 
         //---------------------------------------------------------------------
         //-- Vehicle Selector

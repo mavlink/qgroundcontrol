@@ -39,12 +39,12 @@ FlightMap {
     property var    flightWidgets
     property var    rightPanelWidth
     property var    multiVehicleView                    ///< true: multi-vehicle view, false: single vehicle view
+    property var    missionController
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
 
-    property var    _missionController:         planMasterController.missionController
-    property var    _geoFenceController:        planMasterController.geoFenceController
-    property var    _rallyPointController:      planMasterController.rallyPointController
+    property var    _geoFenceController:        missionController.geoFenceController
+    property var    _rallyPointController:      missionController.rallyPointController
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
@@ -145,7 +145,6 @@ FlightMap {
         id:         panRecenterTimer
         interval:   10000
         running:    false
-
         onTriggered: {
             _disableVehicleTracking = false
             updateMapToVehiclePosition()
@@ -163,10 +162,9 @@ FlightMap {
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     Connections {
-        target: _missionController
-
+        target: missionController
         onNewItemsFromVehicle: {
-            var visualItems = _missionController.visualItems
+            var visualItems = missionController.visualItems
             if (visualItems && visualItems.count !== 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
                 firstVehiclePositionReceived = true
@@ -182,13 +180,13 @@ FlightMap {
         id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
         map:                        _flightMap
         usePlannedHomePosition:     false
-        property real leftToolWidth:    toolStrip.x + toolStrip.width
+        planMasterController:       missionController
+        property real leftToolWidth: toolStrip.x + toolStrip.width
     }
 
     // Add trajectory points to the map
     MapItemView {
         model: _mainIsMap ? activeVehicle ? activeVehicle.trajectoryPoints : 0 : 0
-
         delegate: MapPolyline {
             line.width: 3
             line.color: "red"
@@ -203,7 +201,6 @@ FlightMap {
     // Add the vehicles to the map
     MapItemView {
         model: QGroundControl.multiVehicleManager.vehicles
-
         delegate: VehicleMapItem {
             vehicle:        object
             coordinate:     object.coordinate

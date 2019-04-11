@@ -17,6 +17,7 @@ import QGroundControl.FlightMap 1.0
 Item {
     property var    map
     property bool   usePlannedHomePosition      ///< true: planned home position used for calculations, false: vehicle home position use for calculations
+    property var    planMasterController
 
     property var    _missionController:     planMasterController.missionController
     property var    _geoFenceController:    planMasterController.geoFenceController
