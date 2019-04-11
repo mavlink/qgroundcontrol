@@ -16,6 +16,7 @@
 #include <QDebug>
 #include <cfloat>
 #include <QDir>
+#include <QUrl>
 
 #include "ExifParser.h"
 #include "ULogParser.h"
@@ -38,7 +39,7 @@ GeoTagController::~GeoTagController()
 
 void GeoTagController::setLogFile(QString filename)
 {
-    filename.replace("file://","");
+    filename = QUrl(filename).toLocalFile();
     if (!filename.isEmpty()) {
         _worker.setLogFile(filename);
         emit logFileChanged(filename);
@@ -47,7 +48,7 @@ void GeoTagController::setLogFile(QString filename)
 
 void GeoTagController::setImageDirectory(QString dir)
 {
-    dir.replace("file://","");
+    dir = QUrl(dir).toLocalFile();
     if (!dir.isEmpty()) {
         _worker.setImageDirectory(dir);
         emit imageDirectoryChanged(dir);
@@ -56,7 +57,7 @@ void GeoTagController::setImageDirectory(QString dir)
 
 void GeoTagController::setSaveDirectory(QString dir)
 {
-    dir.replace("file://","");
+    dir = QUrl(dir).toLocalFile();
     if (!dir.isEmpty()) {
         _worker.setSaveDirectory(dir);
         emit saveDirectoryChanged(dir);

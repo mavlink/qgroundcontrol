@@ -149,31 +149,31 @@ Item {
 
                     QGCButton {
                         text:       "Arm"
-                        visible:    !_vehicle.armed
+                        visible:    _vehicle && !_vehicle.armed
                         onClicked:  _vehicle.armed = true
                     }
 
                     QGCButton {
                         text:       "Start Mission"
-                        visible:    _vehicle.armed && _vehicle.flightMode !== _vehicle.missionFlightMode
+                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.missionFlightMode
                         onClicked:  _vehicle.startMission()
                     }
 
                     QGCButton {
                         text:       "Pause"
-                        visible:    _vehicle.armed && _vehicle.pauseVehicleSupported
+                        visible:    _vehicle && _vehicle.armed && _vehicle.pauseVehicleSupported
                         onClicked:  _vehicle.pauseVehicle()
                     }
 
                     QGCButton {
                         text:       "RTL"
-                        visible:    _vehicle.armed && _vehicle.flightMode !== _vehicle.rtlFlightMode
+                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.rtlFlightMode
                         onClicked:  _vehicle.flightMode = _vehicle.rtlFlightMode
                     }
 
                     QGCButton {
                         text:       "Take control"
-                        visible:    _vehicle.armed && _vehicle.flightMode !== _vehicle.takeControlFlightMode
+                        visible:    _vehicle && _vehicle.armed && _vehicle.flightMode !== _vehicle.takeControlFlightMode
                         onClicked:  _vehicle.flightMode = _vehicle.takeControlFlightMode
                     }
                 } // Row

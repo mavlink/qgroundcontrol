@@ -73,7 +73,7 @@ AnalyzePage {
                     title: qsTr("Date")
                     width: ScreenTools.defaultFontPixelWidth * 34
                     horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
+                    delegate: Text  {
                         text: {
                             var o = logController.model.get(styleData.row)
                             if (o) {

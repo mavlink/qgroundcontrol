@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.3
-import QtQuick.Layouts  1.12
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQuick.Dialogs              1.3
+import QtQuick.Layouts              1.11
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -40,7 +40,7 @@ AnalyzePage {
             //-----------------------------------------------------------------
             ProgressBar {
                 id:                 progressBar
-                maximumValue:       100
+                to:                 100
                 value:              geoController.progress
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
@@ -113,7 +113,7 @@ AnalyzePage {
                     selectFolder:   true
                     selectExisting: true
                     onAccepted: {
-                        geoController.imageDirectory = openLogFile.folder
+                        geoController.selectImageDir = openLogFile.folder
                         close()
                     }
                 }
@@ -141,7 +141,7 @@ AnalyzePage {
                     selectFolder:   true
                     selectExisting: true
                     onAccepted: {
-                        geoController.saveDirectory = openLogFile.folder
+                        geoController.saveDirectory = selectDestDir.folder
                         close()
                     }
                 }
