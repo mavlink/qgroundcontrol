@@ -26,8 +26,6 @@ ColumnLayout {
     property bool   showMission:          true
     property bool   showAllItems:         true
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
     QGCLabel { text: qsTr("Center map on:") }
 
     QGCButton {
@@ -65,7 +63,7 @@ ColumnLayout {
     QGCButton {
         text:               qsTr("Vehicle")
         Layout.fillWidth:   true
-        enabled:            _activeVehicle && _activeVehicle.coordinate.isValid
+        enabled:            activeVehicle && activeVehicle.coordinate.isValid
 
         onClicked: {
             dropPanel.hide()

@@ -24,14 +24,13 @@ Item {
     anchors.bottom: parent.bottom
     width:          flightModeSelector.width
 
-    property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-    property var _flightModes:      _activeVehicle ? _activeVehicle.flightModes : [ ]
+    property var _flightModes:      activeVehicle ? activeVehicle.flightModes : [ ]
 
     on_FlightModesChanged: flightModeSelector.updateFlightModesMenu()
 
     QGCLabel {
         id:                     flightModeSelector
-        text:                   _activeVehicle ? _activeVehicle.flightMode : qsTr("N/A", "No data to display")
+        text:                   activeVehicle ? activeVehicle.flightMode : qsTr("N/A", "No data to display")
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
@@ -41,12 +40,12 @@ Item {
         Component {
             id: flightModeMenuItemComponent
             MenuItem {
-                onTriggered: _activeVehicle.flightMode = text
+                onTriggered: activeVehicle.flightMode = text
             }
         }
         property var flightModesMenuItems: []
         function updateFlightModesMenu() {
-            if (_activeVehicle && _activeVehicle.flightModeSetAvailable) {
+            if (activeVehicle && activeVehicle.flightModeSetAvailable) {
                 // Remove old menu items
                 for (var i = 0; i < flightModesMenuItems.length; i++) {
                     flightModesMenu.removeItem(flightModesMenuItems[i])
@@ -62,7 +61,7 @@ Item {
         }
         Component.onCompleted: flightModeSelector.updateFlightModesMenu()
         MouseArea {
-            visible:        _activeVehicle && _activeVehicle.flightModeSetAvailable
+            visible:        activeVehicle && activeVehicle.flightModeSetAvailable
             anchors.fill:   parent
             onClicked:      flightModesMenu.popup()
         }

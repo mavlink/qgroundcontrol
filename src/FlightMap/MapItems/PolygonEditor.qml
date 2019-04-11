@@ -169,7 +169,7 @@ Item {
 
         QGCMapLabel {
             id:                     polygonHelp
-            anchors.topMargin:      parent.height - ScreenTools.availableHeight
+            anchors.topMargin:      parent.height - mainWindow.height
             anchors.top:            parent.top
             anchors.left:           parent.left
             anchors.right:          parent.right

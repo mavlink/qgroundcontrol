@@ -26,9 +26,7 @@ SetupPage {
     id:             firmwarePage
     pageComponent:  firmwarePageComponent
     pageName:       qsTr("Firmware")
-    showAdvanced:   _activeVehicle && _activeVehicle.apmFirmware
-
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
+    showAdvanced:   activeVehicle && activeVehicle.apmFirmware
 
     signal cancelDialog
 
@@ -459,7 +457,7 @@ SetupPage {
                 id:         flashBootloaderButton
                 text:       qsTr("Flash ChibiOS Bootloader")
                 visible:    firmwarePage.advanced
-                onClicked:  _activeVehicle.flashBootloader()
+                onClicked:  activeVehicle.flashBootloader()
             }
 
             TextArea {
