@@ -16,7 +16,7 @@
 
 QGCOptions::QGCOptions(QObject* parent)
     : QObject(parent)
-    , _defaultInstrumentWidget(NULL)
+    , _defaultInstrumentWidget(nullptr)
 {
     qmlRegisterUncreatableType<CustomInstrumentWidget>("QGroundControl", 1, 0, "CustomInstrumentWidget", "Reference only");
 }
@@ -30,9 +30,15 @@ QGCOptions::instrumentWidget()
     return _defaultInstrumentWidget;
 }
 
+QUrl
+QGCOptions::mainToolbarIndicatorsUrl() const
+{
+    return QUrl(QStringLiteral("qrc:/toolbar/MainToolBarIndicators.qml"));
+}
+
+
 CustomInstrumentWidget::CustomInstrumentWidget(QObject* parent)
     : QObject(parent)
 {
 }
-
 

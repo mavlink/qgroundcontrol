@@ -28,8 +28,6 @@ SetupPage {
             width:      availableWidth
             spacing:    _margins
 
-            FactPanelController { id: controller; factPanel: tuningPage.viewPanel }
-
             QGCPalette { id: palette; colorGroupEnabled: true }
 
             property bool _rcFeelAvailable:     controller.parameterExists(-1, "RC_FEEL")

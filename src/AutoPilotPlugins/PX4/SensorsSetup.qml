@@ -25,7 +25,6 @@ import QGroundControl.Controllers   1.0
 Item {
     id: _root
 
-    property var    qgcView                                 ///< QGCView must be passed in
     property bool   showSensorCalibrationCompass:   true    ///< true: Show this calibration button
     property bool   showSensorCalibrationGyro:      true    ///< true: Show this calibration button
     property bool   showSensorCalibrationAccel:     true    ///< true: Show this calibration button
@@ -117,7 +116,6 @@ Item {
 
     SensorsComponentController {
         id:                         controller
-        factPanel:                  _root.qgcView.viewPanel
         statusLog:                  statusTextArea
         progressBar:                progressBar
         compassButton:              compassButton
@@ -133,12 +131,12 @@ Item {
 
         onMagCalComplete: {
             setOrientationsDialogShowBoardOrientation = false
-            showDialog(setOrientationsDialogComponent, qsTr("Compass Calibration Complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+            mainWindow.showDialog(setOrientationsDialogComponent, qsTr("Compass Calibration Complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
         }
 
         onWaitingForCancelChanged: {
             if (controller.waitingForCancel) {
-                showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), qgcView.showDialogDefaultWidth, 0)
+                mainWindow.showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), mainWindow.showDialogDefaultWidth, 0)
             }
         }
     }
@@ -146,7 +144,7 @@ Item {
     Component.onCompleted: {
         var usingUDP = controller.usingUDPLink()
         if (usingUDP && !_wifiReliableForCalibration) {
-            showMessage(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead."), StandardButton.Ok)
+            mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection is known to be unreliable. You should disconnect and perform calibration using a direct USB connection instead."))
         }
     }
 
@@ -395,7 +393,7 @@ Item {
                 onClicked: {
                     preCalibrationDialogType = "compass"
                     preCalibrationDialogHelp = compassHelp
-                    showDialog(preCalibrationDialogComponent, qsTr("Calibrate Compass"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    mainWindow.showDialog(preCalibrationDialogComponent, qsTr("Calibrate Compass"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
 
@@ -409,7 +407,7 @@ Item {
                 onClicked: {
                     preCalibrationDialogType = "gyro"
                     preCalibrationDialogHelp = gyroHelp
-                    showDialog(preCalibrationDialogComponent, qsTr("Calibrate Gyro"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    mainWindow.showDialog(preCalibrationDialogComponent, qsTr("Calibrate Gyro"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
 
@@ -423,7 +421,7 @@ Item {
                 onClicked: {
                     preCalibrationDialogType = "accel"
                     preCalibrationDialogHelp = accelHelp
-                    showDialog(preCalibrationDialogComponent, qsTr("Calibrate Accelerometer"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    mainWindow.showDialog(preCalibrationDialogComponent, qsTr("Calibrate Accelerometer"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
 
@@ -438,7 +436,7 @@ Item {
                 onClicked: {
                     preCalibrationDialogType = "level"
                     preCalibrationDialogHelp = levelHelp
-                    showDialog(preCalibrationDialogComponent, qsTr("Level Horizon"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    mainWindow.showDialog(preCalibrationDialogComponent, qsTr("Level Horizon"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
 
@@ -456,7 +454,7 @@ Item {
                 onClicked: {
                     preCalibrationDialogType = "airspeed"
                     preCalibrationDialogHelp = airspeedHelp
-                    showDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                    mainWindow.showDialog(preCalibrationDialogComponent, qsTr("Calibrate Airspeed"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                 }
             }
 
@@ -485,7 +483,7 @@ Item {
 
                 onClicked:  {
                     setOrientationsDialogShowBoardOrientation = true
-                    showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                    mainWindow.showDialog(setOrientationsDialogComponent, qsTr("Set Orientations"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                 }
             }
         } // Column - Buttons

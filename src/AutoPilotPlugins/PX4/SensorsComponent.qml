@@ -13,16 +13,12 @@ import QGroundControl.Controls  1.0
 import QGroundControl.PX4       1.0
 
 SetupPage {
-    id:             sensorsPage
     pageComponent:  pageComponent
-
     Component {
         id: pageComponent
-
         SensorsSetup {
             width:      availableWidth
             height:     availableHeight
-            qgcView:    sensorsPage
         }
-    } // Component
-} // SetupPage
+    }
+}

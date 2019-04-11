@@ -152,26 +152,9 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     : QGuiApplication           (argc, argv)
-    , _qmlAppEngine             (nullptr)
     , _runningUnitTests         (unitTesting)
-    , _logOutput                (false)
-    , _fakeMobile               (false)
-    , _settingsUpgraded         (false)
-    , _majorVersion             (0)
-    , _minorVersion             (0)
-    , _buildVersion             (0)
-    , _currentVersionDownload   (nullptr)
-    , _gpsRtkFactGroup          (nullptr)
-    , _toolbox                  (nullptr)
-    , _bluetoothAvailable       (false)
 {
     _app = this;
-
-    // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
-#ifndef __android__
-    setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
-#endif
-
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
@@ -398,7 +381,7 @@ void QGCApplication::setLanguage()
         _app->installTranslator(&_QGCTranslator);
 }
 
-void QGCApplication::_shutdown(void)
+void QGCApplication::_shutdown()
 {
     shutdownVideoStreaming();
     delete _toolbox;
@@ -410,7 +393,7 @@ QGCApplication::~QGCApplication()
     _app = nullptr;
 }
 
-void QGCApplication::_initCommon(void)
+void QGCApplication::_initCommon()
 {
     static const char* kRefOnly         = "Reference only";
     static const char* kQGCControllers  = "QGroundControl.Controllers";
@@ -479,7 +462,7 @@ void QGCApplication::_initCommon(void)
     qmlRegisterSingletonType<ShapeFileHelper>           ("QGroundControl.ShapeFileHelper",          1, 0, "ShapeFileHelper",        shapeFileHelperSingletonFactory);
 }
 
-bool QGCApplication::_initForNormalAppBoot(void)
+bool QGCApplication::_initForNormalAppBoot()
 {
     QSettings settings;
 
@@ -515,7 +498,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     return true;
 }
 
-bool QGCApplication::_initForUnitTests(void)
+bool QGCApplication::_initForUnitTests()
 {
     return true;
 }
@@ -585,7 +568,7 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
     QFile::remove(tempLogfile);
 }
 
-void QGCApplication::checkTelemetrySavePathOnMainThread(void)
+void QGCApplication::checkTelemetrySavePathOnMainThread()
 {
     // This is called with an active vehicle so don't pop message boxes which holds ui thread
     _checkTelemetrySavePath(false /* useMessageBox */);
@@ -661,14 +644,22 @@ void QGCApplication::showMessage(const QString& message)
     }
 }
 
-void QGCApplication::showSetupView(void)
+QQuickItem* QGCApplication::mainQmlWindow()
+{
+    if(_mainQmlWindow) {
+        _mainQmlWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
+    }
+    return _mainQmlWindow;
+}
+
+void QGCApplication::showSetupView()
 {
     if(_rootQmlObject()) {
         QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
     }
 }
 
-void QGCApplication::qmlAttemptWindowClose(void)
+void QGCApplication::qmlAttemptWindowClose()
 {
     if(_rootQmlObject()) {
         QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
@@ -680,7 +671,7 @@ bool QGCApplication::isInternetAvailable()
     return getQGCMapEngine()->isInternetActive();
 }
 
-void QGCApplication::_checkForNewVersion(void)
+void QGCApplication::_checkForNewVersion()
 {
 #ifndef __mobile__
     if (!_runningUnitTests) {

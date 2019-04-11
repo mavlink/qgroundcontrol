@@ -27,7 +27,7 @@ SetupPage {
     property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property bool _oldFW:   _activeVehicle.versionCompare(3 ,5 ,2) < 0
 
-    APMAirframeComponentController { id: controller; factPanel: subFramePage.viewPanel }
+    APMAirframeComponentController { id: controller; }
 
     Component {
         id: subFramePageComponent
@@ -115,7 +115,7 @@ SetupPage {
                     id: defaultsButton
                     anchors.left: parent.left
                     text:       qsTr("Load Vehicle Default Parameters")
-                    onClicked:  showDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                    onClicked:  mainWindow.showDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
 

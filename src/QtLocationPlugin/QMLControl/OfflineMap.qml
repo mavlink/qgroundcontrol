@@ -24,9 +24,8 @@ import QGroundControl.QGCMapEngineManager   1.0
 import QGroundControl.FactSystem            1.0
 import QGroundControl.FactControls          1.0
 
-QGCView {
+Item {
     id:             offlineMapView
-    viewPanel:      panel
     anchors.fill:   parent
 
     property var    _currentSelection:  null
@@ -215,7 +214,6 @@ QGCView {
 
     QGCFileDialog {
         id:             fileDialog
-        qgcView:        offlineMapView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         nameFilters:    ["Tile Sets (*.qgctiledb)"]
         fileExtension:  "qgctiledb"
@@ -366,8 +364,7 @@ QGCView {
         }
     }
 
-    QGCViewPanel {
-        id:                 panel
+    Item {
         anchors.fill:       parent
 
         FlightMap {
@@ -378,7 +375,6 @@ QGCView {
             allowVehicleLocationCenter: false
             gesture.flickDeceleration:  3000
             mapName:                    "OfflineMap"
-            qgcView:                    offlineMapView
 
             property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
 
@@ -545,7 +541,7 @@ QGCView {
                         QGCButton {
                             text:       qsTr("Delete")
                             width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
-                            onClicked:  showDialog(deleteConfirmationDialogComponent, qsTr("Confirm Delete"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                            onClicked:  mainWindow.showDialog(deleteConfirmationDialogComponent, qsTr("Confirm Delete"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                         }
                         QGCButton {
                             text:       qsTr("Ok")
@@ -1024,7 +1020,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Options")
                 width:          _buttonSize
-                onClicked:      showDialog(optionsDialogComponent, qsTr("Offline Maps Options"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                onClicked:      mainWindow.showDialog(optionsDialogComponent, qsTr("Offline Maps Options"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
             }
         }
 
@@ -1099,7 +1095,7 @@ QGCView {
                 onClicked:       showList()
             }
         }
-    } // QGCViewPanel
+    }
 
     Component {
         id: exportToDiskProgress
@@ -1263,5 +1259,4 @@ QGCView {
             }
         }
     }
-
-} // QGCView
+}

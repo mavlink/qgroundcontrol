@@ -49,14 +49,13 @@ SetupPage {
             property bool controllerCompleted:      false
             property bool controllerAndViewReady:   false
 
-            readonly property real labelToMonitorMargin: defaultTextWidth * 3
+            readonly property real labelToMonitorMargin: ScreenTools.defaultFontPixelWidth * 3
 
             property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
             property var _activeJoystick:   joystickManager.activeJoystick
 
             JoystickConfigController {
                 id:             controller
-                factPanel:      joystickPage.viewPanel
                 statusText:     statusText
                 cancelButton:   cancelButton
                 nextButton:     nextButton
@@ -117,7 +116,7 @@ SetupPage {
                     // Center point
                     Rectangle {
                         anchors.horizontalCenter:   parent.horizontalCenter
-                        width:                      defaultTextWidth / 2
+                        width:                      ScreenTools.defaultFontPixelWidth / 2
                         height:                     parent.height
                         color:                      qgcPal.window
                     }
@@ -188,7 +187,7 @@ SetupPage {
 
                         QGCLabel {
                             id:     rollLabel
-                            width:  defaultTextWidth * 10
+                            width:  ScreenTools.defaultFontPixelWidth * 10
                             text:   _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         }
 
@@ -200,7 +199,7 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real defaultTextWidth: ScreenTools.defaultFontPixelWidth
+                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.rollAxisMapped
                             property bool reversed:         controller.rollAxisReversed
                         }
@@ -218,7 +217,7 @@ SetupPage {
 
                         QGCLabel {
                             id:     pitchLabel
-                            width:  defaultTextWidth * 10
+                            width:  ScreenTools.defaultFontPixelWidth * 10
                             text:   _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                         }
 
@@ -230,7 +229,7 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real defaultTextWidth: ScreenTools.defaultFontPixelWidth
+                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.pitchAxisMapped
                             property bool reversed:         controller.pitchAxisReversed
                         }
@@ -248,7 +247,7 @@ SetupPage {
 
                         QGCLabel {
                             id:     yawLabel
-                            width:  defaultTextWidth * 10
+                            width:  ScreenTools.defaultFontPixelWidth * 10
                             text:   qsTr("Yaw")
                         }
 
@@ -260,7 +259,7 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real defaultTextWidth: ScreenTools.defaultFontPixelWidth
+                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.yawAxisMapped
                             property bool reversed:         controller.yawAxisReversed
                         }
@@ -278,7 +277,7 @@ SetupPage {
 
                         QGCLabel {
                             id:     throttleLabel
-                            width:  defaultTextWidth * 10
+                            width:  ScreenTools.defaultFontPixelWidth * 10
                             text:   qsTr("Throttle")
                         }
 
@@ -290,7 +289,7 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real defaultTextWidth: ScreenTools.defaultFontPixelWidth
+                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.throttleAxisMapped
                             property bool reversed:         controller.throttleAxisReversed
                         }
@@ -740,7 +739,7 @@ SetupPage {
                 id:             rightColumn
                 anchors.top:    parent.top
                 anchors.right:  parent.right
-                width:          Math.min(joystickPage.defaultTextWidth * 35, availableWidth * 0.4)
+                width:          Math.min(joystickPage.ScreenTools.defaultFontPixelWidth * 35, availableWidth * 0.4)
                 spacing:        ScreenTools.defaultFontPixelHeight / 2
 
                 Row {
@@ -843,7 +842,7 @@ SetupPage {
                                 sourceComponent:        axisMonitorDisplayComponent
                                 Component.onCompleted:  item.narrowIndicator = true
 
-                                property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
+                                property real ScreenTools.defaultFontPixelWidth:     ScreenTools.defaultFontPixelWidth
                                 property bool mapped:               true
                                 readonly property bool reversed:    false
 

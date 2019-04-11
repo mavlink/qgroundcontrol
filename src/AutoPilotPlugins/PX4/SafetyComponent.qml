@@ -23,7 +23,6 @@ import QGroundControl.ScreenTools   1.0
 SetupPage {
     id:             safetyPage
     pageComponent:  pageComponent
-
     Component {
         id: pageComponent
 
@@ -33,7 +32,6 @@ SetupPage {
 
             FactPanelController {
                 id:         controller
-                factPanel:  safetyPage.viewPanel
             }
 
             readonly property string hitlParam: "SYS_HITL"

@@ -59,11 +59,9 @@ QGCSlider               1.0 QGCSlider.qml
 QGCSwitch               1.0 QGCSwitch.qml
 QGCTextField            1.0 QGCTextField.qml
 QGCToolBarButton        1.0 QGCToolBarButton.qml
-QGCView                 1.0 QGCView.qml
 QGCViewDialog           1.0 QGCViewDialog.qml
 QGCViewDialogContainer  1.0 QGCViewDialogContainer.qml
 QGCViewMessage          1.0 QGCViewMessage.qml
-QGCViewPanel            1.0 QGCViewPanel.qml
 RallyPointEditorHeader  1.0 RallyPointEditorHeader.qml
 RallyPointItemEditor    1.0 RallyPointItemEditor.qml
 RallyPointMapVisuals    1.0 RallyPointMapVisuals.qml

@@ -58,7 +58,7 @@ Rectangle {
             Layout.minimumWidth:    _width
             Layout.maximumWidth:    _width
 
-            property real _width: Math.min(root.width * 0.8, actionRow.width)
+            property real _width: Math.min(_root.width * 0.8, actionRow.width)
 
             RowLayout {
                 id:         actionRow

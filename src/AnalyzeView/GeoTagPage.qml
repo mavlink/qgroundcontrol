@@ -40,7 +40,7 @@ AnalyzePage {
 
                 ProgressBar {
                     id:             progressBar
-                    width:          qgcView.width -_margin * 5
+                    width:          geoTagPage.width -_margin * 5
                     maximumValue:   100
                     value:          geoController.progress
                 }
@@ -62,7 +62,7 @@ AnalyzePage {
             // Horizontal spacer line
             Rectangle {
               height:                     1
-              width:                      qgcView.width * 1.0
+              width:                      geoTagPage.width * 1.0
               color:                      qgcPal.windowShadeDark
               anchors.horizontalCenter:   parent.horizontalCenter
             }
@@ -118,7 +118,7 @@ AnalyzePage {
             // Horizontal spacer line
             Rectangle {
               height:                     1
-              width:                      qgcView.width * 1.0
+              width:                      geoTagPage.width * 1.0
               color:                      qgcPal.windowShadeDark
               anchors.horizontalCenter:   parent.horizontalCenter
             }

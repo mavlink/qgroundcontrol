@@ -25,7 +25,6 @@ Rectangle {
     border.width:   _showLargeCompass ? 1 : 0
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 
-    property var    _qgcView:               qgcView
     property real   _maxHeight:             maxHeight
     property real   _defaultSize:           ScreenTools.defaultFontPixelHeight * (9)
     property color  _backgroundColor:       qgcPal.window
@@ -148,7 +147,6 @@ Rectangle {
                 anchors.margins:    1
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                qgcView:            instrumentPanel._qgcView
                 textColor:          qgcPal.text
                 backgroundColor:    _backgroundColor
                 maxHeight:          _availableValueHeight

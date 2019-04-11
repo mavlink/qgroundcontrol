@@ -31,7 +31,7 @@ SetupPage {
             width:  Math.max(availableWidth, innerColumn.width)
             height: innerColumn.height
 
-            FactPanelController { id: controller; factPanel: cameraPage.viewPanel }
+            FactPanelController { id: controller; }
 
             property real _margins:         ScreenTools.defaultFontPixelHeight
             property real _editFieldWidth:  ScreenTools.defaultFontPixelWidth * 25

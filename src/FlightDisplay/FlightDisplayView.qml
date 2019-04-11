@@ -30,11 +30,7 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
 /// Flight Display View
-QGCView {
-    id:             root
-    viewPanel:      _panel
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+Item {
 
     PlanMasterController {
         id:                     planMasterController
@@ -111,11 +107,6 @@ QGCView {
         return true;
     }
 
-    PlanMasterController {
-        id:                     masterController
-        Component.onCompleted:  start(true /* flyView */)
-    }
-
     BuiltInPreFlightCheckModel {
         id: preFlightCheckModel
     }
@@ -149,7 +140,7 @@ QGCView {
             if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
                 // ArduPilot has a strange bug which prevents mission clear from working at certain times, so we can't show this dialog
                 if (!activeVehicle.apmFirmware) {
-                    root.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), showDialogDefaultWidth, StandardButton.Close)
+                    mainWindow.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
             promptForMissionRemove = false
@@ -297,7 +288,7 @@ QGCView {
 
     QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
 
-    QGCViewPanel {
+    Item {
         id:             _panel
         anchors.fill:   parent
 
@@ -334,7 +325,6 @@ QGCView {
                 guidedActionsController:    _guidedController
                 flightWidgets:              flightDisplayViewWidgets
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
-                qgcView:                    root
                 multiVehicleView:           !singleVehicleView.checked
                 scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
             }
@@ -507,7 +497,6 @@ QGCView {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
-            qgcView:            root
             useLightColors:     isBackgroundDark
             missionController:  _missionController
             visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
@@ -523,8 +512,6 @@ QGCView {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
-
-            property var qgcView: root
         }
 
         MultiVehicleList {

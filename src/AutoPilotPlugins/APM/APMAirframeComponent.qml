@@ -33,7 +33,6 @@ SetupPage {
 
     APMAirframeComponentController {
         id:         controller
-        factPanel:  airframePage.viewPanel
     }
 
     ExclusiveGroup {

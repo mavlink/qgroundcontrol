@@ -18,9 +18,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
+Item {
 
     property var    _activeVehicle: QGroundControl.multiVehicleManager.parameterReadyVehicleAvailable ? QGroundControl.multiVehicleManager.activeVehicle : null
     property real   _margins:       ScreenTools.defaultFontPixelHeight
@@ -40,8 +38,6 @@ QGCView {
 
     CustomCommandWidgetController {
         id:         controller
-        factPanel:  panel
-
         onCustomQmlFileChanged: _updateLoader()
     }
 
@@ -62,8 +58,7 @@ QGCView {
         }
     }
 
-    QGCViewPanel {
-        id:             panel
+    Item {
         anchors.fill:   parent
 
         Rectangle {

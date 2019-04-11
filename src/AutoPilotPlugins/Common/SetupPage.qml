@@ -21,9 +21,8 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
 /// Base view control for all Setup pages
-QGCView {
+Item {
     id:             setupView
-    viewPanel:      setupPanel
     enabled:        !_disableDueToArmed && !_disableDueToFlying
 
     property alias  pageComponent:      pageLoader.sourceComponent
@@ -42,69 +41,59 @@ QGCView {
     // FIXME: The _vehicleIsRover checkl is a hack to work around https://github.com/PX4/Firmware/issues/10969
     property bool   _disableDueToFlying:    vehicleComponent ? (!_vehicleIsRover && !vehicleComponent.allowSetupWhileFlying && _vehicleFlying) : false
     property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
+    property real   _margins:               ScreenTools.defaultFontPixelHeight * 0.5
+    property string _pageTitle:             qsTr("%1 Setup").arg(pageName)
 
-    property real _margins:             ScreenTools.defaultFontPixelHeight * 0.5
-    property string _pageTitle:         qsTr("%1 Setup").arg(pageName)
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: setupPanel.enabled }
-
-    QGCViewPanel {
-        id:             setupPanel
+    QGCFlickable {
         anchors.fill:   parent
+        contentWidth:   pageLoader.x + pageLoader.item.width
+        contentHeight:  pageLoader.y + pageLoader.item.height
+        clip:           true
 
-        QGCFlickable {
-            anchors.fill:   parent
-            contentWidth:   pageLoader.x + pageLoader.item.width
-            contentHeight:  pageLoader.y + pageLoader.item.height
-            clip:           true
+        RowLayout {
+            id:                 headingRow
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            _margins
+            layoutDirection:    Qt.RightToLeft
 
-            RowLayout {
-                id:                 headingRow
-                anchors.left:       parent.left
-                anchors.right:      parent.right
+            QGCCheckBox {
+                id:         advancedCheckBox
+                text:       qsTr("Advanced")
+                visible:    showAdvanced
+            }
+
+            Column {
                 spacing:            _margins
-                layoutDirection:    Qt.RightToLeft
+                Layout.fillWidth:   true
 
-                QGCCheckBox {
-                    id:         advancedCheckBox
-                    text:       qsTr("Advanced")
-                    visible:    showAdvanced
+                QGCLabel {
+                    font.pointSize: ScreenTools.largeFontPointSize
+                    text:           !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
+                    visible:        !ScreenTools.isShortScreen
                 }
 
-                Column {
-                    spacing:            _margins
-                    Layout.fillWidth:   true
-
-                    QGCLabel {
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        text:           !setupView.enabled ? _pageTitle + "<font color=\"red\">" + qsTr(" (Disabled while the vehicle is %1)").arg(_disableReason) + "</font>" : _pageTitle
-                        visible:        !ScreenTools.isShortScreen
-                    }
-
-                    QGCLabel {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        wrapMode:       Text.WordWrap
-                        text:           pageDescription
-                        visible:        pageDescription !== "" && !ScreenTools.isShortScreen
-                    }
+                QGCLabel {
+                    anchors.left:   parent.left
+                    anchors.right:  parent.right
+                    wrapMode:       Text.WordWrap
+                    text:           pageDescription
+                    visible:        pageDescription !== "" && !ScreenTools.isShortScreen
                 }
             }
-
-            Loader {
-                id:                 pageLoader
-                anchors.topMargin:  _margins
-                anchors.top:        headingRow.bottom
-            }
-
-            // Overlay to display when vehicle is armed and this setup page needs
-            // to be disabled
-            Rectangle {
-                visible:            !setupView.enabled
-                anchors.fill:       pageLoader
-                color:              "black"
-                opacity:            0.5
-            }
+        }
+        Loader {
+            id:                 pageLoader
+            anchors.topMargin:  _margins
+            anchors.top:        headingRow.bottom
+        }
+        // Overlay to display when vehicle is armed and this setup page needs
+        // to be disabled
+        Rectangle {
+            visible:            !setupView.enabled
+            anchors.fill:       pageLoader
+            color:              "black"
+            opacity:            0.5
         }
     }
 }
