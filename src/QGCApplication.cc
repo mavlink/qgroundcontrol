@@ -91,6 +91,7 @@
 #include "QGCFileDownload.h"
 #include "FirmwareImage.h"
 #include "MavlinkConsoleController.h"
+#include "MAVLinkInspectorController.h"
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
 #endif
@@ -455,6 +456,7 @@ void QGCApplication::_initCommon()
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
 #endif
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
+    qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
 
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
