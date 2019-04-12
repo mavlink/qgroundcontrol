@@ -8,11 +8,9 @@
  ****************************************************************************/
 
 #include "GeoTagController.h"
-//#include "QGCQFileDialog.h"
 #include "QGCLoggingCategory.h"
 #include <math.h>
 #include <QtEndian>
-#include <QMessageBox>
 #include <QDebug>
 #include <cfloat>
 #include <QDir>

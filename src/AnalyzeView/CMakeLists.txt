@@ -9,6 +9,7 @@ endif()
 add_library(AnalyzeView
 	ExifParser.cc
 	GeoTagController.cc
+	MAVLinkInspectorController.cc
 	LogDownloadController.cc
 	MavlinkConsoleController.cc
 	PX4LogParser.cc

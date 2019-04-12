@@ -396,10 +396,11 @@ SOURCES += \
 # Main QGC Headers and Source files
 
 HEADERS += \
-    src/AnalyzeView/ExifParser.h \
     src/AnalyzeView/LogDownloadController.h \
     src/AnalyzeView/PX4LogParser.h \
     src/AnalyzeView/ULogParser.h \
+    src/AnalyzeView/MAVLinkInspectorController.h \
+    src/AnalyzeView/MavlinkConsoleController.h \
     src/Audio/AudioOutput.h \
     src/Camera/QGCCameraControl.h \
     src/Camera/QGCCameraIO.h \
@@ -506,7 +507,6 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/UTM.h \
-    src/AnalyzeView/MavlinkConsoleController.h \
 
 
 AndroidBuild {
@@ -542,6 +542,7 @@ HEADERS += \
 !MobileBuild {
 HEADERS += \
     src/AnalyzeView/GeoTagController.h \
+    src/AnalyzeView/ExifParser.h \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/rtcm.h \
     src/GPS/Drivers/src/ashtech.h \
@@ -575,10 +576,11 @@ AndroidBuild {
 }
 
 SOURCES += \
-    src/AnalyzeView/ExifParser.cc \
     src/AnalyzeView/LogDownloadController.cc \
     src/AnalyzeView/PX4LogParser.cc \
     src/AnalyzeView/ULogParser.cc \
+    src/AnalyzeView/MAVLinkInspectorController.cc \
+    src/AnalyzeView/MavlinkConsoleController.cc \
     src/Audio/AudioOutput.cc \
     src/Camera/QGCCameraControl.cc \
     src/Camera/QGCCameraIO.cc \
@@ -680,7 +682,6 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/UTM.cpp \
-    src/AnalyzeView/MavlinkConsoleController.cc \
 
 DebugBuild {
 SOURCES += \
@@ -703,6 +704,7 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 !MobileBuild {
 SOURCES += \
     src/AnalyzeView/GeoTagController.cc \
+    src/AnalyzeView/ExifParser.cc \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/rtcm.cpp \
     src/GPS/Drivers/src/ashtech.cpp \
