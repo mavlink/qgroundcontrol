@@ -43,7 +43,7 @@ ApplicationWindow {
     property string             formatedMessage:            activeVehicle ? activeVehicle.formatedMessage : ""
     property real               availableHeight:            mainWindow.height - mainWindow.header.height
 
-    property var                currentPlanMissionItem:     null
+    property var                currentPlanMissionItem:     planMasterControllerPlan ? planMasterControllerPlan.missionController.currentPlanViewItem : null
     property var                planMasterControllerPlan:   null
     property var                planMasterControllerView:   null
 
@@ -261,7 +261,7 @@ ApplicationWindow {
         visible:            false
         onYes:              activeConnectionsCloseDialog.check()
         function check() {
-            if (planViewLoader.item && planViewLoader.item.dirty) {
+            if (planMasterControllerPlan && planMasterControllerPlan.dirty) {
                 unsavedMissionCloseDialog.open()
             } else {
                 activeConnectionsCloseDialog.check()
