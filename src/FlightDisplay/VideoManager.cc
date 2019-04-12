@@ -81,6 +81,7 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     _updateSettings();
     if(isGStreamer()) {
         startVideo();
+        _subtitleWriter.setVideoReceiver(_videoReceiver);
     } else {
         stopVideo();
     }
