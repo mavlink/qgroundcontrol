@@ -33,40 +33,34 @@ AnalyzePage {
     Component {
         id:  pageComponent
         GridLayout {
-            columns:                3
+            columns:                2
             columnSpacing:          _margin
             rowSpacing:             ScreenTools.defaultFontPixelWidth * 2
             width:                  availableWidth
+            BusyIndicator {
+                running:            geoController.progress > 0 && geoController.progress < 100 && geoController.errorMessage === ""
+                width:              progressBar.height
+                height:             progressBar.height
+                Layout.alignment:   Qt.AlignVCenter | Qt.AlignHCenter
+            }
             //-----------------------------------------------------------------
             ProgressBar {
                 id:                 progressBar
                 to:                 100
                 value:              geoController.progress
+                opacity:            geoController.progress > 0 ? 1 : 0.25
                 Layout.fillWidth:   true
-                Layout.alignment:   Qt.AlignVCenter
-                Layout.columnSpan:  2
-            }
-            BusyIndicator {
-                running:            geoController.progress > 0 && geoController.progress < 100 && geoController.errorMessage === ""
-                width:              progressBar.height
-                height:             progressBar.height
                 Layout.alignment:   Qt.AlignVCenter
             }
             //-----------------------------------------------------------------
             QGCLabel {
                 text:               geoController.errorMessage
-                font.bold:          true
-                font.pointSize:     ScreenTools.largeFontPointSize
                 color:              "red"
-                Layout.columnSpan:  3
-            }
-            //-----------------------------------------------------------------
-            //-- Horizontal spacer line
-            Rectangle {
-                height:             1
-                color:              qgcPal.windowShadeDark
-                Layout.fillWidth:   true
-                Layout.columnSpan:  3
+                font.family:        ScreenTools.demiboldFontFamily
+                font.pointSize:     ScreenTools.mediumFontPointSize
+                horizontalAlignment:Text.AlignHCenter
+                Layout.alignment:   Qt.AlignHCenter
+                Layout.columnSpan:  2
             }
             //-----------------------------------------------------------------
             //-- Log File
@@ -95,7 +89,6 @@ AnalyzePage {
                 elide:              Text.ElideLeft
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                Layout.columnSpan:  2
             }
             //-----------------------------------------------------------------
             //-- Image Directory
@@ -113,7 +106,7 @@ AnalyzePage {
                     selectFolder:   true
                     selectExisting: true
                     onAccepted: {
-                        geoController.selectImageDir = openLogFile.folder
+                        geoController.imageDirectory = selectImageDir.folder
                         close()
                     }
                 }
@@ -123,7 +116,6 @@ AnalyzePage {
                 elide:              Text.ElideLeft
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                Layout.columnSpan:  2
             }
             //-----------------------------------------------------------------
             //-- Save Directory
@@ -147,27 +139,19 @@ AnalyzePage {
                 }
             }
             QGCLabel {
-                text:               geoController.saveDirectory !== "" ? geoController.saveDirectory : "/TAGGED folder in your image folder"
+                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? "/TAGGED folder in your image folder" : geoController.imageDirectory + "/TAGGED") : geoController.saveDirectory
                 elide:              Text.ElideLeft
                 Layout.fillWidth:   true
                 Layout.alignment:   Qt.AlignVCenter
-                Layout.columnSpan:  2
-            }
-            //-----------------------------------------------------------------
-            //-- Horizontal spacer line
-            Rectangle {
-                height:             1
-                color:              qgcPal.windowShadeDark
-                Layout.fillWidth:   true
-                Layout.columnSpan:  3
             }
             //-----------------------------------------------------------------
             //-- Execute
             QGCButton {
                 text:               geoController.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
                 width:              ScreenTools.defaultFontPixelWidth * 30
+                enabled:            (geoController.imageDirectory !== "" && geoController.logFile !== "") || geoController.inProgress
                 Layout.alignment:   Qt.AlignHCenter
-                Layout.columnSpan:  3
+                Layout.columnSpan:  2
                 onClicked: {
                     if (geoController.inProgress) {
                         geoController.cancelTagging()
