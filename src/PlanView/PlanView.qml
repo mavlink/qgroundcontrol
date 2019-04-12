@@ -35,9 +35,6 @@ Item {
 
     property bool planControlColapsed: false
 
-    ///< This property is used to determine dirty state for prompting on QGC shutdown
-    readonly property bool  dirty:                      _planMasterController.dirty
-
     readonly property int   _decimalPlaces:             8
     readonly property real  _horizontalMargin:          ScreenTools.defaultFontPixelWidth  * 0.5
     readonly property real  _margin:                    ScreenTools.defaultFontPixelHeight * 0.5
@@ -188,7 +185,6 @@ Item {
             start(false /* flyView */)
             _missionController.setCurrentPlanViewIndex(0, true)
             mainWindow.planMasterControllerPlan = _planMasterController
-            mainWindow.currentPlanMissionItem   = _planMasterController.missionController.currentPlanViewItem
         }
 
         function waitingOnDataMessage() {

@@ -14,8 +14,8 @@ Rectangle {
     id:                 _root
     color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
 
-    property var    _planMasterController:      mainWindow.planMasterController
-    property var    _currentMissionItem:        mainWindow.currentMissionItem          ///< Mission item to display status for
+    property var    _planMasterController:      mainWindow.planMasterControllerPlan
+    property var    _currentMissionItem:        mainWindow.currentPlanMissionItem          ///< Mission item to display status for
 
     property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
     property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
