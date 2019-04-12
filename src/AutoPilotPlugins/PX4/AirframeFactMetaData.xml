@@ -410,6 +410,11 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Simulation</type>
     </airframe>
+    <airframe id="1100" maintainer="Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;" name="SIH Quadcopter X">
+      <class>Copter</class>
+      <maintainer>Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;</maintainer>
+      <type>Simulation</type>
+    </airframe>
   </airframe_group>
   <airframe_group image="AirframeUnknown" name="Tilt-Quad">
     <airframe id="4100" maintainer="Ricardo Marques &lt;marques.ricardo17@gmail.com&gt;" name="Tilt-Quadrotor">
