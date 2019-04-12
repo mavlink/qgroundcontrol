@@ -828,6 +828,7 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
             gst_element_sync_state_with_parent(pThis->_sink->filesink);
 
             qCDebug(VideoReceiverLog) << "Got keyframe, stop dropping buffers";
+            pThis->gotFirstRecordingKeyFrame();
         }
     }
 
