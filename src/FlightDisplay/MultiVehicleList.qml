@@ -19,7 +19,7 @@ import QGroundControl.Vehicle       1.0
 import QGroundControl.FlightMap     1.0
 
 Item {
-    property var guidedActionsController
+    property var    guidedActionsController
 
     property real   _margin:        ScreenTools.defaultFontPixelWidth / 2
     property real   _widgetHeight:  ScreenTools.defaultFontPixelHeight * 3
@@ -111,7 +111,7 @@ Item {
 
                     QGCLabel {
                         Layout.alignment:   Qt.AlignTop
-                        text:               _vehicle.id
+                        text:               _vehicle ? _vehicle.id : ""
                         color:              _textColor
                     }
 
@@ -128,7 +128,7 @@ Item {
 
                         QGCLabel {
                             Layout.alignment:           Qt.AlignHCenter
-                            text:                       _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
+                            text:                       _vehicle && _vehicle.armed ? qsTr("Armed") : qsTr("Disarmed")
                             color:                      _textColor
                         }
                     }
