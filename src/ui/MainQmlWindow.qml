@@ -591,7 +591,7 @@ ApplicationWindow {
     //-- System Messages
 
     property var    _messageQueue:      []
-    property string _systemMessage:   ""
+    property string _systemMessage:     ""
 
     function showMessage(message) {
         vehicleMessageArea.close()
@@ -616,7 +616,7 @@ ApplicationWindow {
         y:                  ScreenTools.defaultFontPixelHeight
         x:                  Math.round((mainWindow.width - width) * 0.5)
         width:              mainWindow.width  * 0.55
-        height:             ScreenTools.defaultFontPixelHeight * 4
+        height:             ScreenTools.defaultFontPixelHeight * 6
         modal:              false
         focus:              true
         closePolicy:        Popup.CloseOnEscape
@@ -640,7 +640,8 @@ ApplicationWindow {
                 //-- Show all messages in queue
                 for (var i = 0; i < mainWindow._messageQueue.length; i++) {
                     var text = mainWindow._messageQueue[i]
-                    mainWindow._systemMessage.append(text)
+                    if(i) mainWindow._systemMessage += "<br>"
+                    mainWindow._systemMessage += text
                 }
                 //-- Clear it
                 mainWindow._messageQueue = []
