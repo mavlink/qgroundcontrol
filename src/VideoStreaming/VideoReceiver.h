@@ -48,11 +48,7 @@ public:
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
-    virtual bool            running         () { return _running;   }
     virtual bool            recording       () { return _recording; }
-    virtual bool            streaming       () { return _streaming; }
-    virtual bool            starting        () { return _starting;  }
-    virtual bool            stopping        () { return _stopping;  }
 #endif
 
     virtual VideoSurface*   videoSurface    () { return _videoSurface; }
@@ -87,9 +83,7 @@ public slots:
 protected slots:
     virtual void _updateTimer               ();
 #if defined(QGC_GST_STREAMING)
-    virtual void _timeout                   ();
-    virtual void _connected                 ();
-    virtual void _socketError               (QAbstractSocket::SocketError socketError);
+    virtual void _restart_timeout           ();
     virtual void _handleError               ();
     virtual void _handleEOS                 ();
     virtual void _handleStateChanged        ();
@@ -133,14 +127,12 @@ protected:
 
     //-- Wait for Video Server to show up before starting
     QTimer          _frameTimer;
-    QTimer          _timer;
-    QTcpSocket*     _socket;
-    bool            _serverPresent;
-    int             _rtspTestInterval_ms;
+    QTimer          _restart_timer;
+    int             _restart_time_ms;
 
     //-- RTSP UDP reconnect timeout
     uint64_t        _udpReconnect_us;
-
+    int             _decoder;
 #endif
 
     QString         _uri;
