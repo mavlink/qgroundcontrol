@@ -52,7 +52,7 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
+                "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2
