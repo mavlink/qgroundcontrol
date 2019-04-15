@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <manifest package="com.auterion.auteriongs" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="0.0.1" android:versionCode="000000001" android:installLocation="auto">
-    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --" android:icon="@mipmap/icon">
+    <application
+        android:hardwareAccelerated="true"
+        android:name="org.qtproject.qt5.android.bindings.QtApplication"
+        android:label="-- %%INSERT_APP_NAME%% --"
+        android:icon="@mipmap/icon">
         <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation" android:name="org.mavlink.qgroundcontrol.QGCActivity" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="sensorLandscape" android:launchMode="singleTask" android:keepScreenOn="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
