@@ -98,7 +98,7 @@ Item {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        visible:                !communicationLost
+        visible:                activeVehicle && !communicationLost
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
         mipmap:                 true
@@ -133,7 +133,7 @@ Item {
         anchors.fill:       parent
         layoutDirection:    Qt.RightToLeft
         spacing:            ScreenTools.defaultFontPixelWidth
-        visible:            communicationLost
+        visible:            activeVehicle && communicationLost
 
         QGCButton {
             id:                     disconnectButton

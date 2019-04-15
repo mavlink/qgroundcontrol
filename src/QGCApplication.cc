@@ -25,6 +25,7 @@
 #include <QAction>
 #include <QStringListModel>
 #include <QRegularExpression>
+#include <QFontDatabase>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -466,6 +467,13 @@ void QGCApplication::_initCommon()
 
 bool QGCApplication::_initForNormalAppBoot()
 {
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+        qWarning() << "Could not load /fonts/opensans font";
+    }
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+        qWarning() << "Could not load /fonts/opensans-demibold font";
+    }
+
     QSettings settings;
 
     // Exit main application when last window is closed
