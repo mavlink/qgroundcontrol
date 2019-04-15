@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### April 15
+
+*   Fix blurry icon. Issue: https://www.wrike.com/open.htm?id=340642934
+
 ### March 17 2019
 
 *   Merging upstream master. It brings in support for the Microhard modem and fixes for MAVLink console on mobile platforms.
