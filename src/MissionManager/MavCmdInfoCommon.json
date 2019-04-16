@@ -101,7 +101,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -128,7 +129,8 @@
             "param4": {
                 "label":            "Heading",
                 "units":            "radians",
-                "default":          0,
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
