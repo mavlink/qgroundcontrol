@@ -570,8 +570,8 @@ Item {
             z:                  _mapAndVideo.z + 4
             title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
-            buttonEnabled:      [ _useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
+            buttonVisible:      [true, _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
+            buttonEnabled:      [true, _useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
@@ -609,6 +609,10 @@ Item {
 
             model: [
                 {
+                    name:               "Plan",
+                    iconSource:         "/qmlimages/Plan.svg",
+                },
+                {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
                     dropPanelComponent: checklistDropPanel
@@ -642,13 +646,18 @@ Item {
 
             onClicked: {
                 guidedActionsController.closeAll()
-                var action = model[index].action
-                if (action === -1) {
-                    guidedActionList.model   = _actionModel
-                    guidedActionList.visible = true
+                if(index === 0) {
+                    mainWindow.showPlanView()
                 } else {
-                    _guidedController.confirmAction(action)
+                    var action = model[index].action
+                    if (action === -1) {
+                        guidedActionList.model   = _actionModel
+                        guidedActionList.visible = true
+                    } else {
+                        _guidedController.confirmAction(action)
+                    }
                 }
+
             }
         }
 

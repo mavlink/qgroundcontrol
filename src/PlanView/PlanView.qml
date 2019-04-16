@@ -551,16 +551,20 @@ Item {
                 color:              qgcPal.window
                 title:              qsTr("Plan")
                 z:                  QGroundControl.zOrderWidgets
-                showAlternateIcon:  [ _planMasterController.dirty, false, false, false, false, false, false ]
-                rotateImage:        [ _planMasterController.syncInProgress, false, false, false, false, false, false ]
-                animateImage:       [ _planMasterController.dirty, false, false, false, false, false, false ]
-                buttonEnabled:      [ !_planMasterController.syncInProgress, true, true, true, true, true, true ]
-                buttonVisible:      [ true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
+                showAlternateIcon:  [ false, _planMasterController.dirty, false, false, false, false, false, false ]
+                rotateImage:        [ false, _planMasterController.syncInProgress, false, false, false, false, false, false ]
+                animateImage:       [ false, _planMasterController.dirty, false, false, false, false, false, false ]
+                buttonEnabled:      [ true, !_planMasterController.syncInProgress, true, true, true, true, true, true ]
+                buttonVisible:      [ true, true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
                 maxHeight:          mapScale.y - toolStrip.y
 
                 property bool _showZoom: !ScreenTools.isMobile
 
                 model: [
+                    {
+                        name:                   qsTr("Fly"),
+                        iconSource:             "/qmlimages/PaperPlane.svg",
+                    },
                     {
                         name:                   qsTr("File"),
                         iconSource:             "/qmlimages/MapSync.svg",
@@ -599,29 +603,33 @@ Item {
 
                 onClicked: {
                     switch (index) {
-                    case 1:
-                        _addWaypointOnClick = checked
-                        _addROIOnClick = false
-                        break
+                    case 0:
+                        mainWindow.showFlyView()
+                        break;
                     case 2:
-                        _addROIOnClick = checked
-                        _addWaypointOnClick = false
+                        _addWaypointOnClick = checked
+                        _addROIOnClick      = false
                         break
                     case 3:
+                        _addROIOnClick      = checked
+                        _addWaypointOnClick = false
+                        break
+                    case 4:
                         if (_singleComplexItem) {
                             addComplexItem(_missionController.complexMissionItemNames[0])
                         }
                         break
-                    case 5:
+                    case 6:
                         editorMap.zoomLevel += 0.5
                         break
-                    case 6:
+                    case 7:
                         editorMap.zoomLevel -= 0.5
                         break
                     }
                 }
             }
         }
+
         //-----------------------------------------------------------
         // Right pane for mission editing controls
         Rectangle {
