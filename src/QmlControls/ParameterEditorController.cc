@@ -54,7 +54,7 @@ ParameterEditorController::ParameterEditorController(void)
 
 ParameterEditorController::~ParameterEditorController()
 {
-    
+
 }
 
 QStringList ParameterEditorController::getGroupsForCategory(const QString& category)
@@ -71,13 +71,13 @@ QStringList ParameterEditorController::getGroupsForCategory(const QString& categ
 QStringList ParameterEditorController::searchParameters(const QString& searchText, bool searchInName, bool searchInDescriptions)
 {
     QStringList list;
-    
+
     for(const QString &paramName: _parameterMgr->parameterNames(_vehicle->defaultComponentId())) {
         if (searchText.isEmpty()) {
             list += paramName;
         } else {
             Fact* fact = _parameterMgr->getParameter(_vehicle->defaultComponentId(), paramName);
-            
+
             if (searchInName && fact->name().contains(searchText, Qt::CaseInsensitive)) {
                 list += paramName;
             } else if (searchInDescriptions && (fact->shortDescription().contains(searchText, Qt::CaseInsensitive) || fact->longDescription().contains(searchText, Qt::CaseInsensitive))) {
@@ -86,7 +86,7 @@ QStringList ParameterEditorController::searchParameters(const QString& searchTex
         }
     }
     list.sort();
-    
+
     return list;
 }
 
@@ -106,12 +106,12 @@ void ParameterEditorController::saveToFile(const QString& filename)
         }
 
         QFile file(parameterFilename);
-        
+
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
             qgcApp()->showMessage(tr("Unable to create file: %1").arg(parameterFilename));
             return;
         }
-        
+
         QTextStream stream(&file);
         _parameterMgr->writeParametersToStream(stream);
         file.close();
@@ -121,19 +121,19 @@ void ParameterEditorController::saveToFile(const QString& filename)
 void ParameterEditorController::loadFromFile(const QString& filename)
 {
     QString errors;
-    
+
     if (!filename.isEmpty()) {
         QFile file(filename);
-        
+
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qgcApp()->showMessage(tr("Unable to open file: %1").arg(filename));
             return;
         }
-        
+
         QTextStream stream(&file);
         errors = _parameterMgr->readParametersFromStream(stream);
         file.close();
-        
+
         if (!errors.isEmpty()) {
             emit showErrorMessage(errors);
         }
@@ -148,6 +148,12 @@ void ParameterEditorController::refresh(void)
 void ParameterEditorController::resetAllToDefaults(void)
 {
     _parameterMgr->resetAllParametersToDefaults();
+    refresh();
+}
+
+void ParameterEditorController::resetAllToVehicleConfiguration(void)
+{
+    _parameterMgr->resetAllToVehicleConfiguration();
     refresh();
 }
 
