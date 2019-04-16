@@ -121,7 +121,6 @@ Item {
         MenuItem {
             text:           qsTr("Load from file...")
             onTriggered: {
-                fileDialog._root =        _root
                 fileDialog.title =          qsTr("Load Parameters")
                 fileDialog.selectExisting = true
                 fileDialog.openForLoad()
@@ -130,7 +129,6 @@ Item {
         MenuItem {
             text:           qsTr("Save to file...")
             onTriggered: {
-                fileDialog._root =        _root
                 fileDialog.title =          qsTr("Save Parameters")
                 fileDialog.selectExisting = false
                 fileDialog.openForSave()
