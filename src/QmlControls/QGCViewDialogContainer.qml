@@ -97,10 +97,10 @@ Item {
         id:                 _dialogPanel
         anchors.fill:       parent
         Rectangle {
-            id:     _header
-            width:  parent.width
-            height: _acceptButton.visible ? _acceptButton.height : _rejectButton.height
-            color:  qgcPal.windowShade
+            id:             _header
+            width:          parent.width
+            height:         _acceptButton.visible ? _acceptButton.height : _rejectButton.height
+            color:          qgcPal.windowShade
             QGCLabel {
                 id:                 titleLabel
                 x:                  _defaultTextWidth
@@ -109,18 +109,19 @@ Item {
                 verticalAlignment:	Text.AlignVCenter
             }
             QGCButton {
-                id:             _rejectButton
-                anchors.right:  _acceptButton.visible ?  _acceptButton.left : parent.right
-                anchors.bottom: parent.bottom
+                id:                 _rejectButton
+                anchors.right:      _acceptButton.visible ?  _acceptButton.left : parent.right
+                anchors.bottom:     parent.bottom
                 onClicked: {
                     _dialogComponentLoader.item.reject()
                     mainWindowDialog.close()
                 }
             }
             QGCButton {
-                id:             _acceptButton
-                anchors.right:  parent.right
-                primary:        true
+                id:                 _acceptButton
+                anchors.right:      parent.right
+                anchors.bottom:     parent.bottom
+                primary:            true
                 onClicked: {
                     _dialogComponentLoader.item.accept()
                     mainWindowDialog.close()
@@ -128,10 +129,10 @@ Item {
             }
         }
         Item {
-            id:             _spacer
-            width:          10
-            height:         10
-            anchors.top:    _header.bottom
+            id:                     _spacer
+            width:                  10
+            height:                 10
+            anchors.top:            _header.bottom
         }
         Loader {
             id:                 _dialogComponentLoader

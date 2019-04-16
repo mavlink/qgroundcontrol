@@ -98,47 +98,54 @@ Item {
         anchors.right:  parent.right
         text:           qsTr("Tools")
         visible:        !_searchFilter
+        onClicked:      toolsMenu.popup()
+    }
 
-        menu: Menu {
-            MenuItem {
-                text:           qsTr("Refresh")
-                onTriggered:	controller.refresh()
+    Menu {
+        id:                 toolsMenu
+        MenuItem {
+            text:           qsTr("Refresh")
+            onTriggered:	controller.refresh()
+        }
+        MenuItem {
+            text:           qsTr("Reset all to firmware's defaults")
+            visible:        !activeVehicle.apmFirmware
+            onTriggered:    mainWindow.showDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+        }
+        MenuItem {
+            text:           qsTr("Reset to vehicle's configuration defaults")
+            visible:        !activeVehicle.apmFirmware
+            onTriggered:    mainWindow.showDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+        }
+        MenuSeparator { }
+        MenuItem {
+            text:           qsTr("Load from file...")
+            onTriggered: {
+                fileDialog._root =        _root
+                fileDialog.title =          qsTr("Load Parameters")
+                fileDialog.selectExisting = true
+                fileDialog.openForLoad()
             }
-            MenuItem {
-                text:           qsTr("Reset all to defaults")
-                visible:        !activeVehicle.apmFirmware
-                onTriggered:    mainWindow.showDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+        }
+        MenuItem {
+            text:           qsTr("Save to file...")
+            onTriggered: {
+                fileDialog._root =        _root
+                fileDialog.title =          qsTr("Save Parameters")
+                fileDialog.selectExisting = false
+                fileDialog.openForSave()
             }
-            MenuSeparator { }
-            MenuItem {
-                text:           qsTr("Load from file...")
-                onTriggered: {
-                    fileDialog._root =        _root
-                    fileDialog.title =          qsTr("Load Parameters")
-                    fileDialog.selectExisting = true
-                    fileDialog.openForLoad()
-                }
-            }
-            MenuItem {
-                text:           qsTr("Save to file...")
-                onTriggered: {
-                    fileDialog._root =        _root
-                    fileDialog.title =          qsTr("Save Parameters")
-                    fileDialog.selectExisting = false
-                    fileDialog.openForSave()
-                }
-            }
-            MenuSeparator { visible: _showRCToParam }
-            MenuItem {
-                text:           qsTr("Clear RC to Param")
-                onTriggered:	controller.clearRCToParam()
-                visible:        _showRCToParam
-            }
-            MenuSeparator { }
-            MenuItem {
-                text:           qsTr("Reboot Vehicle")
-                onTriggered:    mainWindow.showDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
-            }
+        }
+        MenuSeparator { visible: _showRCToParam }
+        MenuItem {
+            text:           qsTr("Clear RC to Param")
+            onTriggered:	controller.clearRCToParam()
+            visible:        _showRCToParam
+        }
+        MenuSeparator { }
+        MenuItem {
+            text:           qsTr("Reboot Vehicle")
+            onTriggered:    mainWindow.showDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         }
     }
 
@@ -309,17 +316,30 @@ Item {
 
     Component {
         id: resetToDefaultConfirmComponent
-
         QGCViewDialog {
             function accept() {
                 controller.resetAllToDefaults()
                 hideDialog()
             }
-
             QGCLabel {
                 width:              parent.width
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Select Reset to reset all parameters to their defaults.")
+            }
+        }
+    }
+
+    Component {
+        id: resetToVehicleConfigurationConfirmComponent
+        QGCViewDialog {
+            function accept() {
+                controller.resetAllToVehicleConfiguration()
+                hideDialog()
+            }
+            QGCLabel {
+                width:              parent.width
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Select Reset to reset all parameters to the vehicle's configuration defaults.")
             }
         }
     }
