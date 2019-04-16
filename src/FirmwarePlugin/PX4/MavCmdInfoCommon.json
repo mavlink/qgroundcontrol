@@ -10,39 +10,6 @@
             "paramRemove":  "2,3"
         },
         {
-            "id":                   17,
-            "comment":              "MAV_CMD_NAV_LOITER_UNLIM",
-            "param4": {
-                "label":            "Heading",
-                "units":            "radians",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
-            }
-        },
-        {
-            "id":                   18,
-            "comment":              "MAV_CMD_NAV_LOITER_TURNS",
-            "param4": {
-                "label":            "Heading",
-                "units":            "radians",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
-            }
-        },
-        {
-            "id":                   19,
-            "comment":              "MAV_CMD_NAV_LOITER_TIME",
-            "param4": {
-                "label":            "Heading",
-                "units":            "radians",
-                "nanUnchanged":     true,
-                "default":          null,
-                "decimalPlaces":    2
-            }
-        },
-        {
             "id":           21,
             "comment":      "MAV_CMD_NAV_LAND",
             "paramRemove":  "1"
