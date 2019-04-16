@@ -96,9 +96,10 @@ protected:
     {
         GstPad*         teepad;
         GstElement*     queue;
+        GstElement*     demux;
+        GstElement*     parse;
         GstElement*     mux;
         GstElement*     filesink;
-        GstElement*     parse;
         gboolean        removing;
     } Sink;
 
@@ -132,7 +133,6 @@ protected:
 
     //-- RTSP UDP reconnect timeout
     uint64_t        _udpReconnect_us;
-    int             _decoder;
 #endif
 
     QString         _uri;
