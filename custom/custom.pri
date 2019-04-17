@@ -114,6 +114,17 @@ exists($$PWD/custom/custom.pri) {
         QMAKE_ASSET_CATALOGS += $$PWD/ios/Images.xcassets
         BUNDLE.files          = $$PWD/ios/QGCLaunchScreen.xib $$QMAKE_INFO_PLIST
         QMAKE_BUNDLE_DATA    += BUNDLE
+
+        TMP_QGC_IOS_CCACHE_CXX=$$(QGC_IOS_CCACHE_CXX)
+        !isEmpty(TMP_QGC_IOS_CCACHE_CXX) {
+            QMAKE_CXX = $$(QGC_IOS_CCACHE_CXX)
+            message(Forcing C++ compiler: $$(QGC_IOS_CCACHE_CXX))
+        }
+        TMP_QGC_IOS_CCACHE_CC=$$(QGC_IOS_CCACHE_CC)
+        !isEmpty(TMP_QGC_IOS_CCACHE_CC) {
+            QMAKE_CC = $$(QGC_IOS_CCACHE_CC)
+            message(Forcing C compiler: $$(QGC_IOS_CCACHE_CC))
+        }
     }
 
     # Multimedia is disabled for non UVC builds but we need it.
