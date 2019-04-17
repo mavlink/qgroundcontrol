@@ -1842,7 +1842,6 @@ void
 QGCCameraControl::_handleDefinitionFile(const QString &url)
 {
     //-- First check and see if we have it cached
-    _cacheFile = "";
     QFile xmlFile(_cacheFile);
     if (!xmlFile.exists()) {
         qCDebug(CameraControlLog) << "No camera definition file cached";
