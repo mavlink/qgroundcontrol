@@ -83,6 +83,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
 
     connect(&_cameraCalc, &CameraCalc::isManualCameraChanged, this, &StructureScanComplexItem::_updateGimbalPitch);
 
+    connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcScanDistance);
+
     _recalcLayerInfo();
 
     if (!kmlOrShpFile.isEmpty()) {
@@ -91,14 +93,6 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     }
 
     setDirty(false);
-}
-
-void StructureScanComplexItem::_setScanDistance(double scanDistance)
-{
-    if (!qFuzzyCompare(_scanDistance, scanDistance)) {
-        _scanDistance = scanDistance;
-        emit complexDistanceChanged();
-    }
 }
 
 void StructureScanComplexItem::_setCameraShots(int cameraShots)
@@ -519,6 +513,9 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
     } else {
         _entryVertex = savedEntryVertex;
     }
+
+    _recalcScanDistance();
+
     emit coordinateChanged(coordinate());
     emit exitCoordinateChanged(exitCoordinate());
 }
@@ -597,4 +594,27 @@ void StructureScanComplexItem::_signalTopBottomAltChanged(void)
 {
     emit topFlightAltChanged();
     emit bottomFlightAltChanged();
+}
+
+void StructureScanComplexItem::_recalcScanDistance()
+{
+    double scanDistance = 0;
+    QList<QGeoCoordinate> vertices = _flightPolygon.coordinateList();
+    for (int i=0; i<vertices.count() - 1; i++) {
+        scanDistance += vertices[i].distanceTo(vertices[i+1]);
+    }
+
+    scanDistance *= _layersFact.rawValue().toInt();
+
+    double surfaceHeight = qMax(_structureHeightFact.rawValue().toDouble() - _scanBottomAltFact.rawValue().toDouble(), 0.0);
+    scanDistance += surfaceHeight;
+
+    if (!qFuzzyCompare(_scanDistance, scanDistance)) {
+        _scanDistance = scanDistance;
+        emit complexDistanceChanged();
+    }
+
+    qCDebug(MissionControllerLog) << "StructureScanComplexItem--_recalcScanDistance layers: "
+                                  << _layersFact.rawValue().toInt() << " structure height: " << surfaceHeight
+                                  << " scanDistance: " << _scanDistance;
 }
