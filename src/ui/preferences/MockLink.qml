@@ -53,6 +53,10 @@ Rectangle {
                 onClicked:  QGroundControl.startAPMArduSubMockLink(sendStatusText.checked)
             }
             QGCButton {
+                text:       qsTr("APM ArduRover Vehicle")
+                onClicked:  QGroundControl.startAPMArduRoverMockLink(sendStatusText.checked)
+            }
+            QGCButton {
                 text:       qsTr("Generic Vehicle")
                 onClicked:  QGroundControl.startGenericMockLink(sendStatusText.checked)
             }
