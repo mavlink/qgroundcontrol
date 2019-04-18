@@ -145,11 +145,13 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 #endif
 
 //-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
 void
 VideoReceiver::_restart_timeout()
 {
     start();
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
