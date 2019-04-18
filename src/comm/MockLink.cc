@@ -1159,64 +1159,46 @@ MockLink*  MockLink::_startMockLink(MockConfiguration* mockConfig)
     return qobject_cast<MockLink*>(linkMgr->createConnectedLink(config));
 }
 
-MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+MockLink* MockLink::_startMockLinkWorker(QString configName, MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType, bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("PX4 MockLink");
+    MockConfiguration* mockConfig = new MockConfiguration(configName);
 
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_PX4);
-    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
+    mockConfig->setFirmwareType(firmwareType);
+    mockConfig->setVehicleType(vehicleType);
     mockConfig->setSendStatusText(sendStatusText);
     mockConfig->setFailureMode(failureMode);
 
     return _startMockLink(mockConfig);
+}
+
+MockLink*  MockLink::startPX4MockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+{
+    return _startMockLinkWorker("PX4 MultiRotor MockLink", MAV_AUTOPILOT_PX4, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
 }
 
 MockLink*  MockLink::startGenericMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("Generic MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_GENERIC);
-    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
-    mockConfig->setSendStatusText(sendStatusText);
-    mockConfig->setFailureMode(failureMode);
-
-    return _startMockLink(mockConfig);
+    return _startMockLinkWorker("Generic MockLink", MAV_AUTOPILOT_GENERIC, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
 }
 
 MockLink*  MockLink::startAPMArduCopterMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduCopter MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
-    mockConfig->setVehicleType(MAV_TYPE_QUADROTOR);
-    mockConfig->setSendStatusText(sendStatusText);
-    mockConfig->setFailureMode(failureMode);
-
-    return _startMockLink(mockConfig);
+    return _startMockLinkWorker("ArduCopter MockLink",MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_QUADROTOR, sendStatusText, failureMode);
 }
 
 MockLink*  MockLink::startAPMArduPlaneMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduPlane MockLink");
-
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
-    mockConfig->setVehicleType(MAV_TYPE_FIXED_WING);
-    mockConfig->setSendStatusText(sendStatusText);
-    mockConfig->setFailureMode(failureMode);
-
-    return _startMockLink(mockConfig);
+    return _startMockLinkWorker("ArduPlane MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_FIXED_WING, sendStatusText, failureMode);
 }
 
 MockLink*  MockLink::startAPMArduSubMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
 {
-    MockConfiguration* mockConfig = new MockConfiguration("APM ArduSub MockLink");
+    return _startMockLinkWorker("ArduSub MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_SUBMARINE, sendStatusText, failureMode);
+}
 
-    mockConfig->setFirmwareType(MAV_AUTOPILOT_ARDUPILOTMEGA);
-    mockConfig->setVehicleType(MAV_TYPE_SUBMARINE);
-    mockConfig->setSendStatusText(sendStatusText);
-    mockConfig->setFailureMode(failureMode);
-
-    return _startMockLink(mockConfig);
+MockLink*  MockLink::startAPMArduRoverMockLink(bool sendStatusText, MockConfiguration::FailureMode_t failureMode)
+{
+    return _startMockLinkWorker("ArduRover MockLink", MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_TYPE_GROUND_ROVER, sendStatusText, failureMode);
 }
 
 void MockLink::_sendRCChannels(void)
