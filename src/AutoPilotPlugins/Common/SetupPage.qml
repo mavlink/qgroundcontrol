@@ -25,13 +25,14 @@ Item {
     id:             setupView
     enabled:        !_disableDueToArmed && !_disableDueToFlying
 
-    property alias  pageComponent:      pageLoader.sourceComponent
-    property string pageName:           vehicleComponent ? vehicleComponent.name : ""
-    property string pageDescription:    vehicleComponent ? vehicleComponent.description : ""
-    property real   availableWidth:     width - pageLoader.x
-    property real   availableHeight:    height - pageLoader.y
-    property bool   showAdvanced:       false
-    property alias  advanced:           advancedCheckBox.checked
+    property alias  pageComponent:          pageLoader.sourceComponent
+    property string pageName:               vehicleComponent ? vehicleComponent.name : ""
+    property string pageDescription:        vehicleComponent ? vehicleComponent.description : ""
+    property real   availableWidth:         width - pageLoader.x
+    property real   availableHeight:        height - pageLoader.y
+    property bool   showAdvanced:           false
+    property alias  advanced:               advancedCheckBox.checked
+    property bool   setupPageCompleted:     false
 
     property bool   _vehicleIsRover:        activeVehicle ? activeVehicle.rover : false
     property bool   _vehicleArmed:          activeVehicle ? activeVehicle.armed : false
@@ -42,6 +43,10 @@ Item {
     property string _disableReason:         _disableDueToArmed ? qsTr("armed") : qsTr("flying")
     property real   _margins:               ScreenTools.defaultFontPixelHeight * 0.5
     property string _pageTitle:             qsTr("%1 Setup").arg(pageName)
+
+    Component.onCompleted: {
+        setupPageCompleted = true
+    }
 
     QGCFlickable {
         anchors.fill:   parent
