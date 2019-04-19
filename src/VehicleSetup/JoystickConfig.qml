@@ -46,12 +46,13 @@ SetupPage {
             width:  availableWidth
             height: Math.max(leftColumn.height, rightColumn.height)
 
-            property bool controllerCompleted:      false
-            property bool controllerAndViewReady:   false
-
             readonly property real labelToMonitorMargin: ScreenTools.defaultFontPixelWidth * 3
 
             property var _activeJoystick:   joystickManager.activeJoystick
+
+            onSetupPageCompleted: {
+                controller.start()
+            }
 
             JoystickConfigController {
                 id:             controller
@@ -59,21 +60,6 @@ SetupPage {
                 cancelButton:   cancelButton
                 nextButton:     nextButton
                 skipButton:     skipButton
-
-                Component.onCompleted: {
-                    controllerCompleted = true
-                    if (joystickPage.completedSignalled) {
-                        controllerAndViewReady = true
-                        controller.start()
-                    }
-                }
-            }
-
-            Component.onCompleted: {
-                if (controllerCompleted) {
-                    controllerAndViewReady = true
-                    controller.start()
-                }
             }
 
             // Live axis monitor control component
