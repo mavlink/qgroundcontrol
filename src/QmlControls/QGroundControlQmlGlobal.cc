@@ -144,6 +144,15 @@ void QGroundControlQmlGlobal::startAPMArduSubMockLink(bool sendStatusText)
 #endif
 }
 
+void QGroundControlQmlGlobal::startAPMArduRoverMockLink(bool sendStatusText)
+{
+#ifdef QT_DEBUG
+    MockLink::startAPMArduRoverMockLink(sendStatusText);
+#else
+    Q_UNUSED(sendStatusText);
+#endif
+}
+
 void QGroundControlQmlGlobal::stopOneMockLink(void)
 {
 #ifdef QT_DEBUG
