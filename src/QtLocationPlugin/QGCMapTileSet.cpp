@@ -268,6 +268,10 @@ QGCCachedTileSet::_networkReplyFinished()
         qWarning() << "QGCMapEngineManager::networkReplyFinished() NULL Reply";
         return;
     }
+    if (reply->error() != QNetworkReply::NoError) {
+        // Error was already handled in _networkReplyError implementation
+        return;
+    }
     //-- Get tile hash
     const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
     if(!hash.isEmpty()) {
@@ -275,10 +279,6 @@ QGCCachedTileSet::_networkReplyFinished()
             _replies.remove(hash);
         } else {
             qWarning() << "QGCMapEngineManager::networkReplyFinished() Reply not in list: " << hash;
-        }
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning() << "QGCMapEngineManager::networkReplyFinished() Error:" << reply->errorString();
-            return;
         }
         qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
         QByteArray image = reply->readAll();
