@@ -22,6 +22,7 @@ APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
     enumToString.insert(STEERING,       "Steering");
     enumToString.insert(HOLD,           "Hold");
     enumToString.insert(LOITER,         "Loiter");
+    enumToString.insert(FOLLOW,         "Follow");
     enumToString.insert(SIMPLE,         "Simple");
     enumToString.insert(AUTO,           "Auto");
     enumToString.insert(RTL,            "RTL");
@@ -40,6 +41,7 @@ ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
     supportedFlightModes << APMRoverMode(APMRoverMode::STEERING     ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::HOLD         ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::LOITER       ,true);
+    supportedFlightModes << APMRoverMode(APMRoverMode::FOLLOW       ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::SIMPLE       ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::AUTO         ,true);
     supportedFlightModes << APMRoverMode(APMRoverMode::RTL          ,true);

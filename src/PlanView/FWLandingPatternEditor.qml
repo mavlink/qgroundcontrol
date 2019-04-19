@@ -32,10 +32,14 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
+    property var    _masterControler:               masterController
+    property var    _missionController:             _masterControler.missionController
+    property var    _missionVehicle:                _masterControler.controllerVehicle
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
+    property bool   _showCameraSection:         !_missionVehicle.apmFirmware
 
 
     ExclusiveGroup { id: distanceGlideGroup }
@@ -165,15 +169,16 @@ Rectangle {
         }
 
         SectionHeader {
-            id:     cameraSection
-            text:   qsTr("Camera")
+            id:         cameraSection
+            text:       qsTr("Camera")
+            visible:    _showCameraSection
         }
 
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            cameraSection.checked
+            visible:            _showCameraSection && cameraSection.checked
 
             Item { width: 1; height: _spacer }
 

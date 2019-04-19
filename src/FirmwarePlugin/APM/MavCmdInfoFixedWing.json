@@ -10,6 +10,28 @@
             "paramRemove":  "1,3,4"
         },
         {
+            "id":           18,
+            "comment":      "MAV_CMD_NAV_LOITER_TURNS",
+            "param4": {
+                "label":            "Exit loiter from",
+                "enumStrings":      "Center,Tangent",
+                "enumValues":       "0,1",
+                "default":          1,
+                "decimalPlaces":    0
+            }
+        },
+        {
+            "id":           19,
+            "comment":      "MAV_CMD_NAV_LOITER_TIME",
+            "param4": {
+                "label":            "Exit loiter from",
+                "enumStrings":      "Center,Tangent",
+                "enumValues":       "0,1",
+                "default":          1,
+                "decimalPlaces":    0
+            }
+        },
+        {
             "id":           21,
             "comment":      "MAV_CMD_NAV_LAND",
             "paramRemove":  "4"
