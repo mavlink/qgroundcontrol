@@ -18,7 +18,6 @@
 
 DECLARE_SETTINGGROUP(FlightMap, "FlightMap")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<FlightMapSettings>("QGroundControl.SettingsManager", 1, 0, "FlightMapSettings", "Reference only");
 
     // Save the original version since we modify based on map provider

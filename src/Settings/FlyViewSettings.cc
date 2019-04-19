@@ -14,7 +14,6 @@
 
 DECLARE_SETTINGGROUP(FlyView, "FlyView")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
     qmlRegisterUncreatableType<FlyViewSettings>("QGroundControl.SettingsManager", 1, 0, "FlyViewSettings", "Reference only"); \
 }
 
