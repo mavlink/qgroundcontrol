@@ -62,7 +62,6 @@ SetupPage {
             property bool   _defaultFirmwareIsPX4:  true
 
             property string firmwareWarningMessage
-            property bool   controllerCompleted:      false
             property bool   initialBoardSearch:       true
             property string firmwareName
 
@@ -76,17 +75,17 @@ SetupPage {
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+            onSetupPageCompleted: {
+                controller.startBoardSearch()
+                _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
+            }
+
             FirmwareUpgradeController {
                 id:             controller
                 progressBar:    progressBar
                 statusLog:      statusTextArea
 
                 property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-                Component.onCompleted: {
-                    controllerCompleted = true
-                    controller.startBoardSearch()
-                }
 
                 onActiveVehicleChanged: {
                     if (!activeVehicle) {
@@ -127,14 +126,6 @@ SetupPage {
                     statusTextArea.append(flashFailText)
                     firmwarePage.cancelDialog()
                 }
-            }
-
-            Component.onCompleted: {
-                if (controllerCompleted) {
-                    // We can only start the board search when the Qml and Controller are completely done loading
-                    controller.startBoardSearch()
-                }
-                _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
 
             Component {
