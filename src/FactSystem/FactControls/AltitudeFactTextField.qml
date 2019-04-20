@@ -1,20 +1,24 @@
+import QtQuick                      2.3
 import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 
 FactTextField {
-    unitsLabel: fact ? fact.units + _altitudeModeExtraUnits : ""
-    showUnits:  true
-    showHelp:   true
+    unitsLabel:         fact ? fact.units : ""
+    extraUnitsLabel:    fact ? _altitudeModeExtraUnits : ""
+    showUnits:          true
+    showHelp:           true
 
     property int altitudeMode: QGroundControl.AltitudeModeNone
 
     readonly property string _altModeNoneExtraUnits:            ""
-    readonly property string _altModeRelativeExtraUnits:        qsTr(" (Rel)")
-    readonly property string _altModeAbsoluteExtraUnits:        qsTr(" (AMSL)")
-    readonly property string _altModeAboveTerrainExtraUnits:    qsTr(" (Abv Terr)")
-    readonly property string _altModeTerrainFrameExtraUnits:    qsTr(" (TerrF)")
+    readonly property string _altModeRelativeExtraUnits:        qsTr("(Rel)")
+    readonly property string _altModeAbsoluteExtraUnits:        qsTr("(AMSL)")
+    readonly property string _altModeAboveTerrainExtraUnits:    qsTr("(Abv Terr)")
+    readonly property string _altModeTerrainFrameExtraUnits:    qsTr("(TerrF)")
 
-    property string _altitudeModeExtraUnits: _altModeRelativeExtraUnits
+    property string _altitudeModeExtraUnits: _altModeNoneExtraUnits
+
+    onAltitudeModeChanged: updateAltitudeModeExtraUnits()
 
     function updateAltitudeModeExtraUnits() {
         if (altitudeMode === QGroundControl.AltitudeModeNone) {
@@ -32,6 +36,4 @@ FactTextField {
             _altitudeModeExtraUnits = ""
         }
     }
-
-    onAltitudeModeChanged: updateAltitudeModeExtraUnits()
 }
