@@ -1,0 +1,13 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+upnp_enabled=
+
+Name: libnice
+Description: ICE library
+Version: 0.1.13
+Requires: glib-2.0 >= 2.30 gio-2.0 >= 2.30 gobject-2.0 >= 2.30 
+Requires.private: gthread-2.0 
+Libs: -L${libdir} -lnice
+Cflags: -I${includedir}/nice -I${includedir}

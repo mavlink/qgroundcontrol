@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: libdts
+Description: Backward compatibility place-holder for libdca.
+Version: 0.0.5
+Requires: libdca = 0.0.5
+Libs: -L${libdir} -ldca
+Cflags: -I${includedir}/libdca

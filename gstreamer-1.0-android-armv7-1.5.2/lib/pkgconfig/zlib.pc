@@ -1,0 +1,13 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+sharedlibdir=${libdir}
+includedir=${prefix}/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.8
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

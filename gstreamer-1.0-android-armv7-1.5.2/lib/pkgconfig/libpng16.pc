@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/libpng16
+
+Name: libpng
+Description: Loads and saves PNG files
+Version: 1.6.17
+Libs: -L${libdir} -lpng16
+Libs.private: -lz -lm 
+Cflags: -I${includedir}

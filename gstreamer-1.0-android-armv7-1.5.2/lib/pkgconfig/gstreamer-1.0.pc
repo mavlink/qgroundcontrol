@@ -1,0 +1,20 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+toolsdir=${exec_prefix}/bin
+pluginsdir=/home/slomo/cerbero/dist/android_armv7/lib/gstreamer-1.0
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+girdir=${datadir}/gir-1.0
+completionsdir=${datarootdir}/bash-completion/completions
+helpersdir=${datarootdir}/bash-completion/helpers
+typelibdir=${libdir}/girepository-1.0
+
+Name: GStreamer
+Description: Streaming media framework
+Version: 1.5.2
+Requires: glib-2.0, gobject-2.0
+Requires.private: gmodule-no-export-2.0
+Libs: -L${libdir} -lgstreamer-1.0
+Cflags: -I${includedir} -I${libdir}/gstreamer-1.0/include

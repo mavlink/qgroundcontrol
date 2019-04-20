@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=/home/slomo/cerbero/dist/android_armv7
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=/home/slomo/cerbero/dist/android_armv7/include
+
+Name: TagLib
+Description: Audio meta-data library
+Requires:  gnustl
+Version: 1.7.2
+Libs: -L/home/slomo/cerbero/dist/android_armv7/lib -ltag
+Cflags: -I/home/slomo/cerbero/dist/android_armv7/include/taglib 

@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: GThread
+Description: Thread support for GLib
+Requires: glib-2.0
+Version: 2.44.0
+Libs: -L${libdir} -lgthread-2.0 -pthread
+Cflags: -pthread

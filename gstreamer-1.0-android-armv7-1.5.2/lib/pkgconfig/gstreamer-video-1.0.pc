@@ -1,0 +1,16 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+girdir=${datadir}/gir-1.0
+typelibdir=${libdir}/girepository-1.0
+
+Name: GStreamer Video Library
+Description: Video base classes and helper functions
+Requires: gstreamer-1.0 gstreamer-base-1.0
+Version: 1.5.2
+Libs: -L${libdir} -lgstvideo-1.0
+Cflags: -I${includedir}
+

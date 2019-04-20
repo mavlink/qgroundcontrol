@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=/home/slomo/cerbero/dist/android_armv7
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=/home/slomo/cerbero/dist/android_armv7/include
+
+Name: harfbuzz
+Description: HarfBuzz text shaping library
+Version: 0.9.40
+
+Libs: -L${libdir} -lharfbuzz
+Cflags: -I${includedir}/harfbuzz

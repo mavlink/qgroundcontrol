@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: libdv 
+Description: DV software codec
+Requires: 
+Version: 1.0.0
+Libs: -L${libdir} -ldv -lm  
+Cflags: -I${includedir}

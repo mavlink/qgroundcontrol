@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: cairo-ft
+Description: FreeType font backend for cairo graphics library
+Version: 1.14.2
+
+Requires: cairo freetype2 >= 9.7.3 
+Libs:  
+Cflags: -I${includedir}/cairo 

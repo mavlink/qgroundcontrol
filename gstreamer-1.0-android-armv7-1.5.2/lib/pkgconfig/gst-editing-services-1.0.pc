@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+
+Name: gst-editing-services
+Description: GStreamer Editing Services
+Version: 1.5.2
+Requires: gstreamer-1.0 gstreamer-base-1.0 gstreamer-controller-1.0 gstreamer-pbutils-1.0
+Libs: -L${libdir} -lges-1.0
+Cflags: -I${includedir}

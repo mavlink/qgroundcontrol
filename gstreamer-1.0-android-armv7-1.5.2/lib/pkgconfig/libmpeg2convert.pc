@@ -1,0 +1,10 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: libmpeg2convert
+Description: Image conversion library helper for libmpeg2
+Version: 0.5.1
+Libs: -L${libdir} -lmpeg2convert
+Cflags: -I${includedir}/mpeg2dec

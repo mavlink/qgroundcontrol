@@ -1,0 +1,15 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+
+Name: gnustl
+Description: gnustl
+Version: 1.0
+Requires: 
+Requires.private: 
+Libs: -L${libdir} -lgnustl -lsupc++ -lstdc++ 
+Libs.private: ${libdir}/libgnustl.a ${libdir}/libsupc++.a
+Cflags: -I/home/slomo/Projects/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.9/include -I/home/slomo/Projects/android/android-ndk-r10d/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include

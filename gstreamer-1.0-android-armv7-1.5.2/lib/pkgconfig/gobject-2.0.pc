@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: GObject
+Description: GLib Type, Object, Parameter and Signal Library
+Requires: glib-2.0
+Version: 2.44.0
+Libs: -L${libdir} -lgobject-2.0
+Libs.private: -L/home/slomo/cerbero/dist/android_armv7/lib -lffi 
+Cflags:

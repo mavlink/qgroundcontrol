@@ -1,0 +1,14 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=/home/slomo/cerbero/dist/android_armv7
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=/home/slomo/cerbero/dist/android_armv7/include/freetype2
+
+Name: FreeType 2
+URL: http://freetype.org
+Description: A free, high-quality, and portable font engine.
+Version: 17.4.11
+Requires:
+Requires.private: zlib, libpng
+Libs: -L${libdir} -lfreetype
+Libs.private: -lbz2
+Cflags: -I${includedir}

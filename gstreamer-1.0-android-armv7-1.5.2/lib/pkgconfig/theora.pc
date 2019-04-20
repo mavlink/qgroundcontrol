@@ -1,0 +1,14 @@
+# theora installed pkg-config file
+
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: theora
+Description: Theora video codec
+Version: 1.1.1
+Requires: ogg >= 1.1
+Conflicts:
+Libs: -L${libdir} -ltheora
+Cflags: -I${includedir}

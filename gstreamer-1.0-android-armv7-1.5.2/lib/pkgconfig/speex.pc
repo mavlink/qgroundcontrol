@@ -1,0 +1,15 @@
+# libspeex pkg-config source file
+
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: speex
+Description: Speex is an audio codec tuned for speech
+Version: 1.2rc2
+Requires:
+Conflicts:
+Libs: -L${libdir} -lspeex
+Libs.private: -lm
+Cflags: -I${includedir}

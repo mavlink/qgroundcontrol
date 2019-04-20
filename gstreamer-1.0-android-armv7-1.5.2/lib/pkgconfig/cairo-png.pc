@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: cairo-png
+Description: PNG functions for cairo graphics library
+Version: 1.14.2
+
+Requires: cairo libpng
+Libs:  
+Cflags: -I${includedir}/cairo 

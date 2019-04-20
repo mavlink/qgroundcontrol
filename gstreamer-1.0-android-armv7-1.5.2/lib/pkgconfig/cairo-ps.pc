@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: cairo-ps
+Description: PostScript surface backend for cairo graphics library
+Version: 1.14.2
+
+Requires: cairo 
+Libs: -lz 
+Cflags: -I${includedir}/cairo 

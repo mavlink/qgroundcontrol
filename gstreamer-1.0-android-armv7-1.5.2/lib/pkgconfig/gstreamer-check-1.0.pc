@@ -1,0 +1,15 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/gstreamer-1.0
+datarootdir=${prefix}/share
+datadir=${datarootdir}
+girdir=${datadir}/gir-1.0
+typelibdir=${libdir}/girepository-1.0
+
+Name: GStreamer check unit testing
+Description: Unit testing helper library for GStreamer modules
+Requires: gstreamer-1.0
+Version: 1.5.2
+Libs: -L${libdir} -lgstcheck-1.0 -lm
+Cflags: -I${includedir}

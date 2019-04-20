@@ -1,0 +1,15 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+svgz_supported=true
+css_supported=true
+
+Name: librsvg
+Description: library that renders svg files
+Version: 2.40.9
+Requires: glib-2.0 gio-2.0 gdk-pixbuf-2.0 cairo
+Requires.private:
+Libs: -L${libdir} -lrsvg-2 -lm
+Cflags: -I${includedir}/librsvg-2.0

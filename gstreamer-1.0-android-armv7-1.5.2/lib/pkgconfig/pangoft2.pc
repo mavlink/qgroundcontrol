@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: Pango FT2 and Pango Fc
+Description: Freetype 2.0 and fontconfig font support for Pango
+Version: 1.36.8
+Requires: pango freetype2 fontconfig
+Requires.private: harfbuzz
+Libs: -L${libdir} -lpangoft2-1.0
+Cflags: -I${includedir}/pango-1.0

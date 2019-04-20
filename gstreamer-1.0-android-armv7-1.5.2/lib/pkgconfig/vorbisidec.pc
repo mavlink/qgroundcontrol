@@ -1,0 +1,14 @@
+# libvorbisidec pkg-config source file
+
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: vorbisidec
+Description: vorbisidec is the integer Ogg Vorbis library
+Version: 1.2.1
+Requires: ogg
+Conflicts:
+Libs: -L${libdir} -lvorbisidec -lm
+Cflags: -I${includedir} -Dvorbis_block_init=ivorbis_block_init -D_vorbis_block_alloc=_ivorbis_block_alloc -D_vorbis_block_ripcord=_ivorbis_block_ripcord -Dvorbis_block_clear=ivorbis_block_clear -Dvorbis_dsp_clear=ivorbis_dsp_clear -Dvorbis_synthesis=ivorbis_synthesis -Dvorbis_synthesis_restart=ivorbis_synthesis_restart -Dvorbis_synthesis_init=ivorbis_synthesis_init -Dvorbis_synthesis_blockin=ivorbis_synthesis_blockin -Dvorbis_synthesis_pcmout=ivorbis_synthesis_pcmout -Dvorbis_synthesis_read=ivorbis_synthesis_read -D_vorbis_apply_window=_ivorbis_apply_window -Dvorbis_comment_init=ivorbis_comment_init -Dvorbis_comment_query=ivorbis_comment_query -Dvorbis_comment_query_count=ivorbis_comment_query_count -Dvorbis_comment_clear=ivorbis_comment_clear -Dvorbis_info_blocksize=ivorbis_info_blocksize -Dvorbis_info_init=ivorbis_info_init -Dvorbis_info_clear=ivorbis_info_clear -Dvorbis_synthesis_idheader=ivorbis_synthesis_idheader -Dvorbis_synthesis_headerin=ivorbis_synthesis_headerin -Dvorbis_staticbook_unpack=ivorbis_staticbook_unpack -Dvorbis_book_decode=ivorbis_book_decode -Dvorbis_book_decodevs_add=ivorbis_book_decodevs_add -Dvorbis_book_decodev_add=ivorbis_book_decodev_add -Dvorbis_book_decodev_set=ivorbis_book_decodev_set -Dvorbis_book_decodevv_add=ivorbis_book_decodevv_add -D_ilog=_iilog -D_make_words=_imake_words -D_book_maptype1_quantvals=_ibook_maptype1_quantvals -D_book_unquantize=_ibook_unquantize -Dvorbis_staticbook_destroy=ivorbis_staticbook_destroy -Dvorbis_book_clear=ivorbis_book_clear -Dvorbis_book_init_decode=ivorbis_book_init_decode -Dmdct_backward=imdct_backward

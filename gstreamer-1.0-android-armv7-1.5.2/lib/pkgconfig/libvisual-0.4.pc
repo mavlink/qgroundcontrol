@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/libvisual-0.4
+pluginsbasedir=/home/slomo/cerbero/dist/android_armv7/lib/libvisual-0.4
+
+Name: libvisual
+Version: 0.4.0
+Description: an audio visualisation abstraction library.
+Requires: 
+Libs: -L${libdir} -lm -ldl  -lvisual-0.4
+Cflags: -I${includedir} 

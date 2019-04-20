@@ -1,0 +1,24 @@
+# Process this file with autoconf to produce a pkg-config metadata file.
+
+# Copyright (C) 2004-2012 Free Software Foundation, Inc.
+
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
+# Author: Simon Josefsson
+
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: GnuTLS
+Description: Transport Security Layer implementation for the GNU system
+URL: http://www.gnutls.org/
+Version: 3.3.14
+Libs: -L${libdir} -lgnutls
+Libs.private: -L/home/slomo/cerbero/dist/android_armv7/lib -lz -R/home/slomo/cerbero/dist/android_armv7/lib -L/home/slomo/cerbero/dist/android_armv7/lib -lintl -L/home/slomo/cerbero/dist/android_armv7/lib -liconv -L/home/slomo/Projects/android/android-ndk-r10d/platforms/android-9/arch-arm/usr/lib -lc -R/home/slomo/cerbero/dist/android_armv7/lib -R/home/slomo/Projects/android/android-ndk-r10d/platforms/android-9/arch-arm/usr/lib   -L/home/slomo/cerbero/dist/android_armv7/lib -liconv -R/home/slomo/cerbero/dist/android_armv7/lib    -lgmp
+Requires.private: nettle, hogweed, libtasn1, zlib
+Cflags: -I${includedir}

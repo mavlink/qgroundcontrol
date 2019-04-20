@@ -1,0 +1,18 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+sysconfdir=${prefix}/etc
+localstatedir=${prefix}/var
+PACKAGE=fontconfig
+confdir=${sysconfdir}/fonts
+cachedir=${localstatedir}/cache/${PACKAGE}
+
+Name: Fontconfig
+Description: Font configuration and customization library
+Version: 2.11.1
+Requires:  freetype2
+Requires.private:  expat
+Libs: -L${libdir} -lfontconfig
+Libs.private: -L/home/slomo/cerbero/dist/android_armv7/lib -lexpat  -L/home/slomo/cerbero/dist/android_armv7/lib -lfreetype   
+Cflags: -I${includedir}/fontconfig  -I/home/slomo/cerbero/dist/android_armv7/include/freetype2 -I/home/slomo/cerbero/dist/android_armv7/include/libpng16   

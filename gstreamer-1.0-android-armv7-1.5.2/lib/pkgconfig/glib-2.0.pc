@@ -1,0 +1,16 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+glib_genmarshal=glib-genmarshal
+gobject_query=gobject-query
+glib_mkenums=glib-mkenums
+
+Name: GLib
+Description: C Utility Library
+Version: 2.44.0
+Requires.private: 
+Libs: -L${libdir} -lglib-2.0 -lintl 
+Libs.private: -pthread   -lintl  -liconv  
+Cflags: -I${includedir}/glib-2.0 -I${libdir}/glib-2.0/include 

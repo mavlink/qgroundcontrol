@@ -1,0 +1,15 @@
+# This is the pkg-config file for liboggkate
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: Kate
+Description: liboggkate is an interface between libkate and libogg
+Version: 0.4.1
+URL: http://libkate.googlecode.com/
+Requires: kate ogg >= 1.1.2
+Conflicts: 
+Libs: -L${libdir} -loggkate
+Libs.private: 
+Cflags: -I${includedir}

@@ -1,0 +1,12 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: wavpack
+Description: wavpack library
+Version: 4.70.0
+Requires:
+Conflicts:
+Libs: -L${libdir} -lwavpack
+Libs.private: -lm
+Cflags: -I${includedir}

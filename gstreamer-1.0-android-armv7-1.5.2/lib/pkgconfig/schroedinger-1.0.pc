@@ -1,0 +1,16 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/schroedinger-1.0
+toolsdir=${exec_prefix}/bin
+
+
+Name: schroedinger-1.0
+Description: Dirac codec library
+Requires.private:  orc-0.4 >= 0.4.16 gthread-2.0
+Version: 1.0.11
+Libs: -L${libdir} -lschroedinger-1.0
+Libs.private:  -lm
+Cflags: -I${includedir}
+
+

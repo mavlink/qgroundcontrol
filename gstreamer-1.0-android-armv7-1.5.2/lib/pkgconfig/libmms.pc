@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/
+
+Name: libmms
+Description: Library implementing the MMS protocol 
+Requires: glib-2.0
+Version: 0.6.4
+Libs: -L${libdir} -lmms -lm
+Cflags: -I${includedir}

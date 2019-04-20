@@ -1,0 +1,11 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+Name: x264
+Description: H.264 (MPEG4 AVC) encoder library
+Version: 0.140.0+2M 9e3b2cb
+Libs: -L/home/slomo/cerbero/dist/android_armv7/lib -lx264 
+Libs.private: -lm -ldl
+Cflags: -I${prefix}/include

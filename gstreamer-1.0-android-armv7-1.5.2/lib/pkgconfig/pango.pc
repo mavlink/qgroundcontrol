@@ -1,0 +1,14 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include
+
+pango_module_version=1.8.0
+
+Name: Pango
+Description: Internationalized text handling
+Version: 1.36.8
+Requires: glib-2.0 gobject-2.0
+Requires.private: gmodule-no-export-2.0
+Libs: -L${libdir} -lpango-1.0 -lm
+Cflags: -I${includedir}/pango-1.0

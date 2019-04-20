@@ -1,0 +1,13 @@
+prefix=/home/slomo/cerbero/dist/android_armv7
+exec_prefix=${prefix}
+libdir=/home/slomo/cerbero/dist/android_armv7/lib
+includedir=${prefix}/include/openjpeg-1.5
+
+Name: openjpeg
+Description: JPEG2000 library
+URL: http://www.openjpeg.org/
+Version: 1.5.2
+Requires.private: 
+Libs: -L${libdir} -lopenjpeg
+Libs.private: -lm
+Cflags: -I${includedir}
