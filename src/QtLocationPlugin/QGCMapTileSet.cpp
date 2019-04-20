@@ -268,48 +268,46 @@ QGCCachedTileSet::_networkReplyFinished()
         qWarning() << "QGCMapEngineManager::networkReplyFinished() NULL Reply";
         return;
     }
-    //-- Get tile hash
-    const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
-    if(!hash.isEmpty()) {
-        if(_replies.contains(hash)) {
-            _replies.remove(hash);
-        } else {
-            qWarning() << "QGCMapEngineManager::networkReplyFinished() Reply not in list: " << hash;
-        }
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning() << "QGCMapEngineManager::networkReplyFinished() Error:" << reply->errorString();
-            return;
-        }
-        qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
-        QByteArray image = reply->readAll();
-        UrlFactory::MapType type = getQGCMapEngine()->hashToType(hash);
-        if (type == UrlFactory::MapType::AirmapElevation) {
-            image = TerrainTile::serialize(image);
-        }
-        QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
-        if(!format.isEmpty()) {
-            //-- Cache tile
-            getQGCMapEngine()->cacheTile(type, hash, image, format, _id);
-            QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
-            getQGCMapEngine()->addTask(task);
-            //-- Updated cached (downloaded) data
-            _savedTileSize += image.size();
-            _savedTileCount++;
-            emit savedTileSizeChanged();
-            emit savedTileCountChanged();
-            //-- Update estimate
-            if(_savedTileCount % 10 == 0) {
-                quint32 avg = _savedTileSize / _savedTileCount;
-                _totalTileSize  = avg * _totalTileCount;
-                _uniqueTileSize = avg * _uniqueTileCount;
-                emit totalTilesSizeChanged();
-                emit uniqueTileSizeChanged();
+    if (reply->error() == QNetworkReply::NoError) {
+        //-- Get tile hash
+        const QString hash = reply->request().attribute(QNetworkRequest::User).toString();
+        if(!hash.isEmpty()) {
+            if(_replies.contains(hash)) {
+                _replies.remove(hash);
+            } else {
+                qWarning() << "QGCMapEngineManager::networkReplyFinished() Reply not in list: " << hash;
             }
+            qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
+            QByteArray image = reply->readAll();
+            UrlFactory::MapType type = getQGCMapEngine()->hashToType(hash);
+            if (type == UrlFactory::MapType::AirmapElevation) {
+                image = TerrainTile::serialize(image);
+            }
+            QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);
+            if(!format.isEmpty()) {
+                //-- Cache tile
+                getQGCMapEngine()->cacheTile(type, hash, image, format, _id);
+                QGCUpdateTileDownloadStateTask* task = new QGCUpdateTileDownloadStateTask(_id, QGCTile::StateComplete, hash);
+                getQGCMapEngine()->addTask(task);
+                //-- Updated cached (downloaded) data
+                _savedTileSize += image.size();
+                _savedTileCount++;
+                emit savedTileSizeChanged();
+                emit savedTileCountChanged();
+                //-- Update estimate
+                if(_savedTileCount % 10 == 0) {
+                    quint32 avg = _savedTileSize / _savedTileCount;
+                    _totalTileSize  = avg * _totalTileCount;
+                    _uniqueTileSize = avg * _uniqueTileCount;
+                    emit totalTilesSizeChanged();
+                    emit uniqueTileSizeChanged();
+                }
+            }
+            //-- Setup a new download
+            _prepareDownload();
+        } else {
+            qWarning() << "QGCMapEngineManager::networkReplyFinished() Empty Hash";
         }
-        //-- Setup a new download
-        _prepareDownload();
-    } else {
-        qWarning() << "QGCMapEngineManager::networkReplyFinished() Empty Hash";
     }
     reply->deleteLater();
 }
