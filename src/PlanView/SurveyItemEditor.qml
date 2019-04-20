@@ -67,11 +67,12 @@ Rectangle {
         }
 
         CameraCalc {
-            cameraCalc:             missionItem.cameraCalc
-            vehicleFlightIsFrontal: true
-            distanceToSurfaceLabel: qsTr("Altitude")
-            frontalDistanceLabel:   qsTr("Trigger Distance")
-            sideDistanceLabel:      qsTr("Spacing")
+            cameraCalc:                     missionItem.cameraCalc
+            vehicleFlightIsFrontal:         true
+            distanceToSurfaceLabel:         qsTr("Altitude")
+            distanceToSurfaceAltitudeMode:  missionItem.followTerrain ? QGroundControl.AltitudeModeAboveTerrain : QGroundControl.AltitudeModeRelative
+            frontalDistanceLabel:           qsTr("Trigger Dist")
+            sideDistanceLabel:              qsTr("Spacing")
         }
 
         SectionHeader {
