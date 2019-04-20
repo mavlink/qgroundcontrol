@@ -17,7 +17,7 @@ RadioButton {
     activeFocusOnPress: true
 
     style: RadioButtonStyle {
-        spacing: _noText ? 0 : ScreenTools.defaultFontPixelWidth / 2
+        spacing: _noText ? 0 : ScreenTools.defaultFontPixelWidth * 0.25
 
         label: Item {
             implicitWidth:          _noText ? 0 : text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
