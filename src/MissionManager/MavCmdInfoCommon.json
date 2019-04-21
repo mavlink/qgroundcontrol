@@ -52,7 +52,7 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
+                "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2
@@ -74,8 +74,9 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
-                "default":          0,
+                "units":            "deg",
+                "nanUnchanged":     true,
+                "default":          null,
                 "decimalPlaces":    2
             }
         },
@@ -100,7 +101,7 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
+                "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2
@@ -128,7 +129,7 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
+                "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2
@@ -158,7 +159,7 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
+                "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2
@@ -180,7 +181,7 @@
             },
             "param4": {
                 "label":            "Heading",
-                "units":            "radians",
+                "units":            "deg",
                 "nanUnchanged":     true,
                 "default":          null,
                 "decimalPlaces":    2
