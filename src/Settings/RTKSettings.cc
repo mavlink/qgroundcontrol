@@ -14,7 +14,6 @@
 
 DECLARE_SETTINGGROUP(RTK, "RTK")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
     qmlRegisterUncreatableType<RTKSettings>("QGroundControl.SettingsManager", 1, 0, "RTKSettings", "Reference only"); \
 }
 
