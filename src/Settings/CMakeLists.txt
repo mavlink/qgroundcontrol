@@ -6,6 +6,7 @@ add_library(Settings
 	BrandImageSettings.cc
 	FlightMapSettings.cc
 	FlyViewSettings.cc
+	OfflineMapsSettings.cc
 	PlanViewSettings.cc
 	RTKSettings.cc
 	SettingsGroup.cc

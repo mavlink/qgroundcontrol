@@ -7,15 +7,16 @@
  *
  ****************************************************************************/
 
-#include "FlyViewSettings.h"
+#include "OfflineMapsSettings.h"
 
 #include <QQmlEngine>
 #include <QtQml>
 
-DECLARE_SETTINGGROUP(FlyView, "FlyView")
+DECLARE_SETTINGGROUP(OfflineMaps, "OfflineMaps")
 {
-    qmlRegisterUncreatableType<FlyViewSettings>("QGroundControl.SettingsManager", 1, 0, "FlyViewSettings", "Reference only"); \
+    qmlRegisterUncreatableType<OfflineMapsSettings>("QGroundControl.SettingsManager", 1, 0, "OfflineMapsSettings", "Reference only");
 }
 
-DECLARE_SETTINGSFACT(FlyViewSettings, guidedMinimumAltitude)
-DECLARE_SETTINGSFACT(FlyViewSettings, guidedMaximumAltitude)
+DECLARE_SETTINGSFACT(OfflineMapsSettings, minZoomLevelDownload)
+DECLARE_SETTINGSFACT(OfflineMapsSettings, maxZoomLevelDownload)
+DECLARE_SETTINGSFACT(OfflineMapsSettings, maxTilesForDownload)
