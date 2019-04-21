@@ -70,7 +70,7 @@ for:
 -
   branches:
     only:
-      - Stable_V3.5
+      - AppveyorPDB
   artifacts:
     - path: C:\projects\qgroundcontrol\build_windows_install\release\qgroundcontrol.pdb
       name: pdb
