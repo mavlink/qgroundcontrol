@@ -21,7 +21,7 @@ import QGroundControl.Palette               1.0
 //-- GPS Indicator
 Item {
     id:             satelitte
-    width:          (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1
+    width:          visible ? (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1 : 0
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     visible:        QGroundControl.gpsRtk.connected.value
