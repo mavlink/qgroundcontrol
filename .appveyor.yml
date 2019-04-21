@@ -67,6 +67,13 @@ for:
       name: qgcinstaller
     - path: symbols\**\*.*_
       name: symbols
+-
+  branches:
+    only:
+      - Stable_V3.5
+  artifacts:
+    - path: %SHADOW_BUILD_DIR%\release\qgroundcontrol.pdb
+      name: pdb
 
 deploy:
 # deploy continuous builds to s3
