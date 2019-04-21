@@ -41,6 +41,7 @@ Rectangle {
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
     property bool   _showCameraSection:         !_missionVehicle.apmFirmware
+    property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
 
 
     ExclusiveGroup { id: distanceGlideGroup }
@@ -66,11 +67,25 @@ Rectangle {
 
             Item { width: 1; height: _spacer }
 
-            FactTextFieldGrid {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                factList:       [ missionItem.loiterAltitude, missionItem.loiterRadius ]
-                factLabels:     [ qsTr("Altitude"), qsTr("Radius") ]
+            GridLayout {
+                anchors.left:    parent.left
+                anchors.right:   parent.right
+                columns:         2
+
+                QGCLabel { text: qsTr("Altitude") }
+
+                AltitudeFactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.loiterAltitude
+                    altitudeMode:       _altitudeMode
+                }
+
+                QGCLabel { text: qsTr("Radius") }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.loiterRadius
+                }
             }
 
             Item { width: 1; height: _spacer }
@@ -115,9 +130,10 @@ Rectangle {
 
                 QGCLabel { text: qsTr("Altitude") }
 
-                FactTextField {
+                AltitudeFactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.landingAltitude
+                    altitudeMode:       _altitudeMode
                 }
 
                 QGCRadioButton {
