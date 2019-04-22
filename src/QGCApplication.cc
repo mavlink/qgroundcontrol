@@ -654,12 +654,12 @@ void QGCApplication::showMessage(const QString& message)
     }
 }
 
-QQuickItem* QGCApplication::mainQmlWindow()
+QQuickItem* QGCApplication::mainRootWindow()
 {
-    if(_mainQmlWindow) {
-        _mainQmlWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
+    if(_mainRootWindow) {
+        _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
     }
-    return _mainQmlWindow;
+    return _mainRootWindow;
 }
 
 void QGCApplication::showSetupView()

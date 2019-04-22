@@ -3,6 +3,7 @@
         <file alias="FactSystemTest.qml">src/FactSystem/FactSystemTest.qml</file>
     </qresource>
     <qresource prefix="/toolbar">
+        <file alias="MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
         <file alias="ArmedIndicator.qml">src/ui/toolbar/ArmedIndicator.qml</file>
         <file alias="BatteryIndicator.qml">src/ui/toolbar/BatteryIndicator.qml</file>
         <file alias="GPSIndicator.qml">src/ui/toolbar/GPSIndicator.qml</file>
@@ -48,7 +49,7 @@
         <file alias="LinkSettings.qml">src/ui/preferences/LinkSettings.qml</file>
         <file alias="LogDownloadPage.qml">src/AnalyzeView/LogDownloadPage.qml</file>
         <file alias="LogReplaySettings.qml">src/ui/preferences/LogReplaySettings.qml</file>
-        <file alias="MainQmlWindow.qml">src/ui/MainQmlWindow.qml</file>
+        <file alias="MainRootWindow.qml">src/ui/MainRootWindow.qml</file>
         <file alias="MavlinkConsolePage.qml">src/AnalyzeView/MavlinkConsolePage.qml</file>
         <file alias="MavlinkSettings.qml">src/ui/preferences/MavlinkSettings.qml</file>
         <file alias="MissionSettingsEditor.qml">src/PlanView/MissionSettingsEditor.qml</file>
@@ -76,8 +77,6 @@
         <file alias="QGroundControl/Controls/GeoFenceMapVisuals.qml">src/PlanView/GeoFenceMapVisuals.qml</file>
         <file alias="QGroundControl/Controls/IndicatorButton.qml">src/QmlControls/IndicatorButton.qml</file>
         <file alias="QGroundControl/Controls/JoystickThumbPad.qml">src/QmlControls/JoystickThumbPad.qml</file>
-        <file alias="QGroundControl/Controls/MainToolBar.qml">src/ui/toolbar/MainToolBar.qml</file>
-        <file alias="QGroundControl/Controls/MainToolBarIndicators.qml">src/ui/toolbar/MainToolBarIndicators.qml</file>
         <file alias="QGroundControl/Controls/MissionCommandDialog.qml">src/QmlControls/MissionCommandDialog.qml</file>
         <file alias="QGroundControl/Controls/MissionItemEditor.qml">src/PlanView/MissionItemEditor.qml</file>
         <file alias="QGroundControl/Controls/MissionItemIndexLabel.qml">src/QmlControls/MissionItemIndexLabel.qml</file>

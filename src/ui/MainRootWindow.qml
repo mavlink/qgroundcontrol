@@ -24,12 +24,12 @@ import QGroundControl.FlightMap     1.0
 ApplicationWindow {
     id:         mainWindow
     width:      1280
-    height:     1024
+    height:     720
     visible:    true
 
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
-    readonly property string    _mainToolbarIndicators:     QGroundControl.corePlugin.options.mainToolbarIndicatorsUrl
-    readonly property string    _planToolbarIndicators:     QGroundControl.corePlugin.options.planToolbarIndicatorsUrl
+    readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
+    readonly property string    _planToolbar:               QGroundControl.corePlugin.options.planToolbarUrl
     readonly property string    _settingsViewSource:        "AppSettings.qml"
     readonly property string    _setupViewSource:           "SetupView.qml"
     readonly property string    _planViewSource:            "PlanView.qml"
@@ -64,28 +64,18 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global Scope Functions
 
-    function disableToolbar() {
-        drawer.enabled = false
-    }
-
-    function enableToolbar() {
-        drawer.enabled = true
-    }
-
     function viewSwitch(isPlanView) {
-        enableToolbar()
-        drawer.close()
         if(isPlanView) {
             rootBackground.visible = false
             planViewLoader.visible = true
-            if(toolbarIndicators.source !== _planToolbarIndicators) {
-                toolbarIndicators.source  = _planToolbarIndicators
+            if(toolbar.source !== _planToolbar) {
+                toolbar.source  = _planToolbar
             }
         } else {
             rootBackground.visible = true
             planViewLoader.visible = false
-            if(toolbarIndicators.source !== _mainToolbarIndicators) {
-                toolbarIndicators.source  = _mainToolbarIndicators
+            if(toolbar.source !== _mainToolbar) {
+                toolbar.source  = _mainToolbar
             }
         }
     }
@@ -93,9 +83,6 @@ ApplicationWindow {
     function showFlyView() {
         viewSwitch(false)
         mainContentWindow.source = ""
-        if(toolbarIndicators.source !== _mainToolbarIndicators) {
-            toolbarIndicators.source  = _mainToolbarIndicators
-        }
     }
 
     function showPlanView() {
@@ -297,169 +284,17 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //-- Global Indicator Bar
+    //-- Toolbar
     header: ToolBar {
         height:         ScreenTools.toolbarHeight
         visible:        !QGroundControl.videoManager.fullScreen
         background:     Rectangle {
-            color:      qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
+            color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
         }
-        RowLayout {
-            anchors.fill:               parent
-            spacing:                    0
-            Rectangle {
-                height:                 parent.height
-                width:                  height
-                color:                  qgcPal.brandingPurple
-                QGCColoredImage {
-                    anchors.centerIn:       parent
-                    height:                 ScreenTools.defaultFontPixelHeight * 2
-                    width:                  height
-                    sourceSize.height:      parent.height
-                    fillMode:               Image.PreserveAspectFit
-                    source:                 "/res/QGCLogoWhite"
-                    color:                  "white"
-                }
-                MouseArea {
-                    anchors.fill:       parent
-                    onClicked:{
-                        if(drawer.visible) {
-                            drawer.close()
-                        } else {
-                            drawer.open()
-                        }
-                    }
-                }
-            }
-            Loader {
-                id:                 toolbarIndicators
-                height:             parent.height
-                source:             _mainToolbarIndicators
-                Layout.fillWidth:   true
-            }
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    // Small parameter download progress bar
-    Rectangle {
-        x:              0
-        y:              header.height
-        height:         ScreenTools.toolbarHeight * 0.05
-        width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * mainWindow.width : 0
-        color:          qgcPal.colorGreen
-        visible:        !largeProgressBar.visible
-    }
-
-    //-------------------------------------------------------------------------
-    // Large parameter download progress bar
-    Rectangle {
-        id:             largeProgressBar
-        x:              0
-        y:              header.height
-        height:         ScreenTools.toolbarHeight
-        width:          mainWindow.width
-        color:          qgcPal.window
-        visible:        _showLargeProgress
-
-        property bool _initialDownloadComplete: activeVehicle ? activeVehicle.parameterManager.parametersReady : true
-        property bool _userHide:                false
-        property bool _showLargeProgress:       !_initialDownloadComplete && !_userHide && qgcPal.globalTheme === QGCPalette.Light
-
-        Connections {
-            target:                 QGroundControl.multiVehicleManager
-            onActiveVehicleChanged: largeProgressBar._userHide = false
-        }
-        Rectangle {
-            anchors.top:    parent.top
-            anchors.bottom: parent.bottom
-            width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * mainWindow.width : 0
-            color:          qgcPal.colorGreen
-        }
-        QGCLabel {
-            anchors.centerIn:   parent
-            text:               qsTr("Downloading Parameters")
-            font.pointSize:     ScreenTools.largeFontPointSize
-        }
-        QGCLabel {
-            anchors.margins:    _margin
-            anchors.right:      parent.right
-            anchors.bottom:     parent.bottom
-            text:               qsTr("Click anywhere to hide")
-
-            property real _margin: ScreenTools.defaultFontPixelWidth * 0.5
-        }
-        MouseArea {
+        Loader {
+            id:             toolbar
             anchors.fill:   parent
-            onClicked:      largeProgressBar._userHide = true
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Navigation Drawer (Left to Right, on command or using touch gestures)
-    Drawer {
-        id:         drawer
-        y:          header.height
-        width:      navButtonWidth
-        height:     mainWindow.height - header.height
-        background: Rectangle {
-            color:  qgcPal.globalTheme === QGCPalette.Light ? "white" : "black"
-        }
-        ButtonGroup {
-            buttons: buttons.children
-        }
-        ColumnLayout {
-            id:                     buttons
-            anchors.top:            parent.top
-            anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.5
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            spacing:                ScreenTools.defaultFontPixelHeight * 0.5
-            QGCToolBarButton {
-                text:               "Fly"
-                icon.source:        "/qmlimages/PaperPlane.svg"
-                Layout.fillWidth:   true
-                onClicked: {
-                    checked = true
-                    showFlyView()
-                }
-            }
-            QGCToolBarButton {
-                text:               "Plan"
-                icon.source:        "/qmlimages/Plan.svg"
-                Layout.fillWidth:   true
-                onClicked: {
-                    checked = true
-                    showPlanView()
-                }
-            }
-            QGCToolBarButton {
-                text:               "Analyze"
-                icon.source:        "/qmlimages/Analyze.svg"
-                Layout.fillWidth:   true
-                onClicked: {
-                    checked = true
-                    showAnalyzeView()
-                }
-            }
-            QGCToolBarButton {
-                text:               "Vehicle Setup"
-                icon.source:        "/qmlimages/Gears.svg"
-                Layout.fillWidth:   true
-                onClicked: {
-                    checked = true
-                    showSetupView()
-                }
-            }
-            QGCToolBarButton {
-                text:               "Settings"
-                icon.source:        "/qmlimages/Gears.svg"
-                Layout.fillWidth:   true
-                onClicked: {
-                    checked = true
-                    showSettingsView()
-                }
-            }
+            source:         _mainToolbar
         }
     }
 
@@ -472,7 +307,7 @@ ApplicationWindow {
 
     //-------------------------------------------------------------------------
     //-- Loader helper for any child, no matter how deep can display an element
-    //   in the middle of the main window.
+    //   on top of the main window.
     Loader {
         id:             rootLoader
         anchors.centerIn: parent

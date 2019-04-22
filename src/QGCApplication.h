@@ -96,7 +96,7 @@ public:
     static QString cachedAirframeMetaDataFile(void);
 
     void            setLanguage();
-    QQuickItem*     mainQmlWindow();
+    QQuickItem*     mainRootWindow();
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -180,7 +180,7 @@ private:
     QGCFileDownload*    _currentVersionDownload = nullptr;
     GPSRTKFactGroup*    _gpsRtkFactGroup        = nullptr;
     QGCToolbox*         _toolbox                = nullptr;
-    QQuickItem*         _mainQmlWindow          = nullptr;
+    QQuickItem*         _mainRootWindow         = nullptr;
     bool                _bluetoothAvailable     = false;
     QTranslator         _QGCTranslator;
 

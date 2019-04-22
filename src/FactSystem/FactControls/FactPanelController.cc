@@ -33,10 +33,10 @@ FactPanelController::FactPanelController()
 
 void FactPanelController::_notifyPanelMissingParameter(const QString& missingParam)
 {
-    if (qgcApp()->mainQmlWindow()) {
+    if (qgcApp()->mainRootWindow()) {
         QVariant returnedValue;
         QMetaObject::invokeMethod(
-            qgcApp()->mainQmlWindow(),
+            qgcApp()->mainRootWindow(),
             "showMissingParameterOverlay",
             Q_RETURN_ARG(QVariant, returnedValue),
             Q_ARG(QVariant, missingParam));
@@ -45,10 +45,10 @@ void FactPanelController::_notifyPanelMissingParameter(const QString& missingPar
 
 void FactPanelController::_notifyPanelErrorMsg(const QString& errorMsg)
 {
-    if(qgcApp()->mainQmlWindow()) {
+    if(qgcApp()->mainRootWindow()) {
         QVariant returnedValue;
         QMetaObject::invokeMethod(
-            qgcApp()->mainQmlWindow(),
+            qgcApp()->mainRootWindow(),
             "showFactError",
             Q_RETURN_ARG(QVariant, returnedValue),
             Q_ARG(QVariant, errorMsg));
@@ -67,7 +67,7 @@ void FactPanelController::_reportMissingParameter(int componentId, const QString
     // will not have access to _factPanel yet. Just record list of missing facts
     // in that case instead of notify. Once _factPanel is available they will be
     // send out for real.
-    if (qgcApp()->mainQmlWindow()) {
+    if (qgcApp()->mainRootWindow()) {
         _notifyPanelMissingParameter(missingParam);
     } else {
         _delayedMissingParams += missingParam;
