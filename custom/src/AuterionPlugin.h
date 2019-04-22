@@ -58,9 +58,6 @@ public:
     VideoReceiver*          createVideoReceiver             (QObject* parent) final;
     QQmlApplicationEngine*  createRootWindow                (QObject* parent) final;
     bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
-#if !defined(__mobile__)
-    QGCQmlWidgetHolder*     createMainQmlWidgetHolder       (QLayout* mainLayout, QWidget *parent) final;
-#endif
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);
 

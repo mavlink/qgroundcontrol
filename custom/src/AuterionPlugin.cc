@@ -17,7 +17,6 @@
 #include "QGCApplication.h"
 #include "SettingsManager.h"
 #include "AppMessages.h"
-#include "QGCQmlWidgetHolder.h"
 #include "QmlComponentInfo.h"
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
@@ -185,7 +184,7 @@ AuterionPlugin::createRootWindow(QObject *parent)
     pEngine->addImportPath("qrc:/Auterion/Widgets");
     pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
     return pEngine;
 }
 
@@ -207,20 +206,3 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
     }
     return true;
 }
-
-//-----------------------------------------------------------------------------
-#if !defined(__mobile__)
-QGCQmlWidgetHolder*
-AuterionPlugin::createMainQmlWidgetHolder(QLayout *mainLayout, QWidget* parent)
-{
-    QGCQmlWidgetHolder* pMainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), nullptr, parent);
-    mainLayout->addWidget(pMainQmlWidgetHolder);
-    pMainQmlWidgetHolder->setVisible(true);
-    QQmlEngine::setObjectOwnership(parent, QQmlEngine::CppOwnership);
-    pMainQmlWidgetHolder->setContextPropertyObject("controller", parent);
-    pMainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
-    pMainQmlWidgetHolder->getRootContext()->engine()->addImportPath("qrc:/Auterion/Widgets");
-    pMainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
-    return pMainQmlWidgetHolder;
-}
-#endif
