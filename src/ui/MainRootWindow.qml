@@ -265,10 +265,10 @@ ApplicationWindow {
             id:             flightView
             anchors.fill:   parent
             //-----------------------------------------------------------------
-            //-- Loader helper for any child, no matter how deep can display an
-            //   element on top of the video window.
+            //-- Loader helper for any child, no matter how deep, to display
+            //   elements on top of the fly (video) window.
             Loader {
-                id:             rootVideoLoader
+                id: rootVideoLoader
                 anchors.centerIn: parent
             }
         }
@@ -301,15 +301,15 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Current content
     Loader {
-        id:             mainContentWindow
+        id: mainContentWindow
         anchors.fill:   parent
     }
 
     //-------------------------------------------------------------------------
-    //-- Loader helper for any child, no matter how deep can display an element
+    //-- Loader helper for any child, no matter how deep, to display elements
     //   on top of the main window.
     Loader {
-        id:             rootLoader
+        id: rootLoader
         anchors.centerIn: parent
     }
 
