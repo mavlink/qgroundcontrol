@@ -27,18 +27,18 @@ RowLayout {
     property real   _chartHeight:       ScreenTools.defaultFontPixelHeight * 20
     property real   _margins:           ScreenTools.defaultFontPixelHeight / 2
     property string _currentTuneType:   tuneList[0]
-    property real   _roll:              _activeVehicle.roll.value
-    property real   _rollSetpoint:      _activeVehicle.setpoint.roll.value
-    property real   _rollRate:          _activeVehicle.rollRate.value
-    property real   _rollRateSetpoint:  _activeVehicle.setpoint.rollRate.value
-    property real   _pitch:             _activeVehicle.pitch.value
-    property real   _pitchSetpoint:     _activeVehicle.setpoint.pitch.value
-    property real   _pitchRate:         _activeVehicle.pitchRate.value
-    property real   _pitchRateSetpoint: _activeVehicle.setpoint.pitchRate.value
-    property real   _yaw:               _activeVehicle.heading.value
-    property real   _yawSetpoint:       _activeVehicle.setpoint.yaw.value
-    property real   _yawRate:           _activeVehicle.yawRate.value
-    property real   _yawRateSetpoint:   _activeVehicle.setpoint.yawRate.value
+    property real   _roll:              activeVehicle.roll.value
+    property real   _rollSetpoint:      activeVehicle.setpoint.roll.value
+    property real   _rollRate:          activeVehicle.rollRate.value
+    property real   _rollRateSetpoint:  activeVehicle.setpoint.rollRate.value
+    property real   _pitch:             activeVehicle.pitch.value
+    property real   _pitchSetpoint:     activeVehicle.setpoint.pitch.value
+    property real   _pitchRate:         activeVehicle.pitchRate.value
+    property real   _pitchRateSetpoint: activeVehicle.setpoint.pitchRate.value
+    property real   _yaw:               activeVehicle.heading.value
+    property real   _yawSetpoint:       activeVehicle.setpoint.yaw.value
+    property real   _yawRate:           activeVehicle.yawRate.value
+    property real   _yawRateSetpoint:   activeVehicle.setpoint.yawRate.value
     property var    _valueXAxis:        valueXAxis
     property var    _valueRateXAxis:    valueRateXAxis
     property var    _valueYAxis:        valueYAxis
@@ -229,7 +229,6 @@ RowLayout {
                             */
         }
 
-        property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
         property int _maxPointCount:    10000 / interval
     }
 

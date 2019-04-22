@@ -25,8 +25,6 @@ PreFlightCheckButton {
 
     property int    failurePercent:                 40
     property bool   allowFailurePercentOverride:    false
-
-    property var _activeVehicle:        QGroundControl.multiVehicleManager.activeVehicle
-    property var _batPercentRemaining:  _activeVehicle ? _activeVehicle.battery.percentRemaining.value : 0
-    property bool _batLow:              _batPercentRemaining < failurePercent
+    property var    _batPercentRemaining:           activeVehicle ? activeVehicle.battery.percentRemaining.value : 0
+    property bool   _batLow:                        _batPercentRemaining < failurePercent
 }

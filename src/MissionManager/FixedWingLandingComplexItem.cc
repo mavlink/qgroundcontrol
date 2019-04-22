@@ -100,6 +100,12 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 
+    if (vehicle->apmFirmware()) {
+        // ArduPilot does not support camera commands
+        _stopTakingVideoFact.setRawValue(false);
+        _stopTakingPhotosFact.setRawValue(false);
+    }
+
     if (_valueSetIsDistanceFact.rawValue().toBool()) {
         _recalcFromHeadingAndDistanceChange();
     } else {

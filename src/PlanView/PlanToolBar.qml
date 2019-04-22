@@ -12,32 +12,23 @@ import QGroundControl.Palette           1.0
 // Toolbar for Plan View
 Rectangle {
     id:                 _root
-    height:             ScreenTools.toolbarHeight
-    anchors.left:       parent.left
-    anchors.right:      parent.right
-    anchors.top:        parent.top
-    z:                  toolBar.z + 1
     color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.8) : Qt.rgba(0,0,0,0.75)
-    visible:            false
-    anchors.bottomMargin: 1
 
-    signal showFlyView
+    property var    _planMasterController:      mainWindow.planMasterControllerPlan
+    property var    _currentMissionItem:        mainWindow.currentPlanMissionItem          ///< Mission item to display status for
 
-    property var    planMasterController
-    property var    currentMissionItem          ///< Mission item to display status for
+    property var    missionItems:               _controllerValid ? _planMasterController.missionController.visualItems : undefined
+    property real   missionDistance:            _controllerValid ? _planMasterController.missionController.missionDistance : NaN
+    property real   missionTime:                _controllerValid ? _planMasterController.missionController.missionTime : NaN
+    property real   missionMaxTelemetry:        _controllerValid ? _planMasterController.missionController.missionMaxTelemetry : NaN
+    property bool   missionDirty:               _controllerValid ? _planMasterController.missionController.dirty : false
 
-    property var    missionItems:               _controllerValid ? planMasterController.missionController.visualItems : undefined
-    property real   missionDistance:            _controllerValid ? planMasterController.missionController.missionDistance : NaN
-    property real   missionTime:                _controllerValid ? planMasterController.missionController.missionTime : NaN
-    property real   missionMaxTelemetry:        _controllerValid ? planMasterController.missionController.missionMaxTelemetry : NaN
-    property bool   missionDirty:               _controllerValid ? planMasterController.missionController.dirty : false
+    property bool   _controllerValid:           _planMasterController !== undefined && _planMasterController !== null
+    property bool   _controllerOffline:         _controllerValid ? _planMasterController.offline : true
+    property var    _controllerDirty:           _controllerValid ? _planMasterController.dirty : false
+    property var    _controllerSyncInProgress:  _controllerValid ? _planMasterController.syncInProgress : false
 
-    property bool   _controllerValid:           planMasterController !== undefined
-    property bool   _controllerOffline:         _controllerValid ? planMasterController.offline : true
-    property var    _controllerDirty:           _controllerValid ? planMasterController.dirty : false
-    property var    _controllerSyncInProgress:  _controllerValid ? planMasterController.syncInProgress : false
-
-    property bool   _statusValid:               currentMissionItem !== undefined
+    property bool   _statusValid:               _currentMissionItem !== undefined && _currentMissionItem !== null
     property bool   _missionValid:              missionItems !== undefined
 
     property real   _dataFontSize:              ScreenTools.defaultFontPointSize
@@ -46,20 +37,20 @@ Rectangle {
     property real   _smallValueWidth:           ScreenTools.defaultFontPixelWidth * 3
     property real   _labelToValueSpacing:       ScreenTools.defaultFontPixelWidth
     property real   _rowSpacing:                ScreenTools.isMobile ? 1 : 0
-    property real   _distance:                  _statusValid && currentMissionItem ? currentMissionItem.distance : NaN
-    property real   _altDifference:             _statusValid && currentMissionItem ? currentMissionItem.altDifference : NaN
-    property real   _gradient:                  _statusValid && currentMissionItem && currentMissionItem.distance > 0 ? Math.atan(currentMissionItem.altDifference / currentMissionItem.distance) : NaN
+    property real   _distance:                  _statusValid && _currentMissionItem ? _currentMissionItem.distance : NaN
+    property real   _altDifference:             _statusValid && _currentMissionItem ? _currentMissionItem.altDifference : NaN
+    property real   _gradient:                  _statusValid && _currentMissionItem && _currentMissionItem.distance > 0 ? Math.atan(_currentMissionItem.altDifference / _currentMissionItem.distance) : NaN
     property real   _gradientPercent:           isNaN(_gradient) ? NaN : _gradient * 100
-    property real   _azimuth:                   _statusValid && currentMissionItem ? currentMissionItem.azimuth : NaN
-    property real   _heading:                   _statusValid && currentMissionItem ? currentMissionItem.missionVehicleYaw : NaN
+    property real   _azimuth:                   _statusValid && _currentMissionItem ? _currentMissionItem.azimuth : NaN
+    property real   _heading:                   _statusValid && _currentMissionItem ? _currentMissionItem.missionVehicleYaw : NaN
     property real   _missionDistance:           _missionValid ? missionDistance : NaN
     property real   _missionMaxTelemetry:       _missionValid ? missionMaxTelemetry : NaN
     property real   _missionTime:               _missionValid ? missionTime : NaN
-    property int    _batteryChangePoint:        _controllerValid ? planMasterController.missionController.batteryChangePoint : -1
-    property int    _batteriesRequired:         _controllerValid ? planMasterController.missionController.batteriesRequired : -1
+    property int    _batteryChangePoint:        _controllerValid ? _planMasterController.missionController.batteryChangePoint : -1
+    property int    _batteriesRequired:         _controllerValid ? _planMasterController.missionController.batteriesRequired : -1
     property bool   _batteryInfoAvailable:      _batteryChangePoint >= 0 || _batteriesRequired >= 0
-    property real   _controllerProgressPct:     _controllerValid ? planMasterController.missionController.progressPct : 0
-    property bool   _syncInProgress:            _controllerValid ? planMasterController.missionController.syncInProgress : false
+    property real   _controllerProgressPct:     _controllerValid ? _planMasterController.missionController.progressPct : 0
+    property bool   _syncInProgress:            _controllerValid ? _planMasterController.missionController.syncInProgress : false
 
     property string _distanceText:              isNaN(_distance) ?              "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_distance).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
     property string _altDifferenceText:         isNaN(_altDifference) ?         "-.-" : QGroundControl.metersToAppSettingsDistanceUnits(_altDifference).toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
@@ -72,8 +63,6 @@ Rectangle {
     property string _batteriesRequiredText:     _batteriesRequired < 0 ?        "N/A" : _batteriesRequired
 
     readonly property real _margins: ScreenTools.defaultFontPixelWidth
-
-    QGCPalette { id: qgcPal }
 
     function getMissionTime() {
         if(isNaN(_missionTime)) {
@@ -100,12 +89,12 @@ Rectangle {
             id:                 settingsButton
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
-            source:             "/qmlimages/PaperPlane.svg"
+            icon.source:        "/qmlimages/PaperPlane.svg"
             logo:               true
             checked:            false
             onClicked: {
                 checked = false
-                showFlyView()
+                mainWindow.showFlyView()
             }
         }
     }
@@ -134,10 +123,7 @@ Rectangle {
 
     QGCLabel {
         id:                     uploadCompleteText
-        anchors.top:            parent.top
-        anchors.bottom:         parent.bottom
-        anchors.left:           logoRow.right
-        anchors.right:          uploadButton.left
+        anchors.fill:           parent
         font.pointSize:         ScreenTools.largeFontPointSize
         horizontalAlignment:    Text.AlignHCenter
         verticalAlignment:      Text.AlignVCenter
@@ -151,7 +137,7 @@ Rectangle {
         anchors.bottom:         parent.bottom
         anchors.leftMargin:     _margins
         anchors.rightMargin:    _margins
-        anchors.left:           logoRow.right
+        anchors.left:           parent.left
         anchors.right:          uploadButton.visible ? uploadButton.left : parent.right
         columnSpacing:          0
         columns:                3
@@ -288,7 +274,7 @@ Rectangle {
         enabled:                !_controllerSyncInProgress
         visible:                !_controllerOffline && !_controllerSyncInProgress && !uploadCompleteText.visible
         primary:                _controllerDirty
-        onClicked:              planMasterController.upload()
+        onClicked:              _planMasterController.upload()
 
         PropertyAnimation on opacity {
             easing.type:    Easing.OutQuart
@@ -322,7 +308,7 @@ Rectangle {
     Rectangle {
         anchors.bottom: parent.bottom
         height:         toolBar.height * 0.05
-        width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
+        width:          activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
         color:          qgcPal.colorGreen
         visible:        !largeProgressBar.visible
     }

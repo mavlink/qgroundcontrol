@@ -45,7 +45,7 @@ struct stQGeoTileCacheQGCMapTypes {
 //-- IMPORTANT
 //   Changes here must reflect those in QGeoTiledMappingManagerEngineQGC.cpp
 
-stQGeoTileCacheQGCMapTypes kMapTypes[] = {
+static stQGeoTileCacheQGCMapTypes kMapTypes[] = {
 #ifndef QGC_LIMITED_MAPS
     {"Google Street Map",       UrlFactory::GoogleMap},
     {"Google Satellite Map",    UrlFactory::GoogleSatellite},
@@ -69,7 +69,7 @@ stQGeoTileCacheQGCMapTypes kMapTypes[] = {
 
 #define NUM_MAPS (sizeof(kMapTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
+static stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
     {"Mapbox Street Map",       UrlFactory::MapboxStreets},
     {"Mapbox Satellite Map",    UrlFactory::MapboxSatellite},
     {"Mapbox High Contrast Map",UrlFactory::MapboxHighContrast},
@@ -88,7 +88,7 @@ stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
 
 #define NUM_MAPBOXMAPS (sizeof(kMapboxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
+static stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
     {"Esri Street Map",       UrlFactory::EsriWorldStreet},
     {"Esri Satellite Map",    UrlFactory::EsriWorldSatellite},
     {"Esri Terrain Map",      UrlFactory::EsriTerrain}
@@ -96,7 +96,7 @@ stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
 
 #define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-stQGeoTileCacheQGCMapTypes kElevationTypes[] = {
+static stQGeoTileCacheQGCMapTypes kElevationTypes[] = {
     {"Airmap Elevation Data", UrlFactory::AirmapElevation}
 };
 
@@ -107,7 +107,7 @@ static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
 //-----------------------------------------------------------------------------
 // Singleton
-static QGCMapEngine* kMapEngine = NULL;
+static QGCMapEngine* kMapEngine = nullptr;
 QGCMapEngine*
 getQGCMapEngine()
 {
@@ -125,7 +125,7 @@ destroyMapEngine()
 {
     if(kMapEngine) {
         delete kMapEngine;
-        kMapEngine = NULL;
+        kMapEngine = nullptr;
     }
 }
 
@@ -275,15 +275,19 @@ QGCMapEngine::cacheTile(UrlFactory::MapType type, int x, int y, int z, const QBy
 void
 QGCMapEngine::cacheTile(UrlFactory::MapType type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
 {
-    QGCSaveTileTask* task = new QGCSaveTileTask(new QGCCacheTile(hash, image, format, type, set));
-    _worker.enqueueTask(task);
+    AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
+    //-- If we are allowed to persist data, save tile to cache
+    if(!appSettings->disableAllPersistence()->rawValue().toBool()) {
+        QGCSaveTileTask* task = new QGCSaveTileTask(new QGCCacheTile(hash, image, format, type, set));
+        _worker.enqueueTask(task);
+    }
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCMapEngine::getTileHash(UrlFactory::MapType type, int x, int y, int z)
 {
-    return QString().sprintf("%04d%08d%08d%03d", (int)type, x, y, z);
+    return QString().sprintf("%04d%08d%08d%03d", static_cast<int>(type), x, y, z);
 }
 
 //-----------------------------------------------------------------------------
@@ -291,7 +295,7 @@ UrlFactory::MapType
 QGCMapEngine::hashToType(const QString& hash)
 {
     QString type = hash.mid(0,4);
-    return (UrlFactory::MapType)type.toInt();
+    return static_cast<UrlFactory::MapType>(type.toInt());
 }
 
 //-----------------------------------------------------------------------------
@@ -321,7 +325,7 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
         set.tileX1 = long2elevationTileX(bottomRightLon,    zoom);
         set.tileY1 = lat2elevationTileY(topleftLat,         zoom);
     }
-    set.tileCount = (quint64)((quint64)set.tileX1 - (quint64)set.tileX0 + 1) * (quint64)((quint64)set.tileY1 - (quint64)set.tileY0 + 1);
+    set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
     set.tileSize  = UrlFactory::averageSizeForType(mapType) * set.tileCount;
     return set;
 }
@@ -330,14 +334,14 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
 int
 QGCMapEngine::long2tileX(double lon, int z)
 {
-    return (int)(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
+    return static_cast<int>(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
 }
 
 //-----------------------------------------------------------------------------
 int
 QGCMapEngine::lat2tileY(double lat, int z)
 {
-    return (int)(floor((1.0 - log( tan(lat * M_PI/180.0) + 1.0 / cos(lat * M_PI/180.0)) / M_PI) / 2.0 * pow(2.0, z)));
+    return static_cast<int>(floor((1.0 - log( tan(lat * M_PI/180.0) + 1.0 / cos(lat * M_PI/180.0)) / M_PI) / 2.0 * pow(2.0, z)));
 }
 
 //-----------------------------------------------------------------------------
@@ -345,7 +349,7 @@ int
 QGCMapEngine::long2elevationTileX(double lon, int z)
 {
     Q_UNUSED(z);
-    return (int)(floor((lon + 180.0) / srtm1TileSize));
+    return static_cast<int>(floor((lon + 180.0) / srtm1TileSize));
 }
 
 //-----------------------------------------------------------------------------
@@ -353,7 +357,7 @@ int
 QGCMapEngine::lat2elevationTileY(double lat, int z)
 {
     Q_UNUSED(z);
-    return (int)(floor((lat + 90.0) / srtm1TileSize));
+    return static_cast<int>(floor((lat + 90.0) / srtm1TileSize));
 }
 
 //-----------------------------------------------------------------------------
@@ -458,13 +462,13 @@ QGCMapEngine::bigSizeToString(quint64 size)
     if(size < 1024)
         return kLocale.toString(size);
     else if(size < 1024 * 1024)
-        return kLocale.toString((double)size / 1024.0, 'f', 1) + "kB";
+        return kLocale.toString(static_cast<double>(size) / 1024.0, 'f', 1) + "kB";
     else if(size < 1024 * 1024 * 1024)
-        return kLocale.toString((double)size / (1024.0 * 1024.0), 'f', 1) + "MB";
+        return kLocale.toString(static_cast<double>(size) / (1024.0 * 1024.0), 'f', 1) + "MB";
     else if(size < 1024.0 * 1024.0 * 1024.0 * 1024.0)
-        return kLocale.toString((double)size / (1024.0 * 1024.0 * 1024.0), 'f', 1) + "GB";
+        return kLocale.toString(static_cast<double>(size) / (1024.0 * 1024.0 * 1024.0), 'f', 1) + "GB";
     else
-        return kLocale.toString((double)size / (1024.0 * 1024.0 * 1024.0 * 1024), 'f', 1) + "TB";
+        return kLocale.toString(static_cast<double>(size) / (1024.0 * 1024.0 * 1024.0 * 1024), 'f', 1) + "TB";
 }
 
 //-----------------------------------------------------------------------------
@@ -479,7 +483,7 @@ void
 QGCMapEngine::_updateTotals(quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize)
 {
     emit updateTotals(totaltiles, totalsize, defaulttiles, defaultsize);
-    quint64 maxSize = (quint64)getMaxDiskCache() * 1024L * 1024L;
+    quint64 maxSize = static_cast<quint64>(getMaxDiskCache()) * 1024L * 1024L;
     if(!_prunning && defaultsize > maxSize) {
         //-- Prune Disk Cache
         _prunning = true;

@@ -18,10 +18,6 @@
 #include "VideoReceiver.h"
 #include "QGCLoggingCategory.h"
 
-#if !defined(__mobile__)
-#include "QGCQmlWidgetHolder.h"
-#endif
-
 #include <QtQml>
 #include <QQmlEngine>
 
@@ -182,7 +178,7 @@ QVariantList &QGCCorePlugin::settingsPages()
     return _p->settingsList;
 }
 
-QVariantList& QGCCorePlugin::instrumentPages(void)
+QVariantList& QGCCorePlugin::instrumentPages()
 {
     if (!_p->valuesPageWidgetInfo) {
         _p->valuesPageWidgetInfo    = new QmlComponentInfo(tr("Values"),    QUrl::fromUserInput("qrc:/qml/ValuePageWidget.qml"));
@@ -284,7 +280,7 @@ void QGCCorePlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorI
     Q_UNUSED(colorInfo);
 }
 
-QString QGCCorePlugin::showAdvancedUIMessage(void) const
+QString QGCCorePlugin::showAdvancedUIMessage() const
 {
     return tr("WARNING: You are about to enter Advanced Mode. "
               "If used incorrectly, this may cause your vehicle to malfunction thus voiding your warranty. "
@@ -304,7 +300,7 @@ QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
     pEngine->addImportPath("qrc:/qml");
     pEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
-    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
     return pEngine;
 }
 
@@ -317,7 +313,7 @@ bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlin
     return true;
 }
 
-QmlObjectListModel* QGCCorePlugin::customMapItems(void)
+QmlObjectListModel* QGCCorePlugin::customMapItems()
 {
     return &_p->_emptyCustomMapItems;
 }
@@ -327,12 +323,12 @@ VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)
     return new VideoReceiver(parent);
 }
 
-bool QGCCorePlugin::guidedActionsControllerLogging(void) const
+bool QGCCorePlugin::guidedActionsControllerLogging() const
 {
     return GuidedActionsControllerLog().isDebugEnabled();
 }
 
-QString QGCCorePlugin::stableVersionCheckFileUrl(void) const
+QString QGCCorePlugin::stableVersionCheckFileUrl() const
 {
 #ifdef QGC_CUSTOM_BUILD
     // Custom builds must override to turn on and provide their own location
@@ -341,17 +337,3 @@ QString QGCCorePlugin::stableVersionCheckFileUrl(void) const
     return QString("https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGC.version.txt");
 #endif
 }
-
-#if !defined(__mobile__)
-QGCQmlWidgetHolder* QGCCorePlugin::createMainQmlWidgetHolder(QLayout *mainLayout, QWidget* parent)
-{
-    QGCQmlWidgetHolder* pMainQmlWidgetHolder = new QGCQmlWidgetHolder(QString(), nullptr, parent);
-    mainLayout->addWidget(pMainQmlWidgetHolder);
-    pMainQmlWidgetHolder->setVisible(true);
-    QQmlEngine::setObjectOwnership(parent, QQmlEngine::CppOwnership);
-    pMainQmlWidgetHolder->setContextPropertyObject("controller", parent);
-    pMainQmlWidgetHolder->setContextPropertyObject("debugMessageModel", AppMessages::getModel());
-    pMainQmlWidgetHolder->setSource(QUrl::fromUserInput("qrc:qml/MainWindowHybrid.qml"));
-    return pMainQmlWidgetHolder;
-}
-#endif

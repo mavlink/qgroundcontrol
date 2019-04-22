@@ -23,9 +23,12 @@ import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
 SetupPage {
-    id:            firmwarePage
-    pageComponent: firmwarePageComponent
-    pageName:      "Firmware" // For building setup page title: 'Firmware Setup'
+    id:             firmwarePage
+    pageComponent:  firmwarePageComponent
+    pageName:       qsTr("Firmware")
+    showAdvanced:   activeVehicle && activeVehicle.apmFirmware
+
+    signal cancelDialog
 
     Component {
         id: firmwarePageComponent
@@ -40,7 +43,7 @@ SetupPage {
             // a better way to hightlight them, or use less highlights.
 
             // User visible strings
-            readonly property string title:   "Firmware Setup" // Popup dialog title
+            readonly property string title:   qsTr("Firmware Setup") // Popup dialog title
 
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
@@ -55,15 +58,14 @@ SetupPage {
             readonly property int _defaultFimwareTypePX4:   12
             readonly property int _defaultFimwareTypeAPM:   3
 
-            property var    _defaultFirmwareFact:       QGroundControl.settingsManager.appSettings.defaultFirmwareType
-            property bool   _defaultFirmwareIsPX4:      true
+            property var    _defaultFirmwareFact:   QGroundControl.settingsManager.appSettings.defaultFirmwareType
+            property bool   _defaultFirmwareIsPX4:  true
 
             property string firmwareWarningMessage
-            property bool   controllerCompleted:        false
-            property bool   initialBoardSearch:         true
+            property bool   initialBoardSearch:       true
             property string firmwareName
 
-            property bool _singleFirmwareMode:          QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
+            property bool _singleFirmwareMode: QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
 
             function cancelFlash() {
                 statusTextArea.append(highlightPrefix + qsTr("Upgrade cancelled") + highlightSuffix)
@@ -73,20 +75,17 @@ SetupPage {
 
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
+            onSetupPageCompleted: {
+                controller.startBoardSearch()
+                _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
+            }
+
             FirmwareUpgradeController {
                 id:             controller
                 progressBar:    progressBar
                 statusLog:      statusTextArea
 
                 property var activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
-                Component.onCompleted: {
-                    controllerCompleted = true
-                    if (qgcView.completedSignalled) {
-                        // We can only start the board search when the Qml and Controller are completely done loading
-                        controller.startBoardSearch()
-                    }
-                }
 
                 onActiveVehicleChanged: {
                     if (!activeVehicle) {
@@ -118,23 +117,15 @@ SetupPage {
                         // We end up here when we detect a board plugged in after we've started upgrade
                         statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
                         if (controller.pixhawkBoard || controller.px4FlowBoard) {
-                            showDialog(pixhawkFirmwareSelectDialogComponent, title, qgcView.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                            mainWindow.showDialog(pixhawkFirmwareSelectDialogComponent, title, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                         }
                     }
                 }
 
                 onError: {
-                    hideDialog()
                     statusTextArea.append(flashFailText)
+                    firmwarePage.cancelDialog()
                 }
-            }
-
-            Component.onCompleted: {
-                if (controllerCompleted) {
-                    // We can only start the board search when the Qml and Controller are completely done loading
-                    controller.startBoardSearch()
-                }
-                _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
 
             Component {
@@ -165,7 +156,11 @@ SetupPage {
                         px4FlightStackRadio2.text = qsTr("PX4 Flight Stack ") + versionString
                     }
 
-                    Component.onCompleted: updatePX4VersionDisplay()
+                    Component.onCompleted: {
+                        firmwarePage.advanced = false
+                        firmwarePage.showAdvanced = false
+                        updatePX4VersionDisplay()
+                    }
 
                     function accept() {
                         hideDialog()
@@ -175,21 +170,14 @@ SetupPage {
                             var stack
                             var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
+
                             if (px4Flow) {
-                                if(QGroundControl.hasAPMSupport) {
-                                    stack = px4FlowTypeSelectionCombo.model.get(px4FlowTypeSelectionCombo.currentIndex).stackType
-                                } else {
-                                    stack = FirmwareUpgradeController.PX4FlowPX4
-                                }
+                                stack = px4FlowTypeSelectionCombo.model.get(px4FlowTypeSelectionCombo.currentIndex).stackType
                                 vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
                             } else {
-                                if(QGroundControl.hasAPMSupport) {
-                                    stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
-                                    if (apmFlightStack.checked) {
-                                        vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
-                                    }
-                                } else {
-                                    stack = FirmwareUpgradeController.AutoPilotStackPX4
+                                stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
+                                if (apmFlightStack.checked) {
+                                    vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
                                 }
                             }
 
@@ -200,6 +188,12 @@ SetupPage {
                     function reject() {
                         hideDialog()
                         cancelFlash()
+                    }
+
+
+                    Connections {
+                        target:         firmwarePage
+                        onCancelDialog: reject()
                     }
 
                     ExclusiveGroup {
@@ -273,7 +267,7 @@ SetupPage {
                         QGCLabel {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
-                            text:       (_singleFirmwareMode || !QGroundControl.hasAPMSupport) ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
+                            text:       _singleFirmwareMode ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
 
                             readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:")
                             readonly property string _pixhawkLabel:          qsTr("Detected Pixhawk board. You can select from the following flight stacks:")
@@ -300,7 +294,7 @@ SetupPage {
                             text:           qsTr("PX4 Flight Stack ")
                             textBold:       _defaultFirmwareIsPX4
                             checked:        _defaultFirmwareIsPX4
-                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
+                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -314,7 +308,7 @@ SetupPage {
                             text:           qsTr("ArduPilot Flight Stack")
                             textBold:       !_defaultFirmwareIsPX4
                             checked:        !_defaultFirmwareIsPX4
-                            visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
+                            visible:        !_singleFirmwareMode && !px4Flow
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
@@ -326,7 +320,7 @@ SetupPage {
                             id:             px4FlightStackRadio2
                             exclusiveGroup: _defaultFirmwareIsPX4 ? null : firmwareGroup
                             text:           qsTr("PX4 Flight Stack ")
-                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
+                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -338,7 +332,7 @@ SetupPage {
                             id:             vehicleTypeSelectionCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            visible:        !px4Flow && apmFlightStack.checked && QGroundControl.hasAPMSupport
+                            visible:        !px4Flow && apmFlightStack.checked
                             model:          controller.apmAvailableVersions
                         }
 
@@ -346,7 +340,7 @@ SetupPage {
                             id:             px4FlowTypeSelectionCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
-                            visible:        px4Flow && QGroundControl.hasAPMSupport
+                            visible:        px4Flow
                             model:          px4FlowFirmwareList
                             currentIndex:   _defaultFirmwareIsPX4 ? 0 : 1
                         }
@@ -354,7 +348,7 @@ SetupPage {
                         Row {
                             width:      parent.width
                             spacing:    ScreenTools.defaultFontPixelWidth / 2
-                            visible:    !px4Flow && false //===> Needs to come from elsewhere defining if we're to enable Beta/Dev options
+                            visible:    !px4Flow
 
                             Rectangle {
                                 height:     1
@@ -366,7 +360,7 @@ SetupPage {
                             QGCCheckBox {
                                 id:         _advanced
                                 text:       qsTr("Advanced settings")
-                                checked:    false // px4Flow ? true : false
+                                checked:    px4Flow ? true : false
 
                                 onClicked: {
                                     firmwareVersionCombo.currentIndex = 0
@@ -445,8 +439,16 @@ SetupPage {
             }
 
             ProgressBar {
-                id:                 progressBar
-                Layout.preferredWidth:              parent.width
+                id:                     progressBar
+                Layout.preferredWidth:  parent.width
+                visible:                !flashBootloaderButton.visible
+            }
+
+            QGCButton {
+                id:         flashBootloaderButton
+                text:       qsTr("Flash ChibiOS Bootloader")
+                visible:    firmwarePage.advanced
+                onClicked:  activeVehicle.flashBootloader()
             }
 
             TextArea {

@@ -32,11 +32,15 @@ Rectangle {
     //property real   availableWidth    ///< Width for control
     //property var    missionItem       ///< Mission Item for editor
 
+    property var    _masterControler:               masterController
+    property var    _missionController:             _masterControler.missionController
+    property var    _missionVehicle:                _masterControler.controllerVehicle
     property real   _margin:                    ScreenTools.defaultFontPixelWidth / 2
     property real   _spacer:                    ScreenTools.defaultFontPixelWidth / 2
-    property var    _activeVehicle:             QGroundControl.multiVehicleManager.activeVehicle
     property string _setToVehicleHeadingStr:    qsTr("Set to vehicle heading")
     property string _setToVehicleLocationStr:   qsTr("Set to vehicle location")
+    property bool   _showCameraSection:         !_missionVehicle.apmFirmware
+    property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
 
 
     ExclusiveGroup { id: distanceGlideGroup }
@@ -62,11 +66,25 @@ Rectangle {
 
             Item { width: 1; height: _spacer }
 
-            FactTextFieldGrid {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                factList:       [ missionItem.loiterAltitude, missionItem.loiterRadius ]
-                factLabels:     [ qsTr("Altitude"), qsTr("Radius") ]
+            GridLayout {
+                anchors.left:    parent.left
+                anchors.right:   parent.right
+                columns:         2
+
+                QGCLabel { text: qsTr("Altitude") }
+
+                AltitudeFactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.loiterAltitude
+                    altitudeMode:       _altitudeMode
+                }
+
+                QGCLabel { text: qsTr("Radius") }
+
+                FactTextField {
+                    Layout.fillWidth:   true
+                    fact:               missionItem.loiterRadius
+                }
             }
 
             Item { width: 1; height: _spacer }
@@ -79,8 +97,8 @@ Rectangle {
 
             QGCButton {
                 text:       _setToVehicleHeadingStr
-                visible:    _activeVehicle
-                onClicked:  missionItem.landingHeading.rawValue = _activeVehicle.heading.rawValue
+                visible:    activeVehicle
+                onClicked:  missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
             }
         }
 
@@ -111,9 +129,10 @@ Rectangle {
 
                 QGCLabel { text: qsTr("Altitude") }
 
-                FactTextField {
+                AltitudeFactTextField {
                     Layout.fillWidth:   true
                     fact:               missionItem.landingAltitude
+                    altitudeMode:       _altitudeMode
                 }
 
                 QGCRadioButton {
@@ -148,9 +167,9 @@ Rectangle {
 
                 QGCButton {
                     text:               _setToVehicleLocationStr
-                    visible:            _activeVehicle
+                    visible:            activeVehicle
                     Layout.columnSpan:  2
-                    onClicked:          missionItem.landingCoordinate = _activeVehicle.coordinate
+                    onClicked:          missionItem.landingCoordinate = activeVehicle.coordinate
                 }
             }
         }
@@ -166,15 +185,16 @@ Rectangle {
         }
 
         SectionHeader {
-            id:     cameraSection
-            text:   qsTr("Camera")
+            id:         cameraSection
+            text:       qsTr("Camera")
+            visible:    _showCameraSection
         }
 
         Column {
             anchors.left:       parent.left
             anchors.right:      parent.right
             spacing:            _margin
-            visible:            cameraSection.checked
+            visible:            _showCameraSection && cameraSection.checked
 
             Item { width: 1; height: _spacer }
 
@@ -216,17 +236,17 @@ Rectangle {
             anchors.right:          parent.right
             horizontalAlignment:    Text.AlignHCenter
             text:                   qsTr("- or -")
-            visible:                _activeVehicle
+            visible:                activeVehicle
         }
 
         QGCButton {
             anchors.horizontalCenter:   parent.horizontalCenter
             text:                       _setToVehicleLocationStr
-            visible:                    _activeVehicle
+            visible:                    activeVehicle
 
             onClicked: {
-                missionItem.landingCoordinate = _activeVehicle.coordinate
-                missionItem.landingHeading.rawValue = _activeVehicle.heading.rawValue
+                missionItem.landingCoordinate = activeVehicle.coordinate
+                missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
             }
         }
     }

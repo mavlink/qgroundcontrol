@@ -25,6 +25,7 @@ public:
         STEERING        = 3,
         HOLD            = 4,
         LOITER          = 5,
+        FOLLOW          = 6,
         SIMPLE          = 7,
         AUTO            = 10,
         RTL             = 11,

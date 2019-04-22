@@ -3,7 +3,7 @@
 # Please see our website at <http://qgroundcontrol.org>
 # Maintainer:
 # Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2015 QGroundControl Developers
+# (c) 2009-2019 QGroundControl Developers
 # License terms set in COPYING.md
 # -------------------------------------------------
 
@@ -15,8 +15,8 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 
 message(Qt version $$[QT_VERSION])
 
-!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 8) {
-    error("Unsupported Qt version, 5.9+ is required")
+!equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 11) {
+    error("Unsupported Qt version, 5.12+ is required")
 }
 
 include(QGCCommon.pri)
@@ -39,9 +39,7 @@ MacBuild {
     QMAKE_INFO_PLIST    = Custom-Info.plist
     ICON                = $${BASEDIR}/resources/icons/macx.icns
     OTHER_FILES        += Custom-Info.plist
-    equals(QT_MAJOR_VERSION, 5) | greaterThan(QT_MINOR_VERSION, 5) {
-        LIBS           += -framework ApplicationServices
-    }
+    LIBS               += -framework ApplicationServices
 }
 
 LinuxBuild {
@@ -60,7 +58,7 @@ QGC_APP_NAME        = "QGroundControl"
 QGC_ORG_NAME        = "QGroundControl.org"
 QGC_ORG_DOMAIN      = "org.qgroundcontrol"
 QGC_APP_DESCRIPTION = "Open source ground control app provided by QGroundControl dev team"
-QGC_APP_COPYRIGHT   = "Copyright (C) 2017 QGroundControl Development Team. All rights reserved."
+QGC_APP_COPYRIGHT   = "Copyright (C) 2019 QGroundControl Development Team. All rights reserved."
 
 WindowsBuild {
     QGC_INSTALLER_ICON          = "WindowsQGC.ico"
@@ -330,7 +328,7 @@ equals(QT_MAJOR_VERSION, 5):equals(QT_MINOR_VERSION, 9):AndroidBuild {
 
 DebugBuild {
     # Unit Test resources
-    RESOURCES += UnitTest.qrc
+    #-- TODO: RESOURCES += UnitTest.qrc
 }
 
 DEPENDPATH += \
@@ -376,26 +374,6 @@ INCLUDEPATH += \
     src/ui/toolbar \
     src/ui/uas \
 
-FORMS += \
-    src/ui/MainWindow.ui \
-    src/QGCQmlWidgetHolder.ui \
-
-!MobileBuild {
-FORMS += \
-    src/ui/linechart/Linechart.ui \
-    src/ui/MultiVehicleDockWidget.ui \
-    src/ui/QGCHilConfiguration.ui \
-    src/ui/QGCHilFlightGearConfiguration.ui \
-    src/ui/QGCHilJSBSimConfiguration.ui \
-    src/ui/QGCHilXPlaneConfiguration.ui \
-    src/ui/QGCMAVLinkInspector.ui \
-    src/ui/QGCMAVLinkLogPlayer.ui \
-    src/ui/QGCMapRCToParamDialog.ui \
-    src/ui/QGCUASFileView.ui \
-    src/ui/QGCUASFileViewMulti.ui \
-    src/ui/uas/QGCUnconnectedInfoWidget.ui \
-}
-
 #
 # Plugin API
 #
@@ -415,109 +393,14 @@ SOURCES += \
     src/api/QmlComponentInfo.cc \
     src/comm/MavlinkMessagesTimer.cc
 
-#
-# Unit Test specific configuration goes here (requires full debug build with all plugins)
-#
-
-DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory  { APMFirmwarePlugin { APMFirmwarePluginFactory { !MobileBuild {
-    DEFINES += UNITTEST_BUILD
-
-    INCLUDEPATH += \
-        src/qgcunittest
-
-    HEADERS += \
-        src/AnalyzeView/LogDownloadTest.h \
-        src/Audio/AudioOutputTest.h \
-        src/FactSystem/FactSystemTestBase.h \
-        src/FactSystem/FactSystemTestGeneric.h \
-        src/FactSystem/FactSystemTestPX4.h \
-        src/FactSystem/ParameterManagerTest.h \
-        src/MissionManager/CameraCalcTest.h \
-        src/MissionManager/CameraSectionTest.h \
-        src/MissionManager/CorridorScanComplexItemTest.h \
-        src/MissionManager/FWLandingPatternTest.h \
-        src/MissionManager/MissionCommandTreeTest.h \
-        src/MissionManager/MissionControllerManagerTest.h \
-        src/MissionManager/MissionControllerTest.h \
-        src/MissionManager/MissionItemTest.h \
-        src/MissionManager/MissionManagerTest.h \
-        src/MissionManager/MissionSettingsTest.h \
-        src/MissionManager/PlanMasterControllerTest.h \
-        src/MissionManager/QGCMapPolygonTest.h \
-        src/MissionManager/QGCMapPolylineTest.h \
-        src/MissionManager/SectionTest.h \
-        src/MissionManager/SimpleMissionItemTest.h \
-        src/MissionManager/SpeedSectionTest.h \
-        src/MissionManager/StructureScanComplexItemTest.h \
-        src/MissionManager/SurveyComplexItemTest.h \
-        src/MissionManager/TransectStyleComplexItemTest.h \
-        src/MissionManager/VisualMissionItemTest.h \
-        src/qgcunittest/FileDialogTest.h \
-        src/qgcunittest/FileManagerTest.h \
-        src/qgcunittest/FlightGearTest.h \
-        src/qgcunittest/GeoTest.h \
-        src/qgcunittest/LinkManagerTest.h \
-        src/qgcunittest/MainWindowTest.h \
-        src/qgcunittest/MavlinkLogTest.h \
-        src/qgcunittest/MessageBoxTest.h \
-        src/qgcunittest/MultiSignalSpy.h \
-        src/qgcunittest/RadioConfigTest.h \
-        src/qgcunittest/TCPLinkTest.h \
-        src/qgcunittest/TCPLoopBackServer.h \
-        src/qgcunittest/UnitTest.h \
-        src/Vehicle/SendMavCommandTest.h \
-
-    SOURCES += \
-        src/AnalyzeView/LogDownloadTest.cc \
-        src/Audio/AudioOutputTest.cc \
-        src/FactSystem/FactSystemTestBase.cc \
-        src/FactSystem/FactSystemTestGeneric.cc \
-        src/FactSystem/FactSystemTestPX4.cc \
-        src/FactSystem/ParameterManagerTest.cc \
-        src/MissionManager/CameraCalcTest.cc \
-        src/MissionManager/CameraSectionTest.cc \
-        src/MissionManager/CorridorScanComplexItemTest.cc \
-        src/MissionManager/FWLandingPatternTest.cc \
-        src/MissionManager/MissionCommandTreeTest.cc \
-        src/MissionManager/MissionControllerManagerTest.cc \
-        src/MissionManager/MissionControllerTest.cc \
-        src/MissionManager/MissionItemTest.cc \
-        src/MissionManager/MissionManagerTest.cc \
-        src/MissionManager/MissionSettingsTest.cc \
-        src/MissionManager/PlanMasterControllerTest.cc \
-        src/MissionManager/QGCMapPolygonTest.cc \
-        src/MissionManager/QGCMapPolylineTest.cc \
-        src/MissionManager/SectionTest.cc \
-        src/MissionManager/SimpleMissionItemTest.cc \
-        src/MissionManager/SpeedSectionTest.cc \
-        src/MissionManager/StructureScanComplexItemTest.cc \
-        src/MissionManager/SurveyComplexItemTest.cc \
-        src/MissionManager/TransectStyleComplexItemTest.cc \
-        src/MissionManager/VisualMissionItemTest.cc \
-        src/qgcunittest/FileDialogTest.cc \
-        src/qgcunittest/FileManagerTest.cc \
-        src/qgcunittest/FlightGearTest.cc \
-        src/qgcunittest/GeoTest.cc \
-        src/qgcunittest/LinkManagerTest.cc \
-        src/qgcunittest/MainWindowTest.cc \
-        src/qgcunittest/MavlinkLogTest.cc \
-        src/qgcunittest/MessageBoxTest.cc \
-        src/qgcunittest/MultiSignalSpy.cc \
-        src/qgcunittest/RadioConfigTest.cc \
-        src/qgcunittest/TCPLinkTest.cc \
-        src/qgcunittest/TCPLoopBackServer.cc \
-        src/qgcunittest/UnitTest.cc \
-        src/qgcunittest/UnitTestList.cc \
-        src/Vehicle/SendMavCommandTest.cc \
-} } } } } }
-
 # Main QGC Headers and Source files
 
 HEADERS += \
-    src/AnalyzeView/ExifParser.h \
     src/AnalyzeView/LogDownloadController.h \
     src/AnalyzeView/PX4LogParser.h \
     src/AnalyzeView/ULogParser.h \
+    src/AnalyzeView/MAVLinkInspectorController.h \
+    src/AnalyzeView/MavlinkConsoleController.h \
     src/Audio/AudioOutput.h \
     src/Camera/QGCCameraControl.h \
     src/Camera/QGCCameraIO.h \
@@ -580,8 +463,6 @@ HEADERS += \
     src/QGCMapPalette.h \
     src/QGCPalette.h \
     src/QGCQGeoCoordinate.h \
-    src/QGCQmlWidgetHolder.h \
-    src/QGCQuickWidget.h \
     src/QGCTemporaryFile.h \
     src/QGCToolbox.h \
     src/QmlControls/AppMessages.h \
@@ -601,6 +482,7 @@ HEADERS += \
     src/Settings/BrandImageSettings.h \
     src/Settings/FlightMapSettings.h \
     src/Settings/FlyViewSettings.h \
+    src/Settings/OfflineMapsSettings.h \
     src/Settings/PlanViewSettings.h \
     src/Settings/RTKSettings.h \
     src/Settings/SettingsGroup.h \
@@ -626,7 +508,6 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/UTM.h \
-    src/AnalyzeView/MavlinkConsoleController.h \
 
 
 AndroidBuild {
@@ -662,6 +543,7 @@ HEADERS += \
 !MobileBuild {
 HEADERS += \
     src/AnalyzeView/GeoTagController.h \
+    src/AnalyzeView/ExifParser.h \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/rtcm.h \
     src/GPS/Drivers/src/ashtech.h \
@@ -676,38 +558,12 @@ HEADERS += \
     src/GPS/vehicle_gps_position.h \
     src/Joystick/JoystickSDL.h \
     src/QGCQFileDialog.h \
-    src/QGCMessageBox.h \
     src/RunGuard.h \
-    src/ViewWidgets/CustomCommandWidget.h \
-    src/ViewWidgets/CustomCommandWidgetController.h \
-    src/ViewWidgets/ViewWidgetController.h \
     src/comm/LogReplayLink.h \
-    src/comm/QGCFlightGearLink.h \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
     src/uas/FileManager.h \
-    src/ui/HILDockWidget.h \
-    src/ui/MAVLinkDecoder.h \
-    src/ui/MainWindow.h \
-    src/ui/MultiVehicleDockWidget.h \
-    src/ui/QGCHilConfiguration.h \
-    src/ui/QGCHilFlightGearConfiguration.h \
-    src/ui/QGCHilJSBSimConfiguration.h \
-    src/ui/QGCHilXPlaneConfiguration.h \
-    src/ui/QGCMAVLinkInspector.h \
-    src/ui/QGCMAVLinkLogPlayer.h \
-    src/ui/QGCMapRCToParamDialog.h \
-    src/ui/QGCUASFileView.h \
-    src/ui/QGCUASFileViewMulti.h \
-    src/ui/linechart/ChartPlot.h \
-    src/ui/linechart/IncrementalPlot.h \
-    src/ui/linechart/LinechartPlot.h \
-    src/ui/linechart/LinechartWidget.h \
-    src/ui/linechart/Linecharts.h \
-    src/ui/linechart/ScrollZoomer.h \
-    src/ui/linechart/Scrollbar.h \
-    src/ui/uas/QGCUnconnectedInfoWidget.h \
 }
 
 iOSBuild {
@@ -721,10 +577,11 @@ AndroidBuild {
 }
 
 SOURCES += \
-    src/AnalyzeView/ExifParser.cc \
     src/AnalyzeView/LogDownloadController.cc \
     src/AnalyzeView/PX4LogParser.cc \
     src/AnalyzeView/ULogParser.cc \
+    src/AnalyzeView/MAVLinkInspectorController.cc \
+    src/AnalyzeView/MavlinkConsoleController.cc \
     src/Audio/AudioOutput.cc \
     src/Camera/QGCCameraControl.cc \
     src/Camera/QGCCameraIO.cc \
@@ -783,8 +640,6 @@ SOURCES += \
     src/QGCMapPalette.cc \
     src/QGCPalette.cc \
     src/QGCQGeoCoordinate.cc \
-    src/QGCQmlWidgetHolder.cpp \
-    src/QGCQuickWidget.cc \
     src/QGCTemporaryFile.cc \
     src/QGCToolbox.cc \
     src/QmlControls/AppMessages.cc \
@@ -804,6 +659,7 @@ SOURCES += \
     src/Settings/BrandImageSettings.cc \
     src/Settings/FlightMapSettings.cc \
     src/Settings/FlyViewSettings.cc \
+    src/Settings/OfflineMapsSettings.cc \
     src/Settings/PlanViewSettings.cc \
     src/Settings/RTKSettings.cc \
     src/Settings/SettingsGroup.cc \
@@ -828,7 +684,6 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/UTM.cpp \
-    src/AnalyzeView/MavlinkConsoleController.cc \
 
 DebugBuild {
 SOURCES += \
@@ -851,6 +706,7 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 !MobileBuild {
 SOURCES += \
     src/AnalyzeView/GeoTagController.cc \
+    src/AnalyzeView/ExifParser.cc \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/rtcm.cpp \
     src/GPS/Drivers/src/ashtech.cpp \
@@ -862,41 +718,10 @@ SOURCES += \
     src/Joystick/JoystickSDL.cc \
     src/QGCQFileDialog.cc \
     src/RunGuard.cc \
-    src/ViewWidgets/CustomCommandWidget.cc \
-    src/ViewWidgets/CustomCommandWidgetController.cc \
-    src/ViewWidgets/ViewWidgetController.cc \
     src/comm/LogReplayLink.cc \
-    src/comm/QGCFlightGearLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
     src/uas/FileManager.cc \
-    src/ui/HILDockWidget.cc \
-    src/ui/MAVLinkDecoder.cc \
-    src/ui/MainWindow.cc \
-    src/ui/MultiVehicleDockWidget.cc \
-    src/ui/QGCHilConfiguration.cc \
-    src/ui/QGCHilFlightGearConfiguration.cc \
-    src/ui/QGCHilJSBSimConfiguration.cc \
-    src/ui/QGCHilXPlaneConfiguration.cc \
-    src/ui/QGCMAVLinkInspector.cc \
-    src/ui/QGCMAVLinkLogPlayer.cc \
-    src/ui/QGCMapRCToParamDialog.cpp \
-    src/ui/QGCUASFileView.cc \
-    src/ui/QGCUASFileViewMulti.cc \
-    src/ui/linechart/ChartPlot.cc \
-    src/ui/linechart/IncrementalPlot.cc \
-    src/ui/linechart/LinechartPlot.cc \
-    src/ui/linechart/LinechartWidget.cc \
-    src/ui/linechart/Linecharts.cc \
-    src/ui/linechart/ScrollZoomer.cc \
-    src/ui/linechart/Scrollbar.cc \
-    src/ui/uas/QGCUnconnectedInfoWidget.cc \
-}
-
-# Palette test widget in debug builds
-DebugBuild {
-    HEADERS += src/QmlControls/QmlTestWidget.h
-    SOURCES += src/QmlControls/QmlTestWidget.cc
 }
 
 #

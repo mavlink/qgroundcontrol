@@ -15,7 +15,6 @@
 
 DECLARE_SETTINGGROUP(AutoConnect, "LinkManager")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
     qmlRegisterUncreatableType<AutoConnectSettings>("QGroundControl.SettingsManager", 1, 0, "AutoConnectSettings", "Reference only"); \
 }
 

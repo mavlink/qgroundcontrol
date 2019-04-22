@@ -15,8 +15,9 @@ Column {
     spacing:        _margin
 
     property var    cameraCalc
-    property bool   vehicleFlightIsFrontal: true
+    property bool   vehicleFlightIsFrontal:         true
     property string distanceToSurfaceLabel
+    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
 
@@ -226,8 +227,9 @@ Column {
                     onClicked:              cameraCalc.valueSetIsDistance.value = 1
                 }
 
-                FactTextField {
+                AltitudeFactTextField {
                     fact:                   cameraCalc.distanceToSurface
+                    altitudeMode:           distanceToSurfaceAltitudeMode
                     enabled:                fixedDistanceRadio.checked
                     Layout.fillWidth:       true
                 }
@@ -285,8 +287,9 @@ Column {
             visible:        cameraCalc.isManualCamera
 
             QGCLabel { text: distanceToSurfaceLabel }
-            FactTextField {
+            AltitudeFactTextField {
                 fact:               cameraCalc.distanceToSurface
+                altitudeMode:       distanceToSurfaceAltitudeMode
                 Layout.fillWidth:   true
             }
 

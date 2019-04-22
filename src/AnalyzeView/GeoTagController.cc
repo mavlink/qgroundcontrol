@@ -8,20 +8,21 @@
  ****************************************************************************/
 
 #include "GeoTagController.h"
-#include "QGCQFileDialog.h"
 #include "QGCLoggingCategory.h"
-#include "MainWindow.h"
 #include <math.h>
 #include <QtEndian>
-#include <QMessageBox>
 #include <QDebug>
 #include <cfloat>
+#include <QDir>
+#include <QUrl>
 
 #include "ExifParser.h"
 #include "ULogParser.h"
 #include "PX4LogParser.h"
 
-GeoTagController::GeoTagController(void)
+static const char* kTagged = "/TAGGED";
+
+GeoTagController::GeoTagController()
     : _progress(0)
     , _inProgress(false)
 {
@@ -36,58 +37,69 @@ GeoTagController::~GeoTagController()
 
 }
 
-void GeoTagController::pickLogFile(void)
+void GeoTagController::setLogFile(QString filename)
 {
-    QString filename = QGCQFileDialog::getOpenFileName(MainWindow::instance(), tr("Select log file load"), QString(), tr("ULog file (*.ulg);;PX4 log file (*.px4log);;All Files (*.*)"));
+    filename = QUrl(filename).toLocalFile();
     if (!filename.isEmpty()) {
         _worker.setLogFile(filename);
         emit logFileChanged(filename);
     }
 }
 
-void GeoTagController::pickImageDirectory(void)
+void GeoTagController::setImageDirectory(QString dir)
 {
-    QString dir = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select image directory"));
+    dir = QUrl(dir).toLocalFile();
     if (!dir.isEmpty()) {
         _worker.setImageDirectory(dir);
         emit imageDirectoryChanged(dir);
+        if(_worker.saveDirectory() == "") {
+            QDir saveDirectory = QDir(_worker.imageDirectory() + kTagged);
+            if(saveDirectory.exists()) {
+                _setErrorMessage(tr("Images have alreay been tagged. Existing images will be removed."));
+                return;
+            }
+        }
     }
+    _errorMessage.clear();
+    emit errorMessageChanged(_errorMessage);
 }
 
-void GeoTagController::pickSaveDirectory(void)
+void GeoTagController::setSaveDirectory(QString dir)
 {
-    QString dir = QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Select save directory"));
+    dir = QUrl(dir).toLocalFile();
     if (!dir.isEmpty()) {
         _worker.setSaveDirectory(dir);
         emit saveDirectoryChanged(dir);
+        //-- Check and see if there are images already there
+        QDir saveDirectory = QDir(_worker.saveDirectory());
+        saveDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
+        QStringList nameFilters;
+        nameFilters << "*.jpg" << "*.JPG";
+        saveDirectory.setNameFilters(nameFilters);
+        QStringList imageList = saveDirectory.entryList();
+        if(!imageList.isEmpty()) {
+            _setErrorMessage(tr("The save folder already contains images."));
+            return;
+        }
     }
+    _errorMessage.clear();
+    emit errorMessageChanged(_errorMessage);
 }
 
-void GeoTagController::startTagging(void)
+void GeoTagController::startTagging()
 {
     _errorMessage.clear();
     emit errorMessageChanged(_errorMessage);
-
     QDir imageDirectory = QDir(_worker.imageDirectory());
     if(!imageDirectory.exists()) {
-        _setErrorMessage(tr("Cannot find the image directory"));
+        _setErrorMessage(tr("Cannot find the image directory."));
         return;
     }
     if(_worker.saveDirectory() == "") {
-        if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
-            QMessageBox msgBox(QMessageBox::Question,
-                               tr("Images have alreay been tagged."),
-                               tr("The images have already been tagged. Do you want to replace the previously tagged images?"),
-                               QMessageBox::Cancel);
-            msgBox.setWindowModality(Qt::ApplicationModal);
-            msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
-            if (msgBox.exec() == QMessageBox::Cancel) {
-                _setErrorMessage(tr("Images have already been tagged"));
-                return;
-            }
-            QDir oldTaggedFolder = QDir(_worker.imageDirectory() + "/TAGGED");
+        QDir oldTaggedFolder = QDir(_worker.imageDirectory() + kTagged);
+        if(oldTaggedFolder.exists()) {
             oldTaggedFolder.removeRecursively();
-            if(!imageDirectory.mkdir(_worker.imageDirectory() + "/TAGGED")) {
+            if(!imageDirectory.mkdir(_worker.imageDirectory() + kTagged)) {
                 _setErrorMessage(tr("Couldn't replace the previously tagged images"));
                 return;
             }
@@ -95,32 +107,8 @@ void GeoTagController::startTagging(void)
     } else {
         QDir saveDirectory = QDir(_worker.saveDirectory());
         if(!saveDirectory.exists()) {
-            _setErrorMessage(tr("Cannot find the save directory"));
+            _setErrorMessage(tr("Cannot find the save directory."));
             return;
-        }
-        saveDirectory.setFilter(QDir::Files | QDir::Readable | QDir::NoSymLinks | QDir::Writable);
-        QStringList nameFilters;
-        nameFilters << "*.jpg" << "*.JPG";
-        saveDirectory.setNameFilters(nameFilters);
-        QStringList imageList = saveDirectory.entryList();
-        if(!imageList.isEmpty()) {
-            QMessageBox msgBox(QMessageBox::Question,
-                               tr("Save folder not empty."),
-                               tr("The save folder already contains images. Do you want to replace them?"),
-                               QMessageBox::Cancel);
-            msgBox.setWindowModality(Qt::ApplicationModal);
-            msgBox.addButton(tr("Replace"), QMessageBox::ActionRole);
-            if (msgBox.exec() == QMessageBox::Cancel) {
-                _setErrorMessage(tr("Save folder not empty"));
-                return;
-            }
-            for(QString dirFile: imageList)
-            {
-                if(!saveDirectory.remove(dirFile)) {
-                    _setErrorMessage(tr("Couldn't replace the existing images"));
-                    return;
-                }
-            }
         }
     }
     _worker.start();
@@ -145,7 +133,7 @@ void GeoTagController::_setErrorMessage(const QString& error)
     emit errorMessageChanged(error);
 }
 
-GeoTagWorker::GeoTagWorker(void)
+GeoTagWorker::GeoTagWorker()
     : _cancel(false)
     , _logFile("")
     , _imageDirectory("")
@@ -154,7 +142,7 @@ GeoTagWorker::GeoTagWorker(void)
 
 }
 
-void GeoTagWorker::run(void)
+void GeoTagWorker::run()
 {
     _cancel = false;
     emit progressChanged(1);
@@ -314,17 +302,14 @@ bool GeoTagWorker::triggerFiltering()
 {
     _imageIndices.clear();
     _triggerIndices.clear();
-
     if(_imageList.count() > _triggerList.count()) {             // Logging dropouts
         qCDebug(GeotaggingLog) << "Detected missing feedback packets.";
     } else if (_imageList.count() < _triggerList.count()) {     // Camera skipped frames
         qCDebug(GeotaggingLog) << "Detected missing image frames.";
     }
-
     for(int i = 0; i < _imageList.count() && i < _triggerList.count(); i++) {
-        _imageIndices.append(_triggerList[i].imageSequence);
+        _imageIndices.append(static_cast<int>(_triggerList[i].imageSequence));
         _triggerIndices.append(i);
     }
-
     return true;
 }

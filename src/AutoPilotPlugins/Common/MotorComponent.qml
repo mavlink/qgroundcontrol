@@ -26,7 +26,6 @@ SetupPage {
 
     FactPanelController {
         id:             controller
-        factPanel:      motorPage.viewPanel
     }
 
     Component {

@@ -25,6 +25,7 @@
 #include <QAction>
 #include <QStringListModel>
 #include <QRegularExpression>
+#include <QFontDatabase>
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -91,16 +92,16 @@
 #include "QGCFileDownload.h"
 #include "FirmwareImage.h"
 #include "MavlinkConsoleController.h"
+#include "MAVLinkInspectorController.h"
+#ifndef __mobile__
+#include "FirmwareUpgradeController.h"
+#endif
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
 #endif
 
 #ifndef __mobile__
-#include "QGCQFileDialog.h"
-#include "QGCMessageBox.h"
-#include "FirmwareUpgradeController.h"
-#include "MainWindow.h"
 #include "GeoTagController.h"
 #include "GPS/GPSManager.h"
 #endif
@@ -152,31 +153,10 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 }
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
-#ifdef __mobile__
     : QGuiApplication           (argc, argv)
-    , _qmlAppEngine             (nullptr)
-#else
-    : QApplication              (argc, argv)
-#endif
     , _runningUnitTests         (unitTesting)
-    , _logOutput                (false)
-    , _fakeMobile               (false)
-    , _settingsUpgraded         (false)
-    , _majorVersion             (0)
-    , _minorVersion             (0)
-    , _buildVersion             (0)
-    , _currentVersionDownload   (nullptr)
-    , _gpsRtkFactGroup          (nullptr)
-    , _toolbox                  (nullptr)
-    , _bluetoothAvailable       (false)
 {
     _app = this;
-
-    // This prevents usage of QQuickWidget to fail since it doesn't support native widget siblings
-#ifndef __android__
-    setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
-#endif
-
     // Setup for network proxy support
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
@@ -403,18 +383,8 @@ void QGCApplication::setLanguage()
         _app->installTranslator(&_QGCTranslator);
 }
 
-void QGCApplication::_shutdown(void)
+void QGCApplication::_shutdown()
 {
-    // This code is specifically not in the destructor since the application object may not be available in the destructor.
-    // This cause problems for deleting object like settings which are in the toolbox which may have qml references. By
-    // moving them here and having main.cc call this prior to deleting the app object we make sure app object is still
-    // around while these things are shutting down.
-#ifndef __mobile__
-    MainWindow* mainWindow = MainWindow::instance();
-    if (mainWindow) {
-        delete mainWindow;
-    }
-#endif
     shutdownVideoStreaming();
     delete _toolbox;
 }
@@ -425,7 +395,7 @@ QGCApplication::~QGCApplication()
     _app = nullptr;
 }
 
-void QGCApplication::_initCommon(void)
+void QGCApplication::_initCommon()
 {
     static const char* kRefOnly         = "Reference only";
     static const char* kQGCControllers  = "QGroundControl.Controllers";
@@ -481,14 +451,13 @@ void QGCApplication::_initCommon(void)
     qmlRegisterType<EditPositionDialogController>   (kQGCControllers,                       1, 0, "EditPositionDialogController");
 
 #ifndef __mobile__
-    qmlRegisterType<ViewWidgetController>           (kQGCControllers,                       1, 0, "ViewWidgetController");
-    qmlRegisterType<CustomCommandWidgetController>  (kQGCControllers,                       1, 0, "CustomCommandWidgetController");
 #ifndef NO_SERIAL_LINK
     qmlRegisterType<FirmwareUpgradeController>      (kQGCControllers,                       1, 0, "FirmwareUpgradeController");
 #endif
     qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
 #endif
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
+    qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
 
     // Register Qml Singletons
     qmlRegisterSingletonType<QGroundControlQmlGlobal>   ("QGroundControl",                          1, 0, "QGroundControl",         qgroundcontrolQmlGlobalSingletonFactory);
@@ -496,22 +465,21 @@ void QGCApplication::_initCommon(void)
     qmlRegisterSingletonType<ShapeFileHelper>           ("QGroundControl.ShapeFileHelper",          1, 0, "ShapeFileHelper",        shapeFileHelperSingletonFactory);
 }
 
-bool QGCApplication::_initForNormalAppBoot(void)
+bool QGCApplication::_initForNormalAppBoot()
 {
-    QSettings settings;
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+        qWarning() << "Could not load /fonts/opensans font";
+    }
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+        qWarning() << "Could not load /fonts/opensans-demibold font";
+    }
 
-    _loadCurrentStyleSheet();
+    QSettings settings;
 
     // Exit main application when last window is closed
     connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
-#ifdef __mobile__
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
-#else
-    // Start the user interface
-    MainWindow* mainWindow = MainWindow::_create();
-    Q_CHECK_PTR(mainWindow);
-#endif
 
     // Now that main window is up check for lost log files
     connect(this, &QGCApplication::checkForLostLogFiles, toolbox()->mavlinkProtocol(), &MAVLinkProtocol::checkForLostLogFiles);
@@ -540,7 +508,7 @@ bool QGCApplication::_initForNormalAppBoot(void)
     return true;
 }
 
-bool QGCApplication::_initForUnitTests(void)
+bool QGCApplication::_initForUnitTests()
 {
     return true;
 }
@@ -571,22 +539,14 @@ void QGCApplication::informationMessageBoxOnMainThread(const QString& title, con
 
 void QGCApplication::warningMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-#ifdef __mobile__
     Q_UNUSED(title)
     showMessage(msg);
-#else
-    QGCMessageBox::warning(title, msg);
-#endif
 }
 
 void QGCApplication::criticalMessageBoxOnMainThread(const QString& title, const QString& msg)
 {
-#ifdef __mobile__
     Q_UNUSED(title)
     showMessage(msg);
-#else
-    QGCMessageBox::critical(title, msg);
-#endif
 }
 
 void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
@@ -612,17 +572,13 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
         QFile tempFile(tempLogfile);
         if (!tempFile.copy(saveFilePath)) {
             QString error = tr("Unable to save telemetry log. Error copying telemetry to '%1': '%2'.").arg(saveFilePath).arg(tempFile.errorString());
-#ifndef __mobile__
-            QGCMessageBox::warning(tr("Telemetry Save Error"), error);
-#else
             showMessage(error);
-#endif
         }
     }
     QFile::remove(tempLogfile);
 }
 
-void QGCApplication::checkTelemetrySavePathOnMainThread(void)
+void QGCApplication::checkTelemetrySavePathOnMainThread()
 {
     // This is called with an active vehicle so don't pop message boxes which holds ui thread
     _checkTelemetrySavePath(false /* useMessageBox */);
@@ -635,71 +591,19 @@ bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
-#ifndef __mobile__
-        if (useMessageBox) {
-            QGCMessageBox::warning(errorTitle, error);
-        } else {
-#endif
-            Q_UNUSED(useMessageBox);
-            showMessage(error);
-#ifndef __mobile__
-        }
-#endif
+        Q_UNUSED(useMessageBox);
+        showMessage(error);
         return false;
     }
 
     QDir saveDir(saveDirPath);
     if (!saveDir.exists()) {
         QString error = tr("Unable to save telemetry log. Telemetry save directory \"%1\" does not exist.").arg(saveDirPath);
-#ifndef __mobile__
-        if (useMessageBox) {
-            QGCMessageBox::warning(errorTitle, error);
-        } else {
-#endif
-            showMessage(error);
-#ifndef __mobile__
-        }
-#endif
+        showMessage(error);
         return false;
     }
 
     return true;
-}
-
-void QGCApplication::_loadCurrentStyleSheet(void)
-{
-#ifndef __mobile__
-    bool success = true;
-    QString styles;
-
-    // The dark style sheet is the master. Any other selected style sheet just overrides
-    // the colors of the master sheet.
-    QFile masterStyleSheet(_darkStyleFile);
-    if (masterStyleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        styles = masterStyleSheet.readAll();
-    } else {
-        qDebug() << "Unable to load master dark style sheet";
-        success = false;
-    }
-
-    if (success && !_toolbox->settingsManager()->appSettings()->indoorPalette()->rawValue().toBool()) {
-        // Load the slave light stylesheet.
-        QFile styleSheet(_lightStyleFile);
-        if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            styles += styleSheet.readAll();
-        } else {
-            qWarning() << "Unable to load slave light sheet:";
-            success = false;
-        }
-    }
-
-    setStyleSheet(styles);
-
-    if (!success) {
-        // Fall back to plastique if we can't load our own
-        setStyle("plastique");
-    }
-#endif
 }
 
 void QGCApplication::reportMissingParameter(int componentId, const QString& name)
@@ -728,22 +632,9 @@ void QGCApplication::_missingParamsDisplay(void)
 
 QObject* QGCApplication::_rootQmlObject()
 {
-#ifdef __mobile__
     if(_qmlAppEngine && _qmlAppEngine->rootObjects().size())
         return _qmlAppEngine->rootObjects()[0];
     return nullptr;
-#else
-    MainWindow * mainWindow = MainWindow::instance();
-    if (mainWindow) {
-        return mainWindow->rootQmlObject();
-    } else if (runningUnitTests()){
-        // Unit test can run without a main window
-        return nullptr;
-    } else {
-        qWarning() << "Why is MainWindow missing?";
-        return nullptr;
-    }
-#endif
 }
 
 
@@ -753,32 +644,32 @@ void QGCApplication::showMessage(const QString& message)
     if (message.startsWith(QStringLiteral("PreArm")) || message.startsWith(QStringLiteral("preflight"), Qt::CaseInsensitive)) {
         return;
     }
-
     QObject* rootQmlObject = _rootQmlObject();
-
     if (rootQmlObject) {
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
-
         QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
-#ifndef __mobile__
-    } else if (runningUnitTests()){
-        // Unit test can run without a main window which will lead to no root qml object. Use QGCMessageBox instead
-        QGCMessageBox::information("Unit Test", message);
-#endif
     } else {
         qWarning() << "Internal error";
     }
 }
 
-void QGCApplication::showSetupView(void)
+QQuickItem* QGCApplication::mainRootWindow()
+{
+    if(_mainRootWindow) {
+        _mainRootWindow = reinterpret_cast<QQuickItem*>(_rootQmlObject());
+    }
+    return _mainRootWindow;
+}
+
+void QGCApplication::showSetupView()
 {
     if(_rootQmlObject()) {
         QMetaObject::invokeMethod(_rootQmlObject(), "showSetupView");
     }
 }
 
-void QGCApplication::qmlAttemptWindowClose(void)
+void QGCApplication::qmlAttemptWindowClose()
 {
     if(_rootQmlObject()) {
         QMetaObject::invokeMethod(_rootQmlObject(), "attemptWindowClose");
@@ -790,7 +681,7 @@ bool QGCApplication::isInternetAvailable()
     return getQGCMapEngine()->isInternetActive();
 }
 
-void QGCApplication::_checkForNewVersion(void)
+void QGCApplication::_checkForNewVersion()
 {
 #ifndef __mobile__
     if (!_runningUnitTests) {
@@ -826,7 +717,8 @@ void QGCApplication::_currentVersionDownloadFinished(QString remoteFile, QString
             if (_majorVersion < majorVersion ||
                     (_majorVersion == majorVersion && _minorVersion < minorVersion) ||
                     (_majorVersion == majorVersion && _minorVersion == minorVersion && _buildVersion < buildVersion)) {
-                QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
+                //-- TODO
+                ///QGCMessageBox::information(tr("New Version Available"), tr("There is a newer version of %1 available. You can download it from %2.").arg(applicationName()).arg(toolbox()->corePlugin()->stableDownloadLocation()));
             }
         }
     }

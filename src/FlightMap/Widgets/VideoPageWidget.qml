@@ -30,8 +30,7 @@ Item {
     anchors.margins:    ScreenTools.defaultFontPixelWidth * 2
     anchors.centerIn:   parent
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
+    property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
     property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _videoRunning:          _videoReceiver && _videoReceiver.videoRunning
@@ -79,7 +78,7 @@ Item {
            visible:             QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
         }
         QGCSwitch {
-            enabled:            _streamingEnabled && _activeVehicle
+            enabled:            _streamingEnabled && activeVehicle
             checked:            QGroundControl.settingsManager.videoSettings.gridLines.rawValue
             visible:            QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
             Layout.alignment:   Qt.AlignHCenter

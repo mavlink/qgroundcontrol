@@ -29,7 +29,6 @@ const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream"
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data

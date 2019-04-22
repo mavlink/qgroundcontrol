@@ -11,10 +11,6 @@
 #include "LogDownloadController.h"
 #include "MultiVehicleManager.h"
 #include "QGCMAVLink.h"
-#if !defined(__mobile__)
-#include "QGCQFileDialog.h"
-#include "MainWindow.h"
-#endif
 #include "UAS.h"
 #include "QGCApplication.h"
 #include "QGCToolbox.h"
@@ -516,11 +512,11 @@ LogDownloadController::download(QString path)
     }
 #else
     if(dir.isEmpty()) {
-        dir = QGCQFileDialog::getExistingDirectory(
-                MainWindow::instance(),
-                tr("Log Download Directory"),
-                QDir::homePath(),
-                QGCQFileDialog::ShowDirsOnly | QGCQFileDialog::DontResolveSymlinks);
+        dir = QString(); //-- TODO: QGCQFileDialog::getExistingDirectory(
+        //        MainWindow::instance(),
+        //        tr("Log Download Directory"),
+        //        QDir::homePath(),
+        //        QGCQFileDialog::ShowDirsOnly | QGCQFileDialog::DontResolveSymlinks);
     }
 #endif
     downloadToDirectory(dir);

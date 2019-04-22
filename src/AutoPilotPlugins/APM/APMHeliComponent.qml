@@ -30,7 +30,7 @@ SetupPage {
             width:      availableWidth
             spacing:    _margins
 
-            FactPanelController { id: controller; factPanel: safetyPage.viewPanel }
+            FactPanelController { id: controller; }
 
             QGCPalette { id: ggcPal; colorGroupEnabled: true }
 

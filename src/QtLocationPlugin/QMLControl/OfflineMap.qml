@@ -10,7 +10,7 @@
 import QtQuick                  2.3
 import QtQuick.Controls         1.2
 import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
+import QtQuick.Dialogs          1.3
 import QtQuick.Layouts          1.2
 import QtLocation               5.3
 import QtPositioning            5.3
@@ -24,19 +24,21 @@ import QGroundControl.QGCMapEngineManager   1.0
 import QGroundControl.FactSystem            1.0
 import QGroundControl.FactControls          1.0
 
-QGCView {
+Item {
     id:             offlineMapView
-    viewPanel:      panel
     anchors.fill:   parent
 
     property var    _currentSelection:  null
 
     property string mapKey:             "lastMapType"
 
-    property Fact   _mapboxFact:        QGroundControl.settingsManager.appSettings.mapboxToken
-    property Fact   _esriFact:          QGroundControl.settingsManager.appSettings.esriToken
+    property var    _settingsManager:   QGroundControl.settingsManager
+    property var    _settings:          _settingsManager.offlineMapsSettings
+    property var    _fmSettings:        _settingsManager.flightMapSettings
+    property Fact   _mapboxFact:        _settingsManager.appSettings.mapboxToken
+    property Fact   _esriFact:          _settingsManager.appSettings.esriToken
 
-    property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
+    property string mapType:            _fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue
     property bool   isMapInteractive:   false
     property var    savedCenter:        undefined
     property real   savedZoom:          3
@@ -52,13 +54,12 @@ QGCView {
 
     property var    _mapAdjustedColor:  _map.isSatelliteMap ? "white" : "black"
     property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
-    property var    _settings:          QGroundControl.settingsManager.flightMapSettings
 
     readonly property real minZoomLevel:    1
     readonly property real maxZoomLevel:    20
     readonly property real sliderTouchArea: ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 5 : (ScreenTools.isMobile ? 6 : 3))
 
-    readonly property int _maxTilesForDownload: 100000
+    readonly property int _maxTilesForDownload: _settings.maxTilesForDownload.rawValue
 
     QGCPalette { id: qgcPal }
 
@@ -106,7 +107,7 @@ QGCView {
 
     function addNewSet() {
         isMapInteractive = true
-        mapType = _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
+        mapType = _fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue
         resetMapToDefaults()
         handleChanges()
         _map.visible = true
@@ -215,7 +216,6 @@ QGCView {
 
     QGCFileDialog {
         id:             fileDialog
-        qgcView:        offlineMapView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         nameFilters:    ["Tile Sets (*.qgctiledb)"]
         fileExtension:  "qgctiledb"
@@ -232,7 +232,6 @@ QGCView {
         onAcceptedForLoad: {
             if(!QGroundControl.mapEngineManager.importSets(file)) {
                 showList();
-                mainWindow.enableToolbar()
             }
             close()
         }
@@ -366,8 +365,7 @@ QGCView {
         }
     }
 
-    QGCViewPanel {
-        id:                 panel
+    Item {
         anchors.fill:       parent
 
         FlightMap {
@@ -378,7 +376,6 @@ QGCView {
             allowVehicleLocationCenter: false
             gesture.flickDeceleration:  3000
             mapName:                    "OfflineMap"
-            qgcView:                    offlineMapView
 
             property bool isSatelliteMap: activeMapType.name.indexOf("Satellite") > -1 || activeMapType.name.indexOf("Hybrid") > -1
 
@@ -545,7 +542,7 @@ QGCView {
                         QGCButton {
                             text:       qsTr("Delete")
                             width:      ScreenTools.defaultFontPixelWidth * (infoView._extraButton ? 6 : 10)
-                            onClicked:  showDialog(deleteConfirmationDialogComponent, qsTr("Confirm Delete"), qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
+                            onClicked:  mainWindow.showDialog(deleteConfirmationDialogComponent, qsTr("Confirm Delete"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
                         }
                         QGCButton {
                             text:       qsTr("Ok")
@@ -813,11 +810,21 @@ QGCView {
                                 maximumValue:               maxZoomLevel
                                 stepSize:                   1
                                 updateValueWhileDragging:   true
-                                property real _savedZoom
-                                Component.onCompleted:      Math.max(sliderMinZoom.value = _map.zoomLevel - 4, 2)
+
+                                property bool _updateSetting: false
+
+                                Component.onCompleted: {
+                                    sliderMinZoom.value = _settings.minZoomLevelDownload.rawValue
+                                    _updateSetting = true
+                                }
+
                                 onValueChanged: {
                                     if(sliderMinZoom.value > sliderMaxZoom.value) {
                                         sliderMaxZoom.value = sliderMinZoom.value
+                                    }
+                                    if (_updateSetting) {
+                                        // Don't update setting until after Component.onCompleted since bad values come through before that
+                                        _settings.minZoomLevelDownload.rawValue = value
                                     }
                                     handleChanges()
                                 }
@@ -856,11 +863,21 @@ QGCView {
                                 maximumValue:               maxZoomLevel
                                 stepSize:                   1
                                 updateValueWhileDragging:   true
-                                property real _savedZoom
-                                Component.onCompleted:      Math.min(sliderMaxZoom.value = _map.zoomLevel + 2, 20)
+
+                                property bool _updateSetting: false
+
+                                Component.onCompleted: {
+                                    sliderMaxZoom.value = _settings.maxZoomLevelDownload.rawValue
+                                    _updateSetting = true
+                                }
+
                                 onValueChanged: {
                                     if(sliderMaxZoom.value < sliderMinZoom.value) {
                                         sliderMinZoom.value = sliderMaxZoom.value
+                                    }
+                                    if (_updateSetting) {
+                                        // Don't update setting until after Component.onCompleted since bad values come through before that
+                                        _settings.maxZoomLevelDownload.rawValue = value
                                     }
                                     handleChanges()
                                 }
@@ -1024,7 +1041,7 @@ QGCView {
             QGCButton {
                 text:           qsTr("Options")
                 width:          _buttonSize
-                onClicked:      showDialog(optionsDialogComponent, qsTr("Offline Maps Options"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                onClicked:      mainWindow.showDialog(optionsDialogComponent, qsTr("Offline Maps Options"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
             }
         }
 
@@ -1099,7 +1116,7 @@ QGCView {
                 onClicked:       showList()
             }
         }
-    } // QGCViewPanel
+    }
 
     Component {
         id: exportToDiskProgress
@@ -1147,7 +1164,6 @@ QGCView {
                         visible:        !QGroundControl.mapEngineManager.exporting
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
-                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1231,7 +1247,6 @@ QGCView {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             showList();
-                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1254,7 +1269,6 @@ QGCView {
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
-                                mainWindow.enableToolbar()
                                 rootLoader.sourceComponent = null
                             }
                         }
@@ -1263,5 +1277,4 @@ QGCView {
             }
         }
     }
-
-} // QGCView
+}

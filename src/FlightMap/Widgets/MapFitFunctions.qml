@@ -23,8 +23,6 @@ Item {
     property var    _geoFenceController:    planMasterController.geoFenceController
     property var    _rallyPointController:  planMasterController.rallyPointController
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
     function fitHomePosition() {
         var homePosition = QtPositioning.coordinate()
         var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle

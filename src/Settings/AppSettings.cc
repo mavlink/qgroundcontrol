@@ -10,6 +10,7 @@
 #include "AppSettings.h"
 #include "QGCPalette.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
 
 #include <QQmlEngine>
 #include <QtQml>
@@ -35,7 +36,6 @@ const char* AppSettings::crashDirectory =           "CrashLogs";
 
 DECLARE_SETTINGGROUP(App, "")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 
@@ -61,7 +61,7 @@ DECLARE_SETTINGGROUP(App, "")
     connect(savePathFact, &Fact::rawValueChanged, this, &AppSettings::_checkSavePathDirectories);
 
     _checkSavePathDirectories();
-    //-- Same for language
+    //-- Keep track of language changes
     SettingsFact* languageFact = qobject_cast<SettingsFact*>(language());
     connect(languageFact, &Fact::rawValueChanged, this, &AppSettings::_languageChanged);
 }
@@ -93,6 +93,7 @@ DECLARE_SETTINGSFACT(AppSettings, enableTaisync)
 DECLARE_SETTINGSFACT(AppSettings, enableTaisyncVideo)
 DECLARE_SETTINGSFACT(AppSettings, enableMicrohard)
 DECLARE_SETTINGSFACT(AppSettings, language)
+DECLARE_SETTINGSFACT(AppSettings, disableAllPersistence)
 
 DECLARE_SETTINGSFACT_NO_FUNC(AppSettings, indoorPalette)
 {
@@ -126,7 +127,6 @@ void AppSettings::_checkSavePathDirectories(void)
 
 void AppSettings::_indoorPaletteChanged(void)
 {
-    qgcApp()->_loadCurrentStyleSheet();
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 }
 

@@ -14,6 +14,5 @@
 
 DECLARE_SETTINGGROUP(PlanView, "PlanView")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership); \
     qmlRegisterUncreatableType<PlanViewSettings>("QGroundControl.SettingsManager", 1, 0, "PlanViewSettings", "Reference only"); \
 }

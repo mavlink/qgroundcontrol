@@ -22,8 +22,6 @@ SetupPage {
 
         FactSliderPanel {
             width:          availableWidth
-            qgcViewPanel:   tuningPage.viewPanel
-
             sliderModel: ListModel {
 
                 ListElement {

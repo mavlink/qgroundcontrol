@@ -30,7 +30,6 @@ SetupPage {
 
     FactPanelController {
         id:             controller
-        factPanel:      motorPage.viewPanel
     }
 
     function setMotorDirection(num, reversed) {

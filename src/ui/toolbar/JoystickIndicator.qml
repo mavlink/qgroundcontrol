@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-
-import QtQuick          2.5
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.11
+import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -69,12 +67,6 @@ Item {
                     }
                 }
             }
-
-            Component.onCompleted: {
-                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
-                x = pos.x
-                y = pos.y + ScreenTools.defaultFontPixelHeight
-            }
         }
     }
 
@@ -97,6 +89,9 @@ Item {
 
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showPopUp(joystickInfo, mapToItem(toolBar, x, y).x + (width / 2))
+        onClicked: {
+            var centerX = mapToGlobal(x + (width / 2), 0).x
+            mainWindow.showPopUp(joystickInfo, centerX)
+        }
     }
 }

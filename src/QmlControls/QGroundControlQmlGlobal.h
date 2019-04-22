@@ -122,6 +122,7 @@ public:
     Q_INVOKABLE void    startAPMArduCopterMockLink  (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduPlaneMockLink   (bool sendStatusText);
     Q_INVOKABLE void    startAPMArduSubMockLink     (bool sendStatusText);
+    Q_INVOKABLE void    startAPMArduRoverMockLink   (bool sendStatusText);
     Q_INVOKABLE void    stopOneMockLink             (void);
 
     /// Converts from meters to the user specified distance unit

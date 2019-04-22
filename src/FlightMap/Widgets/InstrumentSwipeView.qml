@@ -11,7 +11,6 @@ Item {
     clip:   true
     height: column.height
 
-    property var    qgcView         ///< QGCView to use for showing dialogs
     property color  textColor
     property color  backgroundColor
     property var    maxHeight       ///< Maximum height that should be taken, smaller than this is ok
@@ -57,23 +56,19 @@ Item {
 
         Row {
             id: pageRow
-
             ValuesWidget {
                 id:         valuesPage
                 width:      _pageWidth
-                qgcView:    _root.qgcView
                 textColor:  _root.textColor
                 maxHeight:  _root.maxHeight
             }
             CameraWidget {
                 width:      _pageWidth
-                qgcView:    _root.qgcView
                 textColor:  _root.textColor
                 maxHeight:  _root.maxHeight
             }
             VehicleHealthWidget {
                 width:      _pageWidth
-                qgcView:    _root.qgcView
                 textColor:  _root.textColor
                 maxHeight:  _root.maxHeight
             }

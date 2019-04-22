@@ -27,270 +27,263 @@ import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.SettingsManager       1.0
 
-QGCView {
-    id:                 _qgcView
-    viewPanel:          panel
+Rectangle {
+    id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 26
     property real _valueWidth:                  ScreenTools.defaultFontPixelWidth * 20
-    property real _panelWidth:                  _qgcView.width * _internalWidthRatio
+    property real _panelWidth:                  _root.width * _internalWidthRatio
     property Fact _microhardEnabledFact:        QGroundControl.settingsManager.appSettings.enableMicrohard
     property bool _microhardEnabled:            _microhardEnabledFact.rawValue
 
     readonly property real _internalWidthRatio:          0.8
 
-    QGCPalette { id: qgcPal }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-        QGCFlickable {
-            clip:               true
-            anchors.fill:       parent
-            contentHeight:      settingsColumn.height
-            contentWidth:       settingsColumn.width
-            Column {
-                id:                 settingsColumn
-                width:              _qgcView.width
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
-                anchors.margins:    ScreenTools.defaultFontPixelWidth
-                //-----------------------------------------------------------------
-                //-- General
-                Item {
-                    width:                      _panelWidth
-                    height:                     generalLabel.height
-                    anchors.margins:            ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    QGCLabel {
-                        id:             generalLabel
-                        text:           qsTr("General")
-                        font.family:    ScreenTools.demiboldFontFamily
-                    }
+    QGCFlickable {
+        clip:               true
+        anchors.fill:       parent
+        contentHeight:      settingsColumn.height
+        contentWidth:       settingsColumn.width
+        Column {
+            id:                 settingsColumn
+            width:              _root.width
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.margins:    ScreenTools.defaultFontPixelWidth
+            //-----------------------------------------------------------------
+            //-- General
+            Item {
+                width:                      _panelWidth
+                height:                     generalLabel.height
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                QGCLabel {
+                    id:             generalLabel
+                    text:           qsTr("General")
+                    font.family:    ScreenTools.demiboldFontFamily
                 }
-                Rectangle {
-                    height:                     generalRow.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _panelWidth
-                    color:                      qgcPal.windowShade
-                    anchors.margins:            ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    Row {
-                        id:                 generalRow
-                        spacing:            ScreenTools.defaultFontPixelWidth * 4
-                        anchors.centerIn:   parent
-                        Column {
-                            spacing:        ScreenTools.defaultFontPixelWidth
-                            FactCheckBox {
-                                text:       qsTr("Enable Microhard")
-                                fact:       _microhardEnabledFact
-                                enabled:    true
-                                visible:    _microhardEnabledFact.visible
-                            }
-                        }
-                    }
-                }
-                //-----------------------------------------------------------------
-                //-- Connection Status
-                Item {
-                    width:                      _panelWidth
-                    height:                     statusLabel.height
-                    anchors.margins:            ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    _microhardEnabled
-                    QGCLabel {
-                        id:                     statusLabel
-                        text:                   qsTr("Connection Status")
-                        font.family:            ScreenTools.demiboldFontFamily
-                    }
-                }
-                Rectangle {
-                    height:                     statusCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _panelWidth
-                    color:                      qgcPal.windowShade
-                    visible:                    _microhardEnabled
-                    anchors.margins:            ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
+            }
+            Rectangle {
+                height:                     generalRow.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:                      _panelWidth
+                color:                      qgcPal.windowShade
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                Row {
+                    id:                 generalRow
+                    spacing:            ScreenTools.defaultFontPixelWidth * 4
+                    anchors.centerIn:   parent
                     Column {
-                        id:                     statusCol
-                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
-                        width:                  parent.width
-                        anchors.centerIn:       parent
-                        GridLayout {
-                            anchors.margins:    ScreenTools.defaultFontPixelHeight
-                            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            columns: 2
-                            QGCLabel {
-                                text:           qsTr("Ground Unit:")
-                                Layout.minimumWidth: _labelWidth
-                            }
-                            QGCLabel {
-                                text:           QGroundControl.microhardManager.connected ? qsTr("Connected") : qsTr("Not Connected")
-                                color:          QGroundControl.microhardManager.connected ? qgcPal.colorGreen : qgcPal.colorRed
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Air Unit:")
-                            }
-                            QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected ? qsTr("Connected") : qsTr("Not Connected")
-                                color:          QGroundControl.microhardManager.linkConnected ? qgcPal.colorGreen : qgcPal.colorRed
-                            }
-                            QGCLabel {
-                                text:           qsTr("Uplink RSSI:")
-                            }
-                            QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.uplinkRSSI < 0 ? QGroundControl.microhardManager.uplinkRSSI : ""
-                            }
-                            QGCLabel {
-                                text:           qsTr("Downlink RSSI:")
-                            }
-                            QGCLabel {
-                                text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.downlinkRSSI < 0 ? QGroundControl.microhardManager.downlinkRSSI : ""
-                            }
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        FactCheckBox {
+                            text:       qsTr("Enable Microhard")
+                            fact:       _microhardEnabledFact
+                            enabled:    true
+                            visible:    _microhardEnabledFact.visible
                         }
                     }
                 }
-                //-----------------------------------------------------------------
-                //-- IP Settings
-                Item {
-                    width:                      _panelWidth
-                    height:                     ipSettingsLabel.height
-                    anchors.margins:            ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    visible:                    _microhardEnabled
-                    QGCLabel {
-                        id:                     ipSettingsLabel
-                        text:                   qsTr("Network Settings")
-                        font.family:            ScreenTools.demiboldFontFamily
+            }
+            //-----------------------------------------------------------------
+            //-- Connection Status
+            Item {
+                width:                      _panelWidth
+                height:                     statusLabel.height
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                visible:                    _microhardEnabled
+                QGCLabel {
+                    id:                     statusLabel
+                    text:                   qsTr("Connection Status")
+                    font.family:            ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:                     statusCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:                      _panelWidth
+                color:                      qgcPal.windowShade
+                visible:                    _microhardEnabled
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                Column {
+                    id:                     statusCol
+                    spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                    width:                  parent.width
+                    anchors.centerIn:       parent
+                    GridLayout {
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        columns: 2
+                        QGCLabel {
+                            text:           qsTr("Ground Unit:")
+                            Layout.minimumWidth: _labelWidth
+                        }
+                        QGCLabel {
+                            text:           QGroundControl.microhardManager.connected ? qsTr("Connected") : qsTr("Not Connected")
+                            color:          QGroundControl.microhardManager.connected ? qgcPal.colorGreen : qgcPal.colorRed
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
+                            text:           qsTr("Air Unit:")
+                        }
+                        QGCLabel {
+                            text:           QGroundControl.microhardManager.linkConnected ? qsTr("Connected") : qsTr("Not Connected")
+                            color:          QGroundControl.microhardManager.linkConnected ? qgcPal.colorGreen : qgcPal.colorRed
+                        }
+                        QGCLabel {
+                            text:           qsTr("Uplink RSSI:")
+                        }
+                        QGCLabel {
+                            text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.uplinkRSSI < 0 ? QGroundControl.microhardManager.uplinkRSSI : ""
+                        }
+                        QGCLabel {
+                            text:           qsTr("Downlink RSSI:")
+                        }
+                        QGCLabel {
+                            text:           QGroundControl.microhardManager.linkConnected && QGroundControl.microhardManager.downlinkRSSI < 0 ? QGroundControl.microhardManager.downlinkRSSI : ""
+                        }
                     }
                 }
-                Rectangle {
-                    height:                     ipSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    width:                      _panelWidth
-                    color:                      qgcPal.windowShade
-                    visible:                    _microhardEnabled
-                    anchors.margins:            ScreenTools.defaultFontPixelWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    Column {
-                        id:                     ipSettingsCol
-                        spacing:                ScreenTools.defaultFontPixelHeight * 0.5
-                        width:                  parent.width
-                        anchors.centerIn:       parent
-                        GridLayout {
-                            anchors.margins:    ScreenTools.defaultFontPixelHeight
-                            columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            columns: 2
-                            QGCLabel {
-                                text:           qsTr("Local IP Address:")
-                                Layout.minimumWidth: _labelWidth
-                            }
-                            QGCTextField {
-                                id:             localIP
-                                text:           QGroundControl.microhardManager.localIPAddr
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Remote IP Address:")
-                            }
-                            QGCTextField {
-                                id:             remoteIP
-                                text:           QGroundControl.microhardManager.remoteIPAddr
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Ground Unit IP Address:")
-                                Layout.minimumWidth: _labelWidth
-                            }
-                            QGCTextField {
-                                id:             groundIP
-                                text:           QGroundControl.microhardManager.groundIPAddr
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Air Unit IP Address:")
-                            }
-                            QGCTextField {
-                                id:             airIP
-                                text:           QGroundControl.microhardManager.airIPAddr
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Network Mask:")
-                            }
-                            QGCTextField {
-                                id:             netMask
-                                text:           QGroundControl.microhardManager.netMask
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Configuration password:")
-                            }
-                            QGCTextField {
-                                id:             configPassword
-                                text:           QGroundControl.microhardManager.configPassword
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhHiddenText
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Encryption key:")
-                            }
-                            QGCTextField {
-                                id:             encryptionKey
-                                text:           QGroundControl.microhardManager.encryptionKey
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhHiddenText
-                                Layout.minimumWidth: _valueWidth
-                            }
+            }
+            //-----------------------------------------------------------------
+            //-- IP Settings
+            Item {
+                width:                      _panelWidth
+                height:                     ipSettingsLabel.height
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                visible:                    _microhardEnabled
+                QGCLabel {
+                    id:                     ipSettingsLabel
+                    text:                   qsTr("Network Settings")
+                    font.family:            ScreenTools.demiboldFontFamily
+                }
+            }
+            Rectangle {
+                height:                     ipSettingsCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                width:                      _panelWidth
+                color:                      qgcPal.windowShade
+                visible:                    _microhardEnabled
+                anchors.margins:            ScreenTools.defaultFontPixelWidth
+                anchors.horizontalCenter:   parent.horizontalCenter
+                Column {
+                    id:                     ipSettingsCol
+                    spacing:                ScreenTools.defaultFontPixelHeight * 0.5
+                    width:                  parent.width
+                    anchors.centerIn:       parent
+                    GridLayout {
+                        anchors.margins:    ScreenTools.defaultFontPixelHeight
+                        columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        columns: 2
+                        QGCLabel {
+                            text:           qsTr("Local IP Address:")
+                            Layout.minimumWidth: _labelWidth
                         }
-                        Item {
-                            width:  1
-                            height: ScreenTools.defaultFontPixelHeight
+                        QGCTextField {
+                            id:             localIP
+                            text:           QGroundControl.microhardManager.localIPAddr
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                            Layout.minimumWidth: _valueWidth
                         }
-                        QGCButton {
-                            function validateIPaddress(ipaddress) {
-                                if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
-                                    return true
-                                return false
-                            }
-                            function testEnabled() {
-                                if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
-                                    remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
-                                    groundIP.text        === QGroundControl.microhardManager.groundIPAddr &&
-                                    airIP.text           === QGroundControl.microhardManager.airIPAddr &&
-                                    netMask.text         === QGroundControl.microhardManager.netMask &&
-                                    configPassword.text  === QGroundControl.microhardManager.configPassword &&
-                                    encryptionKey.text   === QGroundControl.microhardManager.encryptionKey)
-                                    return false
-                                if(!validateIPaddress(localIP.text))  return false
-                                if(!validateIPaddress(remoteIP.text)) return false
-                                if(!validateIPaddress(groundIP.text)) return false
-                                if(!validateIPaddress(airIP.text)) return false
-                                if(!validateIPaddress(netMask.text))  return false
+                        QGCLabel {
+                            text:           qsTr("Remote IP Address:")
+                        }
+                        QGCTextField {
+                            id:             remoteIP
+                            text:           QGroundControl.microhardManager.remoteIPAddr
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
+                            text:           qsTr("Ground Unit IP Address:")
+                            Layout.minimumWidth: _labelWidth
+                        }
+                        QGCTextField {
+                            id:             groundIP
+                            text:           QGroundControl.microhardManager.groundIPAddr
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
+                            text:           qsTr("Air Unit IP Address:")
+                        }
+                        QGCTextField {
+                            id:             airIP
+                            text:           QGroundControl.microhardManager.airIPAddr
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
+                            text:           qsTr("Network Mask:")
+                        }
+                        QGCTextField {
+                            id:             netMask
+                            text:           QGroundControl.microhardManager.netMask
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhFormattedNumbersOnly
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
+                            text:           qsTr("Configuration password:")
+                        }
+                        QGCTextField {
+                            id:             configPassword
+                            text:           QGroundControl.microhardManager.configPassword
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhHiddenText
+                            Layout.minimumWidth: _valueWidth
+                        }
+                        QGCLabel {
+                            text:           qsTr("Encryption key:")
+                        }
+                        QGCTextField {
+                            id:             encryptionKey
+                            text:           QGroundControl.microhardManager.encryptionKey
+                            enabled:        true
+                            inputMethodHints:    Qt.ImhHiddenText
+                            Layout.minimumWidth: _valueWidth
+                        }
+                    }
+                    Item {
+                        width:  1
+                        height: ScreenTools.defaultFontPixelHeight
+                    }
+                    QGCButton {
+                        function validateIPaddress(ipaddress) {
+                            if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(ipaddress))
                                 return true
-                            }
-                            enabled:            testEnabled()
-                            text:               qsTr("Apply")
-                            anchors.horizontalCenter:   parent.horizontalCenter
-                            onClicked: {
-                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, groundIP.text, airIP.text, netMask.text, configPassword.text, encryptionKey.text)
-                            }
-
+                            return false
                         }
+                        function testEnabled() {
+                            if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
+                                remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
+                                groundIP.text        === QGroundControl.microhardManager.groundIPAddr &&
+                                airIP.text           === QGroundControl.microhardManager.airIPAddr &&
+                                netMask.text         === QGroundControl.microhardManager.netMask &&
+                                configPassword.text  === QGroundControl.microhardManager.configPassword &&
+                                encryptionKey.text   === QGroundControl.microhardManager.encryptionKey)
+                                return false
+                            if(!validateIPaddress(localIP.text))  return false
+                            if(!validateIPaddress(remoteIP.text)) return false
+                            if(!validateIPaddress(groundIP.text)) return false
+                            if(!validateIPaddress(airIP.text)) return false
+                            if(!validateIPaddress(netMask.text))  return false
+                            return true
+                        }
+                        enabled:            testEnabled()
+                        text:               qsTr("Apply")
+                        anchors.horizontalCenter:   parent.horizontalCenter
+                        onClicked: {
+                            QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, groundIP.text, airIP.text, netMask.text, configPassword.text, encryptionKey.text)
+                        }
+
                     }
                 }
             }

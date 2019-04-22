@@ -1,0 +1,24 @@
+[
+{
+    "name":             "minZoomLevelDownload",
+    "shortDescription": "Minimum zoom level for downloads.",
+    "type":             "Uint32",
+    "min":              1,
+    "max":              20,
+    "defaultValue":     13
+},
+{
+    "name":             "maxZoomLevelDownload",
+    "shortDescription": "Maximum zoom level for downloads.",
+    "type":             "Uint32",
+    "min":              1,
+    "max":              20,
+    "defaultValue":     19
+},
+{
+    "name":             "maxTilesForDownload",
+    "shortDescription": "Maximum number of tiles for download.",
+    "type":             "Uint32",
+    "defaultValue":     100000
+}
+]

@@ -25,9 +25,8 @@ Item {
     property double _ar:                QGroundControl.videoManager.aspectRatio
     property bool   _showGrid:          QGroundControl.settingsManager.videoSettings.gridLines.rawValue > 0
     property var    _videoReceiver:     QGroundControl.videoManager.videoReceiver
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property var    _dynamicCameras:    _activeVehicle ? _activeVehicle.dynamicCameras : null
-    property bool   _connected:         _activeVehicle ? !_activeVehicle.connectionLost : false
+    property var    _dynamicCameras:    activeVehicle ? activeVehicle.dynamicCameras : null
+    property bool   _connected:         activeVehicle ? !activeVehicle.connectionLost : false
     property int    _curCameraIndex:    _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property bool   _isCamera:          _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null

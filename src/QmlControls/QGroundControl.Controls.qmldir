@@ -20,8 +20,6 @@ GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
 HackFileDialog          1.0 HackFileDialog.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
-MainToolBar             1.0 MainToolBar.qml
-MainToolBarIndicators   1.0 MainToolBarIndicators.qml
 MissionCommandDialog    1.0 MissionCommandDialog.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
 MissionItemIndexLabel   1.0 MissionItemIndexLabel.qml
@@ -34,7 +32,6 @@ PageView                1.0 PageView.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 PIDTuning               1.0 PIDTuning.qml
-PlanToolBar             1.0 PlanToolBar.qml
 PreFlightCheckButton    1.0 PreFlightCheckButton.qml
 PreFlightCheckGroup     1.0 PreFlightCheckGroup.qml
 PreFlightCheckList      1.0 PreFlightCheckList.qml
@@ -60,11 +57,9 @@ QGCSlider               1.0 QGCSlider.qml
 QGCSwitch               1.0 QGCSwitch.qml
 QGCTextField            1.0 QGCTextField.qml
 QGCToolBarButton        1.0 QGCToolBarButton.qml
-QGCView                 1.0 QGCView.qml
 QGCViewDialog           1.0 QGCViewDialog.qml
 QGCViewDialogContainer  1.0 QGCViewDialogContainer.qml
 QGCViewMessage          1.0 QGCViewMessage.qml
-QGCViewPanel            1.0 QGCViewPanel.qml
 RallyPointEditorHeader  1.0 RallyPointEditorHeader.qml
 RallyPointItemEditor    1.0 RallyPointItemEditor.qml
 RallyPointMapVisuals    1.0 RallyPointMapVisuals.qml

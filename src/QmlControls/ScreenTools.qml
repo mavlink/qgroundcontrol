@@ -46,7 +46,6 @@ Item {
     property real mediumFontPointSize:      10
     property real largeFontPointSize:       10
 
-    property real availableHeight:          0
     property real toolbarHeight:            0
 
     readonly property real smallFontPointRatio:      0.75

@@ -7,19 +7,16 @@ import QGroundControl.Controls 1.0
 import QGroundControl.Controllers 1.0
 import QGroundControl.Palette 1.0
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
     color:          qgcPal.windowShadeDark
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     APMAirframeComponentController {
         id:         controller
-        factPanel:  panel
     }
 
     property bool _frameAvailable:      controller.parameterExists(-1, "FRAME")
-
     property Fact _frame:               controller.getParameterFact(-1, "FRAME", false)
     property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS", false)
     property Fact _frameType:           controller.getParameterFact(-1, "FRAME_TYPE", false)
