@@ -84,6 +84,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     connect(&_cameraCalc, &CameraCalc::isManualCameraChanged, this, &StructureScanComplexItem::_updateGimbalPitch);
 
     connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcScanDistance);
+    connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcScanDistance);
 
     _recalcLayerInfo();
 
@@ -514,8 +515,6 @@ void StructureScanComplexItem::_rebuildFlightPolygon(void)
         _entryVertex = savedEntryVertex;
     }
 
-    _recalcScanDistance();
-
     emit coordinateChanged(coordinate());
     emit exitCoordinateChanged(exitCoordinate());
 }
@@ -614,7 +613,7 @@ void StructureScanComplexItem::_recalcScanDistance()
         emit complexDistanceChanged();
     }
 
-    qCDebug(MissionControllerLog) << "StructureScanComplexItem--_recalcScanDistance layers: "
+    qCDebug(StructureScanComplexItemLog) << "StructureScanComplexItem--_recalcScanDistance layers: "
                                   << _layersFact.rawValue().toInt() << " structure height: " << surfaceHeight
                                   << " scanDistance: " << _scanDistance;
 }
