@@ -23,12 +23,12 @@ Rectangle {
     property real   missionMaxTelemetry:        _controllerValid ? _planMasterController.missionController.missionMaxTelemetry : NaN
     property bool   missionDirty:               _controllerValid ? _planMasterController.missionController.dirty : false
 
-    property bool   _controllerValid:           _planMasterController !== undefined
+    property bool   _controllerValid:           _planMasterController !== undefined && _planMasterController !== null
     property bool   _controllerOffline:         _controllerValid ? _planMasterController.offline : true
     property var    _controllerDirty:           _controllerValid ? _planMasterController.dirty : false
     property var    _controllerSyncInProgress:  _controllerValid ? _planMasterController.syncInProgress : false
 
-    property bool   _statusValid:               _currentMissionItem !== undefined
+    property bool   _statusValid:               _currentMissionItem !== undefined && _currentMissionItem !== null
     property bool   _missionValid:              missionItems !== undefined
 
     property real   _dataFontSize:              ScreenTools.defaultFontPointSize
@@ -75,6 +75,28 @@ Rectangle {
     //-- Eat mouse events, preventing them from reaching toolbar, which is underneath us.
     DeadMouseArea {
         anchors.fill: parent
+    }
+
+    //-- The reason for this Row to be here is so the Logo (Home) button is in the same
+    //   location as the one in the main toolbar.
+    Row {
+        id:                     logoRow
+        anchors.bottomMargin:   1
+        anchors.left:           parent.left
+        anchors.top:            parent.top
+        anchors.bottom:         parent.bottom
+        QGCToolBarButton {
+            id:                 settingsButton
+            anchors.top:        parent.top
+            anchors.bottom:     parent.bottom
+            icon.source:        "/qmlimages/PaperPlane.svg"
+            logo:               true
+            checked:            false
+            onClicked: {
+                checked = false
+                mainWindow.showFlyView()
+            }
+        }
     }
 
     // Progress bar

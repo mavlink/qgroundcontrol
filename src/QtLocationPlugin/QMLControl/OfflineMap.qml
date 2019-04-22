@@ -230,7 +230,6 @@ Item {
         onAcceptedForLoad: {
             if(!QGroundControl.mapEngineManager.importSets(file)) {
                 showList();
-                mainWindow.enableToolbar()
             }
             close()
         }
@@ -1143,7 +1142,6 @@ Item {
                         visible:        !QGroundControl.mapEngineManager.exporting
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
-                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1227,7 +1225,6 @@ Item {
                         anchors.horizontalCenter: parent.horizontalCenter
                         onClicked: {
                             showList();
-                            mainWindow.enableToolbar()
                             rootLoader.sourceComponent = null
                         }
                     }
@@ -1250,7 +1247,6 @@ Item {
                             width:          _bigButtonSize * 1.25
                             onClicked: {
                                 showList();
-                                mainWindow.enableToolbar()
                                 rootLoader.sourceComponent = null
                             }
                         }

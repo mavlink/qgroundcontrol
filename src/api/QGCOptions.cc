@@ -31,9 +31,27 @@ QGCOptions::instrumentWidget()
 }
 
 QUrl
-QGCOptions::mainToolbarIndicatorsUrl() const
+QGCOptions::mainToolbarUrl() const
 {
-    return QUrl(QStringLiteral("qrc:/toolbar/MainToolBarIndicators.qml"));
+    return QUrl(QStringLiteral("qrc:/toolbar/MainToolBar.qml"));
+}
+
+QUrl
+QGCOptions::planToolbarUrl() const
+{
+    return QUrl(QStringLiteral("qrc:/qml/PlanToolBar.qml"));
+}
+
+QColor
+QGCOptions::toolbarBackgroundLight() const
+{
+    return QColor(255,255,255,204);
+}
+
+QColor
+QGCOptions::toolbarBackgroundDark() const
+{
+    return QColor(0,0,0,192);
 }
 
 QUrl

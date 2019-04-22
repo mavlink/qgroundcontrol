@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QString>
 #include <QUrl>
+#include <QColor>
 
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Application Options
@@ -29,7 +30,12 @@ public:
     Q_PROPERTY(bool                     enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget                READ instrumentWidget               CONSTANT)
     Q_PROPERTY(QUrl                     flyViewOverlay                  READ flyViewOverlay                 CONSTANT)
-    Q_PROPERTY(QUrl                     mainToolbarIndicatorsUrl        READ mainToolbarIndicatorsUrl       CONSTANT)
+
+    Q_PROPERTY(QUrl                     mainToolbarUrl                  READ mainToolbarUrl                 CONSTANT)
+    Q_PROPERTY(QUrl                     planToolbarUrl                  READ planToolbarUrl                 CONSTANT)
+    Q_PROPERTY(QColor                   toolbarBackgroundLight          READ toolbarBackgroundLight         CONSTANT)
+    Q_PROPERTY(QColor                   toolbarBackgroundDark           READ toolbarBackgroundDark          CONSTANT)
+
     Q_PROPERTY(QUrl                     planToolbarIndicatorsUrl        READ planToolbarIndicatorsUrl       CONSTANT)
     Q_PROPERTY(bool                     showSensorCalibrationCompass    READ showSensorCalibrationCompass   NOTIFY showSensorCalibrationCompassChanged)
     Q_PROPERTY(bool                     showSensorCalibrationGyro       READ showSensorCalibrationGyro      NOTIFY showSensorCalibrationGyroChanged)
@@ -79,8 +85,11 @@ public:
 
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
-    /// Allows replacing the toolbar container
-    virtual QUrl    mainToolbarIndicatorsUrl        () const;
+    /// Allows replacing the toolbar
+    virtual QUrl    mainToolbarUrl                  () const;
+    virtual QUrl    planToolbarUrl                  () const;
+    virtual QColor  toolbarBackgroundLight          () const;
+    virtual QColor  toolbarBackgroundDark           () const;
     /// Allows replacing the Plan View toolbar container
     virtual QUrl    planToolbarIndicatorsUrl        () const;
     /// By returning false you can hide the following sensor calibration pages
@@ -157,7 +166,7 @@ public:
         POS_BOTTOM_LEFT
     };
     Q_ENUM(Pos)
-    CustomInstrumentWidget(QObject* parent = NULL);
+    CustomInstrumentWidget(QObject* parent = nullptr);
     Q_PROPERTY(QUrl     source  READ source CONSTANT)
     Q_PROPERTY(Pos      widgetPosition              READ widgetPosition             NOTIFY widgetPositionChanged)
     virtual QUrl        source                      () { return QUrl(); }

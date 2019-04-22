@@ -20,11 +20,13 @@ Button {
     height:             ScreenTools.defaultFontPixelHeight * 3
     autoExclusive:      true
 
+    property bool logo: false
+
     QGCPalette { id: qgcPal }
 
     background: Rectangle {
         anchors.fill: parent
-        color:  checked ? qgcPal.buttonHighlight : qgcPal.button
+        color:  logo ? qgcPal.brandingPurple : (checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0))
     }
 
     contentItem: Row {
@@ -38,12 +40,13 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  logo ? "white" : (button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText)
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
         Label {
             id:                     _label
+            visible:                text !== ""
             text:                   button.text
             color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
