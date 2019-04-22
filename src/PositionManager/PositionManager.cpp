@@ -45,6 +45,7 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    //     _defaultSource = _simulatedSource;
    // }
 
+   connect(_app, &QGCApplication::applicationStateChanged, this, &QGCPositionManager::_handleApplicationStateChanged);
    setPositionSource(QGCPositionSource::InternalGPS);
 }
 
@@ -130,11 +131,34 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
         _currentSource->setUpdateInterval(_updateInterval);
         connect(_currentSource, &QGeoPositionInfoSource::positionUpdated,       this, &QGCPositionManager::_positionUpdated);
         connect(_currentSource, SIGNAL(error(QGeoPositionInfoSource::Error)),   this, SLOT(_error(QGeoPositionInfoSource::Error)));
-        _currentSource->startUpdates();
+        //_currentSource->startUpdates();
     }
 }
 
 void QGCPositionManager::_error(QGeoPositionInfoSource::Error positioningError)
 {
     qWarning() << "QGCPositionManager error" << positioningError;
+}
+
+void QGCPositionManager::startPositionUpdate()
+{
+    if (_currentSource != nullptr) {
+        _currentSource->startUpdates();
+    }
+}
+
+void QGCPositionManager::stopPositionUpdate()
+{
+    if (_currentSource != nullptr) {
+        _currentSource->stopUpdates();
+    }
+}
+
+void QGCPositionManager::_handleApplicationStateChanged(Qt::ApplicationState state)
+{
+    if(state == Qt::ApplicationActive) {
+        startPositionUpdate();
+    } else if (state == Qt::ApplicationInactive) {
+        stopPositionUpdate();
+    }
 }

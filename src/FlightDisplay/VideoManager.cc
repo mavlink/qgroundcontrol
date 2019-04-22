@@ -65,6 +65,9 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
    MultiVehicleManager *pVehicleMgr = qgcApp()->toolbox()->multiVehicleManager();
    connect(pVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &VideoManager::_setActiveVehicle);
 
+   _videoStreamControl = new VideoStreamControl();
+   connect(_videoStreamControl, &VideoStreamControl::videoStreamUrlChanged, this, &VideoManager::_videoStreamUrlChanged);
+
 #if defined(QGC_GST_STREAMING)
 #ifndef QGC_DISABLE_UVC
    // If we are using a UVC camera setup the device name
@@ -152,6 +155,10 @@ VideoManager::_rtspUrlChanged()
     _restartVideo();
 }
 
+void VideoManager::_videoStreamUrlChanged(void)
+{
+    _restartVideo();
+}
 //-----------------------------------------------------------------------------
 void
 VideoManager::_tcpUrlChanged()
@@ -181,6 +188,7 @@ VideoManager::isGStreamer()
         videoSource == VideoSettings::videoSourceRTSP ||
         videoSource == VideoSettings::videoSourceTCP ||
         videoSource == VideoSettings::videoSourceMPEGTS ||
+        videoSource == VideoSettings::videoSourceAuto ||
         autoStreamConfigured();
 #else
     return false;
@@ -233,6 +241,8 @@ VideoManager::_updateSettings()
         _videoReceiver->setUri(_videoSettings->rtspUrl()->rawValue().toString());
     else if (source == VideoSettings::videoSourceTCP)
         _videoReceiver->setUri(QStringLiteral("tcp://%1").arg(_videoSettings->tcpUrl()->rawValue().toString()));
+    else if (_videoSettings->videoSource()->rawValue().toString() == VideoSettings::videoSourceAuto)
+        _videoReceiver->setUri(_videoStreamControl->videoStreamUrl());
 }
 
 //-----------------------------------------------------------------------------

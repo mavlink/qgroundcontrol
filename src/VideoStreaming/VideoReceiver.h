@@ -140,6 +140,7 @@ protected:
 
     //-- RTSP UDP reconnect timeout
     uint64_t        _udpReconnect_us;
+    time_t          _startTime;
 
 #endif
 

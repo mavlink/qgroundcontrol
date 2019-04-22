@@ -20,6 +20,7 @@
 #include "QGCLoggingCategory.h"
 #include "VideoReceiver.h"
 #include "QGCToolbox.h"
+#include "VideoStreamControl.h"
 
 Q_DECLARE_LOGGING_CATEGORY(VideoManagerLog)
 
@@ -44,6 +45,7 @@ public:
     Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
+    Q_PROPERTY(VideoStreamControl* videoStreamControl READ  videoStreamControl                          CONSTANT)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
@@ -55,6 +57,7 @@ public:
     bool        autoStreamConfigured();
 
     VideoReceiver*  videoReceiver   () { return _videoReceiver; }
+    VideoStreamControl* videoStreamControl () { return _videoStreamControl; }
 
 #if defined(QGC_DISABLE_UVC)
     bool        uvcEnabled          () { return false; }
@@ -85,6 +88,7 @@ private slots:
     void _videoSourceChanged        ();
     void _udpPortChanged            ();
     void _rtspUrlChanged            ();
+    void _videoStreamUrlChanged     ();
     void _tcpUrlChanged             ();
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
@@ -99,6 +103,7 @@ private:
     VideoReceiver*  _videoReceiver      = nullptr;
     VideoSettings*  _videoSettings      = nullptr;
     QString         _videoSourceID;
+    VideoStreamControl* _videoStreamControl = nullptr;
     bool            _fullScreen         = false;
     Vehicle*        _activeVehicle      = nullptr;
 };

@@ -169,9 +169,9 @@ QGCView {
             FactComboBox {
                 id:                 gstCombo
                 anchors.left:       gstLabel.right
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth / 2
+                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
                 anchors.bottom:     parent.bottom
-                width:              ScreenTools.defaultFontPixelWidth * 10
+                width:              ScreenTools.defaultFontPixelWidth * 20
                 model:              ["Disabled", "1", "2", "3", "4", "5", "6", "7", "8"]
                 fact:               QGroundControl.settingsManager.appSettings.gstDebugLevel
                 visible:            QGroundControl.settingsManager.appSettings.gstDebugLevel.visible

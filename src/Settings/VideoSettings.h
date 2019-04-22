@@ -11,6 +11,7 @@
 #define VideoSettings_H
 
 #include "SettingsGroup.h"
+#include "WifiSettings.h"
 
 class VideoSettings : public SettingsGroup
 {
@@ -34,18 +35,28 @@ public:
     DEFINE_SETTINGFACT(rtspTimeout)
     DEFINE_SETTINGFACT(streamEnabled)
     DEFINE_SETTINGFACT(disableWhenDisarmed)
+    DEFINE_SETTINGFACT(videoResolution)
+    DEFINE_SETTINGFACT(videoShareEnable)
+    DEFINE_SETTINGFACT(cameraId)
+    
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
     Q_PROPERTY(QString  udpVideoSource          READ udpVideoSource         CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
+    Q_PROPERTY(QString  autoVideoSource         READ autoVideoSource        CONSTANT)
+    Q_PROPERTY(WifiSettings* videoShareSettings  READ videoShareSettings     CONSTANT)
 
     bool     streamConfigured       ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
     QString  udpVideoSource         () { return videoSourceUDP; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
     QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
+    QString  autoVideoSource        () { return videoSourceAuto; }
+
+    WifiSettings* videoShareSettings(void) { return _videoShareSettings; }
+    Q_INVOKABLE bool setVideoShareEnabled(bool enabled);
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
@@ -53,6 +64,7 @@ public:
     static const char* videoSourceRTSP;
     static const char* videoSourceTCP;
     static const char* videoSourceMPEGTS;
+    static const char* videoSourceAuto;
 
 signals:
     void streamConfiguredChanged    ();
@@ -65,6 +77,7 @@ private:
 
 private:
     bool _noVideo = false;
+    WifiSettings* _videoShareSettings = nullptr;
 
 };
 

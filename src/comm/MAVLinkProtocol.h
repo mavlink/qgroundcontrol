@@ -27,6 +27,7 @@
 class LinkManager;
 class MultiVehicleManager;
 class QGCApplication;
+class SystemMessageHandler;
 
 Q_DECLARE_LOGGING_CATEGORY(MAVLinkProtocolLog)
 
@@ -168,5 +169,7 @@ private:
 
     LinkManager*            _linkMgr;
     MultiVehicleManager*    _multiVehicleManager;
+    SystemMessageHandler*   _systemMessageHandler;
+    SysStatusManager*       _sysStatusManager;
 };
 

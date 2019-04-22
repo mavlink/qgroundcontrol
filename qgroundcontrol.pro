@@ -237,6 +237,7 @@ QT += \
     sql \
     svg \
     widgets \
+    charts \
     xml \
     texttospeech
 
@@ -404,6 +405,8 @@ HEADERS += \
     src/api/QGCCorePlugin.h \
     src/api/QGCOptions.h \
     src/api/QGCSettings.h \
+    src/QmlControls/D2dInforDataSingle.h \
+    src/QmlControls/Freqcalibrationmodel.h \
     src/api/QmlComponentInfo.h \
     src/comm/MavlinkMessagesTimer.h \
     src/GPS/Drivers/src/base_station.h
@@ -412,6 +415,8 @@ SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
+    src/QmlControls/D2dInforDataSingle.cpp \
+    src/QmlControls/Freqcalibrationmodel.cpp \
     src/api/QmlComponentInfo.cc \
     src/comm/MavlinkMessagesTimer.cc
 
@@ -529,6 +534,8 @@ HEADERS += \
     src/FollowMe/FollowMe.h \
     src/Joystick/Joystick.h \
     src/Joystick/JoystickManager.h \
+    src/Joystick/JoystickMessageSender.h \
+    src/Joystick/KeyConfiguration.h \
     src/JsonHelper.h \
     src/KMLFileHelper.h \
     src/LogCompressor.h \
@@ -611,11 +618,14 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
+    src/Settings/WifiSettings.h \
+    src/Settings/RfSettings.h \
     src/Vehicle/MAVLinkLogManager.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
     src/comm/LinkManager.h \
+    src/comm/SysStatusManager.h \
     src/comm/MAVLinkProtocol.h \
     src/comm/ProtocolInterface.h \
     src/comm/QGCMAVLink.h \
@@ -626,11 +636,15 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/UTM.h \
+    src/SystemMessageHandler.h \
 
 
 AndroidBuild {
 HEADERS += \
-    src/Joystick/JoystickAndroid.h \
+	src/Joystick/JoystickAndroid.h \
+    src/Joystick/InputEventReader.h \
+    src/AndroidInterface.h \
+    src/AndroidController.h \
 }
 
 DebugBuild {
@@ -717,7 +731,10 @@ iOSBuild {
 
 AndroidBuild {
     SOURCES += src/MobileScreenMgr.cc \
-    src/Joystick/JoystickAndroid.cc \
+	src/Joystick/JoystickAndroid.cc \
+    src/Joystick/InputEventReader.cc \
+    src/AndroidInterface.cc \
+    src/AndroidController.cc \
 }
 
 SOURCES += \
@@ -735,6 +752,8 @@ SOURCES += \
     src/FollowMe/FollowMe.cc \
     src/Joystick/Joystick.cc \
     src/Joystick/JoystickManager.cc \
+    src/Joystick/JoystickMessageSender.cc \
+    src/Joystick/KeyConfiguration.cc \
     src/JsonHelper.cc \
     src/KMLFileHelper.cc \
     src/LogCompressor.cc \
@@ -814,11 +833,14 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
+    src/Settings/WifiSettings.cc \
+    src/Settings/RfSettings.cc \
     src/Vehicle/MAVLinkLogManager.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkInterface.cc \
     src/comm/LinkManager.cc \
+    src/comm/SysStatusManager.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/QGCMAVLink.cc \
     src/comm/TCPLink.cc \
@@ -828,6 +850,7 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/UTM.cpp \
+    src/SystemMessageHandler.cc \
 
 DebugBuild {
 SOURCES += \
@@ -1234,6 +1257,7 @@ HEADERS += \
     src/VideoStreaming/VideoItem.h \
     src/VideoStreaming/VideoReceiver.h \
     src/VideoStreaming/VideoStreaming.h \
+    src/VideoStreaming/VideoStreamControl.h \
     src/VideoStreaming/VideoSurface.h \
     src/VideoStreaming/VideoSurface_p.h \
 
@@ -1242,6 +1266,7 @@ SOURCES += \
     src/VideoStreaming/VideoReceiver.cc \
     src/VideoStreaming/VideoStreaming.cc \
     src/VideoStreaming/VideoSurface.cc \
+    src/VideoStreaming/VideoStreamControl.cc \
 
 contains (CONFIG, DISABLE_VIDEOSTREAMING) {
     message("Skipping support for video streaming (manual override from command line)")
@@ -1279,3 +1304,5 @@ contains (CONFIG, QGC_DISABLE_BUILD_SETUP) {
 #
 
 include(QGCInstaller.pri)
+
+DISTFILES +=

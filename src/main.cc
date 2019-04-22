@@ -26,6 +26,7 @@
 #include <QStringListModel>
 #include "QGCApplication.h"
 #include "AppMessages.h"
+#include <gmodule.h>
 
 #ifndef __mobile__
     #include "QGCSerialPortInfo.h"
@@ -81,36 +82,50 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #if defined(__android__) && !defined(NO_SERIAL_LINK)
 #include <jni.h>
 #include "qserialport.h"
+#include "Settings/WifiSettings.h"
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
     Q_UNUSED(reserved);
 
     JNIEnv* env;
+    GModule *module;
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
         return -1;
     }
 
     QSerialPort::setNativeMethods();
+    WifiSettings::setNativeMethods();
+
+    /* Tell the androidmedia plugin about the Java VM if we can */
+    module = g_module_open (NULL, G_MODULE_BIND_LOCAL);
+    if (module) {
+        void (*set_java_vm) (JavaVM *) = NULL;
+        if (g_module_symbol (module, "gst_amc_jni_set_java_vm",
+                            (gpointer *) & set_java_vm) && set_java_vm) {
+            set_java_vm (vm);
+        }
+        g_module_close (module);
+    }
 
     return JNI_VERSION_1_6;
 }
 #endif
 
-#ifdef __android__
-#include <QtAndroid>
-bool checkAndroidWritePermission() {
-    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-    if(r == QtAndroid::PermissionResult::Denied) {
-        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
-        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-        if(r == QtAndroid::PermissionResult::Denied) {
-             return false;
-        }
-   }
-   return true;
-}
-#endif
+//#ifdef __android__
+//#include <QtAndroid>
+//bool checkAndroidWritePermission() {
+//    QtAndroid::PermissionResult r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+//    if(r == QtAndroid::PermissionResult::Denied) {
+//        QtAndroid::requestPermissionsSync( QStringList() << "android.permission.WRITE_EXTERNAL_STORAGE" );
+//        r = QtAndroid::checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+//        if(r == QtAndroid::PermissionResult::Denied) {
+//             return false;
+//        }
+//   }
+//   return true;
+//}
+//#endif
 
 /**
  * @brief Starts the application
@@ -271,7 +286,7 @@ int main(int argc, char *argv[])
     {
 
 #ifdef __android__
-        checkAndroidWritePermission();
+        //checkAndroidWritePermission();
 #endif
         if (!app->_initForNormalAppBoot()) {
             return -1;

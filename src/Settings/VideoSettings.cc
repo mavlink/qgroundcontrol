@@ -15,6 +15,11 @@
 #include <QtQml>
 #include <QVariantList>
 
+#ifdef __android__
+#include <QtAndroidExtras/QAndroidJniObject>
+#define VIDEO_SHARE_PROP_NAME "persist.fpv.ext.disp"
+#endif
+
 #ifndef QGC_DISABLE_UVC
 #include <QCameraInfo>
 #endif
@@ -25,6 +30,7 @@ const char* VideoSettings::videoSourceRTSP      = "RTSP Video Stream";
 const char* VideoSettings::videoSourceUDP       = "UDP Video Stream";
 const char* VideoSettings::videoSourceTCP       = "TCP-MPEG2 Video Stream";
 const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream";
+const char* VideoSettings::videoSourceAuto    = "Auto Video Stream";
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
@@ -40,6 +46,7 @@ DECLARE_SETTINGGROUP(Video, "Video")
 #endif
     videoSourceList.append(videoSourceTCP);
     videoSourceList.append(videoSourceMPEGTS);
+    videoSourceList.append(videoSourceAuto);
 #endif
 #ifndef QGC_DISABLE_UVC
     QList<QCameraInfo> cameras = QCameraInfo::availableCameras();
@@ -67,8 +74,10 @@ void VideoSettings::_setDefaults()
     if (_noVideo) {
         _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceNoVideo);
     } else {
-        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoDisabled);
+        _nameToMetaDataMap[videoSourceName]->setRawDefaultValue(videoSourceAuto);
     }
+
+    _videoShareSettings = new WifiSettings();
 }
 
 DECLARE_SETTINGSFACT(VideoSettings, aspectRatio)
@@ -81,6 +90,8 @@ DECLARE_SETTINGSFACT(VideoSettings, enableStorageLimit)
 DECLARE_SETTINGSFACT(VideoSettings, rtspTimeout)
 DECLARE_SETTINGSFACT(VideoSettings, streamEnabled)
 DECLARE_SETTINGSFACT(VideoSettings, disableWhenDisarmed)
+DECLARE_SETTINGSFACT(VideoSettings, videoResolution)
+DECLARE_SETTINGSFACT(VideoSettings, cameraId)
 
 DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoSource)
 {
@@ -161,10 +172,59 @@ bool VideoSettings::streamConfigured(void)
         qCDebug(VideoManagerLog) << "Testing configuration for MPEG-TS Stream:" << udpPort()->rawValue().toInt();
         return udpPort()->rawValue().toInt() != 0;
     }
+    if(vSource == videoSourceAuto) {
+        return true;
+    }
     return false;
+}
+
+DECLARE_SETTINGSFACT_NO_FUNC(VideoSettings, videoShareEnable)
+{
+    if (!_videoShareEnableFact) {
+        _videoShareEnableFact = _createSettingsFact(videoShareEnableName);
+
+#ifdef __android__
+        //Set video share state by property
+        QAndroidJniObject prop = QAndroidJniObject::fromString(VIDEO_SHARE_PROP_NAME);
+        QAndroidJniObject defaultValue = QAndroidJniObject::fromString("0");
+        QAndroidJniObject value = QAndroidJniObject::callStaticObjectMethod("android/os/SystemProperties", "get",
+                                    "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", prop.object<jstring>(), defaultValue.object<jstring>());
+        _videoShareEnableFact->setRawValue(value.toString().toInt());
+        if(_videoShareEnableFact->rawValue().toBool()) {
+            _videoShareSettings->setVideoShareApEnabled(true);
+        }
+#endif
+    }
+    return _videoShareEnableFact;
+}
+
+/*
+ *set android property persist.fpv.ext.disp
+ */
+bool VideoSettings::setVideoShareEnabled(bool enabled)
+{
+#ifdef __android__
+    if(!_videoShareSettings->setVideoShareApEnabled(enabled)) {
+        qWarning() << "Set wifi AP hotspot failed.";
+        return false;
+    }
+
+    QAndroidJniObject prop = QAndroidJniObject::fromString(VIDEO_SHARE_PROP_NAME);
+    QAndroidJniObject value;
+    if(enabled) {
+        value = QAndroidJniObject::fromString("1");
+    } else {
+        value = QAndroidJniObject::fromString("0");
+    }
+    QAndroidJniObject::callStaticObjectMethod("android/os/SystemProperties", "set", "(Ljava/lang/String;Ljava/lang/String;)V",
+                                                                                prop.object<jstring>(), value.object<jstring>());
+    qDebug() << "Andoid property" << prop.toString() << "is be set to" << value.toString();
+#endif
+    return true;
 }
 
 void VideoSettings::_configChanged(QVariant)
 {
     emit streamConfiguredChanged();
 }
+

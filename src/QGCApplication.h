@@ -44,6 +44,7 @@ class QGCSingleton;
 class MainWindow;
 class QGCToolbox;
 class QGCFileDownload;
+class AndroidController;
 
 /**
  * @brief The main application and management class.
@@ -54,7 +55,7 @@ class QGCFileDownload;
  **/
 class QGCApplication : public
 #ifdef __mobile__
-    QGuiApplication // Native Qml based application
+    QApplication // Native Qml based application
 #else
     QApplication    // QtWidget based application
 #endif
@@ -188,6 +189,7 @@ private:
     GPSRTKFactGroup*    _gpsRtkFactGroup;
 
     QGCToolbox* _toolbox;
+    AndroidController* _androidController;
 
     QTranslator _QGCTranslator;
 

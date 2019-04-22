@@ -22,6 +22,10 @@
 #include "QGCQmlWidgetHolder.h"
 #endif
 
+
+//#include "FreqCalibration.h"
+#include "D2dInforDataSingle.h"
+
 #include <QtQml>
 #include <QQmlEngine>
 
@@ -56,6 +60,10 @@ public:
             delete pMAVLink;
         if(pConsole)
             delete pConsole;
+        if(pCalibration)
+            delete pCalibration;
+        if(pD2dInfo)
+            delete pD2dInfo;
 #if defined(QT_DEBUG)
         if(pMockLink)
             delete pMockLink;
@@ -78,6 +86,9 @@ public:
     QmlComponentInfo* pMAVLink                  = nullptr;
     QmlComponentInfo* pConsole                  = nullptr;
     QmlComponentInfo* pHelp                     = nullptr;
+    QmlComponentInfo* pCalibration              = nullptr;
+    QmlComponentInfo* pD2dInfo                  = nullptr;
+
 #if defined(QT_DEBUG)
     QmlComponentInfo* pMockLink                 = nullptr;
     QmlComponentInfo* pDebug                    = nullptr;
@@ -88,6 +99,7 @@ public:
     QmlComponentInfo*   videoPageWidgetInfo     = nullptr;
     QmlComponentInfo*   healthPageWidgetInfo    = nullptr;
     QmlComponentInfo*   vibrationPageWidgetInfo = nullptr;
+    QmlComponentInfo*   sysStatusPageWidgetInfo = nullptr;
 
     QGCOptions*         defaultOptions          = nullptr;
     QVariantList        settingsList;
@@ -156,6 +168,15 @@ QVariantList &QGCCorePlugin::settingsPages()
         _p->pHelp = new QmlComponentInfo(tr("Help"),
             QUrl::fromUserInput("qrc:/qml/HelpSettings.qml"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pHelp)));
+
+        _p->pCalibration = new QmlComponentInfo(tr("Calibration "),
+                                       QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/FreqCalibration.qml"));
+        //_p->settingsList.append(QVariant::fromValue((QmlComponentInfo*)_p->pCalibration));
+
+        _p->pD2dInfo = new QmlComponentInfo(tr("D2d Info "),
+                                       QUrl::fromUserInput("qrc:/qml/QGroundControl/Controls/D2dInfo.qml"));
+        _p->settingsList.append(QVariant::fromValue((QmlComponentInfo*)_p->pD2dInfo));
+
 #if defined(QT_DEBUG)
         //-- These are always present on Debug builds
         _p->pMockLink = new QmlComponentInfo(tr("Mock Link"),
@@ -179,6 +200,7 @@ QVariantList& QGCCorePlugin::instrumentPages(void)
 #endif
         _p->healthPageWidgetInfo    = new QmlComponentInfo(tr("Health"),    QUrl::fromUserInput("qrc:/qml/HealthPageWidget.qml"));
         _p->vibrationPageWidgetInfo = new QmlComponentInfo(tr("Vibration"), QUrl::fromUserInput("qrc:/qml/VibrationPageWidget.qml"));
+        _p->sysStatusPageWidgetInfo = new QmlComponentInfo(tr("System Status"),    QUrl::fromUserInput("qrc:/qml/SysStatusPageWidget.qml"));
 
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->valuesPageWidgetInfo));
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->cameraPageWidgetInfo));
@@ -187,6 +209,7 @@ QVariantList& QGCCorePlugin::instrumentPages(void)
 #endif
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->healthPageWidgetInfo));
         _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->vibrationPageWidgetInfo));
+        _p->instrumentPageWidgetList.append(QVariant::fromValue(_p->sysStatusPageWidgetInfo));
     }
     return _p->instrumentPageWidgetList;
 }
@@ -291,6 +314,10 @@ QQmlApplicationEngine* QGCCorePlugin::createRootWindow(QObject *parent)
     pEngine->addImportPath("qrc:/qml");
     pEngine->rootContext()->setContextProperty("joystickManager", qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
+    //zhangcan start
+    pEngine->rootContext()->setContextProperty("pD2dInforData", D2dInforDataSingle::getD2dInforData());
+    //end
+
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainWindowNative.qml")));
     return pEngine;
 }

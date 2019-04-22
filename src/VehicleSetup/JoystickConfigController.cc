@@ -42,6 +42,9 @@ const char*  JoystickConfigController::_imageRollLeft =     "joystickRollLeft.pn
 const char*  JoystickConfigController::_imageRollRight =    "joystickRollRight.png";
 const char*  JoystickConfigController::_imagePitchUp =      "joystickPitchUp.png";
 const char*  JoystickConfigController::_imagePitchDown =    "joystickPitchDown.png";
+const char*  JoystickConfigController::_imageWheelLeft =    "wheelLeft.png";
+const char*  JoystickConfigController::_imageWheelRight =   "wheelRight.png";
+const char*  JoystickConfigController::_imageWheelCenter =  "wheelCenter.png";
 
 JoystickConfigController::JoystickConfigController(void)
     : _activeJoystick(NULL)
@@ -98,7 +101,9 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgRollRight =       "Move the Roll stick all the way to the right and hold it there...";
     static const char* msgPitchDown =       "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp =         "Move the Pitch stick all the way up and hold it there...";
-    static const char* msgPitchCenter =     "Allow the Pitch stick to move back to center...";
+    static const char* msgWheelLeft =       "Move the Scroll Wheel all the way to the left and hold it there...";
+    static const char* msgWheelRight =      "Move the Scroll Wheel all the way to the Right and hold it there...";
+    static const char* msgWheelCenter =     "Allow the Scroll Wheel to move back to center...";
     static const char* msgComplete =        "All settings have been captured. Click Next to enable the joystick.";
     
     static const stateMachineEntry rgStateMachine[] = {
@@ -112,7 +117,9 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::rollFunction,      msgRollLeft,        _imageRollLeft,     &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
         { Joystick::pitchFunction,     msgPitchUp,         _imagePitchUp,      &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
         { Joystick::pitchFunction,     msgPitchDown,       _imagePitchDown,    &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
-        { Joystick::pitchFunction,     msgPitchCenter,     _imageCenter,       &JoystickConfigController::_inputCenterWait,        NULL,                                           NULL },
+        { Joystick::wheelFunction,     msgWheelLeft,       _imageWheelLeft,    &JoystickConfigController::_inputStickDetect,       NULL,                                           NULL },
+        { Joystick::wheelFunction,     msgWheelRight,      _imageWheelRight,   &JoystickConfigController::_inputStickMin,          NULL,                                           NULL },
+        { Joystick::wheelFunction,     msgWheelCenter,     _imageWheelCenter,  &JoystickConfigController::_inputCenterWait,        NULL,                                           NULL },
         { Joystick::maxFunction,       msgComplete,        _imageCenter,       NULL,                                               &JoystickConfigController::_writeCalibration,   NULL },
     };
     
@@ -515,6 +522,7 @@ void JoystickConfigController::_validateCalibration(void)
             }
             
             switch (_rgAxisInfo[chan].function) {
+                case Joystick::wheelFunction:
                 case Joystick::throttleFunction:
                 case Joystick::yawFunction:
                 case Joystick::rollFunction:
@@ -576,6 +584,9 @@ void JoystickConfigController::_writeCalibration(void)
     Vehicle* vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
     if (vehicle) {
         vehicle->setJoystickEnabled(true);
+        _joystickManager->setJoystickEnabled(true);
+    } else {
+        _joystickManager->setJoystickEnabled(true);
     }
 }
 
@@ -695,6 +706,11 @@ bool JoystickConfigController::throttleAxisMapped(void)
     return _rgFunctionAxisMapping[Joystick::throttleFunction] != _axisNoAxis;
 }
 
+bool JoystickConfigController::wheelAxisMapped(void)
+{
+    return _rgFunctionAxisMapping[Joystick::wheelFunction] != _axisNoAxis;
+}
+
 bool JoystickConfigController::rollAxisReversed(void)
 {
     if (_rgFunctionAxisMapping[Joystick::rollFunction] != _axisNoAxis) {
@@ -731,6 +747,15 @@ bool JoystickConfigController::throttleAxisReversed(void)
     }
 }
 
+bool JoystickConfigController::wheelAxisReversed(void)
+{
+    if (_rgFunctionAxisMapping[Joystick::wheelFunction] != _axisNoAxis) {
+        return _rgAxisInfo[_rgFunctionAxisMapping[Joystick::wheelFunction]].reversed;
+    } else {
+        return false;
+    }
+}
+
 void JoystickConfigController::setTransmitterMode(int mode)
 {
     if (mode > 0 && mode <= 4) {
@@ -751,11 +776,13 @@ void JoystickConfigController::_signalAllAttitudeValueChanges(void)
     emit pitchAxisMappedChanged(pitchAxisMapped());
     emit yawAxisMappedChanged(yawAxisMapped());
     emit throttleAxisMappedChanged(throttleAxisMapped());
+    emit wheelAxisMappedChanged(wheelAxisMapped());
     
     emit rollAxisReversedChanged(rollAxisReversed());
     emit pitchAxisReversedChanged(pitchAxisReversed());
     emit yawAxisReversedChanged(yawAxisReversed());
     emit throttleAxisReversedChanged(throttleAxisReversed());
+    emit wheelAxisReversedChanged(wheelAxisReversed());
 
     emit transmitterModeChanged(_transmitterMode);
 }

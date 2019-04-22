@@ -179,7 +179,7 @@ private:
     int         _prevWaitingReadParamNameCount;
     int         _prevWaitingWriteParamNameCount;
 
-    static const int    _maxInitialRequestListRetry = 4;        ///< Maximum retries for request list
+    static const int    _maxInitialRequestListRetry = 4000000;  ///< Maximum retries for request list
     int                 _initialRequestRetryCount;              ///< Current retry count for request list
     static const int    _maxInitialLoadRetrySingleParam = 5;    ///< Maximum retries for initial index based load of a single param
     static const int    _maxReadWriteRetry = 5;                 ///< Maximum retries read/write

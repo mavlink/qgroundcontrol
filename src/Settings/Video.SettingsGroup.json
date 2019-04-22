@@ -102,7 +102,7 @@
     "type":             "uint32",
     "min":              1,
     "units":            "s",
-    "defaultValue":     2
+    "defaultValue":     60
 },
 {
     "name":             "streamEnabled",
@@ -115,6 +115,29 @@
     "name":             "disableWhenDisarmed",
     "shortDescription": "Video Stream Disnabled When Armed",
     "longDescription":  "Disable Video Stream when disarmed.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "VideoResolution",
+    "shortDescription": "Video stream resolution",
+    "longDescription":  "Video stream resolution.",
+    "type":             "uint32",
+    "enumStrings":      "undefined,720p,1080p",
+    "enumValues":       "0,1,2",
+    "defaultValue":     0
+},
+{
+    "name":             "cameraId",
+    "shortDescription": "Camera ID",
+    "longDescription":  "Camera ID used for video streaming.",
+    "type":             "uint32",
+    "defaultValue":     0
+},
+{
+    "name":             "VideoShareEnable",
+    "shortDescription": "Enable Video Share",
+    "longDescription":  "Enable Video Share with other devices.",
     "type":             "bool",
     "defaultValue":     false
 }

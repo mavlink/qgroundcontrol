@@ -1,0 +1,10 @@
+[
+{
+    "name":             "RFAuthentication",
+    "shortDescription": "RF authentication",
+    "type":             "uint32",
+    "enumStrings":      "FCC, CE, SRRC, MIC",
+    "enumValues":       "1,2,3,4",
+    "defaultValue":     1
+}
+]

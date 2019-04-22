@@ -26,6 +26,7 @@ SettingsManager::SettingsManager(QGCApplication* app, QGCToolbox* toolbox)
     , _flyViewSettings      (nullptr)
     , _planViewSettings     (nullptr)
     , _brandImageSettings   (nullptr)
+    , _rfSettings           (nullptr)
 {
 
 }
@@ -45,6 +46,7 @@ void SettingsManager::setToolbox(QGCToolbox *toolbox)
     _flyViewSettings =      new FlyViewSettings     (this);
     _planViewSettings =     new PlanViewSettings    (this);
     _brandImageSettings =   new BrandImageSettings  (this);
+    _rfSettings         =   new RfSettings          (this);
 #if defined(QGC_AIRMAP_ENABLED)
     _airMapSettings =       new AirMapSettings      (this);
 #endif

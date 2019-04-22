@@ -24,9 +24,10 @@ import QGroundControl.FactSystem        1.0
 import QGroundControl.FactControls      1.0
 
 /// Video streaming page for Instrument Panel PageView
-Item {
+Column {
     width:              pageWidth
-    height:             videoGrid.height + (ScreenTools.defaultFontPixelHeight * 2)
+    height:             videoGrid.height + ScreenTools.defaultFontPixelWidth * 2 +
+                        (cameraIdRow.visible ? cameraIdRow.height : 0)
     anchors.margins:    ScreenTools.defaultFontPixelWidth * 2
     anchors.centerIn:   parent
 
@@ -39,12 +40,35 @@ Item {
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
+    Row {
+        id:                       cameraIdRow
+        visible:                  QGroundControl.videoManager.videoStreamControl.cameraCount > 1
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing:                  ScreenTools.defaultFontPixelWidth
+        ExclusiveGroup { id:cameraIdGroup }
+        QGCRadioButton {
+            exclusiveGroup: cameraIdGroup
+            text:           "Stream 1"
+            checked:        QGroundControl.settingsManager.videoSettings.cameraId.rawValue === 0
+            enabled:        !QGroundControl.videoManager.videoStreamControl.settingInProgress
+            onClicked:      QGroundControl.settingsManager.videoSettings.cameraId.rawValue = 0
+        }
+        QGCRadioButton {
+            exclusiveGroup: cameraIdGroup
+            text:           "Stream 2"
+            checked:        QGroundControl.settingsManager.videoSettings.cameraId.rawValue === 1
+            enabled:        !QGroundControl.videoManager.videoStreamControl.settingInProgress
+            onClicked:      QGroundControl.settingsManager.videoSettings.cameraId.rawValue = 1
+        }
+    }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight}
     GridLayout {
         id:                 videoGrid
         columns:            2
         columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
         rowSpacing:         ScreenTools.defaultFontPixelHeight
-        anchors.centerIn:   parent
+        anchors.horizontalCenter: parent.horizontalCenter
+
         Connections {
             // For some reason, the normal signal is not reflected in the control below
             target: QGroundControl.settingsManager.videoSettings.streamEnabled
@@ -55,14 +79,13 @@ Item {
         // Enable/Disable Video Streaming
         QGCLabel {
            text:                qsTr("Enable Stream")
-           font.pointSize:      ScreenTools.smallFontPointSize
         }
         QGCSwitch {
             id:                 enableSwitch
             enabled:            _streamingEnabled
             checked:            QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
             Layout.alignment:   Qt.AlignHCenter
-            onClicked: {
+            onCheckedChanged: {
                 if(checked) {
                     QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue = 1
                     _videoReceiver.start()
@@ -72,10 +95,23 @@ Item {
                 }
             }
         }
+        // resolution
+        QGCLabel {
+           text:            qsTr("1080P video")
+        }
+        QGCSwitch {
+            id:             fhdSwitch
+            enabled:        !QGroundControl.videoManager.videoStreamControl.settingInProgress
+            checked:        (QGroundControl.settingsManager.videoSettings.videoResolution.rawValue === 2)
+                            || ((QGroundControl.settingsManager.videoSettings.videoResolution.rawValue === 0)
+                                &&(QGroundControl.videoManager.videoStreamControl.videoResolution === "1920x1080"))
+            onCheckedChanged: {
+                QGroundControl.videoManager.videoStreamControl.fhdEnabledChanged(checked)
+            }
+        }
         // Grid Lines
         QGCLabel {
            text:                qsTr("Grid Lines")
-           font.pointSize:      ScreenTools.smallFontPointSize
            visible:             QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
         }
         QGCSwitch {
@@ -83,7 +119,7 @@ Item {
             checked:            QGroundControl.settingsManager.videoSettings.gridLines.rawValue
             visible:            QGroundControl.videoManager.isGStreamer && QGroundControl.settingsManager.videoSettings.gridLines.visible
             Layout.alignment:   Qt.AlignHCenter
-            onClicked: {
+            onCheckedChanged: {
                 if(checked) {
                     QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 1
                 } else {
@@ -104,7 +140,6 @@ Item {
         //-- Video Recording
         QGCLabel {
            text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
-           font.pointSize:  ScreenTools.smallFontPointSize
            visible:         QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
         }
         // Button to start/stop video recording
@@ -155,7 +190,6 @@ Item {
         }
         QGCLabel {
             text:               qsTr("Video Streaming Not Configured")
-            font.pointSize:     ScreenTools.smallFontPointSize
             visible:            !_streamingEnabled
             Layout.columnSpan:  2
         }

@@ -996,33 +996,7 @@ void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float t
                                                                 0,
                                                                 yawrate);
         } else if (joystickMode == Vehicle::JoystickModeRC) {
-
-            // Save the new manual control inputs
-            manualRollAngle = roll;
-            manualPitchAngle = pitch;
-            manualYawAngle = yaw;
-            manualThrust = thrust;
-            manualButtons = buttons;
-
-            // Store scaling values for all 3 axes
-            const float axesScaling = 1.0 * 1000.0;
-
-            // Calculate the new commands for roll, pitch, yaw, and thrust
-            const float newRollCommand = roll * axesScaling;
-            // negate pitch value because pitch is negative for pitching forward but mavlink message argument is positive for forward
-            const float newPitchCommand = -pitch * axesScaling;
-            const float newYawCommand = yaw * axesScaling;
-            const float newThrustCommand = thrust * axesScaling;
-
-            //qDebug() << newRollCommand << newPitchCommand << newYawCommand << newThrustCommand;
-
-            // Send the MANUAL_COMMAND message
-            mavlink_msg_manual_control_pack_chan(mavlink->getSystemId(),
-                                                 mavlink->getComponentId(),
-                                                 _vehicle->priorityLink()->mavlinkChannel(),
-                                                 &message,
-                                                 this->uasId,
-                                                 newPitchCommand, newRollCommand, newThrustCommand, newYawCommand, buttons);
+            return;
         }
 
         _vehicle->sendMessageOnLink(_vehicle->priorityLink(), message);

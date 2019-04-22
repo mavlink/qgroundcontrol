@@ -1714,7 +1714,7 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
 
     int rssi    = rstatus.rssi;
     int remrssi = rstatus.remrssi;
-    int lnoise = (int)(int8_t)rstatus.noise;
+    int lnoise = 0 - rstatus.noise;
     int rnoise = (int)(int8_t)rstatus.remnoise;
     //-- 3DR Si1k radio needs rssi fields to be converted to dBm
     if (message.sysid == '3' && message.compid == 'D') {
@@ -1731,7 +1731,7 @@ void Vehicle::_handleRadioStatus(mavlink_message_t& message)
         rssi    = qMin(qMax(qRound(static_cast<qreal>(rssi)    / 1.9 - 127.0), - 120), 0);
         remrssi = qMin(qMax(qRound(static_cast<qreal>(remrssi) / 1.9 - 127.0), - 120), 0);
     } else {
-        rssi    = (int)(int8_t)rstatus.rssi;
+        rssi    = 0 - rstatus.rssi;
         remrssi = (int)(int8_t)rstatus.remrssi;
     }
     //-- Check for changes
@@ -2853,11 +2853,17 @@ bool Vehicle::vtol(void) const
 
 bool Vehicle::supportsThrottleModeCenterZero(void) const
 {
+    if(_firmwarePlugin == NULL) {
+        return true;
+    }
     return _firmwarePlugin->supportsThrottleModeCenterZero();
 }
 
 bool Vehicle::supportsNegativeThrust(void) const
 {
+    if(_firmwarePlugin == NULL) {
+        return false;
+    }
     return _firmwarePlugin->supportsNegativeThrust();
 }
 

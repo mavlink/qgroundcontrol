@@ -310,6 +310,9 @@
         <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode1/joystickThrottleUp.png</file>
         <file alias="joystickYawLeft.png">resources/calibration/joystick/mode1/joystickYawLeft.png</file>
         <file alias="joystickYawRight.png">resources/calibration/joystick/mode1/joystickYawRight.png</file>
+        <file alias="wheelLeft.png">resources/calibration/joystick/mode1/wheelLeft.png</file>
+        <file alias="wheelRight.png">resources/calibration/joystick/mode1/wheelRight.png</file>
+        <file alias="wheelCenter.png">resources/calibration/joystick/mode1/wheelCenter.png</file>
     </qresource>
     <qresource prefix="/qml/calibration/joystick/mode2">
         <file alias="joystickCenter.png">resources/calibration/joystick/mode2/joystickCenter.png</file>
@@ -321,6 +324,9 @@
         <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode2/joystickThrottleUp.png</file>
         <file alias="joystickYawLeft.png">resources/calibration/joystick/mode2/joystickYawLeft.png</file>
         <file alias="joystickYawRight.png">resources/calibration/joystick/mode2/joystickYawRight.png</file>
+        <file alias="wheelLeft.png">resources/calibration/joystick/mode2/wheelLeft.png</file>
+        <file alias="wheelRight.png">resources/calibration/joystick/mode2/wheelRight.png</file>
+        <file alias="wheelCenter.png">resources/calibration/joystick/mode2/wheelCenter.png</file>
     </qresource>
     <qresource prefix="/qml/calibration/joystick/mode3">
         <file alias="joystickCenter.png">resources/calibration/joystick/mode3/joystickCenter.png</file>
@@ -332,6 +338,9 @@
         <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode3/joystickThrottleUp.png</file>
         <file alias="joystickYawLeft.png">resources/calibration/joystick/mode3/joystickYawLeft.png</file>
         <file alias="joystickYawRight.png">resources/calibration/joystick/mode3/joystickYawRight.png</file>
+        <file alias="wheelLeft.png">resources/calibration/joystick/mode3/wheelLeft.png</file>
+        <file alias="wheelRight.png">resources/calibration/joystick/mode3/wheelRight.png</file>
+        <file alias="wheelCenter.png">resources/calibration/joystick/mode3/wheelCenter.png</file>
     </qresource>
     <qresource prefix="/qml/calibration/joystick/mode4">
         <file alias="joystickCenter.png">resources/calibration/joystick/mode4/joystickCenter.png</file>
@@ -343,5 +352,8 @@
         <file alias="joystickThrottleUp.png">resources/calibration/joystick/mode4/joystickThrottleUp.png</file>
         <file alias="joystickYawLeft.png">resources/calibration/joystick/mode4/joystickYawLeft.png</file>
         <file alias="joystickYawRight.png">resources/calibration/joystick/mode4/joystickYawRight.png</file>
+        <file alias="wheelLeft.png">resources/calibration/joystick/mode4/wheelLeft.png</file>
+        <file alias="wheelRight.png">resources/calibration/joystick/mode4/wheelRight.png</file>
+        <file alias="wheelCenter.png">resources/calibration/joystick/mode4/wheelCenter.png</file>
     </qresource>
 </RCC>

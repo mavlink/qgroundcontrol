@@ -30,6 +30,7 @@
 
 #include <cstring>
 #include <QCoreApplication>
+#include <QGuiApplication>
 
 #define CAPS_FORMATS "{ BGRA, BGRx, ARGB, xRGB, RGB, RGB16, BGR, v308, AYUV, YV12, I420 }"
 
@@ -253,6 +254,11 @@ static GstFlowReturn
 gst_qt_quick2_video_sink_show_frame(GstVideoSink *sink, GstBuffer *buffer)
 {
     GstQtQuick2VideoSink *self = GST_QT_QUICK2_VIDEO_SINK (sink);
+
+    if (QGuiApplication::applicationState() != Qt::ApplicationActive) {
+        GST_TRACE_OBJECT(sink, "Stop posting new buffer (%" GST_PTR_FORMAT") for rendering.", buffer);
+        return GST_FLOW_OK;
+    }
 
     GST_TRACE_OBJECT(self, "Posting new buffer (%" GST_PTR_FORMAT ") for rendering.", buffer);
 

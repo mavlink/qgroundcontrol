@@ -150,6 +150,7 @@ class UDPLink : public LinkInterface
 
     friend class UDPConfiguration;
     friend class LinkManager;
+    friend class JoystickMessageSender;
 
 public:
     void    requestReset            () override { }

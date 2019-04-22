@@ -13,6 +13,8 @@
 
 #include "QGroundControlQmlGlobal.h"
 
+#include <QAndroidJniObject>
+#include <QtAndroid>
 #include <QSettings>
 #include <QLineF>
 #include <QPointF>
@@ -50,12 +52,19 @@ QGroundControlQmlGlobal::~QGroundControlQmlGlobal()
     settings.setValue(_flightMapZoomSettingsKey, _zoom);
 }
 
+void QGroundControlQmlGlobal::openDialPad() {
+    QtAndroid::runOnAndroidThread([]{
+        QAndroidJniObject::callStaticMethod<void>("org/mavlink/qgroundcontrol/QGCActivity", "openDialPad");
+    });
+}
+
 void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
 {
     QGCTool::setToolbox(toolbox);
 
     _linkManager            = toolbox->linkManager();
     _multiVehicleManager    = toolbox->multiVehicleManager();
+    _sysStatusManager       = toolbox->sysStatusManager();
     _mapEngineManager       = toolbox->mapEngineManager();
     _qgcPositionManager     = toolbox->qgcPositionManager();
     _missionCommandTree     = toolbox->missionCommandTree();

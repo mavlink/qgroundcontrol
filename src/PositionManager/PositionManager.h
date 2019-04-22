@@ -46,10 +46,13 @@ public:
     void setToolbox(QGCToolbox* toolbox);
 
     void setNmeaSourceDevice(QIODevice* device);
+    void stopPositionUpdate();
+    void startPositionUpdate();
 
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
     void _error(QGeoPositionInfoSource::Error positioningError);
+    void _handleApplicationStateChanged(Qt::ApplicationState state);
 
 signals:
     void gcsPositionChanged(QGeoCoordinate gcsPosition);

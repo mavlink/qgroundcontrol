@@ -53,6 +53,7 @@ SetupPage {
 
             property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
             property var _activeJoystick:   joystickManager.activeJoystick
+            property var _joystickMessageSender: joystickManager.joystickMessageSender
 
             JoystickConfigController {
                 id:             controller
@@ -166,7 +167,6 @@ SetupPage {
             } // Component - axisMonitorDisplayComponent
 
             // Main view Qml starts here
-
             // Left side column
             Column {
                 id:                     leftColumn
@@ -189,7 +189,7 @@ SetupPage {
                         QGCLabel {
                             id:     rollLabel
                             width:  defaultTextWidth * 10
-                            text:   _activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
+                            text:   (_activeVehicle) ? (_activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")) : qsTr("Roll")
                         }
 
                         Loader {
@@ -219,7 +219,7 @@ SetupPage {
                         QGCLabel {
                             id:     pitchLabel
                             width:  defaultTextWidth * 10
-                            text:   _activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
+                            text:   (_activeVehicle) ? (_activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")) : qsTr("Pitch")
                         }
 
                         Loader {
@@ -301,6 +301,38 @@ SetupPage {
                             onManualControl: throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
                         }
                     }
+
+                    QGCLabel { text: qsTr("Wheel Controls") }
+
+                    Item {
+                        width:  parent.width
+                        height: defaultTextHeight * 2
+
+                        QGCLabel {
+                            id:     wheelLabel
+                            width:  defaultTextWidth * 10
+                            text:   qsTr("Wheel")
+                        }
+
+                        Loader {
+                            id:                 wheelLoader
+                            anchors.left:       wheelLabel.right
+                            anchors.right:      parent.right
+                            height:             ScreenTools.defaultFontPixelHeight
+                            width:              100
+                            sourceComponent:    axisMonitorDisplayComponent
+
+                            property real defaultTextWidth: ScreenTools.defaultFontPixelWidth
+                            property bool mapped:           controller.wheelAxisMapped
+                            property bool reversed:         controller.wheelAxisReversed
+                        }
+
+                        Connections {
+                            target: _activeJoystick
+
+                            onManualControl: wheelLoader.item.axisValue = wheel*32768.0
+                        }
+                    }
                 } // Column - Attitude Control labels
 
                 // Command Buttons
@@ -364,11 +396,10 @@ SetupPage {
 
                             QGCCheckBox {
                                 id:         enabledCheckBox
-                                enabled:    _activeJoystick ? _activeJoystick.calibrated : false
+                                enabled:    false
                                 text:       _activeJoystick ? _activeJoystick.calibrated ? qsTr("Enable joystick input") : qsTr("Enable not allowed (Calibrate First)") : ""
-                                onClicked:  _activeVehicle.joystickEnabled = checked
-                                Component.onCompleted: checked = _activeVehicle.joystickEnabled
-
+                                onClicked:  (_activeVehicle) ? (_activeVehicle.joystickEnabled = checked) : (joystickManager.joystickEnabled = checked)
+                                Component.onCompleted: checked = (_activeVehicle) ? (_activeVehicle.joystickEnabled) : (joystickManager.joystickEnabled)
                                 Connections {
                                     target: _activeVehicle
 
@@ -382,7 +413,7 @@ SetupPage {
 
                                     onActiveJoystickChanged: {
                                         if(_activeJoystick) {
-                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && _activeVehicle.joystickEnabled })
+                                            enabledCheckBox.checked = Qt.binding(function() { return _activeJoystick.calibrated && ((_activeVehicle) ? _activeVehicle.joystickEnabled : joystickManager.joystickEnabled) })
                                         }
                                     }
                                 }
@@ -428,7 +459,7 @@ SetupPage {
 
                             Column {
                                 spacing: ScreenTools.defaultFontPixelHeight / 3
-                                visible: _activeVehicle.supportsThrottleModeCenterZero
+                                visible: (_activeVehicle) ? _activeVehicle.supportsThrottleModeCenterZero : joystickManager.supportsThrottleModeCenterZero
 
                                 ExclusiveGroup { id: throttleModeExclusiveGroup }
 
@@ -464,10 +495,10 @@ SetupPage {
                                 }
 
                                 QGCCheckBox {
-                                    visible:        _activeVehicle.supportsNegativeThrust
+                                    visible:        (_activeVehicle) ? _activeVehicle.supportsNegativeThrust : joystickManager.supportsNegativeThrust
                                     id:             negativeThrust
                                     text:           qsTr("Allow negative Thrust")
-                                    enabled:        _activeJoystick.negativeThrust = _activeVehicle.supportsNegativeThrust
+                                    enabled:        _activeJoystick.negativeThrust = ((_activeVehicle) ? _activeVehicle.supportsNegativeThrust : joystickManager.supportsNegativeThrust)
                                     checked:        _activeJoystick ? _activeJoystick.negativeThrust : false
                                     onClicked:      _activeJoystick.negativeThrust = checked
                                 }
@@ -500,12 +531,12 @@ SetupPage {
 
                             QGCCheckBox {
                                 id:         advancedSettings
-                                checked:    _activeVehicle.joystickMode != 0
+                                checked:    (_activeVehicle) ? (_activeVehicle.joystickMode != 0) : (joystickManager.joystickMode != 0)
                                 text:       qsTr("Advanced settings (careful!)")
 
                                 onClicked: {
                                     if (!checked) {
-                                        _activeVehicle.joystickMode = 0
+                                        (_activeVehicle) ? (_activeVehicle.joystickMode = 0) : (joystickManager.joystickMode = 0)
                                     }
                                 }
                             }
@@ -523,11 +554,11 @@ SetupPage {
 
                                 QGCComboBox {
                                     id:             joystickModeCombo
-                                    currentIndex:   _activeVehicle.joystickMode
+                                    currentIndex:   (_activeVehicle) ? _activeVehicle.joystickMode : joystickManager.joystickMode
                                     width:          ScreenTools.defaultFontPixelWidth * 20
-                                    model:          _activeVehicle.joystickModes
+                                    model:          (_activeVehicle) ? _activeVehicle.joystickModes : joystickManager.joystickModes
 
-                                    onActivated: _activeVehicle.joystickMode = index
+                                    onActivated: (_activeVehicle) ? (_activeVehicle.joystickMode = index) : (joystickManager.joystickMode = index)
                                 }
                             }
 
@@ -598,6 +629,7 @@ SetupPage {
 
                     // Right column settings
                     Column {
+                        visible:    false
                         width:      parent.width / 2
                         spacing:    ScreenTools.defaultFontPixelHeight
 
@@ -620,13 +652,22 @@ SetupPage {
                             width:      parent.width
                             spacing:    ScreenTools.defaultFontPixelHeight / 3
 
+                            QGCLabel {
+                                visible: (_activeVehicle) ? (_activeVehicle.manualControlReservedButtonCount != 0) : (joystickManager.manualControlReservedButtonCount != 0)
+                                text: qsTr("Buttons 0-%1 reserved for firmware use").arg(reservedButtonCount)
+
+                                property int reservedButtonCount: ((_activeVehicle) ? (_activeVehicle.manualControlReservedButtonCount == -1) : joystickManager.manualControlReservedButtonCount == -1) ?
+                                                                      _activeJoystick.totalButtonCount : ((_activeVehicle) ? _activeVehicle.manualControlReservedButtonCount : joystickManager.manualControlReservedButtonCount)
+                            }
+
                             Repeater {
                                 id:     buttonActionRepeater
                                 model:  _activeJoystick ? Math.min(_activeJoystick.totalButtonCount, _maxButtons) : 0
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-                                    visible: !_activeVehicle.supportsJSButton
+                                    visible: (_activeVehicle) ? ((_activeVehicle.manualControlReservedButtonCount == -1 ? false : modelData >= _activeVehicle.manualControlReservedButtonCount) && !_activeVehicle.supportsJSButton)
+                                                              : ((joystickManager.manualControlReservedButtonCount == -1 ? false : modelData >= joystickManager.manualControlReservedButtonCount) && !joystickManager.supportsJSButton)
 
                                     property bool pressed
 
@@ -668,7 +709,7 @@ SetupPage {
 
                             Row {
                                 spacing: ScreenTools.defaultFontPixelWidth
-                                visible: _activeVehicle.supportsJSButton
+                                visible: (_activeVehicle) ? _activeVehicle.supportsJSButton : joystickManager.supportsJSButton
 
                                 QGCLabel {
                                     horizontalAlignment:    Text.AlignHCenter
@@ -693,7 +734,7 @@ SetupPage {
 
                                 Row {
                                     spacing: ScreenTools.defaultFontPixelWidth
-                                    visible: _activeVehicle.supportsJSButton
+                                    visible: (_activeVehicle) ? _activeVehicle.supportsJSButton : joystickManager.supportsJSButton
 
                                     property bool pressed
 
@@ -875,8 +916,58 @@ SetupPage {
                     }
                 } // Column - Axis Monitor
 
+                // Channel monitor
+                Loader {
+                    id: channelMonitorLoader
+                    sourceComponent: channelMonitor
+                }
+                Component {
+                    id: channelMonitor
+                    Column {
+                        spacing:        20
+
+                        QGCLabel { text: qsTr("Channel Monitor") }
+
+                        Row {
+                            QGCLabel { text: qsTr("RC1:") }
+                        }
+                        Row {
+                            x: 20
+                            visible: _joystickMessageSender.sbusChannelStatus[0] !== ""
+                            QGCLabel {
+                                width: 580
+                                visible: true
+                                wrapMode:       Text.WordWrap
+                                text: _joystickMessageSender.sbusChannelStatus[0]
+                            }
+                        }
+                        Row {
+                            QGCLabel { text: qsTr("RC2:") }
+                        }
+                        Row {
+                            x: 20
+                            visible: _joystickMessageSender.sbusChannelStatus[1] !== ""
+                            QGCLabel {
+                                width: 580
+                                visible: true
+                                wrapMode:       Text.WordWrap
+                                text: _joystickMessageSender.sbusChannelStatus[1]
+                            }
+                        }
+                    }
+                }// Channel monitor
+
+                QGCButton {
+                    id:        keySettings
+                    text:      qsTr("Extra channel settings")
+                    onClicked: {
+                        joystickPage.pageComponent = keySettingComponent;
+                    }
+                }
+
                 // Button monitor
                 Column {
+                    visible:    false
                     width:      parent.width
                     spacing:    ScreenTools.defaultFontPixelHeight
 
@@ -923,6 +1014,32 @@ SetupPage {
             } // Column - Right Column
         } // Item
     } // Component - pageComponent
+
+    Component {
+        id: keySettingComponent
+
+        Item {
+            width:  availableWidth
+            height: joystickPage.height
+
+            Row {
+                id:         keySettingRow
+                visible:    true
+                Loader {
+                    id:     keySettingLoader
+                    source: "QGroundControl/Controls/KeyConfiguration.qml"
+                }
+                QGCButton {
+                    id:     backButton
+                    text:   qsTr("Joystick settings")
+
+                    onClicked: {
+                        joystickPage.pageComponent = pageComponent;
+                    }
+                }
+            }
+        }
+    } // Component - keySettingComponent
 } // SetupPage
 
 

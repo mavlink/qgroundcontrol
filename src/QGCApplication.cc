@@ -90,6 +90,7 @@
 #include "ShapeFileHelper.h"
 #include "QGCFileDownload.h"
 #include "FirmwareImage.h"
+#include "AndroidController.h"
 
 #ifndef NO_SERIAL_LINK
 #include "SerialLink.h"
@@ -153,7 +154,7 @@ static QObject* shapeFileHelperSingletonFactory(QQmlEngine*, QJSEngine*)
 
 QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef __mobile__
-    : QGuiApplication           (argc, argv)
+    : QApplication              (argc, argv)
     , _qmlAppEngine             (nullptr)
 #else
     : QApplication              (argc, argv)
@@ -371,6 +372,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #endif /* __mobile__ */
 
     _checkForNewVersion();
+    _androidController = new AndroidController(this);
 }
 
 void QGCApplication::_shutdown(void)

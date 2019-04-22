@@ -4,15 +4,16 @@
 #include "Joystick.h"
 #include "Vehicle.h"
 #include "MultiVehicleManager.h"
+#include "JoystickManager.h"
 
 #include <SDL.h>
 
 class JoystickSDL : public Joystick
 {
 public:
-    JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager);
+    JoystickSDL(const QString& name, int axisCount, int buttonCount, int hatCount, int index, bool isGameController, MultiVehicleManager* multiVehicleManager, JoystickManager* joystickManager);
 
-    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager); 
+    static QMap<QString, Joystick*> discover(MultiVehicleManager* _multiVehicleManager, JoystickManager* _joystickManager);
     static bool init(void);
 
     int index(void) { return _index; }

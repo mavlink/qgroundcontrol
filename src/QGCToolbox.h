@@ -20,6 +20,7 @@ class GPSManager;
 class JoystickManager;
 class FollowMe;
 class LinkManager;
+class SysStatusManager;
 class MAVLinkProtocol;
 class MissionCommandTree;
 class MultiVehicleManager;
@@ -48,6 +49,7 @@ public:
     AudioOutput*                audioOutput             () { return _audioOutput; }
     JoystickManager*            joystickManager         () { return _joystickManager; }
     LinkManager*                linkManager             () { return _linkManager; }
+    SysStatusManager*           sysStatusManager(void)          { return _sysStatusManager; }
     MAVLinkProtocol*            mavlinkProtocol         () { return _mavlinkProtocol; }
     MissionCommandTree*         missionCommandTree      () { return _missionCommandTree; }
     MultiVehicleManager*        multiVehicleManager     () { return _multiVehicleManager; }
@@ -94,6 +96,7 @@ private:
     QGCCorePlugin*              _corePlugin             = nullptr;
     SettingsManager*            _settingsManager        = nullptr;
     AirspaceManager*            _airspaceManager        = nullptr;
+    SysStatusManager*           _sysStatusManager       = nullptr;
 #if defined(QGC_GST_TAISYNC_ENABLED)
     TaisyncManager*             _taisyncManager         = nullptr;
 #endif

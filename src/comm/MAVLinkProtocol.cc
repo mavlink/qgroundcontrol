@@ -38,6 +38,7 @@
 #include "QGCLoggingCategory.h"
 #include "MultiVehicleManager.h"
 #include "SettingsManager.h"
+#include "SystemMessageHandler.h"
 
 Q_DECLARE_METATYPE(mavlink_message_t)
 
@@ -65,6 +66,7 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     , _tempLogFile(QString("%2.%3").arg(_tempLogFileTemplate).arg(_logFileExtension))
     , _linkMgr(nullptr)
     , _multiVehicleManager(nullptr)
+    , _sysStatusManager(nullptr)
 {
     memset(totalReceiveCounter, 0, sizeof(totalReceiveCounter));
     memset(totalLossCounter,    0, sizeof(totalLossCounter));
@@ -72,12 +74,14 @@ MAVLinkProtocol::MAVLinkProtocol(QGCApplication* app, QGCToolbox* toolbox)
     memset(firstMessage,        1, sizeof(firstMessage));
     memset(&_status,            0, sizeof(_status));
     memset(&_message,           0, sizeof(_message));
+    _systemMessageHandler = new SystemMessageHandler(this);
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
 {
     storeSettings();
     _closeLogFile();
+    delete _systemMessageHandler;
 }
 
 void MAVLinkProtocol::setVersion(unsigned version)
@@ -104,6 +108,7 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
 
    _linkMgr =               _toolbox->linkManager();
    _multiVehicleManager =   _toolbox->multiVehicleManager();
+   _sysStatusManager    =   _toolbox->sysStatusManager();
 
    qRegisterMetaType<mavlink_message_t>("mavlink_message_t");
 
@@ -112,12 +117,24 @@ void MAVLinkProtocol::setToolbox(QGCToolbox *toolbox)
    // All the *Counter variables are not initialized here, as they should be initialized
    // on a per-link basis before those links are used. @see resetMetadataForLink().
 
+   // Initialize the list for tracking dropped messages to invalid.
+   for (int i = 0; i < 256; i++)
+   {
+       for (int j = 0; j < 256; j++)
+       {
+           lastIndex[i][j] = -1;
+       }
+   }
+
+
    connect(this, &MAVLinkProtocol::protocolStatusMessage,   _app, &QGCApplication::criticalMessageBoxOnMainThread);
    connect(this, &MAVLinkProtocol::saveTelemetryLog,        _app, &QGCApplication::saveTelemetryLogOnMainThread);
    connect(this, &MAVLinkProtocol::checkTelemetrySavePath,  _app, &QGCApplication::checkTelemetrySavePathOnMainThread);
 
    connect(_multiVehicleManager, &MultiVehicleManager::vehicleAdded, this, &MAVLinkProtocol::_vehicleCountChanged);
    connect(_multiVehicleManager, &MultiVehicleManager::vehicleRemoved, this, &MAVLinkProtocol::_vehicleCountChanged);
+
+   connect(_systemMessageHandler, &SystemMessageHandler::boardTemputureChanged,  _sysStatusManager, &SysStatusManager::setBoardTemputure);
 
    emit versionCheckChanged(m_enable_version_check);
 }

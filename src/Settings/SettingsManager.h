@@ -26,6 +26,8 @@
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirMapSettings.h"
 #endif
+#include "RfSettings.h"
+
 #include <QVariantList>
 
 /// Provides access to all app settings
@@ -48,6 +50,7 @@ public:
     Q_PROPERTY(QObject* flyViewSettings     READ flyViewSettings        CONSTANT)
     Q_PROPERTY(QObject* planViewSettings    READ planViewSettings       CONSTANT)
     Q_PROPERTY(QObject* brandImageSettings  READ brandImageSettings     CONSTANT)
+    Q_PROPERTY(QObject* rfSettings          READ rfSettings             CONSTANT)
 
     // Override from QGCTool
     virtual void setToolbox(QGCToolbox *toolbox);
@@ -64,6 +67,7 @@ public:
     FlyViewSettings*        flyViewSettings     (void) { return _flyViewSettings; }
     PlanViewSettings*       planViewSettings    (void) { return _planViewSettings; }
     BrandImageSettings*     brandImageSettings  (void) { return _brandImageSettings; }
+    RfSettings*             rfSettings          (void) { return _rfSettings; }
 
 private:
 #if defined(QGC_AIRMAP_ENABLED)
@@ -78,6 +82,7 @@ private:
     FlyViewSettings*        _flyViewSettings;
     PlanViewSettings*       _planViewSettings;
     BrandImageSettings*     _brandImageSettings;
+    RfSettings*             _rfSettings;
 };
 
 #endif
