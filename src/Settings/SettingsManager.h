@@ -23,6 +23,7 @@
 #include "FlyViewSettings.h"
 #include "PlanViewSettings.h"
 #include "BrandImageSettings.h"
+#include "OfflineMapsSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirMapSettings.h"
@@ -49,6 +50,7 @@ public:
     Q_PROPERTY(QObject* flyViewSettings                 READ flyViewSettings                CONSTANT)
     Q_PROPERTY(QObject* planViewSettings                READ planViewSettings               CONSTANT)
     Q_PROPERTY(QObject* brandImageSettings              READ brandImageSettings             CONSTANT)
+    Q_PROPERTY(QObject* offlineMapsSettings             READ offlineMapsSettings             CONSTANT)
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_PROPERTY(QObject* apmMavlinkStreamRateSettings    READ apmMavlinkStreamRateSettings   CONSTANT)
 #endif
@@ -67,6 +69,7 @@ public:
     FlyViewSettings*                flyViewSettings             (void) { return _flyViewSettings; }
     PlanViewSettings*               planViewSettings            (void) { return _planViewSettings; }
     BrandImageSettings*             brandImageSettings          (void) { return _brandImageSettings; }
+    OfflineMapsSettings*            offlineMapsSettings         (void) { return _offlineMapsSettings; }
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   apmMavlinkStreamRateSettings(void) { return _apmMavlinkStreamRateSettings; }
 #endif
@@ -83,6 +86,7 @@ private:
     FlyViewSettings*                _flyViewSettings;
     PlanViewSettings*               _planViewSettings;
     BrandImageSettings*             _brandImageSettings;
+    OfflineMapsSettings*            _offlineMapsSettings;
 #if !defined(NO_ARDUPILOT_DIALECT)
     APMMavlinkStreamRateSettings*   _apmMavlinkStreamRateSettings;
 #endif

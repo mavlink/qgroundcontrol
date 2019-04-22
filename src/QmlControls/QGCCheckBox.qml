@@ -16,6 +16,8 @@ CheckBox {
     activeFocusOnPress: true
 
     style: CheckBoxStyle {
+        spacing: _noText ? 0 : ScreenTools.defaultFontPixelWidth * 0.25
+
         label: Item {
             implicitWidth:  _noText ? 0 : text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
             implicitHeight: _noText ? 0 : Math.max(text.implicitHeight, ScreenTools.checkBoxIndicatorSize)

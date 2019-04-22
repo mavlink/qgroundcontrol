@@ -75,11 +75,12 @@ Rectangle {
         }
 
         CameraCalc {
-            cameraCalc:             missionItem.cameraCalc
-            vehicleFlightIsFrontal: false
-            distanceToSurfaceLabel: qsTr("Scan Distance")
-            frontalDistanceLabel:   qsTr("Layer Height")
-            sideDistanceLabel:      qsTr("Trigger Distance")
+            cameraCalc:                     missionItem.cameraCalc
+            vehicleFlightIsFrontal:         false
+            distanceToSurfaceLabel:         qsTr("Scan Distance")
+            distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
+            frontalDistanceLabel:           qsTr("Layer Height")
+            sideDistanceLabel:              qsTr("Trigger Distance")
         }
 
         SectionHeader {
@@ -117,14 +118,16 @@ Rectangle {
                 }
 
                 QGCLabel { text: qsTr("Scan Bottom Alt") }
-                FactTextField {
+                AltitudeFactTextField {
                     fact:               missionItem.scanBottomAlt
+                    altitudeMode:       QGroundControl.AltitudeModeRelative
                     Layout.fillWidth:   true
                 }
 
                 QGCLabel { text: qsTr("Entrance/Exit Alt") }
-                FactTextField {
+                AltitudeFactTextField {
                     fact:               missionItem.entranceAlt
+                    altitudeMode:       QGroundControl.AltitudeModeRelative
                     Layout.fillWidth:   true
                 }
 

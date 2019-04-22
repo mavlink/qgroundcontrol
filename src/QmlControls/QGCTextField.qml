@@ -13,9 +13,10 @@ TextField {
     activeFocusOnPress: true
     antialiasing:       true
 
-    property bool   showUnits:  false
-    property bool   showHelp:   false
-    property string unitsLabel: ""
+    property bool   showUnits:          false
+    property bool   showHelp:           false
+    property string unitsLabel:         ""
+    property string extraUnitsLabel:    ""
 
     signal helpClicked
 
@@ -89,7 +90,17 @@ TextField {
                     font.family:        ScreenTools.normalFontFamily
                     antialiasing:       true
                     color:              control.textColor
-                    visible:            control.showUnits
+                    visible:            control.showUnits && text !== ""
+                }
+
+                Text {
+                    Layout.alignment:   Qt.AlignVCenter
+                    text:               control.extraUnitsLabel
+                    font.pointSize:     ScreenTools.smallFontPointSize
+                    font.family:        ScreenTools.normalFontFamily
+                    antialiasing:       true
+                    color:              control.textColor
+                    visible:            control.showUnits && text !== ""
                 }
 
                 Rectangle {
