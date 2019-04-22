@@ -23,7 +23,8 @@ import QGroundControl.Vehicle               1.0
 Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    width:          priorityLinkSelector.width
+    width:          visible ? priorityLinkSelector.width : 0
+    visible:        _visible
 
     property bool _visible: false
 
@@ -33,7 +34,6 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
-        visible:                _visible
         Menu {
             id: linkSelectionMenu
         }

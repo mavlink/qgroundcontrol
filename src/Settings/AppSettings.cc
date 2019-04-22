@@ -36,7 +36,6 @@ const char* AppSettings::crashDirectory =           "CrashLogs";
 
 DECLARE_SETTINGGROUP(App, "")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<AppSettings>("QGroundControl.SettingsManager", 1, 0, "AppSettings", "Reference only");
     QGCPalette::setGlobalTheme(indoorPalette()->rawValue().toBool() ? QGCPalette::Dark : QGCPalette::Light);
 

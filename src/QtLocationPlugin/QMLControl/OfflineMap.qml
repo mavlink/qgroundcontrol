@@ -32,10 +32,13 @@ Item {
 
     property string mapKey:             "lastMapType"
 
-    property Fact   _mapboxFact:        QGroundControl.settingsManager.appSettings.mapboxToken
-    property Fact   _esriFact:          QGroundControl.settingsManager.appSettings.esriToken
+    property var    _settingsManager:   QGroundControl.settingsManager
+    property var    _settings:          _settingsManager.offlineMapsSettings
+    property var    _fmSettings:        _settingsManager.flightMapSettings
+    property Fact   _mapboxFact:        _settingsManager.appSettings.mapboxToken
+    property Fact   _esriFact:          _settingsManager.appSettings.esriToken
 
-    property string mapType:            _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
+    property string mapType:            _fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue
     property bool   isMapInteractive:   false
     property var    savedCenter:        undefined
     property real   savedZoom:          3
@@ -51,13 +54,12 @@ Item {
 
     property var    _mapAdjustedColor:  _map.isSatelliteMap ? "white" : "black"
     property bool   _tooManyTiles:      QGroundControl.mapEngineManager.tileCount > _maxTilesForDownload
-    property var    _settings:          QGroundControl.settingsManager.flightMapSettings
 
     readonly property real minZoomLevel:    1
     readonly property real maxZoomLevel:    20
     readonly property real sliderTouchArea: ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 5 : (ScreenTools.isMobile ? 6 : 3))
 
-    readonly property int _maxTilesForDownload: 100000
+    readonly property int _maxTilesForDownload: _settings.maxTilesForDownload.rawValue
 
     QGCPalette { id: qgcPal }
 
@@ -105,7 +107,7 @@ Item {
 
     function addNewSet() {
         isMapInteractive = true
-        mapType = _settings.mapProvider.enumStringValue + " " + _settings.mapType.enumStringValue
+        mapType = _fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue
         resetMapToDefaults()
         handleChanges()
         _map.visible = true
@@ -808,11 +810,21 @@ Item {
                                 maximumValue:               maxZoomLevel
                                 stepSize:                   1
                                 updateValueWhileDragging:   true
-                                property real _savedZoom
-                                Component.onCompleted:      Math.max(sliderMinZoom.value = _map.zoomLevel - 4, 2)
+
+                                property bool _updateSetting: false
+
+                                Component.onCompleted: {
+                                    sliderMinZoom.value = _settings.minZoomLevelDownload.rawValue
+                                    _updateSetting = true
+                                }
+
                                 onValueChanged: {
                                     if(sliderMinZoom.value > sliderMaxZoom.value) {
                                         sliderMaxZoom.value = sliderMinZoom.value
+                                    }
+                                    if (_updateSetting) {
+                                        // Don't update setting until after Component.onCompleted since bad values come through before that
+                                        _settings.minZoomLevelDownload.rawValue = value
                                     }
                                     handleChanges()
                                 }
@@ -851,11 +863,21 @@ Item {
                                 maximumValue:               maxZoomLevel
                                 stepSize:                   1
                                 updateValueWhileDragging:   true
-                                property real _savedZoom
-                                Component.onCompleted:      Math.min(sliderMaxZoom.value = _map.zoomLevel + 2, 20)
+
+                                property bool _updateSetting: false
+
+                                Component.onCompleted: {
+                                    sliderMaxZoom.value = _settings.maxZoomLevelDownload.rawValue
+                                    _updateSetting = true
+                                }
+
                                 onValueChanged: {
                                     if(sliderMaxZoom.value < sliderMinZoom.value) {
                                         sliderMinZoom.value = sliderMaxZoom.value
+                                    }
+                                    if (_updateSetting) {
+                                        // Don't update setting until after Component.onCompleted since bad values come through before that
+                                        _settings.maxZoomLevelDownload.rawValue = value
                                     }
                                     handleChanges()
                                 }

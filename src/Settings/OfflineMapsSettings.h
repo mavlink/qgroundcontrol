@@ -7,12 +7,21 @@
  *
  ****************************************************************************/
 
-#include "PlanViewSettings.h"
+#pragma once
 
-#include <QQmlEngine>
-#include <QtQml>
+#include "SettingsGroup.h"
 
-DECLARE_SETTINGGROUP(PlanView, "PlanView")
+class OfflineMapsSettings : public SettingsGroup
 {
-    qmlRegisterUncreatableType<PlanViewSettings>("QGroundControl.SettingsManager", 1, 0, "PlanViewSettings", "Reference only"); \
-}
+    Q_OBJECT
+
+public:
+    OfflineMapsSettings(QObject* parent = nullptr);
+
+    DEFINE_SETTING_NAME_GROUP()
+    DEFINE_SETTINGFACT(minZoomLevelDownload)
+    DEFINE_SETTINGFACT(maxZoomLevelDownload)
+    DEFINE_SETTINGFACT(maxTilesForDownload)
+
+private:
+};

@@ -446,7 +446,9 @@ int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QS
 int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i)
 {
     int sequenceNumber = _nextSequenceNumber();
-    bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) || qobject_cast<CorridorScanComplexItem*>(complexItem);
+    bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) ||
+                            qobject_cast<CorridorScanComplexItem*>(complexItem) ||
+                            qobject_cast<StructureScanComplexItem*>(complexItem);
 
     if (surveyStyleItem) {
         bool rollSupported  = false;

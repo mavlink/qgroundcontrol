@@ -15,7 +15,6 @@
 
 DECLARE_SETTINGGROUP(APMMavlinkStreamRate, "APMMavlinkStreamRate")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<APMMavlinkStreamRateSettings>("QGroundControl.SettingsManager", 1, 0, "APMMavlinkStreamRateSettings", "Reference only");
 
     connect(streamRateRawSensors(),     &Fact::rawValueChanged, this, &APMMavlinkStreamRateSettings::_updateStreamRateRawSensors);
