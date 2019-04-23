@@ -30,10 +30,11 @@ ApplicationWindow {
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
     readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
     readonly property string    _planToolbar:               QGroundControl.corePlugin.options.planToolbarUrl
-    readonly property string    _settingsViewSource:        "AppSettings.qml"
-    readonly property string    _setupViewSource:           "SetupView.qml"
-    readonly property string    _planViewSource:            "PlanView.qml"
-    readonly property string    _analyzeViewSource:         !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
+
+    readonly property string    settingsViewSource:         "AppSettings.qml"
+    readonly property string    setupViewSource:            "SetupView.qml"
+    readonly property string    planViewSource:             "PlanView.qml"
+    readonly property string    analyzeViewSource:          !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
 
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
@@ -87,29 +88,29 @@ ApplicationWindow {
 
     function showPlanView() {
         viewSwitch(true)
-        if (mainContentWindow.source !== _planViewSource) {
-            mainContentWindow.source  = _planViewSource
+        if (mainContentWindow.source !== planViewSource) {
+            mainContentWindow.source  = planViewSource
         }
     }
 
     function showAnalyzeView() {
         viewSwitch(false)
-        if (mainContentWindow.source !== _analyzeViewSource) {
-            mainContentWindow.source  = _analyzeViewSource
+        if (mainContentWindow.source !== analyzeViewSource) {
+            mainContentWindow.source  = analyzeViewSource
         }
     }
 
     function showSetupView() {
         viewSwitch(false)
-        if (mainContentWindow.source !== _setupViewSource) {
-            mainContentWindow.source  = _setupViewSource
+        if (mainContentWindow.source !== setupViewSource) {
+            mainContentWindow.source  = setupViewSource
         }
     }
 
     function showSettingsView() {
         viewSwitch(false)
-        if (mainContentWindow.source !== _settingsViewSource) {
-            mainContentWindow.source  = _settingsViewSource
+        if (mainContentWindow.source !== settingsViewSource) {
+            mainContentWindow.source  = settingsViewSource
         }
     }
 
