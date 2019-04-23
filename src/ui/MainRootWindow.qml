@@ -276,15 +276,6 @@ ApplicationWindow {
     }
 
     //-------------------------------------------------------------------------
-    //-- Plan View
-    Loader {
-        id:                 planViewLoader
-        anchors.fill:       parent
-        visible:            false
-        source:             "PlanView.qml"
-    }
-
-    //-------------------------------------------------------------------------
     //-- Toolbar
     header: ToolBar {
         height:         ScreenTools.toolbarHeight
@@ -297,6 +288,15 @@ ApplicationWindow {
             anchors.fill:   parent
             source:         _mainToolbar
         }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Plan View
+    Loader {
+        id:                 planViewLoader
+        anchors.fill:       parent
+        visible:            false
+        source:             "PlanView.qml"
     }
 
     //-------------------------------------------------------------------------

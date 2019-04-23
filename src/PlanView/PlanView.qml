@@ -53,7 +53,6 @@ Item {
     property bool   _addWaypointOnClick:                false
     property bool   _addROIOnClick:                     false
     property bool   _singleComplexItem:                 _missionController.complexMissionItemNames.length === 1
-    property real   _toolbarHeight:                     _root.height - mainWindow.height
     property int    _editingLayer:                      _layerMission
     property int    _toolStripBottom:                   toolStrip.height + toolStrip.y
     property var    _appSettings:                       QGroundControl.settingsManager.appSettings
@@ -418,7 +417,7 @@ Item {
             planView:                   true
 
             // This is the center rectangle of the map which is not obscured by tools
-            property rect centerViewport:   Qt.rect(_leftToolWidth, _toolbarHeight, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight - _toolbarHeight)
+            property rect centerViewport:   Qt.rect(_leftToolWidth, 0, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight)
 
             property real _leftToolWidth:   toolStrip.x + toolStrip.width
             property real _statusHeight:    waypointValuesDisplay.visible ? editorMap.height - waypointValuesDisplay.y : 0
@@ -447,13 +446,6 @@ Item {
                 onClicked: {
                     // Take focus to close any previous editing
                     editorMap.focus = true
-
-                    //-- Don't pay attention to items beneath the toolbar.
-                    var topLimit = parent.height - mainWindow.height
-                    if(mouse.y < topLimit) {
-                        return
-                    }
-
                     var coordinate = editorMap.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
                     coordinate.latitude = coordinate.latitude.toFixed(_decimalPlaces)
                     coordinate.longitude = coordinate.longitude.toFixed(_decimalPlaces)
@@ -627,7 +619,7 @@ Item {
         // Right pane for mission editing controls
         Rectangle {
             id:                 rightPanel
-            height:             mainWindow.height
+            height:             parent.height
             width:              _rightPanelWidth
             color:              qgcPal.window
             opacity:            planExpanded.visible ? 0.2 : 0
