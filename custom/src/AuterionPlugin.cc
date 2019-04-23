@@ -212,6 +212,7 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
 void
 AuterionPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
 {
+
     if (colorName == QStringLiteral("window")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#090e18");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#080d15");
