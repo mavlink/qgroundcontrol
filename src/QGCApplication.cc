@@ -26,6 +26,11 @@
 #include <QStringListModel>
 #include <QRegularExpression>
 #include <QFontDatabase>
+#ifdef Q_OS_LINUX
+#ifndef __mobile__
+    #include <QMessageBox>
+#endif
+#endif
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
