@@ -22,7 +22,5 @@ class AuterionQuickInterface : public QObject
 public:
     AuterionQuickInterface(QObject* parent = nullptr);
     ~AuterionQuickInterface();
-    Q_PROPERTY(QColor   colorIndicators READ    colorIndicators CONSTANT)
     void    init            ();
-    QColor  colorIndicators () { return QColor(72,214,255); }
 };

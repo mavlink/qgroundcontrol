@@ -32,6 +32,7 @@ Rectangle {
     width:          mainCol.width + (ScreenTools.defaultFontPixelWidth * 2)
     visible:        !QGroundControl.videoManager.fullScreen
     color:          "#0B1629"
+    radius:         2
 
     readonly property string _commLostStr: qsTr("NO CAMERA")
 
@@ -39,13 +40,11 @@ Rectangle {
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 36
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
 
-    property color  _borderColor:           AuterionQuickInterface.colorIndicators
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
-    property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
+    property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property bool   _noSdCard:              _camera && _camera.storageTotal === 0
     property bool   _fullSD:                _camera && _camera.storageTotal !== 0 && _camera.storageFree > 0 && _camera.storageFree < 250 // We get kiB from the camera
     property bool   _cameraVideoMode:       !_communicationLost && (_noSdCard ? false : _camera && _camera.cameraMode   === QGCCameraControl.CAM_MODE_VIDEO)
@@ -81,7 +80,7 @@ Rectangle {
         //-----------------------------------------------------------------
         //-- Camera Name
         QGCLabel {
-            text:                   _activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
+            text:                   activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
             font.pointSize:         ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
@@ -277,7 +276,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
         }
         AuterionLabel {
-            text:               _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+            text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
             visible:            _cameraPhotoMode
             pointSize:          ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter

@@ -1,9 +1,6 @@
 Module Auterion.Widgets
 
-AuterionArtificialHorizon   1.0     AuterionArtificialHorizon.qml
-AuterionAttitudeWidget      1.0     AuterionAttitudeWidget.qml
 AuterionComboBox            1.0     AuterionComboBox.qml
-AuterionCompassRing         1.0     AuterionCompassRing.qml
 AuterionFactCombo           1.0     AuterionFactCombo.qml
 AuterionLabel               1.0     AuterionLabel.qml
 AuterionSignalStrength      1.0     AuterionSignalStrength.qml
