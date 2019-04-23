@@ -19,13 +19,17 @@
         <file alias="check.svg">res/ToolStrip/check.svg</file>
     </qresource>
     <qresource prefix="/auterion">
-        <file alias="AuterionArmedIndicator.qml">res/AuterionArmedIndicator.qml</file>
-        <file alias="AuterionBatteryIndicator.qml">res/AuterionBatteryIndicator.qml</file>
+        <file alias="AuterionArmedIndicator.qml">res/MainToolbar/AuterionArmedIndicator.qml</file>
+        <file alias="AuterionBatteryIndicator.qml">res/MainToolbar/AuterionBatteryIndicator.qml</file>
         <file alias="AuterionCameraControl.qml">res/AuterionCameraControl.qml</file>
         <file alias="AuterionFlyView.qml">res/AuterionFlyView.qml</file>
-        <file alias="AuterionGPSIndicator.qml">res/AuterionGPSIndicator.qml</file>
-        <file alias="AuterionRCRSSIIndicator.qml">res/AuterionRCRSSIIndicator.qml</file>
-        <file alias="AuterionModeIndicator.qml">res/AuterionModeIndicator.qml</file>
+        <file alias="AuterionGPSIndicator.qml">res/MainToolbar/AuterionGPSIndicator.qml</file>
+        <file alias="AuterionMainToolBar.qml">res/MainToolbar/AuterionMainToolBar.qml</file>
+        <file alias="AuterionMainToolBarIndicators.qml">res/MainToolbar/AuterionMainToolBarIndicators.qml</file>
+        <file alias="AuterionMessageIndicator.qml">res/MainToolbar/AuterionMessageIndicator.qml</file>
+        <file alias="AuterionModeIndicator.qml">res/MainToolbar/AuterionModeIndicator.qml</file>
+        <file alias="AuterionMultiVehicleSelector.qml">res/MainToolbar/AuterionMultiVehicleSelector.qml</file>
+        <file alias="AuterionRCRSSIIndicator.qml">res/MainToolbar/AuterionRCRSSIIndicator.qml</file>
     </qresource>
     <qresource prefix="/auterion/img">
         <file alias="attitude_crosshair.svg">res/images/attitude_crosshair.svg</file>
@@ -38,6 +42,7 @@
         <file alias="chevron_right.svg">res/images/chevron_right.svg</file>
         <file alias="compass_dial.svg">res/images/compass_dial.svg</file>
         <file alias="compass_pointer.svg">res/images/compass_pointer.svg</file>
+        <file alias="drop_down.svg">res/images/drop_down.svg</file>
         <file alias="gimbal_icon.svg">res/images/gimbal_icon.svg</file>
         <file alias="gimbal_pitch.svg">res/images/gimbal_pitch.svg</file>
         <file alias="gimbal_position.svg">res/images/gimbal_position.svg</file>
@@ -48,6 +53,7 @@
         <file alias="menu_flight.svg">res/images/menu_flight.svg</file>
         <file alias="menu_gear.svg">res/images/menu_gear.svg</file>
         <file alias="menu_gps.svg">res/images/menu_gps.svg</file>
+        <file alias="menu_left_edge.svg">res/images/menu_left_edge.svg</file>
         <file alias="menu_logo.svg">res/images/menu_logo.svg</file>
         <file alias="menu_logo_advanced.svg">res/images/menu_logo_advanced.svg</file>
         <file alias="menu_plan.svg">res/images/menu_plan.svg</file>
@@ -57,7 +63,12 @@
         <file alias="menu_signal_25.svg">res/images/menu_signal_25.svg</file>
         <file alias="menu_signal_50.svg">res/images/menu_signal_50.svg</file>
         <file alias="menu_signal_75.svg">res/images/menu_signal_75.svg</file>
+        <file alias="messages.svg">res/images/messages.svg</file>
+        <file alias="plan.svg">res/images/plan.svg</file>
+        <file alias="settings.svg">res/images/settings.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
+        <file alias="vehicle.svg">res/images/vehicle.svg</file>
+        <file alias="vehicle_settings.svg">res/images/vehicle_settings.svg</file>
         <file alias="void.png">res/images/void.png</file>
     </qresource>
     <qresource prefix="/Auterion/Widgets">
@@ -70,11 +81,11 @@
         <file alias="Auterion/Widgets/AuterionSignalStrength.qml">res/Auterion/Widgets/AuterionSignalStrength.qml</file>
         <file alias="Auterion/Widgets/AuterionTextBackground.qml">res/Auterion/Widgets/AuterionTextBackground.qml</file>
         <file alias="Auterion/Widgets/AuterionToolBarButton.qml">res/Auterion/Widgets/AuterionToolBarButton.qml</file>
+        <file alias="Auterion/Widgets/AuterionIconButton.qml">res/Auterion/Widgets/AuterionIconButton.qml</file>
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
     </qresource>
     <qresource prefix="/qml">
-        <file alias="QGroundControl/Controls/MainToolBar.qml">res/MainToolbar/AuterionMainToolBar.qml</file>
         <file alias="QGroundControl/Controls/ToolStrip.qml">res/ToolStrip/AuterionToolStrip.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">

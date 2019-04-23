@@ -8,9 +8,9 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.11
+import QtQuick.Controls 1.4
+import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -27,8 +27,6 @@ Item {
     width:                  gpsRow.width
     anchors.top:            parent.top
     anchors.bottom:         parent.bottom
-    anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.25
-    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 0.25
 
     function getGPSSignal() {
         if(!activeVehicle || activeVehicle.gps.count.rawValue < 1 || activeVehicle.gps.hdop.rawValue > 1.4) {
@@ -87,15 +85,6 @@ Item {
                     QGCLabel { text: activeVehicle ? activeVehicle.gps.courseOverGround.valueString : qsTr("--.--", "No data to display") }
                 }
             }
-
-            Component.onCompleted: {
-                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
-                x = pos.x
-                y = pos.y + ScreenTools.defaultFontPixelHeight
-                if((x + width) > toolBar.width) {
-                    x = toolBar.width - width - ScreenTools.defaultFontPixelWidth
-                }
-            }
         }
     }
 
@@ -123,7 +112,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            var centerX = mapToItem(toolBar, x, y).x + (width / 2)
+            var centerX = mapToGlobal(x + (width / 2), 0).x
             mainWindow.showPopUp(gpsInfo, centerX)
         }
     }

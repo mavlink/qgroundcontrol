@@ -9,4 +9,5 @@ AuterionLabel               1.0     AuterionLabel.qml
 AuterionSignalStrength      1.0     AuterionSignalStrength.qml
 AuterionTextBackground      1.0     AuterionTextBackground.qml
 AuterionToolBarButton       1.0     AuterionToolBarButton.qml
+AuterionIconButton          1.0     AuterionIconButton.qml
 OnOffSwitch                 1.0     OnOffSwitch.qml

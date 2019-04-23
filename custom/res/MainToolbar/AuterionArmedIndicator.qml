@@ -17,27 +17,16 @@ import QGroundControl.Controls              1.0
 import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 
-import Auterion.Widgets             1.0
-
 //-------------------------------------------------------------------------
 //-- Armed Indicator
-Item {
-    id:         _root
-    width:      background.width
-    height:     background.height
+Rectangle {
+    anchors.top:                    parent.top
+    anchors.bottom:                 parent.bottom
+    width:                          labelRow.width + (ScreenTools.defaultFontPixelWidth * 6)
+    color:                          Qt.rgba(1,1,1,0.1)
 
-    property var  _activeVehicle:   QGroundControl.multiVehicleManager.activeVehicle
-    property bool _armed:           _activeVehicle ? _activeVehicle.armed : false
+    property bool _armed:           activeVehicle ? activeVehicle.armed : false
 
-    QGCPalette { id: qgcPal }
-
-    AuterionTextBackground {
-        id:                         background
-        contentWidth:               labelRow.width
-        contentHeight:              labelText.height * 2
-        opacity:                    0.75
-        anchors.verticalCenter:     parent.verticalCenter
-    }
     Row {
         id:                         labelRow
         spacing:                    ScreenTools.defaultFontPixelWidth
@@ -50,24 +39,17 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
         }
         Rectangle {
-            height:                 Math.round(ScreenTools.defaultFontPixelHeight * 0.75)
+            height:                 ScreenTools.defaultFontPixelHeight * 0.5
             width:                  height
             radius:                 height * 0.5
-            color:                  Qt.rgba(0,0,0,0)
+            color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
             border.color:           "#FFF"
             border.width:           1
             anchors.verticalCenter: parent.verticalCenter
-            Rectangle {
-                height:                 Math.round(parent.height * 0.5)
-                width:                  height
-                radius:                 height * 0.5
-                color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
-                anchors.centerIn:       parent
-            }
         }
     }
     QGCMouseArea {
         fillItem: parent
-        onClicked: _armed ? toolBar.disarmVehicle() : toolBar.armVehicle()
+        onClicked: _armed ? mainWindow.disarmVehicle() : mainWindow.armVehicle()
     }
 }
