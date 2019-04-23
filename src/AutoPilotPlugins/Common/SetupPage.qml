@@ -32,7 +32,6 @@ Item {
     property real   availableHeight:        height - pageLoader.y
     property bool   showAdvanced:           false
     property alias  advanced:               advancedCheckBox.checked
-    property bool   setupPageCompleted:     false
 
     property bool   _vehicleIsRover:        activeVehicle ? activeVehicle.rover : false
     property bool   _vehicleArmed:          activeVehicle ? activeVehicle.armed : false
@@ -45,7 +44,9 @@ Item {
     property string _pageTitle:             qsTr("%1 Setup").arg(pageName)
 
     Component.onCompleted: {
-        setupPageCompleted = true
+        if(pageLoader.item && pageLoader.item.setupPageCompleted) {
+            pageLoader.item.setupPageCompleted()
+        }
     }
 
     QGCFlickable {

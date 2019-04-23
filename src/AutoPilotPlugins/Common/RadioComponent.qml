@@ -33,7 +33,7 @@ SetupPage {
 
             readonly property string  dialogTitle: qsTr("Radio")
 
-            onSetupPageCompleted: {
+            function setupPageCompleted() {
                 controller.start()
                 updateChannelCount()
             }

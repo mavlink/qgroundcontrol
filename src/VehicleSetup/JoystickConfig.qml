@@ -50,7 +50,7 @@ SetupPage {
 
             property var _activeJoystick:   joystickManager.activeJoystick
 
-            onSetupPageCompleted: {
+            function setupPageCompleted() {
                 controller.start()
             }
 

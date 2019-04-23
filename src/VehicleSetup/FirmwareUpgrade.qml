@@ -73,9 +73,7 @@ SetupPage {
                 controller.cancel()
             }
 
-            QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
-            onSetupPageCompleted: {
+            function setupPageCompleted() {
                 controller.startBoardSearch()
                 _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
