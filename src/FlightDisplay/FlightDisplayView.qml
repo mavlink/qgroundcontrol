@@ -523,7 +523,7 @@ Item {
             id:                 flyViewOverlay
             z:                  flightDisplayViewWidgets.z + 1
             visible:            !QGroundControl.videoManager.fullScreen
-            height:             mainWindow.height
+            height:             mainWindow.height - mainWindow.header.height
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
