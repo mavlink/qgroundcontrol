@@ -36,6 +36,17 @@ Item {
         visible:        qgcPal.globalTheme === QGCPalette.Light
     }
 
+    //-- Setup can be invoked from c++ side
+    Connections {
+        target: mainContentWindow
+        onSourceChanged: {
+            console.log(mainContentWindow.source)
+            if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
+                setupButton.checked = true
+            }
+        }
+    }
+
     RowLayout {
         anchors.bottomMargin:   1
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
