@@ -24,6 +24,18 @@ Item {
     id:                                     toolBar
     anchors.fill:                           parent
     property string sectionTitle:           qsTr("Fly")
+    property bool   inPlanView:             planViewLoader.visible
+    //-------------------------------------------------------------------------
+    //-- Setup can be invoked from c++ side
+    Connections {
+        target: mainContentWindow
+        onSourceChanged: {
+            if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
+                vehicleSetup.checked = true
+                sectionTitle = vehicleSetup.text
+            }
+        }
+    }
     Row {
         id:                                 iconRow
         height:                             parent.height
@@ -63,13 +75,13 @@ Item {
             anchors.top:                    parent.top
             anchors.bottom:                 parent.bottom
             source:                         "/auterion/AuterionMultiVehicleSelector.qml"
-            visible:                        activeVehicle
+            visible:                        activeVehicle && !inPlanView
         }
         Rectangle {
             width:                          1
             height:                         parent.height
             color:                          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
-            visible:                        activeVehicle
+            visible:                        activeVehicle && !inPlanView
         }
         //-------------------------------------------------------------------------
         //-- Flight Mode
@@ -77,7 +89,7 @@ Item {
             anchors.top:                    parent.top
             anchors.bottom:                 parent.bottom
             source:                         "/auterion/AuterionModeIndicator.qml"
-            visible:                        activeVehicle
+            visible:                        activeVehicle && !inPlanView
         }
     }
     //-------------------------------------------------------------------------
@@ -87,12 +99,12 @@ Item {
         anchors.bottom:                     parent.bottom
         anchors.horizontalCenter:           parent.horizontalCenter
         source:                             "/auterion/AuterionArmedIndicator.qml"
-        visible:                            activeVehicle
+        visible:                            activeVehicle && !inPlanView
     }
     //-------------------------------------------------------------------------
     // Indicators
     Loader {
-        source:                             "/auterion/AuterionMainToolBarIndicators.qml"
+        source:                             inPlanView ? "/qml/PlanToolBarIndicators.qml" : "/auterion/AuterionMainToolBarIndicators.qml"
         anchors.left:                       iconRow.right
         anchors.leftMargin:                 ScreenTools.defaultFontPixelWidth * 2
         anchors.right:                      parent.right
@@ -116,18 +128,6 @@ Item {
         height:                             1
         color:                              "black"
         visible:                            qgcPal.globalTheme === QGCPalette.Light
-    }
-    //-------------------------------------------------------------------------
-    //-- Setup can be invoked from c++ side
-    Connections {
-        target: mainContentWindow
-        onSourceChanged: {
-            console.log(mainContentWindow.source)
-            if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
-                vehicleSetup.checked = true
-                sectionTitle = vehicleSetup.text
-            }
-        }
     }
     //-------------------------------------------------------------------------
     //-- Navigation Drawer (Left to Right, on command or using touch gestures)
