@@ -15,7 +15,7 @@ class QDomNodeList;
 class QGCCameraParamIO;
 
 Q_DECLARE_LOGGING_CATEGORY(CameraControlLog)
-Q_DECLARE_LOGGING_CATEGORY(CameraControlLogVerbose)
+Q_DECLARE_LOGGING_CATEGORY(CameraControlVerboseLog)
 
 //-----------------------------------------------------------------------------
 class QGCVideoStreamInfo : public QObject
