@@ -133,9 +133,9 @@ Item {
     //-- Navigation Drawer (Left to Right, on command or using touch gestures)
     Drawer {
         id:                                 drawer
-        y:                                  0
+        y:                                  header.height
         width:                              navButtonWidth
-        height:                             mainWindow.height
+        height:                             mainWindow.height - header.height
         background: Rectangle {
             color:  qgcPal.globalTheme === QGCPalette.Light ? "white" : "#0B1629"
         }

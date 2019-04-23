@@ -155,6 +155,7 @@ Item {
         width:          ScreenTools.defaultFontPixelWidth  * 50
         color:          "#C5C6C9"
         radius:         2
+        clip:           true
         anchors.top:    parent.top
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 2
         anchors.horizontalCenter: parent.horizontalCenter
