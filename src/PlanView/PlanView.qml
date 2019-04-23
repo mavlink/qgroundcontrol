@@ -574,87 +574,90 @@ QGCView {
                     border.width:   object.lineWidth
                 }
             }
+        }
 
-            ToolStrip {
-                id:                 toolStrip
-                anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-                anchors.left:       parent.left
-                anchors.topMargin:  _toolButtonTopMargin
-                anchors.top:        parent.top
-                color:              qgcPal.window
-                title:              qsTr("Plan")
-                z:                  QGroundControl.zOrderWidgets
-                showAlternateIcon:  [ masterController.dirty, false, false, false, false, false, false ]
-                rotateImage:        [ masterController.syncInProgress, false, false, false, false, false, false ]
-                animateImage:       [ masterController.dirty, false, false, false, false, false, false ]
-                buttonEnabled:      [ !masterController.syncInProgress, true, true, true, true, true, true ]
-                buttonVisible:      [ true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
-                maxHeight:          mapScale.y - toolStrip.y
+        //-----------------------------------------------------------
+        // Left tool strip
+        ToolStrip {
+            id:                 toolStrip
+            anchors.leftMargin: ScreenTools.defaultFontPixelWidth
+            anchors.left:       parent.left
+            anchors.topMargin:  _toolButtonTopMargin
+            anchors.top:        parent.top
+            color:              qgcPal.window
+            title:              qsTr("Plan")
+            z:                  QGroundControl.zOrderWidgets
+            showAlternateIcon:  [ masterController.dirty, false, false, false, false, false, false ]
+            rotateImage:        [ masterController.syncInProgress, false, false, false, false, false, false ]
+            animateImage:       [ masterController.dirty, false, false, false, false, false, false ]
+            buttonEnabled:      [ !masterController.syncInProgress, true, true, true, true, true, true ]
+            buttonVisible:      [ true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
+            maxHeight:          mapScale.y - toolStrip.y
 
-                property bool _showZoom: !ScreenTools.isMobile
+            property bool _showZoom: !ScreenTools.isMobile
 
-                model: [
-                    {
-                        name:                   qsTr("File"),
-                        iconSource:             "/qmlimages/MapSync.svg",
-                        alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
-                        dropPanelComponent:     syncDropPanel
-                    },
-                    {
-                        name:                   qsTr("Waypoint"),
-                        iconSource:             "/qmlimages/MapAddMission.svg",
-                        toggle:                 true
-                    },
-                    {
-                        name:                   qsTr("ROI"),
-                        iconSource:             "/qmlimages/MapAddMission.svg",
-                        toggle:                 true
-                    },
-                    {
-                        name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern"),
-                        iconSource:         "/qmlimages/MapDrawShape.svg",
-                        dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
-                    },
-                    {
-                        name:               qsTr("Center"),
-                        iconSource:         "/qmlimages/MapCenter.svg",
-                        dropPanelComponent: centerMapDropPanel
-                    },
-                    {
-                        name:               qsTr("In"),
-                        iconSource:         "/qmlimages/ZoomPlus.svg"
-                    },
-                    {
-                        name:               qsTr("Out"),
-                        iconSource:         "/qmlimages/ZoomMinus.svg"
+            model: [
+                {
+                    name:                   qsTr("File"),
+                    iconSource:             "/qmlimages/MapSync.svg",
+                    alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
+                    dropPanelComponent:     syncDropPanel
+                },
+                {
+                    name:                   qsTr("Waypoint"),
+                    iconSource:             "/qmlimages/MapAddMission.svg",
+                    toggle:                 true
+                },
+                {
+                    name:                   qsTr("ROI"),
+                    iconSource:             "/qmlimages/MapAddMission.svg",
+                    toggle:                 true
+                },
+                {
+                    name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern"),
+                    iconSource:         "/qmlimages/MapDrawShape.svg",
+                    dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
+                },
+                {
+                    name:               qsTr("Center"),
+                    iconSource:         "/qmlimages/MapCenter.svg",
+                    dropPanelComponent: centerMapDropPanel
+                },
+                {
+                    name:               qsTr("In"),
+                    iconSource:         "/qmlimages/ZoomPlus.svg"
+                },
+                {
+                    name:               qsTr("Out"),
+                    iconSource:         "/qmlimages/ZoomMinus.svg"
+                }
+            ]
+
+            onClicked: {
+                switch (index) {
+                case 1:
+                    _addWaypointOnClick = checked
+                    _addROIOnClick = false
+                    break
+                case 2:
+                    _addROIOnClick = checked
+                    _addWaypointOnClick = false
+                    break
+                case 3:
+                    if (_singleComplexItem) {
+                        addComplexItem(_missionController.complexMissionItemNames[0])
                     }
-                ]
-
-                onClicked: {
-                    switch (index) {
-                    case 1:
-                        _addWaypointOnClick = checked
-                        _addROIOnClick = false
-                        break
-                    case 2:
-                        _addROIOnClick = checked
-                        _addWaypointOnClick = false
-                        break
-                    case 3:
-                        if (_singleComplexItem) {
-                            addComplexItem(_missionController.complexMissionItemNames[0])
-                        }
-                        break
-                    case 5:
-                        editorMap.zoomLevel += 0.5
-                        break
-                    case 6:
-                        editorMap.zoomLevel -= 0.5
-                        break
-                    }
+                    break
+                case 5:
+                    editorMap.zoomLevel += 0.5
+                    break
+                case 6:
+                    editorMap.zoomLevel -= 0.5
+                    break
                 }
             }
         }
+
         //-----------------------------------------------------------
         // Right pane for mission editing controls
         Rectangle {
