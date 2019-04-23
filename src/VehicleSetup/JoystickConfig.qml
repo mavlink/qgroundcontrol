@@ -213,7 +213,6 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.pitchAxisMapped
                             property bool reversed:         controller.pitchAxisReversed
                         }
@@ -243,7 +242,6 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.yawAxisMapped
                             property bool reversed:         controller.yawAxisReversed
                         }
@@ -273,7 +271,6 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
                             property bool mapped:           controller.throttleAxisMapped
                             property bool reversed:         controller.throttleAxisReversed
                         }
@@ -826,7 +823,6 @@ SetupPage {
                                 sourceComponent:        axisMonitorDisplayComponent
                                 Component.onCompleted:  item.narrowIndicator = true
 
-                                property real ScreenTools.defaultFontPixelWidth:     ScreenTools.defaultFontPixelWidth
                                 property bool mapped:               true
                                 readonly property bool reversed:    false
 
