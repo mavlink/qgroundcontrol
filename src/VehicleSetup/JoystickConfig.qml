@@ -184,9 +184,8 @@ SetupPage {
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
 
-                            property real ScreenTools.defaultFontPixelWidth: ScreenTools.defaultFontPixelWidth
-                            property bool mapped:           controller.rollAxisMapped
-                            property bool reversed:         controller.rollAxisReversed
+                            property bool mapped:   controller.rollAxisMapped
+                            property bool reversed: controller.rollAxisReversed
                         }
 
                         Connections {
