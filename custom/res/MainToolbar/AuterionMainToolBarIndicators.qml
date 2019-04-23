@@ -20,6 +20,7 @@ import QGroundControl.Palette               1.0
 
 Item {
     anchors.fill: parent
+    readonly property real _indicatorMargins: ScreenTools.defaultFontPixelHeight * 0.75
     //-------------------------------------------------------------------------
     //-- Waiting for a vehicle
     Row {
@@ -61,7 +62,7 @@ Item {
             Loader {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                anchors.margins:    ScreenTools.defaultFontPixelHeight
+                anchors.margins:    _indicatorMargins
                 source:             modelData;
             }
         }
@@ -72,7 +73,7 @@ Item {
         Loader {
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
-            anchors.margins:        ScreenTools.defaultFontPixelHeight
+            anchors.margins:        _indicatorMargins
             source:                 "/auterion/AuterionMessageIndicator.qml"
         }
     }

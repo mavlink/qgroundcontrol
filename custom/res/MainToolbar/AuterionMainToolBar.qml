@@ -118,6 +118,18 @@ Item {
         visible:                            qgcPal.globalTheme === QGCPalette.Light
     }
     //-------------------------------------------------------------------------
+    //-- Setup can be invoked from c++ side
+    Connections {
+        target: mainContentWindow
+        onSourceChanged: {
+            console.log(mainContentWindow.source)
+            if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
+                vehicleSetup.checked = true
+                sectionTitle = vehicleSetup.text
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
     //-- Navigation Drawer (Left to Right, on command or using touch gestures)
     Drawer {
         id:                                 drawer
@@ -190,6 +202,7 @@ Item {
                 color:                      Qt.rgba(1,1,1,0.15)
             }
             AuterionToolBarButton {
+                id:                         vehicleSetup
                 text:                       qsTr("Vehicle Setup")
                 icon.source:                "/auterion/img/vehicle_settings.svg"
                 Layout.fillWidth:           true

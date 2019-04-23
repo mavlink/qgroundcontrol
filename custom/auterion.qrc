@@ -64,6 +64,7 @@
         <file alias="menu_signal_50.svg">res/images/menu_signal_50.svg</file>
         <file alias="menu_signal_75.svg">res/images/menu_signal_75.svg</file>
         <file alias="messages.svg">res/images/messages.svg</file>
+        <file alias="microSD.svg">res/images/microSD.svg</file>
         <file alias="plan.svg">res/images/plan.svg</file>
         <file alias="settings.svg">res/images/settings.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
