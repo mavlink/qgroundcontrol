@@ -14,7 +14,7 @@
 #include <QPoint>
 
 Q_DECLARE_LOGGING_CATEGORY(AuterionCameraLog)
-Q_DECLARE_LOGGING_CATEGORY(AuterionCameraLogVerbose)
+Q_DECLARE_LOGGING_CATEGORY(AuterionCameraVerboseLog)
 
 //-----------------------------------------------------------------------------
 class AuterionCameraControl : public QGCCameraControl

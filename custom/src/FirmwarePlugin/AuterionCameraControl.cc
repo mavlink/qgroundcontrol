@@ -9,7 +9,7 @@
 #include "QGCCameraIO.h"
 
 QGC_LOGGING_CATEGORY(AuterionCameraLog, "AuterionCameraLog")
-QGC_LOGGING_CATEGORY(AuterionCameraLogVerbose, "AuterionCameraLogVerbose")
+QGC_LOGGING_CATEGORY(AuterionCameraVerboseLog, "AuterionCameraVerboseLog")
 
 static const char* kCAM_VIDEORES = "CAM_VIDEORES";
 

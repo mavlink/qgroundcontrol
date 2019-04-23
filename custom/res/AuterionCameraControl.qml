@@ -97,10 +97,9 @@ Rectangle {
                 QGCColoredImage {
                     height:         ScreenTools.defaultFontPixelHeight
                     width:          height
-                    source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/auterion/img/camera_video.svg" : "/auterion/img/camera_photo.svg"
+                    source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/auterion/img/camera_photo.svg" : "/auterion/img/camera_video.svg"
                     color:          "#FFFFFF"
                     fillMode:       Image.PreserveAspectFit
-                    visible:        _cameraModeUndefined || _cameraPhotoMode
                     sourceSize.height:  height
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
