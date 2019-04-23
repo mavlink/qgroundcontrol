@@ -561,16 +561,16 @@ Item {
         ToolStrip {
             visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
-            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth : undefined
+
+            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth * 2 : undefined
             anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
             anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  ScreenTools.toolbarHeight + (_margins * 2)
+            anchors.topMargin:  ScreenTools.toolbarHeight + anchors.leftMargin
             anchors.top:        _mapAndVideo.top
             z:                  _mapAndVideo.z + 4
-            title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [_useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
+            buttonVisible:      [_useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, _guidedController.showPause, !_guidedController.showPause ]
             buttonEnabled:      [_useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort

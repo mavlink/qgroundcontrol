@@ -63,7 +63,7 @@ Item {
         if (visible) {
             visible = false
             _dropDownComponent = undefined
-            toolStrip.uncheckAll()
+            toolStrip.lastClickedButton.checked = false
         }
     }
 
