@@ -176,6 +176,7 @@
 		<file alias="QGroundControl/FlightMap/VehicleMapItem.qml">../src/FlightMap/MapItems/VehicleMapItem.qml</file>
 		<file alias="QGroundControl/ScreenTools/qmldir">../src/QmlControls/QGroundControl.ScreenTools.qmldir</file>
 		<file alias="QGroundControl/ScreenTools/ScreenTools.qml">../src/QmlControls/ScreenTools.qml</file>
+		<file alias="QGroundControl/Controls/QGCHoverButton.qml">../src/QmlControls/QGCHoverButton.qml</file>
 		<file alias="QmlTest.qml">../src/QmlControls/QmlTest.qml</file>
 		<file alias="RadioComponent.qml">../src/AutoPilotPlugins/Common/RadioComponent.qml</file>
 		<file alias="SerialSettings.qml">../src/ui/preferences/SerialSettings.qml</file>
