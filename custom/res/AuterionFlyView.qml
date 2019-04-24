@@ -159,7 +159,6 @@ Item {
         anchors.top:    parent.top
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 2
         anchors.horizontalCenter: parent.horizontalCenter
-        property int _startX: 0
         Repeater {
             model: 720
             QGCLabel {
@@ -275,7 +274,7 @@ Item {
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
             }
             QGCLabel {
-                text:                   activeVehicle ? activeVehicle.groundSpeed.rawValue.toFixed(1) + ' ' + activeVehicle.groundSpeed.units : "0.0"
+                text:                   activeVehicle ? activeVehicle.groundSpeed.value.toFixed(1) + ' ' + activeVehicle.groundSpeed.units : "0.0"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
