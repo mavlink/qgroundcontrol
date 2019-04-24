@@ -309,6 +309,7 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Loader helper for any child, no matter how deep, to display elements
     //   on top of the main window.
+    //   This is DEPRECATED. Use Popup instead.
     Loader {
         id: rootLoader
         anchors.centerIn: parent

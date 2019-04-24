@@ -680,7 +680,6 @@ Item {
 
             /// Close all dialogs
             function closeAll() {
-                rootLoader.sourceComponent  = null
                 guidedActionConfirm.visible = false
                 guidedActionList.visible    = false
                 altitudeSlider.visible      = false
