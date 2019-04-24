@@ -61,6 +61,8 @@ public:
             delete pMockLink;
         if(pDebug)
             delete pDebug;
+        if(pQmlTest)
+            delete pQmlTest;
 #endif
         if(defaultOptions)
             delete defaultOptions;
@@ -84,6 +86,7 @@ public:
 #if defined(QT_DEBUG)
     QmlComponentInfo* pMockLink                 = nullptr;
     QmlComponentInfo* pDebug                    = nullptr;
+    QmlComponentInfo* pQmlTest                  = nullptr;
 #endif
 
     QmlComponentInfo*   valuesPageWidgetInfo    = nullptr;
@@ -173,6 +176,9 @@ QVariantList &QGCCorePlugin::settingsPages()
         _p->pDebug = new QmlComponentInfo(tr("Debug"),
             QUrl::fromUserInput("qrc:/qml/DebugWindow.qml"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pDebug)));
+        _p->pQmlTest = new QmlComponentInfo(tr("Palette Test"),
+            QUrl::fromUserInput("qrc:/qml/QmlTest.qml"));
+        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pQmlTest)));
 #endif
     }
     return _p->settingsList;
