@@ -103,6 +103,7 @@ public:
     DEFINE_QGC_COLOR(alertBorder,           setAlertBorder)
     DEFINE_QGC_COLOR(alertText,             setAlertText)
     DEFINE_QGC_COLOR(missionItemEditor,     setMissionItemEditor)
+    DEFINE_QGC_COLOR(hoverColor,            setHoverColor)
 
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();
