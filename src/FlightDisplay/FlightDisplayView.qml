@@ -486,7 +486,7 @@ Item {
             anchors.top:            parent.top
             spacing:                ScreenTools.defaultFontPixelWidth
             z:                      _mapAndVideo.z + 4
-            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
+            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.enableMultiVehicleList
 
             ExclusiveGroup { id: multiVehicleSelectorGroup }
 
@@ -535,7 +535,7 @@ Item {
             anchors.right:              parent.right
             anchors.bottom:             parent.bottom
             width:                      ScreenTools.defaultFontPixelWidth * 30
-            visible:                    !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
+            visible:                    !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen && QGroundControl.corePlugin.options.enableMultiVehicleList
             z:                          _mapAndVideo.z + 4
             guidedActionsController:    _guidedController
         }
