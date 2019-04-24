@@ -233,7 +233,7 @@ Item {
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2
-        anchors.bottom:         parent.bottom
+        anchors.bottom:         multiVehicleSelector.visible ? multiVehicleSelector.top : parent.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
@@ -349,6 +349,25 @@ Item {
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    Text.AlignRight
+            }
+        }
+    }
+
+    //-- Multi Vehicle Selector
+    Row {
+        id:                     multiVehicleSelector
+        spacing:                ScreenTools.defaultFontPixelWidth
+        anchors.bottom:         parent.bottom
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
+        Repeater {
+            model:              QGroundControl.multiVehicleManager.vehicles.count
+            AuterionVehicleButton {
+                property var _vehicle: QGroundControl.multiVehicleManager.vehicles.get(modelData)
+                vehicle:        _vehicle
+                checked:        (_vehicle && activeVehicle) ? _vehicle.id === activeVehicle.id : false
             }
         }
     }

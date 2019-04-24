@@ -40,6 +40,7 @@ public:
     CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
     bool        showMavlinkLogOptions           () const final { return false; }
     bool        showFirmwareUpgrade             () const final;
+    bool        enableMultiVehicleList          () const final { return false; }
 };
 
 

@@ -72,6 +72,7 @@
         <file alias="Auterion/Widgets/AuterionSignalStrength.qml">res/Auterion/Widgets/AuterionSignalStrength.qml</file>
         <file alias="Auterion/Widgets/AuterionTextBackground.qml">res/Auterion/Widgets/AuterionTextBackground.qml</file>
         <file alias="Auterion/Widgets/AuterionToolBarButton.qml">res/Auterion/Widgets/AuterionToolBarButton.qml</file>
+        <file alias="Auterion/Widgets/AuterionVehicleButton.qml">res/Auterion/Widgets/AuterionVehicleButton.qml</file>
         <file alias="Auterion/Widgets/AuterionIconButton.qml">res/Auterion/Widgets/AuterionIconButton.qml</file>
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>

@@ -2,9 +2,10 @@ Module Auterion.Widgets
 
 AuterionComboBox            1.0     AuterionComboBox.qml
 AuterionFactCombo           1.0     AuterionFactCombo.qml
+AuterionIconButton          1.0     AuterionIconButton.qml
 AuterionLabel               1.0     AuterionLabel.qml
 AuterionSignalStrength      1.0     AuterionSignalStrength.qml
 AuterionTextBackground      1.0     AuterionTextBackground.qml
 AuterionToolBarButton       1.0     AuterionToolBarButton.qml
-AuterionIconButton          1.0     AuterionIconButton.qml
+AuterionVehicleButton		1.0		AuterionVehicleButton.qml
 OnOffSwitch                 1.0     OnOffSwitch.qml
