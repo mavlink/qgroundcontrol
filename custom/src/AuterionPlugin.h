@@ -60,6 +60,7 @@ public:
     VideoReceiver*          createVideoReceiver             (QObject* parent) final;
     QQmlApplicationEngine*  createRootWindow                (QObject* parent) final;
     bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
+    void                    paletteOverride                 (QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);
 
