@@ -62,6 +62,7 @@ public:
     Q_PROPERTY(float                    devicePixelDensity              READ devicePixelDensity             NOTIFY devicePixelDensityChanged)
     Q_PROPERTY(bool                     checkFirmwareVersion            READ checkFirmwareVersion           CONSTANT)
     Q_PROPERTY(bool                     showMavlinkLogOptions           READ showMavlinkLogOptions          CONSTANT)
+    Q_PROPERTY(bool                     enableMultiVehicleList          READ enableMultiVehicleList         CONSTANT)
 
     /// Should QGC hide its settings menu and colapse it into one single menu (Settings and Vehicle Setup)?
     /// @return true if QGC should consolidate both menus into one.
@@ -113,6 +114,7 @@ public:
     virtual bool    disableVehicleConnection        () const { return false; }  ///< true: vehicle connection is disabled
     virtual bool    checkFirmwareVersion            () const { return true; }
     virtual bool    showMavlinkLogOptions           () const { return true; }
+    virtual bool    enableMultiVehicleList           () const { return true; }
 
 #if defined(__mobile__)
     virtual bool    useMobileFileDialog             () const { return true;}
