@@ -159,6 +159,37 @@ Item {
         anchors.top:    parent.top
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * 2
         anchors.horizontalCenter: parent.horizontalCenter
+        property int _startX: 0
+        Repeater {
+            model: 720
+            QGCLabel {
+                function _normalize(degrees) {
+                    var a = degrees % 360
+                    if (a < 0) a += 360
+                    return a
+                }
+                property int _startAngle: modelData + 180 + _heading
+                property int _angle: _normalize(_startAngle)
+                anchors.verticalCenter: parent.verticalCenter
+                x:              visible ? ((modelData * (compassBar.width / 360)) - (width * 0.5)) : 0
+                visible:        _angle % 45 == 0
+                color:          "#505565"
+                font.pointSize: ScreenTools.smallFontPointSize
+                text: {
+                    switch(_angle) {
+                    case 0:     return "N"
+                    case 45:    return "NE"
+                    case 90:    return "E"
+                    case 135:   return "SE"
+                    case 180:   return "S"
+                    case 225:   return "SW"
+                    case 270:   return "W"
+                    case 315:   return "NW"
+                    }
+                    return ""
+                }
+            }
+        }
     }
     Rectangle {
         id:             headingIndicator
