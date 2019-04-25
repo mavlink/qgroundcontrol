@@ -77,9 +77,6 @@
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
     </qresource>
-    <qresource prefix="/qml">
-        <file alias="QGroundControl/Controls/ToolStrip.qml">res/ToolStrip/AuterionToolStrip.qml</file>
-    </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
         <file alias="boop.wav">res/audio/boop.wav</file>
