@@ -17,3 +17,5 @@
         <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="action.svg">resources/action.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
+        <file alias="PaperPlane.svg">../src/ui/toolbar/Images/PaperPlane.svg</file>
+        <file alias="Plan.svg">../src/ui/toolbar/Images/Plan.svg</file>
