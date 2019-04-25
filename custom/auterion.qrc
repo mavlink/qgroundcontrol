@@ -17,6 +17,8 @@
         <file alias="ZoomPlus.svg">res/ToolStrip/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">res/ToolStrip/ZoomMinus.svg</file>
         <file alias="check.svg">res/ToolStrip/check.svg</file>
+        <file alias="PaperPlane.svg">res/ToolStrip/FlyView.svg</file>
+        <file alias="Plan.svg">res/ToolStrip/PlanView.svg</file>
     </qresource>
     <qresource prefix="/auterion">
         <file alias="AuterionArmedIndicator.qml">res/MainToolbar/AuterionArmedIndicator.qml</file>
@@ -76,9 +78,6 @@
         <file alias="Auterion/Widgets/AuterionIconButton.qml">res/Auterion/Widgets/AuterionIconButton.qml</file>
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
-    </qresource>
-    <qresource prefix="/qml">
-        <file alias="QGroundControl/Controls/ToolStrip.qml">res/ToolStrip/AuterionToolStrip.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>

@@ -216,7 +216,7 @@ AuterionPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#090e18");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#080d15");
     } else if (colorName == QStringLiteral("windowShade")) {
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#333333");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#0e1a35");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#0B1629");
     } else if (colorName == QStringLiteral("windowShadeDark")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#060a11");
@@ -247,5 +247,41 @@ AuterionPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_
     } else if (colorName == QStringLiteral("textFieldText")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#ffffff");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#000000");
+    } else if (colorName == QStringLiteral("colorGreen")) {
+        QColor c("#0CA678");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("colorOrange")) {
+        QColor c("#F6921E");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("colorRed")) {
+        QColor c("#E03131");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("colorGrey")) {
+        QColor c("#8B90A0");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("colorBlue")) {
+        QColor c("#228BE6");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("alertBackground")) {
+        QColor c("#FAB005");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("alertBorder")) {
+        QColor c("#C79218");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("alertText")) {
+        QColor c("#0B1629");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
+    } else if (colorName == QStringLiteral("missionItemEditor")) {
+        QColor c("#0B1629");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = c;
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = c;
     }
 }

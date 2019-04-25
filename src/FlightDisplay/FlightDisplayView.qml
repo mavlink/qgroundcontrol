@@ -561,17 +561,18 @@ Item {
         ToolStrip {
             visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
-            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth : undefined
+
+            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth * 2 : undefined
             anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
             anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  ScreenTools.toolbarHeight + (_margins * 2)
+            anchors.topMargin:  ScreenTools.toolbarHeight + anchors.leftMargin
             anchors.top:        _mapAndVideo.top
             z:                  _mapAndVideo.z + 4
-            title:              qsTr("Fly")
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [_useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
-            buttonEnabled:      [_useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
+
+            buttonVisible:      [true, _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, _guidedController.showPause, !_guidedController.showPause ]
+            buttonEnabled:      [true, _useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
@@ -609,8 +610,12 @@ Item {
 
             model: [
                 {
-                    name:       "Checklist",
-                    iconSource: "/qmlimages/check.svg",
+                    name:               "Plan",
+                    iconSource:         "/qmlimages/Plan.svg",
+                },
+                {
+                    name:               "Checklist",
+                    iconSource:         "/qmlimages/check.svg",
                     dropPanelComponent: checklistDropPanel
                 },
                 {
@@ -642,13 +647,18 @@ Item {
 
             onClicked: {
                 guidedActionsController.closeAll()
-                var action = model[index].action
-                if (action === -1) {
-                    guidedActionList.model   = _actionModel
-                    guidedActionList.visible = true
+                if(index === 0) {
+                    mainWindow.showPlanView()
                 } else {
-                    _guidedController.confirmAction(action)
+                    var action = model[index].action
+                    if (action === -1) {
+                        guidedActionList.model   = _actionModel
+                        guidedActionList.visible = true
+                    } else {
+                        _guidedController.confirmAction(action)
+                    }
                 }
+
             }
         }
 
