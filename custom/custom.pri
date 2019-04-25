@@ -204,15 +204,16 @@ exists($$PWD/custom/custom.pri) {
             $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.properties \
             $$QGCROOT/custom/android/gradlew.bat
 
+        # For now only android uses install customization
         # It's important to keep the right order
         include($$QGCROOT/QGCSetup.pri)
         include(customQGCInstaller.pri)
+        # Disable only for Android. MacOS build won't add the right libraries to the build package
+        CONFIG += QGC_DISABLE_BUILD_SETUP
     }
 
     #-------------------------------------------------------------------------------------
     # Custom setup
-    CONFIG += QGC_DISABLE_BUILD_SETUP
-    include($$QGCROOT/QGCSetup.pri)
     LinxuBuild {
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/deploy/qgroundcontrol.desktop $$DESTDIR

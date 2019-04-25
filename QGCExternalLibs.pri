@@ -174,7 +174,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else {
     AIRMAPD_PATH    = $$PWD/libs/airmapd
     AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
-    message(Looking for Airmap in $$AIRMAP_QT_PATH)
+    message('Looking for Airmap in folder "$${AIRMAPD_PATH}", variant: "$$AIRMAP_QT_PATH"')
     MacBuild {
         exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
             message("Including support for AirMap for macOS")
