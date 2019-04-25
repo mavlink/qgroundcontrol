@@ -130,10 +130,7 @@
 		<file alias="scaleLight.png">../src/FlightMap/Images/scaleLight.png</file>
 		<file alias="scale_endLight.png">../src/FlightMap/Images/scale_endLight.png</file>
 		<file alias="adsbVehicle.svg">../src/FlightMap/Images/adsbVehicle.svg</file>
-		<file alias="vehicleArrowOutline.svg">../src/FlightMap/Images/vehicleArrowOutline.svg</file>
-		<file alias="vehicleArrowOpaque.svg">../src/FlightMap/Images/vehicleArrowOpaque.svg</file>
 		<file alias="Help.svg">../src/FlightMap/Images/Help.svg</file>
-		<file alias="Home.svg">../src/FlightMap/Images/Home.svg</file>
 		<file alias="HelpBlack.svg">../src/FlightMap/Images/HelpBlack.svg</file>
 		<file alias="MapAddMissionBlack.svg">../src/FlightMap/Images/MapAddMissionBlack.svg</file>
 		<file alias="MapCenterBlack.svg">../src/FlightMap/Images/MapCenterBlack.svg</file>
@@ -203,7 +200,6 @@
 		<file alias="Play">../resources/Play.svg</file>
 		<file alias="PowerButton">../resources/PowerButton.svg</file>
 		<file alias="QGCLogoBlack">../resources/QGCLogoBlack.svg</file>
-		<file alias="QGCLogoArrow">../resources/QGCLogoArrow.svg</file>
 		<file alias="QGroundControlConnect">../resources/QGroundControlConnect.svg</file>
 		<file alias="SplashScreen">../resources/SplashScreen.png</file>
 		<file alias="Stop">../resources/Stop.svg</file>

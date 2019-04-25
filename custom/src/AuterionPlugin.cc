@@ -18,6 +18,7 @@
 #include "SettingsManager.h"
 #include "AppMessages.h"
 #include "QmlComponentInfo.h"
+#include "QGCPalette.h"
 
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
@@ -60,6 +61,18 @@ bool
 AuterionOptions::showFirmwareUpgrade() const
 {
     return qgcApp()->toolbox()->corePlugin()->showAdvancedUI();
+}
+
+QColor
+AuterionOptions::toolbarBackgroundLight() const
+{
+    return AuterionPlugin::_windowShadeEnabledLightColor;
+}
+
+QColor
+AuterionOptions::toolbarBackgroundDark() const
+{
+    return AuterionPlugin::_windowShadeEnabledDarkColor;
 }
 
 //-----------------------------------------------------------------------------
@@ -208,15 +221,19 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
     return true;
 }
 
+
+const QColor     AuterionPlugin::_windowShadeEnabledLightColor("#d9d9d9");
+const QColor     AuterionPlugin::_windowShadeEnabledDarkColor("#0e1a35");
+
 //-----------------------------------------------------------------------------
 void
 AuterionPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo)
 {
     if (colorName == QStringLiteral("window")) {
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#090e18");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#0e1a35");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#080d15");
     } else if (colorName == QStringLiteral("windowShade")) {
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#0e1a35");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = _windowShadeEnabledDarkColor;
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#0B1629");
     } else if (colorName == QStringLiteral("windowShadeDark")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#060a11");
