@@ -19,3 +19,7 @@
         <file>resources/icons/qgroundcontrol.ico</file>
         <file alias="PaperPlane.svg">../src/ui/toolbar/Images/PaperPlane.svg</file>
         <file alias="Plan.svg">../src/ui/toolbar/Images/Plan.svg</file>
+        <file alias="Home.svg">src/FlightMap/Images/Home.svg</file>
+        <file alias="QGCLogoArrow">resources/QGCLogoArrow.svg</file>
+        <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
+        <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>

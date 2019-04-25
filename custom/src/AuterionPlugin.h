@@ -41,6 +41,9 @@ public:
     bool        showMavlinkLogOptions           () const final { return false; }
     bool        showFirmwareUpgrade             () const final;
     bool        enableMultiVehicleList          () const final { return false; }
+    // TODO: Can't access QGCPalette without some workarounds, change this upstream
+    QColor      toolbarBackgroundLight          () const final;
+    QColor      toolbarBackgroundDark           () const final;
 };
 
 
@@ -64,6 +67,9 @@ public:
     void                    paletteOverride                 (QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);
+
+    const static QColor     _windowShadeEnabledLightColor;
+    const static QColor     _windowShadeEnabledDarkColor;
 
 private slots:
     void                    _advancedChanged                (bool advanced);
