@@ -22,14 +22,27 @@ Item {
 
     QGCMapPalette { id: mapPal }
 
-    onStickPositionXChanged: {
+    onWidthChanged: calculateXAxis()
+    onStickPositionXChanged: calculateXAxis()
+    onHeightChanged: calculateYAxis()
+    onStickPositionYChanged: calculateYAxis()
+
+    function calculateXAxis()
+    {
+        if(!visible()) {
+            return;
+        }
         var xAxisTemp = stickPositionX / width
         xAxisTemp *= 2.0
         xAxisTemp -= 1.0
         xAxis = xAxisTemp
     }
 
-    onStickPositionYChanged: {
+    function calculateYAxis()
+    {
+        if(!visible()) {
+            return;
+        }
         var yAxisTemp = stickPositionY / height
         yAxisTemp *= 2.0
         yAxisTemp -= 1.0
