@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/res">
-        <file alias="QGCLogoFull">res/images/toolbar_logo.svg</file>
         <file alias="QGCLogoWhite">res/images/toolbar_logo.svg</file>
         <file alias="takeoff.svg">res/ToolStrip/takeoff.svg</file>
         <file alias="land.svg">res/ToolStrip/land.svg</file>
@@ -8,6 +7,8 @@
         <file alias="pause-mission.svg">res/ToolStrip/pause-mission.svg</file>
         <file alias="action.svg">res/ToolStrip/action.svg</file>
         <file alias="resources/icons/qgroundcontrol.ico">Windows/icon.ico</file>
+        <file alias="QGCLogoArrow">res/images/GcsPosition.svg</file>
+        <file alias="QGCLogoFull">res/images/GcsPosition.svg</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="MapSync.svg">res/ToolStrip/MapSync.svg</file>
@@ -17,6 +18,11 @@
         <file alias="ZoomPlus.svg">res/ToolStrip/ZoomPlus.svg</file>
         <file alias="ZoomMinus.svg">res/ToolStrip/ZoomMinus.svg</file>
         <file alias="check.svg">res/ToolStrip/check.svg</file>
+        <file alias="PaperPlane.svg">res/ToolStrip/FlyView.svg</file>
+        <file alias="Plan.svg">res/ToolStrip/PlanView.svg</file>
+        <file alias="Home.svg">res/images/HomePosition.svg</file>
+        <file alias="vehicleArrowOutline.svg">res/images/VehiclePositionOutline.svg</file>
+        <file alias="vehicleArrowOpaque.svg">res/images/VehiclePositionOpaque.svg</file>
     </qresource>
     <qresource prefix="/auterion">
         <file alias="AuterionArmedIndicator.qml">res/AuterionArmedIndicator.qml</file>
