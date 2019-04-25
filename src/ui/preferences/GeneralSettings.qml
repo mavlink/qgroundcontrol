@@ -455,6 +455,17 @@ QGCView {
                                 property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
                             }
 
+                            FactCheckBox {
+                                text:       qsTr("Auto-Center throttle")
+                                visible:    _virtualJoystickCentralized.visible && (
+                                        QGroundControl.multiVehicleManager.activeVehicle.sub || QGroundControl.multiVehicleManager.activeVehicle.rover
+                                    )
+                                fact:       _virtualJoystickCentralized
+                                Layout.leftMargin: _margins
+
+                                property Fact _virtualJoystickCentralized: QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
+                            }
+
                             GridLayout {
                                 columns: 2
 
