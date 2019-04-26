@@ -50,23 +50,11 @@ build_script:
 test_script:
   - if "%CONFIG%" EQU "debug" ( %SHADOW_BUILD_DIR%\debug\qgroundcontrol --unittest )
 
-for:
--
-  branches:
-    only:
-      - master
-  artifacts:
+artifacts:
   - path: QGroundControl-installer.exe
     name: qgcinstaller
--
-  branches:
-    only:
-      - Stable_V3.5
-  artifacts:
-    - path: QGroundControl-installer.exe
-      name: qgcinstaller
-    - path: symbols\**\*.*_
-      name: symbols
+  - path: build_windows_install\release\qgroundcontrol.pdb
+    name: pdb
 
 deploy:
 # deploy continuous builds to s3
@@ -101,19 +89,19 @@ deploy:
 #      appveyor_repo_tag: false
 
 # deploy release symbols to s3
-  - provider: S3
-    access_key_id:
-      secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
-    secret_access_key:
-      secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
-    bucket: qgroundcontrol
-    region: us-west-2
-    set_public: true
-    folder: releasesyms
-    artifact: symbols
-    on:
-      CONFIG: installer
-      appveyor_repo_tag: true
+#  - provider: S3
+#    access_key_id:
+#      secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
+#    secret_access_key:
+#      secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
+#    bucket: qgroundcontrol
+#    region: us-west-2
+#    set_public: true
+#    folder: releasesyms
+#    artifact: symbols
+#    on:
+#      CONFIG: installer
+#      appveyor_repo_tag: true
 
 # deploy tagged releases to Github releases
   - provider: GitHub
@@ -155,3 +143,18 @@ deploy:
     on:
       CONFIG: installer
       appveyor_repo_tag: true
+
+# deploy pdb for tagged releases to s3 latest folder
+  - provider: S3
+    access_key_id:
+        secure: IGAojLMqokL+76DbdulmWDA3MTsxEBBi3ReVVSqTy9c=
+    secret_access_key:
+        secure: RiYqaR+3T2PMNz2j5ur8LCA6H/Zfd4jTX33CZE5iBxm+zaz4QLs25p0B7prpaoNN
+    bucket: qgroundcontrol
+    region: us-west-2
+    set_public: true
+    folder: latest
+    artifact: pdb
+    on:
+       CONFIG: installer
+       appveyor_repo_tag: true
