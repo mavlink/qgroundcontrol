@@ -54,7 +54,9 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
 {
     APMAirframeLoader::loadAirframeFactMetaData();
 
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
+#endif
 }
 
 APMAutoPilotPlugin::~APMAutoPilotPlugin()
@@ -176,6 +178,7 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
     return QString();
 }
 
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
 /// The following code is executed when the Vehicle is parameter ready. It checks for the service bulletin against Cube Blacks.
 void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
 {
@@ -204,3 +207,4 @@ void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
 
     }
 }
+#endif
