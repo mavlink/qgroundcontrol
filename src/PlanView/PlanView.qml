@@ -549,7 +549,7 @@ Item {
             rotateImage:        [ false, _planMasterController.syncInProgress, false, false, false, false, false, false ]
             animateImage:       [ false, _planMasterController.dirty, false, false, false, false, false, false ]
             buttonEnabled:      [ true, !_planMasterController.syncInProgress, true, true, true, true, true, true ]
-            buttonVisible:      [ true, true, true, _waypointsOnlyMode, true, true, false, false ]
+            buttonVisible:      [ true, true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
             maxHeight:          mapScale.y - toolStrip.y
 
             property bool _showZoom: !ScreenTools.isMobile
