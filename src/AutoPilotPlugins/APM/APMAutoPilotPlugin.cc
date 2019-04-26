@@ -29,6 +29,9 @@
 #include "APMSubFrameComponent.h"
 #include "ESP8266Component.h"
 #include "APMHeliComponent.h"
+#include "QGCApplication.h"
+
+#include <QSerialPortInfo>
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
@@ -50,6 +53,8 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _heliComponent            (NULL)
 {
     APMAirframeLoader::loadAirframeFactMetaData();
+
+    connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
 }
 
 APMAutoPilotPlugin::~APMAutoPilotPlugin()
@@ -169,4 +174,33 @@ QString APMAutoPilotPlugin::prerequisiteSetup(VehicleComponent* component) const
     }
 
     return QString();
+}
+
+/// The following code is executed when the Vehicle is parameter ready. It checks for the service bulletin against Cube Blacks.
+void APMAutoPilotPlugin::_checkForBadCubeBlack(void)
+{
+    bool cubeBlackFound = false;
+    for (const QVariant& varLink: _vehicle->links()) {
+        SerialLink* serialLink = varLink.value<SerialLink*>();
+        if (serialLink && QSerialPortInfo(*serialLink->_hackAccessToPort()).description().contains(QStringLiteral("CubeBlack"))) {
+            cubeBlackFound = true;
+        }
+
+    }
+    if (!cubeBlackFound) {
+        return;
+    }
+
+    ParameterManager* paramMgr = _vehicle->parameterManager();
+
+    QString paramAcc3("INS_ACC3_ID");
+    QString paramGyr3("INS_GYR3_ID");
+    QString paramEnableMask("INS_ENABLE_MASK");
+
+    if (paramMgr->parameterExists(-1, paramAcc3) && paramMgr->getParameter(-1, paramAcc3)->rawValue().toInt() == 0 &&
+            paramMgr->parameterExists(-1, paramGyr3) && paramMgr->getParameter(-1, paramGyr3)->rawValue().toInt() == 0 &&
+            paramMgr->parameterExists(-1, paramEnableMask) && paramMgr->getParameter(-1, paramEnableMask)->rawValue().toInt() >= 7) {
+        qgcApp()->showMessage(tr("WARNING: The flight board you are using has a critical service bulletin against ti which advise against flying. https://discuss.cubepilot.org/t/sb-0000002-critical-service-bulletin-for-cubes-purchased-between-january-2019-to-present-do-not-fly/406"));
+
+    }
 }
