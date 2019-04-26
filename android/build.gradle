@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.0'
+        classpath 'com.android.tools.build:gradle:1.2.0'
     }
 }
 
@@ -50,10 +50,6 @@ android {
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
        }
-    }
-
-    aaptOptions {
-        cruncherEnabled = false
     }
 
     lintOptions {
