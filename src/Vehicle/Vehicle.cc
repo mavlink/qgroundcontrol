@@ -3343,6 +3343,11 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         case MAV_RESULT_FAILED:
             qgcApp()->showMessage(tr("%1 command failed").arg(commandName));
             break;
+        case MAV_RESULT_ACCEPTED:
+            if (ack.command == MAV_CMD_FLASH_BOOTLOADER) {
+                qgcApp()->showMessage(tr("Flash of bootloader succeeded."));
+            }
+            break;
         default:
             // Do nothing
             break;
