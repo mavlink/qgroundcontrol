@@ -32,7 +32,6 @@ import QGroundControl.SettingsManager       1.0
 
 Item {
     id:                 _root
-    color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
