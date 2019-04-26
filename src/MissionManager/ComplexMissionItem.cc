@@ -20,8 +20,9 @@ const char* ComplexMissionItem::_saveCameraInPresetKey =    "complexItemCameraSa
 const char* ComplexMissionItem::_builtInPresetKey =         "complexItemBuiltInPreset";
 
 ComplexMissionItem::ComplexMissionItem(Vehicle* vehicle, bool flyView, QObject* parent)
-    : VisualMissionItem         (vehicle, flyView, parent)
-    , _cameraInPreset           (true)
+    : VisualMissionItem (vehicle, flyView, parent)
+    , _cameraInPreset   (true)
+    , _builtInPreset    (false)
 {
 
 }
@@ -30,7 +31,9 @@ const ComplexMissionItem& ComplexMissionItem::operator=(const ComplexMissionItem
 {
     VisualMissionItem::operator=(other);
 
-    _cameraInPreset = other._cameraInPreset;
+    _currentPreset =    other._currentPreset;
+    _cameraInPreset =   other._cameraInPreset;
+    _builtInPreset =    other._builtInPreset;
 
     return *this;
 }
