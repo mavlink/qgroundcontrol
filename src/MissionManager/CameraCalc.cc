@@ -282,7 +282,7 @@ bool CameraCalc::load(const QJsonObject& json, bool forPresets, bool cameraSpecI
         _adjustedFootprintSideFact.setRawValue      (v1Json[adjustedFootprintSideName].toDouble());
         _adjustedFootprintFrontalFact.setRawValue   (v1Json[adjustedFootprintFrontalName].toDouble());
         _distanceToSurfaceFact.setRawValue          (v1Json[distanceToSurfaceName].toDouble());
-        if (isManualCamera()) {
+        if (!isManualCamera()) {
             _imageDensityFact.setRawValue(v1Json[imageDensityName].toDouble());
 
             if (!CameraSpec::load(v1Json, errorString)) {
