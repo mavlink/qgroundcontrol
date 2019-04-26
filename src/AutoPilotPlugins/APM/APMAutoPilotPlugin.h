@@ -59,6 +59,9 @@ protected:
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
 
+private slots:
+    void _checkForBadCubeBlack(void);
+
 private:
     QVariantList                _components;
 };
