@@ -176,7 +176,7 @@ void VideoStreamControl::_handleVideoStreamInfo(mavlink_message_t& message)
         emit videoResolutionChanged();
     }
     qCDebug(VideoStreamControlLog) << "Video stream resolution:" << _videoResolution;
-    _cameraIdInUse = streamInfo.stream_id;
+    _cameraIdInUse = streamInfo.camera_id;
     qCDebug(VideoStreamControlLog) << "Camera id in use:" <<  _cameraIdInUse;
 
     if (!uriNotChange) {
