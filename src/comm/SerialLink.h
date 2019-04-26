@@ -145,6 +145,9 @@ public:
     bool    connect(void);
     bool    disconnect(void);
 
+    /// Don't even think of calling this method!
+    QSerialPort* _hackAccessToPort(void) { return _port; }
+
 private slots:
     /**
      * @brief Write a number of bytes to the interface.
