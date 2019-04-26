@@ -218,7 +218,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     setSequenceNumber(sequenceNumber);
 
     // Load CameraCalc first since it will trigger camera name change which will trounce gimbal angles
-    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
+    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), false /* forPresets */, false /* cameraSpecInPreset */, errorString)) {
         return false;
     }
 

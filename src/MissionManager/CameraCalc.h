@@ -70,7 +70,7 @@ public:
     void setDistanceToSurfaceRelative   (bool distanceToSurfaceRelative);
 
     void save(QJsonObject& json) const;
-    bool load(const QJsonObject& json, QString& errorString);
+    bool load(const QJsonObject& json, bool forPresets, bool cameraSpecInPreset, QString& errorString);
 
     static const char* cameraNameName;
     static const char* valueSetIsDistanceName;
