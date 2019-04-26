@@ -119,7 +119,7 @@
     "defaultValue":     false
 },
 {
-    "name":             "VideoResolution",
+    "name":             "videoResolution",
     "shortDescription": "Video stream resolution",
     "longDescription":  "Video stream resolution.",
     "type":             "uint32",
@@ -135,7 +135,7 @@
     "defaultValue":     0
 },
 {
-    "name":             "VideoShareEnable",
+    "name":             "videoShareEnable",
     "shortDescription": "Enable Video Share",
     "longDescription":  "Enable Video Share with other devices.",
     "type":             "bool",
