@@ -53,7 +53,7 @@ test_script:
 artifacts:
   - path: QGroundControl-installer.exe
     name: qgcinstaller
-  - path: C:\projects\qgroundcontrol\build_windows_install\release\qgroundcontrol.pdb
+  - path: build_windows_install\release\qgroundcontrol.pdb
     name: pdb
 
 deploy:
