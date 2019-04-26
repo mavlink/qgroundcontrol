@@ -1,6 +1,5 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
 import QtQuick.Dialogs  1.2
 import QtQuick.Extras   1.4
 import QtQuick.Layouts  1.2
@@ -29,6 +28,8 @@ Rectangle {
     property real   _fieldWidth:                ScreenTools.defaultFontPixelWidth * 10.5
     property var    _vehicle:                   QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property real   _cameraMinTriggerInterval:  missionItem.cameraCalc.minTriggerInterval.rawValue
+    property string _currentPreset:             missionItem.currentPreset
+    property bool   _usingPreset:               _currentPreset !== ""
 
     function polygonCaptureStarted() {
         missionItem.clearPolygon()
@@ -66,6 +67,97 @@ Rectangle {
             visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
         }
 
+        QGCLabel {
+            text: qsTr("Presets")
+        }
+
+        QGCComboBox {
+            id:                 presetCombo
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            model:              _presetList
+
+            property var _presetList:   []
+
+            readonly property int _indexCustom:         0
+            readonly property int _indexCreate:         1
+            readonly property int _indexDelete:         2
+            readonly property int _indexLabel:          3
+            readonly property int _indexFirstPreset:    4
+
+            Component.onCompleted: _updateList()
+
+            onActivated: {
+                if (index == _indexCustom) {
+                    missionItem.clearCurrentPreset()
+                } else if (index == _indexCreate) {
+                    rootQgcView.showDialog(savePresetDialog, qsTr("Save Preset"), rootQgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                } else if (index == _indexDelete) {
+                    if (missionItem.builtInPreset) {
+                        rootQgcView.showMessage(qsTr("Delete Preset"), qsTr("This preset cannot be deleted."), StandardButton.Ok)
+                    } else {
+                        missionItem.deleteCurrentPreset()
+                    }
+                } else if (index >= _indexFirstPreset) {
+                    missionItem.loadPreset(textAt(index))
+                } else {
+                    _selectCurrentPreset()
+                }
+            }
+
+            Connections {
+                target: missionItem
+
+                onPresetNamesChanged:   presetCombo._updateList()
+                onCurrentPresetChanged: presetCombo._selectCurrentPreset()
+            }
+
+            // There is some major strangeness going on with programatically changing the index of a combo box in this scenario.
+            // If you just set currentIndex directly it will just change back 1o -1 magically. Has something to do with resetting
+            // model on the fly I think. But not sure. To work around I delay the currentIndex changes to let things unwind.
+            Timer {
+                id:         delayedIndexChangeTimer
+                interval:   10
+
+                property int newIndex
+
+                onTriggered:  presetCombo.currentIndex = newIndex
+
+            }
+
+            function delayedIndexChange(index) {
+                delayedIndexChangeTimer.newIndex = index
+                delayedIndexChangeTimer.start()
+            }
+
+            function _updateList() {
+                _presetList = []
+                _presetList.push(qsTr("Custom (specify all settings)"))
+                _presetList.push(qsTr("Save Settings As Preset"))
+                _presetList.push(qsTr("Delete Current Preset"))
+                if (missionItem.presetNames.length !== 0) {
+                    _presetList.push(qsTr("Presets:"))
+                }
+
+                for (var i=0; i<missionItem.presetNames.length; i++) {
+                    _presetList.push(missionItem.presetNames[i])
+                }
+                model = _presetList
+                _selectCurrentPreset()
+            }
+
+            function _selectCurrentPreset() {
+                if (_usingPreset) {
+                    var newIndex = find(_currentPreset)
+                    if (newIndex !== -1) {
+                        delayedIndexChange(newIndex)
+                        return
+                    }
+                }
+                delayedIndexChange(presetCombo._indexCustom)
+            }
+        }
+
         CameraCalc {
             cameraCalc:                     missionItem.cameraCalc
             vehicleFlightIsFrontal:         true
@@ -73,6 +165,8 @@ Rectangle {
             distanceToSurfaceAltitudeMode:  missionItem.followTerrain ? QGroundControl.AltitudeModeAboveTerrain : QGroundControl.AltitudeModeRelative
             frontalDistanceLabel:           qsTr("Trigger Dist")
             sideDistanceLabel:              qsTr("Spacing")
+            usingPreset:                    _usingPreset
+            cameraSpecifiedInPreset:        missionItem.cameraInPreset
         }
 
         SectionHeader {
@@ -109,23 +203,27 @@ Rectangle {
                 updateValueWhileDragging: true
             }
 
-            QGCLabel { text: qsTr("Turnaround dist") }
+            QGCLabel {
+                text:       qsTr("Turnaround dist")
+                visible:    !_usingPreset
+            }
             FactTextField {
                 fact:               missionItem.turnAroundDistance
                 Layout.fillWidth:   true
+                visible:            !_usingPreset
             }
+        }
+
+        QGCButton {
+            text:               qsTr("Rotate Entry Point")
+            onClicked:          missionItem.rotateEntryPoint();
         }
 
         ColumnLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        transectsHeader.checked
-
-            QGCButton {
-                text:               qsTr("Rotate Entry Point")
-                onClicked:          missionItem.rotateEntryPoint();
-            }
+            visible:        transectsHeader.checked && !_usingPreset
 
             /*
               Temporarily removed due to bug https://github.com/mavlink/qgroundcontrol/issues/7005
@@ -187,13 +285,15 @@ Rectangle {
             id:         terrainHeader
             text:       qsTr("Terrain")
             checked:    missionItem.followTerrain
+            visible:    !_usingPreset
         }
 
         ColumnLayout {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        terrainHeader.checked
+            visible:        terrainHeader.checked && !_usingPreset
+
 
             QGCCheckBox {
                 id:         followsTerrainCheckBox
@@ -236,4 +336,45 @@ Rectangle {
 
         TransectStyleComplexItemStats { }
     } // Column
+
+    Component {
+        id: savePresetDialog
+
+        QGCViewDialog {
+            function accept() {
+                if (presetNameField.text != "") {
+                    missionItem.savePreset(presetNameField.text)
+                    hideDialog()
+                }
+            }
+
+            ColumnLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        ScreenTools.defaultFontPixelHeight
+
+                QGCLabel {
+                    Layout.fillWidth:   true
+                    text:               qsTr("Save the current settings as a named preset.")
+                    wrapMode:           Text.WordWrap
+                }
+
+                QGCLabel {
+                    text: qsTr("Preset Name")
+                }
+
+                QGCTextField {
+                    id:                 presetNameField
+                    Layout.fillWidth:   true
+                    text:               _currentPreset
+                }
+
+                QGCCheckBox {
+                    text:       qsTr("Save Camera In Preset")
+                    checked:    missionItem.cameraInPreset
+                    onClicked:  missionItem.cameraInPreset = checked
+                }
+            }
+        }
+    }
 } // Rectangle

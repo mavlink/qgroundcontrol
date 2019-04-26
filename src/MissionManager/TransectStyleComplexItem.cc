@@ -132,6 +132,8 @@ void TransectStyleComplexItem::setDirty(bool dirty)
 
 void TransectStyleComplexItem::_save(QJsonObject& complexObject)
 {
+    ComplexMissionItem::_saveItem(complexObject);
+
     QJsonObject innerObject;
 
     innerObject[JsonHelper::jsonVersionKey] =       1;
@@ -183,8 +185,9 @@ void TransectStyleComplexItem::setSequenceNumber(int sequenceNumber)
     }
 }
 
-bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& errorString)
+bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forPresets, QString& errorString)
 {
+    ComplexMissionItem::_loadItem(complexObject);
 
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { _jsonTransectStyleComplexItemKey, QJsonValue::Object, true },
@@ -211,8 +214,8 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
         { hoverAndCaptureName,              QJsonValue::Bool,   true },
         { refly90DegreesName,               QJsonValue::Bool,   true },
         { _jsonCameraCalcKey,               QJsonValue::Object, true },
-        { _jsonVisualTransectPointsKey,     QJsonValue::Array,  true },
-        { _jsonItemsKey,                    QJsonValue::Array,  true },
+        { _jsonVisualTransectPointsKey,     QJsonValue::Array,  !forPresets },
+        { _jsonItemsKey,                    QJsonValue::Array,  !forPresets },
         { _jsonFollowTerrainKey,            QJsonValue::Bool,   true },
         { _jsonCameraShotsKey,              QJsonValue::Double, false },    // Not required since it was missing from initial implementation
     };
@@ -220,28 +223,30 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, QString& 
         return false;
     }
 
-    // Load visual transect points
-    if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
-        return false;
-    }
-    _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
-    _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
-
-    // Load generated mission items
-    _loadedMissionItemsParent = new QObject(this);
-    QJsonArray missionItemsJsonArray = innerObject[_jsonItemsKey].toArray();
-    for (const QJsonValue& missionItemJson: missionItemsJsonArray) {
-        MissionItem* missionItem = new MissionItem(_loadedMissionItemsParent);
-        if (!missionItem->load(missionItemJson.toObject(), 0 /* sequenceNumber */, errorString)) {
-            _loadedMissionItemsParent->deleteLater();
-            _loadedMissionItemsParent = NULL;
+    if (!forPresets) {
+        // Load visual transect points
+        if (!JsonHelper::loadGeoCoordinateArray(innerObject[_jsonVisualTransectPointsKey], false /* altitudeRequired */, _visualTransectPoints, errorString)) {
             return false;
         }
-        _loadedMissionItems.append(missionItem);
+        _coordinate = _visualTransectPoints.count() ? _visualTransectPoints.first().value<QGeoCoordinate>() : QGeoCoordinate();
+        _exitCoordinate = _visualTransectPoints.count() ? _visualTransectPoints.last().value<QGeoCoordinate>() : QGeoCoordinate();
+
+        // Load generated mission items
+        _loadedMissionItemsParent = new QObject(this);
+        QJsonArray missionItemsJsonArray = innerObject[_jsonItemsKey].toArray();
+        for (const QJsonValue missionItemJson: missionItemsJsonArray) {
+            MissionItem* missionItem = new MissionItem(_loadedMissionItemsParent);
+            if (!missionItem->load(missionItemJson.toObject(), 0 /* sequenceNumber */, errorString)) {
+                _loadedMissionItemsParent->deleteLater();
+                _loadedMissionItemsParent = nullptr;
+                return false;
+            }
+            _loadedMissionItems.append(missionItem);
+        }
     }
 
     // Load CameraCalc data
-    if (!_cameraCalc.load(innerObject[_jsonCameraCalcKey].toObject(), errorString)) {
+    if (!_cameraCalc.load(innerObject[_jsonCameraCalcKey].toObject(), forPresets, cameraInPreset(), errorString)) {
         return false;
     }
 
@@ -435,7 +440,7 @@ void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
         // Let the signal fall on the floor
         disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
 #endif
-        _terrainPolyPathQuery = NULL;
+        _terrainPolyPathQuery = nullptr;
     }
 
     // Append all transects into a single PolyPath query
@@ -479,7 +484,7 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
         qWarning() << "TransectStyleComplexItem::_polyPathTerrainData _terrainPolyPathQuery != sender()";
     }
     disconnect(_terrainPolyPathQuery, &TerrainPolyPathQuery::terrainDataReceived, this, &TransectStyleComplexItem::_polyPathTerrainData);
-    _terrainPolyPathQuery = NULL;
+    _terrainPolyPathQuery = nullptr;
 }
 
 bool TransectStyleComplexItem::readyForSave(void) const
