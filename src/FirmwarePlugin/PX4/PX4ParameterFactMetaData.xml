@@ -4471,15 +4471,6 @@ default 1.5 turns per second</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="45.0" name="MC_YAWRAUTO_MAX" type="FLOAT">
-      <short_desc>Max yaw rate in auto mode</short_desc>
-      <long_desc>Limit for yaw rate, has effect for large rotations in autonomous mode, to avoid large control output and mixer saturation.</long_desc>
-      <min>0.0</min>
-      <max>360.0</max>
-      <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>5</increment>
-    </parameter>
     <parameter default="2.8" name="MC_YAW_P" type="FLOAT">
       <short_desc>Yaw P gain</short_desc>
       <long_desc>Yaw proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
@@ -4495,6 +4486,15 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter default="45.0" name="MPC_YAWRAUTO_MAX" type="FLOAT">
+      <short_desc>Max yaw rate in auto mode</short_desc>
+      <long_desc>Limit the rate of change of the yaw setpoint in autonomous mode to avoid large control output and mixer saturation.</long_desc>
+      <min>0.0</min>
+      <max>360.0</max>
+      <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
   </group>
   <group name="Multicopter Position Control">
