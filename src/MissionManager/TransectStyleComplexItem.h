@@ -141,7 +141,7 @@ protected:
     virtual void _recalcCameraShots         (void) = 0;
 
     void    _save                           (QJsonObject& saveObject);
-    bool    _load                           (const QJsonObject& complexObject, QString& errorString);
+    bool    _load                           (const QJsonObject& complexObject, bool forPresets, QString& errorString);
     void    _setExitCoordinate              (const QGeoCoordinate& coordinate);
     void    _setCameraShots                 (int cameraShots);
     double  _triggerDistance                (void) const;
