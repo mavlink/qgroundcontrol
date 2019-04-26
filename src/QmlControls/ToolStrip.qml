@@ -32,7 +32,7 @@ Rectangle {
     property AbstractButton lastClickedButton: null
 
     // Ensure we don't get lower than
-    property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 10) + toolStripColumn.anchors.margins * 2
+    property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 9) + toolStripColumn.anchors.margins * 2
 
     signal clicked(int index, bool checked)
 
@@ -61,7 +61,7 @@ Rectangle {
                 anchors.right:  toolStripColumn.right
                 height:         width
                 radius:         ScreenTools.defaultFontPixelWidth / 2
-                fontPointSize:  ScreenTools.isMobile ? ScreenTools.smallFontPointSize : ScreenTools.mediumFontPointSize
+                fontPointSize:  ScreenTools.isMobile ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
 
                 enabled:        _root.buttonEnabled ? _root.buttonEnabled[index] : true
                 visible:        _root.buttonVisible ? _root.buttonVisible[index] : true
