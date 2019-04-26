@@ -31,7 +31,9 @@
 #include "APMHeliComponent.h"
 #include "QGCApplication.h"
 
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
 #include <QSerialPortInfo>
+#endif
 
 /// This is the AutoPilotPlugin implementatin for the MAV_AUTOPILOT_ARDUPILOT type.
 APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
