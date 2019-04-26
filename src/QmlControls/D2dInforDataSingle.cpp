@@ -82,7 +82,7 @@ void D2dInforDataSingle::dataReceived()
        QTextStream stream(socket);
        vTemp = stream.readAll();
 
-       qCritical() << "D2dInforDataSingle localServer dataReceived:" << vTemp;
+       //qCritical() << "D2dInforDataSingle localServer dataReceived:" << vTemp;
 
        if (vTemp.contains(D2D_UL_DATA_RATE_TAG))//D2D_UL_DATA_RATE_TAG  //
        {
