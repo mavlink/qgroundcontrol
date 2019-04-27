@@ -1,6 +1,7 @@
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Layouts  1.2
+import QtPositioning    5.2
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -53,7 +54,7 @@ QGCFlickable {
                 anchors.top:        parent.top
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                spacing:            ScreenTools.defaultFontPixelHeight / 2
+                spacing:            _margin
 
                 QGCLabel {
                     anchors.left:       parent.left
@@ -66,10 +67,10 @@ QGCFlickable {
                 }
 
                 Column {
-                    anchors.left:   parent.left
-                    anchors.right:  parent.right
-                    spacing:        ScreenTools.defaultFontPixelHeight / 2
-                    visible:        myGeoFenceController.supported
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    spacing:            _margin
+                    visible:            myGeoFenceController.supported
 
                     Repeater {
                         model: myGeoFenceController.params
@@ -114,9 +115,8 @@ QGCFlickable {
                     }
 
                     QGCButton {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        text:           qsTr("Polygon Fence")
+                        Layout.fillWidth:   true
+                        text:               qsTr("Polygon Fence")
 
                         onClicked: {
                             var rect = Qt.rect(flightMap.centerViewport.x, flightMap.centerViewport.y, flightMap.centerViewport.width, flightMap.centerViewport.height)
@@ -127,9 +127,8 @@ QGCFlickable {
                     }
 
                     QGCButton {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        text:           qsTr("Circular Fence")
+                        Layout.fillWidth:   true
+                        text:               qsTr("Circular Fence")
 
                         onClicked: {
                             var rect = Qt.rect(flightMap.centerViewport.x, flightMap.centerViewport.y, flightMap.centerViewport.width, flightMap.centerViewport.height)
@@ -150,11 +149,10 @@ QGCFlickable {
                     }
 
                     GridLayout {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        columns:        3
-                        flow:           GridLayout.TopToBottom
-                        visible:        polygonSection.checked && myGeoFenceController.polygons.count > 0
+                        Layout.fillWidth:   true
+                        columns:            3
+                        flow:               GridLayout.TopToBottom
+                        visible:            polygonSection.checked && myGeoFenceController.polygons.count > 0
 
                         QGCLabel {
                             text:               qsTr("Inclusion")
@@ -224,11 +222,11 @@ QGCFlickable {
                     }
 
                     GridLayout {
-                        anchors.left:   parent.left
-                        anchors.right:  parent.right
-                        columns:        4
-                        flow:           GridLayout.TopToBottom
-                        visible:        polygonSection.checked && myGeoFenceController.circles.count > 0
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        columns:            4
+                        flow:               GridLayout.TopToBottom
+                        visible:            polygonSection.checked && myGeoFenceController.circles.count > 0
 
                         QGCLabel {
                             text:               qsTr("Inclusion")
@@ -302,6 +300,46 @@ QGCFlickable {
                             }
                         }
                     } // GridLayout
+
+                    SectionHeader {
+                        id:     breachReturnSection
+                        text:   qsTr("Breach Return Point")
+                    }
+
+                    QGCButton {
+                        text:               qsTr("Add Breach Return Point")
+                        visible:            breachReturnSection.visible && !myGeoFenceController.breachReturnPoint.isValid
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+
+                        onClicked: myGeoFenceController.breachReturnPoint = flightMap.center
+                    }
+
+                    QGCButton {
+                        text:               qsTr("Remove Breach Return Point")
+                        visible:            breachReturnSection.visible && myGeoFenceController.breachReturnPoint.isValid
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+
+                        onClicked: myGeoFenceController.breachReturnPoint = QtPositioning.coordinate()
+                    }
+
+                    ColumnLayout {
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        spacing:            _margin
+                        visible:            breachReturnSection.visible && myGeoFenceController.breachReturnPoint.isValid
+
+                        QGCLabel {
+                            text: qsTr("Altitude")
+                        }
+
+                        AltitudeFactTextField {
+                            fact:           myGeoFenceController.breachReturnAltitude
+                            altitudeMode:   QGroundControl.AltitudeModeRelative
+                        }
+                    }
+
                 }
             }
         }
