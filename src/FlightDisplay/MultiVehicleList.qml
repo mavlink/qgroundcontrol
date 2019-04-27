@@ -123,7 +123,7 @@ Item {
                             Layout.alignment:           Qt.AlignHCenter
                             font.pointSize:             ScreenTools.largeFontPointSize
                             color:                      _textColor
-                            activeVehicle:              _vehicle
+                            currentVehicle:             _vehicle
                         }
 
                         QGCLabel {
