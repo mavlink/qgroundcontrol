@@ -18,7 +18,7 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- GPS Indicator
 Item {
-    id:             satelitte
+    id:             _root
     width:          visible ? (gpsValuesColumn.x + gpsValuesColumn.width) * 1.1 : 0
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
@@ -108,8 +108,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            var centerX = mapToGlobal(x + (width / 2), 0).x
-            mainWindow.showPopUp(gpsInfo, centerX)
+            mainWindow.showPopUp(_root, gpsInfo)
         }
     }
 }
