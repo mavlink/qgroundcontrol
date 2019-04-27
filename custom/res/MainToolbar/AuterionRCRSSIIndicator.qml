@@ -23,6 +23,7 @@ import Auterion.Widgets                     1.0
 //-------------------------------------------------------------------------
 //-- RC RSSI Indicator
 Item {
+    id:                     _root
     width:                  visible ? rssiRow.width : 0
     anchors.top:            parent.top
     anchors.bottom:         parent.bottom
@@ -92,8 +93,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            var centerX = mapToGlobal(x + (width / 2), 0).x
-            mainWindow.showPopUp(rcRSSIInfo, centerX)
+            mainWindow.showPopUp(_root, rcRSSIInfo)
         }
     }
 }

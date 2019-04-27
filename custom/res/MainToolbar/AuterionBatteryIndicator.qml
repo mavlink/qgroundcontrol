@@ -21,6 +21,7 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- Battery Indicator
 Item {
+    id:                     _root
     width:                  batteryIndicatorRow.width
     anchors.top:            parent.top
     anchors.bottom:         parent.bottom
@@ -126,8 +127,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            var centerX = mapToGlobal(x + (width / 2), 0).x
-            mainWindow.showPopUp(batteryInfo, centerX)
+            mainWindow.showPopUp(_root, batteryInfo)
         }
     }
 }
