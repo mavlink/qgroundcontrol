@@ -575,7 +575,11 @@ ApplicationWindow {
         Loader {
             id:             loader
             onLoaded: {
-                indicatorDropdown.x = mainWindow.contentItem.mapFromItem(indicatorDropdown.currentItem, 0, 0).x - (loader.width * 0.5)
+                var centerX = mainWindow.contentItem.mapFromItem(indicatorDropdown.currentItem, 0, 0).x - (loader.width * 0.5)
+                if((centerX + indicatorDropdown.width) > (mainWindow.width - ScreenTools.defaultFontPixelWidth)) {
+                    centerX = mainWindow.width - indicatorDropdown.width - ScreenTools.defaultFontPixelWidth
+                }
+                indicatorDropdown.x = centerX
             }
         }
         onOpened: {
