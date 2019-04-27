@@ -40,7 +40,6 @@ Item {
     Connections {
         target: mainContentWindow
         onSourceChanged: {
-            console.log(mainContentWindow.source)
             if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
                 setupButton.checked = true
             }
