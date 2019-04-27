@@ -7,6 +7,7 @@
  *
  ****************************************************************************/
 
+#include "AirspaceFlightPlanProvider.h"
 #include "AirMapRulesetsManager.h"
 #include "AirMapManager.h"
 #include "QGCApplication.h"
@@ -136,6 +137,7 @@ AirMapRuleFeature::setValue(const QVariant val)
     settings.setValue(name(), _value);
     settings.endGroup();
     emit valueChanged();
+    qgcApp()->toolbox()->airspaceManager()->flightPlan()->setDirty(true);
 }
 
 //-----------------------------------------------------------------------------

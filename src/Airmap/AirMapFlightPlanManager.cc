@@ -139,9 +139,11 @@ AirMapFlightPlanManager::setFlightStartTime(QDateTime start)
 {
     if(start < QDateTime::currentDateTime()) {
         start = QDateTime::currentDateTime().addSecs(1);
+        setDirty(true);
     }
     if(_flightStartTime != start) {
         _flightStartTime = start;
+        setDirty(true);
         emit flightStartTimeChanged();
     }
     qCDebug(AirMapManagerLog) << "Set time start time" << _flightStartTime;
@@ -152,6 +154,7 @@ void
 AirMapFlightPlanManager::setFlightStartsNow(bool now)
 {
     _flightStartsNow = now;
+    setDirty(true);
     emit flightStartsNowChanged();
 }
 
@@ -159,12 +162,15 @@ AirMapFlightPlanManager::setFlightStartsNow(bool now)
 void
 AirMapFlightPlanManager::setFlightDuration(int seconds)
 {
-    _flightDuration = seconds;
-    if(_flightDuration < 30) {
-        _flightDuration = 30;
+    if(_flightDuration != seconds || _flightDuration < 30) {
+        _flightDuration = seconds;
+        if(_flightDuration < 30) {
+            _flightDuration = 30;
+        }
+        setDirty(true);
+        emit flightDurationChanged();
+        qCDebug(AirMapManagerLog) << "Set time duration" << _flightDuration;
     }
-    emit flightDurationChanged();
-    qCDebug(AirMapManagerLog) << "Set time duration" << _flightDuration;
 }
 
 //-----------------------------------------------------------------------------
@@ -261,6 +267,7 @@ AirMapFlightPlanManager::updateFlightPlan()
     }
     _flightPermitStatus = AirspaceFlightPlanProvider::PermitPending;
     emit flightPermitStatusChanged();
+    setDirty(false);
     _updateFlightPlan(true);
 }
 
