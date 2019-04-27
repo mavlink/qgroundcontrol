@@ -22,6 +22,7 @@ import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Vehicle               1.0
 import QGroundControl.QGCPositionManager    1.0
+import QGroundControl.Airspace              1.0
 
 import AuterionQuickInterface               1.0
 import Auterion.Widgets                     1.0
@@ -47,6 +48,9 @@ Item {
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _cameraPresent:         _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
+    property var    _flightPermit:          QGroundControl.airmapSupported ? QGroundControl.airspaceManager.flightPlan.flightPermitStatus : null
+
+    property bool   _airspaceIndicatorVisible: QGroundControl.airmapSupported && _mainIsMap && _flightPermit && _flightPermit !== AirspaceFlightPlanProvider.PermitNone
 
     property string _altitude:              activeVehicle ? (isNaN(activeVehicle.altitudeRelative.value) ? "0.0" : activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (activeVehicle ? activeVehicle.altitudeRelative.units : "")
@@ -157,8 +161,8 @@ Item {
         radius:         2
         clip:           true
         anchors.top:    parent.top
-        anchors.topMargin: ScreenTools.defaultFontPixelHeight * 2
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 2)
+        anchors.horizontalCenter:   parent.horizontalCenter
         Repeater {
             model: 720
             QGCLabel {
