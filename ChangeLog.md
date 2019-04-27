@@ -14,6 +14,7 @@ Note: This file only contains high level features or important fixes.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
 ### 3.5.1 - Not yet released
+* Add ArduPilot CubeBlack Service Bulletin check
 * Fix visibility of PX4/ArduPilot logo in toolbar
 * Fix tile set count but in OfflineMaps which would cause image and elevation tile set to have incorrect counts and be incorrectly marked as download incomplete.
 
