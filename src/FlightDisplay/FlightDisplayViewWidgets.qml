@@ -31,7 +31,7 @@ Item {
     property var    missionController
     property bool   showValues:             !QGroundControl.airspaceManager.airspaceVisible
 
-    property bool   _isSatellite:           _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    property bool   _isSatellite:           _mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
     property bool   _lightWidgetBorders:    _isSatellite
     property bool   _airspaceEnabled:       QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
