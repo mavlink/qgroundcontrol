@@ -27,12 +27,13 @@ class GeoFenceController : public PlanElementController
     Q_OBJECT
     
 public:
-    GeoFenceController(PlanMasterController* masterController, QObject* parent = NULL);
+    GeoFenceController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~GeoFenceController();
 
-    Q_PROPERTY(QmlObjectListModel*  polygons            READ polygons                                       CONSTANT)
-    Q_PROPERTY(QmlObjectListModel*  circles             READ circles                                        CONSTANT)
-    Q_PROPERTY(QGeoCoordinate       breachReturnPoint   READ breachReturnPoint  WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
+    Q_PROPERTY(QmlObjectListModel*  polygons                READ polygons                                           CONSTANT)
+    Q_PROPERTY(QmlObjectListModel*  circles                 READ circles                                            CONSTANT)
+    Q_PROPERTY(QGeoCoordinate       breachReturnPoint       READ breachReturnPoint      WRITE setBreachReturnPoint  NOTIFY breachReturnPointChanged)
+    Q_PROPERTY(Fact*                breachReturnAltitude    READ breachReturnAltitude                               CONSTANT)
 
     // Hack to expose PX4 circular fence controlled by GF_MAX_HOR_DIST
     Q_PROPERTY(double               paramCircularFence  READ paramCircularFence                             NOTIFY paramCircularFenceChanged)
@@ -58,7 +59,8 @@ public:
     /// Clears the interactive bit from all fence items
     Q_INVOKABLE void clearAllInteractive(void);
 
-    double paramCircularFence(void);
+    double  paramCircularFence  (void);
+    Fact*   breachReturnAltitude(void) { return &_breachReturnAltitudeFact; }
 
     // Overrides from PlanElementController
     bool supported                  (void) const final;
@@ -101,15 +103,18 @@ private slots:
 
 private:
     void _init(void);
-    void _signalAll(void);
 
     GeoFenceManager*    _geoFenceManager;
     bool                _dirty;
     QmlObjectListModel  _polygons;
     QmlObjectListModel  _circles;
     QGeoCoordinate      _breachReturnPoint;
+    Fact                _breachReturnAltitudeFact;
+    double              _breachReturnDefaultAltitude;
     bool                _itemsRequested;
     Fact*               _px4ParamCircularFenceFact;
+
+    static QMap<QString, FactMetaData*> _metaDataMap;
 
     static const char* _px4ParamCircularFence;
 
@@ -119,6 +124,8 @@ private:
     static const char* _jsonBreachReturnKey;
     static const char* _jsonPolygonsKey;
     static const char* _jsonCirclesKey;
+
+    static const char* _breachReturnAltitudeFactName;
 };
 
 #endif
