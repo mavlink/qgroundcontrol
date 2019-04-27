@@ -25,6 +25,7 @@ Item {
     anchors.fill:                           parent
     property string sectionTitle:           qsTr("Fly")
     property bool   inPlanView:             planViewLoader.visible
+    property bool   inFlyView:              rootBackground.visible
     //-------------------------------------------------------------------------
     //-- Setup can be invoked from c++ side
     Connections {
@@ -34,6 +35,26 @@ Item {
                 vehicleSetup.checked = true
                 sectionTitle = vehicleSetup.text
             }
+        }
+    }
+    //-------------------------------------------------------------------------
+    //-- Initial State
+    Component.onCompleted: {
+        flyButton.checked = true
+        sectionTitle = flyButton.text
+    }
+    //-------------------------------------------------------------------------
+    //-- Fly/Plan state toggle
+    onInPlanViewChanged: {
+        if(inPlanView) {
+            planButton.checked = true
+            sectionTitle = planButton.text
+        }
+    }
+    onInFlyViewChanged: {
+        if(inFlyView) {
+            flyButton.checked = true
+            sectionTitle = flyButton.text
         }
     }
     Row {
@@ -151,6 +172,7 @@ Item {
             anchors.right:                  parent.right
             spacing:                        ScreenTools.defaultFontPixelHeight * 0.5
             AuterionToolBarButton {
+                id:                         flyButton
                 text:                       qsTr("Fly")
                 icon.source:                "/auterion/img/vehicle.svg"
                 Layout.fillWidth:           true
@@ -168,6 +190,7 @@ Item {
                 color:                      Qt.rgba(1,1,1,0.15)
             }
             AuterionToolBarButton {
+                id:                         planButton
                 text:                       qsTr("Plan")
                 icon.source:                "/auterion/img/plan.svg"
                 Layout.fillWidth:           true
