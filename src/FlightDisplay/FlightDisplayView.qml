@@ -57,7 +57,7 @@ Item {
 
     readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
+    readonly property bool      isBackgroundDark:       _mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
     readonly property real      _defaultPitch:          0
     readonly property real      _defaultHeading:        0
@@ -76,17 +76,22 @@ Item {
             _flightMapContainer.state   = "fullMode"
             _flightVideo.state          = "pipMode"
             //-- Save/Restore Map Zoom Level
-            if(_savedZoomLevel != 0)
-                _flightMap.zoomLevel = _savedZoomLevel
-            else
-                _savedZoomLevel = _flightMap.zoomLevel
+            if(_savedZoomLevel != 0) {
+                if(mainWindow.flightDisplayMap) {
+                    mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel
+                }
+            } else {
+                if(mainWindow.flightDisplayMap) {
+                    _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
+                }
+            }
         } else {
             //-- Adjust Margins
             _flightMapContainer.state   = "pipMode"
             _flightVideo.state          = "fullMode"
             //-- Set Map Zoom Level
-            _savedZoomLevel = _flightMap.zoomLevel
-            _flightMap.zoomLevel = _savedZoomLevel - 3
+            _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
+            mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
         }
     }
 
@@ -302,7 +307,7 @@ Item {
       }
     }
 
-    QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
+    QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? mainWindow.flightDisplayMap.isSatelliteMap : true }
 
     Item {
         id:             _mapAndVideo
@@ -334,7 +339,7 @@ Item {
                 }
             ]
             FlightDisplayViewMap {
-                id:                         _flightMap
+                id:                         _fMap
                 anchors.fill:               parent
                 guidedActionsController:    _guidedController
                 missionController:          _planController
@@ -342,6 +347,9 @@ Item {
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
                 multiVehicleView:           !singleVehicleView.checked
                 scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
+                Component.onCompleted: {
+                    mainWindow.flightDisplayMap = _fMap
+                }
             }
         }
 

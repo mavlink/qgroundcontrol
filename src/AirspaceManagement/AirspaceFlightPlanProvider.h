@@ -197,7 +197,7 @@ public:
     virtual void                setFlightDuration   (int seconds) = 0;
     virtual void                setFlightStartsNow  (bool now) = 0;
     virtual void                startFlightPlanning (PlanMasterController* planController) = 0;
-    virtual void                setDirty            (bool dirt) { if(_dirty != dirt) { _dirty = dirt; emit dirtyChanged(); qDebug() << "Dirty" << _dirty; }}
+    virtual void                setDirty            (bool dirt) { if(_dirty != dirt) { _dirty = dirt; emit dirtyChanged(); }}
 
 signals:
     void flightPermitStatusChanged                  ();

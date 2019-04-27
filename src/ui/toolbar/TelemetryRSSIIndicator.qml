@@ -19,6 +19,7 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- Telemetry RSSI
 Item {
+    id:             _root
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          _hasTelemetry ? telemIcon.width * 1.1 : 0
@@ -83,8 +84,7 @@ Item {
     MouseArea {
         anchors.fill: parent
         onClicked: {
-            var centerX = mapToGlobal(x + (width / 2), 0).x
-            mainWindow.showPopUp(telemRSSIInfo, centerX)
+            mainWindow.showPopUp(_root, telemRSSIInfo)
         }
     }
 }

@@ -33,7 +33,6 @@ ApplicationWindow {
 
     readonly property string    settingsViewSource:         "AppSettings.qml"
     readonly property string    setupViewSource:            "SetupView.qml"
-    readonly property string    planViewSource:             "PlanView.qml"
     readonly property string    analyzeViewSource:          !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
 
     //-------------------------------------------------------------------------
@@ -47,6 +46,7 @@ ApplicationWindow {
     property var                currentPlanMissionItem:     planMasterControllerPlan ? planMasterControllerPlan.missionController.currentPlanViewItem : null
     property var                planMasterControllerPlan:   null
     property var                planMasterControllerView:   null
+    property var                flightDisplayMap:           null
 
     readonly property string    navButtonWidth:             ScreenTools.defaultFontPixelWidth * 24
     readonly property real      defaultTextHeight:          ScreenTools.defaultFontPixelHeight
@@ -88,9 +88,7 @@ ApplicationWindow {
 
     function showPlanView() {
         viewSwitch(true)
-        if (mainContentWindow.source !== planViewSource) {
-            mainContentWindow.source  = planViewSource
-        }
+        mainContentWindow.source = ""
     }
 
     function showAnalyzeView() {
@@ -555,9 +553,9 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Indicator Popups
 
-    function showPopUp(dropItem, centerX) {
-        indicatorDropdown.centerX = centerX
+    function showPopUp(item, dropItem) {
         indicatorDropdown.currentIndicator = dropItem
+        indicatorDropdown.currentItem = item
         indicatorDropdown.open()
     }
 
@@ -567,8 +565,8 @@ ApplicationWindow {
         modal:          true
         focus:          true
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        property var    currentIndicator: null
-        property real   centerX: 0
+        property var    currentItem:        null
+        property var    currentIndicator:   null
         background: Rectangle {
             width:  loader.width
             height: loader.height
@@ -577,7 +575,7 @@ ApplicationWindow {
         Loader {
             id:             loader
             onLoaded: {
-                indicatorDropdown.x = mapFromGlobal(indicatorDropdown.centerX, 0).x
+                indicatorDropdown.x = mainWindow.contentItem.mapFromItem(indicatorDropdown.currentItem, 0, 0).x - (loader.width * 0.5)
             }
         }
         onOpened: {

@@ -23,7 +23,6 @@ Rectangle {
     property var    masterController
     property var    missionItem         ///< MissionItem associated with this editor
     property bool   readOnly            ///< true: read only view, false: full editing view
-    property var    rootQgcView
 
     signal clicked
     signal remove

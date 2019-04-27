@@ -76,8 +76,6 @@ Map {
         }
     }
 
-    ExclusiveGroup { id: mapTypeGroup }
-
     // Center map to gcs location
     onGcsPositionChanged: {
         if (gcsPosition.isValid && allowGCSLocationCenter && !firstGCSPositionReceived && !firstVehiclePositionReceived) {
