@@ -158,7 +158,6 @@ FlightMap {
         onTriggered:    updateMapToVehiclePosition()
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     Connections {
@@ -178,7 +177,7 @@ FlightMap {
 
     MapFitFunctions {
         id:                         mapFitFunctions // The name for this id cannot be changed without breaking references outside of this code. Beware!
-        map:                        _flightMap
+        map:                        mainWindow.flightDisplayMap
         usePlannedHomePosition:     false
         planMasterController:       missionController
         property real leftToolWidth: toolStrip.x + toolStrip.width
