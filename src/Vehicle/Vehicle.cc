@@ -2979,13 +2979,13 @@ QString Vehicle::gotoFlightMode() const
     return _firmwarePlugin->gotoFlightMode();
 }
 
-void Vehicle::guidedModeRTL(void)
+void Vehicle::guidedModeRTL(bool smartRTL)
 {
     if (!guidedModeSupported()) {
         qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
         return;
     }
-    _firmwarePlugin->guidedModeRTL(this);
+    _firmwarePlugin->guidedModeRTL(this, smartRTL);
 }
 
 void Vehicle::guidedModeLand(void)
@@ -3604,6 +3604,16 @@ QString Vehicle::pauseFlightMode(void) const
 QString Vehicle::rtlFlightMode(void) const
 {
     return _firmwarePlugin->rtlFlightMode();
+}
+
+QString Vehicle::smartRTLFlightMode(void) const
+{
+    return _firmwarePlugin->smartRTLFlightMode();
+}
+
+bool Vehicle::supportsSmartRTL(void) const
+{
+    return _firmwarePlugin->supportsSmartRTL();
 }
 
 QString Vehicle::landFlightMode(void) const
