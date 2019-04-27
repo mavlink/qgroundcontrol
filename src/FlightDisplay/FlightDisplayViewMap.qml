@@ -32,6 +32,11 @@ FlightMap {
     allowVehicleLocationCenter: !_keepVehicleCentered
     planView:                   false
 
+    onVisibleChanged: {
+        // I don't know what is causing this to become invisible when a connection is dropped
+        if(!visible) visible = true
+    }
+
     property alias  scaleState: mapScale.state
 
     // The following properties must be set by the consumer
@@ -39,7 +44,7 @@ FlightMap {
     property var    flightWidgets
     property var    rightPanelWidth
     property var    multiVehicleView                    ///< true: multi-vehicle view, false: single vehicle view
-    property var    missionController
+    property var    missionController:          null
 
     property rect   centerViewport:             Qt.rect(0, 0, width, height)
 
@@ -161,7 +166,9 @@ FlightMap {
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     Connections {
-        target: missionController
+        enabled:                missionController !== null
+        target:                 missionController
+        ignoreUnknownSignals:   true
         onNewItemsFromVehicle: {
             var visualItems = missionController.visualItems
             if (visualItems && visualItems.count !== 1) {
