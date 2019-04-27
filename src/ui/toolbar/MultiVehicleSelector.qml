@@ -63,7 +63,6 @@ Item {
                     var menuItem = multiVehicleMenuItemComponent.createObject(null, { "text": "Vehicle " + vehicle.id })
                     multiVehiclesMenuItems.push(menuItem)
                     multiVehiclesMenu.insertItem(i, menuItem)
-                    console.log("Vehicle " + vehicle.id)
                 }
             }
         }
