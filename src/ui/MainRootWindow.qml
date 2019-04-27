@@ -33,7 +33,6 @@ ApplicationWindow {
 
     readonly property string    settingsViewSource:         "AppSettings.qml"
     readonly property string    setupViewSource:            "SetupView.qml"
-    readonly property string    planViewSource:             "PlanView.qml"
     readonly property string    analyzeViewSource:          !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
 
     //-------------------------------------------------------------------------
@@ -89,9 +88,7 @@ ApplicationWindow {
 
     function showPlanView() {
         viewSwitch(true)
-        if (mainContentWindow.source !== planViewSource) {
-            mainContentWindow.source  = planViewSource
-        }
+        mainContentWindow.source = ""
     }
 
     function showAnalyzeView() {
