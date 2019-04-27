@@ -1901,10 +1901,6 @@ void Vehicle::_linkInactiveOrDeleted(LinkInterface* link)
 
     _links.removeOne(link);
 
-    if (_priorityLink.data() == link) {
-        _priorityLink.clear();
-    }
-
     _updatePriorityLink(true /* updateActive */, true /* sendCommand */);
 
     if (_links.count() == 0 && !_allLinksInactiveSent) {
