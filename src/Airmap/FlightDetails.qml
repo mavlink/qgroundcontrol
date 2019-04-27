@@ -17,8 +17,8 @@ Item {
     id:                 _root
     implicitHeight:     detailCol.height
     implicitWidth:      detailCol.width
-    property real baseHeight:  ScreenTools.defaultFontPixelHeight * 22
-    property real baseWidth:   ScreenTools.defaultFontPixelWidth  * 40
+    property real baseHeight:   ScreenTools.defaultFontPixelHeight * 22
+    property real baseWidth:    ScreenTools.defaultFontPixelWidth  * 40
     Column {
         id:             detailCol
         spacing:        ScreenTools.defaultFontPixelHeight * 0.25
@@ -71,7 +71,6 @@ Item {
                                 text:       qsTr("Now")
                                 checked:    QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 onClicked: {
-                                    _dirty = true
                                     QGroundControl.airspaceManager.flightPlan.flightStartsNow = !QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 }
                             }
@@ -89,7 +88,6 @@ Item {
                                 enabled:            !QGroundControl.airspaceManager.flightPlan.flightStartsNow
                                 iconSource:         "qrc:/airmap/expand.svg"
                                 onClicked: {
-                                    _dirty = true
                                     datePicker.visible = true
                                 }
                             }
@@ -112,7 +110,6 @@ Item {
                                 anchors.left:   parent.left
                                 anchors.verticalCenter: parent.verticalCenter
                                 onValueChanged: {
-                                    _dirty = true
                                     var today = QGroundControl.airspaceManager.flightPlan.flightStartTime
                                     today.setHours(Math.floor(timeSlider.value * 0.25))
                                     today.setMinutes((timeSlider.value * 15) % 60)

@@ -16,8 +16,9 @@ Item {
     id:                 _root
     implicitHeight:     briefRootCol.height
     implicitWidth:      briefRootCol.width
-    property real baseHeight:  ScreenTools.defaultFontPixelHeight * 22
-    property real baseWidth:   ScreenTools.defaultFontPixelWidth  * 40
+    property real baseHeight:   ScreenTools.defaultFontPixelHeight * 22
+    property real baseWidth:    ScreenTools.defaultFontPixelWidth  * 40
+    signal closed()
     Column {
         id:             briefRootCol
         spacing:        ScreenTools.defaultFontPixelHeight * 0.25
@@ -198,11 +199,10 @@ Item {
                 backRadius:     4
                 heightFactor:   0.3333
                 showBorder:     true
-                enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone && _dirty
+                enabled:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone && QGroundControl.airspaceManager.flightPlan.dirty
                 visible:        planView
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 onClicked: {
-                    _dirty = false
                     QGroundControl.airspaceManager.flightPlan.updateFlightPlan()
                 }
             }
@@ -216,8 +216,7 @@ Item {
                 visible:        planView
                 onClicked: {
                     QGroundControl.airspaceManager.flightPlan.submitFlightPlan()
-                    mainWindow.enableToolbar()
-                    rootLoader.sourceComponent = null
+                    _root.closed()
                 }
             }
             QGCButton {
@@ -227,8 +226,7 @@ Item {
                 showBorder:     true
                 width:          ScreenTools.defaultFontPixelWidth * 12
                 onClicked: {
-                    mainWindow.enableToolbar()
-                    rootLoader.sourceComponent = null
+                    _root.closed()
                 }
             }
         }
