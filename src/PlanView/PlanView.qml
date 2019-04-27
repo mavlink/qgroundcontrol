@@ -938,9 +938,9 @@ QGCView {
                      (_planMasterController.offline ? "" : qsTr("This will also remove all items from the vehicle."))
             function accept() {
                 if (_planMasterController.offline) {
-                    masterController.removeAll()
+                    _planMasterController.removeAll()
                 } else {
-                    masterController.removeAllFromVehicle()
+                    _planMasterController.removeAllFromVehicle()
                 }
                 hideDialog()
             }
@@ -1042,7 +1042,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("New...")
                     Layout.fillWidth:   true
-                    enabled:            _visualItems.count > 1
+                    enabled:            _planMasterController.containsItems
                     onClicked:  {
                         dropPanel.hide()
                         _qgcView.showDialog(removeAllPromptDialog, qsTr("New Plan"), _qgcView.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
@@ -1080,7 +1080,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Save As...")
                     Layout.fillWidth:   true
-                    enabled:            !masterController.syncInProgress && _visualItems.count > 1
+                    enabled:            !masterController.syncInProgress && _planMasterController.containsItems
                     onClicked: {
                         dropPanel.hide()
                         masterController.saveToSelectedFile()
@@ -1115,7 +1115,7 @@ QGCView {
                 QGCButton {
                     text:               qsTr("Upload")
                     Layout.fillWidth:   true
-                    enabled:            !masterController.offline && !masterController.syncInProgress && _visualItems.count > 1
+                    enabled:            !masterController.offline && !masterController.syncInProgress && _planMasterController.containsItems
                     visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
                     onClicked: {
                         dropPanel.hide()

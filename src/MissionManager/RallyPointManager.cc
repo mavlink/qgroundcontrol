@@ -72,6 +72,7 @@ void RallyPointManager::sendToVehicle(const QList<QGeoCoordinate>& rgPoints)
 
 void RallyPointManager::removeAll(void)
 {
+    _rgPoints.clear();
     _planManager.removeAll();
 }
 
