@@ -18,6 +18,7 @@ import QGroundControl.Palette               1.0
 
 // Joystick Indicator
 Item {
+    id:             _root
     width:          joystickRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
@@ -90,8 +91,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-            var centerX = mapToGlobal(x + (width / 2), 0).x
-            mainWindow.showPopUp(joystickInfo, centerX)
+            mainWindow.showPopUp(_root, joystickInfo)
         }
     }
 }
