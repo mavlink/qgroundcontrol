@@ -31,7 +31,6 @@ import QGroundControl.Airmap            1.0
 /// Mission Editor
 
 Item {
-    id:         _root
 
     property bool planControlColapsed: false
 
@@ -440,8 +439,6 @@ Item {
             onCenterChanged:    updateAirspace(false)
 
             MouseArea {
-                //-- It's a whole lot faster to just fill parent and deal with top offset below
-                //   than computing the coordinate offset.
                 anchors.fill: parent
                 onClicked: {
                     // Take focus to close any previous editing
@@ -807,7 +804,6 @@ Item {
                         missionItem:        object
                         width:              parent.width
                         readOnly:           false
-                        rootQgcView:        _root
                         onClicked:  _missionController.setCurrentPlanViewIndex(object.sequenceNumber, false)
                         onRemove: {
                             var removeIndex = index
