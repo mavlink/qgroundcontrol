@@ -211,9 +211,10 @@ exists($$PWD/custom/custom.pri) {
 
     #-------------------------------------------------------------------------------------
     # QZXing
-    CONFIG += qzxing_qml
-    CONFIG += qzxing_multimedia
-    include($$QGCROOT/custom/qzxing/src/QZXing.pri)
+    #DEFINES += QGC_ENABLE_QZXING
+    #CONFIG  += qzxing_qml
+    #CONFIG  += qzxing_multimedia
+    #include($$QGCROOT/custom/qzxing/src/QZXing.pri)
 
     #-------------------------------------------------------------------------------------
     # Custom setup

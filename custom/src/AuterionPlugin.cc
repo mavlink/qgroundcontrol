@@ -6,8 +6,9 @@
 #include <QtQml>
 #include <QQmlEngine>
 #include <QDateTime>
+#if defined(QGC_ENABLE_QZXING)
 #include <QZXing.h>
-
+#endif
 #include "QGCSettings.h"
 #include "MAVLinkLogManager.h"
 
@@ -99,7 +100,9 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &AuterionPlugin::_advancedChanged);
+#if defined(QGC_ENABLE_QZXING)
     QZXing::registerQMLTypes();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -143,7 +146,9 @@ AuterionPlugin::settingsPages()
 #endif
         addSettingsEntry(tr("MAVLink"),     "qrc:/qml/MavlinkSettings.qml", "    qrc:/res/waves.svg");
         addSettingsEntry(tr("Console"),     "qrc:/qml/QGroundControl/Controls/AppMessages.qml");
+#if defined(QGC_ENABLE_QZXING)
         addSettingsEntry(tr("Barcode Test"),"qrc:/auterion/BarcodeReader.qml");
+#endif
 #if defined(QT_DEBUG)
         //-- These are always present on Debug builds
         addSettingsEntry(tr("Mock Link"),   "qrc:/qml/MockLink.qml");
