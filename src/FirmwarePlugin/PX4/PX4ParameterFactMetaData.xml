@@ -1083,7 +1083,7 @@ This parameter controls the time constant of the decay</short_desc>
     </parameter>
     <parameter default="1" name="EKF2_AID_MASK" type="INT32">
       <short_desc>Integer bitmask controlling data fusion and aiding methods</short_desc>
-      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Set to true to enable GPS yaw fusion. Cannot be used if bit position 4 is true.</long_desc>
+      <long_desc>Set bits in the following positions to enable: 0 : Set to true to use GPS data if available 1 : Set to true to use optical flow data if available 2 : Set to true to inhibit IMU delta velocity bias estimation 3 : Set to true to enable vision position fusion 4 : Set to true to enable vision yaw fusion. Cannot be used if bit position 7 is true. 5 : Set to true to enable multi-rotor drag specific force fusion 6 : set to true if the EV observations are in a non NED reference frame and need to be rotated before being used 7 : Set to true to enable GPS yaw fusion. Cannot be used if bit position 4 is true.</long_desc>
       <min>0</min>
       <max>255</max>
       <reboot_required>true</reboot_required>
@@ -4471,15 +4471,6 @@ default 1.5 turns per second</short_desc>
       <decimal>2</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="45.0" name="MC_YAWRAUTO_MAX" type="FLOAT">
-      <short_desc>Max yaw rate in auto mode</short_desc>
-      <long_desc>Limit for yaw rate, has effect for large rotations in autonomous mode, to avoid large control output and mixer saturation.</long_desc>
-      <min>0.0</min>
-      <max>360.0</max>
-      <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>5</increment>
-    </parameter>
     <parameter default="2.8" name="MC_YAW_P" type="FLOAT">
       <short_desc>Yaw P gain</short_desc>
       <long_desc>Yaw proportional gain, i.e. desired angular speed in rad/s for error 1 rad.</long_desc>
@@ -4495,6 +4486,15 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter default="45.0" name="MPC_YAWRAUTO_MAX" type="FLOAT">
+      <short_desc>Max yaw rate in auto mode</short_desc>
+      <long_desc>Limit the rate of change of the yaw setpoint in autonomous mode to avoid large control output and mixer saturation.</long_desc>
+      <min>0.0</min>
+      <max>360.0</max>
+      <unit>deg/s</unit>
+      <decimal>1</decimal>
+      <increment>5</increment>
     </parameter>
   </group>
   <group name="Multicopter Position Control">

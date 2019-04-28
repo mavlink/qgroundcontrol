@@ -125,11 +125,11 @@ private slots:
     void _recalcLayerInfo           (void);
     void _updateLastSequenceNumber  (void);
     void _updateGimbalPitch         (void);
-    void _signalTopBottomAltChanged  (void);
+    void _signalTopBottomAltChanged (void);
+    void _recalcScanDistance        (void);
 
 private:
     void _setExitCoordinate(const QGeoCoordinate& coordinate);
-    void _setScanDistance(double scanDistance);
     void _setCameraShots(int cameraShots);
     double _triggerDistance(void) const;
 
