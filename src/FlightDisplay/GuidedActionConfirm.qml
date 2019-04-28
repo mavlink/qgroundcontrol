@@ -35,6 +35,8 @@ Rectangle {
     property var    actionData
     property bool   hideTrigger:        false
     property var    mapIndicator
+    property alias  optionText:         optionCheckBox.text
+    property alias  optionChecked:      optionCheckBox.checked
 
     property real _margins:         ScreenTools.defaultFontPixelWidth
     property bool _emergencyAction: action === guidedController.actionEmergencyStop
@@ -101,6 +103,13 @@ Rectangle {
             wrapMode:               Text.WordWrap
         }
 
+        QGCCheckBox {
+            id:                         optionCheckBox
+            anchors.horizontalCenter:   parent.horizontalCenter
+            text:                       ""
+            visible:                    text !== ""
+        }
+
         // Action confirmation control
         SliderSwitch {
             id:             slider
@@ -115,7 +124,7 @@ Rectangle {
                     altitudeSlider.visible = false
                 }
                 hideTrigger = false
-                guidedController.executeAction(_root.action, _root.actionData, altitudeChange)
+                guidedController.executeAction(_root.action, _root.actionData, altitudeChange, _root.optionChecked)
                 if (mapIndicator) {
                     mapIndicator.actionConfirmed()
                     mapIndicator = undefined

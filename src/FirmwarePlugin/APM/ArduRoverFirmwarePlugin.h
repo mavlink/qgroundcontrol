@@ -49,8 +49,9 @@ public:
     QString pauseFlightMode                         (void) const override { return QString("Hold"); }
     void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
-    const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
-    bool supportsNegativeThrust(void) final;
+    const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    bool    supportsNegativeThrust                  (void) final;
+    bool    supportsSmartRTL                        (void) const override { return true; }
 
 private:
     static bool _remapParamNameIntialized;
