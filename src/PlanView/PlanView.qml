@@ -43,7 +43,7 @@ Item {
     readonly property var   _defaultVehicleCoordinate:  QtPositioning.coordinate(37.803784, -122.462276)
     readonly property bool  _waypointsOnlyMode:         QGroundControl.corePlugin.options.missionWaypointsOnly
 
-    property bool   _airspaceEnabled:                   QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
+    property bool   _airspaceEnabled:                    QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
     property var    _missionController:                 _planMasterController.missionController
     property var    _geoFenceController:                _planMasterController.geoFenceController
     property var    _rallyPointController:              _planMasterController.rallyPointController
@@ -534,91 +534,91 @@ Item {
 
         //-----------------------------------------------------------
         // Left tool strip
-        ToolStrip {
-            id:                 toolStrip
+            ToolStrip {
+                id:                 toolStrip
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-            anchors.left:       parent.left
+                anchors.left:       parent.left
             anchors.topMargin:  _toolButtonTopMargin + anchors.leftMargin
-            anchors.top:        parent.top
-            z:                  QGroundControl.zOrderWidgets
+                anchors.top:        parent.top
+                z:                  QGroundControl.zOrderWidgets
 
             showAlternateIcon:  [ false, _planMasterController.dirty, false, false, false, false, false, false ]
             rotateImage:        [ false, _planMasterController.syncInProgress, false, false, false, false, false, false ]
             animateImage:       [ false, _planMasterController.dirty, false, false, false, false, false, false ]
             buttonEnabled:      [ true, !_planMasterController.syncInProgress, true, true, true, true, true, true ]
             buttonVisible:      [ true, true, true, _waypointsOnlyMode, true, true, _showZoom, _showZoom ]
-            maxHeight:          mapScale.y - toolStrip.y
+                maxHeight:          mapScale.y - toolStrip.y
 
-            property bool _showZoom: !ScreenTools.isMobile
+                property bool _showZoom: !ScreenTools.isMobile
 
-            model: [
-                {
+                model: [
+                    {
                     name:                   qsTr("Fly"),
                     iconSource:             "/qmlimages/PaperPlane.svg",
                 },
                 {
-                    name:                   qsTr("File"),
-                    iconSource:             "/qmlimages/MapSync.svg",
-                    alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
-                    dropPanelComponent:     syncDropPanel
-                },
-                {
-                    name:                   qsTr("Waypoint"),
-                    iconSource:             "/qmlimages/MapAddMission.svg",
-                    toggle:                 true
-                },
-                {
-                    name:                   qsTr("ROI"),
-                    iconSource:             "/qmlimages/MapAddMission.svg",
-                    toggle:                 true
-                },
-                {
-                    name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern"),
-                    iconSource:         "/qmlimages/MapDrawShape.svg",
-                    dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
-                },
-                {
-                    name:               qsTr("Center"),
-                    iconSource:         "/qmlimages/MapCenter.svg",
-                    dropPanelComponent: centerMapDropPanel
-                },
-                {
-                    name:               qsTr("In"),
-                    iconSource:         "/qmlimages/ZoomPlus.svg"
-                },
-                {
-                    name:               qsTr("Out"),
-                    iconSource:         "/qmlimages/ZoomMinus.svg"
-                }
-            ]
+                        name:                   qsTr("File"),
+                        iconSource:             "/qmlimages/MapSync.svg",
+                        alternateIconSource:    "/qmlimages/MapSyncChanged.svg",
+                        dropPanelComponent:     syncDropPanel
+                    },
+                    {
+                        name:                   qsTr("Waypoint"),
+                        iconSource:             "/qmlimages/MapAddMission.svg",
+                        toggle:                 true
+                    },
+                    {
+                        name:                   qsTr("ROI"),
+                        iconSource:             "/qmlimages/MapAddMission.svg",
+                        toggle:                 true
+                    },
+                    {
+                        name:               _singleComplexItem ? _missionController.complexMissionItemNames[0] : qsTr("Pattern"),
+                        iconSource:         "/qmlimages/MapDrawShape.svg",
+                        dropPanelComponent: _singleComplexItem ? undefined : patternDropPanel
+                    },
+                    {
+                        name:               qsTr("Center"),
+                        iconSource:         "/qmlimages/MapCenter.svg",
+                        dropPanelComponent: centerMapDropPanel
+                    },
+                    {
+                        name:               qsTr("In"),
+                        iconSource:         "/qmlimages/ZoomPlus.svg"
+                    },
+                    {
+                        name:               qsTr("Out"),
+                        iconSource:         "/qmlimages/ZoomMinus.svg"
+                    }
+                ]
 
-            onClicked: {
-                switch (index) {
+                onClicked: {
+                    switch (index) {
                 case 0:
                     mainWindow.showFlyView()
                     break;
                 case 2:
-                    _addWaypointOnClick = checked
-                    _addROIOnClick      = false
-                    break
+                        _addWaypointOnClick = checked
+                        _addROIOnClick = false
+                        break
                 case 3:
-                    _addROIOnClick      = checked
-                    _addWaypointOnClick = false
-                    break
+                        _addROIOnClick = checked
+                        _addWaypointOnClick = false
+                        break
                 case 4:
-                    if (_singleComplexItem) {
-                        addComplexItem(_missionController.complexMissionItemNames[0])
-                    }
-                    break
-                case 6:
+                        if (_singleComplexItem) {
+                            addComplexItem(_missionController.complexMissionItemNames[0])
+                        }
+                        break
+                    case 6:
                     editorMap.zoomLevel += 0.5
                     break
                 case 7:
-                    editorMap.zoomLevel -= 0.5
-                    break
+                        editorMap.zoomLevel -= 0.5
+                        break
+                    }
                 }
             }
-        }
 
         //-----------------------------------------------------------
         // Right pane for mission editing controls
@@ -800,7 +800,7 @@ Item {
                     //-- List Elements
                     delegate: MissionItemEditor {
                         map:                editorMap
-                        masterController:   _planMasterController
+                        masterController:  _planMasterController
                         missionItem:        object
                         width:              parent.width
                         readOnly:           false
@@ -1007,7 +1007,7 @@ Item {
                 QGCButton {
                     text:               qsTr("New...")
                     Layout.fillWidth:   true
-                    enabled:            _visualItems.count > 1
+                    enabled:            _planMasterController.containsItems
                     onClicked:  {
                         dropPanel.hide()
                         mainWindow.showDialog(removeAllPromptDialog, qsTr("New Plan"), mainWindow.showDialogDefaultWidth, StandardButton.Yes | StandardButton.No)
@@ -1045,7 +1045,7 @@ Item {
                 QGCButton {
                     text:               qsTr("Save As...")
                     Layout.fillWidth:   true
-                    enabled:            !_planMasterController.syncInProgress && _visualItems.count > 1
+                    enabled:            !_planMasterController.syncInProgress && _planMasterController.containsItems
                     onClicked: {
                         dropPanel.hide()
                         _planMasterController.saveToSelectedFile()
@@ -1053,7 +1053,7 @@ Item {
                 }
 
                 QGCButton {
-                    text:               qsTr("Save Mission Waypoints As KML...")
+                    text:               qsTr("Save Mission Waypoints As KML...")                    
                     Layout.columnSpan:  2
                     enabled:            !_planMasterController.syncInProgress && _visualItems.count > 1
                     onClicked: {
@@ -1080,7 +1080,7 @@ Item {
                 QGCButton {
                     text:               qsTr("Upload")
                     Layout.fillWidth:   true
-                    enabled:            !_planMasterController.offline && !_planMasterController.syncInProgress && _visualItems.count > 1
+                    enabled:            !_planMasterController.offline && !_planMasterController.syncInProgress && _planMasterController.containsItems
                     visible:            !QGroundControl.corePlugin.options.disableVehicleConnection
                     onClicked: {
                         dropPanel.hide()

@@ -208,7 +208,7 @@ Item {
 
     on_FlightModeChanged: {
         _vehiclePaused =        activeVehicle ? _flightMode === activeVehicle.pauseFlightMode : false
-        _vehicleInRTLMode =     activeVehicle ? _flightMode === activeVehicle.rtlFlightMode : false
+        _vehicleInRTLMode =     activeVehicle ? _flightMode === activeVehicle.rtlFlightMode || _flightMode === activeVehicle.smartRTLFlightMode : false
         _vehicleInLandMode =    activeVehicle ? _flightMode === activeVehicle.landFlightMode : false
         _vehicleInMissionMode = activeVehicle ? _flightMode === activeVehicle.missionFlightMode : false // Must be last to get correct signalling for showStartMission popups
     }
@@ -221,6 +221,7 @@ Item {
         confirmDialog.actionData = actionData
         confirmDialog.hideTrigger = true
         confirmDialog.mapIndicator = mapIndicator
+        confirmDialog.optionText = ""
         _actionData = actionData
         switch (actionCode) {
         case actionArm:
@@ -284,6 +285,10 @@ Item {
         case actionRTL:
             confirmDialog.title = rtlTitle
             confirmDialog.message = rtlMessage
+            if (activeVehicle.supportsSmartRTL) {
+                confirmDialog.optionText = qsTr("Smart RTL")
+                confirmDialog.optionChecked = false
+            }
             confirmDialog.hideTrigger = Qt.binding(function() { return !showRTL })
             break;
         case actionChangeAlt:
@@ -344,12 +349,12 @@ Item {
     }
 
     // Executes the specified action
-    function executeAction(actionCode, actionData, actionAltitudeChange) {
+    function executeAction(actionCode, actionData, actionAltitudeChange, optionChecked) {
         var i;
         var rgVehicle;
         switch (actionCode) {
         case actionRTL:
-            activeVehicle.guidedModeRTL()
+            activeVehicle.guidedModeRTL(optionChecked)
             break
         case actionLand:
             activeVehicle.guidedModeLand()
