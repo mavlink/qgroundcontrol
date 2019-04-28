@@ -54,7 +54,7 @@ class APMFrameClass : public QObject
     Q_OBJECT
     
 public:
-    APMFrameClass(const QString& name, int frameClass, Fact* frameTypeFact, int defaultFrameType, QObject* parent = nullptr);
+    APMFrameClass(const QString& name, bool copter, int frameClass, Fact* frameTypeFact, int defaultFrameType, QObject* parent = nullptr);
     ~APMFrameClass();
     
     Q_PROPERTY(QString      name                MEMBER _name                CONSTANT)
@@ -68,6 +68,7 @@ public:
     QString imageResource   (void);
 
     QString _name;
+    bool    _copter;
     QString _imageResource;
     int     _frameClass;
     int     _defaultFrameType;

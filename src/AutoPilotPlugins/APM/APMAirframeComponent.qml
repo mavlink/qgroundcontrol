@@ -31,12 +31,13 @@ SetupPage {
             id:     mainColumn
             width:  availableWidth
 
-            property real _minW:        ScreenTools.defaultFontPixelWidth * 20
-            property real _boxWidth:    _minW
-            property real _boxSpace:    ScreenTools.defaultFontPixelWidth
-            property real _margins:     ScreenTools.defaultFontPixelWidth
-            property Fact _frameClass:  controller.getParameterFact(-1, "FRAME_CLASS")
-            property Fact _frameType:   controller.getParameterFact(-1, "FRAME_TYPE")
+            property real _minW:                ScreenTools.defaultFontPixelWidth * 20
+            property real _boxWidth:            _minW
+            property real _boxSpace:            ScreenTools.defaultFontPixelWidth
+            property real _margins:             ScreenTools.defaultFontPixelWidth
+            property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS")
+            property Fact _frameType:           controller.getParameterFact(-1, "FRAME_TYPE", false)    // FRAME_TYPE is not available on all Rover versions
+            property bool _frameTypeAvailable:  controller.parameterExists(-1, "FRAME_TYPE")
 
             readonly property real spacerHeight: ScreenTools.defaultFontPixelHeight
 
@@ -71,7 +72,9 @@ SetupPage {
                 Layout.fillWidth:   true
                 text:               (_frameClass.rawValue === 0 ?
                                          qsTr("Airframe is currently not set.") :
-                                         qsTr("Currently set to frame class '%1' and frame type '%2'.").arg(_frameClass.enumStringValue).arg(_frameType.enumStringValue)) +
+                                         qsTr("Currently set to frame class '%1'").arg(_frameClass.enumStringValue) +
+                                         (_frameTypeAvailable ?  qsTr(" and frame type '%2'").arg(_frameType.enumStringValue) : "") +
+                                         qsTr(".", "period for end of sentence")) +
                                     qsTr(" To change this configuration, select the desired frame class below and frame type.")
                 font.family:        ScreenTools.demiboldFontFamily
                 wrapMode:           Text.WordWrap

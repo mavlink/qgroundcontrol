@@ -35,11 +35,9 @@ public:
 private:
     bool            _requiresFrameSetup; ///< true: FRAME parameter must be set
     const QString   _name;
-    Fact*           _frameParamFact;
-    bool            _useNewFrameParam;
+    Fact*           _frameClassFact;
 
-    static const char* _oldFrameParam;
-    static const char* _newFrameParam;
+    static const char* _frameClassParam;
 };
 
 #endif
