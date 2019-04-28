@@ -47,10 +47,11 @@ public:
 
     // Overrides from FirmwarePlugin
     QString pauseFlightMode                         (void) const override { return QString("Hold"); }
-    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) override;
-    int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const override;
-    const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const override { return _remapParamName; }
-    bool    supportsNegativeThrust                  (void) override;
+    void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
+    int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
+    const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
+    bool    supportsNegativeThrust                  (void) final;
+    bool    supportsSmartRTL                        (void) const override { return true; }
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
 
 private:

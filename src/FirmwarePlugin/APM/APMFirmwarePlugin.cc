@@ -889,9 +889,9 @@ void APMFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoord
     vehicle->missionManager()->writeArduPilotGuidedMissionItem(coordWithAltitude, false /* altChangeOnly */);
 }
 
-void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+void APMFirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
 {
-    _setFlightModeAndValidate(vehicle, rtlFlightMode());
+    _setFlightModeAndValidate(vehicle, smartRTL ? smartRTLFlightMode() : rtlFlightMode());
 }
 
 void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitudeChange)

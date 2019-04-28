@@ -15,8 +15,6 @@
 #include "FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h"
 #include "VehicleComponent.h"
 #include "APMAirframeComponent.h"
-#include "APMAirframeComponentAirframes.h"
-#include "APMAirframeLoader.h"
 #include "APMFlightModesComponent.h"
 #include "APMRadioComponent.h"
 #include "APMSafetyComponent.h"
@@ -30,6 +28,7 @@
 #include "ESP8266Component.h"
 #include "APMHeliComponent.h"
 #include "QGCApplication.h"
+#include "ParameterManager.h"
 
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
 #include <QSerialPortInfo>
@@ -50,12 +49,9 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _safetyComponent          (NULL)
     , _sensorsComponent         (NULL)
     , _tuningComponent          (NULL)
-    , _airframeFacts            (new APMAirframeLoader(this, vehicle->uas(), this))
     , _esp8266Component         (NULL)
     , _heliComponent            (NULL)
 {
-    APMAirframeLoader::loadAirframeFactMetaData();
-
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
 #endif
