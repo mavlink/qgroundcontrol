@@ -228,6 +228,7 @@ int main(int argc, char *argv[])
 #endif
 #endif // QT_DEBUG
 
+    QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
     QGCApplication* app = new QGCApplication(argc, argv, runUnitTests);
     Q_CHECK_PTR(app);
 
