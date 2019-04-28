@@ -36,6 +36,7 @@
         <file alias="AuterionModeIndicator.qml">res/MainToolbar/AuterionModeIndicator.qml</file>
         <file alias="AuterionMultiVehicleSelector.qml">res/MainToolbar/AuterionMultiVehicleSelector.qml</file>
         <file alias="AuterionRCRSSIIndicator.qml">res/MainToolbar/AuterionRCRSSIIndicator.qml</file>
+        <file alias="BarcodeReader.qml">res/BarcodeReader.qml</file>
     </qresource>
     <qresource prefix="/auterion/img">
         <file alias="camera_photo.svg">res/images/camera_photo.svg</file>

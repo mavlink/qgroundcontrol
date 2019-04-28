@@ -210,6 +210,12 @@ exists($$PWD/custom/custom.pri) {
     }
 
     #-------------------------------------------------------------------------------------
+    # QZXing
+    CONFIG += qzxing_qml
+    CONFIG += qzxing_multimedia
+    include($$QGCROOT/custom/qzxing/src/QZXing.pri)
+
+    #-------------------------------------------------------------------------------------
     # Custom setup
     LinxuBuild {
         CONFIG += QGC_DISABLE_BUILD_SETUP

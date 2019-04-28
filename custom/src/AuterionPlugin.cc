@@ -6,6 +6,7 @@
 #include <QtQml>
 #include <QQmlEngine>
 #include <QDateTime>
+#include <QZXing.h>
 
 #include "QGCSettings.h"
 #include "MAVLinkLogManager.h"
@@ -98,6 +99,7 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     toolbox->mavlinkLogManager()->setEnableAutoStart(false);
     toolbox->mavlinkLogManager()->setEnableAutoUpload(false);
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &AuterionPlugin::_advancedChanged);
+    QZXing::registerQMLTypes();
 }
 
 //-----------------------------------------------------------------------------
@@ -137,15 +139,16 @@ AuterionPlugin::settingsPages()
         addSettingsEntry(tr("Taisync"),     "qrc:/qml/TaisyncSettings.qml");
 #endif
 #if defined(QGC_AIRMAP_ENABLED)
-        addSettingsEntry(tr("AirMap"), "qrc:/qml/AirmapSettings.qml");
+        addSettingsEntry(tr("AirMap"),      "qrc:/qml/AirmapSettings.qml");
 #endif
-        addSettingsEntry(tr("MAVLink"),"qrc:/qml/MavlinkSettings.qml", "    qrc:/res/waves.svg");
-        addSettingsEntry(tr("Console"),"qrc:/qml/QGroundControl/Controls/AppMessages.qml");
+        addSettingsEntry(tr("MAVLink"),     "qrc:/qml/MavlinkSettings.qml", "    qrc:/res/waves.svg");
+        addSettingsEntry(tr("Console"),     "qrc:/qml/QGroundControl/Controls/AppMessages.qml");
+        addSettingsEntry(tr("Barcode Test"),"qrc:/auterion/BarcodeReader.qml");
 #if defined(QT_DEBUG)
         //-- These are always present on Debug builds
-        addSettingsEntry(tr("Mock Link"), "qrc:/qml/MockLink.qml");
-        addSettingsEntry(tr("Debug"), "qrc:/qml/DebugWindow.qml");
-        addSettingsEntry(tr("Palette Test"), "qrc:/qml/QmlTest.qml");
+        addSettingsEntry(tr("Mock Link"),   "qrc:/qml/MockLink.qml");
+        addSettingsEntry(tr("Debug"),       "qrc:/qml/DebugWindow.qml");
+        addSettingsEntry(tr("Palette Test"),"qrc:/qml/QmlTest.qml");
 #endif
     }
     return _auterionSettingsList;
