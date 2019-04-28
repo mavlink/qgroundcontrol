@@ -231,8 +231,18 @@ Item {
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 4
     }
 
+    //-- Map Scale
+    MapScale {
+        anchors.right:          vehicleIndicator.right
+        anchors.bottom:         vehicleIndicator.top
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.25)
+        mapControl:             mainWindow.flightDisplayMap
+        visible:                rootBackground.visible && _mainIsMap
+    }
+
     //-- Vehicle Indicator
     Rectangle {
+        id:                     vehicleIndicator
         color:                  "#0B1629"
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
