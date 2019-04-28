@@ -108,7 +108,21 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
 {
     QJsonObject saveObject;
 
-    _save(saveObject);
+    _saveWorker(saveObject);
+    planItems.append(saveObject);
+}
+
+void SurveyComplexItem::savePreset(const QString& name)
+{
+    QJsonObject saveObject;
+
+    _saveWorker(saveObject);
+    _savePresetJson(name, saveObject);
+}
+
+void SurveyComplexItem::_saveWorker(QJsonObject& saveObject)
+{
+    TransectStyleComplexItem::_save(saveObject);
 
     saveObject[JsonHelper::jsonVersionKey] =                    5;
     saveObject[VisualMissionItem::jsonTypeKey] =                VisualMissionItem::jsonTypeComplexItemValue;
@@ -120,8 +134,15 @@ void SurveyComplexItem::save(QJsonArray&  planItems)
 
     // Polygon shape
     _surveyAreaPolygon.saveToJson(saveObject);
+}
 
-    planItems.append(saveObject);
+void SurveyComplexItem::loadPreset(const QString& name)
+{
+    QString errorString;
+
+    QJsonObject presetObject = _loadPresetJson(name);
+    _loadV4V5(presetObject, 0, errorString, 5, true /* forPresets */);
+    _rebuildTransects();
 }
 
 bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumber, QString& errorString)
@@ -141,7 +162,7 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
     }
 
     if (version == 4 || version == 5) {
-        if (!_loadV4V5(complexObject, sequenceNumber, errorString, version)) {
+        if (!_loadV4V5(complexObject, sequenceNumber, errorString, version, false /* forPresets */)) {
             return false;
         }
 
@@ -171,7 +192,7 @@ bool SurveyComplexItem::load(const QJsonObject& complexObject, int sequenceNumbe
     return true;
 }
 
-bool SurveyComplexItem::_loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version)
+bool SurveyComplexItem::_loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets)
 {
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { VisualMissionItem::jsonTypeKey,               QJsonValue::String, true },
@@ -197,16 +218,18 @@ bool SurveyComplexItem::_loadV4V5(const QJsonObject& complexObject, int sequence
         return false;
     }
 
-    _ignoreRecalc = true;
+    _ignoreRecalc = !forPresets;
 
-    setSequenceNumber(sequenceNumber);
+    if (!forPresets) {
+        setSequenceNumber(sequenceNumber);
 
-    if (!_surveyAreaPolygon.loadFromJson(complexObject, true /* required */, errorString)) {
-        _surveyAreaPolygon.clear();
-        return false;
+        if (!_surveyAreaPolygon.loadFromJson(complexObject, true /* required */, errorString)) {
+            _surveyAreaPolygon.clear();
+            return false;
+        }
     }
 
-    if (!_load(complexObject, errorString)) {
+    if (!TransectStyleComplexItem::_load(complexObject, forPresets, errorString)) {
         _ignoreRecalc = false;
         return false;
     }
@@ -214,7 +237,7 @@ bool SurveyComplexItem::_loadV4V5(const QJsonObject& complexObject, int sequence
     _gridAngleFact.setRawValue              (complexObject[_jsonGridAngleKey].toDouble());
     _flyAlternateTransectsFact.setRawValue  (complexObject[_jsonFlyAlternateTransectsKey].toBool(false));
 
-    if(version == 5) {
+    if (version == 5) {
         _splitConcavePolygonsFact.setRawValue   (complexObject[_jsonSplitConcavePolygonsKey].toBool(true));
     }
 
@@ -282,7 +305,7 @@ bool SurveyComplexItem::_loadV3(const QJsonObject& complexObject, int sequenceNu
     _turnAroundDistanceFact.setRawValue (gridObject[_jsonV3TurnaroundDistKey].toDouble());
 
     if (gridObject.contains(_jsonEntryPointKey)) {
-        _entryPoint = gridObject[_jsonEntryPointKey].toDouble();
+        _entryPoint = gridObject[_jsonEntryPointKey].toInt();
     } else {
         _entryPoint = EntryLocationTopRight;
     }
