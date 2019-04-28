@@ -10,6 +10,7 @@
 
 import QtQuick              2.3
 import QtQuick.Controls     1.2
+import QtQuick.Layouts      1.2
 
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
@@ -36,12 +37,14 @@ SetupPage {
             property bool _atcInputTCAvailable: controller.parameterExists(-1, "ATC_INPUT_TC")
             property Fact _rcFeel:              controller.getParameterFact(-1, "RC_FEEL", false)
             property Fact _atcInputTC:          controller.getParameterFact(-1, "ATC_INPUT_TC", false)
-            property Fact _rateRollP:           controller.getParameterFact(-1, "r.ATC_RAT_RLL_P")
-            property Fact _rateRollI:           controller.getParameterFact(-1, "r.ATC_RAT_RLL_I")
-            property Fact _ratePitchP:          controller.getParameterFact(-1, "r.ATC_RAT_PIT_P")
-            property Fact _ratePitchI:          controller.getParameterFact(-1, "r.ATC_RAT_PIT_I")
-            property Fact _rateClimbP:          controller.getParameterFact(-1, "r.PSC_ACCZ_P")
-            property Fact _rateClimbI:          controller.getParameterFact(-1, "r.PSC_ACCZ_I")
+            property Fact _rateRollP:           controller.getParameterFact(-1, "ATC_RAT_RLL_P")
+            property Fact _rateRollI:           controller.getParameterFact(-1, "ATC_RAT_RLL_I")
+            property Fact _ratePitchP:          controller.getParameterFact(-1, "ATC_RAT_PIT_P")
+            property Fact _ratePitchI:          controller.getParameterFact(-1, "ATC_RAT_PIT_I")
+            property Fact _rateClimbP:          controller.getParameterFact(-1, "PSC_ACCZ_P")
+            property Fact _rateClimbI:          controller.getParameterFact(-1, "PSC_ACCZ_I")
+            property Fact _motSpinArm:          controller.getParameterFact(-1, "MOT_SPIN_ARM")
+            property Fact _motSpinMin:          controller.getParameterFact(-1, "MOT_SPIN_MIN")
 
             property Fact _ch7Opt:  controller.getParameterFact(-1, "r.RC7_OPTION")
             property Fact _ch8Opt:  controller.getParameterFact(-1, "r.RC8_OPTION")
@@ -122,7 +125,6 @@ SetupPage {
             Connections { target: _ch12Opt; onValueChanged: calcAutoTuneChannel() }
 
             QGCLabel {
-                id:         basicLabel
                 text:       qsTr("Basic Tuning")
                 font.family: ScreenTools.demiboldFontFamily
             }
@@ -270,6 +272,92 @@ SetupPage {
                     }
                 }
             } // Rectangle - Basic tuning
+
+            QGCLabel {
+                text:       qsTr("Advanced Tuning")
+                font.family: ScreenTools.demiboldFontFamily
+            }
+
+            Rectangle {
+                anchors.left:       parent.left
+                anchors.right:      parent.right
+                height:             advColumnLayout.y + advColumnLayout.height + _margins
+                color:              palette.windowShade
+
+                ColumnLayout {
+                    id:                 advColumnLayout
+                    anchors.margins:    _margins
+                    anchors.left:       parent.left
+                    anchors.right:      parent.right
+                    anchors.top:        parent.top
+                    spacing:            _margins
+
+                    Column {
+                        Layout.fillWidth: true
+
+                        QGCLabel {
+                            text:       qsTr("Spin While Armed")
+                            font.family: ScreenTools.demiboldFontFamily
+                        }
+
+                        QGCLabel {
+                            text: qsTr("Adjust the amount the motors spin to indicate armed")
+                        }
+
+                        Slider {
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            minimumValue:       0
+                            maximumValue:       Math.max(0.3, _motSpinArm.rawValue)
+                            stepSize:           0.01
+                            tickmarksEnabled:   true
+                            value:              _motSpinArm.rawValue
+
+                            onValueChanged: {
+                                if (_loadComplete) {
+                                    _motSpinArm.rawValue = value
+                                }
+                            }
+                        }
+                    }
+
+                    Column {
+                        id:                 lastAdvTuningColumn
+                        Layout.fillWidth:   true
+
+                        QGCLabel {
+                            text:       qsTr("Minimum Thrust")
+                            font.family: ScreenTools.demiboldFontFamily
+                        }
+
+                        QGCLabel {
+                            text: qsTr("Adjust the minimum amount of thrust for a stable minimum throttle descent")
+                        }
+
+                        QGCLabel {
+                            text:       qsTr("Warning: This setting should be higher than 'Spin While Armed'")
+                            color:      palette.warningText
+                            visible:    _motSpinMin.rawValue < _motSpinArm.rawValue
+                        }
+
+                        Slider {
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            minimumValue:       0
+                            maximumValue:       Math.max(0.3, _motSpinMin.rawValue)
+                            stepSize:           0.01
+                            tickmarksEnabled:   true
+                            value:              _motSpinMin.rawValue
+
+                            onValueChanged: {
+                                if (_loadComplete) {
+                                    _motSpinMin.rawValue = value
+                                }
+                            }
+                        }
+                    }
+                }
+            } // Rectangle - Advanced tuning
 
             Flow {
                 id:             flowLayout
