@@ -8,11 +8,14 @@ Note: This file only contains high level features or important fixes.
 
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.1 - Not yet released
+### 3.5.2 - Not yet released
+* ArduPilot: Fix parameter file save generating bad characters from git hash
+
+### 3.5.1
 * Fix visibility of PX4/ArduPilot logo in toolbar
 * Fix tile set count but in OfflineMaps which would cause image and elevation tile set to have incorrect counts and be incorrectly marked as download incomplete.
 
-### 3.5.0 - Stable
+### 3.5.0
 * Plan GeoFence: Fix loading of fence from intermediate 3.4 code
 * Structure Scan: Fix loading of structure scan height
 * ArduPilot: Fix location of planned home position when not connected to vehicle. Issue #6840.
