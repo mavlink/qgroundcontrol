@@ -6,19 +6,13 @@ import QtGraphicalEffects 1.0
 import QGroundControl.ScreenTools 1.0
 import QGroundControl.Palette 1.0
 
+// TODO: use QT palette
 Button {
     id: button
     width: columnItem.contentWidth + contentLayoutItem.margins * 2
     height: width
     flat: true
 
-    property color color: qgcPal.button
-    property color disabledColor: qgcPalDisabled.button
-    property color pressedColor: qgcPal.buttonHighlight
-    // TODO: remove after we add it to the palette
-    property color hoverColor: qgcPal.hoverColor
-    property color contentColor: qgcPal.buttonText
-    property color contentPressedColor: qgcPal.buttonHighlightText
     property color borderColor: qgcPal.windowShadeDark
 
     property alias radius: buttonBkRect.radius
@@ -30,8 +24,8 @@ Button {
     property real  borderWidth: 0
     property real  contentMargins: innerText.height * 0.1
 
-    property color _currentColor: checked ? pressedColor : color
-    property color _currentContentColor: contentColor
+    property color _currentColor: qgcPal.button
+    property color _currentContentColor: qgcPal.buttonText
 
     QGCPalette { id: qgcPal }
     QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
@@ -102,27 +96,36 @@ Button {
         id: buttonBkRect
         anchors.fill: parent
         color: _currentColor
+        visible: !flat
 
         border.width: borderWidth
         border.color: borderColor
     }
 
-    // Change the aspect of the content in differen button states
+    // Change the colors based on button states
     states: [
         State {
             name: "Hovering"
             PropertyChanges {
                 target: button;
-                _currentColor: pressed || checked ? pressedColor : hoverColor
-                _currentContentColor: pressed || checked ? contentPressedColor : contentColor
+                _currentColor: (checked || pressed) ? qgcPal.buttonHighlight : qgcPal.hoverColor
+                _currentContentColor: qgcPal.buttonHighlightText
+            }
+            PropertyChanges {
+                target: buttonBkRect
+                visible: true
             }
         },
         State {
             name: "Default"
             PropertyChanges {
                 target: button;
-                _currentColor: enabled ? ((checked || pressed) ? pressedColor : color) : disabledColor
-                _currentContentColor: contentColor
+                _currentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlight : qgcPal.button) : qgcPalDisabled.button
+                _currentContentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonHighlight) : qgcPalDisabled.buttonText
+            }
+            PropertyChanges {
+                target: buttonBkRect
+                visible: !flat || (checked || pressed)
             }
         }
     ]
