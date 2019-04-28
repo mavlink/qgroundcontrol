@@ -41,22 +41,20 @@
         <file alias="APMAirframeFactMetaData.xml">../../AutoPilotPlugins/APM/APMAirframeFactMetaData.xml</file>
     </qresource>
     <qresource prefix="/FirmwarePlugin/APM">
-        <file alias="APMParameterFactMetaData.Plane.3.3.xml">APMParameterFactMetaData.Plane.3.3.xml</file>
-        <file alias="APMParameterFactMetaData.Plane.3.5.xml">APMParameterFactMetaData.Plane.3.5.xml</file>
-        <file alias="APMParameterFactMetaData.Plane.3.7.xml">APMParameterFactMetaData.Plane.3.7.xml</file>
         <file alias="APMParameterFactMetaData.Plane.3.8.xml">APMParameterFactMetaData.Plane.3.8.xml</file>
-        <file alias="APMParameterFactMetaData.Copter.3.3.xml">APMParameterFactMetaData.Copter.3.3.xml</file>
-        <file alias="APMParameterFactMetaData.Copter.3.4.xml">APMParameterFactMetaData.Copter.3.4.xml</file>
+        <file alias="APMParameterFactMetaData.Plane.3.9.xml">APMParameterFactMetaData.Plane.3.9.xml</file>
+        <file alias="APMParameterFactMetaData.Plane.3.10.xml">APMParameterFactMetaData.Plane.3.10.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.5.xml">APMParameterFactMetaData.Copter.3.5.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.6.xml">APMParameterFactMetaData.Copter.3.6.xml</file>
         <file alias="APMParameterFactMetaData.Copter.3.7.xml">APMParameterFactMetaData.Copter.3.7.xml</file>
-        <file alias="APMParameterFactMetaData.Rover.3.0.xml">APMParameterFactMetaData.Rover.3.0.xml</file>
-        <file alias="APMParameterFactMetaData.Rover.3.2.xml">APMParameterFactMetaData.Rover.3.2.xml</file>
         <file alias="APMParameterFactMetaData.Rover.3.4.xml">APMParameterFactMetaData.Rover.3.4.xml</file>
+        <file alias="APMParameterFactMetaData.Rover.3.5.xml">APMParameterFactMetaData.Rover.3.5.xml</file>
+        <file alias="APMParameterFactMetaData.Rover.3.6.xml">APMParameterFactMetaData.Rover.3.6.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.4.xml">APMParameterFactMetaData.Sub.3.4.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.5.xml">APMParameterFactMetaData.Sub.3.5.xml</file>
         <file alias="APMParameterFactMetaData.Sub.3.6dev.xml">APMParameterFactMetaData.Sub.3.6dev.xml</file>
-        <file alias="Copter.OfflineEditing.params">Copter3.5.OfflineEditing.params</file>
-        <file alias="Plane.OfflineEditing.params">Plane3.7.OfflineEditing.params</file>
+        <file alias="Copter.OfflineEditing.params">Copter3.6.OfflineEditing.params</file>
+        <file alias="Plane.OfflineEditing.params">Plane3.9.OfflineEditing.params</file>
+        <file alias="Rover.OfflineEditing.params">Rover3.5.OfflineEditing.params</file>
     </qresource>
 </RCC>
