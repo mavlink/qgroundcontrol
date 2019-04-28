@@ -23,26 +23,25 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
-    enumToString.insert(STABILIZE, "Stabilize");
-    enumToString.insert(ACRO,      "Acro");
-    enumToString.insert(ALT_HOLD,  "Altitude Hold");
-    enumToString.insert(AUTO,      "Auto");
-    enumToString.insert(GUIDED,    "Guided");
-    enumToString.insert(LOITER,    "Loiter");
-    enumToString.insert(RTL,       "RTL");
-    enumToString.insert(CIRCLE,    "Circle");
-    enumToString.insert(LAND,      "Land");
-    enumToString.insert(DRIFT,     "Drift");
-    enumToString.insert(SPORT,     "Sport");
-    enumToString.insert(FLIP,      "Flip");
-    enumToString.insert(AUTOTUNE,  "Autotune");
-    enumToString.insert(POS_HOLD,  "Position Hold");
-    enumToString.insert(BRAKE,     "Brake");
-    enumToString.insert(THROW,     "Throw");
-    enumToString.insert(AVOID_ADSB,"Avoid ADSB");
-    enumToString.insert(GUIDED_NOGPS,"Guided No GPS");
-    enumToString.insert(SAFE_RTL,"Smart RTL");
-
+    enumToString.insert(STABILIZE,      "Stabilize");
+    enumToString.insert(ACRO,           "Acro");
+    enumToString.insert(ALT_HOLD,       "Altitude Hold");
+    enumToString.insert(AUTO,           "Auto");
+    enumToString.insert(GUIDED,         "Guided");
+    enumToString.insert(LOITER,         "Loiter");
+    enumToString.insert(RTL,            "RTL");
+    enumToString.insert(CIRCLE,         "Circle");
+    enumToString.insert(LAND,           "Land");
+    enumToString.insert(DRIFT,          "Drift");
+    enumToString.insert(SPORT,          "Sport");
+    enumToString.insert(FLIP,           "Flip");
+    enumToString.insert(AUTOTUNE,       "Autotune");
+    enumToString.insert(POS_HOLD,       "Position Hold");
+    enumToString.insert(BRAKE,          "Brake");
+    enumToString.insert(THROW,          "Throw");
+    enumToString.insert(AVOID_ADSB,     "Avoid ADSB");
+    enumToString.insert(GUIDED_NOGPS,   "Guided No GPS");
+    enumToString.insert(SAFE_RTL,       "Smart RTL");
 
     setEnumToStringMapping(enumToString);
 }
