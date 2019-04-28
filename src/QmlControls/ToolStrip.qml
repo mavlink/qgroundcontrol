@@ -31,8 +31,8 @@ Rectangle {
 
     property AbstractButton lastClickedButton: null
 
-    // Ensure we don't get lower than
-    property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 9) + toolStripColumn.anchors.margins * 2
+    // Ensure we don't get narrower than content
+    property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
     signal clicked(int index, bool checked)
 
@@ -44,7 +44,7 @@ Rectangle {
 
     Column {
         id:                 toolStripColumn
-        anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.8
+        anchors.margins:    ScreenTools.defaultFontPixelWidth * 0.4
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
@@ -54,8 +54,6 @@ Rectangle {
 
             QGCHoverButton {
                 id: buttonTemplate
-
-                color:          _root.color
 
                 anchors.left:   toolStripColumn.left
                 anchors.right:  toolStripColumn.right

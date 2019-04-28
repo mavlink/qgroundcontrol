@@ -231,7 +231,7 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
 
 
 const QColor     AuterionPlugin::_windowShadeEnabledLightColor("#d9d9d9");
-const QColor     AuterionPlugin::_windowShadeEnabledDarkColor("#0e1a35");
+const QColor     AuterionPlugin::_windowShadeEnabledDarkColor("#1E2A45");
 
 //-----------------------------------------------------------------------------
 void
@@ -242,7 +242,7 @@ AuterionPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#080d15");
     } else if (colorName == QStringLiteral("windowShade")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = _windowShadeEnabledDarkColor;
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#0B1629");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#181A25");
     } else if (colorName == QStringLiteral("windowShadeDark")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#060a11");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#0B1629");
