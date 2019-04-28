@@ -476,7 +476,7 @@ FlightMap {
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight * (0.33) + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
         anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.33)
         mapControl:             flightMap
-        visible:                !ScreenTools.isTinyScreen
+        visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale
         state:                  "bottomMode"
         states: [
             State {
