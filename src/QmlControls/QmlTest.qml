@@ -1,6 +1,6 @@
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Controls.Styles 1.4
+import QtQuick                  2.11
+import QtQuick.Controls         2.4
+import QtQuick.Controls.Styles  1.4
 import QtQuick.Layouts          1.2
 
 import QGroundControl.Palette       1.0
@@ -8,79 +8,14 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
 Rectangle {
+    id: _root
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
     color:              "white"
 
     property var palette: QGCPalette { colorGroupEnabled: true }
-
-    Component {
-        id: arbBox
-        Rectangle {
-            width:  arbGrid.width  * 1.5
-            height: arbGrid.height * 1.5
-            color:  backgroundColor
-            border.color: qgcPal.text
-            border.width: 1
-            anchors.horizontalCenter: parent.horizontalCenter
-            GridLayout {
-                id: arbGrid
-                columns: 4
-                rowSpacing: 10
-                anchors.centerIn: parent
-                QGCColoredImage {
-                    color:                      qgcPal.colorGreen
-                    width:                      ScreenTools.defaultFontPixelWidth * 2
-                    height:                     width
-                    sourceSize.height:          width
-                    mipmap:                     true
-                    fillMode:                   Image.PreserveAspectFit
-                    source:                     "/qmlimages/Gears.svg"
-                }
-                Label { text: "colorGreen"; color: qgcPal.colorGreen; }
-                QGCColoredImage {
-                    color:                      qgcPal.colorOrange
-                    width:                      ScreenTools.defaultFontPixelWidth * 2
-                    height:                     width
-                    sourceSize.height:          width
-                    mipmap:                     true
-                    fillMode:                   Image.PreserveAspectFit
-                    source:                     "/qmlimages/Gears.svg"
-                }
-                Label { text: "colorOrange"; color: qgcPal.colorOrange; }
-                QGCColoredImage {
-                    color:                      qgcPal.colorRed
-                    width:                      ScreenTools.defaultFontPixelWidth * 2
-                    height:                     width
-                    sourceSize.height:          width
-                    mipmap:                     true
-                    fillMode:                   Image.PreserveAspectFit
-                    source:                     "/qmlimages/Gears.svg"
-                }
-                Label { text: "colorRed"; color: qgcPal.colorRed; }
-                QGCColoredImage {
-                    color:                      qgcPal.colorGrey
-                    width:                      ScreenTools.defaultFontPixelWidth * 2
-                    height:                     width
-                    sourceSize.height:          width
-                    mipmap:                     true
-                    fillMode:                   Image.PreserveAspectFit
-                    source:                     "/qmlimages/Gears.svg"
-                }
-                Label { text: "colorGrey"; color: qgcPal.colorGrey;  }
-                QGCColoredImage {
-                    color:                      qgcPal.colorBlue
-                    width:                      ScreenTools.defaultFontPixelWidth * 2
-                    height:                     width
-                    sourceSize.height:          width
-                    mipmap:                     true
-                    fillMode:                   Image.PreserveAspectFit
-                    source:                     "/qmlimages/Gears.svg"
-                }
-                Label { text: "colorBlue"; color: qgcPal.colorBlue; }
-            }
-        }
-    }
+    property var enabledPalette: QGCPalette { colorGroupEnabled: true }
+    property var disabledPalette: QGCPalette { colorGroupEnabled: false }
 
     QGCFlickable {
         anchors.fill:           parent
@@ -92,30 +27,163 @@ Rectangle {
             id:         _rootCol
 
             Rectangle {
+                id: _header
                 width:  parent.width
                 height: themeChoice.height * 2
                 color:  palette.window
                 QGCLabel {
+                    id: windowColorLabel
                     text: qsTr("Window Color")
                     anchors.left:           parent.left
                     anchors.leftMargin:     20
                 }
+
+                function exportPaletteColors(pal) {
+                    var objToExport = {}
+                    for(var clrName in pal) {
+                        if(pal[clrName].r !== undefined) {
+                            objToExport[clrName] = pal[clrName].toString();
+                        }
+                    }
+                    return objToExport;
+                }
+
+                function fillPalette(pal, colorsObj) {
+                    for(var clrName in colorsObj) {
+                        pal[clrName] = colorsObj[clrName];
+                    }
+                }
+
+                function exportTheme() {
+                    var themeObj = {"light": {}, "dark":{}}
+                    var oldTheme = palette.globalTheme;
+
+                    palette.globalTheme = QGCPalette.Light
+                    palette.colorGroupEnabled = true
+                    themeObj.light["enabled"] = exportPaletteColors(palette);
+                    palette.colorGroupEnabled = false
+                    themeObj.light["disabled"] = exportPaletteColors(palette);
+                    palette.globalTheme = QGCPalette.Dark
+                    palette.colorGroupEnabled = true
+                    themeObj.dark["enabled"] = exportPaletteColors(palette);
+                    palette.colorGroupEnabled = false
+                    themeObj.dark["disabled"] = exportPaletteColors(palette);
+
+                    palette.globalTheme = oldTheme;
+                    palette.colorGroupEnabled = true;
+
+                    var jsonString = JSON.stringify(themeObj);
+
+                    themeImportExportEdit.text = jsonString
+                    paletteImportExportPopup.open()
+                }
+
+                function importTheme(jsonStr) {
+                    var jsonObj = JSON.parse(jsonStr)
+                    var themeObj = {"light": {}, "dark":{}}
+                    var oldTheme = palette.globalTheme;
+
+                    palette.globalTheme = QGCPalette.Light
+                    palette.colorGroupEnabled = true
+                    fillPalette(palette, jsonObj.light.enabled)
+                    palette.colorGroupEnabled = false
+                    fillPalette(palette, jsonObj.light.disabled);
+                    palette.globalTheme = QGCPalette.Dark
+                    palette.colorGroupEnabled = true
+                    fillPalette(palette, jsonObj.dark.enabled);
+                    palette.colorGroupEnabled = false
+                    fillPalette(palette, jsonObj.dark.disabled);
+
+                    palette.globalTheme = oldTheme;
+                    palette.colorGroupEnabled = true;
+
+                    paletteImportExportPopup.close()
+                }
+
+                Popup {
+                    id: paletteImportExportPopup
+                    focus: true
+                    parent: Overlay.overlay
+                    x: (_root.width - width)/2
+                    y: (_root.height - height)/2
+                    width:  _root.width  * 0.666
+                    height: _root.height * 0.666
+                    modal:  true
+                    Column {
+                        anchors.fill: parent
+                        spacing: 5
+
+                        Rectangle {
+                            width: parent.width
+                            height: parent.height - importButton.height
+                            border.width: 1
+
+                            Flickable {
+                                id: flick
+
+                                anchors.fill: parent
+                                contentWidth: themeImportExportEdit.paintedWidth
+                                contentHeight: themeImportExportEdit.paintedHeight
+                                clip: true
+
+                                function ensureVisible(r)
+                                {
+                                   if (contentX >= r.x)
+                                       contentX = r.x;
+                                   else if (contentX+width <= r.x+r.width)
+                                       contentX = r.x+r.width-width;
+                                   if (contentY >= r.y)
+                                       contentY = r.y;
+                                   else if (contentY+height <= r.y+r.height)
+                                       contentY = r.y+r.height-height;
+                                }
+
+                                TextEdit {
+                                   id: themeImportExportEdit
+                                   width: flick.width
+                                   focus: true
+                                   wrapMode: TextEdit.Wrap
+                                   onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
+                                }
+                            }
+                        }
+                        Button {
+                            id: importButton
+                            text: "Import"
+                            onPressed: {
+                                _header.importTheme(themeImportExportEdit.text);
+                            }
+                        }
+                    }
+                }
+
+                Button {
+                    id: exportButton
+                    text: "Import/Export"
+                    width: 200
+                    height: 30
+                    anchors.left: windowColorLabel.right
+                    anchors.leftMargin: 20
+                    onPressed: _header.exportTheme()
+                }
+
                 Row {
                     id: themeChoice
                     anchors.centerIn: parent
                     anchors.margins: 20
                     spacing:         20
-                    ExclusiveGroup { id: themeGroup }
+
+                    ButtonGroup { id: themeGroup; exclusive: true }
                     QGCRadioButton {
                         text: qsTr("Light")
                         checked: palette.globalTheme === QGCPalette.Light
-                        exclusiveGroup: themeGroup
+                        ButtonGroup.group: themeGroup
                         onClicked: { palette.globalTheme = QGCPalette.Light }
                     }
                     QGCRadioButton {
                         text: qsTr("Dark")
                         checked: palette.globalTheme === QGCPalette.Dark
-                        exclusiveGroup: themeGroup
+                        ButtonGroup.group: themeGroup
                         onClicked: { palette.globalTheme = QGCPalette.Dark }
                     }
                 }
@@ -124,769 +192,109 @@ Rectangle {
             Row {
                 spacing: 30
 
-                // Theme preview
-                Grid {
-                    columns: 5
+                // Edit theme GroupBox
+                GroupBox {
+                    title: "Preview and edit theme"
+                Column {
+                    id: editRoot
                     spacing: 5
+                    property size cellSize: "90x25"
 
-                    Component {
-                        id: rowHeader
-
+                    // Header row
+                    Row {
                         Text {
-                            width: 180
-                            height: 20
-                            horizontalAlignment: Text.AlignRight
-                            verticalAlignment: Text.AlignVCenter
+                            width: editRoot.cellSize.width * 2
+                            height: editRoot.cellSize.height
+                            text: ""
+                        }
+                        Text {
+                            width: editRoot.cellSize.width; height: editRoot.cellSize.height
                             color: "black"
-                            text: parent.text
+                            horizontalAlignment: Text.AlignLeft
+                            text: qsTr("Enabled")
+                        }
+                        Text {
+                            width: editRoot.cellSize.width; height: editRoot.cellSize.height
+                            color: "black"
+                            horizontalAlignment: Text.AlignHCenter
+                            text: qsTr("Value")
+                        }
+                        Text {
+                            width: editRoot.cellSize.width; height: editRoot.cellSize.height
+                            color: "black"
+                            horizontalAlignment: Text.AlignHCenter
+                            text: qsTr("Disabled")
+                        }
+                        Text {
+                            width: editRoot.cellSize.width; height: editRoot.cellSize.height
+                            color: "black"
+                            horizontalAlignment: Text.AlignHCenter
+                            text: qsTr("Value")
                         }
                     }
 
-                    // Header row
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: ""
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        text: qsTr("Disabled")
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        text: qsTr("Enabled")
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        text: qsTr("Value")
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        text: qsTr("Value")
+                    // Populate the model with all color names in the global palette
+                    Component.onCompleted: {
+                        for(var colorNameStr in palette) {
+                            if(palette[colorNameStr].r !== undefined) {
+                                paletteColorList.append({ colorName: colorNameStr });
+                            }
+                        }
                     }
 
-                    // window
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "window"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.window
-                        onColorSelected: palette.window = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.window
-                        onColorSelected: palette.window = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.window
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.window
+                    ListModel {
+                        id: paletteColorList
                     }
 
-                    // windowShade
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "windowShade"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.windowShade
-                        onColorSelected: palette.windowShade = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.windowShade
-                        onColorSelected: palette.windowShade = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.windowShade
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.windowShade
-                    }
-
-                    // windowShadeDark
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "windowShadeDark"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.windowShadeDark
-                        onColorSelected: palette.windowShadeDark = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.windowShadeDark
-                        onColorSelected: palette.windowShadeDark = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.windowShadeDark
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.windowShadeDark
-                    }
-
-                    // text
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "text"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.text
-                        onColorSelected: palette.text = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.text
-                        onColorSelected: palette.text = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.text
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.text
-                    }
-
-                    // button
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "button"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.button
-                        onColorSelected: palette.button = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.button
-                        onColorSelected: palette.button = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.button
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.button
-                    }
-
-                    // buttonText
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "buttonText"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.buttonText
-                        onColorSelected: palette.buttonText = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.buttonText
-                        onColorSelected: palette.buttonText = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.buttonText
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.buttonText
-                    }
-
-                    // buttonHighlight
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "buttonHighlight"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.buttonHighlight
-                        onColorSelected: palette.buttonHighlight = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.buttonHighlight
-                        onColorSelected: palette.buttonHighlight = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.buttonHighlight
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.buttonHighlight
-                    }
-
-                    // buttonHighlightText
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "buttonHighlightText"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.buttonHighlightText
-                        onColorSelected: palette.buttonHighlightText = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.buttonHighlightText
-                        onColorSelected: palette.buttonHighlightText = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.buttonHighlightText
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.buttonHighlightText
-                    }
-
-                    // primaryButton
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "primaryButton"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.primaryButton
-                        onColorSelected: palette.primaryButton = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.primaryButton
-                        onColorSelected: palette.primaryButton = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.primaryButton
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.primaryButton
-                    }
-
-                    // primaryButtonText
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "primaryButtonText"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.primaryButtonText
-                        onColorSelected: palette.primaryButtonText = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.primaryButtonText
-                        onColorSelected: palette.primaryButtonText = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.primaryButtonText
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.primaryButtonText
-                    }
-
-                    // textField
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "textField"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.textField
-                        onColorSelected: palette.textField = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.textField
-                        onColorSelected: palette.textField = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.textField
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.textField
-                    }
-
-                    // textFieldText
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "textFieldText"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.textFieldText
-                        onColorSelected: palette.textFieldText = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.textFieldText
-                        onColorSelected: palette.textFieldText = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.textFieldText
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.textFieldText
-                    }
-
-                    // warningText
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "warningText"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.warningText
-                        onColorSelected: palette.warningText = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.warningText
-                        onColorSelected: palette.warningText = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.warningText
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.warningText
-                    }
-
-                    // colorGreen
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "colorGreen"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.colorGreen
-                        onColorSelected: palette.colorGreen = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.colorGreen
-                        onColorSelected: palette.colorGreen = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.colorGreen
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.colorGreen
-                    }
-
-                    // colorOrange
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "colorOrange"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.colorOrange
-                        onColorSelected: palette.colorOrange = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.colorOrange
-                        onColorSelected: palette.colorOrange = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.colorOrange
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.colorOrange
-                    }
-
-                    // colorRed
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "colorRed"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.colorRed
-                        onColorSelected: palette.colorRed = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.colorRed
-                        onColorSelected: palette.colorRed = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.colorRed
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.colorRed
-                    }
-
-                    // colorGrey
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "colorGrey"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.colorGrey
-                        onColorSelected: palette.colorGrey = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.colorGrey
-                        onColorSelected: palette.colorGrey = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.colorGrey
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.colorGrey
-                    }
-
-                    // colorBlue
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "colorBlue"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.colorBlue
-                        onColorSelected: palette.colorBlue = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.colorBlue
-                        onColorSelected: palette.colorBlue = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.colorBlue
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.colorBlue
-                    }
-
-                    // alertBackground
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "alertBackground"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.alertBackground
-                        onColorSelected: palette.alertBackground = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.alertBackground
-                        onColorSelected: palette.alertBackground = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.alertBackground
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.alertBackground
-                    }
-
-                    // alertBorder
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "alertBorder"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.alertBorder
-                        onColorSelected: palette.alertBorder = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.alertBorder
-                        onColorSelected: palette.alertBorder = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.alertBorder
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.alertBorder
-                    }
-
-                    // alertText
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "alertText"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.alertText
-                        onColorSelected: palette.alertText = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.alertText
-                        onColorSelected: palette.alertText = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.alertText
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.alertText
-                    }
-
-                    // missionItemEditor
-                    Loader {
-                        sourceComponent: rowHeader
-                        property string text: "missionItemEditor"
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        color: palette.missionItemEditor
-                        onColorSelected: palette.missionItemEditor = color
-                    }
-                    ClickableColor {
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        color: palette.missionItemEditor
-                        onColorSelected: palette.missionItemEditor = color
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: false }
-                        text: palette.missionItemEditor
-                    }
-                    Text {
-                        width: 80
-                        height: 20
-                        color: "black"
-                        horizontalAlignment: Text.AlignHCenter
-                        property var palette: QGCPalette { colorGroupEnabled: true }
-                        text: palette.missionItemEditor
-                    }
-
-                } // Theme preview
+                    // Reproduce all the models
+                    Repeater {
+                        model: paletteColorList
+                        delegate: Row {
+                            spacing: 5
+                            Text {
+                                width: editRoot.cellSize.width * 2
+                                height: editRoot.cellSize.height
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                color: "black"
+                                text: colorName
+                            }
+                            ClickableColor {
+                                id: enabledColorPicker
+                                color: enabledPalette[colorName]
+                                onColorSelected: enabledPalette[colorName] = color
+                            }
+                            TextField {
+                                id: enabledTextField
+                                width: editRoot.cellSize.width; height: editRoot.cellSize.height
+                                inputMask: "\\#>HHHHHHhh;"
+                                horizontalAlignment: Text.AlignLeft
+                                text: enabledPalette[colorName]
+                                onEditingFinished: enabledPalette[colorName] = text
+                            }
+                            ClickableColor {
+                                id: disabledColorPicker
+                                color: disabledPalette[colorName]
+                                onColorSelected: disabledPalette[colorName] = color
+                            }
+                            TextField {
+                                width: editRoot.cellSize.width; height: editRoot.cellSize.height
+                                inputMask: enabledTextField.inputMask
+                                horizontalAlignment: Text.AlignLeft
+                                text: disabledPalette[colorName]
+                                onEditingFinished: disabledPalette[colorName] = text
+                            }
+                        }
+                    }
+                } // Column
+                } // GroupBox { title: "Preview and edit theme"
 
                 // QGC controls preview
+                GroupBox { title: "Controls preview"
                 Column {
                     id: ctlPrevColumn
-                    property real _width: ScreenTools.defaultFontPointSize * 18
-                    property real _height: _width*0.15
+                    property real _colWidth: ScreenTools.defaultFontPointSize * 18
+                    property real _height: _colWidth*0.15
                     property color _bkColor: qgcPal.window
                     spacing: 10
                     width: previewGrid.width
@@ -899,7 +307,7 @@ Rectangle {
                             id: ctlRowHeader
 
                             Rectangle {
-                                width: ctlPrevColumn._width
+                                width: ctlPrevColumn._colWidth
                                 height: ctlPrevColumn._height
                                 color: "white"
                                 Text {
@@ -915,21 +323,21 @@ Rectangle {
 
                         // Header row
                         Text {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: "black"
                             horizontalAlignment: Text.AlignHCenter
                             text: qsTr("QGC name")
                         }
                         Text {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: "black"
                             horizontalAlignment: Text.AlignHCenter
                             text: qsTr("Enabled")
                         }
                         Text {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: "black"
                             horizontalAlignment: Text.AlignHCenter
@@ -942,7 +350,7 @@ Rectangle {
                             property string text: "QGCLabel"
                         }
                         Rectangle {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: ctlPrevColumn._bkColor
                             QGCLabel {
@@ -952,7 +360,7 @@ Rectangle {
                             }
                         }
                         Rectangle {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: ctlPrevColumn._bkColor
                             QGCLabel {
@@ -969,12 +377,12 @@ Rectangle {
                             property string text: "QGCButton"
                         }
                         QGCButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: qsTr("Button")
                         }
                         QGCButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: qsTr("Button")
                             enabled: false
@@ -986,13 +394,13 @@ Rectangle {
                             property string text: "QGCButton(primary)"
                         }
                         QGCButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             primary: true
                             text: qsTr("Button")
                         }
                         QGCButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: qsTr("Button")
                             primary: true
@@ -1005,14 +413,14 @@ Rectangle {
                             property string text: "QGCHoverButton"
                         }
                         QGCHoverButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
                             text: qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                         }
                         QGCHoverButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
                             text: qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
@@ -1038,17 +446,17 @@ Rectangle {
                             }
                         }
                         QGCButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: qsTr("Button")
-                            menu: buttonMenu
+                            onClicked: buttonMenu.popup()
                         }
                         QGCButton {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: qsTr("Button")
                             enabled: false
-                            menu: buttonMenu
+                            onClicked: buttonMenu.popup()
                         }
 
                         // QGCRadioButton
@@ -1057,7 +465,7 @@ Rectangle {
                             property string text: "QGCRadioButton"
                         }
                         Rectangle {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: ctlPrevColumn._bkColor
                             QGCRadioButton {
@@ -1067,7 +475,7 @@ Rectangle {
                             }
                         }
                         Rectangle {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: ctlPrevColumn._bkColor
                             QGCRadioButton {
@@ -1084,7 +492,7 @@ Rectangle {
                             property string text: "QGCCheckBox"
                         }
                         Rectangle {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: ctlPrevColumn._bkColor
                             QGCCheckBox {
@@ -1094,7 +502,7 @@ Rectangle {
                             }
                         }
                         Rectangle {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             color: ctlPrevColumn._bkColor
                             QGCCheckBox {
@@ -1111,12 +519,12 @@ Rectangle {
                             property string text: "QGCTextField"
                         }
                         QGCTextField {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: "QGCTextField"
                         }
                         QGCTextField {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             text: "QGCTextField"
                             enabled: false
@@ -1128,12 +536,12 @@ Rectangle {
                             property string text: "QGCComboBox"
                         }
                         QGCComboBox {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
                         }
                         QGCComboBox {
-                            width: ctlPrevColumn._width
+                            width: ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
                             model: [ qsTr("Item 1"), qsTr("Item 2"), qsTr("Item 3") ]
                             enabled: false
@@ -1145,13 +553,13 @@ Rectangle {
                             property string text: "SubMenuButton"
                         }
                         SubMenuButton {
-                            width: ctlPrevColumn._width
-                            height: ctlPrevColumn._width/3
+                            width: ctlPrevColumn._colWidth
+                            height: ctlPrevColumn._colWidth/3
                             text: qsTr("SUB MENU")
                         }
                         SubMenuButton {
-                            width: ctlPrevColumn._width
-                            height: ctlPrevColumn._width/3
+                            width: ctlPrevColumn._colWidth
+                            height: ctlPrevColumn._colWidth/3
                             text: qsTr("SUB MENU")
                             enabled: false
                         }
@@ -1165,16 +573,85 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         Label {
                             text: "Alert Message"
-                            color:  palette.alertText
+                            palette.text: palette.alertText
                             anchors.centerIn: parent
                         }
                     }
-                } // QGC controls preview
+                } // Column
+                } // GroupBox { title: "Controls preview"
             }
 
             Item{
                 height: 10;
                 width:  1;
+            }
+
+            Component {
+                id: arbBox
+                Rectangle {
+                    width:  arbGrid.width  * 1.5
+                    height: arbGrid.height * 1.5
+                    color:  backgroundColor
+                    border.color: qgcPal.text
+                    border.width: 1
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    GridLayout {
+                        id: arbGrid
+                        columns: 4
+                        rowSpacing: 10
+                        anchors.centerIn: parent
+                        QGCColoredImage {
+                            color:                      qgcPal.colorGreen
+                            width:                      ScreenTools.defaultFontPixelWidth * 2
+                            height:                     width
+                            sourceSize.height:          width
+                            mipmap:                     true
+                            fillMode:                   Image.PreserveAspectFit
+                            source:                     "/qmlimages/Gears.svg"
+                        }
+                        Label { text: "colorGreen"; color: qgcPal.colorGreen; }
+                        QGCColoredImage {
+                            color:                      qgcPal.colorOrange
+                            width:                      ScreenTools.defaultFontPixelWidth * 2
+                            height:                     width
+                            sourceSize.height:          width
+                            mipmap:                     true
+                            fillMode:                   Image.PreserveAspectFit
+                            source:                     "/qmlimages/Gears.svg"
+                        }
+                        Label { text: "colorOrange"; color: qgcPal.colorOrange; }
+                        QGCColoredImage {
+                            color:                      qgcPal.colorRed
+                            width:                      ScreenTools.defaultFontPixelWidth * 2
+                            height:                     width
+                            sourceSize.height:          width
+                            mipmap:                     true
+                            fillMode:                   Image.PreserveAspectFit
+                            source:                     "/qmlimages/Gears.svg"
+                        }
+                        Label { text: "colorRed"; color: qgcPal.colorRed; }
+                        QGCColoredImage {
+                            color:                      qgcPal.colorGrey
+                            width:                      ScreenTools.defaultFontPixelWidth * 2
+                            height:                     width
+                            sourceSize.height:          width
+                            mipmap:                     true
+                            fillMode:                   Image.PreserveAspectFit
+                            source:                     "/qmlimages/Gears.svg"
+                        }
+                        Label { text: "colorGrey"; color: qgcPal.colorGrey;  }
+                        QGCColoredImage {
+                            color:                      qgcPal.colorBlue
+                            width:                      ScreenTools.defaultFontPixelWidth * 2
+                            height:                     width
+                            sourceSize.height:          width
+                            mipmap:                     true
+                            fillMode:                   Image.PreserveAspectFit
+                            source:                     "/qmlimages/Gears.svg"
+                        }
+                        Label { text: "colorBlue"; color: qgcPal.colorBlue; }
+                    }
+                }
             }
 
             Row {
