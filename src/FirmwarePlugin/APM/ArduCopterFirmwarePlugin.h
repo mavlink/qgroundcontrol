@@ -65,8 +65,9 @@ public:
     QString pauseFlightMode                     (void) const override { return QString("Brake"); }
     QString landFlightMode                      (void) const override { return QString("Land"); }
     QString takeControlFlightMode               (void) const override { return QString("Loiter"); }
-    bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const final;
-    QString autoDisarmParameter                 (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
+    bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const override;
+    QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
+    bool    supportsSmartRTL                    (void) const override { return true; }
 
 private:
     static bool _remapParamNameIntialized;

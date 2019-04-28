@@ -351,8 +351,9 @@ void PX4FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
                             NAN);
 }
 
-void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+void PX4FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
 {
+    Q_UNUSED(smartRTL);
     _setFlightModeAndValidate(vehicle, _rtlFlightMode);
 }
 

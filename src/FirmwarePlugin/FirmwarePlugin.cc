@@ -240,10 +240,11 @@ void FirmwarePlugin::pauseVehicle(Vehicle* vehicle)
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
-void FirmwarePlugin::guidedModeRTL(Vehicle* vehicle)
+void FirmwarePlugin::guidedModeRTL(Vehicle* vehicle, bool smartRTL)
 {
     // Not supported by generic vehicle
     Q_UNUSED(vehicle);
+    Q_UNUSED(smartRTL);
     qgcApp()->showMessage(guided_mode_not_supported_by_vehicle);
 }
 
