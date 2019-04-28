@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* ArduPilot: Rework Airframe setup ui
 * Plan/Pattern: Support named presets to simplify commonly used settings setup. Currently only supported by Survey.
 * ArduCopter: Handle 3.7 parameter name change from CH#_OPT to RC#_OPTION.
 * Improved support for flashing/connecting to ChibiOS bootloaders boards.
