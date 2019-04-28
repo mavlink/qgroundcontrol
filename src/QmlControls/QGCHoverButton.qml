@@ -121,7 +121,7 @@ Button {
             PropertyChanges {
                 target: button;
                 _currentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlight : qgcPal.button) : qgcPalDisabled.button
-                _currentContentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonHighlight) : qgcPalDisabled.buttonText
+                _currentContentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText) : qgcPalDisabled.buttonText
             }
             PropertyChanges {
                 target: buttonBkRect
