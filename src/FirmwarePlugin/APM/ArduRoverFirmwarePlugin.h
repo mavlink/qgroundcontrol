@@ -52,6 +52,7 @@ public:
     const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     bool    supportsNegativeThrust                  (void) final;
     bool    supportsSmartRTL                        (void) const override { return true; }
+    QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
 
 private:
     static bool _remapParamNameIntialized;

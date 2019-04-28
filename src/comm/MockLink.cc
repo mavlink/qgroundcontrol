@@ -230,11 +230,13 @@ void MockLink::_loadParams(void)
 
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         if (_vehicleType == MAV_TYPE_FIXED_WING) {
-            paramFile.setFileName(":/MockLink/APMArduPlaneMockLink.params");
+            paramFile.setFileName(":/FirmwarePlugin/APM/Plane.OfflineEditing.params");
         } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
             paramFile.setFileName(":/MockLink/APMArduSubMockLink.params");
+        } else if (_vehicleType == MAV_TYPE_GROUND_ROVER ) {
+            paramFile.setFileName(":/FirmwarePlugin/APM/Rover.OfflineEditing.params");
         } else {
-            paramFile.setFileName(":/MockLink/APMArduCopterMockLink.params");
+            paramFile.setFileName(":/FirmwarePlugin/APM/Copter.OfflineEditing.params");
         }
     } else {
         paramFile.setFileName(":/MockLink/PX4MockLink.params");
@@ -947,9 +949,17 @@ void MockLink::_respondWithAutopilotVersion(void)
     uint32_t flightVersion = 0;
 #if !defined(NO_ARDUPILOT_DIALECT)
     if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        flightVersion |= 3 << (8*3);
-        flightVersion |= 5 << (8*2);
-        flightVersion |= 0 << (8*1);
+        if (_vehicleType == MAV_TYPE_FIXED_WING) {
+            flightVersion |= 9 << (8*2);
+        } else if (_vehicleType == MAV_TYPE_SUBMARINE ) {
+            flightVersion |= 5 << (8*2);
+        } else if (_vehicleType == MAV_TYPE_GROUND_ROVER ) {
+            flightVersion |= 5 << (8*2);
+        } else {
+            flightVersion |= 6 << (8*2);
+        }
+        flightVersion |= 3 << (8*3);    // Major
+        flightVersion |= 0 << (8*1);    // Patch
         flightVersion |= FIRMWARE_VERSION_TYPE_DEV << (8*0);
     } else if (_firmwareType == MAV_AUTOPILOT_PX4) {
 #endif

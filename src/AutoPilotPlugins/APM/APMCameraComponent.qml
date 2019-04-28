@@ -55,16 +55,16 @@ SetupPage {
             property Fact _mountAngMinPan:      controller.getParameterFact(-1, "MNT_ANGMIN_PAN")
             property Fact _mountAngMaxPan:      controller.getParameterFact(-1, "MNT_ANGMAX_PAN")
 
-            property Fact _rc5Function:         controller.getParameterFact(-1, "r.SERVO5_FUNCTION")
-            property Fact _rc6Function:         controller.getParameterFact(-1, "r.SERVO6_FUNCTION")
-            property Fact _rc7Function:         controller.getParameterFact(-1, "r.SERVO7_FUNCTION")
-            property Fact _rc8Function:         controller.getParameterFact(-1, "r.SERVO8_FUNCTION")
-            property Fact _rc9Function:         controller.getParameterFact(-1, "r.SERVO9_FUNCTION")
-            property Fact _rc10Function:        controller.getParameterFact(-1, "r.SERVO10_FUNCTION")
-            property Fact _rc11Function:        controller.getParameterFact(-1, "r.SERVO11_FUNCTION")
-            property Fact _rc12Function:        controller.getParameterFact(-1, "r.SERVO12_FUNCTION")
-            property Fact _rc13Function:        controller.getParameterFact(-1, "r.SERVO13_FUNCTION")
-            property Fact _rc14Function:        controller.getParameterFact(-1, "r.SERVO14_FUNCTION")
+            property Fact _rc5Function:         controller.getParameterFact(-1, "SERVO5_FUNCTION")
+            property Fact _rc6Function:         controller.getParameterFact(-1, "SERVO6_FUNCTION")
+            property Fact _rc7Function:         controller.getParameterFact(-1, "SERVO7_FUNCTION")
+            property Fact _rc8Function:         controller.getParameterFact(-1, "SERVO8_FUNCTION")
+            property Fact _rc9Function:         controller.getParameterFact(-1, "SERVO9_FUNCTION")
+            property Fact _rc10Function:        controller.getParameterFact(-1, "SERVO10_FUNCTION")
+            property Fact _rc11Function:        controller.getParameterFact(-1, "SERVO11_FUNCTION")
+            property Fact _rc12Function:        controller.getParameterFact(-1, "SERVO12_FUNCTION")
+            property Fact _rc13Function:        controller.getParameterFact(-1, "SERVO13_FUNCTION")
+            property Fact _rc14Function:        controller.getParameterFact(-1, "SERVO14_FUNCTION")
 
             property bool _tiltEnabled:         false
             property bool _panEnabled:          false
@@ -92,7 +92,7 @@ SetupPage {
             }
 
             function setGimbalSettingsServoInfo(loader, channel) {
-                var rcPrefix = "r.SERVO" + channel + "_"
+                var rcPrefix = "SERVO" + channel + "_"
 
                 loader.gimbalOutIndex = channel - 4
                 loader.servoPWMMinFact = controller.getParameterFact(-1, rcPrefix + "MIN")
@@ -110,7 +110,7 @@ SetupPage {
                 _panEnabled = false
                 _rollEnabled = false
                 for (var channel=_firstGimbalOutChannel; channel<=_lastGimbalOutChannel; channel++) {
-                    var functionFact = controller.getParameterFact(-1, "r.SERVO" + channel + "_FUNCTION")
+                    var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
                     if (functionFact.value == _rcFunctionMountTilt) {
                         _tiltEnabled = true
                         setGimbalSettingsServoInfo(gimbalDirectionTiltLoader, channel)
@@ -127,7 +127,7 @@ SetupPage {
             function setRCFunction(channel, rcFunction) {
                 // First clear any previous settings for this function
                 for (var index=_firstGimbalOutChannel; index<=_lastGimbalOutChannel; index++) {
-                    var functionFact = controller.getParameterFact(-1, "r.SERVO" + index + "_FUNCTION")
+                    var functionFact = controller.getParameterFact(-1, "SERVO" + index + "_FUNCTION")
                     if (functionFact.value != _rcFunctionDisabled && functionFact.value == rcFunction) {
                         functionFact.value = _rcFunctionDisabled
                     }
@@ -135,7 +135,7 @@ SetupPage {
 
                 // Now set the function into the new channel
                 if (channel != 0) {
-                    var functionFact = controller.getParameterFact(-1, "r.SERVO" + channel + "_FUNCTION")
+                    var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
                     functionFact.value = rcFunction
                 }
             }
