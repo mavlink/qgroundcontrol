@@ -58,24 +58,20 @@ Column {
         width:  parent.width
     }
     ColumnLayout {
-        ExclusiveGroup { id: autoPilotGroup }
         QGCRadioButton {
             id:         px4Firmware
             text:       qsTr("PX4 Firmware")
             checked:    false
-            exclusiveGroup: autoPilotGroup
         }
         QGCRadioButton {
             id:         apmFirmware
             text:       qsTr("APM Firmware")
             checked:    false
-            exclusiveGroup: autoPilotGroup
         }
         QGCRadioButton {
             id:         genericFirmware
             text:       qsTr("Generic Firmware")
             checked:    false
-            exclusiveGroup: autoPilotGroup
         }
     }
     Item {
@@ -88,18 +84,15 @@ Column {
     }
     ColumnLayout {
         visible:        apmFirmware.checked
-        ExclusiveGroup { id: apmVehicleGroup }
         QGCRadioButton {
             id:         copterVehicle
             text:       qsTr("ArduCopter")
             checked:    false
-            exclusiveGroup: apmVehicleGroup
         }
         QGCRadioButton {
             id:         planeVehicle
             text:       qsTr("ArduPlane")
             checked:    false
-            exclusiveGroup: apmVehicleGroup
         }
     }
 }

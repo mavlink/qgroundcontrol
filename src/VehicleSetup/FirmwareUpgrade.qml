@@ -194,10 +194,6 @@ SetupPage {
                         onCancelDialog: reject()
                     }
 
-                    ExclusiveGroup {
-                        id: firmwareGroup
-                    }
-
                     ListModel {
                         id: firmwareTypeList
 
@@ -288,7 +284,6 @@ SetupPage {
 
                         QGCRadioButton {
                             id:             px4FlightStackRadio1
-                            exclusiveGroup: _defaultFirmwareIsPX4 ? firmwareGroup : null
                             text:           qsTr("PX4 Flight Stack ")
                             textBold:       _defaultFirmwareIsPX4
                             checked:        _defaultFirmwareIsPX4
@@ -302,7 +297,6 @@ SetupPage {
 
                         QGCRadioButton {
                             id:             apmFlightStack
-                            exclusiveGroup: firmwareGroup
                             text:           qsTr("ArduPilot Flight Stack")
                             textBold:       !_defaultFirmwareIsPX4
                             checked:        !_defaultFirmwareIsPX4
@@ -316,7 +310,6 @@ SetupPage {
 
                         QGCRadioButton {
                             id:             px4FlightStackRadio2
-                            exclusiveGroup: _defaultFirmwareIsPX4 ? null : firmwareGroup
                             text:           qsTr("PX4 Flight Stack ")
                             visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
 
