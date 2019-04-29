@@ -108,27 +108,19 @@ SetupPage {
                             text:       qsTr("Click Ok to place your Spektrum receiver in the bind mode. Select the specific receiver type below:")
                         }
 
-                        ExclusiveGroup { id: radioGroup }
-
                         QGCRadioButton {
-                            exclusiveGroup: radioGroup
-                            text:           qsTr("DSM2 Mode")
-
+                            text:       qsTr("DSM2 Mode")
                             property int bindMode: RadioComponentController.DSM2
                         }
 
                         QGCRadioButton {
-                            exclusiveGroup: radioGroup
-                            text:           qsTr("DSMX (7 channels or less)")
-
+                            text:       qsTr("DSMX (7 channels or less)")
                             property int bindMode: RadioComponentController.DSMX7
                         }
 
                         QGCRadioButton {
-                            exclusiveGroup: radioGroup
-                            checked:        true
-                            text:           qsTr("DSMX (8 channels or more)")
-
+                            checked:    true
+                            text:       qsTr("DSMX (8 channels or more)")
                             property int bindMode: RadioComponentController.DSMX8
                         }
                     }
@@ -440,22 +432,16 @@ SetupPage {
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
 
-                    ExclusiveGroup { id: modeGroup }
-
                     QGCRadioButton {
-                        exclusiveGroup: modeGroup
-                        text:           qsTr("Mode 1")
-                        checked:        controller.transmitterMode == 1
-
-                        onClicked: controller.transmitterMode = 1
+                        text:       qsTr("Mode 1")
+                        checked:    controller.transmitterMode == 1
+                        onClicked:  controller.transmitterMode = 1
                     }
 
                     QGCRadioButton {
-                        exclusiveGroup: modeGroup
-                        text:           qsTr("Mode 2")
-                        checked:        controller.transmitterMode == 2
-
-                        onClicked: controller.transmitterMode = 2
+                        text:       qsTr("Mode 2")
+                        checked:    controller.transmitterMode == 2
+                        onClicked:  controller.transmitterMode = 2
                     }
                 }
 

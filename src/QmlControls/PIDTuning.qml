@@ -150,10 +150,6 @@ RowLayout {
         resetGraphs()
     }
 
-    ExclusiveGroup {
-        id: tuneTypeRadios
-    }
-
     ValueAxis {
         id:             valueXAxis
         min:            0
@@ -246,8 +242,6 @@ RowLayout {
                 QGCRadioButton {
                     text:           modelData
                     checked:        _currentTuneType === modelData
-                    exclusiveGroup: tuneTypeRadios
-
                     onClicked: _currentTuneType = modelData
                 }
             }

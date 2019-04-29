@@ -344,9 +344,6 @@ Item {
                 insertComplexMissionItemFromKMLOrSHP(complexItemName, polygonSelectPatternFile, -1)
                 hideDialog()
             }
-            ExclusiveGroup {
-                id: radioGroup
-            }
             Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
@@ -361,11 +358,9 @@ Item {
                     id:             surveyRadio
                     text:           qsTr("Survey")
                     checked:        true
-                    exclusiveGroup: radioGroup
                 }
                 QGCRadioButton {
                     text:           qsTr("Structure Scan")
-                    exclusiveGroup: radioGroup
                 }
             }
         }
@@ -732,43 +727,27 @@ Item {
                                     visible:        !QGroundControl.corePlugin.options.enablePlanViewSelector
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
-                                ExclusiveGroup {
-                                    id: planElementSelectorGroup
-                                    onCurrentChanged: {
-                                        switch (current) {
-                                        case planElementMission:
-                                            _editingLayer = _layerMission
-                                            break
-                                        case planElementGeoFence:
-                                            _editingLayer = _layerGeoFence
-                                            break
-                                        case planElementRallyPoints:
-                                            _editingLayer = _layerRallyPoints
-                                            break
-                                        }
-                                    }
-                                }
                                 QGCRadioButton {
                                     id:             planElementMission
-                                    exclusiveGroup: planElementSelectorGroup
                                     text:           qsTr("Mission")
                                     checked:        true
                                     visible:        QGroundControl.corePlugin.options.enablePlanViewSelector
                                     anchors.verticalCenter: parent.verticalCenter
+                                    onClicked:      _editingLayer = _layerMission
                                 }
                                 QGCRadioButton {
                                     id:             planElementGeoFence
-                                    exclusiveGroup: planElementSelectorGroup
                                     text:           qsTr("Fence")
                                     visible:        QGroundControl.corePlugin.options.enablePlanViewSelector
                                     anchors.verticalCenter: parent.verticalCenter
+                                    onClicked:      _editingLayer = _layerGeoFence
                                 }
                                 QGCRadioButton {
                                     id:             planElementRallyPoints
-                                    exclusiveGroup: planElementSelectorGroup
                                     text:           qsTr("Rally")
                                     visible:        QGroundControl.corePlugin.options.enablePlanViewSelector
                                     anchors.verticalCenter: parent.verticalCenter
+                                    onClicked:      _editingLayer = _layerRallyPoints
                                 }
                             }
                         }
