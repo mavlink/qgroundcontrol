@@ -35,10 +35,6 @@ SetupPage {
         id:         controller
     }
 
-    ExclusiveGroup {
-        id: airframeTypeExclusive
-    }
-
     Component {
         id: oldFramePageComponent
 
@@ -62,12 +58,9 @@ SetupPage {
 
             Repeater {
                 model: controller.airframeTypesModel
-
                 QGCRadioButton {
                     text: object.name
                     checked: controller.currentAirframeType == object
-                    exclusiveGroup: airframeTypeExclusive
-
                     onCheckedChanged: {
                         if (checked) {
                             controller.currentAirframeType = object

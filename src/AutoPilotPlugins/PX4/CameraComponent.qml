@@ -261,10 +261,8 @@ SetupPage {
                                 Item { height: 1; width: _margins; }
                                 Column {
                                     spacing:            _margins * 0.5
-                                    ExclusiveGroup { id: polarityGroup }
                                     QGCRadioButton {
                                         checked:        _camTriggerPol && _camTriggerPol.value === 0
-                                        exclusiveGroup: polarityGroup
                                         text:           "Low (0V)"
                                         onClicked: {
                                             if(_camTriggerPol) {
@@ -274,7 +272,6 @@ SetupPage {
                                     }
                                     QGCRadioButton {
                                         checked:        _camTriggerPol && _camTriggerPol.value > 0
-                                        exclusiveGroup: polarityGroup
                                         text:           "High (3.3V)"
                                         onClicked: {
                                             if(_camTriggerPol) {

@@ -496,18 +496,14 @@ Item {
             z:                      _mapAndVideo.z + 4
             visible:                QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.enableMultiVehicleList
 
-            ExclusiveGroup { id: multiVehicleSelectorGroup }
-
             QGCRadioButton {
                 id:             singleVehicleView
-                exclusiveGroup: multiVehicleSelectorGroup
                 text:           qsTr("Single")
                 checked:        true
                 textColor:      mapPal.text
             }
 
             QGCRadioButton {
-                exclusiveGroup: multiVehicleSelectorGroup
                 text:           qsTr("Multi-Vehicle")
                 textColor:      mapPal.text
             }

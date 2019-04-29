@@ -1195,9 +1195,6 @@ Item {
                 height:         width
                 anchors.horizontalCenter: parent.horizontalCenter
             }
-            ButtonGroup {
-                buttons:            mapSetButtons.children
-            }
             Column {
                 id:                 mapSetButtons
                 spacing:            ScreenTools.defaultFontPixelHeight

@@ -410,10 +410,7 @@ SetupPage {
                                 spacing: ScreenTools.defaultFontPixelHeight / 3
                                 visible: activeVehicle.supportsThrottleModeCenterZero
 
-                                ExclusiveGroup { id: throttleModeExclusiveGroup }
-
                                 QGCRadioButton {
-                                    exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Center stick is zero throttle")
                                     checked:        _activeJoystick ? _activeJoystick.throttleMode == 0 : false
 
@@ -436,7 +433,6 @@ SetupPage {
                                 }
 
                                 QGCRadioButton {
-                                    exclusiveGroup: throttleModeExclusiveGroup
                                     text:           qsTr("Full down stick is zero throttle")
                                     checked:        _activeJoystick ? _activeJoystick.throttleMode == 1 : false
 
@@ -726,14 +722,11 @@ SetupPage {
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
 
-                    ExclusiveGroup { id: modeGroup }
-
                     QGCLabel {
                         text: "TX Mode:"
                     }
 
                     QGCRadioButton {
-                        exclusiveGroup: modeGroup
                         text:           "1"
                         checked:        controller.transmitterMode == 1
                         enabled:        !controller.calibrating
@@ -742,7 +735,6 @@ SetupPage {
                     }
 
                     QGCRadioButton {
-                        exclusiveGroup: modeGroup
                         text:           "2"
                         checked:        controller.transmitterMode == 2
                         enabled:        !controller.calibrating
@@ -751,7 +743,6 @@ SetupPage {
                     }
 
                     QGCRadioButton {
-                        exclusiveGroup: modeGroup
                         text:           "3"
                         checked:        controller.transmitterMode == 3
                         enabled:        !controller.calibrating
@@ -760,7 +751,6 @@ SetupPage {
                     }
 
                     QGCRadioButton {
-                        exclusiveGroup: modeGroup
                         text:           "4"
                         checked:        controller.transmitterMode == 4
                         enabled:        !controller.calibrating

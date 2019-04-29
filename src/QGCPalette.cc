@@ -24,6 +24,8 @@ QGCPalette::Theme QGCPalette::_theme = QGCPalette::Dark;
 
 QMap<int, QMap<int, QMap<QString, QColor>>> QGCPalette::_colorInfoMap;
 
+QStringList QGCPalette::_colors;
+
 QGCPalette::QGCPalette(QObject* parent) :
     QObject(parent),
     _colorGroupEnabled(true)
@@ -44,7 +46,7 @@ QGCPalette::~QGCPalette()
     }
 }
 
-void QGCPalette::_buildMap(void)
+void QGCPalette::_buildMap()
 {
     //                                      Light                 Dark
     //                                      Disabled   Enabled    Disabled   Enabled

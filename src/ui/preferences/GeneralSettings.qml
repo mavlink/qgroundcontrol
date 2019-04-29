@@ -639,16 +639,11 @@ Rectangle {
                         property bool useFixedPosition: rtkSettings.useFixedBasePosition.rawValue
                         property real firstColWidth:    ScreenTools.defaultFontPixelWidth * 3
 
-                        ExclusiveGroup {
-                            id: useFixedBasePositionRadioGroup
-                        }
-
                         QGCRadioButton {
                             text:               qsTr("Perform Survey-In")
                             visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
                             checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == false
                             onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = false
-                            exclusiveGroup:     useFixedBasePositionRadioGroup
                             Layout.columnSpan:  3
                         }
 
@@ -683,7 +678,6 @@ Rectangle {
                             visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
                             checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == true
                             onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = true
-                            exclusiveGroup:     useFixedBasePositionRadioGroup
                             Layout.columnSpan:  3
                         }
 

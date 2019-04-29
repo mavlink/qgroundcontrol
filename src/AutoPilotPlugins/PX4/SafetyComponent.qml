@@ -54,8 +54,6 @@ SetupPage {
             property bool _hitlAvailable:   controller.parameterExists(-1, hitlParam)
             property Fact _hitlEnabled:     controller.getParameterFact(-1, hitlParam, false)
 
-            ExclusiveGroup { id: homeLoiterGroup }
-
             Rectangle {
                 x:      lowBattGrid.x + outerGrid.x - _margins
                 y:      lowBattGrid.y + outerGrid.y - _margins
@@ -391,7 +389,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value === 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Land immediately")
                             onClicked:          _rtlLandDelay.value = 0
                         }
@@ -402,7 +399,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLoiterNoLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value < 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Loiter and do not land")
                             onClicked:          _rtlLandDelay.value = -1
                         }
@@ -413,7 +409,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLoiterLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value > 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Loiter and land after specified time")
                             onClicked:          _rtlLandDelay.value = 60
                         }
