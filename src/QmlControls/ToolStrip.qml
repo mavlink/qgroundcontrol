@@ -36,7 +36,6 @@ Rectangle {
 
     signal clicked(int index, bool checked)
 
-    QGCPalette { id: qgcPal }
     ButtonGroup {
         id: buttonGroup
         exclusive: false
@@ -59,7 +58,7 @@ Rectangle {
                 anchors.right:  toolStripColumn.right
                 height:         width
                 radius:         ScreenTools.defaultFontPixelWidth / 2
-                fontPointSize:  ScreenTools.isMobile ? ScreenTools.smallFontPointSize : ScreenTools.defaultFontPointSize
+                fontPointSize:  ScreenTools.smallFontPointSize
 
                 enabled:        _root.buttonEnabled ? _root.buttonEnabled[index] : true
                 visible:        _root.buttonVisible ? _root.buttonVisible[index] : true
