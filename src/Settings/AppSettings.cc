@@ -46,7 +46,7 @@ DECLARE_SETTINGGROUP(App, "")
     if (savePathFact->rawValue().toString().isEmpty() && _nameToMetaDataMap[savePathName]->rawDefaultValue().toString().isEmpty()) {
 #ifdef __mobile__
 #ifdef __ios__
-        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
+        QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
 #else
         QDir rootDir = QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
 #endif
