@@ -132,7 +132,7 @@ Fact* FactPanelController::getParameterFact(int componentId, const QString& name
         if (reportMissing) {
             _reportMissingParameter(componentId, name);
         }
-        return NULL;
+        return nullptr;
     }
 }
 
