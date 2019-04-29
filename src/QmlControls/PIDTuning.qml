@@ -323,7 +323,7 @@ RowLayout {
         }
         Item { width: 1; height: 1 }
 
-        QGCLabel { text: qsTr("Saved Tuning Values:") }
+        QGCLabel { text: qsTr("Clipboard Values:") }
 
         GridLayout {
             rows:           savedRepeater.model.length
@@ -348,12 +348,12 @@ RowLayout {
             spacing: _margins
 
             QGCButton {
-                text:       qsTr("Save Values")
+                text:       qsTr("Save To Clipboard")
                 onClicked:  saveTuningParamValues()
             }
 
             QGCButton {
-                text:       qsTr("Reset To Saved Values")
+                text:       qsTr("Restore From Clipboard")
                 onClicked:  resetToSavedTuningParamValues()
             }
         }
