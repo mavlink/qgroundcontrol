@@ -37,7 +37,7 @@ Rectangle {
     readonly property string _commLostStr: qsTr("NO CAMERA")
 
     property real   _spacers:               ScreenTools.defaultFontPixelHeight
-    property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 36
+    property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 28
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
 
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
@@ -323,17 +323,16 @@ Rectangle {
                 text:               _noSdCard ? qsTr("Settings") : (_cameraVideoMode ? qsTr("Video Settings") : qsTr("Photo Settings"))
                 font.family:        ScreenTools.demiboldFontFamily
                 font.pointSize:     ScreenTools.mediumFontPointSize
-                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
                 anchors.top:        parent.top
                 anchors.left:       parent.left
             }
             QGCFlickable {
                 clip:               true
                 anchors.top:        cameraSettingsLabel.bottom
-                anchors.topMargin:  ScreenTools.defaultFontPixelHeight
                 anchors.bottom:     parent.bottom
-                anchors.bottomMargin: ScreenTools.defaultFontPixelHeight
-                width:              cameraSettingsCol.width + (ScreenTools.defaultFontPixelHeight * 2)
+                anchors.margins:    ScreenTools.defaultFontPixelWidth
+                width:              cameraSettingsCol.width + (ScreenTools.defaultFontPixelWidth * 2)
                 contentHeight:      cameraSettingsCol.height
                 contentWidth:       cameraSettingsCol.width
                 anchors.horizontalCenter: parent.horizontalCenter
