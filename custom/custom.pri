@@ -19,13 +19,18 @@ exists($$PWD/custom/custom.pri) {
 
     #   Build number is automatic
 
-    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list master --first-parent --count)
+    #-- TODO: Switch this back to master once merged
+    #AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list master --first-parent --count)
+    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list newUI --first-parent --count)
+
     win32 {
         AUTERION_QGC_VER_BUILD = $$system("set /a $$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD")
     } else {
         AUTERION_QGC_VER_BUILD = $$system("echo $(($$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD))")
     }
-    AUTERION_QGC_VERSION = $${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
+    #-- TODO: Switch this back once merged
+    #AUTERION_QGC_VERSION = $${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
+    AUTERION_QGC_VERSION = NUI.$${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
 
     DEFINES -= GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
     DEFINES += GIT_VERSION=\"\\\"$$AUTERION_QGC_VERSION\\\"\"
