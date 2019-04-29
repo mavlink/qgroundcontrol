@@ -292,7 +292,7 @@ protected:
     virtual void    _setCameraMode          (CameraMode mode);
     virtual void    _requestStreamInfo      (uint8_t streamID);
     virtual void    _requestStreamStatus    (uint8_t streamID);
-    virtual QGCVideoStreamInfo* _findStream (uint8_t streamID);
+    virtual QGCVideoStreamInfo* _findStream (uint8_t streamID, bool report = true);
 
 protected slots:
     virtual void    _initWhenReady          ();
