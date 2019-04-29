@@ -15,8 +15,8 @@ const char* APMAirframeComponent::_frameClassParam = "FRAME_CLASS";
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
     : VehicleComponent      (vehicle, autopilot, parent)
-    , _name                 (tr("Frame"))
     , _requiresFrameSetup   (false)
+    , _name                 (tr("Frame"))
 {
     ParameterManager* paramMgr = vehicle->parameterManager();
 
