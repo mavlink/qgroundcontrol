@@ -31,7 +31,7 @@ Rectangle {
 
     property AbstractButton lastClickedButton: null
 
-    // Ensure we don't get lower than
+    // Ensure we don't get narrower than content
     property real _idealWidth: (ScreenTools.isMobile ? ScreenTools.minTouchPixels : ScreenTools.defaultFontPixelWidth * 8) + toolStripColumn.anchors.margins * 2
 
     signal clicked(int index, bool checked)

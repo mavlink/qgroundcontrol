@@ -72,10 +72,38 @@ Rectangle {
                     palette.globalTheme = oldTheme;
                     palette.colorGroupEnabled = true;
 
-                    var jsonString = JSON.stringify(themeObj);
+                    var jsonString = JSON.stringify(themeObj, null, 4);
 
                     themeImportExportEdit.text = jsonString
-                    paletteImportExportPopup.open()
+                }
+
+                function exportThemeCPP() {
+                    var palToExport = ""
+                    for(var i = 0; i < palette.colors.length; i++) {
+                        var cs = palette.colors[i]
+                        var csc = cs + 'Colors'
+                        palToExport += 'DECLARE_QGC_COLOR(' + cs + ', \"' + palette[csc][0] + '\", \"' + palette[csc][1] + '\", \"' + palette[csc][2] + '\", \"' + palette[csc][3] + '\")\n'
+                    }
+                    themeImportExportEdit.text = palToExport
+                }
+
+                function exportThemePlugin() {
+                    var palToExport = ""
+                    for(var i = 0; i < palette.colors.length; i++) {
+                        var cs = palette.colors[i]
+                        var csc = cs + 'Colors'
+                        if(i > 0) {
+                            palToExport += '\nelse '
+                        }
+                        palToExport +=
+                        'if (colorName == QStringLiteral(\"' + cs + '\")) {\n' +
+                        '    colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor(\"' + palette[csc][0] + '\");\n' +
+                        '    colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor(\"' + palette[csc][1] + '\");\n' +
+                        '    colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor(\"' + palette[csc][2] + '\");\n' +
+                        '    colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor(\"' + palette[csc][3] + '\");\n' +
+                        '}'
+                    }
+                    themeImportExportEdit.text = palToExport
                 }
 
                 function importTheme(jsonStr) {
@@ -101,30 +129,64 @@ Rectangle {
                 }
 
                 Popup {
-                    id: paletteImportExportPopup
-                    focus: true
-                    parent: Overlay.overlay
-                    x: (_root.width - width)/2
-                    y: (_root.height - height)/2
-                    width:  _root.width  * 0.666
-                    height: _root.height * 0.666
-                    modal:  true
+                    id:             paletteImportExportPopup
+                    width:          impCol.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+                    height:         impCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+                    modal:          true
+                    focus:          true
+                    parent:         Overlay.overlay
+                    closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                    x:              Math.round((mainWindow.width  - width)  * 0.5)
+                    y:              Math.round((mainWindow.height - height) * 0.5)
+                    onVisibleChanged: {
+                        if(visible) {
+                            _header.exportTheme()
+                            _jsonButton.checked = true
+                        }
+                    }
+                    background: Rectangle {
+                        anchors.fill:   parent
+                        color:          palette.window
+                        radius:         ScreenTools.defaultFontPixelHeight * 0.5
+                        border.width:   1
+                        border.color:   palette.text
+                    }
                     Column {
-                        anchors.fill: parent
-                        spacing: 5
-
+                        id:             impCol
+                        spacing:        ScreenTools.defaultFontPixelHeight
+                        anchors.centerIn: parent
+                        Row {
+                            id:         exportFormats
+                            spacing:    ScreenTools.defaultFontPixelWidth  * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCRadioButton {
+                                id:     _jsonButton
+                                text:   "Json"
+                                onClicked: _header.exportTheme()
+                            }
+                            QGCRadioButton {
+                                text: "QGC"
+                                onClicked: _header.exportThemeCPP()
+                            }
+                            QGCRadioButton {
+                                text: "Custom Plugin"
+                                onClicked: _header.exportThemePlugin()
+                            }
+                        }
                         Rectangle {
-                            width: parent.width
-                            height: parent.height - importButton.height
-                            border.width: 1
-
+                            width:              flick.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+                            height:             flick.height + (ScreenTools.defaultFontPixelHeight * 2)
+                            color:              "white"
+                            anchors.margins:    10
                             Flickable {
-                                id: flick
-
-                                anchors.fill: parent
-                                contentWidth: themeImportExportEdit.paintedWidth
-                                contentHeight: themeImportExportEdit.paintedHeight
-                                clip: true
+                                id:             flick
+                                clip:           true
+                                width:          mainWindow.width  * 0.666
+                                height:         mainWindow.height * 0.666
+                                contentWidth:   themeImportExportEdit.paintedWidth
+                                contentHeight:  themeImportExportEdit.paintedHeight
+                                anchors.centerIn: parent
+                                flickableDirection: Flickable.VerticalFlick
 
                                 function ensureVisible(r)
                                 {
@@ -139,19 +201,31 @@ Rectangle {
                                 }
 
                                 TextEdit {
-                                   id: themeImportExportEdit
-                                   width: flick.width
-                                   focus: true
-                                   wrapMode: TextEdit.Wrap
+                                   id:          themeImportExportEdit
+                                   width:       flick.width
+                                   focus:       true
+                                   font.family: ScreenTools.fixedFontFamily
+                                   font.pointSize: ScreenTools.defaultFontPointSize
                                    onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
                                 }
                             }
                         }
-                        Button {
-                            id: importButton
-                            text: "Import"
-                            onPressed: {
-                                _header.importTheme(themeImportExportEdit.text);
+                        Row {
+                            spacing:    ScreenTools.defaultFontPixelWidth  * 2
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCButton {
+                                id:         importButton
+                                text:       "Import (Json Only)"
+                                enabled:    themeImportExportEdit.text[0] === "{" && _jsonButton.checked
+                                onClicked: {
+                                    _header.importTheme(themeImportExportEdit.text);
+                                }
+                            }
+                            QGCButton {
+                                text:       "Close"
+                                onClicked: {
+                                    paletteImportExportPopup.close()
+                                }
                             }
                         }
                     }
@@ -164,7 +238,7 @@ Rectangle {
                     height: 30
                     anchors.left: windowColorLabel.right
                     anchors.leftMargin: 20
-                    onPressed: _header.exportTheme()
+                    onPressed: paletteImportExportPopup.open()
                 }
 
                 Row {
