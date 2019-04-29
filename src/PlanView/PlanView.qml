@@ -530,12 +530,12 @@ Item {
         //-----------------------------------------------------------
         // Left tool strip
             ToolStrip {
-                id:                 toolStrip
+            id:                 toolStrip
             anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-                anchors.left:       parent.left
-            anchors.topMargin:  _toolButtonTopMargin + anchors.leftMargin
-                anchors.top:        parent.top
-                z:                  QGroundControl.zOrderWidgets
+            anchors.left:       parent.left
+            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.top:        parent.top
+            z:                  QGroundControl.zOrderWidgets
 
             showAlternateIcon:  [ false, _planMasterController.dirty, false, false, false, false, false, false ]
             rotateImage:        [ false, _planMasterController.syncInProgress, false, false, false, false, false, false ]
