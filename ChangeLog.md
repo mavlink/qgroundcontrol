@@ -6,6 +6,8 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* ArduPilot: Copter - Advanced Tuning support
+* ArduPilot: Rover - Frame setup support
 * ArduPilot: Copter - Update support to 3.5+
 * ArduPilot: Plane - Update support to 3.8+
 * ArduPilot: Rover - Update support to 3.4+
