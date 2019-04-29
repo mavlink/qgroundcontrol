@@ -9105,8 +9105,8 @@ is less than 50% of this value</short_desc>
       <max>2</max>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="1">local_position_estimator, attitude_estimator_q</value>
-        <value code="2">ekf2</value>
+        <value code="1">local_position_estimator, attitude_estimator_q (unsupported)</value>
+        <value code="2">ekf2 (recommended)</value>
       </values>
     </parameter>
     <parameter default="1" name="SYS_PARAM_VER" type="INT32">
