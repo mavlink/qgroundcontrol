@@ -157,7 +157,7 @@ Item {
         id:             compassBar
         height:         ScreenTools.defaultFontPixelHeight * 1.5
         width:          ScreenTools.defaultFontPixelWidth  * 50
-        color:          "#C5C6C9"
+        color:          "#DEDEDE"
         radius:         2
         clip:           true
         anchors.top:    parent.top
@@ -198,7 +198,7 @@ Item {
         id:             headingIndicator
         height:         ScreenTools.defaultFontPixelHeight
         width:          ScreenTools.defaultFontPixelWidth * 4
-        color:          "#0B1629"
+        color:          "#0B1420"
         anchors.bottom: compassBar.top
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * -0.1
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -243,7 +243,7 @@ Item {
     //-- Vehicle Indicator
     Rectangle {
         id:                     vehicleIndicator
-        color:                  "#0B1629"
+        color:                  "#0B1420"
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2

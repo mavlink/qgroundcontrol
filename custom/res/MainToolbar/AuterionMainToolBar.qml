@@ -158,7 +158,7 @@ Item {
         width:                              navButtonWidth
         height:                             mainWindow.height - header.height
         background: Rectangle {
-            color:  qgcPal.globalTheme === QGCPalette.Light ? "white" : "#0B1629"
+            color:  qgcPal.globalTheme === QGCPalette.Light ? "white" : "#0B1420"
         }
         ButtonGroup {
             id:                             buttonGroup
