@@ -1491,7 +1491,7 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
 {
     qCDebug(CameraControlLog) << "handleVideoInfo:" << vi->stream_id << vi->uri;
     _expectedCount = vi->count;
-    if(!_findStream(vi->stream_id)) {
+    if(!_findStream(vi->stream_id, false)) {
         qCDebug(CameraControlLog) << "Create stream handler for stream ID:" << vi->stream_id;
         QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(this, vi);
         QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);
@@ -1640,7 +1640,7 @@ QGCCameraControl::_requestStreamStatus(uint8_t streamID)
 
 //-----------------------------------------------------------------------------
 QGCVideoStreamInfo*
-QGCCameraControl::_findStream(uint8_t id)
+QGCCameraControl::_findStream(uint8_t id, bool report)
 {
     for(int i = 0; i < _streams.count(); i++) {
         if(_streams[i]) {
@@ -1654,7 +1654,9 @@ QGCCameraControl::_findStream(uint8_t id)
             }
         }
     }
-    qWarning() << "Stream id not found:" << id;
+    if(report) {
+        qWarning() << "Stream id not found:" << id;
+    }
     return nullptr;
 }
 
@@ -1676,7 +1678,7 @@ QGCCameraControl::_streamTimeout()
     }
     for(uint8_t i = 0; i < _expectedCount; i++) {
         //-- Stream ID starts at 1
-        if(!_findStream(i+1)) {
+        if(!_findStream(i+1, false)) {
             _requestStreamInfo(i+1);
             return;
         }
