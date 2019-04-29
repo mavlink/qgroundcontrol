@@ -134,7 +134,8 @@ SetupPage {
                                     Layout.fillHeight:  true
                                     fillMode:           Image.PreserveAspectFit
                                     smooth:             true
-                                    mipmap:             true
+                                    antialiasing:       true
+                                    sourceSize.width:   width
                                     source:             object.imageResource
                                 }
 
