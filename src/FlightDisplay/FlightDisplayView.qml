@@ -90,8 +90,10 @@ Item {
             _flightMapContainer.state   = "pipMode"
             _flightVideo.state          = "fullMode"
             //-- Set Map Zoom Level
-            _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
-            mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
+            if(mainWindow.flightDisplayMap) {
+                _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
+                mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
+            }
         }
     }
 
@@ -135,10 +137,10 @@ Item {
         }
         onVtolTransitionToFwdFlight:    guidedController.confirmAction(guidedController.actionVtolTransitionToFwdFlight)
         onVtolTransitionToMRFlight:     guidedController.confirmAction(guidedController.actionVtolTransitionToMRFlight)
+        onFlightDisplayMapChanged:      setStates()
     }
 
     Component.onCompleted: {
-        setStates()
         if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
             flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
         }
