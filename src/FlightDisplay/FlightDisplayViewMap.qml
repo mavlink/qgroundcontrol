@@ -8,7 +8,7 @@
  ****************************************************************************/
 
 
-import QtQuick          2.3
+import QtQuick          2.4
 import QtQuick.Controls 1.2
 import QtLocation       5.3
 import QtPositioning    5.3
@@ -166,7 +166,6 @@ FlightMap {
     QGCMapPalette { id: mapPal; lightColors: isSatelliteMap }
 
     Connections {
-        enabled:                missionController !== null
         target:                 missionController
         ignoreUnknownSignals:   true
         onNewItemsFromVehicle: {
