@@ -13,259 +13,259 @@ Rectangle {
     anchors.margins:    ScreenTools.defaultFontPixelWidth
     color:              "white"
 
-    property var palette: QGCPalette { colorGroupEnabled: true }
-    property var enabledPalette: QGCPalette { colorGroupEnabled: true }
-    property var disabledPalette: QGCPalette { colorGroupEnabled: false }
+    property var palette:           QGCPalette { colorGroupEnabled: true }
+    property var enabledPalette:    QGCPalette { colorGroupEnabled: true }
+    property var disabledPalette:   QGCPalette { colorGroupEnabled: false }
 
-    QGCFlickable {
-        anchors.fill:           parent
-        contentWidth:           _rootCol.width
-        contentHeight:          _rootCol.height
-        clip:                   true
+    function exportPaletteColors(pal) {
+        var objToExport = {}
+        for(var clrName in pal) {
+            if(pal[clrName].r !== undefined) {
+                objToExport[clrName] = pal[clrName].toString();
+            }
+        }
+        return objToExport;
+    }
 
+    function fillPalette(pal, colorsObj) {
+        for(var clrName in colorsObj) {
+            pal[clrName] = colorsObj[clrName];
+        }
+    }
+
+    function exportTheme() {
+        var themeObj = {"light": {}, "dark":{}}
+        var oldTheme = palette.globalTheme;
+
+        palette.globalTheme = QGCPalette.Light
+        palette.colorGroupEnabled = true
+        themeObj.light["enabled"] = exportPaletteColors(palette);
+        palette.colorGroupEnabled = false
+        themeObj.light["disabled"] = exportPaletteColors(palette);
+        palette.globalTheme = QGCPalette.Dark
+        palette.colorGroupEnabled = true
+        themeObj.dark["enabled"] = exportPaletteColors(palette);
+        palette.colorGroupEnabled = false
+        themeObj.dark["disabled"] = exportPaletteColors(palette);
+
+        palette.globalTheme = oldTheme;
+        palette.colorGroupEnabled = true;
+
+        var jsonString = JSON.stringify(themeObj, null, 4);
+
+        themeImportExportEdit.text = jsonString
+    }
+
+    function exportThemeCPP() {
+        var palToExport = ""
+        for(var i = 0; i < palette.colors.length; i++) {
+            var cs = palette.colors[i]
+            var csc = cs + 'Colors'
+            palToExport += 'DECLARE_QGC_COLOR(' + cs + ', \"' + palette[csc][1] + '\", \"' + palette[csc][0] + '\", \"' + palette[csc][3] + '\", \"' + palette[csc][2] + '\")\n'
+        }
+        themeImportExportEdit.text = palToExport
+    }
+
+    function exportThemePlugin() {
+        var palToExport = ""
+        for(var i = 0; i < palette.colors.length; i++) {
+            var cs = palette.colors[i]
+            var csc = cs + 'Colors'
+            if(i > 0) {
+                palToExport += '\nelse '
+            }
+            palToExport +=
+            'if (colorName == QStringLiteral(\"' + cs + '\")) {\n' +
+            '    colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor(\"' + palette[csc][2] + '\");\n' +
+            '    colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor(\"' + palette[csc][3] + '\");\n' +
+            '    colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor(\"' + palette[csc][0] + '\");\n' +
+            '    colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor(\"' + palette[csc][1] + '\");\n' +
+            '}'
+        }
+        themeImportExportEdit.text = palToExport
+    }
+
+    function importTheme(jsonStr) {
+        var jsonObj = JSON.parse(jsonStr)
+        var themeObj = {"light": {}, "dark":{}}
+        var oldTheme = palette.globalTheme;
+
+        palette.globalTheme = QGCPalette.Light
+        palette.colorGroupEnabled = true
+        fillPalette(palette, jsonObj.light.enabled)
+        palette.colorGroupEnabled = false
+        fillPalette(palette, jsonObj.light.disabled);
+        palette.globalTheme = QGCPalette.Dark
+        palette.colorGroupEnabled = true
+        fillPalette(palette, jsonObj.dark.enabled);
+        palette.colorGroupEnabled = false
+        fillPalette(palette, jsonObj.dark.disabled);
+
+        palette.globalTheme = oldTheme;
+        palette.colorGroupEnabled = true;
+
+        paletteImportExportPopup.close()
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Export/Import
+    Popup {
+        id:             paletteImportExportPopup
+        width:          impCol.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+        height:         impCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+        modal:          true
+        focus:          true
+        parent:         Overlay.overlay
+        closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:              Math.round((mainWindow.width  - width)  * 0.5)
+        y:              Math.round((mainWindow.height - height) * 0.5)
+        onVisibleChanged: {
+            if(visible) {
+                exportTheme()
+                _jsonButton.checked = true
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          palette.window
+            radius:         ScreenTools.defaultFontPixelHeight * 0.5
+            border.width:   1
+            border.color:   palette.text
+        }
         Column {
-            id:         _rootCol
-
+            id:             impCol
+            spacing:        ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            Row {
+                id:         exportFormats
+                spacing:    ScreenTools.defaultFontPixelWidth  * 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCRadioButton {
+                    id:     _jsonButton
+                    text:   "Json"
+                    onClicked: exportTheme()
+                }
+                QGCRadioButton {
+                    text: "QGC"
+                    onClicked: exportThemeCPP()
+                }
+                QGCRadioButton {
+                    text: "Custom Plugin"
+                    onClicked: exportThemePlugin()
+                }
+            }
             Rectangle {
-                id: _header
-                width:  parent.width
-                height: themeChoice.height * 2
-                color:  palette.window
-                QGCLabel {
-                    id: windowColorLabel
-                    text: qsTr("Window Color")
-                    anchors.left:           parent.left
-                    anchors.leftMargin:     20
-                }
-
-                function exportPaletteColors(pal) {
-                    var objToExport = {}
-                    for(var clrName in pal) {
-                        if(pal[clrName].r !== undefined) {
-                            objToExport[clrName] = pal[clrName].toString();
-                        }
-                    }
-                    return objToExport;
-                }
-
-                function fillPalette(pal, colorsObj) {
-                    for(var clrName in colorsObj) {
-                        pal[clrName] = colorsObj[clrName];
-                    }
-                }
-
-                function exportTheme() {
-                    var themeObj = {"light": {}, "dark":{}}
-                    var oldTheme = palette.globalTheme;
-
-                    palette.globalTheme = QGCPalette.Light
-                    palette.colorGroupEnabled = true
-                    themeObj.light["enabled"] = exportPaletteColors(palette);
-                    palette.colorGroupEnabled = false
-                    themeObj.light["disabled"] = exportPaletteColors(palette);
-                    palette.globalTheme = QGCPalette.Dark
-                    palette.colorGroupEnabled = true
-                    themeObj.dark["enabled"] = exportPaletteColors(palette);
-                    palette.colorGroupEnabled = false
-                    themeObj.dark["disabled"] = exportPaletteColors(palette);
-
-                    palette.globalTheme = oldTheme;
-                    palette.colorGroupEnabled = true;
-
-                    var jsonString = JSON.stringify(themeObj, null, 4);
-
-                    themeImportExportEdit.text = jsonString
-                }
-
-                function exportThemeCPP() {
-                    var palToExport = ""
-                    for(var i = 0; i < palette.colors.length; i++) {
-                        var cs = palette.colors[i]
-                        var csc = cs + 'Colors'
-                        palToExport += 'DECLARE_QGC_COLOR(' + cs + ', \"' + palette[csc][0] + '\", \"' + palette[csc][1] + '\", \"' + palette[csc][2] + '\", \"' + palette[csc][3] + '\")\n'
-                    }
-                    themeImportExportEdit.text = palToExport
-                }
-
-                function exportThemePlugin() {
-                    var palToExport = ""
-                    for(var i = 0; i < palette.colors.length; i++) {
-                        var cs = palette.colors[i]
-                        var csc = cs + 'Colors'
-                        if(i > 0) {
-                            palToExport += '\nelse '
-                        }
-                        palToExport +=
-                        'if (colorName == QStringLiteral(\"' + cs + '\")) {\n' +
-                        '    colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor(\"' + palette[csc][0] + '\");\n' +
-                        '    colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor(\"' + palette[csc][1] + '\");\n' +
-                        '    colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor(\"' + palette[csc][2] + '\");\n' +
-                        '    colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor(\"' + palette[csc][3] + '\");\n' +
-                        '}'
-                    }
-                    themeImportExportEdit.text = palToExport
-                }
-
-                function importTheme(jsonStr) {
-                    var jsonObj = JSON.parse(jsonStr)
-                    var themeObj = {"light": {}, "dark":{}}
-                    var oldTheme = palette.globalTheme;
-
-                    palette.globalTheme = QGCPalette.Light
-                    palette.colorGroupEnabled = true
-                    fillPalette(palette, jsonObj.light.enabled)
-                    palette.colorGroupEnabled = false
-                    fillPalette(palette, jsonObj.light.disabled);
-                    palette.globalTheme = QGCPalette.Dark
-                    palette.colorGroupEnabled = true
-                    fillPalette(palette, jsonObj.dark.enabled);
-                    palette.colorGroupEnabled = false
-                    fillPalette(palette, jsonObj.dark.disabled);
-
-                    palette.globalTheme = oldTheme;
-                    palette.colorGroupEnabled = true;
-
-                    paletteImportExportPopup.close()
-                }
-
-                Popup {
-                    id:             paletteImportExportPopup
-                    width:          impCol.width  + (ScreenTools.defaultFontPixelWidth  * 4)
-                    height:         impCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-                    modal:          true
-                    focus:          true
-                    parent:         Overlay.overlay
-                    closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                    x:              Math.round((mainWindow.width  - width)  * 0.5)
-                    y:              Math.round((mainWindow.height - height) * 0.5)
-                    onVisibleChanged: {
-                        if(visible) {
-                            _header.exportTheme()
-                            _jsonButton.checked = true
-                        }
-                    }
-                    background: Rectangle {
-                        anchors.fill:   parent
-                        color:          palette.window
-                        radius:         ScreenTools.defaultFontPixelHeight * 0.5
-                        border.width:   1
-                        border.color:   palette.text
-                    }
-                    Column {
-                        id:             impCol
-                        spacing:        ScreenTools.defaultFontPixelHeight
-                        anchors.centerIn: parent
-                        Row {
-                            id:         exportFormats
-                            spacing:    ScreenTools.defaultFontPixelWidth  * 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            QGCRadioButton {
-                                id:     _jsonButton
-                                text:   "Json"
-                                onClicked: _header.exportTheme()
-                            }
-                            QGCRadioButton {
-                                text: "QGC"
-                                onClicked: _header.exportThemeCPP()
-                            }
-                            QGCRadioButton {
-                                text: "Custom Plugin"
-                                onClicked: _header.exportThemePlugin()
-                            }
-                        }
-                        Rectangle {
-                            width:              flick.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-                            height:             flick.height + (ScreenTools.defaultFontPixelHeight * 2)
-                            color:              "white"
-                            anchors.margins:    10
-                            Flickable {
-                                id:             flick
-                                clip:           true
-                                width:          mainWindow.width  * 0.666
-                                height:         mainWindow.height * 0.666
-                                contentWidth:   themeImportExportEdit.paintedWidth
-                                contentHeight:  themeImportExportEdit.paintedHeight
-                                anchors.centerIn: parent
-                                flickableDirection: Flickable.VerticalFlick
-
-                                function ensureVisible(r)
-                                {
-                                   if (contentX >= r.x)
-                                       contentX = r.x;
-                                   else if (contentX+width <= r.x+r.width)
-                                       contentX = r.x+r.width-width;
-                                   if (contentY >= r.y)
-                                       contentY = r.y;
-                                   else if (contentY+height <= r.y+r.height)
-                                       contentY = r.y+r.height-height;
-                                }
-
-                                TextEdit {
-                                   id:          themeImportExportEdit
-                                   width:       flick.width
-                                   focus:       true
-                                   font.family: ScreenTools.fixedFontFamily
-                                   font.pointSize: ScreenTools.defaultFontPointSize
-                                   onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
-                                }
-                            }
-                        }
-                        Row {
-                            spacing:    ScreenTools.defaultFontPixelWidth  * 2
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            QGCButton {
-                                id:         importButton
-                                text:       "Import (Json Only)"
-                                enabled:    themeImportExportEdit.text[0] === "{" && _jsonButton.checked
-                                onClicked: {
-                                    _header.importTheme(themeImportExportEdit.text);
-                                }
-                            }
-                            QGCButton {
-                                text:       "Close"
-                                onClicked: {
-                                    paletteImportExportPopup.close()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Button {
-                    id: exportButton
-                    text: "Import/Export"
-                    width: 200
-                    height: 30
-                    anchors.left: windowColorLabel.right
-                    anchors.leftMargin: 20
-                    onPressed: paletteImportExportPopup.open()
-                }
-
-                Row {
-                    id: themeChoice
+                width:              flick.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+                height:             flick.height + (ScreenTools.defaultFontPixelHeight * 2)
+                color:              "white"
+                anchors.margins:    10
+                Flickable {
+                    id:             flick
+                    clip:           true
+                    width:          mainWindow.width  * 0.666
+                    height:         mainWindow.height * 0.666
+                    contentWidth:   themeImportExportEdit.paintedWidth
+                    contentHeight:  themeImportExportEdit.paintedHeight
                     anchors.centerIn: parent
-                    anchors.margins: 20
-                    spacing:         20
+                    flickableDirection: Flickable.VerticalFlick
 
-                    ButtonGroup { id: themeGroup; exclusive: true }
-                    QGCRadioButton {
-                        text: qsTr("Light")
-                        checked: palette.globalTheme === QGCPalette.Light
-                        ButtonGroup.group: themeGroup
-                        onClicked: { palette.globalTheme = QGCPalette.Light }
+                    function ensureVisible(r)
+                    {
+                       if (contentX >= r.x)
+                           contentX = r.x;
+                       else if (contentX+width <= r.x+r.width)
+                           contentX = r.x+r.width-width;
+                       if (contentY >= r.y)
+                           contentY = r.y;
+                       else if (contentY+height <= r.y+r.height)
+                           contentY = r.y+r.height-height;
                     }
-                    QGCRadioButton {
-                        text: qsTr("Dark")
-                        checked: palette.globalTheme === QGCPalette.Dark
-                        ButtonGroup.group: themeGroup
-                        onClicked: { palette.globalTheme = QGCPalette.Dark }
+
+                    TextEdit {
+                       id:          themeImportExportEdit
+                       width:       flick.width
+                       focus:       true
+                       font.family: ScreenTools.fixedFontFamily
+                       font.pointSize: ScreenTools.defaultFontPointSize
+                       onCursorRectangleChanged: flick.ensureVisible(cursorRectangle)
                     }
                 }
             }
+            Row {
+                spacing:    ScreenTools.defaultFontPixelWidth  * 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCButton {
+                    id:         importButton
+                    text:       "Import (Json Only)"
+                    enabled:    themeImportExportEdit.text[0] === "{" && _jsonButton.checked
+                    onClicked: {
+                        importTheme(themeImportExportEdit.text);
+                    }
+                }
+                QGCButton {
+                    text:       "Close"
+                    onClicked: {
+                        paletteImportExportPopup.close()
+                    }
+                }
+            }
+        }
+    }
 
+    //-------------------------------------------------------------------------
+    //-- Header
+    Rectangle {
+        id:         _header
+        width:      parent.width
+        height:     themeChoice.height * 2
+        color:      palette.window
+        anchors.top: parent.top
+        Row {
+            id:         themeChoice
+            spacing:    20
+            anchors.centerIn: parent
+            QGCLabel {
+                text:   qsTr("Window Color")
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            QGCButton {
+                text:   qsTr("Import/Export")
+                anchors.verticalCenter: parent.verticalCenter
+                onClicked: paletteImportExportPopup.open()
+            }
+            Row {
+                spacing:         20
+                anchors.verticalCenter: parent.verticalCenter
+                QGCRadioButton {
+                    text:       qsTr("Light")
+                    checked:    _root.palette.globalTheme === QGCPalette.Light
+                    onClicked: {
+                        _root.palette.globalTheme = QGCPalette.Light
+                    }
+                }
+                QGCRadioButton {
+                    text:       qsTr("Dark")
+                    checked:    _root.palette.globalTheme === QGCPalette.Dark
+                    onClicked: {
+                        _root.palette.globalTheme = QGCPalette.Dark
+                    }
+                }
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
+    //-- Main Contents
+    QGCFlickable {
+        anchors.top:            _header.bottom
+        anchors.bottom:         parent.bottom
+        width:                  parent.width
+        contentWidth:           _rootCol.width
+        contentHeight:          _rootCol.height
+        clip:                   true
+        Column {
+            id:         _rootCol
             Row {
                 spacing: 30
-
                 // Edit theme GroupBox
                 GroupBox {
                     title: "Preview and edit theme"
@@ -376,24 +376,6 @@ Rectangle {
                         id: previewGrid
                         columns: 3
                         spacing: 10
-
-                        Component {
-                            id: ctlRowHeader
-
-                            Rectangle {
-                                width: ctlPrevColumn._colWidth
-                                height: ctlPrevColumn._height
-                                color: "white"
-                                Text {
-                                    anchors.fill: parent
-                                    horizontalAlignment: Text.AlignRight
-                                    verticalAlignment: Text.AlignVCenter
-                                    color: "black"
-
-                                    text: parent.parent.text
-                                }
-                            }
-                        }
 
                         // Header row
                         Text {
@@ -660,74 +642,6 @@ Rectangle {
                 width:  1;
             }
 
-            Component {
-                id: arbBox
-                Rectangle {
-                    width:  arbGrid.width  * 1.5
-                    height: arbGrid.height * 1.5
-                    color:  backgroundColor
-                    border.color: qgcPal.text
-                    border.width: 1
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    GridLayout {
-                        id: arbGrid
-                        columns: 4
-                        rowSpacing: 10
-                        anchors.centerIn: parent
-                        QGCColoredImage {
-                            color:                      qgcPal.colorGreen
-                            width:                      ScreenTools.defaultFontPixelWidth * 2
-                            height:                     width
-                            sourceSize.height:          width
-                            mipmap:                     true
-                            fillMode:                   Image.PreserveAspectFit
-                            source:                     "/qmlimages/Gears.svg"
-                        }
-                        Label { text: "colorGreen"; color: qgcPal.colorGreen; }
-                        QGCColoredImage {
-                            color:                      qgcPal.colorOrange
-                            width:                      ScreenTools.defaultFontPixelWidth * 2
-                            height:                     width
-                            sourceSize.height:          width
-                            mipmap:                     true
-                            fillMode:                   Image.PreserveAspectFit
-                            source:                     "/qmlimages/Gears.svg"
-                        }
-                        Label { text: "colorOrange"; color: qgcPal.colorOrange; }
-                        QGCColoredImage {
-                            color:                      qgcPal.colorRed
-                            width:                      ScreenTools.defaultFontPixelWidth * 2
-                            height:                     width
-                            sourceSize.height:          width
-                            mipmap:                     true
-                            fillMode:                   Image.PreserveAspectFit
-                            source:                     "/qmlimages/Gears.svg"
-                        }
-                        Label { text: "colorRed"; color: qgcPal.colorRed; }
-                        QGCColoredImage {
-                            color:                      qgcPal.colorGrey
-                            width:                      ScreenTools.defaultFontPixelWidth * 2
-                            height:                     width
-                            sourceSize.height:          width
-                            mipmap:                     true
-                            fillMode:                   Image.PreserveAspectFit
-                            source:                     "/qmlimages/Gears.svg"
-                        }
-                        Label { text: "colorGrey"; color: qgcPal.colorGrey;  }
-                        QGCColoredImage {
-                            color:                      qgcPal.colorBlue
-                            width:                      ScreenTools.defaultFontPixelWidth * 2
-                            height:                     width
-                            sourceSize.height:          width
-                            mipmap:                     true
-                            fillMode:                   Image.PreserveAspectFit
-                            source:                     "/qmlimages/Gears.svg"
-                        }
-                        Label { text: "colorBlue"; color: qgcPal.colorBlue; }
-                    }
-                }
-            }
-
             Row {
                 spacing: 10
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -747,5 +661,89 @@ Rectangle {
 
         }
 
+    }
+
+    Component {
+        id: ctlRowHeader
+        Rectangle {
+            width:  ctlPrevColumn._colWidth
+            height: ctlPrevColumn._height
+            color:  "white"
+            Text {
+                color:  "black"
+                text:   parent.parent.text
+                anchors.fill: parent
+                horizontalAlignment: Text.AlignRight
+                verticalAlignment: Text.AlignVCenter
+            }
+        }
+    }
+
+    Component {
+        id: arbBox
+        Rectangle {
+            width:  arbGrid.width  * 1.5
+            height: arbGrid.height * 1.5
+            color:  backgroundColor
+            border.color: qgcPal.text
+            border.width: 1
+            anchors.horizontalCenter: parent.horizontalCenter
+            GridLayout {
+                id: arbGrid
+                columns: 4
+                rowSpacing: 10
+                anchors.centerIn: parent
+                QGCColoredImage {
+                    color:                      qgcPal.colorGreen
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorGreen"; color: qgcPal.colorGreen; }
+                QGCColoredImage {
+                    color:                      qgcPal.colorOrange
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorOrange"; color: qgcPal.colorOrange; }
+                QGCColoredImage {
+                    color:                      qgcPal.colorRed
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorRed"; color: qgcPal.colorRed; }
+                QGCColoredImage {
+                    color:                      qgcPal.colorGrey
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorGrey"; color: qgcPal.colorGrey;  }
+                QGCColoredImage {
+                    color:                      qgcPal.colorBlue
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     width
+                    sourceSize.height:          width
+                    mipmap:                     true
+                    fillMode:                   Image.PreserveAspectFit
+                    source:                     "/qmlimages/Gears.svg"
+                }
+                Label { text: "colorBlue"; color: qgcPal.colorBlue; }
+            }
+        }
     }
 }
