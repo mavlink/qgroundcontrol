@@ -17,6 +17,7 @@ import QtMultimedia     5.5
 import QZXing           2.3
 
 import QGroundControl                       1.0
+import QGroundControl.Controls              1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
@@ -28,37 +29,10 @@ Rectangle {
     property int    detectedTags: 0
     property string lastTag: ""
 
-    Rectangle {
-        id:             bgRect
-        color:          "gray"
-        anchors.fill:   videoOutput
-    }
-
-    Text {
-        id:             text1
-        wrapMode:       Text.Wrap
-        font.pixelSize: 20
-        anchors.top:    parent.top
-        anchors.left:   parent.left
-        z:              50
-        text:           "Tags detected: " + detectedTags
-        color:          "white"
-    }
-
-    Text {
-        id:             fps
-        font.pixelSize: 20
-        anchors.top:    parent.top
-        anchors.right:  parent.right
-        z:              50
-        text:           (1000 / zxingFilter.timePerFrameDecode).toFixed(0) + "fps"
-        color:          "white"
-    }
-
     Camera {
         id:             camera
         focus {
-            focusMode:  CameraFocus.FocusContinuous
+            focusMode:      CameraFocus.FocusContinuous
             focusPointMode: CameraFocus.FocusPointAuto
         }
     }
@@ -66,13 +40,12 @@ Rectangle {
     VideoOutput  {
         id:             videoOutput
         source:         camera
-        anchors.top:    text1.bottom
-        anchors.bottom: text2.top
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        autoOrientation: true
-        fillMode:       VideoOutput.Stretch
+        width:          parent.width  * 0.75
+        height:         parent.height * 0.75
+        fillMode:       VideoOutput.PreserveAspectFit
         filters:        [ zxingFilter ]
+        anchors.centerIn:   parent
+        autoOrientation:    true
         MouseArea {
             anchors.fill: parent
             onClicked: {
@@ -85,10 +58,15 @@ Rectangle {
             id:         captureZone
             color:      "red"
             opacity:    0.2
-            width:      parent.width / 2
+            width:      parent.width  / 2
             height:     parent.height / 2
             anchors.centerIn: parent
         }
+    }
+
+    SoundEffect {
+        id:             playSound
+        source:         "/auterion/wav/beep.wav"
     }
 
     QZXingFilter  {
@@ -100,11 +78,15 @@ Rectangle {
             return videoOutput.mapRectToSource(videoOutput.mapNormalizedRectToItem(Qt.rect(0.25, 0.25, 0.5, 0.5)));
         }
         decoder {
-            enabledDecoders: QZXing.DecoderFormat_EAN_13 | QZXing.DecoderFormat_CODE_39 | QZXing.DecoderFormat_QR_CODE
+            //enabledDecoders: QZXing.DecoderFormat_UPC_A | QZXing.DecoderFormat_UPC_E | QZXing.DecoderFormat_QR_CODE
+            enabledDecoders: QZXing.DecoderFormat_QR_CODE
             onTagFound: {
                 console.log(tag + " | " + decoder.foundedFormat() + " | " + decoder.charSet());
                 _root.detectedTags++;
-                _root.lastTag = tag;
+                if(_root.lastTag != tag) {
+                    _root.lastTag = tag
+                    playSound.play()
+                }
             }
             tryHarder: false
         }
@@ -125,17 +107,22 @@ Rectangle {
         }
     }
 
-    Text {
-        id:             text2
-        wrapMode:       Text.Wrap
-        font.pixelSize: 20
-        anchors.bottom: parent.bottom
-        anchors.left:   parent.left
-        z:              50
-        text:           "Last tag: " + lastTag
-        color:          "white"
+    Column {
+        anchors.top:    parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
+        QGCLabel {
+            text:           "Last Tag"
+            color:          "white"
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+        QGCLabel {
+            anchors.horizontalCenter: parent.horizontalCenter
+            text:           lastTag
+            color:          "white"
+        }
     }
 
+    /*
     Rectangle {
         width:          optCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
         height:         optCol.height + (ScreenTools.defaultFontPixelHeight * 2)
@@ -146,16 +133,12 @@ Rectangle {
             id:             optCol
             spacing:        10
             anchors.centerIn: parent
-            ListView {
-                width:        ScreenTools.defaultFontPixelWidth  * 10
-                height:       ScreenTools.defaultFontPixelHeight * 5
-                model:        QtMultimedia.availableCameras
-                delegate: Text {
-                  text: modelData.displayName
-                  MouseArea {
-                      anchors.fill: parent
-                      onClicked:    camera.deviceId = modelData.deviceId
-                  }
+            ComboBox {
+                model:      QtMultimedia.availableCameras
+                textRole:   'displayName'
+                onCurrentIndexChanged: {
+                    if (currentIndex != -1)
+                        camera.deviceId = QtMultimedia.availableCameras[currentIndex].deviceId
                 }
             }
             Switch {
@@ -176,5 +159,6 @@ Rectangle {
             }
         }
     }
+    */
 
 }
