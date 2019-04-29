@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* ArduCopter: Add PID Tuning page to Tuning Setup
 * ArduPilot: Copter - Advanced Tuning support
 * ArduPilot: Rover - Frame setup support
 * ArduPilot: Copter - Update support to 3.5+
