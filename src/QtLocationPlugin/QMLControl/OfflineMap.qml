@@ -38,7 +38,7 @@ Item {
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _esriFact:          _settingsManager ? _settingsManager.appSettings.esriToken : null
 
-    property string mapType:            _fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue
+    property string mapType:            _fmSettings ? (_fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue) : ""
     property bool   isMapInteractive:   false
     property var    savedCenter:        undefined
     property real   savedZoom:          3
@@ -59,7 +59,7 @@ Item {
     readonly property real maxZoomLevel:    20
     readonly property real sliderTouchArea: ScreenTools.defaultFontPixelWidth * (ScreenTools.isTinyScreen ? 5 : (ScreenTools.isMobile ? 6 : 3))
 
-    readonly property int _maxTilesForDownload: _settings.maxTilesForDownload.rawValue
+    readonly property int _maxTilesForDownload: _settings ? _settings.maxTilesForDownload.rawValue : 0
 
     QGCPalette { id: qgcPal }
 

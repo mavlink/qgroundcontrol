@@ -8,7 +8,7 @@
         <file alias="QGroundControl/Airmap/FlightBrief.qml">FlightBrief.qml</file>
         <file alias="QGroundControl/Airmap/FlightDetails.qml">FlightDetails.qml</file>
         <file alias="QGroundControl/Airmap/FlightFeature.qml">FlightFeature.qml</file>
-        <file alias="QGroundControl/Airmap/qmldir">QGroundControl.Airmap.qmldir</file>
+        <file alias="QGroundControl/Airmap/qmldir">../QmlControls/QGroundControl/Airmap/qmldir</file>
         <file alias="QGroundControl/Airmap/RuleSelector.qml">RuleSelector.qml</file>
     </qresource>
     <qresource prefix="/json">

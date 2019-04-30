@@ -642,7 +642,7 @@ Rectangle {
                         QGCRadioButton {
                             text:               qsTr("Perform Survey-In")
                             visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
-                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == false
+                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === false
                             onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = false
                             Layout.columnSpan:  3
                         }
@@ -676,7 +676,7 @@ Rectangle {
                         QGCRadioButton {
                             text:               qsTr("Use Specified Base Position")
                             visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
-                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == true
+                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === true
                             onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = true
                             Layout.columnSpan:  3
                         }

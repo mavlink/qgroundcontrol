@@ -32,7 +32,7 @@ SetupPage {
     Connections {
         target: joystickManager
         onAvailableJoysticksChanged: {
-            if( joystickManager.joysticks.length == 0 ) {
+            if( joystickManager.joysticks.length === 0 ) {
                 summaryButton.checked = true
                 setupView.showSummaryPanel()
             }
@@ -387,7 +387,7 @@ SetupPage {
 
                                     Component.onCompleted: {
                                         var index = joystickCombo.find(joystickManager.activeJoystickName)
-                                        if (index == -1) {
+                                        if (index === -1) {
                                             console.warn(qsTr("Active joystick name not in combo"), joystickManager.activeJoystickName)
                                         } else {
                                             joystickCombo.currentIndex = index
@@ -412,7 +412,7 @@ SetupPage {
 
                                 QGCRadioButton {
                                     text:           qsTr("Center stick is zero throttle")
-                                    checked:        _activeJoystick ? _activeJoystick.throttleMode == 0 : false
+                                    checked:        _activeJoystick ? _activeJoystick.throttleMode === 0 : false
 
                                     onClicked: _activeJoystick.throttleMode = 0
                                 }
@@ -421,7 +421,7 @@ SetupPage {
                                     x:          20
                                     width:      parent.width
                                     spacing:    ScreenTools.defaultFontPixelWidth
-                                    visible:    _activeJoystick ? _activeJoystick.throttleMode == 0 : false
+                                    visible:    _activeJoystick ? _activeJoystick.throttleMode === 0 : false
 
                                     QGCCheckBox {
                                         id:         accumulator
@@ -434,7 +434,7 @@ SetupPage {
 
                                 QGCRadioButton {
                                     text:           qsTr("Full down stick is zero throttle")
-                                    checked:        _activeJoystick ? _activeJoystick.throttleMode == 1 : false
+                                    checked:        _activeJoystick ? _activeJoystick.throttleMode === 1 : false
 
                                     onClicked: _activeJoystick.throttleMode = 1
                                 }
@@ -476,7 +476,7 @@ SetupPage {
 
                             QGCCheckBox {
                                 id:         advancedSettings
-                                checked:    activeVehicle.joystickMode != 0
+                                checked:    activeVehicle.joystickMode !== 0
                                 text:       qsTr("Advanced settings (careful!)")
 
                                 onClicked: {
@@ -531,7 +531,7 @@ SetupPage {
                                 visible:    advancedSettings.checked
                                 QGCCheckBox {
                                     id:         joystickCircleCorrection
-                                    checked:    activeVehicle.joystickMode != 0
+                                    checked:    activeVehicle.joystickMode !== 0
                                     text:       qsTr("Enable circle correction")
 
                                     Component.onCompleted: checked = _activeJoystick.circleCorrection
@@ -608,7 +608,7 @@ SetupPage {
 
                                     QGCCheckBox {
                                         anchors.verticalCenter:     parent.verticalCenter
-                                        checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] != "" : false
+                                        checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] !== "" : false
 
                                         onClicked: _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
                                     }

@@ -9,7 +9,6 @@ import QGroundControl.Palette      1.0
 
 Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
     property bool   _firmware34: activeVehicle.versionCompare(3, 5, 0) < 0
 
