@@ -59,6 +59,7 @@ Item {
     property real   _distance:              0.0
     property string _messageTitle:          ""
     property string _messageText:           ""
+    property bool   _showAttitude:          false
 
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
@@ -224,52 +225,6 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
-    //-- Compass
-    Image {
-        id:                 compass
-        height:             ScreenTools.defaultFontPixelHeight * 4
-        width:              height
-        source:             "/auterion/img/compass.svg"
-        fillMode:           Image.PreserveAspectFit
-        visible:            mainIsMap
-        sourceSize.height:  height
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
-        anchors.right:          parent.right
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
-        anchors.bottom:         mapScale.top
-        Image {
-            id:             compassNeedle
-            anchors.centerIn:   parent
-            height:             ScreenTools.defaultFontPixelHeight * 3
-            width:              height
-            source:             "/auterion/img/compass_needle.svg"
-            fillMode:           Image.PreserveAspectFit
-            sourceSize.height:  height
-            transform: [
-                Rotation {
-                    origin.x:   compassNeedle.width  / 2
-                    origin.y:   compassNeedle.height / 2
-                    angle:      _heading
-                }]
-        }
-    }
-    Rectangle {
-        height:             ScreenTools.defaultFontPixelHeight
-        width:              ScreenTools.defaultFontPixelWidth * 4
-        color:              qgcPal.windowShadeDark
-        visible:            mainIsMap
-        anchors.top:        compass.bottom
-        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.1
-        anchors.horizontalCenter:  compass.horizontalCenter
-        QGCLabel {
-            text:               _heading
-            color:              qgcPal.text
-            font.pointSize:     ScreenTools.smallFontPointSize
-            anchors.centerIn:   parent
-        }
-    }
-
-
     //-- Camera Control
     Loader {
         id:                     camControlLoader
@@ -284,9 +239,10 @@ Item {
     //-- Map Scale
     MapScale {
         id:                     mapScale
-        anchors.right:          vehicleIndicator.right
-        anchors.bottom:         vehicleIndicator.top
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.25)
+        anchors.left:           parent.left
+        anchors.top:            parent.top
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth  * 16
         mapControl:             mainWindow.flightDisplayMap
         visible:                rootBackground.visible && mainIsMap
     }
@@ -300,13 +256,13 @@ Item {
         radius:                 2
         anchors.bottom:         multiVehicleSelector.visible ? multiVehicleSelector.top : parent.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.right:          attitudeIndicator.visible ? attitudeIndicator.left : parent.right
+        anchors.rightMargin:    attitudeIndicator.visible ? -ScreenTools.defaultFontPixelWidth : ScreenTools.defaultFontPixelWidth
         GridLayout {
             id:                     vehicleStatusGrid
             columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
             rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.5
-            columns:                6
+            columns:                7
             anchors.centerIn:       parent
             //-- Chronometer
             Image {
@@ -363,6 +319,75 @@ Item {
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
+            //-- Compass
+            Item {
+                Layout.rowSpan:         2
+                Layout.minimumWidth:    mainIsMap ? parent.height * 1.25 : 0
+                Layout.fillHeight:      true
+                Layout.fillWidth:       true
+                //-- Large circle
+                Rectangle {
+                    height:             mainIsMap ? parent.height : 0
+                    width:              mainIsMap ? height : 0
+                    radius:             height * 0.5
+                    border.color:       qgcPal.text
+                    border.width:       1
+                    color:              Qt.rgba(0,0,0,0)
+                    anchors.centerIn:   parent
+                    visible:            mainIsMap
+                }
+                //-- North Label
+                Rectangle {
+                    height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
+                    width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 2 : 0
+                    radius:             ScreenTools.defaultFontPixelWidth  * 0.25
+                    color:              qgcPal.window
+                    visible:            mainIsMap
+                    anchors.top:        parent.top
+                    anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.25
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        text:               "N"
+                        color:              qgcPal.text
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        anchors.centerIn:   parent
+                    }
+                }
+                //-- Needle
+                Image {
+                    id:                 compassNeedle
+                    anchors.centerIn:   parent
+                    height:             mainIsMap ? parent.height * 0.75 : 0
+                    width:              height
+                    source:             "/auterion/img/compass_needle.svg"
+                    fillMode:           Image.PreserveAspectFit
+                    visible:            mainIsMap
+                    sourceSize.height:  height
+                    transform: [
+                        Rotation {
+                            origin.x:   compassNeedle.width  / 2
+                            origin.y:   compassNeedle.height / 2
+                            angle:      _heading
+                        }]
+                }
+                //-- Heading
+                Rectangle {
+                    height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
+                    width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 3.5 : 0
+                    radius:             ScreenTools.defaultFontPixelWidth  * 0.25
+                    color:              qgcPal.window
+                    visible:            mainIsMap
+                    anchors.bottom:         parent.bottom
+                    anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * -0.25
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        text:               _heading
+                        color:              qgcPal.text
+                        font.pointSize:     ScreenTools.smallFontPointSize
+                        anchors.centerIn:   parent
+                    }
+                }
+            }
             //-- Second Row
             //-- Odometer
             Image {
@@ -415,6 +440,38 @@ Item {
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
+        }
+        MouseArea {
+            anchors.fill:       parent
+            onDoubleClicked:    _showAttitude = !_showAttitude
+        }
+    }
+
+    //-- Attitude Indicator
+    Rectangle {
+        color:                  qgcPal.window
+        width:                  attitudeIndicator.width * 0.5
+        height:                 vehicleIndicator.height
+        visible:                _showAttitude
+        anchors.top:            vehicleIndicator.top
+        anchors.left:           vehicleIndicator.right
+    }
+    Rectangle {
+        id:                     attitudeIndicator
+        anchors.bottom:         vehicleIndicator.bottom
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * -0.5
+        anchors.right:          parent.right
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        height:                 ScreenTools.defaultFontPixelHeight * 6
+        width:                  height
+        radius:                 height * 0.5
+        color:                  qgcPal.window
+        visible:                _showAttitude
+        AuterionAttitudeWidget {
+            size:               parent.height * 0.95
+            vehicle:            activeVehicle
+            showHeading:        false
+            anchors.centerIn:   parent
         }
     }
 
