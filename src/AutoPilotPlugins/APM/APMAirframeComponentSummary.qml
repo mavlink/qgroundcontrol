@@ -7,39 +7,34 @@ import QGroundControl.Controls 1.0
 import QGroundControl.Controllers 1.0
 import QGroundControl.Palette 1.0
 
-Item {
+FactPanel {
+    id:             panel
     anchors.fill:   parent
+    color:          qgcPal.windowShadeDark
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     APMAirframeComponentController {
         id:         controller
+        factPanel:  panel
     }
 
-    property bool _frameAvailable:      controller.parameterExists(-1, "FRAME")
-    property Fact _frame:               controller.getParameterFact(-1, "FRAME", false)
-    property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS", false)
+    property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS")
     property Fact _frameType:           controller.getParameterFact(-1, "FRAME_TYPE", false)
+    property bool _frameTypeAvailable:  controller.parameterExists(-1, "FRAME_TYPE")
 
     Column {
         anchors.fill:       parent
 
         VehicleSummaryRow {
-            labelText:  qsTr("Frame Type")
-            valueText:  visible ? controller.currentAirframeTypeName() + " " + _frame.enumStringValue : ""
-            visible:    _frameAvailable
-        }
-
-        VehicleSummaryRow {
             labelText:  qsTr("Frame Class")
-            valueText:  visible ? _frameClass.enumStringValue : ""
-            visible:    !_frameAvailable
+            valueText:  _frameClass.enumStringValue
 
         }
 
         VehicleSummaryRow {
             labelText:  qsTr("Frame Type")
             valueText:  visible ? _frameType.enumStringValue : ""
-            visible:    !_frameAvailable
+            visible:    _frameTypeAvailable
         }
 
         VehicleSummaryRow {

@@ -15,7 +15,6 @@
 #include "Vehicle.h"
 
 class APMAirframeComponent;
-class APMAirframeLoader;
 class APMFlightModesComponent;
 class APMRadioComponent;
 class APMTuningComponent;
@@ -55,7 +54,6 @@ protected:
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
     APMTuningComponent*         _tuningComponent;
-    APMAirframeLoader*          _airframeFacts;
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
 

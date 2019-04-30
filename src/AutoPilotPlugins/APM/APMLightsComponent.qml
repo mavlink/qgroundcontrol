@@ -29,21 +29,22 @@ SetupPage {
             spacing:    _margins
             width:      availableWidth
 
-            FactPanelController { id: controller; }
+            FactPanelController { id: controller; factPanel: lightsPage.viewPanel }
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            property bool _oldFW:               activeVehicle.versionCompare(3, 5, 2) < 0
-            property Fact _rc5Function:         controller.getParameterFact(-1, "r.SERVO5_FUNCTION")
-            property Fact _rc6Function:         controller.getParameterFact(-1, "r.SERVO6_FUNCTION")
-            property Fact _rc7Function:         controller.getParameterFact(-1, "r.SERVO7_FUNCTION")
-            property Fact _rc8Function:         controller.getParameterFact(-1, "r.SERVO8_FUNCTION")
-            property Fact _rc9Function:         controller.getParameterFact(-1, "r.SERVO9_FUNCTION")
-            property Fact _rc10Function:        controller.getParameterFact(-1, "r.SERVO10_FUNCTION")
-            property Fact _rc11Function:        controller.getParameterFact(-1, "r.SERVO11_FUNCTION")
-            property Fact _rc12Function:        controller.getParameterFact(-1, "r.SERVO12_FUNCTION")
-            property Fact _rc13Function:        controller.getParameterFact(-1, "r.SERVO13_FUNCTION")
-            property Fact _rc14Function:        controller.getParameterFact(-1, "r.SERVO14_FUNCTION")
+            property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
+            property bool _oldFW:               _activeVehicle.versionCompare(3, 5, 2) < 0
+            property Fact _rc5Function:         controller.getParameterFact(-1, "SERVO5_FUNCTION")
+            property Fact _rc6Function:         controller.getParameterFact(-1, "SERVO6_FUNCTION")
+            property Fact _rc7Function:         controller.getParameterFact(-1, "SERVO7_FUNCTION")
+            property Fact _rc8Function:         controller.getParameterFact(-1, "SERVO8_FUNCTION")
+            property Fact _rc9Function:         controller.getParameterFact(-1, "SERVO9_FUNCTION")
+            property Fact _rc10Function:        controller.getParameterFact(-1, "SERVO10_FUNCTION")
+            property Fact _rc11Function:        controller.getParameterFact(-1, "SERVO11_FUNCTION")
+            property Fact _rc12Function:        controller.getParameterFact(-1, "SERVO12_FUNCTION")
+            property Fact _rc13Function:        controller.getParameterFact(-1, "SERVO13_FUNCTION")
+            property Fact _rc14Function:        controller.getParameterFact(-1, "SERVO14_FUNCTION")
             property Fact _stepSize:            _oldFW ? controller.getParameterFact(-1, "JS_LIGHTS_STEP") : null // v3.5.1 and prior
             property Fact _numSteps:            _oldFW ? null : controller.getParameterFact(-1, "JS_LIGHTS_STEPS") // v3.5.2 and up
 
@@ -65,7 +66,7 @@ SetupPage {
                 lightsLoader.lights1OutIndex = 0
                 lightsLoader.lights2OutIndex = 0
                 for (var channel=_firstLightsOutChannel; channel<=_lastLightsOutChannel; channel++) {
-                    var functionFact = controller.getParameterFact(-1, "r.SERVO" + channel + "_FUNCTION")
+                    var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
                     if (functionFact.value == _rcFunctionRCIN9) {
                         lightsLoader.lights1OutIndex = channel - 4
                     } else if (functionFact.value == _rcFunctionRCIN10) {
@@ -77,7 +78,7 @@ SetupPage {
             function setRCFunction(channel, rcFunction) {
                 // First clear any previous settings for this function
                 for (var index=_firstLightsOutChannel; index<=_lastLightsOutChannel; index++) {
-                    var functionFact = controller.getParameterFact(-1, "r.SERVO" + index + "_FUNCTION")
+                    var functionFact = controller.getParameterFact(-1, "SERVO" + index + "_FUNCTION")
                     if (functionFact.value != _rcFunctionDisabled && functionFact.value == rcFunction) {
                         functionFact.value = _rcFunctionDisabled
                     }
@@ -85,7 +86,7 @@ SetupPage {
 
                 // Now set the function into the new channel
                 if (channel != 0) {
-                    var functionFact = controller.getParameterFact(-1, "r.SERVO" + channel + "_FUNCTION")
+                    var functionFact = controller.getParameterFact(-1, "SERVO" + channel + "_FUNCTION")
                     functionFact.value = rcFunction
                 }
             }

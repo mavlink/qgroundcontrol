@@ -11,28 +11,22 @@
 #include "ArduCopterFirmwarePlugin.h"
 #include "ParameterManager.h"
 
-const char* APMAirframeComponent::_oldFrameParam = "FRAME";
-const char* APMAirframeComponent::_newFrameParam = "FRAME_CLASS";
+const char* APMAirframeComponent::_frameClassParam = "FRAME_CLASS";
 
 APMAirframeComponent::APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent)
-    : VehicleComponent(vehicle, autopilot, parent)
-    , _requiresFrameSetup(false)
-    , _name(tr("Airframe"))
+    : VehicleComponent      (vehicle, autopilot, parent)
+    , _requiresFrameSetup   (false)
+    , _name                 (tr("Frame"))
 {
-    if (qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) != NULL) {
-        ParameterManager* paramMgr = _vehicle->parameterManager();
-        _requiresFrameSetup = true;
-        if (paramMgr->parameterExists(FactSystem::defaultComponentId, _oldFrameParam)) {
-            _useNewFrameParam = false;
-            _frameParamFact = paramMgr->getParameter(FactSystem::defaultComponentId, _oldFrameParam);
-            MAV_TYPE vehicleType = vehicle->vehicleType();
-            if (vehicleType == MAV_TYPE_TRICOPTER || vehicleType == MAV_TYPE_HELICOPTER) {
-                _requiresFrameSetup = false;
-            }
-        } else {
-            _useNewFrameParam = true;
-            _frameParamFact = paramMgr->getParameter(FactSystem::defaultComponentId, _newFrameParam);
+    ParameterManager* paramMgr = vehicle->parameterManager();
+
+    if (paramMgr->parameterExists(FactSystem::defaultComponentId, _frameClassParam)) {
+        _frameClassFact = paramMgr->getParameter(FactSystem::defaultComponentId, _frameClassParam);
+        if (vehicle->vehicleType() != MAV_TYPE_HELICOPTER) {
+            _requiresFrameSetup = true;
         }
+    } else {
+        _frameClassFact = nullptr;
     }
 }
 
@@ -43,7 +37,7 @@ QString APMAirframeComponent::name(void) const
 
 QString APMAirframeComponent::description(void) const
 {
-    return tr("Airframe Setup is used to select the airframe which matches your vehicle.");
+    return tr("Frame Setup is used to select the airframe which matches your vehicle.");
 }
 
 QString APMAirframeComponent::iconResource(void) const
@@ -59,11 +53,7 @@ bool APMAirframeComponent::requiresSetup(void) const
 bool APMAirframeComponent::setupComplete(void) const
 {
     if (_requiresFrameSetup) {
-        if (_useNewFrameParam) {
-            return _frameParamFact->rawValue().toInt() > 0;
-        } else {
-            return _frameParamFact->rawValue().toInt() >= 0;
-        }
+        return _frameClassFact->rawValue().toInt() != 0;
     } else {
         return true;
     }
@@ -74,7 +64,7 @@ QStringList APMAirframeComponent::setupCompleteChangedTriggerList(void) const
     QStringList list;
 
     if (_requiresFrameSetup) {
-        list << (_useNewFrameParam ? _newFrameParam : _oldFrameParam);
+        list << _frameClassParam;
     }
 
     return list;
