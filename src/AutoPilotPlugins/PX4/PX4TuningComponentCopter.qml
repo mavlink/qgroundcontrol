@@ -112,7 +112,6 @@ SetupPage {
                          controller.getParameterFact(-1, "MC_YAWRATE_P"),
                          controller.getParameterFact(-1, "MC_YAWRATE_I"),
                          controller.getParameterFact(-1, "MC_YAWRATE_D"),
-                         controller.getParameterFact(-1, "MC_YAW_FF"),
                          controller.getParameterFact(-1, "MC_YAWRATE_FF") ] ]
                 }
             } // Component - Advanced Page
