@@ -1,6 +1,11 @@
 ## AGS Changelog
 
-### April 15
+### April 30 2019
+
+*   Hide Airframe, Radio, Flight Modes, Power, Tuning and Camera in normal mode
+*   Fix Speed display to respect the configured metric system
+
+### April 15 2019
 
 *   Fix blurry icon. Issue: https://www.wrike.com/open.htm?id=340642934
 
