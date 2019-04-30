@@ -638,7 +638,6 @@ Item {
                 anchors.left:       parent.left
                 anchors.right:      parent.right
                 anchors.top:        parent.top
-                anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.25
                 //-------------------------------------------------------
                 // Airmap Airspace Control
                 AirspaceControl {
