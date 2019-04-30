@@ -50,7 +50,7 @@ Item {
         loader.visible = false
         textOutput.text = _noVehicleText
         if (_activeVehicle) {
-            if (controller.customQmlFile == "") {
+            if (controller.customQmlFile === "") {
                 textOutput.text = _assignQmlFile
             } else {
                 loader.source = controller.customQmlFile

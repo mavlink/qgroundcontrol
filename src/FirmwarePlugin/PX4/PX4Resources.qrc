@@ -20,7 +20,7 @@
         <file alias="SensorsComponentSummary.qml">../../AutoPilotPlugins/PX4/SensorsComponentSummary.qml</file>
         <file alias="SensorsComponentSummaryFixedWing.qml">../../AutoPilotPlugins/PX4/SensorsComponentSummaryFixedWing.qml</file>
         <file alias="SensorsSetup.qml">../../AutoPilotPlugins/PX4/SensorsSetup.qml</file>
-        <file alias="QGroundControl/PX4/qmldir">QGroundControl.PX4.qmldir</file>
+        <file alias="QGroundControl/PX4/qmldir">../../QmlControls/QGroundControl/PX4/qmldir</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="PX4/MavCmdInfoCommon.json">MavCmdInfoCommon.json</file>

@@ -47,12 +47,13 @@ Item {
         function updateFlightModesMenu() {
             if (activeVehicle && activeVehicle.flightModeSetAvailable) {
                 // Remove old menu items
-                for (var i = 0; i < flightModesMenuItems.length; i++) {
+                var i
+                for (i = 0; i < flightModesMenuItems.length; i++) {
                     flightModesMenu.removeItem(flightModesMenuItems[i])
                 }
                 flightModesMenuItems.length = 0
                 // Add new items
-                for (var i = 0; i < _flightModes.length; i++) {
+                for (i = 0; i < _flightModes.length; i++) {
                     var menuItem = flightModeMenuItemComponent.createObject(null, { "text": _flightModes[i] })
                     flightModesMenuItems.push(menuItem)
                     flightModesMenu.insertItem(i, menuItem)
