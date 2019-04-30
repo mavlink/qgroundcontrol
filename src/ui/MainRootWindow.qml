@@ -29,9 +29,6 @@ ApplicationWindow {
     minimumHeight:  646
     visible:        true
 
-    onWidthChanged:     console.log('W: ' + width)
-    onHeightChanged:    console.log('H: ' + height)
-
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
     readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
     readonly property string    _planToolbar:               QGroundControl.corePlugin.options.planToolbarUrl
@@ -527,7 +524,7 @@ ApplicationWindow {
             color:              qgcPal.alertText
             MouseArea {
                 anchors.fill:       parent
-                anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
+                anchors.margins:    -ScreenTools.defaultFontPixelHeight
                 onClicked: {
                     systemMessageArea.close()
                 }
