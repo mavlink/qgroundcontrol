@@ -55,7 +55,7 @@ FlightMap {
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
 
     property bool   _disableVehicleTracking:    false
-    property bool   _keepVehicleCentered:       _mainIsMap ? false : true
+    property bool   _keepVehicleCentered:       mainIsMap ? false : true
 
     function updateAirspace(reset) {
         if(_airspaceEnabled) {
@@ -191,7 +191,7 @@ FlightMap {
 
     // Add trajectory points to the map
     MapItemView {
-        model: _mainIsMap ? activeVehicle ? activeVehicle.trajectoryPoints : 0 : 0
+        model: mainIsMap ? activeVehicle ? activeVehicle.trajectoryPoints : 0 : 0
         delegate: MapPolyline {
             line.width: 3
             line.color: "red"
@@ -210,7 +210,7 @@ FlightMap {
             vehicle:        object
             coordinate:     object.coordinate
             map:            flightMap
-            size:           _mainIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
+            size:           mainIsMap ? ScreenTools.defaultFontPixelHeight * 3 : ScreenTools.defaultFontPixelHeight
             z:              QGroundControl.zOrderVehicles
         }
     }
@@ -236,7 +236,7 @@ FlightMap {
 
         PlanMapItems {
             map:                flightMap
-            largeMapView:       _mainIsMap
+            largeMapView:       mainIsMap
             masterController:   masterController
             isActiveVehicle:    _vehicle.active
 
@@ -252,7 +252,7 @@ FlightMap {
     // Allow custom builds to add map items
     CustomMapItems {
         map:            flightMap
-        largeMapView:   _mainIsMap
+        largeMapView:   mainIsMap
     }
 
     GeoFenceMapVisuals {

@@ -40,24 +40,24 @@ Item {
         }
     }
 
-    property alias  guidedController:               guidedActionsController
-    property bool   activeVehicleJoystickEnabled:   activeVehicle ? activeVehicle.joystickEnabled : false
+    property alias  guidedController:              guidedActionsController
+    property bool   activeVehicleJoystickEnabled:  activeVehicle ? activeVehicle.joystickEnabled : false
+    property bool   mainIsMap:                     QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool   isBackgroundDark:              mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
 
-    property var    _missionController:     _planController.missionController
-    property var    _geoFenceController:    _planController.geoFenceController
-    property var    _rallyPointController:  _planController.rallyPointController
-    property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
-    property bool   _useChecklist:          QGroundControl.settingsManager.appSettings.useChecklist.rawValue
-    property real   _savedZoomLevel:        0
-    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
-    property real   _pipSize:               mainWindow.width * 0.2
-    property alias  _guidedController:      guidedActionsController
-    property alias  _altitudeSlider:        altitudeSlider
+    property var    _missionController:             _planController.missionController
+    property var    _geoFenceController:            _planController.geoFenceController
+    property var    _rallyPointController:          _planController.rallyPointController
+    property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
+    property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue
+    property real   _savedZoomLevel:                0
+    property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
+    property real   _pipSize:                       mainWindow.width * 0.2
+    property alias  _guidedController:              guidedActionsController
+    property alias  _altitudeSlider:                altitudeSlider
 
     readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    readonly property bool      isBackgroundDark:       _mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
     readonly property real      _defaultPitch:          0
     readonly property real      _defaultHeading:        0
@@ -70,8 +70,8 @@ Item {
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
 
     function setStates() {
-        QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
-        if(_mainIsMap) {
+        QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, mainIsMap)
+        if(mainIsMap) {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
             _flightVideo.state          = "pipMode"
@@ -277,8 +277,8 @@ Item {
 
     Window {
         id:             videoWindow
-        width:          !_mainIsMap ? _mapAndVideo.width  : _pipSize
-        height:         !_mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+        width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+        height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
         visible:        false
 
         Item {
@@ -309,7 +309,7 @@ Item {
       }
     }
 
-    QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? mainWindow.flightDisplayMap.isSatelliteMap : true }
+    QGCMapPalette { id: mapPal; lightColors: mainIsMap ? mainWindow.flightDisplayMap.isSatelliteMap : true }
 
     Item {
         id:             _mapAndVideo
@@ -318,12 +318,12 @@ Item {
         //-- Map View
         Item {
             id: _flightMapContainer
-            z:  _mainIsMap ? _mapAndVideo.z + 1 : _mapAndVideo.z + 2
+            z:  mainIsMap ? _mapAndVideo.z + 1 : _mapAndVideo.z + 2
             anchors.left:   _mapAndVideo.left
             anchors.bottom: _mapAndVideo.bottom
-            visible:        _mainIsMap || _isPipVisible && !QGroundControl.videoManager.fullScreen
-            width:          _mainIsMap ? _mapAndVideo.width  : _pipSize
-            height:         _mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            visible:        mainIsMap || _isPipVisible && !QGroundControl.videoManager.fullScreen
+            width:          mainIsMap ? _mapAndVideo.width  : _pipSize
+            height:         mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
             states: [
                 State {
                     name:   "pipMode"
@@ -348,7 +348,7 @@ Item {
                 flightWidgets:              flightDisplayViewWidgets
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
                 multiVehicleView:           !singleVehicleView.checked
-                scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
+                scaleState:                 (mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
                 Component.onCompleted: {
                     mainWindow.flightDisplayMap = _fMap
                 }
@@ -358,12 +358,12 @@ Item {
         //-- Video View
         Item {
             id:             _flightVideo
-            z:              _mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
-            width:          !_mainIsMap ? _mapAndVideo.width  : _pipSize
-            height:         !_mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            z:              mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
+            width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+            height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
             anchors.left:   _mapAndVideo.left
             anchors.bottom: _mapAndVideo.bottom
-            visible:        QGroundControl.videoManager.hasVideo && (!_mainIsMap || _isPipVisible)
+            visible:        QGroundControl.videoManager.hasVideo && (!mainIsMap || _isPipVisible)
 
             onParentChanged: {
                 /* If video comes back from popup
@@ -471,9 +471,9 @@ Item {
             visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
-            enablePopup:        _mainIsMap
+            enablePopup:        mainIsMap
             onActivated: {
-                _mainIsMap = !_mainIsMap
+                mainIsMap = !mainIsMap
                 setStates()
             }
             onHideIt: {
@@ -741,7 +741,7 @@ Item {
         width:          airspaceRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         airspaceRow.height * 1.25
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitNone
+        visible:        QGroundControl.airmapSupported && mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitNone
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)

@@ -22,10 +22,15 @@ import QGroundControl.FlightMap     1.0
 
 /// Native QML top level window
 ApplicationWindow {
-    id:         mainWindow
-    width:      1280
-    height:     720
-    visible:    true
+    id:             mainWindow
+    width:          1280
+    height:         720
+    minimumWidth:   920
+    minimumHeight:  646
+    visible:        true
+
+    onWidthChanged:     console.log('W: ' + width)
+    onHeightChanged:    console.log('H: ' + height)
 
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
     readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
