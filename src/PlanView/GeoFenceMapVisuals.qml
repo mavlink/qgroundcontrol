@@ -20,6 +20,7 @@ import QGroundControl.FlightMap     1.0
 
 /// GeoFence map visuals
 Item {
+    id: _root
     z: QGroundControl.zOrderMapItems
 
     property var    map
@@ -88,10 +89,15 @@ Item {
         _paramCircleFenceComponent.destroy()
     }
 
+    // By default the parent for Instantiator.delegate item is the Instatiator itself. By there is a bug
+    // in Qt which will cause a crash if this delete item has Menu item within it. Since the Menu item
+    // doesn't like having a non-visual item as parent. This is likely related to hybrid QQuickWidtget+QML
+    // Hence Qt folks are going to care. In order to workaround you have to parent the item to _root Item instead.
     Instantiator {
         model: _polygons
 
         delegate : QGCMapPolygonVisuals {
+            parent:             _root
             mapControl:         map
             mapPolygon:         object
             borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
@@ -105,6 +111,7 @@ Item {
         model: _circles
 
         delegate : QGCMapCircleVisuals {
+            parent:             _root
             mapControl:         map
             mapCircle:          object
             borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
