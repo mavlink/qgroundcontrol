@@ -47,7 +47,8 @@ Item {
         function updatelinkSelectionMenu() {
             if (activeVehicle) {
                 // Remove old menu items
-                for (var i = 0; i < linkSelectionMenuItems.length; i++) {
+                var i
+                for (i = 0; i < linkSelectionMenuItems.length; i++) {
                     linkSelectionMenu.removeItem(linkSelectionMenuItems[i])
                 }
                 linkSelectionMenuItems.length = 0
@@ -55,7 +56,7 @@ Item {
                 // Add new items
                 var has_hl = false;
                 var links = activeVehicle.links
-                for (var i = 0; i < links.length; i++) {
+                for (i = 0; i < links.length; i++) {
                     var menuItem = linkSelectionMenuItemComponent.createObject(null, { "text": links[i].getName(), "enabled": links[i].link_active(activeVehicle.id)})
                     linkSelectionMenuItems.push(menuItem)
                     linkSelectionMenu.insertItem(i, menuItem)
