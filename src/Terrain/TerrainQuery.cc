@@ -489,7 +489,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
         return;
     }
 
-    qWarning() << "Received some bytes of terrain data: " << responseBytes.size();
+    qCDebug(TerrainQueryLog) << "Received some bytes of terrain data: " << responseBytes.size();
 
     TerrainTile* terrainTile = new TerrainTile(responseBytes);
     if (terrainTile->isValid()) {
