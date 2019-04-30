@@ -22,82 +22,159 @@ import QGroundControl.ScreenTools   1.0
 
 SetupPage {
     id:             airframePage
-    pageComponent:  _useOldFrameParam ?  oldFramePageComponent: newFramePageComponent
-
-    property real _margins:             ScreenTools.defaultFontPixelWidth
-    property bool _useOldFrameParam:    controller.parameterExists(-1, "FRAME")
-    property Fact _oldFrameParam:       controller.getParameterFact(-1, "FRAME", false)
-    property Fact _newFrameParam:       controller.getParameterFact(-1, "FRAME_CLASS", false)
-    property Fact _frameTypeParam:      controller.getParameterFact(-1, "FRAME_TYPE", false)
-
-
-    APMAirframeComponentController {
-        id:         controller
-    }
+    pageComponent:  pageComponent
 
     Component {
-        id: oldFramePageComponent
+        id: pageComponent
 
-        Column {
-            width:      availableWidth
-            height:     1000
-            spacing:    _margins
+        ColumnLayout {
+            id:     mainColumn
+            width:  availableWidth
 
-            RowLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margins
+            property real _minW:                ScreenTools.defaultFontPixelWidth * 20
+            property real _boxWidth:            _minW
+            property real _boxSpace:            ScreenTools.defaultFontPixelWidth
+            property real _margins:             ScreenTools.defaultFontPixelWidth
+            property Fact _frameClass:          controller.getParameterFact(-1, "FRAME_CLASS")
+            property Fact _frameType:           controller.getParameterFact(-1, "FRAME_TYPE", false)    // FRAME_TYPE is not available on all Rover versions
+            property bool _frameTypeAvailable:  controller.parameterExists(-1, "FRAME_TYPE")
 
-                QGCLabel {
-                    font.pointSize:     ScreenTools.mediumFontPointSize
-                    wrapMode:           Text.WordWrap
-                    text:               qsTr("Please select your airframe type")
-                    Layout.fillWidth:   true
+            readonly property real spacerHeight: ScreenTools.defaultFontPixelHeight
+
+            onWidthChanged:         computeDimensions()
+            Component.onCompleted:  computeDimensions()
+
+            function computeDimensions() {
+                var sw  = 0
+                var rw  = 0
+                var idx = Math.floor(mainColumn.width / (_minW + ScreenTools.defaultFontPixelWidth))
+                if(idx < 1) {
+                    _boxWidth = mainColumn.width
+                    _boxSpace = 0
+                } else {
+                    _boxSpace = 0
+                    if(idx > 1) {
+                        _boxSpace = ScreenTools.defaultFontPixelWidth
+                        sw = _boxSpace * (idx - 1)
+                    }
+                    rw = mainColumn.width - sw
+                    _boxWidth = rw / idx
                 }
             }
 
-            Repeater {
-                model: controller.airframeTypesModel
-                QGCRadioButton {
-                    text: object.name
-                    checked: controller.currentAirframeType == object
-                    onCheckedChanged: {
-                        if (checked) {
-                            controller.currentAirframeType = object
+            APMAirframeComponentController {
+                id:         controller
+                factPanel:  airframePage.viewPanel
+            }
+
+            QGCLabel {
+                id:                 helpText
+                Layout.fillWidth:   true
+                text:               (_frameClass.rawValue === 0 ?
+                                         qsTr("Airframe is currently not set.") :
+                                         qsTr("Currently set to frame class '%1'").arg(_frameClass.enumStringValue) +
+                                         (_frameTypeAvailable ?  qsTr(" and frame type '%2'").arg(_frameType.enumStringValue) : "") +
+                                         qsTr(".", "period for end of sentence")) +
+                                    qsTr(" To change this configuration, select the desired frame class below and frame type.")
+                font.family:        ScreenTools.demiboldFontFamily
+                wrapMode:           Text.WordWrap
+            }
+
+            Item {
+                id:             lastSpacer
+                height:         parent.spacerHeight
+                width:          10
+            }
+
+            Flow {
+                id:                 flowView
+                Layout.fillWidth:   true
+                spacing:            _boxSpace
+
+                ExclusiveGroup {
+                    id: airframeTypeExclusive
+                }
+
+                Repeater {
+                    model: controller.frameClassModel
+
+                    // Outer summary item rectangle
+                    Rectangle {
+                        id:     outerRect
+                        width:  _boxWidth
+                        height: ScreenTools.defaultFontPixelHeight * 14
+                        color:  qgcPal.window
+
+                        readonly property real titleHeight: ScreenTools.defaultFontPixelHeight * 1.75
+                        readonly property real innerMargin: ScreenTools.defaultFontPixelWidth
+
+                        MouseArea {
+                            anchors.fill:   parent
+                            onClicked:      airframeCheckBox.checked = true
+                        }
+
+                        QGCLabel {
+                            id:     title
+                            text:   object.name
+                        }
+
+                        Rectangle {
+                            anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 2
+                            anchors.top:        title.bottom
+                            anchors.bottom:     parent.bottom
+                            anchors.left:       parent.left
+                            anchors.right:      parent.right
+                            color:              airframeCheckBox.checked ? qgcPal.buttonHighlight : qgcPal.windowShade
+
+                            ColumnLayout {
+                                anchors.margins:    innerMargin
+                                anchors.fill:       parent
+                                spacing:            innerMargin
+
+                                Image {
+                                    id:                 image
+                                    Layout.fillWidth:   true
+                                    Layout.fillHeight:  true
+                                    fillMode:           Image.PreserveAspectFit
+                                    smooth:             true
+                                    antialiasing:       true
+                                    sourceSize.width:   width
+                                    source:             object.imageResource
+                                }
+
+                                QGCCheckBox {
+                                    // Although this item is invisible we still use it to manage state
+                                    id:             airframeCheckBox
+                                    checked:        object.frameClass === _frameClass.rawValue
+                                    exclusiveGroup: airframeTypeExclusive
+                                    visible:        false
+
+                                    onCheckedChanged: {
+                                        if (checked) {
+                                            _frameClass.rawValue = object.frameClass
+                                        }
+                                    }
+                                }
+
+                                QGCLabel {
+                                    text:           qsTr("Frame Type")
+                                    font.pointSize: ScreenTools.smallFontPointSize
+                                    color:          qgcPal.buttonHighlightText
+                                    visible:        airframeCheckBox.checked && object.frameTypeSupported
+                                }
+
+                                FactComboBox {
+                                    id:                 combo
+                                    Layout.fillWidth:   true
+                                    fact:               _frameType
+                                    indexModel:         false
+                                    visible:            airframeCheckBox.checked && object.frameTypeSupported
+                                }
+                            }
                         }
                     }
-                }
-            }
+                } // Repeater - summary boxes
+            } // Flow - summary boxes
         } // Column
-    } // Component - oldFramePageComponent
-
-    Component {
-        id: newFramePageComponent
-
-        Grid {
-            width:      availableWidth
-            spacing:    _margins
-            columns:    2
-
-            QGCLabel {
-                text: qsTr("Frame Class:")
-            }
-
-            FactComboBox {
-                fact:       _newFrameParam
-                indexModel: false
-                width:      ScreenTools.defaultFontPixelWidth * 15
-            }
-
-            QGCLabel {
-                text: qsTr("Frame Type:")
-            }
-
-            FactComboBox {
-                fact:       _frameTypeParam
-                indexModel: false
-                width:      ScreenTools.defaultFontPixelWidth * 15
-            }
-        }
-    }
+    } // Component
 } // SetupPage

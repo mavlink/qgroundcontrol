@@ -644,6 +644,29 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <long_desc>The default allows to arm the vehicle without GPS signal.</long_desc>
       <boolean />
     </parameter>
+    <parameter category="Developer" default="0" name="COM_ASPD_FS_ACT" type="INT32">
+      <short_desc>Airspeed fault detection (Experimental)</short_desc>
+      <long_desc>Failsafe action when bad airspeed measurements are detected. Ensure the COM_ASPD_STALL parameter is set correctly before use.</long_desc>
+      <values>
+        <value code="0">disabled</value>
+        <value code="1">log a message</value>
+        <value code="2">log a message, warn the user</value>
+        <value code="3">log a message, warn the user, switch to non-airspeed TECS mode</value>
+        <value code="4">log a message, warn the user, switch to non-airspeed TECS mode, switch to Return mode after COM_ASPD_FS_DLY seconds</value>
+      </values>
+    </parameter>
+    <parameter category="Developer" default="0" name="COM_ASPD_FS_DLY" type="INT32">
+      <short_desc>Airspeed fault detection delay before RTL (Experimental)</short_desc>
+      <long_desc>RTL delay after bad airspeed measurements are detected if COM_ASPD_FS_ACT is set to 4. Ensure the COM_ASPD_STALL parameter is set correctly before use. The failsafe start and stop delays are controlled by the COM_TAS_FS_T1 and COM_TAS_FS_T2 parameters. Additional protection against persistent airspeed sensor errors can be enabled using the COM_TAS_FS_INNOV parameter, but these addtional checks are more prone to false positives in windy conditions.</long_desc>
+      <min>0</min>
+      <max>300</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter category="Developer" default="10.0" name="COM_ASPD_STALL" type="FLOAT">
+      <short_desc>Airspeed fault detection stall airspeed. (Experimental)</short_desc>
+      <long_desc>This is the minimum indicated airspeed at which the wing can produce 1g of lift. It is used by the airspeed sensor fault detection and failsafe calculation to detect a significant airspeed low measurement error condition and should be set based on flight test for reliable operation. The failsafe response is controlled by the COM_ASPD_FS_ACT parameter.</long_desc>
+      <unit>m/s</unit>
+    </parameter>
     <parameter default="-1.0" name="COM_DISARM_LAND" type="FLOAT">
       <short_desc>Time-out for auto disarm after landing</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. The vehicle will also auto-disarm right after arming if it has not even flown, however the time will always be 10 seconds such that the pilot has enough time to take off. A negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
@@ -872,6 +895,14 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <unit>s</unit>
       <increment>1</increment>
     </parameter>
+    <parameter default="0" name="COM_POSCTL_NAVL" type="INT32">
+      <short_desc>Position control navigation loss response</short_desc>
+      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
+      <values>
+        <value code="0">Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
+        <value code="1">Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
+      </values>
+    </parameter>
     <parameter default="1" name="COM_POS_FS_DELAY" type="INT32">
       <short_desc>Loss of position failsafe activation delay</short_desc>
       <long_desc>This sets number of seconds that the position checks need to be failed before the failsafe will activate. The default value has been optimised for rotary wing applications. For fixed wing applications, a larger value between 5 and 10 should be used.</long_desc>
@@ -941,6 +972,32 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <unit>%</unit>
       <decimal>0</decimal>
       <increment>0.05</increment>
+    </parameter>
+    <parameter category="Developer" default="1.0" name="COM_TAS_FS_INNOV" type="FLOAT">
+      <short_desc>Airspeed failsafe consistency threshold (Experimental)</short_desc>
+      <long_desc>This specifies the minimum airspeed test ratio as logged in estimator_status.tas_test_ratio required to trigger a failsafe. Larger values make the check less sensitive, smaller values make it more sensitive. Start with a value of 1.0 when tuning. When estimator_status.tas_test_ratio is &gt; 1.0 it indicates the inconsistency between predicted and measured airspeed is large enough to cause the navigation EKF to reject airspeed measurements. The time required to detect a fault when the threshold is exceeded depends on the size of the exceedance and is controlled by the COM_TAS_FS_INTEG parameter. The subsequent failsafe response is controlled by the COM_ASPD_FS_ACT parameter.</long_desc>
+      <min>0.5</min>
+      <max>3.0</max>
+    </parameter>
+    <parameter category="Developer" default="-1.0" name="COM_TAS_FS_INTEG" type="FLOAT">
+      <short_desc>Airspeed failsafe consistency delay (Experimental)</short_desc>
+      <long_desc>This sets the time integral of airspeed test ratio exceedance above COM_TAS_FS_INNOV required to trigger a failsafe. For example if COM_TAS_FS_INNOV is 100 and estimator_status.tas_test_ratio is 2.0, then the exceedance is 1.0 and the integral will rise at a rate of 1.0/second. A negative value disables the check. Larger positive values make the check less sensitive, smaller positive values make it more sensitive. The failsafe response is controlled by the COM_ASPD_FS_ACT parameter.</long_desc>
+      <max>30.0</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter category="Developer" default="3" name="COM_TAS_FS_T1" type="INT32">
+      <short_desc>Airspeed failsafe stop delay (Experimental)</short_desc>
+      <long_desc>Delay before stopping use of airspeed sensor if checks indicate sensor is bad. The failsafe response is controlled by the COM_ASPD_FS_ACT parameter.</long_desc>
+      <min>1</min>
+      <max>10</max>
+      <unit>s</unit>
+    </parameter>
+    <parameter category="Developer" default="100" name="COM_TAS_FS_T2" type="INT32">
+      <short_desc>Airspeed failsafe start delay (Experimental)</short_desc>
+      <long_desc>Delay before switching back to using airspeed sensor if checks indicate sensor is good. The failsafe response is controlled by the COM_ASPD_FS_ACT parameter.</long_desc>
+      <min>10</min>
+      <max>1000</max>
+      <unit>s</unit>
     </parameter>
     <parameter default="1" name="COM_VEL_FS_EVH" type="FLOAT">
       <short_desc>Horizontal velocity error threshold</short_desc>
@@ -3861,14 +3918,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     <parameter default="0" name="COM_OBS_AVOID" type="INT32">
       <short_desc>Flag to enable obstacle avoidance</short_desc>
       <boolean />
-    </parameter>
-    <parameter default="0" name="COM_POSCTL_NAVL" type="INT32">
-      <short_desc>Position control navigation loss response</short_desc>
-      <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
-      <values>
-        <value code="0">Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
-        <value code="1">Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
-      </values>
     </parameter>
     <parameter default="0" name="COM_TAKEOFF_ACT" type="INT32">
       <short_desc>Action after TAKEOFF has been accepted</short_desc>
@@ -9105,8 +9154,8 @@ is less than 50% of this value</short_desc>
       <max>2</max>
       <reboot_required>true</reboot_required>
       <values>
-        <value code="1">local_position_estimator, attitude_estimator_q</value>
-        <value code="2">ekf2</value>
+        <value code="1">local_position_estimator, attitude_estimator_q (unsupported)</value>
+        <value code="2">ekf2 (recommended)</value>
       </values>
     </parameter>
     <parameter default="1" name="SYS_PARAM_VER" type="INT32">
