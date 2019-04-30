@@ -50,7 +50,7 @@ Item {
     property bool   _cameraPresent:         _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property var    _flightPermit:          QGroundControl.airmapSupported ? QGroundControl.airspaceManager.flightPlan.flightPermitStatus : null
 
-    property bool   _airspaceIndicatorVisible: QGroundControl.airmapSupported && _mainIsMap && _flightPermit && _flightPermit !== AirspaceFlightPlanProvider.PermitNone
+    property bool   _airspaceIndicatorVisible: QGroundControl.airmapSupported && mainIsMap && _flightPermit && _flightPermit !== AirspaceFlightPlanProvider.PermitNone
 
     property string _altitude:              activeVehicle ? (isNaN(activeVehicle.altitudeRelative.value) ? "0.0" : activeVehicle.altitudeRelative.value.toFixed(1)) + ' ' + activeVehicle.altitudeRelative.units : "0.0"
     property string _distanceStr:           isNaN(_distance) ? "0" : _distance.toFixed(0) + ' ' + (activeVehicle ? activeVehicle.altitudeRelative.units : "")
@@ -163,10 +163,10 @@ Item {
         anchors.top:    parent.top
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 2)
         anchors.horizontalCenter:   parent.horizontalCenter
-        visible:        !_mainIsMap
+        visible:        !mainIsMap
         Repeater {
             model: 720
-            visible:    !_mainIsMap
+            visible:    !mainIsMap
             QGCLabel {
                 function _normalize(degrees) {
                     var a = degrees % 360
@@ -201,7 +201,7 @@ Item {
         height:         ScreenTools.defaultFontPixelHeight
         width:          ScreenTools.defaultFontPixelWidth * 4
         color:          qgcPal.windowShadeDark
-        visible:        !_mainIsMap
+        visible:        !mainIsMap
         anchors.bottom: compassBar.top
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * -0.1
         anchors.horizontalCenter:   parent.horizontalCenter
@@ -216,7 +216,7 @@ Item {
         height:         ScreenTools.defaultFontPixelHeight * 0.75
         width:          height
         source:         "/auterion/img/compass_pointer.svg"
-        visible:        !_mainIsMap
+        visible:        !mainIsMap
         fillMode:       Image.PreserveAspectFit
         sourceSize.height:  height
         anchors.top:    compassBar.bottom
@@ -227,16 +227,16 @@ Item {
     //-- Compass
     Image {
         id:                 compass
-        anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-        anchors.right:      parent.right
-        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
-        anchors.top:        parent.top
         height:             ScreenTools.defaultFontPixelHeight * 4
         width:              height
         source:             "/auterion/img/compass.svg"
         fillMode:           Image.PreserveAspectFit
-        visible:            _mainIsMap
+        visible:            mainIsMap
         sourceSize.height:  height
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.right:          parent.right
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * 2
+        anchors.bottom:         mapScale.top
         Image {
             id:             compassNeedle
             anchors.centerIn:   parent
@@ -257,7 +257,7 @@ Item {
         height:             ScreenTools.defaultFontPixelHeight
         width:              ScreenTools.defaultFontPixelWidth * 4
         color:              qgcPal.windowShadeDark
-        visible:            _mainIsMap
+        visible:            mainIsMap
         anchors.top:        compass.bottom
         anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.1
         anchors.horizontalCenter:  compass.horizontalCenter
@@ -273,7 +273,7 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                !_mainIsMap && _cameraPresent && _camera.paramComplete
+        visible:                !mainIsMap && _cameraPresent && _camera.paramComplete
         source:                 visible ? "/auterion/AuterionCameraControl.qml" : ""
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
@@ -283,11 +283,12 @@ Item {
 
     //-- Map Scale
     MapScale {
+        id:                     mapScale
         anchors.right:          vehicleIndicator.right
         anchors.bottom:         vehicleIndicator.top
         anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.25)
         mapControl:             mainWindow.flightDisplayMap
-        visible:                rootBackground.visible && _mainIsMap
+        visible:                rootBackground.visible && mainIsMap
     }
 
     //-- Vehicle Indicator
