@@ -27,11 +27,13 @@ import QGroundControl.Airmap        1.0
 Item {
     id: widgetRoot
 
+    readonly property real  _rightPanelWidth: Math.min(parent.width / 3, ScreenTools.defaultFontPixelWidth * 30)
+
     property bool   useLightColors
     property var    missionController
     property bool   showValues:             !QGroundControl.airspaceManager.airspaceVisible
 
-    property bool   _isSatellite:           _mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
+    property bool   _isSatellite:           mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
     property bool   _lightWidgetBorders:    _isSatellite
     property bool   _airspaceEnabled:       QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
@@ -117,7 +119,7 @@ Item {
         anchors.top:                parent.verticalCenter
         spacing:                    ScreenTools.defaultFontPixelHeight
 
-        property bool noGPSLockVisible:     activeVehicle && !activeVehicle.coordinate.isValid && _mainIsMap
+        property bool noGPSLockVisible:     activeVehicle && !activeVehicle.coordinate.isValid && mainIsMap
         property bool prearmErrorVisible:   activeVehicle && activeVehicle.prearmError
 
         QGCLabel {
@@ -161,10 +163,9 @@ Item {
         // Airmap Airspace Control
         AirspaceControl {
             id:                 airspaceControl
-            width:              getPreferredInstrumentWidth()
+            width:              _rightPanelWidth
             planView:           false
             visible:            _airspaceEnabled
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.5
         }
         //-------------------------------------------------------
         //-- Instrument Panel

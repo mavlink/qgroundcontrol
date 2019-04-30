@@ -43,8 +43,6 @@ Rectangle {
     property int    _altitudeMode:              missionItem.altitudesAreRelative ? QGroundControl.AltitudeModeRelative : QGroundControl.AltitudeModeAbsolute
 
 
-    ExclusiveGroup { id: distanceGlideGroup }
-
     Column {
         id:                 editorColumn
         anchors.margins:    _margin
@@ -139,7 +137,6 @@ Rectangle {
                     id:                 specifyLandingDistance
                     text:               qsTr("Landing Dist")
                     checked:            missionItem.valueSetIsDistance.rawValue
-                    exclusiveGroup:     distanceGlideGroup
                     onClicked:          missionItem.valueSetIsDistance.rawValue = checked
                     Layout.fillWidth:   true
                 }
@@ -154,7 +151,6 @@ Rectangle {
                     id:                 specifyGlideSlope
                     text:               qsTr("Glide Slope")
                     checked:            !missionItem.valueSetIsDistance.rawValue
-                    exclusiveGroup:     distanceGlideGroup
                     onClicked:          missionItem.valueSetIsDistance.rawValue = !checked
                     Layout.fillWidth:   true
                 }

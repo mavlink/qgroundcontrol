@@ -70,8 +70,6 @@ Column {
         id: cameraOrientationGroup
     }
 
-    ExclusiveGroup { id: fixedValueGroup }
-
     SectionHeader {
         id:         cameraHeader
         text:       qsTr("Camera")
@@ -109,7 +107,6 @@ Column {
                     width:          _editFieldWidth
                     text:           "Landscape"
                     checked:        !!cameraCalc.landscape.value
-                    exclusiveGroup: cameraOrientationGroup
                     onClicked:      cameraCalc.landscape.value = 1
                 }
 
@@ -117,7 +114,6 @@ Column {
                     id:             cameraOrientationPortrait
                     text:           "Portrait"
                     checked:        !cameraCalc.landscape.value
-                    exclusiveGroup: cameraOrientationGroup
                     onClicked:      cameraCalc.landscape.value = 0
                 }
             }
@@ -243,7 +239,6 @@ Column {
                     id:                     fixedDistanceRadio
                     text:                   distanceToSurfaceLabel
                     checked:                !!cameraCalc.valueSetIsDistance.value
-                    exclusiveGroup:         fixedValueGroup
                     onClicked:              cameraCalc.valueSetIsDistance.value = 1
                 }
 
@@ -258,7 +253,6 @@ Column {
                     id:                     fixedImageDensityRadio
                     text:                   qsTr("Ground Res")
                     checked:                !cameraCalc.valueSetIsDistance.value
-                    exclusiveGroup:         fixedValueGroup
                     onClicked:              cameraCalc.valueSetIsDistance.value = 0
                 }
 
