@@ -39,7 +39,7 @@ Item {
 
     property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 18
     property var    _sepColor:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
-    property color  _indicatorsColor:       "white"
+    property color  _indicatorsColor:       qgcPal.text
 
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property bool   _isVehicleGps:          activeVehicle && activeVehicle.gps && activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
@@ -163,8 +163,10 @@ Item {
         anchors.top:    parent.top
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 2)
         anchors.horizontalCenter:   parent.horizontalCenter
+        visible:        !_mainIsMap
         Repeater {
             model: 720
+            visible:    !_mainIsMap
             QGCLabel {
                 function _normalize(degrees) {
                     var a = degrees % 360
@@ -198,13 +200,14 @@ Item {
         id:             headingIndicator
         height:         ScreenTools.defaultFontPixelHeight
         width:          ScreenTools.defaultFontPixelWidth * 4
-        color:          "#0B1420"
+        color:          qgcPal.windowShadeDark
+        visible:        !_mainIsMap
         anchors.bottom: compassBar.top
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * -0.1
         anchors.horizontalCenter:   parent.horizontalCenter
         QGCLabel {
             text:               _heading
-            color:              "white"
+            color:              qgcPal.text
             font.pointSize:     ScreenTools.smallFontPointSize
             anchors.centerIn:   parent
         }
@@ -213,12 +216,59 @@ Item {
         height:         ScreenTools.defaultFontPixelHeight * 0.75
         width:          height
         source:         "/auterion/img/compass_pointer.svg"
+        visible:        !_mainIsMap
         fillMode:       Image.PreserveAspectFit
         sourceSize.height:  height
         anchors.top:    compassBar.bottom
         anchors.topMargin: ScreenTools.defaultFontPixelHeight * -0.5
         anchors.horizontalCenter: parent.horizontalCenter
     }
+
+    //-- Compass
+    Image {
+        id:                 compass
+        anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+        anchors.right:      parent.right
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
+        anchors.top:        parent.top
+        height:             ScreenTools.defaultFontPixelHeight * 4
+        width:              height
+        source:             "/auterion/img/compass.svg"
+        fillMode:           Image.PreserveAspectFit
+        visible:            _mainIsMap
+        sourceSize.height:  height
+        Image {
+            id:             compassNeedle
+            anchors.centerIn:   parent
+            height:             ScreenTools.defaultFontPixelHeight * 3
+            width:              height
+            source:             "/auterion/img/compass_needle.svg"
+            fillMode:           Image.PreserveAspectFit
+            sourceSize.height:  height
+            transform: [
+                Rotation {
+                    origin.x:   compassNeedle.width  / 2
+                    origin.y:   compassNeedle.height / 2
+                    angle:      _heading
+                }]
+        }
+    }
+    Rectangle {
+        height:             ScreenTools.defaultFontPixelHeight
+        width:              ScreenTools.defaultFontPixelWidth * 4
+        color:              qgcPal.windowShadeDark
+        visible:            _mainIsMap
+        anchors.top:        compass.bottom
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.1
+        anchors.horizontalCenter:  compass.horizontalCenter
+        QGCLabel {
+            text:               _heading
+            color:              qgcPal.text
+            font.pointSize:     ScreenTools.smallFontPointSize
+            anchors.centerIn:   parent
+        }
+    }
+
 
     //-- Camera Control
     Loader {
@@ -243,7 +293,7 @@ Item {
     //-- Vehicle Indicator
     Rectangle {
         id:                     vehicleIndicator
-        color:                  "#0B1420"
+        color:                  qgcPal.window
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2

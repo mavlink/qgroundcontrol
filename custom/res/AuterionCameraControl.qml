@@ -31,7 +31,7 @@ Rectangle {
     height:         mainCol.height
     width:          mainCol.width + (ScreenTools.defaultFontPixelWidth * 2)
     visible:        !QGroundControl.videoManager.fullScreen
-    color:          "#0B1629"
+    color:          qgcPal.windowShade
     radius:         2
 
     readonly property string _commLostStr: qsTr("NO CAMERA")
@@ -97,7 +97,7 @@ Rectangle {
                     height:         ScreenTools.defaultFontPixelHeight
                     width:          height
                     source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/auterion/img/camera_photo.svg" : "/auterion/img/camera_video.svg"
-                    color:          "#FFFFFF"
+                    color:          qgcPal.text
                     fillMode:       Image.PreserveAspectFit
                     sourceSize.height:  height
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -130,7 +130,7 @@ Rectangle {
                 width:              parent.width * 0.75
                 height:             width
                 radius:             width * 0.5
-                color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : "white" )
+                color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
                 visible:            !pauseVideo.visible
                 anchors.centerIn:   parent
                 QGCColoredImage {
@@ -261,7 +261,7 @@ Rectangle {
                     if(_fullSD) return qsTr("FULL")
                     return _camera ? _camera.storageFreeStr : ""
                 }
-                color:          (_noSdCard || _fullSD) ? qgcPal.colorOrange : "#FFF"
+                color:          (_noSdCard || _fullSD) ? qgcPal.colorOrange : qgcPal.text
                 font.pointSize: ScreenTools.smallFontPointSize
                 anchors.horizontalCenter: parent.horizontalCenter
             }
