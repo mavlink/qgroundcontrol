@@ -142,7 +142,15 @@ RowLayout {
     }
 
     Component.onCompleted: {
+        // Stop deferring updates to vehicle values. We need them as fast as we can for charting.
+        _activeVehicle.setLiveUpdates(true)
+        _activeVehicle.setpoint.setLiveUpdates(true)
         saveTuningParamValues()
+    }
+
+    Component.onDestruction: {
+        _activeVehicle.setLiveUpdates(false)
+        _activeVehicle.setpoint.setLiveUpdates(true)
     }
 
     on_CurrentTuneTypeChanged: {
@@ -159,7 +167,8 @@ RowLayout {
         min:            0
         max:            0
         labelFormat:    "%d"
-        titleText:      "sec"
+        titleText:      "msec"
+        tickCount:      11
     }
 
     ValueAxis {
@@ -167,7 +176,8 @@ RowLayout {
         min:            0
         max:            0
         labelFormat:    "%d"
-        titleText:      "sec"
+        titleText:      "msec"
+        tickCount:      11
     }
 
     ValueAxis {
@@ -192,41 +202,37 @@ RowLayout {
         running:    false
         repeat:     true
 
+        function startOrStop() {
+            if (dataTimer.running) {
+                dataTimer.stop()
+            } else {
+                dataTimer.start()
+            }
+        }
+
         onTriggered: {
-            var seconds = _msecs / 1000
-            _valueXAxis.max = seconds
-            _valueRateXAxis.max = seconds
+            _valueXAxis.max = _msecs
+            _valueRateXAxis.max = _msecs
 
             getValues()
 
-            valueSeries.append(seconds, _value)
+            valueSeries.append(_msecs, _value)
             adjustYAxisMin(_valueYAxis, _value)
             adjustYAxisMax(_valueYAxis, _value)
 
-            valueSetpointSeries.append(seconds, _valueSetpoint)
+            valueSetpointSeries.append(_msecs, _valueSetpoint)
             adjustYAxisMin(_valueYAxis, _valueSetpoint)
             adjustYAxisMax(_valueYAxis, _valueSetpoint)
 
-            valueRateSeries.append(seconds, _valueRate)
+            valueRateSeries.append(_msecs, _valueRate)
             adjustYAxisMin(_valueRateYAxis, _valueRate)
             adjustYAxisMax(_valueRateYAxis, _valueRate)
 
-            valueRateSetpointSeries.append(seconds, _valueRateSetpoint)
+            valueRateSetpointSeries.append(_msecs, _valueRateSetpoint)
             adjustYAxisMin(_valueRateYAxis, _valueRateSetpoint)
             adjustYAxisMax(_valueRateYAxis, _valueRateSetpoint)
 
             _msecs += interval
-            /*
-                              Testing with just start/stop for now. No time limit.
-                            if (valueSeries.count > _maxPointCount) {
-                                valueSeries.remove(0)
-                                valueSetpointSeries.remove(0)
-                                valueRateSeries.remove(0)
-                                valueRateSetpointSeries.remove(0)
-                                valueXAxis.min = valueSeries.at(0).x
-                                valueRateXAxis.min = valueSeries.at(0).x
-                            }
-                            */
         }
 
         property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
@@ -279,7 +285,10 @@ RowLayout {
                     text: "-"
                     onClicked: {
                         var value = modelData.value
-                        modelData.value -= value * adjustPercentModel.get(adjustPercentCombo.currentIndex).value
+                        var newValue = value - (value * adjustPercentModel.get(adjustPercentCombo.currentIndex).value)
+                        if (newValue >= modelData.min) {
+                            modelData.value = newValue
+                        }
                     }
                 }
             }
@@ -301,7 +310,10 @@ RowLayout {
                     text: "+"
                     onClicked: {
                         var value = modelData.value
-                        modelData.value += value * adjustPercentModel.get(adjustPercentCombo.currentIndex).value
+                        var newValue = value + (value * adjustPercentModel.get(adjustPercentCombo.currentIndex).value)
+                        if (newValue <= modelData.max) {
+                            modelData.value = newValue
+                        }
                     }
                 }
             }
@@ -372,7 +384,7 @@ RowLayout {
 
             QGCButton {
                 text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
-                onClicked:  dataTimer.running = !dataTimer.running
+                onClicked:  dataTimer.startOrStop()
             }
         }
     }

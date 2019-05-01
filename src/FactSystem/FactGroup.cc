@@ -46,7 +46,8 @@ void FactGroup::_setupTimer()
     if (_updateRateMSecs > 0) {
         connect(&_updateTimer, &QTimer::timeout, this, &FactGroup::_updateAllValues);
         _updateTimer.setSingleShot(false);
-        _updateTimer.start(_updateRateMSecs);
+        _updateTimer.setInterval(_updateRateMSecs);
+        _updateTimer.start();
     }
 }
 
@@ -123,5 +124,21 @@ void FactGroup::_updateAllValues(void)
 {
     for(Fact* fact: _nameToFactMap) {
         fact->sendDeferredValueChangedSignal();
+    }
+}
+
+void FactGroup::setLiveUpdates(bool liveUpdates)
+{
+    if (_updateTimer.interval() == 0) {
+        return;
+    }
+
+    if (liveUpdates) {
+        _updateTimer.stop();
+    } else {
+        _updateTimer.start();
+    }
+    for(Fact* fact: _nameToFactMap) {
+        fact->setSendValueChangedSignals(liveUpdates);
     }
 }

@@ -38,6 +38,9 @@ public:
     /// @return FactGroup for specified name, NULL if not found
     Q_INVOKABLE FactGroup* getFactGroup(const QString& name);
 
+    /// Turning on live updates will allow value changes to flow through as they are received.
+    Q_INVOKABLE void setLiveUpdates(bool liveUpdates);
+
     QStringList factNames(void) const { return _factNames; }
     QStringList factGroupNames(void) const { return _nameToFactGroupMap.keys(); }
 
