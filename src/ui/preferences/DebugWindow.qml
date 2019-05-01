@@ -242,6 +242,38 @@ Item {
             font.pointSize: 16
             font.family:    ScreenTools.normalFontFamily
         }
+        Text {
+            text:           qsTr("Desktop Available Width:")
+            color:          qgcPal.text
+            font.family:    ScreenTools.normalFontFamily
+        }
+        Text {
+            text:           Screen.desktopAvailableWidth
+            color:          qgcPal.text
+            font.family:    ScreenTools.normalFontFamily
+        }
+        Text {
+            text:           qsTr("Font Point Size 16.5")
+            color:          qgcPal.text
+            font.pointSize: 16.5
+            font.family:    ScreenTools.normalFontFamily
+        }
+        Text {
+            text:           qsTr("Desktop Available Height:")
+            color:          qgcPal.text
+            font.family:    ScreenTools.normalFontFamily
+        }
+        Text {
+            text:           Screen.desktopAvailableHeight
+            color:          qgcPal.text
+            font.family:    ScreenTools.normalFontFamily
+        }
+        Text {
+            text:           qsTr("Font Point Size 17")
+            color:          qgcPal.text
+            font.pointSize: 17
+            font.family:    ScreenTools.normalFontFamily
+        }
     }
 
     Rectangle {

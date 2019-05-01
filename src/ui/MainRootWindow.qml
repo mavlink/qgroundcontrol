@@ -12,6 +12,7 @@ import QtQuick          2.11
 import QtQuick.Controls 2.4
 import QtQuick.Dialogs  1.3
 import QtQuick.Layouts  1.11
+import QtQuick.Window   2.11
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -23,11 +24,17 @@ import QGroundControl.FlightMap     1.0
 /// Native QML top level window
 ApplicationWindow {
     id:             mainWindow
-    width:          1280
-    height:         720
-    minimumWidth:   920
-    minimumHeight:  646
+    width:          ScreenTools.isMobile ? Screen.width  : Math.min(250 * Screen.pixelDensity, Screen.width)
+    height:         ScreenTools.isMobile ? Screen.height : Math.min(150 * Screen.pixelDensity, Screen.height)
+    minimumWidth:   ScreenTools.isMobile ? Screen.width  : Math.min(215 * Screen.pixelDensity, Screen.width)
+    minimumHeight:  ScreenTools.isMobile ? Screen.height : Math.min(120 * Screen.pixelDensity, Screen.height)
     visible:        true
+
+    Component.onCompleted: {
+        if(ScreenTools.isMobile) {
+            mainWindow.showFullScreen()
+        }
+    }
 
     readonly property real      _topBottomMargins:          ScreenTools.defaultFontPixelHeight * 0.5
     readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
@@ -287,6 +294,18 @@ ApplicationWindow {
             id:             toolbar
             anchors.fill:   parent
             source:         _mainToolbar
+            //-- Toggle Full Screen / Windowed
+            MouseArea {
+                anchors.fill:   parent
+                enabled:        !ScreenTools.isMobile
+                onDoubleClicked: {
+                    if(mainWindow.visibility === Window.Windowed) {
+                        mainWindow.showFullScreen()
+                    } else {
+                        mainWindow.showNormal()
+                    }
+                }
+            }
         }
     }
 
@@ -594,4 +613,3 @@ ApplicationWindow {
     }
 
 }
-
