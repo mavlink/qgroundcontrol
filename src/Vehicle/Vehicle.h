@@ -758,6 +758,8 @@ public:
     ///     @param percent 0-no power, 100-full power
     Q_INVOKABLE void motorTest(int motor, int percent);
 
+    Q_INVOKABLE void setPIDTuningTelemetryMode(bool pidTuning);
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader(void);
 #endif
