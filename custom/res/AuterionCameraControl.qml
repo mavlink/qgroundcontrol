@@ -390,6 +390,59 @@ Rectangle {
                         visible:    _isCamera && _camera.streamLabels.length > 1
                     }
                     //-------------------------------------------
+                    //-- Thermal Modes
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            QGroundControl.videoManager.hasThermal
+                        property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
+                        QGCLabel {
+                            text:           qsTr("Thermal View Mode")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            width:          _editFieldWidth
+                            model:          parent.thermalModes
+                            currentIndex:   _camera ? _camera.thermalMode : 0
+                            onActivated:    _camera.thermalMode = index
+                        }
+                    }
+                    Rectangle {
+                        color:      qgcPal.button
+                        height:     1
+                        width:      cameraSettingsCol.width
+                        visible:            QGroundControl.videoManager.hasThermal
+                    }
+                    //-------------------------------------------
+                    //-- Thermal Video Opacity
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                        QGCLabel {
+                            text:           qsTr("Blend Opacity")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Slider {
+                            width:          _editFieldWidth
+                            to:             100
+                            from:           0
+                            value:          _camera ? _camera.thermalOpacity : 0
+                            live:           true
+                            onValueChanged: {
+                                _camera.thermalOpacity = value
+                            }
+                        }
+                    }
+                    Rectangle {
+                        color:      qgcPal.button
+                        height:     1
+                        width:      cameraSettingsCol.width
+                        visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                    }
+                    //-------------------------------------------
                     //-- Settings from Camera Definition File
                     Repeater {
                         model:      _camera ? _camera.activeSettings : []
