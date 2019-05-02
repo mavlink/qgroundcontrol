@@ -51,6 +51,7 @@ public:
     // Property accessors
     bool active() const;
     bool isPX4Flow(void) const { return _isPX4Flow; }
+    void setActive(bool active);
 
     LinkConfiguration* getLinkConfiguration(void) { return _config.data(); }
 

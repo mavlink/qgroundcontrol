@@ -24,11 +24,9 @@ Item {
     width:          rssiRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    visible:        _activeVehicle ? _activeVehicle.supportsRadio : true
+    visible:        true
 
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _rcRSSIAvailable:   _activeVehicle ? _activeVehicle.rcRSSI > 0 && _activeVehicle.rcRSSI <= 100 : false
-
+    //end
     Component {
         id: rcRSSIInfo
 
@@ -48,21 +46,9 @@ Item {
 
                 QGCLabel {
                     id:             rssiLabel
-                    text:           _activeVehicle ? (_activeVehicle.rcRSSI != 255 ? qsTr("RC RSSI Status") : qsTr("RC RSSI Data Unavailable")) : qsTr("N/A", "No data available")
+                    text:           qsTr("Data Rate")
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
-                }
-
-                GridLayout {
-                    id:                 rcrssiGrid
-                    visible:            _rcRSSIAvailable
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    columns:            2
-                    anchors.horizontalCenter: parent.horizontalCenter
-
-                    QGCLabel { text: qsTr("RSSI:") }
-                    QGCLabel { text: _activeVehicle ? (_activeVehicle.rcRSSI + "%") : 0 }
                 }
             }
 
@@ -87,14 +73,24 @@ Item {
             sourceSize.height:  height
             source:             "/qmlimages/RC.svg"
             fillMode:           Image.PreserveAspectFit
-            opacity:            _rcRSSIAvailable ? 1 : 0.5
+            opacity:            1
             color:              qgcPal.buttonText
         }
 
-        SignalStrength {
+
+        QGCLabel {
+            id:                     dataRate
+            text:                   qsTr("0kbps")
+            font.pointSize:         ScreenTools.mediumFontPointSize
+            color:                  qgcPal.colorBlue
             anchors.verticalCenter: parent.verticalCenter
-            size:                   parent.height * 0.5
-            percent:                _rcRSSIAvailable ? _activeVehicle.rcRSSI : 0
+        }
+
+        Connections {
+            target:  pD2dInforData
+            onSignalUpRate: {
+               dataRate.text = pD2dInforData.getUlRateValue() + "kbps";
+            }
         }
     }
 

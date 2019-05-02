@@ -215,34 +215,6 @@ Rectangle {
             Layout.fillHeight:  true
             Layout.margins:     ScreenTools.defaultFontPixelHeight * 0.66
         }
-        //rate
-        QGCLabel {
-            id:                     showRatelabel
-            anchors.left:           testmainToolBarIndicators.right
-            anchors.top:            testmainToolBarIndicators.top
-            anchors.bottom:         testmainToolBarIndicators.bottom
-            text:                   qsTr("Rate:")
-            font.pointSize:         ScreenTools.mediumFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  qgcPal.colorRed
-        }
-        QGCLabel {
-            id:                     d2dInforRateDataLable
-            anchors.left:           showRatelabel.right
-            anchors.top:            showRatelabel.top
-            anchors.bottom:         showRatelabel.bottom
-            text:                   qsTr("0kbps")
-            font.pointSize:         ScreenTools.mediumFontPointSize
-            font.family:            ScreenTools.demiboldFontFamily
-            color:                  qgcPal.colorRed
-        }
-        Connections {
-            target:  pD2dInforData
-            onSignalUpRate: {
-               d2dInforRateDataLable.text= pD2dInforData.getUlRateValue() + "kbps";
-            }
-        }
-        //end
     }
 
     // Small parameter download progress bar
