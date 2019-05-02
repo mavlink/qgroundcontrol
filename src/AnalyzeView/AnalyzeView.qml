@@ -26,8 +26,6 @@ Rectangle {
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
     ExclusiveGroup { id: setupButtonGroup }
 
     readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
@@ -106,8 +104,13 @@ Rectangle {
                     }
                     ListElement {
                         buttonImage:        "/qmlimages/MavlinkConsoleIcon"
-                        buttonText:         qsTr("Mavlink Console")
+                        buttonText:         qsTr("MAVLink Console")
                         pageSource:         "MavlinkConsolePage.qml"
+                    }
+                    ListElement {
+                        buttonImage:        "/qmlimages/MAVLinkInspector"
+                        buttonText:         qsTr("MAVLink Inspector")
+                        pageSource:         "MAVLinkInspectorPage.qml"
                     }
                 }
 

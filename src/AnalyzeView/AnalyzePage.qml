@@ -23,7 +23,7 @@ Item {
     property alias  pageComponent:      pageLoader.sourceComponent
     property alias  pageName:           pageNameLabel.text
     property alias  pageDescription:    pageDescriptionLabel.text
-    property real   availableWidth:     width - pageLoader.x
+    property real   availableWidth:     width  - pageLoader.x
     property real   availableHeight:    height - pageLoader.y
     property real   _margins:           ScreenTools.defaultFontPixelHeight * 0.5
 
