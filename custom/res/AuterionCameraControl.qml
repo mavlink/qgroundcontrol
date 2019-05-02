@@ -292,7 +292,7 @@ Rectangle {
     //-- Camera Settings
     Popup {
         id:                 cameraSettings
-        width:              mainWindow.width  * 0.666
+        width:              Math.min(mainWindow.width  * 0.666, ScreenTools.defaultFontPixelWidth * 80)
         height:             mainWindow.height * 0.666
         modal:              true
         focus:              true
@@ -345,6 +345,7 @@ Rectangle {
                     //-- Camera Selector
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
+                        visible:        _isCamera && _dynamicCameras.cameraLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Camera Selector:")
@@ -358,10 +359,17 @@ Rectangle {
                             currentIndex:   _dynamicCameras ? _dynamicCameras.currentCamera : 0
                         }
                     }
+                    Rectangle {
+                        color:      qgcPal.button
+                        height:     1
+                        width:      cameraSettingsCol.width
+                        visible:    _isCamera && _dynamicCameras.cameraLabels.length > 1
+                    }
                     //-------------------------------------------
                     //-- Stream Selector
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
+                        visible:        _isCamera && _camera.streamLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Stream Selector:")
@@ -379,6 +387,7 @@ Rectangle {
                         color:      qgcPal.button
                         height:     1
                         width:      cameraSettingsCol.width
+                        visible:    _isCamera && _camera.streamLabels.length > 1
                     }
                     //-------------------------------------------
                     //-- Settings from Camera Definition File
