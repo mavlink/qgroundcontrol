@@ -22,10 +22,7 @@ Item {
     anchors.fill:           parent
     anchors.margins:        ScreenTools.defaultFontPixelWidth
 
-    readonly property real _butttonWidth: ScreenTools.defaultFontPixelWidth * 30
-
-    property int curVehicleIndex:   0
-    property var curVehicle:        controller.vehicles.count > 0 ? controller.vehicles.get(curVehicleIndex) : null
+    property var curVehicle:        controller ? controller.activeVehicle : null
     property int curMessageIndex:   0
     property var curMessage:        curVehicle && curVehicle.messages.count ? curVehicle.messages.get(curMessageIndex) : null
 
@@ -38,39 +35,21 @@ Item {
     }
 
     //-- Header
-    ColumnLayout {
-        id:                     header
-        width:                  parent.width
-        spacing:                ScreenTools.defaultFontPixelHeight
-        QGCLabel {
-            text:               qsTr("Analyze real time MAVLink messages.")
-        }
-        RowLayout {
-            Layout.fillWidth:   true
-            spacing:            ScreenTools.defaultFontPixelWidth
-            QGCLabel {
-                text:           qsTr("Vehicle:")
-            }
-            QGCComboBox {
-                id:             vehicleSelector
-                model:          controller.vehicleNames
-                enabled:        controller.vehicles.count > 0
-                onActivated:    curVehicleIndex = index
-                Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 16
-            }
-        }
-        Item {
-            height:         ScreenTools.defaultFontPixelHeight
-            width:          1
-        }
+    QGCLabel {
+        id:                 header
+        text:               qsTr("Inspect real time MAVLink messages.")
+        anchors.top:        parent.top
+        anchors.left:       parent.left
     }
-    //-- Messages
+
+    //-- Messages (Buttons)
     QGCFlickable {
         id:                 buttonGrid
         anchors.top:        header.bottom
+        anchors.topMargin:  ScreenTools.defaultFontPixelHeight
         anchors.bottom:     parent.bottom
         anchors.left:       parent.left
-        width:              ScreenTools.defaultFontPixelWidth * 32
+        width:              buttonCol.width
         contentWidth:       buttonCol.width
         contentHeight:      buttonCol.height
         ColumnLayout {
@@ -78,10 +57,12 @@ Item {
             spacing:        ScreenTools.defaultFontPixelHeight * 0.25
             Repeater {
                 model:      curVehicle ? curVehicle.messages : []
-                delegate:   QGCButton {
-                    text:   object.name
-                    onClicked: curMessageIndex = index
-                    Layout.minimumWidth: _butttonWidth
+                delegate:   MAVLinkMessageButton {
+                    text:       object.name
+                    checked:    curMessageIndex === index
+                    messageHz:  object.messageHz
+                    onClicked:  curMessageIndex = index
+                    Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 36
                 }
             }
         }
@@ -89,16 +70,17 @@ Item {
     //-- Message Data
     QGCFlickable {
         id:                 messageGrid
-        anchors.top:        header.bottom
+        visible:            curMessage !== null
+        anchors.top:        buttonGrid.top
         anchors.bottom:     parent.bottom
         anchors.left:       buttonGrid.right
         anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
         anchors.right:      parent.right
         contentWidth:       messageCol.width
         contentHeight:      messageCol.height
-        Column {
+        ColumnLayout {
             id:                 messageCol
-            spacing:            ScreenTools.defaultFontPixelHeight
+            spacing:            ScreenTools.defaultFontPixelHeight * 0.25
             GridLayout {
                 columns:        2
                 columnSpacing:  ScreenTools.defaultFontPixelWidth
@@ -109,7 +91,13 @@ Item {
                 }
                 QGCLabel {
                     color:      qgcPal.buttonHighlight
-                    text:       curMessage ? curMessage.name : ""
+                    text:       curMessage ? curMessage.name + ' (' + curMessage.id + ') ' + curMessage.messageHz.toFixed(1) + 'Hz' : ""
+                }
+                QGCLabel {
+                    text:       qsTr("Component:")
+                }
+                QGCLabel {
+                    text:       curMessage ? curMessage.cid : ""
                 }
                 QGCLabel {
                     text:       qsTr("Count:")
@@ -117,13 +105,17 @@ Item {
                 QGCLabel {
                     text:       curMessage ? curMessage.count : ""
                 }
-                QGCLabel {
-                    text:       qsTr("Frequency:")
-                }
-                QGCLabel {
-                    text:       curMessage ? curMessage.messageHz + 'Hz' : ""
-                }
             }
+            Item { height: ScreenTools.defaultFontPixelHeight; width: 1 }
+            QGCLabel {
+                text:       qsTr("Message Fields:")
+            }
+            Rectangle {
+                Layout.fillWidth: true
+                height:     1
+                color:      qgcPal.text
+            }
+            Item { height: ScreenTools.defaultFontPixelHeight * 0.25; width: 1 }
             GridLayout {
                 columns:        3
                 columnSpacing:  ScreenTools.defaultFontPixelWidth
