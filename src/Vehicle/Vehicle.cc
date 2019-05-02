@@ -3859,6 +3859,32 @@ int  Vehicle::versionCompare(int major, int minor, int patch)
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }
 
+void Vehicle::setPIDTuningTelemetryMode(bool pidTuning)
+{
+    qDebug() << "setPIDTuningTelemetryMode" << pidTuning;
+    QList<int> rgTelemetry;
+
+    if (pidTuning) {
+        rgTelemetry << MAVLINK_MSG_ID_ATTITUDE << MAVLINK_MSG_ID_ATTITUDE_TARGET;
+        for (int telemetry: rgTelemetry) {
+            sendMavCommand(defaultComponentId(),
+                           MAV_CMD_SET_MESSAGE_INTERVAL,
+                           true,                        // show error
+                           telemetry,
+                           pidTuning ? (1000000.0 / 30.0) /* Hz */ : -1 /* default Hz */);
+        }
+    }
+
+    setLiveUpdates(pidTuning);
+    _setpointFactGroup.setLiveUpdates(pidTuning);
+
+    sendMavCommand(defaultComponentId(),
+                   MAV_CMD_GET_MESSAGE_INTERVAL,
+                   true,                        // show error
+                   MAVLINK_MSG_ID_ATTITUDE);
+}
+
+
 #if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::flashBootloader(void)
 {
