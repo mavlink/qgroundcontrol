@@ -146,7 +146,7 @@ RowLayout {
         saveTuningParamValues()
     }
 
-    Component.onDestruction: _activeVehicle.setPIDTuningTelemetryMode(true)
+    Component.onDestruction: _activeVehicle.setPIDTuningTelemetryMode(false)
 
     on_CurrentTuneTypeChanged: {
         saveTuningParamValues()
@@ -197,14 +197,6 @@ RowLayout {
         running:    false
         repeat:     true
 
-        function startOrStop() {
-            if (dataTimer.running) {
-                dataTimer.stop()
-            } else {
-                dataTimer.start()
-            }
-        }
-
         onTriggered: {
             _valueXAxis.max = _msecs
             _valueRateXAxis.max = _msecs
@@ -238,24 +230,24 @@ RowLayout {
         spacing:            _margins
         Layout.alignment:   Qt.AlignTop
 
-        QGCLabel { text: qsTr("Tuning Axis:") }
+        Column {
+            QGCLabel { text: qsTr("Tuning Axis:") }
 
-        RowLayout {
-            spacing: _margins
+            RowLayout {
+                spacing: _margins
 
-            Repeater {
-                model: tuneList
-                QGCRadioButton {
-                    text:           modelData
-                    checked:        _currentTuneType === modelData
-                    exclusiveGroup: tuneTypeRadios
+                Repeater {
+                    model: tuneList
+                    QGCRadioButton {
+                        text:           modelData
+                        checked:        _currentTuneType === modelData
+                        exclusiveGroup: tuneTypeRadios
 
-                    onClicked: _currentTuneType = modelData
+                        onClicked: _currentTuneType = modelData
+                    }
                 }
             }
         }
-
-        Item { width: 1; height: 1 }
 
         QGCLabel { text: qsTr("Tuning Values:") }
 
@@ -328,26 +320,27 @@ RowLayout {
                 }
             }
         }
-        Item { width: 1; height: 1 }
 
-        QGCLabel { text: qsTr("Clipboard Values:") }
+        Column {
+            QGCLabel { text: qsTr("Clipboard Values:") }
 
-        GridLayout {
-            rows:           savedRepeater.model.length
-            flow:           GridLayout.TopToBottom
-            rowSpacing:     _margins
-            columnSpacing:  _margins
+            GridLayout {
+                rows:           savedRepeater.model.length
+                flow:           GridLayout.TopToBottom
+                rowSpacing:     0
+                columnSpacing:  _margins
 
-            Repeater {
-                model: params[tuneList.indexOf(_currentTuneType)]
+                Repeater {
+                    model: params[tuneList.indexOf(_currentTuneType)]
 
-                QGCLabel { text: modelData.name }
-            }
+                    QGCLabel { text: modelData.name }
+                }
 
-            Repeater {
-                id: savedRepeater
+                Repeater {
+                    id: savedRepeater
 
-                QGCLabel { text: modelData }
+                    QGCLabel { text: modelData }
+                }
             }
         }
 
@@ -379,7 +372,30 @@ RowLayout {
 
             QGCButton {
                 text:       dataTimer.running ? qsTr("Stop") : qsTr("Start")
-                onClicked:  dataTimer.startOrStop()
+                onClicked: {
+                    dataTimer.running = !dataTimer.running
+                    if (autoModeChange.checked) {
+                        _activeVehicle.flightMode = dataTimer.running ? "Stabilized" : _activeVehicle.pauseFlightMode
+                    }
+                }
+            }
+        }
+
+        QGCCheckBox {
+            id:     autoModeChange
+            text:   qsTr("Automatic Flight Mode Switching")
+        }
+
+        Column {
+            visible: autoModeChange.checked
+            QGCLabel {
+                text:            qsTr("Switches to 'Stabilized' when you click Start.")
+                font.pointSize:     ScreenTools.smallFontPointSize
+            }
+
+            QGCLabel {
+                text:            qsTr("Switches to '%1' when you click Stop.").arg(_activeVehicle.pauseFlightMode)
+                font.pointSize:     ScreenTools.smallFontPointSize
             }
         }
     }

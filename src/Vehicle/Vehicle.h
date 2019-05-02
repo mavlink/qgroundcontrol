@@ -1267,6 +1267,7 @@ private:
     void _handleEstimatorStatus(mavlink_message_t& message);
     void _handleStatusText(mavlink_message_t& message, bool longVersion);
     void _handleOrbitExecutionStatus(const mavlink_message_t& message);
+    void _handleMessageInterval(const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1293,6 +1294,7 @@ private:
     void _setCapabilities(uint64_t capabilityBits);
     void _updateArmed(bool armed);
     bool _apmArmingNotRequired(void);
+    void _pidTuningAdjustRates(bool setRatesForTuning);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1474,6 +1476,12 @@ private:
     QGCMapCircle    _orbitMapCircle;
     QTimer          _orbitTelemetryTimer;
     static const int _orbitTelemetryTimeoutMsecs = 3000; // No telemetry for this amount and orbit will go inactive
+
+    // PID Tuning telemetry mode
+    bool            _pidTuningTelemetryMode;
+    bool            _pidTuningWaitingForRates;
+    QList<int>      _pidTuningMessages;
+    QMap<int, int>  _pidTuningMessageRatesUsecs;
 
     // FactGroup facts
 
