@@ -66,7 +66,7 @@ Column {
         id:                 videoGrid
         columns:            2
         columnSpacing:      ScreenTools.defaultFontPixelWidth * 2
-        rowSpacing:         ScreenTools.defaultFontPixelHeight
+        rowSpacing:         ScreenTools.defaultFontPixelHeight/2
         anchors.horizontalCenter: parent.horizontalCenter
 
         Connections {
@@ -127,16 +127,6 @@ Column {
                 }
             }
         }
-        //-- Video Fit
-        QGCLabel {
-            text:               qsTr("Fit")
-        }
-        FactComboBox {
-            fact:               QGroundControl.settingsManager.videoSettings.videoFit
-            indexModel:         false
-            Layout.alignment:   Qt.AlignHCenter
-            pointSize:          ScreenTools.smallFontPointSize
-        }
         //-- Video Recording
         QGCLabel {
            text:            _recordingVideo ? qsTr("Stop") : qsTr("Record")
@@ -187,6 +177,16 @@ Column {
                     }
                 }
             }
+        }
+        //-- Video Fit
+        QGCLabel {
+            text:               qsTr("Fit")
+        }
+        FactComboBox {
+            fact:               QGroundControl.settingsManager.videoSettings.videoFit
+            indexModel:         false
+            Layout.alignment:   Qt.AlignHCenter
+            pointSize:          ScreenTools.smallFontPointSize
         }
         QGCLabel {
             text:               qsTr("Video Streaming Not Configured")
