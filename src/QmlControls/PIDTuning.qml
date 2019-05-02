@@ -142,16 +142,11 @@ RowLayout {
     }
 
     Component.onCompleted: {
-        // Stop deferring updates to vehicle values. We need them as fast as we can for charting.
-        _activeVehicle.setLiveUpdates(true)
-        _activeVehicle.setpoint.setLiveUpdates(true)
+        _activeVehicle.setPIDTuningTelemetryMode(true)
         saveTuningParamValues()
     }
 
-    Component.onDestruction: {
-        _activeVehicle.setLiveUpdates(false)
-        _activeVehicle.setpoint.setLiveUpdates(true)
-    }
+    Component.onDestruction: _activeVehicle.setPIDTuningTelemetryMode(true)
 
     on_CurrentTuneTypeChanged: {
         saveTuningParamValues()
