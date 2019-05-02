@@ -263,6 +263,9 @@ AuterionPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_
     } else if (colorName == QStringLiteral("buttonHighlight")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#1C7ED6");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#222A35");
+    } else if (colorName == QStringLiteral("buttonHighlightText")) {
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#ffffff");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#777C89");
     } else if (colorName == QStringLiteral("primaryButton")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#0069D5");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#29313A");
