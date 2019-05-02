@@ -119,7 +119,7 @@ bool QmlObjectListModel::removeRows(int position, int rows, const QModelIndex& p
 QObject* QmlObjectListModel::operator[](int index)
 {
     if (index < 0 || index >= _objectList.count()) {
-        return NULL;
+        return nullptr;
     }
     return _objectList[index];
 }
@@ -127,7 +127,7 @@ QObject* QmlObjectListModel::operator[](int index)
 const QObject* QmlObjectListModel::operator[](int index) const
 {
     if (index < 0 || index >= _objectList.count()) {
-        return NULL;
+        return nullptr;
     }
     return _objectList[index];
 }
