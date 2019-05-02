@@ -213,9 +213,9 @@
         <file alias="VibrationPageWidget.qml">src/FlightMap/Widgets/VibrationPageWidget.qml</file>
         <file alias="VideoPageWidget.qml">src/FlightMap/Widgets/VideoPageWidget.qml</file>
         <file alias="VirtualJoystick.qml">src/FlightDisplay/VirtualJoystick.qml</file>
-        <file alias="QGroundControl/Controls/KeyConfiguration.qml">src/QmlControls/KeyConfiguration.qml</file>
         <file alias="QGroundControl/Controls/D2dInfo.qml">src/QmlControls/D2dInfo.qml</file>
         <file alias="SysStatusPageWidget.qml">src/FlightMap/Widgets/SysStatusPageWidget.qml</file>
+        <file alias="KeyConfig.qml">src/VehicleSetup/KeyConfig.qml</file>
     </qresource>
     <qresource prefix="/json">
         <file alias="CameraCalc.FactMetaData.json">src/MissionManager/CameraCalc.FactMetaData.json</file>
@@ -232,7 +232,7 @@
         <file alias="FlightMap.SettingsGroup.json">src/Settings/FlightMap.SettingsGroup.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="FlyView.SettingsGroup.json">src/Settings/FlyView.SettingsGroup.json</file>
-		<file alias="PlanView.SettingsGroup.json">src/Settings/PlanView.SettingsGroup.json</file>
+        <file alias="PlanView.SettingsGroup.json">src/Settings/PlanView.SettingsGroup.json</file>
         <file alias="MavCmdInfoCommon.json">src/MissionManager/MavCmdInfoCommon.json</file>
         <file alias="MavCmdInfoFixedWing.json">src/MissionManager/MavCmdInfoFixedWing.json</file>
         <file alias="MavCmdInfoMultiRotor.json">src/MissionManager/MavCmdInfoMultiRotor.json</file>
@@ -270,4 +270,5 @@
         <file alias="APMArduSubMockLink.params">src/comm/APMArduSubMockLink.params</file>
         <file alias="PX4MockLink.params">src/comm/PX4MockLink.params</file>
     </qresource>
+    <qresource prefix="/"/>
 </RCC>

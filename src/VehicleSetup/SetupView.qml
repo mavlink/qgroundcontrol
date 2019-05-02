@@ -66,6 +66,11 @@ Rectangle {
         panelLoader.setSource("JoystickConfig.qml")
     }
 
+    function showKeyConfigPanel()
+    {
+        panelLoader.setSource("KeyConfig.qml")
+    }
+
     function showParametersPanel()
     {
         panelLoader.setSource("SetupParameterEditor.qml")
@@ -276,6 +281,18 @@ Rectangle {
                 Layout.fillWidth:   true
 
                 onClicked: showJoystickPanel()
+            }
+
+            SubMenuButton {
+                id:                 keyButton
+                setupIndicator:     true
+                setupComplete:      true
+                exclusiveGroup:     setupButtonGroup
+                visible:            joystickManager.joysticks.length !== 0
+                text:               qsTr("Buttons")
+                Layout.fillWidth:   true
+
+                onClicked: showKeyConfigPanel()
             }
 
             Repeater {

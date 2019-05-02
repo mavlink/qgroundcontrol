@@ -479,7 +479,7 @@ void Joystick::run(void)
             }
         }
 
-        if (_activeVehicle->joystickEnabled() && !_calibrationMode && _calibrated) {
+        if (!_calibrationMode && _calibrated) {
             int     axis = _rgFunctionAxis[rollFunction];
             float   roll = _adjustRange(_rgAxisValues[axis], _rgCalibration[axis], _deadband);
 

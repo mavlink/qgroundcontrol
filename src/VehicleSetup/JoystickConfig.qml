@@ -404,7 +404,7 @@ SetupPage {
                                     target: _activeVehicle
 
                                     onJoystickEnabledChanged: {
-                                        enabledCheckBox.checked = _activeVehicle.joystickEnabled
+                                        enabledCheckBox.checked = (_activeVehicle) ? _activeVehicle.joystickEnabled : joystickManager.joystickEnabled
                                     }
                                 }
 
@@ -586,7 +586,7 @@ SetupPage {
                                 visible:    advancedSettings.checked
                                 QGCCheckBox {
                                     id:         joystickCircleCorrection
-                                    checked:    _activeVehicle.joystickMode != 0
+                                    checked:    (_activeVehicle) ? (_activeVehicle.joystickMode != 0) : (joystickManager.joystickMode != 0)
                                     text:       qsTr("Enable circle correction")
 
                                     Component.onCompleted: checked = _activeJoystick.circleCorrection
