@@ -24,8 +24,6 @@ import QGroundControl.FlightMap     1.0
 /// Native QML top level window
 ApplicationWindow {
     id:             mainWindow
-    width:          ScreenTools.isMobile ? Screen.width  : Math.min(250 * Screen.pixelDensity, Screen.width)
-    height:         ScreenTools.isMobile ? Screen.height : Math.min(150 * Screen.pixelDensity, Screen.height)
     minimumWidth:   ScreenTools.isMobile ? Screen.width  : Math.min(215 * Screen.pixelDensity, Screen.width)
     minimumHeight:  ScreenTools.isMobile ? Screen.height : Math.min(120 * Screen.pixelDensity, Screen.height)
     visible:        true
@@ -33,6 +31,9 @@ ApplicationWindow {
     Component.onCompleted: {
         if(ScreenTools.isMobile) {
             mainWindow.showFullScreen()
+        } else {
+            width   = ScreenTools.isMobile ? Screen.width  : Math.min(250 * Screen.pixelDensity, Screen.width)
+            height  = ScreenTools.isMobile ? Screen.height : Math.min(150 * Screen.pixelDensity, Screen.height)
         }
     }
 

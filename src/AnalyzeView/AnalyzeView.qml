@@ -108,7 +108,7 @@ Rectangle {
                         pageSource:         "MavlinkConsolePage.qml"
                     }
                     ListElement {
-                        buttonImage:        "/qmlimages/MavlinkConsoleIcon"
+                        buttonImage:        "/qmlimages/MAVLinkInspector"
                         buttonText:         qsTr("MAVLink Inspector")
                         pageSource:         "MAVLinkInspectorPage.qml"
                     }
