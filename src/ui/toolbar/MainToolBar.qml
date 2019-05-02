@@ -277,7 +277,7 @@ Rectangle {
         id: messageDialog
         icon: StandardIcon.Warning
         title: "WARNING"
-        text: "Please calibrate first."
+        text: "Please Pair first."
         standardButtons:    StandardButton.Yes
         onYes: {
             messageDialog.close();
@@ -297,7 +297,7 @@ Rectangle {
         id: showMessageDialog
         icon: StandardIcon.Warning
         title: "WARNING"
-        text: "Please long press the airplane calibrate button for 3 seconds within 30 seconds,and wait for a moment .\n"
+        text: "Please long press the Pair/Reset button on Air Unit for 3 seconds within 30 seconds,and wait for a moment.\n"
         standardButtons:    StandardButton.NoButton
         Component.onCompleted: visible = false
     }
@@ -306,7 +306,7 @@ Rectangle {
         id: resultDialog
         icon: StandardIcon.Warning
         title: "WARNING"
-        text: "calibrate succeed."
+        text: "pairing succeeded."
         standardButtons:    StandardButton.Ok
         onAccepted: {
             close();
@@ -335,7 +335,7 @@ Rectangle {
             showMessageDialog.close();
             svrMessageDialog.close();
 
-            resultDialog.text = "calibrate failed.";
+            resultDialog.text = "pairing failed.";
             resultDialog.open();
         }
     }
@@ -349,7 +349,7 @@ Rectangle {
             showMessageDialog.close();
             svrMessageDialog.close();
 
-            resultDialog.text = "calibrate succeed.";
+            resultDialog.text = "pairing succeeded.";
             resultDialog.open();
         }
     }
@@ -405,14 +405,14 @@ Rectangle {
             {
                 resultDialog.close();
                 messageDialog.close();
-                svrMessageDialog.text = "Connection failed, please check the version match.";
+                svrMessageDialog.text = "Connection failed, Air and Remote Unit FW version mismatch.";
                 svrMessageDialog.open();
             }
             else if(index == 6)
             {
                 resultDialog.close();
                 messageDialog.close();
-                svrMessageDialog.text = "Serial number unmatched,Please calibrate first!";
+                svrMessageDialog.text = "Serial number unmatched, Please pair first!";
                 svrMessageDialog.open();
             }
         }

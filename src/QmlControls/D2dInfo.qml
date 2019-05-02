@@ -235,7 +235,7 @@ QGCView {
                 anchors.leftMargin:    ScreenTools.defaultFontPixelWidth*0.5
                 width:                 manualBtn.width*1.2
                 anchors.bottom:        parent.bottom
-                text:            qsTr("Calibrate")
+                text:            qsTr("Pair")
                 onClicked:{
                     __isCalibrate = true;
                     urulCombo.visible = !__isCalibrate;
@@ -453,7 +453,7 @@ QGCView {
                         pD2dInforData.setIsCalibrateFlag(__isCalibrate);
 
                         //
-                        svrMessageDialog.text = qsTr("calibrate succeed.");
+                        svrMessageDialog.text = qsTr("pairing succeeded.");
                         svrMessageDialog.open();
                     }
                     else
@@ -477,7 +477,7 @@ QGCView {
                 id: messageDialog
                 icon: StandardIcon.Warning
                 title: "WARNING"
-                text: "Please long press the airplane calibrate button for 3 seconds within 30 seconds,and wait for a moment .\n"
+                text: "Please long press the Pair/Reset button on Air Unit for 3 seconds within 30 seconds,and wait for a moment.\n"
                 standardButtons:    StandardButton.NoButton
                 modality:           Qt.ApplicationModal
 
@@ -519,7 +519,7 @@ QGCView {
                         pD2dInforData.setIsCalibrateFlag(__isCalibrate);
 
                         //
-                        svrMessageDialog.text = qsTr("calibrate failed.");
+                        svrMessageDialog.text = qsTr("pairing failed.");
                         svrMessageDialog.open();
                     }
                     else
