@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick                  2.11
+import QtQuick                  2.3
 import QtPositioning            5.2
 import QtQuick.Layouts          1.2
-import QtQuick.Controls         2.4
+import QtQuick.Controls         1.2
 import QtQuick.Dialogs          1.2
 import QtGraphicalEffects       1.0
 
@@ -129,17 +129,17 @@ Column {
         }
         //-- Video Fit
         QGCLabel {
-            text:               qsTr("Video Screen Fit")
-            font.pointSize:     ScreenTools.smallFontPointSize
+            text:               qsTr("Fit")
         }
         FactComboBox {
             fact:               QGroundControl.settingsManager.videoSettings.videoFit
             indexModel:         false
             Layout.alignment:   Qt.AlignHCenter
+            pointSize:          ScreenTools.smallFontPointSize
         }
         //-- Video Recording
         QGCLabel {
-           text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
+           text:            _recordingVideo ? qsTr("Stop") : qsTr("Record")
            visible:         QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
         }
         // Button to start/stop video recording
