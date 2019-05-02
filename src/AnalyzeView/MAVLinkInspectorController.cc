@@ -11,6 +11,282 @@
 #include "QGCApplication.h"
 #include "MultiVehicleManager.h"
 
+QGC_LOGGING_CATEGORY(MAVLinkInspectorLog, "MAVLinkInspectorLog")
+
+//-----------------------------------------------------------------------------
+QGCMAVLinkMessageField::QGCMAVLinkMessageField(QObject* parent, QString name, QString type)
+    : QObject(parent)
+    , _type(type)
+    , _name(name)
+{
+    qCDebug(MAVLinkInspectorLog) << "Field:" << name << type;
+}
+
+//-----------------------------------------------------------------------------
+QGCMAVLinkMessage::QGCMAVLinkMessage(QObject* parent, mavlink_message_t* message)
+    : QObject(parent)
+{
+    _message = *message;
+    _messageHz = QGC::groundTimeMilliseconds();
+    const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
+    if (!msgInfo) {
+        qWarning() << QStringLiteral("QGCMAVLinkMessage NULL msgInfo msgid(%1)").arg(message->msgid);
+        return;
+    }
+    _name = QString(msgInfo->name);
+    qCDebug(MAVLinkInspectorLog) << "New Message:" << _name;
+    for (unsigned int i = 0; i < msgInfo->num_fields; ++i) {
+        QString type = QString("?");
+        switch (msgInfo->fields[i].type) {
+            case MAVLINK_TYPE_CHAR:     type = QString("char");     break;
+            case MAVLINK_TYPE_UINT8_T:  type = QString("uint8_t");  break;
+            case MAVLINK_TYPE_INT8_T:   type = QString("int8_t");   break;
+            case MAVLINK_TYPE_UINT16_T: type = QString("uint16_t"); break;
+            case MAVLINK_TYPE_INT16_T:  type = QString("int16_t");  break;
+            case MAVLINK_TYPE_UINT32_T: type = QString("uint32_t"); break;
+            case MAVLINK_TYPE_INT32_T:  type = QString("int32_t");  break;
+            case MAVLINK_TYPE_FLOAT:    type = QString("float");    break;
+            case MAVLINK_TYPE_DOUBLE:   type = QString("double");   break;
+            case MAVLINK_TYPE_UINT64_T: type = QString("uint64_t"); break;
+            case MAVLINK_TYPE_INT64_T:  type = QString("int64_t");  break;
+        }
+        QGCMAVLinkMessageField* f = new QGCMAVLinkMessageField(this, msgInfo->fields[i].name, type);
+        _fields.append(f);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMAVLinkMessage::update(mavlink_message_t* message)
+{
+    _message = *message;
+    _count++;
+    _messageHz = QGC::groundTimeMilliseconds();
+    const mavlink_message_info_t* msgInfo = mavlink_get_message_info(message);
+    if (!msgInfo) {
+        qWarning() << QStringLiteral("QGCMAVLinkMessage::update NULL msgInfo msgid(%1)").arg(message->msgid);
+        return;
+    }
+    if(_fields.count() != static_cast<int>(msgInfo->num_fields)) {
+        qWarning() << QStringLiteral("QGCMAVLinkMessage::update msgInfo field count mismatch msgid(%1)").arg(message->msgid);
+        return;
+    }
+    uint8_t* m = reinterpret_cast<uint8_t*>(&message->payload64[0]);
+    for (unsigned int i = 0; i < msgInfo->num_fields; ++i) {
+        QGCMAVLinkMessageField* f = qobject_cast<QGCMAVLinkMessageField*>(_fields.get(static_cast<int>(i)));
+        if(f) {
+            switch (msgInfo->fields[i].type) {
+            case MAVLINK_TYPE_CHAR:
+                if (msgInfo->fields[i].array_length > 0) {
+                    char* str = reinterpret_cast<char*>(m+ msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    str[msgInfo->fields[i].array_length - 1] = '\0';
+                    QString v(str);
+                    f->updateValue(v);
+                } else {
+                    // Single char
+                    char b = *(reinterpret_cast<char*>(m + msgInfo->fields[i].wire_offset));
+                    QString v(b);
+                    f->updateValue(v);
+                }
+                break;
+            case MAVLINK_TYPE_UINT8_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    uint8_t* nums = m+msgInfo->fields[i].wire_offset;
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    uint8_t u = *(m+msgInfo->fields[i].wire_offset);
+                    f->updateValue(QString::number(u));
+                }
+                break;
+            case MAVLINK_TYPE_INT8_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    int8_t* nums = reinterpret_cast<int8_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    int8_t n = *(reinterpret_cast<int8_t*>(m+msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            case MAVLINK_TYPE_UINT16_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    uint16_t* nums = reinterpret_cast<uint16_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    uint16_t n = *(reinterpret_cast<uint16_t*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            case MAVLINK_TYPE_INT16_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    int16_t* nums = reinterpret_cast<int16_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    int16_t n = *(reinterpret_cast<int16_t*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            case MAVLINK_TYPE_UINT32_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    uint32_t* nums = reinterpret_cast<uint32_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    uint32_t n = *(reinterpret_cast<uint32_t*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            case MAVLINK_TYPE_INT32_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    int32_t* nums = reinterpret_cast<int32_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    int32_t n = *(reinterpret_cast<int32_t*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            case MAVLINK_TYPE_FLOAT:
+                if (msgInfo->fields[i].array_length > 0) {
+                    float* nums = reinterpret_cast<float*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                       string += tmp.arg(static_cast<double>(nums[j]));
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    float fv = *(reinterpret_cast<float*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(static_cast<double>(fv)));
+                }
+                break;
+            case MAVLINK_TYPE_DOUBLE:
+                if (msgInfo->fields[i].array_length > 0) {
+                    double* nums = reinterpret_cast<double*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    double d = *(reinterpret_cast<double*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(d));
+                }
+                break;
+            case MAVLINK_TYPE_UINT64_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    uint64_t* nums = reinterpret_cast<uint64_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    uint64_t n = *(reinterpret_cast<uint64_t*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            case MAVLINK_TYPE_INT64_T:
+                if (msgInfo->fields[i].array_length > 0) {
+                    int64_t* nums = reinterpret_cast<int64_t*>(m + msgInfo->fields[i].wire_offset);
+                    // Enforce null termination
+                    QString tmp("%1, ");
+                    QString string;
+                    for (unsigned int j = 0; j < msgInfo->fields[i].array_length; ++j) {
+                        string += tmp.arg(nums[j]);
+                    }
+                    f->updateValue(string);
+                } else {
+                    // Single value
+                    int64_t n = *(reinterpret_cast<int64_t*>(m + msgInfo->fields[i].wire_offset));
+                    f->updateValue(QString::number(n));
+                }
+                break;
+            }
+        }
+    }
+    emit messageChanged();
+}
+
+//-----------------------------------------------------------------------------
+QGCMAVLinkVehicle::QGCMAVLinkVehicle(QObject* parent, quint8 id)
+    : QObject(parent)
+    , _id(id)
+{
+    qCDebug(MAVLinkInspectorLog) << "New Vehicle:" << id;
+}
+
+//-----------------------------------------------------------------------------
+QGCMAVLinkMessage*
+QGCMAVLinkVehicle::findMessage(uint32_t id)
+{
+    for(int i = 0; i < _messages.count(); i++) {
+        QGCMAVLinkMessage* m = qobject_cast<QGCMAVLinkMessage*>(_messages.get(i));
+        if(m) {
+            if(m->id() == id) {
+                return m;
+            }
+        }
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCMAVLinkVehicle::append(QGCMAVLinkMessage* message)
+{
+    _messages.append(message);
+    emit messagesChanged();
+}
+
 //-----------------------------------------------------------------------------
 MAVLinkInspectorController::MAVLinkInspectorController()
 {
@@ -28,134 +304,76 @@ MAVLinkInspectorController::~MAVLinkInspectorController()
 }
 
 //-----------------------------------------------------------------------------
+QGCMAVLinkVehicle*
+MAVLinkInspectorController::_findVehicle(uint8_t id)
+{
+    for(int i = 0; i < _vehicles.count(); i++) {
+        QGCMAVLinkVehicle* v = qobject_cast<QGCMAVLinkVehicle*>(_vehicles.get(i));
+        if(v) {
+            if(v->id() == id) {
+                return v;
+            }
+        }
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
 void
 MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
 {
-    _vehicleIDs.append(vehicle->id());
+    QGCMAVLinkVehicle* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    if(v) {
+        v->messages()->deleteListAndContents();
+        emit v->messagesChanged();
+    } else {
+        v = new QGCMAVLinkVehicle(this, static_cast<uint8_t>(vehicle->id()));
+        _vehicles.append(v);
+        _vehicleNames.append(QString(tr("Vehicle %1")).arg(vehicle->id()));
+    }
+    emit vehiclesChanged();
 }
 
 //-----------------------------------------------------------------------------
 void
 MAVLinkInspectorController::_vehicleRemoved(Vehicle* vehicle)
 {
-    int idx = _vehicleIDs.indexOf(vehicle->id());
-    if(idx >= 0) {
-        _vehicleIDs.removeAt(idx);
+    QGCMAVLinkVehicle* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
+    if(v) {
+        v->deleteLater();
+        _vehicles.removeOne(v);
+        QString vs = QString(tr("Vehicle %1")).arg(vehicle->id());
+        _vehicleNames.removeOne(vs);
+        emit vehiclesChanged();
     }
 }
 
 //-----------------------------------------------------------------------------
 void
-MAVLinkInspectorController::_receiveMessage(LinkInterface* link,mavlink_message_t message)
+MAVLinkInspectorController::_receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     Q_UNUSED(link);
-    quint64 receiveTime;
-    if (_selectedSystemID    != 0 && _selectedSystemID    != message.sysid)  return;
-    if (_selectedComponentID != 0 && _selectedComponentID != message.compid) return;
-    // Create dynamically an array to store the messages for each UAS
-    if (!_uasMessageStorage.contains(message.sysid)) {
-        mavlink_message_t* msg = new mavlink_message_t;
-        *msg = message;
-        _uasMessageStorage.insertMulti(message.sysid,msg);
-    }
-    bool msgFound = false;
-    QMap<int, mavlink_message_t*>::const_iterator iteMsg = _uasMessageStorage.find(message.sysid);
-    mavlink_message_t* uasMessage = iteMsg.value();
-    while((iteMsg != _uasMessageStorage.end()) && (iteMsg.key() == message.sysid)) {
-        if (iteMsg.value()->msgid == message.msgid) {
-            msgFound   = true;
-            uasMessage = iteMsg.value();
-            break;
-        }
-        ++iteMsg;
-    }
-    if (!msgFound) {
-        mavlink_message_t* msgIdMessage = new mavlink_message_t;
-        *msgIdMessage = message;
-        _uasMessageStorage.insertMulti(message.sysid,msgIdMessage);
+    QGCMAVLinkMessage* m = nullptr;
+    QGCMAVLinkVehicle* v = _findVehicle(message.sysid);
+    if(!v) {
+        v = new QGCMAVLinkVehicle(this, message.sysid);
+        _vehicles.append(v);
+        _vehicleNames.append(QString(tr("Vehicle %1")).arg(message.sysid));
+        emit vehiclesChanged();
     } else {
-        *uasMessage = message;
+        m = v->findMessage(message.msgid);
     }
-    // Looking if this message has already been received once
-    msgFound = false;
-    QMap<int, QMap<int, quint64>* >::const_iterator ite = _uasLastMessageUpdate.find(message.sysid);
-    QMap<int, quint64>* lastMsgUpdate = ite.value();
-    while((ite != _uasLastMessageUpdate.end()) && (ite.key() == message.sysid)) {
-        if(ite.value()->contains(message.msgid)) {
-            msgFound = true;
-            //-- Point to the found message
-            lastMsgUpdate = ite.value();
-            break;
-        }
-        ++ite;
-    }
-    receiveTime = QGC::groundTimeMilliseconds();
-    //-- If the message doesn't exist, create a map for the frequency, message count and time of reception
-    if(!msgFound) {
-        //-- Create a map for the message frequency
-        QMap<int, float>* messageHz = new QMap<int,float>;
-        messageHz->insert(message.msgid,0.0f);
-        _uasMessageHz.insertMulti(message.sysid,messageHz);
-        //-- Create a map for the message count
-        QMap<int, unsigned int>* messagesCount = new QMap<int, unsigned int>;
-        messagesCount->insert(message.msgid,0);
-        _uasMessageCount.insertMulti(message.sysid,messagesCount);
-        //-- Create a map for the time of reception of the message
-        QMap<int, quint64>* lastMessage = new QMap<int, quint64>;
-        lastMessage->insert(message.msgid,receiveTime);
-        _uasLastMessageUpdate.insertMulti(message.sysid,lastMessage);
-        //-- Point to the created message
-        lastMsgUpdate = lastMessage;
+    if(!m) {
+        m = new QGCMAVLinkMessage(this, &message);
+        v->append(m);
     } else {
-        //-- The message has been found/created
-        if((lastMsgUpdate->contains(message.msgid)) && (_uasMessageCount.contains(message.sysid))) {
-            //-- Looking for and updating the message count
-            unsigned int count = 0;
-            QMap<int, QMap<int, unsigned int>* >::const_iterator iter = _uasMessageCount.find(message.sysid);
-            QMap<int, unsigned int> * uasMsgCount = iter.value();
-            while((iter != _uasMessageCount.end()) && (iter.key() == message.sysid)) {
-                if(iter.value()->contains(message.msgid)) {
-                    uasMsgCount = iter.value();
-                    count = uasMsgCount->value(message.msgid,0);
-                    uasMsgCount->insert(message.msgid,count+1);
-                    break;
-                }
-                ++iter;
-            }
-        }
-        lastMsgUpdate->insert(message.msgid,receiveTime);
+        m->update(&message);
     }
+
 }
 
 //-----------------------------------------------------------------------------
 void
 MAVLinkInspectorController::_reset()
 {
-    QMap<int, mavlink_message_t* >::iterator ite;
-    for(ite = _uasMessageStorage.begin(); ite != _uasMessageStorage.end(); ++ite) {
-        delete ite.value();
-        ite.value() = nullptr;
-    }
-    _uasMessageStorage.clear();
-    QMap<int, QMap<int, float>* >::iterator iteHz;
-    for(iteHz = _uasMessageHz.begin(); iteHz != _uasMessageHz.end(); ++iteHz) {
-        iteHz.value()->clear();
-        delete iteHz.value();
-        iteHz.value() = nullptr;
-    }
-    _uasMessageHz.clear();
-    QMap<int, QMap<int, unsigned int>*>::iterator iteCount;
-    for(iteCount = _uasMessageCount.begin(); iteCount != _uasMessageCount.end(); ++iteCount) {
-        iteCount.value()->clear();
-        delete iteCount.value();
-        iteCount.value() = nullptr;
-    }
-    _uasMessageCount.clear();
-    QMap<int, QMap<int, quint64>* >::iterator iteLast;
-    for(iteLast = _uasLastMessageUpdate.begin(); iteLast != _uasLastMessageUpdate.end(); ++iteLast) {
-        iteLast.value()->clear();
-        delete iteLast.value();
-        iteLast.value() = nullptr;
-    }
-    _uasLastMessageUpdate.clear();
 }
