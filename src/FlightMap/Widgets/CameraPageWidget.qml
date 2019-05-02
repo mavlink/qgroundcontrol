@@ -256,8 +256,8 @@ Column {
                     //-------------------------------------------
                     //-- Camera Selector
                     Row {
-                        visible:    _isCamera
-                        spacing:    ScreenTools.defaultFontPixelWidth
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        visible:            _isCamera && _dynamicCameras.cameraLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Camera Selector:")
@@ -276,6 +276,7 @@ Column {
                     //-- Stream Selector
                     Row {
                         spacing:            ScreenTools.defaultFontPixelWidth
+                        visible:            _isCamera && _camera.streamLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Stream Selector:")
@@ -289,7 +290,47 @@ Column {
                             currentIndex:   _camera ? _camera.currentStream : 0
                         }
                     }
-
+                    //-------------------------------------------
+                    //-- Thermal Modes
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            QGroundControl.videoManager.hasThermal
+                        property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
+                        QGCLabel {
+                            text:           qsTr("Thermal View Mode")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            width:          _editFieldWidth
+                            model:          parent.thermalModes
+                            currentIndex:   _camera ? _camera.thermalMode : 0
+                            onActivated:    _camera.thermalMode = index
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Thermal Video Opacity
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                        QGCLabel {
+                            text:           qsTr("Blend Opacity")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Slider {
+                            width:          _editFieldWidth
+                            maximumValue:   100
+                            minimumValue:   0
+                            value:          _camera ? _camera.thermalOpacity : 0
+                            updateValueWhileDragging: true
+                            onValueChanged: {
+                                _camera.thermalOpacity = value
+                            }
+                        }
+                    }
                     //-------------------------------------------
                     //-- Camera Settings
                     Repeater {

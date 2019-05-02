@@ -58,6 +58,8 @@ static const char* kVersion         = "version";
 static const char* kPhotoMode       = "PhotoMode";
 static const char* kPhotoLapse      = "PhotoLapse";
 static const char* kPhotoLapseCount = "PhotoLapseCount";
+static const char* kThermalOpacity  = "ThermalOpacity";
+static const char* kThermalMode     = "ThermalMode";
 
 //-----------------------------------------------------------------------------
 // Known Parameters
@@ -174,9 +176,11 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
         _initWhenReady();
     }
     QSettings settings;
-    _photoMode  = static_cast<PhotoMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
-    _photoLapse = settings.value(kPhotoLapse, 1.0).toDouble();
+    _photoMode       = static_cast<PhotoMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
+    _photoLapse      = settings.value(kPhotoLapse, 1.0).toDouble();
     _photoLapseCount = settings.value(kPhotoLapseCount, 0).toInt();
+    _thermalOpacity  = settings.value(kThermalOpacity, 85.0).toDouble();
+    _thermalMode     = static_cast<ThermalViewMode>(settings.value(kThermalMode, static_cast<uint32_t>(THERMAL_BLEND)).toUInt());
     _recTimer.setSingleShot(false);
     _recTimer.setInterval(333);
     connect(&_recTimer, &QTimer::timeout, this, &QGCCameraControl::_recTimerHandler);
@@ -495,6 +499,30 @@ QGCCameraControl::setPhotoMode()
                 _setCameraMode(CAM_MODE_PHOTO);
             }
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setThermalMode(ThermalViewMode mode)
+{
+    QSettings settings;
+    settings.setValue(kThermalMode, static_cast<uint32_t>(mode));
+    _thermalMode = mode;
+    emit thermalModeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setThermalOpacity(double val)
+{
+    if(val < 0.0) val = 0.0;
+    if(val > 100.0) val = 100.0;
+    if(fabs(_thermalOpacity - val) > 0.1) {
+        _thermalOpacity = val;
+        QSettings settings;
+        settings.setValue(kThermalOpacity, val);
+        emit thermalOpacityChanged();
     }
 }
 
@@ -1496,10 +1524,14 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
         QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(this, vi);
         QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);
         _streams.append(pStream);
-        _streamLabels.append(pStream->name());
-        emit streamsChanged();
-        emit streamLabelsChanged();
-        qDebug() << _streamLabels;
+        //-- Thermal is handled separately and not listed
+        if(!pStream->isThermal()) {
+            _streamLabels.append(pStream->name());
+            emit streamsChanged();
+            emit streamLabelsChanged();
+        } else {
+            emit thermalStreamChanged();
+        }
     }
     //-- Check for missing count
     if(_streams.count() < _expectedCount) {
@@ -1531,7 +1563,7 @@ QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
 void
 QGCCameraControl::setCurrentStream(int stream)
 {
-    if(stream != _currentStream && stream >= 0 && stream < _streams.count()) {
+    if(stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
         if(_currentStream != stream) {
             QGCVideoStreamInfo* pInfo = currentStreamInstance();
             if(pInfo) {
@@ -1606,9 +1638,27 @@ QGCCameraControl::autoStream()
 QGCVideoStreamInfo*
 QGCCameraControl::currentStreamInstance()
 {
-    if(_currentStream < _streams.count() && _streams.count()) {
-        QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[_currentStream]);
+    if(_currentStream < _streamLabels.count() && _streamLabels.count()) {
+        QGCVideoStreamInfo* pStream = _findStream(_streamLabels[_currentStream]);
         return pStream;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraControl::thermalStreamInstance()
+{
+    //-- For now, it will return the first thermal listed (if any)
+    for(int i = 0; i < _streams.count(); i++) {
+        if(_streams[i]) {
+            QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[i]);
+            if(pStream) {
+                if(pStream->isThermal()) {
+                    return pStream;
+                }
+            }
+        }
     }
     return nullptr;
 }
@@ -1656,6 +1706,23 @@ QGCCameraControl::_findStream(uint8_t id, bool report)
     }
     if(report) {
         qWarning() << "Stream id not found:" << id;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraControl::_findStream(const QString name)
+{
+    for(int i = 0; i < _streams.count(); i++) {
+        if(_streams[i]) {
+            QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[i]);
+            if(pStream) {
+                if(pStream->name() == name) {
+                    return pStream;
+                }
+            }
+        }
     }
     return nullptr;
 }

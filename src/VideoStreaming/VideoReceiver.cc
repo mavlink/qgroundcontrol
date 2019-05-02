@@ -567,7 +567,7 @@ void
 VideoReceiver::_handleStateChanged() {
     if(_pipeline) {
         _streaming = GST_STATE(_pipeline) == GST_STATE_PLAYING;
-        qCDebug(VideoReceiverLog) << "State changed, _streaming:" << _streaming;
+        //qCDebug(VideoReceiverLog) << "State changed, _streaming:" << _streaming;
     }
 }
 #endif

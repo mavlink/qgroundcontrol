@@ -18,7 +18,6 @@ add_library(ui
 	QGCHilJSBSimConfiguration.cc
 	QGCHilXPlaneConfiguration.cc
 	QGCMapRCToParamDialog.cpp
-	QGCMAVLinkInspector.cc
 	QGCMAVLinkLogPlayer.cc
 	QGCPluginHost.cc
 	QGCUASFileView.cc
@@ -39,7 +38,6 @@ add_library(ui
 	QGCHilJSBSimConfiguration.ui
 	QGCHilXPlaneConfiguration.ui
 	QGCMapRCToParamDialog.ui
-	QGCMAVLinkInspector.ui
 	QGCMAVLinkLogPlayer.ui
 	QGCPluginHost.ui
 	QGCUASFileView.ui

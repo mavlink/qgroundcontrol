@@ -114,10 +114,18 @@ public:
         PHOTO_CAPTURE_TIMELAPSE,
     };
 
+    enum ThermalViewMode {
+        THERMAL_OFF = 0,
+        THERMAL_BLEND,
+        THERMAL_FULL,
+        THERMAL_PIP,
+    };
+
     Q_ENUM(CameraMode)
     Q_ENUM(VideoStatus)
     Q_ENUM(PhotoStatus)
     Q_ENUM(PhotoMode)
+    Q_ENUM(ThermalViewMode)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
     Q_PROPERTY(QString      modelName           READ modelName          NOTIFY infoChanged)
@@ -162,9 +170,12 @@ public:
     Q_PROPERTY(bool         autoStream          READ autoStream                                     NOTIFY autoStreamChanged)
     Q_PROPERTY(QmlObjectListModel* streams      READ streams                                        NOTIFY streamsChanged)
     Q_PROPERTY(QGCVideoStreamInfo* currentStreamInstance READ currentStreamInstance                 NOTIFY currentStreamChanged)
+    Q_PROPERTY(QGCVideoStreamInfo* thermalStreamInstance READ thermalStreamInstance                 NOTIFY thermalStreamChanged)
     Q_PROPERTY(quint32      recordTime          READ recordTime                                     NOTIFY recordTimeChanged)
     Q_PROPERTY(QString      recordTimeStr       READ recordTimeStr                                  NOTIFY recordTimeChanged)
     Q_PROPERTY(QStringList  streamLabels        READ streamLabels                                   NOTIFY streamLabelsChanged)
+    Q_PROPERTY(ThermalViewMode thermalMode      READ thermalMode        WRITE  setThermalMode       NOTIFY thermalModeChanged)
+    Q_PROPERTY(double       thermalOpacity      READ thermalOpacity     WRITE  setThermalOpacity    NOTIFY thermalOpacityChanged)
 
     Q_INVOKABLE virtual void setVideoMode   ();
     Q_INVOKABLE virtual void setPhotoMode   ();
@@ -216,6 +227,7 @@ public:
 
     virtual QmlObjectListModel* streams     () { return &_streams; }
     virtual QGCVideoStreamInfo* currentStreamInstance();
+    virtual QGCVideoStreamInfo* thermalStreamInstance();
     virtual int          currentStream      () { return _currentStream; }
     virtual void         setCurrentStream   (int stream);
     virtual bool         autoStream         ();
@@ -231,7 +243,12 @@ public:
     virtual Fact*       mode                ();
 
     //-- Stream names to show the user (for selection)
-    virtual QStringList          streamLabels       () { return _streamLabels; }
+    virtual QStringList streamLabels        () { return _streamLabels; }
+
+    virtual ThermalViewMode thermalMode     () { return _thermalMode; }
+    virtual void        setThermalMode      (ThermalViewMode mode);
+    virtual double      thermalOpacity      () { return _thermalOpacity; }
+    virtual void        setThermalOpacity   (double val);
 
     virtual void        setZoomLevel        (qreal level);
     virtual void        setFocusLevel       (qreal level);
@@ -282,9 +299,12 @@ signals:
     void    focusLevelChanged               ();
     void    streamsChanged                  ();
     void    currentStreamChanged            ();
+    void    thermalStreamChanged            ();
     void    autoStreamChanged               ();
     void    recordTimeChanged               ();
     void    streamLabelsChanged             ();
+    void    thermalModeChanged              ();
+    void    thermalOpacityChanged           ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
@@ -293,6 +313,7 @@ protected:
     virtual void    _requestStreamInfo      (uint8_t streamID);
     virtual void    _requestStreamStatus    (uint8_t streamID);
     virtual QGCVideoStreamInfo* _findStream (uint8_t streamID, bool report = true);
+    virtual QGCVideoStreamInfo* _findStream (const QString name);
 
 protected slots:
     virtual void    _initWhenReady          ();
@@ -376,4 +397,6 @@ protected:
     QTimer                              _streamStatusTimer;
     QmlObjectListModel                  _streams;
     QStringList                         _streamLabels;
+    ThermalViewMode                     _thermalMode        = THERMAL_BLEND;
+    double                              _thermalOpacity     = 85.0;
 };

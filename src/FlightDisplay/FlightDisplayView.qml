@@ -7,14 +7,13 @@
  *
  ****************************************************************************/
 
+import QtQuick                  2.11
+import QtQuick.Controls         2.4
+import QtQuick.Dialogs          1.3
+import QtQuick.Layouts          1.11
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 import QtPositioning            5.3
-import QtQuick.Layouts          1.2
 import QtQuick.Window           2.2
 import QtQml.Models             2.1
 

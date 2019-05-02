@@ -44,6 +44,9 @@ VideoManager::~VideoManager()
     if(_videoReceiver) {
         delete _videoReceiver;
     }
+    if(_thermalVideoReceiver) {
+        delete _thermalVideoReceiver;
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -74,14 +77,31 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
     emit isGStreamerChanged();
     qCDebug(VideoManagerLog) << "New Video Source:" << videoSource;
     _videoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
+    _thermalVideoReceiver = toolbox->corePlugin()->createVideoReceiver(this);
     _updateSettings();
     if(isGStreamer()) {
-        _videoReceiver->start();
+        startVideo();
     } else {
-        _videoReceiver->stop();
+        stopVideo();
     }
 
 #endif
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::startVideo()
+{
+    if(_videoReceiver) _videoReceiver->start();
+    if(_thermalVideoReceiver) _thermalVideoReceiver->start();
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::stopVideo()
+{
+    if(_videoReceiver) _videoReceiver->stop();
+    if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
 }
 
 //-----------------------------------------------------------------------------
@@ -90,10 +110,61 @@ double VideoManager::aspectRatio()
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
+            qCDebug(VideoManagerLog) << "Primary AR: " << pInfo->aspectRatio();
             return pInfo->aspectRatio();
         }
     }
     return _videoSettings->aspectRatio()->rawValue().toDouble();
+}
+
+//-----------------------------------------------------------------------------
+double VideoManager::thermalAspectRatio()
+{
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+        if(pInfo) {
+            qCDebug(VideoManagerLog) << "Thermal AR: " << pInfo->aspectRatio();
+            return pInfo->aspectRatio();
+        }
+    }
+    return 1.0;
+}
+
+//-----------------------------------------------------------------------------
+double VideoManager::hfov()
+{
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+        if(pInfo) {
+            return pInfo->hfov();
+        }
+    }
+    return 1.0;
+}
+
+//-----------------------------------------------------------------------------
+double VideoManager::thermalHfov()
+{
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+        if(pInfo) {
+            return pInfo->aspectRatio();
+        }
+    }
+    return _videoSettings->aspectRatio()->rawValue().toDouble();
+}
+
+//-----------------------------------------------------------------------------
+bool
+VideoManager::hasThermal()
+{
+    if(_activeVehicle && _activeVehicle->dynamicCameras()) {
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+        if(pInfo) {
+            return true;
+        }
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -204,8 +275,9 @@ VideoManager::_updateSettings()
         return;
     //-- Auto discovery
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
+        QGCVideoStreamInfo* pInfo  = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
+            qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
             switch(pInfo->type()) {
                 case VIDEO_STREAM_TYPE_RTSP:
                 case VIDEO_STREAM_TYPE_TCP_MPEG:
@@ -220,6 +292,26 @@ VideoManager::_updateSettings()
                 default:
                     _videoReceiver->setUri(pInfo->uri());
                     break;
+            }
+            //-- Thermal stream (if any)
+            QGCVideoStreamInfo* pTinfo = _activeVehicle->dynamicCameras()->thermalStreamInstance();
+            if(pTinfo) {
+                qCDebug(VideoManagerLog) << "Configure secondary stream: " << pTinfo->uri();
+                switch(pTinfo->type()) {
+                    case VIDEO_STREAM_TYPE_RTSP:
+                    case VIDEO_STREAM_TYPE_TCP_MPEG:
+                        _thermalVideoReceiver->setUri(pTinfo->uri());
+                        break;
+                    case VIDEO_STREAM_TYPE_RTPUDP:
+                        _thermalVideoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pTinfo->uri()));
+                        break;
+                    case VIDEO_STREAM_TYPE_MPEG_TS_H264:
+                        _thermalVideoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pTinfo->uri()));
+                        break;
+                    default:
+                        _thermalVideoReceiver->setUri(pTinfo->uri());
+                        break;
+                }
             }
             return;
         }
@@ -241,11 +333,9 @@ VideoManager::_restartVideo()
 {
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoManagerLog) << "Restart video streaming";
-    if(!_videoReceiver)
-        return;
-    _videoReceiver->stop();
+    stopVideo();
     _updateSettings();
-    _videoReceiver->start();
+    startVideo();
     emit aspectRatioChanged();
 #endif
 }
