@@ -271,7 +271,7 @@ void MainWindow::_buildCommonWidgets(void)
     // Log player
     // TODO: Make this optional with a preferences setting or under a "View" menu
     logPlayer = new QGCMAVLinkLogPlayer(statusBar());
-    statusBar()->addPermanentWidget(logPlayer);
+    statusBar()->addPermanentWidget(logPlayer, 1);
 
     // Populate widget menu
     for (int i = 0, end = ARRAY_SIZE(rgDockWidgetNames); i < end; i++) {

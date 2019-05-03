@@ -142,7 +142,6 @@ void QGCMAVLinkLogPlayer::_playbackStarted(void)
     _enablePlaybackControls(true);
     _ui->playButton->setChecked(true);
     _ui->playButton->setIcon(QIcon(":/res/Pause"));
-    _ui->positionSlider->setEnabled(false);
 }
 
 /// Signalled from LogReplayLink when replay is paused
@@ -150,7 +149,6 @@ void QGCMAVLinkLogPlayer::_playbackPaused(void)
 {
     _ui->playButton->setIcon(QIcon(":/res/Play"));
     _ui->playButton->setChecked(false);
-    _ui->positionSlider->setEnabled(true);
 }
 
 void QGCMAVLinkLogPlayer::_playbackPercentCompleteChanged(int percentComplete)

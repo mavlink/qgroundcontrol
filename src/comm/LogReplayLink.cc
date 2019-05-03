@@ -14,6 +14,7 @@
 
 #include <QFileInfo>
 #include <QtEndian>
+#include <QSignalSpy>
 
 const char*  LogReplayLinkConfiguration::_logFilenameKey = "logFilename";
 
@@ -368,7 +369,7 @@ void LogReplayLink::_readNextLogEntry(void)
             timeToNextExecutionMSecs = desiredPacedTimeMSecs - currentTimeMSecs;
         }
 
-        emit currentLogTimeSecs((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000000);
+        _signalCurrentLogTimeSecs();
 
         // And schedule the next execution of this function.
         _readTickTimer.start(timeToNextExecutionMSecs);
@@ -450,8 +451,12 @@ void LogReplayLink::_resetPlaybackToBeginning(void)
 void LogReplayLink::movePlayhead(int percentComplete)
 {
     if (isPlaying()) {
-        qWarning() << "Should not move playhead while playing, pause first";
-        return;
+        _pauseOnThread();
+        QSignalSpy waitForPause(this, SIGNAL(playbackPaused));
+        waitForPause.wait();
+        if (_readTickTimer.isActive()) {
+            return;
+        }
     }
 
     if (percentComplete < 0 || percentComplete > 100) {
@@ -495,7 +500,8 @@ void LogReplayLink::movePlayhead(int percentComplete)
         // And scan until we reach the start of a MAVLink message. We make sure to record this timestamp for
         // smooth jumping around the file.
         _logCurrentTimeUSecs = _seekToNextMavlinkMessage(&dummy);
-        
+        _signalCurrentLogTimeSecs();
+
         // Now update the UI with our actual final position.
         newRelativeTimeUSecs = (float)(_logCurrentTimeUSecs - _logStartTimeUSecs);
         percentComplete = (newRelativeTimeUSecs / _logDurationUSecs) * 100;
@@ -560,4 +566,9 @@ void LogReplayLink::_playbackError(void)
     _pause();
     _logFile.close();
     emit playbackError();
+}
+
+void LogReplayLink::_signalCurrentLogTimeSecs(void)
+{
+    emit currentLogTimeSecs((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000000);
 }
