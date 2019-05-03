@@ -12,7 +12,7 @@ if %errorlevel%==0 (
     echo "FATAL: Failed to build. qmake returned error level: %errorlevel%"
 )
 if %errorlevel%==0 (
-    copy .\build\release\*-installer.exe .\
+    copy /Y .\release\*-installer.exe ..\
 ) else (
     echo "WARNING: Failed to copy the installer output. copy returned error level: %errorlevel%"
 )

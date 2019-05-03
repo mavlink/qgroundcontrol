@@ -357,6 +357,31 @@ pipeline {
           }
         }
 
+        stage('Dev Windows Release (Update)') {
+          environment {
+            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
+          }
+          agent {
+            node {
+              label 'windows'
+            }
+          }
+          steps {
+            bat 'if exist .\build\release\*.exe (del /F /Q .\build\release\*.exe)'
+            bat 'if exist .\*-installer.exe (del /F /Q .\*-installer.exe)'
+            bat '.\\tools\\build\\build_windows.bat'
+          }
+          post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
+            }
+            cleanup {
+              bat "echo Don't cleanup, we reuse the build. Not safe though"
+            }
+          }
+        }
+
       } // parallel
     } // stage('build')
   } // stages
