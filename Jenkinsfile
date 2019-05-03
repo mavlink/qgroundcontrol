@@ -331,36 +331,10 @@ pipeline {
         }
         */
 
-        stage('Windows Release') {
-          environment {
-            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
-          }
-          agent {
-            node {
-              label 'windows'
-            }
-          }
-          steps {
-            bat 'git submodule deinit -f .'
-            bat 'git clean -ff -x -d .'
-            bat 'git submodule update --init --recursive --force'
-            bat '.\\tools\\build\\build_windows.bat release build'
-            bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
-          }
-          post {
-            always {
-                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
-            }
-            cleanup {
-              bat 'git clean -ff -x -d .'
-            }
-          }
-        }
-
         stage('Dev Windows Release (Update)') {
           environment {
             QGC_CONFIG = 'release installer'
+            QGC_NSIS_INSTALLER_PARAMETERS='/X"SetCompressor /FINAL zlib"'
           }
           agent {
             node {
@@ -373,7 +347,7 @@ pipeline {
           }
           post {
             always {
-                archiveArtifacts artifacts: 'build-dev/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: 'build-dev/release/*.exe', onlyIfSuccessful: true
             }
             cleanup {
               bat "echo Don't cleanup, we reuse the build. Not safe though"
@@ -381,6 +355,32 @@ pipeline {
           }
         }
 
+        stage('Windows Release') {
+          environment {
+            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
+          }
+          agent {
+            node {
+              label 'windows'
+            }
+          }
+          steps {
+            bat 'git submodule deinit -f .'
+            bat 'git clean -ff -x -e build-dev -d .'
+            bat 'git submodule update --init --recursive --force'
+            bat '.\\tools\\build\\build_windows.bat release build'
+            bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
+          }
+          post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
+            }
+            cleanup {
+              bat 'git clean -ff -x -e build-dev -d .'
+            }
+          }
+        }
       } // parallel
     } // stage('build')
   } // stages
