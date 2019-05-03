@@ -18,11 +18,8 @@ exists($$PWD/custom/custom.pri) {
     AUTERION_QGC_VER_FIRST_BUILD = 0
 
     #   Build number is automatic
-
-    #-- TODO: Switch this back to master once merged
-    #AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list master --first-parent --count)
-    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list newUI --first-parent --count)
-
+    #   Uses the current branch. This way it works on any branch including build-server's PR branches
+    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list $$GIT_BRANCH --first-parent --count)
     win32 {
         AUTERION_QGC_VER_BUILD = $$system("set /a $$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD")
     } else {
