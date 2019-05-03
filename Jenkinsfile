@@ -367,8 +367,8 @@ pipeline {
             }
           }
           steps {
-            bat 'if exist .\build\release\*.exe (del /F /Q .\build\release\*.exe)'
-            bat 'if exist .\*-installer.exe (del /F /Q .\*-installer.exe)'
+            bat 'if exist .\\build\\release\\*.exe (del /F /Q .\\build\\release\\*.exe)'
+            bat 'if exist .\\*-installer.exe (del /F /Q .\\*-installer.exe)'
             bat '.\\tools\\build\\build_windows.bat'
           }
           post {
