@@ -185,6 +185,8 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _lastAnnouncedLowBatteryPercent(100)
     , _priorityLinkCommanded(false)
     , _orbitActive(false)
+    , _pidTuningTelemetryMode(false)
+    , _pidTuningWaitingForRates(false)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -386,6 +388,8 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _uid(0)
     , _lastAnnouncedLowBatteryPercent(100)
     , _orbitActive(false)
+    , _pidTuningTelemetryMode(false)
+    , _pidTuningWaitingForRates(false)
     , _rollFact             (0, _rollFactName,              FactMetaData::valueTypeDouble)
     , _pitchFact            (0, _pitchFactName,             FactMetaData::valueTypeDouble)
     , _headingFact          (0, _headingFactName,           FactMetaData::valueTypeDouble)
@@ -519,6 +523,8 @@ void Vehicle::_commonInit(void)
         }
     }
 #endif
+
+    _pidTuningMessages << MAVLINK_MSG_ID_ATTITUDE << MAVLINK_MSG_ID_ATTITUDE_TARGET;
 }
 
 Vehicle::~Vehicle()
@@ -794,7 +800,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_ORBIT_EXECUTION_STATUS:
         _handleOrbitExecutionStatus(message);
         break;
-
+    case MAVLINK_MSG_ID_MESSAGE_INTERVAL:
+        _handleMessageInterval(message);
+        break;
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
         break;
@@ -3858,6 +3866,74 @@ int  Vehicle::versionCompare(int major, int minor, int patch)
 {
     return _firmwarePlugin->versionCompare(this, major, minor, patch);
 }
+
+void Vehicle::_handleMessageInterval(const mavlink_message_t& message)
+{
+    if (_pidTuningWaitingForRates) {
+        mavlink_message_interval_t messageInterval;
+
+        mavlink_msg_message_interval_decode(&message, &messageInterval);
+
+        int msgId = messageInterval.message_id;
+        if (_pidTuningMessages.contains(msgId)) {
+            _pidTuningMessageRatesUsecs[msgId] = messageInterval.interval_us;
+        }
+
+        if (_pidTuningMessageRatesUsecs.count() == _pidTuningMessages.count()) {
+            // We have back all the rates we requested
+            _pidTuningWaitingForRates = false;
+            _pidTuningAdjustRates(true);
+        }
+    }
+}
+
+void Vehicle::setPIDTuningTelemetryMode(bool pidTuning)
+{
+    if (pidTuning) {
+        if (!_pidTuningTelemetryMode) {
+            // First step is to get the current message rates before we adjust them
+            _pidTuningTelemetryMode = true;
+            _pidTuningWaitingForRates = true;
+            _pidTuningMessageRatesUsecs.clear();
+            for (int telemetry: _pidTuningMessages) {
+                sendMavCommand(defaultComponentId(),
+                               MAV_CMD_GET_MESSAGE_INTERVAL,
+                               true,                        // show error
+                               telemetry);
+            }
+        }
+    } else {
+        if (_pidTuningTelemetryMode) {
+            _pidTuningTelemetryMode = false;
+            if (_pidTuningWaitingForRates) {
+                // We never finished waiting for previous rates
+                _pidTuningWaitingForRates = false;
+            } else {
+                _pidTuningAdjustRates(false);
+            }
+        }
+    }
+}
+
+void Vehicle::_pidTuningAdjustRates(bool setRatesForTuning)
+{
+    int requestedRate = (int)(1000000.0 / 30.0); // 30 Hz in usecs
+
+    for (int telemetry: _pidTuningMessages) {
+
+        if (requestedRate < _pidTuningMessageRatesUsecs[telemetry]) {
+            sendMavCommand(defaultComponentId(),
+                           MAV_CMD_SET_MESSAGE_INTERVAL,
+                           true,                        // show error
+                           telemetry,
+                           setRatesForTuning ? requestedRate : _pidTuningMessageRatesUsecs[telemetry]);
+        }
+    }
+
+    setLiveUpdates(setRatesForTuning);
+    _setpointFactGroup.setLiveUpdates(setRatesForTuning);
+}
+
 
 #if !defined(NO_ARDUPILOT_DIALECT)
 void Vehicle::flashBootloader(void)
