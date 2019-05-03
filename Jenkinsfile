@@ -344,7 +344,8 @@ pipeline {
             bat 'git submodule deinit -f .'
             bat 'git clean -ff -x -d .'
             bat 'git submodule update --init --recursive --force'
-            bat '.\\tools\\build\\build_windows.bat'
+            bat '.\\tools\\build\\build_windows.bat release build'
+            bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
           }
           post {
             always {
@@ -359,7 +360,7 @@ pipeline {
 
         stage('Dev Windows Release (Update)') {
           environment {
-            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
+            QGC_CONFIG = 'release installer'
           }
           agent {
             node {
@@ -367,14 +368,12 @@ pipeline {
             }
           }
           steps {
-            bat 'if exist .\\build\\release\\*.exe (del /F /Q .\\build\\release\\*.exe)'
-            bat 'if exist .\\*-installer.exe (del /F /Q .\\*-installer.exe)'
-            bat '.\\tools\\build\\build_windows.bat'
+            bat 'if exist .\\build-dev\\release\\*.exe (del /F /Q .\\build-dev\\release\\*.exe)'
+            bat '.\\tools\\build\\build_windows.bat release build-dev'
           }
           post {
             always {
-                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
+                archiveArtifacts artifacts: 'build-dev/release/**/*', onlyIfSuccessful: true
             }
             cleanup {
               bat "echo Don't cleanup, we reuse the build. Not safe though"
