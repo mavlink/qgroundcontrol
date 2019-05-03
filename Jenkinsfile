@@ -5,46 +5,48 @@ pipeline {
     stage('build') {
       parallel {
 
-        stage('Android Release') {
-          environment {
-            CCACHE_BASEDIR = "${env.WORKSPACE}"
-            QGC_CONFIG = 'installer'
-            QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
-          }
-          agent {
-            /*
-            docker {
-              image 'mavlink/qgc-build-android:2019-02-03'
-              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
-            }
-            */
-            dockerfile {
-              dir 'custom/deploy/ci/android'
-              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
-            }
-          }
-          steps {
-            sh 'export'
-            sh 'ccache -z'
-            sh 'git submodule deinit -f .'
-            sh 'git clean -ff -x -d .'
-            sh 'git submodule update --init --recursive --force'
-            sh 'ln -s $CI_ANDROID_GSTREAMER_LOCATION ${WORKSPACE}/'
-            sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
-            sh 'cd build; make -j`nproc --all`'
-            sh 'ccache -s'
-            sh 'cp build/release/package/*.apk ${WORKSPACE}/'
-          }
-          post {
-            always {
-              archiveArtifacts artifacts: 'build/release/**/*'
-              archiveArtifacts artifacts: '*.apk', onlyIfSuccessful: true
-            }
-            cleanup {
-              sh 'git clean -ff -x -d .'
-            }
-          }
-        }
+        // stage('Android Release') {
+        //   environment {
+        //     CCACHE_BASEDIR = "${env.WORKSPACE}"
+        //     QGC_CONFIG = 'installer'
+        //     QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
+        //   }
+        //   agent {
+        //     label 'docker'
+        //     /*
+        //     docker {
+        //       label 'docker'
+        //       image 'mavlink/qgc-build-android:2019-02-03'
+        //       args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+        //     }
+        //     */
+        //     dockerfile {
+        //       dir 'custom/deploy/ci/android'
+        //       args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+        //     }
+        //   }
+        //   steps {
+        //     sh 'export'
+        //     sh 'ccache -z'
+        //     sh 'git submodule deinit -f .'
+        //     sh 'git clean -ff -x -d .'
+        //     sh 'git submodule update --init --recursive --force'
+        //     sh 'ln -s $CI_ANDROID_GSTREAMER_LOCATION ${WORKSPACE}/'
+        //     sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+        //     sh 'cd build; make -j`nproc --all`'
+        //     sh 'ccache -s'
+        //     sh 'cp build/release/package/*.apk ${WORKSPACE}/'
+        //   }
+        //   post {
+        //     always {
+        //       archiveArtifacts artifacts: 'build/release/**/*'
+        //       archiveArtifacts artifacts: '*.apk', onlyIfSuccessful: true
+        //     }
+        //     cleanup {
+        //       sh 'git clean -ff -x -d .'
+        //     }
+        //   }
+        // }
 
         /*
         stage('Linux Debug') {
@@ -107,57 +109,58 @@ pipeline {
         }
         */
 
-        stage('Linux Release') {
-          environment {
-            CCACHE_BASEDIR = "${env.WORKSPACE}"
-            QGC_CONFIG = 'release'
-            QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
+        // stage('Linux Release') {
+        //   environment {
+        //     CCACHE_BASEDIR = "${env.WORKSPACE}"
+        //     QGC_CONFIG = 'release'
+        //     QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
 
-            QGC_CUSTOM_APP_NAME = "AGS"
-            QGC_CUSTOM_GENERIC_NAME = "Auterion Ground Station"
-            QGC_CUSTOM_BINARY_NAME = "AuterionGS"
-            QGC_CUSTOM_LINUX_START_SH = "${env.WORKSPACE}/custom/deploy/qgroundcontrol-start.sh"
-            QGC_CUSTOM_APP_ICON = "${env.WORKSPACE}/custom/res/src/Auterion_Icon.png"
-            QGC_CUSTOM_APP_ICON_NAME = "Auterion_Icon"
-          }
-          agent {
-            /*docker {
-              image 'mavlink/qgc-build-linux:2019-02-03'
-              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
-            }*/
-            // TODO: remove after sync upstream
-            // Custom docker file that extends on the upstream one in order to provide unmerged features
-            dockerfile {
-              dir 'custom/deploy/ci/linux'
-              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
-            }
-          }
-          steps {
-            sh 'export'
-            sh 'ccache -z'
-            sh 'git submodule deinit -f .'
-            sh 'git clean -ff -x -d .'
-            sh 'git submodule update --init --recursive --force'
-            sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
-            sh 'cd build; make -j`nproc --all`'
+        //     QGC_CUSTOM_APP_NAME = "AGS"
+        //     QGC_CUSTOM_GENERIC_NAME = "Auterion Ground Station"
+        //     QGC_CUSTOM_BINARY_NAME = "AuterionGS"
+        //     QGC_CUSTOM_LINUX_START_SH = "${env.WORKSPACE}/custom/deploy/qgroundcontrol-start.sh"
+        //     QGC_CUSTOM_APP_ICON = "${env.WORKSPACE}/custom/res/src/Auterion_Icon.png"
+        //     QGC_CUSTOM_APP_ICON_NAME = "Auterion_Icon"
+        //   }
+        //   agent {
+        //       label 'docker'
+        //     /*docker {
+        //       image 'mavlink/qgc-build-linux:2019-02-03'
+        //       args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
+        //     }*/
+        //     // TODO: remove after sync upstream
+        //     // Custom docker file that extends on the upstream one in order to provide unmerged features
+        //     dockerfile {
+        //       dir 'custom/deploy/ci/linux'
+        //       args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
+        //     }
+        //   }
+        //   steps {
+        //     sh 'export'
+        //     sh 'ccache -z'
+        //     sh 'git submodule deinit -f .'
+        //     sh 'git clean -ff -x -d .'
+        //     sh 'git submodule update --init --recursive --force'
+        //     sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+        //     sh 'cd build; make -j`nproc --all`'
 
-            // Create AppImg
-            sh 'deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
-            sh 'chmod +x AuterionGS.AppImage'
+        //     // Create AppImg
+        //     sh 'deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
+        //     sh 'chmod +x AuterionGS.AppImage'
 
-            // Cache build files
-            sh 'ccache -s'
-          }
-          post {
-            always {
-                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-                archiveArtifacts artifacts: 'AuterionGS.AppImage', onlyIfSuccessful: true
-            }
-            cleanup {
-              sh 'git clean -ff -x -d .'
-            }
-          }
-        }
+        //     // Cache build files
+        //     sh 'ccache -s'
+        //   }
+        //   post {
+        //     always {
+        //         archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+        //         archiveArtifacts artifacts: 'AuterionGS.AppImage', onlyIfSuccessful: true
+        //     }
+        //     cleanup {
+        //       sh 'git clean -ff -x -d .'
+        //     }
+        //   }
+        // }
 
         /*
         stage('Linux Release (cmake)') {
@@ -327,6 +330,32 @@ pipeline {
           }
         }
         */
+
+        stage('Windows Release') {
+          environment {
+            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
+          }
+          agent {
+            node {
+              label 'windows'
+            }
+          }
+          steps {
+            bat 'git submodule deinit -f .'
+            bat 'git clean -ff -x -d .'
+            bat 'git submodule update --init --recursive --force'
+            bat '.\\tools\\build\\build_windows.bat'
+          }
+          post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
+            }
+            cleanup {
+              bat 'git clean -ff -x -d .'
+            }
+          }
+        }
 
       } // parallel
     } // stage('build')
