@@ -106,14 +106,6 @@ void MissionCommandTree::_collapseHierarchy(Vehicle*                            
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
 
     for (MAV_CMD command: cmdList->commandIds()) {
-        // Only add supported command to tree (MAV_CMD_NAV_LAST is used for planned home position)
-        if (!qgcApp()->runningUnitTests()
-                && !vehicle->firmwarePlugin()->supportedMissionCommands().isEmpty()
-                && !vehicle->firmwarePlugin()->supportedMissionCommands().contains(command)
-                && command != MAV_CMD_NAV_LAST) {
-            continue;
-        }
-
         MissionCommandUIInfo* uiInfo = cmdList->getUIInfo(command);
         if (uiInfo) {
             if (collapsedTree.contains(command)) {
@@ -125,22 +117,20 @@ void MissionCommandTree::_collapseHierarchy(Vehicle*                            
     }
 }
 
-void MissionCommandTree::_buildAvailableCommands(Vehicle* vehicle)
+void MissionCommandTree::_buildAllCommands(Vehicle* vehicle)
 {
     MAV_AUTOPILOT   baseFirmwareType;
     MAV_TYPE        baseVehicleType;
 
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
 
-    if (_availableCommands.contains(baseFirmwareType) &&
-            _availableCommands[baseFirmwareType].contains(baseVehicleType)) {
-        // Available commands list already built
+    if (_allCommands.contains(baseFirmwareType) &&
+            _allCommands[baseFirmwareType].contains(baseVehicleType)) {
+        // Already built
         return;
     }
 
-    // Build new available commands list
-
-    QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree = _availableCommands[baseFirmwareType][baseVehicleType];
+    QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree = _allCommands[baseFirmwareType][baseVehicleType];
 
     // Any Firmware, Any Vehicle
     _collapseHierarchy(vehicle, _staticCommandTree[MAV_AUTOPILOT_GENERIC][MAV_TYPE_GENERIC], collapsedTree);
@@ -160,16 +150,17 @@ void MissionCommandTree::_buildAvailableCommands(Vehicle* vehicle)
         }
     }
 
-    // Build category list
-    QMapIterator<MAV_CMD, MissionCommandUIInfo*> iter(collapsedTree);
-    while (iter.hasNext()) {
-        iter.next();
-        QString newCategory = iter.value()->category();
-        if (!_availableCategories[baseFirmwareType][baseVehicleType].contains(newCategory)) {
-            _availableCategories[baseFirmwareType][baseVehicleType].append(newCategory);
+    // Build category list from supported commands
+    QList<MAV_CMD> supportedCommands = vehicle->firmwarePlugin()->supportedMissionCommands();
+    for (MAV_CMD cmd: collapsedTree.keys()) {
+        if (supportedCommands.contains(cmd)) {
+            QString newCategory = collapsedTree[cmd]->category();
+            if (!_supportedCategories[baseFirmwareType][baseVehicleType].contains(newCategory)) {
+                _supportedCategories[baseFirmwareType][baseVehicleType].append(newCategory);
+            }
         }
     }
-    _availableCategories[baseFirmwareType][baseVehicleType].append(_allCommandsCategory);
+    _supportedCategories[baseFirmwareType][baseVehicleType].append(_allCommandsCategory);
 }
 
 QStringList MissionCommandTree::_availableCategoriesForVehicle(Vehicle* vehicle)
@@ -178,9 +169,9 @@ QStringList MissionCommandTree::_availableCategoriesForVehicle(Vehicle* vehicle)
     MAV_TYPE        baseVehicleType;
 
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
-    _buildAvailableCommands(vehicle);
+    _buildAllCommands(vehicle);
 
-    return _availableCategories[baseFirmwareType][baseVehicleType];
+    return _supportedCategories[baseFirmwareType][baseVehicleType];
 }
 
 QString MissionCommandTree::friendlyName(MAV_CMD command)
@@ -191,7 +182,7 @@ QString MissionCommandTree::friendlyName(MAV_CMD command)
     if (uiInfo) {
         return uiInfo->friendlyName();
     } else {
-        return QString("MAV_CMD(%1)").arg((int)command);
+        return QStringLiteral("MAV_CMD(%1)").arg((int)command);
     }
 }
 
@@ -203,7 +194,7 @@ QString MissionCommandTree::rawName(MAV_CMD command)
     if (uiInfo) {
         return uiInfo->rawName();
     } else {
-        return QString("MAV_CMD(%1)").arg((int)command);
+        return QStringLiteral("MAV_CMD(%1)").arg((int)command);
     }
 }
 
@@ -218,13 +209,13 @@ const MissionCommandUIInfo* MissionCommandTree::getUIInfo(Vehicle* vehicle, MAV_
     MAV_TYPE        baseVehicleType;
 
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
-    _buildAvailableCommands(vehicle);
+    _buildAllCommands(vehicle);
 
-    const QMap<MAV_CMD, MissionCommandUIInfo*>& infoMap = _availableCommands[baseFirmwareType][baseVehicleType];
+    const QMap<MAV_CMD, MissionCommandUIInfo*>& infoMap = _allCommands[baseFirmwareType][baseVehicleType];
     if (infoMap.contains(command)) {
         return infoMap[command];
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -232,21 +223,19 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
 {
     MAV_AUTOPILOT   baseFirmwareType;
     MAV_TYPE        baseVehicleType;
+    QList<MAV_CMD>  supportedCommands = vehicle->firmwarePlugin()->supportedMissionCommands();
 
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
-    _buildAvailableCommands(vehicle);
+    _buildAllCommands(vehicle);
 
     QVariantList list;
-    QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _availableCommands[baseFirmwareType][baseVehicleType];
+    QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _allCommands[baseFirmwareType][baseVehicleType];
     for (MAV_CMD command: commandMap.keys()) {
-        if (command == MAV_CMD_NAV_LAST) {
-            // MAV_CMD_NAV_LAST is used for Mission Settings item. Although we want to be able to get command info for it.
-            // The user should not be able to use it as a command.
-            continue;
-        }
-        MissionCommandUIInfo* uiInfo = commandMap[command];
-        if (uiInfo->category() == category || category == _allCommandsCategory) {
-            list.append(QVariant::fromValue(uiInfo));
+        if (supportedCommands.contains(command)) {
+            MissionCommandUIInfo* uiInfo = commandMap[command];
+            if (uiInfo->category() == category || category == _allCommandsCategory) {
+                list.append(QVariant::fromValue(uiInfo));
+            }
         }
     }
 
