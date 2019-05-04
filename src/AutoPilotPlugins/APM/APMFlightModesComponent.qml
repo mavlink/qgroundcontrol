@@ -96,10 +96,10 @@ SetupPage {
                         }
 
                         GridLayout {
-                            rows:   7
+                            rows:   _customSimpleMode ? 7 : 6
                             flow:   GridLayout.TopToBottom
 
-                            QGCLabel { text: "" }
+                            QGCLabel { text: ""; visible: _customSimpleMode }
                             Repeater {
                                 model:  6
 
@@ -111,7 +111,7 @@ SetupPage {
                                 }
                             }
 
-                            QGCLabel { text: "" }
+                            QGCLabel { text: ""; visible: _customSimpleMode }
                             Repeater {
                                 model:  6
 
@@ -154,7 +154,7 @@ SetupPage {
                                 }
                             }
 
-                            QGCLabel { text: "" }
+                            QGCLabel { text: ""; visible: _customSimpleMode }
                             Repeater {
                                 model:  6
 
