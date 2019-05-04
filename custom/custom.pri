@@ -19,7 +19,7 @@ exists($$PWD/custom/custom.pri) {
 
     #   Build number is automatic
 
-    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list master --first-parent --count)
+    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list $$GIT_BRANCH --first-parent --count)
     win32 {
         AUTERION_QGC_VER_BUILD = $$system("set /a $$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD")
     } else {
