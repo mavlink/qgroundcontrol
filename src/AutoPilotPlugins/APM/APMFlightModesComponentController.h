@@ -67,7 +67,6 @@ private slots:
     void _setupSimpleModeEnabled     (void);
 
 private:
-    bool            _rover;
     QString         _modeParamPrefix;
     QString         _modeChannelParam;
     int             _activeFlightMode;
@@ -85,6 +84,9 @@ private:
     static const int        _cChannelOptions =  10;
     static const int        _cSimpleModeBits =  8;
     static const int        _cFltModes =        6;
+
+    static const char*      _simpleParamName;
+    static const char*      _superSimpleParamName;
 
     static bool _typeRegistered;
 };
