@@ -14,12 +14,55 @@
 #include <QVariant>
 #include <QQmlProperty>
 
+bool APMFlightModesComponentController::_typeRegistered = false;
+
 APMFlightModesComponentController::APMFlightModesComponentController(void)
-    : _activeFlightMode(0)
-    , _channelCount(Vehicle::cMaxRcChannels)
+    : _rover                (_vehicle->rover())
+    , _activeFlightMode     (0)
+    , _channelCount         (Vehicle::cMaxRcChannels)
+    , _simpleMode           (SimpleModeStandard)
+    , _simpleModeFact       (_rover ? nullptr : getParameterFact(-1, "SIMPLE"))
+    , _superSimpleModeFact  (_rover ? nullptr : getParameterFact(-1, "SUPER_SIMPLE"))
+    , _simpleModesSupported (_simpleModeFact && _superSimpleModeFact)
 {
+    if (!_typeRegistered) {
+        qmlRegisterUncreatableType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController", "Reference only");
+    }
+
     _modeParamPrefix = _vehicle->rover() ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
     _modeChannelParam = _vehicle->rover() ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");
+
+    _simpleModeNames << tr("Off") << tr("Simple") << tr("Super-Simple") << tr("Custom");
+    for (int i=0; i<_cFltModes; i++) {
+        _simpleModeEnabled.append(QVariant(false));
+        _superSimpleModeEnabled.append(QVariant(false));
+    }
+
+    if (!_rover) {
+        for (int i=0; i<_cFltModes; i++) {
+            Fact* fltModeFact = getParameterFact(-1, QStringLiteral("%1%2").arg(_modeParamPrefix).arg(i+1));
+            _rgFltModeFacts.append(fltModeFact);
+            connect(fltModeFact, &Fact::rawValueChanged, this, &APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams);
+        }
+
+        _adjustSimpleModeEnabledFromParams();
+
+        uint8_t simpleModeValue = static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
+        uint8_t superSimpleModeValue = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
+        if (simpleModeValue == 0 && superSimpleModeValue == 0) {
+            _simpleMode = SimpleModeStandard;
+        } else if (simpleModeValue == _allSimpleBits && superSimpleModeValue == 0) {
+            _simpleMode = SimpleModeSimple;
+        } else if (simpleModeValue == 0 && superSimpleModeValue == _allSimpleBits) {
+            _simpleMode = SimpleModeSuperSimple;
+        } else {
+            _simpleMode = SimpleModeCustom;
+        }
+
+        connect(this,                   &APMFlightModesComponentController::simpleModeChanged,  this, &APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode);
+        connect(_simpleModeFact,        &Fact::rawValueChanged,                                 this, &APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams);
+        connect(_superSimpleModeFact,   &Fact::rawValueChanged,                                 this, &APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams);
+    }
 
     QStringList usedParams;
     for (int i=1; i<7; i++) {
@@ -29,8 +72,10 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
         return;
     }
 
-    _rgChannelOptionEnabled << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false) << QVariant(false);
-    
+    for (int i=0; i<_cChannelOptions; i++) {
+        _rgChannelOptionEnabled.append(QVariant(false));
+    }
+
     connect(_vehicle, &Vehicle::rcChannelsChanged, this, &APMFlightModesComponentController::_rcChannelsChanged);
 }
 
@@ -65,7 +110,7 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
     }
     emit activeFlightModeChanged(_activeFlightMode);
 
-    for (int i=0; i<6; i++) {
+    for (int i=0; i<_cChannelOptions; i++) {
         _rgChannelOptionEnabled[i] = QVariant(false);
         channelValue = pwmValues[i+6];
         if (channelValue > 1800) {
@@ -73,4 +118,80 @@ void APMFlightModesComponentController::_rcChannelsChanged(int channelCount, int
         }
     }
     emit channelOptionEnabledChanged();
+}
+
+void APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode(void)
+{
+    int newSimpleModeValue = 0;
+    int newSuperSimpleModeValue = 0;
+
+    if (_simpleMode == SimpleModeSimple) {
+        newSimpleModeValue = _allSimpleBits;
+    } else if (_simpleMode == SimpleModeSuperSimple) {
+        newSuperSimpleModeValue = _allSimpleBits;
+    }
+
+    _simpleModeFact->setRawValue(newSimpleModeValue);
+    _superSimpleModeFact->setRawValue(newSuperSimpleModeValue);
+}
+
+void APMFlightModesComponentController::setSimpleMode(int fltModeIndex, bool enabled)
+{
+    if (fltModeIndex < _cFltModes) {
+        int fltMode = _rgFltModeFacts[fltModeIndex]->rawValue().toInt();
+        if (fltMode < _cSimpleModeBits) {
+            uint8_t mode = static_cast<uint8_t>(_simpleModeFact->rawValue().toInt());
+            if (enabled) {
+                mode |= 1 << fltMode;
+            } else {
+                mode &= ~(1 << fltMode);
+            }
+            _simpleModeFact->setRawValue(mode);
+        }
+    }
+}
+
+void APMFlightModesComponentController::setSuperSimpleMode(int fltModeIndex, bool enabled)
+{
+    if (fltModeIndex < _cFltModes) {
+        int fltMode = _rgFltModeFacts[fltModeIndex]->rawValue().toInt();
+        if (fltMode < _cSimpleModeBits) {
+            uint8_t mode = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toInt());
+            if (enabled) {
+                mode |= 1 << fltMode;
+            } else {
+                mode &= ~(1 << fltMode);
+            }
+            _superSimpleModeFact->setRawValue(mode);
+        }
+    }
+}
+
+void APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams(void)
+{
+    uint8_t simpleMode =        static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
+    uint8_t superSimpleMode =   static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
+
+    for (int fltModeIndex=0; fltModeIndex<_cFltModes; fltModeIndex++) {
+        _simpleModeEnabled[fltModeIndex] =      false;
+        _superSimpleModeEnabled[fltModeIndex] = false;
+    }
+
+    for (int fltModeBit=0; fltModeBit<_cSimpleModeBits; fltModeBit++) {
+        for (int fltModeIndex=0; fltModeIndex<_cFltModes; fltModeIndex++) {
+            int fltModeValue = _rgFltModeFacts[fltModeIndex]->rawValue().toInt();
+            uint8_t bitSet = 1 << fltModeBit;
+            bool simpleModeBitEnabled = !!(simpleMode & bitSet) && fltModeValue == fltModeBit;
+            bool superSimpleModeBitEnabled = !!(superSimpleMode & bitSet) && fltModeValue == fltModeBit;
+            if (simpleModeBitEnabled) {
+                _simpleModeEnabled[fltModeIndex] = true;
+            }
+            if (superSimpleModeBitEnabled) {
+                _superSimpleModeEnabled[fltModeIndex] = true;
+            }
+        }
+    }
+
+    emit simpleModeEnabledChanged();
+    emit superSimpleModeEnabledChanged();
 }
