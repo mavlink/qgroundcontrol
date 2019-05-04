@@ -12,7 +12,6 @@ pipeline {
             QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
           }
           agent {
-            label 'docker'
             /*
             docker {
               label 'docker'
@@ -21,6 +20,7 @@ pipeline {
             }
             */
             dockerfile {
+              label 'docker'
               dir 'custom/deploy/ci/android'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
@@ -123,7 +123,6 @@ pipeline {
             QGC_CUSTOM_APP_ICON_NAME = "Auterion_Icon"
           }
           agent {
-              label 'docker'
             /*docker {
               image 'mavlink/qgc-build-linux:2019-02-03'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
@@ -131,6 +130,7 @@ pipeline {
             // TODO: remove after sync upstream
             // Custom docker file that extends on the upstream one in order to provide unmerged features
             dockerfile {
+              label 'docker'
               dir 'custom/deploy/ci/linux'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
             }
