@@ -16,13 +16,15 @@
 
 bool APMFlightModesComponentController::_typeRegistered = false;
 
+const char* APMFlightModesComponentController::_simpleParamName =       "SIMPLE";
+const char* APMFlightModesComponentController::_superSimpleParamName =  "SUPER_SIMPLE";
+
 APMFlightModesComponentController::APMFlightModesComponentController(void)
-    : _rover                (_vehicle->rover())
-    , _activeFlightMode     (0)
+    : _activeFlightMode     (0)
     , _channelCount         (Vehicle::cMaxRcChannels)
     , _simpleMode           (SimpleModeStandard)
-    , _simpleModeFact       (_rover ? nullptr : getParameterFact(-1, "SIMPLE"))
-    , _superSimpleModeFact  (_rover ? nullptr : getParameterFact(-1, "SUPER_SIMPLE"))
+    , _simpleModeFact       (parameterExists(-1, _simpleParamName)      ? getParameterFact(-1, _simpleParamName) : nullptr)
+    , _superSimpleModeFact  (parameterExists(-1, _superSimpleParamName) ? getParameterFact(-1, _superSimpleParamName) : nullptr)
     , _simpleModesSupported (_simpleModeFact && _superSimpleModeFact)
 {
     if (!_typeRegistered) {
@@ -38,7 +40,7 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
         _superSimpleModeEnabled.append(QVariant(false));
     }
 
-    if (!_rover) {
+    if (_simpleModesSupported) {
         _setupSimpleModeEnabled();
 
         uint8_t simpleModeValue = static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
