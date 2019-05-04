@@ -39,13 +39,7 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
     }
 
     if (!_rover) {
-        for (int i=0; i<_cFltModes; i++) {
-            Fact* fltModeFact = getParameterFact(-1, QStringLiteral("%1%2").arg(_modeParamPrefix).arg(i+1));
-            _rgFltModeFacts.append(fltModeFact);
-            connect(fltModeFact, &Fact::rawValueChanged, this, &APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams);
-        }
-
-        _adjustSimpleModeEnabledFromParams();
+        _setupSimpleModeEnabled();
 
         uint8_t simpleModeValue = static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
         uint8_t superSimpleModeValue = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
@@ -59,9 +53,7 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
             _simpleMode = SimpleModeCustom;
         }
 
-        connect(this,                   &APMFlightModesComponentController::simpleModeChanged,  this, &APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode);
-        connect(_simpleModeFact,        &Fact::rawValueChanged,                                 this, &APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams);
-        connect(_superSimpleModeFact,   &Fact::rawValueChanged,                                 this, &APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams);
+        connect(this, &APMFlightModesComponentController::simpleModeChanged, this, &APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode);
     }
 
     QStringList usedParams;
@@ -131,6 +123,13 @@ void APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode(void)
         newSuperSimpleModeValue = _allSimpleBits;
     }
 
+    for (int i=0; i<_cFltModes; i++) {
+        _simpleModeEnabled[i] =         false;
+        _superSimpleModeEnabled[i] =    false;
+    }
+    emit simpleModeEnabledChanged();
+    emit superSimpleModeEnabledChanged();
+
     _simpleModeFact->setRawValue(newSimpleModeValue);
     _superSimpleModeFact->setRawValue(newSuperSimpleModeValue);
 }
@@ -138,58 +137,38 @@ void APMFlightModesComponentController::_updateSimpleParamsFromSimpleMode(void)
 void APMFlightModesComponentController::setSimpleMode(int fltModeIndex, bool enabled)
 {
     if (fltModeIndex < _cFltModes) {
-        int fltMode = _rgFltModeFacts[fltModeIndex]->rawValue().toInt();
-        if (fltMode < _cSimpleModeBits) {
-            uint8_t mode = static_cast<uint8_t>(_simpleModeFact->rawValue().toInt());
-            if (enabled) {
-                mode |= 1 << fltMode;
-            } else {
-                mode &= ~(1 << fltMode);
-            }
-            _simpleModeFact->setRawValue(mode);
+        uint8_t mode = static_cast<uint8_t>(_simpleModeFact->rawValue().toInt());
+        if (enabled) {
+            mode |= 1 << fltModeIndex;
+        } else {
+            mode &= ~(1 << fltModeIndex);
         }
+        _simpleModeFact->setRawValue(mode);
     }
 }
 
 void APMFlightModesComponentController::setSuperSimpleMode(int fltModeIndex, bool enabled)
 {
     if (fltModeIndex < _cFltModes) {
-        int fltMode = _rgFltModeFacts[fltModeIndex]->rawValue().toInt();
-        if (fltMode < _cSimpleModeBits) {
-            uint8_t mode = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toInt());
-            if (enabled) {
-                mode |= 1 << fltMode;
-            } else {
-                mode &= ~(1 << fltMode);
-            }
-            _superSimpleModeFact->setRawValue(mode);
+        uint8_t mode = static_cast<uint8_t>(_superSimpleModeFact->rawValue().toInt());
+        if (enabled) {
+            mode |= 1 << fltModeIndex;
+        } else {
+            mode &= ~(1 << fltModeIndex);
         }
+        _superSimpleModeFact->setRawValue(mode);
     }
 }
 
-void APMFlightModesComponentController::_adjustSimpleModeEnabledFromParams(void)
+void APMFlightModesComponentController::_setupSimpleModeEnabled(void)
 {
     uint8_t simpleMode =        static_cast<uint8_t>(_simpleModeFact->rawValue().toUInt());
     uint8_t superSimpleMode =   static_cast<uint8_t>(_superSimpleModeFact->rawValue().toUInt());
 
-    for (int fltModeIndex=0; fltModeIndex<_cFltModes; fltModeIndex++) {
-        _simpleModeEnabled[fltModeIndex] =      false;
-        _superSimpleModeEnabled[fltModeIndex] = false;
-    }
-
-    for (int fltModeBit=0; fltModeBit<_cSimpleModeBits; fltModeBit++) {
-        for (int fltModeIndex=0; fltModeIndex<_cFltModes; fltModeIndex++) {
-            int fltModeValue = _rgFltModeFacts[fltModeIndex]->rawValue().toInt();
-            uint8_t bitSet = 1 << fltModeBit;
-            bool simpleModeBitEnabled = !!(simpleMode & bitSet) && fltModeValue == fltModeBit;
-            bool superSimpleModeBitEnabled = !!(superSimpleMode & bitSet) && fltModeValue == fltModeBit;
-            if (simpleModeBitEnabled) {
-                _simpleModeEnabled[fltModeIndex] = true;
-            }
-            if (superSimpleModeBitEnabled) {
-                _superSimpleModeEnabled[fltModeIndex] = true;
-            }
-        }
+    for (int i=0; i<_cFltModes; i++) {
+        uint8_t bitSet = static_cast<uint8_t>(1 << i);
+        _simpleModeEnabled[i] = !!(simpleMode & bitSet);
+        _superSimpleModeEnabled[i] = !!(superSimpleMode & bitSet);
     }
 
     emit simpleModeEnabledChanged();

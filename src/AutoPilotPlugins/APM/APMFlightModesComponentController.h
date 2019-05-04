@@ -64,7 +64,7 @@ signals:
 private slots:
     void _rcChannelsChanged                     (int channelCount, int pwmValues[Vehicle::cMaxRcChannels]);
     void _updateSimpleParamsFromSimpleMode      (void);
-    void _adjustSimpleModeEnabledFromParams     (void);
+    void _setupSimpleModeEnabled     (void);
 
 private:
     bool            _rover;
@@ -75,7 +75,6 @@ private:
     QVariantList    _rgChannelOptionEnabled;
     QStringList     _simpleModeNames;
     int             _simpleMode;
-    QList<Fact*>    _rgFltModeFacts;
     Fact*           _simpleModeFact;
     Fact*           _superSimpleModeFact;
     bool            _simpleModesSupported;
