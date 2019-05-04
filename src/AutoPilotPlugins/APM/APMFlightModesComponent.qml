@@ -150,7 +150,7 @@ SetupPage {
                                     Layout.alignment:   Qt.AlignHCenter
                                     visible:            _customSimpleMode
                                     checked:            modelData
-                                    onClicked:          controller.setSimpleMode(index, checked)
+                                    onClicked:          controller.setSuperSimpleMode(index, checked)
                                 }
                             }
 
@@ -166,7 +166,7 @@ SetupPage {
                             spacing: _margins
                             visible: controller.simpleModesSupported
 
-                            QGCLabel { text: qsTr("Set All Flight Modes To") }
+                            QGCLabel { text: qsTr("Simple Mode") }
 
                             QGCComboBox {
                                 model:          controller.simpleModeNames
