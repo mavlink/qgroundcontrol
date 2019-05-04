@@ -6,6 +6,8 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* ArduPilot: Copter - Add suppor for Simple and Super Simple flight modes
+* ArduPilot: Flight Mode setup - Switch Options were not showing up for all firmware revs
 * ArduPilot: Copter - Advanced Tuning support
 * ArduPilot: Rover - Frame setup support
 * ArduPilot: Copter - Update support to 3.5+
