@@ -895,12 +895,16 @@ void Vehicle::_handleStatusText(mavlink_message_t& message, bool longVersion)
 
     if (longVersion) {
         b.resize(MAVLINK_MSG_STATUSTEXT_LONG_FIELD_TEXT_LEN+1);
-        mavlink_msg_statustext_long_get_text(&message, b.data());
-        severity = mavlink_msg_statustext_long_get_severity(&message);
+        mavlink_statustext_long_t statustextLong;
+        mavlink_msg_statustext_long_decode(&message, &statustextLong);
+        strncpy(b.data(), statustextLong.text, MAVLINK_MSG_STATUSTEXT_LONG_FIELD_TEXT_LEN);
+        severity = statustextLong.severity;
     } else {
         b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1);
-        mavlink_msg_statustext_get_text(&message, b.data());
-        severity = mavlink_msg_statustext_get_severity(&message);
+        mavlink_statustext_t statustext;
+        mavlink_msg_statustext_decode(&message, &statustext);
+        strncpy(b.data(), statustext.text, MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
+        severity = statustext.severity;
     }
     b[b.length()-1] = '\0';
     messageText = QString(b);
