@@ -667,6 +667,7 @@ public:
     Q_PROPERTY(Fact* headingToHome      READ headingToHome      CONSTANT)
     Q_PROPERTY(Fact* distanceToGCS      READ distanceToGCS      CONSTANT)
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
+    Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
 
     Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
     Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
@@ -963,6 +964,7 @@ public:
     Fact* headingToHome     (void) { return &_headingToHomeFact; }
     Fact* distanceToGCS     (void) { return &_distanceToGCSFact; }
     Fact* hobbs             (void) { return &_hobbsFact; }
+    Fact* throttlePct       (void) { return &_throttlePctFact; }
 
     FactGroup* gpsFactGroup             (void) { return &_gpsFactGroup; }
     FactGroup* battery1FactGroup        (void) { return &_battery1FactGroup; }
@@ -1502,6 +1504,7 @@ private:
     Fact _headingToHomeFact;
     Fact _distanceToGCSFact;
     Fact _hobbsFact;
+    Fact _throttlePctFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
     VehicleBatteryFactGroup         _battery1FactGroup;
@@ -1531,6 +1534,7 @@ private:
     static const char* _headingToHomeFactName;
     static const char* _distanceToGCSFactName;
     static const char* _hobbsFactName;
+    static const char* _throttlePctFactName;
 
     static const char* _gpsFactGroupName;
     static const char* _battery1FactGroupName;
