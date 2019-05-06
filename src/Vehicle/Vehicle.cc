@@ -75,6 +75,7 @@ const char* Vehicle::_distanceToHomeFactName =      "distanceToHome";
 const char* Vehicle::_headingToHomeFactName =       "headingToHome";
 const char* Vehicle::_distanceToGCSFactName =       "distanceToGCS";
 const char* Vehicle::_hobbsFactName =               "hobbs";
+const char* Vehicle::_throttlePctFactName =         "throttlePct";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
 const char* Vehicle::_battery1FactGroupName =           "battery";
@@ -204,6 +205,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _headingToHomeFact    (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
     , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
+    , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
     , _battery1FactGroup(this)
     , _battery2FactGroup(this)
@@ -407,6 +409,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _headingToHomeFact    (0, _headingToHomeFactName,     FactMetaData::valueTypeDouble)
     , _distanceToGCSFact    (0, _distanceToGCSFactName,     FactMetaData::valueTypeDouble)
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
+    , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
     , _battery1FactGroup(this)
     , _battery2FactGroup(this)
@@ -480,6 +483,7 @@ void Vehicle::_commonInit(void)
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
     _addFact(&_headingToHomeFact,       _headingToHomeFactName);
     _addFact(&_distanceToGCSFact,       _distanceToGCSFactName);
+    _addFact(&_throttlePctFact,         _throttlePctFactName);
 
     _hobbsFact.setRawValue(QVariant(QString("0000:00:00")));
     _addFact(&_hobbsFact,               _hobbsFactName);
