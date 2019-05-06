@@ -653,6 +653,8 @@ SetupPage {
                         readOnly:       true
                         frameVisible:   false
                         text:           statusTextAreaDefaultText
+                        selectByKeyboard:   false
+                        selectByMouse:      false
 
                         style: TextAreaStyle {
                             textColor:          qgcPal.text
