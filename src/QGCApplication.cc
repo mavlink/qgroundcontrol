@@ -474,11 +474,17 @@ void QGCApplication::_initCommon()
 
 bool QGCApplication::_initForNormalAppBoot()
 {
-    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
-        qWarning() << "Could not load /fonts/opensans font";
-    }
-    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
-        qWarning() << "Could not load /fonts/opensans-demibold font";
+
+    //-- See App.SettinsGroup.json for index
+    int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
+    //-- Don't load custom fonts if not using standard character set
+    if(langID != 6 /*Korean*/ && langID != 9 /*Chinese*/) {
+        if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+            qWarning() << "Could not load /fonts/opensans font";
+        }
+        if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+            qWarning() << "Could not load /fonts/opensans-demibold font";
+        }
     }
 
     QSettings settings;
