@@ -154,14 +154,6 @@ SetupPage {
                 }
             }
 
-            Component.onCompleted: {
-                var usingUDP = controller.usingUDPLink()
-                var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
-                if (usingUDP && !isSub) {
-                    showMessage(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."), StandardButton.Ok)
-                }
-            }
-
             QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
             Component {
