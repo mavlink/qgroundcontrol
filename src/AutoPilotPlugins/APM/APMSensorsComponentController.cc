@@ -24,42 +24,27 @@ QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsCompone
 const char* APMSensorsComponentController::_compassCalFitnessParam = "COMPASS_CAL_FIT";
 
 APMSensorsComponentController::APMSensorsComponentController(void)
-    : _sensorsComponent(NULL)
-    , _statusLog(NULL)
-    , _progressBar(NULL)
-    , _nextButton(NULL)
-    , _cancelButton(NULL)
-    , _showOrientationCalArea(false)
-    , _calTypeInProgress(CalTypeNone)
-    , _orientationCalDownSideDone(false)
-    , _orientationCalUpsideDownSideDone(false)
-    , _orientationCalLeftSideDone(false)
-    , _orientationCalRightSideDone(false)
-    , _orientationCalNoseDownSideDone(false)
-    , _orientationCalTailDownSideDone(false)
-    , _orientationCalDownSideVisible(false)
-    , _orientationCalUpsideDownSideVisible(false)
-    , _orientationCalLeftSideVisible(false)
-    , _orientationCalRightSideVisible(false)
-    , _orientationCalNoseDownSideVisible(false)
-    , _orientationCalTailDownSideVisible(false)
-    , _orientationCalDownSideInProgress(false)
-    , _orientationCalUpsideDownSideInProgress(false)
-    , _orientationCalLeftSideInProgress(false)
-    , _orientationCalRightSideInProgress(false)
-    , _orientationCalNoseDownSideInProgress(false)
-    , _orientationCalTailDownSideInProgress(false)
-    , _orientationCalDownSideRotate(false)
-    , _orientationCalUpsideDownSideRotate(false)
-    , _orientationCalLeftSideRotate(false)
-    , _orientationCalRightSideRotate(false)
-    , _orientationCalNoseDownSideRotate(false)
-    , _orientationCalTailDownSideRotate(false)
-    , _waitingForCancel(false)
-    , _restoreCompassCalFitness(false)
+    : _sensorsComponent                         (nullptr)
+    , _statusLog                                (nullptr)
+    , _progressBar                              (nullptr)
+    , _nextButton                               (nullptr)
+    , _cancelButton                             (nullptr)
+    , _showOrientationCalArea                   (false)
+    , _calTypeInProgress                        (CalTypeNone)
+    , _orientationCalDownSideDone               (false)
+    , _orientationCalUpsideDownSideDone         (false)
+    , _orientationCalLeftSideDone               (false)
+    , _orientationCalRightSideDone              (false)
+    , _orientationCalNoseDownSideDone           (false)
+    , _orientationCalTailDownSideDone           (false)
+    , _waitingForCancel                         (false)
+    , _currentCalOrientation                    (CalOrientationNone)
+    , _restoreCompassCalFitness                 (false)
 {
     _compassCal.setVehicle(_vehicle);
     connect(&_compassCal, &APMCompassCal::vehicleTextMessage, this, &APMSensorsComponentController::_handleUASTextMessage);
+
+    connect(_vehicle, &Vehicle::mavlinkMessageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 
     APMAutoPilotPlugin * apmPlugin = qobject_cast<APMAutoPilotPlugin*>(_vehicle->autopilotPlugin());
 
@@ -76,8 +61,6 @@ APMSensorsComponentController::APMSensorsComponentController(void)
     } else {
         qWarning() << "Sensors component is missing";
     }
-
-    connect(qgcApp()->toolbox()->mavlinkProtocol(), &MAVLinkProtocol::messageReceived, this, &APMSensorsComponentController::_mavlinkMessageReceived);
 }
 
 APMSensorsComponentController::~APMSensorsComponentController()
@@ -130,22 +113,8 @@ void APMSensorsComponentController::_resetInternalState(void)
     _orientationCalRightSideDone = true;
     _orientationCalTailDownSideDone = true;
     _orientationCalNoseDownSideDone = true;
-    _orientationCalDownSideInProgress = false;
-    _orientationCalUpsideDownSideInProgress = false;
-    _orientationCalLeftSideInProgress = false;
-    _orientationCalRightSideInProgress = false;
-    _orientationCalNoseDownSideInProgress = false;
-    _orientationCalTailDownSideInProgress = false;
-    _orientationCalDownSideRotate = false;
-    _orientationCalUpsideDownSideRotate = false;
-    _orientationCalLeftSideRotate = false;
-    _orientationCalRightSideRotate = false;
-    _orientationCalNoseDownSideRotate = false;
-    _orientationCalTailDownSideRotate = false;
 
-    emit orientationCalSidesRotateChanged();
     emit orientationCalSidesDoneChanged();
-    emit orientationCalSidesInProgressChanged();
 }
 
 void APMSensorsComponentController::_stopCalibration(APMSensorsComponentController::StopCalibrationCode code)
@@ -350,80 +319,19 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
             _startVisualCalibration();
             _cancelButton->setEnabled(false);
 
-            // Reset all progress indication
             _orientationCalDownSideDone = false;
             _orientationCalUpsideDownSideDone = false;
             _orientationCalLeftSideDone = false;
             _orientationCalRightSideDone = false;
             _orientationCalTailDownSideDone = false;
             _orientationCalNoseDownSideDone = false;
-            _orientationCalDownSideInProgress = false;
-            _orientationCalUpsideDownSideInProgress = false;
-            _orientationCalLeftSideInProgress = false;
-            _orientationCalRightSideInProgress = false;
-            _orientationCalNoseDownSideInProgress = false;
-            _orientationCalTailDownSideInProgress = false;
-
-            // Reset all visibility
-            _orientationCalDownSideVisible = false;
-            _orientationCalUpsideDownSideVisible = false;
-            _orientationCalLeftSideVisible = false;
-            _orientationCalRightSideVisible = false;
-            _orientationCalTailDownSideVisible = false;
-            _orientationCalNoseDownSideVisible = false;
 
             _calTypeInProgress = CalTypeAccel;
-            _orientationCalDownSideVisible = true;
-            _orientationCalUpsideDownSideVisible = true;
-            _orientationCalLeftSideVisible = true;
-            _orientationCalRightSideVisible = true;
-            _orientationCalTailDownSideVisible = true;
-            _orientationCalNoseDownSideVisible = true;
+            _currentCalOrientation = CalOrientationNone;
 
             emit orientationCalSidesDoneChanged();
-            emit orientationCalSidesVisibleChanged();
-            emit orientationCalSidesInProgressChanged();
+            emit currentCalOrientationChanged(_currentCalOrientation);
             _updateAndEmitShowOrientationCalArea(true);
-        }
-
-        QString placeVehicle("place vehicle ");
-        if (_calTypeInProgress == CalTypeAccel && text.startsWith(placeVehicle)) {
-            text = text.right(text.length() - placeVehicle.length());
-            if (text.startsWith("level")) {
-                _orientationCalDownSideInProgress = true;
-                _nextButton->setEnabled(true);
-            } else if (text.startsWith("on its left")) {
-                _orientationCalDownSideDone =       true;
-                _orientationCalDownSideInProgress = false;
-                _orientationCalLeftSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(17 / 100.0));
-            } else if (text.startsWith("on its right")) {
-                _orientationCalLeftSideDone =       true;
-                _orientationCalLeftSideInProgress = false;
-                _orientationCalRightSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(34 / 100.0));
-            } else if (text.startsWith("nose down")) {
-                _orientationCalRightSideDone =       true;
-                _orientationCalRightSideInProgress = false;
-                _orientationCalNoseDownSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(51 / 100.0));
-            } else if (text.startsWith("nose up")) {
-                _orientationCalNoseDownSideDone =       true;
-                _orientationCalNoseDownSideInProgress = false;
-                _orientationCalTailDownSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(68 / 100.0));
-            } else if (text.startsWith("on its back")) {
-                _orientationCalTailDownSideDone =       true;
-                _orientationCalTailDownSideInProgress = false;
-                _orientationCalUpsideDownSideInProgress = true;
-                _progressBar->setProperty("value", (qreal)(85 / 100.0));
-            }
-
-            _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation and press Next when ready"));
-
-            emit orientationCalSidesDoneChanged();
-            emit orientationCalSidesInProgressChanged();
-            emit orientationCalSidesRotateChanged();
         }
     }
 
@@ -444,203 +352,6 @@ void APMSensorsComponentController::_handleUASTextMessage(int uasId, int compId,
         _stopCalibration(StopCalibrationFailed);
         return;
     }
-
-#if 0
-
-    if (text.contains(QLatin1Literal("progress <"))) {
-        QString percent = text.split("<").last().split(">").first();
-        bool ok;
-        int p = percent.toInt(&ok);
-        if (ok && _progressBar) {
-            _progressBar->setProperty("value", (float)(p / 100.0));
-        }
-        return;
-    }
-
-    QString anyKey(QStringLiteral("and press any"));
-    if (text.contains(anyKey)) {
-        text = text.left(text.indexOf(anyKey)) + QStringLiteral("and click Next to continue.");
-        _nextButton->setEnabled(true);
-    }
-
-    _appendStatusLog(text);
-    qCDebug(APMSensorsComponentControllerLog) << text << severity;
-
-    if (text.contains(QLatin1String("Calibration successful"))) {
-        _stopCalibration(StopCalibrationSuccess);
-        return;
-    }
-
-    if (text.contains(QLatin1String("FAILED"))) {
-        _stopCalibration(StopCalibrationFailed);
-        return;
-    }
-
-    // All calibration messages start with [cal]
-    QString calPrefix(QStringLiteral("[cal] "));
-    if (!text.startsWith(calPrefix)) {
-        return;
-    }
-    text = text.right(text.length() - calPrefix.length());
-
-    QString calStartPrefix(QStringLiteral("calibration started: "));
-    if (text.startsWith(calStartPrefix)) {
-        text = text.right(text.length() - calStartPrefix.length());
-        
-        _startVisualCalibration();
-        
-        if (text == QLatin1Literal("accel") || text == QLatin1Literal("mag") || text == QLatin1Literal("gyro")) {
-            // Reset all progress indication
-            _orientationCalDownSideDone = false;
-            _orientationCalUpsideDownSideDone = false;
-            _orientationCalLeftSideDone = false;
-            _orientationCalRightSideDone = false;
-            _orientationCalTailDownSideDone = false;
-            _orientationCalNoseDownSideDone = false;
-            _orientationCalDownSideInProgress = false;
-            _orientationCalUpsideDownSideInProgress = false;
-            _orientationCalLeftSideInProgress = false;
-            _orientationCalRightSideInProgress = false;
-            _orientationCalNoseDownSideInProgress = false;
-            _orientationCalTailDownSideInProgress = false;
-            
-            // Reset all visibility
-            _orientationCalDownSideVisible = false;
-            _orientationCalUpsideDownSideVisible = false;
-            _orientationCalLeftSideVisible = false;
-            _orientationCalRightSideVisible = false;
-            _orientationCalTailDownSideVisible = false;
-            _orientationCalNoseDownSideVisible = false;
-            
-            _orientationCalAreaHelpText->setProperty("text", "Place your vehicle into one of the Incomplete orientations shown below and hold it still");
-            
-            if (text == "accel") {
-                _calTypeInProgress = CalTypeAccel;
-                _orientationCalDownSideVisible = true;
-                _orientationCalUpsideDownSideVisible = true;
-                _orientationCalLeftSideVisible = true;
-                _orientationCalRightSideVisible = true;
-                _orientationCalTailDownSideVisible = true;
-                _orientationCalNoseDownSideVisible = true;
-            } else if (text == "mag") {
-                _calTypeInProgress = CalTypeOffboardCompass;
-                _orientationCalDownSideVisible = true;
-                _orientationCalUpsideDownSideVisible = true;
-                _orientationCalLeftSideVisible = true;
-                _orientationCalRightSideVisible = true;
-                _orientationCalTailDownSideVisible = true;
-                _orientationCalNoseDownSideVisible = true;
-            } else {
-                Q_ASSERT(false);
-            }
-            emit orientationCalSidesDoneChanged();
-            emit orientationCalSidesVisibleChanged();
-            emit orientationCalSidesInProgressChanged();
-            _updateAndEmitShowOrientationCalArea(true);
-        }
-        return;
-    }
-    
-    if (text.endsWith(QLatin1Literal("orientation detected"))) {
-        QString side = text.section(" ", 0, 0);
-        qDebug() << "Side started" << side;
-        
-        if (side == QLatin1Literal("down")) {
-            _orientationCalDownSideInProgress = true;
-            if (_calTypeInProgress == CalTypeOffboardCompass) {
-                _orientationCalDownSideRotate = true;
-            }
-        } else if (side == QLatin1Literal("up")) {
-            _orientationCalUpsideDownSideInProgress = true;
-            if (_calTypeInProgress == CalTypeOffboardCompass) {
-                _orientationCalUpsideDownSideRotate = true;
-            }
-        } else if (side == QLatin1Literal("left")) {
-            _orientationCalLeftSideInProgress = true;
-            if (_calTypeInProgress == CalTypeOffboardCompass) {
-                _orientationCalLeftSideRotate = true;
-            }
-        } else if (side == QLatin1Literal("right")) {
-            _orientationCalRightSideInProgress = true;
-            if (_calTypeInProgress == CalTypeOffboardCompass) {
-                _orientationCalRightSideRotate = true;
-            }
-        } else if (side == QLatin1Literal("front")) {
-            _orientationCalNoseDownSideInProgress = true;
-            if (_calTypeInProgress == CalTypeOffboardCompass) {
-                _orientationCalNoseDownSideRotate = true;
-            }
-        } else if (side == QLatin1Literal("back")) {
-            _orientationCalTailDownSideInProgress = true;
-            if (_calTypeInProgress == CalTypeOffboardCompass) {
-                _orientationCalTailDownSideRotate = true;
-            }
-        }
-        
-        if (_calTypeInProgress == CalTypeOffboardCompass) {
-            _orientationCalAreaHelpText->setProperty("text", tr("Rotate the vehicle continuously as shown in the diagram until marked as Completed"));
-        } else {
-            _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation"));
-        }
-        
-        emit orientationCalSidesInProgressChanged();
-        emit orientationCalSidesRotateChanged();
-        return;
-    }
-    
-    if (text.endsWith(QLatin1Literal("side done, rotate to a different side"))) {
-        QString side = text.section(" ", 0, 0);
-        qDebug() << "Side finished" << side;
-        
-        if (side == QLatin1Literal("down")) {
-            _orientationCalDownSideInProgress = false;
-            _orientationCalDownSideDone = true;
-            _orientationCalDownSideRotate = false;
-        } else if (side == QLatin1Literal("up")) {
-            _orientationCalUpsideDownSideInProgress = false;
-            _orientationCalUpsideDownSideDone = true;
-            _orientationCalUpsideDownSideRotate = false;
-        } else if (side == QLatin1Literal("left")) {
-            _orientationCalLeftSideInProgress = false;
-            _orientationCalLeftSideDone = true;
-            _orientationCalLeftSideRotate = false;
-        } else if (side == QLatin1Literal("right")) {
-            _orientationCalRightSideInProgress = false;
-            _orientationCalRightSideDone = true;
-            _orientationCalRightSideRotate = false;
-        } else if (side == QLatin1Literal("front")) {
-            _orientationCalNoseDownSideInProgress = false;
-            _orientationCalNoseDownSideDone = true;
-            _orientationCalNoseDownSideRotate = false;
-        } else if (side == QLatin1Literal("back")) {
-            _orientationCalTailDownSideInProgress = false;
-            _orientationCalTailDownSideDone = true;
-            _orientationCalTailDownSideRotate = false;
-        }
-        
-        _orientationCalAreaHelpText->setProperty("text", tr("Place you vehicle into one of the orientations shown below and hold it still"));
-
-        emit orientationCalSidesInProgressChanged();
-        emit orientationCalSidesDoneChanged();
-        emit orientationCalSidesRotateChanged();
-        return;
-    }
-    
-    if (text.startsWith(QLatin1Literal("calibration done:"))) {
-        _stopCalibration(StopCalibrationSuccess);
-        return;
-    }
-
-    if (text.startsWith(QLatin1Literal("calibration cancelled"))) {
-        _stopCalibration(_waitingForCancel ? StopCalibrationCancelled : StopCalibrationFailed);
-        return;
-    }
-
-    if (text.startsWith(QLatin1Literal("calibration failed"))) {
-        _stopCalibration(StopCalibrationFailed);
-        return;
-    }
-#endif
 }
 
 void APMSensorsComponentController::_refreshParams(void)
@@ -692,18 +403,24 @@ void APMSensorsComponentController::cancelCalibration(void)
 
 void APMSensorsComponentController::nextClicked(void)
 {
-    mavlink_message_t       msg;
-    mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
-                                      qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
-                                      _vehicle->priorityLink()->mavlinkChannel(),
-                                      &msg,
-                                      0,    // command
-                                      1,    // result
-                                      0,    // progress
-                                      0,    // result_param2
-                                      0,    // target_system
-                                      0);   // target_component
+    mavlink_message_t msg;
 
+    if (_calTypeInProgress == CalTypeAccel) {
+        _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_ACCELCAL_VEHICLE_POS, true /* showError */, _currentCalOrientation);
+    } else {
+        mavlink_message_t       msg;
+        mavlink_msg_command_ack_pack_chan(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId(),
+                                          qgcApp()->toolbox()->mavlinkProtocol()->getComponentId(),
+                                          _vehicle->priorityLink()->mavlinkChannel(),
+                                          &msg,
+                                          0,    // command
+                                          1,    // result
+                                          0,    // progress
+                                          0,    // result_param2
+                                          0,    // target_system
+                                          0);   // target_component
+
+    }
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
     if (_calTypeInProgress == CalTypeCompassMot) {
@@ -841,14 +558,8 @@ void APMSensorsComponentController::_handleMagCalReport(mavlink_message_t& messa
     }
 }
 
-void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
+void APMSensorsComponentController::_mavlinkMessageReceived(mavlink_message_t message)
 {
-    Q_UNUSED(link);
-
-    if (message.sysid != _vehicle->id()) {
-        return;
-    }
-
     switch (message.msgid) {
     case MAVLINK_MSG_ID_COMMAND_ACK:
         _handleCommandAck(message);
@@ -858,6 +569,9 @@ void APMSensorsComponentController::_mavlinkMessageReceived(LinkInterface* link,
         break;
     case MAVLINK_MSG_ID_MAG_CAL_REPORT:
         _handleMagCalReport(message);
+        break;
+    case MAVLINK_MSG_ID_COMMAND_LONG:
+        _handleCommandLong(message);
         break;
     }
 }
@@ -869,3 +583,79 @@ void APMSensorsComponentController::_restorePreviousCompassCalFitness(void)
         getParameterFact(FactSystem::defaultComponentId, _compassCalFitnessParam)->setRawValue(_previousCompassCalFitness);
     }
 }
+
+void APMSensorsComponentController::_handleCommandLong(mavlink_message_t& message)
+{
+    CalOrientation_t newOrientation;
+
+    mavlink_command_long_t commandLong;
+    mavlink_msg_command_long_decode(&message, &commandLong);
+
+    if (commandLong.command == MAV_CMD_ACCELCAL_VEHICLE_POS && _calTypeInProgress == CalTypeAccel) {
+        bool orientationChanged =   _currentCalOrientation != commandLong.param1;
+        bool advanceProgress =      true;
+
+        if (orientationChanged) {
+            qDebug() << static_cast<CalOrientation_t>(commandLong.param1);
+        }
+
+        switch (static_cast<int>(commandLong.param1)) {
+        case ACCELCAL_VEHICLE_POS_LEVEL:
+            if (orientationChanged) {
+                advanceProgress = false;
+                _nextButton->setEnabled(true);
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_LEFT:
+            if (orientationChanged) {
+                _orientationCalDownSideDone = true;
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_RIGHT:
+            if (orientationChanged) {
+                _orientationCalLeftSideDone = true;
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_NOSEDOWN:
+            if (orientationChanged) {
+                _orientationCalRightSideDone = true;
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_NOSEUP:
+            if (orientationChanged) {
+                _orientationCalNoseDownSideDone = true;
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_BACK:
+            if (orientationChanged) {
+                _orientationCalTailDownSideDone = true;
+            }
+            break;
+        case ACCELCAL_VEHICLE_POS_SUCCESS:
+            qDebug() << "ACCELCAL_VEHICLE_POS_SUCCESS";
+            _stopCalibration(StopCalibrationSuccess);
+            advanceProgress = false;
+            break;
+        case ACCELCAL_VEHICLE_POS_FAILED:
+            qDebug() << "ACCELCAL_VEHICLE_POS_FAILED";
+            _stopCalibration(StopCalibrationFailed);
+            advanceProgress = false;
+            break;
+        }
+
+        if (orientationChanged) {
+            if (advanceProgress) {
+                double  progressValue =     _progressBar->property("value").toDouble();
+                double  progressIncrement = 17 / 100.0;
+                _progressBar->setProperty("value", progressValue + progressIncrement);
+            }
+
+            _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation and press Next when ready"));
+
+            _currentCalOrientation = static_cast<CalOrientation_t>(commandLong.param1);
+            emit orientationCalSidesDoneChanged();
+            emit currentCalOrientationChanged(_currentCalOrientation);
+        }
+    }
+}
+

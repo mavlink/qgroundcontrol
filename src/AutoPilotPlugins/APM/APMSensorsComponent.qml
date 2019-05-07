@@ -40,11 +40,11 @@ SetupPage {
             readonly property string orientationHelpSet:    qsTr("If mounted in the direction of flight, select None.")
             readonly property string orientationHelpCal:    qsTr("Before calibrating make sure rotation settings are correct. ") + orientationHelpSet
             readonly property string compassRotationText:   qsTr("If the compass or GPS module is mounted in flight direction, leave the default value (None)")
-
-            readonly property string compassHelp:   qsTr("For Compass calibration you will need to rotate your vehicle through a number of positions.")
-            readonly property string gyroHelp:      qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.")
-            readonly property string accelHelp:     qsTr("For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.")
-            readonly property string levelHelp:     qsTr("To level the horizon you need to place the vehicle in its level flight position and press OK.")
+            readonly property string compassHelp:           qsTr("For Compass calibration you will need to rotate your vehicle through a number of positions.")
+            readonly property string gyroHelp:              qsTr("For Gyroscope calibration you will need to place your vehicle on a surface and leave it still.")
+            readonly property string accelHelp:             qsTr("For Accelerometer calibration you will need to place your vehicle on all six sides on a perfectly level surface and hold it still in each orientation for a few seconds.")
+            readonly property string levelHelp:             qsTr("To level the horizon you need to place the vehicle in its level flight position and press OK.")
+            readonly property string holdStill:             qsTr("Hold Still")
 
             readonly property string statusTextAreaDefaultText: qsTr("Start the individual calibration steps by clicking one of the buttons to the left.")
 
@@ -690,55 +690,49 @@ SetupPage {
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
-                                visible:            controller.orientationCalDownSideVisible
                                 calValid:           controller.orientationCalDownSideDone
-                                calInProgress:      controller.orientationCalDownSideInProgress
-                                calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                calInProgress:      controller.currentCalOrientation === APMSensorsComponentController.CalOrientationDown
+                                calInProgressText:  holdStill
                                 imageSource:        "qrc:///qmlimages/VehicleDown.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
-                                visible:            controller.orientationCalLeftSideVisible
                                 calValid:           controller.orientationCalLeftSideDone
-                                calInProgress:      controller.orientationCalLeftSideInProgress
-                                calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                calInProgress:      controller.currentCalOrientation === APMSensorsComponentController.CalOrientationLeft
+                                calInProgressText:  holdStill
                                 imageSource:        "qrc:///qmlimages/VehicleLeft.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
-                                visible:            controller.orientationCalRightSideVisible
                                 calValid:           controller.orientationCalRightSideDone
-                                calInProgress:      controller.orientationCalRightSideInProgress
-                                calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                calInProgress:      controller.currentCalOrientation === APMSensorsComponentController.CalOrientationRight
+                                calInProgressText:  holdStill
                                 imageSource:        "qrc:///qmlimages/VehicleRight.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
-                                visible:            controller.orientationCalNoseDownSideVisible
                                 calValid:           controller.orientationCalNoseDownSideDone
-                                calInProgress:      controller.orientationCalNoseDownSideInProgress
-                                calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                calInProgress:      controller.currentCalOrientation === APMSensorsComponentController.CalOrientationNoseDown
+                                calInProgressText:  holdStill
                                 imageSource:        "qrc:///qmlimages/VehicleNoseDown.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
-                                visible:            controller.orientationCalTailDownSideVisible
                                 calValid:           controller.orientationCalTailDownSideDone
-                                calInProgress:      controller.orientationCalTailDownSideInProgress
-                                calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                calInProgress:      controller.currentCalOrientation === APMSensorsComponentController.CalOrientationTailDown
+                                calInProgressText:  holdStill
                                 imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
                                 height:             parent.indicatorHeight
-                                visible:            controller.orientationCalUpsideDownSideVisible
                                 calValid:           controller.orientationCalUpsideDownSideDone
-                                calInProgress:      controller.orientationCalUpsideDownSideInProgress
-                                calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                calInProgress:      controller.currentCalOrientation === APMSensorsComponentController.CalOrientationUpsideDown
+                                calInProgressText:  holdStill
                                 imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
                             }
                         }
