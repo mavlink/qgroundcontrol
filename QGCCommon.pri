@@ -253,6 +253,10 @@ ReleaseBuild {
     }
 
     WindowsBuild {
+        *msvc* { # visual studio spec filter
+            # Run compilation using VS compiler using multiple threads
+            QMAKE_CXXFLAGS += -MP
+        }
         # Enable function level linking and enhanced optimized debugging
         QMAKE_CFLAGS_RELEASE   += /Gy /Zo
         QMAKE_CXXFLAGS_RELEASE += /Gy /Zo

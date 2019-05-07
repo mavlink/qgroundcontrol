@@ -14,11 +14,13 @@ pipeline {
           agent {
             /*
             docker {
+              label 'docker'
               image 'mavlink/qgc-build-android:2019-02-03'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
             */
             dockerfile {
+              label 'docker'
               dir 'custom/deploy/ci/android'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
             }
@@ -128,6 +130,7 @@ pipeline {
             // TODO: remove after sync upstream
             // Custom docker file that extends on the upstream one in order to provide unmerged features
             dockerfile {
+              label 'docker'
               dir 'custom/deploy/ci/linux'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
             }
@@ -140,7 +143,6 @@ pipeline {
             sh 'git submodule update --init --recursive --force'
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
             sh 'cd build; make -j`nproc --all`'
-
             // Create AppImg
             sh 'deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
             sh 'chmod +x AuterionGS.AppImage'
@@ -328,6 +330,59 @@ pipeline {
         }
         */
 
+        // TODO: Check why incrementall compilation doesn't work
+        // stage('Dev Windows Release (Update)') {
+        //   environment {
+        //     QGC_CONFIG = 'release installer'
+        //     QGC_NSIS_INSTALLER_PARAMETERS='/X"SetCompressor /FINAL zlib"'
+        //   }
+        //   agent {
+        //     node {
+        //       label 'windows'
+        //     }
+        //   }
+        //   steps {
+        //     bat 'if exist .\\build-dev\\release\\*.exe (del /F /Q .\\build-dev\\release\\*.exe)'
+        //     bat '.\\tools\\build\\build_windows.bat release build-dev'
+        //   }
+        //   post {
+        //     always {
+        //         archiveArtifacts artifacts: 'build-dev/release/*.exe', onlyIfSuccessful: true
+        //     }
+        //     cleanup {
+        //       bat "echo Don't cleanup, we reuse the build. Not safe though"
+        //     }
+        //   }
+        // }
+
+        stage('Windows Release') {
+          environment {
+            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
+          }
+          agent {
+            node {
+              label 'windows'
+            }
+          }
+          steps {
+            bat 'git submodule deinit -f .'
+            //bat 'git clean -ff -x -e build-dev -d .'
+            bat 'git clean -ff -x -d .'
+            bat 'git submodule update --init --recursive --force'
+            bat '.\\tools\\build\\build_windows.bat release build'
+            bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
+          }
+          post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
+            }
+            cleanup {
+              //bat 'git clean -ff -x -e build-dev -d .'
+              bat 'git clean -ff -x -d .'
+            }
+          }
+        }
       } // parallel
     } // stage('build')
   } // stages
