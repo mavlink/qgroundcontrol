@@ -515,7 +515,7 @@ SetupPage {
                     QGCLabel {
                         width:      parent.width
                         wrapMode:   Text.WordWrap
-                        text:       qsTr("Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier.")
+                        text:       qsTr("Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new adjusted voltage multiplier.")
                     }
 
                     Grid {
@@ -536,7 +536,7 @@ SetupPage {
                     }
 
                     QGCButton {
-                        text: "Calculate"
+                        text: qsTr("Calculate And Set")
 
                         onClicked:  {
                             var measuredVoltageValue = parseFloat(measuredVoltage.text)
@@ -598,7 +598,7 @@ SetupPage {
                     }
 
                     QGCButton {
-                        text: "Calculate"
+                        text: qsTr("Calculate And Set")
 
                         onClicked:  {
                             var measuredCurrentValue = parseFloat(measuredCurrent.text)

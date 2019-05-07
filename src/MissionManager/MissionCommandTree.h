@@ -41,7 +41,7 @@ class MissionCommandTreeTest;
 /// For known firmwares, the override files are requested from the FirmwarePlugin.
 ///
 /// When ui info is requested for a specific vehicle the static hierarchy in _staticCommandTree is collapsed into the set of available commands in
-/// _availableCommands taking into account the appropriate set of overrides for the MAV_AUTOPILOT/MAV_TYPE combination associated with the vehicle.
+/// _allCommands taking into account the appropriate set of overrides for the MAV_AUTOPILOT/MAV_TYPE combination associated with the vehicle.
 ///
 class MissionCommandTree : public QGCTool
 {
@@ -68,12 +68,12 @@ public:
     virtual void setToolbox(QGCToolbox* toolbox);
 
 private:
-    void _collapseHierarchy(Vehicle* vehicle, const MissionCommandList* cmdList, QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree);
-    MAV_TYPE _baseVehicleType(MAV_TYPE mavType) const;
-    MAV_AUTOPILOT _baseFirmwareType(MAV_AUTOPILOT firmwareType) const;
-    void _buildAvailableCommands(Vehicle* vehicle);
-    QStringList _availableCategoriesForVehicle(Vehicle* vehicle);
-    void _baseVehicleInfo(Vehicle* vehicle, MAV_AUTOPILOT& baseFirmwareType, MAV_TYPE& baseVehicleType) const;
+    void            _collapseHierarchy(Vehicle* vehicle, const MissionCommandList* cmdList, QMap<MAV_CMD, MissionCommandUIInfo*>& collapsedTree);
+    MAV_TYPE        _baseVehicleType(MAV_TYPE mavType) const;
+    MAV_AUTOPILOT   _baseFirmwareType(MAV_AUTOPILOT firmwareType) const;
+    void             _buildAllCommands(Vehicle* vehicle);
+    QStringList     _availableCategoriesForVehicle(Vehicle* vehicle);
+    void            _baseVehicleInfo(Vehicle* vehicle, MAV_AUTOPILOT& baseFirmwareType, MAV_TYPE& baseVehicleType) const;
 
 private:
     QString             _allCommandsCategory;   ///< Category which contains all available commands
@@ -85,10 +85,10 @@ private:
     QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, MissionCommandList*>>                    _staticCommandTree;
 
     /// Collapsed hierarchy for specific vehicle type
-    QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, QMap<MAV_CMD, MissionCommandUIInfo*>>>   _availableCommands;
+    QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, QMap<MAV_CMD, MissionCommandUIInfo*>>>   _allCommands;
 
     /// Collapsed hierarchy for specific vehicle type
-    QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, QStringList>>                            _availableCategories;
+    QMap<MAV_AUTOPILOT, QMap<MAV_TYPE, QStringList /* category */>>             _supportedCategories;
 
 
 #ifdef UNITTEST_BUILD

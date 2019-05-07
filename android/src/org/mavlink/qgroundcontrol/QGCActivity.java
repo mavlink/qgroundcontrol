@@ -76,6 +76,7 @@ public class QGCActivity extends QtActivity
     private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
     private static PendingIntent                        _usbPermissionIntent = null;
     private TaiSync                                     taiSync = null;
+    private Timer                                       probeAccessoriesTimer = null;
 
     public static Context m_context;
 
@@ -225,7 +226,15 @@ public class QGCActivity extends QtActivity
             IntentFilter accessoryFilter = new IntentFilter(ACTION_USB_PERMISSION);
             filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
             registerReceiver(mOpenAccessoryReceiver, accessoryFilter);
-            probeAccessories();
+
+            probeAccessoriesTimer = new Timer();
+            probeAccessoriesTimer.schedule(new TimerTask() {
+                @Override
+                public void run()
+                {
+                    probeAccessories();
+                }
+            }, 0, 3000);
         } catch(Exception e) {
            Log.e(TAG, "Exception: " + e);
         }
@@ -243,6 +252,9 @@ public class QGCActivity extends QtActivity
     @Override
     protected void onDestroy()
     {
+        if (probeAccessoriesTimer != null) {
+            probeAccessoriesTimer.cancel();
+        }
         unregisterReceiver(mOpenAccessoryReceiver);
         try {
             if(_wakeLock != null) {
@@ -706,22 +718,26 @@ public class QGCActivity extends QtActivity
         }
     }
 
+    Object probeAccessoriesLock = new Object();
+
     private void probeAccessories()
     {
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, new Intent(ACTION_USB_PERMISSION), 0);
         new Thread(new Runnable() {
             public void run() {
-                Log.i(TAG, "probeAccessories");
-                UsbAccessory[] accessories = _usbManager.getAccessoryList();
-                if (accessories != null) {
-                   for (UsbAccessory usbAccessory : accessories) {
-                       if (_usbManager.hasPermission(usbAccessory)) {
-                           openAccessory(usbAccessory);
-                       } else {
-                           Log.i(TAG, "requestPermission");
-                           _usbManager.requestPermission(usbAccessory, pendingIntent);
+                synchronized(openAccessoryLock) {
+                    Log.i(TAG, "probeAccessories");
+                    UsbAccessory[] accessories = _usbManager.getAccessoryList();
+                    if (accessories != null) {
+                       for (UsbAccessory usbAccessory : accessories) {
+                           if (_usbManager.hasPermission(usbAccessory)) {
+                               openAccessory(usbAccessory);
+                           } else {
+                               Log.i(TAG, "requestPermission");
+                               _usbManager.requestPermission(usbAccessory, pendingIntent);
+                           }
                        }
-                   }
+                    }
                 }
             }
         }).start();
