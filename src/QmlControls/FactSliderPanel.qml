@@ -32,6 +32,8 @@ Column {
     property real _margins:         ScreenTools.defaultFontPixelHeight
     property bool _loadComplete:    false
 
+    Component.onCompleted: _loadComplete = true
+
     FactPanelController {
         id: controller
     }
@@ -68,10 +70,22 @@ Column {
                         font.family:    ScreenTools.demiboldFontFamily
                     }
 
-                    FactValueSlider {
-                        digitCount:     fact.maxString.length
-                        incrementSlots: 3
-                        fact:           controller.getParameterFact(-1, param)
+                    Slider {
+                        anchors.left:       parent.left
+                        anchors.right:      parent.right
+                        minimumValue:       min
+                        maximumValue:       max
+                        stepSize:           step
+                        tickmarksEnabled:   true
+                        value:              _fact.value
+
+                        property Fact _fact: controller.getParameterFact(-1, param)
+
+                        onValueChanged: {
+                            if (_loadComplete) {
+                                _fact.value = value
+                            }
+                        }
                     }
 
                     QGCLabel {
