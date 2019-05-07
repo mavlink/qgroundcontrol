@@ -1,4 +1,4 @@
-echo on
+:: echo off
 
 :: Populate VS2015 script variables
 call "%VC_VARS_SCRIPT%" x86
