@@ -477,8 +477,15 @@ bool QGCApplication::_initForNormalAppBoot()
 
     //-- See App.SettinsGroup.json for index
     int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
-    //-- Don't load custom fonts if not using standard character set
-    if(langID != 6 /*Korean*/ && langID != 9 /*Chinese*/) {
+    //-- Load font appropriate for the language
+    if(langID == 6 /*Korean*/) {
+        if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
+            qWarning() << "Could not load /fonts/NanumGothic-Regular font";
+        }
+        if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
+            qWarning() << "Could not load /fonts/NanumGothic-Bold font";
+        }
+    } else {
         if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
             qWarning() << "Could not load /fonts/opensans font";
         }

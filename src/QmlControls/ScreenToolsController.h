@@ -39,6 +39,8 @@ public:
     Q_PROPERTY(bool     isSerialAvailable   READ isSerialAvailable  CONSTANT)
     Q_PROPERTY(QString  iOSDevice           READ iOSDevice          CONSTANT)
     Q_PROPERTY(QString  fixedFontFamily     READ fixedFontFamily    CONSTANT)
+    Q_PROPERTY(QString  normalFontFamily    READ normalFontFamily   CONSTANT)
+    Q_PROPERTY(QString  boldFontFamily      READ boldFontFamily     CONSTANT)
 
     // Returns current mouse position
     Q_INVOKABLE int mouseX(void) { return QCursor::pos().x(); }
@@ -102,7 +104,8 @@ public:
 
     QString  iOSDevice          () const;
     QString  fixedFontFamily    () const;
-
+    QString  normalFontFamily   () const;
+    QString  boldFontFamily     () const;
 };
 
 #endif
