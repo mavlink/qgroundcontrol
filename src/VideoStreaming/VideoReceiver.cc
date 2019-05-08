@@ -712,17 +712,18 @@ VideoReceiver::startRecording(const QString &videoFile)
     gst_object_ref(_sink->mux);
     gst_object_ref(_sink->filesink);
 
-    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->parse, _sink->mux, _sink->filesink, nullptr);
-    gst_element_link_many(_sink->queue, _sink->parse, _sink->mux, _sink->filesink, nullptr);
+    gst_bin_add_many(GST_BIN(_pipeline), _sink->queue, _sink->parse, _sink->mux, nullptr);
+    gst_element_link_many(_sink->queue, _sink->parse, _sink->mux, nullptr);
 
     gst_element_sync_state_with_parent(_sink->queue);
     gst_element_sync_state_with_parent(_sink->parse);
     gst_element_sync_state_with_parent(_sink->mux);
-    gst_element_sync_state_with_parent(_sink->filesink);
 
     // Install a probe on the recording branch to drop buffers until we hit our first keyframe
     // When we hit our first keyframe, we can offset the timestamps appropriately according to the first keyframe time
     // This will ensure the first frame is a keyframe at t=0, and decoding can begin immediately on playback
+    // Once we have this valid frame, we attach the filesink.
+    // Attaching it here would cause the filesink to fail to preroll and to stall the pipeline for a few seconds.
     GstPad* probepad = gst_element_get_static_pad(_sink->queue, "src");
     gst_pad_add_probe(probepad, (GstPadProbeType)(GST_PAD_PROBE_TYPE_BUFFER /* | GST_PAD_PROBE_TYPE_BLOCK */), _keyframeWatch, this, nullptr); // to drop the buffer or to block the buffer?
     gst_object_unref(probepad);
@@ -875,6 +876,12 @@ VideoReceiver::_keyframeWatch(GstPad* pad, GstPadProbeInfo* info, gpointer user_
             gst_element_set_base_time(pThis->_pipeline, time); // offset pipeline timestamps to start at zero again
             buf->dts = 0; // The offset will not apply to this current buffer, our first frame, timestamp is zero
             buf->pts = 0;
+
+            // Add the filesink once we have a valid I-frame
+            gst_bin_add_many(GST_BIN(pThis->_pipeline), pThis->_sink->filesink, nullptr);
+            gst_element_link_many(pThis->_sink->mux, pThis->_sink->filesink, nullptr);
+            gst_element_sync_state_with_parent(pThis->_sink->filesink);
+
             qCDebug(VideoReceiverLog) << "Got keyframe, stop dropping buffers";
         }
     }
