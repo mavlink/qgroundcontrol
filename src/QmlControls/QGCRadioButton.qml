@@ -34,7 +34,8 @@ RadioButton {
     }
 
     contentItem: Text {
-        text:       control.text
+        text:               control.text
+        font.family:        ScreenTools.normalFontFamily
         font.pointSize:     textFontPointSize
         font.bold:          control.textBold
         color:              control.textColor

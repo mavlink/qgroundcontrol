@@ -79,15 +79,14 @@ Button {
             }
 
             Text {
-                id: innerText
-
-                text: button.text
-                color: _currentContentColor
-                width: parent.width
-
-                font.pointSize: ScreenTools.defaultFontPointSize
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
+                id:                     innerText
+                text:                   button.text
+                color:                  _currentContentColor
+                width:                  parent.width
+                font.family:            ScreenTools.normalFontFamily
+                font.pointSize:         ScreenTools.defaultFontPointSize
+                horizontalAlignment:    Text.AlignHCenter
+                verticalAlignment:      Text.AlignVCenter
             }
         } // Column - content
     } // Item - content

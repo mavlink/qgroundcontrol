@@ -12,6 +12,8 @@
     <qresource prefix="/fonts">
         <file alias="opensans">resources/fonts/OpenSans-Regular.ttf</file>
         <file alias="opensans-demibold">resources/fonts/OpenSans-Semibold.ttf</file>
+        <file alias="NanumGothic-Regular">resources/fonts/NanumGothic-Regular.ttf</file>
+        <file alias="NanumGothic-Bold">resources/fonts/NanumGothic-Bold.ttf</file>
     </qresource>
     <qresource prefix="/qmlimages">
         <file alias="AirframeComponentIcon.png">src/AutoPilotPlugins/Common/Images/AirframeComponentIcon.png</file>
