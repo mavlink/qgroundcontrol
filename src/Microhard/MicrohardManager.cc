@@ -15,13 +15,12 @@
 
 #include <QSettings>
 
-#define LONG_TIMEOUT 5000
+#define SHORT_TIMEOUT 2500
+#define LONG_TIMEOUT  5000
 
 static const char *kMICROHARD_GROUP     = "Microhard";
 static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
-static const char *kGROUND_IP           = "GroundIP";
-static const char *kAIR_IP              = "AirIP";
 static const char *kNET_MASK            = "NetMask";
 static const char *kCFG_PASSWORD        = "ConfigPassword";
 static const char *kENC_KEY             = "EncryptionKey";
@@ -38,8 +37,6 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     settings.beginGroup(kMICROHARD_GROUP);
     _localIPAddr    = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
     _remoteIPAddr   = settings.value(kREMOTE_IP,      QString("192.168.168.2")).toString();
-    _groundIPAddr   = settings.value(kGROUND_IP,      QString("192.168.168.101")).toString();
-    _airIPAddr      = settings.value(kAIR_IP,         QString("192.168.168.213")).toString();
     _netMask        = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
     _configPassword = settings.value(kCFG_PASSWORD,   QString("admin")).toString();
     _encryptionKey  = settings.value(kENC_KEY,        QString("1234567890")).toString();
@@ -117,10 +114,10 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 
 //-----------------------------------------------------------------------------
 bool
-MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString groundIP_, QString airIP_, QString netMask_, QString cfgPassword_, QString encryptionKey_)
+MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_, QString cfgPassword_, QString encryptionKey_)
 {
     if (_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_ ||
-        _configPassword != cfgPassword_ || _encryptionKey != encryptionKey_ || _groundIPAddr != groundIP_ || _airIPAddr != airIP_)
+        _configPassword != cfgPassword_ || _encryptionKey != encryptionKey_)
     {
         if (_mhSettingsLoc && _encryptionKey != encryptionKey_) {
             _mhSettingsLoc->setEncryptionKey(encryptionKey_);
@@ -128,8 +125,6 @@ MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString gro
 
         _localIPAddr    = localIP_;
         _remoteIPAddr   = remoteIP_;
-        _groundIPAddr   = groundIP_;
-        _airIPAddr      = airIP_;
         _netMask        = netMask_;
         _configPassword = cfgPassword_;
         _encryptionKey  = encryptionKey_;
@@ -138,8 +133,6 @@ MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString gro
         settings.beginGroup(kMICROHARD_GROUP);
         settings.setValue(kLOCAL_IP, localIP_);
         settings.setValue(kREMOTE_IP, remoteIP_);
-        settings.setValue(kGROUND_IP, groundIP_);
-        settings.setValue(kAIR_IP, airIP_);
         settings.setValue(kNET_MASK, netMask_);
         settings.setValue(kCFG_PASSWORD, cfgPassword_);
         settings.setValue(kENC_KEY, encryptionKey_);
@@ -169,7 +162,7 @@ MicrohardManager::_setEnabled()
             connect(_mhSettingsRem, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedRem);
             connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedRem);
         }
-        _workTimer.start(1000);
+        _workTimer.start(SHORT_TIMEOUT);
     } else {
         //-- Stop everything
         _close();
@@ -268,5 +261,5 @@ MicrohardManager::_checkMicrohard()
             _mhSettingsRem->getStatus();
         }
     }
-    _workTimer.start(_isConnected ? 1000 : LONG_TIMEOUT);
+    _workTimer.start(_isConnected ? SHORT_TIMEOUT : LONG_TIMEOUT);
 }
