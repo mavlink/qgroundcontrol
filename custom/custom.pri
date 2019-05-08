@@ -83,6 +83,10 @@ exists($$PWD/custom/custom.pri) {
 
     WindowsBuild {
         VERSION             = $${AUTERION_QGC_VERSION}.0
+        #-- TODO: Remove the next line after fixing the version TODO in above
+        message(Before $${VERSION})
+        VERSION = $$replace(VERSION, "NUI.", "")
+        message(After $${VERSION})
         QGCWINROOT          = $$replace(QGCROOT, "/", "\\")
         RC_ICONS            = $$QGCWINROOT\\custom\\Windows\\icon.ico
         QGC_INSTALLER_ICON          = $$QGCWINROOT\\custom\\Windows\\icon.ico
