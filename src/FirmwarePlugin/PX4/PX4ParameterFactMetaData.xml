@@ -10039,6 +10039,7 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <min>0</min>
       <max>2</max>
       <decimal>0</decimal>
+      <reboot_required>true</reboot_required>
       <values>
         <value code="0">Tailsitter</value>
         <value code="1">Tiltrotor</value>

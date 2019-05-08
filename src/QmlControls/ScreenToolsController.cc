@@ -15,6 +15,8 @@
 #include <QFontDatabase>
 #include <QScreen>
 
+#include "SettingsManager.h"
+
 #if defined(__ios__)
 #include <sys/utsname.h>
 #endif
@@ -40,4 +42,28 @@ QString
 ScreenToolsController::fixedFontFamily() const
 {
     return QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+}
+
+QString
+ScreenToolsController::normalFontFamily() const
+{
+    //-- See App.SettinsGroup.json for index
+    int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
+    if(langID == 6 /*Korean*/) {
+        return QString("fonts/NanumGothic-Regular");
+    } else {
+        return QString("opensans");
+    }
+}
+
+QString
+ScreenToolsController::boldFontFamily() const
+{
+    //-- See App.SettinsGroup.json for index
+    int langID = qgcApp()->toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
+    if(langID == 6 /*Korean*/) {
+        return QString("NanumGothic-Bold");
+    } else {
+        return QString("opensans-demibold");
+    }
 }
