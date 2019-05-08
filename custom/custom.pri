@@ -154,6 +154,15 @@ exists($$PWD/custom/custom.pri) {
         $$PWD/src \
 
     #-------------------------------------------------------------------------------------
+    # Google Breakpad
+
+    !DebugBuild {
+        !MacBuild {
+            include($$QGCROOT/custom/src/CrashManager/CrashManager.pri)
+        }
+    }
+
+    #-------------------------------------------------------------------------------------
     # Firmware/AutoPilot Plugin
 
     INCLUDEPATH += \

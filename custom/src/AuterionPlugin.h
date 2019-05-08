@@ -15,6 +15,9 @@
 
 class AuterionPlugin;
 class AuterionSettings;
+#if defined(USE_BREAKPAD)
+class CrashHandler;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(AuterionLog)
 
@@ -83,6 +86,9 @@ private:
         const char* iconFile = nullptr);
 
 private:
-    AuterionOptions*     _pOptions;
+    AuterionOptions*     _pOptions = nullptr;
     QVariantList         _auterionSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+#if defined(USE_BREAKPAD)
+    CrashHandler*        _pCrashHandler = nullptr;
+#endif
 };

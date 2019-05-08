@@ -22,6 +22,10 @@
 #include "QmlComponentInfo.h"
 #include "QGCPalette.h"
 
+#if defined(USE_BREAKPAD)
+#include "crashhandler.h"
+#endif
+
 QGC_LOGGING_CATEGORY(AuterionLog, "AuterionLog")
 
 AuterionVideoReceiver::AuterionVideoReceiver(QObject* parent)
@@ -83,11 +87,18 @@ AuterionPlugin::AuterionPlugin(QGCApplication *app, QGCToolbox* toolbox)
 {
     _pOptions = new AuterionOptions(this, this);
     _showAdvancedUI = false;
+#if defined(USE_BREAKPAD)
+    _pCrashHandler = new CrashHandler();
+#endif
 }
 
 //-----------------------------------------------------------------------------
 AuterionPlugin::~AuterionPlugin()
 {
+#if defined(USE_BREAKPAD)
+    if(_pCrashHandler)
+        delete _pCrashHandler;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -102,6 +113,12 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
     connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &AuterionPlugin::_advancedChanged);
 #if defined(QGC_ENABLE_QZXING)
     QZXing::registerQMLTypes();
+#endif
+#if defined(USE_BREAKPAD)
+    _pCrashHandler->setNamePrefix(qgcApp()->applicationName());
+    _pCrashHandler->setNameSuffix(qgcApp()->applicationVersion());
+    _pCrashHandler->setDumpPath(qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath());
+    _pCrashHandler->install();
 #endif
 }
 
