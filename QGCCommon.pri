@@ -40,6 +40,7 @@ linux {
         DEFINES += QGC_ENABLE_BLUETOOTH
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
+        QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
