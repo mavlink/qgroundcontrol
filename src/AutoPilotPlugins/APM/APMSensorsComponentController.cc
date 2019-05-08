@@ -586,18 +586,12 @@ void APMSensorsComponentController::_restorePreviousCompassCalFitness(void)
 
 void APMSensorsComponentController::_handleCommandLong(mavlink_message_t& message)
 {
-    CalOrientation_t newOrientation;
-
     mavlink_command_long_t commandLong;
     mavlink_msg_command_long_decode(&message, &commandLong);
 
     if (commandLong.command == MAV_CMD_ACCELCAL_VEHICLE_POS && _calTypeInProgress == CalTypeAccel) {
         bool orientationChanged =   _currentCalOrientation != commandLong.param1;
         bool advanceProgress =      true;
-
-        if (orientationChanged) {
-            qDebug() << static_cast<CalOrientation_t>(commandLong.param1);
-        }
 
         switch (static_cast<int>(commandLong.param1)) {
         case ACCELCAL_VEHICLE_POS_LEVEL:
@@ -652,7 +646,7 @@ void APMSensorsComponentController::_handleCommandLong(mavlink_message_t& messag
 
             _orientationCalAreaHelpText->setProperty("text", tr("Hold still in the current orientation and press Next when ready"));
 
-            _currentCalOrientation = static_cast<CalOrientation_t>(commandLong.param1);
+            _currentCalOrientation = static_cast<CalOrientation_t>(static_cast<int>(commandLong.param1));
             emit orientationCalSidesDoneChanged();
             emit currentCalOrientationChanged(_currentCalOrientation);
         }
