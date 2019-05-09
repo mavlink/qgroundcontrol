@@ -261,7 +261,7 @@ SetupPage {
                         Component.onCompleted: {
                             if(!QGroundControl.hasAPMSupport) {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
-                                parent.firmwareVersionChanged(firmwareTypeList)
+                                firmwareVersionChanged(firmwareTypeList)
                             }
                         }
 
