@@ -222,7 +222,7 @@ QGCView {
                                 id:             configPassword
                                 text:           QGroundControl.microhardManager.configPassword
                                 enabled:        true
-                                inputMethodHints:    Qt.ImhHiddenText
+                                echoMode:       TextInput.Password
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
@@ -232,7 +232,7 @@ QGCView {
                                 id:             encryptionKey
                                 text:           QGroundControl.microhardManager.encryptionKey
                                 enabled:        true
-                                inputMethodHints:    Qt.ImhHiddenText
+                                echoMode:       TextInput.Password
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
