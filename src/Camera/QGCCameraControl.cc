@@ -1526,20 +1526,6 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
         _streams.append(pStream);
         //-- Thermal is handled separately and not listed
         if(!pStream->isThermal()) {
-            switch (vi->type) {
-            case VIDEO_STREAM_TYPE::VIDEO_STREAM_TYPE_RTSP:
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
-                break;
-            case VIDEO_STREAM_TYPE::VIDEO_STREAM_TYPE_RTPUDP:
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDP);
-                break;
-            case VIDEO_STREAM_TYPE::VIDEO_STREAM_TYPE_TCP_MPEG:
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
-                break;
-            case VIDEO_STREAM_TYPE::VIDEO_STREAM_TYPE_MPEG_TS_H264:
-                qgcApp()->toolbox()->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
-                break;
-            }
             _streamLabels.append(pStream->name());
             emit streamsChanged();
             emit streamLabelsChanged();
