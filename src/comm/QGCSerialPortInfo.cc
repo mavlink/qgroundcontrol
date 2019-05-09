@@ -340,7 +340,7 @@ bool QGCSerialPortInfo::isSystemPort(QSerialPortInfo* port)
     return false;
 }
 
-bool QGCSerialPortInfo::canFlash(void)
+bool QGCSerialPortInfo::canFlash(void) const
 {
     BoardType_t boardType;
     QString     name;
