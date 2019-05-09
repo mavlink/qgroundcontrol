@@ -258,10 +258,17 @@ SetupPage {
                         anchors.fill:   parent
                         spacing:        defaultTextHeight
 
+                        Component.onCompleted: {
+                            if(!QGroundControl.hasAPMSupport) {
+                                _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
+                                parent.firmwareVersionChanged(firmwareTypeList)
+                            }
+                        }
+
                         QGCLabel {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
-                            text:       _singleFirmwareMode ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
+                            text:       (_singleFirmwareMode || !QGroundControl.hasAPMSupport) ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
 
                             readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:")
                             readonly property string _pixhawkLabel:          qsTr("Detected Pixhawk board. You can select from the following flight stacks:")
@@ -282,12 +289,13 @@ SetupPage {
                         // The following craziness of three radio buttons to represent two radio buttons is so that the
                         // order can be changed such that the default firmware button is always on the top
 
+                        //-- Visible only if you have an option. If it's the only option, it's already setup.
                         QGCRadioButton {
                             id:             px4FlightStackRadio1
                             text:           qsTr("PX4 Flight Stack ")
                             textBold:       _defaultFirmwareIsPX4
                             checked:        _defaultFirmwareIsPX4
-                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
+                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -300,7 +308,7 @@ SetupPage {
                             text:           qsTr("ArduPilot Flight Stack")
                             textBold:       !_defaultFirmwareIsPX4
                             checked:        !_defaultFirmwareIsPX4
-                            visible:        !_singleFirmwareMode && !px4Flow
+                            visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
@@ -308,10 +316,11 @@ SetupPage {
                             }
                         }
 
+                        //-- Visible only if you have an option. If it's the only option, it's already setup.
                         QGCRadioButton {
                             id:             px4FlightStackRadio2
                             text:           qsTr("PX4 Flight Stack ")
-                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow
+                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
 
                             onClicked: {
                                 _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
