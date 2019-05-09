@@ -152,6 +152,13 @@ public:
     bool pixhawkBoard(void) const { return _foundBoardType == QGCSerialPortInfo::BoardTypePixhawk; }
     bool px4FlowBoard(void) const { return _foundBoardType == QGCSerialPortInfo::BoardTypePX4Flow; }
 
+    /**
+     * @brief Return a human friendly string of available boards
+     *
+     * @return availableBoardNames
+     */
+    Q_INVOKABLE QStringList availableBoardsName(void);
+
 signals:
     void boardFound(void);
     void noBoardFound(void);
