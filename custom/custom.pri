@@ -157,7 +157,7 @@ exists($$PWD/custom/custom.pri) {
     # Google Breakpad
 
     !DebugBuild {
-        !MacBuild {
+        AndroidBuild {
             include($$QGCROOT/custom/src/CrashManager/CrashManager.pri)
         }
     }
