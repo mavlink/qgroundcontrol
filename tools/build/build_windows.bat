@@ -1,5 +1,12 @@
 :: echo off
 
+::
+:: Script assumes that the right QT bin folder is in the PATH env var
+::
+
+:: Prepare the environment for windeployqt
+call qtenv2.bat
+
 :: Populate VS2015 script variables
 call "%VC_VARS_SCRIPT%" x86
 
