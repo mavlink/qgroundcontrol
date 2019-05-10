@@ -145,11 +145,13 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 #endif
 
 //-----------------------------------------------------------------------------
+#if defined(QGC_GST_STREAMING)
 void
 VideoReceiver::_restart_timeout()
 {
     start();
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
@@ -205,6 +207,7 @@ VideoReceiver::start()
 
     GstElement*     dataSource  = nullptr;
     GstCaps*        caps        = nullptr;
+    GstElement*     parser      = nullptr;
     GstElement*     queue       = nullptr;
     GstElement*     decoder     = nullptr;
     GstElement*     queue1      = nullptr;
@@ -229,7 +232,8 @@ VideoReceiver::start()
         }
 
         if(isUdp) {
-            if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264")) == nullptr) {
+            caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264");
+            if (caps == nullptr) {
                 qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
                 break;
             }
@@ -262,29 +266,42 @@ VideoReceiver::start()
             break;
         }
 
-        const char *decoderName = "decodebin";
+        if (isTaisyncUSB) {
+            const char *parserName = "h264parse";
+            if ((parser = gst_element_factory_make(parserName, "parser")) == nullptr) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << parserName << "')";
+                break;
+            }
+        }
+
+        const char *decoderName = isTaisyncUSB ? "avdec_h264" : "decodebin";
         if ((decoder = gst_element_factory_make(decoderName, "decoder")) == nullptr) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << decoderName << "')";
             break;
         }
+
 
         if ((queue1 = gst_element_factory_make("queue", nullptr)) == nullptr) {
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue') [1]";
             break;
         }
 
-        gst_bin_add_many(GST_BIN(_pipeline), dataSource, _tee, queue, decoder, queue1, _videoSink, nullptr);
+        if (!isTaisyncUSB) {
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, _tee, queue, decoder, queue1, _videoSink, nullptr);
+        } else {
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, _tee, queue, parser, decoder, queue1, _videoSink, nullptr);
+        }
         pipelineUp = true;
 
         if(isUdp) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, _tee, queue, decoder, nullptr)) {
                 qCritical() << "Unable to link UDP elements.";
                 break;
             }
         } else if(isTaisyncUSB) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, _tee, queue, parser, decoder, queue1, _videoSink, nullptr)) {
                 qCritical() << "Unable to link Taisync USB elements.";
                 break;
             }
@@ -293,15 +310,18 @@ VideoReceiver::start()
                 qCritical() << "Unable to link decoder to tee.";
                 break;
             }
+            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), _tee);
+        }
+
+        if (!isTaisyncUSB) {
             if(!gst_element_link_many(queue1, _videoSink, nullptr)) {
                 qCritical() << "Unable to link videosink to queue.";
                 break;
             }
-            g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), _tee);
             g_signal_connect(decoder, "pad-added", G_CALLBACK(newPadCB), queue1);
         }
 
-        dataSource = queue = decoder = queue1 = nullptr;
+        dataSource = queue = parser = decoder = queue1 = nullptr;
 
         GstBus* bus = nullptr;
 
@@ -336,6 +356,11 @@ VideoReceiver::start()
             if (decoder != nullptr) {
                 gst_object_unref(decoder);
                 decoder = nullptr;
+            }
+
+            if (parser != nullptr) {
+                gst_object_unref(parser);
+                parser = nullptr;
             }
 
             if (dataSource != nullptr) {
