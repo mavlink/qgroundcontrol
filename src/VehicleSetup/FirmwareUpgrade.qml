@@ -189,7 +189,6 @@ SetupPage {
                     }
 
                     function accept() {
-                        hideDialog()
                         if (_singleFirmwareMode) {
                             controller.flashSingleFirmwareMode(controller.selectedFirmwareBuildType)
                         } else {
@@ -210,13 +209,18 @@ SetupPage {
                                             // Not ready yet, or no firmware available
                                             return
                                         }
+                                        var firmwareUrl = controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex]
+                                        if (firmwareUrl == "") {
+                                            return
+                                        }
                                         controller.flashFirmwareUrl(controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex])
+                                        hideDialog()
                                         return
                                     }
                                 }
                             }
-
                             controller.flash(stack, firmwareBuildType, vehicleType)
+                            hideDialog()
                         }
                     }
 
