@@ -290,6 +290,7 @@ private:
         QList<int>              rgPID;
         QString                 friendlyName;
         bool                    chibios;
+        bool                    fmuv2;
     } ManifestFirmwareInfo_t;
 
 
