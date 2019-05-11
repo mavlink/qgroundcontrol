@@ -643,7 +643,7 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
 
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 {
-    qDebug() << "_buildAPMFirmwareNames";
+    qCDebug(FirmwareUpgradeLog) << "_buildAPMFirmwareNames";
 
     bool                    chibios =       _apmChibiOSSetting->rawValue().toInt() == 0;
     FirmwareVehicleType_t   vehicleType =   static_cast<FirmwareVehicleType_t>(_apmVehicleTypeSetting->rawValue().toInt());
@@ -659,21 +659,31 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
         if (firmwareInfo.firmwareBuildType == _selectedFirmwareBuildType && firmwareInfo.chibios == chibios && firmwareInfo.vehicleType == vehicleType) {
             if (bootloaderMatch) {
                 if (firmwareInfo.rgBootloaderPortString.contains(_foundBoardInfo.description())) {
-                    qDebug() << "Booatloader match:" << firmwareInfo.friendlyName << _foundBoardInfo.description() << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
+                    qCDebug(FirmwareUpgradeLog) << "Bootloader match:" << firmwareInfo.friendlyName << _foundBoardInfo.description() << firmwareInfo.rgBootloaderPortString << firmwareInfo.url << firmwareInfo.vehicleType;
                     match = true;
                 }
             } else {
                 if (firmwareInfo.rgVID.contains(_foundBoardInfo.vendorIdentifier()) && firmwareInfo.rgPID.contains(_foundBoardInfo.productIdentifier())) {
-                    qDebug() << "Fallback match:" << firmwareInfo.friendlyName << _foundBoardInfo.vendorIdentifier() << _foundBoardInfo.productIdentifier() << _bootloaderBoardID << firmwareInfo.url << firmwareInfo.vehicleType;
+                    qCDebug(FirmwareUpgradeLog) << "Fallback match:" << firmwareInfo.friendlyName << _foundBoardInfo.vendorIdentifier() << _foundBoardInfo.productIdentifier() << _bootloaderBoardID << firmwareInfo.url << firmwareInfo.vehicleType;
                     match = true;
                 }
             }
-
         }
+
+        // Do a final filter on fmuv2/fmuv3
+        if (match && _bootloaderBoardID == Bootloader::boardIDPX4FMUV3) {
+            match = !firmwareInfo.fmuv2;
+        }
+
         if (match) {
             _apmFirmwareNames.append(firmwareInfo.friendlyName);
             _apmFirmwareUrls.append(firmwareInfo.url);
         }
+    }
+
+    if (_apmFirmwareNames.count() > 1) {
+        _apmFirmwareNames.prepend(tr("Choose board type"));
+        _apmFirmwareUrls.prepend(QString());
     }
 
     emit apmFirmwareNamesChanged();
@@ -829,9 +839,10 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
         FirmwareVehicleType_t   firmwareVehicleType =   _manifestMavTypeToFirmwareVehicleType(firmwareJson[_manifestMavTypeJsonKey].toString());
         FirmwareBuildType_t     firmwareBuildType =     _manifestMavFirmwareVersionTypeToFirmwareBuildType(firmwareJson[_manifestMavFirmwareVersionTypeJsonKey].toString());
         QString                 format =                firmwareJson[_manifestFormatJsonKey].toString();
+        QString                 platform =              firmwareJson[_manifestPlatformKey].toString();
 
         if (firmwareVehicleType != DefaultVehicleFirmware && firmwareBuildType != CustomFirmware && (format == QStringLiteral("apj") || format == QStringLiteral("px4"))) {
-            if (firmwareJson[_manifestPlatformKey].toString().contains("-heli") && firmwareVehicleType != HeliFirmware) {
+            if (platform.contains("-heli") && firmwareVehicleType != HeliFirmware) {
                 continue;
             }
 
@@ -844,6 +855,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
             firmwareInfo.url =                  firmwareJson[_manifestUrlJsonKey].toString();
             firmwareInfo.version =              firmwareJson[_manifestMavFirmwareVersionJsonKey].toString();
             firmwareInfo.chibios =              format == QStringLiteral("apj");
+            firmwareInfo.fmuv2 =                platform.contains(QStringLiteral("fmuv2"));
 
             QJsonArray bootloaderArray = firmwareJson[_manifestBootloaderStrJsonKey].toArray();
             for (int j=0; j<bootloaderArray.count(); j++) {
@@ -862,7 +874,7 @@ void FirmwareUpgradeController::_ardupilotManifestDownloadFinished(QString remot
             }
 
             QString brandName = firmwareJson[_manifestBrandNameKey].toString();
-            firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? firmwareJson[_manifestPlatformKey].toString() : brandName).arg(firmwareInfo.version);
+            firmwareInfo.friendlyName = QStringLiteral("%1 - %2").arg(brandName.isEmpty() ? platform : brandName).arg(firmwareInfo.version);
         }
     }
 
