@@ -167,6 +167,9 @@ public:
     Q_PROPERTY(Fact*        aperture            READ aperture           NOTIFY parametersReady)
     Q_PROPERTY(Fact*        wb                  READ wb                 NOTIFY parametersReady)
     Q_PROPERTY(Fact*        mode                READ mode               NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        bitRate             READ bitRate            NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        frameRate           READ frameRate          NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        videoEncoding       READ videoEncoding      NOTIFY parametersReady)
 
     Q_PROPERTY(QStringList  activeSettings      READ activeSettings                                 NOTIFY activeSettingsChanged)
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
@@ -252,6 +255,9 @@ public:
     virtual Fact*       aperture            ();
     virtual Fact*       wb                  ();
     virtual Fact*       mode                ();
+    virtual Fact*       bitRate             ();
+    virtual Fact*       frameRate           ();
+    virtual Fact*       videoEncoding       ();
 
     //-- Stream names to show the user (for selection)
     virtual QStringList streamLabels        () { return _streamLabels; }
@@ -292,6 +298,9 @@ public:
     static const char* kCAM_APERTURE;
     static const char* kCAM_WBMODE;
     static const char* kCAM_MODE;
+    static const char* kCAM_BITRATE;
+    static const char* kCAM_FPS;
+    static const char* kCAM_ENC;
 
 signals:
     void    infoChanged                     ();
