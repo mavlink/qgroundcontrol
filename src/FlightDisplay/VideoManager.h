@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -62,6 +62,7 @@ public:
     double      thermalHfov         ();
     bool        autoStreamConfigured();
     bool        hasThermal          ();
+    void        restartVideo        ();
 
     VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
@@ -99,7 +100,6 @@ private slots:
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
-    void _restartVideo              ();
 
 private:
     void _updateSettings            ();
