@@ -3334,6 +3334,10 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
         //_startPlanRequest();
     }
 
+    if (ack.command == MAV_CMD_FLASH_BOOTLOADER && ack.result == MAV_RESULT_ACCEPTED) {
+        qgcApp()->showMessage(tr("Bootloader flash succeeded"));
+    }
+
     if (_mavCommandQueue.count() && ack.command == _mavCommandQueue[0].command) {
         _mavCommandAckTimer.stop();
         showError = _mavCommandQueue[0].showError;

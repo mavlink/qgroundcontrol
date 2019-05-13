@@ -224,6 +224,7 @@
         <file alias="AutoConnect.SettingsGroup.json">src/Settings/AutoConnect.SettingsGroup.json</file>
         <file alias="BrandImage.SettingsGroup.json">src/Settings/BrandImage.SettingsGroup.json</file>
         <file alias="CameraSection.FactMetaData.json">src/MissionManager/CameraSection.FactMetaData.json</file>
+		<file alias="FirmwareUpgrade.SettingsGroup.json">src/Settings/FirmwareUpgrade.SettingsGroup.json</file>
         <file alias="FlightMap.SettingsGroup.json">src/Settings/FlightMap.SettingsGroup.json</file>
         <file alias="FWLandingPattern.FactMetaData.json">src/MissionManager/FWLandingPattern.FactMetaData.json</file>
         <file alias="FlyView.SettingsGroup.json">src/Settings/FlyView.SettingsGroup.json</file>
