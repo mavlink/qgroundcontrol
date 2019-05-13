@@ -20,8 +20,6 @@ Button {
     height:                         ScreenTools.defaultFontPixelHeight * 3
     autoExclusive:                  true
 
-    QGCPalette { id: qgcPal }
-
     background: Rectangle {
         anchors.fill:               parent
         color:                      Qt.rgba(0,0,0,0)
