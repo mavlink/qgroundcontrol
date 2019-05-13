@@ -107,8 +107,8 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
 {
     mavlink_heartbeat_t heartbeat;
     mavlink_msg_heartbeat_decode(&message, &heartbeat);
-    //-- If this heartbeat is from a different component within the vehicle
-    if(_vehicleReadyState && _vehicle->id() == message.sysid && _vehicle->defaultComponentId() != message.compid) {
+    //-- Only pay attention to "camera" component IDs
+    if(_vehicleReadyState && _vehicle->id() == message.sysid && message.compid >= MAV_COMP_ID_CAMERA && message.compid <= MAV_COMP_ID_CAMERA6) {
         //-- First time hearing from this one?
         QString sCompID = QString::number(message.compid);
         if(!_cameraInfoRequest.contains(sCompID)) {
@@ -135,8 +135,7 @@ QGCCameraManager::_handleHeartbeat(const mavlink_message_t &message)
                             }
                         } else {
                             pInfo->tryCount++;
-                            //-- Request camera info. Again. It could be something other than a camera, in which
-                            //   case, we won't ever receive it.
+                            //-- Request camera info again.
                             _requestCameraInfo(message.compid);
                         }
                     }
