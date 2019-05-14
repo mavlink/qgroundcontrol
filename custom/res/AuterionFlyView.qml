@@ -11,7 +11,7 @@ import QtQuick                  2.11
 import QtQuick.Controls         2.4
 import QtQuick.Layouts          1.11
 import QtQuick.Dialogs          1.3
-import QtPositioning            5.2
+import QtPositioning        5.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controllers           1.0
@@ -163,7 +163,7 @@ Item {
         clip:           true
         anchors.top:    parent.top
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 2)
-        anchors.horizontalCenter:   parent.horizontalCenter
+        anchors.horizontalCenter: parent.horizontalCenter
         visible:        !mainIsMap
         Repeater {
             model: 720
@@ -181,7 +181,7 @@ Item {
                 visible:        _angle % 45 == 0
                 color:          "#505565"
                 font.pointSize: ScreenTools.smallFontPointSize
-                text: {
+            text: {
                     switch(_angle) {
                     case 0:     return "N"
                     case 45:    return "NE"
@@ -258,13 +258,13 @@ Item {
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
         anchors.right:          attitudeIndicator.visible ? attitudeIndicator.left : parent.right
         anchors.rightMargin:    attitudeIndicator.visible ? -ScreenTools.defaultFontPixelWidth : ScreenTools.defaultFontPixelWidth
-        GridLayout {
-            id:                     vehicleStatusGrid
-            columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
+    GridLayout {
+        id:                     vehicleStatusGrid
+        columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
             rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.5
             columns:                7
             anchors.centerIn:       parent
-            //-- Chronometer
+        //-- Chronometer
             Image {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
@@ -272,19 +272,19 @@ Item {
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-            }
-            QGCLabel {
-                text: {
+        }
+        QGCLabel {
+            text: {
                     if(activeVehicle)
                         return secondsToHHMMSS(activeVehicle.getFact("flightTime").value)
-                    return "00:00:00"
-                }
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
+                return "00:00:00"
             }
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
             //-- Ground Speed
             Image {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
@@ -406,7 +406,7 @@ Item {
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    Text.AlignRight
             }
-            //-- Altitude
+        //-- Altitude
             Image {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
@@ -414,16 +414,16 @@ Item {
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-            }
-            QGCLabel {
-                text:                   _altitude
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
-            //-- Distance
+        }
+        QGCLabel {
+            text:                   _altitude
+            color:                  _indicatorsColor
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
+        //-- Distance
             Image {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
@@ -431,15 +431,15 @@ Item {
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-            }
-            QGCLabel {
-                text:                   _distance ? _distanceStr : noGPS
-                color:                  _distance ? _indicatorsColor : qgcPal.colorOrange
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
-            }
+        }
+        QGCLabel {
+            text:                   _distance ? _distanceStr : noGPS
+            color:                  _distance ? _indicatorsColor : qgcPal.colorOrange
+            font.pointSize:         ScreenTools.smallFontPointSize
+            Layout.fillWidth:       true
+            Layout.minimumWidth:    indicatorValueWidth
+            horizontalAlignment:    Text.AlignRight
+        }
         }
         MouseArea {
             anchors.fill:       parent
@@ -460,17 +460,17 @@ Item {
         id:                     attitudeIndicator
         anchors.bottom:         vehicleIndicator.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * -0.5
-        anchors.right:          parent.right
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+        anchors.right:  parent.right
+        anchors.rightMargin:  ScreenTools.defaultFontPixelWidth
         height:                 ScreenTools.defaultFontPixelHeight * 6
         width:                  height
         radius:                 height * 0.5
         color:                  qgcPal.window
         visible:                _showAttitude
-        AuterionAttitudeWidget {
+            AuterionAttitudeWidget {
             size:               parent.height * 0.95
             vehicle:            activeVehicle
-            showHeading:        false
+                showHeading:        false
             anchors.centerIn:   parent
         }
     }
@@ -496,9 +496,9 @@ Item {
 
     //-- Connection Lost While Armed
     Popup {
-        id:                     connectionLostArmed
+        id:         connectionLostArmed
         width:                  mainWindow.width  * 0.666
-        height:                 connectionLostArmedCol.height * 1.5
+                height:             connectionLostArmedCol.height * 1.5
         modal:                  true
         focus:                  true
         parent:                 Overlay.overlay
@@ -507,38 +507,38 @@ Item {
         closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             anchors.fill:       parent
-            color:              qgcPal.alertBackground
-            border.color:       qgcPal.alertBorder
+                color:              qgcPal.alertBackground
+                border.color:       qgcPal.alertBorder
             radius:             ScreenTools.defaultFontPixelWidth
         }
-        Column {
-            id:                 connectionLostArmedCol
-            spacing:            ScreenTools.defaultFontPixelHeight * 3
-            anchors.margins:    ScreenTools.defaultFontPixelHeight
-            anchors.centerIn:   parent
-            QGCLabel {
-                text:           qsTr("Communication Lost")
-                font.family:    ScreenTools.demiboldFontFamily
-                font.pointSize: ScreenTools.largeFontPointSize
-                color:          qgcPal.alertText
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            QGCLabel {
-                text:           qsTr("Warning: Connection to vehicle lost.")
-                color:          qgcPal.alertText
-                font.family:    ScreenTools.demiboldFontFamily
-                font.pointSize: ScreenTools.mediumFontPointSize
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            QGCLabel {
-                text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
+                Column {
+                    id:                 connectionLostArmedCol
+                    spacing:            ScreenTools.defaultFontPixelHeight * 3
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.centerIn:   parent
+                    QGCLabel {
+                        text:           qsTr("Communication Lost")
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.largeFontPointSize
+                        color:          qgcPal.alertText
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("Warning: Connection to vehicle lost.")
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
                 width:          connectionLostArmed.width * 0.75
-                wrapMode:       Text.WordWrap
-                color:          qgcPal.alertText
-                font.family:    ScreenTools.demiboldFontFamily
-                font.pointSize: ScreenTools.mediumFontPointSize
-                anchors.horizontalCenter: parent.horizontalCenter
+                        wrapMode:       Text.WordWrap
+                        color:          qgcPal.alertText
+                        font.family:    ScreenTools.demiboldFontFamily
+                        font.pointSize: ScreenTools.mediumFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
             }
-        }
-    }
 }

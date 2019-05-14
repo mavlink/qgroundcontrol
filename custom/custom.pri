@@ -25,9 +25,7 @@ exists($$PWD/custom/custom.pri) {
     } else {
         AUTERION_QGC_VER_BUILD = $$system("echo $(($$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD))")
     }
-    #-- TODO: Switch this back once merged
-    #AUTERION_QGC_VERSION = $${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
-    AUTERION_QGC_VERSION = NUI.$${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
+    AUTERION_QGC_VERSION = $${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
 
     DEFINES -= GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
     DEFINES += GIT_VERSION=\"\\\"$$AUTERION_QGC_VERSION\\\"\"
@@ -83,10 +81,6 @@ exists($$PWD/custom/custom.pri) {
 
     WindowsBuild {
         VERSION             = $${AUTERION_QGC_VERSION}.0
-        #-- TODO: Remove the next line after fixing the version TODO in above
-        message(Before $${VERSION})
-        VERSION = $$replace(VERSION, "NUI.", "")
-        message(After $${VERSION})
         QGCWINROOT          = $$replace(QGCROOT, "/", "\\")
         RC_ICONS            = $$QGCWINROOT\\custom\\Windows\\icon.ico
         QGC_INSTALLER_ICON          = $$QGCWINROOT\\custom\\Windows\\icon.ico
@@ -219,9 +213,12 @@ exists($$PWD/custom/custom.pri) {
             $$QGCROOT/custom/android/gradle/wrapper/gradle-wrapper.properties \
             $$QGCROOT/custom/android/gradlew.bat
 
+        # For now only android uses install customization
         # It's important to keep the right order
         include($$QGCROOT/QGCSetup.pri)
         include(customQGCInstaller.pri)
+        # Disable only for Android. MacOS build won't add the right libraries to the build package
+        CONFIG += QGC_DISABLE_BUILD_SETUP
     }
 
     #-------------------------------------------------------------------------------------
