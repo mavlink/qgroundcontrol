@@ -1,9 +1,7 @@
 
 add_library(AutoPilotPlugins
 	APM/APMAirframeComponent.cc
-	APM/APMAirframeComponentAirframes.cc
 	APM/APMAirframeComponentController.cc
-	APM/APMAirframeLoader.cc
 	APM/APMAutoPilotPlugin.cc
 	APM/APMCameraComponent.cc
 	APM/APMCompassCal.cc
