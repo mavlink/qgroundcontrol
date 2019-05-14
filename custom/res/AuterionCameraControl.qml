@@ -27,12 +27,10 @@ import QGroundControl.Vehicle           1.0
 import AuterionQuickInterface           1.0
 import Auterion.Widgets                 1.0
 
-Rectangle {
-    height:         mainCol.height
-    width:          mainCol.width + (ScreenTools.defaultFontPixelWidth * 2)
+Item {
+    height:         mainRow.height
+    width:          mainRow.width + (ScreenTools.defaultFontPixelWidth * 2)
     visible:        !QGroundControl.videoManager.fullScreen
-    color:          qgcPal.windowShade
-    radius:         2
 
     readonly property string _commLostStr: qsTr("NO CAMERA")
 
@@ -54,7 +52,8 @@ Rectangle {
     property bool   _cameraModeUndefined:   !_cameraPhotoMode && !_cameraVideoMode
     property bool   _recordingVideo:        _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _settingsEnabled:       !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
-    property Fact   _emptyfact:             Fact { }
+    property bool   _hasZoom:               _camera && _camera.hasZoom
+    property Fact   _evFact:                _camera && _camera.ev
 
     Connections {
         target: QGroundControl.multiVehicleManager.activeVehicle
@@ -69,222 +68,433 @@ Rectangle {
         anchors.fill:   parent
     }
 
-    Column {
-        id:         mainCol
-        spacing:    _spacers
-        anchors.centerIn: parent
-        Item {
-            height:     1
-            width:      1
-        }
-        //-----------------------------------------------------------------
-        //-- Camera Name
-        QGCLabel {
-            text:                   activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
-            font.pointSize:         ScreenTools.smallFontPointSize
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-        //-----------------------------------------------------------------
-        //-- Camera Mode
-        Item {
-            width:                  modeCol.width
-            height:                 modeCol.height
-            anchors.horizontalCenter: parent.horizontalCenter
-            Column {
-                id:                 modeCol
-                spacing:            _spacers * 0.5
-                QGCColoredImage {
-                    height:         ScreenTools.defaultFontPixelHeight
-                    width:          height
-                    source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/auterion/img/camera_photo.svg" : "/auterion/img/camera_video.svg"
-                    color:          qgcPal.text
-                    fillMode:       Image.PreserveAspectFit
-                    sourceSize.height:  height
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                QGCLabel {
-                    text:           _cameraVideoMode ? qsTr("Video") : qsTr("Photo")
-                    font.pointSize: ScreenTools.smallFontPointSize
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-            }
-            MouseArea {
-                anchors.fill:       parent
-                enabled:            !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
-                onClicked: {
-                    _camera.toggleMode()
-                }
-            }
-        }
-        //-----------------------------------------------------------------
-        //-- Shutter
+    Row {
+        id:         mainRow
+        spacing:    _spacers * 0.5
         Rectangle {
-            color:                  Qt.rgba(0,0,0,0)
-            width:                  height
-            height:                 ScreenTools.defaultFontPixelHeight * 4
-            radius:                 width * 0.5
-            border.color:           qgcPal.buttonText
-            border.width:           3
-            anchors.horizontalCenter: parent.horizontalCenter
-            Rectangle {
-                width:              parent.width * 0.75
-                height:             width
-                radius:             width * 0.5
-                color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
-                visible:            !pauseVideo.visible
-                anchors.centerIn:   parent
-                QGCColoredImage {
-                    id:                 busyIndicator
-                    height:             parent.height * 0.75
-                    width:              height
-                    source:             "/qmlimages/MapSync.svg"
-                    sourceSize.height:  height
-                    fillMode:           Image.PreserveAspectFit
-                    mipmap:             true
-                    smooth:             true
-                    color:              qgcPal.colorBlue
-                    visible: {
-                        if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
-                            return true
-                        }
-                        return false
-                    }
-                    anchors.centerIn:   parent
-                    RotationAnimation on rotation {
-                        loops:          Animation.Infinite
-                        from:           360
-                        to:             0
-                        duration:       740
-                        running:        busyIndicator.visible
-                    }
-                }
-                QGCLabel {
-                    text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : qsTr('N/A')
-                    font.family:        ScreenTools.demiboldFontFamily
-                    color:              qgcPal.colorBlue
-                    visible:            _cameraElapsedMode
-                    anchors.centerIn:   parent
-                }
-            }
-            Rectangle {
-                id:         pauseVideo
-                width:      parent.width * 0.5
-                height:     width
-                color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
-                visible: {
-                   if(_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
-                       return true
-                   }
-                   if(_cameraPhotoMode) {
-                       if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
-                           return true
-                       }
-                   }
-                   return false
-                }
-                anchors.centerIn:   parent
-            }
-            MouseArea {
-                anchors.fill:   parent
-                enabled:        !_noSdCard
-                onClicked: {
-                    if(_cameraVideoMode) {
-                        if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
-                            _camera.stopVideo()
-                        } else {
-                            if(!_fullSD) {
-                                _camera.startVideo()
-                            }
-                        }
-                    } else {
-                        if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
-                            _camera.stopTakePhoto()
-                        } else {
-                            if(!_fullSD) {
-                                _camera.takePhoto()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        //-----------------------------------------------------------------
-        //-- Settings
-        Item {
-            width:                  settingsCol.width
-            height:                 settingsCol.height
-            anchors.horizontalCenter: parent.horizontalCenter
+            id:             quickSettingMenu
+            height:         buttonCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+            width:          buttonCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+            color:          qgcPal.windowShade
+            radius:         2
+            anchors.verticalCenter: cameraRect.verticalCenter
             Column {
-                id:                 settingsCol
-                spacing:            _spacers * 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
-                Image {
-                    width:          ScreenTools.defaultFontPixelHeight
-                    height:         width
-                    sourceSize.width: width
-                    source:         "qrc:/auterion/img/camera_settings.svg"
-                    fillMode:       Image.PreserveAspectFit
-                    opacity:        _settingsEnabled ? 1 : 0.5
-                    anchors.horizontalCenter: parent.horizontalCenter
+                id:                     buttonCol
+                spacing:                _spacers
+                anchors.centerIn:       parent
+                AuterionQuickSettingButton {
+                    id:                 evButton
+                    visible:            _evFact
+                    flat:               true
+                    icon.source:        "/auterion/img/ev_icon.svg"
+                    onClicked: {
+                        checked = true
+                        if(!evQuickSetting.visible) evQuickSetting.open()
+                    }
                 }
+                AuterionQuickSettingButton {
+                    id:                 gimbalButton
+                    icon.source:        "/auterion/img/gimbal_icon.svg"
+                    flat:               true
+                    onClicked: {
+                        checked = true
+                        if(!gimbalQuickSetting.visible) gimbalQuickSetting.open()
+                    }
+                }
+                AuterionQuickSettingButton {
+                    id:                 zoomButton
+                    visible:            _hasZoom
+                    icon.source:        "/auterion/img/zoom_icon.svg"
+                    flat:               true
+                    onClicked: {
+                        checked = true
+                        if(!zoomQuickSetting.visible) zoomQuickSetting.open()
+                    }
+                }
+                AuterionQuickSettingButton {
+                    id:                 paletteButton
+                    icon.source:        "/auterion/img/palette_icon.svg"
+                    flat:               true
+                    onClicked: {
+                        checked = true
+                        if(!paletteQuickSetting.visible) paletteQuickSetting.open()
+                    }
+                }
+            }
+        }
+        Rectangle {
+            id:             cameraRect
+            height:         cameraCol.height
+            width:          cameraCol.width + (ScreenTools.defaultFontPixelWidth * 2)
+            color:          qgcPal.windowShade
+            radius:         2
+            Column {
+                id:         cameraCol
+                spacing:    _spacers
+                anchors.centerIn: parent
+                Item {
+                    height:     1
+                    width:      1
+                }
+                //-----------------------------------------------------------------
+                //-- Camera Name
                 QGCLabel {
-                    text:           qsTr("Settings")
-                    font.pointSize: ScreenTools.smallFontPointSize
+                    text:                   activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
+                    font.pointSize:         ScreenTools.smallFontPointSize
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
-            }
-            MouseArea {
-                anchors.fill:       parent
-                enabled:            _settingsEnabled
-                onClicked: {
-                    cameraSettings.open()
+                //-----------------------------------------------------------------
+                //-- Camera Mode
+                Item {
+                    width:                  modeCol.width
+                    height:                 modeCol.height
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Column {
+                        id:                 modeCol
+                        spacing:            _spacers * 0.5
+                        QGCColoredImage {
+                            height:         ScreenTools.defaultFontPixelHeight
+                            width:          height
+                            source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/auterion/img/camera_photo.svg" : "/auterion/img/camera_video.svg"
+                            color:          qgcPal.text
+                            fillMode:       Image.PreserveAspectFit
+                            sourceSize.height:  height
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCLabel {
+                            text:           _cameraVideoMode ? qsTr("Video") : qsTr("Photo")
+                            font.pointSize: ScreenTools.smallFontPointSize
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill:       parent
+                        enabled:            !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
+                        onClicked: {
+                            _camera.toggleMode()
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- Shutter
+                Rectangle {
+                    color:                  Qt.rgba(0,0,0,0)
+                    width:                  height
+                    height:                 ScreenTools.defaultFontPixelHeight * 4
+                    radius:                 width * 0.5
+                    border.color:           qgcPal.buttonText
+                    border.width:           3
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Rectangle {
+                        width:              parent.width * 0.75
+                        height:             width
+                        radius:             width * 0.5
+                        color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
+                        visible:            !pauseVideo.visible
+                        anchors.centerIn:   parent
+                        QGCColoredImage {
+                            id:                 busyIndicator
+                            height:             parent.height * 0.75
+                            width:              height
+                            source:             "/qmlimages/MapSync.svg"
+                            sourceSize.height:  height
+                            fillMode:           Image.PreserveAspectFit
+                            mipmap:             true
+                            smooth:             true
+                            color:              qgcPal.colorBlue
+                            visible: {
+                                if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
+                                    return true
+                                }
+                                return false
+                            }
+                            anchors.centerIn:   parent
+                            RotationAnimation on rotation {
+                                loops:          Animation.Infinite
+                                from:           360
+                                to:             0
+                                duration:       740
+                                running:        busyIndicator.visible
+                            }
+                        }
+                        QGCLabel {
+                            text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : qsTr('N/A')
+                            font.family:        ScreenTools.demiboldFontFamily
+                            color:              qgcPal.colorBlue
+                            visible:            _cameraElapsedMode
+                            anchors.centerIn:   parent
+                        }
+                    }
+                    Rectangle {
+                        id:         pauseVideo
+                        width:      parent.width * 0.5
+                        height:     width
+                        color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
+                        visible: {
+                           if(_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
+                               return true
+                           }
+                           if(_cameraPhotoMode) {
+                               if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                                   return true
+                               }
+                           }
+                           return false
+                        }
+                        anchors.centerIn:   parent
+                    }
+                    MouseArea {
+                        anchors.fill:   parent
+                        enabled:        !_noSdCard
+                        onClicked: {
+                            if(_cameraVideoMode) {
+                                if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
+                                    _camera.stopVideo()
+                                } else {
+                                    if(!_fullSD) {
+                                        _camera.startVideo()
+                                    }
+                                }
+                            } else {
+                                if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                                    _camera.stopTakePhoto()
+                                } else {
+                                    if(!_fullSD) {
+                                        _camera.takePhoto()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- Settings
+                Item {
+                    width:                  settingsCol.width
+                    height:                 settingsCol.height
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Column {
+                        id:                 settingsCol
+                        spacing:            _spacers * 0.5
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Image {
+                            width:          ScreenTools.defaultFontPixelHeight
+                            height:         width
+                            sourceSize.width: width
+                            source:         "qrc:/auterion/img/camera_settings.svg"
+                            fillMode:       Image.PreserveAspectFit
+                            opacity:        _settingsEnabled ? 1 : 0.5
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        QGCLabel {
+                            text:           qsTr("Settings")
+                            font.pointSize: ScreenTools.smallFontPointSize
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill:       parent
+                        enabled:            _settingsEnabled
+                        onClicked: {
+                            cameraSettings.open()
+                        }
+                    }
+                }
+                //-----------------------------------------------------------------
+                //-- microSD Card
+                Column {
+                    spacing:            _spacers * 0.5
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Image {
+                        width:          ScreenTools.defaultFontPixelHeight
+                        height:         width
+                        sourceSize.width: width
+                        source:         "qrc:/auterion/img/microSD.svg"
+                        fillMode:       Image.PreserveAspectFit
+                        opacity:        _settingsEnabled ? 1 : 0.5
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text: {
+                            if(_noSdCard) return qsTr("NONE")
+                            if(_fullSD) return qsTr("FULL")
+                            return _camera ? _camera.storageFreeStr : ""
+                        }
+                        color:          (_noSdCard || _fullSD) ? qgcPal.colorOrange : qgcPal.text
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                }
+                /*
+                //-----------------------------------------------------------------
+                //-- Recording Time / Images Captured
+                AuterionLabel {
+                    text:               (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
+                    visible:            _cameraVideoMode
+                    pointSize:          ScreenTools.smallFontPointSize
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                AuterionLabel {
+                    text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+                    visible:            _cameraPhotoMode
+                    pointSize:          ScreenTools.smallFontPointSize
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                */
+                Item {
+                    height:     1
+                    width:      1
                 }
             }
         }
-        //-----------------------------------------------------------------
-        //-- microSD Card
-        Column {
-            spacing:            _spacers * 0.5
-            anchors.horizontalCenter: parent.horizontalCenter
-            Image {
-                width:          ScreenTools.defaultFontPixelHeight
-                height:         width
-                sourceSize.width: width
-                source:         "qrc:/auterion/img/microSD.svg"
-                fillMode:       Image.PreserveAspectFit
-                opacity:        _settingsEnabled ? 1 : 0.5
-                anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    //-------------------------------------------------------------------------
+    //-- EV Quick Setting
+    Popup {
+        id:                 evQuickSetting
+        width:              evQuickSettingControl.width
+        height:             evQuickSettingControl.height
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _evPopupTarget ? _evPopupTarget.x - width - _spacers : 0
+        y:                  _evPopupTarget ? _evPopupTarget.y + mainWindow.header.height - ((evQuickSetting.height - evButton.height) / 2): 0
+        property var _evPopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _evPopupTarget = mainWindow.contentItem.mapFromItem(evButton, 0, 0)
+            } else {
+                evButton.checked = false
             }
-            QGCLabel {
-                text: {
-                    if(_noSdCard) return qsTr("NONE")
-                    if(_fullSD) return qsTr("FULL")
-                    return _camera ? _camera.storageFreeStr : ""
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
+        }
+        AuterionQuickSetting {
+            id:             evQuickSettingControl
+            text:           _evFact && _evFact.enumStrings.length ? _evFact.enumStringValue : ""
+            showValue:      true
+            anchors.centerIn: parent
+            onIncremented:  _evFact.value = _evFact.value + 1
+            onDecremented:  _evFact.value = _evFact.value - 1
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Gimbal Quick Setting
+    Popup {
+        id:                 gimbalQuickSetting
+        width:              gimbalQuickSettingControl.width  * 2
+        height:             gimbalQuickSettingControl.height * 2
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _gimbalPopupTarget ? _gimbalPopupTarget.x - width - _spacers : 0
+        y:                  _gimbalPopupTarget ? _gimbalPopupTarget.y + mainWindow.header.height - ((gimbalQuickSetting.height - gimbalButton.height) / 2): 0
+        property var _gimbalPopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _gimbalPopupTarget = mainWindow.contentItem.mapFromItem(gimbalButton, 0, 0)
+            } else {
+                gimbalButton.checked = false
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
+        }
+        QGCLabel {
+            id:             gimbalQuickSettingControl
+            text:           "Not Yet"
+            anchors.centerIn: parent
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Zoom Quick Setting
+    Popup {
+        id:                 zoomQuickSetting
+        width:              zoomQuickSettingControl.width
+        height:             zoomQuickSettingControl.height
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _zoomPopupTarget ? _zoomPopupTarget.x - width - _spacers : 0
+        y:                  _zoomPopupTarget ? _zoomPopupTarget.y + mainWindow.header.height - ((zoomQuickSetting.height - zoomButton.height) / 2): 0
+        property var _zoomPopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _zoomPopupTarget = mainWindow.contentItem.mapFromItem(zoomButton, 0, 0)
+            } else {
+                zoomButton.checked = false
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
+        }
+        AuterionQuickSetting {
+            id:             zoomQuickSettingControl
+            showValue:      false
+            anchors.centerIn: parent
+            onIncremented: {
+                if(_hasZoom) {
+                    _camera.stepZoom(1)
                 }
-                color:          (_noSdCard || _fullSD) ? qgcPal.colorOrange : qgcPal.text
-                font.pointSize: ScreenTools.smallFontPointSize
-                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            onDecremented: {
+                if(_hasZoom) {
+                    _camera.stepZoom(-1)
+                }
             }
         }
-        /*
-        //-----------------------------------------------------------------
-        //-- Recording Time / Images Captured
-        AuterionLabel {
-            text:               (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
-            visible:            _cameraVideoMode
-            pointSize:          ScreenTools.smallFontPointSize
-            anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Thermal Palette Quick Setting
+    Popup {
+        id:                 paletteQuickSetting
+        width:              paletteQuickSettingControl.width  * 2
+        height:             paletteQuickSettingControl.height * 2
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _palettePopupTarget ? _palettePopupTarget.x - width - _spacers : 0
+        y:                  _palettePopupTarget ? _palettePopupTarget.y + mainWindow.header.height - ((paletteQuickSetting.height - paletteButton.height) / 2): 0
+        property var _palettePopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _palettePopupTarget = mainWindow.contentItem.mapFromItem(paletteButton, 0, 0)
+            } else {
+                paletteButton.checked = false
+            }
         }
-        AuterionLabel {
-            text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-            visible:            _cameraPhotoMode
-            pointSize:          ScreenTools.smallFontPointSize
-            anchors.horizontalCenter: parent.horizontalCenter
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
         }
-        */
-        Item {
-            height:     1
-            width:      1
+        QGCLabel {
+            id:             paletteQuickSettingControl
+            text:           "Not Yet"
+            anchors.centerIn: parent
         }
     }
 
