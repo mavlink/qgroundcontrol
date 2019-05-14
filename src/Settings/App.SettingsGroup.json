@@ -104,6 +104,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "virtualJoystickCentralized",
+    "shortDescription": "Set virtual joystick to be centralize throttle (spring-loaded).",
+    "longDescription":  "If this option is enabled the virtual joystick throttle stick will be centralized.",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
     "name":             "gstDebugLevel",
     "shortDescription": "Video streaming debug",
     "longDescription":  "Sets the environment variable GST_DEBUG for all pipeline elements on boot.",
