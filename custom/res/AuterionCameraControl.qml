@@ -70,8 +70,9 @@ Item {
 
     Row {
         id:         mainRow
-        spacing:    ScreenTools.defaultFontPixelWidth
+        spacing:    _spacers
         Rectangle {
+            id:             quickSettingMenu
             height:         buttonCol.height + (ScreenTools.defaultFontPixelHeight * 2)
             width:          buttonCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
             color:          qgcPal.windowShade
@@ -81,22 +82,35 @@ Item {
                 id:                     buttonCol
                 spacing:                _spacers
                 anchors.centerIn:       parent
-                AuterionCameraQuickSettingButton {
+                AuterionQuickSettingButton {
+                    id:                 evButton
                     visible:            _evFact
+                    flat:               true
                     icon.source:        "/auterion/img/ev_icon.svg"
                     onClicked: {
                         checked = true
+                        if(!evQuickSetting.visible) evQuickSetting.open()
                     }
                 }
-                AuterionCameraQuickSettingButton {
+                AuterionQuickSettingButton {
                     icon.source:        "/auterion/img/gimbal_icon.svg"
+                    flat:               true
                     onClicked: {
                         checked = true
                     }
                 }
-                AuterionCameraQuickSettingButton {
+                AuterionQuickSettingButton {
                     visible:            _hasZoom
                     icon.source:        "/auterion/img/zoom_icon.svg"
+                    flat:               true
+                    onClicked: {
+                        checked = true
+                    }
+                }
+                AuterionQuickSettingButton {
+                    visible:            _hasZoom
+                    icon.source:        "/auterion/img/palette_icon.svg"
+                    flat:               true
                     onClicked: {
                         checked = true
                     }
@@ -327,6 +341,41 @@ Item {
                     width:      1
                 }
             }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- EV Quick Setting
+    Popup {
+        id:                 evQuickSetting
+        width:              evQuickSettingControl.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+        height:             evQuickSettingControl.height + (ScreenTools.defaultFontPixelHeight * 2)
+        modal:              true
+        focus:              true
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _evPopupTarget ? _evPopupTarget.x - width - _spacers : 0
+        y:                  _evPopupTarget ? _evPopupTarget.y + mainWindow.header.height - ((evQuickSetting.height - quickSettingMenu.height) / 2): 0
+        property var _evPopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _evPopupTarget = mainWindow.contentItem.mapFromItem(quickSettingMenu, 0, 0)
+            } else {
+                evButton.checked = false
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+        }
+        AuterionQuickSetting {
+            id:             evQuickSettingControl
+            text:           _evFact && _evFact.enumStrings.length ? _evFact.enumStringValue : ""
+            showValue:      true
+            anchors.centerIn: parent
+            onIncremented:  _evFact.value = _evFact.value + 1
+            onDecremented:  _evFact.value = _evFact.value - 1
         }
     }
 

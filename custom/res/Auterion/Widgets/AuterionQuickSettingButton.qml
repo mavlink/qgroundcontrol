@@ -20,10 +20,11 @@ Button {
     height:                         ScreenTools.defaultFontPixelHeight * 2
     width:                          height
     autoExclusive:                  true
-
+    property bool showArrow:        true
+    property real iconRatio:        1
     background: Rectangle {
         anchors.fill:               parent
-        color:                      button.checked ? qgcPal.buttonHighlight : qgcPal.windowShade
+        color:                      (button.checked || button.pressed) ? qgcPal.buttonHighlight : (button.flat ? Qt.rgba(0,0,0,0) : qgcPal.button)
         QGCColoredImage {
             height:                 parent.height * 0.25
             width:                  height
@@ -31,20 +32,19 @@ Button {
             fillMode:               Image.PreserveAspectFit
             color:                  qgcPal.buttonHighlight
             source:                 "/auterion/img/button_arrow_left.svg"
-            visible:                button.checked
+            visible:                button.checked && showArrow
             anchors.right:          parent.left
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-
     contentItem: QGCColoredImage {
-        id:                     _icon
-        height:                 ScreenTools.defaultFontPixelHeight
-        width:                  height
-        sourceSize.height:      parent.height
-        fillMode:               Image.PreserveAspectFit
-        color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-        source:                 button.icon.source
-        anchors.centerIn:       parent
+        id:                         _icon
+        height:                     ScreenTools.defaultFontPixelHeight * button.iconRatio
+        width:                      height
+        sourceSize.height:          height
+        fillMode:                   Image.PreserveAspectFit
+        color:                      (button.checked || button.pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+        source:                     button.icon.source
+        anchors.centerIn:           parent
     }
 }

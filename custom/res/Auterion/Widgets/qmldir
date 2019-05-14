@@ -1,14 +1,15 @@
 Module Auterion.Widgets
 
-AuterionArtificialHorizon           1.0     AuterionArtificialHorizon.qml
-AuterionAttitudeWidget              1.0     AuterionAttitudeWidget.qml
-AuterionCameraQuickSettingButton    1.0     AuterionCameraQuickSettingButton.qml
-AuterionComboBox                    1.0     AuterionComboBox.qml
-AuterionFactCombo                   1.0     AuterionFactCombo.qml
-AuterionIconButton                  1.0     AuterionIconButton.qml
-AuterionLabel                       1.0     AuterionLabel.qml
-AuterionSignalStrength              1.0     AuterionSignalStrength.qml
-AuterionTextBackground              1.0     AuterionTextBackground.qml
-AuterionToolBarButton               1.0     AuterionToolBarButton.qml
-AuterionVehicleButton               1.0     AuterionVehicleButton.qml
-OnOffSwitch                         1.0     OnOffSwitch.qml
+AuterionArtificialHorizon       1.0     AuterionArtificialHorizon.qml
+AuterionAttitudeWidget          1.0     AuterionAttitudeWidget.qml
+AuterionComboBox                1.0     AuterionComboBox.qml
+AuterionFactCombo               1.0     AuterionFactCombo.qml
+AuterionIconButton              1.0     AuterionIconButton.qml
+AuterionLabel                   1.0     AuterionLabel.qml
+AuterionQuickSetting            1.0     AuterionQuickSetting.qml
+AuterionQuickSettingButton      1.0     AuterionQuickSettingButton.qml
+AuterionSignalStrength          1.0     AuterionSignalStrength.qml
+AuterionTextBackground          1.0     AuterionTextBackground.qml
+AuterionToolBarButton           1.0     AuterionToolBarButton.qml
+AuterionVehicleButton           1.0     AuterionVehicleButton.qml
+OnOffSwitch                     1.0     OnOffSwitch.qml

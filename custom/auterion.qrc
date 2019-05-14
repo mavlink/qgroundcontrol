@@ -71,8 +71,11 @@
         <file alias="menu_signal_75.svg">res/images/menu_signal_75.svg</file>
         <file alias="messages.svg">res/images/messages.svg</file>
         <file alias="microSD.svg">res/images/microSD.svg</file>
+        <file alias="minus_icon.svg">res/images/minus_icon.svg</file>
         <file alias="odometer.svg">res/images/odometer.svg</file>
+        <file alias="palette_icon.svg">res/images/palette_icon.svg</file>
         <file alias="plan.svg">res/images/plan.svg</file>
+        <file alias="plus_icon.svg">res/images/plus_icon.svg</file>
         <file alias="settings.svg">res/images/settings.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
         <file alias="vehicle.svg">res/images/vehicle.svg</file>
@@ -84,7 +87,8 @@
     <qresource prefix="Auterion/Widgets">
         <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
         <file alias="Auterion/Widgets/AuterionAttitudeWidget.qml">res/Auterion/Widgets/AuterionAttitudeWidget.qml</file>
-        <file alias="Auterion/Widgets/AuterionCameraQuickSettingButton.qml">res/Auterion/Widgets/AuterionCameraQuickSettingButton.qml</file>
+        <file alias="Auterion/Widgets/AuterionQuickSetting.qml">res/Auterion/Widgets/AuterionQuickSetting.qml</file>
+        <file alias="Auterion/Widgets/AuterionQuickSettingButton.qml">res/Auterion/Widgets/AuterionQuickSettingButton.qml</file>
         <file alias="Auterion/Widgets/AuterionComboBox.qml">res/Auterion/Widgets/AuterionComboBox.qml</file>
         <file alias="Auterion/Widgets/AuterionFactCombo.qml">res/Auterion/Widgets/AuterionFactCombo.qml</file>
         <file alias="Auterion/Widgets/AuterionIconButton.qml">res/Auterion/Widgets/AuterionIconButton.qml</file>
