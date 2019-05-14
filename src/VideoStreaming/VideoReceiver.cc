@@ -138,7 +138,6 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
         qCritical() << "newPadCB : failed to link elements\n";
     g_free(name);
 }
-#endif
 
 //-----------------------------------------------------------------------------
 void
@@ -146,6 +145,7 @@ VideoReceiver::_restart_timeout()
 {
     qgcApp()->toolbox()->videoManager()->restartVideo();
 }
+#endif
 
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
