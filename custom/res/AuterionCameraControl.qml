@@ -70,7 +70,7 @@ Item {
 
     Row {
         id:         mainRow
-        spacing:    _spacers
+        spacing:    _spacers * 0.5
         Rectangle {
             id:             quickSettingMenu
             height:         buttonCol.height + (ScreenTools.defaultFontPixelHeight * 2)
@@ -93,26 +93,31 @@ Item {
                     }
                 }
                 AuterionQuickSettingButton {
+                    id:                 gimbalButton
                     icon.source:        "/auterion/img/gimbal_icon.svg"
                     flat:               true
                     onClicked: {
                         checked = true
+                        if(!gimbalQuickSetting.visible) gimbalQuickSetting.open()
                     }
                 }
                 AuterionQuickSettingButton {
+                    id:                 zoomButton
                     visible:            _hasZoom
                     icon.source:        "/auterion/img/zoom_icon.svg"
                     flat:               true
                     onClicked: {
                         checked = true
+                        if(!zoomQuickSetting.visible) zoomQuickSetting.open()
                     }
                 }
                 AuterionQuickSettingButton {
-                    visible:            _hasZoom
+                    id:                 paletteButton
                     icon.source:        "/auterion/img/palette_icon.svg"
                     flat:               true
                     onClicked: {
                         checked = true
+                        if(!paletteQuickSetting.visible) paletteQuickSetting.open()
                     }
                 }
             }
@@ -348,18 +353,19 @@ Item {
     //-- EV Quick Setting
     Popup {
         id:                 evQuickSetting
-        width:              evQuickSettingControl.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-        height:             evQuickSettingControl.height + (ScreenTools.defaultFontPixelHeight * 2)
+        width:              evQuickSettingControl.width
+        height:             evQuickSettingControl.height
         modal:              true
         focus:              true
+        dim:                false
         parent:             Overlay.overlay
         closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
         x:                  _evPopupTarget ? _evPopupTarget.x - width - _spacers : 0
-        y:                  _evPopupTarget ? _evPopupTarget.y + mainWindow.header.height - ((evQuickSetting.height - quickSettingMenu.height) / 2): 0
+        y:                  _evPopupTarget ? _evPopupTarget.y + mainWindow.header.height - ((evQuickSetting.height - evButton.height) / 2): 0
         property var _evPopupTarget: null
         onVisibleChanged: {
             if(visible) {
-                _evPopupTarget = mainWindow.contentItem.mapFromItem(quickSettingMenu, 0, 0)
+                _evPopupTarget = mainWindow.contentItem.mapFromItem(evButton, 0, 0)
             } else {
                 evButton.checked = false
             }
@@ -368,6 +374,7 @@ Item {
             anchors.fill:   parent
             color:          qgcPal.windowShade
             radius:         2
+            clip:           true
         }
         AuterionQuickSetting {
             id:             evQuickSettingControl
@@ -376,6 +383,118 @@ Item {
             anchors.centerIn: parent
             onIncremented:  _evFact.value = _evFact.value + 1
             onDecremented:  _evFact.value = _evFact.value - 1
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Gimbal Quick Setting
+    Popup {
+        id:                 gimbalQuickSetting
+        width:              gimbalQuickSettingControl.width  * 2
+        height:             gimbalQuickSettingControl.height * 2
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _gimbalPopupTarget ? _gimbalPopupTarget.x - width - _spacers : 0
+        y:                  _gimbalPopupTarget ? _gimbalPopupTarget.y + mainWindow.header.height - ((gimbalQuickSetting.height - gimbalButton.height) / 2): 0
+        property var _gimbalPopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _gimbalPopupTarget = mainWindow.contentItem.mapFromItem(gimbalButton, 0, 0)
+            } else {
+                gimbalButton.checked = false
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
+        }
+        QGCLabel {
+            id:             gimbalQuickSettingControl
+            text:           "Not Yet"
+            anchors.centerIn: parent
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Zoom Quick Setting
+    Popup {
+        id:                 zoomQuickSetting
+        width:              zoomQuickSettingControl.width
+        height:             zoomQuickSettingControl.height
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _zoomPopupTarget ? _zoomPopupTarget.x - width - _spacers : 0
+        y:                  _zoomPopupTarget ? _zoomPopupTarget.y + mainWindow.header.height - ((zoomQuickSetting.height - zoomButton.height) / 2): 0
+        property var _zoomPopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _zoomPopupTarget = mainWindow.contentItem.mapFromItem(zoomButton, 0, 0)
+            } else {
+                zoomButton.checked = false
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
+        }
+        AuterionQuickSetting {
+            id:             zoomQuickSettingControl
+            showValue:      false
+            anchors.centerIn: parent
+            onIncremented: {
+                if(_hasZoom) {
+                    _camera.stepZoom(1)
+                }
+            }
+            onDecremented: {
+                if(_hasZoom) {
+                    _camera.stepZoom(-1)
+                }
+            }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Thermal Palette Quick Setting
+    Popup {
+        id:                 paletteQuickSetting
+        width:              paletteQuickSettingControl.width  * 2
+        height:             paletteQuickSettingControl.height * 2
+        modal:              true
+        focus:              true
+        dim:                false
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x:                  _palettePopupTarget ? _palettePopupTarget.x - width - _spacers : 0
+        y:                  _palettePopupTarget ? _palettePopupTarget.y + mainWindow.header.height - ((paletteQuickSetting.height - paletteButton.height) / 2): 0
+        property var _palettePopupTarget: null
+        onVisibleChanged: {
+            if(visible) {
+                _palettePopupTarget = mainWindow.contentItem.mapFromItem(paletteButton, 0, 0)
+            } else {
+                paletteButton.checked = false
+            }
+        }
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.windowShade
+            radius:         2
+            clip:           true
+        }
+        QGCLabel {
+            id:             paletteQuickSettingControl
+            text:           "Not Yet"
+            anchors.centerIn: parent
         }
     }
 

@@ -21,7 +21,6 @@ Button {
     width:                          height
     autoExclusive:                  true
     property bool showArrow:        true
-    property real iconRatio:        1
     background: Rectangle {
         anchors.fill:               parent
         color:                      (button.checked || button.pressed) ? qgcPal.buttonHighlight : (button.flat ? Qt.rgba(0,0,0,0) : qgcPal.button)
@@ -39,7 +38,7 @@ Button {
     }
     contentItem: QGCColoredImage {
         id:                         _icon
-        height:                     ScreenTools.defaultFontPixelHeight * button.iconRatio
+        height:                     ScreenTools.defaultFontPixelHeight * 0.5
         width:                      height
         sourceSize.height:          height
         fillMode:                   Image.PreserveAspectFit

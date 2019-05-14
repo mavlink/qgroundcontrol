@@ -87,13 +87,14 @@
     <qresource prefix="Auterion/Widgets">
         <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
         <file alias="Auterion/Widgets/AuterionAttitudeWidget.qml">res/Auterion/Widgets/AuterionAttitudeWidget.qml</file>
-        <file alias="Auterion/Widgets/AuterionQuickSetting.qml">res/Auterion/Widgets/AuterionQuickSetting.qml</file>
-        <file alias="Auterion/Widgets/AuterionQuickSettingButton.qml">res/Auterion/Widgets/AuterionQuickSettingButton.qml</file>
         <file alias="Auterion/Widgets/AuterionComboBox.qml">res/Auterion/Widgets/AuterionComboBox.qml</file>
         <file alias="Auterion/Widgets/AuterionFactCombo.qml">res/Auterion/Widgets/AuterionFactCombo.qml</file>
         <file alias="Auterion/Widgets/AuterionIconButton.qml">res/Auterion/Widgets/AuterionIconButton.qml</file>
         <file alias="Auterion/Widgets/AuterionLabel.qml">res/Auterion/Widgets/AuterionLabel.qml</file>
+        <file alias="Auterion/Widgets/AuterionQuickSetting.qml">res/Auterion/Widgets/AuterionQuickSetting.qml</file>
+        <file alias="Auterion/Widgets/AuterionQuickSettingButton.qml">res/Auterion/Widgets/AuterionQuickSettingButton.qml</file>
         <file alias="Auterion/Widgets/AuterionSignalStrength.qml">res/Auterion/Widgets/AuterionSignalStrength.qml</file>
+        <file alias="Auterion/Widgets/AuterionSimpleIconButton.qml">res/Auterion/Widgets/AuterionSimpleIconButton.qml</file>
         <file alias="Auterion/Widgets/AuterionTextBackground.qml">res/Auterion/Widgets/AuterionTextBackground.qml</file>
         <file alias="Auterion/Widgets/AuterionToolBarButton.qml">res/Auterion/Widgets/AuterionToolBarButton.qml</file>
         <file alias="Auterion/Widgets/AuterionVehicleButton.qml">res/Auterion/Widgets/AuterionVehicleButton.qml</file>

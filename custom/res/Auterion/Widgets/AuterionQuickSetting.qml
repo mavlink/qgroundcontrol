@@ -24,31 +24,28 @@ Item {
 
     property bool   showValue:  false
     property alias  text:       _label.text
+    property real   size:       ScreenTools.defaultFontPixelWidth * 6
     signal          incremented ()
     signal          decremented ()
-    property real   _spacers:   ScreenTools.defaultFontPixelHeight
-    property real   _size:      ScreenTools.defaultFontPixelWidth * 4
+    property real   _spacers:   showValue ? ScreenTools.defaultFontPixelHeight * 0.5 : 2
 
     Column {
         id:                 valueCol
-        spacing:            _spacers * 0.3333
-        AuterionQuickSettingButton {
-            icon.source:    "/auterion/img/plus_icon.svg"
-            showArrow:      false
-            iconRatio:      0.25
-            flat:           false
+        spacing:            _spacers
+        AuterionSimpleIconButton {
+            size:           _root.size
+            source:         "/auterion/img/plus_icon.svg"
             onClicked:      _root.incremented();
         }
         QGCLabel {
             id:             _label
+            visible:        showValue
             font.pointSize: ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
-        AuterionQuickSettingButton {
-            icon.source:    "/auterion/img/minus_icon.svg"
-            showArrow:      false
-            iconRatio:      0.25
-            flat:           false
+        AuterionSimpleIconButton {
+            size:           _root.size
+            source:         "/auterion/img/minus_icon.svg"
             onClicked:      _root.decremented();
         }
     }
