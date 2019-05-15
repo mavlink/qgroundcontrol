@@ -171,6 +171,18 @@ QGCCameraManager::currentStreamInstance()
 }
 
 //-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraManager::thermalStreamInstance()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        QGCVideoStreamInfo* pInfo = pCamera->thermalStreamInstance();
+        return pInfo;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
 QGCCameraControl*
 QGCCameraManager::_findCamera(int id)
 {

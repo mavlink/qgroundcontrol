@@ -7,17 +7,13 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controllers   1.0
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
-    QGCPalette          { id: qgcPal; colorGroupEnabled: enabled }
-    FactPanelController { id: controller; factPanel: panel }
+    FactPanelController { id: controller; }
 
     ESP8266ComponentController {
         id:         esp8266
-        factPanel:  panel
     }
 
     property Fact debugEnabled:     controller.getParameterFact(esp8266.componentID, "DEBUG_ENABLED")

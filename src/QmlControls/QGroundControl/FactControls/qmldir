@@ -1,0 +1,12 @@
+Module QGroundControl.FactControls
+
+AltitudeFactTextField   1.0 AltitudeFactTextField.qml
+FactBitmask             1.0 FactBitmask.qml
+FactCheckBox            1.0 FactCheckBox.qml
+FactComboBox            1.0 FactComboBox.qml
+FactLabel               1.0 FactLabel.qml
+FactTextField           1.0 FactTextField.qml
+FactTextFieldGrid       1.0 FactTextFieldGrid.qml
+FactTextFieldRow        1.0 FactTextFieldRow.qml
+FactValueSlider         1.0 FactValueSlider.qml
+FactTextFieldSlider     1.0 FactTextFieldSlider.qml

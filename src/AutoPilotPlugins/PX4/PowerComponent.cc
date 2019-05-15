@@ -12,7 +12,6 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #include "PowerComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "PX4AutoPilotPlugin.h"
 
 PowerComponent::PowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :

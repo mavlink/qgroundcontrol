@@ -28,8 +28,6 @@ SetupPage {
         Column {
             width: availableWidth
 
-            FactPanelController { id: controller; factPanel: tuningPage.viewPanel }
-
             QGCPalette { id: palette; colorGroupEnabled: true }
 
             property bool _atcInputTCAvailable: controller.parameterExists(-1, "ATC_INPUT_TC")

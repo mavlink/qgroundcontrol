@@ -7,9 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs  1.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQuick.Dialogs              1.3
+import QtQuick.Layouts              1.11
 
 import QGroundControl               1.0
 import QGroundControl.Palette       1.0
@@ -25,108 +26,132 @@ AnalyzePage {
     pageName:           qsTr("GeoTag Images")
     pageDescription:    qsTr("GeoTag Images is used to tag a set of images from a survey mission with gps coordinates. You must provide the binary log from the flight as well as the directory which contains the images to tag.")
 
-    property real _margin: ScreenTools.defaultFontPixelWidth * 2
+    readonly property real _margin:     ScreenTools.defaultFontPixelWidth * 2
+    readonly property real _minWidth:   ScreenTools.defaultFontPixelWidth * 20
+    readonly property real _maxWidth:   ScreenTools.defaultFontPixelWidth * 30
 
     Component {
-        id:                 pageComponent
-
-        Column {
-            id:         mainColumn
-            width:      availableWidth
-            spacing:    _margin
-
-            Row {
-                spacing: ScreenTools.defaultFontPixelWidth * 2
-
-                ProgressBar {
-                    id:             progressBar
-                    width:          qgcView.width -_margin * 5
-                    maximumValue:   100
-                    value:          geoController.progress
-                }
-
-                BusyIndicator {
-                    running:        geoController.progress > 0 && geoController.progress < 100 && geoController.errorMessage === ""
-                    width:          progressBar.height
-                    height:         progressBar.height
-                }
+        id:  pageComponent
+        GridLayout {
+            columns:                2
+            columnSpacing:          _margin
+            rowSpacing:             ScreenTools.defaultFontPixelWidth * 2
+            width:                  availableWidth
+            BusyIndicator {
+                running:            geoController.progress > 0 && geoController.progress < 100 && geoController.errorMessage === ""
+                width:              progressBar.height
+                height:             progressBar.height
+                Layout.alignment:   Qt.AlignVCenter | Qt.AlignHCenter
             }
-
+            //-----------------------------------------------------------------
+            ProgressBar {
+                id:                 progressBar
+                to:                 100
+                value:              geoController.progress
+                opacity:            geoController.progress > 0 ? 1 : 0.25
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+            }
+            //-----------------------------------------------------------------
             QGCLabel {
-                text:           geoController.errorMessage
-                font.bold:      true
-                font.pointSize: ScreenTools.largeFontPointSize
-                color:          "red"
+                text:               geoController.errorMessage
+                color:              "red"
+                font.family:        ScreenTools.demiboldFontFamily
+                font.pointSize:     ScreenTools.mediumFontPointSize
+                horizontalAlignment:Text.AlignHCenter
+                Layout.alignment:   Qt.AlignHCenter
+                Layout.columnSpan:  2
             }
-
-            // Horizontal spacer line
-            Rectangle {
-              height:                     1
-              width:                      qgcView.width * 1.0
-              color:                      qgcPal.windowShadeDark
-              anchors.horizontalCenter:   parent.horizontalCenter
-            }
-
-            Row {
-                spacing: _margin
-
-                QGCButton {
-                    text:       qsTr("Select log file")
-                    width:      ScreenTools.defaultFontPixelWidth * 30
-                    onClicked:  geoController.pickLogFile()
-                    anchors.verticalCenter:   parent.verticalCenter
-                }
-
-                QGCLabel {
-                    text: geoController.logFile
-                    anchors.verticalCenter:   parent.verticalCenter
-                }
-            }
-
-            Row {
-                spacing: _margin
-
-                QGCButton {
-                    text:       qsTr("Select image directory")
-                    width:      ScreenTools.defaultFontPixelWidth * 30
-                    onClicked:  geoController.pickImageDirectory()
-                    anchors.verticalCenter:   parent.verticalCenter
-                }
-
-                QGCLabel {
-                    text: geoController.imageDirectory
-                    anchors.verticalCenter:   parent.verticalCenter
-                }
-            }
-
-            Row {
-                spacing: _margin
-
-                QGCButton {
-                    text:       qsTr("(Optionally) Select save directory")
-                    width:      ScreenTools.defaultFontPixelWidth * 30
-                    onClicked:  geoController.pickSaveDirectory()
-                    anchors.verticalCenter:   parent.verticalCenter
-                }
-
-                QGCLabel {
-                    text: geoController.saveDirectory !== "" ? geoController.saveDirectory : "/TAGGED folder in your image folder"
-                    anchors.verticalCenter:   parent.verticalCenter
-                }
-            }
-
-            // Horizontal spacer line
-            Rectangle {
-              height:                     1
-              width:                      qgcView.width * 1.0
-              color:                      qgcPal.windowShadeDark
-              anchors.horizontalCenter:   parent.horizontalCenter
-            }
-
+            //-----------------------------------------------------------------
+            //-- Log File
             QGCButton {
-                text:   geoController.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
-                width:  ScreenTools.defaultFontPixelWidth * 30
-
+                text:               qsTr("Select log file")
+                onClicked:          openLogFile.open()
+                Layout.minimumWidth:_minWidth
+                Layout.maximumWidth:_maxWidth
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+                FileDialog {
+                    id:             openLogFile
+                    title:          qsTr("Select log file")
+                    folder:         shortcuts.home
+                    nameFilters:    [qsTr("ULog file (*.ulg)"), qsTr("PX4 log file (*.px4log)"), qsTr("All Files (*.*)")]
+                    defaultSuffix:  "ulg"
+                    selectExisting: true
+                    onAccepted: {
+                        geoController.logFile = openLogFile.fileUrl
+                        close()
+                    }
+                }
+            }
+            QGCLabel {
+                text:               geoController.logFile
+                elide:              Text.ElideLeft
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+            }
+            //-----------------------------------------------------------------
+            //-- Image Directory
+            QGCButton {
+                text:               qsTr("Select image directory")
+                onClicked:          selectImageDir.open()
+                Layout.minimumWidth:_minWidth
+                Layout.maximumWidth:_maxWidth
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+                FileDialog {
+                    id:             selectImageDir
+                    title:          qsTr("Select image directory")
+                    folder:         shortcuts.home
+                    selectFolder:   true
+                    selectExisting: true
+                    onAccepted: {
+                        geoController.imageDirectory = selectImageDir.folder
+                        close()
+                    }
+                }
+            }
+            QGCLabel {
+                text:               geoController.imageDirectory
+                elide:              Text.ElideLeft
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+            }
+            //-----------------------------------------------------------------
+            //-- Save Directory
+            QGCButton {
+                text:               qsTr("(Optionally) Select save directory")
+                onClicked:          selectDestDir.open()
+                Layout.minimumWidth:_minWidth
+                Layout.maximumWidth:_maxWidth
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+                FileDialog {
+                    id:             selectDestDir
+                    title:          qsTr("Select save directory")
+                    folder:         shortcuts.home
+                    selectFolder:   true
+                    selectExisting: true
+                    onAccepted: {
+                        geoController.saveDirectory = selectDestDir.folder
+                        close()
+                    }
+                }
+            }
+            QGCLabel {
+                text:               geoController.saveDirectory === "" ? (geoController.imageDirectory === "" ? "/TAGGED folder in your image folder" : geoController.imageDirectory + "/TAGGED") : geoController.saveDirectory
+                elide:              Text.ElideLeft
+                Layout.fillWidth:   true
+                Layout.alignment:   Qt.AlignVCenter
+            }
+            //-----------------------------------------------------------------
+            //-- Execute
+            QGCButton {
+                text:               geoController.inProgress ? qsTr("Cancel Tagging") : qsTr("Start Tagging")
+                width:              ScreenTools.defaultFontPixelWidth * 30
+                enabled:            (geoController.imageDirectory !== "" && geoController.logFile !== "") || geoController.inProgress
+                Layout.alignment:   Qt.AlignHCenter
+                Layout.columnSpan:  2
                 onClicked: {
                     if (geoController.inProgress) {
                         geoController.cancelTagging()
@@ -135,6 +160,6 @@ AnalyzePage {
                     }
                 }
             }
-        } // Column
-    } // Component
-} // AnalyzePage
+        }
+    }
+}

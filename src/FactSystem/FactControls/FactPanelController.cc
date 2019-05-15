@@ -20,65 +20,38 @@
 
 QGC_LOGGING_CATEGORY(FactPanelControllerLog, "FactPanelControllerLog")
 
-FactPanelController::FactPanelController(bool standaloneUnitTesting)
-    : _vehicle(NULL)
-    , _uas(NULL)
-    , _autopilot(NULL)
-    , _factPanel(NULL)
+FactPanelController::FactPanelController()
 {
     _vehicle = qgcApp()->toolbox()->multiVehicleManager()->activeVehicle();
-
     if (_vehicle) {
         _uas = _vehicle->uas();
         _autopilot = _vehicle->autopilotPlugin();
     } else {
         _vehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
     }
-
-    if (!standaloneUnitTesting) {
-        // Do a delayed check for the _factPanel finally being set correctly from Qml
-        QTimer::singleShot(1000, this, &FactPanelController::_checkForMissingFactPanel);
-    }
-}
-
-QQuickItem* FactPanelController::factPanel(void)
-{
-    return _factPanel;
-}
-
-void FactPanelController::setFactPanel(QQuickItem* panel)
-{
-    // Once we finally have the _factPanel member set, send any
-    // missing fact notices that were waiting to go out
-
-    _factPanel = panel;
-    foreach (const QString &missingParam, _delayedMissingParams) {
-        _notifyPanelMissingParameter(missingParam);
-    }
-    _delayedMissingParams.clear();
 }
 
 void FactPanelController::_notifyPanelMissingParameter(const QString& missingParam)
 {
-    if (_factPanel) {
+    if (qgcApp()->mainRootWindow()) {
         QVariant returnedValue;
-
-        QMetaObject::invokeMethod(_factPanel,
-                                  "showMissingParameterOverlay",
-                                  Q_RETURN_ARG(QVariant, returnedValue),
-                                  Q_ARG(QVariant, missingParam));
+        QMetaObject::invokeMethod(
+            qgcApp()->mainRootWindow(),
+            "showMissingParameterOverlay",
+            Q_RETURN_ARG(QVariant, returnedValue),
+            Q_ARG(QVariant, missingParam));
     }
 }
 
 void FactPanelController::_notifyPanelErrorMsg(const QString& errorMsg)
 {
-    if (_factPanel) {
+    if(qgcApp()->mainRootWindow()) {
         QVariant returnedValue;
-
-        QMetaObject::invokeMethod(_factPanel,
-                                  "showError",
-                                  Q_RETURN_ARG(QVariant, returnedValue),
-                                  Q_ARG(QVariant, errorMsg));
+        QMetaObject::invokeMethod(
+            qgcApp()->mainRootWindow(),
+            "showFactError",
+            Q_RETURN_ARG(QVariant, returnedValue),
+            Q_ARG(QVariant, errorMsg));
     }
 }
 
@@ -94,7 +67,7 @@ void FactPanelController::_reportMissingParameter(int componentId, const QString
     // will not have access to _factPanel yet. Just record list of missing facts
     // in that case instead of notify. Once _factPanel is available they will be
     // send out for real.
-    if (_factPanel) {
+    if (qgcApp()->mainRootWindow()) {
         _notifyPanelMissingParameter(missingParam);
     } else {
         _delayedMissingParams += missingParam;
@@ -115,12 +88,6 @@ bool FactPanelController::_allParametersExists(int componentId, QStringList name
     return noMissingFacts;
 }
 
-void FactPanelController::_checkForMissingFactPanel(void)
-{
-    if (!_factPanel) {
-        _showInternalError(tr("Incorrect FactPanel Qml implementation. FactPanelController used without passing in factPanel."));
-    }
-}
 
 Fact* FactPanelController::getParameterFact(int componentId, const QString& name, bool reportMissing)
 {

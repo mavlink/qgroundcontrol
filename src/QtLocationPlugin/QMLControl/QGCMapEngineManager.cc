@@ -12,8 +12,7 @@
 ///     @author Gus Grubba <mavlink@grubba.com>
 
 #if !defined(__mobile__)
-#include "QGCQFileDialog.h"
-#include "MainWindow.h"
+//-- TODO: #include "QGCQFileDialog.h"
 #endif
 
 #include "QGCMapEngineManager.h"
@@ -435,11 +434,11 @@ QGCMapEngineManager::importSets(QString path) {
         //-- TODO: This has to be something fixed
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
-        dir = QGCQFileDialog::getOpenFileName(
-            nullptr,
-            "Import Tile Set",
-            QDir::homePath(),
-            "Tile Sets (*.qgctiledb)");
+        dir = QString(); //-- TODO: QGCQFileDialog::getOpenFileName(
+        //    nullptr,
+        //    "Import Tile Set",
+        //    QDir::homePath(),
+        //    "Tile Sets (*.qgctiledb)");
 #endif
     }
     if(!dir.isEmpty()) {
@@ -465,13 +464,13 @@ QGCMapEngineManager::exportSets(QString path) {
 #if defined(__mobile__)
         dir = QDir(QDir::homePath()).filePath(QString("export_%1.db").arg(QDateTime::currentDateTime().toTime_t()));
 #else
-        dir = QGCQFileDialog::getSaveFileName(
-            MainWindow::instance(),
-            "Export Tile Set",
-            QDir::homePath(),
-            "Tile Sets (*.qgctiledb)",
-            "qgctiledb",
-            true);
+        dir = QString(); //-- TODO: QGCQFileDialog::getSaveFileName(
+        //    MainWindow::instance(),
+        //    "Export Tile Set",
+        //    QDir::homePath(),
+        //    "Tile Sets (*.qgctiledb)",
+        //    "qgctiledb",
+        //    true);
 #endif
     }
     if(!dir.isEmpty()) {

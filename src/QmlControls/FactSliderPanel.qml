@@ -29,16 +29,13 @@ Column {
     ///     }
     property ListModel sliderModel
 
-    property var qgcViewPanel
-
     property real _margins:         ScreenTools.defaultFontPixelHeight
     property bool _loadComplete:    false
 
     Component.onCompleted: _loadComplete = true
 
     FactPanelController {
-        id:         controller
-        factPanel:  qgcViewPanel
+        id: controller
     }
 
     QGCPalette { id: palette; colorGroupEnabled: enabled }
@@ -97,8 +94,8 @@ Column {
                         anchors.right:  parent.right
                         wrapMode:       Text.WordWrap
                     }
-                } // Column
-            } // Rectangle
-        } // Repeater
-    } // Column
-} // QGCView
+                }
+            }
+        }
+    }
+}

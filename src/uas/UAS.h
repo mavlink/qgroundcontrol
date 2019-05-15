@@ -23,7 +23,6 @@
 #ifndef __mobile__
 #include "FileManager.h"
 #include "QGCHilLink.h"
-#include "QGCFlightGearLink.h"
 #include "QGCJSBSimLink.h"
 #include "QGCXPlaneLink.h"
 #endif
@@ -219,7 +218,6 @@ public slots:
 
     /** @brief Enable / disable HIL */
 #ifndef __mobile__
-    void enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration);
     void enableHilJSBSim(bool enable, QString options);
     void enableHilXPlane(bool enable);
 

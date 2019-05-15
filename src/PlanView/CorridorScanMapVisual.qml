@@ -20,7 +20,6 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
-    property var qgcView    ///< QGCView to use for popping dialogs
 
     property var _missionItem:      object
     property var _entryCoordinate
@@ -54,7 +53,6 @@ Item {
     }
 
     QGCMapPolygonVisuals {
-        qgcView:            _root.qgcView
         mapControl:         map
         mapPolygon:         object.surveyAreaPolygon
         interactive:        false
@@ -64,7 +62,6 @@ Item {
 
     QGCMapPolylineVisuals {
         id:             mapPolylineVisuals
-        qgcView:        _root.qgcView
         mapControl:     map
         mapPolyline:    object.corridorPolyline
         interactive:    _missionItem.isCurrentItem

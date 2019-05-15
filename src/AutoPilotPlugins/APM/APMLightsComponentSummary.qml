@@ -6,13 +6,10 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Controls 1.0
 import QGroundControl.Palette 1.0
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    FactPanelController { id: controller; factPanel: panel }
+    FactPanelController { id: controller; }
 
     property Fact _rc5Function:         controller.getParameterFact(-1, "SERVO5_FUNCTION")
     property Fact _rc6Function:         controller.getParameterFact(-1, "SERVO6_FUNCTION")

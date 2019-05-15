@@ -97,7 +97,7 @@ Rectangle {
                 onClicked: {
                     valueListView.focus = true
                     if (_currentIndex === index) {
-                        qgcView.showDialog(editDialogComponent, qsTr("Value Details"), qgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                        mainWindow.showDialog(editDialogComponent, qsTr("Value Details"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
                     } else {
                         _currentIndex = index
                         valueListView.positionViewAtIndex(_currentIndex, ListView.Center)

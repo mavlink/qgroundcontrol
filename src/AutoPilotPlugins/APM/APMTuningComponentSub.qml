@@ -28,7 +28,7 @@ SetupPage {
             width:      availableWidth
             spacing:    _margins
 
-            FactPanelController { id: controller; factPanel: tuningPage.viewPanel }
+            FactPanelController { id: controller; }
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 

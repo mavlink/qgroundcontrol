@@ -63,11 +63,9 @@ SetupPage {
 
             AirframeComponentController {
                 id:         controller
-                factPanel:  airframePage.viewPanel
-
                 Component.onCompleted: {
                     if (controller.showCustomConfigPanel) {
-                        showDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), qgcView.showDialogDefaultWidth, StandardButton.Reset)
+                        mainWindow.showDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), mainWindow.showDialogDefaultWidth, StandardButton.Reset)
                     }
                 }
             }
@@ -133,7 +131,7 @@ Your vehicle will also be restarted in order to complete the process.")
                     anchors.right:  parent.right
                     text:           qsTr("Apply and Restart")
 
-                    onClicked:      showDialog(applyRestartDialogComponent, qsTr("Apply and Restart"), qgcView.showDialogDefaultWidth, StandardButton.Apply | StandardButton.Cancel)
+                    onClicked:      mainWindow.showDialog(applyRestartDialogComponent, qsTr("Apply and Restart"), mainWindow.showDialogDefaultWidth, StandardButton.Apply | StandardButton.Cancel)
                 }
             }
 
