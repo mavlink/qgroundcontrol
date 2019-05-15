@@ -41,10 +41,6 @@ ApplicationWindow {
     readonly property string    _mainToolbar:               QGroundControl.corePlugin.options.mainToolbarUrl
     readonly property string    _planToolbar:               QGroundControl.corePlugin.options.planToolbarUrl
 
-    readonly property string    settingsViewSource:         "AppSettings.qml"
-    readonly property string    setupViewSource:            "SetupView.qml"
-    readonly property string    analyzeViewSource:          !ScreenTools.isMobile ? "AnalyzeView.qml" : "MavlinkConsolePage.qml"
-
     //-------------------------------------------------------------------------
     //-- Global Scope Variables
 
@@ -76,50 +72,41 @@ ApplicationWindow {
     //-- Global Scope Functions
 
     function viewSwitch(isPlanView) {
+        settingsWindow.visible  = false
+        setupWindow.visible     = false
+        analyzeWindow.visible   = false
+        rootBackground.visible  = false
+        planViewLoader.visible  = false
         if(isPlanView) {
-            rootBackground.visible = false
-            planViewLoader.visible = true
-            if(toolbar.source !== _planToolbar) {
-                toolbar.source  = _planToolbar
-            }
+            toolbar.source  = _planToolbar
         } else {
-            rootBackground.visible = true
-            planViewLoader.visible = false
-            if(toolbar.source !== _mainToolbar) {
-                toolbar.source  = _mainToolbar
-            }
+            toolbar.source  = _mainToolbar
         }
     }
 
     function showFlyView() {
         viewSwitch(false)
-        mainContentWindow.source = ""
+        rootBackground.visible = true
     }
 
     function showPlanView() {
         viewSwitch(true)
-        mainContentWindow.source = ""
+        planViewLoader.visible = true
     }
 
     function showAnalyzeView() {
         viewSwitch(false)
-        if (mainContentWindow.source !== analyzeViewSource) {
-            mainContentWindow.source  = analyzeViewSource
-        }
+        analyzeWindow.visible = true
     }
 
     function showSetupView() {
         viewSwitch(false)
-        if (mainContentWindow.source !== setupViewSource) {
-            mainContentWindow.source  = setupViewSource
-        }
+        setupWindow.visible = true
     }
 
     function showSettingsView() {
         viewSwitch(false)
-        if (mainContentWindow.source !== settingsViewSource) {
-            mainContentWindow.source  = settingsViewSource
-        }
+        settingsWindow.visible = true
     }
 
     //-------------------------------------------------------------------------
@@ -313,17 +300,37 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Plan View
     Loader {
-        id:                 planViewLoader
-        anchors.fill:       parent
-        visible:            false
-        source:             "PlanView.qml"
+        id:             planViewLoader
+        anchors.fill:   parent
+        visible:        false
+        source:         "PlanView.qml"
     }
 
     //-------------------------------------------------------------------------
-    //-- Current content
+    //-- Settings
     Loader {
-        id: mainContentWindow
+        id:             settingsWindow
         anchors.fill:   parent
+        visible:        false
+        source:         "AppSettings.qml"
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Setup
+    Loader {
+        id:             setupWindow
+        anchors.fill:   parent
+        visible:        false
+        source:         "SetupView.qml"
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Analyze
+    Loader {
+        id:             analyzeWindow
+        anchors.fill:   parent
+        visible:        false
+        source:         "AnalyzeView.qml"
     }
 
     //-------------------------------------------------------------------------
