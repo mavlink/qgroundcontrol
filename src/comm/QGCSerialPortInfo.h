@@ -43,7 +43,7 @@ public:
     bool getBoardInfo(BoardType_t& boardType, QString& name) const;
 
     /// @return true: we can flash this board type
-    bool canFlash(void);
+    bool canFlash(void) const;
 
     /// @return true: Board is currently in bootloader
     bool isBootloader(void) const;
