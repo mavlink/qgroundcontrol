@@ -29,9 +29,9 @@ Item {
     //-------------------------------------------------------------------------
     //-- Setup can be invoked from c++ side
     Connections {
-        target: mainContentWindow
-        onSourceChanged: {
-            if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
+        target: setupWindow
+        onVisibleChanged: {
+            if(setupWindow.visible) {
                 vehicleSetup.checked = true
                 sectionTitle = vehicleSetup.text
             }
@@ -167,10 +167,15 @@ Item {
         ColumnLayout {
             id:                             buttons
             anchors.top:                    parent.top
-            anchors.topMargin:              ScreenTools.defaultFontPixelHeight * 0.5
             anchors.left:                   parent.left
             anchors.right:                  parent.right
-            spacing:                        ScreenTools.defaultFontPixelHeight * 0.5
+            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
             AuterionToolBarButton {
                 id:                         flyButton
                 text:                       qsTr("Fly")
@@ -246,10 +251,10 @@ Item {
         ColumnLayout {
             id:                             lowerButtons
             anchors.bottom:                 parent.bottom
-            anchors.bottomMargin:           ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.bottomMargin:           ScreenTools.defaultFontPixelHeight * 0.125
             anchors.left:                   parent.left
             anchors.right:                  parent.right
-            spacing:                        ScreenTools.defaultFontPixelHeight * 0.5
+            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
             Rectangle {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width

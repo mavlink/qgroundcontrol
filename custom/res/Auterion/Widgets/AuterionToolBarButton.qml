@@ -17,12 +17,11 @@ import QGroundControl.ScreenTools   1.0
 
 Button {
     id:                             button
-    height:                         ScreenTools.defaultFontPixelHeight * 3
     autoExclusive:                  true
 
     background: Rectangle {
         anchors.fill:               parent
-        color:                      Qt.rgba(0,0,0,0)
+        color:                      mouseArea.pressed ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
     }
 
     contentItem: Row {
@@ -30,13 +29,17 @@ Button {
         anchors.left:               button.left
         anchors.leftMargin:         ScreenTools.defaultFontPixelWidth
         anchors.verticalCenter:     button.verticalCenter
+        Item {
+            height:                 ScreenTools.defaultFontPixelHeight * 3
+            width:                  1
+        }
         QGCColoredImage {
             id:                     _icon
             height:                 ScreenTools.defaultFontPixelHeight
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  button.checked ? qgcPal.buttonHighlight : qgcPal.buttonText
+            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -44,9 +47,14 @@ Button {
             id:                     _label
             visible:                text !== ""
             text:                   button.text
-            color:                  button.checked ? qgcPal.buttonHighlight : qgcPal.buttonText
+            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-
+    // Process hover events
+    MouseArea {
+        id:                         mouseArea
+        anchors.fill:               parent
+        onClicked:                  button.clicked()
+    }
 }
