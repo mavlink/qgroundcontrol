@@ -166,6 +166,23 @@ void FirmwareUpgradeController::cancel(void)
     _threadController->cancel();
 }
 
+QStringList FirmwareUpgradeController::availableBoardsName(void)
+{
+    QGCSerialPortInfo::BoardType_t boardType;
+    QString boardName;
+    QStringList names;
+
+    auto ports = QGCSerialPortInfo::availablePorts();
+    for(const auto info : ports) {
+        if(info.canFlash()) {
+            info.getBoardInfo(boardType, boardName);
+            names.append(boardName);
+        }
+    }
+
+    return names;
+}
+
 void FirmwareUpgradeController::_foundBoard(bool firstAttempt, const QSerialPortInfo& info, int boardType, QString boardName)
 {
     _foundBoardInfo =       info;

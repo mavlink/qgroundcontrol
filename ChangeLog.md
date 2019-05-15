@@ -6,6 +6,11 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* QGC now requires Qt 5.11 or greater. The idea is to standardize on Qt 5.12 (LTS). Just waiting for a solution for Windows as Qt dropped support for 32-bit.
+* New, QtQuick MAVLink Inspector. The basics are already there but it still needs the ability to filter compID.
+* Fixed application storage location on iOS. It was trying to save things where it could not.
+* Basic support for secondary, thermal imaging with video streaming. If a camera provides both visual spectrum and thermal imaging, you have the option of displaying both at the same time.
+* Better handling of fonts for Korean and Chinese locales. QGC now has builtin fonts for Korean (where some unusable font was being used). I still need to know if Chinese will need its own font as well.
 * ArduPilot: Copter - Add suppor for Simple and Super Simple flight modes
 * ArduPilot: Flight Mode setup - Switch Options were not showing up for all firmware revs
 * ArduCopter: Add PID Tuning page to Tuning Setup
