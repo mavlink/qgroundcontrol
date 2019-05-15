@@ -137,6 +137,7 @@ private:
     // Vehicle specific data should go into APMFirmwarePluginInstanceData
 
     QList<APMCustomMode>    _supportedModes;
+    QMap<int /* vehicle id */, QMap<int /* componentId */, bool /* true: component is part of ArduPilot stack */>> _ardupilotComponentMap;
 
     static const char*      _artooIP;
     static const int        _artooVideoHandshakePort;
