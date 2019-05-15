@@ -117,7 +117,12 @@ AuterionPlugin::setToolbox(QGCToolbox* toolbox)
 #if defined(USE_BREAKPAD)
     _pCrashHandler->setNamePrefix(qgcApp()->applicationName());
     _pCrashHandler->setNameSuffix(qgcApp()->applicationVersion());
-    _pCrashHandler->setDumpPath(qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath());
+    // The crash save path can't be empty which it might be the case for some devices
+    // that don't have external writable storage. Keep the default one in this case
+    QString crashPath = qgcApp()->toolbox()->settingsManager()->appSettings()->crashSavePath();
+    if(!crashPath.isEmpty()) {
+        _pCrashHandler->setDumpPath(crashPath);
+    }
     _pCrashHandler->install();
 #endif
 }
