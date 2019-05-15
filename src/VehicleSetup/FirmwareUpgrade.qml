@@ -130,6 +130,13 @@ SetupPage {
                         // Board was found right away, so something is already plugged in before we've started upgrade
                         statusTextArea.append(qgcUnplugText1)
                         statusTextArea.append(qgcUnplugText2)
+
+                        var availableDevices = controller.availableBoardsName()
+                        if(availableDevices.length > 1) {
+                            statusTextArea.append(highlightPrefix + qsTr("Multiple devices detected! Remove all detected devices to perform the firmware upgrade."))
+                            statusTextArea.append(qsTr("Detected [%1]: ").arg(availableDevices.length) + availableDevices.join(", "))
+                        }
+
                         QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
                     } else {
                         // We end up here when we detect a board plugged in after we've started upgrade
