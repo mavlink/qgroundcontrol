@@ -1,5 +1,19 @@
 ## AGS Changelog
 
+### May 15 2019
+
+*   Preload Settings, Vehicle Setup and Analyze views
+*   Make drawer menu buttons slightly larger to make it easier to "touch" when using mobile.
+*   Added some of the Analyze panels to mobile builds
+
+### May 14 2019
+
+*   Added Initial camera quick settings control (zoom and EV control)
+
+### May 8 2019
+
+*   Added Google Breakpad to Android builds
+
 ### April 30 2019
 
 *   Hide Airframe, Radio, Flight Modes, Power, Tuning and Camera in normal mode
