@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     CmdLineOpt_t rgCmdLineOptions[] = {
         { "--unittest",             &runUnitTests,          &unitTestOptions },
         { "--unittest-stress",      &stressUnitTests,       &unitTestOptions },
-        { "--no-windows-assert-ui", &quietWindowsAsserts,   NULL },
+        { "--no-windows-assert-ui", &quietWindowsAsserts,   nullptr },
         // Add additional command line option flags here
     };
 
