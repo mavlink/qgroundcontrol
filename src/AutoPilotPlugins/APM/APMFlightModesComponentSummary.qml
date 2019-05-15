@@ -6,13 +6,10 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    FactPanelController { id: controller; factPanel: panel }
+    FactPanelController { id: controller; }
 
     property var _vehicle: controller.vehicle
 

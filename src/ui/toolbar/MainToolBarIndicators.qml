@@ -7,10 +7,10 @@
  *
  ****************************************************************************/
 
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
-import QtQuick.Dialogs  1.2
+import QtQuick          2.11
+import QtQuick.Controls 2.4
+import QtQuick.Dialogs  1.3
+import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -19,21 +19,22 @@ import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
 Item {
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property bool _communicationLost:   _activeVehicle ? _activeVehicle.connectionLost : false
 
-    QGCPalette { id: qgcPal }
-
+    //-------------------------------------------------------------------------
     // Easter egg mechanism
     MouseArea {
         anchors.fill: parent
         onClicked: {
             _clickCount++
             eggTimer.restart()
-            if (_clickCount == 5 && !QGroundControl.corePlugin.showAdvancedUI) {
-                advancedModeConfirmation.visible = true
+            if (_clickCount == 5) {
+                if(QGroundControl.corePlugin.showAdvancedUI) {
+                    advancedModeConfirmation.open()
+                } else {
+                    QGroundControl.corePlugin.showAdvancedUI = false
+                }
             } else if (_clickCount == 7) {
-                QGroundControl.corePlugin.showTouchAreas = true
+                QGroundControl.corePlugin.showTouchAreas = !QGroundControl.corePlugin.showTouchAreas
             }
         }
 
@@ -42,6 +43,7 @@ Item {
         Timer {
             id:             eggTimer
             interval:       1000
+            repeat:         false
             onTriggered:    parent._clickCount = 0
         }
 
@@ -50,46 +52,53 @@ Item {
             title:              qsTr("Advanced Mode")
             text:               QGroundControl.corePlugin.showAdvancedUIMessage
             standardButtons:    StandardButton.Yes | StandardButton.No
-
             onYes: {
                 QGroundControl.corePlugin.showAdvancedUI = true
-                visible = false
+                advancedModeConfirmation.close()
             }
         }
     }
 
+    //-------------------------------------------------------------------------
+    //-- Waiting for a vehicle
     QGCLabel {
         id:                     waitForVehicle
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.centerIn:       parent
         text:                   qsTr("Waiting For Vehicle Connection")
         font.pointSize:         ScreenTools.mediumFontPointSize
         font.family:            ScreenTools.demiboldFontFamily
         color:                  qgcPal.colorRed
-        visible:                !_activeVehicle
+        visible:                !activeVehicle
     }
 
+    //-------------------------------------------------------------------------
+    //-- Toolbar Indicators
     Row {
-        id:             indicatorRow
-        anchors.top:    parent.top
-        anchors.bottom: parent.bottom
-        spacing:        ScreenTools.defaultFontPixelWidth * 1.5
-        visible:        _activeVehicle && !_communicationLost
-
+        id:                 indicatorRow
+        anchors.top:        parent.top
+        anchors.bottom:     parent.bottom
+        anchors.left:       parent.left
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+        spacing:            ScreenTools.defaultFontPixelWidth * 1.5
+        visible:            activeVehicle && !communicationLost
         Repeater {
-            model:      _activeVehicle ? _activeVehicle.toolBarIndicators : []
+            model:      activeVehicle ? activeVehicle.toolBarIndicators : []
             Loader {
-                anchors.top:    parent.top
-                anchors.bottom: parent.bottom
-                source:         modelData;
+                anchors.top:        parent.top
+                anchors.bottom:     parent.bottom
+                anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
+                source:             modelData;
             }
         }
     }
 
+    //-------------------------------------------------------------------------
+    //-- Branding Logo
     Image {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        visible:                x > indicatorRow.width && !_communicationLost
+        visible:                activeVehicle && !communicationLost
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
         mipmap:                 true
@@ -103,33 +112,35 @@ Item {
         property string _brandImageIndoor:      _userBrandingIndoor ?
                                                     _userBrandImageIndoor : (_userBrandingOutdoor ?
                                                         _userBrandImageOutdoor : (_corePluginBranding ?
-                                                            QGroundControl.corePlugin.brandImageIndoor : (_activeVehicle ?
-                                                                _activeVehicle.brandImageIndoor : ""
+                                                            QGroundControl.corePlugin.brandImageIndoor : (activeVehicle ?
+                                                                activeVehicle.brandImageIndoor : ""
                                                             )
                                                         )
                                                     )
         property string _brandImageOutdoor:     _userBrandingOutdoor ?
                                                     _userBrandImageOutdoor : (_userBrandingIndoor ?
                                                         _userBrandImageIndoor : (_corePluginBranding ?
-                                                            QGroundControl.corePlugin.brandImageOutdoor : (_activeVehicle ?
-                                                                _activeVehicle.brandImageOutdoor : ""
+                                                            QGroundControl.corePlugin.brandImageOutdoor : (activeVehicle ?
+                                                                activeVehicle.brandImageOutdoor : ""
                                                             )
                                                         )
                                                     )
     }
 
+    //-------------------------------------------------------------------------
+    //-- Connection Status
     Row {
         anchors.fill:       parent
         layoutDirection:    Qt.RightToLeft
         spacing:            ScreenTools.defaultFontPixelWidth
-        visible:            _communicationLost
+        visible:            activeVehicle && communicationLost
 
         QGCButton {
             id:                     disconnectButton
             anchors.verticalCenter: parent.verticalCenter
             text:                   qsTr("Disconnect")
             primary:                true
-            onClicked:              _activeVehicle.disconnectInactiveVehicle()
+            onClicked:              activeVehicle.disconnectInactiveVehicle()
         }
 
         QGCLabel {

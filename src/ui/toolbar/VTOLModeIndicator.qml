@@ -26,16 +26,13 @@ QGCLabel {
     text:               _fwdFlight ? qsTr("VTOL: Fixed Wing") : qsTr("VTOL: Multi-Rotor")
     font.pointSize:     ScreenTools.mediumFontPointSize
     color:              qgcPal.buttonText
-    visible:            _activeVehicle ? _activeVehicle.vtol && _activeVehicle.px4Firmware : false
+    visible:            activeVehicle ? activeVehicle.vtol && activeVehicle.px4Firmware : false
     width:              visible ? implicitWidth : 0
 
-    property var    _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _fwdFlight:     _activeVehicle ? _activeVehicle.vtolInFwdFlight : false
-
-    QGCPalette { id: qgcPal }
+    property bool _fwdFlight: activeVehicle ? activeVehicle.vtolInFwdFlight : false
 
     QGCMouseArea {
         fillItem: parent
-        onClicked: _activeVehicle.vtolInFwdFlight ? toolBar.vtolTransitionToMRFlight() : toolBar.vtolTransitionToFwdFlight()
+        onClicked: activeVehicle.vtolInFwdFlight ? toolBar.vtolTransitionToMRFlight() : toolBar.vtolTransitionToFwdFlight()
     }
 }

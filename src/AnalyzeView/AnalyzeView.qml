@@ -26,8 +26,6 @@ Rectangle {
     color:  qgcPal.window
     z:      QGroundControl.zOrderTopMost
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
     ExclusiveGroup { id: setupButtonGroup }
 
     readonly property real  _defaultTextHeight:     ScreenTools.defaultFontPixelHeight
@@ -90,29 +88,53 @@ Rectangle {
                 visible:                !ScreenTools.isShortScreen
             }
 
-            Repeater {
-                id: buttonRepeater
-
-                model: ListModel {
-                    ListElement {
-                        buttonImage:        "/qmlimages/LogDownloadIcon"
-                        buttonText:         qsTr("Log Download")
-                        pageSource:         "LogDownloadPage.qml"
-                    }
-                    ListElement {
-                        buttonImage:        "/qmlimages/GeoTagIcon"
-                        buttonText:         qsTr("GeoTag Images")
-                        pageSource:         "GeoTagPage.qml"
-                    }
-                    ListElement {
-                        buttonImage:        "/qmlimages/MavlinkConsoleIcon"
-                        buttonText:         qsTr("Mavlink Console")
-                        pageSource:         "MavlinkConsolePage.qml"
-                    }
+            ListModel {
+                id: desktopModel
+                ListElement {
+                    buttonImage:        "/qmlimages/LogDownloadIcon"
+                    buttonText:         qsTr("Log Download")
+                    pageSource:         "LogDownloadPage.qml"
                 }
+                ListElement {
+                    buttonImage:        "/qmlimages/GeoTagIcon"
+                    buttonText:         qsTr("GeoTag Images")
+                    pageSource:         "GeoTagPage.qml"
+                }
+                ListElement {
+                    buttonImage:        "/qmlimages/MavlinkConsoleIcon"
+                    buttonText:         qsTr("MAVLink Console")
+                    pageSource:         "MavlinkConsolePage.qml"
+                }
+                ListElement {
+                    buttonImage:        "/qmlimages/MAVLinkInspector"
+                    buttonText:         qsTr("MAVLink Inspector")
+                    pageSource:         "MAVLinkInspectorPage.qml"
+                }
+            }
 
+            ListModel {
+                id: mobileModel
+                ListElement {
+                    buttonImage:        "/qmlimages/LogDownloadIcon"
+                    buttonText:         qsTr("Log Download")
+                    pageSource:         "LogDownloadPage.qml"
+                }
+                ListElement {
+                    buttonImage:        "/qmlimages/MavlinkConsoleIcon"
+                    buttonText:         qsTr("MAVLink Console")
+                    pageSource:         "MavlinkConsolePage.qml"
+                }
+                ListElement {
+                    buttonImage:        "/qmlimages/MAVLinkInspector"
+                    buttonText:         qsTr("MAVLink Inspector")
+                    pageSource:         "MAVLinkInspectorPage.qml"
+                }
+            }
+
+            Repeater {
+                id:                     buttonRepeater
+                model:                  ScreenTools.isMobile ? mobileModel : desktopModel
                 Component.onCompleted: itemAt(0).checked = true
-
                 SubMenuButton {
                     imageResource:      buttonImage
                     setupIndicator:     false

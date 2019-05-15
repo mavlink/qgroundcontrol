@@ -30,8 +30,7 @@ Column {
 
     property bool   showSettingsIcon:       _camera !== null
 
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property var    _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
@@ -42,14 +41,14 @@ Column {
     property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
-    property bool   _communicationLost:     _activeVehicle ? _activeVehicle.connectionLost : false
+    property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property bool   _hasModes:              _isCamera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _noStorage:             _camera && _camera.storageTotal === 0
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
 
     function showSettings() {
-        qgcView.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
+        mainWindow.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
     }
 
     //-- Dumb camera trigger if no actual camera interface exists
@@ -57,8 +56,8 @@ Column {
         anchors.horizontalCenter:   parent.horizontalCenter
         text:                       qsTr("Trigger Camera")
         visible:                    !_isCamera
-        onClicked:                  _activeVehicle.triggerCamera()
-        enabled:                    _activeVehicle
+        onClicked:                  activeVehicle.triggerCamera()
+        enabled:                    activeVehicle
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     //-- Actual controller
@@ -183,7 +182,7 @@ Column {
         anchors.horizontalCenter: parent.horizontalCenter
     }
     QGCLabel {
-        text: _activeVehicle && _cameraPhotoMode ? ('00000' + _activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+        text: activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
         font.pointSize: ScreenTools.smallFontPointSize
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
@@ -206,8 +205,8 @@ Column {
                     //-------------------------------------------
                     //-- Camera Selector
                     Row {
-                        visible:    _isCamera
-                        spacing:    ScreenTools.defaultFontPixelWidth
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        visible:            _isCamera && _dynamicCameras.cameraLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Camera Selector:")
@@ -226,6 +225,7 @@ Column {
                     //-- Stream Selector
                     Row {
                         spacing:            ScreenTools.defaultFontPixelWidth
+                        visible:            _isCamera && _camera.streamLabels.length > 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:           qsTr("Stream Selector:")
@@ -239,7 +239,47 @@ Column {
                             currentIndex:   _camera ? _camera.currentStream : 0
                         }
                     }
-
+                    //-------------------------------------------
+                    //-- Thermal Modes
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            QGroundControl.videoManager.hasThermal
+                        property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
+                        QGCLabel {
+                            text:           qsTr("Thermal View Mode")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCComboBox {
+                            width:          _editFieldWidth
+                            model:          parent.thermalModes
+                            currentIndex:   _camera ? _camera.thermalMode : 0
+                            onActivated:    _camera.thermalMode = index
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Thermal Video Opacity
+                    Row {
+                        spacing:            ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                        QGCLabel {
+                            text:           qsTr("Blend Opacity")
+                            width:          _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Slider {
+                            width:          _editFieldWidth
+                            maximumValue:   100
+                            minimumValue:   0
+                            value:          _camera ? _camera.thermalOpacity : 0
+                            updateValueWhileDragging: true
+                            onValueChanged: {
+                                _camera.thermalOpacity = value
+                            }
+                        }
+                    }
                     //-------------------------------------------
                     //-- Camera Settings
                     Repeater {

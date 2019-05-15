@@ -27,26 +27,20 @@ import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.SettingsManager       1.0
 
-QGCView {
-    id:                 _qgcView
-    viewPanel:          panel
+Rectangle {
+    id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 26
     property real _valueWidth:                  ScreenTools.defaultFontPixelWidth * 20
-    property real _panelWidth:                  _qgcView.width * _internalWidthRatio
+    property real _panelWidth:                  _root.width * _internalWidthRatio
     property Fact _microhardEnabledFact:        QGroundControl.settingsManager.appSettings.enableMicrohard
     property bool _microhardEnabled:            _microhardEnabledFact.rawValue
 
     readonly property real _internalWidthRatio:          0.8
 
-    QGCPalette { id: qgcPal }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
         QGCFlickable {
             clip:               true
             anchors.fill:       parent
@@ -54,7 +48,7 @@ QGCView {
             contentWidth:       settingsColumn.width
             Column {
                 id:                 settingsColumn
-                width:              _qgcView.width
+            width:              _root.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
@@ -271,4 +265,3 @@ QGCView {
             }
         }
     }
-}

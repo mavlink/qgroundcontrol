@@ -24,7 +24,6 @@ import QGroundControl.ShapeFileHelper   1.0
 Item {
     id: _root
 
-    property var    qgcView                                     ///< QGCView for popping dialogs
     property var    mapControl                                  ///< Map control to place item in
     property var    mapPolygon                                  ///< QGCMapPolygon object
     property bool   interactive:        mapPolygon.interactive
@@ -173,7 +172,6 @@ Item {
 
     QGCFileDialog {
         id:             kmlOrSHPLoadDialog
-        qgcView:        _root.qgcView
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
         title:          qsTr("Select Polygon File")
         selectExisting: true
@@ -237,13 +235,13 @@ Item {
         MenuItem {
             text:           qsTr("Edit position..." )
             visible:        _circle
-            onTriggered:    qgcView.showDialog(editCenterPositionDialog, qsTr("Edit Center Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    mainWindow.showDialog(editCenterPositionDialog, qsTr("Edit Center Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
         MenuItem {
             text:           qsTr("Edit position..." )
             visible:        !_circle && menu._editingVertexIndex >= 0
-            onTriggered:    qgcView.showDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    mainWindow.showDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
         MenuItem {

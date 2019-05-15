@@ -28,6 +28,7 @@ CheckBox {
                 text:               control.text
                 font.pointSize:     textFontPointSize
                 font.bold:          control.textBold
+                font.family:        ScreenTools.normalFontFamily
                 color:              control.textColor
                 anchors.centerIn:   parent
             }
@@ -43,7 +44,7 @@ CheckBox {
                 border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
                 QGCColoredImage {
-                    source: "/qmlimages/checkbox-check.svg"
+                    source:     "/qmlimages/checkbox-check.svg"
                     color:      "black"
                     opacity:    control.checkedState === Qt.Checked ? (control.enabled ? 1 : 0.5) : 0
                     mipmap:     true

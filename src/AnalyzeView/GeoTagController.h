@@ -26,17 +26,17 @@ class GeoTagWorker : public QThread
     Q_OBJECT
 
 public:
-    GeoTagWorker(void);
+    GeoTagWorker();
 
     void setLogFile         (const QString& logFile)        { _logFile = logFile; }
     void setImageDirectory  (const QString& imageDirectory) { _imageDirectory = imageDirectory; }
     void setSaveDirectory   (const QString& saveDirectory)  { _saveDirectory = saveDirectory; }
 
-    QString logFile         (void) const { return _logFile; }
-    QString imageDirectory  (void) const { return _imageDirectory; }
-    QString saveDirectory   (void) const { return _saveDirectory; }
+    QString logFile         () const { return _logFile; }
+    QString imageDirectory  () const { return _imageDirectory; }
+    QString saveDirectory   () const { return _saveDirectory; }
 
-    void cancelTagging      (void) { _cancel = true; }
+    void cancelTagging      () { _cancel = true; }
 
     struct cameraFeedbackPacket {
         double timestamp;
@@ -51,11 +51,11 @@ public:
     };
 
 protected:
-    void run(void) final;
+    void run() final;
 
 signals:
     void error              (QString errorMsg);
-    void taggingComplete    (void);
+    void taggingComplete    ();
     void progressChanged    (double progress);
 
 private:
@@ -77,14 +77,13 @@ private:
 class GeoTagController : public QObject
 {
     Q_OBJECT
-    
 public:
-    GeoTagController(void);
+    GeoTagController();
     ~GeoTagController();
-    
-    Q_PROPERTY(QString  logFile         READ logFile        NOTIFY logFileChanged)
-    Q_PROPERTY(QString  imageDirectory  READ imageDirectory NOTIFY imageDirectoryChanged)
-    Q_PROPERTY(QString  saveDirectory   READ saveDirectory  NOTIFY saveDirectoryChanged)
+
+    Q_PROPERTY(QString  logFile         READ logFile        WRITE setLogFile        NOTIFY logFileChanged)
+    Q_PROPERTY(QString  imageDirectory  READ imageDirectory WRITE setImageDirectory NOTIFY imageDirectoryChanged)
+    Q_PROPERTY(QString  saveDirectory   READ saveDirectory  WRITE setSaveDirectory  NOTIFY saveDirectoryChanged)
 
     /// Set to an error message is geotagging fails
     Q_PROPERTY(QString  errorMessage    READ errorMessage   NOTIFY errorMessageChanged)
@@ -95,26 +94,27 @@ public:
     /// true: Currently in the process of tagging
     Q_PROPERTY(bool     inProgress      READ inProgress     NOTIFY inProgressChanged)
 
-    Q_INVOKABLE void pickLogFile(void);
-    Q_INVOKABLE void pickImageDirectory(void);
-    Q_INVOKABLE void pickSaveDirectory(void);
-    Q_INVOKABLE void startTagging(void);
-    Q_INVOKABLE void cancelTagging(void) { _worker.cancelTagging(); }
+    Q_INVOKABLE void startTagging();
+    Q_INVOKABLE void cancelTagging() { _worker.cancelTagging(); }
 
-    QString logFile             (void) const { return _worker.logFile(); }
-    QString imageDirectory      (void) const { return _worker.imageDirectory(); }
-    QString saveDirectory       (void) const { return _worker.saveDirectory(); }
-    double  progress            (void) const { return _progress; }
-    bool    inProgress          (void) const { return _worker.isRunning(); }
-    QString errorMessage        (void) const { return _errorMessage; }
+    QString logFile             () const { return _worker.logFile(); }
+    QString imageDirectory      () const { return _worker.imageDirectory(); }
+    QString saveDirectory       () const { return _worker.saveDirectory(); }
+    double  progress            () const { return _progress; }
+    bool    inProgress          () const { return _worker.isRunning(); }
+    QString errorMessage        () const { return _errorMessage; }
+
+    void    setLogFile          (QString file);
+    void    setImageDirectory   (QString dir);
+    void    setSaveDirectory    (QString dir);
 
 signals:
-    void logFileChanged                 (QString logFile);
-    void imageDirectoryChanged          (QString imageDirectory);
-    void saveDirectoryChanged           (QString saveDirectory);
-    void progressChanged                (double progress);
-    void inProgressChanged              (void);
-    void errorMessageChanged            (QString errorMessage);
+    void logFileChanged         (QString logFile);
+    void imageDirectoryChanged  (QString imageDirectory);
+    void saveDirectoryChanged   (QString saveDirectory);
+    void progressChanged        (double progress);
+    void inProgressChanged      ();
+    void errorMessageChanged    (QString errorMessage);
 
 private slots:
     void _workerProgressChanged (double progress);

@@ -40,7 +40,6 @@ SetupPage {
 
     APMFlightModesComponentController {
         id:         controller
-        factPanel:  flightModePage.viewPanel
     }
 
     Component {

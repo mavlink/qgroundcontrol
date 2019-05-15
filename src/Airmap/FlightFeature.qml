@@ -29,53 +29,57 @@ Rectangle {
         anchors.left:       parent.left
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
-            text:           feature.description
+            text:           feature ? feature.description : ""
             anchors.right:  parent.right
             anchors.left:   parent.left
             wrapMode:       Text.WordWrap
-            visible:        feature.type !== AirspaceRuleFeature.Boolean
+            visible:        feature ?  (feature.type !== AirspaceRuleFeature.Boolean) : false
         }
         QGCTextField {
-            text:           feature.value ? feature.value : ""
-            visible:        feature.type !== AirspaceRuleFeature.Boolean
+            text:           feature ? (feature.value ? feature.value : "") : ""
+            visible:        feature ? (feature.type !== AirspaceRuleFeature.Boolean) : false
             showUnits:      true
             unitsLabel: {
-                if(feature.unit == AirspaceRuleFeature.Kilogram)
-                    return "kg";
-                if(feature.unit == AirspaceRuleFeature.Meters)
-                    return "m";
-                if(feature.unit == AirspaceRuleFeature.MetersPerSecond)
-                    return "m/s";
+                if(feature) {
+                    if(feature.unit == AirspaceRuleFeature.Kilogram)
+                        return "kg";
+                    if(feature.unit == AirspaceRuleFeature.Meters)
+                        return "m";
+                    if(feature.unit == AirspaceRuleFeature.MetersPerSecond)
+                        return "m/s";
+                }
                 return ""
             }
             anchors.right:  parent.right
             anchors.left:   parent.left
-            inputMethodHints: feature.type === AirspaceRuleFeature.Float ? Qt.ImhFormattedNumbersOnly :Qt.ImhNone
+            inputMethodHints: feature ? (feature.type === AirspaceRuleFeature.Float ? Qt.ImhFormattedNumbersOnly : Qt.ImhNone) : Qt.ImhNone
             onAccepted: {
-                feature.value = parseFloat(text)
+                if(feature)
+                    feature.value = parseFloat(text)
             }
             onEditingFinished: {
-                feature.value = parseFloat(text)
+                if(feature)
+                    feature.value = parseFloat(text)
             }
         }
         Item {
             height:         Math.max(checkBox.height, label.height)
             anchors.right:  parent.right
             anchors.left:   parent.left
-            visible:        feature.type === AirspaceRuleFeature.Boolean
+            visible:        feature ? (feature.type === AirspaceRuleFeature.Boolean) : false
             QGCCheckBox {
                 id:             checkBox
                 text:           ""
-                onClicked:      feature.value = checked
+                onClicked:      { if(feature) {feature.value = checked} }
                 anchors.left:   parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 Component.onCompleted: {
-                    checked = feature.value === 2 ? false : feature.value
+                    checked = feature ? (feature.value === 2 ? false : feature.value) : false
                 }
             }
             QGCLabel {
                 id:             label
-                text:           feature.description
+                text:           feature ? feature.description : ""
                 anchors.right:  parent.right
                 anchors.left:   checkBox.right
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.5

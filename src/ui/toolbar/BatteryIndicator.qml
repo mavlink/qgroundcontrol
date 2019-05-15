@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-
-import QtQuick          2.3
-import QtQuick.Controls 1.2
-import QtQuick.Layouts  1.2
+import QtQuick          2.11
+import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -21,21 +19,20 @@ import QGroundControl.Palette               1.0
 //-------------------------------------------------------------------------
 //-- Battery Indicator
 Item {
+    id:             _root
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          batteryIndicatorRow.width
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
     function getBatteryColor() {
-        if(_activeVehicle) {
-            if(_activeVehicle.battery.percentRemaining.value > 75) {
+        if(activeVehicle) {
+            if(activeVehicle.battery.percentRemaining.value > 75) {
                 return qgcPal.text
             }
-            if(_activeVehicle.battery.percentRemaining.value > 50) {
+            if(activeVehicle.battery.percentRemaining.value > 50) {
                 return qgcPal.colorOrange
             }
-            if(_activeVehicle.battery.percentRemaining.value > 0.1) {
+            if(activeVehicle.battery.percentRemaining.value > 0.1) {
                 return qgcPal.colorRed
             }
         }
@@ -43,15 +40,15 @@ Item {
     }
 
     function getBatteryPercentageText() {
-        if(_activeVehicle) {
-            if(_activeVehicle.battery.percentRemaining.value > 98.9) {
+        if(activeVehicle) {
+            if(activeVehicle.battery.percentRemaining.value > 98.9) {
                 return "100%"
             }
-            if(_activeVehicle.battery.percentRemaining.value > 0.1) {
-                return _activeVehicle.battery.percentRemaining.valueString + _activeVehicle.battery.percentRemaining.units
+            if(activeVehicle.battery.percentRemaining.value > 0.1) {
+                return activeVehicle.battery.percentRemaining.valueString + activeVehicle.battery.percentRemaining.units
             }
-            if(_activeVehicle.battery.voltage.value >= 0) {
-                return _activeVehicle.battery.voltage.valueString + _activeVehicle.battery.voltage.units
+            if(activeVehicle.battery.voltage.value >= 0) {
+                return activeVehicle.battery.voltage.valueString + activeVehicle.battery.voltage.units
             }
         }
         return "N/A"
@@ -89,16 +86,10 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel { text: qsTr("Voltage:") }
-                    QGCLabel { text: (_activeVehicle && _activeVehicle.battery.voltage.value != -1) ? (_activeVehicle.battery.voltage.valueString + " " + _activeVehicle.battery.voltage.units) : "N/A" }
+                    QGCLabel { text: (activeVehicle && activeVehicle.battery.voltage.value !== -1) ? (activeVehicle.battery.voltage.valueString + " " + activeVehicle.battery.voltage.units) : "N/A" }
                     QGCLabel { text: qsTr("Accumulated Consumption:") }
-                    QGCLabel { text: (_activeVehicle && _activeVehicle.battery.mahConsumed.value != -1) ? (_activeVehicle.battery.mahConsumed.valueString + " " + _activeVehicle.battery.mahConsumed.units) : "N/A" }
+                    QGCLabel { text: (activeVehicle && activeVehicle.battery.mahConsumed.value !== -1) ? (activeVehicle.battery.mahConsumed.valueString + " " + activeVehicle.battery.mahConsumed.units) : "N/A" }
                 }
-            }
-
-            Component.onCompleted: {
-                var pos = mapFromItem(toolBar, centerX - (width / 2), toolBar.height)
-                x = pos.x
-                y = pos.y + ScreenTools.defaultFontPixelHeight
             }
         }
     }
@@ -107,7 +98,7 @@ Item {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
-        opacity:        (_activeVehicle && _activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
+        opacity:        (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
         QGCColoredImage {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
@@ -126,6 +117,8 @@ Item {
     }
     MouseArea {
         anchors.fill:   parent
-        onClicked:      mainWindow.showPopUp(batteryInfo, mapToItem(toolBar, x, y).x + (width / 2))
+        onClicked: {
+            mainWindow.showPopUp(_root, batteryInfo)
+        }
     }
 }

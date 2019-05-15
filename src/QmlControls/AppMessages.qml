@@ -20,25 +20,18 @@ import QGroundControl.FactControls  1.0
 import QGroundControl.Controllers   1.0
 import QGroundControl.ScreenTools   1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
+Item {
+    id:         _root
 
     property bool loaded: false
 
-    property var _qgcView: qgcView
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
     Component {
         id: filtersDialogComponent
-
         QGCViewDialog {
             QGCFlickable {
                 anchors.fill:   parent
                 contentHeight:  categoryColumn.height
                 clip:           true
-
                 Column {
                     id:         categoryColumn
                     spacing:    ScreenTools.defaultFontPixelHeight / 2
@@ -55,7 +48,6 @@ QGCView {
                             categoryRepeater.model = QGroundControl.loggingCategories()
                         }
                     }
-
                     Repeater {
                         id:     categoryRepeater
                         model:  QGroundControl.loggingCategories()
@@ -71,10 +63,10 @@ QGCView {
                     }
                 }
             }
-        } // QGCViewDialog
-    } // Component - filtersDialogComponent
+        }
+    }
 
-    QGCViewPanel {
+    Item {
         id:             panel
         anchors.fill:   parent
 
@@ -136,7 +128,6 @@ QGCView {
                 fileExtension:  qsTr("txt")
                 selectExisting: false
                 title:          qsTr("Select log save file")
-                qgcView:        _qgcView
                 onAcceptedForSave: {
                     debugMessageModel.writeMessages(file);
                     visible = false;
@@ -198,9 +189,9 @@ QGCView {
                 anchors.bottom: parent.bottom
                 anchors.right:  parent.right
                 text:           qsTr("Set Logging")
-                onClicked:      showDialog(filtersDialogComponent, qsTr("Turn on logging categories"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                onClicked:      mainWindow.showDialog(filtersDialogComponent, qsTr("Turn on logging categories"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
             }
         }
-    } // QGCViewPanel
-} // QGCView
+    }
+}
 

@@ -7,13 +7,10 @@ import QGroundControl.Controls 1.0
 import QGroundControl.Controllers 1.0
 import QGroundControl.Palette 1.0
 
-FactPanel {
-    id:                 panel
+Item {
     anchors.fill:       parent
-    color:              qgcPal.windowShadeDark
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    AirframeComponentController { id: controller; factPanel: panel }
+    AirframeComponentController { id: controller; }
 
     property Fact sysIdFact:        controller.getParameterFact(-1, "MAV_SYS_ID")
     property Fact sysAutoStartFact: controller.getParameterFact(-1, "SYS_AUTOSTART")

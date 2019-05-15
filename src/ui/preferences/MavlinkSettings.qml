@@ -32,7 +32,6 @@ Rectangle {
     property int  _selectedCount:       0
     property real _columnSpacing:       ScreenTools.defaultFontPixelHeight * 0.25
     property bool _uploadedSelected:    false
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
     property bool _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
     property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible
     property Fact _disableDataPersistenceFact: QGroundControl.settingsManager.appSettings.disableAllPersistence
@@ -282,7 +281,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkSentCount : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkSentCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -297,7 +296,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -312,7 +311,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkLossCount : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkLossCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -327,7 +326,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }

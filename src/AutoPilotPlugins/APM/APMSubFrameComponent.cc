@@ -13,7 +13,6 @@
 ///     @author Jacob Walser <jwalser90@gmail.com>
 
 #include "APMSubFrameComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
 

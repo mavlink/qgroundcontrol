@@ -35,8 +35,6 @@ DropButton {
     property bool   showFollowVehicle:    false
     property bool   followVehicle:        false
 
-    property var _activeVehicle: QGroundControl.multiVehicleManager.activeVehicle
-
     function fitHomePosition() {
         var homePosition = QtPositioning.coordinate()
         var activeVehicle = QGroundControl.multiVehicleManager.activeVehicle
@@ -223,7 +221,7 @@ DropButton {
             QGCButton {
                 text:               qsTr("Vehicle")
                 Layout.fillWidth:   true
-                enabled:            _activeVehicle && _activeVehicle.latitude != 0 && _activeVehicle.longitude != 0 && !followVehicleCheckBox.checked
+                enabled:            activeVehicle && activeVehicle.latitude != 0 && activeVehicle.longitude != 0 && !followVehicleCheckBox.checked
 
                 onClicked: {
                     dropButton.hideDropDown()

@@ -1,8 +1,8 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
+import QtQuick                  2.11
+import QtQuick.Controls         2.4
+import QtQuick.Layouts          1.11
+import QtQuick.Dialogs          1.3
 import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQuick.Layouts          1.2
 import QtQml                    2.2
 import QtGraphicalEffects       1.0
 
@@ -21,7 +21,7 @@ Item {
     height: _colapsed ? colapsedRect.height : expandedRect.height
 
     property bool   showColapse:        true
-    property bool   planView:           true
+    property bool   planView:           false
 
     property color  _airspaceColor:     _validAdvisories ? getAispaceColor(QGroundControl.airspaceManager.advisories.airspaceColor) : _colorGray
     property bool   _validRules:        QGroundControl.airspaceManager.connected && QGroundControl.airspaceManager.ruleSets.valid
@@ -29,7 +29,6 @@ Item {
     property color  _textColor:         qgcPal.text
     property bool   _colapsed:          !QGroundControl.airspaceManager.airspaceVisible || !QGroundControl.airspaceManager.connected
     property int    _flightPermit:      QGroundControl.airspaceManager.flightPlan.flightPermitStatus
-    property bool   _dirty:             false
 
     readonly property real      _radius:            ScreenTools.defaultFontPixelWidth * 0.5
     readonly property color     _colorOrange:       "#d75e0d"
@@ -42,6 +41,8 @@ Item {
     readonly property color     _colorWhite:        "#ffffff"
     readonly property color     _colorRed:          "#aa1200"
     readonly property color     _colorGreen:        "#125f00"
+    readonly property real      _baseHeight:        ScreenTools.defaultFontPixelHeight * 22
+    readonly property real      _baseWidth:         ScreenTools.defaultFontPixelWidth  * 40
 
     QGCPalette {
         id: qgcPal
@@ -309,8 +310,7 @@ Item {
                                         MouseArea {
                                             anchors.fill:   parent
                                             onClicked: {
-                                                rootLoader.sourceComponent = ruleSelector
-                                                mainWindow.disableToolbar()
+                                                ruleSelector.open()
                                             }
                                         }
                                     }
@@ -377,8 +377,7 @@ Item {
                 visible:        _flightPermit !== AirspaceFlightPlanProvider.PermitNone
                 anchors.horizontalCenter: parent.horizontalCenter
                 onClicked: {
-                    rootLoader.sourceComponent = planView ? flightDetails : flightBrief
-                    mainWindow.disableToolbar()
+                    planView ? flightDetails.open() : flightBrief.open()
                 }
             }
             QGCLabel {
@@ -391,310 +390,214 @@ Item {
     }
     //---------------------------------------------------------------
     //-- Rule Selector
-    Component {
-        id:             ruleSelector
-        Rectangle {
-            width:      mainWindow.width
-            height:     mainWindow.height
-            color:      Qt.rgba(0,0,0,0.1)
-            MouseArea {
-                anchors.fill:   parent
-                onWheel:   { wheel.accepted = true; }
-                onClicked: {
-                    mainWindow.enableToolbar()
-                    rootLoader.sourceComponent = null
-                }
-            }
-            Rectangle {
-                id:             ruleSelectorShadow
-                anchors.fill:   ruleSelectorRect
-                radius:         ruleSelectorRect.radius
-                color:          qgcPal.window
-                visible:        false
-            }
-            DropShadow {
-                anchors.fill:       ruleSelectorShadow
-                visible:            ruleSelectorRect.visible
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             ruleSelectorShadow
-            }
-            Rectangle {
-                id:                 ruleSelectorRect
-                x:                  0
-                y:                  0
-                color:              qgcPal.window
-                width:              rulesCol.width  + ScreenTools.defaultFontPixelWidth
-                height:             rulesCol.height + ScreenTools.defaultFontPixelHeight
-                radius:             ScreenTools.defaultFontPixelWidth
-                Column {
-                    id:             rulesCol
-                    spacing:        ScreenTools.defaultFontPixelHeight * 0.5
-                    anchors.centerIn: parent
-                    //-- Regulations
-                    Rectangle {
-                        color:      qgcPal.windowShade
-                        height:     rulesTitle.height + ScreenTools.defaultFontPixelHeight
-                        width:      parent.width * 0.95
-                        radius:     _radius
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        QGCLabel {
-                            id:         rulesTitle
-                            text:       qsTr("Airspace Regulation Options")
-                            anchors.centerIn: parent
-                        }
-                    }
-                    Flickable {
-                        clip:           true
-                        width:          ScreenTools.defaultFontPixelWidth  * 30
-                        height:         ScreenTools.defaultFontPixelHeight * 14
-                        contentHeight:  rulesetCol.height
-                        flickableDirection: Flickable.VerticalFlick
-                        Column {
-                            id:         rulesetCol
-                            spacing:    ScreenTools.defaultFontPixelHeight * 0.25
-                            anchors.right: parent.right
-                            anchors.left:  parent.left
-                            anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
-                            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
-                            Item {
-                                width:  1
-                                height: 1
-                            }
-                            ExclusiveGroup { id: rulesGroup }
-                            QGCLabel {
-                                text:           qsTr("PICK ONE REGULATION")
-                                font.pointSize: ScreenTools.smallFontPointSize
-                                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-                            }
-                            Repeater {
-                                model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
-                                delegate: RuleSelector {
-                                    visible:             object.selectionType === AirspaceRuleSet.Pickone
-                                    rule:                object
-                                    exclusiveGroup:      rulesGroup
-                                    anchors.right:       parent.right
-                                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-                                    anchors.left:        parent.left
-                                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
-                                }
-                            }
-                            Item {
-                                width:  1
-                                height: 1
-                            }
-                            QGCLabel {
-                                text:           qsTr("OPTIONAL")
-                                font.pointSize: ScreenTools.smallFontPointSize
-                                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-                            }
-                            Repeater {
-                                model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
-                                delegate: RuleSelector {
-                                    visible:             object.selectionType === AirspaceRuleSet.Optional
-                                    rule:                object
-                                    anchors.right:       parent.right
-                                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-                                    anchors.left:        parent.left
-                                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
-                                }
-                            }
-                            Item {
-                                width:  1
-                                height: 1
-                            }
-                            QGCLabel {
-                                text:           qsTr("REQUIRED")
-                                font.pointSize: ScreenTools.smallFontPointSize
-                                anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
-                            }
-                            Repeater {
-                                model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
-                                delegate: RuleSelector {
-                                    visible:             object.selectionType === AirspaceRuleSet.Required
-                                    rule:                object
-                                    required:            true
-                                    anchors.right:       parent.right
-                                    anchors.rightMargin: ScreenTools.defaultFontPixelWidth
-                                    anchors.left:        parent.left
-                                    anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            //-- Arrow
-            QGCColoredImage {
-                id:                 arrowIconShadow
-                anchors.fill:       arrowIcon
-                sourceSize.height:  height
-                source:             "qrc:/airmap/right-arrow.svg"
-                color:              qgcPal.window
-                visible:            false
-            }
-            DropShadow {
-                anchors.fill:       arrowIconShadow
-                visible:            ruleSelectorRect.visible && qgcPal.globalTheme === QGCPalette.Dark
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             arrowIconShadow
-            }
-            QGCColoredImage {
-                id:                 arrowIcon
-                width:              height
-                height:             ScreenTools.defaultFontPixelHeight * 2
-                sourceSize.height:  height
-                source:             "qrc:/airmap/right-arrow.svg"
-                color:              ruleSelectorRect.color
-                anchors.left:       ruleSelectorRect.right
-                anchors.top:        ruleSelectorRect.top
-                anchors.topMargin:  (ScreenTools.defaultFontPixelHeight * 4) - (height * 0.5) + (pencilIcon.height * 0.5)
-            }
-            Component.onCompleted: {
-                mainWindow.disableToolbar()
-                var target = mainWindow.mapFromItem(pencilIcon, 0, 0)
-                ruleSelectorRect.x = target.x - ruleSelectorRect.width - (ScreenTools.defaultFontPixelWidth * 7)
-                ruleSelectorRect.y = target.y - (ScreenTools.defaultFontPixelHeight * 4)
+    Popup {
+        id:                 ruleSelector
+        width:              rulesCol.width  + ScreenTools.defaultFontPixelWidth
+        height:             rulesCol.height + ScreenTools.defaultFontPixelHeight
+        modal:              true
+        focus:              true
+        parent:             Overlay.overlay
+        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        property var _popupTarget: null
+        property var _arrowTarget: null
+
+        onVisibleChanged: {
+            if(visible) {
+                _popupTarget = mainWindow.contentItem.mapFromItem(_root, 0, 0)
+                _arrowTarget = mainWindow.contentItem.mapFromItem(pencilIcon, 0, 0)
             }
         }
-    }
-    //---------------------------------------------------------------
-    //-- Flight Details
-    Component {
-        id:             flightDetails
-        Rectangle {
-            id:         flightDetailsRoot
-            width:      mainWindow.width
-            height:     mainWindow.height
-            color:      Qt.rgba(0,0,0,0.1)
-            property real baseHeight:  ScreenTools.defaultFontPixelHeight * 22
-            property real baseWidth:   ScreenTools.defaultFontPixelWidth  * 40
-            Component.onCompleted: {
-                _dirty = false
-                mainWindow.disableToolbar()
-            }
-            MouseArea {
-                anchors.fill:   parent
-                hoverEnabled:   true
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
-            }
+
+        x:                  _popupTarget ? _popupTarget.x - width - (ScreenTools.defaultFontPixelWidth * 5) : 0
+        y:                  _popupTarget ? _popupTarget.y + mainWindow.header.height : 0
+
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.window
+            radius:         ScreenTools.defaultFontPixelWidth
+        }
+
+        Column {
+            id:             rulesCol
+            spacing:        ScreenTools.defaultFontPixelHeight * 0.5
+            anchors.centerIn: parent
+            //-- Regulations
             Rectangle {
-                id:             flightDetailsShadow
-                anchors.fill:   flightDetailsRect
-                radius:         flightDetailsRect.radius
-                color:          qgcPal.window
-                visible:        false
-            }
-            DropShadow {
-                anchors.fill:       flightDetailsShadow
-                visible:            flightDetailsRect.visible
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             flightDetailsShadow
-            }
-            Rectangle {
-                id:                 flightDetailsRect
-                color:              qgcPal.window
-                width:              flDetailsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
-                height:             flDetailsRow.height + (ScreenTools.defaultFontPixelHeight * 2)
-                radius:             ScreenTools.defaultFontPixelWidth
-                anchors.centerIn:   parent
-                Row {
-                    id:             flDetailsRow
-                    spacing:        ScreenTools.defaultFontPixelWidth
+                color:      qgcPal.windowShade
+                height:     rulesTitle.height + ScreenTools.defaultFontPixelHeight
+                width:      parent.width * 0.95
+                radius:     _radius
+                anchors.horizontalCenter: parent.horizontalCenter
+                QGCLabel {
+                    id:         rulesTitle
+                    text:       qsTr("Airspace Regulation Options")
                     anchors.centerIn: parent
-                    //---------------------------------------------------------
-                    //-- Flight Details
-                    FlightDetails {
-                        baseHeight:  flightDetailsRoot.baseHeight
-                        baseWidth:   flightDetailsRoot.baseWidth
+                }
+            }
+            Flickable {
+                clip:           true
+                width:          ScreenTools.defaultFontPixelWidth  * 30
+                height:         ScreenTools.defaultFontPixelHeight * 14
+                contentHeight:  rulesetCol.height
+                flickableDirection: Flickable.VerticalFlick
+                Column {
+                    id:         rulesetCol
+                    spacing:    ScreenTools.defaultFontPixelHeight * 0.25
+                    anchors.right: parent.right
+                    anchors.left:  parent.left
+                    anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
+                    anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
+                    Item {
+                        width:  1
+                        height: 1
                     }
-                    //---------------------------------------------------------
-                    //-- Divider
-                    Rectangle {
-                        color:      qgcPal.text
-                        width:      1
-                        height:     parent.height
-                        opacity:    0.25
-                        anchors.verticalCenter: parent.verticalCenter
+                    QGCLabel {
+                        text:           qsTr("PICK ONE REGULATION")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
                     }
-                    //---------------------------------------------------------
-                    //-- Flight Brief
-                    FlightBrief {
-                        baseHeight:  flightDetailsRoot.baseHeight
-                        baseWidth:   flightDetailsRoot.baseWidth
+                    Repeater {
+                        model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
+                        delegate: RuleSelector {
+                            visible:             object.selectionType === AirspaceRuleSet.Pickone
+                            rule:                object
+                            autoExclusive:       true
+                            anchors.right:       parent.right
+                            anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                            anchors.left:        parent.left
+                            anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                        }
+                    }
+                    Item {
+                        width:  1
+                        height: 1
+                    }
+                    QGCLabel {
+                        text:           qsTr("OPTIONAL")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                    }
+                    Repeater {
+                        model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
+                        delegate: RuleSelector {
+                            visible:             object.selectionType === AirspaceRuleSet.Optional
+                            rule:                object
+                            anchors.right:       parent.right
+                            anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                            anchors.left:        parent.left
+                            anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                        }
+                    }
+                    Item {
+                        width:  1
+                        height: 1
+                    }
+                    QGCLabel {
+                        text:           qsTr("REQUIRED")
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 2
+                    }
+                    Repeater {
+                        model:    _validRules ? QGroundControl.airspaceManager.ruleSets.ruleSets : []
+                        delegate: RuleSelector {
+                            visible:             object.selectionType === AirspaceRuleSet.Required
+                            rule:                object
+                            enabled:             false
+                            anchors.right:       parent.right
+                            anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+                            anchors.left:        parent.left
+                            anchors.leftMargin:  ScreenTools.defaultFontPixelWidth
+                        }
                     }
                 }
+            }
+        }
+
+        //-- Arrow
+        QGCColoredImage {
+            id:                 arrowIcon
+            width:              height
+            height:             ScreenTools.defaultFontPixelHeight * 2
+            sourceSize.height:  height
+            source:             "qrc:/airmap/right-arrow.svg"
+            color:              qgcPal.window
+            anchors.left:       parent.right
+            y:                  ruleSelector._arrowTarget ? (ruleSelector._arrowTarget.y - height) : 0
+        }
+    }
+
+    //---------------------------------------------------------------
+    //-- Flight Details
+    Popup {
+        id:                 flightDetails
+        width:              flDetailsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+        height:             flDetailsRow.height + (ScreenTools.defaultFontPixelHeight * 2)
+        modal:              true
+        focus:              true
+        parent:             Overlay.overlay
+        x:                  Math.round((mainWindow.width  - width)  * 0.5)
+        y:                  Math.round((mainWindow.height - height) * 0.5)
+        closePolicy:        Popup.NoAutoClose
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.window
+            radius:         ScreenTools.defaultFontPixelWidth
+        }
+        Row {
+            id:             flDetailsRow
+            spacing:        ScreenTools.defaultFontPixelWidth
+            anchors.centerIn: parent
+            //---------------------------------------------------------
+            //-- Flight Details
+            FlightDetails {
+                id:         _flightDetails
+                baseHeight: _baseHeight
+                baseWidth:  _baseWidth
+            }
+            //---------------------------------------------------------
+            //-- Divider
+            Rectangle {
+                color:      qgcPal.text
+                width:      1
+                height:     parent.height
+                opacity:    0.25
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            //---------------------------------------------------------
+            //-- Flight Brief
+            FlightBrief {
+                baseHeight: _baseHeight
+                baseWidth:  _baseWidth
+                onClosed:   flightDetails.close()
             }
         }
     }
     //---------------------------------------------------------------
     //-- Flight Brief
-    Component {
-        id:             flightBrief
-        Rectangle {
-            id:         flightBriefRoot
-            width:      mainWindow.width
-            height:     mainWindow.height
-            color:      Qt.rgba(0,0,0,0.1)
-            property real baseHeight:  ScreenTools.defaultFontPixelHeight * 22
-            property real baseWidth:   ScreenTools.defaultFontPixelWidth  * 40
-            Component.onCompleted: {
-                _dirty = false
-                mainWindow.disableToolbar()
-            }
-            MouseArea {
-                anchors.fill:   parent
-                hoverEnabled:   true
-                onWheel:        { wheel.accepted = true; }
-                onPressed:      { mouse.accepted = true; }
-                onReleased:     { mouse.accepted = true; }
-            }
-            Rectangle {
-                id:             flightBriefShadow
-                anchors.fill:   flightBriefRect
-                radius:         flightBriefRect.radius
-                color:          qgcPal.window
-                visible:        false
-            }
-            DropShadow {
-                anchors.fill:       flightBriefShadow
-                visible:            flightBriefRect.visible
-                horizontalOffset:   4
-                verticalOffset:     4
-                radius:             32.0
-                samples:            65
-                color:              Qt.rgba(0,0,0,0.75)
-                source:             flightBriefShadow
-            }
-            Rectangle {
-                id:                 flightBriefRect
-                color:              qgcPal.window
-                width:              flightBriedItem.width  + (ScreenTools.defaultFontPixelWidth  * 4)
-                height:             flightBriedItem.height + (ScreenTools.defaultFontPixelHeight * 2)
-                radius:             ScreenTools.defaultFontPixelWidth
-                anchors.centerIn:   parent
-                //---------------------------------------------------------
-                //-- Flight Brief
-                FlightBrief {
-                    id:             flightBriedItem
-                    baseHeight:     flightBriefRoot.baseHeight
-                    baseWidth:      flightBriefRoot.baseWidth
-                    anchors.centerIn: parent
-                }
-            }
+    Popup {
+        id:                 flightBrief
+        width:              flightBriedItem.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+        height:             flightBriedItem.height + (ScreenTools.defaultFontPixelHeight * 2)
+        modal:              true
+        focus:              true
+        parent:             Overlay.overlay
+        x:                  Math.round((mainWindow.width  - width)  * 0.5)
+        y:                  Math.round((mainWindow.height - height) * 0.5)
+        closePolicy:        Popup.NoAutoClose
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          qgcPal.window
+            radius:         ScreenTools.defaultFontPixelWidth
+        }
+        //---------------------------------------------------------
+        //-- Flight Brief
+        FlightBrief {
+            id:             flightBriedItem
+            baseHeight:     _baseHeight
+            baseWidth:      _baseWidth
+            onClosed:       flightBrief.close()
+            anchors.centerIn: parent
         }
     }
 }

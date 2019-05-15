@@ -27,9 +27,8 @@ Item {
     onHeightChanged: calculateYAxis()
     onStickPositionYChanged: calculateYAxis()
 
-    function calculateXAxis()
-    {
-        if(!visible()) {
+    function calculateXAxis() {
+        if(!_joyRoot.visible) {
             return;
         }
         var xAxisTemp = stickPositionX / width
@@ -38,9 +37,8 @@ Item {
         xAxis = xAxisTemp
     }
 
-    function calculateYAxis()
-    {
-        if(!visible()) {
+    function calculateYAxis() {
+        if(!_joyRoot.visible) {
             return;
         }
         var yAxisTemp = stickPositionY / height
@@ -52,8 +50,7 @@ Item {
         yAxis = yAxisTemp
     }
 
-    function reCenter()
-    {
+    function reCenter() {
         _processTouchPoints = false
 
         // Move control back to original position
@@ -67,8 +64,7 @@ Item {
         }
     }
 
-    function thumbDown(touchPoints)
-    {
+    function thumbDown(touchPoints) {
         // Position the control around the initial thumb position
         xPositionDelta = touchPoints[0].x - _centerXY
         if (yAxisThrottle) {

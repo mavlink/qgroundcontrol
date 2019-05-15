@@ -26,7 +26,7 @@
 class ParameterEditorController : public FactPanelController
 {
     Q_OBJECT
-    
+
 public:
     ParameterEditorController(void);
     ~ParameterEditorController();
@@ -40,16 +40,17 @@ public:
 
     Q_INVOKABLE QStringList getGroupsForCategory(const QString& category);
     Q_INVOKABLE QStringList searchParameters(const QString& searchText, bool searchInName=true, bool searchInDescriptions=true);
-	
+
     Q_INVOKABLE void clearRCToParam(void);
     Q_INVOKABLE void saveToFile(const QString& filename);
     Q_INVOKABLE void loadFromFile(const QString& filename);
     Q_INVOKABLE void refresh(void);
     Q_INVOKABLE void resetAllToDefaults(void);
+    Q_INVOKABLE void resetAllToVehicleConfiguration(void);
     Q_INVOKABLE void setRCToParam(const QString& paramName);
-	
+
     QList<QObject*> model(void);
-    
+
 signals:
     void searchTextChanged(QString searchText);
     void currentCategoryChanged(QString category);

@@ -26,7 +26,6 @@ Rectangle {
     border.width:   1
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 
-    property var    _qgcView:           qgcView
     property real   _innerRadius:       (width - (_topBottomMargin * 3)) / 4
     property real   _outerRadius:       _innerRadius + _topBottomMargin
     property real   _defaultSize:       ScreenTools.defaultFontPixelHeight * (9)
@@ -37,7 +36,6 @@ Rectangle {
     property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (width * 0.05) / 2
     property real   _availableValueHeight: maxHeight - (root.height + _valuesItem.anchors.topMargin)
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
 
     // Prevent all clicks from going through to lower layers
     DeadMouseArea {
@@ -51,7 +49,7 @@ Rectangle {
         anchors.leftMargin: _topBottomMargin
         anchors.left:       parent.left
         size:               _innerRadius * 2
-        vehicle:            _activeVehicle
+        vehicle:            activeVehicle
         anchors.verticalCenter: parent.verticalCenter
     }
 
@@ -60,7 +58,7 @@ Rectangle {
         anchors.leftMargin: _spacing
         anchors.left:       attitude.right
         size:               _innerRadius * 2
-        vehicle:            _activeVehicle
+        vehicle:            activeVehicle
         anchors.verticalCenter: parent.verticalCenter
     }
 
@@ -87,7 +85,6 @@ Rectangle {
             anchors.margins:    1
             anchors.left:       parent.left
             anchors.right:      parent.right
-            qgcView:            root._qgcView
             maxHeight:          _availableValueHeight
         }
     }

@@ -24,9 +24,8 @@ import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
 import QGroundControl.SettingsManager       1.0
 
-QGCView {
-    id:                 _qgcView
-    viewPanel:          panel
+Rectangle {
+    id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
@@ -42,7 +41,7 @@ QGCView {
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
-    property real _panelWidth:                  _qgcView.width * _internalWidthRatio
+    property real _panelWidth:                  _root.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
@@ -57,12 +56,6 @@ QGCView {
 
     readonly property real _internalWidthRatio: 0.8
 
-    QGCPalette { id: qgcPal }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
         QGCFlickable {
             clip:               true
             anchors.fill:       parent
@@ -71,7 +64,7 @@ QGCView {
 
             Item {
                 id:     outerItem
-                width:  Math.max(panel.width, settingsColumn.width)
+            width:  Math.max(_root.width, settingsColumn.width)
                 height: settingsColumn.height
 
                 ColumnLayout {
@@ -338,15 +331,12 @@ QGCView {
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  savePathBrowseDialog.openForLoad()
-
                                 QGCFileDialog {
                                     id:             savePathBrowseDialog
-                                    qgcView:        _qgcView
                                     title:          qsTr("Choose the location to save/load files")
                                     folder:         _savePath.rawValue
                                     selectExisting: true
                                     selectFolder:   true
-
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
                             }
@@ -457,9 +447,7 @@ QGCView {
 
                             FactCheckBox {
                                 text:       qsTr("Auto-Center throttle")
-                                visible:    _virtualJoystickCentralized.visible && (
-                                        QGroundControl.multiVehicleManager.activeVehicle.sub || QGroundControl.multiVehicleManager.activeVehicle.rover
-                                    )
+                                visible:    _virtualJoystickCentralized.visible && activeVehicle && (activeVehicle.sub || activeVehicle.rover)
                                 fact:       _virtualJoystickCentralized
                                 Layout.leftMargin: _margins
 
@@ -660,16 +648,11 @@ QGCView {
                             property bool useFixedPosition: rtkSettings.useFixedBasePosition.rawValue
                             property real firstColWidth:    ScreenTools.defaultFontPixelWidth * 3
 
-                            ExclusiveGroup {
-                                id: useFixedBasePositionRadioGroup
-                            }
-
                             QGCRadioButton {
                                 text:               qsTr("Perform Survey-In")
                                 visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
-                                checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == false
+                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === false
                                 onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = false
-                                exclusiveGroup:     useFixedBasePositionRadioGroup
                                 Layout.columnSpan:  3
                             }
 
@@ -702,9 +685,8 @@ QGCView {
                             QGCRadioButton {
                                 text:               qsTr("Use Specified Base Position")
                                 visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
-                                checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == true
+                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === true
                                 onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = true
-                                exclusiveGroup:     useFixedBasePositionRadioGroup
                                 Layout.columnSpan:  3
                             }
 
@@ -949,15 +931,12 @@ QGCView {
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  userBrandImageIndoorBrowseDialog.openForLoad()
-
                                 QGCFileDialog {
                                     id:             userBrandImageIndoorBrowseDialog
-                                    qgcView:        _qgcView
                                     title:          qsTr("Choose custom brand image file")
                                     folder:         _userBrandImageIndoor.rawValue.replace("file:///","")
                                     selectExisting: true
                                     selectFolder:   false
-
                                     onAcceptedForLoad: _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
                             }
@@ -974,24 +953,19 @@ QGCView {
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  userBrandImageOutdoorBrowseDialog.openForLoad()
-
                                 QGCFileDialog {
                                     id:             userBrandImageOutdoorBrowseDialog
-                                    qgcView:        _qgcView
                                     title:          qsTr("Choose custom brand image file")
                                     folder:         _userBrandImageOutdoor.rawValue.replace("file:///","")
                                     selectExisting: true
                                     selectFolder:   false
-
                                     onAcceptedForLoad: _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }
                             }
-
                             QGCButton {
                                 text:               qsTr("Reset Default Brand Image")
                                 Layout.columnSpan:  3
                                 Layout.alignment:   Qt.AlignHCenter
-
                                 onClicked:  {
                                     _userBrandImageIndoor.rawValue = ""
                                     _userBrandImageOutdoor.rawValue = ""
@@ -1012,6 +986,5 @@ QGCView {
                     }
                 } // settingsColumn
             }
-        } // QGCFlickable
-    } // QGCViewPanel
-} // QGCView
+    }
+}

@@ -21,10 +21,6 @@ import QGroundControl.ScreenTools   1.0
 Item {
     id: root
 
-    // The following properties must be pushed in from the Loader
-    //property var qgcView      - QGCView control
-    //property var qgcViewPanel - QGCViewPanel control
-
     property real _margins:             ScreenTools.defaultFontPixelHeight / 2
     property var  _switchNameList:      [ "ACRO", "ARM", "GEAR", "KILL", "LOITER", "OFFB", "POSCTL", "RATT", "RETURN", "STAB" ]
     property var  _switchFactList:      [ ]
@@ -53,7 +49,6 @@ Item {
 
     PX4SimpleFlightModesController {
         id:         controller
-        factPanel:  qgcViewPanel
     }
 
     QGCFlickable {
@@ -207,6 +202,6 @@ Item {
                     controller.getParameterFact(-1, "RC_MAP_FLTMODE").value = 0
                 }
             }
-        } // Column
-    } // QGCFlickable
-} // QGCView
+        }
+    }
+}

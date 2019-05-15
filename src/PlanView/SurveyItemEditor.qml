@@ -91,10 +91,10 @@ Rectangle {
                 if (index == _indexCustom) {
                     missionItem.clearCurrentPreset()
                 } else if (index == _indexCreate) {
-                    rootQgcView.showDialog(savePresetDialog, qsTr("Save Preset"), rootQgcView.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+                    mainWindow.showDialog(savePresetDialog, qsTr("Save Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
                 } else if (index == _indexDelete) {
                     if (missionItem.builtInPreset) {
-                        rootQgcView.showMessage(qsTr("Delete Preset"), qsTr("This preset cannot be deleted."), StandardButton.Ok)
+                        mainWindow.showMessage(qsTr("Delete Preset"), qsTr("This preset cannot be deleted."), StandardButton.Ok)
                     } else {
                         missionItem.deleteCurrentPreset()
                     }
@@ -262,7 +262,7 @@ Rectangle {
             FactCheckBox {
                 text:               qsTr("Fly alternate transects")
                 fact:               missionItem.flyAlternateTransects
-                visible:            _vehicle.fixedWing || _vehicle.vtol
+                visible:            _vehicle ? (_vehicle.fixedWing || _vehicle.vtol) : false
             }
 
             QGCCheckBox {

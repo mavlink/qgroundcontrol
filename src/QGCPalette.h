@@ -25,12 +25,22 @@
         _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Light][ColorGroupDisabled]; \
         _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupEnabled]; \
         _colorInfoMap[Dark][ColorGroupDisabled][QStringLiteral(#name)] = colorInfo[Dark][ColorGroupDisabled]; \
+        _colors << #name; \
     }
 
-#define DEFINE_QGC_COLOR(name, setName) \
-    Q_PROPERTY(QColor name READ name WRITE setName NOTIFY paletteChanged) \
-    QColor name() const { return _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#name)]; } \
-    void setName(QColor& color) { _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#name)] = color; _signalPaletteChangeToAll(); }
+#define DEFINE_QGC_COLOR(NAME, SETNAME) \
+    Q_PROPERTY(QColor NAME READ NAME WRITE SETNAME NOTIFY paletteChanged) \
+    Q_PROPERTY(QStringList NAME ## Colors READ NAME ## Colors NOTIFY paletteChanged) \
+    QColor NAME() const { return _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#NAME)]; } \
+    QStringList NAME ## Colors() const { \
+        QStringList c; \
+        c << _colorInfoMap[Light][ColorGroupEnabled][QStringLiteral(#NAME)].name(QColor::HexRgb); \
+        c << _colorInfoMap[Light][ColorGroupDisabled][QStringLiteral(#NAME)].name(QColor::HexRgb); \
+        c << _colorInfoMap[Dark][ColorGroupEnabled][QStringLiteral(#NAME)].name(QColor::HexRgb); \
+        c << _colorInfoMap[Dark][ColorGroupDisabled][QStringLiteral(#NAME)].name(QColor::HexRgb); \
+        return c; \
+    } \
+    void SETNAME(QColor& color) { _colorInfoMap[_theme][_colorGroupEnabled  ? ColorGroupEnabled : ColorGroupDisabled][QStringLiteral(#NAME)] = color; _signalPaletteChangeToAll(); }
 
 /*!
  QGCPalette is used in QML ui to expose color properties for the QGC palette. There are two
@@ -70,8 +80,9 @@ public:
 
     typedef QColor PaletteColorInfo_t[cMaxTheme][cMaxColorGroup];
 
-    Q_PROPERTY(Theme    globalTheme         READ globalTheme        WRITE setGlobalTheme        NOTIFY paletteChanged)
-    Q_PROPERTY(bool     colorGroupEnabled   READ colorGroupEnabled  WRITE setColorGroupEnabled  NOTIFY paletteChanged)
+    Q_PROPERTY(Theme        globalTheme         READ globalTheme        WRITE setGlobalTheme        NOTIFY paletteChanged)
+    Q_PROPERTY(bool         colorGroupEnabled   READ colorGroupEnabled  WRITE setColorGroupEnabled  NOTIFY paletteChanged)
+    Q_PROPERTY(QStringList  colors              READ colors             CONSTANT)
 
     DEFINE_QGC_COLOR(window,                setWindow)
     DEFINE_QGC_COLOR(windowShade,           setWindowShade)
@@ -103,27 +114,30 @@ public:
     DEFINE_QGC_COLOR(alertBorder,           setAlertBorder)
     DEFINE_QGC_COLOR(alertText,             setAlertText)
     DEFINE_QGC_COLOR(missionItemEditor,     setMissionItemEditor)
+    DEFINE_QGC_COLOR(hoverColor,            setHoverColor)
 
-     QGCPalette(QObject* parent = NULL);
+     QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();
-    
-    bool colorGroupEnabled      (void) const { return _colorGroupEnabled; }
-    void setColorGroupEnabled   (bool enabled);
-    
-    static Theme    globalTheme     (void) { return _theme; }
-    static void     setGlobalTheme  (Theme newTheme);
+
+    QStringList colors                      () const { return _colors; }
+    bool        colorGroupEnabled           () const { return _colorGroupEnabled; }
+    void        setColorGroupEnabled        (bool enabled);
+
+    static Theme    globalTheme             () { return _theme; }
+    static void     setGlobalTheme          (Theme newTheme);
 
 signals:
     void paletteChanged ();
-    
+
 private:
-    static void _buildMap                   (void);
-    static void _signalPaletteChangeToAll   (void);
-    void        _signalPaletteChanged       (void);
-    void        _themeChanged               (void);
-    
+    static void _buildMap                   ();
+    static void _signalPaletteChangeToAll   ();
+    void        _signalPaletteChanged       ();
+    void        _themeChanged               ();
+
     static Theme                _theme;             ///< There is a single theme for all palettes
     bool                        _colorGroupEnabled; ///< Currently selected ColorGroup. true: enabled, false: disabled
+    static QStringList          _colors;
 
     static QMap<int, QMap<int, QMap<QString, QColor>>> _colorInfoMap;   // theme -> colorGroup -> color name -> color
     static QList<QGCPalette*> _paletteObjects;    ///< List of all active QGCPalette objects

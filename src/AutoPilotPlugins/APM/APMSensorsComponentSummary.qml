@@ -13,14 +13,11 @@ import QGroundControl.ArduPilot     1.0
     IMPORTANT NOTE: Any changes made here must also be made to SensorsComponentSummary.qml
 */
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
     color:          qgcPal.windowShadeDark
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
-    APMSensorsComponentController { id: controller; factPanel: panel }
+    APMSensorsComponentController { id: controller; }
 
     APMSensorParams {
         id:                     sensorParams

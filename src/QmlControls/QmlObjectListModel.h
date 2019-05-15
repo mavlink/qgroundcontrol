@@ -18,8 +18,8 @@ class QmlObjectListModel : public QAbstractListModel
     Q_OBJECT
     
 public:
-    QmlObjectListModel(QObject* parent = NULL);
-    ~QmlObjectListModel();
+    QmlObjectListModel(QObject* parent = nullptr);
+    ~QmlObjectListModel() override;
     
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     

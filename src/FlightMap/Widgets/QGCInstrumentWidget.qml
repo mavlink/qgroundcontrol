@@ -25,14 +25,12 @@ Rectangle {
     border.width:   _showLargeCompass ? 1 : 0
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 
-    property var    _qgcView:               qgcView
     property real   _maxHeight:             maxHeight
     property real   _defaultSize:           ScreenTools.defaultFontPixelHeight * (9)
     property color  _backgroundColor:       qgcPal.window
     property real   _spacing:               ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:       (width * 0.05) / 2
     property real   _availableValueHeight:  _maxHeight - (outerCompass.height + _spacer1.height + _spacer2.height + (_spacing * 4)) - (_showLargeCompass ? compass.height : 0)
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
     property bool   _showLargeCompass:      QGroundControl.settingsManager.appSettings.showLargeCompass.value
 
     readonly property real _outerRingRatio: 0.95
@@ -60,7 +58,7 @@ Rectangle {
             CompassRing {
                 id:                 outerCompass
                 size:               parent.width * _outerRingRatio
-                vehicle:            _activeVehicle
+                vehicle:            activeVehicle
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible:            !_showLargeCompass
 
@@ -69,7 +67,7 @@ Rectangle {
             QGCAttitudeWidget {
                 id:                 attitudeWidget
                 size:               parent.width * (_showLargeCompass ? _outerRingRatio : _innerRingRatio)
-                vehicle:            _activeVehicle
+                vehicle:            activeVehicle
                 anchors.centerIn:   outerCompass
                 showHeading:        !_showLargeCompass
             }
@@ -99,7 +97,7 @@ Rectangle {
                 anchors.left:       outerCompass.left
                 source:             "/qmlimages/Yield.svg"
                 mipmap:             true
-                visible:            _activeVehicle ? !_warningsViewed && _activeVehicle.unhealthySensors.length > 0 && _valuesWidget.currentPage() != 2 : false
+                visible:            activeVehicle ? !_warningsViewed && activeVehicle.unhealthySensors.length > 0 && _valuesWidget.currentPage() != 2 : false
                 opacity:            0.8
                 width:              outerCompass.width * 0.15
                 sourceSize.width:   width
@@ -119,7 +117,7 @@ Rectangle {
                 }
 
                 Connections {
-                    target: _activeVehicle
+                    target: activeVehicle
                     onUnhealthySensorsChanged: healthWarning._warningsViewed = false
                 }
             }
@@ -149,7 +147,6 @@ Rectangle {
                 anchors.margins:    1
                 anchors.left:       parent.left
                 anchors.right:      parent.right
-                qgcView:            instrumentPanel._qgcView
                 textColor:          qgcPal.text
                 backgroundColor:    _backgroundColor
                 maxHeight:          _availableValueHeight
@@ -169,7 +166,7 @@ Rectangle {
             id:                         compass
             anchors.horizontalCenter:   parent.horizontalCenter
             size:                       parent.width * 0.95
-            vehicle:                    _activeVehicle
+            vehicle:                    activeVehicle
             visible:                    _showLargeCompass
         }
     }

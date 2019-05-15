@@ -15,37 +15,20 @@ import QtQuick.Dialogs          1.2
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
-import QGroundControl.FactSystem            1.0
-import QGroundControl.FactControls          1.0
-import QGroundControl.Palette               1.0
-import QGroundControl.Controllers           1.0
 import QGroundControl.ScreenTools           1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
-
-    property var _activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: panel.enabled }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
-        QGCLabel {
-            id:             titleLabel
-            text:           qsTr("PX4Flow Camera")
-            font.family:    ScreenTools.demiboldFontFamily
-        }
-
-        Image {
-            source:     _activeVehicle ? "image://QGCImages/" + _activeVehicle.id + "/" + _activeVehicle.flowImageIndex : ""
-            width:      parent.width * 0.5
-            height:     width * 0.75
-            cache:      false
-            anchors.centerIn: parent
-            fillMode: Image.PreserveAspectFit
-        }
+Item {
+    QGCLabel {
+        id:             titleLabel
+        text:           qsTr("PX4Flow Camera")
+        font.family:    ScreenTools.demiboldFontFamily
+    }
+    Image {
+        source:         activeVehicle ? "image://QGCImages/" + activeVehicle.id + "/" + activeVehicle.flowImageIndex : ""
+        width:          parent.width * 0.5
+        height:         width * 0.75
+        cache:          false
+        fillMode:       Image.PreserveAspectFit
+        anchors.centerIn: parent
     }
 }

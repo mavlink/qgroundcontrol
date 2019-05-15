@@ -13,7 +13,6 @@
 ///     @author Rustom Jehangir <rusty@bluerobotics.com>
 
 #include "APMLightsComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "APMAutoPilotPlugin.h"
 #include "APMAirframeComponent.h"
 

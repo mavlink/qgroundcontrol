@@ -23,7 +23,6 @@ import QGroundControl.ScreenTools   1.0
 SetupPage {
     id:             safetyPage
     pageComponent:  pageComponent
-
     Component {
         id: pageComponent
 
@@ -33,7 +32,6 @@ SetupPage {
 
             FactPanelController {
                 id:         controller
-                factPanel:  safetyPage.viewPanel
             }
 
             readonly property string hitlParam: "SYS_HITL"
@@ -55,8 +53,6 @@ SetupPage {
             property Fact _landSpeedMC:     controller.getParameterFact(-1, "MPC_LAND_SPEED", false)
             property bool _hitlAvailable:   controller.parameterExists(-1, hitlParam)
             property Fact _hitlEnabled:     controller.getParameterFact(-1, hitlParam, false)
-
-            ExclusiveGroup { id: homeLoiterGroup }
 
             Rectangle {
                 x:      lowBattGrid.x + outerGrid.x - _margins
@@ -393,7 +389,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value === 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Land immediately")
                             onClicked:          _rtlLandDelay.value = 0
                         }
@@ -404,7 +399,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLoiterNoLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value < 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Loiter and do not land")
                             onClicked:          _rtlLandDelay.value = -1
                         }
@@ -415,7 +409,6 @@ SetupPage {
                         QGCRadioButton {
                             id:                 homeLoiterLandRadio
                             checked:            _rtlLandDelay ? _rtlLandDelay.value > 0 : false
-                            exclusiveGroup:     homeLoiterGroup
                             text:               qsTr("Loiter and land after specified time")
                             onClicked:          _rtlLandDelay.value = 60
                         }

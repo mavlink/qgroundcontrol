@@ -40,7 +40,7 @@ public:
         ObjectRole = Qt::UserRole + 1
     };
 
-    QGCLogModel(QObject *parent = 0);
+    QGCLogModel(QObject *parent = nullptr);
 
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_INVOKABLE QGCLogEntry* get(int index);

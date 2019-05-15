@@ -29,7 +29,7 @@
 #include "QGC.h"
 #include "UAS.h"
 #include "UASInterface.h"
-#include "QGCMessageBox.h"
+//-- TODO: #include "QGCMessageBox.h"
 
 QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress localHost, quint16 localPort) :
     _vehicle(vehicle),
@@ -302,7 +302,7 @@ void QGCXPlaneLink::processError(QProcess::ProcessError err)
     }
     
     
-    QGCMessageBox::critical(tr("X-Plane HIL"), msg);
+    //-- TODO: QGCMessageBox::critical(tr("X-Plane HIL"), msg);
 }
 
 QString QGCXPlaneLink::getRemoteHost()

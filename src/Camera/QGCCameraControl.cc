@@ -18,7 +18,7 @@
 #include <QDomNodeList>
 
 QGC_LOGGING_CATEGORY(CameraControlLog, "CameraControlLog")
-QGC_LOGGING_CATEGORY(CameraControlLogVerbose, "CameraControlLogVerbose")
+QGC_LOGGING_CATEGORY(CameraControlVerboseLog, "CameraControlVerboseLog")
 
 static const char* kCondition       = "condition";
 static const char* kControl         = "control";
@@ -58,6 +58,8 @@ static const char* kVersion         = "version";
 static const char* kPhotoMode       = "PhotoMode";
 static const char* kPhotoLapse      = "PhotoLapse";
 static const char* kPhotoLapseCount = "PhotoLapseCount";
+static const char* kThermalOpacity  = "ThermalOpacity";
+static const char* kThermalMode     = "ThermalMode";
 
 //-----------------------------------------------------------------------------
 // Known Parameters
@@ -174,9 +176,11 @@ QGCCameraControl::QGCCameraControl(const mavlink_camera_information_t *info, Veh
         _initWhenReady();
     }
     QSettings settings;
-    _photoMode  = static_cast<PhotoMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
-    _photoLapse = settings.value(kPhotoLapse, 1.0).toDouble();
+    _photoMode       = static_cast<PhotoMode>(settings.value(kPhotoMode, static_cast<int>(PHOTO_CAPTURE_SINGLE)).toInt());
+    _photoLapse      = settings.value(kPhotoLapse, 1.0).toDouble();
     _photoLapseCount = settings.value(kPhotoLapseCount, 0).toInt();
+    _thermalOpacity  = settings.value(kThermalOpacity, 85.0).toDouble();
+    _thermalMode     = static_cast<ThermalViewMode>(settings.value(kThermalMode, static_cast<uint32_t>(THERMAL_BLEND)).toUInt());
     _recTimer.setSingleShot(false);
     _recTimer.setInterval(333);
     connect(&_recTimer, &QTimer::timeout, this, &QGCCameraControl::_recTimerHandler);
@@ -495,6 +499,30 @@ QGCCameraControl::setPhotoMode()
                 _setCameraMode(CAM_MODE_PHOTO);
             }
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setThermalMode(ThermalViewMode mode)
+{
+    QSettings settings;
+    settings.setValue(kThermalMode, static_cast<uint32_t>(mode));
+    _thermalMode = mode;
+    emit thermalModeChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraControl::setThermalOpacity(double val)
+{
+    if(val < 0.0) val = 0.0;
+    if(val > 100.0) val = 100.0;
+    if(fabs(_thermalOpacity - val) > 0.1) {
+        _thermalOpacity = val;
+        QSettings settings;
+        settings.setValue(kThermalOpacity, val);
+        emit thermalOpacityChanged();
     }
 }
 
@@ -873,7 +901,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
         //-- Check for updates
         QStringList updates = _loadUpdates(parameterNode);
         if(updates.size()) {
-            qCDebug(CameraControlLogVerbose) << "Parameter" << factName << "requires updates for:" << updates;
+            qCDebug(CameraControlVerboseLog) << "Parameter" << factName << "requires updates for:" << updates;
             _requestUpdates[factName] = updates;
         }
         //-- Build metadata
@@ -907,7 +935,7 @@ QGCCameraControl::_loadSettings(const QDomNodeList nodeList)
                 //-- Check for exclusions
                 QStringList exclusions = _loadExclusions(option);
                 if(exclusions.size()) {
-                    qCDebug(CameraControlLogVerbose) << "New exclusions:" << factName << optValue << exclusions;
+                    qCDebug(CameraControlVerboseLog) << "New exclusions:" << factName << optValue << exclusions;
                     QGCCameraOptionExclusion* pExc = new QGCCameraOptionExclusion(this, factName, optValue, exclusions);
                     QQmlEngine::setObjectOwnership(pExc, QQmlEngine::CppOwnership);
                     _valueExclusions.append(pExc);
@@ -1136,7 +1164,7 @@ QGCCameraControl::_requestAllParameters()
         static_cast<uint8_t>(_vehicle->id()),
         static_cast<uint8_t>(compID()));
     _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
-    qCDebug(CameraControlLogVerbose) << "Request all parameters";
+    qCDebug(CameraControlVerboseLog) << "Request all parameters";
 }
 
 //-----------------------------------------------------------------------------
@@ -1202,7 +1230,7 @@ QGCCameraControl::_updateActiveList()
         }
     }
     if(active != _activeSettings) {
-        qCDebug(CameraControlLogVerbose) << "Excluding" << exclusionList;
+        qCDebug(CameraControlVerboseLog) << "Excluding" << exclusionList;
         _activeSettings = active;
         emit activeSettingsChanged();
         //-- Force validity of "Facts" based on active set
@@ -1223,7 +1251,7 @@ QGCCameraControl::_processConditionTest(const QString conditionTest)
         TEST_GREATER,
         TEST_SMALLER
     };
-    qCDebug(CameraControlLogVerbose) << "_processConditionTest(" << conditionTest << ")";
+    qCDebug(CameraControlVerboseLog) << "_processConditionTest(" << conditionTest << ")";
     int op = TEST_NONE;
     QStringList test;
     if(conditionTest.contains("!=")) {
@@ -1267,7 +1295,7 @@ QGCCameraControl::_processConditionTest(const QString conditionTest)
 bool
 QGCCameraControl::_processCondition(const QString condition)
 {
-    qCDebug(CameraControlLogVerbose) << "_processCondition(" << condition << ")";
+    qCDebug(CameraControlVerboseLog) << "_processCondition(" << condition << ")";
     bool result = true;
     bool andOp  = true;
     if(!condition.isEmpty()) {
@@ -1306,10 +1334,10 @@ QGCCameraControl::_updateRanges(Fact* pFact)
             Fact* pRFact = getFact(pRange->param);          //-- This parameter
             Fact* pTFact = getFact(pRange->targetParam);    //-- The target parameter (the one its range is to change)
             if(pRFact && pTFact) {
-                //qCDebug(CameraControlLogVerbose) << "Check new set of options for" << pTFact->name();
+                //qCDebug(CameraControlVerboseLog) << "Check new set of options for" << pTFact->name();
                 QString option = pRFact->rawValueString();  //-- This parameter value
                 //-- If this value (and condition) triggers a change in the target range
-                //qCDebug(CameraControlLogVerbose) << "Range value:" << pRange->value << "Current value:" << option << "Condition:" << pRange->condition;
+                //qCDebug(CameraControlVerboseLog) << "Range value:" << pRange->value << "Current value:" << option << "Condition:" << pRange->condition;
                 if(pRange->value == option && _processCondition(pRange->condition)) {
                     if(pTFact->enumStrings() != pRange->optNames) {
                         //-- Set limited range set
@@ -1340,7 +1368,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
             _paramIO[f->name()]->optNames = rangesSet[f]->optNames;
             _paramIO[f->name()]->optVariants = rangesSet[f]->optVariants;
             emit f->enumsChanged();
-            qCDebug(CameraControlLogVerbose) << "Limited set of options for:" << f->name() << rangesSet[f]->optNames;;
+            qCDebug(CameraControlVerboseLog) << "Limited set of options for:" << f->name() << rangesSet[f]->optNames;;
             updates << f->name();
         }
     }
@@ -1351,7 +1379,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
             _paramIO[f->name()]->optNames = _originalOptNames[rangesReset[f]];
             _paramIO[f->name()]->optVariants = _originalOptValues[rangesReset[f]];
             emit f->enumsChanged();
-            qCDebug(CameraControlLogVerbose) << "Restore full set of options for:" << f->name() << _originalOptNames[f->name()];
+            qCDebug(CameraControlVerboseLog) << "Restore full set of options for:" << f->name() << _originalOptNames[f->name()];
             updates << f->name();
         }
     }
@@ -1491,15 +1519,19 @@ QGCCameraControl::handleVideoInfo(const mavlink_video_stream_information_t* vi)
 {
     qCDebug(CameraControlLog) << "handleVideoInfo:" << vi->stream_id << vi->uri;
     _expectedCount = vi->count;
-    if(!_findStream(vi->stream_id)) {
+    if(!_findStream(vi->stream_id, false)) {
         qCDebug(CameraControlLog) << "Create stream handler for stream ID:" << vi->stream_id;
         QGCVideoStreamInfo* pStream = new QGCVideoStreamInfo(this, vi);
         QQmlEngine::setObjectOwnership(pStream, QQmlEngine::CppOwnership);
         _streams.append(pStream);
-        _streamLabels.append(pStream->name());
-        emit streamsChanged();
-        emit streamLabelsChanged();
-        qDebug() << _streamLabels;
+        //-- Thermal is handled separately and not listed
+        if(!pStream->isThermal()) {
+            _streamLabels.append(pStream->name());
+            emit streamsChanged();
+            emit streamLabelsChanged();
+        } else {
+            emit thermalStreamChanged();
+        }
     }
     //-- Check for missing count
     if(_streams.count() < _expectedCount) {
@@ -1531,7 +1563,7 @@ QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
 void
 QGCCameraControl::setCurrentStream(int stream)
 {
-    if(stream != _currentStream && stream >= 0 && stream < _streams.count()) {
+    if(stream != _currentStream && stream >= 0 && stream < _streamLabels.count()) {
         if(_currentStream != stream) {
             QGCVideoStreamInfo* pInfo = currentStreamInstance();
             if(pInfo) {
@@ -1606,9 +1638,27 @@ QGCCameraControl::autoStream()
 QGCVideoStreamInfo*
 QGCCameraControl::currentStreamInstance()
 {
-    if(_currentStream < _streams.count() && _streams.count()) {
-        QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[_currentStream]);
+    if(_currentStream < _streamLabels.count() && _streamLabels.count()) {
+        QGCVideoStreamInfo* pStream = _findStream(_streamLabels[_currentStream]);
         return pStream;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraControl::thermalStreamInstance()
+{
+    //-- For now, it will return the first thermal listed (if any)
+    for(int i = 0; i < _streams.count(); i++) {
+        if(_streams[i]) {
+            QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[i]);
+            if(pStream) {
+                if(pStream->isThermal()) {
+                    return pStream;
+                }
+            }
+        }
     }
     return nullptr;
 }
@@ -1640,7 +1690,7 @@ QGCCameraControl::_requestStreamStatus(uint8_t streamID)
 
 //-----------------------------------------------------------------------------
 QGCVideoStreamInfo*
-QGCCameraControl::_findStream(uint8_t id)
+QGCCameraControl::_findStream(uint8_t id, bool report)
 {
     for(int i = 0; i < _streams.count(); i++) {
         if(_streams[i]) {
@@ -1654,7 +1704,26 @@ QGCCameraControl::_findStream(uint8_t id)
             }
         }
     }
-    qWarning() << "Stream id not found:" << id;
+    if(report) {
+        qWarning() << "Stream id not found:" << id;
+    }
+    return nullptr;
+}
+
+//-----------------------------------------------------------------------------
+QGCVideoStreamInfo*
+QGCCameraControl::_findStream(const QString name)
+{
+    for(int i = 0; i < _streams.count(); i++) {
+        if(_streams[i]) {
+            QGCVideoStreamInfo* pStream = qobject_cast<QGCVideoStreamInfo*>(_streams[i]);
+            if(pStream) {
+                if(pStream->name() == name) {
+                    return pStream;
+                }
+            }
+        }
+    }
     return nullptr;
 }
 
@@ -1676,7 +1745,7 @@ QGCCameraControl::_streamTimeout()
     }
     for(uint8_t i = 0; i < _expectedCount; i++) {
         //-- Stream ID starts at 1
-        if(!_findStream(i+1)) {
+        if(!_findStream(i+1, false)) {
             _requestStreamInfo(i+1);
             return;
         }
@@ -1781,7 +1850,7 @@ QGCCameraControl::_loadRanges(QDomNode option, const QString factName, QString p
             if(optNames.size()) {
                 QGCCameraOptionRange* pRange = new QGCCameraOptionRange(this, factName, paramValue, param, condition, optNames, optValues);
                 _optionRanges.append(pRange);
-                qCDebug(CameraControlLogVerbose) << "New range limit:" << factName << paramValue << param << condition << optNames << optValues;
+                qCDebug(CameraControlVerboseLog) << "New range limit:" << factName << paramValue << param << condition << optNames << optValues;
             }
         }
     }

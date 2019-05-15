@@ -42,8 +42,13 @@ public:
     Q_PROPERTY(bool             uvcEnabled              READ    uvcEnabled                                  CONSTANT)
     Q_PROPERTY(bool             fullScreen              READ    fullScreen      WRITE   setfullScreen       NOTIFY fullScreenChanged)
     Q_PROPERTY(VideoReceiver*   videoReceiver           READ    videoReceiver                               CONSTANT)
+    Q_PROPERTY(VideoReceiver*   thermalVideoReceiver    READ    thermalVideoReceiver                        CONSTANT)
     Q_PROPERTY(double           aspectRatio             READ    aspectRatio                                 NOTIFY aspectRatioChanged)
+    Q_PROPERTY(double           thermalAspectRatio      READ    thermalAspectRatio                          NOTIFY aspectRatioChanged)
+    Q_PROPERTY(double           hfov                    READ    hfov                                        NOTIFY aspectRatioChanged)
+    Q_PROPERTY(double           thermalHfov             READ    thermalHfov                                 NOTIFY aspectRatioChanged)
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
+    Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
 
     bool        hasVideo            ();
     bool        isGStreamer         ();
@@ -52,9 +57,14 @@ public:
     bool        fullScreen          () { return _fullScreen; }
     QString     videoSourceID       () { return _videoSourceID; }
     double      aspectRatio         ();
+    double      thermalAspectRatio  ();
+    double      hfov                ();
+    double      thermalHfov         ();
     bool        autoStreamConfigured();
+    bool        hasThermal          ();
 
-    VideoReceiver*  videoReceiver   () { return _videoReceiver; }
+    VideoReceiver*  videoReceiver           () { return _videoReceiver; }
+    VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
 
 #if defined(QGC_DISABLE_UVC)
     bool        uvcEnabled          () { return false; }
@@ -68,8 +78,8 @@ public:
     // Override from QGCTool
     void        setToolbox          (QGCToolbox *toolbox);
 
-    Q_INVOKABLE void startVideo     () { _videoReceiver->start(); }
-    Q_INVOKABLE void stopVideo      () { _videoReceiver->stop();  }
+    Q_INVOKABLE void startVideo     ();
+    Q_INVOKABLE void stopVideo      ();
 
 signals:
     void hasVideoChanged            ();
@@ -95,12 +105,13 @@ private:
     void _updateSettings            ();
 
 private:
-    bool            _isTaisync          = false;
-    VideoReceiver*  _videoReceiver      = nullptr;
-    VideoSettings*  _videoSettings      = nullptr;
+    bool            _isTaisync              = false;
+    VideoReceiver*  _videoReceiver          = nullptr;
+    VideoReceiver*  _thermalVideoReceiver   = nullptr;
+    VideoSettings*  _videoSettings          = nullptr;
     QString         _videoSourceID;
-    bool            _fullScreen         = false;
-    Vehicle*        _activeVehicle      = nullptr;
+    bool            _fullScreen             = false;
+    Vehicle*        _activeVehicle          = nullptr;
 };
 
 #endif

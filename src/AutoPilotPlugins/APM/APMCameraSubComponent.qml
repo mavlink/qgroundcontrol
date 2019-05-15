@@ -31,12 +31,11 @@ SetupPage {
             spacing:    _margins
             width:      availableWidth
 
-            FactPanelController { id: controller; factPanel: cameraPage.viewPanel }
+            FactPanelController { id: controller; }
 
             QGCPalette { id: palette; colorGroupEnabled: true }
 
-            property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-            property bool _oldFW:               !(_activeVehicle.firmwareMajorVersion > 3 || _activeVehicle.firmwareMinorVersion > 5 || _activeVehicle.firmwarePatchVersion >= 2)
+            property bool _oldFW:               !(activeVehicle.firmwareMajorVersion > 3 || activeVehicle.firmwareMinorVersion > 5 || activeVehicle.firmwarePatchVersion >= 2)
 
             property Fact _mountRetractX:       controller.getParameterFact(-1, "MNT_RETRACT_X")
             property Fact _mountRetractY:       controller.getParameterFact(-1, "MNT_RETRACT_Y")
