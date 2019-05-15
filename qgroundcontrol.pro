@@ -614,6 +614,8 @@ HEADERS += \
     src/uas/UASInterface.h \
     src/uas/UASMessageHandler.h \
     src/UTM.h \
+    src/AnalyzeView/GeoTagController.h \
+    src/AnalyzeView/ExifParser.h \
 
 
 AndroidBuild {
@@ -648,8 +650,6 @@ HEADERS += \
 
 !MobileBuild {
 HEADERS += \
-    src/AnalyzeView/GeoTagController.h \
-    src/AnalyzeView/ExifParser.h \
     src/GPS/Drivers/src/gps_helper.h \
     src/GPS/Drivers/src/rtcm.h \
     src/GPS/Drivers/src/ashtech.h \
@@ -663,7 +663,6 @@ HEADERS += \
     src/GPS/satellite_info.h \
     src/GPS/vehicle_gps_position.h \
     src/Joystick/JoystickSDL.h \
-    src/QGCQFileDialog.h \
     src/RunGuard.h \
     src/comm/LogReplayLink.h \
     src/comm/QGCHilLink.h \
@@ -790,6 +789,8 @@ SOURCES += \
     src/uas/UAS.cc \
     src/uas/UASMessageHandler.cc \
     src/UTM.cpp \
+    src/AnalyzeView/GeoTagController.cc \
+    src/AnalyzeView/ExifParser.cc \
 
 DebugBuild {
 SOURCES += \
@@ -811,8 +812,6 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
 
 !MobileBuild {
 SOURCES += \
-    src/AnalyzeView/GeoTagController.cc \
-    src/AnalyzeView/ExifParser.cc \
     src/GPS/Drivers/src/gps_helper.cpp \
     src/GPS/Drivers/src/rtcm.cpp \
     src/GPS/Drivers/src/ashtech.cpp \
@@ -822,7 +821,6 @@ SOURCES += \
     src/GPS/GPSProvider.cc \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
-    src/QGCQFileDialog.cc \
     src/RunGuard.cc \
     src/comm/LogReplayLink.cc \
     src/comm/QGCJSBSimLink.cc \

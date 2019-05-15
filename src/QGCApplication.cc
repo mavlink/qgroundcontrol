@@ -99,6 +99,8 @@
 #include "FirmwareImage.h"
 #include "MavlinkConsoleController.h"
 #include "MAVLinkInspectorController.h"
+#include "GeoTagController.h"
+
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
 #endif
@@ -108,7 +110,6 @@
 #endif
 
 #ifndef __mobile__
-#include "GeoTagController.h"
 #include "GPS/GPSManager.h"
 #endif
 
@@ -461,8 +462,8 @@ void QGCApplication::_initCommon()
 #ifndef NO_SERIAL_LINK
     qmlRegisterType<FirmwareUpgradeController>      (kQGCControllers,                       1, 0, "FirmwareUpgradeController");
 #endif
-    qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
 #endif
+    qmlRegisterType<GeoTagController>               (kQGCControllers,                       1, 0, "GeoTagController");
     qmlRegisterType<MavlinkConsoleController>       (kQGCControllers,                       1, 0, "MavlinkConsoleController");
     qmlRegisterType<MAVLinkInspectorController>     (kQGCControllers,                       1, 0, "MAVLinkInspectorController");
 
