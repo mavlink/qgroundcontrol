@@ -36,7 +36,7 @@ class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
     
-    friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
+    //friend class RadioConfigTest; ///< This allows our unit test to access internal information needed.
     
 public:
     JoystickConfigController(void);
