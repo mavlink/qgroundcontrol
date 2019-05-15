@@ -38,9 +38,9 @@ Item {
 
     //-- Setup can be invoked from c++ side
     Connections {
-        target: mainContentWindow
-        onSourceChanged: {
-            if(mainContentWindow.source.toString().endsWith(setupViewSource)) {
+        target: setupWindow
+        onVisibleChanged: {
+            if(setupWindow.visible) {
                 setupButton.checked = true
             }
         }
