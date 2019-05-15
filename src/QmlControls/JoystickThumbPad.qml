@@ -11,26 +11,36 @@ Item {
     property real   xAxis:          0                   ///< Value range [-1,1], negative values left stick, positive values right stick
     property real   yAxis:          0                   ///< Value range [-1,1], negative values up stick, positive values down stick
     property bool   yAxisThrottle:  false               ///< true: yAxis used for throttle, range [1,0], positive value are stick up
+    property bool   yAxisThrottleCentered: false        ///< false: center yAxis in throttle for reverser and forward
     property real   xPositionDelta: 0                   ///< Amount to move the control on x axis
     property real   yPositionDelta: 0                   ///< Amount to move the control on y axis
-    property bool   throttle:       false
 
     property real   _centerXY:              width / 2
     property bool   _processTouchPoints:    false
-    property bool   _stickCenteredOnce:     false
     property real   stickPositionX:         _centerXY
-    property real   stickPositionY:         yAxisThrottle ? height : _centerXY
+    property real   stickPositionY:         yAxisThrottleCentered ? _centerXY : height
 
     QGCMapPalette { id: mapPal }
 
-    onStickPositionXChanged: {
+    onWidthChanged: calculateXAxis()
+    onStickPositionXChanged: calculateXAxis()
+    onHeightChanged: calculateYAxis()
+    onStickPositionYChanged: calculateYAxis()
+
+    function calculateXAxis() {
+        if(!_joyRoot.visible) {
+            return;
+        }
         var xAxisTemp = stickPositionX / width
         xAxisTemp *= 2.0
         xAxisTemp -= 1.0
         xAxis = xAxisTemp
     }
 
-    onStickPositionYChanged: {
+    function calculateYAxis() {
+        if(!_joyRoot.visible) {
+            return;
+        }
         var yAxisTemp = stickPositionY / height
         yAxisTemp *= 2.0
         yAxisTemp -= 1.0
@@ -40,8 +50,7 @@ Item {
         yAxis = yAxisTemp
     }
 
-    function reCenter()
-    {
+    function reCenter() {
         _processTouchPoints = false
 
         // Move control back to original position
@@ -50,13 +59,12 @@ Item {
 
         // Center sticks
         stickPositionX = _centerXY
-        if (!yAxisThrottle) {
+        if (yAxisThrottleCentered) {
             stickPositionY = _centerXY
         }
     }
 
-    function thumbDown(touchPoints)
-    {
+    function thumbDown(touchPoints) {
         // Position the control around the initial thumb position
         xPositionDelta = touchPoints[0].x - _centerXY
         if (yAxisThrottle) {
@@ -86,7 +94,7 @@ Item {
 
     QGCColoredImage {
         color:                      lightColors ? "white" : "black"
-        visible:                    throttle
+        visible:                    yAxisThrottle
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -100,7 +108,7 @@ Item {
 
     QGCColoredImage {
         color:                      lightColors ? "white" : "black"
-        visible:                    throttle
+        visible:                    yAxisThrottle
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -114,7 +122,7 @@ Item {
 
     QGCColoredImage {
         color:                      lightColors ? "white" : "black"
-        visible:                    throttle
+        visible:                    yAxisThrottle
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height
@@ -128,7 +136,7 @@ Item {
 
     QGCColoredImage {
         color:                      lightColors ? "white" : "black"
-        visible:                    throttle
+        visible:                    yAxisThrottle
         height:                     ScreenTools.defaultFontPixelHeight
         width:                      height
         sourceSize.height:          height

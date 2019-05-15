@@ -33,6 +33,7 @@ public:
     DEFINE_SETTINGFACT(telemetrySaveNotArmed)
     DEFINE_SETTINGFACT(audioMuted)
     DEFINE_SETTINGFACT(virtualJoystick)
+    DEFINE_SETTINGFACT(virtualJoystickCentralized)
     DEFINE_SETTINGFACT(appFontPointSize)
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(showLargeCompass)

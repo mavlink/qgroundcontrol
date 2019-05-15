@@ -446,46 +446,55 @@ void APMFirmwarePlugin::_handleIncomingHeartbeat(Vehicle* vehicle, mavlink_messa
 {
     bool flying = false;
 
-    // We pull Vehicle::flying state from HEARTBEAT on ArduPilot. This is a firmware specific test.
+    mavlink_heartbeat_t heartbeat;
+    mavlink_msg_heartbeat_decode(message, &heartbeat);
 
-    if (vehicle->armed()) {
-        mavlink_heartbeat_t heartbeat;
-        mavlink_msg_heartbeat_decode(message, &heartbeat);
+    if (message->compid == MAV_COMP_ID_AUTOPILOT1) {
+        // We pull Vehicle::flying state from HEARTBEAT on ArduPilot. This is a firmware specific test.
+        if (vehicle->armed()) {
 
-        flying = heartbeat.system_status == MAV_STATE_ACTIVE;
-        if (!flying && vehicle->flying()) {
-            // If we were previously flying, and we go into critical or emergency assume we are still flying
-            flying = heartbeat.system_status == MAV_STATE_CRITICAL || heartbeat.system_status == MAV_STATE_EMERGENCY;
+            flying = heartbeat.system_status == MAV_STATE_ACTIVE;
+            if (!flying && vehicle->flying()) {
+                // If we were previously flying, and we go into critical or emergency assume we are still flying
+                flying = heartbeat.system_status == MAV_STATE_CRITICAL || heartbeat.system_status == MAV_STATE_EMERGENCY;
+            }
         }
+        vehicle->_setFlying(flying);
     }
 
-    vehicle->_setFlying(flying);
+    // We need to know whether this component is part of the ArduPilot stack code or not so we can adjust mavlink quirks appropriately.
+    // If the component sends a heartbeat we can know that. If it's doesn't there is pretty much no way to know.
+    _ardupilotComponentMap[message->sysid][message->compid] = heartbeat.autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA;
+
+    // Force the ESP8266 to be non-ArduPilot code (it doesn't send heartbeats)
+    _ardupilotComponentMap[message->sysid][MAV_COMP_ID_UDP_BRIDGE] = false;
 }
 
 bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_message_t* message)
 {
-    // Only translate messages which come from the autopilot. All other components are expected to follow current mavlink spec.
-    if (message->compid != MAV_COMP_ID_AUTOPILOT1) {
+    if (message->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+        // We need to look at all heartbeats that go by from any component
+        _handleIncomingHeartbeat(vehicle, message);
         return true;
     }
 
-    switch (message->msgid) {
-    case MAVLINK_MSG_ID_PARAM_VALUE:
-        _handleIncomingParamValue(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_STATUSTEXT:
-        return _handleIncomingStatusText(vehicle, message, false /* longVersion */);
-    case MAVLINK_MSG_ID_STATUSTEXT_LONG:
-        return _handleIncomingStatusText(vehicle, message, true /* longVersion */);
-    case MAVLINK_MSG_ID_HEARTBEAT:
-        _handleIncomingHeartbeat(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_RC_CHANNELS:
-        _handleRCChannels(vehicle, message);
-        break;
-    case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
-        _handleRCChannelsRaw(vehicle, message);
-        break;
+    // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
+    if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
+        switch (message->msgid) {
+        case MAVLINK_MSG_ID_PARAM_VALUE:
+            _handleIncomingParamValue(vehicle, message);
+            break;
+        case MAVLINK_MSG_ID_STATUSTEXT:
+            return _handleIncomingStatusText(vehicle, message, false /* longVersion */);
+        case MAVLINK_MSG_ID_STATUSTEXT_LONG:
+            return _handleIncomingStatusText(vehicle, message, true /* longVersion */);
+        case MAVLINK_MSG_ID_RC_CHANNELS:
+            _handleRCChannels(vehicle, message);
+            break;
+        case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
+            _handleRCChannelsRaw(vehicle, message);
+            break;
+        }
     }
 
     return true;
@@ -493,15 +502,13 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
 
 void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
 {
-    //-- Don't process messages to/from UDP Bridge. It doesn't suffer from these issues
-    if (message->compid == MAV_COMP_ID_UDP_BRIDGE) {
-        return;
-    }
-
-    switch (message->msgid) {
-    case MAVLINK_MSG_ID_PARAM_SET:
-        _handleOutgoingParamSet(vehicle, outgoingLink, message);
-        break;
+    // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
+    if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
+        switch (message->msgid) {
+        case MAVLINK_MSG_ID_PARAM_SET:
+            _handleOutgoingParamSet(vehicle, outgoingLink, message);
+            break;
+        }
     }
 }
 
