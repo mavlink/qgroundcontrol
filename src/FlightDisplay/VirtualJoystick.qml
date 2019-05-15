@@ -17,8 +17,8 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Vehicle       1.0
 
 Item {
-    //property bool useLightColors - Must be passed in from loader
-
+    //property bool useLightColors - Must be passed in from loaded
+    //property bool centralizeThrottle - Must be passed in from loaded
     Timer {
         interval:   40  // 25Hz, same as real joystick rate
         running:    QGroundControl.settingsManager.appSettings.virtualJoystick.value && activeVehicle
@@ -39,8 +39,8 @@ Item {
         width:                  parent.height
         height:                 parent.height
         yAxisThrottle:          true
+        yAxisThrottleCentered:  centralizeThrottle
         lightColors:            useLightColors
-        throttle:               true
     }
 
     JoystickThumbPad {

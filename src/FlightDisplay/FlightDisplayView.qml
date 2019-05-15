@@ -559,8 +559,11 @@ Item {
             active:                     (_virtualJoystick ? _virtualJoystick.value : false) && !(activeVehicle ? activeVehicle.highLatencyLink : false)
 
             property bool useLightColors: isBackgroundDark
+            // The default behaviour is not centralized throttle
+            property bool centralizeThrottle: _virtualJoystickCentralized ? _virtualJoystickCentralized.value : false
 
             property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+            property Fact _virtualJoystickCentralized: QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
         }
 
         ToolStrip {

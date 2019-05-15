@@ -43,8 +43,7 @@ SetupPage {
             // a better way to hightlight them, or use less highlights.
 
             // User visible strings
-            readonly property string title:   qsTr("Firmware Setup") // Popup dialog title
-
+            readonly property string title:             qsTr("Firmware Setup") // Popup dialog title
             readonly property string highlightPrefix:   "<font color=\"" + qgcPal.warningText + "\">"
             readonly property string highlightSuffix:   "</font>"
             readonly property string welcomeText:       qsTr("%1 can upgrade the firmware on Pixhawk devices, SiK Radios and PX4 Flow Smart Cameras.").arg(QGroundControl.appName)
@@ -58,14 +57,16 @@ SetupPage {
             readonly property int _defaultFimwareTypePX4:   12
             readonly property int _defaultFimwareTypeAPM:   3
 
-            property var    _defaultFirmwareFact:   QGroundControl.settingsManager.appSettings.defaultFirmwareType
-            property bool   _defaultFirmwareIsPX4:  true
+            property var    _firmwareUpgradeSettings:   QGroundControl.settingsManager.firmwareUpgradeSettings
+            property var    _defaultFirmwareFact:       _firmwareUpgradeSettings.defaultFirmwareType
+            property bool   _defaultFirmwareIsPX4:      true
 
             property string firmwareWarningMessage
-            property bool   initialBoardSearch:       true
+            property bool   firmwareWarningMessageVisible:  false
+            property bool   initialBoardSearch:             true
             property string firmwareName
 
-            property bool _singleFirmwareMode: QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
+            property bool _singleFirmwareMode:          QGroundControl.corePlugin.options.firmwareUpgradeSingleURL.length != 0   ///< true: running in special single firmware download mode
 
             function cancelFlash() {
                 statusTextArea.append(highlightPrefix + qsTr("Upgrade cancelled") + highlightSuffix)
@@ -136,10 +137,21 @@ SetupPage {
                     property bool showFirmwareTypeSelection:    _advanced.checked
                     property bool px4Flow:                      controller.px4FlowBoard
 
+                    function firmwareVersionChanged(model) {
+                        firmwareWarningMessageVisible = false
+                        // All of this bizarre, setting model to null and index to 1 and then to 0 is to work around
+                        // strangeness in the combo box implementation. This sequence of steps correctly changes the combo model
+                        // without generating any warnings and correctly updates the combo text with the new selection.
+                        firmwareBuildTypeCombo.model = null
+                        firmwareBuildTypeCombo.model = model
+                        firmwareBuildTypeCombo.currentIndex = 1
+                        firmwareBuildTypeCombo.currentIndex = 0
+                    }
+
                     function updatePX4VersionDisplay() {
                         var versionString = ""
                         if (_advanced.checked) {
-                            switch (controller.selectedFirmwareType) {
+                            switch (controller.selectedFirmwareBuildType) {
                             case FirmwareUpgradeController.StableFirmware:
                                 versionString = controller.px4StableVersion
                                 break
@@ -150,8 +162,8 @@ SetupPage {
                         } else {
                             versionString = controller.px4StableVersion
                         }
-                        px4FlightStackRadio1.text = qsTr("PX4 Flight Stack ") + versionString
-                        px4FlightStackRadio2.text = qsTr("PX4 Flight Stack ") + versionString
+                        px4FlightStackRadio.text = qsTr("PX4 Pro ") + versionString
+                        //px4FlightStackRadio2.text = qsTr("PX4 Pro ") + versionString
                     }
 
                     Component.onCompleted: {
@@ -161,12 +173,11 @@ SetupPage {
                     }
 
                     function accept() {
-                        hideDialog()
                         if (_singleFirmwareMode) {
-                            controller.flashSingleFirmwareMode(controller.selectedFirmwareType)
+                            controller.flashSingleFirmwareMode(controller.selectedFirmwareBuildType)
                         } else {
                             var stack
-                            var firmwareType = firmwareVersionCombo.model.get(firmwareVersionCombo.currentIndex).firmwareType
+                            var firmwareBuildType = firmwareBuildTypeCombo.model.get(firmwareBuildTypeCombo.currentIndex).firmwareType
                             var vehicleType = FirmwareUpgradeController.DefaultVehicleFirmware
 
                             if (px4Flow) {
@@ -175,11 +186,25 @@ SetupPage {
                             } else {
                                 stack = apmFlightStack.checked ? FirmwareUpgradeController.AutoPilotStackAPM : FirmwareUpgradeController.AutoPilotStackPX4
                                 if (apmFlightStack.checked) {
-                                    vehicleType = controller.vehicleTypeFromVersionIndex(vehicleTypeSelectionCombo.currentIndex)
+                                    if (firmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
+                                        vehicleType = apmVehicleTypeCombo.currentIndex
+                                    } else {
+                                        if (controller.apmFirmwareNames.length === 0) {
+                                            // Not ready yet, or no firmware available
+                                            return
+                                        }
+                                        var firmwareUrl = controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex]
+                                        if (firmwareUrl == "") {
+                                            return
+                                        }
+                                        controller.flashFirmwareUrl(controller.apmFirmwareUrls[ardupilotFirmwareSelectionCombo.currentIndex])
+                                        hideDialog()
+                                        return
+                                    }
                                 }
                             }
-
-                            controller.flash(stack, firmwareType, vehicleType)
+                            controller.flash(stack, firmwareBuildType, vehicleType)
+                            hideDialog()
                         }
                     }
 
@@ -195,7 +220,7 @@ SetupPage {
                     }
 
                     ListModel {
-                        id: firmwareTypeList
+                        id: firmwareBuildTypeList
 
                         ListElement {
                             text:           qsTr("Standard Version (stable)")
@@ -258,82 +283,88 @@ SetupPage {
                         anchors.fill:   parent
                         spacing:        defaultTextHeight
 
-                        Component.onCompleted: {
-                            if(!QGroundControl.hasAPMSupport) {
-                                _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
-                                firmwareVersionChanged(firmwareTypeList)
-                            }
-                        }
-
                         QGCLabel {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
-                            text:       (_singleFirmwareMode || !QGroundControl.hasAPMSupport) ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
+                            text:       _singleFirmwareMode ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
 
                             readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:")
                             readonly property string _pixhawkLabel:          qsTr("Detected Pixhawk board. You can select from the following flight stacks:")
                             readonly property string _singleFirmwareLabel:   qsTr("Press Ok to upgrade your vehicle.")
                         }
 
-                        function firmwareVersionChanged(model) {
-                            firmwareVersionWarningLabel.visible = false
-                            // All of this bizarre, setting model to null and index to 1 and then to 0 is to work around
-                            // strangeness in the combo box implementation. This sequence of steps correctly changes the combo model
-                            // without generating any warnings and correctly updates the combo text with the new selection.
-                            firmwareVersionCombo.model = null
-                            firmwareVersionCombo.model = model
-                            firmwareVersionCombo.currentIndex = 1
-                            firmwareVersionCombo.currentIndex = 0
-                        }
+                        QGCLabel { text: qsTr("Flight Stack") }
 
-                        // The following craziness of three radio buttons to represent two radio buttons is so that the
-                        // order can be changed such that the default firmware button is always on the top
+                        Column {
 
-                        //-- Visible only if you have an option. If it's the only option, it's already setup.
-                        QGCRadioButton {
-                            id:             px4FlightStackRadio1
-                            text:           qsTr("PX4 Flight Stack ")
-                            textBold:       _defaultFirmwareIsPX4
-                            checked:        _defaultFirmwareIsPX4
-                            visible:        _defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
+                            QGCRadioButton {
+                                id:             px4FlightStackRadio
+                                text:           qsTr("PX4 Pro ")
+                                textBold:       _defaultFirmwareIsPX4
+                                checked:        _defaultFirmwareIsPX4
+                                visible:        !_singleFirmwareMode && !px4Flow
 
-                            onClicked: {
-                                _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
-                                parent.firmwareVersionChanged(firmwareTypeList)
+                                onClicked: {
+                                    _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
+                                    firmwareVersionChanged(firmwareBuildTypeList)
+                                }
+                            }
+
+                            QGCRadioButton {
+                                id:             apmFlightStack
+                                text:           qsTr("ArduPilot")
+                                textBold:       !_defaultFirmwareIsPX4
+                                checked:        !_defaultFirmwareIsPX4
+                                visible:        !_singleFirmwareMode && !px4Flow
+
+                                onClicked: {
+                                    _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
+                                    firmwareVersionChanged(firmwareBuildTypeList)
+                                }
                             }
                         }
 
-                        QGCRadioButton {
-                            id:             apmFlightStack
-                            text:           qsTr("ArduPilot Flight Stack")
-                            textBold:       !_defaultFirmwareIsPX4
-                            checked:        !_defaultFirmwareIsPX4
-                            visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
-
-                            onClicked: {
-                                _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
-                                parent.firmwareVersionChanged(firmwareTypeList)
-                            }
-                        }
-
-                        //-- Visible only if you have an option. If it's the only option, it's already setup.
-                        QGCRadioButton {
-                            id:             px4FlightStackRadio2
-                            text:           qsTr("PX4 Flight Stack ")
-                            visible:        !_defaultFirmwareIsPX4 && !_singleFirmwareMode && !px4Flow && QGroundControl.hasAPMSupport
-
-                            onClicked: {
-                                _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
-                                parent.firmwareVersionChanged(firmwareTypeList)
-                            }
-                        }
-
-                        QGCComboBox {
-                            id:             vehicleTypeSelectionCombo
+                        FactComboBox {
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             visible:        !px4Flow && apmFlightStack.checked
-                            model:          controller.apmAvailableVersions
+                            fact:           _firmwareUpgradeSettings.apmChibiOS
+                            indexModel:     false
+                        }
+
+                        FactComboBox {
+                            id:             apmVehicleTypeCombo
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            visible:        !px4Flow && apmFlightStack.checked
+                            fact:           _firmwareUpgradeSettings.apmVehicleType
+                            indexModel:     false
+                        }
+
+                        QGCComboBox {
+                            id:             ardupilotFirmwareSelectionCombo
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            visible:        !px4Flow && apmFlightStack.checked && !controller.downloadingFirmwareList && controller.apmFirmwareNames.length !== 0
+                            model:          controller.apmFirmwareNames
+
+                            onModelChanged: console.log("model", model)
+                        }
+
+                        QGCLabel {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            wrapMode:       Text.WordWrap
+                            text:           qsTr("Downloading list of available firmwares...")
+                            visible:        controller.downloadingFirmwareList
+                        }
+
+                        QGCLabel {
+                            anchors.left:   parent.left
+                            anchors.right:  parent.right
+                            wrapMode:       Text.WordWrap
+                            text:           qsTr("No Firmware Available")
+                            visible:        !controller.downloadingFirmwareList && controller.apmFirmwareNames.length === 0
                         }
 
                         QGCComboBox {
@@ -363,8 +394,8 @@ SetupPage {
                                 checked:    px4Flow ? true : false
 
                                 onClicked: {
-                                    firmwareVersionCombo.currentIndex = 0
-                                    firmwareVersionWarningLabel.visible = false
+                                    firmwareBuildTypeCombo.currentIndex = 0
+                                    firmwareWarningMessageVisible = false
                                     updatePX4VersionDisplay()
                                 }
                             }
@@ -385,23 +416,23 @@ SetupPage {
                         }
 
                         QGCComboBox {
-                            id:             firmwareVersionCombo
+                            id:             firmwareBuildTypeCombo
                             anchors.left:   parent.left
                             anchors.right:  parent.right
                             visible:        showFirmwareTypeSelection
-                            model:          _singleFirmwareMode ? singleFirmwareModeTypeList : (px4Flow ? px4FlowTypeList : firmwareTypeList)
-                            currentIndex:   controller.selectedFirmwareType
+                            model:          _singleFirmwareMode ? singleFirmwareModeTypeList : (px4Flow ? px4FlowTypeList : firmwareBuildTypeList)
+                            currentIndex:   controller.selectedFirmwareBuildType
 
                             onActivated: {
-                                controller.selectedFirmwareType = model.get(index).firmwareType
+                                controller.selectedFirmwareBuildType = model.get(index).firmwareType
                                 if (model.get(index).firmwareType === FirmwareUpgradeController.BetaFirmware) {
-                                    firmwareVersionWarningLabel.visible = true
+                                    firmwareWarningMessageVisible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: BETA FIRMWARE. ") +
                                             qsTr("This firmware version is ONLY intended for beta testers. ") +
                                             qsTr("Although it has received FLIGHT TESTING, it represents actively changed code. ") +
                                             qsTr("Do NOT use for normal operation.")
                                 } else if (model.get(index).firmwareType === FirmwareUpgradeController.DeveloperFirmware) {
-                                    firmwareVersionWarningLabel.visible = true
+                                    firmwareWarningMessageVisible = true
                                     firmwareVersionWarningLabel.text = qsTr("WARNING: CONTINUOUS BUILD FIRMWARE. ") +
                                             qsTr("This firmware has NOT BEEN FLIGHT TESTED. ") +
                                             qsTr("It is only intended for DEVELOPERS. ") +
@@ -409,7 +440,7 @@ SetupPage {
                                             qsTr("Do NOT fly this without additional safety precautions. ") +
                                             qsTr("Follow the mailing list actively when using it.")
                                 } else {
-                                    firmwareVersionWarningLabel.visible = false
+                                    firmwareWarningMessageVisible = false
                                 }
                                 updatePX4VersionDisplay()
                             }
@@ -419,7 +450,7 @@ SetupPage {
                             id:         firmwareVersionWarningLabel
                             width:      parent.width
                             wrapMode:   Text.WordWrap
-                            visible:    false
+                            visible:    firmwareWarningMessageVisible
                         }
                     } // Column
                 } // QGCViewDialog
