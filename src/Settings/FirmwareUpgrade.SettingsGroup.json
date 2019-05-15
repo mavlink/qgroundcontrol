@@ -1,0 +1,22 @@
+[
+{
+    "name":             "defaultFirmwareType",
+    "shortDescription": "Default firmware type for flashing",
+    "type":             "uint32",
+    "defaultValue":     12
+},
+{
+    "name":             "apmChibiOS",
+    "type":             "uint32",
+    "enumStrings":      "ChibiOS,NuttX",
+    "enumValues":       "0,1",
+    "defaultValue":     0
+},
+{
+    "name":             "apmVehicleType",
+    "type":             "uint32",
+    "enumStrings":      "Multi-Rotor,Helicopter,Plane,Rover,Sub",
+    "enumValues":       "0,1,2,3,4",
+    "defaultValue":     0
+}
+]

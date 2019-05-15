@@ -16,7 +16,7 @@ exists($${OUT_PWD}/qgroundcontrol.pro) {
 message(Qt version $$[QT_VERSION])
 
 !equals(QT_MAJOR_VERSION, 5) | !greaterThan(QT_MINOR_VERSION, 10) {
-    error("Unsupported Qt version, 5.12+ is required")
+    error("Unsupported Qt version, 5.11+ is required")
 }
 
 include(QGCCommon.pri)
@@ -330,7 +330,7 @@ equals(QT_MAJOR_VERSION, 5):equals(QT_MINOR_VERSION, 9):AndroidBuild {
 
 DebugBuild {
     # Unit Test resources
-    #-- TODO: RESOURCES += UnitTest.qrc
+    RESOURCES += UnitTest.qrc
 }
 
 DEPENDPATH += \
@@ -395,6 +395,103 @@ SOURCES += \
     src/api/QmlComponentInfo.cc \
     src/comm/MavlinkMessagesTimer.cc
 
+#
+# Unit Test specific configuration goes here (requires full debug build with all plugins)
+#
+
+DebugBuild { PX4FirmwarePlugin { PX4FirmwarePluginFactory { APMFirmwarePlugin { APMFirmwarePluginFactory { !MobileBuild {
+    DEFINES += UNITTEST_BUILD
+
+    INCLUDEPATH += \
+        src/qgcunittest
+
+    HEADERS += \
+        src/Audio/AudioOutputTest.h \
+        src/FactSystem/FactSystemTestBase.h \
+        src/FactSystem/FactSystemTestGeneric.h \
+        src/FactSystem/FactSystemTestPX4.h \
+        src/FactSystem/ParameterManagerTest.h \
+        src/MissionManager/CameraCalcTest.h \
+        src/MissionManager/CameraSectionTest.h \
+        src/MissionManager/CorridorScanComplexItemTest.h \
+        src/MissionManager/FWLandingPatternTest.h \
+        src/MissionManager/MissionCommandTreeTest.h \
+        src/MissionManager/MissionControllerManagerTest.h \
+        src/MissionManager/MissionControllerTest.h \
+        src/MissionManager/MissionItemTest.h \
+        src/MissionManager/MissionManagerTest.h \
+        src/MissionManager/MissionSettingsTest.h \
+        src/MissionManager/PlanMasterControllerTest.h \
+        src/MissionManager/QGCMapPolygonTest.h \
+        src/MissionManager/QGCMapPolylineTest.h \
+        src/MissionManager/SectionTest.h \
+        src/MissionManager/SimpleMissionItemTest.h \
+        src/MissionManager/SpeedSectionTest.h \
+        src/MissionManager/StructureScanComplexItemTest.h \
+        src/MissionManager/SurveyComplexItemTest.h \
+        src/MissionManager/TransectStyleComplexItemTest.h \
+        src/MissionManager/VisualMissionItemTest.h \
+        src/qgcunittest/GeoTest.h \
+        src/qgcunittest/LinkManagerTest.h \
+        src/qgcunittest/MavlinkLogTest.h \
+        src/qgcunittest/MultiSignalSpy.h \
+        src/qgcunittest/TCPLinkTest.h \
+        src/qgcunittest/TCPLoopBackServer.h \
+        src/qgcunittest/UnitTest.h \
+        src/Vehicle/SendMavCommandTest.h \
+        #src/qgcunittest/RadioConfigTest.h \
+        #src/AnalyzeView/LogDownloadTest.h \
+        #src/qgcunittest/FileDialogTest.h \
+        #src/qgcunittest/FileManagerTest.h \
+        #src/qgcunittest/FlightGearTest.h \
+        #src/qgcunittest/MainWindowTest.h \
+        #src/qgcunittest/MessageBoxTest.h \
+
+    SOURCES += \
+        src/Audio/AudioOutputTest.cc \
+        src/FactSystem/FactSystemTestBase.cc \
+        src/FactSystem/FactSystemTestGeneric.cc \
+        src/FactSystem/FactSystemTestPX4.cc \
+        src/FactSystem/ParameterManagerTest.cc \
+        src/MissionManager/CameraCalcTest.cc \
+        src/MissionManager/CameraSectionTest.cc \
+        src/MissionManager/CorridorScanComplexItemTest.cc \
+        src/MissionManager/FWLandingPatternTest.cc \
+        src/MissionManager/MissionCommandTreeTest.cc \
+        src/MissionManager/MissionControllerManagerTest.cc \
+        src/MissionManager/MissionControllerTest.cc \
+        src/MissionManager/MissionItemTest.cc \
+        src/MissionManager/MissionManagerTest.cc \
+        src/MissionManager/MissionSettingsTest.cc \
+        src/MissionManager/PlanMasterControllerTest.cc \
+        src/MissionManager/QGCMapPolygonTest.cc \
+        src/MissionManager/QGCMapPolylineTest.cc \
+        src/MissionManager/SectionTest.cc \
+        src/MissionManager/SimpleMissionItemTest.cc \
+        src/MissionManager/SpeedSectionTest.cc \
+        src/MissionManager/StructureScanComplexItemTest.cc \
+        src/MissionManager/SurveyComplexItemTest.cc \
+        src/MissionManager/TransectStyleComplexItemTest.cc \
+        src/MissionManager/VisualMissionItemTest.cc \
+        src/qgcunittest/GeoTest.cc \
+        src/qgcunittest/LinkManagerTest.cc \
+        src/qgcunittest/MavlinkLogTest.cc \
+        src/qgcunittest/MultiSignalSpy.cc \
+        src/qgcunittest/TCPLinkTest.cc \
+        src/qgcunittest/TCPLoopBackServer.cc \
+        src/qgcunittest/UnitTest.cc \
+        src/qgcunittest/UnitTestList.cc \
+        src/Vehicle/SendMavCommandTest.cc \
+        #src/qgcunittest/RadioConfigTest.cc \
+        #src/AnalyzeView/LogDownloadTest.cc \
+        #src/qgcunittest/FileDialogTest.cc \
+        #src/qgcunittest/FileManagerTest.cc \
+        #src/qgcunittest/FlightGearTest.cc \
+        #src/qgcunittest/MainWindowTest.cc \
+        #src/qgcunittest/MessageBoxTest.cc \
+
+} } } } } }
+
 # Main QGC Headers and Source files
 
 HEADERS += \
@@ -458,7 +555,6 @@ HEADERS += \
     src/QGCApplication.h \
     src/QGCComboBox.h \
     src/QGCConfig.h \
-    src/QGCDockWidget.h \
     src/QGCFileDownload.h \
     src/QGCGeo.h \
     src/QGCLoggingCategory.h \
@@ -482,6 +578,7 @@ HEADERS += \
     src/Settings/AppSettings.h \
     src/Settings/AutoConnectSettings.h \
     src/Settings/BrandImageSettings.h \
+    src/Settings/FirmwareUpgradeSettings.h \
     src/Settings/FlightMapSettings.h \
     src/Settings/FlyViewSettings.h \
     src/Settings/OfflineMapsSettings.h \
@@ -635,7 +732,6 @@ SOURCES += \
     src/QGC.cc \
     src/QGCApplication.cc \
     src/QGCComboBox.cc \
-    src/QGCDockWidget.cc \
     src/QGCFileDownload.cc \
     src/QGCGeo.cc \
     src/QGCLoggingCategory.cc \
@@ -659,6 +755,7 @@ SOURCES += \
     src/Settings/AppSettings.cc \
     src/Settings/AutoConnectSettings.cc \
     src/Settings/BrandImageSettings.cc \
+    src/Settings/FirmwareUpgradeSettings.cc \
     src/Settings/FlightMapSettings.cc \
     src/Settings/FlyViewSettings.cc \
     src/Settings/OfflineMapsSettings.cc \

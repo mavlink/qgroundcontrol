@@ -18,8 +18,6 @@
 #include <QList>
 #include <QGeoCoordinate>
 
-//-- TODO: This is not even WIP yet. Just a skeleton of what's to come.
-
 //-----------------------------------------------------------------------------
 /// class to upload a flight
 class AirMapFlightManager : public QObject, public LifetimeChecker

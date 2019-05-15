@@ -818,20 +818,24 @@ SetupPage {
 
 
                                 MouseArea {
-                                    id:             deadbandMouseArea
-                                    anchors.fill:   parent.item
-                                    enabled:        controller.deadbandToggle
+                                    id:                 deadbandMouseArea
+                                    anchors.fill:       parent.item
+                                    enabled:            controller.deadbandToggle
+                                    preventStealing:    true
 
-                                    property real startY
+                                    property real startX
+                                    property real direction
 
                                     onPressed: {
-                                        startY = mouseY
+                                        startX = mouseX
+                                        direction = startX > width/2 ? 1 : -1
                                         parent.item.deadbandColor = "#3C6315"
                                     }
                                     onPositionChanged: {
-                                        var newValue = parent.item.deadbandValue + (startY - mouseY)*15
+                                        var mouseToDeadband = 32768/(width/2) // Factor to have deadband follow the mouse movement
+                                        var newValue = parent.item.deadbandValue + direction*(mouseX - startX)*mouseToDeadband
                                         if ((newValue > 0) && (newValue <32768)){parent.item.deadbandValue=newValue;}
-                                        startY = mouseY
+                                        startX = mouseX
                                     }
                                     onReleased: {
                                         controller.setDeadbandValue(modelData,parent.item.deadbandValue)
