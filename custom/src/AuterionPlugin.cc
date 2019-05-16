@@ -33,7 +33,7 @@ AuterionVideoReceiver::AuterionVideoReceiver(QObject* parent)
 {
 #if defined(QGC_GST_STREAMING)
     //-- Shorter RTSP test interval
-    _rtspTestInterval_ms = 1000;
+    _restart_time_ms = 1000;
 #endif
 }
 
