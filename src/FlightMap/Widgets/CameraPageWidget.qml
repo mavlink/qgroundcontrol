@@ -32,19 +32,21 @@ Column {
 
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
-    property bool   _cameraModeUndefined:   _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
-    property bool   _cameraVideoMode:       _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === 1 : false
-    property bool   _cameraPhotoMode:       _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === 0 : false
-    property bool   _cameraPhotoIdle:       _isCamera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
-    property bool   _cameraElapsedMode:     _isCamera && _camera.cameraMode === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
+    property var    _camera:                _isCamera ? (_dynamicCameras.cameras.get(_curCameraIndex) && _dynamicCameras.cameras.get(_curCameraIndex).paramComplete ? _dynamicCameras.cameras.get(_curCameraIndex) : null) : null
+    property bool   _cameraModeUndefined:   _camera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === QGCCameraControl.CAMERA_MODE_UNDEFINED : true
+    property bool   _cameraVideoMode:       _camera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === 1 : false
+    property bool   _cameraPhotoMode:       _camera ? _dynamicCameras.cameras.get(_curCameraIndex).cameraMode === 0 : false
+    property bool   _cameraPhotoIdle:       _camera && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE
+    property bool   _cameraElapsedMode:     _camera && _camera.cameraMode === QGCCameraControl.CAM_MODE_PHOTO && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE
     property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 30
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
-    property bool   _hasModes:              _isCamera && _camera && _camera.hasModes
+    property bool   _hasModes:              _camera && _camera && _camera.hasModes
     property bool   _videoRecording:        _camera && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
-    property bool   _noStorage:             _camera && _camera.storageTotal === 0
+    property bool   _storageReady:          _camera && _camera.storageStatus === QGCCameraControl.STORAGE_READY
+    property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
+    property bool   _canShoot:              !_videoRecording && _cameraPhotoIdle && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
 
     function showSettings() {
@@ -55,16 +57,16 @@ Column {
     QGCButton {
         anchors.horizontalCenter:   parent.horizontalCenter
         text:                       qsTr("Trigger Camera")
-        visible:                    !_isCamera
+        visible:                    !_camera
         onClicked:                  activeVehicle.triggerCamera()
         enabled:                    activeVehicle
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _camera; }
     //-- Actual controller
     QGCLabel {
         id:             cameraLabel
-        text:           _isCamera ? _camera.modelName : qsTr("Camera")
-        visible:        _isCamera
+        text:           _camera ? _camera.modelName : qsTr("Camera")
+        visible:        _camera
         font.pointSize: ScreenTools.smallFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
     }
@@ -72,7 +74,7 @@ Column {
         text: _camera ? qsTr("Free Space: ") + _camera.storageFreeStr : ""
         font.pointSize: ScreenTools.smallFontPointSize
         anchors.horizontalCenter: parent.horizontalCenter
-        visible: _camera && !_noStorage
+        visible: _camera && _storageReady
     }
     //-- Camera Mode (visible only if camera has modes)
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: camMode.visible; }
@@ -147,7 +149,7 @@ Column {
         width:      ScreenTools.defaultFontPixelWidth * 6
         height:     width
         radius:     width * 0.5
-        visible:    _isCamera
+        visible:    _camera
         border.color: qgcPal.buttonText
         border.width: 3
         anchors.horizontalCenter: parent.horizontalCenter
@@ -155,12 +157,12 @@ Column {
             width:      parent.width * (_videoRecording || (_cameraPhotoMode && !_cameraPhotoIdle && _cameraElapsedMode) ? 0.5 : 0.75)
             height:     width
             radius:     _videoRecording || (_cameraPhotoMode && !_cameraPhotoIdle && _cameraElapsedMode) ? 0 : width * 0.5
-            color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
+            color:      (_cameraModeUndefined || !_canShoot) ? qgcPal.colorGrey : qgcPal.colorRed
             anchors.centerIn:   parent
         }
         MouseArea {
             anchors.fill:   parent
-            enabled:        !_cameraModeUndefined
+            enabled:        !_cameraModeUndefined && _canShoot
             onClicked: {
                 if(_cameraVideoMode) {
                     _camera.toggleVideo()
@@ -174,7 +176,7 @@ Column {
             }
         }
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: _isCamera; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight * 0.75; visible: _camera; }
     QGCLabel {
         text: (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
         font.pointSize: ScreenTools.smallFontPointSize
@@ -187,7 +189,7 @@ Column {
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
     }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
+    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _camera; }
     Component {
         id: cameraSettings
         QGCViewDialog {

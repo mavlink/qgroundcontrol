@@ -203,6 +203,9 @@ QGCCameraControl::_initWhenReady()
         qCDebug(CameraControlLog) << "Basic, MAVLink only messages.";
         _requestCameraSettings();
         QTimer::singleShot(250, this, &QGCCameraControl::_checkForVideoStreams);
+        //-- Basic cameras have no parameters
+        _paramComplete = true;
+        emit parametersReady();
     } else {
         _requestAllParameters();
         //-- Give some time to load the parameters before going after the camera settings
@@ -1458,16 +1461,21 @@ void
 QGCCameraControl::handleStorageInfo(const mavlink_storage_information_t& st)
 {
     qCDebug(CameraControlLog) << "handleStorageInfo:" << st.available_capacity << st.status << st.storage_count << st.storage_id << st.total_capacity << st.used_capacity;
-    uint32_t t = static_cast<uint32_t>(st.total_capacity);
-    if(_storageTotal != t) {
-        _storageTotal = t;
+    if(st.status == STORAGE_STATUS_READY) {
+        uint32_t t = static_cast<uint32_t>(st.total_capacity);
+        if(_storageTotal != t) {
+            _storageTotal = t;
+            emit storageTotalChanged();
+        }
+        uint32_t a = static_cast<uint32_t>(st.available_capacity);
+        if(_storageFree != a) {
+            _storageFree = a;
+            emit storageFreeChanged();
+        }
     }
-    //-- Always emit this
-    emit storageTotalChanged();
-    uint32_t a = static_cast<uint32_t>(st.available_capacity);
-    if(_storageFree != a) {
-        _storageFree = a;
-        emit storageFreeChanged();
+    if(_storageStatus != static_cast<StorageStatus>(st.status)) {
+        _storageStatus = static_cast<StorageStatus>(st.status);
+        emit storageStatusChanged();
     }
 }
 
