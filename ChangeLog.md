@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Check and respect camera storage status
 * QGC now requires Qt 5.11 or greater. The idea is to standardize on Qt 5.12 (LTS). Just waiting for a solution for Windows as Qt dropped support for 32-bit.
 * New, QtQuick MAVLink Inspector. The basics are already there but it still needs the ability to filter compID.
 * Fixed application storage location on iOS. It was trying to save things where it could not.
