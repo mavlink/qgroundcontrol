@@ -293,14 +293,14 @@ SetupPage {
                         QGCLabel {
                             width:      parent.width
                             wrapMode:   Text.WordWrap
-                            text:       _singleFirmwareMode ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
+                            text:       (_singleFirmwareMode || !QGroundControl.apmFirmwareSupported) ? _singleFirmwareLabel : (px4Flow ? _px4FlowLabel : _pixhawkLabel)
 
                             readonly property string _px4FlowLabel:          qsTr("Detected PX4 Flow board. The firmware you use on the PX4 Flow must match the AutoPilot firmware type you are using on the vehicle:")
                             readonly property string _pixhawkLabel:          qsTr("Detected Pixhawk board. You can select from the following flight stacks:")
                             readonly property string _singleFirmwareLabel:   qsTr("Press Ok to upgrade your vehicle.")
                         }
 
-                        QGCLabel { text: qsTr("Flight Stack") }
+                        QGCLabel { text: qsTr("Flight Stack"); visible: QGroundControl.apmFirmwareSupported }
 
                         Column {
 
@@ -309,7 +309,7 @@ SetupPage {
                                 text:           qsTr("PX4 Pro ")
                                 textBold:       _defaultFirmwareIsPX4
                                 checked:        _defaultFirmwareIsPX4
-                                visible:        !_singleFirmwareMode && !px4Flow
+                                visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.apmFirmwareSupported
 
                                 onClicked: {
                                     _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
@@ -322,7 +322,7 @@ SetupPage {
                                 text:           qsTr("ArduPilot")
                                 textBold:       !_defaultFirmwareIsPX4
                                 checked:        !_defaultFirmwareIsPX4
-                                visible:        !_singleFirmwareMode && !px4Flow
+                                visible:        !_singleFirmwareMode && !px4Flow && QGroundControl.apmFirmwareSupported
 
                                 onClicked: {
                                     _defaultFirmwareFact.rawValue = _defaultFimwareTypeAPM
