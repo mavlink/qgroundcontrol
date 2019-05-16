@@ -20,49 +20,50 @@ import QtGraphicalEffects           1.0
 
 import AuterionQuickInterface       1.0
 
-Item {
-    id:                         _root
-    width:                      edge.width + icon.width
-    height:                     parent.height
-    signal clicked()
-    QGCColoredImage {
-        id:                     edge
-        height:                 ScreenTools.defaultFontPixelHeight
-        width:                  height
-        sourceSize.height:      parent.height
-        fillMode:               Image.PreserveAspectFit
-        source:                 "/auterion/img/menu_left_edge.svg"
-        color:                  qgcPal.text
-        anchors.left:           parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
-    }
+Button {
+    id: _rootButton
 
-    Image {
-        id:                     icon
-        height:                 parent.height
-        width:                  height
-        smooth:                 true
-        mipmap:                 true
-        antialiasing:           true
-        visible:                !QGroundControl.corePlugin.showAdvancedUI && qgcPal.globalTheme === QGCPalette.Dark
-        fillMode:               Image.PreserveAspectFit
-        anchors.left:           edge.right
-        source:                 QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
-        sourceSize.height:      height
-    }
+    width:  edge.width + icon.width
+    height: parent.height
 
-    ColorOverlay {
-        anchors.fill:   icon
-        source:         icon
-        color:          QGroundControl.corePlugin.showAdvancedUI  ? qgcPal.text : (qgcPal.globalTheme === QGCPalette.Dark ? "black" : qgcPal.text )
-        visible:        !icon.visible
-    }
+    flat:   true
 
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            _root.clicked()
+    contentItem: Item {
+        id:                         _content
+        anchors.fill:               parent
+        QGCColoredImage {
+            id:                     edge
+            height:                 ScreenTools.defaultFontPixelHeight
+            width:                  height
+            sourceSize.height:      parent.height
+            fillMode:               Image.PreserveAspectFit
+            source:                 "/auterion/img/menu_left_edge.svg"
+            color:                  qgcPal.text
+            anchors.left:           parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
         }
+        Image {
+            id:                     icon
+            height:                 parent.height
+            width:                  height
+            smooth:                 true
+            mipmap:                 true
+            antialiasing:           true
+            visible:                !QGroundControl.corePlugin.showAdvancedUI && qgcPal.globalTheme === QGCPalette.Dark
+            fillMode:               Image.PreserveAspectFit
+            anchors.left:           edge.right
+            source:                 QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
+            sourceSize.height:      height
+        }
+        ColorOverlay {
+            anchors.fill:   icon
+            source:         icon
+            color:          QGroundControl.corePlugin.showAdvancedUI  ? qgcPal.text : (qgcPal.globalTheme === QGCPalette.Dark ? "black" : qgcPal.text )
+            visible:        !icon.visible
+        }
+    }
+    background: Item {
+        anchors.fill: parent
     }
 }

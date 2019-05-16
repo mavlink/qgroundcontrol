@@ -62,26 +62,29 @@ Item {
         height:                             parent.height
         anchors.left:                       parent.left
         spacing:                            ScreenTools.defaultFontPixelWidth * 2
+
         AuterionIconButton {
             height:                         parent.height
-            onClicked: {
+            onPressed: {
                 if(drawer.visible) {
+                    console.info("DEV: Drawer vosible, close it!!!!!!!! (" + _pressCount + ")")
                     drawer.close()
                 } else {
+                    console.info("DEV: Drawer NOT visible, open it!!!!!!!! (" + _pressCount + ")")
                     drawer.open()
                 }
                 // Easter egg mechanism
-                _clickCount++
+                _pressCount++
                 eggTimer.restart()
-                if (_clickCount == 5) {
+                if (_pressCount == 5) {
                     QGroundControl.corePlugin.showAdvancedUI = !QGroundControl.corePlugin.showAdvancedUI
                 }
             }
-            property int _clickCount: 0
+            property int _pressCount: 0
             Timer {
                 id:             eggTimer
                 interval:       1000
-                onTriggered:    parent._clickCount = 0
+                onTriggered:    parent._pressCount = 0
             }
         }
         Rectangle {
@@ -155,6 +158,7 @@ Item {
         y:                                  header.height
         width:                              navButtonWidth
         height:                             mainWindow.height - header.height
+        closePolicy:                        Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
         color:                              qgcPal.window
         }
@@ -181,6 +185,7 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
+                    console.info("DEV: 1");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showFlyView()
@@ -199,6 +204,7 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
+                    console.info("DEV: 2");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showPlanView()
@@ -216,6 +222,7 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
+                    console.info("DEV: 3");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showAnalyzeView()
@@ -234,6 +241,7 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
+                    console.info("DEV: 4");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showSetupView()
@@ -267,6 +275,7 @@ Item {
                 onClicked: {
                     checked = true
                     buttonGroup.checkState = Qt.Unchecked
+                    console.info("DEV: 5");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showSettingsView()
