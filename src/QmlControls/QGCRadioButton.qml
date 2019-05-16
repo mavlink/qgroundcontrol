@@ -17,18 +17,18 @@ RadioButton {
         implicitWidth:          ScreenTools.radioButtonIndicatorSize
         implicitHeight:         width
         color:                  "white"
-        border.color:           "black"
+        border.color:           _qgcPal.windowShadeDark
         radius:                 height / 2
         opacity:                control.enabled ? 1 : 0.5
         x:                      control.leftPadding
         y:                      parent.height / 2 - height / 2
         Rectangle {
             anchors.centerIn:   parent
-            width:              Math.round(parent.width * 0.5)
+            width:              parent.width * 0.425
             height:             width
             antialiasing:       true
             radius:             height * 0.5
-            color:              "black"
+            color:              _qgcPal.buttonHighlight
             visible:            control.checked
         }
     }
