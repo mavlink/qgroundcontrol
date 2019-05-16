@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -34,6 +34,13 @@ class VideoReceiver : public QObject
 {
     Q_OBJECT
 public:
+    enum VideoEncoding {
+        H264_SW = 1,
+        H264_HW = 2,
+        H265_SW = 3,
+        H265_HW = 4
+    };
+
 #if defined(QGC_GST_STREAMING)
     Q_PROPERTY(bool             recording           READ    recording           NOTIFY recordingChanged)
 #endif
@@ -47,11 +54,7 @@ public:
     ~VideoReceiver();
 
 #if defined(QGC_GST_STREAMING)
-    virtual bool            running         () { return _running;   }
     virtual bool            recording       () { return _recording; }
-    virtual bool            streaming       () { return _streaming; }
-    virtual bool            starting        () { return _starting;  }
-    virtual bool            stopping        () { return _stopping;  }
 #endif
 
     virtual VideoSurface*   videoSurface    () { return _videoSurface; }
@@ -63,6 +66,8 @@ public:
     virtual void            grabImage       (QString imageFile);
 
     virtual void        setShowFullScreen   (bool show) { _showFullScreen = show; emit showFullScreenChanged(); }
+
+    void                  setVideoDecoder   (VideoEncoding encoding);
 
 signals:
     void videoRunningChanged                ();
@@ -86,9 +91,7 @@ public slots:
 protected slots:
     virtual void _updateTimer               ();
 #if defined(QGC_GST_STREAMING)
-    virtual void _timeout                   ();
-    virtual void _connected                 ();
-    virtual void _socketError               (QAbstractSocket::SocketError socketError);
+    virtual void _restart_timeout           ();
     virtual void _handleError               ();
     virtual void _handleEOS                 ();
     virtual void _handleStateChanged        ();
@@ -132,14 +135,11 @@ protected:
 
     //-- Wait for Video Server to show up before starting
     QTimer          _frameTimer;
-    QTimer          _timer;
-    QTcpSocket*     _socket;
-    bool            _serverPresent;
-    int             _rtspTestInterval_ms;
+    QTimer          _restart_timer;
+    int             _restart_time_ms;
 
     //-- RTSP UDP reconnect timeout
     uint64_t        _udpReconnect_us;
-
 #endif
 
     QString         _uri;
@@ -149,5 +149,8 @@ protected:
     bool            _videoRunning;
     bool            _showFullScreen;
     VideoSettings*  _videoSettings;
+    const char*     _depayName;
+    const char*     _parserName;
+    const char*     _decoderName;
 };
 
