@@ -27,7 +27,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, distanceUnits)
         enumValues << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsFeet)) << QVariant::fromValue(static_cast<uint32_t>(DistanceUnitsMeters));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(distanceUnitsName);
-        metaData->setShortDescription(tr("Distance units"));
+        metaData->setShortDescription("Distance units");
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(DistanceUnitsMeters);
         metaData->setQGCRebootRequired(true);
@@ -52,7 +52,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)
             QVariant::fromValue(static_cast<uint32_t>(AreaUnitsSquareMiles));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(areaUnitsName);
-        metaData->setShortDescription(tr("Area units"));
+        metaData->setShortDescription("Area units");
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(AreaUnitsSquareMeters);
         metaData->setQGCRebootRequired(true);
@@ -76,7 +76,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, speedUnits)
             QVariant::fromValue(static_cast<uint32_t>(SpeedUnitsKnots));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(speedUnitsName);
-        metaData->setShortDescription(tr("Speed units"));
+        metaData->setShortDescription("Speed units");
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(SpeedUnitsMetersPerSecond);
         metaData->setQGCRebootRequired(true);
@@ -95,7 +95,7 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         enumValues << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsCelsius)) << QVariant::fromValue(static_cast<uint32_t>(TemperatureUnitsFarenheit));
         FactMetaData* metaData = new FactMetaData(FactMetaData::valueTypeUint32, this);
         metaData->setName(temperatureUnitsName);
-        metaData->setShortDescription(tr("Temperature units"));
+        metaData->setShortDescription("Temperature units");
         metaData->setEnumInfo(enumStrings, enumValues);
         metaData->setRawDefaultValue(TemperatureUnitsCelsius);
         metaData->setQGCRebootRequired(true);
