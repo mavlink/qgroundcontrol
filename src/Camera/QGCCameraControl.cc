@@ -70,6 +70,9 @@ const char* QGCCameraControl::kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
 const char* QGCCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
 const char* QGCCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
 const char* QGCCameraControl::kCAM_MODE        = "CAM_MODE";
+const char* QGCCameraControl::kCAM_BITRATE     = "CAM_BITRATE";
+const char* QGCCameraControl::kCAM_FPS         = "CAM_FPS";
+const char* QGCCameraControl::kCAM_ENC         = "CAM_ENC";
 
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
@@ -2103,6 +2106,27 @@ Fact*
 QGCCameraControl::mode()
 {
     return _paramComplete ? getFact(kCAM_MODE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::bitRate()
+{
+    return _paramComplete ? getFact(kCAM_BITRATE) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::frameRate()
+{
+    return _paramComplete ? getFact(kCAM_FPS) : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+Fact*
+QGCCameraControl::videoEncoding()
+{
+    return _paramComplete ? getFact(kCAM_ENC) : nullptr;
 }
 
 //-----------------------------------------------------------------------------
