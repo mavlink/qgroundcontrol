@@ -107,7 +107,7 @@ public class QGCActivity extends QtActivity
                 String action = intent.getAction();
                 if (ACTION_USB_PERMISSION.equals(action)) {
                     UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                    if (accessory != null && intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         openAccessory(accessory);
                     }
                 } else if( UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
@@ -730,6 +730,9 @@ public class QGCActivity extends QtActivity
                     UsbAccessory[] accessories = _usbManager.getAccessoryList();
                     if (accessories != null) {
                        for (UsbAccessory usbAccessory : accessories) {
+                           if (usbAccessory == null) {
+                               continue;
+                           }
                            if (_usbManager.hasPermission(usbAccessory)) {
                                openAccessory(usbAccessory);
                            } else {
