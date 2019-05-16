@@ -23,7 +23,7 @@ Rectangle {
     anchors.top:                    parent.top
     anchors.bottom:                 parent.bottom
     width:                          labelRow.width + (ScreenTools.defaultFontPixelWidth * 6)
-    color:                          Qt.rgba(1,1,1,0.1)
+    color:                          qgcPal.windowShade
 
     property bool _armed:           activeVehicle ? activeVehicle.armed : false
 
@@ -39,12 +39,12 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
         }
         Rectangle {
-            height:                 ScreenTools.defaultFontPixelHeight * 0.5
+            height:                 ScreenTools.defaultFontPixelHeight * 0.7
             width:                  height
-            radius:                 height * 0.5
+            radius:                 height * 0.7
             color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
             border.color:           qgcPal.window
-            border.width:           0
+            border.width:           2
             anchors.verticalCenter: parent.verticalCenter
         }
     }
