@@ -114,6 +114,14 @@ public:
         PHOTO_CAPTURE_TIMELAPSE,
     };
 
+    //-- Storage Status
+    enum StorageStatus {
+        STORAGE_EMPTY = STORAGE_STATUS_EMPTY,
+        STORAGE_UNFORMATTED = STORAGE_STATUS_UNFORMATTED,
+        STORAGE_READY = STORAGE_STATUS_READY,
+        STORAGE_NOT_SUPPORTED = STORAGE_STATUS_NOT_SUPPORTED
+    };
+
     enum ThermalViewMode {
         THERMAL_OFF = 0,
         THERMAL_BLEND,
@@ -125,6 +133,7 @@ public:
     Q_ENUM(VideoStatus)
     Q_ENUM(PhotoStatus)
     Q_ENUM(PhotoMode)
+    Q_ENUM(StorageStatus)
     Q_ENUM(ThermalViewMode)
 
     Q_PROPERTY(int          version             READ version            NOTIFY infoChanged)
@@ -163,6 +172,7 @@ public:
     Q_PROPERTY(VideoStatus  videoStatus         READ videoStatus                                    NOTIFY videoStatusChanged)
     Q_PROPERTY(PhotoStatus  photoStatus         READ photoStatus                                    NOTIFY photoStatusChanged)
     Q_PROPERTY(CameraMode   cameraMode          READ cameraMode         WRITE   setCameraMode       NOTIFY cameraModeChanged)
+    Q_PROPERTY(StorageStatus storageStatus      READ storageStatus                                  NOTIFY storageStatusChanged)
     Q_PROPERTY(qreal        photoLapse          READ photoLapse         WRITE   setPhotoLapse       NOTIFY photoLapseChanged)
     Q_PROPERTY(int          photoLapseCount     READ photoLapseCount    WRITE   setPhotoLapseCount  NOTIFY photoLapseCountChanged)
     Q_PROPERTY(PhotoMode    photoMode           READ photoMode          WRITE   setPhotoMode        NOTIFY photoModeChanged)
@@ -217,6 +227,7 @@ public:
     virtual qreal       photoLapse          () { return _photoLapse; }
     virtual int         photoLapseCount     () { return _photoLapseCount; }
     virtual CameraMode  cameraMode          () { return _cameraMode; }
+    virtual StorageStatus storageStatus     () { return _storageStatus; }
     virtual QStringList activeSettings      ();
     virtual quint32     storageFree         () { return _storageFree;  }
     virtual QString     storageFreeStr      ();
@@ -305,6 +316,7 @@ signals:
     void    streamLabelsChanged             ();
     void    thermalModeChanged              ();
     void    thermalOpacityChanged           ();
+    void    storageStatusChanged            ();
 
 protected:
     virtual void    _setVideoStatus         (VideoStatus status);
@@ -367,6 +379,7 @@ protected:
     QString                             _vendor;
     QString                             _cacheFile;
     CameraMode                          _cameraMode         = CAM_MODE_UNDEFINED;
+    StorageStatus                       _storageStatus      = STORAGE_NOT_SUPPORTED;
     PhotoMode                           _photoMode          = PHOTO_CAPTURE_SINGLE;
     qreal                               _photoLapse         = 1.0;
     int                                 _photoLapseCount    = 0;
