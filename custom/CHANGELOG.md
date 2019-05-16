@@ -2,6 +2,7 @@
 
 ### May 16 2019
 
+*   Bitrate, encoding and fps settings from Matej
 *   Fix for java open accessory and joystick issues
 *   Automated the ingestion of localization from Crowdin
 *   Automated the generation of language resources into the application
