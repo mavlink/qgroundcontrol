@@ -1,5 +1,13 @@
 ## AGS Changelog
 
+### May 16 2019
+
+*   Fix for java open accessory and joystick issues
+*   Automated the ingestion of localization from Crowdin
+*   Automated the generation of language resources into the application
+*   Added all languages that come from Crowdin, even if empty.
+*   Allow dynamic language changes
+
 ### May 15 2019
 
 *   Preload Settings, Vehicle Setup and Analyze views
