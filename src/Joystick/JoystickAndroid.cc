@@ -211,9 +211,7 @@ static JoystickManager *_manager = nullptr;
 
 //helper method
 bool JoystickAndroid::init(JoystickManager *manager) {
-    if (_manager == nullptr) {
-        setNativeMethods(manager);
-    }
+    _manager = manager;
 
     //this gets list of all possible buttons - this is needed to check how many buttons our gamepad supports
     //instead of the whole logic below we could have just a simple array of hardcoded int values as these 'should' not change
@@ -267,11 +265,9 @@ static void jniUpdateAvailableJoysticks(JNIEnv *envA, jobject thizA)
     }
 }
 
-void JoystickAndroid::setNativeMethods(JoystickManager *manager)
+void JoystickAndroid::setNativeMethods()
 {
     qCDebug(JoystickLog) << "Registering Native Functions";
-
-    _manager = manager;
 
     //  REGISTER THE C++ FUNCTION WITH JNI
     JNINativeMethod javaMethods[] {
