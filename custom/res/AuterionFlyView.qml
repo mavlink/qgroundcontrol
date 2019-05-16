@@ -179,7 +179,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 x:              visible ? ((modelData * (compassBar.width / 360)) - (width * 0.5)) : 0
                 visible:        _angle % 45 == 0
-                color:          "#505565"
+                color:          "#75505565"
                 font.pointSize: ScreenTools.smallFontPointSize
             text: {
                     switch(_angle) {
@@ -198,31 +198,31 @@ Item {
         }
     }
     Rectangle {
-        id:             headingIndicator
-        height:         ScreenTools.defaultFontPixelHeight
-        width:          ScreenTools.defaultFontPixelWidth * 4
-        color:          qgcPal.windowShadeDark
-        visible:        !mainIsMap
-        anchors.bottom: compassBar.top
+        id:                         headingIndicator
+        height:                     ScreenTools.defaultFontPixelHeight
+        width:                      ScreenTools.defaultFontPixelWidth * 4
+        color:                      qgcPal.windowShadeDark
+        visible:                    !mainIsMap
+        anchors.bottom:             compassBar.top
         anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * -0.1
         anchors.horizontalCenter:   parent.horizontalCenter
         QGCLabel {
-            text:               _heading
-            color:              qgcPal.text
-            font.pointSize:     ScreenTools.smallFontPointSize
-            anchors.centerIn:   parent
+            text:                   _heading
+            color:                  qgcPal.text
+            font.pointSize:         ScreenTools.smallFontPointSize
+            anchors.centerIn:       parent
         }
     }
     Image {
-        height:         ScreenTools.defaultFontPixelHeight * 0.75
-        width:          height
-        source:         "/auterion/img/compass_pointer.svg"
-        visible:        !mainIsMap
-        fillMode:       Image.PreserveAspectFit
-        sourceSize.height:  height
-        anchors.top:    compassBar.bottom
-        anchors.topMargin: ScreenTools.defaultFontPixelHeight * -0.5
-        anchors.horizontalCenter: parent.horizontalCenter
+        height:                     ScreenTools.defaultFontPixelHeight * 0.75
+        width:                      height
+        source:                     "/auterion/img/compass_pointer.svg"
+        visible:                    !mainIsMap
+        fillMode:                   Image.PreserveAspectFit
+        sourceSize.height:          height
+        anchors.top:                compassBar.bottom
+        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * -0.5
+        anchors.horizontalCenter:   parent.horizontalCenter
     }
 
     //-- Camera Control
@@ -265,13 +265,14 @@ Item {
             columns:                7
             anchors.centerIn:       parent
         //-- Chronometer
-            Image {
+            QGCColoredImage {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
                 source:                 "/auterion/img/chronometer.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
         }
         QGCLabel {
             text: {
@@ -286,13 +287,14 @@ Item {
             horizontalAlignment:    Text.AlignRight
         }
             //-- Ground Speed
-            Image {
+            QGCColoredImage {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
                 source:                 "/auterion/img/horizontal_speed.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
             }
             QGCLabel {
                 text:                   activeVehicle ? activeVehicle.groundSpeed.value.toFixed(1) + ' ' + activeVehicle.groundSpeed.units : "0.0"
@@ -303,13 +305,15 @@ Item {
                 horizontalAlignment:    Text.AlignRight
             }
             //-- Vertical Speed
-            Image {
+            QGCColoredImage {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
                 source:                 "/auterion/img/vertical_speed.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
+
             }
             QGCLabel {
                 text:                   activeVehicle ? activeVehicle.climbRate.value.toFixed(1) + ' ' + activeVehicle.climbRate.units : "0.0"
@@ -390,13 +394,15 @@ Item {
             }
             //-- Second Row
             //-- Odometer
-            Image {
+            QGCColoredImage {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
                 source:                 "/auterion/img/odometer.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
+
             }
             QGCLabel {
                 text:                   activeVehicle ? ('00000' + activeVehicle.flightDistance.value.toFixed(0)).slice(-5) + ' ' + activeVehicle.flightDistance.units : "00000"
@@ -407,13 +413,15 @@ Item {
                 horizontalAlignment:    Text.AlignRight
             }
         //-- Altitude
-            Image {
+            QGCColoredImage {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
                 source:                 "/auterion/img/altitude.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
+
         }
         QGCLabel {
             text:                   _altitude
@@ -424,13 +432,15 @@ Item {
             horizontalAlignment:    Text.AlignRight
         }
         //-- Distance
-            Image {
+            QGCColoredImage {
                 height:                 ScreenTools.defaultFontPixelHeight * 0.75
                 width:                  height
                 source:                 "/auterion/img/distance.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
+
         }
         QGCLabel {
             text:                   _distance ? _distanceStr : noGPS
