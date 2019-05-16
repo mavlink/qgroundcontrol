@@ -112,7 +112,7 @@ Item {
             color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             Rectangle {
-                color:              qgcPal.text
+                color:              getBatteryColor()
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.25
                 height:             parent.height * 0.35
