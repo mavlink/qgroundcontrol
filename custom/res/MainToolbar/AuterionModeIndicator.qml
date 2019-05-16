@@ -37,7 +37,7 @@ Item {
         QGCLabel {
             id:                     flightModeSelector
             text:                   activeVehicle ? activeVehicle.flightMode : qsTr("N/A")
-            color:                  "#FFF"
+            color:                  qgcPal.text
             font.pointSize:         ScreenTools.defaultFontPointSize
             anchors.verticalCenter:     parent.verticalCenter
             Menu {
@@ -74,7 +74,7 @@ Item {
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
             source:                 "/auterion/img/drop_down.svg"
-            color:                  "#EFF8FF"
+            color:                  qgcPal.text
         }
     }
     Component.onCompleted: flightModeSelector.updateFlightModesMenu()

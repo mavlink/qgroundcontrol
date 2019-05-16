@@ -8,15 +8,17 @@
  ****************************************************************************/
 
 
-import QtQuick          2.11
-import QtQuick.Controls 1.4
-import QtQuick.Layouts  1.11
+import QtQuick                              2.11
+import QtQuick.Controls                     1.4
+import QtQuick.Layouts                      1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
+
+import Auterion.Widgets                     1.0
 
 //-------------------------------------------------------------------------
 //-- Battery Indicator
@@ -63,7 +65,7 @@ Item {
             width:  battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height: battCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  Qt.rgba(0,0,0,0.75)
+            color:  qgcPal.window
 
             Column {
                 id:                 battCol
@@ -101,15 +103,16 @@ Item {
         anchors.bottom: parent.bottom
         opacity:        (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
         spacing:        ScreenTools.defaultFontPixelWidth
-        Image {
+        QGCColoredImage {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             width:              height
             sourceSize.width:   width
             source:             "/auterion/img/menu_battery.svg"
+            color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             Rectangle {
-                color:              "#FFFFFF"
+                color:              qgcPal.text
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.25
                 height:             parent.height * 0.35

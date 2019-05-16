@@ -49,7 +49,7 @@ Item {
             width:  gpsCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height: gpsCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  Qt.rgba(0,0,0,0.75)
+            color:  qgcPal.window
 
             Column {
                 id:                 gpsCol
@@ -93,12 +93,13 @@ Item {
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth * 0.25
-        Image {
+        QGCColoredImage {
             width:              height
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
             source:             "/auterion/img/menu_gps.svg"
+            color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             opacity:            getGPSSignal() > 0 ? 1 : 0.5
         }

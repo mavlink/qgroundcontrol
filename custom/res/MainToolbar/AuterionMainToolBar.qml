@@ -64,7 +64,6 @@ Item {
         spacing:                            ScreenTools.defaultFontPixelWidth * 2
         AuterionIconButton {
             height:                         parent.height
-            text:                           sectionTitle
             onClicked: {
                 if(drawer.visible) {
                     drawer.close()

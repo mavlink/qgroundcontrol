@@ -8,8 +8,8 @@
  ****************************************************************************/
 
 
-import QtQuick          2.11
-import QtQuick.Controls 1.2
+import QtQuick                              2.11
+import QtQuick.Controls                     1.2
 
 import QGroundControl                       1.0
 import QGroundControl.MultiVehicleManager   1.0
@@ -34,7 +34,7 @@ Rectangle {
         QGCLabel {
             id:                     labelText
             text:                   _armed ? qsTr("Armed") : qsTr("Disarmed")
-            color:                  "#FFF"
+            color:                  qgcPal.text
             font.pointSize:         ScreenTools.defaultFontPointSize
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -43,8 +43,8 @@ Rectangle {
             width:                  height
             radius:                 height * 0.5
             color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
-            border.color:           "#FFF"
-            border.width:           1
+            border.color:           qgcPal.window
+            border.width:           0
             anchors.verticalCenter: parent.verticalCenter
         }
     }

@@ -15,39 +15,50 @@ import QGroundControl               1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
+import QtGraphicalEffects           1.0
+
 
 import AuterionQuickInterface       1.0
 
 Item {
     id:                         _root
-    width:                      edge.width + icon.width + sectionTitle.width
+    width:                      edge.width + icon.width
     height:                     parent.height
-    property alias text:        sectionTitle.text
     signal clicked()
-    Image {
+    QGCColoredImage {
         id:                     edge
         height:                 ScreenTools.defaultFontPixelHeight
         width:                  height
         sourceSize.height:      parent.height
         fillMode:               Image.PreserveAspectFit
         source:                 "/auterion/img/menu_left_edge.svg"
+        color:                  qgcPal.text
         anchors.left:           parent.left
         anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
     }
+
     Image {
         id:                     icon
         height:                 parent.height
         width:                  height
-        sourceSize.height:      parent.height
+        smooth:                 true
+        mipmap:                 true
+        antialiasing:           true
+        visible:                !QGroundControl.corePlugin.showAdvancedUI && qgcPal.globalTheme === QGCPalette.Dark
         fillMode:               Image.PreserveAspectFit
-        source:                 QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
         anchors.left:           edge.right
+        source:                 QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
+        sourceSize.height:      height
     }
-    QGCLabel {
-        id:                     sectionTitle
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left:           icon.right
+
+    ColorOverlay {
+        anchors.fill:   icon
+        source:         icon
+        color:          QGroundControl.corePlugin.showAdvancedUI  ? qgcPal.text : (qgcPal.globalTheme === QGCPalette.Dark ? "black" : qgcPal.text )
+        visible:        !icon.visible
     }
+
     MouseArea {
         anchors.fill: parent
         onClicked: {

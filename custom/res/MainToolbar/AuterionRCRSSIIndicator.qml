@@ -38,7 +38,7 @@ Item {
             width:  rcrssiCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height: rcrssiCol.height  + ScreenTools.defaultFontPixelHeight * 2
             radius: ScreenTools.defaultFontPixelHeight * 0.5
-            color:  Qt.rgba(0,0,0,0.75)
+            color:  qgcPal.window
 
             Column {
                 id:                 rcrssiCol
@@ -74,12 +74,13 @@ Item {
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
         spacing:        ScreenTools.defaultFontPixelWidth * 0.25
-        Image {
+        QGCColoredImage {
             width:              height
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
             source:             "/auterion/img/menu_rc.svg"
+            color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             opacity:            _rcRSSIAvailable ? 1 : 0.5
         }
