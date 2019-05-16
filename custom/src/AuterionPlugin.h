@@ -15,6 +15,9 @@
 
 class AuterionPlugin;
 class AuterionSettings;
+#if defined(USE_BREAKPAD)
+class CrashHandler;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(AuterionLog)
 
@@ -35,9 +38,16 @@ public:
     AuterionOptions(AuterionPlugin*, QObject* parent = nullptr);
     bool        wifiReliableForCalibration      () const final { return true; }
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionFlyView.qml"); }
+    QUrl        mainToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionMainToolBar.qml"); }
+    QUrl        planToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionMainToolBar.qml"); }
     CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
     bool        showMavlinkLogOptions           () const final { return false; }
     bool        showFirmwareUpgrade             () const final;
+    bool        enableMultiVehicleList          () const final { return false; }
+    bool        enableMapScale                  () const final { return false; }
+    // TODO: Can't access QGCPalette without some workarounds, change this upstream
+    QColor      toolbarBackgroundLight          () const final;
+    QColor      toolbarBackgroundDark           () const final;
 };
 
 
@@ -58,11 +68,12 @@ public:
     VideoReceiver*          createVideoReceiver             (QObject* parent) final;
     QQmlApplicationEngine*  createRootWindow                (QObject* parent) final;
     bool                    adjustSettingMetaData           (const QString& settingsGroup, FactMetaData& metaData) final;
-#if !defined(__mobile__)
-    QGCQmlWidgetHolder*     createMainQmlWidgetHolder       (QLayout* mainLayout, QWidget *parent) final;
-#endif
+    void                    paletteOverride                 (QString colorName, QGCPalette::PaletteColorInfo_t& colorInfo) final;
     // Overrides from QGCTool
     void                    setToolbox                      (QGCToolbox* toolbox);
+
+    const static QColor     _windowShadeEnabledLightColor;
+    const static QColor     _windowShadeEnabledDarkColor;
 
 private slots:
     void                    _advancedChanged                (bool advanced);
@@ -75,6 +86,9 @@ private:
         const char* iconFile = nullptr);
 
 private:
-    AuterionOptions*     _pOptions;
+    AuterionOptions*     _pOptions = nullptr;
     QVariantList         _auterionSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+#if defined(USE_BREAKPAD)
+    CrashHandler*        _pCrashHandler = nullptr;
+#endif
 };

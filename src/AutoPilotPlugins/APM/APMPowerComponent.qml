@@ -25,7 +25,6 @@ SetupPage {
 
     FactPanelController {
         id:         controller
-        factPanel:  powerPage.viewPanel
     }
 
     Component {
@@ -45,6 +44,8 @@ SetupPage {
             property bool _batt2ParamsAvailable:    controller.parameterExists(-1, "BATT2_CAPACITY")
             property bool _showBatt1Reboot:         _batt1MonitorEnabled && !_batt1ParamsAvailable
             property bool _showBatt2Reboot:         _batt2MonitorEnabled && !_batt2ParamsAvailable
+            property bool _escCalibrationAvailable: controller.parameterExists(-1, "ESC_CALIBRATION")
+            property Fact _escCalibration:          controller.getParameterFact(-1, "ESC_CALIBRATION", false /* reportMissing */)
 
             property string _restartRequired: qsTr("Requires vehicle reboot")
 
@@ -214,6 +215,61 @@ SetupPage {
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT2_VOLT_PIN", false /* reportMissing */)
                         property Fact vehicleVoltage:   controller.vehicle.battery2.voltage
                         property Fact vehicleCurrent:   controller.vehicle.battery2.current
+                    }
+                }
+            }
+
+            Column {
+                spacing:    _margins / 2
+                visible:    _escCalibrationAvailable
+
+                QGCLabel {
+                    text:       qsTr("ESC Calibration")
+                    font.family: ScreenTools.demiboldFontFamily
+                }
+
+                Rectangle {
+                    width:  escCalibrationHolder.x + escCalibrationHolder.width + _margins
+                    height: escCalibrationHolder.y + escCalibrationHolder.height + _margins
+                    color:  ggcPal.windowShade
+
+                    Column {
+                        id:         escCalibrationHolder
+                        x:          _margins
+                        y:          _margins
+                        spacing:    _margins
+
+                        Column {
+                            spacing: _margins
+
+                            QGCLabel {
+                                text:   qsTr("WARNING: Remove props prior to calibration!")
+                                color:  qgcPal.warningText
+                            }
+
+                            Row {
+                                spacing: _margins
+
+                                QGCButton {
+                                    text: qsTr("Calibrate")
+                                    enabled:    _escCalibration.rawValue === 0
+                                    onClicked:  _escCalibration.rawValue = 3
+                                }
+
+                                Column {
+                                    enabled: _escCalibration.rawValue === 3
+                                    QGCLabel { text:   _escCalibration.rawValue === 3 ? qsTr("Now perform these steps:") : qsTr("Click Calibrate to start, then:") }
+                                    QGCLabel { text:   qsTr("- Disconnect USB and battery so flight controller powers down") }
+                                    QGCLabel { text:   qsTr("- Connect the battery") }
+                                    QGCLabel { text:   qsTr("- The arming tone will be played (if the vehicle has a buzzer attached)") }
+                                    QGCLabel { text:   qsTr("- If using a flight controller with a safety button press it until it displays solid red") }
+                                    QGCLabel { text:   qsTr("- You will hear a musical tone then two beeps") }
+                                    QGCLabel { text:   qsTr("- A few seconds later you should hear a number of beeps (one for each battery cell you’re using)") }
+                                    QGCLabel { text:   qsTr("- And finally a single long beep indicating the end points have been set and the ESC is calibrated") }
+                                    QGCLabel { text:   qsTr("- Disconnect the battery and power up again normally") }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -388,7 +444,7 @@ SetupPage {
                     onClicked: {
                         _calcVoltageDlgVehicleVoltage = vehicleVoltage
                         _calcVoltageDlgBattVoltMultParam = battVoltMult
-                        showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
 
                 }
@@ -420,7 +476,7 @@ SetupPage {
                     onClicked: {
                         _calcAmpsPerVoltDlgVehicleCurrent = vehicleCurrent
                         _calcAmpsPerVoltDlgBattAmpPerVoltParam = battAmpPerVolt
-                        showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), qgcView.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
                 }
 
@@ -459,7 +515,7 @@ SetupPage {
                     QGCLabel {
                         width:      parent.width
                         wrapMode:   Text.WordWrap
-                        text:       qsTr("Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new voltage multiplier.")
+                        text:       qsTr("Measure battery voltage using an external voltmeter and enter the value below. Click Calculate to set the new adjusted voltage multiplier.")
                     }
 
                     Grid {
@@ -480,7 +536,7 @@ SetupPage {
                     }
 
                     QGCButton {
-                        text: "Calculate"
+                        text: qsTr("Calculate And Set")
 
                         onClicked:  {
                             var measuredVoltageValue = parseFloat(measuredVoltage.text)
@@ -542,7 +598,7 @@ SetupPage {
                     }
 
                     QGCButton {
-                        text: "Calculate"
+                        text: qsTr("Calculate And Set")
 
                         onClicked:  {
                             var measuredCurrentValue = parseFloat(measuredCurrent.text)

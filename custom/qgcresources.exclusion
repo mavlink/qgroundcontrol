@@ -1,25 +1,10 @@
         <file alias="apm.png">resources/firmware/apm.png</file>
-        <file alias="APM/BrandImage">src/FirmwarePlugin/APM/APMBrandImage.png</file>
-        <file alias="APM/BrandImageSub">src/FirmwarePlugin/APM/APMBrandImageSub.png</file>
-        <file alias="APMode.svg">src/AutoPilotPlugins/Common/Images/APMode.svg</file>
         <file alias="QGCLogoFull">resources/QGCLogoFull.svg</file>
         <file alias="QGCLogoWhite">resources/QGCLogoWhite.svg</file>
-        <file alias="MapSync.svg">src/FlightMap/Images/MapSync.svg</file>
-        <file alias="MapAddMission.svg">src/FlightMap/Images/MapAddMission.svg</file>
-        <file alias="MapDrawShape.svg">src/FlightMap/Images/MapDrawShape.svg</file>
-        <file alias="MapCenter.svg">src/FlightMap/Images/MapCenter.svg</file>
-        <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
-        <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
-        <file alias="check.svg">resources/check.svg</file>
         <file alias="takeoff.svg">resources/takeoff.svg</file>
         <file alias="land.svg">resources/land.svg</file>
         <file alias="rtl.svg">resources/rtl.svg</file>
         <file alias="pause-mission.svg">resources/pause-mission.svg</file>
         <file alias="action.svg">resources/action.svg</file>
         <file>resources/icons/qgroundcontrol.ico</file>
-        <file alias="PaperPlane.svg">../src/ui/toolbar/Images/PaperPlane.svg</file>
-        <file alias="Plan.svg">../src/ui/toolbar/Images/Plan.svg</file>
-        <file alias="Home.svg">src/FlightMap/Images/Home.svg</file>
         <file alias="QGCLogoArrow">resources/QGCLogoArrow.svg</file>
-        <file alias="vehicleArrowOutline.svg">src/FlightMap/Images/vehicleArrowOutline.svg</file>
-        <file alias="vehicleArrowOpaque.svg">src/FlightMap/Images/vehicleArrowOpaque.svg</file>

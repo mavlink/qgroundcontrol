@@ -43,7 +43,7 @@ public:
     bool getBoardInfo(BoardType_t& boardType, QString& name) const;
 
     /// @return true: we can flash this board type
-    bool canFlash(void);
+    bool canFlash(void) const;
 
     /// @return true: Board is currently in bootloader
     bool isBootloader(void) const;
@@ -68,7 +68,7 @@ private:
         QString     regExp;
         BoardType_t boardType;
         bool        androidOnly;
-    } BoardFallback_t;
+    } BoardRegExpFallback_t;
 
     static void _loadJsonData(void);
     static BoardType_t _boardClassStringToType(const QString& boardClass);
@@ -77,7 +77,8 @@ private:
     static bool         _jsonLoaded;
     static const char*  _jsonFileTypeValue;
     static const char*  _jsonBoardInfoKey;
-    static const char*  _jsonBoardFallbackKey;
+    static const char*  _jsonBoardDescriptionFallbackKey;
+    static const char*  _jsonBoardManufacturerFallbackKey;
     static const char*  _jsonVendorIDKey;
     static const char*  _jsonProductIDKey;
     static const char*  _jsonBoardClassKey;
@@ -87,6 +88,7 @@ private:
 
     static const BoardClassString2BoardType_t   _rgBoardClass2BoardType[BoardTypeUnknown];
     static QList<BoardInfo_t>                   _boardInfoList;
-    static QList<BoardFallback_t>               _boardFallbackList;
+    static QList<BoardRegExpFallback_t>         _boardDescriptionFallbackList;
+    static QList<BoardRegExpFallback_t>         _boardManufacturerFallbackList;
 };
 

@@ -32,9 +32,10 @@ Rectangle {
     property int  _selectedCount:       0
     property real _columnSpacing:       ScreenTools.defaultFontPixelHeight * 0.25
     property bool _uploadedSelected:    false
-    property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
-    property var  _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
+    property bool _showMavlinkLog:      QGroundControl.corePlugin.options.showMavlinkLogOptions
     property bool _showAPMStreamRates:  QGroundControl.apmFirmwareSupported && QGroundControl.settingsManager.apmMavlinkStreamRateSettings.visible
+    property Fact _disableDataPersistenceFact: QGroundControl.settingsManager.appSettings.disableAllPersistence
+    property bool _disableDataPersistence:     _disableDataPersistenceFact ? _disableDataPersistenceFact.rawValue : false
 
     QGCPalette { id: qgcPal }
 
@@ -196,49 +197,49 @@ Rectangle {
 
                         QGCLabel { text:  qsTr("Raw Sensors") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRawSensors
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRawSensors : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
 
                         QGCLabel { text:  qsTr("Extended Status") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtendedStatus
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtendedStatus : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
 
                         QGCLabel { text:  qsTr("RC Channel") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRCChannels
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateRCChannels : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
 
                         QGCLabel { text:  qsTr("Position") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRatePosition
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRatePosition : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
 
                         QGCLabel { text:  qsTr("Extra 1") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra1
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra1 : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
 
                         QGCLabel { text:  qsTr("Extra 2") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra2
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra2 : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
 
                         QGCLabel { text:  qsTr("Extra 3") }
                         FactComboBox {
-                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra3
+                            fact:                   QGroundControl.settingsManager.apmMavlinkStreamRateSettings ? QGroundControl.settingsManager.apmMavlinkStreamRateSettings.streamRateExtra3 : null
                             indexModel:             false
                             Layout.preferredWidth:  _valueWidth
                         }
@@ -280,7 +281,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkSentCount : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkSentCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -295,7 +296,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkReceivedCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -310,7 +311,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkLossCount : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkLossCount : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -325,7 +326,7 @@ Rectangle {
                         }
                         QGCLabel {
                             width:              _valueWidth
-                            text:               _activeVehicle ? _activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
+                            text:               activeVehicle ? activeVehicle.mavlinkLossPercent.toFixed(0) + '%' : qsTr("Not Connected")
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
@@ -370,14 +371,14 @@ Rectangle {
                         QGCButton {
                             text:               qsTr("Start Logging")
                             width:              (_valueWidth * 0.5) - (ScreenTools.defaultFontPixelWidth * 0.5)
-                            enabled:            !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog
+                            enabled:            !QGroundControl.mavlinkLogManager.logRunning && QGroundControl.mavlinkLogManager.canStartLog && !_disableDataPersistence
                             onClicked:          QGroundControl.mavlinkLogManager.startLogging()
                             anchors.verticalCenter: parent.verticalCenter
                         }
                         QGCButton {
                             text:               qsTr("Stop Logging")
                             width:              (_valueWidth * 0.5) - (ScreenTools.defaultFontPixelWidth * 0.5)
-                            enabled:            QGroundControl.mavlinkLogManager.logRunning
+                            enabled:            QGroundControl.mavlinkLogManager.logRunning && !_disableDataPersistence
                             onClicked:          QGroundControl.mavlinkLogManager.stopLogging()
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -387,6 +388,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Enable automatic logging")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoStart
+                        enabled:    !_disableDataPersistence
                         onClicked: {
                             QGroundControl.mavlinkLogManager.enableAutoStart = checked
                         }
@@ -428,9 +430,10 @@ Rectangle {
                             text:               qsTr("Email address for Log Upload:")
                         }
                         QGCTextField {
-                            id:     emailField
-                            text:   QGroundControl.mavlinkLogManager.emailAddress
-                            width:  _valueWidth
+                            id:         emailField
+                            text:       QGroundControl.mavlinkLogManager.emailAddress
+                            width:      _valueWidth
+                            enabled:    !_disableDataPersistence
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhEmailCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
@@ -448,9 +451,10 @@ Rectangle {
                             text:               qsTr("Default Description:")
                         }
                         QGCTextField {
-                            id:     descField
-                            text:   QGroundControl.mavlinkLogManager.description
-                            width:  _valueWidth
+                            id:         descField
+                            text:       QGroundControl.mavlinkLogManager.description
+                            width:      _valueWidth
+                            enabled:    !_disableDataPersistence
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
                                 saveItems();
@@ -467,9 +471,10 @@ Rectangle {
                             text:               qsTr("Default Upload URL")
                         }
                         QGCTextField {
-                            id:     urlField
-                            text:   QGroundControl.mavlinkLogManager.uploadURL
-                            width:  _valueWidth
+                            id:         urlField
+                            text:       QGroundControl.mavlinkLogManager.uploadURL
+                            width:      _valueWidth
+                            enabled:    !_disableDataPersistence
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                             onEditingFinished: {
@@ -487,9 +492,10 @@ Rectangle {
                             text:               qsTr("Video URL:")
                         }
                         QGCTextField {
-                            id:     videoUrlField
-                            text:   QGroundControl.mavlinkLogManager.videoURL
-                            width:  _valueWidth
+                            id:         videoUrlField
+                            text:       QGroundControl.mavlinkLogManager.videoURL
+                            width:      _valueWidth
+                            enabled:    !_disableDataPersistence
                             inputMethodHints:       Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -504,8 +510,9 @@ Rectangle {
                             text:               qsTr("Wind Speed:")
                         }
                         QGCComboBox {
-                            id:                 windCombo
-                            width:              _valueWidth
+                            id:         windCombo
+                            width:      _valueWidth
+                            enabled:    !_disableDataPersistence
                             model: ListModel {
                                 id: windItems
                                 ListElement { text: "Please Select"; value: -1 }
@@ -540,8 +547,9 @@ Rectangle {
                             text:               qsTr("Flight Rating:")
                         }
                         QGCComboBox {
-                            id:                 ratingCombo
-                            width:              _valueWidth
+                            id:         ratingCombo
+                            width:      _valueWidth
+                            enabled:    !_disableDataPersistence
                             model: ListModel {
                                 id: ratingItems
                                 ListElement { text: "Please Select";            value: "notset"}
@@ -582,6 +590,7 @@ Rectangle {
                             frameVisible:       false
                             font.pointSize:     ScreenTools.defaultFontPointSize
                             text:               QGroundControl.mavlinkLogManager.feedback
+                            enabled:            !_disableDataPersistence
                             style: TextAreaStyle {
                                 textColor:          qgcPal.windowShade
                                 backgroundColor:    qgcPal.text
@@ -593,6 +602,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Make this log publicly available")
                         checked:    QGroundControl.mavlinkLogManager.publicLog
+                        enabled:    !_disableDataPersistence
                         onClicked: {
                             QGroundControl.mavlinkLogManager.publicLog = checked
                         }
@@ -603,6 +613,7 @@ Rectangle {
                         id:         autoUploadCheck
                         text:       qsTr("Enable automatic log uploads")
                         checked:    QGroundControl.mavlinkLogManager.enableAutoUpload
+                        enabled:    !_disableDataPersistence
                         onClicked: {
                             saveItems();
                             if(checked && QGroundControl.mavlinkLogManager.emailAddress === "")
@@ -614,7 +625,7 @@ Rectangle {
                     QGCCheckBox {
                         text:       qsTr("Delete log file after uploading")
                         checked:    QGroundControl.mavlinkLogManager.deleteAfterUpload
-                        enabled:    autoUploadCheck.checked
+                        enabled:    autoUploadCheck.checked && !_disableDataPersistence
                         onClicked: {
                             QGroundControl.mavlinkLogManager.deleteAfterUpload = checked
                         }

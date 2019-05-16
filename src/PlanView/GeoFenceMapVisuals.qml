@@ -20,6 +20,7 @@ import QGroundControl.FlightMap     1.0
 
 /// GeoFence map visuals
 Item {
+    id: _root
     z: QGroundControl.zOrderMapItems
 
     property var    map
@@ -28,8 +29,8 @@ Item {
     property bool   planView:               false   ///< true: visuals showing in plan view
     property var    homePosition
 
-    //property var    _breachReturnPointComponent
-    //property var    _mouseAreaComponent
+    property var    _breachReturnPointComponent
+    property var    _breachReturnDragComponent
     property var    _paramCircleFenceComponent
     property var    _polygons:                  myGeoFenceController.polygons
     property var    _circles:                   myGeoFenceController.circles
@@ -75,34 +76,28 @@ Item {
     }
 
     Component.onCompleted: {
-        //_breachReturnPointComponent = breachReturnPointComponent.createObject(map)
-        //map.addMapItem(_breachReturnPointComponent)
-        //_mouseAreaComponent = mouseAreaComponent.createObject(map)
+        _breachReturnPointComponent = breachReturnPointComponent.createObject(map)
+        map.addMapItem(_breachReturnPointComponent)
+        _breachReturnDragComponent = breachReturnDragComponent.createObject(map, { "itemIndicator": _breachReturnPointComponent })
         _paramCircleFenceComponent = paramCircleFenceComponent.createObject(map)
         map.addMapItem(_paramCircleFenceComponent)
     }
 
     Component.onDestruction: {
-        //_breachReturnPointComponent.destroy()
-        //_mouseAreaComponent.destroy()
+        _breachReturnPointComponent.destroy()
+        _breachReturnDragComponent.destroy()
         _paramCircleFenceComponent.destroy()
     }
 
-    // Mouse area to capture breach return point coordinate
-    Component {
-        id: mouseAreaComponent
-
-        MouseArea {
-            anchors.fill:   map
-            visible:        interactive
-            onClicked:      myGeoFenceController.breachReturnPoint = map.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */)
-        }
-    }
-
+    // By default the parent for Instantiator.delegate item is the Instatiator itself. By there is a bug
+    // in Qt which will cause a crash if this delete item has Menu item within it. Since the Menu item
+    // doesn't like having a non-visual item as parent. This is likely related to hybrid QQuickWidtget+QML
+    // Hence Qt folks are going to care. In order to workaround you have to parent the item to _root Item instead.
     Instantiator {
         model: _polygons
 
         delegate : QGCMapPolygonVisuals {
+            parent:             _root
             mapControl:         map
             mapPolygon:         object
             borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
@@ -116,6 +111,7 @@ Item {
         model: _circles
 
         delegate : QGCMapCircleVisuals {
+            parent:             _root
             mapControl:         map
             mapCircle:          object
             borderWidth:        object.inclusion ? _borderWidthInclusion : _borderWidthExclusion
@@ -144,6 +140,19 @@ Item {
         }
     }
 
+    Component {
+        id: breachReturnDragComponent
+
+        MissionItemIndicatorDrag {
+            mapControl:     map
+            itemCoordinate: myGeoFenceController.breachReturnPoint
+            //visible:        itemCoordinate.isValid
+
+            onItemCoordinateChanged: myGeoFenceController.breachReturnPoint = itemCoordinate
+        }
+    }
+
+
     // Breach return point
     Component {
         id: breachReturnPointComponent
@@ -155,7 +164,8 @@ Item {
             coordinate:     myGeoFenceController.breachReturnPoint
 
             sourceItem: MissionItemIndexLabel {
-                label: "B"
+                label:      qsTr("B", "Breach Return Point item indicator")
+                checked:    true
             }
         }
     }

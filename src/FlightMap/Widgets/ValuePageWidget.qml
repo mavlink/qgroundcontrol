@@ -37,7 +37,7 @@ Column {
     }
 
     function showSettings() {
-        qgcView.showDialog(propertyPicker, qsTr("Value Widget Setup"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+        mainWindow.showDialog(propertyPicker, qsTr("Value Widget Setup"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
     }
 
     function listContains(list, value) {

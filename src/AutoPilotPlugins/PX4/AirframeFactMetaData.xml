@@ -410,6 +410,11 @@
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Simulation</type>
     </airframe>
+    <airframe id="1100" maintainer="Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;" name="SIH Quadcopter X">
+      <class>Copter</class>
+      <maintainer>Romain Chiappinelli &lt;romain.chiap@gmail.com&gt;</maintainer>
+      <type>Simulation</type>
+    </airframe>
   </airframe_group>
   <airframe_group image="AirframeUnknown" name="Tilt-Quad">
     <airframe id="4100" maintainer="Ricardo Marques &lt;marques.ricardo17@gmail.com&gt;" name="Tilt-Quadrotor">
@@ -747,6 +752,19 @@
       <output name="MAIN6">Left elevon</output>
       <output name="MAIN7">Pusher motor</output>
       <output name="MAIN8">Pusher reverse channel</output>
+    </airframe>
+    <airframe id="13014" maintainer="Silvan Fuhrer &lt;silvan@auterion.com&gt;" name="BabyShark VTOL">
+      <class>VTOL</class>
+      <maintainer>Silvan Fuhrer &lt;silvan@auterion.com&gt;</maintainer>
+      <type>Standard VTOL</type>
+      <output name="MAIN1">Ailerons</output>
+      <output name="MAIN2">A-tail left</output>
+      <output name="MAIN3">Pusher motor</output>
+      <output name="MAIN4">A-tail right</output>
+      <output name="MAIN5">motor 1</output>
+      <output name="MAIN6">motor 2</output>
+      <output name="MAIN7">motor 3</output>
+      <output name="MAIN8">motor 4</output>
     </airframe>
   </airframe_group>
   <airframe_group image="VTOLDuoRotorTailSitter" name="VTOL Duo Tailsitter">

@@ -39,6 +39,9 @@ public:
     // Overrides from ComplexMissionItem
     bool    load                (const QJsonObject& complexObject, int sequenceNumber, QString& errorString) final;
     QString mapVisualQML        (void) const final { return QStringLiteral("SurveyMapVisual.qml"); }
+    QString presetsSettingsGroup(void) { return settingsGroup; }
+    void    savePreset          (const QString& name);
+    void    loadPreset          (const QString& name);
 
     // Overrides from TransectStyleComplexItem
     void    save                (QJsonArray&  planItems) final;
@@ -114,7 +117,8 @@ private:
     double _turnaroundDistance(void) const;
     bool _hoverAndCaptureEnabled(void) const;
     bool _loadV3(const QJsonObject& complexObject, int sequenceNumber, QString& errorString);
-    bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version);
+    bool _loadV4V5(const QJsonObject& complexObject, int sequenceNumber, QString& errorString, int version, bool forPresets);
+    void _saveWorker(QJsonObject& complexObject);
     void _rebuildTransectsPhase1Worker(bool refly);
     void _rebuildTransectsPhase1WorkerSinglePolygon(bool refly);
     void _rebuildTransectsPhase1WorkerSplitPolygons(bool refly);

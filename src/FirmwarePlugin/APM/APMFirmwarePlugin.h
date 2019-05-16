@@ -86,9 +86,10 @@ public:
     bool                isGuidedMode                    (const Vehicle* vehicle) const override;
     QString             gotoFlightMode                  (void) const override { return QStringLiteral("Guided"); }
     QString             rtlFlightMode                   (void) const override { return QString("RTL"); }
+    QString             smartRTLFlightMode              (void) const override { return QString("Smart RTL"); }
     QString             missionFlightMode               (void) const override { return QString("Auto"); }
     void                pauseVehicle                    (Vehicle* vehicle) override;
-    void                guidedModeRTL                   (Vehicle* vehicle) override;
+    void                guidedModeRTL                   (Vehicle* vehicle, bool smartRTL) override;
     void                guidedModeChangeAltitude        (Vehicle* vehicle, double altitudeChange) override;
     bool                adjustIncomingMavlinkMessage    (Vehicle* vehicle, mavlink_message_t* message) override;
     void                adjustOutgoingMavlinkMessage    (Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message) override;
@@ -136,6 +137,7 @@ private:
     // Vehicle specific data should go into APMFirmwarePluginInstanceData
 
     QList<APMCustomMode>    _supportedModes;
+    QMap<int /* vehicle id */, QMap<int /* componentId */, bool /* true: component is part of ArduPilot stack */>> _ardupilotComponentMap;
 
     static const char*      _artooIP;
     static const int        _artooVideoHandshakePort;

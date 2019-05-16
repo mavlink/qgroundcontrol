@@ -17,8 +17,7 @@ PreFlightCheckButton {
     name:               qsTr("Sensors")
     telemetryFailure:   _unhealthySensors & _allCheckedSensors
 
-    property var    _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property int    _unhealthySensors:  _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
+    property int    _unhealthySensors:  activeVehicle ? activeVehicle.sensorsUnhealthyBits : 0
     property int    _allCheckedSensors: Vehicle.SysStatusSensor3dMag |
                                         Vehicle.SysStatusSensor3dAccel |
                                         Vehicle.SysStatusSensor3dGyro |

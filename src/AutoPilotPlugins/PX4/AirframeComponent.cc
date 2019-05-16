@@ -12,7 +12,6 @@
 ///     @author Don Gagne <don@thegagnes.com>
 
 #include "AirframeComponent.h"
-#include "QGCQmlWidgetHolder.h"
 #include "ParameterManager.h"
 
 AirframeComponent::AirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent) :

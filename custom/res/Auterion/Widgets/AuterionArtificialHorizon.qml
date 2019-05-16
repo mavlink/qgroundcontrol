@@ -24,30 +24,30 @@ Item {
     property real angularScale: pitchAngle * root.height / 45
 
     Item {
-        id: artificialHorizon
+        id:     artificialHorizon
         width:  root.width  * 4
         height: root.height * 8
         anchors.centerIn: parent
         Rectangle {
-            id: sky
-            anchors.fill: parent
-            smooth: true
-            antialiasing: true
+            id:             sky
+            anchors.fill:   parent
+            smooth:         true
+            antialiasing:   true
             gradient: Gradient {
                 GradientStop { position: 0.25; color: root.skyColor1 }
                 GradientStop { position: 0.5;  color: root.skyColor2 }
             }
         }
         Rectangle {
-            id: ground
-            height: sky.height / 2
+            id:             ground
+            height:         sky.height / 2
             anchors {
-                left:   sky.left;
-                right:  sky.right;
-                bottom: sky.bottom
+                left:       sky.left;
+                right:      sky.right;
+                bottom:     sky.bottom
             }
-            smooth: true
-            antialiasing: true
+            smooth:         true
+            antialiasing:   true
             gradient: Gradient {
                 GradientStop { position: 0.0;  color: root.groundColor1 }
                 GradientStop { position: 0.25; color: root.groundColor2 }

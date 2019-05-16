@@ -29,7 +29,6 @@ const char* VideoSettings::videoSourceMPEGTS    = "MPEG-TS (h.264) Video Stream"
 
 DECLARE_SETTINGGROUP(Video, "Video")
 {
-    QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<VideoSettings>("QGroundControl.SettingsManager", 1, 0, "VideoSettings", "Reference only");
 
     // Setup enum values for videoSource settings into meta data
@@ -132,15 +131,15 @@ bool VideoSettings::streamConfigured(void)
 #if !defined(QGC_GST_STREAMING)
     return false;
 #endif
-    //-- First, check if it's disabled
-    QString vSource = videoSource()->rawValue().toString();
-    if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
-        return false;
-    }
-    //-- Check if it's autoconfigured
+    //-- First, check if it's autoconfigured
     if(qgcApp()->toolbox()->videoManager()->autoStreamConfigured()) {
         qCDebug(VideoManagerLog) << "Stream auto configured";
         return true;
+    }
+    //-- Check if it's disabled
+    QString vSource = videoSource()->rawValue().toString();
+    if(vSource == videoSourceNoVideo || vSource == videoDisabled) {
+        return false;
     }
     //-- If UDP, check if port is set
     if(vSource == videoSourceUDP) {

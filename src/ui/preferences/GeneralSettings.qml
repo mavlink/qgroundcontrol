@@ -24,9 +24,8 @@ import QGroundControl.Palette               1.0
 import QGroundControl.Controllers           1.0
 import QGroundControl.SettingsManager       1.0
 
-QGCView {
-    id:                 _qgcView
-    viewPanel:          panel
+Rectangle {
+    id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
@@ -42,7 +41,7 @@ QGCView {
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
-    property real _panelWidth:                  _qgcView.width * _internalWidthRatio
+    property real _panelWidth:                  _root.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
@@ -57,12 +56,6 @@ QGCView {
 
     readonly property real _internalWidthRatio: 0.8
 
-    QGCPalette { id: qgcPal }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
-
         QGCFlickable {
             clip:               true
             anchors.fill:       parent
@@ -71,7 +64,7 @@ QGCView {
 
             Item {
                 id:     outerItem
-                width:  Math.max(panel.width, settingsColumn.width)
+            width:  Math.max(_root.width, settingsColumn.width)
                 height: settingsColumn.height
 
                 ColumnLayout {
@@ -263,22 +256,6 @@ QGCView {
                                 }
 
                                 FactCheckBox {
-                                    id:         promptSaveLog
-                                    text:       qsTr("Save telemetry log after each flight")
-                                    fact:       _telemetrySave
-                                    visible:    _telemetrySave.visible
-                                    property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
-                                }
-
-                                FactCheckBox {
-                                    text:       qsTr("Save telemetry log even if vehicle was not armed")
-                                    fact:       _telemetrySaveNotArmed
-                                    visible:    _telemetrySaveNotArmed.visible
-                                    enabled:    promptSaveLog.checked
-                                    property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
-                                }
-
-                                FactCheckBox {
                                     text:       qsTr("AutoLoad Missions")
                                     fact:       _autoLoad
                                     visible:    _autoLoad.visible
@@ -354,15 +331,12 @@ QGCView {
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  savePathBrowseDialog.openForLoad()
-
                                 QGCFileDialog {
                                     id:             savePathBrowseDialog
-                                    qgcView:        _qgcView
                                     title:          qsTr("Choose the location to save/load files")
                                     folder:         _savePath.rawValue
                                     selectExisting: true
                                     selectFolder:   true
-
                                     onAcceptedForLoad: _savePath.rawValue = file
                                 }
                             }
@@ -370,7 +344,72 @@ QGCView {
                     }
 
                     Item { width: 1; height: _margins }
+                    QGCLabel {
+                        id:         loggingSectionLabel
+                        text:       qsTr("Data Persistence")
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: dataPersistCol.height + (_margins * 2)
+                        Layout.preferredWidth:  dataPersistCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        Layout.fillWidth:       true
+                        ColumnLayout {
+                            id:                         dataPersistCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins * 1.5
+                            FactCheckBox {
+                                id:         disableDataPersistence
+                                text:       qsTr("Disable all data persistence")
+                                fact:       _disableDataPersistence
+                                visible:    _disableDataPersistence.visible
+                                property Fact _disableDataPersistence: QGroundControl.settingsManager.appSettings.disableAllPersistence
+                            }
+                            QGCLabel {
+                                text:       qsTr("When Data Persistence is disabled, all telemetry logging and map tile caching is disabled and not written to disk.")
+                                wrapMode:   Text.WordWrap
+                                font.pointSize:       ScreenTools.smallFontPointSize
+                                Layout.maximumWidth:  logIfNotArmed.visible ? logIfNotArmed.width : disableDataPersistence.width * 1.5
+                            }
+                        }
+                    }
 
+                    Item { width: 1; height: _margins }
+                    QGCLabel {
+                        text:       qsTr("Telemetry Logs from Vehicle")
+                    }
+                    Rectangle {
+                        Layout.preferredHeight: loggingCol.height + (_margins * 2)
+                        Layout.preferredWidth:  loggingCol.width + (_margins * 2)
+                        color:                  qgcPal.windowShade
+                        Layout.fillWidth:       true
+                        ColumnLayout {
+                            id:                         loggingCol
+                            anchors.margins:            _margins
+                            anchors.top:                parent.top
+                            anchors.horizontalCenter:   parent.horizontalCenter
+                            spacing:                    _margins
+                            FactCheckBox {
+                                id:         promptSaveLog
+                                text:       qsTr("Save log after each flight")
+                                fact:       _telemetrySave
+                                visible:    _telemetrySave.visible
+                                enabled:    !disableDataPersistence.checked
+                                property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
+                            }
+                            FactCheckBox {
+                                id:         logIfNotArmed
+                                text:       qsTr("Save logs even if vehicle was not armed")
+                                fact:       _telemetrySaveNotArmed
+                                visible:    _telemetrySaveNotArmed.visible
+                                enabled:    promptSaveLog.checked && !disableDataPersistence.checked
+                                property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
+                            }
+                        }
+                    }
+
+                    Item { width: 1; height: _margins }
                     QGCLabel {
                         id:         flyViewSectionLabel
                         text:       qsTr("Fly View")
@@ -404,6 +443,15 @@ QGCView {
                                 fact:       _virtualJoystick
 
                                 property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Auto-Center throttle")
+                                visible:    _virtualJoystickCentralized.visible && activeVehicle && (activeVehicle.sub || activeVehicle.rover)
+                                fact:       _virtualJoystickCentralized
+                                Layout.leftMargin: _margins
+
+                                property Fact _virtualJoystickCentralized: QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
                             }
 
                             GridLayout {
@@ -600,16 +648,11 @@ QGCView {
                             property bool useFixedPosition: rtkSettings.useFixedBasePosition.rawValue
                             property real firstColWidth:    ScreenTools.defaultFontPixelWidth * 3
 
-                            ExclusiveGroup {
-                                id: useFixedBasePositionRadioGroup
-                            }
-
                             QGCRadioButton {
                                 text:               qsTr("Perform Survey-In")
                                 visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
-                                checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == false
+                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === false
                                 onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = false
-                                exclusiveGroup:     useFixedBasePositionRadioGroup
                                 Layout.columnSpan:  3
                             }
 
@@ -642,9 +685,8 @@ QGCView {
                             QGCRadioButton {
                                 text:               qsTr("Use Specified Base Position")
                                 visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
-                                checked:            rtkGrid.rtkSettings.useFixedBasePosition.value == true
+                            checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === true
                                 onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = true
-                                exclusiveGroup:     useFixedBasePositionRadioGroup
                                 Layout.columnSpan:  3
                             }
 
@@ -889,15 +931,12 @@ QGCView {
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  userBrandImageIndoorBrowseDialog.openForLoad()
-
                                 QGCFileDialog {
                                     id:             userBrandImageIndoorBrowseDialog
-                                    qgcView:        _qgcView
                                     title:          qsTr("Choose custom brand image file")
                                     folder:         _userBrandImageIndoor.rawValue.replace("file:///","")
                                     selectExisting: true
                                     selectFolder:   false
-
                                     onAcceptedForLoad: _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
                             }
@@ -914,24 +953,19 @@ QGCView {
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  userBrandImageOutdoorBrowseDialog.openForLoad()
-
                                 QGCFileDialog {
                                     id:             userBrandImageOutdoorBrowseDialog
-                                    qgcView:        _qgcView
                                     title:          qsTr("Choose custom brand image file")
                                     folder:         _userBrandImageOutdoor.rawValue.replace("file:///","")
                                     selectExisting: true
                                     selectFolder:   false
-
                                     onAcceptedForLoad: _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }
                             }
-
                             QGCButton {
                                 text:               qsTr("Reset Default Brand Image")
                                 Layout.columnSpan:  3
                                 Layout.alignment:   Qt.AlignHCenter
-
                                 onClicked:  {
                                     _userBrandImageIndoor.rawValue = ""
                                     _userBrandImageOutdoor.rawValue = ""
@@ -952,6 +986,5 @@ QGCView {
                     }
                 } // settingsColumn
             }
-        } // QGCFlickable
-    } // QGCViewPanel
-} // QGCView
+    }
+}

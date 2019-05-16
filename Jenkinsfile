@@ -145,7 +145,7 @@ pipeline {
             sh 'cd build; make -j`nproc --all`'
             // Create AppImg
             sh 'deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
-            sh 'chmod +x AuterionGS.AppImage'
+            sh 'chmod +x *.AppImage'
 
             // Cache build files
             sh 'ccache -s'
@@ -153,7 +153,7 @@ pipeline {
           post {
             always {
                 archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-                archiveArtifacts artifacts: 'AuterionGS.AppImage', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*.AppImage', onlyIfSuccessful: true
             }
             cleanup {
               sh 'git clean -ff -x -d .'

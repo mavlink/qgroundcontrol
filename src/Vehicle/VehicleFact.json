@@ -114,5 +114,11 @@
     "name":             "hobbs",
     "shortDescription": "Hobbs Meter",
     "type":             "string"
+},
+{
+    "name":             "throttlePct",
+    "shortDescription": "Throttle %",
+    "type":             "uint16",
+    "units":            "%"
 }
 ]

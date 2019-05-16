@@ -77,7 +77,6 @@ SetupPage {
             property bool   _orientationsDialogShowCompass: true
             property string _orientationDialogHelp:         orientationHelpSet
             property int    _orientationDialogCalType
-            property var    _activeVehicle:                 QGroundControl.multiVehicleManager.activeVehicle
             property real   _margins:                       ScreenTools.defaultFontPixelHeight / 2
             property bool   _compassAutoRotAvailable:       controller.parameterExists(-1, "COMPASS_AUTO_ROT")
             property Fact   _compassAutoRotFact:            controller.getParameterFact(-1, "COMPASS_AUTO_ROT", false /* reportMissing */)
@@ -108,7 +107,7 @@ SetupPage {
                     break
                 }
 
-                showDialog(orientationsDialogComponent, dialogTitle, qgcView.showDialogDefaultWidth, buttons)
+                mainWindow.showDialog(orientationsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, buttons)
             }
 
             APMSensorParams {
@@ -118,7 +117,6 @@ SetupPage {
 
             APMSensorsComponentController {
                 id:                         controller
-                factPanel:                  sensorsPage.viewPanel
                 statusLog:                  statusTextArea
                 progressBar:                progressBar
                 nextButton:                 nextButton
@@ -131,20 +129,20 @@ SetupPage {
 
                 onWaitingForCancelChanged: {
                     if (controller.waitingForCancel) {
-                        showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), qgcView.showDialogDefaultWidth, 0)
+                        mainWindow.showDialog(waitForCancelDialogComponent, qsTr("Calibration Cancel"), mainWindow.showDialogDefaultWidth, 0)
                     }
                 }
 
                 onCalibrationComplete: {
                     switch (calType) {
                     case APMSensorsComponentController.CalTypeAccel:
-                        showDialog(postCalibrationComponent, qsTr("Accelerometer calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        mainWindow.showDialog(postCalibrationComponent, qsTr("Accelerometer calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOffboardCompass:
-                        showDialog(postCalibrationComponent, qsTr("Compass calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        mainWindow.showDialog(postCalibrationComponent, qsTr("Compass calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     case APMSensorsComponentController.CalTypeOnboardCompass:
-                        showDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), qgcView.showDialogDefaultWidth, StandardButton.Ok)
+                        mainWindow.showDialog(postOnboardCompassCalibrationComponent, qsTr("Calibration complete"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
                         break
                     }
                 }
@@ -158,7 +156,7 @@ SetupPage {
                 var usingUDP = controller.usingUDPLink()
                 var isSub = QGroundControl.multiVehicleManager.activeVehicle.sub;
                 if (usingUDP && !isSub) {
-                    showMessage(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."), StandardButton.Ok)
+                    mainWindow.showMessageDialog(qsTr("Sensor Calibration"), qsTr("Performing sensor calibration over a WiFi connection can be unreliable. If you run into problems try using a direct USB connection instead."))
                 }
             }
 
@@ -519,9 +517,9 @@ SetupPage {
                         wrapMode:       Text.WordWrap
                         text:           _helpText
 
-                        readonly property string _altText:      _activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
+                        readonly property string _altText:      activeVehicle.sub ? qsTr("depth") : qsTr("altitude")
                         readonly property string _helpText:     qsTr("Pressure calibration will set the %1 to zero at the current pressure reading. %2").arg(_altText).arg(_helpTextFW)
-                        readonly property string _helpTextFW:   _activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
+                        readonly property string _helpTextFW:   activeVehicle.fixedWing ? qsTr("To calibrate the airspeed sensor shield it from the wind. Do not touch the sensor or obstruct any holes during the calibration.") : ""
                     }
                 } // QGCViewDialog
             } // Component - calibratePressureDialogComponent
@@ -556,7 +554,7 @@ SetupPage {
 
                         onClicked: {
                             if (controller.accelSetupNeeded) {
-                                showMessage(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."), StandardButton.Ok)
+                                mainWindow.showMessageDialog(qsTr("Calibrate Compass"), qsTr("Accelerometer must be calibrated prior to Compass."))
                             } else {
                                 showOrientationsDialog(_calTypeCompass)
                             }
@@ -571,9 +569,9 @@ SetupPage {
 
                         onClicked: {
                             if (controller.accelSetupNeeded) {
-                                showMessage(_levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."), StandardButton.Ok)
+                                mainWindow.showMessageDialog(_levelHorizonText, qsTr("Accelerometer must be calibrated prior to Level Horizon."))
                             } else {
-                                showDialog(levelHorizonDialogComponent, _levelHorizonText, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                                mainWindow.showDialog(levelHorizonDialogComponent, _levelHorizonText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
                             }
                         }
                     }
@@ -581,17 +579,17 @@ SetupPage {
                     QGCButton {
                         width:      _buttonWidth
                         text:       _calibratePressureText
-                        onClicked:  showDialog(calibratePressureDialogComponent, _calibratePressureText, qgcView.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked:  mainWindow.showDialog(calibratePressureDialogComponent, _calibratePressureText, mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
 
-                        readonly property string _calibratePressureText: _activeVehicle.fixedWing ? qsTr("Cal Baro/Airspeed") : qsTr("Calibrate Pressure")
+                        readonly property string _calibratePressureText: activeVehicle.fixedWing ? qsTr("Cal Baro/Airspeed") : qsTr("Calibrate Pressure")
                     }
 
                     QGCButton {
                         width:      _buttonWidth
                         text:       qsTr("CompassMot")
-                        visible:    _activeVehicle ? _activeVehicle.supportsMotorInterference : false
+                        visible:    activeVehicle ? activeVehicle.supportsMotorInterference : false
 
-                        onClicked:  showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), qgcView.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
+                        onClicked:  mainWindow.showDialog(compassMotDialogComponent, qsTr("CompassMot - Compass Motor Interference Calibration"), mainWindow.showDialogFullWidth, StandardButton.Cancel | StandardButton.Ok)
                     }
 
                     QGCButton {
@@ -694,34 +692,7 @@ SetupPage {
                                 calValid:           controller.orientationCalDownSideDone
                                 calInProgress:      controller.orientationCalDownSideInProgress
                                 calInProgressText:  controller.orientationCalDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalDownSideRotate ? "qrc:///qmlimages/VehicleDownRotate.png" : "qrc:///qmlimages/VehicleDown.png"
-                            }
-                            VehicleRotationCal {
-                                width:              parent.indicatorWidth
-                                height:             parent.indicatorHeight
-                                visible:            controller.orientationCalUpsideDownSideVisible
-                                calValid:           controller.orientationCalUpsideDownSideDone
-                                calInProgress:      controller.orientationCalUpsideDownSideInProgress
-                                calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalUpsideDownSideRotate ? "qrc:///qmlimages/VehicleUpsideDownRotate.png" : "qrc:///qmlimages/VehicleUpsideDown.png"
-                            }
-                            VehicleRotationCal {
-                                width:              parent.indicatorWidth
-                                height:             parent.indicatorHeight
-                                visible:            controller.orientationCalNoseDownSideVisible
-                                calValid:           controller.orientationCalNoseDownSideDone
-                                calInProgress:      controller.orientationCalNoseDownSideInProgress
-                                calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalNoseDownSideRotate ? "qrc:///qmlimages/VehicleNoseDownRotate.png" : "qrc:///qmlimages/VehicleNoseDown.png"
-                            }
-                            VehicleRotationCal {
-                                width:              parent.indicatorWidth
-                                height:             parent.indicatorHeight
-                                visible:            controller.orientationCalTailDownSideVisible
-                                calValid:           controller.orientationCalTailDownSideDone
-                                calInProgress:      controller.orientationCalTailDownSideInProgress
-                                calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalTailDownSideRotate ? "qrc:///qmlimages/VehicleTailDownRotate.png" : "qrc:///qmlimages/VehicleTailDown.png"
+                                imageSource:        "qrc:///qmlimages/VehicleDown.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -730,7 +701,7 @@ SetupPage {
                                 calValid:           controller.orientationCalLeftSideDone
                                 calInProgress:      controller.orientationCalLeftSideInProgress
                                 calInProgressText:  controller.orientationCalLeftSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalLeftSideRotate ? "qrc:///qmlimages/VehicleLeftRotate.png" : "qrc:///qmlimages/VehicleLeft.png"
+                                imageSource:        "qrc:///qmlimages/VehicleLeft.png"
                             }
                             VehicleRotationCal {
                                 width:              parent.indicatorWidth
@@ -739,7 +710,34 @@ SetupPage {
                                 calValid:           controller.orientationCalRightSideDone
                                 calInProgress:      controller.orientationCalRightSideInProgress
                                 calInProgressText:  controller.orientationCalRightSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
-                                imageSource:        controller.orientationCalRightSideRotate ? "qrc:///qmlimages/VehicleRightRotate.png" : "qrc:///qmlimages/VehicleRight.png"
+                                imageSource:        "qrc:///qmlimages/VehicleRight.png"
+                            }
+                            VehicleRotationCal {
+                                width:              parent.indicatorWidth
+                                height:             parent.indicatorHeight
+                                visible:            controller.orientationCalNoseDownSideVisible
+                                calValid:           controller.orientationCalNoseDownSideDone
+                                calInProgress:      controller.orientationCalNoseDownSideInProgress
+                                calInProgressText:  controller.orientationCalNoseDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                imageSource:        "qrc:///qmlimages/VehicleNoseDown.png"
+                            }
+                            VehicleRotationCal {
+                                width:              parent.indicatorWidth
+                                height:             parent.indicatorHeight
+                                visible:            controller.orientationCalTailDownSideVisible
+                                calValid:           controller.orientationCalTailDownSideDone
+                                calInProgress:      controller.orientationCalTailDownSideInProgress
+                                calInProgressText:  controller.orientationCalTailDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                imageSource:        "qrc:///qmlimages/VehicleTailDown.png"
+                            }
+                            VehicleRotationCal {
+                                width:              parent.indicatorWidth
+                                height:             parent.indicatorHeight
+                                visible:            controller.orientationCalUpsideDownSideVisible
+                                calValid:           controller.orientationCalUpsideDownSideDone
+                                calInProgress:      controller.orientationCalUpsideDownSideInProgress
+                                calInProgressText:  controller.orientationCalUpsideDownSideRotate ? qsTr("Rotate") : qsTr("Hold Still")
+                                imageSource:        "qrc:///qmlimages/VehicleUpsideDown.png"
                             }
                         }
                     }

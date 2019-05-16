@@ -30,8 +30,6 @@ Item {
     width:  size
     height: size
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
     Item {
         id:             instrument
         anchors.fill:   parent
@@ -42,10 +40,10 @@ Item {
         AuterionArtificialHorizon {
             rollAngle:          _rollAngle
             pitchAngle:         _pitchAngle
-            skyColor1:          "#000"
-            skyColor2:          "#0b0bdf"
-            groundColor1:       "#025504"
-            groundColor2:       "#341c0b"
+            skyColor1:          "#0a2e50"
+            skyColor2:          "#2f85d4"
+            groundColor1:       "#897459"
+            groundColor2:       "#4b3820"
             anchors.fill:       parent
         }
         //----------------------------------------------------
@@ -67,11 +65,14 @@ Item {
         //-- Pointer
         Image {
             id:                 pointer
+            height:             size * 0.0625
+            width:              height
             source:             "/auterion/img/attitude_pointer.svg"
-            mipmap:             true
+            antialiasing:       true
             fillMode:           Image.PreserveAspectFit
-            anchors.fill:       parent
-            sourceSize.height:  parent.height
+            sourceSize.height:  height
+            anchors.top:        parent.top
+            anchors.horizontalCenter: parent.horizontalCenter
         }
         //----------------------------------------------------
         //-- Pitch
@@ -106,9 +107,9 @@ Item {
     }
 
     OpacityMask {
-        anchors.fill: instrument
-        source: instrument
-        maskSource: mask
+        anchors.fill:   instrument
+        source:         instrument
+        maskSource:     mask
     }
 
     Rectangle {
@@ -121,15 +122,15 @@ Item {
     }
 
     QGCLabel {
-        anchors.bottomMargin:       Math.round(ScreenTools.defaultFontPixelHeight * .75)
+        anchors.bottomMargin:       Math.round(ScreenTools.defaultFontPixelHeight * 0.5)
         anchors.bottom:             parent.bottom
         anchors.horizontalCenter:   parent.horizontalCenter
         text:                       _headingString3
         color:                      "white"
         visible:                    showHeading
-
+        font.pointSize:             ScreenTools.smallFontPointSize
         property string _headingString: vehicle ? vehicle.heading.rawValue.toFixed(0) : "OFF"
-        property string _headingString2: _headingString.length === 1 ? "0" + _headingString : _headingString
+        property string _headingString2: _headingString.length  === 1 ? "0" + _headingString  : _headingString
         property string _headingString3: _headingString2.length === 2 ? "0" + _headingString2 : _headingString2
     }
 }

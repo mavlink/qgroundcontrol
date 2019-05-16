@@ -1087,56 +1087,6 @@ void UAS::pairRX(int rxType, int rxSubType)
 }
 
 /**
-* If enabled, connect the flight gear link.
-*/
-#ifndef __mobile__
-void UAS::enableHilFlightGear(bool enable, QString options, bool sensorHil, QObject * configuration)
-{
-    Q_UNUSED(configuration);
-
-    QGCFlightGearLink* link = dynamic_cast<QGCFlightGearLink*>(simulation);
-    if (!link) {
-        // Delete wrong sim
-        if (simulation) {
-            stopHil();
-            delete simulation;
-        }
-        simulation = new QGCFlightGearLink(_vehicle, options);
-    }
-
-    float noise_scaler = 0.0001f;
-    xacc_var = noise_scaler * 0.2914f;
-    yacc_var = noise_scaler * 0.2914f;
-    zacc_var = noise_scaler * 0.9577f;
-    rollspeed_var = noise_scaler * 0.8126f;
-    pitchspeed_var = noise_scaler * 0.6145f;
-    yawspeed_var = noise_scaler * 0.5852f;
-    xmag_var = noise_scaler * 0.0786f;
-    ymag_var = noise_scaler * 0.0566f;
-    zmag_var = noise_scaler * 0.0333f;
-    abs_pressure_var = noise_scaler * 0.5604f;
-    diff_pressure_var = noise_scaler * 0.2604f;
-    pressure_alt_var = noise_scaler * 0.5604f;
-    temperature_var = noise_scaler * 0.7290f;
-
-    // Connect Flight Gear Link
-    link = dynamic_cast<QGCFlightGearLink*>(simulation);
-    link->setStartupArguments(options);
-    link->sensorHilEnabled(sensorHil);
-    // FIXME: this signal is not on the base hil configuration widget, only on the FG widget
-    //QObject::connect(configuration, SIGNAL(barometerOffsetChanged(float)), link, SLOT(setBarometerOffset(float)));
-    if (enable)
-    {
-        startHil();
-    }
-    else
-    {
-        stopHil();
-    }
-}
-#endif
-
-/**
 * If enabled, connect the JSBSim link.
 */
 #ifndef __mobile__

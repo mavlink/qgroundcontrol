@@ -18,7 +18,7 @@ exists($$PWD/custom/custom.pri) {
     AUTERION_QGC_VER_FIRST_BUILD = 0
 
     #   Build number is automatic
-
+    #   Uses the current branch. This way it works on any branch including build-server's PR branches
     AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list $$GIT_BRANCH --first-parent --count)
     win32 {
         AUTERION_QGC_VER_BUILD = $$system("set /a $$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD")
@@ -148,6 +148,15 @@ exists($$PWD/custom/custom.pri) {
         $$PWD/src \
 
     #-------------------------------------------------------------------------------------
+    # Google Breakpad
+
+    !DebugBuild {
+        AndroidBuild {
+            include($$QGCROOT/custom/src/CrashManager/CrashManager.pri)
+        }
+    }
+
+    #-------------------------------------------------------------------------------------
     # Firmware/AutoPilot Plugin
 
     INCLUDEPATH += \
@@ -213,8 +222,17 @@ exists($$PWD/custom/custom.pri) {
     }
 
     #-------------------------------------------------------------------------------------
+    # QZXing
+    #DEFINES += QGC_ENABLE_QZXING
+    #CONFIG  += qzxing_qml
+    #CONFIG  += qzxing_multimedia
+    #include($$QGCROOT/custom/qzxing/src/QZXing.pri)
+
+    #-------------------------------------------------------------------------------------
     # Custom setup
     LinxuBuild {
+        CONFIG += QGC_DISABLE_BUILD_SETUP
+        include($$QGCROOT/QGCSetup.pri)
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/deploy/qgroundcontrol.desktop $$DESTDIR
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/res/src/Auterion_Icon.png $$DESTDIR/qgroundcontrol.png

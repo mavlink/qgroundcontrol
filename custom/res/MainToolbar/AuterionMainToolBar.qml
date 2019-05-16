@@ -7,9 +7,9 @@
  *
  ****************************************************************************/
 
-import QtQuick              2.11
-import QtQuick.Layouts      1.2
-import QtQuick.Controls     1.2
+import QtQuick          2.11
+import QtQuick.Controls 2.4
+import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -20,87 +20,58 @@ import QGroundControl.Controllers           1.0
 
 import Auterion.Widgets                     1.0
 
-Rectangle {
-    id:         toolBar
-    visible:    !QGroundControl.videoManager.fullScreen
-    color:      flyButton.checked ? Qt.rgba(0.04314,0.086275,0.1607843,0.85) : Qt.rgba(0,0,0,0.75)
-
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
-    property var  _activeVehicle:  QGroundControl.multiVehicleManager.activeVehicle
-
-    signal showSettingsView
-    signal showSetupView
-    signal showPlanView
-    signal showFlyView
-    signal showAnalyzeView
-    signal armVehicle
-    signal disarmVehicle
-    signal vtolTransitionToFwdFlight
-    signal vtolTransitionToMRFlight
-
-    function checkSettingsButton() {
-        settingsButton.checked = true
+Item {
+    id:                                     toolBar
+    anchors.fill:                           parent
+    property string sectionTitle:           qsTr("Fly")
+    property bool   inPlanView:             planViewLoader.visible
+    property bool   inFlyView:              rootBackground.visible
+    //-------------------------------------------------------------------------
+    //-- Setup can be invoked from c++ side
+    Connections {
+        target: setupWindow
+        onVisibleChanged: {
+            if(setupWindow.visible) {
+                vehicleSetup.checked = true
+                sectionTitle = vehicleSetup.text
+            }
+        }
     }
-
-    function checkSetupButton() {
-        setupButton.checked = true
-    }
-
-    function checkPlanButton() {
-        planButton.checked = true
-    }
-
-    function checkFlyButton() {
-        flyButton.checked = true
-    }
-
-    function checkAnalyzeButton() {
-        analyzeButton.checked = true
-    }
-
+    //-------------------------------------------------------------------------
+    //-- Initial State
     Component.onCompleted: {
-        //-- TODO: Get this from the actual state
         flyButton.checked = true
+        sectionTitle = flyButton.text
     }
-
-    // Prevent all clicks from going through to lower layers
-    DeadMouseArea {
-        anchors.fill: parent
+    //-------------------------------------------------------------------------
+    //-- Fly/Plan state toggle
+    onInPlanViewChanged: {
+        if(inPlanView) {
+            planButton.checked = true
+            sectionTitle = planButton.text
+        }
     }
-
-    /// Bottom single pixel divider
-    Rectangle {
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.bottom: parent.bottom
-        height:         1
-        color:          "black"
-        visible:        qgcPal.globalTheme === QGCPalette.Light
+    onInFlyViewChanged: {
+        if(inFlyView) {
+            flyButton.checked = true
+            sectionTitle = flyButton.text
+        }
     }
-
-    //---------------------------------------------
-    // Left Toolbar Row
     Row {
-        anchors.top:        parent.top
-        anchors.bottom:     parent.bottom
-        anchors.left:       parent.left
-        anchors.leftMargin: ScreenTools.defaultFontPixelWidth
-        spacing:            ScreenTools.defaultFontPixelWidth * 2
-
-        ExclusiveGroup { id: mainActionGroup }
-
-        AuterionToolBarButton {
-            id:                 settingsButton
-            logo:               true
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
-            visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
+        id:                                 iconRow
+        height:                             parent.height
+        anchors.left:                       parent.left
+        spacing:                            ScreenTools.defaultFontPixelWidth * 2
+        AuterionIconButton {
+            height:                         parent.height
+            text:                           sectionTitle
             onClicked: {
+                if(drawer.visible) {
+                    drawer.close()
+                } else {
+                    drawer.open()
+                }
                 // Easter egg mechanism
-                toolBar.showSettingsView()
                 _clickCount++
                 eggTimer.restart()
                 if (_clickCount == 5) {
@@ -114,108 +85,199 @@ Rectangle {
                 onTriggered:    parent._clickCount = 0
             }
         }
-
-        AuterionToolBarButton {
-            id:                 flyButton
-            text:               qsTr("Flight Mode")
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/auterion/img/menu_flight.svg"
-            onClicked:          toolBar.showFlyView()
+        Rectangle {
+            width:                          1
+            height:                         parent.height
+            color:                          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
         }
-
-        AuterionToolBarButton {
-            id:                 planButton
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/auterion/img/menu_plan.svg"
-            onClicked:          toolBar.showPlanView()
-        }
-
-        AuterionToolBarButton {
-            id:                 setupButton
-            text:               qsTr("Vehicle Settings")
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/auterion/img/menu_gear.svg"
-            onClicked:          toolBar.showSetupView()
-        }
-
-        AuterionToolBarButton {
-            id:                 analyzeButton
-            text:               qsTr("Analyze")
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            exclusiveGroup:     mainActionGroup
-            source:             "/qmlimages/Analyze.svg"
-            visible:            !ScreenTools.isMobile && QGroundControl.corePlugin.showAdvancedUI
-            onClicked:          toolBar.showAnalyzeView()
-        }
-
+        //-------------------------------------------------------------------------
+        //-- Multi Vehicle Selector
         Loader {
-            anchors.top:        parent.top
-            anchors.bottom:     parent.bottom
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * 0.66
-            source:             "/toolbar/MessageIndicator.qml"
+            anchors.top:                    parent.top
+            anchors.bottom:                 parent.bottom
+            source:                         "/auterion/AuterionMultiVehicleSelector.qml"
+            visible:                        activeVehicle && !inPlanView
         }
-
-    }
-
-    AuterionLabel {
-        text:                       qsTr("Waiting For Vehicle")
-        level:                      0.75
-        pointSize:                  ScreenTools.defaultFontPointSize
-        visible:                    !_activeVehicle
-        anchors.centerIn:           parent
-    }
-
-    Row {
-        spacing:                    ScreenTools.defaultFontPixelWidth
-        visible:                    _activeVehicle
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
-        anchors.horizontalCenter:   parent.horizontalCenter
-        Loader {
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            source:                 "/auterion/AuterionModeIndicator.qml"
+        Rectangle {
+            width:                          1
+            height:                         parent.height
+            color:                          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
+            visible:                        activeVehicle && !inPlanView
         }
+        //-------------------------------------------------------------------------
+        //-- Flight Mode
         Loader {
-            anchors.top:            parent.top
-            anchors.bottom:         parent.bottom
-            source:                 "/auterion/AuterionArmedIndicator.qml"
+            anchors.top:                    parent.top
+            anchors.bottom:                 parent.bottom
+            source:                         "/auterion/AuterionModeIndicator.qml"
+            visible:                        activeVehicle && !inPlanView
         }
     }
-
-    Row {
-        id:                         indicatorRow
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
-        anchors.right:              parent.right
-        anchors.rightMargin:        ScreenTools.defaultFontPixelWidth
-        spacing:                    ScreenTools.defaultFontPixelWidth * 2
-        readonly property real buttonMargins: ScreenTools.defaultFontPixelHeight * 0.66
-        Repeater {
-            model:                  _activeVehicle ? _activeVehicle.toolBarIndicators : []
-            Loader {
-                anchors.top:            parent.top
-                anchors.topMargin:      indicatorRow.buttonMargins
-                anchors.bottom:         parent.bottom
-                anchors.bottomMargin:   indicatorRow.buttonMargins
-                source:                 modelData;
+    //-------------------------------------------------------------------------
+    //-- Arm/Disarm
+    Loader {
+        anchors.top:                        parent.top
+        anchors.bottom:                     parent.bottom
+        anchors.horizontalCenter:           parent.horizontalCenter
+        source:                             "/auterion/AuterionArmedIndicator.qml"
+        visible:                            activeVehicle && !inPlanView
+    }
+    //-------------------------------------------------------------------------
+    // Indicators
+    Loader {
+        source:                             inPlanView ? "/qml/PlanToolBarIndicators.qml" : "/auterion/AuterionMainToolBarIndicators.qml"
+        anchors.left:                       iconRow.right
+        anchors.leftMargin:                 ScreenTools.defaultFontPixelWidth * 2
+        anchors.right:                      parent.right
+        anchors.top:                        parent.top
+        anchors.bottom:                     parent.bottom
+    }
+    //-------------------------------------------------------------------------
+    // Parameter download progress bar
+    Rectangle {
+        anchors.bottom:                     parent.bottom
+        height:                             ScreenTools.defaultFontPixelheight * 0.25
+        width:                              activeVehicle ? activeVehicle.parameterManager.loadProgress * parent.width : 0
+        color:                              qgcPal.colorGreen
+    }
+    //-------------------------------------------------------------------------
+    // Bottom single pixel divider
+    Rectangle {
+        anchors.left:                       parent.left
+        anchors.right:                      parent.right
+        anchors.bottom:                     parent.bottom
+        height:                             1
+        color:                              "black"
+        visible:                            qgcPal.globalTheme === QGCPalette.Light
+    }
+    //-------------------------------------------------------------------------
+    //-- Navigation Drawer (Left to Right, on command or using touch gestures)
+    Drawer {
+        id:                                 drawer
+        y:                                  header.height
+        width:                              navButtonWidth
+        height:                             mainWindow.height - header.height
+        background: Rectangle {
+            color:  qgcPal.globalTheme === QGCPalette.Light ? "white" : "#0B1420"
+        }
+        ButtonGroup {
+            id:                             buttonGroup
+            buttons:                        buttons.children
+        }
+        ColumnLayout {
+            id:                             buttons
+            anchors.top:                    parent.top
+            anchors.left:                   parent.left
+            anchors.right:                  parent.right
+            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
+            AuterionToolBarButton {
+                id:                         flyButton
+                text:                       qsTr("Fly")
+                icon.source:                "/auterion/img/vehicle.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    checked = true
+                    drawer.close()
+                    sectionTitle = text
+                    mainWindow.showFlyView()
+                }
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
+            AuterionToolBarButton {
+                id:                         planButton
+                text:                       qsTr("Plan")
+                icon.source:                "/auterion/img/plan.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    checked = true
+                    drawer.close()
+                    sectionTitle = text
+                    mainWindow.showPlanView()
+                }
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
+            AuterionToolBarButton {
+                text:                       qsTr("Analyze")
+                icon.source:                "/qmlimages/Analyze.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    checked = true
+                    drawer.close()
+                    sectionTitle = text
+                    mainWindow.showAnalyzeView()
+                }
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
+            AuterionToolBarButton {
+                id:                         vehicleSetup
+                text:                       qsTr("Vehicle Setup")
+                icon.source:                "/auterion/img/vehicle_settings.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    checked = true
+                    drawer.close()
+                    sectionTitle = text
+                    mainWindow.showSetupView()
+                }
+            }
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
+        }
+        ColumnLayout {
+            id:                             lowerButtons
+            anchors.bottom:                 parent.bottom
+            anchors.bottomMargin:           ScreenTools.defaultFontPixelHeight * 0.125
+            anchors.left:                   parent.left
+            anchors.right:                  parent.right
+            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
+            Rectangle {
+                Layout.alignment:           Qt.AlignVCenter
+                width:                      parent.width
+                height:                     1
+                color:                      Qt.rgba(1,1,1,0.15)
+            }
+            AuterionToolBarButton {
+                id:                         settingsButton
+                text:                       qsTr("Settings")
+                icon.source:                "/auterion/img/settings.svg"
+                Layout.fillWidth:           true
+                onClicked: {
+                    checked = true
+                    buttonGroup.checkState = Qt.Unchecked
+                    drawer.close()
+                    sectionTitle = text
+                    mainWindow.showSettingsView()
+                }
+            }
+            Connections {
+                target:                     buttonGroup
+                onClicked:                  settingsButton.checked = false
             }
         }
     }
-
-    // Small parameter download progress bar
-    Rectangle {
-        anchors.bottom: parent.bottom
-        height:         toolBar.height * 0.05
-        width:          _activeVehicle ? _activeVehicle.parameterManager.loadProgress * parent.width : 0
-        color:          qgcPal.colorGreen
-    }
-
 }

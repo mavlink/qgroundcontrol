@@ -7,16 +7,12 @@ import QGroundControl.FactControls 1.0
 import QGroundControl.Controls     1.0
 import QGroundControl.Palette      1.0
 
-FactPanel {
-    id:             panel
+Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
-    property var _activeVehicle:     QGroundControl.multiVehicleManager.activeVehicle
-    property bool _firmware34:       _activeVehicle.versionCompare(3, 5, 0) < 0
+    property bool   _firmware34: activeVehicle.versionCompare(3, 5, 0) < 0
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-    FactPanelController { id: controller; factPanel: panel }
+    FactPanelController { id: controller; }
 
     // Enable/Action parameters
     property Fact _failsafeBatteryEnable:     controller.getParameterFact(-1, "r.BATT_FS_LOW_ACT")

@@ -64,7 +64,7 @@ public:
     static const int boardIDPX4FMUV1 = 5;       ///< PX4 V1 board, as from USB PID
     static const int boardIDPX4FMUV2 = 9;       ///< PX4 V2 board, as from USB PID
     static const int boardIDPX4FMUV4 = 11;      ///< PX4 V4 board, as from USB PID
-    static const int boardIDPX4FMUV4PRO = 13;      ///< PX4 V4PRO board, as from USB PID
+    static const int boardIDPX4FMUV4PRO = 13;   ///< PX4 V4PRO board, as from USB PID
     static const int boardIDPX4FMUV5 = 50;      ///< PX4 V5 board, as from USB PID
     static const int boardIDPX4Flow = 6;        ///< PX4 Flow board, as from USB PID
     static const int boardIDAeroCore = 98;      ///< Gumstix AeroCore board, as from USB PID
@@ -75,7 +75,7 @@ public:
     static const int boardIDASCV1 = 65;         ///< ASC V1 board, as from USB PID
     static const int boardIDCrazyflie2 = 12;    ///< Crazyflie 2.0 board, as from USB PID
     static const int boardIDOmnibusF4SD = 42;   ///< Omnibus F4 SD, as from USB PID
-    static const int boardIDNXPHliteV3 = 28;    ///< NXPHliteV3 board, as from USB PID
+    static const int boardIDFMUK66V3 = 28;    ///< FMUK66V3 board, as from USB PID
 
     /// Simulated board id for V3 which is a V2 board which supports larger flash space
     /// IMPORTANT: Make sure this id does not conflict with any newly added real board ids

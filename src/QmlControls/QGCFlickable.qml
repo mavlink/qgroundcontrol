@@ -10,8 +10,6 @@ Flickable {
 
     property color indicatorColor: qgcPal.text
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
     Component.onCompleted: {
         var indicatorComponent = Qt.createComponent("QGCFlickableVerticalIndicator.qml")
         indicatorComponent.createObject(root)

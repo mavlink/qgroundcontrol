@@ -43,6 +43,8 @@ public:
     virtual void                setCurrentCamera    (int sel);
     //-- Current stream
     virtual QGCVideoStreamInfo* currentStreamInstance();
+    //-- Current thermal stream
+    virtual QGCVideoStreamInfo* thermalStreamInstance();
 
 signals:
     void    camerasChanged          ();

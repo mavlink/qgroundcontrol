@@ -27,26 +27,20 @@ import QGroundControl.Palette               1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.SettingsManager       1.0
 
-QGCView {
-    id:                 _qgcView
-    viewPanel:          panel
+Rectangle {
+    id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent
     anchors.margins:    ScreenTools.defaultFontPixelWidth
 
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 26
     property real _valueWidth:                  ScreenTools.defaultFontPixelWidth * 20
-    property real _panelWidth:                  _qgcView.width * _internalWidthRatio
+    property real _panelWidth:                  _root.width * _internalWidthRatio
     property Fact _microhardEnabledFact:        QGroundControl.settingsManager.appSettings.enableMicrohard
     property bool _microhardEnabled:            _microhardEnabledFact.rawValue
 
     readonly property real _internalWidthRatio:          0.8
 
-    QGCPalette { id: qgcPal }
-
-    QGCViewPanel {
-        id:             panel
-        anchors.fill:   parent
         QGCFlickable {
             clip:               true
             anchors.fill:       parent
@@ -54,7 +48,7 @@ QGCView {
             contentWidth:       settingsColumn.width
             Column {
                 id:                 settingsColumn
-                width:              _qgcView.width
+            width:              _root.width
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.margins:    ScreenTools.defaultFontPixelWidth
                 //-----------------------------------------------------------------
@@ -206,27 +200,6 @@ QGCView {
                                 Layout.minimumWidth: _valueWidth
                             }
                             QGCLabel {
-                                text:           qsTr("Ground Unit IP Address:")
-                                Layout.minimumWidth: _labelWidth
-                            }
-                            QGCTextField {
-                                id:             groundIP
-                                text:           QGroundControl.microhardManager.groundIPAddr
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
-                                text:           qsTr("Air Unit IP Address:")
-                            }
-                            QGCTextField {
-                                id:             airIP
-                                text:           QGroundControl.microhardManager.airIPAddr
-                                enabled:        true
-                                inputMethodHints:    Qt.ImhFormattedNumbersOnly
-                                Layout.minimumWidth: _valueWidth
-                            }
-                            QGCLabel {
                                 text:           qsTr("Network Mask:")
                             }
                             QGCTextField {
@@ -270,16 +243,12 @@ QGCView {
                             function testEnabled() {
                                 if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
                                     remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
-                                    groundIP.text        === QGroundControl.microhardManager.groundIPAddr &&
-                                    airIP.text           === QGroundControl.microhardManager.airIPAddr &&
                                     netMask.text         === QGroundControl.microhardManager.netMask &&
                                     configPassword.text  === QGroundControl.microhardManager.configPassword &&
                                     encryptionKey.text   === QGroundControl.microhardManager.encryptionKey)
                                     return false
                                 if(!validateIPaddress(localIP.text))  return false
                                 if(!validateIPaddress(remoteIP.text)) return false
-                                if(!validateIPaddress(groundIP.text)) return false
-                                if(!validateIPaddress(airIP.text)) return false
                                 if(!validateIPaddress(netMask.text))  return false
                                 return true
                             }
@@ -287,7 +256,7 @@ QGCView {
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
                             onClicked: {
-                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, groundIP.text, airIP.text, netMask.text, configPassword.text, encryptionKey.text)
+                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, netMask.text, configPassword.text, encryptionKey.text)
                             }
 
                         }
@@ -296,4 +265,3 @@ QGCView {
             }
         }
     }
-}

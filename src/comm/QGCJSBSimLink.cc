@@ -26,7 +26,7 @@
 #include "UAS.h"
 #include "QGCJSBSimLink.h"
 #include "QGC.h"
-#include "QGCMessageBox.h"
+//-- TODO: #include "QGCMessageBox.h"
 
 QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port)
     : _vehicle(vehicle)
@@ -106,14 +106,14 @@ void QGCJSBSimLink::run()
     QFileInfo executable(processJSB);
     if (!executable.isExecutable())
     {
-        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
+        //-- TODO: QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim was not found at %1").arg(processJSB));
         sane = false;
     }
 
     QFileInfo root(rootJSB);
     if (!root.isDir())
     {
-        QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
+        //-- TODO: QGCMessageBox::critical("JSBSim", tr("JSBSim failed to start. JSBSim data directory was not found at %1").arg(rootJSB));
         sane = false;
     }
 
@@ -177,7 +177,7 @@ void QGCJSBSimLink::processError(QProcess::ProcessError err)
             break;
     }
     
-    QGCMessageBox::critical("JSBSim HIL", msg);
+    //-- TODO: QGCMessageBox::critical("JSBSim HIL", msg);
 }
 
 /**

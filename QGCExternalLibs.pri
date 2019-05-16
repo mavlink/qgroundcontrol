@@ -100,15 +100,6 @@ SOURCES += \
     libs/shapelib/safileio.c
 
 #
-# [REQUIRED] QWT plotting library dependency. Provides plotting capabilities.
-#
-!MobileBuild {
-include(libs/qwt.pri)
-DEPENDPATH += libs/qwt
-INCLUDEPATH += libs/qwt
-}
-
-#
 # [REQUIRED] SDL dependency. Provides joystick/gamepad support.
 # The SDL is packaged with QGC for the Mac and Windows. Linux support requires installing the SDL
 # library (development libraries and static binaries).

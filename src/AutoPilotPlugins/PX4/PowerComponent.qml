@@ -88,15 +88,13 @@ SetupPage {
 
                 PowerComponentController {
                     id:         controller
-                    factPanel:  powerPage.viewPanel
-
-                    onOldFirmware:          showMessage(qsTr("ESC Calibration"), qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName), StandardButton.Ok)
-                    onNewerFirmware:        showMessage(qsTr("ESC Calibration"), qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName), StandardButton.Ok)
-                    onBatteryConnected:     showMessage(qsTr("ESC Calibration"), qsTr("Performing calibration. This will take a few seconds.."), 0)
-                    onCalibrationFailed:    showMessage(qsTr("ESC Calibration failed"), errorMessage, StandardButton.Ok)
-                    onCalibrationSuccess:   showMessage(qsTr("ESC Calibration"), qsTr("Calibration complete. You can disconnect your battery now if you like."), StandardButton.Ok)
-                    onConnectBattery:       showMessage(qsTr("ESC Calibration"), highlightPrefix + qsTr("WARNING: Props must be removed from vehicle prior to performing ESC calibration.") + highlightSuffix + qsTr(" Connect the battery now and calibration will begin."), 0)
-                    onDisconnectBattery:    showMessage(qsTr("ESC Calibration failed"), qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."), StandardButton.Ok)
+                    onOldFirmware:          mainWindow.showMessageDialog(qsTr("ESC Calibration"), qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade to a newer firmware.").arg(QGroundControl.appName))
+                    onNewerFirmware:        mainWindow.showMessageDialog(qsTr("ESC Calibration"), qsTr("%1 cannot perform ESC Calibration with this version of firmware. You will need to upgrade %1.").arg(QGroundControl.appName))
+                    onBatteryConnected:     mainWindow.showMessageDialog(qsTr("ESC Calibration"), qsTr("Performing calibration. This will take a few seconds.."))
+                    onCalibrationFailed:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"), errorMessage)
+                    onCalibrationSuccess:   mainWindow.showMessageDialog(qsTr("ESC Calibration"), qsTr("Calibration complete. You can disconnect your battery now if you like."))
+                    onConnectBattery:       mainWindow.showMessageDialog(qsTr("ESC Calibration"), highlightPrefix + qsTr("WARNING: Props must be removed from vehicle prior to performing ESC calibration.") + highlightSuffix + qsTr(" Connect the battery now and calibration will begin."))
+                    onDisconnectBattery:    mainWindow.showMessageDialog(qsTr("ESC Calibration failed"), qsTr("You must disconnect the battery prior to performing ESC Calibration. Disconnect your battery and try again."))
                 }
 
                 Component {
@@ -302,7 +300,7 @@ SetupPage {
                         QGCButton {
                             id:                 voltMultCalculateButton
                             text:               qsTr("Calculate")
-                            onClicked:          showDialog(calcVoltageDividerDlgComponent, qsTr("Calculate Voltage Divider"), powerPage.showDialogDefaultWidth, StandardButton.Close)
+                            onClicked:          mainWindow.showDialog(calcVoltageDividerDlgComponent, qsTr("Calculate Voltage Divider"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                         }
 
                         Item { width: 1; height: 1; Layout.columnSpan: 2 }
@@ -330,7 +328,7 @@ SetupPage {
                         QGCButton {
                             id:                 ampPerVoltCalculateButton
                             text:               qsTr("Calculate")
-                            onClicked:          showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), powerPage.showDialogDefaultWidth, StandardButton.Close)
+                            onClicked:          mainWindow.showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                         }
 
                         Item { width: 1; height: 1; Layout.columnSpan: 2 }

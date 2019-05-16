@@ -33,6 +33,7 @@ public:
     DEFINE_SETTINGFACT(telemetrySaveNotArmed)
     DEFINE_SETTINGFACT(audioMuted)
     DEFINE_SETTINGFACT(virtualJoystick)
+    DEFINE_SETTINGFACT(virtualJoystickCentralized)
     DEFINE_SETTINGFACT(appFontPointSize)
     DEFINE_SETTINGFACT(indoorPalette)
     DEFINE_SETTINGFACT(showLargeCompass)
@@ -48,6 +49,7 @@ public:
     DEFINE_SETTINGFACT(enableTaisyncVideo)
     DEFINE_SETTINGFACT(enableMicrohard)
     DEFINE_SETTINGFACT(language)
+    DEFINE_SETTINGFACT(disableAllPersistence)
 
     // Although this is a global setting it only affects ArduPilot vehicle since PX4 automatically starts the stream from the vehicle side
     DEFINE_SETTINGFACT(apmStartMavlinkStreams)

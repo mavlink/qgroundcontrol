@@ -1,10 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 21.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill:none;stroke:#FFFFFF;stroke-width:8;stroke-miterlimit:10;}
-</style>
-<line class="st0" x1="28.836" y1="17.171" x2="28.836" y2="54.829"/>
-<line class="st0" x1="43.164" y1="17.171" x2="43.164" y2="54.829"/>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7.086 16.9626V7.03068C7.086 6.61115 7.55215 6.27084 7.93027 6.27084H9.94013C10.4063 6.27084 10.7844 6.61115 10.7844 7.03068V16.9626C10.7844 17.3821 10.3183 17.7224 9.94013 17.7224H7.93027C7.46412 17.7224 7.086 17.3821 7.086 16.9626V16.9626Z" fill="white"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M13.2021 16.9626V7.03068C13.2021 6.61115 13.6683 6.27084 14.0464 6.27084H16.0563C16.5224 6.27084 16.9005 6.61115 16.9005 7.03068V16.9626C16.9005 17.3821 16.4344 17.7224 16.0563 17.7224H14.0464C13.5802 17.7224 13.2021 17.3821 13.2021 16.9626Z" fill="white"/>
 </svg>

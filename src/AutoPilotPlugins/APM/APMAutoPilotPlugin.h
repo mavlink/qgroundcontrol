@@ -15,7 +15,6 @@
 #include "Vehicle.h"
 
 class APMAirframeComponent;
-class APMAirframeLoader;
 class APMFlightModesComponent;
 class APMRadioComponent;
 class APMTuningComponent;
@@ -55,9 +54,13 @@ protected:
     APMSafetyComponent*         _safetyComponent;
     APMSensorsComponent*        _sensorsComponent;
     APMTuningComponent*         _tuningComponent;
-    APMAirframeLoader*          _airframeFacts;
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
+
+#if !defined(NO_SERIAL_LINK) && !defined(__android__)
+private slots:
+    void _checkForBadCubeBlack(void);
+#endif
 
 private:
     QVariantList                _components;

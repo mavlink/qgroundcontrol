@@ -24,12 +24,9 @@ import QGroundControl.ScreenTools   1.0
 /// PX4 Flight Mode configuration. This control will load either the Simple or Advanced Flight Mode config
 /// based on current parameter settings.
 SetupPage {
-    id:             flightModesPage
     pageComponent:  pageComponent
-
     Component {
         id: pageComponent
-
         Loader {
             width:  availableWidth
             height: availableHeight
@@ -43,11 +40,7 @@ SetupPage {
 
             FactPanelController {
                 id:         controller
-                factPanel:  flightModesPage.viewPanel
             }
-
-            property var qgcView:       flightModesPage
-            property var qgcViewPanel:  flightModesPage.viewPanel
         }
     }
 }

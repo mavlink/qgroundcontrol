@@ -16,6 +16,8 @@ CheckBox {
     activeFocusOnPress: true
 
     style: CheckBoxStyle {
+        spacing: _noText ? 0 : ScreenTools.defaultFontPixelWidth * 0.25
+
         label: Item {
             implicitWidth:  _noText ? 0 : text.implicitWidth + ScreenTools.defaultFontPixelWidth * 0.25
             implicitHeight: _noText ? 0 : Math.max(text.implicitHeight, ScreenTools.checkBoxIndicatorSize)
@@ -26,6 +28,7 @@ CheckBox {
                 text:               control.text
                 font.pointSize:     textFontPointSize
                 font.bold:          control.textBold
+                font.family:        ScreenTools.normalFontFamily
                 color:              control.textColor
                 anchors.centerIn:   parent
             }
@@ -41,7 +44,7 @@ CheckBox {
                 border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
                 QGCColoredImage {
-                    source: "/qmlimages/checkbox-check.svg"
+                    source:     "/qmlimages/checkbox-check.svg"
                     color:      "black"
                     opacity:    control.checkedState === Qt.Checked ? (control.enabled ? 1 : 0.5) : 0
                     mipmap:     true

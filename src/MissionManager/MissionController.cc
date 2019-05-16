@@ -31,11 +31,6 @@
 #include "KML.h"
 #include "QGCCorePlugin.h"
 
-#ifndef __mobile__
-#include "MainWindow.h"
-#include "QGCQFileDialog.h"
-#endif
-
 #define UPDATE_TIMEOUT 5000 ///< How often we check for bounding box changes
 
 QGC_LOGGING_CATEGORY(MissionControllerLog, "MissionControllerLog")
@@ -451,7 +446,9 @@ int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QS
 int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i)
 {
     int sequenceNumber = _nextSequenceNumber();
-    bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) || qobject_cast<CorridorScanComplexItem*>(complexItem);
+    bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) ||
+                            qobject_cast<CorridorScanComplexItem*>(complexItem) ||
+                            qobject_cast<StructureScanComplexItem*>(complexItem);
 
     if (surveyStyleItem) {
         bool rollSupported  = false;

@@ -21,11 +21,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controllers   1.0
 
-QGCView {
-    id:         qgcView
-    viewPanel:  panel
-
-    QGCPalette { id: palette; colorGroupEnabled: panel.enabled }
+Item {
 
     property real _margins:         ScreenTools.defaultFontPixelHeight
     property real _middleRowWidth:  ScreenTools.defaultFontPixelWidth * 18
@@ -40,8 +36,7 @@ QGCView {
     property bool               stResetCounters:false
 
     ESP8266ComponentController {
-        id:             controller
-        factPanel:      panel
+        id: controller
     }
 
     Timer {
@@ -103,7 +98,7 @@ QGCView {
     property Fact hostPort:     controller.getParameterFact(controller.componentID, "WIFI_UDP_HPORT")
     property Fact clientPort:   controller.getParameterFact(controller.componentID, "WIFI_UDP_CPORT")
 
-    QGCViewPanel {
+    Item {
         id:             panel
         anchors.fill:   parent
 
@@ -122,7 +117,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              statusLayout.width  + _margins * 4
                     height:                             settingsRow.height  + _margins * 2
                     Row {
@@ -130,7 +125,7 @@ QGCView {
                         spacing:                        _margins * 4
                         anchors.centerIn:               parent
                         QGCColoredImage {
-                            color:                      palette.text
+                            color:                      qgcPal.text
                             width:                      ScreenTools.defaultFontPixelWidth * 12
                             height:                     width * 1.45
                             sourceSize.height:          width * 1.45
@@ -283,7 +278,7 @@ QGCView {
                     font.family:                        ScreenTools.demiboldFontFamily
                 }
                 Rectangle {
-                    color:                              palette.windowShade
+                    color:                              qgcPal.windowShade
                     width:                              statusLayout.width  + _margins * 4
                     height:                             statusLayout.height + _margins * 2
                     GridLayout {

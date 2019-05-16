@@ -19,6 +19,5 @@ PreFlightCheckButton {
     telemetryTextFailure:   qsTr("No signal or invalid autopilot-RC config. Check RC and console.")
     telemetryFailure:       _unhealthySensors & Vehicle.SysStatusSensorRCReceiver
 
-    property var _activeVehicle:    QGroundControl.multiVehicleManager.activeVehicle
-    property int _unhealthySensors: _activeVehicle ? _activeVehicle.sensorsUnhealthyBits : 0
+    property int _unhealthySensors: activeVehicle ? activeVehicle.sensorsUnhealthyBits : 0
 }

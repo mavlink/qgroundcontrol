@@ -25,10 +25,6 @@ import QGroundControl.ScreenTools   1.0
 Item {
     id: root
 
-    // The following properties must be pushed in from the Loader
-    //property var qgcView      - QGCView control
-    //property var qgcViewPanel - QGCViewPanel control
-
     readonly property bool _shortText: ScreenTools.isTinyScreen
 
     // User visible strings
@@ -93,8 +89,6 @@ Item {
 
     PX4AdvancedFlightModesController {
         id:         controller
-        factPanel:  qgcViewPanel
-
         onModeRowsChanged: recalcModePositions()
     }
 

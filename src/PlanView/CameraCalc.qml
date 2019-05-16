@@ -14,36 +14,53 @@ Column {
     anchors.right:  parent.right
     spacing:        _margin
 
+    visible: !usingPreset || !cameraSpecifiedInPreset
+
     property var    cameraCalc
-    property bool   vehicleFlightIsFrontal: true
+    property bool   vehicleFlightIsFrontal:         true
     property string distanceToSurfaceLabel
+    property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
+    property bool   usingPreset:                    false
+    property bool   cameraSpecifiedInPreset:        false
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
-    property int    _cameraIndex:       1
+    property string _cameraName:        cameraCalc.cameraName.value
     property real   _fieldWidth:        ScreenTools.defaultFontPixelWidth * 10.5
     property var    _cameraList:        [ ]
     property var    _vehicle:           QGroundControl.multiVehicleManager.activeVehicle ? QGroundControl.multiVehicleManager.activeVehicle : QGroundControl.multiVehicleManager.offlineEditingVehicle
     property var    _vehicleCameraList: _vehicle ? _vehicle.staticCameraList : []
+    property bool   _cameraComboFilled: false
 
     readonly property int _gridTypeManual:          0
     readonly property int _gridTypeCustomCamera:    1
     readonly property int _gridTypeCamera:          2
 
-    Component.onCompleted: {
+    Component.onCompleted: _fillCameraCombo()
+
+    on_CameraNameChanged: _updateSelectedCamera()
+
+    function _fillCameraCombo() {
+        _cameraComboFilled = true
         _cameraList.push(cameraCalc.manualCameraName)
         _cameraList.push(cameraCalc.customCameraName)
         for (var i=0; i<_vehicle.staticCameraList.length; i++) {
             _cameraList.push(_vehicle.staticCameraList[i].name)
         }
         gridTypeCombo.model = _cameraList
-        var knownCameraIndex = gridTypeCombo.find(cameraCalc.cameraName.value)
-        if (knownCameraIndex !== -1) {
-            gridTypeCombo.currentIndex = knownCameraIndex
-        } else {
-            console.log("Internal error: Known camera not found", cameraCalc.cameraName.value)
-            gridTypeCombo.currentIndex = _gridTypeCustomCamera
+        _updateSelectedCamera()
+    }
+
+    function _updateSelectedCamera() {
+        if (_cameraComboFilled) {
+            var knownCameraIndex = gridTypeCombo.find(_cameraName)
+            if (knownCameraIndex !== -1) {
+                gridTypeCombo.currentIndex = knownCameraIndex
+            } else {
+                console.log("Internal error: Known camera not found", _cameraName)
+                gridTypeCombo.currentIndex = _gridTypeCustomCamera
+            }
         }
     }
 
@@ -52,8 +69,6 @@ Column {
     ExclusiveGroup {
         id: cameraOrientationGroup
     }
-
-    ExclusiveGroup { id: fixedValueGroup }
 
     SectionHeader {
         id:         cameraHeader
@@ -92,7 +107,6 @@ Column {
                     width:          _editFieldWidth
                     text:           "Landscape"
                     checked:        !!cameraCalc.landscape.value
-                    exclusiveGroup: cameraOrientationGroup
                     onClicked:      cameraCalc.landscape.value = 1
                 }
 
@@ -100,7 +114,6 @@ Column {
                     id:             cameraOrientationPortrait
                     text:           "Portrait"
                     checked:        !cameraCalc.landscape.value
-                    exclusiveGroup: cameraOrientationGroup
                     onClicked:      cameraCalc.landscape.value = 0
                 }
             }
@@ -178,6 +191,7 @@ Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
+                visible:        !usingPreset
                 Item { Layout.fillWidth: true }
                 QGCLabel {
                     Layout.preferredWidth:  _root._fieldWidth
@@ -193,6 +207,7 @@ Column {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 spacing:        _margin
+                visible:        !usingPreset
                 QGCLabel { text: qsTr("Overlap"); Layout.fillWidth: true }
                 FactTextField {
                     Layout.preferredWidth:  _root._fieldWidth
@@ -209,6 +224,7 @@ Column {
                 text:                   qsTr("Select one:")
                 Layout.preferredWidth:  parent.width
                 Layout.columnSpan:      2
+                visible:                !usingPreset
             }
 
             GridLayout {
@@ -217,17 +233,18 @@ Column {
                 columnSpacing:  _margin
                 rowSpacing:     _margin
                 columns:        2
+                visible:        !usingPreset
 
                 QGCRadioButton {
                     id:                     fixedDistanceRadio
                     text:                   distanceToSurfaceLabel
                     checked:                !!cameraCalc.valueSetIsDistance.value
-                    exclusiveGroup:         fixedValueGroup
                     onClicked:              cameraCalc.valueSetIsDistance.value = 1
                 }
 
-                FactTextField {
+                AltitudeFactTextField {
                     fact:                   cameraCalc.distanceToSurface
+                    altitudeMode:           distanceToSurfaceAltitudeMode
                     enabled:                fixedDistanceRadio.checked
                     Layout.fillWidth:       true
                 }
@@ -236,7 +253,6 @@ Column {
                     id:                     fixedImageDensityRadio
                     text:                   qsTr("Ground Res")
                     checked:                !cameraCalc.valueSetIsDistance.value
-                    exclusiveGroup:         fixedValueGroup
                     onClicked:              cameraCalc.valueSetIsDistance.value = 0
                 }
 
@@ -246,33 +262,6 @@ Column {
                     Layout.fillWidth:       true
                 }
             }
-
-            // Calculated values
-/*
-            Taking these out for now since they take up so much space. May come back at a later time.
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        2
-
-                QGCLabel { text: frontalDistanceLabel }
-                FactTextField {
-                    Layout.fillWidth:   true
-                    fact:               cameraCalc.adjustedFootprintFrontal
-                    enabled:            false
-                }
-
-                QGCLabel { text: sideDistanceLabel }
-                FactTextField {
-                    Layout.fillWidth:   true
-                    fact:               cameraCalc.adjustedFootprintSide
-                    enabled:            false
-                }
-            } // GridLayout
-*/
-
         } // Column - Camera spec based ui
 
         // No camera spec ui
@@ -285,8 +274,9 @@ Column {
             visible:        cameraCalc.isManualCamera
 
             QGCLabel { text: distanceToSurfaceLabel }
-            FactTextField {
+            AltitudeFactTextField {
                 fact:               cameraCalc.distanceToSurface
+                altitudeMode:       distanceToSurfaceAltitudeMode
                 Layout.fillWidth:   true
             }
 

@@ -18,5 +18,7 @@
     <string>@EXECUTABLE@</string>
     <key>CFBundleIdentifier</key>
     <string>com.auterion.auteriongs</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Camera Scan or FPV</string>
 </dict>
 </plist>

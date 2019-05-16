@@ -23,26 +23,25 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
     QMap<uint32_t,QString> enumToString;
-    enumToString.insert(STABILIZE, "Stabilize");
-    enumToString.insert(ACRO,      "Acro");
-    enumToString.insert(ALT_HOLD,  "Altitude Hold");
-    enumToString.insert(AUTO,      "Auto");
-    enumToString.insert(GUIDED,    "Guided");
-    enumToString.insert(LOITER,    "Loiter");
-    enumToString.insert(RTL,       "RTL");
-    enumToString.insert(CIRCLE,    "Circle");
-    enumToString.insert(LAND,      "Land");
-    enumToString.insert(DRIFT,     "Drift");
-    enumToString.insert(SPORT,     "Sport");
-    enumToString.insert(FLIP,      "Flip");
-    enumToString.insert(AUTOTUNE,  "Autotune");
-    enumToString.insert(POS_HOLD,  "Position Hold");
-    enumToString.insert(BRAKE,     "Brake");
-    enumToString.insert(THROW,     "Throw");
-    enumToString.insert(AVOID_ADSB,"Avoid ADSB");
-    enumToString.insert(GUIDED_NOGPS,"Guided No GPS");
-    enumToString.insert(SAFE_RTL,"Smart RTL");
-
+    enumToString.insert(STABILIZE,      "Stabilize");
+    enumToString.insert(ACRO,           "Acro");
+    enumToString.insert(ALT_HOLD,       "Altitude Hold");
+    enumToString.insert(AUTO,           "Auto");
+    enumToString.insert(GUIDED,         "Guided");
+    enumToString.insert(LOITER,         "Loiter");
+    enumToString.insert(RTL,            "RTL");
+    enumToString.insert(CIRCLE,         "Circle");
+    enumToString.insert(LAND,           "Land");
+    enumToString.insert(DRIFT,          "Drift");
+    enumToString.insert(SPORT,          "Sport");
+    enumToString.insert(FLIP,           "Flip");
+    enumToString.insert(AUTOTUNE,       "Autotune");
+    enumToString.insert(POS_HOLD,       "Position Hold");
+    enumToString.insert(BRAKE,          "Brake");
+    enumToString.insert(THROW,          "Throw");
+    enumToString.insert(AVOID_ADSB,     "Avoid ADSB");
+    enumToString.insert(GUIDED_NOGPS,   "Guided No GPS");
+    enumToString.insert(SAFE_RTL,       "Smart RTL");
 
     setEnumToStringMapping(enumToString);
 }
@@ -70,84 +69,9 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
     supportedFlightModes << APMCopterMode(APMCopterMode::GUIDED_NOGPS,true);
     supportedFlightModes << APMCopterMode(APMCopterMode::SAFE_RTL,true);
 
-
-
     setSupportedModes(supportedFlightModes);
 
     if (!_remapParamNameIntialized) {
-        FirmwarePlugin::remapParamNameMap_t& remapV3_4 = _remapParamName[3][4];
-
-        remapV3_4["ATC_ANG_RLL_P"] =    QStringLiteral("STB_RLL_P");
-        remapV3_4["ATC_ANG_PIT_P"] =    QStringLiteral("STB_PIT_P");
-        remapV3_4["ATC_ANG_YAW_P"] =    QStringLiteral("STB_YAW_P");
-
-        remapV3_4["ATC_RAT_RLL_P"] =    QStringLiteral("RATE_RLL_P");
-        remapV3_4["ATC_RAT_RLL_I"] =    QStringLiteral("RATE_RLL_I");
-        remapV3_4["ATC_RAT_RLL_IMAX"] = QStringLiteral("RATE_RLL_IMAX");
-        remapV3_4["ATC_RAT_RLL_D"] =    QStringLiteral("RATE_RLL_D");
-        remapV3_4["ATC_RAT_RLL_FILT"] = QStringLiteral("RATE_RLL_FILT_HZ");
-
-        remapV3_4["ATC_RAT_PIT_P"] =    QStringLiteral("RATE_PIT_P");
-        remapV3_4["ATC_RAT_PIT_I"] =    QStringLiteral("RATE_PIT_I");
-        remapV3_4["ATC_RAT_PIT_IMAX"] = QStringLiteral("RATE_PIT_IMAX");
-        remapV3_4["ATC_RAT_PIT_D"] =    QStringLiteral("RATE_PIT_D");
-        remapV3_4["ATC_RAT_PIT_FILT"] = QStringLiteral("RATE_PIT_FILT_HZ");
-
-        remapV3_4["ATC_RAT_YAW_P"] =    QStringLiteral("RATE_YAW_P");
-        remapV3_4["ATC_RAT_YAW_I"] =    QStringLiteral("RATE_YAW_I");
-        remapV3_4["ATC_RAT_YAW_IMAX"] = QStringLiteral("RATE_YAW_IMAX");
-        remapV3_4["ATC_RAT_YAW_D"] =    QStringLiteral("RATE_YAW_D");
-        remapV3_4["ATC_RAT_YAW_FILT"] = QStringLiteral("RATE_YAW_FILT_HZ");
-
-        FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
-
-        remapV3_5["SERVO5_FUNCTION"] = QStringLiteral("RC5_FUNCTION");
-        remapV3_5["SERVO6_FUNCTION"] = QStringLiteral("RC6_FUNCTION");
-        remapV3_5["SERVO7_FUNCTION"] = QStringLiteral("RC7_FUNCTION");
-        remapV3_5["SERVO8_FUNCTION"] = QStringLiteral("RC8_FUNCTION");
-        remapV3_5["SERVO9_FUNCTION"] = QStringLiteral("RC9_FUNCTION");
-        remapV3_5["SERVO10_FUNCTION"] = QStringLiteral("RC10_FUNCTION");
-        remapV3_5["SERVO11_FUNCTION"] = QStringLiteral("RC11_FUNCTION");
-        remapV3_5["SERVO12_FUNCTION"] = QStringLiteral("RC12_FUNCTION");
-        remapV3_5["SERVO13_FUNCTION"] = QStringLiteral("RC13_FUNCTION");
-        remapV3_5["SERVO14_FUNCTION"] = QStringLiteral("RC14_FUNCTION");
-
-        remapV3_5["SERVO5_MIN"] = QStringLiteral("RC5_MIN");
-        remapV3_5["SERVO6_MIN"] = QStringLiteral("RC6_MIN");
-        remapV3_5["SERVO7_MIN"] = QStringLiteral("RC7_MIN");
-        remapV3_5["SERVO8_MIN"] = QStringLiteral("RC8_MIN");
-        remapV3_5["SERVO9_MIN"] = QStringLiteral("RC9_MIN");
-        remapV3_5["SERVO10_MIN"] = QStringLiteral("RC10_MIN");
-        remapV3_5["SERVO11_MIN"] = QStringLiteral("RC11_MIN");
-        remapV3_5["SERVO12_MIN"] = QStringLiteral("RC12_MIN");
-        remapV3_5["SERVO13_MIN"] = QStringLiteral("RC13_MIN");
-        remapV3_5["SERVO14_MIN"] = QStringLiteral("RC14_MIN");
-
-        remapV3_5["SERVO5_MAX"] = QStringLiteral("RC5_MAX");
-        remapV3_5["SERVO6_MAX"] = QStringLiteral("RC6_MAX");
-        remapV3_5["SERVO7_MAX"] = QStringLiteral("RC7_MAX");
-        remapV3_5["SERVO8_MAX"] = QStringLiteral("RC8_MAX");
-        remapV3_5["SERVO9_MAX"] = QStringLiteral("RC9_MAX");
-        remapV3_5["SERVO10_MAX"] = QStringLiteral("RC10_MAX");
-        remapV3_5["SERVO11_MAX"] = QStringLiteral("RC11_MAX");
-        remapV3_5["SERVO12_MAX"] = QStringLiteral("RC12_MAX");
-        remapV3_5["SERVO13_MAX"] = QStringLiteral("RC13_MAX");
-        remapV3_5["SERVO14_MAX"] = QStringLiteral("RC14_MAX");
-
-        remapV3_5["SERVO5_REVERSED"] = QStringLiteral("RC5_REVERSED");
-        remapV3_5["SERVO6_REVERSED"] = QStringLiteral("RC6_REVERSED");
-        remapV3_5["SERVO7_REVERSED"] = QStringLiteral("RC7_REVERSED");
-        remapV3_5["SERVO8_REVERSED"] = QStringLiteral("RC8_REVERSED");
-        remapV3_5["SERVO9_REVERSED"] = QStringLiteral("RC9_REVERSED");
-        remapV3_5["SERVO10_REVERSED"] = QStringLiteral("RC10_REVERSED");
-        remapV3_5["SERVO11_REVERSED"] = QStringLiteral("RC11_REVERSED");
-        remapV3_5["SERVO12_REVERSED"] = QStringLiteral("RC12_REVERSED");
-        remapV3_5["SERVO13_REVERSED"] = QStringLiteral("RC13_REVERSED");
-        remapV3_5["SERVO14_REVERSED"] = QStringLiteral("RC14_REVERSED");
-
-        remapV3_5["ARMING_VOLT_MIN"] = QStringLiteral("ARMING_MIN_VOLT");
-        remapV3_5["ARMING_VOLT2_MIN"] = QStringLiteral("ARMING_MIN_VOLT2");
-
         FirmwarePlugin::remapParamNameMap_t& remapV3_6 = _remapParamName[3][6];
 
         remapV3_6["BATT_AMP_PERVLT"] =  QStringLiteral("BATT_AMP_PERVOL");
@@ -162,6 +86,12 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
 
         remapV3_7["BATT_ARM_VOLT"] =    QStringLiteral("ARMING_VOLT_MIN");
         remapV3_7["BATT2_ARM_VOLT"] =   QStringLiteral("ARMING_VOLT2_MIN");
+        remapV3_7["RC7_OPTION"] =       QStringLiteral("CH7_OPT");
+        remapV3_7["RC8_OPTION"] =       QStringLiteral("CH8_OPT");
+        remapV3_7["RC9_OPTION"] =       QStringLiteral("CH9_OPT");
+        remapV3_7["RC10_OPTION"] =      QStringLiteral("CH10_OPT");
+        remapV3_7["RC11_OPTION"] =      QStringLiteral("CH11_OPT");
+        remapV3_7["RC12_OPTION"] =      QStringLiteral("CH12_OPT");
 
         _remapParamNameIntialized = true;
     }

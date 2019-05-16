@@ -7,14 +7,13 @@
  *
  ****************************************************************************/
 
+import QtQuick                  2.11
+import QtQuick.Controls         2.4
+import QtQuick.Dialogs          1.3
+import QtQuick.Layouts          1.11
 
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
 import QtLocation               5.3
 import QtPositioning            5.3
-import QtQuick.Layouts          1.2
 import QtQuick.Window           2.2
 import QtQml.Models             2.1
 
@@ -30,33 +29,34 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Vehicle       1.0
 
 /// Flight Display View
-QGCView {
-    id:             root
-    viewPanel:      _panel
+Item {
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+    PlanMasterController {
+        id: _planController
+        Component.onCompleted: {
+            start(true /* flyView */)
+            mainWindow.planMasterControllerView = _planController
+        }
+    }
 
-    property alias  guidedController:   guidedActionsController
+    property alias  guidedController:              guidedActionsController
+    property bool   activeVehicleJoystickEnabled:  activeVehicle ? activeVehicle.joystickEnabled : false
+    property bool   mainIsMap:                     QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
+    property bool   isBackgroundDark:              mainIsMap ? (mainWindow.flightDisplayMap ? mainWindow.flightDisplayMap.isSatelliteMap : true) : true
 
-    property bool activeVehicleJoystickEnabled: _activeVehicle ? _activeVehicle.joystickEnabled : false
+    property var    _missionController:             _planController.missionController
+    property var    _geoFenceController:            _planController.geoFenceController
+    property var    _rallyPointController:          _planController.rallyPointController
+    property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
+    property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue
+    property real   _savedZoomLevel:                0
+    property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
+    property real   _pipSize:                       mainWindow.width * 0.2
+    property alias  _guidedController:              guidedActionsController
+    property alias  _altitudeSlider:                altitudeSlider
 
-    property var    _planMasterController:  masterController
-    property var    _missionController:     _planMasterController.missionController
-    property var    _geoFenceController:    _planMasterController.geoFenceController
-    property var    _rallyPointController:  _planMasterController.rallyPointController
-    property var    _activeVehicle:         QGroundControl.multiVehicleManager.activeVehicle
-    property bool   _mainIsMap:             QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_mainIsMapKey,  true) : true
-    property bool   _isPipVisible:          QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
-    property bool   _useChecklist:          QGroundControl.settingsManager.appSettings.useChecklist.rawValue
-    property real   _savedZoomLevel:        0
-    property real   _margins:               ScreenTools.defaultFontPixelWidth / 2
-    property real   _pipSize:               flightView.width * 0.2
-    property alias  _guidedController:      guidedActionsController
-    property alias  _altitudeSlider:        altitudeSlider
-
-    readonly property var       _dynamicCameras:        _activeVehicle ? _activeVehicle.dynamicCameras : null
+    readonly property var       _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     readonly property bool      _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
-    readonly property bool      isBackgroundDark:       _mainIsMap ? (_flightMap ? _flightMap.isSatelliteMap : true) : true
     readonly property real      _defaultRoll:           0
     readonly property real      _defaultPitch:          0
     readonly property real      _defaultHeading:        0
@@ -69,23 +69,30 @@ QGCView {
     readonly property string    _PIPVisibleKey:         "IsPIPVisible"
 
     function setStates() {
-        QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, _mainIsMap)
-        if(_mainIsMap) {
+        QGroundControl.saveBoolGlobalSetting(_mainIsMapKey, mainIsMap)
+        if(mainIsMap) {
             //-- Adjust Margins
             _flightMapContainer.state   = "fullMode"
             _flightVideo.state          = "pipMode"
             //-- Save/Restore Map Zoom Level
-            if(_savedZoomLevel != 0)
-                _flightMap.zoomLevel = _savedZoomLevel
-            else
-                _savedZoomLevel = _flightMap.zoomLevel
+            if(_savedZoomLevel != 0) {
+                if(mainWindow.flightDisplayMap) {
+                    mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel
+                }
+            } else {
+                if(mainWindow.flightDisplayMap) {
+                    _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
+                }
+            }
         } else {
             //-- Adjust Margins
             _flightMapContainer.state   = "pipMode"
             _flightVideo.state          = "fullMode"
             //-- Set Map Zoom Level
-            _savedZoomLevel = _flightMap.zoomLevel
-            _flightMap.zoomLevel = _savedZoomLevel - 3
+            if(mainWindow.flightDisplayMap) {
+                _savedZoomLevel = mainWindow.flightDisplayMap.zoomLevel
+                mainWindow.flightDisplayMap.zoomLevel = _savedZoomLevel - 3
+            }
         }
     }
 
@@ -108,11 +115,6 @@ QGCView {
         return true;
     }
 
-    PlanMasterController {
-        id:                     masterController
-        Component.onCompleted:  start(true /* flyView */)
-    }
-
     BuiltInPreFlightCheckModel {
         id: preFlightCheckModel
     }
@@ -122,8 +124,22 @@ QGCView {
         onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
     }
 
+    Connections {
+        target:                 mainWindow
+        onArmVehicle:           guidedController.confirmAction(guidedController.actionArm)
+        onDisarmVehicle: {
+            if (guidedController.showEmergenyStop) {
+                guidedController.confirmAction(guidedController.actionEmergencyStop)
+            } else {
+                guidedController.confirmAction(guidedController.actionDisarm)
+            }
+        }
+        onVtolTransitionToFwdFlight:    guidedController.confirmAction(guidedController.actionVtolTransitionToFwdFlight)
+        onVtolTransitionToMRFlight:     guidedController.confirmAction(guidedController.actionVtolTransitionToMRFlight)
+        onFlightDisplayMapChanged:      setStates()
+    }
+
     Component.onCompleted: {
-        setStates()
         if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
             flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
         }
@@ -131,9 +147,9 @@ QGCView {
 
     // The following code is used to track vehicle states such that we prompt to remove mission from vehicle when mission completes
 
-    property bool vehicleArmed:                 _activeVehicle ? _activeVehicle.armed : true // true here prevents pop up from showing during shutdown
+    property bool vehicleArmed:                 activeVehicle ? activeVehicle.armed : true // true here prevents pop up from showing during shutdown
     property bool vehicleWasArmed:              false
-    property bool vehicleInMissionFlightMode:   _activeVehicle ? (_activeVehicle.flightMode === _activeVehicle.missionFlightMode) : false
+    property bool vehicleInMissionFlightMode:   activeVehicle ? (activeVehicle.flightMode === activeVehicle.missionFlightMode) : false
     property bool promptForMissionRemove:       false
 
     onVehicleArmedChanged: {
@@ -145,8 +161,8 @@ QGCView {
         } else {
             if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
                 // ArduPilot has a strange bug which prevents mission clear from working at certain times, so we can't show this dialog
-                if (!_activeVehicle.apmFirmware) {
-                    root.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), showDialogDefaultWidth, StandardButton.Close)
+                if (!activeVehicle.apmFirmware) {
+                    mainWindow.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
             promptForMissionRemove = false
@@ -163,7 +179,7 @@ QGCView {
         id: missionCompleteDialogComponent
 
         QGCViewDialog {
-            property var activeVehicleCopy: _activeVehicle
+            property var activeVehicleCopy: activeVehicle
             onActiveVehicleCopyChanged:
                 if (!activeVehicleCopy) {
                     hideDialog()
@@ -182,20 +198,20 @@ QGCView {
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            !_activeVehicle.connectionLost || !_guidedController.showResumeMission
+                        visible:            !activeVehicle.connectionLost || !_guidedController.showResumeMission
 
                         QGCLabel {
                             Layout.fillWidth:       true
-                            text:                   qsTr("%1 Images Taken").arg(_activeVehicle.cameraTriggerPoints.count)
+                            text:                   qsTr("%1 Images Taken").arg(activeVehicle.cameraTriggerPoints.count)
                             horizontalAlignment:    Text.AlignHCenter
-                            visible:                _activeVehicle.cameraTriggerPoints.count != 0
+                            visible:                activeVehicle.cameraTriggerPoints.count !== 0
                         }
 
                         QGCButton {
                             Layout.fillWidth:   true
                             text:               qsTr("Remove plan from vehicle")
                             onClicked: {
-                                _planMasterController.removeAllFromVehicle()
+                                _planController.removeAllFromVehicle()
                                 hideDialog()
                             }
                         }
@@ -244,7 +260,7 @@ QGCView {
                     ColumnLayout {
                         Layout.fillWidth:   true
                         spacing:            ScreenTools.defaultFontPixelHeight
-                        visible:            _activeVehicle.connectionLost && _guidedController.showResumeMission
+                        visible:            activeVehicle.connectionLost && _guidedController.showResumeMission
 
                         QGCLabel {
                             Layout.fillWidth:   true
@@ -260,8 +276,8 @@ QGCView {
 
     Window {
         id:             videoWindow
-        width:          !_mainIsMap ? _panel.width  : _pipSize
-        height:         !_mainIsMap ? _panel.height : _pipSize * (9/16)
+        width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+        height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
         visible:        false
 
         Item {
@@ -292,23 +308,21 @@ QGCView {
       }
     }
 
-    QGCMapPalette { id: mapPal; lightColors: _mainIsMap ? _flightMap.isSatelliteMap : true }
+    QGCMapPalette { id: mapPal; lightColors: mainIsMap ? mainWindow.flightDisplayMap.isSatelliteMap : true }
 
-    QGCViewPanel {
-        id:             _panel
+    Item {
+        id:             _mapAndVideo
         anchors.fill:   parent
 
         //-- Map View
-        //   For whatever reason, if FlightDisplayViewMap is the _panel item, changing
-        //   width/height has no effect.
         Item {
             id: _flightMapContainer
-            z:  _mainIsMap ? _panel.z + 1 : _panel.z + 2
-            anchors.left:   _panel.left
-            anchors.bottom: _panel.bottom
-            visible:        _mainIsMap || _isPipVisible && !QGroundControl.videoManager.fullScreen
-            width:          _mainIsMap ? _panel.width  : _pipSize
-            height:         _mainIsMap ? _panel.height : _pipSize * (9/16)
+            z:  mainIsMap ? _mapAndVideo.z + 1 : _mapAndVideo.z + 2
+            anchors.left:   _mapAndVideo.left
+            anchors.bottom: _mapAndVideo.bottom
+            visible:        mainIsMap || _isPipVisible && !QGroundControl.videoManager.fullScreen
+            width:          mainIsMap ? _mapAndVideo.width  : _pipSize
+            height:         mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
             states: [
                 State {
                     name:   "pipMode"
@@ -326,37 +340,39 @@ QGCView {
                 }
             ]
             FlightDisplayViewMap {
-                id:                         _flightMap
+                id:                         _fMap
                 anchors.fill:               parent
-                planMasterController:       masterController
                 guidedActionsController:    _guidedController
+                missionController:          _planController
                 flightWidgets:              flightDisplayViewWidgets
                 rightPanelWidth:            ScreenTools.defaultFontPixelHeight * 9
-                qgcView:                    root
                 multiVehicleView:           !singleVehicleView.checked
-                scaleState:                 (_mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
+                scaleState:                 (mainIsMap && flyViewOverlay.item) ? (flyViewOverlay.item.scaleState ? flyViewOverlay.item.scaleState : "bottomMode") : "bottomMode"
+                Component.onCompleted: {
+                    mainWindow.flightDisplayMap = _fMap
+                }
             }
         }
 
         //-- Video View
         Item {
             id:             _flightVideo
-            z:              _mainIsMap ? _panel.z + 2 : _panel.z + 1
-            width:          !_mainIsMap ? _panel.width  : _pipSize
-            height:         !_mainIsMap ? _panel.height : _pipSize * (9/16)
-            anchors.left:   _panel.left
-            anchors.bottom: _panel.bottom
-            visible:        QGroundControl.videoManager.hasVideo && (!_mainIsMap || _isPipVisible)
+            z:              mainIsMap ? _mapAndVideo.z + 2 : _mapAndVideo.z + 1
+            width:          !mainIsMap ? _mapAndVideo.width  : _pipSize
+            height:         !mainIsMap ? _mapAndVideo.height : _pipSize * (9/16)
+            anchors.left:   _mapAndVideo.left
+            anchors.bottom: _mapAndVideo.bottom
+            visible:        QGroundControl.videoManager.hasVideo && (!mainIsMap || _isPipVisible)
 
             onParentChanged: {
                 /* If video comes back from popup
                  * correct anchors.
                  * Such thing is not possible with ParentChange.
                  */
-                if(parent == _panel) {
+                if(parent == _mapAndVideo) {
                     // Do anchors again after popup
-                    anchors.left =       _panel.left
-                    anchors.bottom =     _panel.bottom
+                    anchors.left =       _mapAndVideo.left
+                    anchors.bottom =     _mapAndVideo.bottom
                     anchors.margins =    ScreenTools.defaultFontPixelHeight
                 }
             }
@@ -420,7 +436,7 @@ QGCView {
                     }
                     ParentChange {
                         target: _flightVideo
-                        parent: _panel
+                        parent: _mapAndVideo
                     }
                     PropertyChanges {
                         target: _flightVideoPipControl
@@ -448,15 +464,15 @@ QGCView {
             z:                  _flightVideo.z + 3
             width:              _pipSize
             height:             _pipSize * (9/16)
-            anchors.left:       _panel.left
-            anchors.bottom:     _panel.bottom
+            anchors.left:       _mapAndVideo.left
+            anchors.bottom:     _mapAndVideo.bottom
             anchors.margins:    ScreenTools.defaultFontPixelHeight
             visible:            QGroundControl.videoManager.hasVideo && !QGroundControl.videoManager.fullScreen && _flightVideo.state != "popup"
             isHidden:           !_isPipVisible
             isDark:             isBackgroundDark
-            enablePopup:        _mainIsMap
+            enablePopup:        mainIsMap
             onActivated: {
-                _mainIsMap = !_mainIsMap
+                mainIsMap = !mainIsMap
                 setStates()
             }
             onHideIt: {
@@ -478,21 +494,17 @@ QGCView {
             anchors.right:          parent.right
             anchors.top:            parent.top
             spacing:                ScreenTools.defaultFontPixelWidth
-            z:                      _panel.z + 4
-            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
-
-            ExclusiveGroup { id: multiVehicleSelectorGroup }
+            z:                      _mapAndVideo.z + 4
+            visible:                QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.enableMultiVehicleList
 
             QGCRadioButton {
                 id:             singleVehicleView
-                exclusiveGroup: multiVehicleSelectorGroup
                 text:           qsTr("Single")
                 checked:        true
                 textColor:      mapPal.text
             }
 
             QGCRadioButton {
-                exclusiveGroup: multiVehicleSelectorGroup
                 text:           qsTr("Multi-Vehicle")
                 textColor:      mapPal.text
             }
@@ -500,12 +512,11 @@ QGCView {
 
         FlightDisplayViewWidgets {
             id:                 flightDisplayViewWidgets
-            z:                  _panel.z + 4
-            height:             ScreenTools.availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _margins : 0)
+            z:                  _mapAndVideo.z + 4
+            height:             availableHeight - (singleMultiSelector.visible ? singleMultiSelector.height + _margins : 0) - (ScreenTools.defaultFontPixelHeight * 0.5)
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
-            qgcView:            root
             useLightColors:     isBackgroundDark
             missionController:  _missionController
             visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
@@ -517,12 +528,10 @@ QGCView {
             id:                 flyViewOverlay
             z:                  flightDisplayViewWidgets.z + 1
             visible:            !QGroundControl.videoManager.fullScreen
-            height:             ScreenTools.availableHeight
+            height:             mainWindow.height - mainWindow.header.height
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
-
-            property var qgcView: root
         }
 
         MultiVehicleList {
@@ -531,43 +540,47 @@ QGCView {
             anchors.right:              parent.right
             anchors.bottom:             parent.bottom
             width:                      ScreenTools.defaultFontPixelWidth * 30
-            visible:                    !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
-            z:                          _panel.z + 4
+            visible:                    !singleVehicleView.checked && !QGroundControl.videoManager.fullScreen && QGroundControl.corePlugin.options.enableMultiVehicleList
+            z:                          _mapAndVideo.z + 4
             guidedActionsController:    _guidedController
         }
 
         //-- Virtual Joystick
         Loader {
             id:                         virtualJoystickMultiTouch
-            z:                          _panel.z + 5
+            z:                          _mapAndVideo.z + 5
             width:                      parent.width  - (_flightVideoPipControl.width / 2)
-            height:                     Math.min(ScreenTools.availableHeight * 0.25, ScreenTools.defaultFontPixelWidth * 16)
-            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen && !(_activeVehicle ? _activeVehicle.highLatencyLink : false)
+            height:                     Math.min(mainWindow.height * 0.25, ScreenTools.defaultFontPixelWidth * 16)
+            visible:                    (_virtualJoystick ? _virtualJoystick.value : false) && !QGroundControl.videoManager.fullScreen && !(activeVehicle ? activeVehicle.highLatencyLink : false)
             anchors.bottom:             _flightVideoPipControl.top
             anchors.bottomMargin:       ScreenTools.defaultFontPixelHeight * 2
             anchors.horizontalCenter:   flightDisplayViewWidgets.horizontalCenter
             source:                     "qrc:/qml/VirtualJoystick.qml"
-            active:                     (_virtualJoystick ? _virtualJoystick.value : false) && !(_activeVehicle ? _activeVehicle.highLatencyLink : false)
+            active:                     (_virtualJoystick ? _virtualJoystick.value : false) && !(activeVehicle ? activeVehicle.highLatencyLink : false)
 
             property bool useLightColors: isBackgroundDark
+            // The default behaviour is not centralized throttle
+            property bool centralizeThrottle: _virtualJoystickCentralized ? _virtualJoystickCentralized.value : false
 
             property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
+            property Fact _virtualJoystickCentralized: QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
         }
 
         ToolStrip {
-            visible:            (_activeVehicle ? _activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
+            visible:            (activeVehicle ? activeVehicle.guidedModeSupported : true) && !QGroundControl.videoManager.fullScreen
             id:                 toolStrip
-            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth : undefined
-            anchors.left:       isInstrumentRight() ? _panel.left : undefined
+
+            anchors.leftMargin: isInstrumentRight() ? ScreenTools.defaultFontPixelWidth * 2 : undefined
+            anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
-            anchors.right:      isInstrumentRight() ? undefined : _panel.right
-            anchors.topMargin:  ScreenTools.toolbarHeight + (_margins * 2)
-            anchors.top:        _panel.top
-            z:                  _panel.z + 4
-            title:              qsTr("Fly")
+            anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
+            anchors.topMargin:  mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+            anchors.top:        parent.top
+            z:                  _mapAndVideo.z + 4
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
-            buttonVisible:      [ _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, true, true ]
-            buttonEnabled:      [ _useChecklist && _activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
+
+            buttonVisible:      [true, _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, _guidedController.showPause, !_guidedController.showPause ]
+            buttonEnabled:      [true, _useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
@@ -605,6 +618,10 @@ QGCView {
 
             model: [
                 {
+                    name:               "Plan",
+                    iconSource:         "/qmlimages/Plan.svg",
+                },
+                {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
                     dropPanelComponent: checklistDropPanel
@@ -638,13 +655,18 @@ QGCView {
 
             onClicked: {
                 guidedActionsController.closeAll()
-                var action = model[index].action
-                if (action === -1) {
-                    guidedActionList.model   = _actionModel
-                    guidedActionList.visible = true
+                if(index === 0) {
+                    mainWindow.showPlanView()
                 } else {
-                    _guidedController.confirmAction(action)
+                    var action = model[index].action
+                    if (action === -1) {
+                        guidedActionList.model   = _actionModel
+                        guidedActionList.visible = true
+                    } else {
+                        _guidedController.confirmAction(action)
+                    }
                 }
+
             }
         }
 
@@ -676,8 +698,6 @@ QGCView {
 
             /// Close all dialogs
             function closeAll() {
-                mainWindow.enableToolbar()
-                rootLoader.sourceComponent  = null
                 guidedActionConfirm.visible = false
                 guidedActionList.visible    = false
                 altitudeSlider.visible      = false
@@ -723,7 +743,7 @@ QGCView {
         width:          airspaceRow.width + (ScreenTools.defaultFontPixelWidth * 3)
         height:         airspaceRow.height * 1.25
         color:          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
-        visible:        QGroundControl.airmapSupported && _mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitNone && !messageArea.visible && !criticalMmessageArea.visible
+        visible:        QGroundControl.airmapSupported && mainIsMap && flightPermit && flightPermit !== AirspaceFlightPlanProvider.PermitNone
         radius:         3
         border.width:   1
         border.color:   qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.35) : Qt.rgba(1,1,1,0.35)

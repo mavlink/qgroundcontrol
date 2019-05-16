@@ -16,11 +16,7 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.ScreenTools   1.0
 
-FactPanel {
-    property real defaultTextWidth:     ScreenTools.defaultFontPixelWidth
-    property real defaultTextHeight:    ScreenTools.defaultFontPixelHeight
-
-    QGCPalette { id: __qgcPal; colorGroupEnabled: enabled }
+Item {
 
     signal hideDialog
 
@@ -48,5 +44,4 @@ FactPanel {
         }
     }
 
-    color: __qgcPal.windowShadeDark
 }

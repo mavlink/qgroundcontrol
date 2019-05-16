@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -9,78 +9,52 @@
 
 
 import QtQuick                      2.11
-import QtQuick.Controls             1.2
+import QtQuick.Controls             2.4
 
 import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
-import AuterionQuickInterface       1.0
+Button {
+    id:                             button
+    autoExclusive:                  true
 
-Item {
-    id:     _root
-    width:  iconLogo.width
-    clip:   true
-
-    property string         source:         ""
-    property string         text:           ""
-    property bool           checked:        false
-    property bool           logo:           false
-    property ExclusiveGroup exclusiveGroup: null
-
-    readonly property real _topBottomMargins: ScreenTools.defaultFontPixelHeight * 0.5
-
-    signal clicked()
-
-    onExclusiveGroupChanged: {
-        if (exclusiveGroup) {
-            exclusiveGroup.bindCheckable(_root)
-        }
+    background: Rectangle {
+        anchors.fill:               parent
+        color:                      mouseArea.pressed ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
     }
 
-    Row {
-        id:                         iconLogo
+    contentItem: Row {
         spacing:                    ScreenTools.defaultFontPixelWidth
-        anchors.top:                parent.top
-        anchors.bottom:             parent.bottom
+        anchors.left:               button.left
+        anchors.leftMargin:         ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter:     button.verticalCenter
+        Item {
+            height:                 ScreenTools.defaultFontPixelHeight * 3
+            width:                  1
+        }
         QGCColoredImage {
-            source:                 _root.source
-            color:                  checked ? AuterionQuickInterface.colorIndicators : "#FFF"
+            id:                     _icon
+            height:                 ScreenTools.defaultFontPixelHeight
             width:                  height
-            sourceSize.height:      height
-            anchors.top:            parent.top
-            anchors.topMargin:      _topBottomMargins
-            anchors.bottom:         parent.bottom
-            anchors.bottomMargin:   _topBottomMargins
+            sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            visible:                !logo
+            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            source:                 button.icon.source
+            anchors.verticalCenter: parent.verticalCenter
         }
-        Image {
-            source:                 _root.source
-            width:                  height
-            sourceSize.height:      height
-            anchors.top:            parent.top
-            anchors.topMargin:      _topBottomMargins
-            anchors.bottom:         parent.bottom
-            anchors.bottomMargin:   _topBottomMargins
-            fillMode:               Image.PreserveAspectFit
-            visible:                logo
-        }
-        QGCLabel {
-            id:                     logoLabel
-            color:                  AuterionQuickInterface.colorIndicators
-            text:                   _root.text
-            visible:                checked && !logo
-            font.pointSize:         ScreenTools.smallFontPointSize
+        Label {
+            id:                     _label
+            visible:                text !== ""
+            text:                   button.text
+            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-
+    // Process hover events
     MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            checked = true
-            _root.clicked()
-        }
+        id:                         mouseArea
+        anchors.fill:               parent
+        onClicked:                  button.clicked()
     }
 }

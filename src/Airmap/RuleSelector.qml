@@ -1,8 +1,5 @@
-import QtQuick                  2.3
-import QtQuick.Controls         1.2
-import QtQuick.Controls.Styles  1.4
-import QtQuick.Dialogs          1.2
-import QtQml                    2.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
 
 import QGroundControl                   1.0
 import QGroundControl.ScreenTools       1.0
@@ -11,35 +8,26 @@ import QGroundControl.Palette           1.0
 import QGroundControl.Airmap            1.0
 import QGroundControl.SettingsManager   1.0
 
-Rectangle {
+Button {
     id:                         _root
+    autoExclusive:              false
     height:                     ScreenTools.defaultFontPixelHeight
-    color:                      _selected ? qgcPal.windowShade : qgcPal.window
+    background: Rectangle {
+        anchors.fill:           parent
+        color:                  _selected ? qgcPal.windowShade : qgcPal.window
+    }
     property var    rule:       null
-    property bool   checked:    false
-    property bool   required:   false
     property bool   _selected: {
-        if (exclusiveGroup) {
+        if (autoExclusive) {
             return checked
         } else {
             return rule ? rule.selected : false
         }
     }
-    property ExclusiveGroup exclusiveGroup:  null
-    onExclusiveGroupChanged: {
-        if (exclusiveGroup) {
-            checked = rule.selected
-            exclusiveGroup.bindCheckable(_root)
-        }
-    }
     onCheckedChanged: {
         rule.selected = checked
     }
-    QGCPalette {
-        id: qgcPal
-        colorGroupEnabled: enabled
-    }
-    Row {
+    contentItem: Row {
         id:             ruleRow
         spacing:        ScreenTools.defaultFontPixelWidth
         anchors.right:  parent.right
@@ -52,20 +40,16 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
         }
         QGCLabel {
-            text:       rule.name === "" ? rule.shortName : rule.name
+            text:           rule ? (rule.name === "" ? rule.shortName : rule.name) : ""
             font.pointSize: ScreenTools.smallFontPointSize
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-    MouseArea {
-        anchors.fill:   parent
-        enabled:        !required
-        onClicked: {
-            if (exclusiveGroup) {
-                checked = true
-            } else {
-                rule.selected = !rule.selected
-            }
+    onClicked: {
+        if (autoExclusive) {
+            checked = true
+        } else {
+            rule.selected = !rule.selected
         }
     }
 }

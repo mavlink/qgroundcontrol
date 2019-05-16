@@ -11,7 +11,6 @@
 #include "FileManager.h"
 #include "QGC.h"
 #include "MAVLinkProtocol.h"
-#include "MainWindow.h"
 #include "Vehicle.h"
 #include "QGCApplication.h"
 
