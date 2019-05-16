@@ -39,12 +39,12 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
         }
         Rectangle {
-            height:                 ScreenTools.defaultFontPixelHeight * 0.7
+            height:                 ScreenTools.defaultFontPixelHeight * 0.5
             width:                  height
-            radius:                 height * 0.7
+            radius:                 height * 0.5
             color:                  _armed ? qgcPal.colorGreen : qgcPal.colorRed
             border.color:           qgcPal.window
-            border.width:           2
+            border.width:           1
             anchors.verticalCenter: parent.verticalCenter
         }
     }
