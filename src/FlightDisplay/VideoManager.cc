@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -206,28 +206,28 @@ VideoManager::_videoSourceChanged()
     emit hasVideoChanged();
     emit isGStreamerChanged();
     emit isAutoStreamChanged();
-    _restartVideo();
+    restartVideo();
 }
 
 //-----------------------------------------------------------------------------
 void
 VideoManager::_udpPortChanged()
 {
-    _restartVideo();
+    restartVideo();
 }
 
 //-----------------------------------------------------------------------------
 void
 VideoManager::_rtspUrlChanged()
 {
-    _restartVideo();
+    restartVideo();
 }
 
 //-----------------------------------------------------------------------------
 void
 VideoManager::_tcpUrlChanged()
 {
-    _restartVideo();
+    restartVideo();
 }
 
 //-----------------------------------------------------------------------------
@@ -275,7 +275,14 @@ VideoManager::_updateSettings()
         return;
     //-- Auto discovery
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCVideoStreamInfo* pInfo  = _activeVehicle->dynamicCameras()->currentStreamInstance();
+        QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
+        if(pCamera) {
+            Fact *fact = pCamera->videoEncoding();
+            if (fact) {
+                _videoReceiver->setVideoDecoder(static_cast<VideoReceiver::VideoEncoding>(fact->rawValue().toInt()));
+            }
+        }
+        QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
             switch(pInfo->type()) {
@@ -329,7 +336,7 @@ VideoManager::_updateSettings()
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::_restartVideo()
+VideoManager::restartVideo()
 {
 #if defined(QGC_GST_STREAMING)
     qCDebug(VideoManagerLog) << "Restart video streaming";
@@ -350,13 +357,13 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
             if(pCamera) {
                 pCamera->stopStream();
             }
-            disconnect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
+            disconnect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::restartVideo);
         }
     }
     _activeVehicle = vehicle;
     if(_activeVehicle) {
         if(_activeVehicle->dynamicCameras()) {
-            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::_restartVideo);
+            connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::restartVideo);
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
             if(pCamera) {
                 pCamera->resumeStream();
@@ -364,7 +371,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
         }
     }
     emit autoStreamConfiguredChanged();
-    _restartVideo();
+    restartVideo();
 }
 
 //----------------------------------------------------------------------------------------
