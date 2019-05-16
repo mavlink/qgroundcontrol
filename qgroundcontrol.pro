@@ -1218,6 +1218,14 @@ AndroidBuild {
 
 #-------------------------------------------------------------------------------------
 #
+# Localization
+#
+
+TRANSLATIONS += $$files($$PWD/localization/qgc_*.ts)
+CONFIG+=lrelease embed_translations
+
+#-------------------------------------------------------------------------------------
+#
 # Post link configuration
 #
 
