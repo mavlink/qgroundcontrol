@@ -357,37 +357,86 @@ void QGCApplication::setLanguage()
     if(langID) {
         switch(langID) {
         case 1:
-            locale = QLocale(QLocale::English);
-            break;
-        case 2:
             locale = QLocale(QLocale::Bulgarian);
             break;
+        case 2:
+            locale = QLocale(QLocale::Chinese);
+            break;
         case 3:
-            locale = QLocale(QLocale::German);
+            locale = QLocale(QLocale::Dutch);
             break;
         case 4:
-            locale = QLocale(QLocale::French);
+            locale = QLocale(QLocale::English);
             break;
         case 5:
-            locale = QLocale(QLocale::Italian);
+            locale = QLocale(QLocale::Finnish);
             break;
         case 6:
-            locale = QLocale(QLocale::Korean);
+            locale = QLocale(QLocale::French);
             break;
         case 7:
-            locale = QLocale(QLocale::Russian);
+            locale = QLocale(QLocale::German);
             break;
         case 8:
-            locale = QLocale(QLocale::Turkish);
+            locale = QLocale(QLocale::Greek);
             break;
         case 9:
-            locale = QLocale(QLocale::Chinese);
+            locale = QLocale(QLocale::Hebrew);
+            break;
+        case 10:
+            locale = QLocale(QLocale::Italian);
+            break;
+        case 11:
+            locale = QLocale(QLocale::Japanese);
+            break;
+        case 12:
+            locale = QLocale(QLocale::Korean);
+            if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
+                qWarning() << "Could not load /fonts/NanumGothic-Regular font";
+            }
+            if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
+                qWarning() << "Could not load /fonts/NanumGothic-Bold font";
+            }
+            break;
+        case 13:
+            locale = QLocale(QLocale::Norwegian);
+            break;
+        case 14:
+            locale = QLocale(QLocale::Polish);
+            break;
+        case 15:
+            locale = QLocale(QLocale::Portuguese);
+            break;
+        case 16:
+            locale = QLocale(QLocale::Russian);
+            break;
+        case 17:
+            locale = QLocale(QLocale::Spanish);
+            break;
+        case 18:
+            locale = QLocale(QLocale::Swedish);
+            break;
+        case 19:
+            locale = QLocale(QLocale::Turkish);
             break;
         }
     }
-    //-- Our localization
-    if(_QGCTranslator.load(locale, "qgc_", "", ":/localization"))
+    qDebug() << "Loading localization for" << locale.name();
+    _app->removeTranslator(&_QGCTranslator);
+    _app->removeTranslator(&_QGCTranslatorQt);
+    if(_QGCTranslatorQt.load("qt_" + locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
+        _app->installTranslator(&_QGCTranslatorQt);
+    } else {
+        qDebug() << "Error loading Qt localization for" << locale.name();
+    }
+    if(_QGCTranslator.load(locale, QLatin1String("qgc_"), "", ":/i18n")) {
+        QLocale::setDefault(locale);
         _app->installTranslator(&_QGCTranslator);
+    } else {
+        qDebug() << "Error loading application localization for" << locale.name();
+    }
+    if(_qmlAppEngine)
+        _qmlAppEngine->retranslate();
 }
 
 void QGCApplication::_shutdown()
@@ -476,23 +525,11 @@ void QGCApplication::_initCommon()
 bool QGCApplication::_initForNormalAppBoot()
 {
 
-    //-- See App.SettinsGroup.json for index
-    int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
-    //-- Load font appropriate for the language
-    if(langID == 6 /*Korean*/) {
-        if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
-            qWarning() << "Could not load /fonts/NanumGothic-Regular font";
-        }
-        if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Bold") < 0) {
-            qWarning() << "Could not load /fonts/NanumGothic-Bold font";
-        }
-    } else {
-        if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
-            qWarning() << "Could not load /fonts/opensans font";
-        }
-        if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
-            qWarning() << "Could not load /fonts/opensans-demibold font";
-        }
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans") < 0) {
+        qWarning() << "Could not load /fonts/opensans font";
+    }
+    if(QFontDatabase::addApplicationFont(":/fonts/opensans-demibold") < 0) {
+        qWarning() << "Could not load /fonts/opensans-demibold font";
     }
 
     QSettings settings;
@@ -782,7 +819,7 @@ void QGCApplication::_onGPSDisconnect()
 void QGCApplication::_gpsSurveyInStatus(float duration, float accuracyMM,  double latitude, double longitude, float altitude, bool valid, bool active)
 {
     _gpsRtkFactGroup->currentDuration()->setRawValue(duration);
-    _gpsRtkFactGroup->currentAccuracy()->setRawValue(accuracyMM/1000.0);
+    _gpsRtkFactGroup->currentAccuracy()->setRawValue(static_cast<double>(accuracyMM) / 1000.0);
     _gpsRtkFactGroup->currentLatitude()->setRawValue(latitude);
     _gpsRtkFactGroup->currentLongitude()->setRawValue(longitude);
     _gpsRtkFactGroup->currentAltitude()->setRawValue(altitude);

@@ -6,6 +6,10 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Automated the ingestion of localization from Crowdin
+* Automated the generation of language resources into the application
+* Added all languages that come from Crowdin, even if empty.
+* Allow dynamic language changes
 * Check and respect camera storage status
 * QGC now requires Qt 5.11 or greater. The idea is to standardize on Qt 5.12 (LTS). Just waiting for a solution for Windows as Qt dropped support for 32-bit.
 * New, QtQuick MAVLink Inspector. The basics are already there but it still needs the ability to filter compID.

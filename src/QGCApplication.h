@@ -183,6 +183,7 @@ private:
     QQuickItem*         _mainRootWindow         = nullptr;
     bool                _bluetoothAvailable     = false;
     QTranslator         _QGCTranslator;
+    QTranslator         _QGCTranslatorQt;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
