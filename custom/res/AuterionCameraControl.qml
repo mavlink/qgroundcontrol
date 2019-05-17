@@ -75,7 +75,7 @@ Item {
             id:             quickSettingMenu
             height:         buttonCol.height + (ScreenTools.defaultFontPixelHeight * 2)
             width:          buttonCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-            color:          qgcPal.windowShade
+            color:          qgcPal.window
             radius:         2
             anchors.verticalCenter: cameraRect.verticalCenter
             Column {
@@ -201,7 +201,7 @@ Item {
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            color:              qgcPal.colorBlue
+                            color:              qgcPal.window
                             visible: {
                                 if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
                                     return true
