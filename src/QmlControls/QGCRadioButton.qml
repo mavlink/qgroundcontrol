@@ -16,7 +16,7 @@ RadioButton {
     indicator: Rectangle {
         implicitWidth:          ScreenTools.radioButtonIndicatorSize
         implicitHeight:         width
-        color:                  qgcPal.window
+        color:                  "white"
         border.color:           _qgcPal.windowShadeDark
         radius:                 height / 2
         opacity:                control.enabled ? 1 : 0.5
