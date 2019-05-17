@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QIcon>
 #include <QSslSocket>
+#include <QMessageBox>
 #include <QProcessEnvironment>
 #include <QHostAddress>
 #include <QUdpSocket>
@@ -222,7 +223,12 @@ int main(int argc, char *argv[])
 #ifndef __mobile__
     RunGuard guard("QGroundControlRunGuardKey");
     if (!guard.tryToRun()) {
-        return 0;
+        // QApplication is necessary to use QMessageBox
+        QApplication errorApp(argc, argv);
+        QMessageBox::critical(nullptr, QObject::tr("Error"),
+            QObject::tr("A second instance of QGroundControl is already running. Please close the other instance and try again.")
+        );
+        return -1;
     }
 #endif
 
