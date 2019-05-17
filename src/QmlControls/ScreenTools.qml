@@ -91,7 +91,8 @@ Item {
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
-    property real checkBoxIndicatorSize:            Math.round(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0))
+    // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
+    property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
     property real radioButtonIndicatorSize:         checkBoxIndicatorSize
 
     readonly property string normalFontFamily:      ScreenToolsController.normalFontFamily
