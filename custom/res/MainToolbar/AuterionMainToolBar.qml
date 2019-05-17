@@ -67,10 +67,8 @@ Item {
             height:                         parent.height
             onPressed: {
                 if(drawer.visible) {
-                    console.info("DEV: Drawer vosible, close it!!!!!!!! (" + _pressCount + ")")
                     drawer.close()
                 } else {
-                    console.info("DEV: Drawer NOT visible, open it!!!!!!!! (" + _pressCount + ")")
                     drawer.open()
                 }
                 // Easter egg mechanism
@@ -185,7 +183,6 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
-                    console.info("DEV: 1");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showFlyView()
@@ -204,7 +201,6 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
-                    console.info("DEV: 2");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showPlanView()
@@ -222,7 +218,6 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
-                    console.info("DEV: 3");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showAnalyzeView()
@@ -241,7 +236,6 @@ Item {
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
-                    console.info("DEV: 4");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showSetupView()
@@ -275,7 +269,6 @@ Item {
                 onClicked: {
                     checked = true
                     buttonGroup.checkState = Qt.Unchecked
-                    console.info("DEV: 5");
                     drawer.close()
                     sectionTitle = text
                     mainWindow.showSettingsView()

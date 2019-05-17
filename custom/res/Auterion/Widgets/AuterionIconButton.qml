@@ -30,12 +30,12 @@ Button {
 
     contentItem: Item {
         id:                         _content
-        anchors.fill:               parent
+        anchors.fill:               _rootButton
         QGCColoredImage {
             id:                     edge
             height:                 ScreenTools.defaultFontPixelHeight
             width:                  height
-            sourceSize.height:      parent.height
+            sourceSize.height:      _rootButton.height
             fillMode:               Image.PreserveAspectFit
             source:                 "/auterion/img/menu_left_edge.svg"
             color:                  qgcPal.text
@@ -45,7 +45,7 @@ Button {
         }
         Image {
             id:                     icon
-            height:                 parent.height
+            height:                 _rootButton.height
             width:                  height
             smooth:                 true
             mipmap:                 true
