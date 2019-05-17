@@ -65,7 +65,7 @@ SetupPage {
                 id:         controller
                 Component.onCompleted: {
                     if (controller.showCustomConfigPanel) {
-                        mainWindow.showDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), mainWindow.showDialogDefaultWidth, StandardButton.Reset)
+                        mainWindow.showDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), mainWindow.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Cancel)
                     }
                 }
             }

@@ -147,6 +147,10 @@ ApplicationWindow {
         mainWindowDialog.dialogTitle = title
         mainWindowDialog.dialogButtons = buttons
         mainWindowDialog.open()
+        if(buttons & StandardButton.Cancel || buttons & StandardButton.Close || buttons & StandardButton.Discard || buttons & StandardButton.Abort || buttons & StandardButton.Ignore) {
+            mainWindowDialog.closePolicy = Popup.CloseOnEscape | Popup.CloseOnPressOutside;
+            mainWindowDialog.interactive = true;
+        }
     }
 
     Drawer {
