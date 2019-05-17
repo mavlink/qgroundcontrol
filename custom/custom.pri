@@ -213,7 +213,8 @@ exists($$PWD/custom/custom.pri) {
             $$QGCROOT/custom/android/gradlew.bat
 
         # For now only android uses install customization
-        # It's important to keep the right order
+        # It's important to keep the right order because QGCSetup.pri offers the first command for QMAKE_POST_LINK
+        include($$QGCROOT/QGCSetup.pri)
         include(customQGCInstaller.pri)
         # Disable only for Android
         CONFIG += QGC_DISABLE_INSTALLER_SETUP
