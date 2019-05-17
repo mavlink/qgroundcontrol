@@ -7,9 +7,13 @@
  *
  ****************************************************************************/
 
+import QtQuick                              2.11
+import QtQuick.Controls                     1.4
 
-import QtQuick                  2.11
-import QGroundControl.Palette   1.0
+import QGroundControl                       1.0
+import QGroundControl.Controls              1.0
+import QGroundControl.ScreenTools           1.0
+import QGroundControl.Palette               1.0
 
 Item {
     width:  size
@@ -32,10 +36,11 @@ Item {
         return "/auterion/img/menu_signal_100.svg"
     }
 
-    Image {
+    QGCColoredImage {
         source:             getIcon()
         fillMode:           Image.PreserveAspectFit
         anchors.fill:       parent
         sourceSize.height:  size
+        color:              qgcPal.text
     }
 }

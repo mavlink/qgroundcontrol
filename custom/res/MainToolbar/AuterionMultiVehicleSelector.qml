@@ -42,7 +42,7 @@ Item {
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
             source:                 "/auterion/img/vehicle.svg"
-            color:                  qgcPal.buttonText
+            color:                  qgcPal.text
         }
         QGCLabel {
             id:                     multiVehicleSelector
@@ -58,7 +58,7 @@ Item {
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
             source:                 "/auterion/img/drop_down.svg"
-            color:                  "#EFF8FF"
+            color:                  qgcPal.text
         }
     }
     Menu {

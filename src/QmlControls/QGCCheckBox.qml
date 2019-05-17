@@ -40,12 +40,12 @@ CheckBox {
             Rectangle {
                 anchors.fill:   parent
                 color:          "white"
-                border.color:   qgcPal.text
+                border.color:   qgcPal.windowShadeDark
                 border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
                 QGCColoredImage {
                     source:     "/qmlimages/checkbox-check.svg"
-                    color:      "black"
+                    color:      qgcPal.buttonHighlight
                     opacity:    control.checkedState === Qt.Checked ? (control.enabled ? 1 : 0.5) : 0
                     mipmap:     true
                     fillMode:   Image.PreserveAspectFit

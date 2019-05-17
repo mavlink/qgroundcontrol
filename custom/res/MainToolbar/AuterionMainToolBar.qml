@@ -64,7 +64,6 @@ Item {
         spacing:                            ScreenTools.defaultFontPixelWidth * 2
         AuterionIconButton {
             height:                         parent.height
-            text:                           sectionTitle
             onClicked: {
                 if(drawer.visible) {
                     drawer.close()
@@ -147,8 +146,7 @@ Item {
         anchors.right:                      parent.right
         anchors.bottom:                     parent.bottom
         height:                             1
-        color:                              "black"
-        visible:                            qgcPal.globalTheme === QGCPalette.Light
+        color:                              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
     }
     //-------------------------------------------------------------------------
     //-- Navigation Drawer (Left to Right, on command or using touch gestures)
@@ -158,7 +156,7 @@ Item {
         width:                              navButtonWidth
         height:                             mainWindow.height - header.height
         background: Rectangle {
-            color:  qgcPal.globalTheme === QGCPalette.Light ? "white" : "#0B1420"
+        color:                              qgcPal.window
         }
         ButtonGroup {
             id:                             buttonGroup

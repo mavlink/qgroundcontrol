@@ -75,7 +75,7 @@ Item {
             id:             quickSettingMenu
             height:         buttonCol.height + (ScreenTools.defaultFontPixelHeight * 2)
             width:          buttonCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-            color:          qgcPal.windowShade
+            color:          qgcPal.window
             radius:         2
             anchors.verticalCenter: cameraRect.verticalCenter
             Column {
@@ -126,7 +126,7 @@ Item {
             id:             cameraRect
             height:         cameraCol.height
             width:          cameraCol.width + (ScreenTools.defaultFontPixelWidth * 2)
-            color:          qgcPal.windowShade
+            color:          qgcPal.window
             radius:         2
             Column {
                 id:         cameraCol
@@ -183,7 +183,7 @@ Item {
                     height:                 ScreenTools.defaultFontPixelHeight * 4
                     radius:                 width * 0.5
                     border.color:           qgcPal.buttonText
-                    border.width:           3
+                    border.width:           2
                     anchors.horizontalCenter: parent.horizontalCenter
                     Rectangle {
                         width:              parent.width * 0.75
@@ -201,7 +201,7 @@ Item {
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            color:              qgcPal.colorBlue
+                            color:              qgcPal.window
                             visible: {
                                 if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
                                     return true
@@ -277,19 +277,20 @@ Item {
                         id:                 settingsCol
                         spacing:            _spacers * 0.5
                         anchors.horizontalCenter: parent.horizontalCenter
-                        Image {
-                            width:          ScreenTools.defaultFontPixelHeight
-                            height:         width
-                            sourceSize.width: width
-                            source:         "qrc:/auterion/img/camera_settings.svg"
-                            fillMode:       Image.PreserveAspectFit
-                            opacity:        _settingsEnabled ? 1 : 0.5
-                            anchors.horizontalCenter: parent.horizontalCenter
+                        QGCColoredImage {
+                            width:                      ScreenTools.defaultFontPixelHeight
+                            height:                     width
+                            sourceSize.width:           width
+                            source:                     "qrc:/auterion/img/camera_settings.svg"
+                            color:                      qgcPal.text
+                            fillMode:                   Image.PreserveAspectFit
+                            opacity:                    _settingsEnabled ? 1 : 0.5
+                            anchors.horizontalCenter:   parent.horizontalCenter
                         }
                         QGCLabel {
-                            text:           qsTr("Settings")
-                            font.pointSize: ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            text:                       qsTr("Settings")
+                            font.pointSize:             ScreenTools.smallFontPointSize
+                            anchors.horizontalCenter:   parent.horizontalCenter
                         }
                     }
                     MouseArea {
@@ -303,16 +304,17 @@ Item {
                 //-----------------------------------------------------------------
                 //-- microSD Card
                 Column {
-                    spacing:            _spacers * 0.5
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Image {
-                        width:          ScreenTools.defaultFontPixelHeight
-                        height:         width
-                        sourceSize.width: width
-                        source:         "qrc:/auterion/img/microSD.svg"
-                        fillMode:       Image.PreserveAspectFit
-                        opacity:        _settingsEnabled ? 1 : 0.5
-                        anchors.horizontalCenter: parent.horizontalCenter
+                    spacing:                        _spacers * 0.5
+                    anchors.horizontalCenter:       parent.horizontalCenter
+                    QGCColoredImage {
+                        width:                      ScreenTools.defaultFontPixelHeight
+                        height:                     width
+                        sourceSize.width:           width
+                        source:                     "qrc:/auterion/img/microSD.svg"
+                        color:                      qgcPal.text
+                        fillMode:                   Image.PreserveAspectFit
+                        opacity:                    _settingsEnabled ? 1 : 0.5
+                        anchors.horizontalCenter:   parent.horizontalCenter
                     }
                     QGCLabel {
                         text: {

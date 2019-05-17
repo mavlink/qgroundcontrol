@@ -1,22 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 23.0.3, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:none;}
-	.st1{fill-rule:evenodd;clip-rule:evenodd;fill:url(#logo.svg_1_);}
-</style>
-<title>logo</title>
-<desc>Created with Sketch.</desc>
-<circle class="st0" cx="36" cy="36" r="34.2"/>
-<linearGradient id="logo.svg_1_" gradientUnits="userSpaceOnUse" x1="9.3985" y1="40.473" x2="24.804" y2="48.5452" gradientTransform="matrix(9.8828 0 0 -11.3929 -140.1194 550.8276)">
-	<stop  offset="0" style="stop-color:#FDF280"/>
-	<stop  offset="0.16" style="stop-color:#FDF280"/>
-	<stop  offset="0.66" style="stop-color:#F69321"/>
-	<stop  offset="1" style="stop-color:#F69321"/>
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M23.0988 48.8689L34.0056 22.1874C34.3287 21.3963 35.0557 21 35.7826 21C36.5048 21 37.2264 21.3911 37.5538 22.1742L43.8787 37.3132C44.0676 37.7663 43.8272 38.2826 43.3555 38.4316C42.4206 38.7263 41.4535 39.0316 40.4695 39.3423C40.1969 39.4283 39.923 39.5148 39.6481 39.6016C39.2268 39.7347 38.7721 39.5258 38.6033 39.1216L36.6056 34.3458C36.3169 33.6547 35.3295 33.6553 35.0466 34.3484C34.1637 36.5079 32.7321 40.01 31.8943 42.0605C31.6268 42.7137 32.2471 43.3774 32.9237 43.1632C36.2474 42.1126 43.5518 39.8053 48.3284 38.2974C48.8977 38.1174 49.2432 38.9032 48.7242 39.1968L28.9669 50.3658C28.5684 50.5905 28.1174 50.7084 27.6589 50.7063L24.3277 50.6889C23.3848 50.6837 22.7449 49.7358 23.0988 48.8689ZM42.8958 49.3142L41.0849 44.9737L45.9628 42.2137C45.9628 42.2137 47.6804 46.261 48.7437 48.7679C49.1353 49.6895 48.4508 50.7063 47.4432 50.7063H44.9949C44.0759 50.7063 43.2471 50.1568 42.8958 49.3142Z" fill="url(#paint0_linear)"/>
+<defs>
+<linearGradient id="paint0_linear" x1="25.0199" y1="55.6596" x2="48.2849" y2="45.4804" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFEA79"/>
+<stop offset="0.24" stop-color="#FDE072"/>
+<stop offset="0.38" stop-color="#F8C65F"/>
+<stop offset="0.56" stop-color="#EF9B41"/>
+<stop offset="1" stop-color="#EA802D"/>
 </linearGradient>
-<path id="logo.svg" class="st1" d="M41.2,45.4l5-2.9c0,0,1.8,4.2,2.9,6.8c0.4,1-0.3,2-1.3,2h-2.5c-0.9,0-1.8-0.6-2.2-1.4L41.2,45.4z
-	 M34,21.8c0.3-0.8,1.1-1.2,1.8-1.2c0.7,0,1.5,0.4,1.8,1.2l6.5,15.7c0.2,0.5-0.1,1-0.5,1.2c-1.2,0.4-2.5,0.8-3.8,1.2
-	c-0.4,0.1-0.9-0.1-1.1-0.5l-2.1-4.9c-0.3-0.7-1.3-0.7-1.6,0c-0.9,2.2-2.4,5.9-3.2,8c-0.3,0.7,0.4,1.4,1.1,1.1
-	c3.4-1.1,10.9-3.5,15.8-5c0.6-0.2,0.9,0.6,0.4,0.9L28.8,51c-0.4,0.2-0.9,0.4-1.3,0.4l-3.4,0c-1,0-1.6-1-1.3-1.9L34,21.8z"/>
+</defs>
 </svg>
