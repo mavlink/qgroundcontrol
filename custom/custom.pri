@@ -183,7 +183,6 @@ exists($$PWD/custom/custom.pri) {
     AndroidBuild {
         CONFIG += DISABLE_BUILTIN_ANDROID
         CONFIG += QGC_DISABLE_BUILD_SETUP
-        CONFIG += QGC_DISABLE_INSTALLER_SETUP
         ANDROID_EXTRA_LIBS += $${PLUGIN_SOURCE}
         include($$QGCROOT/libs/qtandroidserialport/src/qtandroidserialport.pri)
         message("Adding Custom Serial Java Classes")
@@ -215,10 +214,9 @@ exists($$PWD/custom/custom.pri) {
 
         # For now only android uses install customization
         # It's important to keep the right order
-        include($$QGCROOT/QGCSetup.pri)
         include(customQGCInstaller.pri)
-        # Disable only for Android. MacOS build won't add the right libraries to the build package
-        CONFIG += QGC_DISABLE_BUILD_SETUP
+        # Disable only for Android
+        CONFIG += QGC_DISABLE_INSTALLER_SETUP
     }
 
     #-------------------------------------------------------------------------------------
@@ -230,10 +228,13 @@ exists($$PWD/custom/custom.pri) {
 
     #-------------------------------------------------------------------------------------
     # Custom setup
-    LinxuBuild {
-        CONFIG += QGC_DISABLE_BUILD_SETUP
+    LinuxBuild {
+        # Disable original setup so that we overwrite parts of the build process
         include($$QGCROOT/QGCSetup.pri)
-        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/deploy/qgroundcontrol-start.sh $$DESTDIR
+        CONFIG += QGC_DISABLE_BUILD_SETUP
+        message("Enable override of standard build setup for Linux")
+        QMAKE_POST_LINK += && echo "Overriding custom Linux setup"
+        QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/deploy/qgroundcontrol-start.sh $$DESTDIR
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/deploy/qgroundcontrol.desktop $$DESTDIR
         QMAKE_POST_LINK += && $$QMAKE_COPY $$BASEDIR/custom/res/src/Auterion_Icon.png $$DESTDIR/qgroundcontrol.png
     }
