@@ -4557,6 +4557,7 @@ default 1.5 turns per second</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_ACC_HOR" type="FLOAT">
       <short_desc>Acceleration for auto and for manual</short_desc>
+      <long_desc>Note: In manual, this parameter is only used in MPC_POS_MODE 1.</long_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s/s</unit>
@@ -4575,7 +4576,8 @@ the vehicle will accelerate at this rate until the normal position control speed
       <increment>0.1</increment>
     </parameter>
     <parameter default="10.0" name="MPC_ACC_HOR_MAX" type="FLOAT">
-      <short_desc>Maximum horizontal acceleration for auto mode and maximum deceleration for manual mode</short_desc>
+      <short_desc>Maximum horizontal acceleration for auto mode and for manual mode</short_desc>
+      <long_desc>Manual mode: Maximum deceleration for MPC_POS_MODE 1 and 2. Maximum acceleration and deceleration for MPC_POS_MODE 3. Auto mode: Used with MPC_AUTO_MODE 0 only. For MPC_AUTO_MODE 1, MPC_ACC_HOR is always used.</long_desc>
       <min>2.0</min>
       <max>15.0</max>
       <unit>m/s/s</unit>
@@ -4627,6 +4629,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="5.0" name="MPC_DEC_HOR_SLOW" type="FLOAT">
       <short_desc>Slow horizontal manual deceleration for manual mode</short_desc>
+      <long_desc>Note: This is only used when MPC_POS_MODE is set to 1.</long_desc>
       <min>0.5</min>
       <max>10.0</max>
       <unit>m/s/s</unit>
@@ -4653,9 +4656,18 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
       <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
+    <parameter default="8.0" name="MPC_JERK_AUTO" type="FLOAT">
+      <short_desc>Jerk limit in auto mode</short_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility. Note: This is only used in jerk-limited trajectory mode (MPC_AUTO_MODE 1)</long_desc>
+      <min>5.0</min>
+      <max>80.0</max>
+      <unit>m/s/s/s</unit>
+      <decimal>1</decimal>
+      <increment>1</increment>
+    </parameter>
     <parameter default="20.0" name="MPC_JERK_MAX" type="FLOAT">
       <short_desc>Maximum jerk limit</short_desc>
-      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
+      <long_desc>Limit the maximum jerk of the vehicle (how fast the acceleration can change). A lower value leads to smoother vehicle motions, but it also limits its agility (how fast it can change directions or break). Setting this to the maximum value essentially disables the limit. Note: This is only used when MPC_POS_MODE is set to a smoothing mode 1 or 3.</long_desc>
       <min>0.5</min>
       <max>500.0</max>
       <unit>m/s/s/s</unit>
@@ -4664,7 +4676,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="8.0" name="MPC_JERK_MIN" type="FLOAT">
       <short_desc>Velocity-based jerk limit</short_desc>
-      <long_desc>If this is not zero, a velocity-based maximum jerk limit is used: the applied jerk limit linearly increases with the vehicle's velocity between MPC_JERK_MIN (zero velocity) and MPC_JERK_MAX (maximum velocity). This means that the vehicle's motions are smooth for low velocities, but still allows fast direction changes or breaking at higher velocities. Set this to zero to use a fixed maximum jerk limit (MPC_JERK_MAX). Note: this is only used when MPC_POS_MODE is set to a smoothing mode.</long_desc>
+      <long_desc>If this is not zero, a velocity-based maximum jerk limit is used: the applied jerk limit linearly increases with the vehicle's velocity between MPC_JERK_MIN (zero velocity) and MPC_JERK_MAX (maximum velocity). This means that the vehicle's motions are smooth for low velocities, but still allows fast direction changes or breaking at higher velocities. Set this to zero to use a fixed maximum jerk limit (MPC_JERK_MAX). Note: This is only used when MPC_POS_MODE is set to 1.</long_desc>
       <min>0</min>
       <max>30.0</max>
       <unit>m/s/s/s</unit>
@@ -4735,7 +4747,7 @@ is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
     </parameter>
     <parameter default="0" name="MPC_THR_CURVE" type="INT32">
       <short_desc>Thrust curve in Manual Mode</short_desc>
-      <long_desc>This parameter defines how the throttle stick input is mapped to commanded thrust in Manual/Stabilized flight mode. In case the default is used ('Rescale to hover thrust'), the stick input is linearly rescaled, such that a centered stick corresponds to the hover throttle (see MPC_THR_HOVER). Select 'No Rescale' to directly map the stick 1:1 to the output. This can be useful in case the hover thrust is very low and the default would lead to too much distortion (e.g. if hover thrust is set to 20%, 80% of the upper thrust range is squeezed into the upper half of the stick range). Note: in case MPC_THR_HOVER is set to 50%, the modes 0 and 1 are the same.</long_desc>
+      <long_desc>This parameter defines how the throttle stick input is mapped to commanded thrust in Manual/Stabilized flight mode. In case the default is used ('Rescale to hover thrust'), the stick input is linearly rescaled, such that a centered stick corresponds to the hover throttle (see MPC_THR_HOVER). Select 'No Rescale' to directly map the stick 1:1 to the output. This can be useful in case the hover thrust is very low and the default would lead to too much distortion (e.g. if hover thrust is set to 20%, 80% of the upper thrust range is squeezed into the upper half of the stick range). Note: In case MPC_THR_HOVER is set to 50%, the modes 0 and 1 are the same.</long_desc>
       <values>
         <value code="0">Rescale to hover thrust</value>
         <value code="1">No Rescale</value>
