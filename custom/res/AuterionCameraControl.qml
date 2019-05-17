@@ -126,7 +126,7 @@ Item {
             id:             cameraRect
             height:         cameraCol.height
             width:          cameraCol.width + (ScreenTools.defaultFontPixelWidth * 2)
-            color:          qgcPal.windowShade
+            color:          qgcPal.window
             radius:         2
             Column {
                 id:         cameraCol
@@ -183,7 +183,7 @@ Item {
                     height:                 ScreenTools.defaultFontPixelHeight * 4
                     radius:                 width * 0.5
                     border.color:           qgcPal.buttonText
-                    border.width:           3
+                    border.width:           2
                     anchors.horizontalCenter: parent.horizontalCenter
                     Rectangle {
                         width:              parent.width * 0.75
