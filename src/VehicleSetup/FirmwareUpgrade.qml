@@ -322,9 +322,9 @@ SetupPage {
 
                         QGCLabel { text: qsTr("Flight Stack") }
 
-                        RowLayout {
+                        ColumnLayout {
                             spacing:            _margins
-                            layoutDirection:    px4FlightStackRadio.checked ? Qt.LeftToRight : Qt.RightToLeft
+                            layoutDirection:    px4FlightStackRadio.checked ? Qt.TopToBottom : Qt.BottomToTop
 
                             // The following craziness of three radio buttons to represent two radio buttons is so that the
                             // order can be changed such that the default firmware button is always on the top
