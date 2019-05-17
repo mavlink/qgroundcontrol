@@ -142,7 +142,7 @@ Button {
 
     // Process hover events
     MouseArea {
-        enabled: !ScreenTools.isMobile
+        enabled: !ScreenTools.hasTouch
         hoverEnabled: true
         propagateComposedEvents: true
         preventStealing: true
