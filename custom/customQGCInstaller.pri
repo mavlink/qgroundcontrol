@@ -10,8 +10,5 @@ installer {
         QMAKE_POST_LINK += && cp $${DESTDIR}/android-build/build/outputs/apk/android-build-release-signed.apk $${DESTDIR}/package/$${QGC_BINARY_NAME}.apk 2>/dev/null
         QMAKE_POST_LINK += || cp $${DESTDIR}/android-build/build/outputs/apk/android-build-debug.apk $${DESTDIR}/package/$${QGC_BINARY_NAME}.apk
         QMAKE_POST_LINK += && echo "Done APK build"
-    } else {
-        # Include the default installer config
-        include($$QGCROOT/QGCInstaller.pri)
     }
 }
