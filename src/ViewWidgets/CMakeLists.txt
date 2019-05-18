@@ -1,7 +1,5 @@
 
 add_library(ViewWidgets
-	CustomCommandWidget.cc
-	CustomCommandWidgetController.cc
 	ViewWidgetController.cc
 )
 

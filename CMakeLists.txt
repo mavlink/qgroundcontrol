@@ -181,6 +181,7 @@ set(QGC_RESOURCES
 	HackFileDialog.qrc
 	qgcresources.qrc
 	qgroundcontrol.qrc
+	qgcimages.qrc
 
 	src/FirmwarePlugin/APM/APMResources.qrc
 	src/FirmwarePlugin/PX4/PX4Resources.qrc

@@ -1,15 +1,15 @@
 
 add_library(qgcunittest
-	FileDialogTest.cc
-	FileManagerTest.cc
-	FlightGearTest.cc
+	#FileDialogTest.cc
+	#FileManagerTest.cc
+	#FlightGearTest.cc
 	GeoTest.cc
 	LinkManagerTest.cc
-	MainWindowTest.cc
+	#MainWindowTest.cc
 	MavlinkLogTest.cc
-	MessageBoxTest.cc
+	#MessageBoxTest.cc
 	MultiSignalSpy.cc
-	RadioConfigTest.cc
+	#RadioConfigTest.cc
 	TCPLinkTest.cc
 	TCPLoopBackServer.cc
 	UnitTest.cc
