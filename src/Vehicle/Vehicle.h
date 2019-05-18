@@ -1230,6 +1230,7 @@ private slots:
     void _trafficUpdate         (bool alert, QString traffic_id, QString vehicle_id, QGeoCoordinate location, float heading);
     void _adsbTimerTimeout      ();
     void _orbitTelemetryTimeout (void);
+    void _protocolVersionTimeOut(void);
 
 private:
     bool _containsLink(LinkInterface* link);
@@ -1297,6 +1298,8 @@ private:
     void _updateArmed(bool armed);
     bool _apmArmingNotRequired(void);
     void _pidTuningAdjustRates(bool setRatesForTuning);
+    void _handleUnsupportedRequestAutopilotCapabilities(void);
+    void _handleUnsupportedRequestProtocolVersion(void);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1354,6 +1357,7 @@ private:
     uint32_t        _telemetryTXBuffer;
     int             _telemetryLNoise;
     int             _telemetryRNoise;
+    bool            _mavlinkProtocolRequestComplete;
     unsigned        _maxProtoVersion;
     bool            _vehicleCapabilitiesKnown;
     uint64_t        _capabilityBits;

@@ -141,6 +141,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _telemetryTXBuffer(0)
     , _telemetryLNoise(0)
     , _telemetryRNoise(0)
+    , _mavlinkProtocolRequestComplete(false)
     , _maxProtoVersion(0)
     , _vehicleCapabilitiesKnown(false)
     , _capabilityBits(0)
@@ -220,6 +221,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::activeVehicleAvailableChanged, this, &Vehicle::_loadSettings);
 
     _mavlink = _toolbox->mavlinkProtocol();
+    qCDebug(VehicleLog) << "Link started with Mavlink " << (_mavlink->getCurrentVersion() >= 200 ? "V2" : "V1");
 
     connect(_mavlink, &MAVLinkProtocol::messageReceived,        this, &Vehicle::_mavlinkMessageReceived);
     connect(_mavlink, &MAVLinkProtocol::mavlinkMessageStatus,   this, &Vehicle::_mavlinkMessageStatus);
@@ -268,17 +270,14 @@ Vehicle::Vehicle(LinkInterface*             link,
         _geoFenceManagerInitialRequestSent = true;
         _rallyPointManagerInitialRequestSent = true;
     } else {
-        // Ask the vehicle for protocol version info.
-        sendMavCommand(MAV_COMP_ID_ALL,                     // Don't know default component id yet.
-                       MAV_CMD_REQUEST_PROTOCOL_VERSION,
-                       false,                               // No error shown if fails
-                       1);                                  // Request protocol version
-
-        // Ask the vehicle for firmware version info.
-        sendMavCommand(MAV_COMP_ID_ALL,                         // Don't know default component id yet.
+        sendMavCommand(MAV_COMP_ID_ALL,
                        MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES,
                        false,                                   // No error shown if fails
                        1);                                      // Request firmware version
+        sendMavCommand(MAV_COMP_ID_ALL,
+                       MAV_CMD_REQUEST_PROTOCOL_VERSION,
+                       false,                                   // No error shown if fails
+                       1);                                      // Request protocol version
     }
 
     _firmwarePlugin->initializeVehicle(this);
@@ -630,12 +629,11 @@ void Vehicle::resetCounters()
 
 void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message)
 {
-    // if the minimum supported version of MAVLink is already 2.0
-    // set our max proto version to it.
+    // If the link is already running at Mavlink V2 set our max proto version to it.
     unsigned mavlinkVersion = _mavlink->getCurrentVersion();
     if (_maxProtoVersion != mavlinkVersion && mavlinkVersion >= 200) {
-        _maxProtoVersion = _mavlink->getCurrentVersion();
-        qCDebug(VehicleLog) << "Vehicle::_mavlinkMessageReceived setting _maxProtoVersion" << _maxProtoVersion;
+        _maxProtoVersion = mavlinkVersion;
+        qCDebug(VehicleLog) << "Vehicle::_mavlinkMessageReceived Link already running Mavlink v2. Setting _maxProtoVersion" << _maxProtoVersion;
     }
 
     if (message.sysid != _id && message.sysid != 0) {
@@ -1277,13 +1275,6 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
     emit capabilitiesKnownChanged(true);
     emit capabilityBitsChanged(_capabilityBits);
 
-    // This should potentially be turned into a user-facing warning
-    // if the general experience after deployment is that users want MAVLink 2
-    // but forget to upgrade their radio firmware
-    if (capabilityBits & MAV_PROTOCOL_CAPABILITY_MAVLINK2 && maxProtoVersion() < 200) {
-        qCDebug(VehicleLog) << QString("Vehicle does support MAVLink 2 but the link does not allow for it.");
-    }
-
     QString supports("supports");
     QString doesNotSupport("does not support");
 
@@ -1351,7 +1342,11 @@ void Vehicle::_handleProtocolVersion(LinkInterface *link, mavlink_message_t& mes
     mavlink_protocol_version_t protoVersion;
     mavlink_msg_protocol_version_decode(&message, &protoVersion);
 
+    qCDebug(VehicleLog) << "_handleProtocolVersion" << protoVersion.max_version;
+
+    _mavlinkProtocolRequestComplete = true;
     _setMaxProtoVersion(protoVersion.max_version);
+    _startPlanRequest();
 }
 
 void Vehicle::_setMaxProtoVersion(unsigned version) {
@@ -1361,11 +1356,6 @@ void Vehicle::_setMaxProtoVersion(unsigned version) {
         qCDebug(VehicleLog) << "_setMaxProtoVersion before:after" << _maxProtoVersion << version;
         _maxProtoVersion = version;
         emit requestProtocolVersion(_maxProtoVersion);
-
-        // Now that the protocol version is known, the mission load is safe
-        // as it will use the right MAVLink version to enable all features
-        // the vehicle supports
-        _startPlanRequest();
     }
 }
 
@@ -2592,10 +2582,15 @@ void Vehicle::_mapTrajectoryStop()
 void Vehicle::_startPlanRequest(void)
 {
     if (_missionManagerInitialRequestSent) {
+        // We have already started (or possibly completed) the sequence of requesting the plan for the first time
         return;
     }
 
-    if (_parameterManager->parametersReady() && _vehicleCapabilitiesKnown) {
+    // We don't start the Plan request until the following things are satisfied:
+    //  - Parameter download is complete
+    //  - We know the vehicle capabilities
+    //  - We know the max mavlink protocol version
+    if (_parameterManager->parametersReady() && _vehicleCapabilitiesKnown && _mavlinkProtocolRequestComplete) {
         qCDebug(VehicleLog) << "_startPlanRequest";
         _missionManagerInitialRequestSent = true;
         if (_settingsManager->appSettings()->autoLoadMissions()->rawValue().toBool()) {
@@ -2616,6 +2611,8 @@ void Vehicle::_startPlanRequest(void)
             qCDebug(VehicleLog) << "Delaying _startPlanRequest due to parameters not ready";
         } else if (!_vehicleCapabilitiesKnown) {
             qCDebug(VehicleLog) << "Delaying _startPlanRequest due to vehicle capabilities not known";
+        } else if (!_mavlinkProtocolRequestComplete) {
+            qCDebug(VehicleLog) << "Delaying _startPlanRequest due to mavlink protocol request not complete";
         }
     }
 }
@@ -2661,6 +2658,7 @@ void Vehicle::_rallyPointLoadComplete(void)
 
 void Vehicle::_parametersReady(bool parametersReady)
 {
+    qDebug() << "_parametersReady" << parametersReady;
     // Try to set current unix time to the vehicle
     _sendQGCTimeToVehicle();
     // Send time twice, more likely to get to the vehicle on a noisy link
@@ -2788,12 +2786,11 @@ void Vehicle::_linkActiveChanged(LinkInterface *link, bool active, int vehicleID
         } else if (!active && !_connectionLost) {
             _updatePriorityLink(false /* updateActive */, false /* sendCommand */);
 
-            // check if another active link has been found
             if (link == _priorityLink) {
+                // No other link to switch to was found, notify user of comm lossf
                 _connectionLost = true;
                 communicationLost = true;
                 _heardFrom = false;
-                _maxProtoVersion = 0;
                 emit connectionLostChanged(true);
 
                 if (_autoDisconnect) {
@@ -3198,22 +3195,13 @@ void Vehicle::_sendMavCommandAgain(void)
 
     if (_mavCommandRetryCount++ > _mavCommandMaxRetryCount) {
         if (queuedCommand.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES) {
-            // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
-            qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES. Setting no capabilities. Starting Plan request.";
-            _setCapabilities(0);
-            _startPlanRequest();
+            qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES.";
+            _handleUnsupportedRequestAutopilotCapabilities();
         }
 
         if (queuedCommand.command == MAV_CMD_REQUEST_PROTOCOL_VERSION) {
-            // We aren't going to get a response back for the protocol version, so assume v1 is all we can do.
-            // If the max protocol version is uninitialized, fall back to v1.
-            qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_PROTOCOL_VERSION. Starting Plan request.";
-            if (_maxProtoVersion == 0) {
-                qCDebug(VehicleLog) << "Setting _maxProtoVersion to 100 since not yet set.";
-                _setMaxProtoVersion(100);
-            } else {
-                qCDebug(VehicleLog) << "Leaving _maxProtoVersion at current value" << _maxProtoVersion;
-            }
+            qCDebug(VehicleLog) << "Vehicle failed to responded to MAV_CMD_REQUEST_PROTOCOL_VERSION.";
+            _handleUnsupportedRequestProtocolVersion();
         }
 
         emit mavCommandResult(_id, queuedCommand.component, queuedCommand.command, MAV_RESULT_FAILED, true /* noResponsefromVehicle */);
@@ -3305,6 +3293,49 @@ void Vehicle::_sendNextQueuedMavCommand(void)
     }
 }
 
+void Vehicle::_handleUnsupportedRequestProtocolVersion(void)
+{
+    // We end up here if either the vehicle does not support the MAV_CMD_REQUEST_PROTOCOL_VERSION command or if
+    // we never received an Ack back for the command.
+
+    // If the link isn't already running Mavlink V2 fall back to the capability bits to determine whether to use Mavlink V2 or not.
+    if (_maxProtoVersion == 0) {
+        if (capabilitiesKnown()) {
+            unsigned vehicleMaxProtoVersion = capabilityBits() & MAV_PROTOCOL_CAPABILITY_MAVLINK2 ? 200 : 100;
+            qCDebug(VehicleLog) << QStringLiteral("Setting _maxProtoVersion to %1 based on capabilitity bits since not yet set.").arg(vehicleMaxProtoVersion);
+            _setMaxProtoVersion(vehicleMaxProtoVersion);
+        } else {
+            qCDebug(VehicleLog) << "Waiting for capabilities to be known to set _maxProtoVersion";
+        }
+    } else {
+        qCDebug(VehicleLog) << "Leaving _maxProtoVersion at current value" << _maxProtoVersion;
+    }
+    _mavlinkProtocolRequestComplete = true;
+
+    // Determining protocol version is one of the triggers to possibly start downloading the plan
+    _startPlanRequest();
+}
+
+void Vehicle::_protocolVersionTimeOut(void)
+{
+    // The PROTOCOL_VERSION message didn't make it through the pipe from Vehicle->QGC.
+    // This means although the vehicle may support mavlink 1, the pipe does not.
+    qCDebug(VehicleLog) << QStringLiteral("Setting _maxProtoVersion to 100 due to timeout on receiving PROTOCOL_VERSION message.");
+    _setMaxProtoVersion(100);
+    _mavlinkProtocolRequestComplete = true;
+    _startPlanRequest();
+}
+
+void Vehicle::_handleUnsupportedRequestAutopilotCapabilities(void)
+{
+    // We end up here if either the vehicle does not support the MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES command or if
+    // we never received an Ack back for the command.
+
+    _setCapabilities(0);
+
+    // Determining vehicle capabilities is one of the triggers to possibly start downloading the plan
+    _startPlanRequest();
+}
 
 void Vehicle::_handleCommandAck(mavlink_message_t& message)
 {
@@ -3314,23 +3345,21 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     mavlink_msg_command_ack_decode(&message, &ack);
 
     if (ack.command == MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES && ack.result != MAV_RESULT_ACCEPTED) {
-        // We aren't going to get a response back for capabilities, so stop waiting for it before we ask for mission items
-        qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error(%1). Setting no capabilities. Starting Plan request.").arg(ack.result);
-        _setCapabilities(0);
+        qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES with error(%1). Setting no capabilities.").arg(ack.result);
+        _handleUnsupportedRequestAutopilotCapabilities();
     }
 
-    if (ack.command == MAV_CMD_REQUEST_PROTOCOL_VERSION && ack.result != MAV_RESULT_ACCEPTED) {
-        // The autopilot does not understand the request and consequently is likely handling only
-        // MAVLink 1
-        qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_PROTOCOL_VERSION with error(%1).").arg(ack.result);
-        if (_maxProtoVersion == 0) {
-            qCDebug(VehicleLog) << "Setting _maxProtoVersion to 100 since not yet set.";
-            _setMaxProtoVersion(100);
+    if (ack.command == MAV_CMD_REQUEST_PROTOCOL_VERSION) {
+        if (ack.result == MAV_RESULT_ACCEPTED) {
+            // The vehicle should be sending a PROTOCOL_VERSION message in a mavlink 2 packet. This may or may not make it through the pipe.
+            // So we wait for it to come and timeout if it doesn't.
+            if (!_mavlinkProtocolRequestComplete) {
+                QTimer::singleShot(1000, this, &Vehicle::_protocolVersionTimeOut);
+            }
         } else {
-            qCDebug(VehicleLog) << "Leaving _maxProtoVersion at current value" << _maxProtoVersion;
+            qCDebug(VehicleLog) << QStringLiteral("Vehicle responded to MAV_CMD_REQUEST_PROTOCOL_VERSION with error(%1).").arg(ack.result);
+            _handleUnsupportedRequestProtocolVersion();
         }
-        // FIXME: Is this missing here. I believe it is a bug. Debug to verify. May need to go into Stable.
-        //_startPlanRequest();
     }
 
 #if !defined(NO_ARDUPILOT_DIALECT)
