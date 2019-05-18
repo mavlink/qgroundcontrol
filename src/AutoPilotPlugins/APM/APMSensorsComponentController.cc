@@ -403,8 +403,6 @@ void APMSensorsComponentController::cancelCalibration(void)
 
 void APMSensorsComponentController::nextClicked(void)
 {
-    mavlink_message_t msg;
-
     if (_calTypeInProgress == CalTypeAccel) {
         _vehicle->sendMavCommand(_vehicle->defaultComponentId(), MAV_CMD_ACCELCAL_VEHICLE_POS, true /* showError */, _currentCalOrientation);
     } else {
@@ -420,8 +418,8 @@ void APMSensorsComponentController::nextClicked(void)
                                           0,    // target_system
                                           0);   // target_component
 
+        _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
     }
-    _vehicle->sendMessageOnLink(_vehicle->priorityLink(), msg);
 
     if (_calTypeInProgress == CalTypeCompassMot) {
         _stopCalibration(StopCalibrationSuccess);
