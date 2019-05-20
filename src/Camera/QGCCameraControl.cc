@@ -1831,7 +1831,6 @@ QGCCameraControl::_loadRanges(QDomNode option, const QString factName, QString p
         for(int i = 0; i < parameterRanges.size(); i++) {
             QString param;
             QString condition;
-            QMap<QString, QVariant> rangeList;
             QDomNode paramRange = parameterRanges.item(i);
             if(!read_attribute(paramRange, kParameter, param)) {
                 qCritical() << QString("Malformed option range for parameter %1").arg(factName);
