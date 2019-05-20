@@ -931,7 +931,7 @@ void LinkManager::_activeLinkCheck(void)
         QSignalSpy spy(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)));
         if (spy.wait(100)) {
             QList<QVariant> arguments = spy.takeFirst();
-            if (arguments[1].value<QByteArray>().contains("nsh>")) {
+            if (arguments[1].toByteArray().contains("nsh>")) {
                 foundNSHPrompt = true;
             }
         }
