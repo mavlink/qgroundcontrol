@@ -1153,7 +1153,7 @@ void
 QGCCameraControl::_requestAllParameters()
 {
     //-- Reset receive list
-    for(QString paramName: _paramIO.keys()) {
+    for(const QString& paramName: _paramIO.keys()) {
         if(_paramIO[paramName]) {
             _paramIO[paramName]->setParamRequest();
         } else {
@@ -1391,7 +1391,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
     }
     //-- Parameter update requests
     if(_requestUpdates.contains(pFact->name())) {
-        for(QString param: _requestUpdates[pFact->name()]) {
+        for(const QString& param: _requestUpdates[pFact->name()]) {
             if(!_updatesToRequest.contains(param)) {
                 _updatesToRequest << param;
             }
@@ -1406,7 +1406,7 @@ QGCCameraControl::_updateRanges(Fact* pFact)
 void
 QGCCameraControl::_requestParamUpdates()
 {
-    for(QString param: _updatesToRequest) {
+    for(const QString& param: _updatesToRequest) {
         _paramIO[param]->paramRequest();
     }
     _updatesToRequest.clear();
@@ -2003,7 +2003,7 @@ QGCCameraControl::_dataReady(QByteArray data)
 void
 QGCCameraControl::_paramDone()
 {
-    for(QString param: _paramIO.keys()) {
+    for(const QString& param: _paramIO.keys()) {
         if(!_paramIO[param]->paramDone()) {
             return;
         }
