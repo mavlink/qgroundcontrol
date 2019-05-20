@@ -226,15 +226,6 @@ public class QGCActivity extends QtActivity
             IntentFilter accessoryFilter = new IntentFilter(ACTION_USB_PERMISSION);
             filter.addAction(UsbManager.ACTION_USB_ACCESSORY_DETACHED);
             registerReceiver(mOpenAccessoryReceiver, accessoryFilter);
-
-            probeAccessoriesTimer = new Timer();
-            probeAccessoriesTimer.schedule(new TimerTask() {
-                @Override
-                public void run()
-                {
-                    probeAccessories();
-                }
-            }, 0, 3000);
         } catch(Exception e) {
            Log.e(TAG, "Exception: " + e);
         }
@@ -698,6 +689,16 @@ public class QGCActivity extends QtActivity
                     openUsbAccessory = usbAccessory;
                     taiSync.open(_usbManager.openAccessory(usbAccessory));
                 }
+            }
+            if (probeAccessoriesTimer == null) {
+                probeAccessoriesTimer = new Timer();
+                probeAccessoriesTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run()
+                    {
+                        probeAccessories();
+                    }
+                }, 0, 3000);
             }
         } catch (IOException e) {
             Log.e(TAG, "openAccessory exception: " + e);
