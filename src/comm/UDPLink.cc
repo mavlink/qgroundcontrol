@@ -55,7 +55,6 @@ static QString get_ip_address(const QString& address)
     if (info.error() == QHostInfo::NoError)
     {
         QList<QHostAddress> hostAddresses = info.addresses();
-        QHostAddress address;
         for (int i = 0; i < hostAddresses.size(); i++)
         {
             // Exclude all IPv6 addresses
