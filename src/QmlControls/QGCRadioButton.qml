@@ -24,7 +24,8 @@ RadioButton {
         y:                      parent.height / 2 - height / 2
         Rectangle {
             anchors.centerIn:   parent
-            width:              Math.round(parent.width * 0.5)
+            // Width should be an odd number to be centralized by the parent properly
+            width:              2 * Math.floor(parent.width / 4) + 1
             height:             width
             antialiasing:       true
             radius:             height * 0.5
