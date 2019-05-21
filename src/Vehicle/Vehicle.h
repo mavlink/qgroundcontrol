@@ -1331,6 +1331,8 @@ private:
     void _pidTuningAdjustRates(bool setRatesForTuning);
     void _handleUnsupportedRequestAutopilotCapabilities(void);
     void _handleUnsupportedRequestProtocolVersion(void);
+    void _initializeCsv();
+    void _writeCsvLine();
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1346,6 +1348,9 @@ private:
     bool                _soloFirmware;
     QGCToolbox*         _toolbox;
     SettingsManager*    _settingsManager;
+
+    QTimer                  _csvLogTimer;
+    QFile                   _csvLogFile;
 
     QList<LinkInterface*> _links;
 
