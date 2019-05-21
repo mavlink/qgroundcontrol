@@ -192,6 +192,9 @@ ApplicationWindow {
     }
 
     function finishCloseProcess() {
+        if(ScreenTools.isWindows) {
+            hide()
+        }
         QGroundControl.linkManager.shutdown()
         // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
         // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
@@ -210,6 +213,10 @@ ApplicationWindow {
         repeat:     false
         onTriggered: {
             reallyClose()
+            if(ScreenTools.isWindows) {
+                // Closing the app while main is hidden doesn't work
+                Qt.callLater(Qt.quit)
+            }
         }
     }
 
