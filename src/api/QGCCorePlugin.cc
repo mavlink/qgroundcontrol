@@ -136,21 +136,44 @@ void QGCCorePlugin::_activeVehicleChanged(Vehicle* activeVehicle)
         }
         if(_dynamicCameras) {
             disconnect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
+            _dynamicCameras = nullptr;
         }
         _activeVehicle = activeVehicle;
-        connect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
+        if(_activeVehicle) {
+            connect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
+        }
     }
 }
 
 void QGCCorePlugin::_dynamicCamerasChanged()
 {
+    if(_currentCamera) {
+        disconnect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
+        _currentCamera = nullptr;
+    }
     if(_activeVehicle) {
         _dynamicCameras = _activeVehicle->dynamicCameras();
-        connect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
+        if(_dynamicCameras) {
+            connect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
+        }
     }
 }
 
 void QGCCorePlugin::_currentCameraChanged()
+{
+    if(_dynamicCameras) {
+        QGCCameraControl* cp = _dynamicCameras->currentCameraInstance();
+        if(_currentCamera) {
+            disconnect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
+        }
+        if(_currentCamera != cp) {
+            _currentCamera = cp;
+            connect(_currentCamera, &QGCCameraControl::autoStreamChanged, this, &QGCCorePlugin::_autoStreamChanged);
+        }
+    }
+}
+
+void QGCCorePlugin::_autoStreamChanged()
 {
     _resetInstrumentPages();
     emit instrumentPagesChanged();
@@ -248,7 +271,7 @@ QVariantList& QGCCorePlugin::instrumentPages()
         _p->valuesPageWidgetInfo    = new QmlComponentInfo(tr("Values"),    QUrl::fromUserInput("qrc:/qml/ValuePageWidget.qml"));
         _p->cameraPageWidgetInfo    = new QmlComponentInfo(tr("Camera"),    QUrl::fromUserInput("qrc:/qml/CameraPageWidget.qml"));
 #if defined(QGC_GST_STREAMING)
-        if(!_dynamicCameras || !_dynamicCameras->currentCameraInstance() || !_dynamicCameras->currentCameraInstance()->autoStream()) {
+        if(!_currentCamera || !_currentCamera->autoStream()) {
             //-- Video Page Widget only available if using manual video streaming
             _p->videoPageWidgetInfo = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
         }
