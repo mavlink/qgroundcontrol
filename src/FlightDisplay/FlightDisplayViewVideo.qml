@@ -34,7 +34,7 @@ Item {
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
 
-    property double _thermalHeightFactor: 0.666 //-- TODO
+    property double _thermalHeightFactor: 0.85 //-- TODO
 
     Rectangle {
         id:             noVideo
@@ -83,7 +83,7 @@ Item {
             anchors.centerIn: parent
             receiver:       _videoReceiver
             display:        _videoReceiver && _videoReceiver.videoSurface
-            visible:        _videoReceiver && _videoReceiver.videoRunning
+            visible:        _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
             Connections {
                 target:         _videoReceiver
                 onImageFileChanged: {
@@ -127,7 +127,7 @@ Item {
         Item {
             id:                 thermalItem
             width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor) : 0
+            height:             _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_FULL ? parent.height : (_camera.thermalMode === QGCCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
             anchors.centerIn:   parent
             visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== QGCCameraControl.THERMAL_OFF
             function pipOrNot() {
