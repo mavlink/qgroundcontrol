@@ -1,5 +1,10 @@
 ## AGS Changelog
 
+### May 22 2019
+
+*   Fix issue where when you select "Thermal Full", it was not hiding the visual spectrum video.
+*	Tweaked the FOV proportion between the Sony and the Boson cameras.
+
 ### May 16 2019
 
 *   Bitrate, encoding and fps settings from Matej
