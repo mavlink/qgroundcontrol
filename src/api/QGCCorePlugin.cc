@@ -17,6 +17,7 @@
 #include "QmlObjectListModel.h"
 #include "VideoReceiver.h"
 #include "QGCLoggingCategory.h"
+#include "QGCCameraManager.h"
 
 #include <QtQml>
 #include <QQmlEngine>
@@ -123,6 +124,63 @@ void QGCCorePlugin::setToolbox(QGCToolbox *toolbox)
     QQmlEngine::setObjectOwnership(this, QQmlEngine::CppOwnership);
     qmlRegisterUncreatableType<QGCCorePlugin>("QGroundControl.QGCCorePlugin", 1, 0, "QGCCorePlugin", "Reference only");
     qmlRegisterUncreatableType<QGCOptions>("QGroundControl.QGCOptions",       1, 0, "QGCOptions",    "Reference only");
+    //-- Handle Camera and Video Changes
+    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &QGCCorePlugin::_activeVehicleChanged);
+}
+
+void QGCCorePlugin::_activeVehicleChanged(Vehicle* activeVehicle)
+{
+    if(activeVehicle != _activeVehicle) {
+        if(_activeVehicle) {
+            disconnect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
+        }
+        if(_dynamicCameras) {
+            disconnect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
+        }
+        _activeVehicle = activeVehicle;
+        connect(_activeVehicle, &Vehicle::dynamicCamerasChanged, this, &QGCCorePlugin::_dynamicCamerasChanged);
+    }
+}
+
+void QGCCorePlugin::_dynamicCamerasChanged()
+{
+    if(_activeVehicle) {
+        _dynamicCameras = _activeVehicle->dynamicCameras();
+        connect(_dynamicCameras, &QGCCameraManager::currentCameraChanged, this, &QGCCorePlugin::_currentCameraChanged);
+    }
+}
+
+void QGCCorePlugin::_currentCameraChanged()
+{
+    _resetInstrumentPages();
+    emit instrumentPagesChanged();
+}
+
+void QGCCorePlugin::_resetInstrumentPages()
+{
+    if (_p->valuesPageWidgetInfo) {
+        _p->valuesPageWidgetInfo->deleteLater();
+        _p->valuesPageWidgetInfo = nullptr;
+    }
+    if(_p->cameraPageWidgetInfo) {
+        _p->cameraPageWidgetInfo->deleteLater();
+        _p->cameraPageWidgetInfo = nullptr;
+    }
+#if defined(QGC_GST_STREAMING)
+    if(_p->videoPageWidgetInfo) {
+        _p->videoPageWidgetInfo->deleteLater();
+        _p->videoPageWidgetInfo = nullptr;
+    }
+#endif
+    if(_p->healthPageWidgetInfo) {
+        _p->healthPageWidgetInfo->deleteLater();
+        _p->healthPageWidgetInfo = nullptr;
+    }
+    if(_p->vibrationPageWidgetInfo) {
+        _p->vibrationPageWidgetInfo->deleteLater();
+        _p->vibrationPageWidgetInfo = nullptr;
+    }
+    _p->instrumentPageWidgetList.clear();
 }
 
 QVariantList &QGCCorePlugin::settingsPages()
@@ -190,7 +248,10 @@ QVariantList& QGCCorePlugin::instrumentPages()
         _p->valuesPageWidgetInfo    = new QmlComponentInfo(tr("Values"),    QUrl::fromUserInput("qrc:/qml/ValuePageWidget.qml"));
         _p->cameraPageWidgetInfo    = new QmlComponentInfo(tr("Camera"),    QUrl::fromUserInput("qrc:/qml/CameraPageWidget.qml"));
 #if defined(QGC_GST_STREAMING)
-        _p->videoPageWidgetInfo     = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
+        if(!_dynamicCameras || !_dynamicCameras->currentCameraInstance() || !_dynamicCameras->currentCameraInstance()->autoStream()) {
+            //-- Video Page Widget only available if using manual video streaming
+            _p->videoPageWidgetInfo = new QmlComponentInfo(tr("Video Stream"), QUrl::fromUserInput("qrc:/qml/VideoPageWidget.qml"));
+        }
 #endif
         _p->healthPageWidgetInfo    = new QmlComponentInfo(tr("Health"),    QUrl::fromUserInput("qrc:/qml/HealthPageWidget.qml"));
         _p->vibrationPageWidgetInfo = new QmlComponentInfo(tr("Vibration"), QUrl::fromUserInput("qrc:/qml/VibrationPageWidget.qml"));

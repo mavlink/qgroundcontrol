@@ -35,6 +35,10 @@ Item {
     property bool   _recordingVideo:        _videoReceiver && _videoReceiver.recording
     property bool   _videoRunning:          _videoReceiver && _videoReceiver.videoRunning
     property bool   _streamingEnabled:      QGroundControl.settingsManager.videoSettings.streamConfigured
+    property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
+    property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
+    property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
+    property var    _camera:                _isCamera ? (_dynamicCameras.cameras.get(_curCameraIndex) && _dynamicCameras.cameras.get(_curCameraIndex).paramComplete ? _dynamicCameras.cameras.get(_curCameraIndex) : null) : null
 
     QGCPalette { id:qgcPal; colorGroupEnabled: true }
 
@@ -55,9 +59,11 @@ Item {
         QGCLabel {
            text:                qsTr("Enable Stream")
            font.pointSize:      ScreenTools.smallFontPointSize
+           visible:             !_camera || !_camera.autoStream
         }
         QGCSwitch {
             id:                 enableSwitch
+            visible:            !_camera || !_camera.autoStream
             enabled:            _streamingEnabled
             checked:            QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue
             Layout.alignment:   Qt.AlignHCenter
@@ -93,10 +99,12 @@ Item {
         //-- Video Fit
         QGCLabel {
             text:               qsTr("Video Screen Fit")
+            visible:            !_camera || !_camera.autoStream
             font.pointSize:     ScreenTools.smallFontPointSize
         }
         FactComboBox {
             fact:               QGroundControl.settingsManager.videoSettings.videoFit
+            visible:            !_camera || !_camera.autoStream
             indexModel:         false
             Layout.alignment:   Qt.AlignHCenter
         }
@@ -104,7 +112,7 @@ Item {
         QGCLabel {
            text:            _recordingVideo ? qsTr("Stop Recording") : qsTr("Record Stream")
            font.pointSize:  ScreenTools.smallFontPointSize
-           visible:         QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
+           visible:         (!_camera || !_camera.autoStream) && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
         }
         // Button to start/stop video recording
         Item {
@@ -112,7 +120,7 @@ Item {
             height:             ScreenTools.defaultFontPixelHeight * 2
             width:              height
             Layout.alignment:   Qt.AlignHCenter
-            visible:            QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
+            visible:            (!_camera || !_camera.autoStream) && QGroundControl.settingsManager.videoSettings.showRecControl.rawValue
             Rectangle {
                 id:                 recordBtnBackground
                 anchors.top:        parent.top
