@@ -33,6 +33,7 @@ class LinkInterface;
 class QmlObjectListModel;
 class VideoReceiver;
 class PlanMasterController;
+class QGCCameraManager;
 
 class QGCCorePlugin : public QGCTool
 {
@@ -158,9 +159,19 @@ signals:
     void showTouchAreasChanged  (bool showTouchAreas);
     void showAdvancedUIChanged  (bool showAdvancedUI);
 
+protected slots:
+    void _activeVehicleChanged  (Vehicle* activeVehicle);
+    void _dynamicCamerasChanged ();
+    void _currentCameraChanged  ();
+
+protected:
+    void _resetInstrumentPages  ();
+
 protected:
     bool                _showTouchAreas;
     bool                _showAdvancedUI;
+    Vehicle*            _activeVehicle  = nullptr;
+    QGCCameraManager*   _dynamicCameras = nullptr;
 
 private:
     QGCCorePlugin_p*    _p;
