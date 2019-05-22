@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### May 22 2019
+
+* Change default metric system used based on system locale: https://www.wrike.com/open.htm?id=354738389
+
 ### May 16 2019
 
 *   Bitrate, encoding and fps settings from Matej
