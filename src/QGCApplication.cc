@@ -351,7 +351,7 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 void QGCApplication::setLanguage()
 {
     QLocale locale = QLocale::system();
-    qDebug() << "System reported locale:" << locale << locale.name();
+    qDebug() << "System reported locale:" << locale << "; Name" << locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
     int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
     //-- See App.SettinsGroup.json for index
     if(langID) {

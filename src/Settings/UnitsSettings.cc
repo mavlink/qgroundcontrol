@@ -29,7 +29,18 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, distanceUnits)
         metaData->setName(distanceUnitsName);
         metaData->setShortDescription("Distance units");
         metaData->setEnumInfo(enumStrings, enumValues);
-        metaData->setRawDefaultValue(DistanceUnitsMeters);
+
+        DistanceUnits defaultDistanceUnit = DistanceUnitsMeters;
+        switch(QLocale::system().measurementSystem()) {
+            case QLocale::MetricSystem: {
+                defaultDistanceUnit = DistanceUnitsMeters;
+            } break;
+            case QLocale::ImperialUSSystem:
+            case QLocale::ImperialUKSystem:
+                defaultDistanceUnit = DistanceUnitsFeet;
+                break;
+        }
+        metaData->setRawDefaultValue(defaultDistanceUnit);
         metaData->setQGCRebootRequired(true);
         _distanceUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
@@ -54,7 +65,18 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, areaUnits)
         metaData->setName(areaUnitsName);
         metaData->setShortDescription("Area units");
         metaData->setEnumInfo(enumStrings, enumValues);
-        metaData->setRawDefaultValue(AreaUnitsSquareMeters);
+
+        AreaUnits defaultAreaUnit = AreaUnitsSquareMeters;
+        switch(QLocale::system().measurementSystem()) {
+            case QLocale::MetricSystem: {
+                defaultAreaUnit = AreaUnitsSquareMeters;
+            } break;
+            case QLocale::ImperialUSSystem:
+            case QLocale::ImperialUKSystem:
+                defaultAreaUnit = AreaUnitsSquareMiles;
+                break;
+        }
+        metaData->setRawDefaultValue(defaultAreaUnit);
         metaData->setQGCRebootRequired(true);
         _areaUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
@@ -78,7 +100,18 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, speedUnits)
         metaData->setName(speedUnitsName);
         metaData->setShortDescription("Speed units");
         metaData->setEnumInfo(enumStrings, enumValues);
-        metaData->setRawDefaultValue(SpeedUnitsMetersPerSecond);
+
+        SpeedUnits defaultSpeedUnit = SpeedUnitsMetersPerSecond;
+        switch(QLocale::system().measurementSystem()) {
+            case QLocale::MetricSystem: {
+                defaultSpeedUnit = SpeedUnitsMetersPerSecond;
+            } break;
+            case QLocale::ImperialUSSystem:
+            case QLocale::ImperialUKSystem:
+                defaultSpeedUnit = SpeedUnitsMilesPerHour;
+                break;
+        }
+        metaData->setRawDefaultValue(defaultSpeedUnit);
         metaData->setQGCRebootRequired(true);
         _speedUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
@@ -97,7 +130,18 @@ DECLARE_SETTINGSFACT_NO_FUNC(UnitsSettings, temperatureUnits)
         metaData->setName(temperatureUnitsName);
         metaData->setShortDescription("Temperature units");
         metaData->setEnumInfo(enumStrings, enumValues);
-        metaData->setRawDefaultValue(TemperatureUnitsCelsius);
+
+        TemperatureUnits defaultTemperatureUnit = TemperatureUnitsCelsius;
+        switch(QLocale::system().measurementSystem()) {
+            case QLocale::MetricSystem: {
+                defaultTemperatureUnit = TemperatureUnitsCelsius;
+            } break;
+            case QLocale::ImperialUSSystem:
+            case QLocale::ImperialUKSystem:
+                defaultTemperatureUnit = TemperatureUnitsFarenheit;
+                break;
+        }
+        metaData->setRawDefaultValue(defaultTemperatureUnit);
         metaData->setQGCRebootRequired(true);
         _temperatureUnitsFact = new SettingsFact(_settingsGroup, metaData, this);
     }
