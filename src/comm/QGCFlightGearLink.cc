@@ -728,16 +728,7 @@ bool QGCFlightGearLink::connectSimulation()
     //-- TODO:
     /*
     while (!QFileInfo(fgAppFullyQualified).exists()) {
-        QMessageBox msgBox(QMessageBox::Critical,
-                           tr("FlightGear application not found"),
-                           tr("FlightGear application not found at: %1").arg(fgAppFullyQualified),
-                           QMessageBox::Cancel,
-                           MainWindow::instance());
-        msgBox.setWindowModality(Qt::ApplicationModal);
-        msgBox.addButton(tr("I'll specify directory"), QMessageBox::ActionRole);
-        if (msgBox.exec() == QMessageBox::Cancel) {
-            return false;
-        }
+        QGCApplication::criticalMessageBoxOnMainThread(tr("FlightGear application not found at: %1").arg(fgAppFullyQualified));
 
         // Let the user pick the right directory
         QString dirPath = QString(); //-- TODO: QGCQFileDialog::getExistingDirectory(MainWindow::instance(), tr("Please select directory of FlightGear application : ") + fgAppName);
@@ -885,16 +876,8 @@ bool QGCFlightGearLink::connectSimulation()
     }
 
     if (!QFileInfo(_fgProtocolFileFullyQualified).exists()) {
-        QMessageBox msgBox(QMessageBox::Critical,
-                           tr("FlightGear Failed to Start"),
-                           tr("FlightGear Failed to Start. %1 protocol (%2) not installed to FlightGear Protocol directory (%3)").arg(qgcApp()->applicationName()).arg(fgProtocolXmlFile).arg(fgProtocolDir.path()),
-                           QMessageBox::Cancel,
-                           MainWindow::instance());
-        msgBox.setWindowModality(Qt::ApplicationModal);
-        msgBox.addButton(tr("Fix it for me"), QMessageBox::ActionRole);
-        if (msgBox.exec() == QMessageBox::Cancel) {
-            return false;
-        }
+        // TODO: Add modal message box and the option to return false to cancel autofix
+        QGCApplication::criticalMessageBoxOnMainThread(tr("FlightGear Failed to Start. %1 protocol (%2) not installed to FlightGear Protocol directory (%3)").arg(qgcApp()->applicationName()).arg(fgProtocolXmlFile).arg(fgProtocolDir.path()));
 
         // Now that we made it this far, we should be able to try to copy the protocol file to FlightGear.
         bool succeeded = QFile::copy(qgcProtocolFileFullyQualified, _fgProtocolFileFullyQualified);
@@ -906,20 +889,13 @@ bool QGCFlightGearLink::connectSimulation()
             QString copyCmd = QString("sudo cp %1 %2").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified);
 #endif
 
-            QMessageBox msgBox(QMessageBox::Critical,
-                               tr("Copy failed"),
-#ifdef Q_OS_WIN32
+            QGCApplication::criticalMessageBoxOnMainThread(
                                tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a Command Prompt which was started with Run as Administrator:\n\n").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified) + copyCmd,
 #else
                                tr("Copy from (%1) to (%2) failed, possibly due to permissions issue. You will need to perform manually. Try pasting the following command into a shell:\n\n").arg(qgcProtocolFileFullyQualified).arg(_fgProtocolFileFullyQualified) + copyCmd,
 #endif
-                               QMessageBox::Cancel,
-                               MainWindow::instance());
-            msgBox.setWindowModality(Qt::ApplicationModal);
-            msgBox.addButton(tr("Copy to Clipboard"), QMessageBox::ActionRole);
-            if (msgBox.exec() != QMessageBox::Cancel) {
-                QApplication::clipboard()->setText(copyCmd);
-            }
+                               );
+            QApplication::clipboard()->setText(copyCmd);
             return false;
         }
     }

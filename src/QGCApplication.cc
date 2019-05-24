@@ -170,39 +170,34 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
+        // TODO: Proper fix by having a separate failed state UI
         if (getuid() == 0) {
-            QMessageBox msgBox;
-            msgBox.setInformativeText(tr("You are running %1 as root. "
-                                         "You should not do this since it will cause other issues with %1. "
-                                         "%1 will now exit. "
-                                         "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
-                                         "sudo usermod -a -G dialout $USER\n"
-                                         "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
-            _exit(0);
+            _preInitMessage.first = true;
+            _preInitMessage.second = tr("You are running %1 as root. "
+                                        "You should not do this since it will cause other issues with %1. "
+                                        "%1 will now exit. "
+                                        "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
+                                        "sudo usermod -a -G dialout $USER\n"
+                                        "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName());
         }
-
-        // Determine if we have the correct permissions to access USB serial devices
-        QFile permFile("/etc/group");
-        if(permFile.open(QIODevice::ReadOnly)) {
-            while(!permFile.atEnd()) {
-                QString line = permFile.readLine();
-                if (line.contains("dialout") && !line.contains(getenv("USER"))) {
-                    QMessageBox msgBox;
-                    msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
-                                              "You should also remove modemmanager since it also interferes. "
-                                              "If you are using Ubuntu, execute the following commands to fix these issues:\n"
-                                              "sudo usermod -a -G dialout $USER\n"
-                                              "sudo apt-get remove modemmanager");
-                    msgBox.setStandardButtons(QMessageBox::Ok);
-                    msgBox.setDefaultButton(QMessageBox::Ok);
-                    msgBox.exec();
-                    break;
+        else {
+            // Determine if we have the correct permissions to access USB serial devices
+            QFile permFile("/etc/group");
+            if(permFile.open(QIODevice::ReadOnly)) {
+                while(!permFile.atEnd()) {
+                    QString line = permFile.readLine();
+                    if (line.contains("dialout") && !line.contains(getenv("USER"))) {
+                        _preInitMessage.first = false;
+                        _preInitMessage.second = tr("The current user does not have the correct permissions to access serial devices. "
+                                                    "You should also remove modemmanager since it also interferes. "
+                                                    "If you are using Ubuntu, execute the following commands to fix these issues:\n"
+                                                    "sudo usermod -a -G dialout $USER\n"
+                                                    "sudo apt-get remove modemmanager");
+                        break;
+                    }
                 }
+                permFile.close();
             }
-            permFile.close();
         }
     }
 #endif
@@ -548,6 +543,10 @@ bool QGCApplication::_initForNormalAppBoot()
 
     // Probe for joysticks
     toolbox()->joystickManager()->init();
+
+    if(_preInitMessage.second.length() > 0 ) {
+        showMessage(QString(_preInitMessage.first ? tr("Critical: ") : tr("")) + _preInitMessage.second);
+    }
 
     if (_settingsUpgraded) {
         showMessage(QString(tr("The format for %1 saved settings has been modified. "
