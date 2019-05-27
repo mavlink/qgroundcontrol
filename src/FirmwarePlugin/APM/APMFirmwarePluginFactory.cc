@@ -36,6 +36,7 @@ FirmwarePlugin* APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
 {
     if (autopilotType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
         switch (vehicleType) {
+        case MAV_TYPE_GENERIC:
         case MAV_TYPE_QUADROTOR:
         case MAV_TYPE_HEXAROTOR:
         case MAV_TYPE_OCTOROTOR:

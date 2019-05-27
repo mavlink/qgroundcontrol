@@ -1179,7 +1179,7 @@ void ParameterManager::_initialRequestTimeout(void)
 QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
 {
     bool            cacheHit = false;
-    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_GENERIC);
 
     // Cached files are stored in settings location
     QSettings settings;
