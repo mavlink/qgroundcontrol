@@ -183,6 +183,8 @@ public class QGCActivity extends QtActivity
     public static native void qgcLogDebug(String message);
     public static native void qgcLogWarning(String message);
 
+    private static native void nativeInit();
+
     // QGCActivity singleton
     public QGCActivity()
     {
@@ -740,6 +742,11 @@ public class QGCActivity extends QtActivity
                 }
             }
         }).start();
+    }
+
+    public void jniOnLoad()
+    {
+        nativeInit();
     }
 }
 

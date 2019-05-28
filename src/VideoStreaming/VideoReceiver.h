@@ -151,6 +151,7 @@ protected:
     VideoSettings*  _videoSettings;
     const char*     _depayName;
     const char*     _parserName;
-    const char*     _decoderName;
+    const char*     _hwDecoderName;
+    const char*     _swDecoderName;
 };
 
