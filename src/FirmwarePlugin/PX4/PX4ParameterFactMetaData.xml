@@ -9133,34 +9133,6 @@ is less than 50% of this value</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>deg C</unit>
     </parameter>
-    <parameter default="0" name="SYS_COMPANION" type="INT32">
-      <short_desc>TELEM2 as companion computer link (deprecated)</short_desc>
-      <long_desc>This parameter is deprecated and will be removed after 1.9.0. Use the generic serial configuration parameters instead (e.g. MAV_0_CONFIG, MAV_0_MODE, etc.).</long_desc>
-      <min>0</min>
-      <max>6460800</max>
-      <reboot_required>true</reboot_required>
-      <values>
-        <value code="0">Disabled</value>
-        <value code="10">FrSky Telemetry</value>
-        <value code="20">Crazyflie (Syslink)</value>
-        <value code="57600">Companion Link (57600 baud, 8N1)</value>
-        <value code="157600">OSD (57600 baud, 8N1)</value>
-        <value code="257600">Command Receiver (57600 baud, 8N1)</value>
-        <value code="319200">Normal Telemetry (19200 baud, 8N1)</value>
-        <value code="338400">Normal Telemetry (38400 baud, 8N1)</value>
-        <value code="357600">Normal Telemetry (57600 baud, 8N1)</value>
-        <value code="519200">Minimal Telemetry (19200 baud, 8N1)</value>
-        <value code="538400">Minimal Telemetry (38400 baud, 8N1)</value>
-        <value code="557600">Minimal Telemetry (57600 baud, 8N1)</value>
-        <value code="921600">Companion Link (921600 baud, 8N1)</value>
-        <value code="1500000">Companion Link (1500000 baud, 8N1)</value>
-        <value code="1921600">ESP8266 (921600 baud, 8N1)</value>
-        <value code="3115200">Normal Telemetry (115200 baud, 8N1)</value>
-        <value code="4115200">Iridium Telemetry (115200 baud, 8N1)</value>
-        <value code="5115200">Minimal Telemetry (115200 baud, 8N1)</value>
-        <value code="6460800">RTPS Client (460800 baud)</value>
-      </values>
-    </parameter>
     <parameter default="1" name="SYS_FMU_TASK" type="INT32">
       <short_desc>Run the FMU as a task to reduce latency</short_desc>
       <long_desc>If true, the FMU will run in a separate task instead of on the work queue. Set this if low latency is required, for example for racing. This is a trade-off between RAM usage and latency: running as a task, it requires a separate stack and directly polls on the control topics, whereas running on the work queue, it runs at a fixed update rate.</long_desc>
