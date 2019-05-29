@@ -7846,6 +7846,7 @@ to takeoff is reached</short_desc>
         <value code="0">when armed until disarm (default)</value>
         <value code="1">from boot until disarm</value>
         <value code="2">from boot until shutdown</value>
+        <value code="3">depending on AUX1 RC channel</value>
       </values>
     </parameter>
     <parameter default="3" name="SDLOG_PROFILE" type="INT32">
