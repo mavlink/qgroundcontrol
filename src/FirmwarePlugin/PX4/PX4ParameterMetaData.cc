@@ -427,6 +427,9 @@ void PX4ParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 
 void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
 {
+    majorVersion = -1;
+    minorVersion = -1;
+
     QFile xmlFile(metaDataFile);
 
     if (!xmlFile.exists()) {
@@ -445,9 +448,6 @@ void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDa
         qWarning() << "Badly formed XML" << xml.errorString();
         return;
     }
-
-    majorVersion = -1;
-    minorVersion = -1;
 
     while (!xml.atEnd() && (majorVersion == -1 || minorVersion == -1)) {
         if (xml.isStartElement()) {
