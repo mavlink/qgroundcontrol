@@ -473,12 +473,4 @@ void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDa
         }
         xml.readNext();
     }
-
-    // Assume defaults if not found
-    if (majorVersion == -1) {
-        majorVersion = 1;
-    }
-    if (minorVersion == -1) {
-        minorVersion = 1;
-    }
 }
