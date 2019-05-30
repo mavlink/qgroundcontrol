@@ -127,6 +127,7 @@ add_subdirectory(Vehicle)
 add_subdirectory(VehicleSetup)
 add_subdirectory(VideoStreaming)
 add_subdirectory(ViewWidgets)
+add_subdirectory(What3Words)
 
 target_link_libraries(qgc
         PRIVATE
@@ -162,6 +163,7 @@ target_link_libraries(qgc
 		VehicleSetup
 		VideoStreaming
 		ViewWidgets
+		What3Words
 )
 
 if(BUILD_TESTING)

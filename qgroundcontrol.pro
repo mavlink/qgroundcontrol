@@ -369,6 +369,7 @@ INCLUDEPATH += \
     src/Terrain \
     src/VehicleSetup \
     src/ViewWidgets \
+    src/What3Words \
     src/Audio \
     src/comm \
     src/input \
@@ -664,6 +665,10 @@ HEADERS += \
     src/GPS/vehicle_gps_position.h \
     src/Joystick/JoystickSDL.h \
     src/RunGuard.h \
+    src/ViewWidgets/CustomCommandWidget.h \
+    src/ViewWidgets/CustomCommandWidgetController.h \
+    src/ViewWidgets/ViewWidgetController.h \
+    src/What3Words/What3Words.h \
     src/comm/LogReplayLink.h \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
@@ -822,6 +827,10 @@ SOURCES += \
     src/GPS/RTCM/RTCMMavlink.cc \
     src/Joystick/JoystickSDL.cc \
     src/RunGuard.cc \
+    src/ViewWidgets/CustomCommandWidget.cc \
+    src/ViewWidgets/CustomCommandWidgetController.cc \
+    src/ViewWidgets/ViewWidgetController.cc \
+    src/What3Words/What3Words.cc \
     src/comm/LogReplayLink.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
