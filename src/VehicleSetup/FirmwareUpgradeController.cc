@@ -93,12 +93,17 @@ FirmwareUpgradeController::FirmwareUpgradeController(void)
     
     connect(&_eraseTimer, &QTimer::timeout, this, &FirmwareUpgradeController::_eraseProgressTick);
 
+#if !defined(NO_ARDUPILOT_DIALECT)
     connect(_apmChibiOSSetting,     &Fact::rawValueChanged, this, &FirmwareUpgradeController::_buildAPMFirmwareNames);
     connect(_apmVehicleTypeSetting, &Fact::rawValueChanged, this, &FirmwareUpgradeController::_buildAPMFirmwareNames);
+#endif
 
     _initFirmwareHash();
     _determinePX4StableVersion();
+
+#if !defined(NO_ARDUPILOT_DIALECT)
     _downloadArduPilotManifest();
+#endif
 }
 
 FirmwareUpgradeController::~FirmwareUpgradeController()
@@ -478,16 +483,12 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     return &_rgFirmwareDynamic;
 }
 
-/// @brief Prompts the user to select a firmware file if needed and moves the state machine to the next state.
 void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
 {
     QHash<FirmwareIdentifier, QString>* prgFirmware = _firmwareHashForBoardId(static_cast<int>(_bootloaderBoardID));
-    
     if (firmwareId.firmwareType == CustomFirmware) {
-        _firmwareFilename = QString(); //-- TODO: QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
-                                                  //          tr("Select Firmware File"),                                             // Dialog Caption
-                                                  //          QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
-                                                  //          tr("Firmware Files (*.px4 *.apj *.bin *.ihx)"));                              // File filter
+        _firmwareFilename = QString();
+        _errorCancel(tr("Custom firmware selected but no filename given."));
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
@@ -673,6 +674,7 @@ void FirmwareUpgradeController::setSelectedFirmwareBuildType(FirmwareBuildType_t
 
 void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
 {
+#if !defined(NO_ARDUPILOT_DIALECT)
     qCDebug(FirmwareUpgradeLog) << "_buildAPMFirmwareNames";
 
     bool                    chibios =       _apmChibiOSSetting->rawValue().toInt() == 0;
@@ -717,6 +719,7 @@ void FirmwareUpgradeController::_buildAPMFirmwareNames(void)
     }
 
     emit apmFirmwareNamesChanged();
+#endif
 }
 
 FirmwareUpgradeController::FirmwareVehicleType_t FirmwareUpgradeController::vehicleTypeFromFirmwareSelectionIndex(int index)
