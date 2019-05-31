@@ -79,6 +79,18 @@ SetupPage {
                 _defaultFirmwareIsPX4 = _defaultFirmwareFact.rawValue === _defaultFimwareTypePX4 // we don't want this to be bound and change as radios are selected
             }
 
+            QGCFileDialog {
+                id:                 customFirmwareDialog
+                title:              qsTr("Select Firmware File")
+                nameFilters:        [qsTr("Firmware Files (*.px4 *.apj *.bin *.ihx)"), qsTr("All Files (*)")]
+                selectExisting:     true
+                folder:             QGroundControl.settingsManager.appSettings.logSavePath
+                onAcceptedForLoad: {
+                    controller.flashFirmwareUrl(file)
+                    close()
+                }
+            }
+
             FirmwareUpgradeController {
                 id:             controller
                 progressBar:    progressBar
@@ -117,8 +129,9 @@ SetupPage {
                             statusTextArea.append(highlightPrefix + qsTr("Multiple devices detected! Remove all detected devices to perform the firmware upgrade."))
                             statusTextArea.append(qsTr("Detected [%1]: ").arg(availableDevices.length) + availableDevices.join(", "))
                         }
-
-                        QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
+                        if(QGroundControl.multiVehicleManager.activeVehicle) {
+                            QGroundControl.multiVehicleManager.activeVehicle.autoDisconnect = true
+                        }
                     } else {
                         // We end up here when we detect a board plugged in after we've started upgrade
                         statusTextArea.append(highlightPrefix + qsTr("Found device") + highlightSuffix + ": " + controller.boardType)
@@ -210,7 +223,12 @@ SetupPage {
                                     }
                                 }
                             }
-                            controller.flash(stack, firmwareBuildType, vehicleType)
+                            //-- If custom, get file path
+                            if (firmwareBuildType === FirmwareUpgradeController.CustomFirmware) {
+                                customFirmwareDialog.openForLoad()
+                            } else {
+                                controller.flash(stack, firmwareBuildType, vehicleType)
+                            }
                             hideDialog()
                         }
                     }
@@ -219,7 +237,6 @@ SetupPage {
                         hideDialog()
                         cancelFlash()
                     }
-
 
                     Connections {
                         target:         firmwarePage
@@ -304,6 +321,13 @@ SetupPage {
 
                         Column {
 
+                            Component.onCompleted: {
+                                if(!QGroundControl.apmFirmwareSupported) {
+                                    _defaultFirmwareFact.rawValue = _defaultFimwareTypePX4
+                                    firmwareVersionChanged(firmwareBuildTypeList)
+                                }
+                            }
+
                             QGCRadioButton {
                                 id:             px4FlightStackRadio
                                 text:           qsTr("PX4 Pro ")
@@ -371,7 +395,7 @@ SetupPage {
                             anchors.right:  parent.right
                             wrapMode:       Text.WordWrap
                             text:           qsTr("No Firmware Available")
-                            visible:        !controller.downloadingFirmwareList && controller.apmFirmwareNames.length === 0
+                            visible:        !controller.downloadingFirmwareList && (QGroundControl.apmFirmwareSupported && controller.apmFirmwareNames.length === 0)
                         }
 
                         QGCComboBox {
