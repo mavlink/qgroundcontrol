@@ -27,6 +27,7 @@ add_library(VideoStreaming
 	VideoReceiver.cc
 	VideoStreaming.cc
 	VideoSurface.cc
+	SubtitleWriter.cc
 	${EXTRA_SRC}
 )
 
