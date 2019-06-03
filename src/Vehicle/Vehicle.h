@@ -761,6 +761,8 @@ public:
 
     Q_INVOKABLE void setPIDTuningTelemetryMode(bool pidTuning);
 
+    Q_INVOKABLE void gimbalControlValue(double pitch, double yaw);
+
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader(void);
 #endif

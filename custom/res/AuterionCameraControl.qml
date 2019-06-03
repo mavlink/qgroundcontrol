@@ -415,10 +415,29 @@ Item {
             radius:         2
             clip:           true
         }
-        QGCLabel {
+        AuterionQuickSetting {
             id:             gimbalQuickSettingControl
-            text:           "Not Yet"
+            text:           _camera ? _camera.gimbalPitch.toFixed(0) : 0
+            showValue:      true
             anchors.centerIn: parent
+            onIncremented:  {
+                if(_camera) {
+                    var p = _camera.gimbalPitch + 5
+                    if(p > 90.0) p = 90
+                    if(p !== _camera.gimbalPitch) {
+                        activeVehicle.gimbalControlValue(p,0)
+                    }
+                }
+            }
+            onDecremented: {
+                if(_camera) {
+                    var p = _camera.gimbalPitch - 5
+                    if(p < -90.0) p = -90
+                    if(p !== _camera.gimbalPitch) {
+                        activeVehicle.gimbalControlValue(p,0)
+                    }
+                }
+            }
         }
     }
 
