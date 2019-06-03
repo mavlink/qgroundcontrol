@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### June 3 2019
+
+* Add gimbal control
+
 ### May 22 2019
 
 * Change default metric system used based on system locale: https://www.wrike.com/open.htm?id=354738389
