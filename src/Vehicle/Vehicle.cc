@@ -3977,6 +3977,21 @@ void Vehicle::flashBootloader(void)
 }
 #endif
 
+void Vehicle::gimbalControlValue(double pitch, double yaw)
+{
+    qDebug() << "Gimbal: " << pitch << yaw;
+    sendMavCommand(
+        _defaultComponentId,
+        MAV_CMD_DO_MOUNT_CONTROL,
+        false,                               // show errors
+        static_cast<float>(pitch),           // Pitch 0 - 90
+        0,                                   // Roll (not used)
+        static_cast<float>(yaw),             // Yaw -180 - 180
+        0,                                   // Altitude (not used)
+        0,                                   // Latitude (not used)
+        0,                                   // Longitude (not used)
+        MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
