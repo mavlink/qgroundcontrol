@@ -24,6 +24,7 @@ matrix:
           services: xvfb
           sudo: required
         - os: android
+          dist: xenial
           language: android
           env: SPEC=android-g++ CONFIG=installer
           sudo: false
