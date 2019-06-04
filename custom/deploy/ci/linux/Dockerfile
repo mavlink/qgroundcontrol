@@ -15,7 +15,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y --no-install-recommends i
         rsync \
         openssl \
         libssl-dev \
-        openssl-dev \
     && apt-get -y autoremove \
     && apt-get clean autoclean \
     && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
