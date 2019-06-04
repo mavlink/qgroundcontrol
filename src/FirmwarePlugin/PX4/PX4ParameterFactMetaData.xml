@@ -4625,6 +4625,13 @@ the vehicle will accelerate at this rate until the normal position control speed
       <max>15</max>
       <unit>meters</unit>
     </parameter>
+    <parameter default="0." name="MPC_COL_PREV_DLY" type="FLOAT">
+      <short_desc>Average delay of the range sensor message in seconds</short_desc>
+      <long_desc>Only used in Position mode.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>seconds</unit>
+    </parameter>
     <parameter default="3.0" name="MPC_CRUISE_90" type="FLOAT">
       <short_desc>Cruise speed when angle prev-current/current-next setpoint
 is 90 degrees. It should be lower than MPC_XY_CRUISE</short_desc>
