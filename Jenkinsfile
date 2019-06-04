@@ -39,8 +39,8 @@ pipeline {
           }
           post {
             always {
-              archiveArtifacts artifacts: 'build/release/**/*'
-              archiveArtifacts artifacts: '*.apk', onlyIfSuccessful: true
+              archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+              archiveArtifacts artifacts: '*.apk'
             }
             cleanup {
               sh 'git clean -ff -x -d .'
@@ -153,7 +153,7 @@ pipeline {
           post {
             always {
                 archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-                archiveArtifacts artifacts: '*.AppImage', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*.AppImage'
             }
             cleanup {
               sh 'git clean -ff -x -d .'
@@ -375,7 +375,7 @@ pipeline {
           post {
             always {
                 archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
-                archiveArtifacts artifacts: '*-installer.exe', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*-installer.exe'
             }
             cleanup {
               //bat 'git clean -ff -x -e build-dev -d .'
