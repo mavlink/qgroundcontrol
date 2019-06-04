@@ -8,7 +8,7 @@ FROM mavlink/qgc-build-linux:2019-02-03
 ENV DEBIAN_FRONTEND noninteractive
 
 # Required by AppImage
-RUN apt-get update && apt-get upgrade -y && apt-get -y --quiet --no-install-recommends install \
+RUN apt-get update && apt-get upgrade -y && apt-get -y --no-install-recommends install \
         apt-utils \
         fuse \
         kmod \
@@ -16,8 +16,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y --quiet --no-install-reco
         openssl \
         libssl-dev \
     && apt-get -y autoremove \
-	&& apt-get clean autoclean \
-	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
-
+    && apt-get clean autoclean \
+    && rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 
 ENV DEBIAN_FRONTEND teletype
