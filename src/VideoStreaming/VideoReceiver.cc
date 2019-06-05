@@ -71,6 +71,8 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _videoRunning(false)
     , _showFullScreen(false)
     , _videoSettings(nullptr)
+    , _hwDecoderName(nullptr)
+    , _swDecoderName("avdec_h264")
 {
     _videoSurface = new VideoSurface;
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();    
@@ -159,6 +161,10 @@ VideoReceiver::_restart_timeout()
 void
 VideoReceiver::start()
 {
+    if (_uri.isEmpty()) {
+        return;
+    }
+    qCDebug(VideoReceiverLog) << "start():" << _uri;
     if(qgcApp()->runningUnitTests()) {
         return;
     }
@@ -170,7 +176,6 @@ VideoReceiver::start()
 
 #if defined(QGC_GST_STREAMING)
     _stop = false;
-    qCDebug(VideoReceiverLog) << "start():" << _uri;
 
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
     //-- Taisync on iOS or Android sends a raw h.264 stream
@@ -274,15 +279,16 @@ VideoReceiver::start()
         }
 
         if((queue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
-            // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
-            //       We should compare gstreamer scripts to QGroundControl to determine the need
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
             break;
         }
 
-        if ((decoder = gst_element_factory_make(_decoderName, "decoder")) == nullptr) {
-            qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _decoderName << "')";
-            break;
+        if (!_hwDecoderName || (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
+            qCritical() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
+            if ((decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _swDecoderName << "')";
+                break;
+            }
         }
 
         if ((queue1 = gst_element_factory_make("queue", nullptr)) == nullptr) {
@@ -583,14 +589,19 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
     if (encoding == H265_HW || encoding == H265_SW) {
         _depayName = "rtph265depay";
         _parserName = "h265parse";
-        _decoderName = "avdec_h265";
+#if defined(__android__)
+        _hwDecoderName = "amcviddec-omxgooglehevcdecoder";
+#endif
+        _swDecoderName = "avdec_h265";
     } else {
         _depayName = "rtph264depay";
         _parserName = "h264parse";
-        _decoderName = "avdec_h264";
+#if defined(__android__)
+        _hwDecoderName = "amcviddec-omxgoogleh264decoder";
+#endif
+        _swDecoderName = "avdec_h264";
     }
 }
-
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
