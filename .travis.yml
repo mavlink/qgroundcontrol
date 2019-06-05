@@ -23,10 +23,11 @@ matrix:
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - os: android
+        - os: linux
+          dist: xenial
           language: android
           env: SPEC=android-g++ CONFIG=installer
-          sudo: false
+          sudo: required
         - os: osx
           osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
