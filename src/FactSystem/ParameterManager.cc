@@ -1177,7 +1177,7 @@ void ParameterManager::_initialRequestTimeout(void)
 QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
 {
     bool            cacheHit = false;
-    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+    FirmwarePlugin* plugin = vehicle->firmwarePlugin();
 
     // Cached files are stored in settings location
     QSettings settings;
@@ -1272,7 +1272,12 @@ QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT 
 
 void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType)
 {
-    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, MAV_TYPE_QUADROTOR);
+    // In order to call FirmwarePlugin::getParameterMetaDataVersionInfo we need the firmware plugin. But at this point we do not have a vehicle associated
+    // with the call. Since the call to FirmwarePlugin::getParameterMetaDataVersionInfo is invariant to vehicle type we just need to use any one of the
+    // supported vehicle types to get the correct FirmwarePlugin.
+    MAV_TYPE anySupportedVehicleType = qgcApp()->toolbox()->firmwarePluginManager()->supportedVehicleTypes(firmwareType)[0];
+
+    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
 
     int newMajorVersion, newMinorVersion;
     plugin->getParameterMetaDataVersionInfo(metaDataFile, newMajorVersion, newMinorVersion);
