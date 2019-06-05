@@ -12,5 +12,11 @@
     "type":             "double",
     "units":            "m",
     "defaultValue":     121.92
+},
+{
+    "name":             "showLogReplayStatusBar",
+    "shortDescription": "Show/Hide Log Replay status bar",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
