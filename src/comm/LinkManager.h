@@ -43,6 +43,7 @@ Q_DECLARE_LOGGING_CATEGORY(LinkManagerVerboseLog)
 class QGCApplication;
 class UDPConfiguration;
 class AutoConnectSettings;
+class LogReplayLink;
 
 /// Manage communication links
 ///
@@ -128,6 +129,8 @@ public:
 
     // Called to signal app shutdown. Disconnects all links while turning off auto-connect.
     Q_INVOKABLE void shutdown(void);
+
+    Q_INVOKABLE LogReplayLink* startLogReplay(const QString& logFile);
 
 #ifdef QT_DEBUG
     // Only used by unit test tp restart after a shutdown
