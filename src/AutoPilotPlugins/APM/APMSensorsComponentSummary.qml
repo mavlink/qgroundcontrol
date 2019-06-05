@@ -15,7 +15,6 @@ import QGroundControl.ArduPilot     1.0
 
 Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
     APMSensorsComponentController { id: controller; }
 

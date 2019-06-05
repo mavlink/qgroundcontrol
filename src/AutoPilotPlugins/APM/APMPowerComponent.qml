@@ -252,13 +252,13 @@ SetupPage {
 
                                 QGCButton {
                                     text: qsTr("Calibrate")
-                                    enabled:    _escCalibration.rawValue === 0
-                                    onClicked:  _escCalibration.rawValue = 3
+                                    enabled:    _escCalibration && _escCalibration.rawValue === 0
+                                    onClicked:  if(_escCalibration) _escCalibration.rawValue = 3
                                 }
 
                                 Column {
-                                    enabled: _escCalibration.rawValue === 3
-                                    QGCLabel { text:   _escCalibration.rawValue === 3 ? qsTr("Now perform these steps:") : qsTr("Click Calibrate to start, then:") }
+                                    enabled: _escCalibration && _escCalibration.rawValue === 3
+                                    QGCLabel { text:   _escCalibration ? (_escCalibration.rawValue === 3 ? qsTr("Now perform these steps:") : qsTr("Click Calibrate to start, then:")) : "" }
                                     QGCLabel { text:   qsTr("- Disconnect USB and battery so flight controller powers down") }
                                     QGCLabel { text:   qsTr("- Connect the battery") }
                                     QGCLabel { text:   qsTr("- The arming tone will be played (if the vehicle has a buzzer attached)") }

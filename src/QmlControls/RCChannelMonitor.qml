@@ -59,7 +59,7 @@ Item {
             // Center point
             Rectangle {
                 anchors.horizontalCenter:   parent.horizontalCenter
-                width:                      ScreenTools.ScreenTools.defaultFontPixelWidth / 2
+                width:                      ScreenTools.defaultFontPixelWidth / 2
                 height:                     parent.height
                 color:                      qgcPal.window
             }
