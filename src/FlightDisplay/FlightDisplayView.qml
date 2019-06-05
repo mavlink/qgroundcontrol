@@ -312,7 +312,10 @@ Item {
 
     Item {
         id:             _mapAndVideo
-        anchors.fill:   parent
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:    parent.top
+        anchors.bottom: logReplayStatusBar.top
 
         //-- Map View
         Item {
@@ -735,6 +738,14 @@ Item {
             color:              qgcPal.window
             visible:            false
         }
+    }
+
+    LogReplayStatusBar {
+        id:                 logReplayStatusBar
+        anchors.left:       parent.left
+        anchors.right:      parent.right
+        anchors.bottom:     parent.bottom
+        visible:            QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue &&_flightMapContainer.state === "fullMode"
     }
 
     //-- Airspace Indicator

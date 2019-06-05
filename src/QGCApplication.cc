@@ -100,6 +100,7 @@
 #include "MavlinkConsoleController.h"
 #include "MAVLinkInspectorController.h"
 #include "GeoTagController.h"
+#include "LogReplayLink.h"
 
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
@@ -485,6 +486,9 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<QmlObjectListModel>  ("QGroundControl",                      1, 0, "QmlObjectListModel",         kRefOnly);
     qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                      1, 0, "MissionCommandTree",         kRefOnly);
     qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",                      1, 0, "CameraCalc",                 kRefOnly);
+    qmlRegisterUncreatableType<LogReplayLink>       ("QGroundControl",                      1, 0, "LogReplayLink",              kRefOnly);
+
+    qmlRegisterType<LogReplayLinkController>        ("QGroundControl",                      1, 0, "LogReplayLinkController");
 
     qmlRegisterUncreatableType<AutoPilotPlugin>     ("QGroundControl.AutoPilotPlugin",      1, 0, "AutoPilotPlugin",            kRefOnly);
     qmlRegisterUncreatableType<VehicleComponent>    ("QGroundControl.AutoPilotPlugin",      1, 0, "VehicleComponent",           kRefOnly);
