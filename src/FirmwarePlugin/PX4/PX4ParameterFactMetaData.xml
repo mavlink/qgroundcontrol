@@ -836,6 +836,16 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
         <value code="12">Follow Me</value>
       </values>
     </parameter>
+    <parameter default="0" name="COM_FLT_PROFILE" type="INT32">
+      <short_desc>User Flight Profile</short_desc>
+      <long_desc>Describes the intended use of the vehicle. Can be used by ground control software or log post processing. This param does not influence the behavior within the firmware. This means for example the control logic is independent of the setting of this param (but depends on other params).</long_desc>
+      <values>
+        <value code="0">Default</value>
+        <value code="100">Pro User</value>
+        <value code="200">Flight Tester</value>
+        <value code="300">Developer</value>
+      </values>
+    </parameter>
     <parameter default="120" name="COM_HLDL_LOSS_T" type="INT32">
       <short_desc>High Latency Datalink loss time threshold</short_desc>
       <long_desc>After this amount of seconds without datalink the data link lost mode triggers</long_desc>
