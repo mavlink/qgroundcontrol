@@ -50,6 +50,7 @@ private:
     };    
 
     QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool* convertOk);
+    static void _outputFileWarning(const QString& metaDataFile, const QString& error1, const QString& error2);
 
     bool _parameterMetaDataLoaded;   ///< true: parameter meta data already loaded
     QMap<QString, FactMetaData*> _mapParameterName2FactMetaData; ///< Maps from a parameter name to FactMetaData

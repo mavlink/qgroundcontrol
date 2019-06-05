@@ -112,7 +112,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
     
     QString         factGroup;
     QString         errorString;
-    FactMetaData*   metaData = NULL;
+    FactMetaData*   metaData = nullptr;
     int             xmlState = XmlStateNone;
     bool            badMetaData = true;
     
@@ -392,7 +392,7 @@ void PX4ParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 }
 
                 // Reset for next parameter
-                metaData = NULL;
+                metaData = nullptr;
                 badMetaData = false;
                 xmlState = XmlStateFoundGroup;
             } else if (elementName == "group") {
@@ -412,7 +412,7 @@ FactMetaData* PX4ParameterMetaData::getMetaDataForFact(const QString& name, MAV_
     if (_mapParameterName2FactMetaData.contains(name)) {
         return _mapParameterName2FactMetaData[name];
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -428,26 +428,27 @@ void PX4ParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDataFile, int& majorVersion, int& minorVersion)
 {
     QFile xmlFile(metaDataFile);
+    QString errorString;
+
+    majorVersion = -1;
+    minorVersion = -1;
 
     if (!xmlFile.exists()) {
-        qWarning() << "Internal error: metaDataFile mission" << metaDataFile;
+        _outputFileWarning(metaDataFile, QStringLiteral("Does not exist"), QString());
         return;
     }
 
     if (!xmlFile.open(QIODevice::ReadOnly)) {
-        qWarning() << "Internal error: Unable to open parameter file:" << metaDataFile << xmlFile.errorString();
+        _outputFileWarning(metaDataFile, QStringLiteral("Unable to open file"), xmlFile.errorString());
         return;
     }
 
     QXmlStreamReader xml(xmlFile.readAll());
     xmlFile.close();
     if (xml.hasError()) {
-        qWarning() << "Badly formed XML" << xml.errorString();
+        _outputFileWarning(metaDataFile, QStringLiteral("Badly formed XML"), xml.errorString());
         return;
     }
-
-    majorVersion = -1;
-    minorVersion = -1;
 
     while (!xml.atEnd() && (majorVersion == -1 || minorVersion == -1)) {
         if (xml.isStartElement()) {
@@ -458,7 +459,7 @@ void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDa
                 QString strVersion = xml.readElementText();
                 majorVersion = strVersion.toInt(&convertOk);
                 if (!convertOk) {
-                    qWarning() << "Badly formed XML";
+                    _outputFileWarning(metaDataFile, QStringLiteral("Unable to convert parameter_version_major value to int"), QString());
                     return;
                 }
             } else if (elementName == "parameter_version_minor") {
@@ -466,7 +467,7 @@ void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDa
                 QString strVersion = xml.readElementText();
                 minorVersion = strVersion.toInt(&convertOk);
                 if (!convertOk) {
-                    qWarning() << "Badly formed XML";
+                    _outputFileWarning(metaDataFile, QStringLiteral("Unable to convert parameter_version_minor value to int"), QString());
                     return;
                 }
             }
@@ -474,11 +475,15 @@ void PX4ParameterMetaData::getParameterMetaDataVersionInfo(const QString& metaDa
         xml.readNext();
     }
 
-    // Assume defaults if not found
     if (majorVersion == -1) {
-        majorVersion = 1;
+        _outputFileWarning(metaDataFile, QStringLiteral("parameter_version_major is missing"), QString());
     }
     if (minorVersion == -1) {
-        minorVersion = 1;
+        _outputFileWarning(metaDataFile, QStringLiteral("parameter_version_minor tag is missing"), QString());
     }
+}
+
+void PX4ParameterMetaData::_outputFileWarning(const QString& metaDataFile, const QString& error1, const QString& error2)
+{
+    qWarning() << QStringLiteral("Internal Error: Parameter meta data file '%1'. %2. error: %3").arg(metaDataFile).arg(error1).arg(error2);
 }
