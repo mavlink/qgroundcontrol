@@ -215,7 +215,9 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
     mavlink_status_t    status;
     qint64              messageStartPos = -1;
 
-    while (_logFile.getChar(&nextByte)) { // Loop over every byte
+    mavlink_reset_channel_status(_mavlinkChannel);
+
+    while (_logFile.getChar(&nextByte)) {
         bool messageFound = mavlink_parse_char(_mavlinkChannel, nextByte, nextMsg, &status);
 
         if (status.parse_state == MAVLINK_PARSE_STATE_GOT_STX) {
@@ -233,6 +235,31 @@ quint64 LogReplayLink::_seekToNextMavlinkMessage(mavlink_message_t* nextMsg)
     }
     
     return 0;
+}
+
+quint64 LogReplayLink::_findLastTimestamp(void)
+{
+    char                nextByte;
+    mavlink_status_t    status;
+    quint64             lastTimestamp = 0;
+    mavlink_message_t   msg;
+
+    // We read through the entire file looking for the last good timestamp. This can be somewhat slow, but trying to work from the
+    // end of the file can be way slower due to all the seeking back and forth required. So instead we take the simple reliable approach.
+
+    _logFile.reset();
+    mavlink_reset_channel_status(_mavlinkChannel);
+
+    while (_logFile.bytesAvailable() > cbTimestamp) {
+        lastTimestamp = _parseTimestamp(_logFile.read(cbTimestamp));
+
+        bool endOfMessage = false;
+        while (!endOfMessage && _logFile.getChar(&nextByte)) {
+            endOfMessage = mavlink_parse_char(_mavlinkChannel, nextByte, &msg, &status);
+        }
+    }
+
+    return lastTimestamp;
 }
 
 bool LogReplayLink::_loadLogFile(void)
@@ -258,28 +285,11 @@ bool LogReplayLink::_loadLogFile(void)
     _logTimestamped = logFilename.endsWith(".tlog");
     
     if (_logTimestamped) {
-        // Get the first timestamp from the log
-        // This should be a big-endian uint64.
-        QByteArray timestamp = _logFile.read(cbTimestamp);
-        quint64 startTimeUSecs = _parseTimestamp(timestamp);
-        
-        // Now find the last timestamp by scanning for the last MAVLink packet and
-        // find the timestamp before it. To do this we start searchin a little before
-        // the end of the file, specifically the maximum MAVLink packet size + the
-        // timestamp size. This guarantees that we will hit a MAVLink packet before
-        // the end of the file. Unfortunately, it basically guarantees that we will
-        // hit more than one. This is why we have to search for a bit.
-        qint64 fileLoc = _logFile.size() - ((MAVLINK_MAX_PACKET_LEN - cbTimestamp) * 2);
-        _logFile.seek(fileLoc);
-        quint64 endTimeUSecs = startTimeUSecs; // Set a sane default for the endtime
-        mavlink_message_t msg;
-        quint64 messageTimeUSecs;
-        while ((messageTimeUSecs = _seekToNextMavlinkMessage(&msg)) > endTimeUSecs) {
-            endTimeUSecs = messageTimeUSecs;
-        }
-        
-        if (endTimeUSecs == startTimeUSecs) {
-            errorMsg = tr("The log file '%1' is corrupt. No valid timestamps were found at the end of the file.").arg(logFilename);
+        quint64 startTimeUSecs = _parseTimestamp(_logFile.read(cbTimestamp));
+        quint64 endTimeUSecs = _findLastTimestamp();
+
+        if (endTimeUSecs <= startTimeUSecs) {
+            errorMsg = tr("The log file '%1' is corrupt or empty.").arg(logFilename);
             goto Error;
         }
         
