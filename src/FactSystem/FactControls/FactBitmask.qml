@@ -25,7 +25,7 @@ Flow {
 
     Repeater {
         id:     repeater
-        model:  fact.bitmaskStrings
+        model:  fact ? fact.bitmaskStrings : []
 
         QGCCheckBox {
             id:         checkbox

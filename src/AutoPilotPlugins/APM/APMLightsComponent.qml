@@ -29,9 +29,7 @@ SetupPage {
             spacing:    _margins
             width:      availableWidth
 
-            FactPanelController { id: controller; factPanel: lightsPage.viewPanel }
-
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            FactPanelController { id: controller; }
 
             property var  _activeVehicle:       QGroundControl.multiVehicleManager.activeVehicle
             property bool _oldFW:               _activeVehicle.versionCompare(3, 5, 2) < 0
@@ -176,7 +174,7 @@ SetupPage {
                         anchors.top:        settingsLabel.bottom
                         width:              lights1Combo.x + lights1Combo.width + lightsStepCombo.width + _margins
                         height:             lights2Combo.y + lights2Combo.height + lightsStepCombo.height + 2*_margins
-                        color:              palette.windowShade
+                        color:              qgcPal.windowShade
 
                         QGCLabel {
                             id:                 lights1Label
