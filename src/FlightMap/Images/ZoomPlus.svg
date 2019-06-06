@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 19.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!-- Generator: Adobe Illustrator 23.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="-269 361 72 72" style="enable-background:new -269 361 72 72;" xml:space="preserve">
+	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
 <style type="text/css">
 	.st0{fill:none;stroke:#FFFFFF;stroke-width:2;stroke-miterlimit:10;}
 	.st1{fill:none;stroke:#FFFFFF;stroke-width:3;stroke-miterlimit:10;}
 	.st2{fill:#FFFFFF;}
 </style>
-<circle class="st0" cx="-236.2" cy="393.9" r="11.2"/>
-<line class="st1" x1="-218.6" y1="411.3" x2="-228.1" y2="401.8"/>
-<path class="st2" d="M-237.3,400.2V395h-5.2v-2.2h5.2v-5.2h2.2v5.2h5.2v2.2h-5.2v5.2H-237.3z"/>
+<circle class="st0" cx="31" cy="31.2" r="17.5"/>
+<line class="st1" x1="58.5" y1="58.3" x2="43.6" y2="43.5"/>
+<path class="st2" d="M29.3,41v-8.1h-8.1v-3.4h8.1v-8.1h3.4v8.1h8.1v3.4h-8.1V41H29.3z"/>
 </svg>
