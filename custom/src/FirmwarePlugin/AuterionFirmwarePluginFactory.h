@@ -18,7 +18,6 @@ public:
     AuterionFirmwarePluginFactory();
     QList<MAV_AUTOPILOT>    supportedFirmwareTypes      () const override;
     FirmwarePlugin*         firmwarePluginForAutopilot  (MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType) override;
-    QList<MAV_TYPE>         supportedVehicleTypes       () const override;
 private:
     AuterionFirmwarePlugin*   _pluginInstance;
 };

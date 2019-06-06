@@ -33,10 +33,3 @@ FirmwarePlugin* AuterionFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AU
     }
     return nullptr;
 }
-
-QList<MAV_TYPE> AuterionFirmwarePluginFactory::supportedVehicleTypes() const
-{
-    QList<MAV_TYPE> mavTypes;
-    mavTypes.append(MAV_TYPE_HEXAROTOR);
-    return mavTypes;
-}
