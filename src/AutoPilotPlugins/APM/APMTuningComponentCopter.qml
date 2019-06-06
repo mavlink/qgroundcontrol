@@ -28,7 +28,7 @@ SetupPage {
         Column {
             width: availableWidth
 
-            QGCPalette { id: palette; colorGroupEnabled: true }
+            FactPanelController { id: controller; }
 
             property bool _atcInputTCAvailable: controller.parameterExists(-1, "ATC_INPUT_TC")
             property Fact _atcInputTC:          controller.getParameterFact(-1, "ATC_INPUT_TC", false)
@@ -133,7 +133,7 @@ SetupPage {
                     anchors.left:       parent.left
                     anchors.right:      parent.right
                     height:             basicTuningColumn.y + basicTuningColumn.height + _margins
-                    color:              palette.windowShade
+                    color:              qgcPal.windowShade
 
                     Column {
                         id:                 basicTuningColumn
@@ -284,7 +284,7 @@ SetupPage {
 
                             QGCLabel {
                                 text:       qsTr("Warning: This setting should be higher than 'Spin While Armed'")
-                                color:      palette.warningText
+                                color:      qgcPal.warningText
                                 visible:    _motSpinMin.rawValue < _motSpinArm.rawValue
                             }
 
@@ -315,7 +315,7 @@ SetupPage {
                     Rectangle {
                         height: autoTuneLabel.height + autoTuneRect.height
                         width:  autoTuneRect.width
-                        color:  palette.window
+                        color:  qgcPal.window
 
                         QGCLabel {
                             id:                 autoTuneLabel
@@ -328,7 +328,7 @@ SetupPage {
                             width:          autoTuneColumn.x + autoTuneColumn.width + _margins
                             height:         autoTuneColumn.y + autoTuneColumn.height + _margins
                             anchors.top:    autoTuneLabel.bottom
-                            color:          palette.windowShade
+                            color:          qgcPal.windowShade
 
                             Column {
                                 id:                 autoTuneColumn
@@ -375,7 +375,7 @@ SetupPage {
                     Rectangle {
                         height:     inFlightTuneLabel.height + channel6TuningOption.height
                         width:      channel6TuningOption.width
-                        color:      palette.window
+                        color:      qgcPal.window
 
                         QGCLabel {
                             id:                 inFlightTuneLabel
