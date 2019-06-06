@@ -8,26 +8,25 @@ import QGroundControl.Palette 1.0
 
 // TODO: use QT palette
 Button {
-    id: button
-    width: columnItem.contentWidth + contentLayoutItem.margins * 2
+    id:     button
+    width:  contentLayoutItem.contentWidth + (contentMargins * 2)
     height: width
-    flat: true
+    flat:   true
 
-    property color borderColor: qgcPal.windowShadeDark
+    property color borderColor:     qgcPal.windowShadeDark
 
-    property alias radius: buttonBkRect.radius
-    property alias fontPointSize: innerText.font.pointSize
-    property alias imageSource: innerImage.source
-    property alias contentWidth: innerText.contentWidth
+    property alias radius:          buttonBkRect.radius
+    property alias fontPointSize:   innerText.font.pointSize
+    property alias imageSource:     innerImage.source
+    property alias contentWidth:    innerText.contentWidth
 
-    property real  imageScale: 0.8
-    property real  borderWidth: 0
+    property real  imageScale:      0.6
+    property real  borderWidth:     0
     property real  contentMargins: innerText.height * 0.1
 
-    property color _currentColor: qgcPal.button
-    property color _currentContentColor: qgcPal.buttonText
+    property color _currentColor:           qgcPal.button
+    property color _currentContentColor:    qgcPal.buttonText
 
-    QGCPalette { id: qgcPal }
     QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
 
     // Initial state
@@ -35,70 +34,43 @@ Button {
     // Update state on status changed
     onEnabledChanged: state = "Default"
 
-    property real _contentVDist: innerImage.height/innerText.contentHeight
-
     // Content Icon + Text
     contentItem: Item {
-        id: contentLayoutItem
-        anchors.fill: parent
-        anchors.margins: contentMargins
-
+        id:                 contentLayoutItem
+        anchors.fill:       parent
+        anchors.margins:    contentMargins
         Column {
-            id: columnItem
-            anchors.fill: parent
-
-            Item {
-                width: parent.width
-                height: (contentLayoutItem.height - innerText.height)
-                Image {
-                    id: innerImage
-
-                    anchors.centerIn: parent
-
-                    height: parent.height * imageScale
-                    width: parent.width * imageScale
-
-                    visible: false
-                    smooth: true
-                    antialiasing: true
-                    mipmap: true
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize.height: height
-                    sourceSize.width: width
-                    horizontalAlignment: Image.AlignHCenter
-                    verticalAlignment: Image.AlignVCenter
-                }
-
-                ColorOverlay {
-                    id: imageOverlay
-                    anchors.fill: innerImage
-                    source: innerImage
-
-                    color: _currentContentColor
-                }
+            anchors.centerIn:   parent
+            spacing:        contentMargins * 2
+            QGCColoredImage {
+                id:         innerImage
+                height:     contentLayoutItem.height * imageScale
+                width:      contentLayoutItem.width  * imageScale
+                smooth:     true
+                mipmap:     true
+                color:      _currentContentColor
+                fillMode:   Image.PreserveAspectFit
+                antialiasing: true
+                sourceSize.height:  height
+                sourceSize.width:   width
+                anchors.horizontalCenter: parent.horizontalCenter
             }
-
-            Text {
-                id:                     innerText
-                text:                   button.text
-                color:                  _currentContentColor
-                width:                  parent.width
-                font.family:            ScreenTools.normalFontFamily
-                font.pointSize:         ScreenTools.defaultFontPointSize
-                horizontalAlignment:    Text.AlignHCenter
-                verticalAlignment:      Text.AlignVCenter
+            QGCLabel {
+                id:         innerText
+                text:       button.text
+                color:      _currentContentColor
+                anchors.horizontalCenter: parent.horizontalCenter
             }
-        } // Column - content
-    } // Item - content
+        }
+    }
 
     background: Rectangle {
-        id: buttonBkRect
-        anchors.fill: parent
-        color: _currentColor
-        visible: !flat
-
-        border.width: borderWidth
-        border.color: borderColor
+        id:                 buttonBkRect
+        color:              _currentColor
+        visible:            !flat
+        border.width:       borderWidth
+        border.color:       borderColor
+        anchors.fill:       parent
     }
 
     // Change the colors based on button states
@@ -142,11 +114,11 @@ Button {
 
     // Process hover events
     MouseArea {
-        enabled: !ScreenTools.isMobile
-        hoverEnabled: true
+        enabled:        !ScreenTools.isMobile
+        hoverEnabled:   true
         propagateComposedEvents: true
         preventStealing: true
-        anchors.fill: button
+        anchors.fill:   button
         onEntered: { button.state = 'Hovering'; }
         onExited: { button.state = 'Default'; }
         // Propagate events down
