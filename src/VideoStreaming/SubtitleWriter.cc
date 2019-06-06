@@ -40,11 +40,14 @@ void SubtitleWriter::setVideoReceiver(VideoReceiver* videoReceiver)
         return;
     }
     _videoReceiver = videoReceiver;
+
+#if defined(QGC_GST_STREAMING)
     // Only start writing subtitles once the recording pipeline actually starts
     connect(_videoReceiver, &VideoReceiver::gotFirstRecordingKeyFrame,  this,  &SubtitleWriter::_startCapturingTelemetry);
 
     // Captures recordingChanged() signals to stop writing subtitles
     connect(_videoReceiver, &VideoReceiver::recordingChanged,           this,  &SubtitleWriter::_onVideoRecordingChanged);
+#endif
 
     // Timer for telemetry capture and writing to file
     connect(&_timer,        &QTimer::timeout,                           this,  &SubtitleWriter::_captureTelemetry);
@@ -52,12 +55,14 @@ void SubtitleWriter::setVideoReceiver(VideoReceiver* videoReceiver)
 
 void SubtitleWriter::_onVideoRecordingChanged()
 {
+#if defined(QGC_GST_STREAMING)
     // Stop capturing data if recording stopped
     if(!_videoReceiver->recording()) {
         qCDebug(SubtitleWriterLog) << "Stopping writing";
         _timer.stop();
         _file.close();
     }
+#endif
 }
 
 void SubtitleWriter::_startCapturingTelemetry()

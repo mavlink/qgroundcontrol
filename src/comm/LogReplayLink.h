@@ -7,11 +7,9 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
-#include "LinkInterface.h"
-#include "LinkConfiguration.h"
+#include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 
 #include <QTimer>
@@ -22,7 +20,6 @@ class LogReplayLinkConfiguration : public LinkConfiguration
     Q_OBJECT
 
 public:
-
     Q_PROPERTY(QString  fileName    READ logFilename    WRITE setLogFilename    NOTIFY fileNameChanged)
 
     LogReplayLinkConfiguration(const QString& name);
@@ -41,6 +38,7 @@ public:
     void        updateSettings          ();
     QString     settingsURL             () { return "LogReplaySettings.qml"; }
     QString     settingsTitle           () { return tr("Log Replay Link Settings"); }
+
 signals:
     void fileNameChanged();
 
@@ -66,7 +64,7 @@ public:
     void pause(void) { emit _pauseOnThread(); }
 
     /// Move the playhead to the specified percent complete
-    void movePlayhead(int percentComplete);
+    void movePlayhead(qreal percentComplete);
 
     /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
     void setAccelerationFactor(int factor) { emit _setAccelerationFactorOnThread(factor); }
@@ -92,8 +90,7 @@ signals:
     void playbackStarted(void);
     void playbackPaused(void);
     void playbackAtEnd(void);
-    void playbackError(void);
-    void playbackPercentCompleteChanged(int percentComplete);
+    void playbackPercentCompleteChanged(qreal percentComplete);
     void currentLogTimeSecs(int secs);
 
     // Internal signals
@@ -118,7 +115,6 @@ private:
     quint64 _readNextMavlinkMessage(QByteArray& bytes);
     bool _loadLogFile(void);
     void _finishPlayback(void);
-    void _playbackError(void);
     void _resetPlaybackToBeginning(void);
     void _signalCurrentLogTimeSecs(void);
 
@@ -154,5 +150,53 @@ private:
     bool                _logTimestamped;    ///< true: Timestamped log format, false: no timestamps
 
     static const int cbTimestamp = sizeof(quint64);
+};
+
+class LogReplayLinkController : public QObject
+{
+    Q_OBJECT
+
+public:
+    Q_PROPERTY(LogReplayLink*   link            READ link               WRITE setLink               NOTIFY linkChanged)
+    Q_PROPERTY(bool             isPlaying       READ isPlaying          WRITE setIsPlaying          NOTIFY isPlayingChanged)
+    Q_PROPERTY(qreal            percentComplete READ percentComplete    WRITE setPercentComplete    NOTIFY percentCompleteChanged)
+    Q_PROPERTY(QString          totalTime       MEMBER _totalTime                                   NOTIFY totalTimeChanged)
+    Q_PROPERTY(QString          playheadTime    MEMBER _playheadTime                                NOTIFY playheadTimeChanged)
+
+    LogReplayLinkController(void);
+
+    LogReplayLink*  link            (void) { return _link; }
+    bool            isPlaying       (void) { return _isPlaying; }
+    qreal           percentComplete (void) { return _percentComplete; }
+
+    void setLink            (LogReplayLink* link);
+    void setIsPlaying       (bool isPlaying);
+    void setPercentComplete (qreal percentComplete);
+
+signals:
+    void linkChanged            (LogReplayLink* link);
+    void isPlayingChanged       (bool isPlaying);
+    void percentCompleteChanged (qreal percentComplete);
+    void playheadTimeChanged    (QString playheadTime);
+    void totalTimeChanged       (QString totalTime);
+
+private slots:
+    void _logFileStats                   (bool logTimestamped, int logDurationSecs, int binaryBaudRate);
+    void _playbackStarted                (void);
+    void _playbackPaused                 (void);
+    void _playbackAtEnd                  (void);
+    void _playbackPercentCompleteChanged (qreal percentComplete);
+    void _currentLogTimeSecs             (int secs);
+    void _linkDisconnected               (void);
+
+private:
+    QString _secondsToHMS(int seconds);
+
+    LogReplayLink*  _link;
+    bool            _isPlaying;
+    qreal           _percentComplete;
+    int             _playheadSecs;
+    QString         _playheadTime;
+    QString         _totalTime;
 };
 
