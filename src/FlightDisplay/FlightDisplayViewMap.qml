@@ -26,7 +26,6 @@ import QGroundControl.Vehicle       1.0
 
 FlightMap {
     id:                         flightMap
-    anchors.fill:               parent
     mapName:                    _mapName
     allowGCSLocationCenter:     !userPanned
     allowVehicleLocationCenter: !_keepVehicleCentered

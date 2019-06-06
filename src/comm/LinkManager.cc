@@ -21,6 +21,7 @@
 #include "UDPLink.h"
 #include "TCPLink.h"
 #include "SettingsManager.h"
+#include "LogReplayLink.h"
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
@@ -139,11 +140,9 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
         pLink = new BluetoothLink(config);
         break;
 #endif
-#ifndef __mobile__
     case LinkConfiguration::TypeLogReplay:
         pLink = new LogReplayLink(config);
         break;
-#endif
 #ifdef QT_DEBUG
     case LinkConfiguration::TypeMock:
         pLink = new MockLink(config);
@@ -393,11 +392,9 @@ void LinkManager::loadLinkConfigurationList()
                                 pLink = dynamic_cast<LinkConfiguration*>(new BluetoothConfiguration(name));
                                 break;
 #endif
-#ifndef __mobile__
                             case LinkConfiguration::TypeLogReplay:
                                 pLink = dynamic_cast<LinkConfiguration*>(new LogReplayLinkConfiguration(name));
                                 break;
-#endif
 #ifdef QT_DEBUG
                             case LinkConfiguration::TypeMock:
                                 pLink = dynamic_cast<LinkConfiguration*>(new MockConfiguration(name));
@@ -847,7 +844,6 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
             }
                 break;
 #endif
-#ifndef __mobile__
             case LinkConfiguration::TypeLogReplay: {
                 LogReplayLinkConfiguration* tconfig = dynamic_cast<LogReplayLinkConfiguration*>(config);
                 if(tconfig) {
@@ -855,7 +851,6 @@ void LinkManager::_fixUnnamed(LinkConfiguration* config)
                 }
             }
                 break;
-#endif
 #ifdef QT_DEBUG
             case LinkConfiguration::TypeMock:
                 config->setName(QString("Mock Link"));
@@ -1014,4 +1009,14 @@ void LinkManager::_freeMavlinkChannel(int channel)
 
 void LinkManager::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message) {
     link->startMavlinkMessagesTimer(message.sysid);
+}
+
+LogReplayLink* LinkManager::startLogReplay(const QString& logFile)
+{
+    LogReplayLinkConfiguration* linkConfig = new LogReplayLinkConfiguration(tr("Log Replay"));
+    linkConfig->setLogFilename(logFile);
+    linkConfig->setName(linkConfig->logFilenameShort());
+
+    SharedLinkConfigurationPointer sharedConfig = addConfiguration(linkConfig);
+    return qobject_cast<LogReplayLink*>(createConnectedLink(sharedConfig));
 }
