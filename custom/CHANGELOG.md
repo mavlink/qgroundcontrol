@@ -3,6 +3,7 @@
 ### June 6 2019
 
 * Show second battery status (if it exists)
+* Show vehicle options when offline editing missions
 
 ### June 3 2019
 
