@@ -16,7 +16,7 @@
 
 FirmwarePluginManager::FirmwarePluginManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _genericFirmwarePlugin(NULL)
+    , _genericFirmwarePlugin(nullptr)
 {
 
 }
@@ -58,7 +58,7 @@ QList<MAV_TYPE> FirmwarePluginManager::supportedVehicleTypes(MAV_AUTOPILOT firmw
 FirmwarePlugin* FirmwarePluginManager::firmwarePluginForAutopilot(MAV_AUTOPILOT firmwareType, MAV_TYPE vehicleType)
 {
     FirmwarePluginFactory*  factory = _findPluginFactory(firmwareType);
-    FirmwarePlugin*         plugin = NULL;
+    FirmwarePlugin*         plugin = nullptr;
 
     if (factory) {
         plugin = factory->firmwarePluginForAutopilot(firmwareType, vehicleType);

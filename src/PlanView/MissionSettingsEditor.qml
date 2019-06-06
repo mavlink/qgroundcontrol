@@ -30,6 +30,7 @@ Rectangle {
     property bool   _showCruiseSpeed:               !_missionVehicle.multiRotor
     property bool   _showHoverSpeed:                _missionVehicle.multiRotor || _missionVehicle.vtol
     property bool   _multipleFirmware:              QGroundControl.supportedFirmwareCount > 2
+    property bool   _multipleVehicleTypes:          QGroundControl.supportedVehicleCount > 1
     property real   _fieldWidth:                    ScreenTools.defaultFontPixelWidth * 16
     property bool   _mobile:                        ScreenTools.isMobile
     property var    _savePath:                      QGroundControl.settingsManager.appSettings.missionSavePath
@@ -158,13 +159,13 @@ Rectangle {
                 QGCLabel {
                     text:               _vehicleLabel
                     Layout.fillWidth:   true
-                    visible:            _showOfflineVehicleCombos
+                    visible:            _multipleVehicleTypes
                 }
                 FactComboBox {
                     fact:                   QGroundControl.settingsManager.appSettings.offlineEditingVehicleType
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
-                    visible:                _showOfflineVehicleCombos
+                    visible:                _multipleVehicleTypes
                     enabled:                _enableOfflineVehicleCombos
                 }
 
