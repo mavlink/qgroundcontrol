@@ -190,6 +190,20 @@ int QGroundControlQmlGlobal::supportedFirmwareCount()
     return _firmwarePluginManager->supportedFirmwareTypes().count();
 }
 
+int QGroundControlQmlGlobal::supportedVehicleCount()
+{
+    int count = 0;
+    QList<MAV_AUTOPILOT> list = _firmwarePluginManager->supportedFirmwareTypes();
+    qDebug() << "Supported Firmwares" << list.count();
+    foreach(auto firmware, list) {
+        if(firmware != MAV_AUTOPILOT_GENERIC) {
+            count += _firmwarePluginManager->supportedVehicleTypes(firmware).count();
+            qDebug() << "Firmware" << firmware << "Vehicles" << _firmwarePluginManager->supportedVehicleTypes(firmware).count();
+        }
+    }
+    return count;
+}
+
 bool QGroundControlQmlGlobal::px4ProFirmwareSupported()
 {
     return _firmwarePluginManager->supportedFirmwareTypes().contains(MAV_AUTOPILOT_PX4);
