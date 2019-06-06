@@ -16,7 +16,7 @@
 PX4FirmwarePluginFactory PX4FirmwarePluginFactory;
 
 PX4FirmwarePluginFactory::PX4FirmwarePluginFactory(void)
-    : _pluginInstance(NULL)
+    : _pluginInstance(nullptr)
 {
 
 }
@@ -40,5 +40,5 @@ FirmwarePlugin* PX4FirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
         return _pluginInstance;
     }
 
-    return NULL;
+    return nullptr;
 }
