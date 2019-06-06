@@ -25,7 +25,6 @@ Rectangle {
     property var    _missionVehicle:                _masterControler.controllerVehicle
     property bool   _vehicleHasHomePosition:        _missionVehicle.homePosition.isValid
     property bool   _offlineEditing:                _missionVehicle.isOfflineEditingVehicle
-    property bool   _showOfflineVehicleCombos:      _multipleFirmware
     property bool   _enableOfflineVehicleCombos:    _offlineEditing && _noMissionItemsAdded
     property bool   _showCruiseSpeed:               !_missionVehicle.multiRotor
     property bool   _showHoverSpeed:                _missionVehicle.multiRotor || _missionVehicle.vtol
@@ -146,13 +145,13 @@ Rectangle {
                 QGCLabel {
                     text:               _firmwareLabel
                     Layout.fillWidth:   true
-                    visible:            _showOfflineVehicleCombos
+                    visible:            _multipleFirmware
                 }
                 FactComboBox {
                     fact:                   QGroundControl.settingsManager.appSettings.offlineEditingFirmwareType
                     indexModel:             false
                     Layout.preferredWidth:  _fieldWidth
-                    visible:                _showOfflineVehicleCombos
+                    visible:                _multipleFirmware
                     enabled:                _enableOfflineVehicleCombos
                 }
 
