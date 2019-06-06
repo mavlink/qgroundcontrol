@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### June 6 2019
+
+* Show second battery status (if it exists)
+
 ### June 3 2019
 
 * Add gimbal control

@@ -28,6 +28,10 @@ Item {
     anchors.top:            parent.top
     anchors.bottom:         parent.bottom
 
+    property var    battery1:           activeVehicle ? activeVehicle.battery  : null
+    property var    battery2:           activeVehicle ? activeVehicle.battery2 : null
+    property bool   hasSecondBattery:   battery2 && battery2.voltage.value !== -1
+
     function getBatteryColor() {
         if(activeVehicle) {
             if(activeVehicle.battery.percentRemaining.value > 75) {
@@ -88,10 +92,22 @@ Item {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
+                    QGCLabel { text: qsTr("Battery 1"); Layout.columnSpan: 2; visible: hasSecondBattery; }
                     QGCLabel { text: qsTr("Voltage:") }
-                    QGCLabel { text: (activeVehicle && activeVehicle.battery.voltage.value !== -1) ? (activeVehicle.battery.voltage.valueString + " " + activeVehicle.battery.voltage.units) : "N/A" }
+                    QGCLabel { text: (battery1 && battery1.voltage.value !== -1) ? (battery1.voltage.valueString + " " + battery1.voltage.units) : "N/A" }
                     QGCLabel { text: qsTr("Accumulated Consumption:") }
-                    QGCLabel { text: (activeVehicle && activeVehicle.battery.mahConsumed.value !== -1) ? (activeVehicle.battery.mahConsumed.valueString + " " + activeVehicle.battery.mahConsumed.units) : "N/A" }
+                    QGCLabel { text: (battery1 && battery1.mahConsumed.value !== -1) ? (battery1.mahConsumed.valueString + " " + battery1.mahConsumed.units) : "N/A" }
+                    Item {
+                        width:  1
+                        height: 1
+                        visible: hasSecondBattery;
+                        Layout.columnSpan: 2
+                    }
+                    QGCLabel { text: qsTr("Battery 2"); Layout.columnSpan: 2; visible: hasSecondBattery; }
+                    QGCLabel { text: qsTr("Voltage:"); visible: hasSecondBattery; }
+                    QGCLabel { text: (battery2 && battery2.voltage.value !== -1) ? (battery2.voltage.valueString + " " + battery2.voltage.units) : "N/A";  visible: hasSecondBattery; }
+                    QGCLabel { text: qsTr("Accumulated Consumption:"); visible: hasSecondBattery; }
+                    QGCLabel { text: (battery2 && battery2.mahConsumed.value !== -1) ? (battery2.mahConsumed.valueString + " " + battery2.mahConsumed.units) : "N/A"; visible: hasSecondBattery; }
                 }
             }
         }
