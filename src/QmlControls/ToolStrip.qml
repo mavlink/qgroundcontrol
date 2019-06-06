@@ -47,6 +47,7 @@ Rectangle {
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
+        spacing:            ScreenTools.defaultFontPixelWidth * 0.25
 
         Repeater {
             id: repeater
