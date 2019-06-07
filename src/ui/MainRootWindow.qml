@@ -131,8 +131,8 @@ ApplicationWindow {
     //-------------------------------------------------------------------------
     //-- Global complex dialog
 
-    /// Shows a QGCViewDialog component
-    ///     @param component QGCViewDialog component
+    /// Shows a QGCViewDialogContainer based dialog
+    ///     @param component The dialog contents
     ///     @param title Title for dialog
     ///     @param charWidth Width of dialog in characters
     ///     @param buttons Buttons to show in dialog using StandardButton enum
@@ -140,7 +140,7 @@ ApplicationWindow {
     readonly property int showDialogFullWidth:      -1  ///< Use for full width dialog
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
-    function showDialog(component, title, charWidth, buttons) {
+    function showComponentDialog(component, title, charWidth, buttons) {
         var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ScreenTools.defaultFontPixelWidth * charWidth
         mainWindowDialog.width = dialogWidth
         mainWindowDialog.dialogComponent = component

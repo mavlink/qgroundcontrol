@@ -34,7 +34,7 @@ Item {
     ParameterEditorController {
         id:         controller;
         onShowErrorMessage: {
-            mainWindow.showMessageDialog(qsTr("Parameter Load Errors"))
+            mainWindow.showMessageDialog(qsTr("Parameter Editor"), qsTr("Parameter Load Errors"))
         }
     }
 
@@ -110,12 +110,12 @@ Item {
         MenuItem {
             text:           qsTr("Reset all to firmware's defaults")
             visible:        !activeVehicle.apmFirmware
-            onTriggered:    mainWindow.showDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+            onTriggered:    mainWindow.showComponentDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
         MenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
             visible:        !activeVehicle.apmFirmware
-            onTriggered:    mainWindow.showDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
+            onTriggered:    mainWindow.showComponentDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
         MenuSeparator { }
         MenuItem {
@@ -143,7 +143,7 @@ Item {
         MenuSeparator { }
         MenuItem {
             text:           qsTr("Reboot Vehicle")
-            onTriggered:    mainWindow.showDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
+            onTriggered:    mainWindow.showComponentDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         }
     }
 
@@ -280,7 +280,7 @@ Item {
                 acceptedButtons:    Qt.LeftButton
                 onClicked: {
                     _editorDialogFact = factRow.modelFact
-                    mainWindow.showDialog(editorDialogComponent, qsTr("Parameter Editor"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
+                    mainWindow.showComponentDialog(editorDialogComponent, qsTr("Parameter Editor"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Save)
                 }
             }
         }

@@ -444,7 +444,7 @@ SetupPage {
                     onClicked: {
                         _calcVoltageDlgVehicleVoltage = vehicleVoltage
                         _calcVoltageDlgBattVoltMultParam = battVoltMult
-                        mainWindow.showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showComponentDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
 
                 }
@@ -476,7 +476,7 @@ SetupPage {
                     onClicked: {
                         _calcAmpsPerVoltDlgVehicleCurrent = vehicleCurrent
                         _calcAmpsPerVoltDlgBattAmpPerVoltParam = battAmpPerVolt
-                        mainWindow.showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showComponentDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
                 }
 

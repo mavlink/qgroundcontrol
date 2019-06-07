@@ -146,7 +146,7 @@ Rectangle {
             MenuItem {
                 text:           qsTr("Edit position...")
                 visible:        missionItem.specifiesCoordinate
-                onTriggered:    mainWindow.showDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
             }
 
             MenuSeparator {
@@ -193,7 +193,7 @@ Rectangle {
             }
         }
 
-        onClicked: mainWindow.showDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+        onClicked: mainWindow.showComponentDialog(commandDialog, qsTr("Select Mission Command"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
     }
 
     QGCLabel {

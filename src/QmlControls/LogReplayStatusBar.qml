@@ -16,7 +16,7 @@ Rectangle {
 
     function pickLogFile() {
         if (mainWindow.activeVehicle) {
-            mainWindow.showMessageDialog(qsTr("Log Replay"), qsTr("You must close all connections prior to replaying a log."), StandardButton.Ok)
+            mainWindow.showMessageDialog(qsTr("Log Replay"), qsTr("You must close all connections prior to replaying a log."))
             return
         }
 
