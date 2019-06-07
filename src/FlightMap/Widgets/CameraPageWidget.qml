@@ -50,7 +50,7 @@ Column {
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
 
     function showSettings() {
-        mainWindow.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
+        mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
     }
 
     //-- Dumb camera trigger if no actual camera interface exists

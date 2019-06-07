@@ -148,7 +148,7 @@ Item {
 
         MenuItem {
             text:           qsTr("Edit position..." )
-            onTriggered:    mainWindow.showDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
+            onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
         }
 
         MenuItem {
