@@ -94,7 +94,7 @@ Rectangle {
                     mainWindow.showComponentDialog(savePresetDialog, qsTr("Save Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
                 } else if (index == _indexDelete) {
                     if (missionItem.builtInPreset) {
-                        mainWindow.showMessage(qsTr("Delete Preset"), qsTr("This preset cannot be deleted."), StandardButton.Ok)
+                        mainWindow.showMessage(qsTr("Delete Preset"), qsTr("This preset cannot be deleted."))
                     } else {
                         missionItem.deleteCurrentPreset()
                     }
