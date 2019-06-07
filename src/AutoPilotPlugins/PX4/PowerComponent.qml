@@ -300,7 +300,7 @@ SetupPage {
                         QGCButton {
                             id:                 voltMultCalculateButton
                             text:               qsTr("Calculate")
-                            onClicked:          mainWindow.showDialog(calcVoltageDividerDlgComponent, qsTr("Calculate Voltage Divider"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                            onClicked:          mainWindow.showComponentDialog(calcVoltageDividerDlgComponent, qsTr("Calculate Voltage Divider"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                         }
 
                         Item { width: 1; height: 1; Layout.columnSpan: 2 }
@@ -328,7 +328,7 @@ SetupPage {
                         QGCButton {
                             id:                 ampPerVoltCalculateButton
                             text:               qsTr("Calculate")
-                            onClicked:          mainWindow.showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                            onClicked:          mainWindow.showComponentDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                         }
 
                         Item { width: 1; height: 1; Layout.columnSpan: 2 }

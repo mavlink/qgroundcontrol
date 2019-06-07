@@ -162,7 +162,7 @@ Item {
             if (promptForMissionRemove && (_missionController.containsItems || _geoFenceController.containsItems || _rallyPointController.containsItems)) {
                 // ArduPilot has a strange bug which prevents mission clear from working at certain times, so we can't show this dialog
                 if (!activeVehicle.apmFirmware) {
-                    mainWindow.showDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                    mainWindow.showComponentDialog(missionCompleteDialogComponent, qsTr("Flight Plan complete"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
             promptForMissionRemove = false
