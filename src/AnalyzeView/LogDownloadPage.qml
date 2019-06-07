@@ -165,7 +165,7 @@ AnalyzePage {
                     enabled:    !logController.requestingList && !logController.downloadingLogs && logController.model.count > 0
                     text:       qsTr("Erase All")
                     width:      _butttonWidth
-                    onClicked:  mainWindow.showDialog(
+                    onClicked:  mainWindow.showComponentDialog(
                         eraseAllMessage,
                         qsTr("Delete All Log Files"),
                         mainWindow.showDialogDefaultWidth,

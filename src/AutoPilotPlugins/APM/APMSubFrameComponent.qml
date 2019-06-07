@@ -120,7 +120,7 @@ SetupPage {
                     id: defaultsButton
                     anchors.left: parent.left
                     text:       qsTr("Load Vehicle Default Parameters")
-                    onClicked:  mainWindow.showDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                    onClicked:  mainWindow.showComponentDialog(selectParamFileDialogComponent, qsTr("Load Vehicle Default Parameters"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                 }
             }
 
