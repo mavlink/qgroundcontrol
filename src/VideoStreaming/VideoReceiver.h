@@ -79,6 +79,7 @@ signals:
     void msgErrorReceived                   ();
     void msgEOSReceived                     ();
     void msgStateChangedReceived            ();
+    void gotFirstRecordingKeyFrame          ();
 #endif
 
 public slots:

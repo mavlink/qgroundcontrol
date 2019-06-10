@@ -501,6 +501,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
         }
         _tilesMutex.unlock();
     } else {
+        delete terrainTile;
         qCWarning(TerrainQueryLog) << "Received invalid tile";
     }
     reply->deleteLater();

@@ -252,13 +252,13 @@ SetupPage {
 
                                 QGCButton {
                                     text: qsTr("Calibrate")
-                                    enabled:    _escCalibration.rawValue === 0
-                                    onClicked:  _escCalibration.rawValue = 3
+                                    enabled:    _escCalibration && _escCalibration.rawValue === 0
+                                    onClicked:  if(_escCalibration) _escCalibration.rawValue = 3
                                 }
 
                                 Column {
-                                    enabled: _escCalibration.rawValue === 3
-                                    QGCLabel { text:   _escCalibration.rawValue === 3 ? qsTr("Now perform these steps:") : qsTr("Click Calibrate to start, then:") }
+                                    enabled: _escCalibration && _escCalibration.rawValue === 3
+                                    QGCLabel { text:   _escCalibration ? (_escCalibration.rawValue === 3 ? qsTr("Now perform these steps:") : qsTr("Click Calibrate to start, then:")) : "" }
                                     QGCLabel { text:   qsTr("- Disconnect USB and battery so flight controller powers down") }
                                     QGCLabel { text:   qsTr("- Connect the battery") }
                                     QGCLabel { text:   qsTr("- The arming tone will be played (if the vehicle has a buzzer attached)") }
@@ -444,7 +444,7 @@ SetupPage {
                     onClicked: {
                         _calcVoltageDlgVehicleVoltage = vehicleVoltage
                         _calcVoltageDlgBattVoltMultParam = battVoltMult
-                        mainWindow.showDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showComponentDialog(calcVoltageMultiplierDlgComponent, qsTr("Calculate Voltage Multiplier"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
 
                 }
@@ -476,7 +476,7 @@ SetupPage {
                     onClicked: {
                         _calcAmpsPerVoltDlgVehicleCurrent = vehicleCurrent
                         _calcAmpsPerVoltDlgBattAmpPerVoltParam = battAmpPerVolt
-                        mainWindow.showDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+                        mainWindow.showComponentDialog(calcAmpsPerVoltDlgComponent, qsTr("Calculate Amps per Volt"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
                     }
                 }
 

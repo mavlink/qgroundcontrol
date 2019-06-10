@@ -345,7 +345,7 @@ SetupPage {
 
                         onClicked: {
                             if (text === qsTr("Calibrate")) {
-                                mainWindow.showDialog(zeroTrimsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                                mainWindow.showComponentDialog(zeroTrimsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                             } else {
                                 controller.nextButtonClicked()
                             }
@@ -405,12 +405,12 @@ SetupPage {
                     QGCButton {
                         id:         bindButton
                         text:       qsTr("Spektrum Bind")
-                        onClicked:  mainWindow.showDialog(spektrumBindDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                        onClicked:  mainWindow.showComponentDialog(spektrumBindDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                     }
 
                     QGCButton {
                         text:       qsTr("Copy Trims")
-                        onClicked:  mainWindow.showDialog(copyTrimsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
+                        onClicked:  mainWindow.showComponentDialog(copyTrimsDialogComponent, dialogTitle, mainWindow.showDialogDefaultWidth, StandardButton.Ok | StandardButton.Cancel)
                     }
                 }
             } // Column - Left Column

@@ -32,14 +32,14 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("Arming Checks:")
-            valueText: fact.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")
+            valueText: fact ? (fact.value & 1 ? qsTr("Enabled") : qsTr("Some disabled")) : ""
 
             property Fact fact: controller.getParameterFact(-1, "ARMING_CHECK")
         }
 
         VehicleSummaryRow {
             labelText:  qsTr("Throttle failsafe:")
-            valueText:  fact.enumStringValue
+            valueText:  fact ? fact.enumStringValue : ""
             visible:    controller.vehicle.multiRotor
 
             property Fact fact: controller.getParameterFact(-1, "FS_THR_ENABLE", false /* reportMissing */)
@@ -47,7 +47,7 @@ Item {
 
         VehicleSummaryRow {
             labelText:  qsTr("Throttle failsafe:")
-            valueText:  fact.enumStringValue
+            valueText:  fact ? fact.enumStringValue : ""
             visible:    controller.vehicle.fixedWing
 
             property Fact fact: controller.getParameterFact(-1, "THR_FAILSAFE", false /* reportMissing */)
@@ -55,7 +55,7 @@ Item {
 
         VehicleSummaryRow {
             labelText:  qsTr("Throttle failsafe:")
-            valueText:  fact.enumStringValue
+            valueText:  fact ? fact.enumStringValue : ""
             visible:    controller.vehicle.rover
 
             property Fact fact: controller.getParameterFact(-1, "FS_THR_ENABLE", false /* reportMissing */)
@@ -63,7 +63,7 @@ Item {
 
         VehicleSummaryRow {
             labelText:  qsTr("Failsafe Action:")
-            valueText:  fact.enumStringValue
+            valueText:  fact ? fact.enumStringValue : ""
             visible:    controller.vehicle.rover
 
             property Fact fact: controller.getParameterFact(-1, "FS_ACTION", false /* reportMissing */)
@@ -71,7 +71,7 @@ Item {
 
         VehicleSummaryRow {
             labelText:  qsTr("Failsafe Crash Check:")
-            valueText:  fact.enumStringValue
+            valueText:  fact ? fact.enumStringValue : ""
             visible:    controller.vehicle.rover
 
             property Fact fact: controller.getParameterFact(-1, "FS_CRASH_CHECK", false /* reportMissing */)
@@ -103,11 +103,22 @@ Item {
 
         VehicleSummaryRow {
             labelText: qsTr("GeoFence:")
-            valueText: _copterFenceEnable.value == 0 || _copterFenceType == 0 ?
-                           qsTr("Disabled") :
-                           (_copterFenceType.value == 1 ?
-                                qsTr("Altitude") :
-                                (_copterFenceType.value == 2 ? qsTr("Circle") : qsTr("Altitude,Circle")))
+            valueText: {
+                if(_copterFenceEnable && _copterFenceType) {
+                    if(_copterFenceEnable.value == 0 || _copterFenceType == 0) {
+                        return qsTr("Disabled")
+                    } else {
+                        if(_copterFenceType.value == 1) {
+                            return qsTr("Altitude")
+                        }
+                        if(_copterFenceType.value == 2) {
+                            return qsTr("Circle")
+                        }
+                        return qsTr("Altitude,Circle")
+                    }
+                }
+                return ""
+            }
             visible: controller.vehicle.multiRotor
         }
 
@@ -121,16 +132,16 @@ Item {
 
         VehicleSummaryRow {
             labelText:  qsTr("RTL min alt:")
-            valueText:  fact.value == 0 ? qsTr("current") : fact.valueString + " " + fact.units
+            valueText:  fact ? (fact.value == 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
             visible:    controller.vehicle.multiRotor
 
             property Fact fact: controller.getParameterFact(-1, "RTL_ALT", false /* reportMissing */)
         }
 
         VehicleSummaryRow {
-            labelText: qsTr("RTL min alt:")
-            valueText: fact.value < 0 ? qsTr("current") : fact.valueString + " " + fact.units
-            visible: controller.vehicle.fixedWing
+            labelText:  qsTr("RTL min alt:")
+            valueText:  fact ? (fact.value < 0 ? qsTr("current") : fact.valueString + " " + fact.units) : ""
+            visible:    controller.vehicle.fixedWing
 
             property Fact fact: controller.getParameterFact(-1, "ALT_HOLD_RTL", false /* reportMissing */)
         }

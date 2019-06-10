@@ -461,7 +461,7 @@ void MAVLinkProtocol::checkForLostLogFiles(void)
     QFileInfoList fileInfoList = tempDir.entryInfoList(QStringList(filter), QDir::Files);
     //qDebug() << "Orphaned log file count" << fileInfoList.count();
 
-    for(const QFileInfo fileInfo: fileInfoList) {
+    for(const QFileInfo& fileInfo: fileInfoList) {
         //qDebug() << "Orphaned log file" << fileInfo.filePath();
         if (fileInfo.size() == 0) {
             // Delete all zero length files

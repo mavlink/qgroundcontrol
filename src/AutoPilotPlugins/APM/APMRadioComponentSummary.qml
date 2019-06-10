@@ -8,9 +8,7 @@ import QGroundControl.Palette 1.0
 
 Item {
     anchors.fill:   parent
-    color:          qgcPal.windowShadeDark
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
     FactPanelController { id: controller; }
 
     property Fact mapRollFact:      controller.getParameterFact(-1, "RCMAP_ROLL")

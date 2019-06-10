@@ -165,17 +165,17 @@ SetupPage {
             // Whenever an MNT_RC_IN_* setting is changed make sure to turn on RC targeting
             Connections {
                 target:         _mountRCInPan
-                onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting
+                onValueChanged: if(_mountDefaultMode) _mountDefaultMode.value = _mountDefaultModeRCTargetting
             }
 
             Connections {
                 target:         _mountRCInRoll
-                onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting
+                onValueChanged: if(_mountDefaultMode) _mountDefaultMode.value = _mountDefaultModeRCTargetting
             }
 
             Connections {
                 target:         _mountRCInTilt
-                onValueChanged: _mountDefaultMode.value = _mountDefaultModeRCTargetting
+                onValueChanged: if(_mountDefaultMode) _mountDefaultMode.value = _mountDefaultModeRCTargetting
             }
 
             ListModel {

@@ -235,13 +235,13 @@ Item {
         MenuItem {
             text:           qsTr("Edit position..." )
             visible:        _circle
-            onTriggered:    mainWindow.showDialog(editCenterPositionDialog, qsTr("Edit Center Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    mainWindow.showComponentDialog(editCenterPositionDialog, qsTr("Edit Center Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
         MenuItem {
             text:           qsTr("Edit position..." )
             visible:        !_circle && menu._editingVertexIndex >= 0
-            onTriggered:    mainWindow.showDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
+            onTriggered:    mainWindow.showComponentDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
         MenuItem {

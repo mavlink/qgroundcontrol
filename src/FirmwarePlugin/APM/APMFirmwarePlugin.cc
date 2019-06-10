@@ -295,6 +295,11 @@ void APMFirmwarePlugin::_handleOutgoingParamSet(Vehicle* vehicle, LinkInterface*
 
     mavlink_msg_param_set_decode(message, &paramSet);
 
+    if (!_ardupilotComponentMap[paramSet.target_system][paramSet.target_component]) {
+        // Message is targetted to non-ArduPilot firmware component, assume it uses current mavlink spec
+        return;
+    }
+
     paramUnion.param_float = paramSet.param_value;
 
     switch (paramSet.param_type) {
@@ -502,13 +507,10 @@ bool APMFirmwarePlugin::adjustIncomingMavlinkMessage(Vehicle* vehicle, mavlink_m
 
 void APMFirmwarePlugin::adjustOutgoingMavlinkMessage(Vehicle* vehicle, LinkInterface* outgoingLink, mavlink_message_t* message)
 {
-    // Only translate messages which come from ArduPilot code. All other components are expected to follow current mavlink spec.
-    if (_ardupilotComponentMap[vehicle->id()][message->compid]) {
-        switch (message->msgid) {
-        case MAVLINK_MSG_ID_PARAM_SET:
-            _handleOutgoingParamSet(vehicle, outgoingLink, message);
-            break;
-        }
+    switch (message->msgid) {
+    case MAVLINK_MSG_ID_PARAM_SET:
+        _handleOutgoingParamSet(vehicle, outgoingLink, message);
+        break;
     }
 }
 
@@ -819,10 +821,10 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
         if (vehicle->versionCompare(3, 7, 0) >= 0) {  // 3.7.0 and higher
-             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.7.xml");
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.7.xml");
         }
         if (vehicle->versionCompare(3, 6, 0) >= 0) {  // 3.6.0 and higher
-             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
         }
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
 
@@ -925,11 +927,11 @@ void APMFirmwarePlugin::guidedModeChangeAltitude(Vehicle* vehicle, double altitu
 
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_set_position_target_local_ned_encode_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        vehicle->priorityLink()->mavlinkChannel(),
-        &msg,
-        &cmd);
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                &msg,
+                &cmd);
 
     vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
 }
@@ -1058,11 +1060,11 @@ void APMFirmwarePlugin::_handleRCChannels(Vehicle* vehicle, mavlink_message_t* m
     }
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_rc_channels_encode_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        vehicle->priorityLink()->mavlinkChannel(),
-        message,
-        &channels);
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                message,
+                &channels);
 }
 
 void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t *message)
@@ -1075,10 +1077,10 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
     }
     MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
     mavlink_msg_rc_channels_raw_encode_chan(
-        static_cast<uint8_t>(mavlink->getSystemId()),
-        static_cast<uint8_t>(mavlink->getComponentId()),
-        vehicle->priorityLink()->mavlinkChannel(),
-        message,
-        &channels);
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                message,
+                &channels);
 }
 

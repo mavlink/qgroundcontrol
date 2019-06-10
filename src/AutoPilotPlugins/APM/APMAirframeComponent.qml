@@ -62,10 +62,7 @@ SetupPage {
                 }
             }
 
-            APMAirframeComponentController {
-                id:         controller
-                factPanel:  airframePage.viewPanel
-            }
+            APMAirframeComponentController { id: controller; }
 
             QGCLabel {
                 id:                 helpText
