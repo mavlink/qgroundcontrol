@@ -1,5 +1,16 @@
 ## AGS Changelog
 
+### June 10 2019
+
+* Upstream merge
+* Log replay
+* Parameter meta data cleanup
+* Tweaking toolstrip layout
+* Update PX4 Firmware metadata
+* Update MAVLink
+* Correct frame on Rally mission items
+* Overlay on recorded videos by using subtitle files (Code only, not implemented)
+
 ### June 6 2019
 
 * Show second battery status (if it exists)
