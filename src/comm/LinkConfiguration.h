@@ -57,9 +57,7 @@ public:
 #ifdef QT_DEBUG
         TypeMock,       ///< Mock Link for Unitesting
 #endif
-#ifndef __mobile__
         TypeLogReplay,
-#endif
         TypeLast        // Last type value (type >= TypeLast == invalid)
     };
     Q_ENUM(LinkType)

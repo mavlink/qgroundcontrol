@@ -678,6 +678,14 @@
       <output name="MAIN2">steering</output>
       <output name="MAIN4">throttle</output>
     </airframe>
+    <airframe id="50003" maintainer="Timothy Scott" name="Aion Robotics R1 UGV">
+      <class>Rover</class>
+      <maintainer>Timothy Scott</maintainer>
+      <type>Rover</type>
+      <url>http://docs.aionrobotics.com/en/latest/r1-ugv.html</url>
+      <output name="MAIN0">Speed of left wheels</output>
+      <output name="MAIN1">Speed of right wheels</output>
+    </airframe>
   </airframe_group>
   <airframe_group image="VTOLPlane" name="Standard VTOL">
     <airframe id="1002" maintainer="Roman Bapst &lt;roman@auterion.com&gt;" name="HIL Standard VTOL QuadPlane">

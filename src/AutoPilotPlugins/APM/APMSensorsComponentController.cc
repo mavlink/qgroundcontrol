@@ -782,7 +782,7 @@ void APMSensorsComponentController::_handleMagCalProgress(mavlink_message_t& mes
             }
         }
 
-        if (magCalProgress.compass_id < 3) {
+        if (magCalProgress.compass_id < 3 && compassCalCount != 0) {
             // Each compass gets a portion of the overall progress
             _rgCompassCalProgress[magCalProgress.compass_id] = magCalProgress.completion_pct / compassCalCount;
         }

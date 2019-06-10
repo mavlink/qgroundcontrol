@@ -247,7 +247,6 @@ Rectangle {
                                     }
                                 }
 
-
                                 FactCheckBox {
                                     text:       qsTr("Mute all audio output")
                                     fact:       _audioMuted
@@ -430,11 +429,19 @@ Rectangle {
                             spacing:                    _margins
 
                             FactCheckBox {
-                                text:       qsTr("Use preflight checklist")
+                                text:       qsTr("Use Preflight Checklist")
                                 fact:       _useChecklist
                                 visible:    _useChecklist.visible
 
                                 property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
+                            }
+
+                            FactCheckBox {
+                                text:       qsTr("Show Telemetry Log Replay Status Bar")
+                                fact:       _showLogReplayStatusBar
+                                visible:    _showLogReplayStatusBar.visible
+
+                                property Fact _showLogReplayStatusBar: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar
                             }
 
                             FactCheckBox {

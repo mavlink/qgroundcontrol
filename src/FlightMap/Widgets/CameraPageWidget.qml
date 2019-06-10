@@ -51,7 +51,7 @@ Column {
     property bool   _isZoom:                _camera && _camera.isZoom
 
     function showSettings() {
-        mainWindow.showDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
+        mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
     }
 
     //-- Dumb camera trigger if no actual camera interface exists
@@ -439,9 +439,52 @@ Column {
                         }
                     }
                     //-------------------------------------------
+                    // Grid Lines
+                    Row {
+                        visible:                _camera && _camera.autoStream
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                           text:                qsTr("Grid Lines")
+                           width:               _labelFieldWidth
+                           anchors.verticalCenter: parent.verticalCenter
+                        }
+                        QGCSwitch {
+                            enabled:            _streamingEnabled && activeVehicle
+                            checked:            QGroundControl.settingsManager.videoSettings.gridLines.rawValue
+                            width:              _editFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked: {
+                                if(checked) {
+                                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 1
+                                } else {
+                                    QGroundControl.settingsManager.videoSettings.gridLines.rawValue = 0
+                                }
+                            }
+                        }
+                    }
+                    //-------------------------------------------
+                    //-- Video Fit
+                    Row {
+                        visible:                _camera && _camera.autoStream
+                        spacing:                ScreenTools.defaultFontPixelWidth
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:               qsTr("Video Screen Fit")
+                            width:               _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        FactComboBox {
+                            fact:               QGroundControl.settingsManager.videoSettings.videoFit
+                            indexModel:         false
+                            width:              _editFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    //-------------------------------------------
                     //-- Reset Camera
                     Row {
-                        spacing:        ScreenTools.defaultFontPixelWidth
+                        spacing:                ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
                             text:       qsTr("Reset Camera Defaults")

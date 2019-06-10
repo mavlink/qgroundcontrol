@@ -98,7 +98,8 @@ Item {
         anchors.right:          parent.right
         anchors.top:            parent.top
         anchors.bottom:         parent.bottom
-        visible:                activeVehicle && !communicationLost
+        anchors.margins:        ScreenTools.defaultFontPixelHeight * 0.66
+        visible:                activeVehicle && !communicationLost && x > (indicatorRow.x + indicatorRow.width + ScreenTools.defaultFontPixelWidth)
         fillMode:               Image.PreserveAspectFit
         source:                 _outdoorPalette ? _brandImageOutdoor : _brandImageIndoor
         mipmap:                 true

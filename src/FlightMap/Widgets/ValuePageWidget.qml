@@ -37,7 +37,7 @@ Column {
     }
 
     function showSettings() {
-        mainWindow.showDialog(propertyPicker, qsTr("Value Widget Setup"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
+        mainWindow.showComponentDialog(propertyPicker, qsTr("Value Widget Setup"), mainWindow.showDialogDefaultWidth, StandardButton.Ok)
     }
 
     function listContains(list, value) {
