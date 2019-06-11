@@ -32,31 +32,43 @@ Item {
     property var    battery2:           activeVehicle ? activeVehicle.battery2 : null
     property bool   hasSecondBattery:   battery2 && battery2.voltage.value !== -1
 
-    function getBatteryColor() {
+    function lowestBattery() {
         if(activeVehicle) {
-            if(activeVehicle.battery.percentRemaining.value > 75) {
+            if(hasSecondBattery) {
+                if(activeVehicle.battery2.percentRemaining.value < activeVehicle.battery.percentRemaining.value) {
+                    return activeVehicle.battery2
+                }
+            }
+            return activeVehicle.battery
+        }
+        return null
+    }
+
+    function getBatteryColor(battery) {
+        if(battery) {
+            if(battery.percentRemaining.value > 75) {
                 return qgcPal.text
             }
-            if(activeVehicle.battery.percentRemaining.value > 50) {
+            if(battery.percentRemaining.value > 50) {
                 return qgcPal.colorOrange
             }
-            if(activeVehicle.battery.percentRemaining.value > 0.1) {
+            if(battery.percentRemaining.value > 0.1) {
                 return qgcPal.colorRed
             }
         }
         return qgcPal.colorGrey
     }
 
-    function getBatteryPercentageText() {
-        if(activeVehicle) {
-            if(activeVehicle.battery.percentRemaining.value > 98.9) {
+    function getBatteryPercentageText(battery) {
+        if(battery) {
+            if(battery.percentRemaining.value > 98.9) {
                 return "100%"
             }
-            if(activeVehicle.battery.percentRemaining.value > 0.1) {
-                return activeVehicle.battery.percentRemaining.valueString + activeVehicle.battery.percentRemaining.units
+            if(battery.percentRemaining.value > 0.1) {
+                return battery.percentRemaining.valueString + battery.percentRemaining.units
             }
-            if(activeVehicle.battery.voltage.value >= 0) {
-                return activeVehicle.battery.voltage.valueString + activeVehicle.battery.voltage.units
+            if(battery.voltage.value >= 0) {
+                return battery.voltage.valueString + battery.voltage.units
             }
         }
         return "N/A"
@@ -92,7 +104,28 @@ Item {
                     columns:            2
                     anchors.horizontalCenter: parent.horizontalCenter
 
-                    QGCLabel { text: qsTr("Battery 1"); Layout.columnSpan: 2; visible: hasSecondBattery; }
+                    QGCLabel {
+                        id:             batteryLabel
+                        text:           qsTr("Battery 1")
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    QGCColoredImage {
+                        height:         batteryLabel.height
+                        width:          height
+                        sourceSize.width:   width
+                        source:         "/auterion/img/menu_battery.svg"
+                        color:          qgcPal.text
+                        fillMode:       Image.PreserveAspectFit
+                        Rectangle {
+                            color:              getBatteryColor(activeVehicle ? activeVehicle.battery : null)
+                            anchors.left:       parent.left
+                            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.125
+                            height:             parent.height * 0.35
+                            width:              activeVehicle ? (activeVehicle.battery.percentRemaining.value / 100) * parent.width * 0.875 : 0
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
                     QGCLabel { text: qsTr("Voltage:") }
                     QGCLabel { text: (battery1 && battery1.voltage.value !== -1) ? (battery1.voltage.valueString + " " + battery1.voltage.units) : "N/A" }
                     QGCLabel { text: qsTr("Accumulated Consumption:") }
@@ -103,7 +136,30 @@ Item {
                         visible: hasSecondBattery;
                         Layout.columnSpan: 2
                     }
-                    QGCLabel { text: qsTr("Battery 2"); Layout.columnSpan: 2; visible: hasSecondBattery; }
+
+                    QGCLabel {
+                        text:           qsTr("Battery 2")
+                        visible:        hasSecondBattery
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                    QGCColoredImage {
+                        height:         batteryLabel.height
+                        width:          height
+                        sourceSize.width:   width
+                        source:         "/auterion/img/menu_battery.svg"
+                        color:          qgcPal.text
+                        visible:        hasSecondBattery
+                        fillMode:       Image.PreserveAspectFit
+                        Rectangle {
+                            color:              getBatteryColor(activeVehicle ? activeVehicle.battery2 : null)
+                            anchors.left:       parent.left
+                            anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.125
+                            height:             parent.height * 0.35
+                            width:              activeVehicle ? (activeVehicle.battery2.percentRemaining.value / 100) * parent.width * 0.875 : 0
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
                     QGCLabel { text: qsTr("Voltage:"); visible: hasSecondBattery; }
                     QGCLabel { text: (battery2 && battery2.voltage.value !== -1) ? (battery2.voltage.valueString + " " + battery2.voltage.units) : "N/A";  visible: hasSecondBattery; }
                     QGCLabel { text: qsTr("Accumulated Consumption:"); visible: hasSecondBattery; }
@@ -128,7 +184,7 @@ Item {
             color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             Rectangle {
-                color:              getBatteryColor()
+                color:              getBatteryColor(lowestBattery())
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.25
                 height:             parent.height * 0.35
@@ -137,9 +193,9 @@ Item {
             }
         }
         QGCLabel {
-            text:                   getBatteryPercentageText()
+            text:                   getBatteryPercentageText(lowestBattery())
             font.pointSize:         ScreenTools.smallFontPointSize
-            color:                  getBatteryColor()
+            color:                  getBatteryColor(lowestBattery())
             anchors.verticalCenter: parent.verticalCenter
         }
     }
