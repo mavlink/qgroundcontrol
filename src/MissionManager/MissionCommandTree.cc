@@ -223,10 +223,14 @@ QVariantList MissionCommandTree::getCommandsForCategory(Vehicle* vehicle, const 
 {
     MAV_AUTOPILOT   baseFirmwareType;
     MAV_TYPE        baseVehicleType;
-    QList<MAV_CMD>  supportedCommands = vehicle->firmwarePlugin()->supportedMissionCommands();
 
     _baseVehicleInfo(vehicle, baseFirmwareType, baseVehicleType);
     _buildAllCommands(vehicle);
+
+    // vehicle can be null in which case _baseVehicleInfo will tell of the firmware/vehicle type for the offline editing vehicle.
+    // We then use that to get a firmware plugin so we can get the list of supported commands.
+    FirmwarePlugin* firmwarePlugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(baseFirmwareType, baseVehicleType);
+    QList<MAV_CMD>  supportedCommands = firmwarePlugin->supportedMissionCommands();
 
     QVariantList list;
     QMap<MAV_CMD, MissionCommandUIInfo*> commandMap = _allCommands[baseFirmwareType][baseVehicleType];
