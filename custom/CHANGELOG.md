@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### June 11 2019
+
+* Adding support for thermal "palette" options within the camera control.
+
 ### June 10 2019
 
 * Upstream merge
