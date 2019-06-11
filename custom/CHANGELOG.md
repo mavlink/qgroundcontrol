@@ -3,6 +3,7 @@
 ### June 11 2019
 
 * Adding support for thermal "palette" options within the camera control.
+* Show battery icon for battery drop down indicator. The main toolbar will also now show the amount of the lowest battery on main battery indicator.
 
 ### June 10 2019
 
