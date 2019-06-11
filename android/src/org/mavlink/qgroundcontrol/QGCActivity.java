@@ -72,7 +72,6 @@ public class QGCActivity extends QtActivity
     private static HashMap<Integer, Integer>            _userDataHashByDeviceId;
     private static final String                         TAG = "QGC_QGCActivity";
     private static PowerManager.WakeLock                _wakeLock;
-//    private static final String                         ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION";
     private static final String                         ACTION_USB_PERMISSION = "org.mavlink.qgroundcontrol.action.USB_PERMISSION";
     private static PendingIntent                        _usbPermissionIntent = null;
     private TaiSync                                     taiSync = null;
@@ -110,7 +109,7 @@ public class QGCActivity extends QtActivity
                     if (accessory != null && intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         openAccessory(accessory);
                     }
-                } else if( UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
+                } else if (UsbManager.ACTION_USB_ACCESSORY_DETACHED.equals(action)) {
                     UsbAccessory accessory = intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY);
                     if (accessory != null) {
                         closeAccessory(accessory);
@@ -728,7 +727,7 @@ public class QGCActivity extends QtActivity
         new Thread(new Runnable() {
             public void run() {
                 synchronized(openAccessoryLock) {
-                    Log.i(TAG, "probeAccessories");
+//                    Log.i(TAG, "probeAccessories");
                     UsbAccessory[] accessories = _usbManager.getAccessoryList();
                     if (accessories != null) {
                        for (UsbAccessory usbAccessory : accessories) {
@@ -737,9 +736,6 @@ public class QGCActivity extends QtActivity
                            }
                            if (_usbManager.hasPermission(usbAccessory)) {
                                openAccessory(usbAccessory);
-                           } else {
-                               Log.i(TAG, "requestPermission");
-                               _usbManager.requestPermission(usbAccessory, pendingIntent);
                            }
                        }
                     }
