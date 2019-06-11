@@ -97,11 +97,13 @@ LinuxBuild {
             -lgstrtpmanager \
             -lgstisomp4 \
             -lgstmatroska \
+            -lgstandroidmedia
 
         # Rest of GStreamer dependencies
         LIBS += -L$$GST_ROOT/lib \
             -lgstfft-1.0 -lm  \
             -lgstnet-1.0 -lgio-2.0 \
+            -lgstphotography-1.0 -lgstgl-1.0 -lEGL \
             -lgstaudio-1.0 -lgstcodecparsers-1.0 -lgstbase-1.0 \
             -lgstreamer-1.0 -lgstrtp-1.0 -lgstpbutils-1.0 -lgstrtsp-1.0 -lgsttag-1.0 \
             -lgstvideo-1.0 -lavformat -lavcodec -lavutil -lx264 -lavfilter -lswresample \
