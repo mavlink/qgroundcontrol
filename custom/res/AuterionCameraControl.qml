@@ -53,7 +53,8 @@ Item {
     property bool   _recordingVideo:        _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _settingsEnabled:       !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
     property bool   _hasZoom:               _camera && _camera.hasZoom
-    property Fact   _evFact:                _camera && _camera.ev
+    property Fact   _evFact:                _camera ? _camera.ev : null
+    property Fact   _irPaletteFact:         _camera ? _camera.irPalette : null
 
     Connections {
         target: QGroundControl.multiVehicleManager.activeVehicle
@@ -114,6 +115,7 @@ Item {
                 AuterionQuickSettingButton {
                     id:                 paletteButton
                     icon.source:        "/auterion/img/palette_icon.svg"
+                    visible:            _irPaletteFact
                     flat:               true
                     onClicked: {
                         checked = true
@@ -512,10 +514,15 @@ Item {
             radius:         2
             clip:           true
         }
-        QGCLabel {
-            id:             paletteQuickSettingControl
-            text:           "Not Yet"
-            anchors.centerIn: parent
+        AuterionComboBox {
+            id:                     paletteQuickSettingControl
+            model:                  _irPaletteFact ? _irPaletteFact.enumStrings : []
+            centeredLabel:          true
+            pointSize:              _root.pointSize
+            currentIndex:           _irPaletteFact ? _irPaletteFact.value : 0
+            onActivated: {
+                _irPaletteFact.value = index
+            }
         }
     }
 
