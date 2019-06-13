@@ -50,11 +50,6 @@ FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
     return _instance;
 }
 
-FirmwarePlugin::FirmwarePlugin(MAV_TYPE vehicleType)
-{
-    _vehicleType = vehicleType;
-}
-
 AutoPilotPlugin* FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
 {
     return new GenericAutoPilotPlugin(vehicle, vehicle);
@@ -132,7 +127,7 @@ bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
     return true;
 }
 
-bool FirmwarePlugin::supportsNegativeThrust(void)
+bool FirmwarePlugin::supportsNegativeThrust(Vehicle* /*vehicle*/)
 {
     // By default, this is not supported
     return false;

@@ -49,8 +49,6 @@ public:
         TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
     } FirmwareCapabilities;
 
-    FirmwarePlugin(MAV_TYPE vehicleType = MAV_TYPE_GENERIC);
-
     /// Maps from on parameter name to another
     ///     key:    parameter name to translate from
     ///     value:  mapped parameter name
@@ -164,7 +162,7 @@ public:
 
     /// Returns true if the vehicle and firmware supports the use of negative thrust
     /// Typically supported rover.
-    virtual bool supportsNegativeThrust(void);
+    virtual bool supportsNegativeThrust(Vehicle *);
 
     /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
     /// setup page. Returns true by default.
@@ -345,9 +343,6 @@ protected:
 
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
-
-protected:
-    MAV_TYPE _vehicleType = MAV_TYPE_GENERIC;
 
 private:
     QVariantList _toolBarIndicatorList;

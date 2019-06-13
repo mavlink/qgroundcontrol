@@ -23,7 +23,7 @@ class PX4FirmwarePlugin : public FirmwarePlugin
     Q_OBJECT
 
 public:
-    PX4FirmwarePlugin   (MAV_TYPE vehicleType);
+    PX4FirmwarePlugin   ();
     ~PX4FirmwarePlugin  () override;
 
     // Overrides from FirmwarePlugin
@@ -69,7 +69,7 @@ public:
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
     bool                supportsTerrainFrame            (void) const override { return false; }
-    bool                supportsNegativeThrust          (void) override;
+    bool                supportsNegativeThrust          (Vehicle *vehicle) override;
 
 protected:
     typedef struct {

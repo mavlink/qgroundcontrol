@@ -29,11 +29,11 @@ QList<MAV_AUTOPILOT> PX4FirmwarePluginFactory::supportedFirmwareTypes(void) cons
     return list;
 }
 
-FirmwarePlugin* PX4FirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE vehicleType)
+FirmwarePlugin* PX4FirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPILOT autopilotType, MAV_TYPE /*vehicleType*/)
 {
     if (autopilotType == MAV_AUTOPILOT_PX4) {
         if (!_pluginInstance) {
-            _pluginInstance = new PX4FirmwarePlugin(vehicleType);
+            _pluginInstance = new PX4FirmwarePlugin();
         }
         return _pluginInstance;
     }
