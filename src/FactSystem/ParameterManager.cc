@@ -1177,7 +1177,7 @@ void ParameterManager::_initialRequestTimeout(void)
 QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT firmwareType, int wantedMajorVersion, int& majorVersion, int& minorVersion)
 {
     bool            cacheHit = false;
-    FirmwarePlugin* plugin = vehicle->firmwarePlugin();
+    FirmwarePlugin* plugin = _anyVehicleTypeFirmwarePlugin(firmwareType);
 
     // Cached files are stored in settings location
     QSettings settings;
@@ -1270,14 +1270,17 @@ QString ParameterManager::parameterMetaDataFile(Vehicle* vehicle, MAV_AUTOPILOT 
     return metaDataFile;
 }
 
-void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType)
+FirmwarePlugin* ParameterManager::_anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType)
 {
-    // In order to call FirmwarePlugin::getParameterMetaDataVersionInfo we need the firmware plugin. But at this point we do not have a vehicle associated
-    // with the call. Since the call to FirmwarePlugin::getParameterMetaDataVersionInfo is invariant to vehicle type we just need to use any one of the
-    // supported vehicle types to get the correct FirmwarePlugin.
+    // There are cases where we need a FirmwarePlugin but we don't have a vehicle. In those specified case the plugin for any of the supported vehicle types will do.
     MAV_TYPE anySupportedVehicleType = qgcApp()->toolbox()->firmwarePluginManager()->supportedVehicleTypes(firmwareType)[0];
 
-    FirmwarePlugin* plugin = qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
+    return qgcApp()->toolbox()->firmwarePluginManager()->firmwarePluginForAutopilot(firmwareType, anySupportedVehicleType);
+}
+
+void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPILOT firmwareType)
+{
+    FirmwarePlugin* plugin = _anyVehicleTypeFirmwarePlugin(firmwareType);
 
     int newMajorVersion, newMinorVersion;
     plugin->getParameterMetaDataVersionInfo(metaDataFile, newMajorVersion, newMinorVersion);
