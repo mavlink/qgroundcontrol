@@ -20,6 +20,11 @@ AudioOutput::AudioOutput(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _tts(new QTextToSpeech(this))
 {
+    //-- Force TTS engine to English as all incoming messages from the autopilot
+    //   are in English and not localized.
+#ifdef Q_OS_LINUX
+    _tts->setLocale(QLocale("en_US"));
+#endif
     connect(_tts, &QTextToSpeech::stateChanged, this, &AudioOutput::_stateChanged);
 }
 

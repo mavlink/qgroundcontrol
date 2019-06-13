@@ -118,10 +118,15 @@ public slots:
     /// Check that the telemetry save path is set correctly
     void checkTelemetrySavePathOnMainThread();
 
+    /// Get current language
+    const QLocale getCurrentLanguage() { return _locale; }
+
 signals:
     /// This is connected to MAVLinkProtocol::checkForLostLogFiles. We signal this to ourselves to call the slot
     /// on the MAVLinkProtocol thread;
-    void checkForLostLogFiles();
+    void checkForLostLogFiles   ();
+
+    void languageChanged        (const QLocale locale);
 
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
@@ -184,6 +189,7 @@ private:
     bool                _bluetoothAvailable     = false;
     QTranslator         _QGCTranslator;
     QTranslator         _QGCTranslatorQt;
+    QLocale             _locale;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
