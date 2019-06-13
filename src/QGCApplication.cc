@@ -351,74 +351,74 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
 void QGCApplication::setLanguage()
 {
-    QLocale locale = QLocale::system();
-    qDebug() << "System reported locale:" << locale << locale.name();
+    _locale = QLocale::system();
+    qDebug() << "System reported locale:" << _locale << _locale.name();
     int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
     //-- See App.SettinsGroup.json for index
     if(langID) {
         switch(langID) {
         case 1:
-            locale = QLocale(QLocale::Bulgarian);
+            _locale = QLocale(QLocale::Bulgarian);
             break;
         case 2:
-            locale = QLocale(QLocale::Chinese);
+            _locale = QLocale(QLocale::Chinese);
             break;
         case 3:
-            locale = QLocale(QLocale::Dutch);
+            _locale = QLocale(QLocale::Dutch);
             break;
         case 4:
-            locale = QLocale(QLocale::English);
+            _locale = QLocale(QLocale::English);
             break;
         case 5:
-            locale = QLocale(QLocale::Finnish);
+            _locale = QLocale(QLocale::Finnish);
             break;
         case 6:
-            locale = QLocale(QLocale::French);
+            _locale = QLocale(QLocale::French);
             break;
         case 7:
-            locale = QLocale(QLocale::German);
+            _locale = QLocale(QLocale::German);
             break;
         case 8:
-            locale = QLocale(QLocale::Greek);
+            _locale = QLocale(QLocale::Greek);
             break;
         case 9:
-            locale = QLocale(QLocale::Hebrew);
+            _locale = QLocale(QLocale::Hebrew);
             break;
         case 10:
-            locale = QLocale(QLocale::Italian);
+            _locale = QLocale(QLocale::Italian);
             break;
         case 11:
-            locale = QLocale(QLocale::Japanese);
+            _locale = QLocale(QLocale::Japanese);
             break;
         case 12:
-            locale = QLocale(QLocale::Korean);
+            _locale = QLocale(QLocale::Korean);
             break;
         case 13:
-            locale = QLocale(QLocale::Norwegian);
+            _locale = QLocale(QLocale::Norwegian);
             break;
         case 14:
-            locale = QLocale(QLocale::Polish);
+            _locale = QLocale(QLocale::Polish);
             break;
         case 15:
-            locale = QLocale(QLocale::Portuguese);
+            _locale = QLocale(QLocale::Portuguese);
             break;
         case 16:
-            locale = QLocale(QLocale::Russian);
+            _locale = QLocale(QLocale::Russian);
             break;
         case 17:
-            locale = QLocale(QLocale::Spanish);
+            _locale = QLocale(QLocale::Spanish);
             break;
         case 18:
-            locale = QLocale(QLocale::Swedish);
+            _locale = QLocale(QLocale::Swedish);
             break;
         case 19:
-            locale = QLocale(QLocale::Turkish);
+            _locale = QLocale(QLocale::Turkish);
             break;
         }
     }
     //-- We have specific fonts for Korean
-    if(locale == QLocale::Korean) {
-        qDebug() << "Loading Korean fonts" << locale.name();
+    if(_locale == QLocale::Korean) {
+        qDebug() << "Loading Korean fonts" << _locale.name();
         if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
             qWarning() << "Could not load /fonts/NanumGothic-Regular font";
         }
@@ -426,22 +426,23 @@ void QGCApplication::setLanguage()
             qWarning() << "Could not load /fonts/NanumGothic-Bold font";
         }
     }
-    qDebug() << "Loading localization for" << locale.name();
+    qDebug() << "Loading localization for" << _locale.name();
     _app->removeTranslator(&_QGCTranslator);
     _app->removeTranslator(&_QGCTranslatorQt);
-    if(_QGCTranslatorQt.load("qt_" + locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
+    if(_QGCTranslatorQt.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
         _app->installTranslator(&_QGCTranslatorQt);
     } else {
-        qDebug() << "Error loading Qt localization for" << locale.name();
+        qDebug() << "Error loading Qt localization for" << _locale.name();
     }
-    if(_QGCTranslator.load(locale, QLatin1String("qgc_"), "", ":/i18n")) {
-        QLocale::setDefault(locale);
+    if(_QGCTranslator.load(_locale, QLatin1String("qgc_"), "", ":/i18n")) {
+        QLocale::setDefault(_locale);
         _app->installTranslator(&_QGCTranslator);
     } else {
-        qDebug() << "Error loading application localization for" << locale.name();
+        qDebug() << "Error loading application localization for" << _locale.name();
     }
     if(_qmlAppEngine)
         _qmlAppEngine->retranslate();
+    emit languageChanged(_locale);
 }
 
 void QGCApplication::_shutdown()
