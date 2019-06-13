@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* For text to speech engine on Linux to English (all messages are in English)
 * Automated the ingestion of localization from Crowdin
 * Automated the generation of language resources into the application
 * Added all languages that come from Crowdin, even if empty.
