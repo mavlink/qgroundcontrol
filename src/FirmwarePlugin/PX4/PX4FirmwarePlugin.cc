@@ -35,9 +35,8 @@ PX4FirmwarePluginInstanceData::PX4FirmwarePluginInstanceData(QObject* parent)
 
 }
 
-PX4FirmwarePlugin::PX4FirmwarePlugin(MAV_TYPE vehicleType)
-    : FirmwarePlugin(vehicleType)
-    , _manualFlightMode     (tr("Manual"))
+PX4FirmwarePlugin::PX4FirmwarePlugin()
+    : _manualFlightMode     (tr("Manual"))
     , _acroFlightMode       (tr("Acro"))
     , _stabilizedFlightMode (tr("Stabilized"))
     , _rattitudeFlightMode  (tr("Rattitude"))
@@ -591,7 +590,7 @@ QString PX4FirmwarePlugin::_versionRegex() {
     return QStringLiteral("v([0-9,\\.]*) Stable");
 }
 
-bool PX4FirmwarePlugin::supportsNegativeThrust(void)
+bool PX4FirmwarePlugin::supportsNegativeThrust(Vehicle* vehicle)
 {
-    return _vehicleType == MAV_TYPE_GROUND_ROVER;
+    return vehicle->vehicleType() == MAV_TYPE_GROUND_ROVER;
 }

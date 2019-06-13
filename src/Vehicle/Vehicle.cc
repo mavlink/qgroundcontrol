@@ -2871,9 +2871,9 @@ bool Vehicle::supportsThrottleModeCenterZero(void) const
     return _firmwarePlugin->supportsThrottleModeCenterZero();
 }
 
-bool Vehicle::supportsNegativeThrust(void) const
+bool Vehicle::supportsNegativeThrust(void)
 {
-    return _firmwarePlugin->supportsNegativeThrust();
+    return _firmwarePlugin->supportsNegativeThrust(this);
 }
 
 bool Vehicle::supportsRadio(void) const
