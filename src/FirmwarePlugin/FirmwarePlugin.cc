@@ -50,6 +50,11 @@ FirmwarePluginFactoryRegister* FirmwarePluginFactoryRegister::instance(void)
     return _instance;
 }
 
+FirmwarePlugin::FirmwarePlugin(MAV_TYPE vehicleType)
+{
+    _vehicleType = vehicleType;
+}
+
 AutoPilotPlugin* FirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
 {
     return new GenericAutoPilotPlugin(vehicle, vehicle);

@@ -49,6 +49,8 @@ public:
         TakeoffVehicleCapability =          1 << 4, ///< Vehicle supports guided takeoff
     } FirmwareCapabilities;
 
+    FirmwarePlugin(MAV_TYPE vehicleType = MAV_TYPE_GENERIC);
+
     /// Maps from on parameter name to another
     ///     key:    parameter name to translate from
     ///     value:  mapped parameter name
@@ -343,6 +345,9 @@ protected:
 
     // Returns regex QString to extract version information from text
     virtual QString _versionRegex() { return QString(); }
+
+protected:
+    MAV_TYPE _vehicleType = MAV_TYPE_GENERIC;
 
 private:
     QVariantList _toolBarIndicatorList;
