@@ -518,7 +518,7 @@ Item {
             id:                     paletteQuickSettingControl
             model:                  _irPaletteFact ? _irPaletteFact.enumStrings : []
             centeredLabel:          true
-            pointSize:              _root.pointSize
+            pointSize:              ScreenTools.smallFontPointSize
             currentIndex:           _irPaletteFact ? _irPaletteFact.value : 0
             onActivated: {
                 _irPaletteFact.value = index
