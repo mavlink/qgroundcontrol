@@ -28,7 +28,6 @@
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
-#include "AudioOutput.h"
 #include "FollowMe.h"
 #include "MissionCommandTree.h"
 #include "QGroundControlQmlGlobal.h"

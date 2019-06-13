@@ -33,7 +33,6 @@ public slots:
 
 private slots:
     void            _stateChanged           (QTextToSpeech::State state);
-    void            _languageChanged        (const QLocale locale);
 
 protected:
     QTextToSpeech*  _tts;
