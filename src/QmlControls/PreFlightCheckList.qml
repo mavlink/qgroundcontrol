@@ -16,10 +16,10 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 
 Rectangle {
-    width:  mainColumn.width + 3*ScreenTools.defaultFontPixelWidth
-    height: mainColumn.height + ScreenTools.defaultFontPixelHeight
-    color:  qgcPal.windowShade
-    radius: 3
+    width:      mainColumn.width  + ScreenTools.defaultFontPixelWidth * 3
+    height:     mainColumn.height + ScreenTools.defaultFontPixelHeight
+    color:      qgcPal.windowShade
+    radius:     3
 
     property alias model: checkListRepeater.model
 
@@ -52,12 +52,12 @@ Rectangle {
 
     Column {
         id:                     mainColumn
-        width:                  40*ScreenTools.defaultFontPixelWidth
-        spacing:                0.8*ScreenTools.defaultFontPixelWidth
+        width:                  40  * ScreenTools.defaultFontPixelWidth
+        spacing:                0.8 * ScreenTools.defaultFontPixelWidth
         anchors.left:           parent.left
         anchors.top:            parent.top
-        anchors.topMargin:      0.6*ScreenTools.defaultFontPixelWidth
-        anchors.leftMargin:     1.5*ScreenTools.defaultFontPixelWidth
+        anchors.topMargin:      0.6 * ScreenTools.defaultFontPixelWidth
+        anchors.leftMargin:     1.5 * ScreenTools.defaultFontPixelWidth
 
         function groupPassedChanged(index, passed) {
             if (passed) {
@@ -70,8 +70,8 @@ Rectangle {
 
         // Header/title of checklist
         Item {
-            width:  parent.width
-            height: 1.75*ScreenTools.defaultFontPixelHeight
+            width:      parent.width
+            height:     1.75 * ScreenTools.defaultFontPixelHeight
 
             QGCLabel {
                 text:                   qsTr("Pre-Flight Checklist %1").arg(_passed ? qsTr("(passed)") : "")
@@ -80,16 +80,19 @@ Rectangle {
                 font.pointSize:         ScreenTools.mediumFontPointSize
             }
             QGCButton {
-                width:                  1.2*ScreenTools.defaultFontPixelHeight
-                height:                 1.2*ScreenTools.defaultFontPixelHeight
+                width:                  1.2 * ScreenTools.defaultFontPixelHeight
+                height:                 1.2 * ScreenTools.defaultFontPixelHeight
                 anchors.right:          parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                opacity :               0.2+0.8*(QGroundControl.multiVehicleManager.vehicles.count > 0)
                 tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
 
-                onClicked: model.reset()
+                onClicked:              model.reset()
 
-                Image { source:"/qmlimages/MapSyncBlack.svg" ; anchors.fill: parent }
+                QGCColoredImage {
+                    source:         "/qmlimages/MapSyncBlack.svg"
+                    color:          qgcPal.buttonText
+                    anchors.fill:   parent
+                }
             }
         }
 
@@ -97,5 +100,5 @@ Rectangle {
         Repeater {
             id: checkListRepeater
         }
-    } // Column
-} //Rectangle
+    }
+}

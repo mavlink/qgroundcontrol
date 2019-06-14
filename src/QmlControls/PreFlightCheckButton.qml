@@ -43,9 +43,9 @@ QGCButton {
     readonly property int _stateFailed:     1   ///< Telemetry check is failing, user cannot click to make it pass
     readonly property int _statePassed:     2   ///< Check has passed
 
-    readonly property color _passedColor:   Qt.rgba(0.27,0.67,0.42,1)
-    readonly property color _pendingColor:  Qt.rgba(0.9,0.47,0.2,1)
-    readonly property color _failedColor:   Qt.rgba(0.92,0.22,0.22,1)
+    readonly property color _passedColor:   "#86cc6a"
+    readonly property color _pendingColor:  "#f7a81f"
+    readonly property color _failedColor:   "#c31818"
 
     property string _text: "<b>" + name +"</b>: " +
                            ((_telemetryState !== _statePassed) ?
@@ -136,5 +136,4 @@ QGCButton {
         }
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 }
