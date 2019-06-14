@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### June 14 2019
+
+* Made the Preflight Checklist dialog modal
+
 ### June 11 2019
 
 * Adding support for thermal "palette" options within the camera control.
