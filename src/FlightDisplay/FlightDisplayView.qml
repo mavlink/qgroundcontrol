@@ -627,7 +627,6 @@ Item {
                 {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
-                    dropPanelComponent: checklistDropPanel
                 },
                 {
                     name:       _guidedController.takeoffTitle,
@@ -660,6 +659,8 @@ Item {
                 guidedActionsController.closeAll()
                 if(index === 0) {
                     mainWindow.showPlanView()
+                } else if(index === 1) {
+                    checklistDropPanel.open()
                 } else {
                     var action = model[index].action
                     if (action === -1) {
@@ -795,10 +796,24 @@ Item {
     }
 
     //-- Checklist GUI
-    Component {
-        id: checklistDropPanel
+    Popup {
+        id:             checklistDropPanel
+        x:              Math.round((mainWindow.width  - width)  * 0.5)
+        y:              Math.round((mainWindow.height - height) * 0.5)
+        height:         checkList.height
+        width:          checkList.width
+        modal:          true
+        focus:          true
+        closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        background: Rectangle {
+            anchors.fill:   parent
+            color:          Qt.rgba(0,0,0,0)
+            clip:           true
+        }
         PreFlightCheckList {
-            model: preFlightCheckModel
+            id:     checkList
+            model:  preFlightCheckModel
         }
     }
+
 }
