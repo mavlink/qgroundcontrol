@@ -50,22 +50,22 @@ static const char* kVideoMuxes[] =
 
 #endif
 
-#if defined(QGC_GST_STREAMING)
-void gstAndroidLog(GstDebugCategory * category,
-                   GstDebugLevel      level,
-                   const gchar      * file,
-                   const gchar      * function,
-                   gint               line,
-                   GObject          * object,
-                   GstDebugMessage  * message,
-                   gpointer           data)
-{
-  if (level <= gst_debug_category_get_threshold (category))
-  {
-    qCritical() << file << function << gst_debug_message_get(message);
-  }
-}
-#endif
+//#if defined(QGC_GST_STREAMING)
+//void gstAndroidLog(GstDebugCategory * category,
+//                   GstDebugLevel      level,
+//                   const gchar      * file,
+//                   const gchar      * function,
+//                   gint               line,
+//                   GObject          * object,
+//                   GstDebugMessage  * message,
+//                   gpointer           data)
+//{
+//  if (level <= gst_debug_category_get_threshold (category))
+//  {
+//    qCritical() << file << function << gst_debug_message_get(message);
+//  }
+//}
+//#endif
 
 VideoReceiver::VideoReceiver(QObject* parent)
     : QObject(parent)
@@ -95,7 +95,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     gst_debug_set_default_threshold(GST_LEVEL_WARNING);
-    gst_debug_add_log_function(&gstAndroidLog, NULL, NULL);
+    //gst_debug_add_log_function(&gstAndroidLog, NULL, NULL);
     _setVideoSink(_videoSurface->videoSink());
     _timer.setSingleShot(true);
     connect(&_timer, &QTimer::timeout, this, &VideoReceiver::_timeout);
