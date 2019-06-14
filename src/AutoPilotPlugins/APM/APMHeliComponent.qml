@@ -171,6 +171,98 @@ SetupPage {
                         fact:               controller.getParameterFact(-1, "SERVO4_REVERSED")
                         Layout.fillWidth:   true
                     }
+
+                    QGCLabel { text: qsTr("5") }
+                    FactComboBox {
+                        fact:               controller.getParameterFact(-1, "SERVO5_FUNCTION")
+                        indexModel:         false
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO5_MIN")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO5_MAX")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO5_TRIM")
+                        Layout.fillWidth:   true
+                    }
+                    FactCheckBox {
+                        fact:               controller.getParameterFact(-1, "SERVO5_REVERSED")
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCLabel { text: qsTr("6") }
+                    FactComboBox {
+                        fact:               controller.getParameterFact(-1, "SERVO6_FUNCTION")
+                        indexModel:         false
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO6_MIN")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO6_MAX")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO6_TRIM")
+                        Layout.fillWidth:   true
+                    }
+                    FactCheckBox {
+                        fact:               controller.getParameterFact(-1, "SERVO6_REVERSED")
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCLabel { text: qsTr("7") }
+                    FactComboBox {
+                        fact:               controller.getParameterFact(-1, "SERVO7_FUNCTION")
+                        indexModel:         false
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO7_MIN")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO7_MAX")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO7_TRIM")
+                        Layout.fillWidth:   true
+                    }
+                    FactCheckBox {
+                        fact:               controller.getParameterFact(-1, "SERVO7_REVERSED")
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCLabel { text: qsTr("8") }
+                    FactComboBox {
+                        fact:               controller.getParameterFact(-1, "SERVO8_FUNCTION")
+                        indexModel:         false
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO8_MIN")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO8_MAX")
+                        Layout.fillWidth:   true
+                    }
+                    FactTextField {
+                        fact:               controller.getParameterFact(-1, "SERVO8_TRIM")
+                        Layout.fillWidth:   true
+                    }
+                    FactCheckBox {
+                        fact:               controller.getParameterFact(-1, "SERVO8_REVERSED")
+                        Layout.fillWidth:   true
+                    }
                 }
             }
 
