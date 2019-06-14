@@ -39,6 +39,7 @@ QGCView {
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
     property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 28
     property real _valueFieldWidth:             ScreenTools.defaultFontPixelWidth * 10
+    property real _editFieldWidth:              ScreenTools.defaultFontPixelWidth * 30
     property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
     property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
@@ -833,14 +834,13 @@ QGCView {
 
                     //-----------------------------------------------------------------
                     //-- Video Share
-                    property var _videoShareSettings: QGroundControl.settingsManager.videoSettings.videoShareSettings
                     QGCLabel {
                         id:             videoShareLabel
                         text:           qsTr("Video Sharing")
                         font.family:    ScreenTools.demiboldFontFamily
                     }
                     Connections {
-                        target: _videoShareSettings
+                        target: QGroundControl.settingsManager.videoSettings.videoShareSettings
                         onWifiAPStateChanged: {
                             if(state == 0) {
                                 if(videoShareRec.enabled) {
@@ -877,24 +877,24 @@ QGCView {
                             anchors.centerIn: parent
 
                             function saveConfiguration() {
-                                var ret = _videoShareSettings.setVideoShareApConfig(networkName.text, pasword.text, securityMode.currentIndex, true);
+                                var ret = QGroundControl.settingsManager.videoSettings.videoShareSettings.setVideoShareApConfig(networkName.text, pasword.text, securityMode.currentIndex, true);
                                 if(!ret)
                                     resetConfiguration();
                             }
 
                             function resetConfiguration() {
-                                networkName.text = _videoShareSettings.videoShareSSID;
-                                securityMode.currentIndex = _videoShareSettings.videoShareAuthType;
-                                pasword.text = _videoShareSettings.videoSharePasswd;
+                                networkName.text = QGroundControl.settingsManager.videoSettings.videoShareSettings.videoShareSSID;
+                                securityMode.currentIndex = QGroundControl.settingsManager.videoSettings.videoShareSettings.videoShareAuthType;
+                                pasword.text = QGroundControl.settingsManager.videoSettings.videoShareSettings.videoSharePasswd;
                                 saveButton.enabled = false;
                                 cancelButton.enabled = false;
                                 passwdErrorRow.visible = false;
                             }
 
                             function checkInputStatue(index) {
-                                if(networkName.text != _videoShareSettings.videoShareSSID
-                                    || index != _videoShareSettings.videoShareAuthType
-                                        || pasword.text != _videoShareSettings.videoSharePasswd) {
+                                if(networkName.text != QGroundControl.settingsManager.videoSettings.videoShareSettings.videoShareSSID
+                                    || index != QGroundControl.settingsManager.videoSettings.videoShareSettings.videoShareAuthType
+                                        || pasword.text != QGroundControl.settingsManager.videoSettings.videoShareSettings.videoSharePasswd) {
                                     saveButton.enabled = true;
                                     cancelButton.enabled = true;
                                 } else {
@@ -932,7 +932,7 @@ QGCView {
                                 }
                                 QGCTextField {
                                     width:              _editFieldWidth
-                                    text:               _videoShareSettings.rtspURL
+                                    text:               QGroundControl.settingsManager.videoSettings.videoShareSettings.rtspURL
                                     enabled:            false
                                 }
                             }
@@ -947,7 +947,7 @@ QGCView {
                                 QGCTextField {
                                     id:                 networkName
                                     width:              _editFieldWidth
-                                    text:               _videoShareSettings.videoShareSSID
+                                    text:               QGroundControl.settingsManager.videoSettings.videoShareSettings.videoShareSSID
 
                                     onEditingFinished: {
                                         videoShareCol.checkInputStatue(securityMode.currentIndex);
@@ -966,7 +966,7 @@ QGCView {
                                     id:     securityMode
                                     width:  _editFieldWidth
                                     model:  ["None", "WPA2 PSK"]
-                                    currentIndex: _videoShareSettings.videoShareAuthType
+                                    currentIndex: QGroundControl.settingsManager.videoSettings.videoShareSettings.videoShareAuthType
 
                                     onActivated: {
                                         videoShareCol.checkInputStatue(index);
@@ -985,7 +985,7 @@ QGCView {
                                 QGCTextField {
                                     id:                 pasword
                                     width:              _editFieldWidth
-                                    text:               _videoShareSettings.videoSharePasswd
+                                    text:               QGroundControl.settingsManager.videoSettings.videoShareSettings.videoSharePasswd
                                     echoMode:           TextInput.Password
 
                                     onEditingFinished: {
