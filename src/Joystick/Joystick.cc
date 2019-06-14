@@ -569,7 +569,7 @@ void Joystick::run(void)
 
             _lastButtonBits = newButtonBits;
 
-            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle:wheel" << name() << roll << -pitch << yaw << throttle << wheel;
+            qCDebug(JoystickLog) << "name:roll:pitch:yaw:throttle:wheel" << name() << roll << -pitch << yaw << throttle << wheel;
 
             emit manualControl(roll, -pitch, yaw, throttle, wheel, buttonPressedBits, _joystickManager->joystickMode());
         }
