@@ -23,8 +23,8 @@ class PX4FirmwarePlugin : public FirmwarePlugin
     Q_OBJECT
 
 public:
-    PX4FirmwarePlugin(void);
-    ~PX4FirmwarePlugin();
+    PX4FirmwarePlugin   ();
+    ~PX4FirmwarePlugin  () override;
 
     // Overrides from FirmwarePlugin
 
@@ -69,6 +69,7 @@ public:
     QString             autoDisarmParameter             (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("COM_DISARM_LAND"); }
     uint32_t            highLatencyCustomModeTo32Bits   (uint16_t hlCustomMode) override;
     bool                supportsTerrainFrame            (void) const override { return false; }
+    bool                supportsNegativeThrust          (Vehicle *vehicle) override;
 
 protected:
     typedef struct {
@@ -122,7 +123,7 @@ class PX4FirmwarePluginInstanceData : public QObject
     Q_OBJECT
 
 public:
-    PX4FirmwarePluginInstanceData(QObject* parent = NULL);
+    PX4FirmwarePluginInstanceData(QObject* parent = nullptr);
 
     bool versionNotified;  ///< true: user notified over version issue
 };

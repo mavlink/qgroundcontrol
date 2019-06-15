@@ -854,7 +854,7 @@ public:
     bool sub(void) const;
 
     bool supportsThrottleModeCenterZero (void) const;
-    bool supportsNegativeThrust         (void) const;
+    bool supportsNegativeThrust         (void);
     bool supportsRadio                  (void) const;
     bool supportsJSButton               (void) const;
     bool supportsMotorInterference      (void) const;
