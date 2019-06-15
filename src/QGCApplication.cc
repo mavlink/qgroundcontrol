@@ -26,11 +26,6 @@
 #include <QStringListModel>
 #include <QRegularExpression>
 #include <QFontDatabase>
-#ifdef Q_OS_LINUX
-#ifndef __mobile__
-    #include <QMessageBox>
-#endif
-#endif
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -164,42 +159,33 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests         (unitTesting)
 {
     _app = this;
-    // Setup for network proxy support
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
         if (getuid() == 0) {
-            QMessageBox msgBox;
-            msgBox.setInformativeText(tr("You are running %1 as root. "
-                                         "You should not do this since it will cause other issues with %1. "
-                                         "%1 will now exit. "
-                                         "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
-                                         "sudo usermod -a -G dialout $USER\n"
-                                         "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName()));
-            msgBox.setStandardButtons(QMessageBox::Ok);
-            msgBox.setDefaultButton(QMessageBox::Ok);
-            msgBox.exec();
-            _exit(0);
+            _exitWithError(QString(
+                tr("You are running %1 as root. "
+                    "You should not do this since it will cause other issues with %1."
+                    "%1 will now exit.<br/><br/>"
+                    "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:<br/>"
+                    "<pre>sudo usermod -a -G dialout $USER<br/>"
+                    "sudo apt-get remove modemmanager</pre>").arg(qgcApp()->applicationName())));
+            return;
         }
-
         // Determine if we have the correct permissions to access USB serial devices
         QFile permFile("/etc/group");
         if(permFile.open(QIODevice::ReadOnly)) {
             while(!permFile.atEnd()) {
                 QString line = permFile.readLine();
                 if (line.contains("dialout") && !line.contains(getenv("USER"))) {
-                    QMessageBox msgBox;
-                    msgBox.setInformativeText("The current user does not have the correct permissions to access serial devices. "
-                                              "You should also remove modemmanager since it also interferes. "
-                                              "If you are using Ubuntu, execute the following commands to fix these issues:\n"
-                                              "sudo usermod -a -G dialout $USER\n"
-                                              "sudo apt-get remove modemmanager");
-                    msgBox.setStandardButtons(QMessageBox::Ok);
-                    msgBox.setDefaultButton(QMessageBox::Ok);
-                    msgBox.exec();
-                    break;
+                    permFile.close();
+                    _exitWithError(QString(
+                        tr("The current user does not have the correct permissions to access serial devices. "
+                           "You should also remove modemmanager since it also interferes.<br/><br/>"
+                           "If you are using Ubuntu, execute the following commands to fix these issues:<br/>"
+                           "<pre>sudo usermod -a -G dialout $USER<br/>"
+                           "sudo apt-get remove modemmanager</pre>")));
+                    return;
                 }
             }
             permFile.close();
@@ -207,6 +193,9 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     }
 #endif
 #endif
+
+    // Setup for network proxy support
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Parse command line options
 
@@ -346,6 +335,17 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 
    setLanguage();
     _checkForNewVersion();
+}
+
+void QGCApplication::_exitWithError(QString errorMessage)
+{
+    _error = true;
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(this);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->rootContext()->setContextProperty("errorMessage", errorMessage);
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/ExitWithErrorWindow.qml")));
+    // Exit main application when last window is closed
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 }
 
 void QGCApplication::setLanguage()
