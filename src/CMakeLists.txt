@@ -72,8 +72,8 @@ add_library(qgc
 	KMLFileHelper.cc
 	LogCompressor.cc
 	main.cc
-	QGC.cc
 	QGCApplication.cc
+	QGC.cc
 	QGCComboBox.cc
 	QGCDockWidget.cc
 	QGCFileDownload.cc
@@ -81,21 +81,15 @@ add_library(qgc
 	QGCLoggingCategory.cc
 	QGCMapPalette.cc
 	QGCPalette.cc
-	QGCQFileDialog.cc
 	QGCQGeoCoordinate.cc
-	QGCQmlWidgetHolder.cpp
-	QGCQuickWidget.cc
 	QGCTemporaryFile.cc
 	QGCToolbox.cc
 	RunGuard.cc
 	ShapeFileHelper.cc
 	SHPFileHelper.cc
 	TerrainTile.cc
-	UTM.cpp
 
-	# UI
-	QGCQmlWidgetHolder.ui
-        QGCQmlWidgetHolder.h
+	UTM.cpp
 )
 
 set_source_files_properties(QGCApplication.cc PROPERTIES COMPILE_DEFINITIONS GIT_VERSION="${git_tag}")
@@ -176,3 +170,4 @@ target_include_directories(qgc
         ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include # HACK: AUTOUIC paths not inheriting?
         ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include_Debug
         )
+
