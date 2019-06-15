@@ -16,7 +16,6 @@ add_library(comm
 	LogReplayLink.cc
 	MavlinkMessagesTimer.cc
 	MAVLinkProtocol.cc
-	QGCFlightGearLink.cc
 	QGCJSBSimLink.cc
 	QGCMAVLink.cc
 	QGCSerialPortInfo.cc
@@ -30,7 +29,6 @@ add_library(comm
 
 	# HEADERS
 	# shouldn't be listed here, but aren't named properly for AUTOMOC
-	QGCFlightGearLink.h
 	QGCHilLink.h
 	QGCJSBSimLink.h
 )
