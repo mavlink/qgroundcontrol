@@ -145,6 +145,8 @@ public:
 
     static QGCApplication*  _app;   ///< Our own singleton. Should be reference directly by qgcApp
 
+    bool    isErrorState()  { return _error; }
+
 public:
     // Although public, these methods are internal and should only be called by UnitTest code
 
@@ -166,6 +168,7 @@ private slots:
 private:
     QObject*    _rootQmlObject          ();
     void        _checkForNewVersion     ();
+    void        _exitWithError          (QString errorMessage);
 
 
     bool _runningUnitTests; ///< true: running unit tests, false: normal app
@@ -190,6 +193,7 @@ private:
     QTranslator         _QGCTranslator;
     QTranslator         _QGCTranslatorQt;
     QLocale             _locale;
+    bool                _error                  = false;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
