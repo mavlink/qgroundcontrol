@@ -2,12 +2,12 @@
 {
     "name":                 "surveyInAccuracyLimit",
     "shortDescription":     "Survey in accuracy (U-blox only)",
-    "longDescription":      "The maximum accuracy allowed prior to completing survey in.",
+    "longDescription":      "The minimum accuracy value that Survey-In must achieve before it can complete.",
     "type":                 "double",
     "defaultValue":         2.0,
-    "min":                  0.5,
+    "min":                  0.01,
     "units":                "m",
-    "decimalPlaces":        1,
+    "decimalPlaces":        2,
     "qgcRebootRequired":    true
 },
 {
