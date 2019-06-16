@@ -897,6 +897,27 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <max>200</max>
       <unit>s</unit>
     </parameter>
+    <parameter default="0" name="COM_OBL_ACT" type="INT32">
+      <short_desc>Set offboard loss failsafe mode</short_desc>
+      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
+      <values>
+        <value code="0">Land mode</value>
+        <value code="1">Hold mode</value>
+        <value code="2">Return mode</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="COM_OBL_RC_ACT" type="INT32">
+      <short_desc>Set offboard loss failsafe mode when RC is available</short_desc>
+      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
+      <values>
+        <value code="0">Position mode</value>
+        <value code="1">Altitude mode</value>
+        <value code="2">Manual</value>
+        <value code="3">Return mode</value>
+        <value code="4">Land mode</value>
+        <value code="5">Hold mode</value>
+      </values>
+    </parameter>
     <parameter default="0.0" name="COM_OF_LOSS_T" type="FLOAT">
       <short_desc>Time-out to wait when offboard connection is lost before triggering offboard lost action.
 See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
@@ -3928,27 +3949,6 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
     </parameter>
   </group>
   <group name="Mission">
-    <parameter default="0" name="COM_OBL_ACT" type="INT32">
-      <short_desc>Set offboard loss failsafe mode</short_desc>
-      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
-      <values>
-        <value code="0">Land mode</value>
-        <value code="1">Hold mode</value>
-        <value code="2">Return mode</value>
-      </values>
-    </parameter>
-    <parameter default="0" name="COM_OBL_RC_ACT" type="INT32">
-      <short_desc>Set offboard loss failsafe mode when RC is available</short_desc>
-      <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
-      <values>
-        <value code="0">Position mode</value>
-        <value code="1">Altitude mode</value>
-        <value code="2">Manual</value>
-        <value code="3">Return mode</value>
-        <value code="4">Land mode</value>
-        <value code="5">Hold mode</value>
-      </values>
-    </parameter>
     <parameter default="0" name="COM_OBS_AVOID" type="INT32">
       <short_desc>Flag to enable obstacle avoidance</short_desc>
       <boolean />
