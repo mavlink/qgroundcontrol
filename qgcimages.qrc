@@ -26,6 +26,7 @@
         <file alias="Airframe/Rover">src/AutoPilotPlugins/Common/Images/Rover.svg</file>
         <file alias="Airframe/VTOLDuoRotorTailSitter">src/AutoPilotPlugins/Common/Images/VTOLDuoRotorTailSitter.svg</file>
         <file alias="Airframe/VTOLPlane">src/AutoPilotPlugins/Common/Images/VTOLPlane.svg</file>
+        <file alias="Airframe/VTOLPlaneOcto">src/AutoPilotPlugins/Common/Images/VTOLPlaneOcto.svg</file>
         <file alias="Airframe/VTOLQuadRotorTailSitter">src/AutoPilotPlugins/Common/Images/VTOLQuadRotorTailSitter.svg</file>
         <file alias="Airframe/VTOLTiltRotor">src/AutoPilotPlugins/Common/Images/VTOLTiltRotor.svg</file>
         <file alias="Airframe/Y6A">src/AutoPilotPlugins/Common/Images/Y6A.svg</file>
