@@ -33,7 +33,9 @@ Note: This file only contains high level features or important fixes.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.3 - Not yet released
+### 3.5.3 - Stable
+* Change minimum RTK Survey-In limit to 0.01 meters
+* Change Windows driver detection logic
 * Fix crash when clicking on GeoFence polygon vertex
 * PX4: Fix missing ```MC_YAW_FF``` parameter in PID Tuning
 * ArduPilot: Fix parameter file save generating bad characters from git hash
