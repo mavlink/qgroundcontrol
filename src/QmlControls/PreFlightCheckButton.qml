@@ -43,9 +43,9 @@ QGCButton {
     readonly property int _stateFailed:     1   ///< Telemetry check is failing, user cannot click to make it pass
     readonly property int _statePassed:     2   ///< Check has passed
 
-    readonly property color _passedColor:   "#86cc6a"
-    readonly property color _pendingColor:  "#f7a81f"
-    readonly property color _failedColor:   "#c31818"
+    readonly property color _passedColor:   "#0CA678"
+    readonly property color _pendingColor:  "#F6921E"
+    readonly property color _failedColor:   "#E03131"
 
     property string _text: "<b>" + name +"</b>: " +
                            ((_telemetryState !== _statePassed) ?
