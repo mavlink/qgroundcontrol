@@ -54,6 +54,9 @@
                           signal is sent! -->
             <meta-data android:name="android.app.background_running" android:value="false"/>
             <!-- Background running -->
+            <!-- Workaround for style extraction: https://bugreports.qt.io/browse/QTBUG-71590 -->
+            <meta-data android:name="android.app.extract_android_style" android:value="none"/>
+            <!-- Workaround end -->
         </activity>
     </application>
     <uses-sdk android:minSdkVersion="16" android:targetSdkVersion="26"/>
