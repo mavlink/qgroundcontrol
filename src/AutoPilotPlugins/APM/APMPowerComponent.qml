@@ -337,6 +337,15 @@ SetupPage {
                 }
 
                 ListElement {
+                    text:       qsTr("Blue Robotics Power Sense Module R2")
+                    voltPin:    2
+                    currPin:    3
+                    voltMult:   11.000
+                    ampPerVolt: 37.8788
+                    ampOffset:  0.330
+                }
+
+                ListElement {
                     text:       qsTr("Other")
                 }
             }
