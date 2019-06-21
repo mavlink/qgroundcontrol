@@ -171,9 +171,7 @@ private:
     void        _exitWithError          (QString errorMessage);
 
 
-    bool _runningUnitTests; ///< true: running unit tests, false: normal app
-    static const char*  _darkStyleFile;
-    static const char*  _lightStyleFile;
+    bool                _runningUnitTests;                                  ///< true: running unit tests, false: normal app
     static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
     QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
