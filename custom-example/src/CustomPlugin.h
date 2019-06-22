@@ -43,6 +43,7 @@ public:
     CustomOptions(CustomPlugin*, QObject* parent = nullptr);
     bool        wifiReliableForCalibration      () const final { return true; }
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomFlyView.qml"); }
+    QUrl        preFlightChecklistUrl           () const final { return QUrl::fromUserInput("qrc:/custom/PreFlightCheckList.qml"); }
     //-- We have our own toolbar
     QUrl        mainToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomMainToolBar.qml"); }
     QUrl        planToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomMainToolBar.qml"); }
