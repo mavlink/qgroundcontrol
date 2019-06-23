@@ -28,6 +28,7 @@ Item {
     property string sectionTitle:           qsTr("Fly")
     property bool   inPlanView:             planViewLoader.visible
     property bool   inFlyView:              rootBackground.visible
+    property color  menuSeparatorColor:     qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
     //-------------------------------------------------------------------------
     //-- Setup can be invoked from c++ side
     Connections {
@@ -103,7 +104,7 @@ Item {
         Rectangle {
             width:                          1
             height:                         parent.height
-            color:                          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
+            color:                          menuSeparatorColor
             visible:                        activeVehicle && !inPlanView
         }
         //-------------------------------------------------------------------------
@@ -149,7 +150,7 @@ Item {
         anchors.right:                      parent.right
         anchors.bottom:                     parent.bottom
         height:                             1
-        color:                              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
+        color:                              menuSeparatorColor
     }
     //-------------------------------------------------------------------------
     //-- Navigation Drawer (Left to Right, on command or using touch gestures)
@@ -160,7 +161,7 @@ Item {
         height:                             mainWindow.height - header.height
         closePolicy:                        Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
-        color:                              qgcPal.window
+            color:                          qgcPal.window
         }
         ButtonGroup {
             id:                             buttonGroup
@@ -176,7 +177,7 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
             CustomToolBarButton {
                 id:                         flyButton
@@ -194,7 +195,7 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
             CustomToolBarButton {
                 id:                         planButton
@@ -212,7 +213,7 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
             CustomToolBarButton {
                 text:                       qsTr("Analyze")
@@ -229,7 +230,7 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
             CustomToolBarButton {
                 id:                         vehicleSetup
@@ -247,7 +248,7 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
         }
         ColumnLayout {
@@ -261,7 +262,7 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
             CustomToolBarButton {
                 id:                         settingsButton
