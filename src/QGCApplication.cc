@@ -126,9 +126,6 @@ QGCApplication* QGCApplication::_app = nullptr;
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
 
-const char* QGCApplication::_darkStyleFile          = ":/res/styles/style-dark.css";
-const char* QGCApplication::_lightStyleFile         = ":/res/styles/style-light.css";
-
 // Mavlink status structures for entire app
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 

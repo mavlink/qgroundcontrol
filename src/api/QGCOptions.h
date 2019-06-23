@@ -30,6 +30,7 @@ public:
     Q_PROPERTY(bool                     enablePlanViewSelector          READ enablePlanViewSelector         CONSTANT)
     Q_PROPERTY(CustomInstrumentWidget*  instrumentWidget                READ instrumentWidget               CONSTANT)
     Q_PROPERTY(QUrl                     flyViewOverlay                  READ flyViewOverlay                 CONSTANT)
+    Q_PROPERTY(QUrl                     preFlightChecklistUrl           READ preFlightChecklistUrl          CONSTANT)
 
     Q_PROPERTY(QUrl                     mainToolbarUrl                  READ mainToolbarUrl                 CONSTANT)
     Q_PROPERTY(QUrl                     planToolbarUrl                  READ planToolbarUrl                 CONSTANT)
@@ -83,10 +84,14 @@ public:
 
     /// Should the mission status indicator (Plan View) be shown?
     /// @return Yes or no
-    virtual bool        showMissionStatus           () { return true; }
+    virtual bool    showMissionStatus               () { return true; }
 
     /// Allows access to the full fly view window
     virtual QUrl    flyViewOverlay                  () const { return QUrl(); }
+
+    /// Provides an optional preflight checklist
+    virtual QUrl    preFlightChecklistUrl           () const { return QUrl(); }
+
     /// Allows replacing the toolbar
     virtual QUrl    mainToolbarUrl                  () const;
     virtual QUrl    planToolbarUrl                  () const;
