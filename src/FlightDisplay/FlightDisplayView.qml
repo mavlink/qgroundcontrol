@@ -48,7 +48,7 @@ Item {
     property var    _geoFenceController:            _planController.geoFenceController
     property var    _rallyPointController:          _planController.rallyPointController
     property bool   _isPipVisible:                  QGroundControl.videoManager.hasVideo ? QGroundControl.loadBoolGlobalSetting(_PIPVisibleKey, true) : false
-    property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue
+    property bool   _useChecklist:                  QGroundControl.settingsManager.appSettings.useChecklist.rawValue && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
     property real   _savedZoomLevel:                0
     property real   _margins:                       ScreenTools.defaultFontPixelWidth / 2
     property real   _pipSize:                       mainWindow.width * 0.2
@@ -115,10 +115,6 @@ Item {
         return true;
     }
 
-    BuiltInPreFlightCheckModel {
-        id: preFlightCheckModel
-    }
-
     Connections {
         target:                     _missionController
         onResumeMissionUploadFail:  guidedActionsController.confirmAction(guidedActionsController.actionResumeMissionUploadFail)
@@ -142,6 +138,9 @@ Item {
     Component.onCompleted: {
         if(QGroundControl.corePlugin.options.flyViewOverlay.toString().length) {
             flyViewOverlay.source = QGroundControl.corePlugin.options.flyViewOverlay
+        }
+        if(QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length) {
+            checkList.source = QGroundControl.corePlugin.options.preFlightChecklistUrl
         }
     }
 
@@ -806,13 +805,13 @@ Item {
         focus:          true
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
-            anchors.fill:   parent
-            color:          Qt.rgba(0,0,0,0)
-            clip:           true
+            anchors.fill:  parent
+            color:      Qt.rgba(0,0,0,0)
+            clip:       true
         }
-        PreFlightCheckList {
-            id:     checkList
-            model:  preFlightCheckModel
+        Loader {
+            id:         checkList
+            anchors.centerIn: parent
         }
     }
 

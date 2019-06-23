@@ -1,6 +1,5 @@
 Module QGroundControl.FlightDisplay
 
-BuiltInPreFlightCheckModel  1.0 BuiltInPreFlightCheckModel.qml
 FlightDisplayView           1.0 FlightDisplayView.qml
 FlightDisplayViewMap        1.0 FlightDisplayViewMap.qml
 FlightDisplayViewVideo      1.0 FlightDisplayViewVideo.qml
