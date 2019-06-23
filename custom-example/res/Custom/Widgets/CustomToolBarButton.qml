@@ -40,7 +40,7 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  (mouseArea.pressed || button.checked) ? qgcPal.colorOrange : qgcPal.buttonText
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -48,7 +48,7 @@ Button {
             id:                     _label
             visible:                text !== ""
             text:                   button.text
-            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  (mouseArea.pressed || button.checked) ? qgcPal.colorOrange : qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }
     }
