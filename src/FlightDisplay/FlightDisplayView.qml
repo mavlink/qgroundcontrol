@@ -799,8 +799,8 @@ Item {
         id:             checklistDropPanel
         x:              Math.round((mainWindow.width  - width)  * 0.5)
         y:              Math.round((mainWindow.height - height) * 0.5)
-        height:         checkList.width
-        width:          checkList.height
+        height:         checkList.height
+        width:          checkList.width
         modal:          true
         focus:          true
         closePolicy:    Popup.CloseOnEscape | Popup.CloseOnPressOutside
