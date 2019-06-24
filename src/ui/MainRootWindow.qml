@@ -181,43 +181,15 @@ ApplicationWindow {
         }
     }
 
-    //-------------------------------------------------------------------------
-    //-- Weird hack that has to be fixed elsewhere and have this removed
-
     property bool _forceClose: false
-
-    function reallyClose() {
-        _forceClose = true
-        mainWindow.close()
-    }
 
     function finishCloseProcess() {
         if(ScreenTools.isWindows) {
             hide()
         }
         QGroundControl.linkManager.shutdown()
-        // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
-        // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
-        // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
-        if(ScreenTools.isWindows) {
-            delayedWindowCloseTimer.start()
-        } else {
-            reallyClose()
-        }
-    }
-
-    Timer {
-        id:         delayedWindowCloseTimer
-        interval:   1500
-        running:    false
-        repeat:     false
-        onTriggered: {
-            reallyClose()
-            if(ScreenTools.isWindows) {
-                // Closing the app while main is hidden doesn't work
-                Qt.callLater(Qt.quit)
-            }
-        }
+        _forceClose = true
+        mainWindow.close()
     }
 
     MessageDialog {
@@ -241,6 +213,7 @@ ApplicationWindow {
     //-- Check for unsaved missions
 
     onClosing: {
+        // Check first for unsaved missions and active connections
         if (!_forceClose) {
             unsavedMissionCloseDialog.check()
             close.accepted = false
