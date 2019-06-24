@@ -162,7 +162,7 @@ public:
 
     /// Returns true if the vehicle and firmware supports the use of negative thrust
     /// Typically supported rover.
-    virtual bool supportsNegativeThrust(void);
+    virtual bool supportsNegativeThrust(Vehicle *);
 
     /// Returns true if the firmware supports the use of the RC radio and requires the RC radio
     /// setup page. Returns true by default.

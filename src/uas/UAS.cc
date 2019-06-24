@@ -26,7 +26,6 @@
 #include "UAS.h"
 #include "LinkInterface.h"
 #include "QGC.h"
-#include "AudioOutput.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"

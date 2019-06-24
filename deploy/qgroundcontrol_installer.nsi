@@ -62,6 +62,7 @@ Section
   ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString"
   StrCmp $R0 "" doinstall
 
+  DetailPrint "Uninstalling previous version..."  
   ExecWait "$R0 /S _?=$INSTDIR -LEAVE_DATA=1"
   IntCmp $0 0 doinstall
 
@@ -78,28 +79,25 @@ doinstall:
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
   SetRegView 64
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpCount" 5 
-  WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 2 
+  WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 1
   WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
 
   ; Only attempt to install the PX4 driver if the version isn't present
-  !define ROOTKEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\434608CF2B6E31F0DDBA5C511053F957B55F098E"
+  !define DRIVERKEY "SOFTWARE\MichaelOborne\driver"
 
   SetRegView 64
-  ReadRegStr $0 HKLM "${ROOTKEY}" "Publisher"
-  StrCmp     $0 "3D Robotics" found_provider notfound
+  ReadRegDWORD $0 HKCU "${DRIVERKEY}" "installed"
+  IntCmp $0 1 found_provider notfound notfound
 
 found_provider:
-  ReadRegStr $0 HKLM "${ROOTKEY}" "DisplayVersion"
-  DetailPrint "Checking USB driver version... $0"
-  StrCmp     $0 "04/11/2013 2.0.0.4" skip_driver notfound
+  DetailPrint "USB Drivers already installed"
+  goto done
 
 notfound:
   DetailPrint "USB Driver not found... installing"
   ExecWait '"msiexec" /i "px4driver.msi"'
   goto done
 
-skip_driver:
-  DetailPrint "USB Driver found... skipping install"
 done:
   SetRegView lastused
 SectionEnd 

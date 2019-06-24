@@ -279,12 +279,14 @@ VideoReceiver::start()
         }
 
         if((queue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
+            // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
+            //       We should compare gstreamer scripts to QGroundControl to determine the need
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
             break;
         }
 
         if (!_hwDecoderName || (decoder = gst_element_factory_make(_hwDecoderName, "decoder")) == nullptr) {
-            qCritical() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
+            qWarning() << "VideoReceiver::start() hardware decoding not available " << ((_hwDecoderName) ? _hwDecoderName : "");
             if ((decoder = gst_element_factory_make(_swDecoderName, "decoder")) == nullptr) {
                 qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('" << _swDecoderName << "')";
                 break;
@@ -476,6 +478,8 @@ VideoReceiver::_shutdownPipeline() {
 void
 VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
+    // If there was an error we switch to software decoding only
+    _tryWithHardwareDecoding = false;
     stop();
     _restart_timer.start(_restart_time_ms);
 }
@@ -586,6 +590,14 @@ VideoReceiver::_cleanupOldVideos()
 void
 VideoReceiver::setVideoDecoder(VideoEncoding encoding)
 {
+    /*
+    #if defined(Q_OS_MAC)
+        _hwDecoderName = "vtdec";
+    #else
+        _hwDecoderName = "vaapidecode";
+    #endif
+    */
+
     if (encoding == H265_HW || encoding == H265_SW) {
         _depayName = "rtph265depay";
         _parserName = "h265parse";
@@ -600,6 +612,10 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _hwDecoderName = "amcviddec-omxgoogleh264decoder";
 #endif
         _swDecoderName = "avdec_h264";
+    }
+
+    if (!_tryWithHardwareDecoding) {
+        _hwDecoderName = nullptr;
     }
 }
 //-----------------------------------------------------------------------------

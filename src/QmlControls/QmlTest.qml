@@ -456,9 +456,9 @@ Rectangle {
                             text: qsTr("Button")
                         }
                         QGCButton {
-                            width: ctlPrevColumn._colWidth
+                            width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height
-                            text: qsTr("Button")
+                            text:   qsTr("Button")
                             primary: true
                             enabled: false
                         }
@@ -469,16 +469,16 @@ Rectangle {
                             property string text: "QGCHoverButton"
                         }
                         QGCHoverButton {
-                            width: ctlPrevColumn._colWidth
+                            width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
-                            text: qsTr("Hover Button")
+                            text:   qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                         }
                         QGCHoverButton {
-                            width: ctlPrevColumn._colWidth
+                            width:  ctlPrevColumn._colWidth
                             height: ctlPrevColumn._height * 2
-                            text: qsTr("Hover Button")
+                            text:   qsTr("Hover Button")
                             radius: ScreenTools.defaultFontPointSize
                             imageSource: "/qmlimages/Gears.svg"
                             enabled: false
@@ -626,10 +626,11 @@ Rectangle {
                         radius: 3
                         color:  palette.alertBackground
                         border.color: palette.alertBorder
+                        border.width: 1
                         anchors.horizontalCenter: parent.horizontalCenter
                         Label {
                             text: "Alert Message"
-                            palette.text: palette.alertText
+                            color: palette.alertText
                             anchors.centerIn: parent
                         }
                     }

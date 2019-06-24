@@ -232,7 +232,7 @@ QGCViewDialog {
 
             QGCLabel {
                 visible:    fact.qgcRebootRequired
-                text:       "Appliction restart required after change"
+                text:       "Application restart required after change"
             }
 
             QGCLabel {

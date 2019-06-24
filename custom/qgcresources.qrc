@@ -45,27 +45,6 @@
 		<file alias="3drradio.png">../resources/firmware/3drradio.png</file>
 		<file alias="px4.png">../resources/firmware/px4.png</file>
 	</qresource>
-	<qresource prefix="/res/mavs">
-		<file alias="Airship">../resources/mavs/airship.svg</file>
-		<file alias="AntennaTracker">../resources/mavs/antenna-tracker.svg</file>
-		<file alias="Coaxial">../resources/mavs/coaxial.svg</file>
-		<file alias="FixedWing">../resources/mavs/fixed-wing.svg</file>
-		<file alias="FlappingWing">../resources/mavs/flapping-wing.svg</file>
-		<file alias="FreeBallon">../resources/mavs/free-balloon.svg</file>
-		<file alias="Generic">../resources/mavs/generic.svg</file>
-		<file alias="GroundRover">../resources/mavs/ground-rover.svg</file>
-		<file alias="Groundstation">../resources/mavs/groundstation.svg</file>
-		<file alias="Helicopter">../resources/mavs/helicopter.svg</file>
-		<file alias="HexaRotor">../resources/mavs/hexarotor.svg</file>
-		<file alias="Kite">../resources/mavs/kite.svg</file>
-		<file alias="OctoRotor">../resources/mavs/octorotor.svg</file>
-		<file alias="QuadRotor">../resources/mavs/quadrotor.svg</file>
-		<file alias="Rocket">../resources/mavs/rocket.svg</file>
-		<file alias="Submarine">../resources/mavs/submarine.svg</file>
-		<file alias="SurfaceBoat">../resources/mavs/surface-boat.svg</file>
-		<file alias="TriCopter">../resources/mavs/tricopter.svg</file>
-		<file alias="Unknown">../resources/mavs/unknown.svg</file>
-	</qresource>
 	<qresource prefix="/res/calibration">
 		<file alias="accel_back.png">../resources/calibration/accel_back.png</file>
 		<file alias="accel_down.png">../resources/calibration/accel_down.png</file>
@@ -102,10 +81,6 @@
 	</qresource>
 	<qresource prefix="/db/mapping/joystick">
 		<file alias="gamecontrollerdb.txt">../resources/SDL_GameControllerDB/gamecontrollerdb.txt</file>
-	</qresource>
-	<qresource prefix="/res/styles">
-		<file alias="style-dark.css">../resources/styles/style-dark.css</file>
-		<file alias="style-light.css">../resources/styles/style-light.css</file>
 	</qresource>
 	<qresource prefix="/res/audio">
 		<file alias="Alert">../resources/audio/alert.wav</file>
