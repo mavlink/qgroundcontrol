@@ -279,6 +279,8 @@ VideoReceiver::start()
         }
 
         if((queue = gst_element_factory_make("queue", nullptr)) == nullptr)  {
+            // TODO: We may want to add queue2 max-size-buffers=1 to get lower latency
+            //       We should compare gstreamer scripts to QGroundControl to determine the need
             qCritical() << "VideoReceiver::start() failed. Error with gst_element_factory_make('queue')";
             break;
         }

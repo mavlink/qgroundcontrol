@@ -159,7 +159,6 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
-        // TODO: Proper fix by having a separate failed state UI
         if (getuid() == 0) {
             _exitWithError(QString(
                 tr("You are running %1 as root. "
@@ -185,8 +184,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
                            "sudo apt-get remove modemmanager</pre>")));
                     return;
                 }
-                permFile.close();
             }
+            permFile.close();
         }
     }
 #endif
@@ -554,10 +553,6 @@ bool QGCApplication::_initForNormalAppBoot()
 
     // Probe for joysticks
     toolbox()->joystickManager()->init();
-
-    if(_preInitMessage.second.length() > 0 ) {
-        showMessage(QString(_preInitMessage.first ? tr("Critical: ") : tr("")) + _preInitMessage.second);
-    }
 
     if (_settingsUpgraded) {
         showMessage(QString(tr("The format for %1 saved settings has been modified. "

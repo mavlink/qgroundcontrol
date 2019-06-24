@@ -38,6 +38,7 @@ public:
     AuterionOptions(AuterionPlugin*, QObject* parent = nullptr);
     bool        wifiReliableForCalibration      () const final { return true; }
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionFlyView.qml"); }
+    QUrl        preFlightChecklistUrl           () const final { return QUrl::fromUserInput("qrc:/auterion/PreFlightCheckList.qml"); }
     QUrl        mainToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionMainToolBar.qml"); }
     QUrl        planToolbarUrl                  () const final { return QUrl::fromUserInput("qrc:/auterion/AuterionMainToolBar.qml"); }
     CustomInstrumentWidget* instrumentWidget    () final { return nullptr; }
