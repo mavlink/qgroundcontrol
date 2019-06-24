@@ -8,11 +8,11 @@
  ****************************************************************************/
 
 
-import QtQuick          2.4
-import QtQuick.Controls 1.2
-import QtLocation       5.3
-import QtPositioning    5.3
-import QtQuick.Dialogs  1.2
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtLocation                   5.3
+import QtPositioning                5.3
+import QtQuick.Dialogs              1.2
 
 import QGroundControl               1.0
 import QGroundControl.Airspace      1.0
@@ -174,10 +174,6 @@ FlightMap {
                 firstVehiclePositionReceived = true
             }
         }
-    }
-
-    ExclusiveGroup {
-        id: _mapTypeButtonsExclusiveGroup
     }
 
     MapFitFunctions {
