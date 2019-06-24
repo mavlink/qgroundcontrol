@@ -26,11 +26,6 @@
 #include <QStringListModel>
 #include <QRegularExpression>
 #include <QFontDatabase>
-#ifdef Q_OS_LINUX
-#ifndef __mobile__
-    #include <QMessageBox>
-#endif
-#endif
 
 #ifdef QGC_ENABLE_BLUETOOTH
 #include <QBluetoothLocalDevice>
@@ -42,7 +37,6 @@
 
 #include "QGC.h"
 #include "QGCApplication.h"
-#include "AudioOutput.h"
 #include "CmdLineOptParser.h"
 #include "UDPLink.h"
 #include "LinkManager.h"
@@ -132,9 +126,6 @@ QGCApplication* QGCApplication::_app = nullptr;
 const char* QGCApplication::_deleteAllSettingsKey           = "DeleteAllSettingsNextBoot";
 const char* QGCApplication::_settingsVersionKey             = "SettingsVersion";
 
-const char* QGCApplication::_darkStyleFile          = ":/res/styles/style-dark.css";
-const char* QGCApplication::_lightStyleFile         = ":/res/styles/style-light.css";
-
 // Mavlink status structures for entire app
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
 
@@ -165,44 +156,43 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests         (unitTesting)
 {
     _app = this;
-    // Setup for network proxy support
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
-
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
-        // TODO: Proper fix by having a separate failed state UI
         if (getuid() == 0) {
-            _preInitMessage.first = true;
-            _preInitMessage.second = tr("You are running %1 as root. "
-                                        "You should not do this since it will cause other issues with %1. "
-                                        "%1 will now exit. "
-                                        "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:\n"
-                                        "sudo usermod -a -G dialout $USER\n"
-                                        "sudo apt-get remove modemmanager").arg(qgcApp()->applicationName());
+            _exitWithError(QString(
+                tr("You are running %1 as root. "
+                    "You should not do this since it will cause other issues with %1."
+                    "%1 will now exit.<br/><br/>"
+                    "If you are having serial port issues on Ubuntu, execute the following commands to fix most issues:<br/>"
+                    "<pre>sudo usermod -a -G dialout $USER<br/>"
+                    "sudo apt-get remove modemmanager</pre>").arg(qgcApp()->applicationName())));
+            return;
         }
-        else {
-            // Determine if we have the correct permissions to access USB serial devices
-            QFile permFile("/etc/group");
-            if(permFile.open(QIODevice::ReadOnly)) {
-                while(!permFile.atEnd()) {
-                    QString line = permFile.readLine();
-                    if (line.contains("dialout") && !line.contains(getenv("USER"))) {
-                        _preInitMessage.first = false;
-                        _preInitMessage.second = tr("The current user does not have the correct permissions to access serial devices. "
-                                                    "You should also remove modemmanager since it also interferes. "
-                                                    "If you are using Ubuntu, execute the following commands to fix these issues:\n"
-                                                    "sudo usermod -a -G dialout $USER\n"
-                                                    "sudo apt-get remove modemmanager");
-                        break;
-                    }
+        // Determine if we have the correct permissions to access USB serial devices
+        QFile permFile("/etc/group");
+        if(permFile.open(QIODevice::ReadOnly)) {
+            while(!permFile.atEnd()) {
+                QString line = permFile.readLine();
+                if (line.contains("dialout") && !line.contains(getenv("USER"))) {
+                    permFile.close();
+                    _exitWithError(QString(
+                        tr("The current user does not have the correct permissions to access serial devices. "
+                           "You should also remove modemmanager since it also interferes.<br/><br/>"
+                           "If you are using Ubuntu, execute the following commands to fix these issues:<br/>"
+                           "<pre>sudo usermod -a -G dialout $USER<br/>"
+                           "sudo apt-get remove modemmanager</pre>")));
+                    return;
                 }
-                permFile.close();
             }
+            permFile.close();
         }
     }
 #endif
 #endif
+
+    // Setup for network proxy support
+    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Parse command line options
 
@@ -344,76 +334,87 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     _checkForNewVersion();
 }
 
+void QGCApplication::_exitWithError(QString errorMessage)
+{
+    _error = true;
+    QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(this);
+    pEngine->addImportPath("qrc:/qml");
+    pEngine->rootContext()->setContextProperty("errorMessage", errorMessage);
+    pEngine->load(QUrl(QStringLiteral("qrc:/qml/ExitWithErrorWindow.qml")));
+    // Exit main application when last window is closed
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
+}
+
 void QGCApplication::setLanguage()
 {
-    QLocale locale = QLocale::system();
-    qDebug() << "System reported locale:" << locale << "; Name" << locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
+    _locale = QLocale::system();
+    qDebug() << "System reported locale:" << _locale << _locale.name();
     int langID = toolbox()->settingsManager()->appSettings()->language()->rawValue().toInt();
     //-- See App.SettinsGroup.json for index
     if(langID) {
         switch(langID) {
         case 1:
-            locale = QLocale(QLocale::Bulgarian);
+            _locale = QLocale(QLocale::Bulgarian);
             break;
         case 2:
-            locale = QLocale(QLocale::Chinese);
+            _locale = QLocale(QLocale::Chinese);
             break;
         case 3:
-            locale = QLocale(QLocale::Dutch);
+            _locale = QLocale(QLocale::Dutch);
             break;
         case 4:
-            locale = QLocale(QLocale::English);
+            _locale = QLocale(QLocale::English);
             break;
         case 5:
-            locale = QLocale(QLocale::Finnish);
+            _locale = QLocale(QLocale::Finnish);
             break;
         case 6:
-            locale = QLocale(QLocale::French);
+            _locale = QLocale(QLocale::French);
             break;
         case 7:
-            locale = QLocale(QLocale::German);
+            _locale = QLocale(QLocale::German);
             break;
         case 8:
-            locale = QLocale(QLocale::Greek);
+            _locale = QLocale(QLocale::Greek);
             break;
         case 9:
-            locale = QLocale(QLocale::Hebrew);
+            _locale = QLocale(QLocale::Hebrew);
             break;
         case 10:
-            locale = QLocale(QLocale::Italian);
+            _locale = QLocale(QLocale::Italian);
             break;
         case 11:
-            locale = QLocale(QLocale::Japanese);
+            _locale = QLocale(QLocale::Japanese);
             break;
         case 12:
-            locale = QLocale(QLocale::Korean);
+            _locale = QLocale(QLocale::Korean);
             break;
         case 13:
-            locale = QLocale(QLocale::Norwegian);
+            _locale = QLocale(QLocale::Norwegian);
             break;
         case 14:
-            locale = QLocale(QLocale::Polish);
+            _locale = QLocale(QLocale::Polish);
             break;
         case 15:
-            locale = QLocale(QLocale::Portuguese);
+            _locale = QLocale(QLocale::Portuguese);
             break;
         case 16:
-            locale = QLocale(QLocale::Russian);
+            _locale = QLocale(QLocale::Russian);
             break;
         case 17:
-            locale = QLocale(QLocale::Spanish);
+            _locale = QLocale(QLocale::Spanish);
             break;
         case 18:
-            locale = QLocale(QLocale::Swedish);
+            _locale = QLocale(QLocale::Swedish);
             break;
         case 19:
-            locale = QLocale(QLocale::Turkish);
+            _locale = QLocale(QLocale::Turkish);
             break;
         }
     }
     //-- We have specific fonts for Korean
-    if(locale == QLocale::Korean) {
-        qDebug() << "Loading Korean fonts" << locale.name();
+    if(_locale == QLocale::Korean) {
+        qDebug() << "Loading Korean fonts" << _locale.name();
         if(QFontDatabase::addApplicationFont(":/fonts/NanumGothic-Regular") < 0) {
             qWarning() << "Could not load /fonts/NanumGothic-Regular font";
         }
@@ -421,22 +422,23 @@ void QGCApplication::setLanguage()
             qWarning() << "Could not load /fonts/NanumGothic-Bold font";
         }
     }
-    qDebug() << "Loading localization for" << locale.name();
+    qDebug() << "Loading localization for" << _locale.name();
     _app->removeTranslator(&_QGCTranslator);
     _app->removeTranslator(&_QGCTranslatorQt);
-    if(_QGCTranslatorQt.load("qt_" + locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
+    if(_QGCTranslatorQt.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
         _app->installTranslator(&_QGCTranslatorQt);
     } else {
-        qDebug() << "Error loading Qt localization for" << locale.name();
+        qDebug() << "Error loading Qt localization for" << _locale.name();
     }
-    if(_QGCTranslator.load(locale, QLatin1String("qgc_"), "", ":/i18n")) {
-        QLocale::setDefault(locale);
+    if(_QGCTranslator.load(_locale, QLatin1String("qgc_"), "", ":/i18n")) {
+        QLocale::setDefault(_locale);
         _app->installTranslator(&_QGCTranslator);
     } else {
-        qDebug() << "Error loading application localization for" << locale.name();
+        qDebug() << "Error loading application localization for" << _locale.name();
     }
     if(_qmlAppEngine)
         _qmlAppEngine->retranslate();
+    emit languageChanged(_locale);
 }
 
 void QGCApplication::_shutdown()
@@ -551,10 +553,6 @@ bool QGCApplication::_initForNormalAppBoot()
 
     // Probe for joysticks
     toolbox()->joystickManager()->init();
-
-    if(_preInitMessage.second.length() > 0 ) {
-        showMessage(QString(_preInitMessage.first ? tr("Critical: ") : tr("")) + _preInitMessage.second);
-    }
 
     if (_settingsUpgraded) {
         showMessage(QString(tr("The format for %1 saved settings has been modified. "

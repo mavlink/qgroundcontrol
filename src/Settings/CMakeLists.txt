@@ -4,6 +4,7 @@ add_library(Settings
 	AppSettings.cc
 	AutoConnectSettings.cc
 	BrandImageSettings.cc
+	FirmwareUpgradeSettings.cc
 	FlightMapSettings.cc
 	FlyViewSettings.cc
 	OfflineMapsSettings.cc
