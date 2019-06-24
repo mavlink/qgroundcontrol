@@ -4367,7 +4367,7 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>4</decimal>
     </parameter>
-    <parameter default="0.05" name="MC_PITCHRATE_I" type="FLOAT">
+    <parameter default="0.2" name="MC_PITCHRATE_I" type="FLOAT">
       <short_desc>Pitch rate I gain</short_desc>
       <long_desc>Pitch rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
@@ -4429,7 +4429,7 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>4</decimal>
     </parameter>
-    <parameter default="0.05" name="MC_ROLLRATE_I" type="FLOAT">
+    <parameter default="0.2" name="MC_ROLLRATE_I" type="FLOAT">
       <short_desc>Roll rate I gain</short_desc>
       <long_desc>Roll rate integral gain. Can be set to compensate static thrust difference or gravity center offset.</long_desc>
       <min>0.0</min>
