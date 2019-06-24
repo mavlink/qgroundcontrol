@@ -129,21 +129,23 @@ protected:
     void _initialRequestTimeout(void);
 
 private:
-    static QVariant _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
-    int _actualComponentId(int componentId);
-    void _setupDefaultComponentCategoryMap(void);
-    void _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
-    void _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
-    void _writeLocalParamCache(int vehicleId, int componentId);
-    void _tryCacheHashLoad(int vehicleId, int componentId, QVariant hash_value);
-    void _loadMetaData(void);
-    void _clearMetaData(void);
-    void _addMetaDataToDefaultComponent(void);
+    static QVariant         _stringToTypedVariant(const QString& string, FactMetaData::ValueType_t type, bool failOk = false);
+    static FirmwarePlugin*  _anyVehicleTypeFirmwarePlugin(MAV_AUTOPILOT firmwareType);
+
+    int     _actualComponentId(int componentId);
+    void    _setupDefaultComponentCategoryMap(void);
+    void    _readParameterRaw(int componentId, const QString& paramName, int paramIndex);
+    void    _writeParameterRaw(int componentId, const QString& paramName, const QVariant& value);
+    void    _writeLocalParamCache(int vehicleId, int componentId);
+    void    _tryCacheHashLoad(int vehicleId, int componentId, QVariant hash_value);
+    void    _loadMetaData(void);
+    void    _clearMetaData(void);
+    void    _addMetaDataToDefaultComponent(void);
     QString _remapParamNameToVersion(const QString& paramName);
-    void _loadOfflineEditingParams(void);
+    void    _loadOfflineEditingParams(void);
     QString _logVehiclePrefix(int componentId);
-    void _setLoadProgress(double loadProgress);
-    bool _fillIndexBatchQueue(bool waitingParamTimeout);
+    void    _setLoadProgress(double loadProgress);
+    bool    _fillIndexBatchQueue(bool waitingParamTimeout);
 
     MAV_PARAM_TYPE _factTypeToMavType(FactMetaData::ValueType_t factType);
     FactMetaData::ValueType_t _mavTypeToFactType(MAV_PARAM_TYPE mavType);

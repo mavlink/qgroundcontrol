@@ -6,7 +6,8 @@ import QGroundControl.Palette 1.0
 import QGroundControl.ScreenTools 1.0
 
 Button {
-    id: combo
+    id:                 combo
+    implicitHeight:     ScreenTools.implicitComboBoxHeight
 
     property real   pointSize:      ScreenTools.defaultFontPointSize    ///< Point size for button text
     property bool   centeredLabel:  false

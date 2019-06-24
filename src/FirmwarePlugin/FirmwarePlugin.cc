@@ -127,7 +127,7 @@ bool FirmwarePlugin::supportsThrottleModeCenterZero(void)
     return true;
 }
 
-bool FirmwarePlugin::supportsNegativeThrust(void)
+bool FirmwarePlugin::supportsNegativeThrust(Vehicle* /*vehicle*/)
 {
     // By default, this is not supported
     return false;

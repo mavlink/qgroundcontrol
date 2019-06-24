@@ -9,7 +9,6 @@ add_library(QmlControls
 	QGCImageProvider.cc
 	QGroundControlQmlGlobal.cc
 	QmlObjectListModel.cc
-	QmlTestWidget.cc
 	RCChannelMonitorController.cc
 	ScreenToolsController.cc
 )

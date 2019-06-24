@@ -431,7 +431,7 @@ Rectangle {
                             FactCheckBox {
                                 text:       qsTr("Use Preflight Checklist")
                                 fact:       _useChecklist
-                                visible:    _useChecklist.visible
+                                visible:    _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
 
                                 property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
                             }

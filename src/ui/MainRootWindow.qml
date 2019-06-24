@@ -75,7 +75,7 @@ ApplicationWindow {
         settingsWindow.visible  = false
         setupWindow.visible     = false
         analyzeWindow.visible   = false
-        rootBackground.visible  = false
+        flightView.visible      = false
         planViewLoader.visible  = false
         if(isPlanView) {
             toolbar.source  = _planToolbar
@@ -86,7 +86,7 @@ ApplicationWindow {
 
     function showFlyView() {
         viewSwitch(false)
-        rootBackground.visible = true
+        flightView.visible = true
     }
 
     function showPlanView() {
@@ -268,17 +268,6 @@ ApplicationWindow {
     background: Item {
         id:             rootBackground
         anchors.fill:   parent
-        FlightDisplayView {
-            id:             flightView
-            anchors.fill:   parent
-            //-----------------------------------------------------------------
-            //-- Loader helper for any child, no matter how deep, to display
-            //   elements on top of the fly (video) window.
-            Loader {
-                id: rootVideoLoader
-                anchors.centerIn: parent
-            }
-        }
     }
 
     //-------------------------------------------------------------------------
@@ -305,6 +294,20 @@ ApplicationWindow {
                     }
                 }
             }
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Fly View
+    FlightDisplayView {
+        id:             flightView
+        anchors.fill:   parent
+        //-----------------------------------------------------------------
+        //-- Loader helper for any child, no matter how deep, to display
+        //   elements on top of the fly (video) window.
+        Loader {
+            id: rootVideoLoader
+            anchors.centerIn: parent
         }
     }
 
