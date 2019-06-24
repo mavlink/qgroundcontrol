@@ -264,12 +264,6 @@ Item {
         }
     }
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
-    ExclusiveGroup {
-        id: _mapTypeButtonsExclusiveGroup
-    }
-
     /// Inserts a new simple mission item
     ///     @param coordinate Location to insert item
     ///     @param index Insert item at this index
@@ -1031,7 +1025,7 @@ Item {
                 }
 
                 QGCButton {
-                    text:               qsTr("Save Mission Waypoints As KML...")                    
+                    text:               qsTr("Save Mission Waypoints As KML...")
                     Layout.columnSpan:  2
                     enabled:            !_planMasterController.syncInProgress && _visualItems.count > 1
                     onClicked: {
