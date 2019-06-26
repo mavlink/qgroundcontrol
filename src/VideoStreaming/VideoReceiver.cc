@@ -200,6 +200,11 @@ VideoReceiver::start()
         qCDebug(VideoReceiverLog) << "Already running!";
         return;
     }
+    if (isUdp264) {
+        setVideoDecoder(H264_HW);
+    } else if (isUdp265) {
+        setVideoDecoder(H265_HW);
+    }
 
     _starting = true;
 
@@ -240,11 +245,11 @@ VideoReceiver::start()
             }
             g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri), "caps", caps, nullptr);
         } else if(isUdp265) {
-
-
-            //-- TODO
-
-
+            if ((caps = gst_caps_from_string("application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265")) == nullptr) {
+                qCritical() << "VideoReceiver::start() failed. Error with gst_caps_from_string()";
+                break;
+            }
+            g_object_set(static_cast<gpointer>(dataSource), "uri", qPrintable(_uri.replace("udp265", "udp")), "caps", caps, nullptr);
 #if  defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
         } else if(isTaisyncUSB) {
             QString uri = QString("0.0.0.0:%1").arg(TAISYNC_VIDEO_UDP_PORT);
