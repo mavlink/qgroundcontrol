@@ -85,7 +85,7 @@
         <file alias="void.png">res/images/void.png</file>
         <file alias="zoom_icon.svg">res/images/zoom_icon.svg</file>
     </qresource>
-    <qresource prefix="Auterion/Widgets">
+    <qresource prefix="/Auterion/Widgets">
         <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
         <file alias="Auterion/Widgets/AuterionAttitudeWidget.qml">res/Auterion/Widgets/AuterionAttitudeWidget.qml</file>
         <file alias="Auterion/Widgets/AuterionComboBox.qml">res/Auterion/Widgets/AuterionComboBox.qml</file>
@@ -106,5 +106,8 @@
         <file alias="beep.wav">res/audio/beep.wav</file>
         <file alias="boop.wav">res/audio/boop.wav</file>
         <file alias="camera.wav">res/audio/camera.wav</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>res/Auterion/Widgets/GimbalVirtualJoystick.qml</file>
     </qresource>
 </RCC>
