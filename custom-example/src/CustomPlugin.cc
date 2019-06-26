@@ -6,7 +6,7 @@
  * COPYING.md in the root of the source code directory.
  *
  *   @brief Custom QGCCorePlugin Implementation
- *   @author Gus Grubba <gus@custom.com>
+ *   @author Gus Grubba <gus@auterion.com>
  */
 
 #include <QtQml>
