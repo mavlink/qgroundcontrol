@@ -586,7 +586,7 @@ void FirmwareUpgradeController::_getFirmwareFile(FirmwareIdentifier firmwareId)
         _firmwareFilename = QGCQFileDialog::getOpenFileName(nullptr,                                                                // Parent to main window
                                                             tr("Select Firmware File"),                                             // Dialog Caption
                                                             QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),    // Initial directory
-                                                            tr("Firmware Files (*.px4 *.bin *.ihx)"));                              // File filter
+                                                            tr("Firmware Files (*.px4 *.apj *.bin *.ihx)"));                        // File filter
     } else {
         if (prgFirmware->contains(firmwareId)) {
             _firmwareFilename = prgFirmware->value(firmwareId);
