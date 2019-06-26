@@ -35,4 +35,69 @@ AuterionQuickInterface::~AuterionQuickInterface()
 void
 AuterionQuickInterface::init()
 {
+    QGCToolbox* toolbox = qgcApp()->toolbox();
+    connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &AuterionQuickInterface::_activeVehicleChanged);
+}
+
+//-----------------------------------------------------------------------------
+void
+AuterionQuickInterface::setTestFlight(bool b)
+{
+#if defined(QT_DEBUG)
+    //-- Debug builds are always test mode
+    b = true;
+#endif
+    _testFlight = b;
+    emit testFlightChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+AuterionQuickInterface::_activeVehicleChanged(Vehicle* vehicle)
+{
+    if(_vehicle) {
+        disconnect(_vehicle, &Vehicle::armedChanged, this, &AuterionQuickInterface::_armedChanged);
+        _vehicle = nullptr;
+    }
+    if(vehicle) {
+        _vehicle = vehicle;
+        connect(_vehicle, &Vehicle::armedChanged, this, &AuterionQuickInterface::_armedChanged);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AuterionQuickInterface::_armedChanged(bool armed)
+{
+    if(_vehicle) {
+        if(armed) {
+            _sendLogMessage();
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+AuterionQuickInterface::_sendLogMessage()
+{
+    static int LOG_VERSION = 1;
+    if(_vehicle) {
+        QString paylod;
+        paylod.sprintf("#0v:%d\np:%s\nt:%d\nc:%c\nb:%s",
+            LOG_VERSION,
+            _pilotID.toLatin1().data(),
+            _testFlight ? 1 : 0,
+            _checkListState == NotSetup ? 'n' : (_checkListState == Passed ? 'p' : 'f'),
+            "");
+        mavlink_message_t msg;
+        qCDebug(AuterionLog) << "Log Message Sent:" << paylod;
+        mavlink_msg_statustext_pack_chan(
+            static_cast<uint8_t>(qgcApp()->toolbox()->mavlinkProtocol()->getSystemId()),
+            static_cast<uint8_t>(qgcApp()->toolbox()->mavlinkProtocol()->getComponentId()),
+            _vehicle->priorityLink()->mavlinkChannel(),
+            &msg,
+            MAV_SEVERITY_NOTICE,
+            paylod.toLatin1().data());
+        _vehicle->sendMessageMultiple(msg);
+    }
 }
