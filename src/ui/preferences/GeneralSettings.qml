@@ -801,12 +801,12 @@ Rectangle {
 
                             QGCLabel {
                                 text:                   qsTr("UDP Port")
-                                visible:                (_isUDP264 || _isMPEGTS)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.udpPort
-                                visible:                (_isUDP264 || _isMPEGTS) && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS) && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
 
                             QGCLabel {
