@@ -249,7 +249,8 @@ VideoManager::isGStreamer()
 #if defined(QGC_GST_STREAMING)
     QString videoSource = _videoSettings->videoSource()->rawValue().toString();
     return
-        videoSource == VideoSettings::videoSourceUDP ||
+        videoSource == VideoSettings::videoSourceUDPH264 ||
+        videoSource == VideoSettings::videoSourceUDPH265 ||
         videoSource == VideoSettings::videoSourceRTSP ||
         videoSource == VideoSettings::videoSourceTCP ||
         videoSource == VideoSettings::videoSourceMPEGTS ||
@@ -325,8 +326,10 @@ VideoManager::_updateSettings()
         }
     }
     QString source = _videoSettings->videoSource()->rawValue().toString();
-    if (source == VideoSettings::videoSourceUDP)
+    if (source == VideoSettings::videoSourceUDPH264)
         _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
+    else if (source == VideoSettings::videoSourceUDPH265)
+        _videoReceiver->setUri(QStringLiteral("udp265://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceMPEGTS)
         _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(_videoSettings->udpPort()->rawValue().toInt()));
     else if (source == VideoSettings::videoSourceRTSP)
