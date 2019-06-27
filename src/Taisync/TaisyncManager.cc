@@ -337,7 +337,7 @@ TaisyncManager::_setVideoEnabled()
         pVSettings->udpPort()->setRawValue(5600);
         //-- TODO: this AR must come from somewhere
         pVSettings->aspectRatio()->setRawValue(1024.0 / 768.0);
-        pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDP));
+        pVSettings->videoSource()->setRawValue(QString(VideoSettings::videoSourceUDPH264));
 #if defined(__ios__) || defined(__android__)
         if(!_taiVideo) {
             //-- iOS and Android receive raw h.264 and need a different pipeline
