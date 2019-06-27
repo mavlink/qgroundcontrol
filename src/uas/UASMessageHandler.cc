@@ -149,7 +149,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     }
 
     // And determine the text for the severitie
-    QString severityText("");
+    QString severityText;
     switch (severity)
     {
     case MAV_SEVERITY_EMERGENCY:
@@ -183,7 +183,7 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
     UASMessage* message = new UASMessage(compId, severity, text);
-    QString compString("");
+    QString compString;
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }
