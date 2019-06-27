@@ -10431,10 +10431,10 @@ tailsitter, tiltrotor: main throttle</short_desc>
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
-    <parameter default="0" name="VT_MOT_COUNT" type="INT32">
-      <short_desc>VTOL number of engines</short_desc>
+    <parameter default="0" name="VT_MOT_ID" type="INT32">
+      <short_desc>The channel number of motors which provide lift during hover</short_desc>
       <min>0</min>
-      <max>8</max>
+      <max>12345678</max>
       <decimal>0</decimal>
       <increment>1</increment>
     </parameter>
