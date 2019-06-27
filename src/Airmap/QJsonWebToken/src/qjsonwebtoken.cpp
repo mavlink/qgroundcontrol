@@ -45,7 +45,7 @@ bool QJsonWebToken::setHeaderJDoc(QJsonDocument jdocHeader)
 	}
 
 	// check if supported algorithm
-	QString strAlgorithm = jdocHeader.object().value("alg").toString("");
+	QString strAlgorithm = jdocHeader.object().value("alg").toString();
 	if (!isAlgorithmSupported(strAlgorithm))
 	{
 		return false;
