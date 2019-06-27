@@ -345,7 +345,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
  **/
 QString MAVLinkProtocol::getName()
 {
-    return QString(tr("MAVLink protocol"));
+    return tr("MAVLink protocol");
 }
 
 /** @return System id of this application */
