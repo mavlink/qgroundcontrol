@@ -37,19 +37,22 @@ public:
 
     Q_PROPERTY(bool     streamConfigured        READ streamConfigured       NOTIFY streamConfiguredChanged)
     Q_PROPERTY(QString  rtspVideoSource         READ rtspVideoSource        CONSTANT)
-    Q_PROPERTY(QString  udpVideoSource          READ udpVideoSource         CONSTANT)
+    Q_PROPERTY(QString  udp264VideoSource       READ udp264VideoSource      CONSTANT)
+    Q_PROPERTY(QString  udp265VideoSource       READ udp265VideoSource      CONSTANT)
     Q_PROPERTY(QString  tcpVideoSource          READ tcpVideoSource         CONSTANT)
     Q_PROPERTY(QString  mpegtsVideoSource       READ mpegtsVideoSource      CONSTANT)
 
     bool     streamConfigured       ();
     QString  rtspVideoSource        () { return videoSourceRTSP; }
-    QString  udpVideoSource         () { return videoSourceUDP; }
+    QString  udp264VideoSource      () { return videoSourceUDPH264; }
+    QString  udp265VideoSource      () { return videoSourceUDPH265; }
     QString  tcpVideoSource         () { return videoSourceTCP; }
     QString  mpegtsVideoSource      () { return videoSourceMPEGTS; }
 
     static const char* videoSourceNoVideo;
     static const char* videoDisabled;
-    static const char* videoSourceUDP;
+    static const char* videoSourceUDPH264;
+    static const char* videoSourceUDPH265;
     static const char* videoSourceRTSP;
     static const char* videoSourceTCP;
     static const char* videoSourceMPEGTS;
