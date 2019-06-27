@@ -498,7 +498,7 @@ TaisyncManager::_updateSettings(QByteArray jSonData)
     //-- Link Status?
     if(jSonData.contains("\"flight\":")) {
         _reqMask &= ~static_cast<uint32_t>(REQ_LINK_STATUS);
-        bool tlinkConnected  = jObj["flight"].toString("") == "online";
+        bool tlinkConnected  = jObj["flight"].toString() == "online";
         if(tlinkConnected != _linkConnected) {
            _linkConnected = tlinkConnected;
            emit linkConnectedChanged();
