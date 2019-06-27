@@ -1539,7 +1539,7 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     if (sysStatus.battery_remaining > 0) {
         if (sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt() &&
                 sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent) {
-            _say(QString(tr("%1 low battery: %2 percent remaining")).arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
+            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
         }
         _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
     }
@@ -2934,7 +2934,7 @@ QString Vehicle::vehicleTypeName() const {
 QString Vehicle::_vehicleIdSpeech(void)
 {
     if (_toolbox->multiVehicleManager()->vehicles()->count() > 1) {
-        return QString(tr("vehicle %1")).arg(id());
+        return tr("vehicle %1").arg(id());
     } else {
         return QString();
     }
@@ -2942,13 +2942,13 @@ QString Vehicle::_vehicleIdSpeech(void)
 
 void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 {
-    _say(QString(tr("%1 %2 flight mode")).arg(_vehicleIdSpeech()).arg(flightMode));
+    _say(tr("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
     emit guidedModeChanged(_firmwarePlugin->isGuidedMode(this));
 }
 
 void Vehicle::_announceArmedChanged(bool armed)
 {
-    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QString(tr("armed")) : QString(tr("disarmed"))));
+    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? tr("armed") : tr("disarmed")));
 }
 
 void Vehicle::_setFlying(bool flying)
