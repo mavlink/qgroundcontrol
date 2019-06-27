@@ -8646,6 +8646,210 @@ is less than 50% of this value</short_desc>
         <value code="202">GPS 2</value>
       </values>
     </parameter>
+    <parameter default="0" name="SENS_MB12_0_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 0 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_10_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 10 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_11_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 12 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_1_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 1 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_2_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 2 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_3_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 3 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_4_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 4 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_5_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 5 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_6_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 6 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_7_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 7 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_8_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 8 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SENS_MB12_9_ROT" type="INT32">
+      <short_desc>MaxBotix MB12XX Sensor 9 Rotation</short_desc>
+      <long_desc>This parameter defines the rotation of the sensor relative to the platform.</long_desc>
+      <min>0</min>
+      <max>7</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">No rotation</value>
+        <value code="1">Yaw 45°</value>
+        <value code="2">Yaw 90°</value>
+        <value code="3">Yaw 135°</value>
+        <value code="4">Yaw 180°</value>
+        <value code="5">Yaw 225°</value>
+        <value code="6">Yaw 270°</value>
+        <value code="7">Yaw 315°</value>
+      </values>
+    </parameter>
     <parameter default="0" name="SENS_MPDT0_ROT" type="INT32">
       <short_desc>MappyDot Sensor 0 Rotation</short_desc>
       <long_desc>This parameter defines the rotation of the Mappydot sensor relative to the platform.</long_desc>
