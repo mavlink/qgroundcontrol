@@ -1,5 +1,15 @@
 ## AGS Changelog
 
+### June 27 2019
+
+* Added support for h.265 streams when using RTP UDP
+
+### June 24 2019
+
+* Handled cases where menus would show up at random places on Android
+* Moved PrFlight Checklist to custom
+* Force text to speech engine on Linux to English (all messages are in English)
+
 ### June 14 2019
 
 * Made the Preflight Checklist dialog modal

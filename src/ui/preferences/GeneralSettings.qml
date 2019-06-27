@@ -46,7 +46,8 @@ Rectangle {
 
     property string _videoSource:               QGroundControl.settingsManager.videoSettings.videoSource.value
     property bool   _isGst:                     QGroundControl.videoManager.isGStreamer
-    property bool   _isUDP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udpVideoSource
+    property bool   _isUDP264:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp264VideoSource
+    property bool   _isUDP265:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.udp265VideoSource
     property bool   _isRTSP:                    _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.rtspVideoSource
     property bool   _isTCP:                     _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.tcpVideoSource
     property bool   _isMPEGTS:                  _isGst && _videoSource === QGroundControl.settingsManager.videoSettings.mpegtsVideoSource
@@ -801,12 +802,12 @@ Rectangle {
 
                             QGCLabel {
                                 text:                   qsTr("UDP Port")
-                                visible:                (_isUDP || _isMPEGTS)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS)  && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
                             FactTextField {
                                 Layout.preferredWidth:  _comboFieldWidth
                                 fact:                   QGroundControl.settingsManager.videoSettings.udpPort
-                                visible:                (_isUDP || _isMPEGTS) && QGroundControl.settingsManager.videoSettings.udpPort.visible
+                                visible:                (_isUDP264 || _isUDP265 || _isMPEGTS) && QGroundControl.settingsManager.videoSettings.udpPort.visible
                             }
 
                             QGCLabel {
