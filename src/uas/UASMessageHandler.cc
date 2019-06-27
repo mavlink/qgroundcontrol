@@ -177,7 +177,6 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
         severityText = tr(" Debug:");
         break;
     default:
-        severityText = tr("");
         break;
     }
 
