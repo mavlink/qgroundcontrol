@@ -7,15 +7,22 @@ To build video streaming support, you will need to install the GStreamer develop
 
 If you do have the proper GStreamer development libraries installed where QGC looks for it, the QGC build system will automatically use it and build video streaming support. If you would like to disable video streaming support, you can add **DISABLE_VIDEOSTREAMING** to the **DEFINES** build variable.
 
-### Pipeline
+### UDP Pipeline
 
-For the time being, the pipeline is somewhat hardcoded, using h.264. It's best to use a camera capable of hardware encoding h.264, such as the Logitech C920. On the sender end, for RTP (UDP Streaming) you would run something like this:
+For the time being, the RTP UDP pipeline is somewhat hardcoded, using h.264 or h.265. It's best to use a camera capable of hardware encoding either h.264 (such as the Logitech C920) or h.265. On the sender end, for RTP (UDP Streaming) you would run something like this:
 
+h.264
 ```
 gst-launch-1.0 uvch264src initial-bitrate=1000000 average-bitrate=1000000 iframe-period=1000 device=/dev/video0 name=src auto-start=true src.vidsrc ! video/x-h264,width=1920,height=1080,framerate=24/1 ! h264parse ! rtph264pay ! udpsink host=xxx.xxx.xxx.xxx port=5600
 ```
 
-Where xxx.xxx.xxx.xxx is the IP address where QGC is running. You may tweak the bitrate, the resolution and the FPS based on your needs and/or available bandwidth.
+h.265
+```
+ffmpeg -f v4l2 -i /dev/video1 -pix_fmt yuv420p -c:v libx265 -preset ultrafast -x265-params crf=23 -strict experimental -f rtp udp://xxx.xxx.xxx.xxx:5600
+```
+
+Where xxx.xxx.xxx.xxx is the IP address where QGC is running.
+
 
 To test using a test source on localhost, you can run this command:
 ```
@@ -30,6 +37,10 @@ On the receiving end, if you want to test it from the command line, you can use 
 ```
 gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false
 ```
+
+### Additional Protocols
+
+QGC also supports RTSP, TCP-MPEG2 and MPEG-TS (h.264) pipelines.
 
 ### Linux
 
