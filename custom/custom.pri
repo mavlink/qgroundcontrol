@@ -46,10 +46,6 @@ exists($$PWD/custom/custom.pri) {
     #   Disable UVC support
     DEFINES += QGC_DISABLE_UVC
 
-    #   We are a native QML app
-    #CONFIG  += MobileBuild
-    #DEFINES += __mobile__
-
     #   Branding
 
     DEFINES += CUSTOMHEADER=\"\\\"AuterionPlugin.h\\\"\"
@@ -222,10 +218,10 @@ exists($$PWD/custom/custom.pri) {
 
     #-------------------------------------------------------------------------------------
     # QZXing
-    #DEFINES += QGC_ENABLE_QZXING
-    #CONFIG  += qzxing_qml
-    #CONFIG  += qzxing_multimedia
-    #include($$QGCROOT/custom/qzxing/src/QZXing.pri)
+    DEFINES += QGC_ENABLE_QZXING
+    CONFIG  += qzxing_qml
+    CONFIG  += qzxing_multimedia
+    include($$QGCROOT/custom/qzxing/src/QZXing.pri)
 
     #-------------------------------------------------------------------------------------
     # Custom setup
