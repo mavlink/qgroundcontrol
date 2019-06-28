@@ -9542,7 +9542,7 @@ is less than 50% of this value</short_desc>
       <short_desc>Auto-start script index</short_desc>
       <long_desc>CHANGING THIS VALUE REQUIRES A RESTART. Defines the auto-start script used to bootstrap the system.</long_desc>
       <min>0</min>
-      <max>99999</max>
+      <max>9999999</max>
       <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="SYS_BL_UPDATE" type="INT32">
