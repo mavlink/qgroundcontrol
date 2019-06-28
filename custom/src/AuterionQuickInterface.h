@@ -35,6 +35,10 @@ public:
     Q_PROPERTY(bool         testFlight      READ    testFlight      WRITE setTestFlight         NOTIFY testFlightChanged)
     Q_PROPERTY(QString      pilotID         READ    pilotID         WRITE setPilotID            NOTIFY pilotIDChanged)
     Q_PROPERTY(CheckList    checkListState  READ    checkListState  WRITE setCheckListState     NOTIFY checkListStateChanged)
+    Q_PROPERTY(QStringList  batteries       READ    batteries       NOTIFY batteriesChanged)
+
+    Q_INVOKABLE bool addBatteryScan (QString batteryID);
+    Q_INVOKABLE void resetBatteries ();
 
     void        init                ();
     bool        testFlight          () { return _testFlight; }
@@ -45,6 +49,7 @@ public:
 #endif
     QString     pilotID             () { return _pilotID; }
     CheckList   checkListState      () { return _checkListState; }
+    QStringList batteries           () { return _batteries; }
 
     void    setTestFlight           (bool b);
     void    setPilotID              (QString pid)   { _pilotID = pid; emit pilotIDChanged(); }
@@ -54,6 +59,7 @@ signals:
     void    testFlightChanged       ();
     void    pilotIDChanged          ();
     void    checkListStateChanged   ();
+    void    batteriesChanged        ();
 
 private slots:
     void _activeVehicleChanged      (Vehicle* vehicle);
@@ -71,4 +77,5 @@ private:
     Vehicle*    _vehicle        = nullptr;
     QString     _pilotID;
     CheckList   _checkListState = NotSetup;
+    QStringList _batteries;
 };

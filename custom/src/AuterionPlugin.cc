@@ -169,7 +169,7 @@ AuterionPlugin::settingsPages()
         addSettingsEntry(tr("MAVLink"),     "qrc:/qml/MavlinkSettings.qml", "    qrc:/res/waves.svg");
         addSettingsEntry(tr("Console"),     "qrc:/qml/QGroundControl/Controls/AppMessages.qml");
 #if defined(QGC_ENABLE_QZXING)
-        addSettingsEntry(tr("Barcode Test"),"qrc:/auterion/BarcodeReader.qml");
+        addSettingsEntry(tr("Battery Scan"),"qrc:/auterion/BarcodeReader.qml");
 #endif
 #if defined(QT_DEBUG)
         //-- These are always present on Debug builds

@@ -83,12 +83,16 @@ AuterionQuickInterface::_sendLogMessage()
     static int LOG_VERSION = 1;
     if(_vehicle) {
         QString paylod;
-        paylod.sprintf("#0v:%d\np:%s\nt:%d\nc:%c\nb:%s",
+        paylod.sprintf("#0v:%d\np:%s\nt:%d\nc:%c",
             LOG_VERSION,
             _pilotID.toLatin1().data(),
             _testFlight ? 1 : 0,
-            _checkListState == NotSetup ? 'n' : (_checkListState == Passed ? 'p' : 'f'),
-            "");
+            _checkListState == NotSetup ? 'n' : (_checkListState == Passed ? 'p' : 'f'));
+        //-- Handle batteries
+        foreach(const QString battery, _batteries) {
+            paylod.append("\nb:");
+            paylod.append(battery);
+        }
         mavlink_message_t msg;
         qCDebug(AuterionLog) << "Log Message Sent:" << paylod;
         mavlink_msg_statustext_pack_chan(
@@ -100,4 +104,25 @@ AuterionQuickInterface::_sendLogMessage()
             paylod.toLatin1().data());
         _vehicle->sendMessageMultiple(msg);
     }
+}
+
+//-----------------------------------------------------------------------------
+bool
+AuterionQuickInterface::addBatteryScan(QString batteryID)
+{
+    //-- Arbitrary limit of 4 batteries
+    if(_batteries.length() < 4 && !_batteries.contains(batteryID)) {
+        _batteries.append(batteryID);
+        emit batteriesChanged();
+        return true;
+    }
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+void
+AuterionQuickInterface::resetBatteries()
+{
+    _batteries.clear();
+    emit batteriesChanged();
 }

@@ -132,10 +132,15 @@ Rectangle {
             }
         }
         _passed = passed
-        if(_passed) {
-            AuterionQuickInterface.checkListState = AuterionQuickInterface.Passed
-        } else {
-            AuterionQuickInterface.checkListState = AuterionQuickInterface.Failed
+    }
+
+    onVisibleChanged: {
+        if(!visible) {
+            if(listModel.isPassed()) {
+                AuterionQuickInterface.checkListState = AuterionQuickInterface.Passed
+            } else {
+                AuterionQuickInterface.checkListState = AuterionQuickInterface.Failed
+            }
         }
     }
 
