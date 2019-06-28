@@ -27,16 +27,17 @@ Column  {
     Component.onCompleted: {
         enabled = _checked
         var moveList = []
-        for (var i=2; i<children.length; i++) {
+        var i = 0
+        for (i = 2; i < children.length; i++) {
             moveList.push(children[i])
         }
-        for (var i=0; i<moveList.length; i++) {
+        for (i = 0; i < moveList.length; i++) {
             moveList[i].parent = innerColumn
         }
     }
 
     function reset() {
-        for (var i=0; i<innerColumn.children.length; i++) {
+        for (var i = 0; i < innerColumn.children.length; i++) {
             innerColumn.children[i].reset()
         }
     }
@@ -52,7 +53,7 @@ Column  {
         visible:    header.checked
 
         function buttonPassedChanged() {
-            for (var i=0; i<children.length; i++) {
+            for (var i = 0; i < children.length; i++) {
                 if (!children[i].passed) {
                     passed = false
                     return

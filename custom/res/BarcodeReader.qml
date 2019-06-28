@@ -16,17 +16,18 @@ import QtMultimedia                 5.5
 
 import QZXing                       2.3
 
-import QGroundControl                       1.0
-import QGroundControl.Controls              1.0
-import QGroundControl.ScreenTools           1.0
-import QGroundControl.Palette               1.0
+import QGroundControl               1.0
+import QGroundControl.Controls      1.0
+import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette       1.0
+
+import AuterionQuickInterface       1.0
 
 Rectangle {
     id:                 _root
     color:              qgcPal.window
     anchors.fill:       parent
 
-    property int    detectedTags: 0
     property string lastTag: ""
 
     Camera {
@@ -65,9 +66,68 @@ Rectangle {
     }
 
     SoundEffect {
-        id:             playSound
-        source:         "/auterion/wav/beep.wav"
+        id:                 playSound
+        source:             "/auterion/wav/beep.wav"
     }
+
+    SoundEffect {
+        id:                 playError
+        source:             "/auterion/wav/boop.wav"
+    }
+
+    Rectangle {
+        width:              batteryCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
+        height:             batteryCol.height + (ScreenTools.defaultFontPixelHeight * 2)
+        color:              Qt.rgba(0,0,0,0.5)
+        radius:             ScreenTools.defaultFontPixelWidth * 0.5
+        visible:            AuterionQuickInterface.batteries.length > 0
+        border.width:       1
+        border.color:       Qt.rgba(1,1,1,0.25)
+        anchors.right:      parent.right
+        anchors.rightMargin: ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter: parent.verticalCenter
+        Column {
+            id:             batteryCol
+            spacing:        ScreenTools.defaultFontPixelHeight
+            anchors.centerIn: parent
+            QGCLabel {
+                text:       qsTr("Batteries")
+                color:      "white"
+                width:      ScreenTools.defaultFontPixelWidth * 20
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Rectangle {
+                width:      parent.width
+                height:     1
+                color:      Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Repeater {
+                model:      AuterionQuickInterface.batteries
+                QGCLabel {
+                    text:   modelData
+                    color:  "white"
+                    font.pointSize: ScreenTools.smallFontPointSize
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+            }
+            Rectangle {
+                width:      parent.width
+                height:     1
+                color:      Qt.rgba(1,1,1,0.25)
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Button {
+                text:       qsTr("Reset")
+                onClicked:  {
+                    _root.lastTag = ""
+                    AuterionQuickInterface.resetBatteries()
+                }
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
+
 
     QZXingFilter  {
         id:             zxingFilter
@@ -82,10 +142,13 @@ Rectangle {
             enabledDecoders: QZXing.DecoderFormat_QR_CODE
             onTagFound: {
                 console.log(tag + " | " + decoder.foundedFormat() + " | " + decoder.charSet());
-                _root.detectedTags++;
                 if(_root.lastTag != tag) {
                     _root.lastTag = tag
-                    playSound.play()
+                    if(AuterionQuickInterface.addBatteryScan(tag)) {
+                        playSound.play()
+                    } else {
+                        playError.play()
+                    }
                 }
             }
             tryHarder: false
@@ -106,59 +169,5 @@ Rectangle {
             }
         }
     }
-
-    Column {
-        anchors.top:    parent.top
-        anchors.horizontalCenter: parent.horizontalCenter
-        QGCLabel {
-            text:           "Last Tag"
-            color:          "white"
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
-        QGCLabel {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text:           lastTag
-            color:          "white"
-        }
-    }
-
-    /*
-    Rectangle {
-        width:          optCol.width  + (ScreenTools.defaultFontPixelWidth  * 2)
-        height:         optCol.height + (ScreenTools.defaultFontPixelHeight * 2)
-        color:          "gray"
-        anchors.right:  parent.right
-        anchors.bottom: parent.bottom
-        Column {
-            id:             optCol
-            spacing:        10
-            anchors.centerIn: parent
-            ComboBox {
-                model:      QtMultimedia.availableCameras
-                textRole:   'displayName'
-                onCurrentIndexChanged: {
-                    if (currentIndex != -1)
-                        camera.deviceId = QtMultimedia.availableCameras[currentIndex].deviceId
-                }
-            }
-            Switch {
-                text:       "Autofocus"
-                checked:    camera.focus.focusMode === CameraFocus.FocusContinuous
-                onCheckedChanged: {
-                    if (checked) {
-                        camera.focus.focusMode      = CameraFocus.FocusContinuous
-                        camera.focus.focusPointMode = CameraFocus.FocusPointAuto
-                    } else {
-                        camera.focus.focusPointMode = CameraFocus.FocusPointCustom
-                        camera.focus.customFocusPoint = Qt.point(0.5,  0.5)
-                    }
-                }
-                font.family:    'Monospace'
-                font.pixelSize: Screen.pixelDensity * 5
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-    }
-    */
 
 }
