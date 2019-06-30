@@ -12,6 +12,23 @@ if(MOBILE)
 		MobileScreenMgr.cc
 	)
 endif()
+if(GST_FOUND)
+	# TODO: Transform those in targets.
+	list(APPEND EXTRA_SRC
+		Taisync/TaisyncManager.cc
+		Taisync/TaisyncHandler.cc
+		Taisync/TaisyncSettings.cc
+		Microhard/MicrohardManager.cc
+		Microhard/MicrohardHandler.cc
+		Microhard/MicrohardSettings.cc
+	)
+	if(ANDROID) # Should also be expanded to iOS
+		list(APPEND EXTRA_SRC
+			src/Taisync/TaisyncTelemetry.cc
+			src/Taisync/TaisyncVideoReceiver.cc
+		)
+	endif()
+endif()
 
 if(BUILD_TESTING)
 
