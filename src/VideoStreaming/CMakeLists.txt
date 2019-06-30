@@ -1,6 +1,5 @@
 if (GST_FOUND)
     include_directories(
-        ${GST_INCLUDE_DIRS}
         gstqtvideosink/utils/
         )
 
