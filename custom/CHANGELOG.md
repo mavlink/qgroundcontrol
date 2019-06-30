@@ -1,5 +1,9 @@
 ## AGS Changelog
 
+### June 30 2019
+
+* Make guided altitude slider zero-based when vehicle is on the ground (positive values only)
+
 ### June 27 2019
 
 * Added support for h.265 streams when using RTP UDP
