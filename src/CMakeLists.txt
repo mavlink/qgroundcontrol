@@ -139,15 +139,15 @@ add_subdirectory(VideoStreaming)
 add_subdirectory(ViewWidgets)
 
 target_link_libraries(qgc
-        PRIVATE
+	PRIVATE
 		shp
 
 	PUBLIC
-                Qt5::QuickWidgets
-                Qt5::Widgets
+		Qt5::QuickWidgets
+		Qt5::Widgets
 
 		Airmap
-                AnalyzeView
+		AnalyzeView
 		api
 		Audio
 		AutoPilotPlugins
@@ -158,7 +158,7 @@ target_link_libraries(qgc
 		FlightDisplay
 		FlightMap
 		FollowMe
-                gps
+		gps
 		Joystick
 		MissionManager
 		PositionManager
@@ -179,11 +179,11 @@ if(BUILD_TESTING)
 endif()
 
 target_include_directories(qgc
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include # HACK: AUTOUIC paths not inheriting?
-        ${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include_Debug
-        ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include # HACK: AUTOUIC paths not inheriting?
-        ${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include_Debug
-        )
+	PUBLIC
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include # HACK: AUTOUIC paths not inheriting?
+		${CMAKE_CURRENT_BINARY_DIR}/ui/ui_autogen/include_Debug
+		${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include # HACK: AUTOUIC paths not inheriting?
+		${CMAKE_CURRENT_BINARY_DIR}/qgc_autogen/include_Debug
+)
 
