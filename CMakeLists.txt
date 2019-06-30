@@ -89,6 +89,12 @@ endif()
 #=============================================================================
 # Qt5
 #
+set(QT_LIBRARY_HINTS
+		$ENV{HOME}/Qt/${QT_VERSION}/${QT_MKSPEC}
+		$ENV{QT_PATH}/${QT_VERSION}/${QT_MKSPEC}
+		C:/Qt
+)
+
 find_package(Qt5 ${QT_VERSION}
 	COMPONENTS
 		Bluetooth
@@ -108,9 +114,7 @@ find_package(Qt5 ${QT_VERSION}
 		Xml
 	REQUIRED
 	HINTS
-		$ENV{HOME}/Qt/${QT_VERSION}/${QT_MKSPEC}
-		$ENV{QT_PATH}/${QT_VERSION}/${QT_MKSPEC}
-		C:/Qt
+        ${QT_LIBRARY_HINTS}
 )
 
 if(NOT QT_MKSPEC MATCHES "winrt")
@@ -119,9 +123,7 @@ if(NOT QT_MKSPEC MATCHES "winrt")
 			SerialPort
 		REQUIRED
 		HINTS
-			$ENV{HOME}/Qt/${QT_VERSION}/${QT_MKSPEC}
-			$ENV{QT_PATH}/${QT_VERSION}/${QT_MKSPEC}
-			C:/Qt
+            ${QT_LIBRARY_HINTS}
 	)
 endif()
 
