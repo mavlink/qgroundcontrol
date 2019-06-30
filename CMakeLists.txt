@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(QGroundControl LANGUAGES CXX)
+project(QGroundControl LANGUAGES C CXX)
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
 
@@ -58,6 +58,16 @@ if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
+
+#=============================================================================
+# GStreamer
+#
+find_package(PkgConfig)
+pkg_check_modules(GST
+    gstreamer-1.0>=1.14
+    gstreamer-video-1.0>=1.14
+)
+
 #=============================================================================
 # Qt5
 #
@@ -73,6 +83,7 @@ find_package(Qt5 ${QT_VERSION}
 		Positioning
 		Quick
 		QuickWidgets
+		OpenGL
 		Sql
 		Svg
 		Test
