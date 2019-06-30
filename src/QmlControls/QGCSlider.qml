@@ -23,8 +23,6 @@ Slider {
     property bool zeroCentered: false
     property bool displayValue: false
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
     style: SliderStyle {
         groove: Item {
             anchors.verticalCenter: parent.verticalCenter
