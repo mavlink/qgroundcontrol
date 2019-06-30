@@ -103,7 +103,7 @@ find_package(Qt5 ${QT_VERSION}
 		Xml
 	REQUIRED
 	HINTS
-        ${QT_LIBRARY_HINTS}
+		${QT_LIBRARY_HINTS}
 )
 
 if(NOT QT_MKSPEC MATCHES "winrt")
@@ -112,7 +112,7 @@ if(NOT QT_MKSPEC MATCHES "winrt")
 			SerialPort
 		REQUIRED
 		HINTS
-            ${QT_LIBRARY_HINTS}
+			${QT_LIBRARY_HINTS}
 	)
 endif()
 
