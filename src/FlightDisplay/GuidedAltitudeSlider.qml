@@ -26,6 +26,7 @@ Rectangle {
     property bool _fixedWing:           activeVehicle ? activeVehicle.fixedWing : false
     property real _sliderMaxAlt:        _flyViewSettings ? _flyViewSettings.guidedMaximumAltitude.rawValue : 0
     property real _sliderMinAlt:        _flyViewSettings ? _flyViewSettings.guidedMinimumAltitude.rawValue : 0
+    property bool _flying:              activeVehicle ? activeVehicle.flying : false
 
     function reset() {
         altSlider.value = 0
@@ -89,14 +90,14 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         orientation:        Qt.Vertical
-        minimumValue:       -1
+        minimumValue:       _flying ? -1 : 0
         maximumValue:       1
         zeroCentered:       true
         rotation:           180
 
         // We want slide up to be positive values
         transform: Rotation {
-            origin.x:   altSlider.width / 2
+            origin.x:   altSlider.width  / 2
             origin.y:   altSlider.height / 2
             angle:      180
         }
