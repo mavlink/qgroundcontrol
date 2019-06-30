@@ -10,7 +10,6 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-
 # CMake build type
 # Debug Release RelWithDebInfo MinSizeRel Coverage
 if (NOT CMAKE_BUILD_TYPE)
@@ -67,7 +66,14 @@ pkg_check_modules(GST
     gstreamer-1.0>=1.14
     gstreamer-video-1.0>=1.14
 )
-
+if (GST_FOUND)
+    include_directories(
+        ${GST_INCLUDE_DIRS}
+    )
+    add_definitions(
+        -DQGC_GST_STREAMING
+    )
+endif()
 #=============================================================================
 # Qt5
 #
