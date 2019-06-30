@@ -66,12 +66,17 @@ pkg_check_modules(GST
     gstreamer-1.0>=1.14
     gstreamer-video-1.0>=1.14
 )
+
 if (GST_FOUND)
     include_directories(
         ${GST_INCLUDE_DIRS}
+        src/Taisync
+        src/Microhard
     )
     add_definitions(
         -DQGC_GST_STREAMING
+        -DQGC_GST_TAISYNC_ENABLED
+        -DQGC_GST_MICROHARD_ENABLED
     )
 endif()
 #=============================================================================
