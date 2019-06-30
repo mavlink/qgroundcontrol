@@ -4,6 +4,13 @@ project(QGroundControl LANGUAGES CXX)
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+
 # CMake build type
 # Debug Release RelWithDebInfo MinSizeRel Coverage
 if (NOT CMAKE_BUILD_TYPE)
@@ -69,12 +76,6 @@ add_definitions(
 	)
 
 message(STATUS "QGroundControl version: ${git_tag}")
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 #=============================================================================
 # ccache
