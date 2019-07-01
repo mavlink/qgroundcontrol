@@ -29,9 +29,9 @@ pipeline {
           steps {
             sh 'export'
             sh 'ccache -z'
-            sh 'git submodule deinit -f .'
+            sh 'git submodule sync && git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
-            sh 'git submodule sync && git submodule update --init --recursive --force'
+            sh 'git submodule update --init --recursive --force'
             sh 'ln -s $CI_ANDROID_GSTREAMER_LOCATION ${WORKSPACE}/'
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG}'
             sh 'cd build; make -j`nproc --all`'
@@ -140,9 +140,9 @@ pipeline {
           steps {
             sh 'export'
             sh 'ccache -z'
-            sh 'git submodule deinit -f .'
+            sh 'git submodule sync && git submodule deinit -f .'
             sh 'git clean -ff -x -d .'
-            sh 'git submodule sync && git submodule update --init --recursive --force'
+            sh 'git submodule update --init --recursive --force'
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG}'
             sh 'cd build; make -j`nproc --all`'
             // Create AppImg
@@ -367,10 +367,9 @@ pipeline {
             }
           }
           steps {
-            bat 'git submodule deinit -f .'
-            //bat 'git clean -ff -x -e build-dev -d .'
+            bat 'git submodule sync && git submodule deinit -f .'
             bat 'git clean -ff -x -d .'
-            bat 'git submodule sync && git submodule update --init --recursive --force'
+            bat 'git submodule update --init --recursive --force'
             bat '.\\tools\\build\\build_windows.bat release build'
             bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
           }
