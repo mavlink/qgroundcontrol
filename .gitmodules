@@ -8,4 +8,4 @@
 	path = custom/qzxing
         #url = https://github.com/ftylitak/qzxing.git
         # Temporary in oder to provide a fix
-        url = git@github.com:stefandunca/qzxing.git
+        url = https://github.com/stefandunca/qzxing.git
