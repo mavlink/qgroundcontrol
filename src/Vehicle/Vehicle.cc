@@ -551,8 +551,11 @@ Vehicle::~Vehicle()
 void Vehicle::prepareDelete()
 {
     if(_cameras) {
-        delete _cameras;
+        // because of _cameras QML bindings check for nullptr won't work in the binding pipeline
+        // the dangling pointer access will cause a runtime fault
+        auto tmpCameras = _cameras;
         _cameras = nullptr;
+        delete tmpCameras;
         emit dynamicCamerasChanged();
         qApp->processEvents();
     }
