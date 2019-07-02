@@ -121,6 +121,7 @@ private:
     void _finishPlayback(void);
     void _playbackError(void);
     void _resetPlaybackToBeginning(void);
+    void _signalCurrentLogTimeSecs(void);
 
     // Virtuals from LinkInterface
     virtual bool _connect(void);
