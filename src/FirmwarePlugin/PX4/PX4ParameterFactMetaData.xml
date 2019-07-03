@@ -7920,6 +7920,15 @@ to takeoff is reached</short_desc>
       <unit>s</unit>
       <increment>1</increment>
     </parameter>
+    <parameter default="50.0" name="SIM_BAT_MIN_PCT" type="FLOAT">
+      <short_desc>Simulator Battery minimal percentage. Can be used to alter
+the battery level during SITL- or HITL-simulation on the fly.
+Particularly useful for testing different low-battery behaviour</short_desc>
+      <min>0</min>
+      <max>100</max>
+      <unit>%</unit>
+      <increment>0.1</increment>
+    </parameter>
   </group>
   <group name="Sensor Calibration">
     <parameter category="System" default="1" name="CAL_ACC0_EN" type="INT32">
