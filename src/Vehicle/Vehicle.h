@@ -985,6 +985,7 @@ public:
     Fact* throttlePct       (void) { return &_throttlePctFact; }
 
     FactGroup* gpsFactGroup             (void) { return &_gpsFactGroup; }
+    FactGroup* batterySummaryFactGroup  (void) { return &_batterySummaryFactGroup; }
     FactGroup* battery1FactGroup        (void) { return &_battery1FactGroup; }
     FactGroup* battery2FactGroup        (void) { return &_battery2FactGroup; }
     FactGroup* windFactGroup            (void) { return &_windFactGroup; }
@@ -1549,6 +1550,7 @@ private:
     Fact _throttlePctFact;
 
     VehicleGPSFactGroup             _gpsFactGroup;
+    VehicleBatteryFactGroup         _batterySummaryFactGroup;
     VehicleBatteryFactGroup         _battery1FactGroup;
     VehicleBatteryFactGroup         _battery2FactGroup;
     VehicleWindFactGroup            _windFactGroup;
@@ -1580,6 +1582,7 @@ private:
     static const char* _throttlePctFactName;
 
     static const char* _gpsFactGroupName;
+    static const char* _batterySummaryFactGroupName;
     static const char* _battery1FactGroupName;
     static const char* _battery2FactGroupName;
     static const char* _windFactGroupName;
