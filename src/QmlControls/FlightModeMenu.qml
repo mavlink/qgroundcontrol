@@ -21,14 +21,14 @@ QGCLabel {
 
     property var currentVehicle: QGroundControl.multiVehicleManager.activeVehicle
 
-    Menu {
+    QGCMenu {
         id: flightModesMenu
     }
 
     Component {
         id: flightModeMenuItemComponent
 
-        MenuItem {
+        QGCMenuItem {
             onTriggered: currentVehicle.flightMode = text
         }
     }
