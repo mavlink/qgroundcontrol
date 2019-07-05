@@ -34,12 +34,12 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
-        Menu {
+        QGCMenu {
             id: linkSelectionMenu
         }
         Component {
             id: linkSelectionMenuItemComponent
-            MenuItem {
+            QGCMenuItem {
                 onTriggered: activeVehicle.priorityLinkName = text
             }
         }

@@ -415,12 +415,12 @@ FlightMap {
     MouseArea {
         anchors.fill: parent
 
-        Menu {
+        QGCMenu {
             id: clickMenu
 
             property var coord
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Go to location")
                 visible:        guidedActionsController.showGotoLocation
 
@@ -431,7 +431,7 @@ FlightMap {
                 }
             }
 
-            MenuItem {
+            QGCMenuItem {
                 text:           qsTr("Orbit at location")
                 visible:        guidedActionsController.showOrbit
 

@@ -186,7 +186,7 @@ Item {
         }
     }
 
-    Menu {
+    QGCMenu {
         id: menu
 
         property int _editingVertexIndex: -1
@@ -201,7 +201,7 @@ Item {
             menu.popup()
         }
 
-        MenuItem {
+        QGCMenuItem {
             id:             removeVertexItem
             visible:        !_circle
             text:           qsTr("Remove vertex")
@@ -212,39 +212,39 @@ Item {
             }
         }
 
-        MenuSeparator {
+        QGCMenuSeparator {
             visible:        removeVertexItem.visible
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Circle" )
             onTriggered:    resetCircle()
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Polygon")
             onTriggered:    resetPolygon()
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Set radius..." )
             visible:        _circle
             onTriggered:    _editCircleRadius = true
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        _circle
             onTriggered:    mainWindow.showComponentDialog(editCenterPositionDialog, qsTr("Edit Center Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Edit position..." )
             visible:        !_circle && menu._editingVertexIndex >= 0
             onTriggered:    mainWindow.showComponentDialog(editVertexPositionDialog, qsTr("Edit Vertex Position"), mainWindow.showDialogDefaultWidth, StandardButton.Close)
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Load KML/SHP...")
             onTriggered:    kmlOrSHPLoadDialog.openForLoad()
         }

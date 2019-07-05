@@ -104,7 +104,7 @@ Button {
 
     ExclusiveGroup { id: eg }
 
-    Menu {
+    QGCMenu {
         id:             popup
         __minimumWidth: combo.width
         __visualItem:   combo
@@ -233,7 +233,7 @@ Button {
 
             onObjectRemoved: popup.removeItem(object)
 
-            MenuItem {
+            QGCMenuItem {
                 text:           popup.textRole === '' ? modelData : ((popup._modelIsArray ? modelData[popup.textRole] : model[popup.textRole]) || '')
                 checked:        index == currentIndex
                 checkable:      true

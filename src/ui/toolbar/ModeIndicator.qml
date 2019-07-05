@@ -34,12 +34,12 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
-        Menu {
+        QGCMenu {
             id: flightModesMenu
         }
         Component {
             id: flightModeMenuItemComponent
-            MenuItem {
+            QGCMenuItem {
                 onTriggered: activeVehicle.flightMode = text
             }
         }
