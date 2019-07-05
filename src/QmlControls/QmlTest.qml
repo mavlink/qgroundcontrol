@@ -491,13 +491,13 @@ Rectangle {
                         }
                         Menu {
                             id: buttonMenu
-                            MenuItem {
+                            QGCMenuItem {
                                 text: qsTr("Item 1")
                             }
-                            MenuItem {
+                            QGCMenuItem {
                                 text: qsTr("Item 2")
                             }
-                            MenuItem {
+                            QGCMenuItem {
                                 text: qsTr("Item 3")
                             }
                         }

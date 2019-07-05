@@ -22,7 +22,43 @@ import QGroundControl.ScreenTools 1.0
 
 SetupPage {
     id:             airframePage
-    pageComponent:  pageComponent
+    pageComponent:  (controller && controller.showCustomConfigPanel) ? customFrame : pageComponent
+
+    AirframeComponentController {
+        id:         controller
+    }
+
+    Component {
+        id: customFrame
+        Column {
+            width:          availableWidth
+            spacing:        ScreenTools.defaultFontPixelHeight * 4
+            Item {
+                width:      1
+                height:     1
+            }
+            QGCLabel {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width:      parent.width * 0.5
+                height:     ScreenTools.defaultFontPixelHeight * 4
+                wrapMode:   Text.WordWrap
+                text:       qsTr("Your vehicle is using a custom airframe configuration. ") +
+                            qsTr("This configuration can only be modified through the Parameter Editor.\n\n") +
+                            qsTr("If you want to reset your airframe configuration and select a standard configuration, click 'Reset' below.")
+            }
+            QGCButton {
+                text:       qsTr("Reset")
+                enabled:    sys_autostart
+                anchors.horizontalCenter: parent.horizontalCenter
+                property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
+                onClicked: {
+                    if(sys_autostart) {
+                        sys_autostart.value = 0
+                    }
+                }
+            }
+        }
+    }
 
     Component {
         id: pageComponent
@@ -58,33 +94,6 @@ SetupPage {
                     }
                     rw = mainColumn.width - sw
                     _boxWidth = rw / idx
-                }
-            }
-
-            AirframeComponentController {
-                id:         controller
-                Component.onCompleted: {
-                    if (controller.showCustomConfigPanel) {
-                        mainWindow.showComponentDialog(customConfigDialogComponent, qsTr("Custom Airframe Config"), mainWindow.showDialogDefaultWidth, StandardButton.Reset | StandardButton.Cancel)
-                    }
-                }
-            }
-
-            Component {
-                id: customConfigDialogComponent
-
-                QGCViewMessage {
-                    id:       customConfigDialog
-                    message:  qsTr("Your vehicle is using a custom airframe configuration. ") +
-                              qsTr("This configuration can only be modified through the Parameter Editor.\n\n") +
-                              qsTr("If you want to reset your airframe configuration and select a standard configuration, click 'Reset' above.")
-
-                    property Fact sys_autostart: controller.getParameterFact(-1, "SYS_AUTOSTART")
-
-                    function accept() {
-                        sys_autostart.value = 0
-                        customConfigDialog.hideDialog()
-                    }
                 }
             }
 

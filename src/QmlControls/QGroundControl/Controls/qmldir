@@ -50,6 +50,9 @@ QGCMapCircleVisuals     1.0 QGCMapCircleVisuals.qml
 QGCMapLabel             1.0 QGCMapLabel.qml
 QGCMapPolygonVisuals    1.0 QGCMapPolygonVisuals.qml
 QGCMapPolylineVisuals   1.0 QGCMapPolylineVisuals.qml
+QGCMenu                 1.0 QGCMenu.qml
+QGCMenuItem             1.0 QGCMenuItem.qml
+QGCMenuSeparator        1.0 QGCMenuSeparator.qml
 QGCMouseArea            1.0 QGCMouseArea.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
 QGCPipable              1.0 QGCPipable.qml

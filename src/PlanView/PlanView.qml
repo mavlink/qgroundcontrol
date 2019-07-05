@@ -180,7 +180,7 @@ Item {
         id: _planMasterController
 
         Component.onCompleted: {
-            start(false /* flyView */)
+            _planMasterController.start(false /* flyView */)
             _missionController.setCurrentPlanViewIndex(0, true)
             mainWindow.planMasterControllerPlan = _planMasterController
         }
