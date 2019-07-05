@@ -126,14 +126,14 @@ Item {
                                 hamburgerMenu.popup()
                             }
 
-                            Menu {
+                            QGCMenu {
                                 id: hamburgerMenu
 
                                 property string fileToDelete
 
                                 onAboutToHide: fileButton.highlight = false
 
-                                MenuItem {
+                                QGCMenuItem {
                                     text:           qsTr("Delete")
                                     onTriggered: {
                                         controller.deleteFile(hamburgerMenu.fileToDelete)
@@ -239,14 +239,14 @@ Item {
                                 hamburgerMenu.popup()
                             }
 
-                            Menu {
+                            QGCMenu {
                                 id: hamburgerMenu
 
                                 property string fileToDelete
 
                                 onAboutToHide: fileButton.highlight = false
 
-                                MenuItem {
+                                QGCMenuItem {
                                     text:           qsTr("Delete")
                                     onTriggered: {
                                         controller.deleteFile(hamburgerMenu.fileToDelete)

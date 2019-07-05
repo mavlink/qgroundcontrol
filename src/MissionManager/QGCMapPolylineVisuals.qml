@@ -126,7 +126,7 @@ Item {
         }
     }
 
-    Menu {
+    QGCMenu {
         id: menu
         property int _removeVertexIndex
 
@@ -136,22 +136,22 @@ Item {
             menu.popup()
         }
 
-        MenuItem {
+        QGCMenuItem {
             id:             removeVertexItem
             text:           qsTr("Remove vertex" )
             onTriggered:    mapPolyline.removeVertex(menu._removeVertexIndex)
         }
 
-        MenuSeparator {
+        QGCMenuSeparator {
             visible:        removeVertexItem.visible
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Edit position..." )
             onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
         }
 
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Load KML...")
             onTriggered:    kmlLoadDialog.openForLoad()
         }

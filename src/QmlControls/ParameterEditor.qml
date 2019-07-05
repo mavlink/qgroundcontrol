@@ -101,24 +101,24 @@ Item {
         onClicked:      toolsMenu.popup()
     }
 
-    Menu {
+    QGCMenu {
         id:                 toolsMenu
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Refresh")
             onTriggered:	controller.refresh()
         }
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Reset all to firmware's defaults")
             visible:        !activeVehicle.apmFirmware
             onTriggered:    mainWindow.showComponentDialog(resetToDefaultConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Reset to vehicle's configuration defaults")
             visible:        !activeVehicle.apmFirmware
             onTriggered:    mainWindow.showComponentDialog(resetToVehicleConfigurationConfirmComponent, qsTr("Reset All"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Reset)
         }
-        MenuSeparator { }
-        MenuItem {
+        QGCMenuSeparator { }
+        QGCMenuItem {
             text:           qsTr("Load from file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Load Parameters")
@@ -126,7 +126,7 @@ Item {
                 fileDialog.openForLoad()
             }
         }
-        MenuItem {
+        QGCMenuItem {
             text:           qsTr("Save to file...")
             onTriggered: {
                 fileDialog.title =          qsTr("Save Parameters")
@@ -134,14 +134,14 @@ Item {
                 fileDialog.openForSave()
             }
         }
-        MenuSeparator { visible: _showRCToParam }
-        MenuItem {
+        QGCMenuSeparator { visible: _showRCToParam }
+        QGCMenuItem {
             text:           qsTr("Clear RC to Param")
             onTriggered:	controller.clearRCToParam()
             visible:        _showRCToParam
         }
-        MenuSeparator { }
-        MenuItem {
+        QGCMenuSeparator { }
+        QGCMenuItem {
             text:           qsTr("Reboot Vehicle")
             onTriggered:    mainWindow.showComponentDialog(rebootVehicleConfirmComponent, qsTr("Reboot Vehicle"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel | StandardButton.Ok)
         }
