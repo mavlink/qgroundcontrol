@@ -38,12 +38,12 @@ Item {
         font.pointSize:         ScreenTools.mediumFontPointSize
         color:                  qgcPal.buttonText
         anchors.verticalCenter: parent.verticalCenter
-        Menu {
+        QGCMenu {
             id: multiVehiclesMenu
         }
         Component {
             id: multiVehicleMenuItemComponent
-            MenuItem {
+            QGCMenuItem {
                 onTriggered: QGroundControl.multiVehicleManager.activeVehicle = vehicle
                 property int vehicleId: Number(text.split(" ")[1])
                 property var vehicle:   QGroundControl.multiVehicleManager.getVehicleById(vehicleId)

@@ -65,10 +65,10 @@ Rectangle {
                 anchors.fill:   parent
                 onClicked:      hamburgerMenu.popup()
 
-                Menu {
+                QGCMenu {
                     id: hamburgerMenu
 
-                    MenuItem {
+                    QGCMenuItem {
                         text:           qsTr("Delete")
                         onTriggered:    controller.removePoint(rallyPoint)
                     }

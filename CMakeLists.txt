@@ -1,42 +1,20 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(QGroundControl LANGUAGES CXX)
+project(QGroundControl LANGUAGES C CXX)
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # CMake build type
 # Debug Release RelWithDebInfo MinSizeRel Coverage
 if (NOT CMAKE_BUILD_TYPE)
 	# default to release with debug symbols
 	set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
-endif()
-
-if(DEFINED ENV{QT_VERSION})
-	set(QT_VERSION $ENV{QT_VERSION})
-endif()
-
-if(NOT QT_VERSION)
-	# try Qt 5.11.2 if none specified
-	set(QT_VERSION "5.11.2")
-endif()
-
-if(DEFINED ENV{QT_MKSPEC})
-	set(QT_MKSPEC $ENV{QT_MKSPEC})
-endif()
-
-if(UNIX AND NOT APPLE)
-	set(LINUX TRUE)
-endif()
-
-if(NOT QT_MKSPEC)
-	if(APPLE)
-		set(QT_MKSPEC clang_64)
-	elseif(LINUX)
-		set(QT_MKSPEC gcc_64)
-	elseif(WIN32)
-		set(QT_MKSPEC msvc2017_64)
-		#set(QT_MKSPEC winrt_x64_msvc2017)
-	endif()
 endif()
 
 # Add folder where are supportive functions
@@ -70,12 +48,6 @@ add_definitions(
 
 message(STATUS "QGroundControl version: ${git_tag}")
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 #=============================================================================
 # ccache
 #
@@ -85,9 +57,32 @@ if (CCACHE AND CCACHE_PROGRAM AND NOT DEFINED ENV{CCACHE_DISABLE})
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
+
+#=============================================================================
+# GStreamer
+#
+find_package(PkgConfig)
+pkg_check_modules(GST
+    gstreamer-1.0>=1.14
+    gstreamer-video-1.0>=1.14
+)
+
+if (GST_FOUND)
+    include_directories(
+        ${GST_INCLUDE_DIRS}
+        src/Taisync
+        src/Microhard
+    )
+    add_definitions(
+        -DQGC_GST_STREAMING
+        -DQGC_GST_TAISYNC_ENABLED
+        -DQGC_GST_MICROHARD_ENABLED
+    )
+endif()
 #=============================================================================
 # Qt5
 #
+include(Qt5QGCConfiguration)
 find_package(Qt5 ${QT_VERSION}
 	COMPONENTS
 		Bluetooth
@@ -99,6 +94,7 @@ find_package(Qt5 ${QT_VERSION}
 		Positioning
 		Quick
 		QuickWidgets
+		OpenGL
 		Sql
 		Svg
 		Test
@@ -107,9 +103,7 @@ find_package(Qt5 ${QT_VERSION}
 		Xml
 	REQUIRED
 	HINTS
-		$ENV{HOME}/Qt/${QT_VERSION}/${QT_MKSPEC}
-		$ENV{QT_PATH}/${QT_VERSION}/${QT_MKSPEC}
-		C:/Qt
+		${QT_LIBRARY_HINTS}
 )
 
 if(NOT QT_MKSPEC MATCHES "winrt")
@@ -118,46 +112,12 @@ if(NOT QT_MKSPEC MATCHES "winrt")
 			SerialPort
 		REQUIRED
 		HINTS
-			$ENV{HOME}/Qt/${QT_VERSION}/${QT_MKSPEC}
-			$ENV{QT_PATH}/${QT_VERSION}/${QT_MKSPEC}
-			C:/Qt
+			${QT_LIBRARY_HINTS}
 	)
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-	include(CTest)
-	enable_testing()
-	add_definitions(-DUNITTEST_BUILD)
-endif()
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	# clang and AppleClang
-	add_compile_options(
-		-Wall
-		-Wextra
-
-		-Wno-address-of-packed-member # ignore for mavlink
-	)
-
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	# GCC
-	if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9)
-		add_compile_options(-fdiagnostics-color=always)
-	endif()
-
-	add_compile_options(
-		-Wall
-		-Wextra
-	)
-	
-elseif (WIN32)
-
-	add_definitions(-D_USE_MATH_DEFINES)
-	add_compile_options(
-		/wd4244 # warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-		)
-
-endif()
+# Sets the default flags for compilation and linking.
+include(CompileOptions)
 
 # TODO: get qtquick compiler working
 #qtquick_compiler_add_resources(QGC_RESOURCES ${QGC_RESOURCES}
@@ -214,56 +174,5 @@ if(NOT QT_MKSPEC MATCHES "winrt")
 		)
 endif()
 
-if(LINUX)
-
-elseif(APPLE)
-
-	get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
-	get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
-	find_program(MACDEPLOYQT_EXECUTABLE macdeployqt HINTS "${_qt_bin_dir}")
-
-	add_custom_command(TARGET QGroundControl
-		POST_BUILD
-		COMMAND
-			${MACDEPLOYQT_EXECUTABLE} $<TARGET_FILE_DIR:QGroundControl>/../.. -appstore-compliant -qmldir=${CMAKE_SOURCE_DIR}/src
-		COMMAND
-			rsync -a ${CMAKE_SOURCE_DIR}/libs/lib/Frameworks $<TARGET_FILE_DIR:QGroundControl>/../../Contents/
-		COMMAND
-			${CMAKE_INSTALL_NAME_TOOL} -change "@rpath/SDL2.framework/Versions/A/SDL2" "@executable_path/../Frameworks/SDL2.framework/Versions/A/SDL2" $<TARGET_FILE:QGroundControl>
-	)
-
-	set_target_properties(QGroundControl PROPERTIES MACOSX_BUNDLE YES)
-
-elseif(WIN32)
-
-	if(MSVC) # Check if we are using the Visual Studio compiler
-		set_target_properties(${PROJECT_NAME} PROPERTIES
-			WIN32_EXECUTABLE YES
-			LINK_FLAGS "/ENTRY:mainCRTStartup"
-		)
-	endif()
-
-	# deploy
-	include(Windeployqt)
-	windeployqt(QGroundControl "QGroundControl-installer.exe")
-
-elseif(ANDROID)
-	include(AddQtAndroidApk)
-	add_qt_android_apk(QGroundControl.apk QGroundControl
-		PACKAGE_NAME "io.mavlink.qgroundcontrol"
-		#KEYSTORE ${CMAKE_CURRENT_LIST_DIR}/mykey.keystore myalias
-		#KEYSTORE_PASSWORD xxxxx
-	)
-
-elseif(LINUX)
-	# TODO: investigate https://github.com/probonopd/linuxdeployqt
-
-	add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/release/package/QGroundControl.AppImage
-		COMMAND ${CMAKE_SOURCE_DIR}/deploy/create_linux_appimage.sh ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/release/package;
-		DEPENDS QGroundControl
-		USES_TERMINAL
-	)
-	add_custom_target(appimage DEPENDS ${CMAKE_BINARY_DIR}/release/package/QGroundControl.AppImage)
-
-endif()
+include(QGCDeploy)
 

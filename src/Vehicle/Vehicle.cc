@@ -3756,12 +3756,7 @@ void Vehicle::_handleADSBVehicle(const mavlink_message_t& message)
     mavlink_msg_adsb_vehicle_decode(&message, &adsbVehicle);
     if (adsbVehicle.flags | ADSB_FLAGS_VALID_COORDS) {
         if (_adsbICAOMap.contains(adsbVehicle.ICAO_address)) {
-            if (adsbVehicle.tslc > maxTimeSinceLastSeen) {
-                ADSBVehicle* vehicle = _adsbICAOMap[adsbVehicle.ICAO_address];
-                _adsbVehicles.removeOne(vehicle);
-                _adsbICAOMap.remove(adsbVehicle.ICAO_address);
-                vehicle->deleteLater();
-            } else {
+            if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
                 _adsbICAOMap[adsbVehicle.ICAO_address]->update(adsbVehicle);
             }
         } else if (adsbVehicle.tslc <= maxTimeSinceLastSeen) {
@@ -3879,15 +3874,13 @@ void Vehicle::_trafficUpdate(bool alert, QString traffic_id, QString vehicle_id,
 }
 void Vehicle::_adsbTimerTimeout()
 {
-    // TODO: take into account _adsbICAOMap as well? Needs to be tested, especially the timeout
-
-    for (auto it = _trafficVehicleMap.begin(); it != _trafficVehicleMap.end();) {
-        if (it.value()->expired()) {
-            _adsbVehicles.removeOne(it.value());
-            delete it.value();
-            it = _trafficVehicleMap.erase(it);
-        } else {
-            ++it;
+    // Remove all expired ADSB vehicle whether from AirMap or ADSB Mavlink
+    for (int i=_adsbVehicles.count()-1; i>=0; i--) {
+        ADSBVehicle* adsbVehicle = _adsbVehicles.value<ADSBVehicle*>(i);
+        if (adsbVehicle->expired()) {
+            qDebug() << "ADSB expired";
+            _adsbVehicles.removeAt(i);
+            adsbVehicle->deleteLater();
         }
     }
 }
