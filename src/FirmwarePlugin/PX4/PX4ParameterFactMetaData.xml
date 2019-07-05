@@ -7729,6 +7729,21 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     </parameter>
   </group>
   <group name="Return Mode">
+    <parameter default="0" name="RTL_CONE_ANG" type="INT32">
+      <short_desc>Half-angle of the RTL cone</short_desc>
+      <long_desc>Defines the half-angle of the cone which defines the vehicle RTL behavior.</long_desc>
+      <min>0</min>
+      <max>90</max>
+      <unit>degrees</unit>
+      <values>
+        <value code="0">No cone, always climb to RTL_RETURN_ALT above home.</value>
+        <value code="25">25 degrees half cone angle.</value>
+        <value code="45">45 degrees half cone angle.</value>
+        <value code="65">65 degrees half cone angle.</value>
+        <value code="80">80 degrees half cone angle.</value>
+        <value code="90">Only climb to at least RTL_DESCEND_ALT above home.</value>
+      </values>
+    </parameter>
     <parameter default="30" name="RTL_DESCEND_ALT" type="FLOAT">
       <short_desc>Return mode loiter altitude</short_desc>
       <long_desc>Stay at this altitude above home position after RTL descending. Land (i.e. slowly descend) from this altitude if autolanding allowed.</long_desc>
