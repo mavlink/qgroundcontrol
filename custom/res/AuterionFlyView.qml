@@ -26,6 +26,7 @@ import QGroundControl.Airspace              1.0
 
 import AuterionQuickInterface               1.0
 import Auterion.Widgets                     1.0
+import Auterion.Specific                    1.0
 
 Item {
     anchors.fill: parent
@@ -228,12 +229,87 @@ Item {
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                !mainIsMap && _cameraPresent && _camera.paramComplete
+        visible:                (!mainIsMap && _cameraPresent && _camera.paramComplete)
         source:                 visible ? "/auterion/AuterionCameraControl.qml" : ""
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 4
+
+        onLoaded: {
+            item.showGimbalControl.connect(showGimbalJoystick)
+            item.gimbalControlVisibleChanged.connect(gimbalControlVisibleChanged)
+        }
+        function showGimbalJoystick(spawnX, spawnY) {
+            if(!joystick.shownFirstTime) {
+                joystick.x = spawnX - joystick.width;
+                joystick.y = spawnY;
+                joystick.shownFirstTime = true;
+            }
+        }
+        function gimbalControlVisibleChanged() {
+            joystick.visible = item.gimbalControlVisible;
+        }
+    }
+
+    GimbalVirtualJoystick {
+        id: joystick
+
+        visible: false
+        dpadPos: x > parent.width/2 ? GimbalVirtualJoystick.DpadPos.Left : GimbalVirtualJoystick.DpadPos.Right
+
+        x: 0
+        y: 0
+        textPointSize: ScreenTools.largeFontPointSize * 1.5
+
+        dragActive: true
+        dragMinX: 0
+        dragMaxX: parent.width
+        dragMinY: 0
+        dragMaxY: parent.height
+
+        panDegrees: _isCamera ? _camera.gimbalYaw : NaN
+        tiltDegrees: _isCamera ? _camera.gimbalPitch : NaN
+
+        returnAnimationDurationMs: 100
+
+        property bool shownFirstTime: false
+    }
+
+    Timer {
+
+        interval:   100
+        running:    joystick.visible
+        repeat:     true
+
+        property real absoluteAnglePitch: 0
+        property real absoluteAngleYaw: 0
+        property real joystickXPos: NaN
+        property real joystickYPos: NaN
+
+        onTriggered: {
+            if (activeVehicle) {
+                var yaw = absoluteAngleYaw
+                var pitch = absoluteAnglePitch
+                var oldYaw = absoluteAngleYaw;
+                var oldPitch = absoluteAnglePitch;
+                yaw += joystick.xUnitVal
+                pitch -= joystick.yUnitVal
+                yaw = clamp(yaw, -90, 90)
+                pitch = clamp(pitch, -90, 90)
+                if(yaw !== oldYaw || pitch !== oldPitch) {
+                    absoluteAnglePitch = pitch
+                    absoluteAngleYaw = yaw
+                    activeVehicle.gimbalControlValue(pitch, yaw)
+                    //joystick.panDegrees = absoluteAngleYaw
+                    //joystick.tiltDegrees = absoluteAnglePitch
+                }
+            }
+        }
+
+        function clamp(num, min, max) {
+            return Math.min(Math.max(num, min), max);
+        }
     }
 
     //-- Map Scale

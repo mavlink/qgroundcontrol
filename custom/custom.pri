@@ -130,7 +130,8 @@ exists($$PWD/custom/custom.pri) {
     }
 
     QML_IMPORT_PATH += \
-        $$QGCROOT/custom/res
+        $$QGCROOT/custom/res \
+        $$QGCROOT/custom/src/QmlControls
 
     SOURCES += \
         $$PWD/src/AuterionPlugin.cc \

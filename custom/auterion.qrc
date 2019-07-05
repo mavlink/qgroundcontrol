@@ -23,6 +23,7 @@
         <file alias="Home.svg">res/images/HomePosition.svg</file>
         <file alias="vehicleArrowOutline.svg">res/images/VehiclePositionOutline.svg</file>
         <file alias="vehicleArrowOpaque.svg">res/images/VehiclePositionOpaque.svg</file>
+        <file alias="x_sign.svg">res/images/x_sign.svg</file>
     </qresource>
     <qresource prefix="/auterion">
         <file alias="AuterionArmedIndicator.qml">res/MainToolbar/AuterionArmedIndicator.qml</file>
@@ -101,13 +102,14 @@
         <file alias="Auterion/Widgets/AuterionVehicleButton.qml">res/Auterion/Widgets/AuterionVehicleButton.qml</file>
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
+        <file alias="Auterion/Controls/qmldir">res/Auterion/Controls/qmldir</file>
+        <file alias="Auterion/Controls/VirtualJoystick.qml">src/QmlControls/QGroundControl/Controls/VirtualJoystick.qml</file>
+        <file alias="Auterion/Specific/qmldir">res/Auterion/Specific/qmldir</file>
+        <file alias="Auterion/Specific/GimbalVirtualJoystick.qml">src/QmlControls/QGroundControl/Specific/GimbalVirtualJoystick.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
         <file alias="boop.wav">res/audio/boop.wav</file>
         <file alias="camera.wav">res/audio/camera.wav</file>
-    </qresource>
-    <qresource prefix="/">
-        <file>res/Auterion/Widgets/GimbalVirtualJoystick.qml</file>
     </qresource>
 </RCC>
