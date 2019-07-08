@@ -4015,7 +4015,6 @@ void Vehicle::flashBootloader(void)
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
-    qDebug() << "Gimbal: " << pitch << yaw;
     sendMavCommand(
         _defaultComponentId,
         MAV_CMD_DO_MOUNT_CONTROL,

@@ -24,10 +24,6 @@ Button {
 
     function getBatteryColor() {
         if(vehicle) {
-            if(vehicle.batterySummary == undefined)
-                console.warn("Battery Summary: Not initialized yet")
-            else
-                console.warn("Battery Summary: OK")
             if(vehicle.batterySummary.percentRemaining.value > 75) {
                 return qgcPal.colorGreen
             }
