@@ -6,6 +6,4 @@
 	url = https://github.com/mavlink/c_library_v2.git
 [submodule "custom/qzxing"]
 	path = custom/qzxing
-        #url = https://github.com/ftylitak/qzxing.git
-        # Temporary in oder to provide a fix
-        url = https://github.com/stefandunca/qzxing.git
+        url = https://github.com/ftylitak/qzxing.git
