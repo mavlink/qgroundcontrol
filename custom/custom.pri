@@ -14,8 +14,8 @@ exists($$PWD/custom/custom.pri) {
     #   Major and minor versions are defined here (manually)
 
     AUTERION_QGC_VER_MAJOR = 1
-    AUTERION_QGC_VER_MINOR = 1
-    AUTERION_QGC_VER_FIRST_BUILD = 140
+    AUTERION_QGC_VER_MINOR = 2
+    AUTERION_QGC_VER_FIRST_BUILD = 146
 
     #   Build number is automatic
     #   Uses the current branch. This way it works on any branch including build-server's PR branches
