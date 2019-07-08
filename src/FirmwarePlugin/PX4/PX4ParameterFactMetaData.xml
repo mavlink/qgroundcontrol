@@ -9677,6 +9677,12 @@ is less than 50% of this value</short_desc>
     </parameter>
   </group>
   <group name="Telemetry">
+    <parameter default="0" name="TEL_BST_EN" type="INT32">
+      <short_desc>Blacksheep telemetry Enable</short_desc>
+      <long_desc>If true, the FMU will try to connect to Blacksheep telemetry on start up</long_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="TEL_FRSKY_CONFIG" type="INT32">
       <short_desc>Serial Configuration for FrSky Telemetry</short_desc>
       <long_desc>Configure on which serial port to run FrSky Telemetry.</long_desc>
