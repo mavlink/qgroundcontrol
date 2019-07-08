@@ -670,6 +670,7 @@ public:
     Q_PROPERTY(Fact* throttlePct        READ throttlePct        CONSTANT)
 
     Q_PROPERTY(FactGroup* gps               READ gpsFactGroup               CONSTANT)
+    Q_PROPERTY(FactGroup* batterySummary    READ batterySummaryFactGroup    CONSTANT)
     Q_PROPERTY(FactGroup* battery           READ battery1FactGroup          CONSTANT)
     Q_PROPERTY(FactGroup* battery2          READ battery2FactGroup          CONSTANT)
     Q_PROPERTY(FactGroup* wind              READ windFactGroup              CONSTANT)

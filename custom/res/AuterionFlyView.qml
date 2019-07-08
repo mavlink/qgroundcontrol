@@ -268,8 +268,8 @@ Item {
         dragMinY: 0
         dragMaxY: parent.height
 
-        panDegrees: _isCamera ? _camera.gimbalYaw : NaN
-        tiltDegrees: _isCamera ? _camera.gimbalPitch : NaN
+        panDegrees: _isCamera && _camera ? _camera.gimbalYaw : NaN
+        tiltDegrees: _isCamera && _camera ? _camera.gimbalPitch : NaN
 
         returnAnimationDurationMs: 100
 

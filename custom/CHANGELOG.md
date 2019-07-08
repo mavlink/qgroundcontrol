@@ -1,5 +1,10 @@
 ## AGS Changelog
 
+### July 08 2019
+
+* Implemented 2D axes gimbal control using virtual joystick
+* Separate individual battery status from battery summary
+
 ### June 30 2019
 
 * Make guided altitude slider zero-based when vehicle is on the ground (positive values only)

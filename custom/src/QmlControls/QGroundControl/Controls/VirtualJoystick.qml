@@ -1,6 +1,6 @@
 import QtQuick 2.4
-import QtQuick.Shapes 1.12
-import QtGraphicalEffects 1.10
+import QtQuick.Shapes 1.11
+import QtGraphicalEffects 1.0
 
 Item {
     id: _root
