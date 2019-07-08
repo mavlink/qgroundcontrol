@@ -239,6 +239,7 @@ Item {
         onLoaded: {
             item.showGimbalControl.connect(showGimbalJoystick)
             item.gimbalControlVisibleChanged.connect(gimbalControlVisibleChanged)
+            item.gimbalControlVisible = joystick.visible
         }
         function showGimbalJoystick(spawnX, spawnY) {
             if(!joystick.shownFirstTime) {
@@ -256,17 +257,25 @@ Item {
         id: joystick
 
         visible: false
-        dpadPos: x > parent.width/2 ? GimbalVirtualJoystick.DpadPos.Left : GimbalVirtualJoystick.DpadPos.Right
+        dpadPos: x > parent.width/2 ? "Left" : "Right"
 
         x: 0
         y: 0
         textPointSize: ScreenTools.largeFontPointSize * 1.5
 
+        mainColor: qgcPal.windowShadeDark
+        secondaryColor: qgcPal.windowShade
+        stickColor: qgcPal.buttonText
+        darkerBorders: 1.4
+        buttonBackgroundColor: qgcPal.buttonText
+        buttonContentColor: qgcPal.button
+        textColor: qgcPal.text
+
         dragActive: true
         dragMinX: 0
-        dragMaxX: parent.width
+        dragMaxX: parent.width - joystick.width
         dragMinY: 0
-        dragMaxY: parent.height
+        dragMaxY: parent.height - joystick.height
 
         panDegrees: _isCamera && _camera ? _camera.gimbalYaw : NaN
         tiltDegrees: _isCamera && _camera ? _camera.gimbalPitch : NaN

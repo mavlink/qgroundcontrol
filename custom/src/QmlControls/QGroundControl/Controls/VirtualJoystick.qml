@@ -1,5 +1,4 @@
-import QtQuick 2.4
-import QtQuick.Shapes 1.11
+import QtQuick 2.11
 import QtGraphicalEffects 1.0
 
 Item {
@@ -69,17 +68,26 @@ Item {
 
             onPositionChanged: {
                 if(_lastMousePress !== null) {
-                    var distFromCenter = Math.hypot(stickAreaItem._stickCenterPos.x - mouse.x, stickAreaItem._stickCenterPos.y - mouse.y);
+                    // TODO: remove when upgrade to 5.12, Qt 5.11.0 doesn't have the hypot function
+                    if (!Math.hypot) Math.hypot = function() {
+                      var y = 0, i = arguments.length;
+                      while (i--) y += arguments[i] * arguments[i];
+                      return Math.sqrt(y);
+                    };
+
+                    var dcX = _lastMousePress.x - stickAreaItem._stickCenterPos.x
+                    var dcY = _lastMousePress.y - stickAreaItem._stickCenterPos.y
+                    var distFromCenter = Math.hypot(_lastMousePress.x - mouse.x, _lastMousePress.y - mouse.y);
                     if(distFromCenter < stickAreaItem._movementRadius) {
-                        stickItem.xC = mouse.x;
-                        stickItem.yC = mouse.y;
+                        stickItem.xC = mouse.x - dcX;
+                        stickItem.yC = mouse.y - dcY;
                     }
                     else {
-                        var angle = Math.atan2(stickAreaItem._stickCenterPos.x - mouse.x, stickAreaItem._stickCenterPos.y - mouse.y);
+                        var angle = Math.atan2(_lastMousePress.x - mouse.x, _lastMousePress.y - mouse.y);
                         var maxX = Math.cos(angle) * stickAreaItem._movementRadius;
                         var maxY = Math.sin(angle) * stickAreaItem._movementRadius;
-                        stickItem.xC = stickAreaItem._stickCenterPos.x - maxY;
-                        stickItem.yC = stickAreaItem._stickCenterPos.y - maxX;
+                        stickItem.xC = _lastMousePress.x - maxY - dcX;
+                        stickItem.yC = _lastMousePress.y - maxX - dcY;
                         _root.stickLimited();
                     }
                 }

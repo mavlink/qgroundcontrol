@@ -100,7 +100,7 @@ Item {
                     id:                 gimbalButton
                     icon.source:        "/auterion/img/gimbal_icon.svg"
                     flat:               true
-                    property bool isChecked: false
+                    property bool       isChecked: checked
                     onReleased: {
                         if(!isChecked) {
                             var gimbalTarget = mainWindow.contentItem.mapFromItem(gimbalButton, 0, 0);

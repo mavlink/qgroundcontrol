@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.11
 import QtQuick.Controls 2.4
 import QtGraphicalEffects 1.0
 
@@ -34,15 +34,7 @@ Item {
 
     property real sizeScale: textPointSize/10
 
-    enum DpadPos {
-        Left,
-        Top,
-        Right,
-        Bottom,
-        None
-    }
-
-    property int dpadPos: GimbalVirtualJoystick.DpadPos.Right
+    property string dpadPos: "Right"
 
     VirtualJoystick {
         id: joystickCtrl
@@ -161,7 +153,7 @@ Item {
         }
 
         onReleased: {
-            _root.dpadPos = GimbalVirtualJoystick.DpadPos.None
+            _root.dpadPos = "None"
         }
     }
 
@@ -169,7 +161,7 @@ Item {
     states: [
         State {
             name: "DpadNone"
-            when: _root.dpadPos === GimbalVirtualJoystick.DpadPos.None
+            when: _root.dpadPos === "None"
             PropertyChanges {
                 target: dpadCtrl
                 visible: false
@@ -181,7 +173,7 @@ Item {
         },
         State {
             name: "DpadRight"
-            when: _root.dpadPos === GimbalVirtualJoystick.DpadPos.Right
+            when: _root.dpadPos === "Right"
 
             PropertyChanges {
                 target: _root
@@ -229,7 +221,7 @@ Item {
         },
         State {
             name: "DpadLeft"
-            when: _root.dpadPos === GimbalVirtualJoystick.DpadPos.Left
+            when: _root.dpadPos === "Left"
 
             PropertyChanges {
                 target: _root
@@ -277,7 +269,7 @@ Item {
         },
         State {
             name: "DpadTop"
-            when: _root.dpadPos === GimbalVirtualJoystick.DpadPos.Top
+            when: _root.dpadPos === "Top"
 
             PropertyChanges {
                 target: _root
@@ -321,7 +313,7 @@ Item {
         },
         State {
             name: "DpadBottom"
-            when: _root.dpadPos === GimbalVirtualJoystick.DpadPos.Bottom
+            when: _root.dpadPos === "Bottom"
 
             PropertyChanges {
                 target: _root
