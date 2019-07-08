@@ -23,6 +23,7 @@
         <file alias="Home.svg">res/images/HomePosition.svg</file>
         <file alias="vehicleArrowOutline.svg">res/images/VehiclePositionOutline.svg</file>
         <file alias="vehicleArrowOpaque.svg">res/images/VehiclePositionOpaque.svg</file>
+        <file alias="x_sign.svg">res/images/x_sign.svg</file>
     </qresource>
     <qresource prefix="/auterion">
         <file alias="AuterionArmedIndicator.qml">res/MainToolbar/AuterionArmedIndicator.qml</file>
@@ -85,7 +86,7 @@
         <file alias="void.png">res/images/void.png</file>
         <file alias="zoom_icon.svg">res/images/zoom_icon.svg</file>
     </qresource>
-    <qresource prefix="Auterion/Widgets">
+    <qresource prefix="/Auterion/Widgets">
         <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
         <file alias="Auterion/Widgets/AuterionAttitudeWidget.qml">res/Auterion/Widgets/AuterionAttitudeWidget.qml</file>
         <file alias="Auterion/Widgets/AuterionComboBox.qml">res/Auterion/Widgets/AuterionComboBox.qml</file>
@@ -101,6 +102,10 @@
         <file alias="Auterion/Widgets/AuterionVehicleButton.qml">res/Auterion/Widgets/AuterionVehicleButton.qml</file>
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
+        <file alias="Auterion/Controls/qmldir">res/Auterion/Controls/qmldir</file>
+        <file alias="Auterion/Controls/VirtualJoystick.qml">src/QmlControls/QGroundControl/Controls/VirtualJoystick.qml</file>
+        <file alias="Auterion/Specific/qmldir">res/Auterion/Specific/qmldir</file>
+        <file alias="Auterion/Specific/GimbalVirtualJoystick.qml">src/QmlControls/QGroundControl/Specific/GimbalVirtualJoystick.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>

@@ -56,6 +56,9 @@ Item {
     property Fact   _evFact:                _camera ? _camera.ev : null
     property Fact   _irPaletteFact:         _camera ? _camera.irPalette : null
 
+    signal showGimbalControl(real spawnX, real spawnX)
+    property alias gimbalControlVisible: gimbalButton.isChecked
+
     Connections {
         target: QGroundControl.multiVehicleManager.activeVehicle
         onConnectionLostChanged: {
@@ -97,9 +100,16 @@ Item {
                     id:                 gimbalButton
                     icon.source:        "/auterion/img/gimbal_icon.svg"
                     flat:               true
-                    onClicked: {
-                        checked = true
-                        if(!gimbalQuickSetting.visible) gimbalQuickSetting.open()
+                    property bool isChecked: false
+                    onReleased: {
+                        if(!isChecked) {
+                            var gimbalTarget = mainWindow.contentItem.mapFromItem(gimbalButton, 0, 0);
+                            var x = gimbalTarget ? gimbalTarget.x - width - _spacers : 0
+                            var y = gimbalTarget ? gimbalTarget.y + mainWindow.header.height - (gimbalButton.height/2): 0
+                            showGimbalControl(x, y)
+                        }
+                        isChecked = !isChecked
+                        checked = isChecked
                     }
                 }
                 AuterionQuickSettingButton {
@@ -387,59 +397,6 @@ Item {
             anchors.centerIn: parent
             onIncremented:  _evFact.value = _evFact.value + 1
             onDecremented:  _evFact.value = _evFact.value - 1
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    //-- Gimbal Quick Setting
-    Popup {
-        id:                 gimbalQuickSetting
-        width:              gimbalQuickSettingControl.width  * 2
-        height:             gimbalQuickSettingControl.height * 2
-        modal:              true
-        focus:              true
-        dim:                false
-        parent:             Overlay.overlay
-        closePolicy:        Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        x:                  _gimbalPopupTarget ? _gimbalPopupTarget.x - width - _spacers : 0
-        y:                  _gimbalPopupTarget ? _gimbalPopupTarget.y + mainWindow.header.height - ((gimbalQuickSetting.height - gimbalButton.height) / 2): 0
-        property var _gimbalPopupTarget: null
-        onVisibleChanged: {
-            if(visible) {
-                _gimbalPopupTarget = mainWindow.contentItem.mapFromItem(gimbalButton, 0, 0)
-            } else {
-                gimbalButton.checked = false
-            }
-        }
-        background: Rectangle {
-            anchors.fill:   parent
-            color:          qgcPal.windowShade
-            radius:         2
-            clip:           true
-        }
-        AuterionQuickSetting {
-            id:             gimbalQuickSettingControl
-            text:           _camera ? _camera.gimbalPitch.toFixed(0) : 0
-            showValue:      true
-            anchors.centerIn: parent
-            onIncremented:  {
-                if(_camera) {
-                    var p = _camera.gimbalPitch + 5
-                    if(p > 90.0) p = 90
-                    if(p !== _camera.gimbalPitch) {
-                        activeVehicle.gimbalControlValue(p,0)
-                    }
-                }
-            }
-            onDecremented: {
-                if(_camera) {
-                    var p = _camera.gimbalPitch - 5
-                    if(p < -90.0) p = -90
-                    if(p !== _camera.gimbalPitch) {
-                        activeVehicle.gimbalControlValue(p,0)
-                    }
-                }
-            }
         }
     }
 
