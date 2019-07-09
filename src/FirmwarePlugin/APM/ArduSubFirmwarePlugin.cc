@@ -48,17 +48,17 @@ APMSubMode::APMSubMode(uint32_t mode, bool settable) :
 ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
     _infoFactGroup(this)
 {
-    QList<APMCustomMode> supportedFlightModes;
-    supportedFlightModes << APMSubMode(APMSubMode::MANUAL ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::STABILIZE ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::ACRO ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::ALT_HOLD  ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::AUTO ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::GUIDED ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::CIRCLE ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::SURFACE ,false);
-    supportedFlightModes << APMSubMode(APMSubMode::POSHOLD ,true);
-    setSupportedModes(supportedFlightModes);
+    setSupportedModes({
+        APMSubMode(APMSubMode::MANUAL ,true),
+        APMSubMode(APMSubMode::STABILIZE ,true),
+        APMSubMode(APMSubMode::ACRO ,true),
+        APMSubMode(APMSubMode::ALT_HOLD  ,true),
+        APMSubMode(APMSubMode::AUTO ,true),
+        APMSubMode(APMSubMode::GUIDED ,true),
+        APMSubMode(APMSubMode::CIRCLE ,true),
+        APMSubMode(APMSubMode::SURFACE ,false),
+        APMSubMode(APMSubMode::POSHOLD ,true),
+    });
 
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
