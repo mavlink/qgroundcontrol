@@ -25,7 +25,7 @@ MavlinkConsoleController::MavlinkConsoleController()
 MavlinkConsoleController::~MavlinkConsoleController()
 {
     if (_vehicle) {
-        QByteArray msg("");
+        QByteArray msg;
         _sendSerialData(msg, true);
     }
 }

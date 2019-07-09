@@ -409,7 +409,7 @@ MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
     } else {
         v = new QGCMAVLinkVehicle(this, static_cast<uint8_t>(vehicle->id()));
         _vehicles.append(v);
-        _vehicleNames.append(QString(tr("Vehicle %1")).arg(vehicle->id()));
+        _vehicleNames.append(tr("Vehicle %1").arg(vehicle->id()));
     }
     emit vehiclesChanged();
 }
@@ -422,7 +422,7 @@ MAVLinkInspectorController::_vehicleRemoved(Vehicle* vehicle)
     if(v) {
         v->deleteLater();
         _vehicles.removeOne(v);
-        QString vs = QString(tr("Vehicle %1")).arg(vehicle->id());
+        QString vs = tr("Vehicle %1").arg(vehicle->id());
         _vehicleNames.removeOne(vs);
         emit vehiclesChanged();
     }
@@ -438,7 +438,7 @@ MAVLinkInspectorController::_receiveMessage(LinkInterface* link, mavlink_message
     if(!v) {
         v = new QGCMAVLinkVehicle(this, message.sysid);
         _vehicles.append(v);
-        _vehicleNames.append(QString(tr("Vehicle %1")).arg(message.sysid));
+        _vehicleNames.append(tr("Vehicle %1").arg(message.sysid));
         emit vehiclesChanged();
         if(!_activeVehicle) {
             _activeVehicle = v;
