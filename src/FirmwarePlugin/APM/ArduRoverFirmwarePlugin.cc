@@ -16,21 +16,20 @@ FirmwarePlugin::remapParamNameMajorVersionMap_t ArduRoverFirmwarePlugin::_remapP
 APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
 {
-    QMap<uint32_t,QString> enumToString;
-    enumToString.insert(MANUAL,         "Manual");
-    enumToString.insert(ACRO,           "Acro");
-    enumToString.insert(STEERING,       "Steering");
-    enumToString.insert(HOLD,           "Hold");
-    enumToString.insert(LOITER,         "Loiter");
-    enumToString.insert(FOLLOW,         "Follow");
-    enumToString.insert(SIMPLE,         "Simple");
-    enumToString.insert(AUTO,           "Auto");
-    enumToString.insert(RTL,            "RTL");
-    enumToString.insert(SMART_RTL,      "Smart RTL");
-    enumToString.insert(GUIDED,         "Guided");
-    enumToString.insert(INITIALIZING,   "Initializing");
-
-    setEnumToStringMapping(enumToString);
+    setEnumToStringMapping({
+        {MANUAL,         "Manual"},
+        {ACRO,           "Acro"},
+        {STEERING,       "Steering"},
+        {HOLD,           "Hold"},
+        {LOITER,         "Loiter"},
+        {FOLLOW,         "Follow"},
+        {SIMPLE,         "Simple"},
+        {AUTO,           "Auto"},
+        {RTL,            "RTL"},
+        {SMART_RTL,      "Smart RTL"},
+        {GUIDED,         "Guided"},
+        {INITIALIZING,   "Initializing"},
+    });
 }
 
 ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
