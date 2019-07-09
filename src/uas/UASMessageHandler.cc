@@ -149,42 +149,41 @@ void UASMessageHandler::handleTextMessage(int, int compId, int severity, QString
     }
 
     // And determine the text for the severitie
-    QString severityText("");
+    QString severityText;
     switch (severity)
     {
     case MAV_SEVERITY_EMERGENCY:
-        severityText = QString(tr(" EMERGENCY:"));
+        severityText = tr(" EMERGENCY:");
         break;
     case MAV_SEVERITY_ALERT:
-        severityText = QString(tr(" ALERT:"));
+        severityText = tr(" ALERT:");
         break;
     case MAV_SEVERITY_CRITICAL:
-        severityText = QString(tr(" Critical:"));
+        severityText = tr(" Critical:");
         break;
     case MAV_SEVERITY_ERROR:
-        severityText = QString(tr(" Error:"));
+        severityText = tr(" Error:");
         break;
     case MAV_SEVERITY_WARNING:
-        severityText = QString(tr(" Warning:"));
+        severityText = tr(" Warning:");
         break;
     case MAV_SEVERITY_NOTICE:
-        severityText = QString(tr(" Notice:"));
+        severityText = tr(" Notice:");
         break;
     case MAV_SEVERITY_INFO:
-        severityText = QString(tr(" Info:"));
+        severityText = tr(" Info:");
         break;
     case MAV_SEVERITY_DEBUG:
-        severityText = QString(tr(" Debug:"));
+        severityText = tr(" Debug:");
         break;
     default:
-        severityText = QString(tr(""));
         break;
     }
 
     // Finally preppend the properly-styled text with a timestamp.
     QString dateString = QDateTime::currentDateTime().toString("hh:mm:ss.zzz");
     UASMessage* message = new UASMessage(compId, severity, text);
-    QString compString("");
+    QString compString;
     if (_multiComp) {
         compString = QString(" COMP:%1").arg(compId);
     }

@@ -197,14 +197,14 @@ Rectangle {
                             Layout.minimumWidth: _labelWidth
                         }
                         QGCLabel {
-                            text:           QGroundControl.taisyncManager.connected ? QGroundControl.taisyncManager.serialNumber : qsTr("")
+                            text:           QGroundControl.taisyncManager.connected ? QGroundControl.taisyncManager.serialNumber : ""
                             Layout.minimumWidth: _valueWidth
                         }
                         QGCLabel {
                             text:           qsTr("Firmware Version:")
                         }
                         QGCLabel {
-                            text:           QGroundControl.taisyncManager.connected ? QGroundControl.taisyncManager.fwVersion : qsTr("")
+                            text:           QGroundControl.taisyncManager.connected ? QGroundControl.taisyncManager.fwVersion : ""
                         }
                     }
                 }

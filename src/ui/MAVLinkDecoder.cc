@@ -227,7 +227,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     QString fieldType;
     uint8_t* m = (uint8_t*)(msgDict[msgid].payload64);
     QString name("%1.%2");
-    QString unit("");
+    QString unit;
 
     // Debug vector messages
     if (msgid == MAVLINK_MSG_ID_DEBUG_VECT)

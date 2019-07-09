@@ -135,9 +135,6 @@ void GeoTagController::_setErrorMessage(const QString& error)
 
 GeoTagWorker::GeoTagWorker()
     : _cancel(false)
-    , _logFile("")
-    , _imageDirectory("")
-    , _saveDirectory("")
 {
 
 }
