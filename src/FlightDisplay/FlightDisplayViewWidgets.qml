@@ -74,7 +74,7 @@ Item {
                     break;
                 }
             } else {
-                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
             }
         } else {
             instrumentsLoader.source = ""
