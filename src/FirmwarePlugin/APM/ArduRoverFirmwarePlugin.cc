@@ -34,20 +34,20 @@ APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
 
 ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
 {
-    QList<APMCustomMode> supportedFlightModes;
-    supportedFlightModes << APMRoverMode(APMRoverMode::MANUAL       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::ACRO         ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::STEERING     ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::HOLD         ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::LOITER       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::FOLLOW       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::SIMPLE       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::AUTO         ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::RTL          ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::SMART_RTL    ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::GUIDED       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::INITIALIZING ,false);
-    setSupportedModes(supportedFlightModes);
+    setSupportedModes({
+        APMRoverMode(APMRoverMode::MANUAL       ,true),
+        APMRoverMode(APMRoverMode::ACRO         ,true),
+        APMRoverMode(APMRoverMode::STEERING     ,true),
+        APMRoverMode(APMRoverMode::HOLD         ,true),
+        APMRoverMode(APMRoverMode::LOITER       ,true),
+        APMRoverMode(APMRoverMode::FOLLOW       ,true),
+        APMRoverMode(APMRoverMode::SIMPLE       ,true),
+        APMRoverMode(APMRoverMode::AUTO         ,true),
+        APMRoverMode(APMRoverMode::RTL          ,true),
+        APMRoverMode(APMRoverMode::SMART_RTL    ,true),
+        APMRoverMode(APMRoverMode::GUIDED       ,true),
+        APMRoverMode(APMRoverMode::INITIALIZING ,false),
+    });
 
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
