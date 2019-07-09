@@ -32,18 +32,17 @@ FirmwarePlugin::remapParamNameMajorVersionMap_t ArduSubFirmwarePlugin::_remapPar
 APMSubMode::APMSubMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
-    QMap<uint32_t,QString> enumToString;
-    enumToString.insert(MANUAL, "Manual");
-    enumToString.insert(STABILIZE, "Stabilize");
-    enumToString.insert(ACRO, "Acro");
-    enumToString.insert(ALT_HOLD,  "Depth Hold");
-    enumToString.insert(AUTO, "Auto");
-    enumToString.insert(GUIDED, "Guided");
-    enumToString.insert(CIRCLE, "Circle");
-    enumToString.insert(SURFACE, "Surface");
-    enumToString.insert(POSHOLD, "Position Hold");
-
-    setEnumToStringMapping(enumToString);
+    setEnumToStringMapping({
+        {MANUAL, "Manual"},
+        {STABILIZE, "Stabilize"},
+        {ACRO, "Acro"},
+        {ALT_HOLD,  "Depth Hold"},
+        {AUTO, "Auto"},
+        {GUIDED, "Guided"},
+        {CIRCLE, "Circle"},
+        {SURFACE, "Surface"},
+        {POSHOLD, "Position Hold"},
+    });
 }
 
 ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
