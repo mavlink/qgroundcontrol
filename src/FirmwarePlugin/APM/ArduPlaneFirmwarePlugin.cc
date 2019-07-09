@@ -40,27 +40,27 @@ APMPlaneMode::APMPlaneMode(uint32_t mode, bool settable)
 
 ArduPlaneFirmwarePlugin::ArduPlaneFirmwarePlugin(void)
 {
-    QList<APMCustomMode> supportedFlightModes;
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::MANUAL          ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::CIRCLE          ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::STABILIZE       ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::TRAINING        ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::ACRO            ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::FLY_BY_WIRE_A   ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::FLY_BY_WIRE_B   ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::CRUISE          ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::AUTOTUNE        ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::AUTO            ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::RTL             ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::LOITER          ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::GUIDED          ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::INITIALIZING    ,false);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::QSTABILIZE      ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::QHOVER          ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::QLOITER         ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::QLAND           ,true);
-    supportedFlightModes << APMPlaneMode(APMPlaneMode::QRTL            ,true);
-    setSupportedModes(supportedFlightModes);
+    setSupportedModes({
+        APMPlaneMode(APMPlaneMode::MANUAL          ,true),
+        APMPlaneMode(APMPlaneMode::CIRCLE          ,true),
+        APMPlaneMode(APMPlaneMode::STABILIZE       ,true),
+        APMPlaneMode(APMPlaneMode::TRAINING        ,true),
+        APMPlaneMode(APMPlaneMode::ACRO            ,true),
+        APMPlaneMode(APMPlaneMode::FLY_BY_WIRE_A   ,true),
+        APMPlaneMode(APMPlaneMode::FLY_BY_WIRE_B   ,true),
+        APMPlaneMode(APMPlaneMode::CRUISE          ,true),
+        APMPlaneMode(APMPlaneMode::AUTOTUNE        ,true),
+        APMPlaneMode(APMPlaneMode::AUTO            ,true),
+        APMPlaneMode(APMPlaneMode::RTL             ,true),
+        APMPlaneMode(APMPlaneMode::LOITER          ,true),
+        APMPlaneMode(APMPlaneMode::GUIDED          ,true),
+        APMPlaneMode(APMPlaneMode::INITIALIZING    ,false),
+        APMPlaneMode(APMPlaneMode::QSTABILIZE      ,true),
+        APMPlaneMode(APMPlaneMode::QHOVER          ,true),
+        APMPlaneMode(APMPlaneMode::QLOITER         ,true),
+        APMPlaneMode(APMPlaneMode::QLAND           ,true),
+        APMPlaneMode(APMPlaneMode::QRTL            ,true),
+    });
 
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_10 = _remapParamName[3][10];
