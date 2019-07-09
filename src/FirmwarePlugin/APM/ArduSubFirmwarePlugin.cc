@@ -209,11 +209,13 @@ const QVariantList& ArduSubFirmwarePlugin::toolBarIndicators(const Vehicle* vehi
     Q_UNUSED(vehicle);
     //-- Sub specific list of indicators (Enter your modified list here)
     if(_toolBarIndicators.size() == 0) {
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")));
+        _toolBarIndicators = QVariantList({
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
+        });
     }
     return _toolBarIndicators;
 }
