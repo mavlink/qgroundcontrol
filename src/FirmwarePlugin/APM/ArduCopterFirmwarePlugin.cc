@@ -22,28 +22,27 @@ FirmwarePlugin::remapParamNameMajorVersionMap_t ArduCopterFirmwarePlugin::_remap
 APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
-    QMap<uint32_t,QString> enumToString;
-    enumToString.insert(STABILIZE,      "Stabilize");
-    enumToString.insert(ACRO,           "Acro");
-    enumToString.insert(ALT_HOLD,       "Altitude Hold");
-    enumToString.insert(AUTO,           "Auto");
-    enumToString.insert(GUIDED,         "Guided");
-    enumToString.insert(LOITER,         "Loiter");
-    enumToString.insert(RTL,            "RTL");
-    enumToString.insert(CIRCLE,         "Circle");
-    enumToString.insert(LAND,           "Land");
-    enumToString.insert(DRIFT,          "Drift");
-    enumToString.insert(SPORT,          "Sport");
-    enumToString.insert(FLIP,           "Flip");
-    enumToString.insert(AUTOTUNE,       "Autotune");
-    enumToString.insert(POS_HOLD,       "Position Hold");
-    enumToString.insert(BRAKE,          "Brake");
-    enumToString.insert(THROW,          "Throw");
-    enumToString.insert(AVOID_ADSB,     "Avoid ADSB");
-    enumToString.insert(GUIDED_NOGPS,   "Guided No GPS");
-    enumToString.insert(SAFE_RTL,       "Smart RTL");
-
-    setEnumToStringMapping(enumToString);
+    setEnumToStringMapping({
+        {STABILIZE,      "Stabilize"},
+        {ACRO,           "Acro"},
+        {ALT_HOLD,       "Altitude Hold"},
+        {AUTO,           "Auto"},
+        {GUIDED,         "Guided"},
+        {LOITER,         "Loiter"},
+        {RTL,            "RTL"},
+        {CIRCLE,         "Circle"},
+        {LAND,           "Land"},
+        {DRIFT,          "Drift"},
+        {SPORT,          "Sport"},
+        {FLIP,           "Flip"},
+        {AUTOTUNE,       "Autotune"},
+        {POS_HOLD,       "Position Hold"},
+        {BRAKE,          "Brake"},
+        {THROW,          "Throw"},
+        {AVOID_ADSB,     "Avoid ADSB"},
+        {GUIDED_NOGPS,   "Guided No GPS"},
+        {SAFE_RTL,       "Smart RTL"},
+    });
 }
 
 ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
