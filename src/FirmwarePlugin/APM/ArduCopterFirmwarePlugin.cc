@@ -47,28 +47,27 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
 
 ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
 {
-    QList<APMCustomMode> supportedFlightModes;
-    supportedFlightModes << APMCopterMode(APMCopterMode::STABILIZE ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::ACRO      ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::ALT_HOLD  ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::AUTO      ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::GUIDED    ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::LOITER    ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::RTL       ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::CIRCLE    ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::LAND      ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::DRIFT     ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::SPORT     ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::FLIP      ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::AUTOTUNE  ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::POS_HOLD  ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::BRAKE     ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::THROW     ,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::AVOID_ADSB,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::GUIDED_NOGPS,true);
-    supportedFlightModes << APMCopterMode(APMCopterMode::SAFE_RTL,true);
-
-    setSupportedModes(supportedFlightModes);
+    setSupportedModes({
+        APMCopterMode(APMCopterMode::STABILIZE ,true),
+        APMCopterMode(APMCopterMode::ACRO      ,true),
+        APMCopterMode(APMCopterMode::ALT_HOLD  ,true),
+        APMCopterMode(APMCopterMode::AUTO      ,true),
+        APMCopterMode(APMCopterMode::GUIDED    ,true),
+        APMCopterMode(APMCopterMode::LOITER    ,true),
+        APMCopterMode(APMCopterMode::RTL       ,true),
+        APMCopterMode(APMCopterMode::CIRCLE    ,true),
+        APMCopterMode(APMCopterMode::LAND      ,true),
+        APMCopterMode(APMCopterMode::DRIFT     ,true),
+        APMCopterMode(APMCopterMode::SPORT     ,true),
+        APMCopterMode(APMCopterMode::FLIP      ,true),
+        APMCopterMode(APMCopterMode::AUTOTUNE  ,true),
+        APMCopterMode(APMCopterMode::POS_HOLD  ,true),
+        APMCopterMode(APMCopterMode::BRAKE     ,true),
+        APMCopterMode(APMCopterMode::THROW     ,true),
+        APMCopterMode(APMCopterMode::AVOID_ADSB,true),
+        APMCopterMode(APMCopterMode::GUIDED_NOGPS,true),
+        APMCopterMode(APMCopterMode::SAFE_RTL,true),
+    });
 
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_6 = _remapParamName[3][6];
