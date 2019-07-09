@@ -1284,12 +1284,14 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonArray(const QJsonArr
 
 QVariant FactMetaData::cookedMax(void) const
 {
-    return std::max(_rawTranslator(_rawMax), _rawTranslator(_rawMin));
+    // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
+    return qMax(_rawTranslator(_rawMax), _rawTranslator(_rawMin));
 }
 
 QVariant FactMetaData::cookedMin(void) const
 {
-    return std::min(_rawTranslator(_rawMax), _rawTranslator(_rawMin));
+    // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
+    return qMin(_rawTranslator(_rawMax), _rawTranslator(_rawMin));
 }
 
 void FactMetaData::setVolatileValue(bool bValue)
