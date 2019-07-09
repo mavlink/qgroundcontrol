@@ -513,50 +513,52 @@ QStringList SerialConfiguration::supportedBaudRates()
 void SerialConfiguration::_initBaudRates()
 {
     kSupportedBaudRates.clear();
+    kSupportedBaudRates = QStringList({
 #if USE_ANCIENT_RATES
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-    kSupportedBaudRates << "50";
-    kSupportedBaudRates << "75";
+        "50",
+        "75",
 #endif
-    kSupportedBaudRates << "110";
+        "110",
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-    kSupportedBaudRates << "134";
-    kSupportedBaudRates << "150";
-    kSupportedBaudRates << "200";
+        "150",
+        "200" ,
+        "134"  ,
 #endif
-    kSupportedBaudRates << "300";
-    kSupportedBaudRates << "600";
-    kSupportedBaudRates << "1200";
+        "300",
+        "600",
+        "1200",
 #if defined(Q_OS_UNIX) || defined(Q_OS_LINUX) || defined(Q_OS_DARWIN)
-    kSupportedBaudRates << "1800";
+        "1800",
 #endif
 #endif
-    kSupportedBaudRates << "2400";
-    kSupportedBaudRates << "4800";
-    kSupportedBaudRates << "9600";
+        "2400",
+        "4800",
+        "9600",
 #if defined(Q_OS_WIN)
-    kSupportedBaudRates << "14400";
+        "14400",
 #endif
-    kSupportedBaudRates << "19200";
-    kSupportedBaudRates << "38400";
+        "19200",
+        "38400",
 #if defined(Q_OS_WIN)
-    kSupportedBaudRates << "56000";
+        "56000",
 #endif
-    kSupportedBaudRates << "57600";
-    kSupportedBaudRates << "115200";
+        "57600",
+        "115200",
 #if defined(Q_OS_WIN)
-    kSupportedBaudRates << "128000";
+        "128000",
 #endif
-    kSupportedBaudRates << "230400";
+        "230400",
 #if defined(Q_OS_WIN)
-    kSupportedBaudRates << "256000";
+        "256000",
 #endif
-    kSupportedBaudRates << "460800";
-    kSupportedBaudRates << "500000";
+        "460800",
+        "500000",
 #if defined(Q_OS_LINUX)
-    kSupportedBaudRates << "576000";
+        "576000",
 #endif
-    kSupportedBaudRates << "921600";
+        "921600",
+    });
 }
 
 void SerialConfiguration::setUsbDirect(bool usbDirect)
