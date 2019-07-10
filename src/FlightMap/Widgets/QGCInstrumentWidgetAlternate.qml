@@ -79,7 +79,7 @@ Rectangle {
             anchors.margins:    1
             anchors.left:       parent.left
             anchors.right:      parent.right
-            maxHeight:          _availableValueHeight
+            maxHeight:          _defaultSize
         }
     }
 
