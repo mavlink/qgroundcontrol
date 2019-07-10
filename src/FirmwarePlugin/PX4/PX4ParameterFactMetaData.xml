@@ -454,20 +454,6 @@ Set to 2 to use heading from motion capture</short_desc>
       <reboot_required>true</reboot_required>
     </parameter>
   </group>
-  <group name="Chip">
-    <parameter category="Developer" default="0" name="SYS_FORCE_F7DC" type="INT32">
-      <short_desc>Force F7 D cache on and disregard errata 1259864 data corruption in
-a sequence of write-through stores and loads on ARM M7 silicon
-Fault Status: Present in r0p1, r0p2, r1p0 and r1p1. Fixed in r1p2</short_desc>
-      <min>0</min>
-      <max>2</max>
-      <values>
-        <value code="0">if Eratta exits turn dcache off else leave it on</value>
-        <value code="1">Force it off</value>
-        <value code="2">Force it on</value>
-      </values>
-    </parameter>
-  </group>
   <group name="Circuit Breaker">
     <parameter category="Developer" default="0" name="CBRK_AIRSPD_CHK" type="INT32">
       <short_desc>Circuit breaker for airspeed sensor</short_desc>
