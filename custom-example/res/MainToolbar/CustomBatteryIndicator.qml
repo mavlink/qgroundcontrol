@@ -175,7 +175,7 @@ Item {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
-        opacity:        (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
+        opacity:        (activeVehicle && activeVehicle.batterySummary.voltage.value >= 0) ? 1 : 0.5
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
             anchors.top:        parent.top
@@ -190,7 +190,7 @@ Item {
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.25
                 height:             parent.height * 0.35
-                width:              activeVehicle ? (activeVehicle.battery.percentRemaining.value / 100) * parent.width * 0.75 : 0
+                width:              activeVehicle ? (activeVehicle.batterySummary.percentRemaining.value / 100) * parent.width * 0.75 : 0
                 anchors.verticalCenter: parent.verticalCenter
             }
         }
