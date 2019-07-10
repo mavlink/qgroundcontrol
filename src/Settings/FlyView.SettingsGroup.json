@@ -18,5 +18,11 @@
     "shortDescription": "Show/Hide Log Replay status bar",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "alternateInstrumentPanel",
+    "shortDescription": "Use Alternate Instrument Panel instead of the default one",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
