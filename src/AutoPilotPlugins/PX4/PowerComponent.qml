@@ -130,7 +130,7 @@ SetupPage {
                                     QGCTextField { id: measuredVoltage }
 
                                     QGCLabel { text: qsTr("Vehicle voltage:") }
-                                    QGCLabel { text: controller.vehicle.battery.voltage.valueString }
+                                    QGCLabel { text: controller.vehicle.batterySummary.voltage.valueString }
 
                                     QGCLabel { text: qsTr("Voltage divider:") }
                                     FactLabel { fact: battVoltageDivider }
@@ -144,7 +144,7 @@ SetupPage {
                                         if (measuredVoltageValue === 0 || isNaN(measuredVoltageValue)) {
                                             return
                                         }
-                                        var newVoltageDivider = (measuredVoltageValue * battVoltageDivider.value) / controller.vehicle.battery.voltage.value
+                                        var newVoltageDivider = (measuredVoltageValue * battVoltageDivider.value) / controller.vehicle.batterySummary.voltage.value
                                         if (newVoltageDivider > 0) {
                                             battVoltageDivider.value = newVoltageDivider
                                         }
@@ -188,7 +188,7 @@ SetupPage {
                                     QGCTextField { id: measuredCurrent }
 
                                     QGCLabel { text: qsTr("Vehicle current:") }
-                                    QGCLabel { text: controller.vehicle.battery.current.valueString }
+                                    QGCLabel { text: controller.vehicle.batterySummary.current.valueString }
 
                                     QGCLabel { text: qsTr("Amps per volt:") }
                                     FactLabel { fact: battAmpsPerVolt }
@@ -202,7 +202,7 @@ SetupPage {
                                         if (measuredCurrentValue === 0) {
                                             return
                                         }
-                                        var newAmpsPerVolt = (measuredCurrentValue * battAmpsPerVolt.value) / controller.vehicle.battery.current.value
+                                        var newAmpsPerVolt = (measuredCurrentValue * battAmpsPerVolt.value) / controller.vehicle.batterySummary.current.value
                                         if (newAmpsPerVolt != 0) {
                                             battAmpsPerVolt.value = newAmpsPerVolt
                                         }
