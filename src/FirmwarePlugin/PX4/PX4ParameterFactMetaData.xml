@@ -2752,22 +2752,6 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
-    <parameter default="10.0" name="GND_SPEED_MAX" type="FLOAT">
-      <short_desc>Maximum ground speed</short_desc>
-      <min>0.0</min>
-      <max>40</max>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter default="3.0" name="GND_SPEED_TRIM" type="FLOAT">
-      <short_desc>Trim ground speed</short_desc>
-      <min>0.0</min>
-      <max>40</max>
-      <unit>m/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
   </group>
   <group name="Failure Detector">
     <parameter default="60" name="FD_FAIL_P" type="INT32">
@@ -2829,209 +2813,6 @@ but also ignore less noise</short_desc>
       <long_desc>The minimum height in meters relative to home for following a target</long_desc>
       <min>8.0</min>
       <unit>meters</unit>
-    </parameter>
-  </group>
-  <group name="GND Attitude Control">
-    <parameter default="0" name="GND_BAT_SCALE_EN" type="INT32">
-      <short_desc>Whether to scale throttle by battery power level</short_desc>
-      <long_desc>This compensates for voltage drop of the battery over time by attempting to normalize performance across the operating range of the battery. The fixed wing should constantly behave as if it was fully charged with reduced max thrust at lower battery percentages. i.e. if cruise speed is at 0.5 throttle at 100% battery, it will still be 0.5 at 60% battery.</long_desc>
-      <boolean />
-    </parameter>
-    <parameter default="1.0" name="GND_GSPD_SP_TRIM" type="FLOAT">
-      <short_desc>Groundspeed speed trim</short_desc>
-      <long_desc>This allows to scale the turning radius depending on the speed.</long_desc>
-      <min>0.0</min>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.1</increment>
-    </parameter>
-    <parameter default="1.0" name="GND_MAN_Y_SC" type="FLOAT">
-      <short_desc>Manual yaw scale</short_desc>
-      <long_desc>Scale factor applied to the desired yaw actuator command in full manual mode. This parameter allows to adjust the throws of the control surfaces.</long_desc>
-      <min>0.0</min>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter default="0.0" name="GND_SPEED_D" type="FLOAT">
-      <short_desc>Speed proportional gain</short_desc>
-      <long_desc>This is the derivative gain for the speed closed loop controller</long_desc>
-      <min>0.00</min>
-      <max>50.0</max>
-      <unit>%m/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="0.1" name="GND_SPEED_I" type="FLOAT">
-      <short_desc>Speed Integral gain</short_desc>
-      <long_desc>This is the integral gain for the speed closed loop controller</long_desc>
-      <min>0.00</min>
-      <max>50.0</max>
-      <unit>%m/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="1.0" name="GND_SPEED_IMAX" type="FLOAT">
-      <short_desc>Speed integral maximum value</short_desc>
-      <long_desc>This is the maxim value the integral can reach to prevent wind-up.</long_desc>
-      <min>0.005</min>
-      <max>50.0</max>
-      <unit>%m/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="2.0" name="GND_SPEED_P" type="FLOAT">
-      <short_desc>Speed proportional gain</short_desc>
-      <long_desc>This is the proportional gain for the speed closed loop controller</long_desc>
-      <min>0.005</min>
-      <max>50.0</max>
-      <unit>%m/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="1.0" name="GND_SPEED_THR_SC" type="FLOAT">
-      <short_desc>Speed to throttle scaler</short_desc>
-      <long_desc>This is a gain to map the speed control output to the throttle linearly.</long_desc>
-      <min>0.005</min>
-      <max>50.0</max>
-      <unit>%m/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="1" name="GND_SP_CTRL_MODE" type="INT32">
-      <short_desc>Control mode for speed</short_desc>
-      <long_desc>This allows the user to choose between closed loop gps speed or open loop cruise throttle speed</long_desc>
-      <min>0</min>
-      <max>1</max>
-      <values>
-        <value code="0">open loop control</value>
-        <value code="1">close the loop with gps speed</value>
-      </values>
-    </parameter>
-    <parameter default="0.00" name="GND_WR_D" type="FLOAT">
-      <short_desc>Wheel steering rate integrator gain</short_desc>
-      <min>0.00</min>
-      <max>30</max>
-      <unit>%/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="0.0" name="GND_WR_FF" type="FLOAT">
-      <short_desc>Wheel steering rate feed forward</short_desc>
-      <long_desc>Direct feed forward from rate setpoint to control surface output</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter default="0.00" name="GND_WR_I" type="FLOAT">
-      <short_desc>Wheel steering rate integrator gain</short_desc>
-      <long_desc>This gain defines how much control response will result out of a steady state error. It trims any constant error.</long_desc>
-      <min>0.00</min>
-      <max>0.5</max>
-      <unit>%/rad</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="0.0" name="GND_WR_IMAX" type="FLOAT">
-      <short_desc>Wheel steering rate integrator limit</short_desc>
-      <long_desc>The portion of the integrator part in the control surface deflection is limited to this value</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter default="1.0" name="GND_WR_P" type="FLOAT">
-      <short_desc>Wheel steering rate proportional gain</short_desc>
-      <long_desc>This defines how much the wheel steering input will be commanded depending on the current body angular rate error.</long_desc>
-      <min>0.005</min>
-      <max>1.0</max>
-      <unit>%/rad/s</unit>
-      <decimal>3</decimal>
-      <increment>0.005</increment>
-    </parameter>
-    <parameter default="0.4" name="GND_WR_TC" type="FLOAT">
-      <short_desc>Attitude Wheel Time Constant</short_desc>
-      <long_desc>This defines the latency between a steering step input and the achieved setpoint (inverse to a P gain). Half a second is a good start value and fits for most average systems. Smaller systems may require smaller values, but as this will wear out servos faster, the value should only be decreased as needed.</long_desc>
-      <min>0.4</min>
-      <max>1.0</max>
-      <unit>s</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter default="90.0" name="GND_W_RMAX" type="FLOAT">
-      <short_desc>Maximum wheel steering rate</short_desc>
-      <long_desc>This limits the maximum wheel steering rate the controller will output (in degrees per second). Setting a value of zero disables the limit.</long_desc>
-      <min>0.0</min>
-      <max>90.0</max>
-      <unit>deg/s</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-  </group>
-  <group name="GND POS Control">
-    <parameter default="0.75" name="GND_L1_DAMPING" type="FLOAT">
-      <short_desc>L1 damping</short_desc>
-      <long_desc>Damping factor for L1 control.</long_desc>
-      <min>0.6</min>
-      <max>0.9</max>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
-    </parameter>
-    <parameter default="5.0" name="GND_L1_DIST" type="FLOAT">
-      <short_desc>L1 distance</short_desc>
-      <long_desc>This is the waypoint radius</long_desc>
-      <min>0.0</min>
-      <max>100.0</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.1</increment>
-    </parameter>
-    <parameter default="10.0" name="GND_L1_PERIOD" type="FLOAT">
-      <short_desc>L1 period</short_desc>
-      <long_desc>This is the L1 distance and defines the tracking point ahead of the rover it's following. Using values around 2-5 for a traxxas stampede. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
-      <min>0.0</min>
-      <max>50.0</max>
-      <unit>m</unit>
-      <decimal>1</decimal>
-      <increment>0.5</increment>
-    </parameter>
-    <parameter default="0.1" name="GND_THR_CRUISE" type="FLOAT">
-      <short_desc>Cruise throttle</short_desc>
-      <long_desc>This is the throttle setting required to achieve the desired cruise speed. 10% is ok for a traxxas stampede vxl with ESC set to training mode</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter default="0.0" name="GND_THR_IDLE" type="FLOAT">
-      <short_desc>Idle throttle</short_desc>
-      <long_desc>This is the minimum throttle while on the ground, it should be 0 for a rover</long_desc>
-      <min>0.0</min>
-      <max>0.4</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter default="0.3" name="GND_THR_MAX" type="FLOAT">
-      <short_desc>Throttle limit max</short_desc>
-      <long_desc>This is the maximum throttle % that can be used by the controller. For a Traxxas stampede vxl with the ESC set to training, 30 % is enough</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
-    <parameter default="0.0" name="GND_THR_MIN" type="FLOAT">
-      <short_desc>Throttle limit min</short_desc>
-      <long_desc>This is the minimum throttle % that can be used by the controller. Set to 0 for rover</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
     </parameter>
   </group>
   <group name="GPS">
@@ -4029,12 +3810,13 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
       <short_desc>Yaw mode</short_desc>
       <long_desc>Specifies the heading in Auto.</long_desc>
       <min>0</min>
-      <max>3</max>
+      <max>4</max>
       <values>
         <value code="0">towards waypoint</value>
         <value code="1">towards home</value>
         <value code="2">away from home</value>
         <value code="3">along trajectory</value>
+        <value code="4">towards waypoint (yaw first)</value>
       </values>
     </parameter>
     <parameter default="10.0" name="NAV_ACC_RAD" type="FLOAT">
@@ -7774,6 +7556,158 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
         <value code="1">Return to a planned mission landing, if available, via direct path, else return to home via direct path</value>
         <value code="2">Return to a planned mission landing, if available, using the mission path, else return to home via the reverse mission path</value>
       </values>
+    </parameter>
+  </group>
+  <group name="Rover Position Control">
+    <parameter default="0.75" name="GND_L1_DAMPING" type="FLOAT">
+      <short_desc>L1 damping</short_desc>
+      <long_desc>Damping factor for L1 control.</long_desc>
+      <min>0.6</min>
+      <max>0.9</max>
+      <decimal>2</decimal>
+      <increment>0.05</increment>
+    </parameter>
+    <parameter default="5.0" name="GND_L1_DIST" type="FLOAT">
+      <short_desc>L1 distance</short_desc>
+      <long_desc>This is the waypoint radius</long_desc>
+      <min>0.0</min>
+      <max>100.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.1</increment>
+    </parameter>
+    <parameter default="10.0" name="GND_L1_PERIOD" type="FLOAT">
+      <short_desc>L1 period</short_desc>
+      <long_desc>This is the L1 distance and defines the tracking point ahead of the rover it's following. Using values around 2-5 for a traxxas stampede. Shorten slowly during tuning until response is sharp without oscillation.</long_desc>
+      <min>0.0</min>
+      <max>50.0</max>
+      <unit>m</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter default="0.7854" name="GND_MAX_ANG" type="FLOAT">
+      <short_desc>Maximum turn angle for Ackerman steering.
+At a control output of 0, the steering wheels are at 0 radians.
+At a control output of 1, the steering wheels are at GND_MAX_ANG radians</short_desc>
+      <min>0.0</min>
+      <max>3.14159</max>
+      <unit>rad</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter default="0.0" name="GND_SPEED_D" type="FLOAT">
+      <short_desc>Speed proportional gain</short_desc>
+      <long_desc>This is the derivative gain for the speed closed loop controller</long_desc>
+      <min>0.00</min>
+      <max>50.0</max>
+      <unit>%m/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter default="0.1" name="GND_SPEED_I" type="FLOAT">
+      <short_desc>Speed Integral gain</short_desc>
+      <long_desc>This is the integral gain for the speed closed loop controller</long_desc>
+      <min>0.00</min>
+      <max>50.0</max>
+      <unit>%m/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter default="1.0" name="GND_SPEED_IMAX" type="FLOAT">
+      <short_desc>Speed integral maximum value</short_desc>
+      <long_desc>This is the maxim value the integral can reach to prevent wind-up.</long_desc>
+      <min>0.005</min>
+      <max>50.0</max>
+      <unit>%m/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter default="10.0" name="GND_SPEED_MAX" type="FLOAT">
+      <short_desc>Maximum ground speed</short_desc>
+      <min>0.0</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter default="2.0" name="GND_SPEED_P" type="FLOAT">
+      <short_desc>Speed proportional gain</short_desc>
+      <long_desc>This is the proportional gain for the speed closed loop controller</long_desc>
+      <min>0.005</min>
+      <max>50.0</max>
+      <unit>%m/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter default="1.0" name="GND_SPEED_THR_SC" type="FLOAT">
+      <short_desc>Speed to throttle scaler</short_desc>
+      <long_desc>This is a gain to map the speed control output to the throttle linearly.</long_desc>
+      <min>0.005</min>
+      <max>50.0</max>
+      <unit>%m/s</unit>
+      <decimal>3</decimal>
+      <increment>0.005</increment>
+    </parameter>
+    <parameter default="3.0" name="GND_SPEED_TRIM" type="FLOAT">
+      <short_desc>Trim ground speed</short_desc>
+      <min>0.0</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
+    <parameter default="1" name="GND_SP_CTRL_MODE" type="INT32">
+      <short_desc>Control mode for speed</short_desc>
+      <long_desc>This allows the user to choose between closed loop gps speed or open loop cruise throttle speed</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <values>
+        <value code="0">open loop control</value>
+        <value code="1">close the loop with gps speed</value>
+      </values>
+    </parameter>
+    <parameter default="0.1" name="GND_THR_CRUISE" type="FLOAT">
+      <short_desc>Cruise throttle</short_desc>
+      <long_desc>This is the throttle setting required to achieve the desired cruise speed. 10% is ok for a traxxas stampede vxl with ESC set to training mode</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter default="0.0" name="GND_THR_IDLE" type="FLOAT">
+      <short_desc>Idle throttle</short_desc>
+      <long_desc>This is the minimum throttle while on the ground, it should be 0 for a rover</long_desc>
+      <min>0.0</min>
+      <max>0.4</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter default="0.3" name="GND_THR_MAX" type="FLOAT">
+      <short_desc>Throttle limit max</short_desc>
+      <long_desc>This is the maximum throttle % that can be used by the controller. For a Traxxas stampede vxl with the ESC set to training, 30 % is enough</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter default="0.0" name="GND_THR_MIN" type="FLOAT">
+      <short_desc>Throttle limit min</short_desc>
+      <long_desc>This is the minimum throttle % that can be used by the controller. Set to 0 for rover</long_desc>
+      <min>0.0</min>
+      <max>1.0</max>
+      <unit>norm</unit>
+      <decimal>2</decimal>
+      <increment>0.01</increment>
+    </parameter>
+    <parameter default="2.0" name="GND_WHEEL_BASE" type="FLOAT">
+      <short_desc>Distance from front axle to rear axle</short_desc>
+      <min>0.0</min>
+      <unit>m</unit>
+      <decimal>3</decimal>
+      <increment>0.01</increment>
     </parameter>
   </group>
   <group name="Runway Takeoff">
