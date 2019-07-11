@@ -19,7 +19,7 @@ import QGroundControl.Palette       1.0
 
 Rectangle {
     id:             root
-    width:          getPreferredInstrumentWidth()
+    width:          getPreferredInstrumentWidth() * 0.7
     height:         _outerRadius * 4 + _valuesWidget.height
     radius:         _outerRadius
     color:          qgcPal.window
@@ -27,7 +27,7 @@ Rectangle {
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 
     property real   _innerRadius:       (width - (_topBottomMargin * 2)) / 2
-    property real   _outerRadius:       _innerRadius + _topBottomMargin
+    property real   _outerRadius:       _innerRadius + _topBottomMargin * 2
     property real   _defaultSize:       ScreenTools.defaultFontPixelHeight * (9)
     property real   _sizeRatio:         ScreenTools.isTinyScreen ? (width / _defaultSize) * 0.5 : width / _defaultSize
     property real   _bigFontSize:       ScreenTools.defaultFontPointSize * 2.5  * _sizeRatio
@@ -35,7 +35,7 @@ Rectangle {
     property real   _labelFontSize:     ScreenTools.defaultFontPointSize * 0.75 * _sizeRatio
     property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (width * 0.05) / 2
-    property real   _availableValueHeight: maxHeight - (root.height + _valuesItem.anchors.topMargin)
+    property real   _availableValueHeight: maxHeight - (attitude.height + compass.height)
 
     // Prevent all clicks from going through to lower layers
     DeadMouseArea {
@@ -54,10 +54,10 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
     }
 
-
     Item {
         id:                 _valuesItem
         anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 4
+        anchors.bottomMargin:  ScreenTools.defaultFontPixelHeight / 4
         anchors.top:        attitude.bottom
         anchors.bottom:     compass.top
         width:              parent.width
@@ -79,7 +79,7 @@ Rectangle {
             anchors.margins:    1
             anchors.left:       parent.left
             anchors.right:      parent.right
-            maxHeight:          _defaultSize
+            maxHeight:          _availableValueHeight
         }
     }
 
