@@ -60,6 +60,7 @@ Item {
             if(battery.percentRemaining.value > 0.1) {
                 return qgcPal.colorRed
             }
+            return Qt.darker(qgcPal.colorRed, 1.5)
         }
         return qgcPal.colorGrey
     }
@@ -83,7 +84,7 @@ Item {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
-        opacity:        (activeVehicle && activeVehicle.batterySummary.voltage.value >= 0) ? 1 : 0.5
+	opacity:        (_root.batterySummary && _root.batterySummary.voltage.value >= 0) ? 1 : 0.5
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
             anchors.top:        parent.top
@@ -123,7 +124,7 @@ Item {
         Rectangle {
             width:  battCol.width   + ScreenTools.defaultFontPixelWidth  * 3
             height: battCol.height  + ScreenTools.defaultFontPixelHeight * 2
-            radius: ScreenTools.defaultFontPixelHeight * 1.0
+            radius: ScreenTools.defaultFontPixelHeight * 0.5
             color:  qgcPal.window
 
             Column {
@@ -145,8 +146,14 @@ Item {
                     sourceComponent: batteryInfoComponent
 
                     property string batteryName: "Battery 1"
-                    property var batteryObj: activeVehicle.battery
+                    property var batteryObj: _root.battery1
                     property var textFontSize: _root._textFontSize
+                    property bool moreDetails: moreDetails.checked
+                }
+
+                Item {
+                    height: battLabel.height/2
+                    width: battLabel.width/2
                 }
 
                 Loader {
@@ -155,8 +162,21 @@ Item {
                     visible: hasSecondBattery
 
                     property string batteryName: "Battery 2"
-                    property var batteryObj: activeVehicle.battery2
+                    property var batteryObj: _root.battery2
                     property var textFontSize: _root._textFontSize
+                    property bool moreDetails: moreDetails.checked
+                }
+
+                Item {
+                    height: battLabel.height/2
+                    width: battLabel.width/2
+                }
+
+                QGCCheckBox {
+                    id: moreDetails
+                    text: qsTr("More details")
+                    checked: false
+                    textFontPointSize: _root._textFontSize
                 }
             }
         }
@@ -179,8 +199,9 @@ Item {
             // property string batteryName: qsTr("...")
             // property var batteryObj: null
             // property var textFontSize: ...
+            // property bool moreDetails: ...
 
-            // Row Battery name
+            // Row: Battery name
             QGCLabel {
                 id: batteryLabel
                 text: batteryName
@@ -204,7 +225,7 @@ Item {
                 }
             }
 
-            // Row Voltage
+            // Row: Voltage
             QGCLabel {
                 text: qsTr("Voltage:")
                 font.pointSize: textFontSize
@@ -213,7 +234,19 @@ Item {
                 text: (batteryObj && batteryObj.voltage.value !== -1) ? (batteryObj.voltage.valueString + " " + batteryObj.voltage.units) : "N/A"
                 font.pointSize: textFontSize
             }
-            // Row Percentage
+            // Row: Current
+            QGCLabel {
+                id: currentLabel
+                visible: moreDetails && batteryObj && batteryObj.current.value > 0
+                text: qsTr("Current:")
+                font.pointSize: textFontSize
+            }
+            QGCLabel {
+                visible: currentLabel.visible
+                text: visible ? (batteryObj.current.valueString + " " + batteryObj.current.units) : "N/A"
+                font.pointSize: textFontSize
+            }
+            // Row: Percentage
             QGCLabel {
                 text: qsTr("Percentage:")
                 font.pointSize: textFontSize
@@ -222,13 +255,37 @@ Item {
                 text: (batteryObj && batteryObj.percentRemaining.value > 0.1) ? getBatteryPercentageText(batteryObj) : "N/A"
                 font.pointSize: textFontSize
             }
-            // Row Accumulated Consumption
+            // Row: Accumulated Consumption
             QGCLabel {
                 text: qsTr("Accumulated Consumption:")
                 font.pointSize: textFontSize
             }
             QGCLabel {
                 text: (batteryObj && batteryObj.mahConsumed.value !== -1) ? (batteryObj.mahConsumed.valueString + " " + batteryObj.mahConsumed.units) : "N/A"
+                font.pointSize: textFontSize
+            }
+            // Row: Temperature
+            QGCLabel {
+                id: temperatureLabel
+                visible: moreDetails && batteryObj && batteryObj.temperature.value > 0
+                text: qsTr("Temperature:")
+                font.pointSize: textFontSize
+            }
+            QGCLabel {
+                visible: temperatureLabel.visible
+                text: visible ? (batteryObj.temperature.valueString + " " + batteryObj.temperature.units) : "N/A"
+                font.pointSize: textFontSize
+            }
+            // Row: Time Remaining
+            QGCLabel {
+                id: timeRemainingLabel
+                visible: moreDetails && batteryObj && batteryObj.timeRemaining.value > 0
+                text: qsTr("Time Remaining:")
+                font.pointSize: textFontSize
+            }
+            QGCLabel {
+                visible: timeRemainingLabel.visible
+                text: visible ? (batteryObj.timeRemaining.value + " " + batteryObj.timeRemaining.units) : "N/A"
                 font.pointSize: textFontSize
             }
         }
