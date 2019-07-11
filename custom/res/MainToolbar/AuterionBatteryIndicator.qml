@@ -33,7 +33,7 @@ Item {
     property var    battery2:           activeVehicle ? activeVehicle.battery2       : null
     property bool   hasSecondBattery:   battery2 && battery2.voltage.value !== -1
 
-    readonly property real _textFontSize: ScreenTools.defaultFontPointSize * (ScreenTools.isMobile ? 1.5 : 1.25)
+    readonly property real _textFontSize: ScreenTools.defaultFontPointSize * (ScreenTools.isMobile ? 1.25 : 1.05)
 
     function lowestBattery() {
         if(activeVehicle) {
@@ -129,7 +129,7 @@ Item {
 
             Column {
                 id:                 battCol
-                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                spacing:            ScreenTools.defaultFontPixelHeight * 1
                 width:              batteryInfoComponent.width
                 anchors.margins:    ScreenTools.defaultFontPixelHeight
                 anchors.centerIn:   parent
@@ -151,11 +151,6 @@ Item {
                     property bool moreDetails: moreDetails.checked
                 }
 
-                Item {
-                    height: battLabel.height/2
-                    width: battLabel.width/2
-                }
-
                 Loader {
                     sourceComponent: batteryInfoComponent
 
@@ -165,11 +160,6 @@ Item {
                     property var batteryObj: _root.battery2
                     property var textFontSize: _root._textFontSize
                     property bool moreDetails: moreDetails.checked
-                }
-
-                Item {
-                    height: battLabel.height/2
-                    width: battLabel.width/2
                 }
 
                 QGCCheckBox {
