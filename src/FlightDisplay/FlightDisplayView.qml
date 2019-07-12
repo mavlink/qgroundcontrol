@@ -438,8 +438,6 @@ QGCView {
                     return false
                 if(!_virtualJoystick || _virtualJoystick.value === 0)
                     return false
-                if(_virtualJoystick.value === 2 && !_activeVehicle.gimbalAcknowledged)
-                    return false
                 return true
             }
             anchors.bottom:             _flightVideoPipControl.top
