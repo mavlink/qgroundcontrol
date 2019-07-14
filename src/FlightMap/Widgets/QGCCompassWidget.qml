@@ -30,12 +30,15 @@ Item {
     property real size:     _defaultSize
     property var  vehicle:  null
 
-    property real _defaultSize: ScreenTools.defaultFontPixelHeight * (10)
-    property real _sizeRatio:   ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
-    property int  _fontSize:    ScreenTools.defaultFontPointSize * _sizeRatio
-    property real _heading:     vehicle ? vehicle.heading.rawValue : 0
+    property real _defaultSize:     ScreenTools.defaultFontPixelHeight * (10)
+    property real _sizeRatio:       ScreenTools.isTinyScreen ? (size / _defaultSize) * 0.5 : size / _defaultSize
+    property int  _fontSize:        ScreenTools.defaultFontPointSize * _sizeRatio
+    property real _heading:         vehicle ? vehicle.heading.rawValue : 0
+    property real _headingToHome:   vehicle ? vehicle.headingToHome.rawValue : 0
+    property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
+
 
     Rectangle {
         id:             borderRect
@@ -59,10 +62,20 @@ Item {
             sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
-            transform: Rotation {
-                origin.x:       pointer.width  / 2
-                origin.y:       pointer.height / 2
-                angle:          _heading
+        }
+
+        Image {
+            id:                     homePointer
+            width:                  size * 0.1
+            source:                 "/qmlimages/Home.svg"
+            mipmap:                 true
+            fillMode:               Image.PreserveAspectFit
+            anchors.centerIn:   	parent
+            sourceSize.width:       width
+
+            transform: Translate {
+                x: size/2.3 * Math.sin((-_heading + _headingToHome)*(3.14/180))
+                y: - size/2.3 * Math.cos((-_heading + _headingToHome)*(3.14/180))
             }
         }
 
@@ -74,6 +87,30 @@ Item {
             anchors.fill:       parent
             sourceSize.height:  parent.height
             color:              qgcPal.text
+            transform: Rotation {
+                origin.x:       compassDial.width  / 2
+                origin.y:       compassDial.height / 2
+                angle:          -_heading
+            }
+        }
+
+        Image {
+            function f(){
+                console.log(_heading -_courseOverGround)
+            }
+            property double test: f()
+            id:                 cOGPointer
+            source:             "/qmlimages/attitudePointer.svg"
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
+
+            transform: Rotation {
+                origin.x:       cOGPointer.width  / 2
+                origin.y:       cOGPointer.height / 2
+                angle:         _courseOverGround - _heading
+            }
         }
 
         Rectangle {
