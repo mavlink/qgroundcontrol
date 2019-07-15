@@ -47,70 +47,84 @@ public:
     Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton)
     
-    Q_PROPERTY(bool rollAxisMapped      READ rollAxisMapped     NOTIFY rollAxisMappedChanged)
-    Q_PROPERTY(bool pitchAxisMapped     READ pitchAxisMapped    NOTIFY pitchAxisMappedChanged)
-    Q_PROPERTY(bool yawAxisMapped       READ yawAxisMapped      NOTIFY yawAxisMappedChanged)
-    Q_PROPERTY(bool throttleAxisMapped  READ throttleAxisMapped NOTIFY throttleAxisMappedChanged)
+    Q_PROPERTY(bool rollAxisMapped              READ rollAxisMapped             NOTIFY rollAxisMappedChanged)
+    Q_PROPERTY(bool pitchAxisMapped             READ pitchAxisMapped            NOTIFY pitchAxisMappedChanged)
+    Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
+    Q_PROPERTY(bool throttleAxisMapped          READ throttleAxisMapped         NOTIFY throttleAxisMappedChanged)
 
-    Q_PROPERTY(int rollAxisReversed     READ rollAxisReversed       NOTIFY rollAxisReversedChanged)
-    Q_PROPERTY(int pitchAxisReversed    READ pitchAxisReversed      NOTIFY pitchAxisReversedChanged)
-    Q_PROPERTY(int yawAxisReversed      READ yawAxisReversed        NOTIFY yawAxisReversedChanged)
-    Q_PROPERTY(int throttleAxisReversed READ throttleAxisReversed   NOTIFY throttleAxisReversedChanged)
-    
-    Q_PROPERTY(bool deadbandToggle            READ getDeadbandToggle        WRITE setDeadbandToggle    NOTIFY deadbandToggled)
+    Q_PROPERTY(bool gimbalPitchAxisMapped       READ gimbalPitchAxisMapped      NOTIFY gimbalPitchAxisMappedChanged)
+    Q_PROPERTY(bool gimbalYawAxisMapped         READ gimbalYawAxisMapped        NOTIFY gimbalYawAxisMappedChanged)
+
+    Q_PROPERTY(int  rollAxisReversed            READ rollAxisReversed           NOTIFY rollAxisReversedChanged)
+    Q_PROPERTY(int  pitchAxisReversed           READ pitchAxisReversed          NOTIFY pitchAxisReversedChanged)
+    Q_PROPERTY(int  yawAxisReversed             READ yawAxisReversed            NOTIFY yawAxisReversedChanged)
+    Q_PROPERTY(int  throttleAxisReversed        READ throttleAxisReversed       NOTIFY throttleAxisReversedChanged)
+
+    Q_PROPERTY(int  gimbalPitchAxisReversed     READ gimbalPitchAxisReversed    NOTIFY gimbalPitchAxisReversedChanged)
+    Q_PROPERTY(int  gimbalYawAxisReversed       READ gimbalYawAxisReversed      NOTIFY gimbalYawAxisReversedChanged)
+
+    Q_PROPERTY(bool deadbandToggle              READ getDeadbandToggle          WRITE setDeadbandToggle    NOTIFY deadbandToggled)
 
     Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
     Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
     Q_PROPERTY(bool calibrating READ calibrating NOTIFY calibratingChanged)
     
-    Q_INVOKABLE void cancelButtonClicked(void);
-    Q_INVOKABLE void skipButtonClicked(void);
-    Q_INVOKABLE void nextButtonClicked(void);
-    Q_INVOKABLE void start(void);
-    Q_INVOKABLE void setDeadbandValue(int axis, int value);
+    Q_INVOKABLE void cancelButtonClicked    ();
+    Q_INVOKABLE void skipButtonClicked      ();
+    Q_INVOKABLE void nextButtonClicked      ();
+    Q_INVOKABLE void start                  ();
+    Q_INVOKABLE void setDeadbandValue       (int axis, int value);
 
-    bool rollAxisMapped(void);
-    bool pitchAxisMapped(void);
-    bool yawAxisMapped(void);
-    bool throttleAxisMapped(void);
-    
-    bool rollAxisReversed(void);
-    bool pitchAxisReversed(void);
-    bool yawAxisReversed(void);
-    bool throttleAxisReversed(void);
-    
-    bool getDeadbandToggle(void);
-    void setDeadbandToggle(bool);
+    bool rollAxisMapped                     () { return _rgFunctionAxisMapping[Joystick::rollFunction]          != _axisNoAxis; }
+    bool pitchAxisMapped                    () { return _rgFunctionAxisMapping[Joystick::pitchFunction]         != _axisNoAxis; }
+    bool yawAxisMapped                      () { return _rgFunctionAxisMapping[Joystick::yawFunction]           != _axisNoAxis; }
+    bool throttleAxisMapped                 () { return _rgFunctionAxisMapping[Joystick::throttleFunction]      != _axisNoAxis; }
+    bool gimbalPitchAxisMapped              () { return _rgFunctionAxisMapping[Joystick::gimbalPitchFunction]   != _axisNoAxis; }
+    bool gimbalYawAxisMapped                () { return _rgFunctionAxisMapping[Joystick::gimbalYawFunction]     != _axisNoAxis; }
 
-    int axisCount(void);
+    bool rollAxisReversed                   ();
+    bool pitchAxisReversed                  ();
+    bool yawAxisReversed                    ();
+    bool throttleAxisReversed               ();
+    bool gimbalPitchAxisReversed            ();
+    bool gimbalYawAxisReversed              ();
 
-    int transmitterMode(void) { return _transmitterMode; }
-    void setTransmitterMode(int mode);
+    bool getDeadbandToggle                  ();
+    void setDeadbandToggle                  (bool);
 
-    bool calibrating(void) { return _currentStep != -1; }
+    int  axisCount                          () { return _axisCount; }
+
+    int  transmitterMode                    () { return _transmitterMode; }
+    void setTransmitterMode                 (int mode);
+
+    bool calibrating                        () { return _currentStep != -1; }
     
 signals:
-    void axisValueChanged(int axis, int value);
-    void axisDeadbandChanged(int axis, int value);
+    void axisValueChanged                   (int axis, int value);
+    void axisDeadbandChanged                (int axis, int value);
 
-    void rollAxisMappedChanged(bool mapped);
-    void pitchAxisMappedChanged(bool mapped);
-    void yawAxisMappedChanged(bool mapped);
-    void throttleAxisMappedChanged(bool mapped);
+    void rollAxisMappedChanged              (bool mapped);
+    void pitchAxisMappedChanged             (bool mapped);
+    void yawAxisMappedChanged               (bool mapped);
+    void throttleAxisMappedChanged          (bool mapped);
+    void gimbalPitchAxisMappedChanged       (bool mapped);
+    void gimbalYawAxisMappedChanged         (bool mapped);
 
-    void rollAxisReversedChanged(bool reversed);
-    void pitchAxisReversedChanged(bool reversed);
-    void yawAxisReversedChanged(bool reversed);
-    void throttleAxisReversedChanged(bool reversed);
+    void rollAxisReversedChanged            (bool reversed);
+    void pitchAxisReversedChanged           (bool reversed);
+    void yawAxisReversedChanged             (bool reversed);
+    void throttleAxisReversedChanged        (bool reversed);
+    void gimbalPitchAxisReversedChanged     (bool reversed);
+    void gimbalYawAxisReversedChanged       (bool reversed);
 
-    void deadbandToggled(bool value);
+    void deadbandToggled                    (bool value);
     
-    void imageHelpChanged(QString source);
-    void transmitterModeChanged(int mode);
-    void calibratingChanged(void);
+    void imageHelpChanged                   (QString source);
+    void transmitterModeChanged             (int mode);
+    void calibratingChanged                 ();
     
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button
-    void nextButtonMessageBoxDisplayed(void);
+    void nextButtonMessageBoxDisplayed      ();
 
 private slots:
     void _activeJoystickChanged(Joystick* joystick);
@@ -139,6 +153,7 @@ private:
         inputFn                     rcInputFn;
         buttonFn                    nextFn;
         buttonFn                    skipFn;
+        int                         channelID;
     };
     
     /// @brief A set of information associated with a radio axis.
@@ -151,45 +166,45 @@ private:
         int                         deadband;   ///< Deadband
     };
     
-    Joystick* _activeJoystick;
+    Joystick* _activeJoystick = nullptr;
     
-    int _transmitterMode;
-    int _currentStep;  ///< Current step of state machine
+    int _transmitterMode    = 2;
+    int _currentStep        = -1;  ///< Current step of state machine
     
     const struct stateMachineEntry* _getStateMachineEntry(int step);
     
-    void _advanceState(void);
-    void _setupCurrentState(void);
+    void _advanceState          ();
+    void _setupCurrentState     ();
     
-    bool _validAxis(int axis);
+    bool _validAxis             (int axis);
 
     void _inputCenterWaitBegin  (Joystick::AxisFunction_t function, int axis, int value);
     void _inputStickDetect      (Joystick::AxisFunction_t function, int axis, int value);
     void _inputStickMin         (Joystick::AxisFunction_t function, int axis, int value);
     void _inputCenterWait       (Joystick::AxisFunction_t function, int axis, int value);
     
-    void _switchDetect(Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep);
+    void _switchDetect          (Joystick::AxisFunction_t function, int axis, int value, bool moveToNextStep);
     
-    void _saveFlapsDown(void);
-    void _skipFlaps(void);
-    void _saveAllTrims(void);
+    void _saveFlapsDown         ();
+    void _skipFlaps             ();
+    void _saveAllTrims          ();
     
-    bool _stickSettleComplete(int axis, int value);
+    bool _stickSettleComplete   (int axis, int value);
     
-    void _validateCalibration(void);
-    void _writeCalibration(void);
-    void _resetInternalCalibrationValues(void);
-    void _setInternalCalibrationValuesFromSettings(void);
+    void _validateCalibration   ();
+    void _writeCalibration      ();
+    void _resetInternalCalibrationValues();
+    void _setInternalCalibrationValuesFromSettings();
     
-    void _startCalibration(void);
-    void _stopCalibration(void);
-    void _calSave(void);
+    void _startCalibration      ();
+    void _stopCalibration       ();
+    void _calSave               ();
 
-    void _calSaveCurrentValues(void);
+    void _calSaveCurrentValues  ();
     
     void _setHelpImage(const char* imageFile);
     
-    void _signalAllAttitudeValueChanges(void);
+    void _signalAllAttitudeValueChanges();
     
     // Member variables
 
@@ -210,20 +225,21 @@ private:
     
     int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 
-    static const int _attitudeControls = 5;
+    static const int _attitudeControls  = 5;
     
-    int                 _axisCount;         ///< Number of actual joystick axes available
-    static const int    _axisNoAxis = -1;   ///< Signals no axis set
-    static const int    _axisMinimum = 4;   ///< Minimum numner of joystick axes required to run PX4
-    struct AxisInfo*    _rgAxisInfo;        ///< Information associated with each axis
-    int*                _axisValueSave;     ///< Saved values prior to detecting axis movement
-    int*                _axisRawValue;      ///< Current set of raw axis values
+    int                 _axisCount      = 0;        ///< Number of actual joystick axes available
+    static const int    _axisNoAxis     = -1;       ///< Signals no axis set
+    static const int    _axisMinimum    = 4;        ///< Minimum numner of joystick axes required to run PX4
+    struct AxisInfo*    _rgAxisInfo     = nullptr;  ///< Information associated with each axis
+    int*                _axisValueSave  = nullptr;  ///< Saved values prior to detecting axis movement
+    int*                _axisRawValue   = nullptr;  ///< Current set of raw axis values
 
-    enum calStates _calState;               ///< Current calibration state
-    int     _calStateCurrentAxis;           ///< Current axis being worked on in calStateIdentify and calStateDetectInversion
-    bool    _calStateAxisComplete;          ///< Work associated with current axis is complete
-    int     _calStateIdentifyOldMapping;    ///< Previous mapping for axis being currently identified
-    int     _calStateReverseOldMapping;     ///< Previous mapping for axis being currently used to detect inversion
+    enum calStates _calState = calStateAxisWait;    ///< Current calibration state
+
+    int     _calStateCurrentAxis;                   ///< Current axis being worked on in calStateIdentify and calStateDetectInversion
+    bool    _calStateAxisComplete;                  ///< Work associated with current axis is complete
+    int     _calStateIdentifyOldMapping;            ///< Previous mapping for axis being currently identified
+    int     _calStateReverseOldMapping;             ///< Previous mapping for axis being currently used to detect inversion
     
     static const int _calCenterPoint;
     static const int _calValidMinValue;
@@ -241,11 +257,11 @@ private:
     bool    _stickDetectSettleStarted;
     QTime   _stickDetectSettleElapsed;
     static const int _stickDetectSettleMSecs;
-    
-    QQuickItem* _statusText;
-    QQuickItem* _cancelButton;
-    QQuickItem* _nextButton;
-    QQuickItem* _skipButton;
+
+    QQuickItem* _statusText     = nullptr;
+    QQuickItem* _cancelButton   = nullptr;
+    QQuickItem* _nextButton     = nullptr;
+    QQuickItem* _skipButton     = nullptr;
     
     QString _imageHelp;
 

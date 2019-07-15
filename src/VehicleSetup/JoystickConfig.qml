@@ -27,7 +27,7 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
-    readonly property real _maxButtons: 16
+    readonly property real _maxButtons: 64
 
     Connections {
         target: joystickManager
@@ -67,12 +67,12 @@ SetupPage {
                 id: axisMonitorDisplayComponent
 
                 Item {
-                    property int axisValue: 0
-                    property int deadbandValue: 0
-                    property bool narrowIndicator: false
-                    property color deadbandColor: "#8c161a"
+                    property int    axisValue:          0
+                    property int    deadbandValue:      0
+                    property bool   narrowIndicator:    false
+                    property color  deadbandColor:      "#8c161a"
 
-                    property color          __barColor:             qgcPal.windowShade
+                    property color  __barColor:         qgcPal.windowShade
 
                     // Bar
                     Rectangle {
@@ -93,9 +93,9 @@ SetupPage {
                         color:                  deadbandColor
                         visible:                controller.deadbandToggle
 
-                        property real _percentDeadband:    ((2 * deadbandValue) / (32768.0 * 2))
-                        property real _deadbandWidth:   parent.width * _percentDeadband
-                        property real _deadbandPosition:   (parent.width - _deadbandWidth) / 2
+                        property real _percentDeadband:     ((2 * deadbandValue) / (32768.0 * 2))
+                        property real _deadbandWidth:       parent.width * _percentDeadband
+                        property real _deadbandPosition:    (parent.width - _deadbandWidth) / 2
                     }
 
                     // Center point
@@ -183,14 +183,12 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-
                             property bool mapped:   controller.rollAxisMapped
                             property bool reversed: controller.rollAxisReversed
                         }
 
                         Connections {
                             target: _activeJoystick
-
                             onManualControl: rollLoader.item.axisValue = roll*32768.0
                         }
                     }
@@ -212,14 +210,12 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-
                             property bool mapped:           controller.pitchAxisMapped
                             property bool reversed:         controller.pitchAxisReversed
                         }
 
                         Connections {
                             target: _activeJoystick
-
                             onManualControl: pitchLoader.item.axisValue = pitch*32768.0
                         }
                     }
@@ -241,14 +237,12 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-
                             property bool mapped:           controller.yawAxisMapped
                             property bool reversed:         controller.yawAxisReversed
                         }
 
                         Connections {
                             target: _activeJoystick
-
                             onManualControl: yawLoader.item.axisValue = yaw*32768.0
                         }
                     }
@@ -270,17 +264,70 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-
                             property bool mapped:           controller.throttleAxisMapped
                             property bool reversed:         controller.throttleAxisReversed
                         }
 
                         Connections {
                             target: _activeJoystick
-
                             onManualControl: throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
                         }
                     }
+
+                    Item {
+                        width:  parent.width
+                        height: defaultTextHeight * 2
+
+                        QGCLabel {
+                            id:     gimbalPitchLabel
+                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            text:   qsTr("Gimbal Pitch")
+                        }
+
+                        Loader {
+                            id:                 gimbalPitchLoader
+                            anchors.left:       gimbalPitchLabel.right
+                            anchors.right:      parent.right
+                            height:             ScreenTools.defaultFontPixelHeight
+                            width:              100
+                            sourceComponent:    axisMonitorDisplayComponent
+                            property bool mapped:   controller.gimbalPitchAxisMapped
+                            property bool reversed: controller.gimbalPitchAxisReversed
+                        }
+
+                        Connections {
+                            target: _activeJoystick
+                            onManualControl:    gimbalPitchLoader.item.axisValue = gimbalPitch * 32768.0
+                        }
+                    }
+
+                    Item {
+                        width:  parent.width
+                        height: defaultTextHeight * 2
+
+                        QGCLabel {
+                            id:     gimbalYawLabel
+                            width:  ScreenTools.defaultFontPixelWidth * 10
+                            text:   qsTr("Gimbal Yaw")
+                        }
+
+                        Loader {
+                            id:                 gimbalYawLoader
+                            anchors.left:       gimbalYawLabel.right
+                            anchors.right:      parent.right
+                            height:             ScreenTools.defaultFontPixelHeight
+                            width:              100
+                            sourceComponent:    axisMonitorDisplayComponent
+                            property bool mapped:   controller.gimbalYawAxisMapped
+                            property bool reversed: controller.gimbalYawAxisReversed
+                        }
+
+                        Connections {
+                            target: _activeJoystick
+                            onManualControl:    gimbalYawLoader.item.axisValue = gimbalYaw * 32768.0
+                        }
+                    }
+
                 } // Column - Attitude Control labels
 
                 // Command Buttons
@@ -291,14 +338,12 @@ SetupPage {
                     QGCButton {
                         id:     skipButton
                         text:   qsTr("Skip")
-
                         onClicked: controller.skipButtonClicked()
                     }
 
                     QGCButton {
                         id:     cancelButton
                         text:   qsTr("Cancel")
-
                         onClicked: controller.cancelButtonClicked()
                     }
 
@@ -306,7 +351,6 @@ SetupPage {
                         id:         nextButton
                         primary:    true
                         text:       qsTr("Calibrate")
-
                         onClicked: controller.nextButtonClicked()
                     }
                 } // Row - Buttons

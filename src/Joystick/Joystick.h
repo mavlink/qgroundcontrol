@@ -49,6 +49,8 @@ public:
         pitchFunction,
         yawFunction,
         throttleFunction,
+        gimbalPitchFunction,
+        gimbalYawFunction,
         maxFunction
     } AxisFunction_t;
 
@@ -155,12 +157,14 @@ signals:
     void circleCorrectionChanged(bool circleCorrection);
 
     /// Signal containing new joystick information
-    ///     @param roll     Range is -1:1, negative meaning roll left, positive meaning roll right
-    ///     @param pitch    Range i -1:1, negative meaning pitch down, positive meaning pitch up
-    ///     @param yaw      Range is -1:1, negative meaning yaw left, positive meaning yaw right
-    ///     @param throttle Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
+    ///     @param roll         Range is -1:1, negative meaning roll left, positive meaning roll right
+    ///     @param pitch        Range i -1:1, negative meaning pitch down, positive meaning pitch up
+    ///     @param yaw          Range is -1:1, negative meaning yaw left, positive meaning yaw right
+    ///     @param throttle     Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
+    ///     @param gimbalPitch  Range is -1:1
+    ///     @param gimbalYaw    Range is -1:1
     ///     @param mode     See Vehicle::JoystickMode_t enum
-    void manualControl(float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
+    void manualControl      (float roll, float pitch, float yaw, float throttle, float gimbalPitch, float gimbalYaw, quint16 buttons, int joystickMmode);
 
     void buttonActionTriggered(int action);
 
@@ -168,20 +172,24 @@ signals:
     void stepZoom           (int direction);
     void stepCamera         (int direction);
     void stepStream         (int direction);
+    void triggerCamera      ();
+    void startVideoRecord   ();
+    void stopVideoRecord    ();
+    void toggleVideoRecord  ();
 
 protected:
-    void    _setDefaultCalibration(void);
-    void    _saveSettings(void);
-    void    _loadSettings(void);
-    float   _adjustRange(int value, Calibration_t calibration, bool withDeadbands);
-    void    _buttonAction(const QString& action);
-    bool    _validAxis(int axis);
-    bool    _validButton(int button);
+    void    _setDefaultCalibration  ();
+    void    _saveSettings           ();
+    void    _loadSettings           ();
+    float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
+    void    _buttonAction           (const QString& action);
+    bool    _validAxis              (int axis);
+    bool    _validButton            (int button);
 
 private:
-    virtual bool _open() = 0;
-    virtual void _close() = 0;
-    virtual bool _update() = 0;
+    virtual bool _open()    = 0;
+    virtual void _close()   = 0;
+    virtual bool _update()  = 0;
 
     virtual bool _getButton(int i) = 0;
     virtual int _getAxis(int i) = 0;
@@ -196,7 +204,23 @@ private:
 
 protected:
 
-    bool    _exitThread;    ///< true: signal thread to exit
+    bool    _exitThread             = false;    ///< true: signal thread to exit
+    bool    _calibrationMode        = false;
+    int*    _rgAxisValues           = nullptr;
+    Calibration_t* _rgCalibration   = nullptr;
+    bool*   _rgButtonValues         = nullptr;
+    quint16 _lastButtonBits         = 0;
+    ThrottleMode_t _throttleMode    = ThrottleModeDownZero;
+    bool    _negativeThrust         = false;
+    float   _exponential            = 0;
+    bool    _accumulator            = false;
+    bool    _deadband               = false;
+    bool    _circleCorrection       = true;
+    float   _frequency              = 25.0f;
+    Vehicle* _activeVehicle         = nullptr;
+
+
+    bool    _pollingStartedForCalibration = false;
 
     QString _name;
     bool    _calibrated;
@@ -207,28 +231,10 @@ protected:
     int     _totalButtonCount;
 
     static int          _transmitterMode;
-    bool                _calibrationMode;
 
-    int*                _rgAxisValues;
-    Calibration_t*      _rgCalibration;
-    int                 _rgFunctionAxis[maxFunction];
+    int                 _rgFunctionAxis[maxFunction] = {};
 
-    bool*               _rgButtonValues;
     QStringList         _rgButtonActions;
-    quint16             _lastButtonBits;
-
-    ThrottleMode_t      _throttleMode;
-
-    bool                _negativeThrust;
-
-    float                _exponential;
-    bool                _accumulator;
-    bool                _deadband;
-    bool                _circleCorrection;
-    float               _frequency;
-
-    Vehicle*            _activeVehicle;
-    bool                _pollingStartedForCalibration;
 
     MultiVehicleManager*    _multiVehicleManager;
 
@@ -261,6 +267,10 @@ private:
     static const char* _buttonActionPreviousStream;
     static const char* _buttonActionNextCamera;
     static const char* _buttonActionPreviousCamera;
+    static const char* _buttonActionTriggerCamera;
+    static const char* _buttonActionStartVideoRecord;
+    static const char* _buttonActionStopVideoRecord;
+    static const char* _buttonActionToggleVideoRecord;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);
