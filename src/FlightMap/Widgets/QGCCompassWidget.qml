@@ -17,10 +17,11 @@
 import QtQuick              2.3
 import QtGraphicalEffects   1.0
 
-import QGroundControl.Controls      1.0
-import QGroundControl.ScreenTools   1.0
-import QGroundControl.Vehicle       1.0
-import QGroundControl.Palette       1.0
+import QGroundControl              1.0
+import QGroundControl.Controls     1.0
+import QGroundControl.ScreenTools  1.0
+import QGroundControl.Vehicle      1.0
+import QGroundControl.Palette      1.0
 
 Item {
     id:     root
@@ -36,6 +37,9 @@ Item {
     property real _heading:         vehicle ? vehicle.heading.rawValue : 0
     property real _headingToHome:   vehicle ? vehicle.headingToHome.rawValue : 0
     property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
+
+    readonly property bool _showHomeHeadingCompass:        QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass.value
+    readonly property bool _showCOGAngleCompass:        QGroundControl.settingsManager.flyViewSettings.showCOGAngleCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -67,11 +71,12 @@ Item {
         Image {
             id:                     homePointer
             width:                  size * 0.1
-            source:                 "/qmlimages/Home.svg"
+            source:                 _showHomeHeadingCompass ? "/qmlimages/Home.svg" : ""
             mipmap:                 true
             fillMode:               Image.PreserveAspectFit
             anchors.centerIn:   	parent
             sourceSize.width:       width
+            visible:                _showHomeHeadingCompass
 
             transform: Translate {
                 x: size/2.3 * Math.sin((-_heading + _headingToHome)*(3.14/180))
@@ -95,16 +100,20 @@ Item {
         }
 
         Image {
-            function f(){
-                console.log(_heading -_courseOverGround)
-            }
-            property double test: f()
             id:                 cOGPointer
-            source:             "/qmlimages/attitudePointer.svg"
+            source:             _showCOGAngleCompass ? "/qmlimages/attitudePointer.svg" : ""
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
             sourceSize.height:  parent.height
+
+            onVisibleChanged: {
+                if (visible)
+                console.log("is being displayed")
+                else 
+                console.log("is being hidden")
+            }
+
 
             transform: Rotation {
                 origin.x:       cOGPointer.width  / 2

@@ -475,6 +475,21 @@ Rectangle {
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
                             }
+                            FactCheckBox {
+                                text:       qsTr("Show/Hide Home heading on the Compass")
+                                visible:    _showHomeHeadingCompass.visible
+                                fact:       _showHomeHeadingCompass
+
+                                property Fact _showHomeHeadingCompass: QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass
+                            }
+                            FactCheckBox {
+                                text:       qsTr("Show/Hide Course Over Ground angle on the Compass")
+                                visible:    _showCOGAngleCompass.visible
+                                fact:       _showCOGAngleCompass
+
+                                property Fact _showCOGAngleCompass: QGroundControl.settingsManager.flyViewSettings.showCOGAngleCompass
+                            }
+
 
                             GridLayout {
                                 columns: 2
