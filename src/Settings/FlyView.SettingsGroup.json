@@ -24,5 +24,17 @@
     "shortDescription": "Use Vertical Instrument Panel instead of the default one",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "showHomeHeadingCompass",
+    "shortDescription": "Show/Hide Home heading on the Compass",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "showCOGAngleCompass",
+    "shortDescription": "Show/Hide Course Over Ground angle on the Compass",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
