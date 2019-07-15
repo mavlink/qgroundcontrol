@@ -59,6 +59,21 @@ Item {
         visible:        false
 
         Image {
+            id:                 cOGPointer
+            source:             _showCOGAngleCompass ? "/qmlimages/cOGPointer.svg" : ""
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
+
+            transform: Rotation {
+                origin.x:       cOGPointer.width  / 2
+                origin.y:       cOGPointer.height / 2
+                angle:         _courseOverGround - _heading
+            }
+        }
+
+        Image {
             id:                 pointer
             width:              size * 0.65
             source:             vehicle ? vehicle.vehicleImageCompass : ""
@@ -99,28 +114,6 @@ Item {
             }
         }
 
-        Image {
-            id:                 cOGPointer
-            source:             _showCOGAngleCompass ? "/qmlimages/attitudePointer.svg" : ""
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.fill:       parent
-            sourceSize.height:  parent.height
-
-            onVisibleChanged: {
-                if (visible)
-                console.log("is being displayed")
-                else 
-                console.log("is being hidden")
-            }
-
-
-            transform: Rotation {
-                origin.x:       cOGPointer.width  / 2
-                origin.y:       cOGPointer.height / 2
-                angle:         _courseOverGround - _heading
-            }
-        }
 
         Rectangle {
             anchors.centerIn:   parent
