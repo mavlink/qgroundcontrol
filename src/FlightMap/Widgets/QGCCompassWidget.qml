@@ -36,9 +36,23 @@ Item {
     property int  _fontSize:        ScreenTools.defaultFontPointSize * _sizeRatio
     property real _heading:         vehicle ? vehicle.heading.rawValue : 0
     property real _headingToHome:   vehicle ? vehicle.headingToHome.rawValue : 0
+    property real _groundSpeed:   vehicle ? vehicle.groundSpeed.rawValue : 0
     property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
 
-    readonly property bool _showHomeHeadingCompass:        QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass.value
+    function isCOGAngleOK(){
+        if(_groundSpeed < 0.5 && _showCOGAngleCompass){
+            return false
+        }
+        else{
+            return true
+        }
+    }
+
+    function isHeadingAngleOK(){
+        return _showHomeHeadingCompass && !isNaN(_headingToHome)
+    }
+
+    readonly property bool _showHomeHeadingCompass:     QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass.value
     readonly property bool _showCOGAngleCompass:        QGroundControl.settingsManager.flyViewSettings.showCOGAngleCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -60,7 +74,7 @@ Item {
 
         Image {
             id:                 cOGPointer
-            source:             _showCOGAngleCompass ? "/qmlimages/cOGPointer.svg" : ""
+            source:             isCOGAngleOK() ? "/qmlimages/cOGPointer.svg" : ""
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
@@ -86,7 +100,7 @@ Item {
         Image {
             id:                     homePointer
             width:                  size * 0.1
-            source:                 _showHomeHeadingCompass ? "/qmlimages/Home.svg" : ""
+            source:                 isHeadingAngleOK()  ? "/qmlimages/Home.svg" : ""
             mipmap:                 true
             fillMode:               Image.PreserveAspectFit
             anchors.centerIn:   	parent
