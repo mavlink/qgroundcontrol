@@ -56,6 +56,7 @@
         <file alias="px4.png">resources/firmware/px4.png</file>
     </qresource>
     <qresource prefix="/res/calibration">
+        <file alias="joystick.svg">resources/calibration/joystick/joystick.svg</file>
         <file alias="accel_back.png">resources/calibration/accel_back.png</file>
         <file alias="accel_down.png">resources/calibration/accel_down.png</file>
         <file alias="accel_front.png">resources/calibration/accel_front.png</file>

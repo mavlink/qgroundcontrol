@@ -27,7 +27,8 @@ SetupPage {
     pageName:           qsTr("Joystick")
     pageDescription:    qsTr("Joystick Setup is used to configure a calibrate joysticks.")
 
-    readonly property real _maxButtons: 64
+    readonly property real _maxButtons:         64
+    readonly property real _attitudeLabelWidth: ScreenTools.defaultFontPixelWidth * 12
 
     Connections {
         target: joystickManager
@@ -157,7 +158,7 @@ SetupPage {
                 anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
                 anchors.left:           parent.left
                 anchors.right:          rightColumn.left
-                spacing:                10
+                spacing:                ScreenTools.defaultFontPixelHeight
 
                 // Attitude Controls
                 Column {
@@ -171,9 +172,9 @@ SetupPage {
                         height: defaultTextHeight * 2
 
                         QGCLabel {
-                            id:     rollLabel
-                            width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
+                            id:                 rollLabel
+                            width:              _attitudeLabelWidth
+                            text:               activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
                         }
 
                         Loader {
@@ -188,8 +189,8 @@ SetupPage {
                         }
 
                         Connections {
-                            target: _activeJoystick
-                            onManualControl: rollLoader.item.axisValue = roll*32768.0
+                            target:             _activeJoystick
+                            onManualControl:    rollLoader.item.axisValue = roll*32768.0
                         }
                     }
 
@@ -198,9 +199,9 @@ SetupPage {
                         height: defaultTextHeight * 2
 
                         QGCLabel {
-                            id:     pitchLabel
-                            width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
+                            id:                 pitchLabel
+                            width:              _attitudeLabelWidth
+                            text:               activeVehicle.sub ? qsTr("Forward") : qsTr("Pitch")
                         }
 
                         Loader {
@@ -210,13 +211,13 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-                            property bool mapped:           controller.pitchAxisMapped
-                            property bool reversed:         controller.pitchAxisReversed
+                            property bool mapped:   controller.pitchAxisMapped
+                            property bool reversed: controller.pitchAxisReversed
                         }
 
                         Connections {
-                            target: _activeJoystick
-                            onManualControl: pitchLoader.item.axisValue = pitch*32768.0
+                            target:             _activeJoystick
+                            onManualControl:    pitchLoader.item.axisValue = pitch*32768.0
                         }
                     }
 
@@ -225,9 +226,9 @@ SetupPage {
                         height: defaultTextHeight * 2
 
                         QGCLabel {
-                            id:     yawLabel
-                            width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   qsTr("Yaw")
+                            id:                 yawLabel
+                            width:              _attitudeLabelWidth
+                            text:               qsTr("Yaw")
                         }
 
                         Loader {
@@ -237,13 +238,13 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-                            property bool mapped:           controller.yawAxisMapped
-                            property bool reversed:         controller.yawAxisReversed
+                            property bool mapped:   controller.yawAxisMapped
+                            property bool reversed: controller.yawAxisReversed
                         }
 
                         Connections {
-                            target: _activeJoystick
-                            onManualControl: yawLoader.item.axisValue = yaw*32768.0
+                            target:             _activeJoystick
+                            onManualControl:    yawLoader.item.axisValue = yaw*32768.0
                         }
                     }
 
@@ -252,9 +253,9 @@ SetupPage {
                         height: defaultTextHeight * 2
 
                         QGCLabel {
-                            id:     throttleLabel
-                            width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   qsTr("Throttle")
+                            id:                 throttleLabel
+                            width:              _attitudeLabelWidth
+                            text:               qsTr("Throttle")
                         }
 
                         Loader {
@@ -264,13 +265,13 @@ SetupPage {
                             height:             ScreenTools.defaultFontPixelHeight
                             width:              100
                             sourceComponent:    axisMonitorDisplayComponent
-                            property bool mapped:           controller.throttleAxisMapped
-                            property bool reversed:         controller.throttleAxisReversed
+                            property bool mapped:   controller.throttleAxisMapped
+                            property bool reversed: controller.throttleAxisReversed
                         }
 
                         Connections {
-                            target: _activeJoystick
-                            onManualControl: throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
+                            target:             _activeJoystick
+                            onManualControl:    throttleLoader.item.axisValue = _activeJoystick.negativeThrust ? -throttle*32768.0 : (-2*throttle+1)*32768.0
                         }
                     }
 
@@ -279,9 +280,9 @@ SetupPage {
                         height: defaultTextHeight * 2
 
                         QGCLabel {
-                            id:     gimbalPitchLabel
-                            width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   qsTr("Gimbal Pitch")
+                            id:                 gimbalPitchLabel
+                            width:              _attitudeLabelWidth
+                            text:               qsTr("Gimbal Pitch")
                         }
 
                         Loader {
@@ -296,7 +297,7 @@ SetupPage {
                         }
 
                         Connections {
-                            target: _activeJoystick
+                            target:             _activeJoystick
                             onManualControl:    gimbalPitchLoader.item.axisValue = gimbalPitch * 32768.0
                         }
                     }
@@ -306,9 +307,9 @@ SetupPage {
                         height: defaultTextHeight * 2
 
                         QGCLabel {
-                            id:     gimbalYawLabel
-                            width:  ScreenTools.defaultFontPixelWidth * 10
-                            text:   qsTr("Gimbal Yaw")
+                            id:                 gimbalYawLabel
+                            width:              _attitudeLabelWidth
+                            text:               qsTr("Gimbal Yaw")
                         }
 
                         Loader {
@@ -323,7 +324,7 @@ SetupPage {
                         }
 
                         Connections {
-                            target: _activeJoystick
+                            target:             _activeJoystick
                             onManualControl:    gimbalYawLoader.item.axisValue = gimbalYaw * 32768.0
                         }
                     }
@@ -334,26 +335,24 @@ SetupPage {
                 Row {
                     spacing: 10
                     visible: _activeJoystick.requiresCalibration
-
+                    anchors.horizontalCenter: parent.horizontalCenter
                     QGCButton {
-                        id:     skipButton
-                        text:   qsTr("Skip")
-                        onClicked: controller.skipButtonClicked()
+                        id:         skipButton
+                        text:       qsTr("Skip")
+                        onClicked:  controller.skipButtonClicked()
                     }
-
                     QGCButton {
-                        id:     cancelButton
-                        text:   qsTr("Cancel")
-                        onClicked: controller.cancelButtonClicked()
+                        id:         cancelButton
+                        text:       qsTr("Cancel")
+                        onClicked:  controller.cancelButtonClicked()
                     }
-
                     QGCButton {
                         id:         nextButton
                         primary:    true
                         text:       qsTr("Calibrate")
-                        onClicked: controller.nextButtonClicked()
+                        onClicked:  controller.nextButtonClicked()
                     }
-                } // Row - Buttons
+                }
 
                 // Status Text
                 QGCLabel {
@@ -412,39 +411,32 @@ SetupPage {
                                 }
                             }
 
-                            Row {
-                                width:      parent.width
-                                spacing:    ScreenTools.defaultFontPixelWidth
+                            QGCLabel {
+                                text:               qsTr("Active joystick:")
+                            }
 
-                                QGCLabel {
-                                    id:                 activeJoystickLabel
-                                    anchors.baseline:   joystickCombo.baseline
-                                    text:               qsTr("Active joystick:")
+                            QGCComboBox {
+                                id:                 joystickCombo
+                                width:              parent.width * 0.9
+                                model:              joystickManager.joystickNames
+
+                                onActivated: joystickManager.activeJoystickName = textAt(index)
+
+                                Component.onCompleted: {
+                                    var index = joystickCombo.find(joystickManager.activeJoystickName)
+                                    if (index === -1) {
+                                        console.warn(qsTr("Active joystick name not in combo"), joystickManager.activeJoystickName)
+                                    } else {
+                                        joystickCombo.currentIndex = index
+                                    }
                                 }
 
-                                QGCComboBox {
-                                    id:                 joystickCombo
-                                    width:              parent.width - activeJoystickLabel.width - parent.spacing
-                                    model:              joystickManager.joystickNames
-
-                                    onActivated: joystickManager.activeJoystickName = textAt(index)
-
-                                    Component.onCompleted: {
+                                Connections {
+                                    target: joystickManager
+                                    onAvailableJoysticksChanged: {
                                         var index = joystickCombo.find(joystickManager.activeJoystickName)
-                                        if (index === -1) {
-                                            console.warn(qsTr("Active joystick name not in combo"), joystickManager.activeJoystickName)
-                                        } else {
+                                        if (index >= 0) {
                                             joystickCombo.currentIndex = index
-                                        }
-                                    }
-
-                                    Connections {
-                                        target: joystickManager
-                                        onAvailableJoysticksChanged: {
-                                            var index = joystickCombo.find(joystickManager.activeJoystickName)
-                                            if (index >= 0) {
-                                                joystickCombo.currentIndex = index
-                                            }
                                         }
                                     }
                                 }
@@ -494,7 +486,7 @@ SetupPage {
                             }
 
                             Column {
-                                spacing: ScreenTools.defaultFontPixelHeight / 3
+                                spacing: ScreenTools.defaultFontPixelHeight
 
                                 QGCLabel {
                                     id:                 expoSliderLabel
@@ -502,15 +494,15 @@ SetupPage {
                                 }
 
                                 Row {
+                                    spacing:            ScreenTools.defaultFontPixelWidth
                                     QGCSlider {
-                                        id: expoSlider
-                                        minimumValue: 0
-                                        maximumValue: 0.75
-
-                                        Component.onCompleted: value=-_activeJoystick.exponential
-                                        onValueChanged: _activeJoystick.exponential=-value
+                                        id:             expoSlider
+                                        width:          ScreenTools.defaultFontPixelWidth * 14
+                                        minimumValue:   0
+                                        maximumValue:   0.75
+                                        Component.onCompleted: value = -_activeJoystick.exponential
+                                        onValueChanged: _activeJoystick.exponential = -value
                                      }
-
                                     QGCLabel {
                                         id:     expoSliderIndicator
                                         text:   expoSlider.value.toFixed(2)
@@ -761,53 +753,58 @@ SetupPage {
                 anchors.top:    parent.top
                 anchors.right:  parent.right
                 width:          Math.min(joystickPage.ScreenTools.defaultFontPixelWidth * 35, availableWidth * 0.4)
-                spacing:        ScreenTools.defaultFontPixelHeight / 2
+                spacing:        ScreenTools.defaultFontPixelHeight
 
                 Row {
                     spacing: ScreenTools.defaultFontPixelWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
 
                     QGCLabel {
                         text: "TX Mode:"
+                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     QGCRadioButton {
-                        text:           "1"
-                        checked:        controller.transmitterMode == 1
-                        enabled:        !controller.calibrating
-
-                        onClicked: controller.transmitterMode = 1
+                        text:       "1"
+                        checked:    controller.transmitterMode == 1
+                        enabled:    !controller.calibrating
+                        onClicked:  controller.transmitterMode = 1
+                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     QGCRadioButton {
-                        text:           "2"
-                        checked:        controller.transmitterMode == 2
-                        enabled:        !controller.calibrating
-
-                        onClicked: controller.transmitterMode = 2
+                        text:       "2"
+                        checked:    controller.transmitterMode == 2
+                        enabled:    !controller.calibrating
+                        onClicked:  controller.transmitterMode = 2
+                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     QGCRadioButton {
-                        text:           "3"
-                        checked:        controller.transmitterMode == 3
-                        enabled:        !controller.calibrating
-
-                        onClicked: controller.transmitterMode = 3
+                        text:       "3"
+                        checked:    controller.transmitterMode == 3
+                        enabled:    !controller.calibrating
+                        onClicked:  controller.transmitterMode = 3
+                        anchors.verticalCenter: parent.verticalCenter
                     }
 
                     QGCRadioButton {
-                        text:           "4"
-                        checked:        controller.transmitterMode == 4
-                        enabled:        !controller.calibrating
-
-                        onClicked: controller.transmitterMode = 4
+                        text:       "4"
+                        checked:    controller.transmitterMode == 4
+                        enabled:    !controller.calibrating
+                        onClicked:  controller.transmitterMode = 4
+                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
 
-                Image {
-                    width:      parent.width
+                QGCColoredImage {
+                    width:      parent.width * 0.9
+                    height:     width * 0.5
+                    sourceSize.height: height
                     fillMode:   Image.PreserveAspectFit
                     smooth:     true
-                    source:     controller.imageHelp
+                    source:     "/res/calibration/joystick.svg"
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 // Axis monitor
@@ -815,7 +812,10 @@ SetupPage {
                     width:      parent.width
                     spacing:    5
 
-                    QGCLabel { text: qsTr("Axis Monitor") }
+                    QGCLabel {
+                        text: qsTr("Axis Monitor")
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
 
                     Connections {
                         target: controller
@@ -840,6 +840,7 @@ SetupPage {
 
                         Row {
                             spacing:    5
+                            anchors.horizontalCenter: parent.horizontalCenter
 
                             // Need this to get to loader from Connections above
                             property Item loader: theLoader
@@ -859,7 +860,6 @@ SetupPage {
 
                                 property bool mapped:               true
                                 readonly property bool reversed:    false
-
 
                                 MouseArea {
                                     id:                 deadbandMouseArea
@@ -897,7 +897,10 @@ SetupPage {
                     width:      parent.width
                     spacing:    ScreenTools.defaultFontPixelHeight
 
-                    QGCLabel { text: qsTr("Button Monitor") }
+                    QGCLabel {
+                        text: qsTr("Button Monitor")
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
 
                     Connections {
                         target: _activeJoystick
@@ -910,19 +913,20 @@ SetupPage {
                     }
 
                     Flow {
-                        width:      parent.width
+                        width:      parent.width * 0.9
                         spacing:    -1
+                        anchors.horizontalCenter: parent.horizontalCenter
 
                         Repeater {
                             id:     buttonMonitorRepeater
                             model:  _activeJoystick ? _activeJoystick.totalButtonCount : 0
 
                             Rectangle {
-                                width:          ScreenTools.defaultFontPixelHeight * 1.2
+                                width:          ScreenTools.defaultFontPixelHeight * 1.5
                                 height:         width
                                 border.width:   1
                                 border.color:   qgcPal.text
-                                color:          pressed ? qgcPal.buttonHighlight : qgcPal.button
+                                color:          pressed ? qgcPal.buttonHighlight : qgcPal.windowShade
 
                                 property bool pressed
 
