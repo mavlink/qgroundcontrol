@@ -49,10 +49,7 @@ bool PowerComponent::setupComplete(void) const
 
 QStringList PowerComponent::setupCompleteChangedTriggerList(void) const
 {
-    QStringList triggerList;
-
-    triggerList << "BAT_V_CHARGED" << "BAT_V_EMPTY" << "BAT_N_CELLS";
-    return triggerList;
+    return {"BAT_V_CHARGED", "BAT_V_EMPTY", "BAT_N_CELLS"};
 }
 
 QUrl PowerComponent::setupSource(void) const
