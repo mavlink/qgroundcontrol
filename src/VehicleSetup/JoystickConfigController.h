@@ -7,10 +7,8 @@
  *
  ****************************************************************************/
 
-
-
 /// @file
-///     @brief Radio Config Qml Controller
+///     @brief Joystick Config Qml Controller
 ///     @author Don Gagne <don@thegagnes.com
 
 #ifndef JoystickConfigController_H
@@ -31,7 +29,6 @@ namespace Ui {
     class JoystickConfigController;
 }
 
-
 class JoystickConfigController : public FactPanelController
 {
     Q_OBJECT
@@ -42,7 +39,8 @@ public:
     JoystickConfigController(void);
     ~JoystickConfigController();
     
-    Q_PROPERTY(QQuickItem* statusText   MEMBER _statusText)
+    Q_PROPERTY(QString statusText               READ statusText                 NOTIFY statusTextChanged)
+
     Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
     Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton)
     Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton)
@@ -52,6 +50,7 @@ public:
     Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped          READ throttleAxisMapped         NOTIFY throttleAxisMappedChanged)
 
+    Q_PROPERTY(bool hasGimbal                   READ hasGimbal                  NOTIFY hasGimbalChanged)
     Q_PROPERTY(bool gimbalPitchAxisMapped       READ gimbalPitchAxisMapped      NOTIFY gimbalPitchAxisMappedChanged)
     Q_PROPERTY(bool gimbalYawAxisMapped         READ gimbalYawAxisMapped        NOTIFY gimbalYawAxisMappedChanged)
 
@@ -65,15 +64,19 @@ public:
 
     Q_PROPERTY(bool deadbandToggle              READ getDeadbandToggle          WRITE setDeadbandToggle    NOTIFY deadbandToggled)
 
-    Q_PROPERTY(int transmitterMode READ transmitterMode WRITE setTransmitterMode NOTIFY transmitterModeChanged)
-    Q_PROPERTY(QString imageHelp MEMBER _imageHelp NOTIFY imageHelpChanged)
-    Q_PROPERTY(bool calibrating READ calibrating NOTIFY calibratingChanged)
-    
+    Q_PROPERTY(int  transmitterMode             READ transmitterMode            WRITE setTransmitterMode NOTIFY transmitterModeChanged)
+    Q_PROPERTY(bool calibrating                 READ calibrating                NOTIFY calibratingChanged)
+
+    Q_PROPERTY(QList<qreal> stickPositions      READ stickPositions             NOTIFY stickPositionsChanged)
+    Q_PROPERTY(QList<qreal> gimbalPositions     READ gimbalPositions            NOTIFY gimbalPositionsChanged)
+
     Q_INVOKABLE void cancelButtonClicked    ();
     Q_INVOKABLE void skipButtonClicked      ();
     Q_INVOKABLE void nextButtonClicked      ();
     Q_INVOKABLE void start                  ();
     Q_INVOKABLE void setDeadbandValue       (int axis, int value);
+
+    QString statusText                      () { return _statusText; }
 
     bool rollAxisMapped                     () { return _rgFunctionAxisMapping[Joystick::rollFunction]          != _axisNoAxis; }
     bool pitchAxisMapped                    () { return _rgFunctionAxisMapping[Joystick::pitchFunction]         != _axisNoAxis; }
@@ -89,6 +92,8 @@ public:
     bool gimbalPitchAxisReversed            ();
     bool gimbalYawAxisReversed              ();
 
+    bool hasGimbal                          () { return _axisCount > 5; }
+
     bool getDeadbandToggle                  ();
     void setDeadbandToggle                  (bool);
 
@@ -98,31 +103,40 @@ public:
     void setTransmitterMode                 (int mode);
 
     bool calibrating                        () { return _currentStep != -1; }
-    
+
+    QList<qreal> stickPositions             () { return _currentStickPositions; }
+    QList<qreal> gimbalPositions            () { return _currentGimbalPositions; }
+
+    struct stateStickPositions {
+        qreal   leftX;
+        qreal   leftY;
+        qreal   rightX;
+        qreal   rightY;
+    };
+
 signals:
     void axisValueChanged                   (int axis, int value);
     void axisDeadbandChanged                (int axis, int value);
-
     void rollAxisMappedChanged              (bool mapped);
     void pitchAxisMappedChanged             (bool mapped);
     void yawAxisMappedChanged               (bool mapped);
     void throttleAxisMappedChanged          (bool mapped);
     void gimbalPitchAxisMappedChanged       (bool mapped);
     void gimbalYawAxisMappedChanged         (bool mapped);
-
     void rollAxisReversedChanged            (bool reversed);
     void pitchAxisReversedChanged           (bool reversed);
     void yawAxisReversedChanged             (bool reversed);
     void throttleAxisReversedChanged        (bool reversed);
     void gimbalPitchAxisReversedChanged     (bool reversed);
     void gimbalYawAxisReversedChanged       (bool reversed);
-
     void deadbandToggled                    (bool value);
-    
-    void imageHelpChanged                   (QString source);
     void transmitterModeChanged             (int mode);
     void calibratingChanged                 ();
-    
+    void stickPositionsChanged              ();
+    void gimbalPositionsChanged             ();
+    void hasGimbalChanged                   ();
+    void statusTextChanged                  ();
+
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button
     void nextButtonMessageBoxDisplayed      ();
 
@@ -143,13 +157,14 @@ private:
         calStateTrims,
         calStateSave
     };
-    
+
     typedef void (JoystickConfigController::*inputFn)(Joystick::AxisFunction_t function, int axis, int value);
     typedef void (JoystickConfigController::*buttonFn)(void);
     struct stateMachineEntry {
         Joystick::AxisFunction_t    function;
         const char*                 instructions;
-        const char*                 image;
+        stateStickPositions         stickPositions;
+        stateStickPositions         gimbalPositions;
         inputFn                     rcInputFn;
         buttonFn                    nextFn;
         buttonFn                    skipFn;
@@ -202,9 +217,11 @@ private:
 
     void _calSaveCurrentValues  ();
     
-    void _setHelpImage(const char* imageFile);
+    void _setStickPositions     ();
     
     void _signalAllAttitudeValueChanges();
+
+    void _setStatusText         (const QString& text);
     
     // Member variables
 
@@ -222,7 +239,20 @@ private:
     static const char* _imageRollRight;
     static const char* _imagePitchUp;
     static const char* _imagePitchDown;
-    
+
+    stateStickPositions _sticksCentered;
+    stateStickPositions _sticksThrottleUp;
+    stateStickPositions _sticksThrottleDown;
+    stateStickPositions _sticksYawLeft;
+    stateStickPositions _sticksYawRight;
+    stateStickPositions _sticksRollLeft;
+    stateStickPositions _sticksRollRight;
+    stateStickPositions _sticksPitchUp;
+    stateStickPositions _sticksPitchDown;
+
+    QList<qreal> _currentStickPositions;
+    QList<qreal> _currentGimbalPositions;
+
     int _rgFunctionAxisMapping[Joystick::maxFunction]; ///< Maps from joystick function to axis index. _axisMax indicates axis not set for this function.
 
     static const int _attitudeControls  = 5;
@@ -258,13 +288,12 @@ private:
     QTime   _stickDetectSettleElapsed;
     static const int _stickDetectSettleMSecs;
 
-    QQuickItem* _statusText     = nullptr;
+    QString     _statusText;
+
     QQuickItem* _cancelButton   = nullptr;
     QQuickItem* _nextButton     = nullptr;
     QQuickItem* _skipButton     = nullptr;
     
-    QString _imageHelp;
-
     JoystickManager*    _joystickManager;
 };
 
