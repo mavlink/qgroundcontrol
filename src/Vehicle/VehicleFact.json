@@ -105,6 +105,13 @@
     "units":            "m"
 },
 {
+    "name":             "headingToNextWP",
+    "shortDescription": "Heading to Next Waypoint",
+    "type":             "double",
+    "decimalPlaces":    0,
+    "units":            "deg"
+},
+{
     "name":             "flightTime",
     "shortDescription": "Flight Time",
     "type":             "elapsedSeconds",
