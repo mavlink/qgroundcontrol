@@ -262,10 +262,18 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/crazyflie_default.px4"},
     };
 
+    //////////////////////////////////// Omnibus F4 SD firmwares //////////////////////////////////////////////////
     FirmwareToUrlElement_t rgOmnibusF4SDFirmwareArray[] = {
         { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/omnibus_f4sd_default.px4"},
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/omnibus_f4sd_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/omnibus_f4sd_default.px4"},
+    };
+
+    //////////////////////////////////// Kakute F7 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgKakuteF7FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/holybro_kakutef7_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/holybro_kakutef7_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/holybro_kakutef7_default.px4"},
     };
     
     //////////////////////////////////// FMUK66V3 firmwares //////////////////////////////////////////////////
@@ -466,6 +474,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         _rgOmnibusF4SDFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
     
+    size = sizeof(rgKakuteF7FirmwareArray)/sizeof(rgKakuteF7FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgKakuteF7FirmwareArray[i];
+        _rgKakuteF7Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
+
     size = sizeof(rgFMUK66V3FirmwareArray)/sizeof(rgFMUK66V3FirmwareArray[0]);
     for (int i = 0; i < size; i++) {
         const FirmwareToUrlElement_t& element = rgFMUK66V3FirmwareArray[i];
@@ -541,6 +555,9 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         break;
     case Bootloader::boardIDOmnibusF4SD:
         rgFirmware = &_rgOmnibusF4SDFirmware;
+        break;
+    case Bootloader::boardIDKakuteF7:
+        rgFirmware = &_rgKakuteF7Firmware;
         break;
     case Bootloader::boardIDFMUK66V3:
         rgFirmware = &_rgFMUK66V3Firmware;
