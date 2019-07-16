@@ -1285,27 +1285,13 @@ QMap<QString, FactMetaData*> FactMetaData::createMapFromJsonArray(const QJsonArr
 QVariant FactMetaData::cookedMax(void) const
 {
     // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
-    QVariant cookedMax = _rawTranslator(_rawMax);
-    QVariant cookedMin = _rawTranslator(_rawMin);
-    if (cookedMax < cookedMin) {
-        // We need to flip
-        return cookedMin;
-    } else {
-        return cookedMax;
-    }
+    return qMax(_rawTranslator(_rawMax), _rawTranslator(_rawMin));
 }
 
 QVariant FactMetaData::cookedMin(void) const
 {
     // We have to be careful with cooked min/max. Running the raw values through the translator could flip min and max.
-    QVariant cookedMax = _rawTranslator(_rawMax);
-    QVariant cookedMin = _rawTranslator(_rawMin);
-    if (cookedMax < cookedMin) {
-        // We need to flip
-        return cookedMax;
-    } else {
-        return cookedMin;
-    }
+    return qMin(_rawTranslator(_rawMax), _rawTranslator(_rawMin));
 }
 
 void FactMetaData::setVolatileValue(bool bValue)

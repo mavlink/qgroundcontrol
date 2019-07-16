@@ -32,34 +32,33 @@ FirmwarePlugin::remapParamNameMajorVersionMap_t ArduSubFirmwarePlugin::_remapPar
 APMSubMode::APMSubMode(uint32_t mode, bool settable) :
     APMCustomMode(mode, settable)
 {
-    QMap<uint32_t,QString> enumToString;
-    enumToString.insert(MANUAL, "Manual");
-    enumToString.insert(STABILIZE, "Stabilize");
-    enumToString.insert(ACRO, "Acro");
-    enumToString.insert(ALT_HOLD,  "Depth Hold");
-    enumToString.insert(AUTO, "Auto");
-    enumToString.insert(GUIDED, "Guided");
-    enumToString.insert(CIRCLE, "Circle");
-    enumToString.insert(SURFACE, "Surface");
-    enumToString.insert(POSHOLD, "Position Hold");
-
-    setEnumToStringMapping(enumToString);
+    setEnumToStringMapping({
+        {MANUAL, "Manual"},
+        {STABILIZE, "Stabilize"},
+        {ACRO, "Acro"},
+        {ALT_HOLD,  "Depth Hold"},
+        {AUTO, "Auto"},
+        {GUIDED, "Guided"},
+        {CIRCLE, "Circle"},
+        {SURFACE, "Surface"},
+        {POSHOLD, "Position Hold"},
+    });
 }
 
 ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
     _infoFactGroup(this)
 {
-    QList<APMCustomMode> supportedFlightModes;
-    supportedFlightModes << APMSubMode(APMSubMode::MANUAL ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::STABILIZE ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::ACRO ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::ALT_HOLD  ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::AUTO ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::GUIDED ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::CIRCLE ,true);
-    supportedFlightModes << APMSubMode(APMSubMode::SURFACE ,false);
-    supportedFlightModes << APMSubMode(APMSubMode::POSHOLD ,true);
-    setSupportedModes(supportedFlightModes);
+    setSupportedModes({
+        APMSubMode(APMSubMode::MANUAL ,true),
+        APMSubMode(APMSubMode::STABILIZE ,true),
+        APMSubMode(APMSubMode::ACRO ,true),
+        APMSubMode(APMSubMode::ALT_HOLD  ,true),
+        APMSubMode(APMSubMode::AUTO ,true),
+        APMSubMode(APMSubMode::GUIDED ,true),
+        APMSubMode(APMSubMode::CIRCLE ,true),
+        APMSubMode(APMSubMode::SURFACE ,false),
+        APMSubMode(APMSubMode::POSHOLD ,true),
+    });
 
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
@@ -134,34 +133,32 @@ ArduSubFirmwarePlugin::ArduSubFirmwarePlugin(void):
 
 QList<MAV_CMD> ArduSubFirmwarePlugin::supportedMissionCommands(void)
 {
-    QList<MAV_CMD> list;
-
-    list << MAV_CMD_NAV_WAYPOINT
-         << MAV_CMD_NAV_RETURN_TO_LAUNCH
-         << MAV_CMD_NAV_LAND
-         << MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT
-         << MAV_CMD_NAV_SPLINE_WAYPOINT
-         << MAV_CMD_NAV_GUIDED_ENABLE
-         << MAV_CMD_NAV_DELAY
-         << MAV_CMD_CONDITION_DELAY << MAV_CMD_CONDITION_DISTANCE << MAV_CMD_CONDITION_YAW
-         << MAV_CMD_DO_SET_MODE
-         << MAV_CMD_DO_JUMP
-         << MAV_CMD_DO_CHANGE_SPEED
-         << MAV_CMD_DO_SET_HOME
-         << MAV_CMD_DO_SET_RELAY << MAV_CMD_DO_REPEAT_RELAY
-         << MAV_CMD_DO_SET_SERVO << MAV_CMD_DO_REPEAT_SERVO
-         << MAV_CMD_DO_LAND_START
-         << MAV_CMD_DO_SET_ROI
-         << MAV_CMD_DO_DIGICAM_CONFIGURE << MAV_CMD_DO_DIGICAM_CONTROL
-         << MAV_CMD_DO_MOUNT_CONTROL
-         << MAV_CMD_DO_SET_CAM_TRIGG_DIST
-         << MAV_CMD_DO_FENCE_ENABLE
-         << MAV_CMD_DO_INVERTED_FLIGHT
-         << MAV_CMD_DO_GRIPPER
-         << MAV_CMD_DO_GUIDED_LIMITS
-         << MAV_CMD_DO_AUTOTUNE_ENABLE;
-
-    return list;
+    return {
+        MAV_CMD_NAV_WAYPOINT,
+        MAV_CMD_NAV_RETURN_TO_LAUNCH,
+        MAV_CMD_NAV_LAND,
+        MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT,
+        MAV_CMD_NAV_SPLINE_WAYPOINT,
+        MAV_CMD_NAV_GUIDED_ENABLE,
+        MAV_CMD_NAV_DELAY,
+        MAV_CMD_CONDITION_DELAY, MAV_CMD_CONDITION_DISTANCE, MAV_CMD_CONDITION_YAW,
+        MAV_CMD_DO_SET_MODE,
+        MAV_CMD_DO_JUMP,
+        MAV_CMD_DO_CHANGE_SPEED,
+        MAV_CMD_DO_SET_HOME,
+        MAV_CMD_DO_SET_RELAY, MAV_CMD_DO_REPEAT_RELAY,
+        MAV_CMD_DO_SET_SERVO, MAV_CMD_DO_REPEAT_SERVO,
+        MAV_CMD_DO_LAND_START,
+        MAV_CMD_DO_SET_ROI,
+        MAV_CMD_DO_DIGICAM_CONFIGURE, MAV_CMD_DO_DIGICAM_CONTROL,
+        MAV_CMD_DO_MOUNT_CONTROL,
+        MAV_CMD_DO_SET_CAM_TRIGG_DIST,
+        MAV_CMD_DO_FENCE_ENABLE,
+        MAV_CMD_DO_INVERTED_FLIGHT,
+        MAV_CMD_DO_GRIPPER,
+        MAV_CMD_DO_GUIDED_LIMITS,
+        MAV_CMD_DO_AUTOTUNE_ENABLE,
+    };
 }
 
 int ArduSubFirmwarePlugin::remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const
@@ -212,11 +209,13 @@ const QVariantList& ArduSubFirmwarePlugin::toolBarIndicators(const Vehicle* vehi
     Q_UNUSED(vehicle);
     //-- Sub specific list of indicators (Enter your modified list here)
     if(_toolBarIndicators.size() == 0) {
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")));
-        _toolBarIndicators.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")));
+        _toolBarIndicators = QVariantList({
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/MessageIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/BatteryIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/JoystickIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ModeIndicator.qml")),
+            QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/ArmedIndicator.qml")),
+        });
     }
     return _toolBarIndicators;
 }

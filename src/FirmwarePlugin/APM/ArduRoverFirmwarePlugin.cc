@@ -16,39 +16,38 @@ FirmwarePlugin::remapParamNameMajorVersionMap_t ArduRoverFirmwarePlugin::_remapP
 APMRoverMode::APMRoverMode(uint32_t mode, bool settable)
     : APMCustomMode(mode, settable)
 {
-    QMap<uint32_t,QString> enumToString;
-    enumToString.insert(MANUAL,         "Manual");
-    enumToString.insert(ACRO,           "Acro");
-    enumToString.insert(STEERING,       "Steering");
-    enumToString.insert(HOLD,           "Hold");
-    enumToString.insert(LOITER,         "Loiter");
-    enumToString.insert(FOLLOW,         "Follow");
-    enumToString.insert(SIMPLE,         "Simple");
-    enumToString.insert(AUTO,           "Auto");
-    enumToString.insert(RTL,            "RTL");
-    enumToString.insert(SMART_RTL,      "Smart RTL");
-    enumToString.insert(GUIDED,         "Guided");
-    enumToString.insert(INITIALIZING,   "Initializing");
-
-    setEnumToStringMapping(enumToString);
+    setEnumToStringMapping({
+        {MANUAL,         "Manual"},
+        {ACRO,           "Acro"},
+        {STEERING,       "Steering"},
+        {HOLD,           "Hold"},
+        {LOITER,         "Loiter"},
+        {FOLLOW,         "Follow"},
+        {SIMPLE,         "Simple"},
+        {AUTO,           "Auto"},
+        {RTL,            "RTL"},
+        {SMART_RTL,      "Smart RTL"},
+        {GUIDED,         "Guided"},
+        {INITIALIZING,   "Initializing"},
+    });
 }
 
 ArduRoverFirmwarePlugin::ArduRoverFirmwarePlugin(void)
 {
-    QList<APMCustomMode> supportedFlightModes;
-    supportedFlightModes << APMRoverMode(APMRoverMode::MANUAL       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::ACRO         ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::STEERING     ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::HOLD         ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::LOITER       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::FOLLOW       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::SIMPLE       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::AUTO         ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::RTL          ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::SMART_RTL    ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::GUIDED       ,true);
-    supportedFlightModes << APMRoverMode(APMRoverMode::INITIALIZING ,false);
-    setSupportedModes(supportedFlightModes);
+    setSupportedModes({
+        APMRoverMode(APMRoverMode::MANUAL       ,true),
+        APMRoverMode(APMRoverMode::ACRO         ,true),
+        APMRoverMode(APMRoverMode::STEERING     ,true),
+        APMRoverMode(APMRoverMode::HOLD         ,true),
+        APMRoverMode(APMRoverMode::LOITER       ,true),
+        APMRoverMode(APMRoverMode::FOLLOW       ,true),
+        APMRoverMode(APMRoverMode::SIMPLE       ,true),
+        APMRoverMode(APMRoverMode::AUTO         ,true),
+        APMRoverMode(APMRoverMode::RTL          ,true),
+        APMRoverMode(APMRoverMode::SMART_RTL    ,true),
+        APMRoverMode(APMRoverMode::GUIDED       ,true),
+        APMRoverMode(APMRoverMode::INITIALIZING ,false),
+    });
 
     if (!_remapParamNameIntialized) {
         FirmwarePlugin::remapParamNameMap_t& remapV3_5 = _remapParamName[3][5];
