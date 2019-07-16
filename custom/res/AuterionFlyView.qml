@@ -247,6 +247,7 @@ Item {
                 joystick.y = spawnY;
                 joystick.shownFirstTime = true;
             }
+            joystick.dpadPos = joystick.x > (parent.width -joystick.width)/2 ? "Left" : "Right"
         }
         function gimbalControlVisibleChanged() {
             joystick.visible = item.gimbalControlVisible;
@@ -257,11 +258,14 @@ Item {
         id: joystick
 
         visible: false
-        dpadPos: x > parent.width/2 ? "Left" : "Right"
+
+        onXChanged: {
+            dpadPos = (x > ((parent.width - width)/2)) ? "Left" : "Right"
+        }
 
         x: 0
         y: 0
-        textPointSize: ScreenTools.largeFontPointSize * 1.5
+        textPointSize: ScreenTools.largeFontPointSize
 
         mainColor: qgcPal.windowShadeDark
         secondaryColor: qgcPal.windowShade

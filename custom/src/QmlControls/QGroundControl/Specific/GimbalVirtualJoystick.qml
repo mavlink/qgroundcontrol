@@ -177,7 +177,7 @@ Item {
 
             PropertyChanges {
                 target: _root
-                width: joystickCtrl.width + dpadCtrl.visible ? (dpadCtrl.width + closeButton.width/2) : 0
+                width: joystickCtrl.width + dpadCtrl.visible ? (textContent.width + closeButton.width/2) : 0
                 height: joystickCtrl.height
             }
             AnchorChanges {
@@ -225,7 +225,7 @@ Item {
 
             PropertyChanges {
                 target: _root
-                width: joystickCtrl.width + dpadCtrl.visible ? dpadCtrl.width + closeButton.width/2 : 0
+                width: joystickCtrl.width + dpadCtrl.visible ? textContent.width + closeButton.width/2 : 0
                 height: joystickCtrl.height
             }
             AnchorChanges {
@@ -274,7 +274,7 @@ Item {
             PropertyChanges {
                 target: _root
                 width: joystickCtrl.width
-                height: joystickCtrl.height + dpadCtrl.visible ? dpadCtrl.height + closeButton.height/2 : 0
+                height: joystickCtrl.height + dpadCtrl.visible ? textContent.height + closeButton.height/2 : 0
             }
             AnchorChanges {
                 target: joystickCtrl
@@ -318,7 +318,7 @@ Item {
             PropertyChanges {
                 target: _root
                 width: joystickCtrl.width
-                height: joystickCtrl.height + dpadCtrl.visible ? dpadCtrl.height + closeButton.height/2 : 0
+                height: joystickCtrl.height + dpadCtrl.visible ? textContent.height + closeButton.height/2 : 0
             }
             AnchorChanges {
                 target: joystickCtrl
