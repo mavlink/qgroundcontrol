@@ -4148,6 +4148,14 @@ default 1.5 turns per second</short_desc>
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter default="1.0" name="MC_PITCHRATE_K" type="FLOAT">
+      <short_desc>Pitch rate controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = MC_PITCHRATE_K * (MC_PITCHRATE_P * error + MC_PITCHRATE_I * error_integral + MC_PITCHRATE_D * error_derivative) Set MC_PITCHRATE_P=1 to implement a PID in the ideal form. Set MC_PITCHRATE_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
+    </parameter>
     <parameter default="220.0" name="MC_PITCHRATE_MAX" type="FLOAT">
       <short_desc>Max pitch rate</short_desc>
       <long_desc>Limit for pitch rate in manual and auto modes (except acro). Has effect for large rotations in autonomous mode, to avoid large control output and mixer saturation. This is not only limited by the vehicle's properties, but also by the maximum measurement rate of the gyro.</long_desc>
@@ -4209,6 +4217,14 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>3</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter default="1.0" name="MC_ROLLRATE_K" type="FLOAT">
+      <short_desc>Roll rate controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = MC_ROLLRATE_K * (MC_ROLLRATE_P * error + MC_ROLLRATE_I * error_integral + MC_ROLLRATE_D * error_derivative) Set MC_ROLLRATE_P=1 to implement a PID in the ideal form. Set MC_ROLLRATE_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="220.0" name="MC_ROLLRATE_MAX" type="FLOAT">
       <short_desc>Max roll rate</short_desc>
@@ -4311,6 +4327,14 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter default="1.0" name="MC_YAWRATE_K" type="FLOAT">
+      <short_desc>Yaw rate controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = MC_YAWRATE_K * (MC_YAWRATE_P * error + MC_YAWRATE_I * error_integral + MC_YAWRATE_D * error_derivative) Set MC_YAWRATE_P=1 to implement a PID in the ideal form. Set MC_YAWRATE_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="200.0" name="MC_YAWRATE_MAX" type="FLOAT">
       <short_desc>Max yaw rate</short_desc>
