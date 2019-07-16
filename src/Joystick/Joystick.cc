@@ -175,10 +175,8 @@ void Joystick::_activeVehicleChanged(Vehicle* activeVehicle)
 
 void Joystick::_loadSettings()
 {
-    QSettings   settings;
-
+    QSettings settings;
     settings.beginGroup(_settingsGroup);
-
     Vehicle* activeVehicle = _multiVehicleManager->activeVehicle();
 
     if(_txModeSettingsKey && activeVehicle)
@@ -191,25 +189,25 @@ void Joystick::_loadSettings()
 
     qCDebug(JoystickLog) << "_loadSettings " << _name;
 
-    _calibrated = settings.value(_calibratedSettingsKey, false).toBool();
-    _exponential = settings.value(_exponentialSettingsKey, 0).toFloat();
-    _accumulator = settings.value(_accumulatorSettingsKey, false).toBool();
-    _deadband = settings.value(_deadbandSettingsKey, false).toBool();
+    _calibrated     = settings.value(_calibratedSettingsKey, false).toBool();
+    _exponential    = settings.value(_exponentialSettingsKey, 0).toFloat();
+    _accumulator    = settings.value(_accumulatorSettingsKey, false).toBool();
+    _deadband       = settings.value(_deadbandSettingsKey, false).toBool();
+    _frequency      = settings.value(_frequencySettingsKey, 25.0f).toFloat();
     _circleCorrection = settings.value(_circleCorrectionSettingsKey, false).toBool();
-    _frequency = settings.value(_frequencySettingsKey, 25.0f).toFloat();
 
-    _throttleMode = (ThrottleMode_t)settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk);
+    _throttleMode   = static_cast<ThrottleMode_t>(settings.value(_throttleModeSettingsKey, ThrottleModeDownZero).toInt(&convertOk));
     badSettings |= !convertOk;
 
     qCDebug(JoystickLog) << "_loadSettings calibrated:txmode:throttlemode:exponential:deadband:badsettings" << _calibrated << _transmitterMode << _throttleMode << _exponential << _deadband << badSettings;
 
-    QString minTpl  ("Axis%1Min");
-    QString maxTpl  ("Axis%1Max");
-    QString trimTpl ("Axis%1Trim");
-    QString revTpl  ("Axis%1Rev");
+    QString minTpl      ("Axis%1Min");
+    QString maxTpl      ("Axis%1Max");
+    QString trimTpl     ("Axis%1Trim");
+    QString revTpl      ("Axis%1Rev");
     QString deadbndTpl  ("Axis%1Deadbnd");
 
-    for (int axis=0; axis<_axisCount; axis++) {
+    for (int axis = 0; axis < _axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
 
         calibration->center = settings.value(trimTpl.arg(axis), 0).toInt(&convertOk);
@@ -225,7 +223,6 @@ void Joystick::_loadSettings()
         badSettings |= !convertOk;
 
         calibration->reversed = settings.value(revTpl.arg(axis), false).toBool();
-
 
         qCDebug(JoystickLog) << "_loadSettings axis:min:max:trim:reversed:deadband:badsettings" << axis << calibration->min << calibration->max << calibration->center << calibration->reversed << calibration->deadband << badSettings;
     }
@@ -268,31 +265,29 @@ void Joystick::_saveSettings()
 
     settings.beginGroup(_name);
 
-    settings.setValue(_calibratedSettingsKey, _calibrated);
-    settings.setValue(_exponentialSettingsKey, _exponential);
-    settings.setValue(_accumulatorSettingsKey, _accumulator);
-    settings.setValue(_deadbandSettingsKey, _deadband);
-    settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
-    settings.setValue(_frequencySettingsKey, _frequency);
+    settings.setValue(_calibratedSettingsKey,   _calibrated);
+    settings.setValue(_exponentialSettingsKey,  _exponential);
+    settings.setValue(_accumulatorSettingsKey,  _accumulator);
+    settings.setValue(_deadbandSettingsKey,     _deadband);
+    settings.setValue(_frequencySettingsKey,    _frequency);
     settings.setValue(_throttleModeSettingsKey, _throttleMode);
+    settings.setValue(_circleCorrectionSettingsKey, _circleCorrection);
 
     qCDebug(JoystickLog) << "_saveSettings calibrated:throttlemode:deadband:txmode" << _calibrated << _throttleMode << _deadband << _circleCorrection << _transmitterMode;
 
-    QString minTpl  ("Axis%1Min");
-    QString maxTpl  ("Axis%1Max");
-    QString trimTpl ("Axis%1Trim");
-    QString revTpl  ("Axis%1Rev");
+    QString minTpl      ("Axis%1Min");
+    QString maxTpl      ("Axis%1Max");
+    QString trimTpl     ("Axis%1Trim");
+    QString revTpl      ("Axis%1Rev");
     QString deadbndTpl  ("Axis%1Deadbnd");
 
-    for (int axis=0; axis<_axisCount; axis++) {
+    for (int axis = 0; axis < _axisCount; axis++) {
         Calibration_t* calibration = &_rgCalibration[axis];
-
         settings.setValue(trimTpl.arg(axis), calibration->center);
         settings.setValue(minTpl.arg(axis), calibration->min);
         settings.setValue(maxTpl.arg(axis), calibration->max);
         settings.setValue(revTpl.arg(axis), calibration->reversed);
         settings.setValue(deadbndTpl.arg(axis), calibration->deadband);
-
         qCDebug(JoystickLog) << "_saveSettings name:axis:min:max:trim:reversed:deadband"
                                 << _name
                                 << axis
@@ -308,12 +303,12 @@ void Joystick::_saveSettings()
     int temp[maxFunction];
     _remapAxes(_transmitterMode, 2, temp);
 
-    for (int function=0; function<maxFunction; function++) {
+    for (int function = 0; function < maxFunction; function++) {
         settings.setValue(_rgFunctionSettingsKey[function], temp[function]);
         qCDebug(JoystickLog) << "_saveSettings name:function:axis" << _name << function << _rgFunctionSettingsKey[function];
     }
 
-    for (int button=0; button<_totalButtonCount; button++) {
+    for (int button = 0; button < _totalButtonCount; button++) {
         settings.setValue(QString(_buttonActionSettingsKey).arg(button), _rgButtonActions[button]);
         qCDebug(JoystickLog) << "_saveSettings button:action" << button << _rgButtonActions[button];
     }
@@ -321,13 +316,11 @@ void Joystick::_saveSettings()
 
 // Relative mappings of axis functions between different TX modes
 int Joystick::_mapFunctionMode(int mode, int function) {
-
-    static const int mapping[][4] = {
-        { 2, 1, 0, 3 },
-        { 2, 3, 0, 1 },
-        { 0, 1, 2, 3 },
-        { 0, 3, 2, 1 }};
-
+    static const int mapping[][6] = {
+        { yawFunction, pitchFunction, rollFunction, throttleFunction, gimbalPitchFunction, gimbalYawFunction },
+        { yawFunction, throttleFunction, rollFunction, pitchFunction, gimbalPitchFunction, gimbalYawFunction },
+        { rollFunction, pitchFunction, yawFunction, throttleFunction, gimbalPitchFunction, gimbalYawFunction },
+        { rollFunction, throttleFunction, yawFunction, pitchFunction, gimbalPitchFunction, gimbalYawFunction }};
     return mapping[mode-1][function];
 }
 

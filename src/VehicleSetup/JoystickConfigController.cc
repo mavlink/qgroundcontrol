@@ -43,13 +43,74 @@ const char*  JoystickConfigController::_imageRollRight =    "joystickRollRight.p
 const char*  JoystickConfigController::_imagePitchUp =      "joystickPitchUp.png";
 const char*  JoystickConfigController::_imagePitchDown =    "joystickPitchDown.png";
 
+static const JoystickConfigController::stateStickPositions stSticksCentered {
+    0.25, 0.5, 0.75, 0.5
+};
+
+static const JoystickConfigController::stateStickPositions stLeftStickUp {
+    0.25, 0.3084, 0.75, 0.5
+};
+
+static const JoystickConfigController::stateStickPositions stLeftStickDown {
+    0.25, 0.6916, 0.75, 0.5
+};
+
+static const JoystickConfigController::stateStickPositions stLeftStickLeft {
+    0.1542, 0.5, 0.75, 0.5
+};
+
+static const JoystickConfigController::stateStickPositions stLeftStickRight {
+    0.3458, 0.5, 0.75, 0.5
+};
+
+static const JoystickConfigController::stateStickPositions stRightStickUp {
+    0.25, 0.5, 0.75, 0.3084
+};
+
+static const JoystickConfigController::stateStickPositions stRightStickDown {
+    0.25, 0.5, 0.75, 0.6916
+};
+
+static const JoystickConfigController::stateStickPositions stRightStickLeft {
+    0.25, 0.5, 0.6542, 0.5
+};
+
+static const JoystickConfigController::stateStickPositions stRightStickRight {
+    0.25, 0.5, 0.8423, 0.5
+};
+
+//-- Gimbal
+
+static const JoystickConfigController::stateStickPositions stGimbalCentered {
+    0.5, 0.5, 0.5, 0.3
+};
+
+static const JoystickConfigController::stateStickPositions stGimbalPitchDown {
+    0.5, 0.6, 0.5, 0.3
+};
+
+static const JoystickConfigController::stateStickPositions stGimbalPitchUp {
+    0.5, 0.4, 0.5, 0.3
+};
+
+static const JoystickConfigController::stateStickPositions stGimbalYawLeft {
+    0.5, 0.5, 0.4, 0.3
+};
+
+static const JoystickConfigController::stateStickPositions stGimbalYawRight {
+    0.5, 0.5, 0.6, 0.3
+};
+
 JoystickConfigController::JoystickConfigController(void)
     : _joystickManager(qgcApp()->toolbox()->joystickManager())
 {
     
     connect(_joystickManager, &JoystickManager::activeJoystickChanged, this, &JoystickConfigController::_activeJoystickChanged);
     _activeJoystickChanged(_joystickManager->activeJoystick());
+    _setStickPositions();
     _resetInternalCalibrationValues();
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
+    _currentGimbalPositions << stGimbalCentered.leftX << stGimbalCentered.leftY << stGimbalCentered.rightX << stGimbalCentered.rightY;
 }
 
 void JoystickConfigController::start(void)
@@ -91,29 +152,29 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgGimbalYawLeft =       "Move the Gimbal Yaw control all the way to the left and hold it there...";
     static const char* msgGimbalYawRight =      "Move the Gimbal Yaw control all the way to the right and hold it there...";
     static const char* msgComplete =            "All settings have been captured. Click Next to enable the joystick.";
-    
+
     static const stateMachineEntry rgStateMachine[] = {
         //Function
-        { Joystick::maxFunction,            msgBegin,           _imageCenter,       &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,        nullptr, 0 },
-        { Joystick::throttleFunction,       msgThrottleUp,      _imageThrottleUp,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 0 },
-        { Joystick::throttleFunction,       msgThrottleDown,    _imageThrottleDown, &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 0 },
-        { Joystick::yawFunction,            msgYawRight,        _imageYawRight,     &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 1 },
-        { Joystick::yawFunction,            msgYawLeft,         _imageYawLeft,      &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 1 },
-        { Joystick::rollFunction,           msgRollRight,       _imageRollRight,    &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 2 },
-        { Joystick::rollFunction,           msgRollLeft,        _imageRollLeft,     &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 2 },
-        { Joystick::pitchFunction,          msgPitchUp,         _imagePitchUp,      &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
-        { Joystick::pitchFunction,          msgPitchDown,       _imagePitchDown,    &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
-        { Joystick::pitchFunction,          msgPitchCenter,     _imageCenter,       &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
+        { Joystick::maxFunction,            msgBegin,           _sticksCentered,        stGimbalCentered,   &JoystickConfigController::_inputCenterWaitBegin,   &JoystickConfigController::_saveAllTrims,        nullptr, 0 },
+        { Joystick::throttleFunction,       msgThrottleUp,      _sticksThrottleUp,      stGimbalCentered,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 0 },
+        { Joystick::throttleFunction,       msgThrottleDown,    _sticksThrottleDown,    stGimbalCentered,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 0 },
+        { Joystick::yawFunction,            msgYawRight,        _sticksYawRight,        stGimbalCentered,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 1 },
+        { Joystick::yawFunction,            msgYawLeft,         _sticksYawLeft,         stGimbalCentered,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 1 },
+        { Joystick::rollFunction,           msgRollRight,       _sticksRollRight,       stGimbalCentered,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 2 },
+        { Joystick::rollFunction,           msgRollLeft,        _sticksRollLeft,        stGimbalCentered,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 2 },
+        { Joystick::pitchFunction,          msgPitchUp,         _sticksPitchUp,         stGimbalCentered,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
+        { Joystick::pitchFunction,          msgPitchDown,       _sticksPitchDown,       stGimbalCentered,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
+        { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        stGimbalCentered,   &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
 
-        { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,   _imageThrottleUp,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _imageThrottleDown, &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
-        { Joystick::gimbalYawFunction,      msgGimbalYawRight,  _imageYawRight,     &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
-        { Joystick::gimbalYawFunction,      msgGimbalYawLeft,   _imageYawLeft,      &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,   _sticksCentered,        stGimbalPitchUp,    &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
+        { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _sticksCentered,        stGimbalPitchDown,  &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
+        { Joystick::gimbalYawFunction,      msgGimbalYawRight,  _sticksCentered,        stGimbalYawRight,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
+        { Joystick::gimbalYawFunction,      msgGimbalYawLeft,   _sticksCentered,        stGimbalYawLeft,    &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
 
-        { Joystick::maxFunction,            msgComplete,        _imageCenter,       nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
+        { Joystick::maxFunction,            msgComplete,        _sticksCentered,        stGimbalCentered,   nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
     };
     
-    Q_ASSERT(step >=0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
+    Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
     return &rgStateMachine[step];
 }
 
@@ -132,13 +193,18 @@ void JoystickConfigController::_advanceState()
 void JoystickConfigController::_setupCurrentState()
 {
     const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-    _statusText->setProperty("text", state->instructions);
-    _setHelpImage(state->image);
+    _setStatusText(state->instructions);
     _stickDetectAxis = _axisNoAxis;
     _stickDetectSettleStarted = false;
     _calSaveCurrentValues();
     _nextButton->setEnabled(state->nextFn != nullptr);
     _skipButton->setEnabled(state->skipFn != nullptr);
+    _currentStickPositions.clear();
+    _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY;
+    _currentGimbalPositions.clear();
+    _currentGimbalPositions << state->gimbalPositions.leftX << state->gimbalPositions.leftY << state->gimbalPositions.rightX << state->gimbalPositions.rightY;
+    emit stickPositionsChanged();
+    emit gimbalPositionsChanged();
 }
 
 void JoystickConfigController::_axisValueChanged(int axis, int value)
@@ -151,6 +217,7 @@ void JoystickConfigController::_axisValueChanged(int axis, int value)
             // Track the axis count by keeping track of how many axes we see
             if (axis + 1 > static_cast<int>(_axisCount)) {
                 _axisCount = axis + 1;
+                emit hasGimbalChanged();
             }
         }
         if (_currentStep != -1) {
@@ -404,7 +471,6 @@ void JoystickConfigController::_resetInternalCalibrationValues()
         info->axisMax  = JoystickConfigController::_calCenterPoint;
         info->axisTrim = JoystickConfigController::_calCenterPoint;
     }
-    
     // Initialize attitude function mapping to function axis not set
     for (size_t i = 0; i < Joystick::maxFunction; i++) {
         _rgFunctionAxisMapping[i] = _axisNoAxis;
@@ -456,40 +522,32 @@ void JoystickConfigController::_validateCalibration()
 {
     for (int chan = 0; chan < _axisCount; chan++) {
         struct AxisInfo* info = &_rgAxisInfo[chan];
-        if (chan < _axisCount) {
-            // Validate Min/Max values. Although the axis appears as available we still may
-            // not have good min/max/trim values for it. Set to defaults if needed.
-            if (info->axisMin < _calValidMinValue || info->axisMax > _calValidMaxValue) {
-                qCDebug(JoystickConfigControllerLog) << "_validateCalibration resetting axis" << chan;
-                info->axisMin = _calDefaultMinValue;
-                info->axisMax = _calDefaultMaxValue;
-                info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
-            }
-            switch (_rgAxisInfo[chan].function) {
-                case Joystick::throttleFunction:
-                case Joystick::yawFunction:
-                case Joystick::rollFunction:
-                case Joystick::pitchFunction:
-                    // Make sure trim is within min/max
-                    if (info->axisTrim < info->axisMin) {
-                        info->axisTrim = info->axisMin;
-                    } else if (info->axisTrim > info->axisMax) {
-                        info->axisTrim = info->axisMax;
-                    }
-                    break;
-                default:
-                    // Non-attitude control axis have calculated trim
-                    info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
-                    break;
-            }
-        } else {
-            // Unavailable axiss are set to defaults
-            qCDebug(JoystickConfigControllerLog) << "_validateCalibration resetting unavailable axis" << chan;
+        // Validate Min/Max values. Although the axis appears as available we still may
+        // not have good min/max/trim values for it. Set to defaults if needed.
+        if (info->axisMin < _calValidMinValue || info->axisMax > _calValidMaxValue) {
+            qCDebug(JoystickConfigControllerLog) << "_validateCalibration resetting axis" << chan;
             info->axisMin = _calDefaultMinValue;
             info->axisMax = _calDefaultMaxValue;
             info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
-            info->deadband = 0;
-            info->reversed = false;
+        }
+        switch (_rgAxisInfo[chan].function) {
+            case Joystick::throttleFunction:
+            case Joystick::yawFunction:
+            case Joystick::rollFunction:
+            case Joystick::pitchFunction:
+            case Joystick::gimbalPitchFunction:
+            case Joystick::gimbalYawFunction:
+                // Make sure trim is within min/max
+                if (info->axisTrim < info->axisMin) {
+                    info->axisTrim = info->axisMin;
+                } else if (info->axisTrim > info->axisMax) {
+                    info->axisTrim = info->axisMax;
+                }
+                break;
+            default:
+                // Non-attitude control axis have calculated trim
+                info->axisTrim = info->axisMin + ((info->axisMax - info->axisMin) / 2);
+                break;
         }
     }
 }
@@ -543,12 +601,11 @@ void JoystickConfigController::_stopCalibration()
     _currentStep = -1;
     _activeJoystick->setCalibrationMode(false);
     _setInternalCalibrationValuesFromSettings();
-    _statusText->setProperty("text", "");
+    _setStatusText("");
     _nextButton->setProperty("text", tr("Calibrate"));
     _nextButton->setEnabled(true);
     _cancelButton->setEnabled(false);
     _skipButton->setEnabled(false);
-    _setHelpImage(_imageCenter);
     emit calibratingChanged();
 }
 
@@ -565,47 +622,65 @@ void JoystickConfigController::_calSaveCurrentValues()
 void JoystickConfigController::_calSave()
 {
     _calState = calStateSave;
-    
-    _statusText->setProperty("text",
-                             tr("The current calibration settings are now displayed for each axis on screen.\n\n"
-                                "Click the Next button to upload calibration to board. Click Cancel if you don't want to save these values."));
-
+    _setStatusText(tr(
+        "The current calibration settings are now displayed for each axis on screen.\n\n"
+        "Click the Next button to upload calibration to board. Click Cancel if you don't want to save these values."));
     _nextButton->setEnabled(true);
     _skipButton->setEnabled(false);
     _cancelButton->setEnabled(true);
     
     // This updates the internal values according to the validation rules. Then _updateView will tick and update ui
-    // such that the settings that will be written our are displayed.
+    // such that the settings that will be written out are displayed.
     _validateCalibration();
 }
 
-void JoystickConfigController::_setHelpImage(const char* imageFile)
+void JoystickConfigController::_setStickPositions()
 {
-    QString file = _imageFilePrefix;
-    
+    _sticksCentered = stSticksCentered;
     switch(_transmitterMode) {
     case 1:
-        file += _imageFileMode1Dir;
+        _sticksThrottleUp   = stRightStickUp;
+        _sticksThrottleDown = stRightStickDown;
+        _sticksYawLeft      = stLeftStickLeft;
+        _sticksYawRight     = stLeftStickRight;
+        _sticksRollLeft     = stRightStickLeft;
+        _sticksRollRight    = stRightStickRight;
+        _sticksPitchUp      = stLeftStickDown;
+        _sticksPitchDown    = stLeftStickUp;
         break;
     case 2:
-        file += _imageFileMode2Dir;
+        _sticksThrottleUp   = stLeftStickUp;
+        _sticksThrottleDown = stLeftStickDown;
+        _sticksYawLeft      = stLeftStickLeft;
+        _sticksYawRight     = stLeftStickRight;
+        _sticksRollLeft     = stRightStickLeft;
+        _sticksRollRight    = stRightStickRight;
+        _sticksPitchUp      = stRightStickDown;
+        _sticksPitchDown    = stRightStickUp;
         break;
     case 3:
-        file += _imageFileMode3Dir;
+        _sticksThrottleUp   = stRightStickUp;
+        _sticksThrottleDown = stRightStickDown;
+        _sticksYawLeft      = stRightStickLeft;
+        _sticksYawRight     = stRightStickRight;
+        _sticksRollLeft     = stLeftStickLeft;
+        _sticksRollRight    = stLeftStickRight;
+        _sticksPitchUp      = stLeftStickDown;
+        _sticksPitchDown    = stLeftStickUp;
         break;
     case 4:
-        file += _imageFileMode4Dir;
+        _sticksThrottleUp   = stLeftStickUp;
+        _sticksThrottleDown = stLeftStickDown;
+        _sticksYawLeft      = stRightStickLeft;
+        _sticksYawRight     = stRightStickRight;
+        _sticksRollLeft     = stLeftStickLeft;
+        _sticksRollRight    = stLeftStickRight;
+        _sticksPitchUp      = stRightStickDown;
+        _sticksPitchDown    = stRightStickUp;
         break;
     default:
         Q_ASSERT(false);
     }
-
-    file += imageFile;
-    
-    qCDebug(JoystickConfigControllerLog) << "_setHelpImage" << file;
-    
-    _imageHelp = file;
-    emit imageHelpChanged(file);
 }
 
 bool JoystickConfigController::rollAxisReversed()
@@ -664,15 +739,12 @@ bool JoystickConfigController::gimbalYawAxisReversed()
 
 void JoystickConfigController::setTransmitterMode(int mode)
 {
-    if (mode > 0 && mode <= 4) {
+    // Mode selection is disabled during calibration
+    if (mode > 0 && mode <= 4 && _currentStep == -1) {
         _transmitterMode = mode;
-        if (_currentStep != -1) { // This should never be true, mode selection is disabled during calibration
-            const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-            _setHelpImage(state->image);
-        } else {
-            _activeJoystick->setTXMode(mode);
-            _setInternalCalibrationValuesFromSettings();
-        }
+        _setStickPositions();
+        _activeJoystick->setTXMode(mode);
+        _setInternalCalibrationValuesFromSettings();
     }
 }
 
@@ -708,6 +780,7 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         delete[] _axisRawValue;
         _axisCount = 0;
         _activeJoystick = nullptr;
+        emit hasGimbalChanged();
     }
     
     if (joystick) {
@@ -722,10 +795,17 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         _axisRawValue   = new int[_axisCount];
         _setInternalCalibrationValuesFromSettings();
         connect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
+        emit hasGimbalChanged();
     }
 }
 
 bool JoystickConfigController::_validAxis(int axis)
 {
     return axis >= 0 && axis < _axisCount;
+}
+
+void JoystickConfigController::_setStatusText(const QString& text)
+{
+    _statusText = text;
+    emit statusTextChanged();
 }
