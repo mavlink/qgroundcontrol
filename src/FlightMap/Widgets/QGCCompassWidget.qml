@@ -36,7 +36,8 @@ Item {
     property int  _fontSize:        ScreenTools.defaultFontPointSize * _sizeRatio
     property real _heading:         vehicle ? vehicle.heading.rawValue : 0
     property real _headingToHome:   vehicle ? vehicle.headingToHome.rawValue : 0
-    property real _groundSpeed:   vehicle ? vehicle.groundSpeed.rawValue : 0
+    property real _groundSpeed:     vehicle ? vehicle.groundSpeed.rawValue : 0
+    property real _headingToNextWP: vehicle ? vehicle.headingToNextWP.rawValue : 0
     property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
 
     function isCOGAngleOK(){
@@ -52,11 +53,14 @@ Item {
         return _showHomeHeadingCompass && !isNaN(_headingToHome)
     }
 
+    function isHeadingToNextWPOK(){
+        return !isNaN(_headingToNextWP)
+    }
+
     readonly property bool _showHomeHeadingCompass:     QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass.value
     readonly property bool _showCOGAngleCompass:        QGroundControl.settingsManager.flyViewSettings.showCOGAngleCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
-
 
     Rectangle {
         id:             borderRect
@@ -71,6 +75,21 @@ Item {
         id:             instrument
         anchors.fill:   parent
         visible:        false
+
+        Image {
+            id:                 nextWPPointer
+            source:             isHeadingToNextWPOK() ? "/qmlimages/compassDottedLine.svg":"" 
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
+
+            transform: Rotation {
+                origin.x:       cOGPointer.width  / 2
+                origin.y:       cOGPointer.height / 2
+                angle:         _headingToNextWP - _heading
+            }
+        }
 
         Image {
             id:                 cOGPointer

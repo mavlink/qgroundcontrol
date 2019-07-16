@@ -669,6 +669,7 @@ public:
     Q_PROPERTY(Fact* altitudeAMSL       READ altitudeAMSL       CONSTANT)
     Q_PROPERTY(Fact* flightDistance     READ flightDistance     CONSTANT)
     Q_PROPERTY(Fact* distanceToHome     READ distanceToHome     CONSTANT)
+    Q_PROPERTY(Fact* headingToNextWP    READ headingToNextWP    CONSTANT)
     Q_PROPERTY(Fact* headingToHome      READ headingToHome      CONSTANT)
     Q_PROPERTY(Fact* distanceToGCS      READ distanceToGCS      CONSTANT)
     Q_PROPERTY(Fact* hobbs              READ hobbs              CONSTANT)
@@ -971,6 +972,7 @@ public:
     Fact* altitudeAMSL      (void) { return &_altitudeAMSLFact; }
     Fact* flightDistance    (void) { return &_flightDistanceFact; }
     Fact* distanceToHome    (void) { return &_distanceToHomeFact; }
+    Fact* headingToNextWP   (void) { return &_headingToNextWPFact; }
     Fact* headingToHome     (void) { return &_headingToHomeFact; }
     Fact* distanceToGCS     (void) { return &_distanceToGCSFact; }
     Fact* hobbs             (void) { return &_hobbsFact; }
@@ -1243,6 +1245,7 @@ private slots:
     void _clearTrajectoryPoints(void);
     void _clearCameraTriggerPoints(void);
     void _updateDistanceHeadingToHome(void);
+    void _updateHeadingToNextWP(void);
     void _updateDistanceToGCS(void);
     void _updateHobbsMeter(void);
     void _vehicleParamLoaded(bool ready);
@@ -1535,7 +1538,9 @@ private:
     Fact _flightDistanceFact;
     Fact _flightTimeFact;
     Fact _distanceToHomeFact;
+    Fact _headingToNextWPFact;
     Fact _headingToHomeFact;
+    Fact _headingToNextWP;
     Fact _distanceToGCSFact;
     Fact _hobbsFact;
     Fact _throttlePctFact;
@@ -1565,6 +1570,7 @@ private:
     static const char* _flightDistanceFactName;
     static const char* _flightTimeFactName;
     static const char* _distanceToHomeFactName;
+    static const char* _headingToNextWPFactName;
     static const char* _headingToHomeFactName;
     static const char* _distanceToGCSFactName;
     static const char* _hobbsFactName;
