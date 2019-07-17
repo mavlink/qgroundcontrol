@@ -28,21 +28,6 @@ const int JoystickConfigController::_calMinDelta =          1000;       ///< Amo
 
 const int JoystickConfigController::_stickDetectSettleMSecs = 500;
 
-const char*  JoystickConfigController::_imageFilePrefix =   "calibration/joystick/";
-const char*  JoystickConfigController::_imageFileMode1Dir = "mode1/";
-const char*  JoystickConfigController::_imageFileMode2Dir = "mode2/";
-const char*  JoystickConfigController::_imageFileMode3Dir = "mode3/";
-const char*  JoystickConfigController::_imageFileMode4Dir = "mode4/";
-const char*  JoystickConfigController::_imageCenter =       "joystickCenter.png";
-const char*  JoystickConfigController::_imageThrottleUp =   "joystickThrottleUp.png";
-const char*  JoystickConfigController::_imageThrottleDown = "joystickThrottleDown.png";
-const char*  JoystickConfigController::_imageYawLeft =      "joystickYawLeft.png";
-const char*  JoystickConfigController::_imageYawRight =     "joystickYawRight.png";
-const char*  JoystickConfigController::_imageRollLeft =     "joystickRollLeft.png";
-const char*  JoystickConfigController::_imageRollRight =    "joystickRollRight.png";
-const char*  JoystickConfigController::_imagePitchUp =      "joystickPitchUp.png";
-const char*  JoystickConfigController::_imagePitchDown =    "joystickPitchDown.png";
-
 static const JoystickConfigController::stateStickPositions stSticksCentered {
     0.25, 0.5, 0.75, 0.5
 };
@@ -137,7 +122,7 @@ JoystickConfigController::~JoystickConfigController()
 /// @brief Returns the state machine entry for the specified state.
 const JoystickConfigController::stateMachineEntry* JoystickConfigController::_getStateMachineEntry(int step)
 {
-    static const char* msgBegin =               "Allow all sticks to center as shown in diagram.\n\nClick Next to continue";
+    static const char* msgBegin =               "Allow all sticks to center as shown in diagram.\nClick Next to continue";
     static const char* msgThrottleUp =          "Move the Throttle stick all the way up and hold it there...";
     static const char* msgThrottleDown =        "Move the Throttle stick all the way down and hold it there...";
     static const char* msgYawLeft =             "Move the Yaw stick all the way to the left and hold it there...";
@@ -151,7 +136,7 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgGimbalPitchUp =       "Move the Gimbal Pitch control all the way up and hold it there...";
     static const char* msgGimbalYawLeft =       "Move the Gimbal Yaw control all the way to the left and hold it there...";
     static const char* msgGimbalYawRight =      "Move the Gimbal Yaw control all the way to the right and hold it there...";
-    static const char* msgComplete =            "All settings have been captured. Click Next to enable the joystick.";
+    static const char* msgComplete =            "All settings have been captured.\nClick Next to enable the joystick.";
 
     static const stateMachineEntry rgStateMachine[] = {
         //Function
@@ -189,6 +174,24 @@ void JoystickConfigController::_advanceState()
     _setupCurrentState();
 }
 
+bool JoystickConfigController::nextEnabled()
+{
+    if(_currentStep >= 0) {
+        const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+        return state->nextFn != nullptr;
+    }
+    return false;
+}
+
+bool JoystickConfigController::skipEnabled()
+{
+    if(_currentStep >= 0) {
+        const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
+        return state->skipFn != nullptr;
+    }
+    return false;
+}
+
 /// @brief Sets up the state machine according to the current step from _currentStep.
 void JoystickConfigController::_setupCurrentState()
 {
@@ -197,14 +200,14 @@ void JoystickConfigController::_setupCurrentState()
     _stickDetectAxis = _axisNoAxis;
     _stickDetectSettleStarted = false;
     _calSaveCurrentValues();
-    _nextButton->setEnabled(state->nextFn != nullptr);
-    _skipButton->setEnabled(state->skipFn != nullptr);
     _currentStickPositions.clear();
     _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY;
     _currentGimbalPositions.clear();
     _currentGimbalPositions << state->gimbalPositions.leftX << state->gimbalPositions.leftY << state->gimbalPositions.rightX << state->gimbalPositions.rightY;
     emit stickPositionsChanged();
     emit gimbalPositionsChanged();
+    emit nextEnabledChanged();
+    emit skipEnabledChanged();
 }
 
 void JoystickConfigController::_axisValueChanged(int axis, int value)
@@ -300,7 +303,6 @@ void JoystickConfigController::_inputCenterWaitBegin(Joystick::AxisFunction_t fu
     if ((abs(value) * 1.1f > _rgAxisInfo[axis].deadband) && (_activeJoystick->deadband())) {   //add 10% on top of existing deadband
         _axisDeadbandChanged(axis, static_cast<int>(abs(value) * 1.1f));
     }
-    _nextButton->setEnabled(true);
     // FIXME: Doesn't wait for center
 }
 
@@ -588,8 +590,6 @@ void JoystickConfigController::_startCalibration()
 {
     _activeJoystick->setCalibrationMode(true);
     _resetInternalCalibrationValues();
-    _nextButton->setProperty("text", "Next");
-    _cancelButton->setEnabled(true);
     _currentStep = 0;
     _setupCurrentState();
     emit calibratingChanged();
@@ -602,11 +602,13 @@ void JoystickConfigController::_stopCalibration()
     _activeJoystick->setCalibrationMode(false);
     _setInternalCalibrationValuesFromSettings();
     _setStatusText("");
-    _nextButton->setProperty("text", tr("Calibrate"));
-    _nextButton->setEnabled(true);
-    _cancelButton->setEnabled(false);
-    _skipButton->setEnabled(false);
     emit calibratingChanged();
+    _currentStickPositions.clear();
+    _currentGimbalPositions.clear();
+    _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
+    _currentGimbalPositions << stGimbalCentered.leftX << stGimbalCentered.leftY << stGimbalCentered.rightX << stGimbalCentered.rightY;
+    emit stickPositionsChanged();
+    emit gimbalPositionsChanged();
 }
 
 /// @brief Saves the current axis values, so that we can detect when the use moves an input.
@@ -616,22 +618,6 @@ void JoystickConfigController::_calSaveCurrentValues()
     for (int i = 0; i < _axisCount; i++) {
         _axisValueSave[i] = _axisRawValue[i];
     }
-}
-
-/// @brief Set up the Save state of calibration.
-void JoystickConfigController::_calSave()
-{
-    _calState = calStateSave;
-    _setStatusText(tr(
-        "The current calibration settings are now displayed for each axis on screen.\n\n"
-        "Click the Next button to upload calibration to board. Click Cancel if you don't want to save these values."));
-    _nextButton->setEnabled(true);
-    _skipButton->setEnabled(false);
-    _cancelButton->setEnabled(true);
-    
-    // This updates the internal values according to the validation rules. Then _updateView will tick and update ui
-    // such that the settings that will be written out are displayed.
-    _validateCalibration();
 }
 
 void JoystickConfigController::_setStickPositions()

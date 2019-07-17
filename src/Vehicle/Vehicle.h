@@ -697,7 +697,7 @@ public:
     // Called when the message drop-down is invoked to clear current count
     Q_INVOKABLE void        resetMessages();
 
-    Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust);
+    Q_INVOKABLE void virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust, double gimbalPitch = 0, double gimbalYaw = 0);
     Q_INVOKABLE void disconnectInactiveVehicle(void);
 
     /// Command vehicle to return to launch

@@ -684,11 +684,9 @@ QString Joystick::getButtonAction(int button)
 QVariantList Joystick::buttonActions(void)
 {
     QVariantList list;
-
     for (int button=0; button<_totalButtonCount; button++) {
         list += QVariant::fromValue(_rgButtonActions[button]);
     }
-
     return list;
 }
 
@@ -703,13 +701,10 @@ void Joystick::setThrottleMode(int mode)
         qCWarning(JoystickLog) << "Invalid throttle mode" << mode;
         return;
     }
-
-    _throttleMode = (ThrottleMode_t)mode;
-
+    _throttleMode = static_cast<ThrottleMode_t>(mode);
     if (_throttleMode == ThrottleModeDownZero) {
         setAccumulator(false);
     }
-
     _saveSettings();
     emit throttleModeChanged(_throttleMode);
 }
@@ -725,7 +720,6 @@ void Joystick::setNegativeThrust(bool allowNegative)
         return;
     }
     _negativeThrust = allowNegative;
-
     _saveSettings();
     emit negativeThrustChanged(_negativeThrust);
 }
@@ -738,7 +732,6 @@ float Joystick::exponential(void)
 void Joystick::setExponential(float expo)
 {
     _exponential = expo;
-
     _saveSettings();
     emit exponentialChanged(_exponential);
 }
@@ -751,7 +744,6 @@ bool Joystick::accumulator(void)
 void Joystick::setAccumulator(bool accu)
 {
     _accumulator = accu;
-
     _saveSettings();
     emit accumulatorChanged(_accumulator);
 }
@@ -764,7 +756,6 @@ bool Joystick::deadband(void)
 void Joystick::setDeadband(bool deadband)
 {
     _deadband = deadband;
-
     _saveSettings();
 }
 
@@ -776,7 +767,6 @@ bool Joystick::circleCorrection(void)
 void Joystick::setCircleCorrection(bool circleCorrection)
 {
     _circleCorrection = circleCorrection;
-
     _saveSettings();
     emit circleCorrectionChanged(_circleCorrection);
 }
@@ -799,7 +789,6 @@ void Joystick::setFrequency(float val)
 void Joystick::setCalibrationMode(bool calibrating)
 {
     _calibrationMode = calibrating;
-
     if (calibrating && !isRunning()) {
         _pollingStartedForCalibration = true;
         startPolling(_multiVehicleManager->activeVehicle());
@@ -815,7 +804,6 @@ void Joystick::_buttonAction(const QString& action)
     if (!_activeVehicle || !_activeVehicle->joystickEnabled()) {
         return;
     }
-
     if (action == _buttonActionArm) {
         _activeVehicle->setArmed(true);
     } else if (action == _buttonActionDisarm) {
