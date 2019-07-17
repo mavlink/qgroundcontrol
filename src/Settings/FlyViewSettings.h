@@ -25,4 +25,6 @@ public:
     DEFINE_SETTINGFACT(alternateInstrumentPanel)
     DEFINE_SETTINGFACT(showHomeHeadingCompass)
     DEFINE_SETTINGFACT(showCOGAngleCompass)
+    DEFINE_SETTINGFACT(showHeadingToNextWP)
+    DEFINE_SETTINGFACT(lockNorthUpCompass)
 };

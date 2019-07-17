@@ -27,14 +27,26 @@
 },
 {
     "name":             "showHomeHeadingCompass",
-    "shortDescription": "Show/Hide Home heading on the Compass",
+    "shortDescription": "Show/Hide Home heading on Compass",
     "type":             "bool",
     "defaultValue":     false
 },
 {
     "name":             "showCOGAngleCompass",
-    "shortDescription": "Show/Hide Course Over Ground angle on the Compass",
+    "shortDescription": "Show/Hide Course Over Ground angle on Compass",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "showHeadingToNextWP",
+    "shortDescription": "Show/Hide Heading to Next Waypoint on Compass",
+    "type":             "bool",
+    "defaultValue":     false
+},
+{
+    "name":             "lockNorthUpCompass",
+    "shortDescription": "Lock North up on Compass",
+    "type":             "bool",
+    "defaultValue":     true
 }
 ]

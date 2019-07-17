@@ -45,20 +45,26 @@ Item {
             return false
         }
         else{
-            return true
+            return vehicle
         }
     }
 
     function isHeadingAngleOK(){
-        return _showHomeHeadingCompass && !isNaN(_headingToHome)
+        return vehicle && _showHomeHeadingCompass && !isNaN(_headingToHome)
     }
 
     function isHeadingToNextWPOK(){
-        return !isNaN(_headingToNextWP)
+        return vehicle && _showHeadingToNextWP && !isNaN(_headingToNextWP)
+    }
+
+    function isNorthUpLocked(){
+        return _lockNorthUpCompass
     }
 
     readonly property bool _showHomeHeadingCompass:     QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass.value
     readonly property bool _showCOGAngleCompass:        QGroundControl.settingsManager.flyViewSettings.showCOGAngleCompass.value
+    readonly property bool _showHeadingToNextWP:        QGroundControl.settingsManager.flyViewSettings.showHeadingToNextWP.value
+    readonly property bool _lockNorthUpCompass:        QGroundControl.settingsManager.flyViewSettings.lockNorthUpCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -85,9 +91,10 @@ Item {
             sourceSize.height:  parent.height
 
             transform: Rotation {
+                property var _angle: isNorthUpLocked()?_headingToNextWP-_heading:_headingToNextWP
                 origin.x:       cOGPointer.width  / 2
                 origin.y:       cOGPointer.height / 2
-                angle:         _headingToNextWP - _heading
+                angle:         _angle
             }
         }
 
@@ -100,9 +107,10 @@ Item {
             sourceSize.height:  parent.height
 
             transform: Rotation {
+                property var _angle:isNorthUpLocked()?_courseOverGround-_heading:_courseOverGround
                 origin.x:       cOGPointer.width  / 2
                 origin.y:       cOGPointer.height / 2
-                angle:         _courseOverGround - _heading
+                angle:         _angle
             }
         }
 
@@ -114,6 +122,11 @@ Item {
             sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             anchors.centerIn:   parent
+            transform: Rotation {
+                origin.x:       pointer.width  / 2
+                origin.y:       pointer.height / 2
+                angle:          isNorthUpLocked()?0:_heading
+            }
         }
 
         Image {
@@ -127,8 +140,9 @@ Item {
             visible:                _showHomeHeadingCompass
 
             transform: Translate {
-                x: size/2.3 * Math.sin((-_heading + _headingToHome)*(3.14/180))
-                y: - size/2.3 * Math.cos((-_heading + _headingToHome)*(3.14/180))
+                property double _angle: isNorthUpLocked()?-_heading+_headingToHome:_headingToHome
+                x: size/2.3 * Math.sin((_angle)*(3.14/180))
+                y: - size/2.3 * Math.cos((_angle)*(3.14/180))
             }
         }
 
@@ -143,7 +157,7 @@ Item {
             transform: Rotation {
                 origin.x:       compassDial.width  / 2
                 origin.y:       compassDial.height / 2
-                angle:          -_heading
+                angle:          isNorthUpLocked()?-_heading:0
             }
         }
 
