@@ -27,6 +27,10 @@ Item {
         id:                 calCol
         spacing:            ScreenTools.defaultFontPixelHeight
         anchors.centerIn:   parent
+        Item {
+            height:         1
+            width:          1
+        }
         Row {
             spacing:            ScreenTools.defaultFontPixelWidth * 4
             anchors.horizontalCenter: parent.horizontalCenter
@@ -131,10 +135,6 @@ Item {
             Column {
                 spacing:            ScreenTools.defaultFontPixelHeight * 0.5
                 anchors.verticalCenter: parent.verticalCenter
-                QGCLabel {
-                    text:           qsTr("Axis Monitor")
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
                 Connections {
                     target: controller
                     onAxisValueChanged: {

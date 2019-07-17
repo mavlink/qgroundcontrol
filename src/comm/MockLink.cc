@@ -509,7 +509,7 @@ void MockLink::_handleManualControl(const mavlink_message_t& msg)
     mavlink_manual_control_t manualControl;
     mavlink_msg_manual_control_decode(&msg, &manualControl);
 
-    qDebug() << "MANUAL_CONTROL" << manualControl.x << manualControl.y << manualControl.z << manualControl.r;
+    qCDebug(MockLinkLog) << "MANUAL_CONTROL" << manualControl.x << manualControl.y << manualControl.z << manualControl.r;
 }
 
 void MockLink::_setParamFloatUnionIntoMap(int componentId, const QString& paramName, float paramFloat)

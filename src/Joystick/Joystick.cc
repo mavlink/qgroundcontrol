@@ -40,6 +40,7 @@ const char* Joystick::_submarineTXModeSettingsKey =     "TXMode_Submarine";
 
 const char* Joystick::_buttonActionArm =                QT_TR_NOOP("Arm");
 const char* Joystick::_buttonActionDisarm =             QT_TR_NOOP("Disarm");
+const char* Joystick::_buttonActionToggleArm =          QT_TR_NOOP("Toggle Arm");
 const char* Joystick::_buttonActionVTOLFixedWing =      QT_TR_NOOP("VTOL: Fixed Wing");
 const char* Joystick::_buttonActionVTOLMultiRotor =     QT_TR_NOOP("VTOL: Multi-Rotor");
 const char* Joystick::_buttonActionZoomIn =             QT_TR_NOOP("Zoom In");
@@ -52,6 +53,11 @@ const char* Joystick::_buttonActionTriggerCamera =      QT_TR_NOOP("Trigger Came
 const char* Joystick::_buttonActionStartVideoRecord =   QT_TR_NOOP("Start Recording Video");
 const char* Joystick::_buttonActionStopVideoRecord =    QT_TR_NOOP("Stop Recording Video");
 const char* Joystick::_buttonActionToggleVideoRecord =  QT_TR_NOOP("Toggle Recording Video");
+const char* Joystick::_buttonActionGimbalDown =         QT_TR_NOOP("Gimbal Down");
+const char* Joystick::_buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
+const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
+const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
+const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -482,9 +488,9 @@ void Joystick::run(void)
                 throttle =  std::max(-1.0f, std::min(tanf(asinf(throttle_limited)), 1.0f));
             }
 
-            if ( _exponential != 0 ) {
+            if ( _exponential < -0.01f) {
                 // Exponential (0% to -50% range like most RC radios)
-                //_exponential is set by a slider in joystickConfig.qml
+                //_exponential is set by a slider in joystickConfigAdvanced.qml
 
                 // Calculate new RPY with exponential applied
                 roll =      -_exponential*powf(roll, 3) + (1+_exponential)*roll;
@@ -507,7 +513,7 @@ void Joystick::run(void)
             quint16 buttonPressedBits   = 0;  // Buttons pressed for manualControl signal
 
             for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
-                quint16 buttonBit = 1 << buttonIndex;
+                quint16 buttonBit = static_cast<quint16>(1 << buttonIndex);
 
                 if (!_rgButtonValues[buttonIndex]) {
                     // Button up, just record it
@@ -528,9 +534,9 @@ void Joystick::run(void)
             }
 
             _lastButtonBits = newButtonBits;
-            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle" << name() << roll << -pitch << yaw << throttle;
+            qCDebug(JoystickValuesLog) << "name:roll:pitch:yaw:throttle:gimbalPitch:gimbalYaw" << name() << roll << -pitch << yaw << throttle << gimbalPitch << gimbalYaw;
             // NOTE: The buttonPressedBits going to MANUAL_CONTROL are currently used by ArduSub.
-            emit manualControl(roll, -pitch, yaw, throttle, gimbalPitch, gimbalYaw, buttonPressedBits, _activeVehicle->joystickMode());
+            emit manualControl(roll, -pitch, yaw, throttle, buttonPressedBits, _activeVehicle->joystickMode());
         }
 
         // Sleep. Update rate of joystick is by default 25 Hz
@@ -643,7 +649,7 @@ int Joystick::getFunctionAxis(AxisFunction_t function)
 QStringList Joystick::actions(void)
 {
     QStringList list;
-    list << _buttonActionArm << _buttonActionDisarm;
+    list << _buttonActionArm << _buttonActionDisarm << _buttonActionToggleArm;
     if (_activeVehicle) {
         list << _activeVehicle->flightModes();
     }
@@ -655,6 +661,11 @@ QStringList Joystick::actions(void)
     list << _buttonActionStartVideoRecord;
     list << _buttonActionStopVideoRecord;
     list << _buttonActionToggleVideoRecord;
+    list << _buttonActionGimbalDown;
+    list << _buttonActionGimbalUp;
+    list << _buttonActionGimbalLeft;
+    list << _buttonActionGimbalRight;
+    list << _buttonActionGimbalCenter;
     return list;
 }
 
@@ -808,6 +819,8 @@ void Joystick::_buttonAction(const QString& action)
         _activeVehicle->setArmed(true);
     } else if (action == _buttonActionDisarm) {
         _activeVehicle->setArmed(false);
+    } else if (action == _buttonActionToggleArm) {
+        _activeVehicle->setArmed(!_activeVehicle->armed());
     } else if (action == _buttonActionVTOLFixedWing) {
         _activeVehicle->setVtolInFwdFlight(true);
     } else if (action == _buttonActionVTOLMultiRotor) {
@@ -828,6 +841,16 @@ void Joystick::_buttonAction(const QString& action)
         emit stopVideoRecord();
     } else if(action == _buttonActionToggleVideoRecord) {
         emit toggleVideoRecord();
+    } else if(action == _buttonActionGimbalUp) {
+        _activeVehicle->gimbalPitchStep(1);
+    } else if(action == _buttonActionGimbalDown) {
+        _activeVehicle->gimbalPitchStep(-1);
+    } else if(action == _buttonActionGimbalLeft) {
+        _activeVehicle->gimbalYawStep(-1);
+    } else if(action == _buttonActionGimbalRight) {
+        _activeVehicle->gimbalYawStep(1);
+    } else if(action == _buttonActionGimbalCenter) {
+        _activeVehicle->centerGimbal();
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
