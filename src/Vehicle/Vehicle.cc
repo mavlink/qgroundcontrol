@@ -2741,11 +2741,18 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
     }
 }
 
-void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
+void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust, double gimbalPitch, double gimbalYaw)
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
     if ( !_joystickEnabled && !_highLatencyLink) {
-        _uas->setExternalControlSetpoint(roll, pitch, yaw, thrust, 0, JoystickModeRC);
+        _uas->setExternalControlSetpoint(
+            static_cast<float>(roll),
+            static_cast<float>(pitch),
+            static_cast<float>(yaw),
+            static_cast<float>(thrust),
+            static_cast<float>(gimbalPitch),
+            static_cast<float>(gimbalYaw),
+            0, JoystickModeRC);
     }
 }
 

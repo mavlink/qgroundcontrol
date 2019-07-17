@@ -41,10 +41,6 @@ public:
     
     Q_PROPERTY(QString statusText               READ statusText                 NOTIFY statusTextChanged)
 
-    Q_PROPERTY(QQuickItem* cancelButton MEMBER _cancelButton)
-    Q_PROPERTY(QQuickItem* nextButton   MEMBER _nextButton)
-    Q_PROPERTY(QQuickItem* skipButton   MEMBER _skipButton)
-    
     Q_PROPERTY(bool rollAxisMapped              READ rollAxisMapped             NOTIFY rollAxisMappedChanged)
     Q_PROPERTY(bool pitchAxisMapped             READ pitchAxisMapped            NOTIFY pitchAxisMappedChanged)
     Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
@@ -66,6 +62,8 @@ public:
 
     Q_PROPERTY(int  transmitterMode             READ transmitterMode            WRITE setTransmitterMode NOTIFY transmitterModeChanged)
     Q_PROPERTY(bool calibrating                 READ calibrating                NOTIFY calibratingChanged)
+    Q_PROPERTY(bool nextEnabled                 READ nextEnabled                NOTIFY nextEnabledChanged)
+    Q_PROPERTY(bool skipEnabled                 READ skipEnabled                NOTIFY skipEnabledChanged)
 
     Q_PROPERTY(QList<qreal> stickPositions      READ stickPositions             NOTIFY stickPositionsChanged)
     Q_PROPERTY(QList<qreal> gimbalPositions     READ gimbalPositions            NOTIFY gimbalPositionsChanged)
@@ -103,6 +101,8 @@ public:
     void setTransmitterMode                 (int mode);
 
     bool calibrating                        () { return _currentStep != -1; }
+    bool nextEnabled                        ();
+    bool skipEnabled                        ();
 
     QList<qreal> stickPositions             () { return _currentStickPositions; }
     QList<qreal> gimbalPositions            () { return _currentGimbalPositions; }
@@ -132,6 +132,8 @@ signals:
     void deadbandToggled                    (bool value);
     void transmitterModeChanged             (int mode);
     void calibratingChanged                 ();
+    void nextEnabledChanged                 ();
+    void skipEnabledChanged                 ();
     void stickPositionsChanged              ();
     void gimbalPositionsChanged             ();
     void hasGimbalChanged                   ();
@@ -213,7 +215,6 @@ private:
     
     void _startCalibration      ();
     void _stopCalibration       ();
-    void _calSave               ();
 
     void _calSaveCurrentValues  ();
     
@@ -223,23 +224,6 @@ private:
 
     void _setStatusText         (const QString& text);
     
-    // Member variables
-
-    static const char* _imageFileMode1Dir;
-    static const char* _imageFileMode2Dir;
-    static const char* _imageFileMode3Dir;
-    static const char* _imageFileMode4Dir;
-    static const char* _imageFilePrefix;
-    static const char* _imageCenter;
-    static const char* _imageThrottleUp;
-    static const char* _imageThrottleDown;
-    static const char* _imageYawLeft;
-    static const char* _imageYawRight;
-    static const char* _imageRollLeft;
-    static const char* _imageRollRight;
-    static const char* _imagePitchUp;
-    static const char* _imagePitchDown;
-
     stateStickPositions _sticksCentered;
     stateStickPositions _sticksThrottleUp;
     stateStickPositions _sticksThrottleDown;
@@ -286,14 +270,10 @@ private:
     int     _stickDetectValue;
     bool    _stickDetectSettleStarted;
     QTime   _stickDetectSettleElapsed;
+
     static const int _stickDetectSettleMSecs;
 
-    QString     _statusText;
-
-    QQuickItem* _cancelButton   = nullptr;
-    QQuickItem* _nextButton     = nullptr;
-    QQuickItem* _skipButton     = nullptr;
-    
+    QString             _statusText;
     JoystickManager*    _joystickManager;
 };
 
