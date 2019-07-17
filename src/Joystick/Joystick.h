@@ -161,10 +161,8 @@ signals:
     ///     @param pitch        Range i -1:1, negative meaning pitch down, positive meaning pitch up
     ///     @param yaw          Range is -1:1, negative meaning yaw left, positive meaning yaw right
     ///     @param throttle     Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
-    ///     @param gimbalPitch  Range is -1:1
-    ///     @param gimbalYaw    Range is -1:1
     ///     @param mode     See Vehicle::JoystickMode_t enum
-    void manualControl      (float roll, float pitch, float yaw, float throttle, float gimbalPitch, float gimbalYaw, quint16 buttons, int joystickMmode);
+    void manualControl      (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
 
     void buttonActionTriggered(int action);
 
@@ -259,6 +257,7 @@ private:
 
     static const char* _buttonActionArm;
     static const char* _buttonActionDisarm;
+    static const char* _buttonActionToggleArm;
     static const char* _buttonActionVTOLFixedWing;
     static const char* _buttonActionVTOLMultiRotor;
     static const char* _buttonActionZoomIn;
@@ -271,6 +270,11 @@ private:
     static const char* _buttonActionStartVideoRecord;
     static const char* _buttonActionStopVideoRecord;
     static const char* _buttonActionToggleVideoRecord;
+    static const char* _buttonActionGimbalDown;
+    static const char* _buttonActionGimbalUp;
+    static const char* _buttonActionGimbalLeft;
+    static const char* _buttonActionGimbalRight;
+    static const char* _buttonActionGimbalCenter;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

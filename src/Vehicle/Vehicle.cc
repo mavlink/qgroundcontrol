@@ -809,6 +809,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
         break;
+    case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
+        _handleGimbalOrientation(message);
+        break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
     {
@@ -2241,18 +2244,13 @@ void Vehicle::_loadSettings(void)
     if (!_active) {
         return;
     }
-
     QSettings settings;
-
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-
     bool convertOk;
-
-    _joystickMode = (JoystickMode_t)settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk);
+    _joystickMode = static_cast<JoystickMode_t>(settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk));
     if (!convertOk) {
         _joystickMode = JoystickModeRC;
     }
-
     // Joystick enabled is a global setting so first make sure there are any joysticks connected
     if (_toolbox->joystickManager()->joysticks().count()) {
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
@@ -2741,7 +2739,7 @@ void Vehicle::_remoteControlRSSIChanged(uint8_t rssi)
     }
 }
 
-void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust, double gimbalPitch, double gimbalYaw)
+void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, double thrust)
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
     if ( !_joystickEnabled && !_highLatencyLink) {
@@ -2750,8 +2748,6 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
             static_cast<float>(pitch),
             static_cast<float>(yaw),
             static_cast<float>(thrust),
-            static_cast<float>(gimbalPitch),
-            static_cast<float>(gimbalYaw),
             0, JoystickModeRC);
     }
 }
@@ -4007,6 +4003,51 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
         0,                                   // Latitude (not used)
         0,                                   // Longitude (not used)
         MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+}
+
+void Vehicle::gimbalPitchStep(int direction)
+{
+    if(!_haveGimbalData) {
+        double p = static_cast<double>(_curGimbalPitch + direction);
+        gimbalControlValue(p, static_cast<double>(_curGinmbalYaw));
+    }
+}
+
+void Vehicle::gimbalYawStep(int direction)
+{
+    if(!_haveGimbalData) {
+        double y = static_cast<double>(_curGinmbalYaw + direction);
+        gimbalControlValue(static_cast<double>(_curGinmbalYaw), y);
+    }
+}
+
+void Vehicle::centerGimbal()
+{
+    if(!_haveGimbalData) {
+        gimbalControlValue(0.0, 0.0);
+    }
+}
+
+void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
+{
+    mavlink_mount_orientation_t o;
+    mavlink_msg_mount_orientation_decode(&message, &o);
+    if(fabsf(_curGimbalRoll - o.roll) > 0.5f) {
+        _curGimbalRoll = o.roll;
+        emit gimbalRollChanged();
+    }
+    if(fabsf(_curGimbalPitch - o.pitch) > 0.5f) {
+        _curGimbalPitch = o.pitch;
+        emit gimbalPitchChanged();
+    }
+    if(fabsf(_curGinmbalYaw - o.yaw) > 0.5f) {
+        _curGinmbalYaw = o.yaw;
+        emit gimbalYawChanged();
+    }
+    if(!_haveGimbalData) {
+        _haveGimbalData = true;
+        emit gimbalDataChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------

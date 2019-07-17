@@ -839,12 +839,8 @@ void UAS::processParamValueMsg(mavlink_message_t& msg, const QString& paramName,
 * Set the manual control commands.
 * This can only be done if the system has manual inputs enabled and is armed.
 */
-void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, float gimbalPitch, float gimbalYaw, quint16 buttons, int joystickMode)
+void UAS::setExternalControlSetpoint(float roll, float pitch, float yaw, float thrust, quint16 buttons, int joystickMode)
 {
-    //-- TODO
-    Q_UNUSED(gimbalPitch);
-    Q_UNUSED(gimbalYaw);
-
     if (!_vehicle) {
         return;
     }

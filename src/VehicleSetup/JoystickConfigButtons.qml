@@ -68,7 +68,7 @@ Item {
                 }
                 QGCComboBox {
                     id:                         buttonActionCombo
-                    width:                      ScreenTools.defaultFontPixelWidth * 20
+                    width:                      ScreenTools.defaultFontPixelWidth * 26
                     model:                      _activeJoystick ? _activeJoystick.actions : 0
                     onActivated:                _activeJoystick.setButtonAction(modelData, textAt(index))
                     Component.onCompleted:      currentIndex = find(_activeJoystick.buttonActions[modelData])
