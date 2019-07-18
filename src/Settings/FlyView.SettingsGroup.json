@@ -21,7 +21,7 @@
 },
 {
     "name":             "alternateInstrumentPanel",
-    "shortDescription": "Use Alternate Instrument Panel instead of the default one",
+    "shortDescription": "Use Vertical Instrument Panel instead of the default one",
     "type":             "bool",
     "defaultValue":     false
 }
