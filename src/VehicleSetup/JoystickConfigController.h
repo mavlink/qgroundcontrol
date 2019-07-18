@@ -46,7 +46,9 @@ public:
     Q_PROPERTY(bool yawAxisMapped               READ yawAxisMapped              NOTIFY yawAxisMappedChanged)
     Q_PROPERTY(bool throttleAxisMapped          READ throttleAxisMapped         NOTIFY throttleAxisMappedChanged)
 
-    Q_PROPERTY(bool hasGimbal                   READ hasGimbal                  NOTIFY hasGimbalChanged)
+    Q_PROPERTY(bool hasGimbalPitch              READ hasGimbalPitch             NOTIFY hasGimbalPitchChanged)
+    Q_PROPERTY(bool hasGimbalYaw                READ hasGimbalYaw               NOTIFY hasGimbalYawChanged)
+
     Q_PROPERTY(bool gimbalPitchAxisMapped       READ gimbalPitchAxisMapped      NOTIFY gimbalPitchAxisMappedChanged)
     Q_PROPERTY(bool gimbalYawAxisMapped         READ gimbalYawAxisMapped        NOTIFY gimbalYawAxisMappedChanged)
 
@@ -90,7 +92,8 @@ public:
     bool gimbalPitchAxisReversed            ();
     bool gimbalYawAxisReversed              ();
 
-    bool hasGimbal                          () { return _axisCount > 5; }
+    bool hasGimbalPitch                     () { return _axisCount > 4; }
+    bool hasGimbalYaw                       () { return _axisCount > 5; }
 
     bool getDeadbandToggle                  ();
     void setDeadbandToggle                  (bool);
@@ -136,7 +139,8 @@ signals:
     void skipEnabledChanged                 ();
     void stickPositionsChanged              ();
     void gimbalPositionsChanged             ();
-    void hasGimbalChanged                   ();
+    void hasGimbalPitchChanged              ();
+    void hasGimbalYawChanged                ();
     void statusTextChanged                  ();
 
     // @brief Signalled when in unit test mode and a message box should be displayed by the next button

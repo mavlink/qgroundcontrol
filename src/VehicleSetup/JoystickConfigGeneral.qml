@@ -149,6 +149,7 @@ Item {
                     anchors.centerIn:   parent
                     QGCLabel {
                         text:               activeVehicle.sub ? qsTr("Lateral") : qsTr("Roll")
+                        Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 12
                     }
                     AxisMonitor {
                         id:                 rollAxis
@@ -156,10 +157,6 @@ Item {
                         width:              axisMonitorWidth
                         mapped:             controller.rollAxisMapped
                         reversed:           controller.rollAxisReversed
-                        Connections {
-                            target:             _activeJoystick
-                            onManualControl:    rollAxis.axisValue = roll * 32768.0
-                        }
                     }
 
                     QGCLabel {
@@ -173,10 +170,6 @@ Item {
                         width:              axisMonitorWidth
                         mapped:             controller.pitchAxisMapped
                         reversed:           controller.pitchAxisReversed
-                        Connections {
-                            target:             _activeJoystick
-                            onManualControl:    pitchAxis.axisValue = pitch * 32768.0
-                        }
                     }
 
                     QGCLabel {
@@ -190,10 +183,6 @@ Item {
                         width:              axisMonitorWidth
                         mapped:             controller.yawAxisMapped
                         reversed:           controller.yawAxisReversed
-                        Connections {
-                            target:             _activeJoystick
-                            onManualControl:    yawAxis.axisValue = yaw * 32768.0
-                        }
                     }
 
                     QGCLabel {
@@ -207,9 +196,15 @@ Item {
                         width:              axisMonitorWidth
                         mapped:             controller.throttleAxisMapped
                         reversed:           controller.throttleAxisReversed
-                        Connections {
-                            target:             _activeJoystick
-                            onManualControl:    throttleAxis.axisValue = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
+                    }
+
+                    Connections {
+                        target:             _activeJoystick
+                        onManualControl: {
+                            rollAxis.axisValue      = roll  * 32768.0
+                            pitchAxis.axisValue     = pitch * 32768.0
+                            yawAxis.axisValue       = yaw   * 32768.0
+                            throttleAxis.axisValue  = _activeJoystick.negativeThrust ? throttle * -32768.0 : (-2 * throttle + 1) * 32768.0
                         }
                     }
 
@@ -217,7 +212,7 @@ Item {
                         id:                 gimbalPitchLabel
                         width:              _attitudeLabelWidth
                         text:               qsTr("Gimbal Pitch")
-                        visible:            controller.hasGimbal
+                        visible:            controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
                     }
                     AxisMonitor {
                         id:                 gimbalPitchAxis
@@ -225,18 +220,14 @@ Item {
                         width:              axisMonitorWidth
                         mapped:             controller.gimbalPitchAxisMapped
                         reversed:           controller.gimbalPitchAxisReversed
-                        visible:            controller.hasGimbal
-                        Connections {
-                            target:             _activeJoystick
-                            onManualControl:    gimbalPitchAxis.axisValue = gimbalPitch * 32768.0
-                        }
+                        visible:            controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
                     }
 
                     QGCLabel {
                         id:                 gimbalYawLabel
                         width:              _attitudeLabelWidth
                         text:               qsTr("Gimbal Yaw")
-                        visible:            controller.hasGimbal
+                        visible:            controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
                     }
                     AxisMonitor {
                         id:                 gimbalYawAxis
@@ -244,9 +235,14 @@ Item {
                         width:              axisMonitorWidth
                         mapped:             controller.gimbalYawAxisMapped
                         reversed:           controller.gimbalYawAxisReversed
-                        Connections {
-                            target:             _activeJoystick
-                            onManualControl:    gimbalYawAxis.axisValue = gimbalYaw * 32768.0
+                        visible:            controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
+                    }
+
+                    Connections {
+                        target:             _activeJoystick
+                        onManualControlGimbal:  {
+                            gimbalPitchAxis.axisValue = gimbalPitch * 32768.0
+                            gimbalYawAxis.axisValue   = gimbalYaw   * 32768.0
                         }
                     }
                 }

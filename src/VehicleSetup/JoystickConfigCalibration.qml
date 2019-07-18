@@ -96,7 +96,7 @@ Item {
                         width:      ScreenTools.defaultFontPixelWidth * 0.125
                         height:     parent.height * 0.2
                         color:      qgcPal.text
-                        visible:    controller.hasGimbal
+                        visible:    controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
                         x:          (parent.width  * 0.5) - (width  * 0.5)
                         y:          (parent.height * 0.5) - (height * 0.5)
                     }
@@ -105,7 +105,7 @@ Item {
                         width:      parent.width * 0.035
                         height:     width
                         radius:     width * 0.5
-                        visible:    controller.hasGimbal
+                        visible:    controller.hasGimbalPitch && _activeJoystick.gimbalEnabled
                         x:          (parent.width  * controller.gimbalPositions[0]) - (width  * 0.5)
                         y:          (parent.height * controller.gimbalPositions[1]) - (height * 0.5)
                     }
@@ -115,7 +115,7 @@ Item {
                         width:      parent.width * 0.2
                         height:     ScreenTools.defaultFontPixelWidth * 0.125
                         color:      qgcPal.text
-                        visible:    controller.hasGimbal
+                        visible:    controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
                         x:          (parent.width  * 0.5) - (width  * 0.5)
                         y:          (parent.height * 0.3) - (height * 0.5)
                     }
@@ -124,7 +124,7 @@ Item {
                         width:      parent.width * 0.035
                         height:     width
                         radius:     width * 0.5
-                        visible:    controller.hasGimbal
+                        visible:    controller.hasGimbalYaw && _activeJoystick.gimbalEnabled
                         x:          (parent.width  * controller.gimbalPositions[2]) - (width  * 0.5)
                         y:          (parent.height * controller.gimbalPositions[3]) - (height * 0.5)
                     }
