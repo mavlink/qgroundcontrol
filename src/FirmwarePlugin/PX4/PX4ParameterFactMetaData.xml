@@ -464,7 +464,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter category="Developer" default="0" name="CBRK_BUZZER" type="INT32">
       <short_desc>Circuit breaker for disabling buzzer</short_desc>
-      <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. WARNING: ENABLING THIS CIRCUIT BREAKER IS AT OWN RISK</long_desc>
+      <long_desc>Setting this parameter to 782097 will disable the buzzer audio notification. Setting this parameter to 782090 will disable the startup tune, while keeping all others enabled.</long_desc>
       <min>0</min>
       <max>782097</max>
       <reboot_required>true</reboot_required>
@@ -653,7 +653,7 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <long_desc>This is the minimum indicated airspeed at which the wing can produce 1g of lift. It is used by the airspeed sensor fault detection and failsafe calculation to detect a significant airspeed low measurement error condition and should be set based on flight test for reliable operation. The failsafe response is controlled by the COM_ASPD_FS_ACT parameter.</long_desc>
       <unit>m/s</unit>
     </parameter>
-    <parameter default="-1.0" name="COM_DISARM_LAND" type="FLOAT">
+    <parameter default="2.0" name="COM_DISARM_LAND" type="FLOAT">
       <short_desc>Time-out for auto disarm after landing</short_desc>
       <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. The vehicle will also auto-disarm right after arming if it has not even flown, however the time will always be 10 seconds such that the pilot has enough time to take off. A negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
       <min>-1</min>
@@ -2829,6 +2829,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="GPS_2_CONFIG" type="INT32">
@@ -2844,6 +2845,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="GPS_DUMP_COMM" type="INT32">
@@ -2990,6 +2992,7 @@ but also ignore less noise</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="ISBD_READ_INT" type="INT32">
@@ -3460,6 +3463,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="1" name="MAV_0_FORWARD" type="INT32">
@@ -3503,6 +3507,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="MAV_1_FORWARD" type="INT32">
@@ -3546,6 +3551,7 @@ Used to calculate increased terrain random walk nosie due to movement</short_des
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="MAV_2_FORWARD" type="INT32">
@@ -4142,6 +4148,14 @@ default 1.5 turns per second</short_desc>
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
+    <parameter default="1.0" name="MC_PITCHRATE_K" type="FLOAT">
+      <short_desc>Pitch rate controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = MC_PITCHRATE_K * (MC_PITCHRATE_P * error + MC_PITCHRATE_I * error_integral + MC_PITCHRATE_D * error_derivative) Set MC_PITCHRATE_P=1 to implement a PID in the ideal form. Set MC_PITCHRATE_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
+    </parameter>
     <parameter default="220.0" name="MC_PITCHRATE_MAX" type="FLOAT">
       <short_desc>Max pitch rate</short_desc>
       <long_desc>Limit for pitch rate in manual and auto modes (except acro). Has effect for large rotations in autonomous mode, to avoid large control output and mixer saturation. This is not only limited by the vehicle's properties, but also by the maximum measurement rate of the gyro.</long_desc>
@@ -4203,6 +4217,14 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>3</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter default="1.0" name="MC_ROLLRATE_K" type="FLOAT">
+      <short_desc>Roll rate controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = MC_ROLLRATE_K * (MC_ROLLRATE_P * error + MC_ROLLRATE_I * error_integral + MC_ROLLRATE_D * error_derivative) Set MC_ROLLRATE_P=1 to implement a PID in the ideal form. Set MC_ROLLRATE_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="220.0" name="MC_ROLLRATE_MAX" type="FLOAT">
       <short_desc>Max roll rate</short_desc>
@@ -4305,6 +4327,14 @@ default 1.5 turns per second</short_desc>
       <min>0.0</min>
       <decimal>2</decimal>
       <increment>0.01</increment>
+    </parameter>
+    <parameter default="1.0" name="MC_YAWRATE_K" type="FLOAT">
+      <short_desc>Yaw rate controller gain</short_desc>
+      <long_desc>Global gain of the controller. This gain scales the P, I and D terms of the controller: output = MC_YAWRATE_K * (MC_YAWRATE_P * error + MC_YAWRATE_I * error_integral + MC_YAWRATE_D * error_derivative) Set MC_YAWRATE_P=1 to implement a PID in the ideal form. Set MC_YAWRATE_K=1 to implement a PID in the parallel form.</long_desc>
+      <min>0.0</min>
+      <max>5.0</max>
+      <decimal>4</decimal>
+      <increment>0.0005</increment>
     </parameter>
     <parameter default="200.0" name="MC_YAWRATE_MAX" type="FLOAT">
       <short_desc>Max yaw rate</short_desc>
@@ -5864,6 +5894,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="RTPS_MAV_CONFIG" type="INT32">
@@ -5879,6 +5910,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
   </group>
@@ -8456,6 +8488,20 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
+    <parameter default="25" name="SENS_CM8JL65_R_0" type="INT32">
+      <short_desc>Distance Sensor Rotation</short_desc>
+      <long_desc>Distance Sensor Rotation as MAV_SENSOR_ORIENTATION enum</long_desc>
+      <reboot_required>True</reboot_required>
+      <values>
+        <value code="0">ROTATION_FORWARD_FACING</value>
+        <value code="2">ROTATION_RIGHT_FACING</value>
+        <value code="6">ROTATION_LEFT_FACING</value>
+        <value code="12">ROTATION_BACKWARD_FACING</value>
+        <value code="24">ROTATION_UPWARD_FACING</value>
+        <value code="25">ROTATION_DOWNWARD_FACING</value>
       </values>
     </parameter>
     <parameter default="0" name="SENS_EN_BATT" type="INT32">
@@ -8588,6 +8634,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="SENS_MB12_0_ROT" type="INT32">
@@ -9011,6 +9058,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="1442826" name="SENS_TEMP_ID" type="INT32">
@@ -9029,6 +9077,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="SENS_ULAND_CFG" type="INT32">
@@ -9044,10 +9093,27 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
   </group>
   <group name="Serial">
+    <parameter default="300" name="RC_PORT_CONFIG" type="INT32">
+      <short_desc>Serial Configuration for RC Input Driver</short_desc>
+      <long_desc>Configure on which serial port to run RC Input Driver. Setting this to 'Disabled' will use a board-specific default port for RC input.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
     <parameter default="0" name="SER_GPS1_BAUD" type="INT32">
       <short_desc>Baudrate for the GPS 1 Serial Port</short_desc>
       <long_desc>Configure the Baudrate for the GPS 1 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
@@ -9084,6 +9150,39 @@ is less than 50% of this value</short_desc>
     <parameter default="0" name="SER_GPS2_BAUD" type="INT32">
       <short_desc>Baudrate for the GPS 2 Serial Port</short_desc>
       <long_desc>Configure the Baudrate for the GPS 2 Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Auto</value>
+        <value code="50">50 8N1</value>
+        <value code="75">75 8N1</value>
+        <value code="110">110 8N1</value>
+        <value code="134">134 8N1</value>
+        <value code="150">150 8N1</value>
+        <value code="200">200 8N1</value>
+        <value code="300">300 8N1</value>
+        <value code="600">600 8N1</value>
+        <value code="1200">1200 8N1</value>
+        <value code="1800">1800 8N1</value>
+        <value code="2400">2400 8N1</value>
+        <value code="4800">4800 8N1</value>
+        <value code="9600">9600 8N1</value>
+        <value code="19200">19200 8N1</value>
+        <value code="38400">38400 8N1</value>
+        <value code="57600">57600 8N1</value>
+        <value code="115200">115200 8N1</value>
+        <value code="230400">230400 8N1</value>
+        <value code="460800">460800 8N1</value>
+        <value code="500000">500000 8N1</value>
+        <value code="921600">921600 8N1</value>
+        <value code="1000000">1000000 8N1</value>
+        <value code="1500000">1500000 8N1</value>
+        <value code="2000000">2000000 8N1</value>
+        <value code="3000000">3000000 8N1</value>
+      </values>
+    </parameter>
+    <parameter default="0" name="SER_RC_BAUD" type="INT32">
+      <short_desc>Baudrate for the Radio Controller Serial Port</short_desc>
+      <long_desc>Configure the Baudrate for the Radio Controller Serial Port. Note: certain drivers such as the GPS can determine the Baudrate automatically.</long_desc>
       <reboot_required>true</reboot_required>
       <values>
         <value code="0">Auto</value>
@@ -9616,6 +9715,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
     <parameter default="0" name="TEL_HOTT_CONFIG" type="INT32">
@@ -9631,6 +9731,7 @@ is less than 50% of this value</short_desc>
         <value code="104">TELEM/SERIAL 4</value>
         <value code="201">GPS 1</value>
         <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
       </values>
     </parameter>
   </group>
