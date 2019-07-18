@@ -660,7 +660,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     } else {
         if(_compID == message.compid) {
-            uint16_t seq_received = (uint16_t)message.seq;
+            uint16_t seq_received = static_cast<uint16_t>(message.seq);
             uint16_t packet_lost_count = 0;
             //-- Account for overflow during packet loss
             if(seq_received < _messageSeq) {
@@ -3996,7 +3996,7 @@ void Vehicle::flashBootloader(void)
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
-    qDebug() << "Gimbal: " << pitch << yaw;
+    //qDebug() << "Gimbal:" << pitch << yaw;
     sendMavCommand(
         _defaultComponentId,
         MAV_CMD_DO_MOUNT_CONTROL,
@@ -4012,7 +4012,8 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
 
 void Vehicle::gimbalPitchStep(int direction)
 {
-    if(!_haveGimbalData) {
+    if(_haveGimbalData) {
+        //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
         double p = static_cast<double>(_curGimbalPitch + direction);
         gimbalControlValue(p, static_cast<double>(_curGinmbalYaw));
     }
@@ -4020,16 +4021,16 @@ void Vehicle::gimbalPitchStep(int direction)
 
 void Vehicle::gimbalYawStep(int direction)
 {
-    if(!_haveGimbalData) {
-        qDebug() << "Yaw:" << _curGinmbalYaw << direction << (_curGinmbalYaw + direction);
+    if(_haveGimbalData) {
+        //qDebug() << "Yaw:" << _curGinmbalYaw << direction << (_curGinmbalYaw + direction);
         double y = static_cast<double>(_curGinmbalYaw + direction);
-        gimbalControlValue(static_cast<double>(_curGinmbalYaw), y);
+        gimbalControlValue(static_cast<double>(_curGimbalPitch), y);
     }
 }
 
 void Vehicle::centerGimbal()
 {
-    if(!_haveGimbalData) {
+    if(_haveGimbalData) {
         gimbalControlValue(0.0, 0.0);
     }
 }
