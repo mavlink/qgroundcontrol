@@ -58,20 +58,20 @@ SetupPage {
                 id:             controller
             }
 
-            TabBar {
+            QGCTabBar {
                 id:             bar
                 width:          parent.width
                 anchors.top:    parent.top
-                TabButton {
+                QGCTabButton {
                     text:       qsTr("General")
                 }
-                TabButton {
+                QGCTabButton {
                     text:       qsTr("Button Assigment")
                 }
-                TabButton {
+                QGCTabButton {
                     text:       qsTr("Calibration")
                 }
-                TabButton {
+                QGCTabButton {
                     text:       qsTr("Advanced")
                 }
             }
