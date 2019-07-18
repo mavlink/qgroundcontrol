@@ -14,6 +14,8 @@
 
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
+#define ENABLE_GIMBAL 0
+
 const int JoystickConfigController::_calCenterPoint =       0;
 const int JoystickConfigController::_calValidMinValue =     -32768;     ///< Largest valid minimum axis value
 const int JoystickConfigController::_calValidMaxValue =     32767;      ///< Smallest valid maximum axis value
@@ -68,6 +70,7 @@ static const JoystickConfigController::stateStickPositions stGimbalCentered {
     0.5, 0.5, 0.5, 0.3
 };
 
+#if ENABLE_GIMBAL
 static const JoystickConfigController::stateStickPositions stGimbalPitchDown {
     0.5, 0.6, 0.5, 0.3
 };
@@ -83,6 +86,7 @@ static const JoystickConfigController::stateStickPositions stGimbalYawLeft {
 static const JoystickConfigController::stateStickPositions stGimbalYawRight {
     0.5, 0.5, 0.6, 0.3
 };
+#endif
 
 JoystickConfigController::JoystickConfigController(void)
     : _joystickManager(qgcApp()->toolbox()->joystickManager())
@@ -130,10 +134,12 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
     static const char* msgPitchDown =           "Move the Pitch stick all the way down and hold it there...";
     static const char* msgPitchUp =             "Move the Pitch stick all the way up and hold it there...";
     static const char* msgPitchCenter =         "Allow the Pitch stick to move back to center...";
+#if ENABLE_GIMBAL
     static const char* msgGimbalPitchDown =     "Move the Gimbal Pitch control all the way down and hold it there...";
     static const char* msgGimbalPitchUp =       "Move the Gimbal Pitch control all the way up and hold it there...";
     static const char* msgGimbalYawLeft =       "Move the Gimbal Yaw control all the way to the left and hold it there...";
     static const char* msgGimbalYawRight =      "Move the Gimbal Yaw control all the way to the right and hold it there...";
+#endif
     static const char* msgComplete =            "All settings have been captured.\nClick Next to enable the joystick.";
 
     static const stateMachineEntry rgStateMachine[] = {
@@ -148,15 +154,15 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
         { Joystick::pitchFunction,          msgPitchUp,         _sticksPitchUp,         stGimbalCentered,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchDown,       _sticksPitchDown,       stGimbalCentered,   &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 3 },
         { Joystick::pitchFunction,          msgPitchCenter,     _sticksCentered,        stGimbalCentered,   &JoystickConfigController::_inputCenterWait,        nullptr,                                         nullptr, 3 },
-
+#if ENABLE_GIMBAL
         { Joystick::gimbalPitchFunction,    msgGimbalPitchUp,   _sticksCentered,        stGimbalPitchUp,    &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 4 },
         { Joystick::gimbalPitchFunction,    msgGimbalPitchDown, _sticksCentered,        stGimbalPitchDown,  &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 4 },
         { Joystick::gimbalYawFunction,      msgGimbalYawRight,  _sticksCentered,        stGimbalYawRight,   &JoystickConfigController::_inputStickDetect,       nullptr,                                         nullptr, 5 },
         { Joystick::gimbalYawFunction,      msgGimbalYawLeft,   _sticksCentered,        stGimbalYawLeft,    &JoystickConfigController::_inputStickMin,          nullptr,                                         nullptr, 5 },
-
+#endif
         { Joystick::maxFunction,            msgComplete,        _sticksCentered,        stGimbalCentered,   nullptr,                                            &JoystickConfigController::_writeCalibration,    nullptr, -1 },
     };
-    
+
     Q_ASSERT(step >= 0 && step < static_cast<int>((sizeof(rgStateMachine) / sizeof(rgStateMachine[0]))));
     return &rgStateMachine[step];
 }
@@ -164,6 +170,8 @@ const JoystickConfigController::stateMachineEntry* JoystickConfigController::_ge
 void JoystickConfigController::_advanceState()
 {
     _currentStep++;
+#if ENABLE_GIMBAL
+    // TODO There are no MAVLink messages to handle gimbal from this
     const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
     //-- Handle Gimbal
     if (state->channelID > _axisCount) {
@@ -174,6 +182,7 @@ void JoystickConfigController::_advanceState()
         //-- Gimbal disabled. Skip it.
         _advanceState();
     }
+#endif
     _setupCurrentState();
 }
 
