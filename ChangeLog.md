@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Rework joysticks. Fixed several issues and updated setup UI.
 * Adding support for UDP RTP h.265 video streams
 * For text to speech engine on Linux to English (all messages are in English)
 * Automated the ingestion of localization from Crowdin
