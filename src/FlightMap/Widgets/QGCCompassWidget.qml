@@ -41,7 +41,7 @@ Item {
     property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
 
     function isCOGAngleOK(){
-        if(_groundSpeed < 0.5 && _showCOGAngleCompass){
+        if(_groundSpeed < 0.5 && _showAdditionalIndicatorsCompass){
             return false
         }
         else{
@@ -49,21 +49,19 @@ Item {
         }
     }
 
-    function isHeadingAngleOK(){
-        return vehicle && _showHomeHeadingCompass && !isNaN(_headingToHome)
+    function isHeadingHomeOK(){
+        return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToHome)
     }
 
     function isHeadingToNextWPOK(){
-        return vehicle && _showHeadingToNextWP && !isNaN(_headingToNextWP)
+        return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToNextWP)
     }
 
     function isNorthUpLocked(){
         return _lockNorthUpCompass
     }
 
-    readonly property bool _showHomeHeadingCompass:     QGroundControl.settingsManager.flyViewSettings.showHomeHeadingCompass.value
-    readonly property bool _showCOGAngleCompass:        QGroundControl.settingsManager.flyViewSettings.showCOGAngleCompass.value
-    readonly property bool _showHeadingToNextWP:        QGroundControl.settingsManager.flyViewSettings.showHeadingToNextWP.value
+    readonly property bool _showAdditionalIndicatorsCompass:     QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass.value
     readonly property bool _lockNorthUpCompass:        QGroundControl.settingsManager.flyViewSettings.lockNorthUpCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
@@ -132,12 +130,11 @@ Item {
         Image {
             id:                     homePointer
             width:                  size * 0.1
-            source:                 isHeadingAngleOK()  ? "/qmlimages/Home.svg" : ""
+            source:                 isHeadingHomeOK()  ? "/qmlimages/Home.svg" : ""
             mipmap:                 true
             fillMode:               Image.PreserveAspectFit
             anchors.centerIn:   	parent
             sourceSize.width:       width
-            visible:                _showHomeHeadingCompass
 
             transform: Translate {
                 property double _angle: isNorthUpLocked()?-_heading+_headingToHome:_headingToHome
