@@ -12,8 +12,6 @@
 #include "JoystickManager.h"
 #include "QGCApplication.h"
 
-#include <QSettings>
-
 QGC_LOGGING_CATEGORY(JoystickConfigControllerLog, "JoystickConfigControllerLog")
 
 const int JoystickConfigController::_calCenterPoint =       0;
@@ -167,9 +165,14 @@ void JoystickConfigController::_advanceState()
 {
     _currentStep++;
     const stateMachineEntry* state = _getStateMachineEntry(_currentStep);
-    while (state->channelID > _axisCount) {
-        _currentStep++;
-        state = _getStateMachineEntry(_currentStep);
+    //-- Handle Gimbal
+    if (state->channelID > _axisCount) {
+        //-- No channels for gimbal
+        _advanceState();
+    }
+    if((state->channelID == 4 || state->channelID == 5) && !_activeJoystick->gimbalEnabled()) {
+        //-- Gimbal disabled. Skip it.
+        _advanceState();
     }
     _setupCurrentState();
 }
@@ -220,7 +223,10 @@ void JoystickConfigController::_axisValueChanged(int axis, int value)
             // Track the axis count by keeping track of how many axes we see
             if (axis + 1 > static_cast<int>(_axisCount)) {
                 _axisCount = axis + 1;
-                emit hasGimbalChanged();
+                if(_axisCount > 4)
+                    emit hasGimbalPitchChanged();
+                if(_axisCount > 5)
+                    emit hasGimbalYawChanged();
             }
         }
         if (_currentStep != -1) {
@@ -631,8 +637,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksYawRight     = stLeftStickRight;
         _sticksRollLeft     = stRightStickLeft;
         _sticksRollRight    = stRightStickRight;
-        _sticksPitchUp      = stLeftStickDown;
-        _sticksPitchDown    = stLeftStickUp;
+        _sticksPitchUp      = stLeftStickUp;
+        _sticksPitchDown    = stLeftStickDown;
         break;
     case 2:
         _sticksThrottleUp   = stLeftStickUp;
@@ -641,8 +647,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksYawRight     = stLeftStickRight;
         _sticksRollLeft     = stRightStickLeft;
         _sticksRollRight    = stRightStickRight;
-        _sticksPitchUp      = stRightStickDown;
-        _sticksPitchDown    = stRightStickUp;
+        _sticksPitchUp      = stRightStickUp;
+        _sticksPitchDown    = stRightStickDown;
         break;
     case 3:
         _sticksThrottleUp   = stRightStickUp;
@@ -651,8 +657,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksYawRight     = stRightStickRight;
         _sticksRollLeft     = stLeftStickLeft;
         _sticksRollRight    = stLeftStickRight;
-        _sticksPitchUp      = stLeftStickDown;
-        _sticksPitchDown    = stLeftStickUp;
+        _sticksPitchUp      = stLeftStickUp;
+        _sticksPitchDown    = stLeftStickDown;
         break;
     case 4:
         _sticksThrottleUp   = stLeftStickUp;
@@ -661,8 +667,8 @@ void JoystickConfigController::_setStickPositions()
         _sticksYawRight     = stRightStickRight;
         _sticksRollLeft     = stLeftStickLeft;
         _sticksRollRight    = stLeftStickRight;
-        _sticksPitchUp      = stRightStickDown;
-        _sticksPitchDown    = stRightStickUp;
+        _sticksPitchUp      = stRightStickUp;
+        _sticksPitchDown    = stRightStickDown;
         break;
     default:
         Q_ASSERT(false);
@@ -766,7 +772,8 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         delete[] _axisRawValue;
         _axisCount = 0;
         _activeJoystick = nullptr;
-        emit hasGimbalChanged();
+        emit hasGimbalPitchChanged();
+        emit hasGimbalYawChanged();
     }
     
     if (joystick) {
@@ -781,7 +788,8 @@ void JoystickConfigController::_activeJoystickChanged(Joystick* joystick)
         _axisRawValue   = new int[_axisCount];
         _setInternalCalibrationValuesFromSettings();
         connect(_activeJoystick, &Joystick::rawAxisValueChanged, this, &JoystickConfigController::_axisValueChanged);
-        emit hasGimbalChanged();
+        emit hasGimbalPitchChanged();
+        emit hasGimbalYawChanged();
     }
 }
 

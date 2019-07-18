@@ -840,8 +840,8 @@ public:
 
     QGeoCoordinate homePosition(void);
 
-    bool armed(void) { return _armed; }
-    void setArmed(bool armed);
+    bool armed      () { return _armed; }
+    void setArmed   (bool armed);
 
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
@@ -1084,7 +1084,6 @@ public:
 
     void _setFlying(bool flying);
     void _setLanding(bool landing);
-    void setVtolInFwdFlight(bool vtolInFwdFlight);
     void _setHomePosition(QGeoCoordinate& homeCoord);
     void _setMaxProtoVersion (unsigned version);
 
@@ -1100,6 +1099,9 @@ public:
     qreal       gimbalPitch             () { return static_cast<qreal>(_curGimbalPitch); }
     qreal       gimbalYaw               () { return static_cast<qreal>(_curGinmbalYaw); }
     bool        gimbalData              () { return _haveGimbalData; }
+
+public slots:
+    void setVtolInFwdFlight             (bool vtolInFwdFlight);
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
