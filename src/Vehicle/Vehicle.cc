@@ -484,6 +484,7 @@ void Vehicle::_commonInit(void)
     _addFact(&_flightDistanceFact,      _flightDistanceFactName);
     _addFact(&_flightTimeFact,          _flightTimeFactName);
     _addFact(&_distanceToHomeFact,      _distanceToHomeFactName);
+    _addFact(&_headingToNextWPFact,     _headingToNextWPFactName);
     _addFact(&_headingToHomeFact,       _headingToHomeFactName);
     _addFact(&_distanceToGCSFact,       _distanceToGCSFactName);
     _addFact(&_throttlePctFact,         _throttlePctFactName);
