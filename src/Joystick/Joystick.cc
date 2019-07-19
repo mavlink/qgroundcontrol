@@ -80,9 +80,9 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
     , _totalButtonCount(_buttonCount+_hatButtonCount)
     , _multiVehicleManager(multiVehicleManager)
 {
-    _rgAxisValues   = new int[_axisCount];
-    _rgCalibration  = new Calibration_t[_axisCount];
-    _rgButtonValues = new uint8_t[_totalButtonCount];
+    _rgAxisValues   = new int[static_cast<size_t>(_axisCount)];
+    _rgCalibration  = new Calibration_t[static_cast<size_t>(_axisCount)];
+    _rgButtonValues = new uint8_t[static_cast<size_t>(_totalButtonCount)];
 
     for (int i = 0; i < _axisCount; i++) {
         _rgAxisValues[i] = 0;
@@ -538,7 +538,7 @@ void Joystick::run()
             // Set up button bitmap
             quint64 buttonPressedBits = 0;  // Buttons pressed for manualControl signal
             for (int buttonIndex = 0; buttonIndex < _totalButtonCount; buttonIndex++) {
-                quint64 buttonBit = static_cast<quint64>(1 << buttonIndex);
+                quint64 buttonBit = static_cast<quint64>(1LL << buttonIndex);
                 if (_rgButtonValues[buttonIndex] != BUTTON_UP) {
                     // Mark the button as pressed as long as its pressed
                     buttonPressedBits |= buttonBit;
