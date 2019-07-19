@@ -60,6 +60,10 @@ protected slots:
     virtual void    _stepCamera             (int direction);
     virtual void    _stepStream             (int direction);
     virtual void    _cameraTimeout          ();
+    virtual void    _triggerCamera          ();
+    virtual void    _startVideoRecording    ();
+    virtual void    _stopVideoRecording     ();
+    virtual void    _toggleVideoRecording   ();
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);

@@ -36,6 +36,7 @@ class UASMessage;
 class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
+class Joystick;
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
 #endif
@@ -632,6 +633,10 @@ public:
     Q_PROPERTY(quint64              mavlinkReceivedCount    READ mavlinkReceivedCount                                   NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(quint64              mavlinkLossCount        READ mavlinkLossCount                                       NOTIFY mavlinkStatusChanged)
     Q_PROPERTY(float                mavlinkLossPercent      READ mavlinkLossPercent                                     NOTIFY mavlinkStatusChanged)
+    Q_PROPERTY(qreal                gimbalRoll              READ gimbalRoll                                             NOTIFY gimbalRollChanged)
+    Q_PROPERTY(qreal                gimbalPitch             READ gimbalPitch                                            NOTIFY gimbalPitchChanged)
+    Q_PROPERTY(qreal                gimbalYaw               READ gimbalYaw                                              NOTIFY gimbalYawChanged)
+    Q_PROPERTY(bool                 gimbalData              READ gimbalData                                             NOTIFY gimbalDataChanged)
 
     // The following properties relate to Orbit status
     Q_PROPERTY(bool             orbitActive     READ orbitActive        NOTIFY orbitActiveChanged)
@@ -761,7 +766,10 @@ public:
 
     Q_INVOKABLE void setPIDTuningTelemetryMode(bool pidTuning);
 
-    Q_INVOKABLE void gimbalControlValue(double pitch, double yaw);
+    Q_INVOKABLE void gimbalControlValue (double pitch, double yaw);
+    Q_INVOKABLE void gimbalPitchStep    (int direction);
+    Q_INVOKABLE void gimbalYawStep      (int direction);
+    Q_INVOKABLE void centerGimbal       ();
 
 #if !defined(NO_ARDUPILOT_DIALECT)
     Q_INVOKABLE void flashBootloader(void);
@@ -832,8 +840,8 @@ public:
 
     QGeoCoordinate homePosition(void);
 
-    bool armed(void) { return _armed; }
-    void setArmed(bool armed);
+    bool armed      () { return _armed; }
+    void setArmed   (bool armed);
 
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
@@ -1076,7 +1084,6 @@ public:
 
     void _setFlying(bool flying);
     void _setLanding(bool landing);
-    void setVtolInFwdFlight(bool vtolInFwdFlight);
     void _setHomePosition(QGeoCoordinate& homeCoord);
     void _setMaxProtoVersion (unsigned version);
 
@@ -1087,6 +1094,14 @@ public:
     quint64     mavlinkReceivedCount    () { return _mavlinkReceivedCount; }    /// Total number of sucessful messages received
     quint64     mavlinkLossCount        () { return _mavlinkLossCount; }        /// Total number of lost messages
     float       mavlinkLossPercent      () { return _mavlinkLossPercent; }      /// Running loss rate
+
+    qreal       gimbalRoll              () { return static_cast<qreal>(_curGimbalRoll);}
+    qreal       gimbalPitch             () { return static_cast<qreal>(_curGimbalPitch); }
+    qreal       gimbalYaw               () { return static_cast<qreal>(_curGinmbalYaw); }
+    bool        gimbalData              () { return _haveGimbalData; }
+
+public slots:
+    void setVtolInFwdFlight             (bool vtolInFwdFlight);
 
 signals:
     void allLinksInactive(Vehicle* vehicle);
@@ -1192,8 +1207,13 @@ signals:
     void mavlinkSerialControl(uint8_t device, uint8_t flags, uint16_t timeout, uint32_t baudrate, QByteArray data);
 
     // MAVLink protocol version
-    void requestProtocolVersion(unsigned version);
-    void mavlinkStatusChanged();
+    void requestProtocolVersion     (unsigned version);
+    void mavlinkStatusChanged       ();
+
+    void gimbalRollChanged          ();
+    void gimbalPitchChanged         ();
+    void gimbalYawChanged           ();
+    void gimbalDataChanged          ();
 
 private slots:
     void _mavlinkMessageReceived(LinkInterface* link, mavlink_message_t message);
@@ -1235,8 +1255,9 @@ private slots:
     void _protocolVersionTimeOut(void);
 
 private:
-    bool _containsLink(LinkInterface* link);
-    void _addLink(LinkInterface* link);
+    bool _containsLink          (LinkInterface* link);
+    void _addLink               (LinkInterface* link);
+    void _joystickChanged       (Joystick* joystick);
     void _loadSettings(void);
     void _saveSettings(void);
     void _startJoystick(bool start);
@@ -1273,6 +1294,7 @@ private:
     void _handleStatusText(mavlink_message_t& message, bool longVersion);
     void _handleOrbitExecutionStatus(const mavlink_message_t& message);
     void _handleMessageInterval(const mavlink_message_t& message);
+    void _handleGimbalOrientation(const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1455,6 +1477,12 @@ private:
     uint8_t             _messageSeq;
     uint8_t             _compID;
     bool                _heardFrom;
+
+    float               _curGimbalRoll  = 0.0f;
+    float               _curGimbalPitch = 0.0f;
+    float               _curGinmbalYaw  = 0.0f;
+    bool                _haveGimbalData = false;
+    Joystick*           _activeJoystick = nullptr;
 
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;
