@@ -543,7 +543,7 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
         rgFirmware = &_rgOmnibusF4SDFirmware;
         break;
     case Bootloader::boardIDFMUK66V3:
-        _rgFirmwareDynamic = _rgFMUK66V3Firmware;
+        rgFirmware = &_rgFMUK66V3Firmware;
         break;
     case Bootloader::boardID3DRRadio:
         rgFirmware = &_rg3DRRadioFirmware;
