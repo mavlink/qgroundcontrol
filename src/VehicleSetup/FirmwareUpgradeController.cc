@@ -267,6 +267,13 @@ void FirmwareUpgradeController::_initFirmwareHash()
         { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/omnibus_f4sd_default.px4"},
         { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/omnibus_f4sd_default.px4"},
     };
+    
+    //////////////////////////////////// FMUK66V3 firmwares //////////////////////////////////////////////////
+    FirmwareToUrlElement_t rgFMUK66V3FirmwareArray[] = {
+        { AutoPilotStackPX4, StableFirmware,    DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/stable/nxp_fmuk66-v3_default.px4"},
+        { AutoPilotStackPX4, BetaFirmware,      DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/beta/nxp_fmuk66-v3_default.px4"},
+        { AutoPilotStackPX4, DeveloperFirmware, DefaultVehicleFirmware, "http://px4-travis.s3.amazonaws.com/Firmware/master/nxp_fmuk66-v3_default.px4"},
+    };
 
     /////////////////////////////// px4flow firmwares ///////////////////////////////////////
     FirmwareToUrlElement_t rgPX4FLowFirmwareArray[] = {
@@ -458,6 +465,12 @@ void FirmwareUpgradeController::_initFirmwareHash()
         const FirmwareToUrlElement_t& element = rgOmnibusF4SDFirmwareArray[i];
         _rgOmnibusF4SDFirmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
     }
+    
+    size = sizeof(rgFMUK66V3FirmwareArray)/sizeof(rgFMUK66V3FirmwareArray[0]);
+    for (int i = 0; i < size; i++) {
+        const FirmwareToUrlElement_t& element = rgFMUK66V3FirmwareArray[i];
+        _rgFMUK66V3Firmware.insert(FirmwareIdentifier(element.stackType, element.firmwareType, element.vehicleType), element.url);
+    }
 
     size = sizeof(rgPX4FLowFirmwareArray)/sizeof(rgPX4FLowFirmwareArray[0]);
     for (int i = 0; i < size; i++) {
@@ -529,8 +542,8 @@ QHash<FirmwareUpgradeController::FirmwareIdentifier, QString>* FirmwareUpgradeCo
     case Bootloader::boardIDOmnibusF4SD:
         rgFirmware = &_rgOmnibusF4SDFirmware;
         break;
-    case Bootloader::boardIDNXPHliteV3:
-        rgFirmware = &_rgNXPHliteV3Firmware;
+    case Bootloader::boardIDFMUK66V3:
+        rgFirmware = &_rgFMUK66V3Firmware;
         break;
     case Bootloader::boardID3DRRadio:
         rgFirmware = &_rg3DRRadioFirmware;
