@@ -57,12 +57,12 @@ Item {
         return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToNextWP)
     }
 
-    function isNorthUpLocked(){
-        return _lockNorthUpCompass
+    function isNoseUpLocked(){
+        return _lockNoseUpCompass
     }
 
     readonly property bool _showAdditionalIndicatorsCompass:     QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass.value
-    readonly property bool _lockNorthUpCompass:        QGroundControl.settingsManager.flyViewSettings.lockNorthUpCompass.value
+    readonly property bool _lockNoseUpCompass:        QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
 
@@ -80,21 +80,6 @@ Item {
         anchors.fill:   parent
         visible:        false
 
-        Image {
-            id:                 nextWPPointer
-            source:             isHeadingToNextWPOK() ? "/qmlimages/compassDottedLine.svg":"" 
-            mipmap:             true
-            fillMode:           Image.PreserveAspectFit
-            anchors.fill:       parent
-            sourceSize.height:  parent.height
-
-            transform: Rotation {
-                property var _angle: isNorthUpLocked()?_headingToNextWP-_heading:_headingToNextWP
-                origin.x:       cOGPointer.width  / 2
-                origin.y:       cOGPointer.height / 2
-                angle:         _angle
-            }
-        }
 
         Image {
             id:                 cOGPointer
@@ -105,10 +90,42 @@ Item {
             sourceSize.height:  parent.height
 
             transform: Rotation {
-                property var _angle:isNorthUpLocked()?_courseOverGround-_heading:_courseOverGround
+                property var _angle:isNoseUpLocked()?_courseOverGround-_heading:_courseOverGround
                 origin.x:       cOGPointer.width  / 2
                 origin.y:       cOGPointer.height / 2
                 angle:         _angle
+            }
+        }
+
+        Image {
+            id:                 nextWPPointer
+            source:             isHeadingToNextWPOK() ? "/qmlimages/compassDottedLine.svg":"" 
+            mipmap:             true
+            fillMode:           Image.PreserveAspectFit
+            anchors.fill:       parent
+            sourceSize.height:  parent.height
+
+            transform: Rotation {
+                property var _angle: isNoseUpLocked()?_headingToNextWP-_heading:_headingToNextWP
+                origin.x:       cOGPointer.width  / 2
+                origin.y:       cOGPointer.height / 2
+                angle:         _angle
+            }
+        }
+
+        Image {
+            id:                     homePointer
+            width:                  size * 0.1
+            source:                 isHeadingHomeOK()  ? "/qmlimages/Home.svg" : ""
+            mipmap:                 true
+            fillMode:               Image.PreserveAspectFit
+            anchors.centerIn:   	parent
+            sourceSize.width:       width
+
+            transform: Translate {
+                property double _angle: isNoseUpLocked()?-_heading+_headingToHome:_headingToHome
+                x: size/2.3 * Math.sin((_angle)*(3.14/180))
+                y: - size/2.3 * Math.cos((_angle)*(3.14/180))
             }
         }
 
@@ -123,25 +140,10 @@ Item {
             transform: Rotation {
                 origin.x:       pointer.width  / 2
                 origin.y:       pointer.height / 2
-                angle:          isNorthUpLocked()?0:_heading
+                angle:          isNoseUpLocked()?0:_heading
             }
         }
 
-        Image {
-            id:                     homePointer
-            width:                  size * 0.1
-            source:                 isHeadingHomeOK()  ? "/qmlimages/Home.svg" : ""
-            mipmap:                 true
-            fillMode:               Image.PreserveAspectFit
-            anchors.centerIn:   	parent
-            sourceSize.width:       width
-
-            transform: Translate {
-                property double _angle: isNorthUpLocked()?-_heading+_headingToHome:_headingToHome
-                x: size/2.3 * Math.sin((_angle)*(3.14/180))
-                y: - size/2.3 * Math.cos((_angle)*(3.14/180))
-            }
-        }
 
         QGCColoredImage {
             id:                 compassDial
@@ -154,7 +156,7 @@ Item {
             transform: Rotation {
                 origin.x:       compassDial.width  / 2
                 origin.y:       compassDial.height / 2
-                angle:          isNorthUpLocked()?-_heading:0
+                angle:          isNoseUpLocked()?-_heading:0
             }
         }
 

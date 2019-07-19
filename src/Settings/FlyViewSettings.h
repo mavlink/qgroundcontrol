@@ -24,5 +24,5 @@ public:
     DEFINE_SETTINGFACT(showLogReplayStatusBar)
     DEFINE_SETTINGFACT(alternateInstrumentPanel)
     DEFINE_SETTINGFACT(showAdditionalIndicatorsCompass)
-    DEFINE_SETTINGFACT(lockNorthUpCompass)
+    DEFINE_SETTINGFACT(lockNoseUpCompass)
 };
