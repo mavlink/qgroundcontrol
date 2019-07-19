@@ -32,9 +32,9 @@
     "defaultValue":     false
 },
 {
-    "name":             "lockNorthUpCompass",
-    "shortDescription": "Lock North up on Compass",
+    "name":             "lockNoseUpCompass",
+    "shortDescription": "Lock Compass Nose-Up",
     "type":             "bool",
-    "defaultValue":     true
+    "defaultValue":     false
 }
 ]
