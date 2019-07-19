@@ -378,15 +378,63 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
 {
     qCDebug(CameraManagerLog) << "Joystick changed";
     if(_activeJoystick) {
-        disconnect(_activeJoystick, &Joystick::stepZoom,   this, &QGCCameraManager::_stepZoom);
-        disconnect(_activeJoystick, &Joystick::stepCamera, this, &QGCCameraManager::_stepCamera);
-        disconnect(_activeJoystick, &Joystick::stepStream, this, &QGCCameraManager::_stepStream);
+        disconnect(_activeJoystick, &Joystick::stepZoom,            this, &QGCCameraManager::_stepZoom);
+        disconnect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera);
+        disconnect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream);
+        disconnect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera);
+        disconnect(_activeJoystick, &Joystick::startVideoRecord,    this, &QGCCameraManager::_startVideoRecording);
+        disconnect(_activeJoystick, &Joystick::stopVideoRecord,     this, &QGCCameraManager::_stopVideoRecording);
+        disconnect(_activeJoystick, &Joystick::toggleVideoRecord,   this, &QGCCameraManager::_toggleVideoRecording);
     }
     _activeJoystick = joystick;
     if(_activeJoystick) {
-        connect(_activeJoystick, &Joystick::stepZoom,   this, &QGCCameraManager::_stepZoom);
-        connect(_activeJoystick, &Joystick::stepCamera, this, &QGCCameraManager::_stepCamera);
-        connect(_activeJoystick, &Joystick::stepStream, this, &QGCCameraManager::_stepStream);
+        connect(_activeJoystick, &Joystick::stepZoom,           this, &QGCCameraManager::_stepZoom);
+        connect(_activeJoystick, &Joystick::stepCamera,         this, &QGCCameraManager::_stepCamera);
+        connect(_activeJoystick, &Joystick::stepStream,         this, &QGCCameraManager::_stepStream);
+        connect(_activeJoystick, &Joystick::triggerCamera,      this, &QGCCameraManager::_triggerCamera);
+        connect(_activeJoystick, &Joystick::startVideoRecord,   this, &QGCCameraManager::_startVideoRecording);
+        connect(_activeJoystick, &Joystick::stopVideoRecord,    this, &QGCCameraManager::_stopVideoRecording);
+        connect(_activeJoystick, &Joystick::toggleVideoRecord,  this, &QGCCameraManager::_toggleVideoRecording);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_triggerCamera()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->takePhoto();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_startVideoRecording()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->startVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_stopVideoRecording()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->stopVideo();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_toggleVideoRecording()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->toggleVideo();
     }
 }
 
