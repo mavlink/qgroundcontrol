@@ -19,6 +19,8 @@
 #include <QtQuick/QQuickItem>
 #include "VideoSurface.h"
 
+class QSGGeometry;
+
 class VideoItem : public QQuickItem
 {
     Q_OBJECT
@@ -40,6 +42,8 @@ protected:
 
 private:
 #if defined(QGC_GST_STREAMING)
+	QSGGeometry* _createDefaultGeometry(QRectF& rectBound);
+	
     struct Private;
     Private* const _data;
 #endif
