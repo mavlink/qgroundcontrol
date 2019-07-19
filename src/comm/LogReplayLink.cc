@@ -686,8 +686,3 @@ QString LogReplayLinkController::_secondsToHMS(int seconds)
 
     return tr("%1h:%2m:%3s").arg(hoursPart, 2).arg(minutesPart, 2).arg(secondsPart, 2);
 }
-
-void LogReplayLink::_signalCurrentLogTimeSecs(void)
-{
-    emit currentLogTimeSecs((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000000);
-}
