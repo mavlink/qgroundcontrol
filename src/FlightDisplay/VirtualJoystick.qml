@@ -27,12 +27,18 @@ Item {
     property int _seq: 0
 
     Timer {
-        interval:   40  // 25Hz, same as real joystick rate
-        running:    _virtualJoystick && _virtualJoystick.value === 1 && _activeVehicle
+        id: mytimer
+        interval:   500  // 25Hz, same as real joystick rate
+        running:    _virtualJoystick  && _activeVehicle
         repeat:     true
         onTriggered: {
             if (_activeVehicle && !_gimbalMode) {
                 _activeVehicle.virtualTabletJoystickValue(rightStick.xAxis, rightStick.yAxis, leftStick.xAxis, leftStick.yAxis)
+            }
+
+            if (_activeVehicle && _gimbalMode) {
+                _activeVehicle.gimbalControlValue(rightStick.yAxis, rightStick.xAxis)
+                _activeVehicle.cameraZoomValue(leftStick.yAxis)
             }
         }
     }
@@ -52,6 +58,7 @@ Item {
         //-- Set Pitch and Yaw ( -1.00 -> 1.00)
         if(s >= _seq){
             _activeVehicle.gimbalControlValue(rightStick.yAxis, rightStick.xAxis)
+
 
         }
     }
