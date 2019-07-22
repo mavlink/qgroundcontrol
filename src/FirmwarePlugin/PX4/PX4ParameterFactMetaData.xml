@@ -977,8 +977,9 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <decimal>1</decimal>
       <increment>0.1</increment>
     </parameter>
-    <parameter default="0" name="COM_RC_OVERRIDE" type="INT32">
+    <parameter default="1" name="COM_RC_OVERRIDE" type="INT32">
       <short_desc>Enable RC stick override of auto modes</short_desc>
+      <long_desc>When an auto mode is active (except a critical battery reaction) moving the RC sticks gives control back to the pilot in manual position mode immediately. Only has an effect on multicopters and VTOLS in multicopter mode.</long_desc>
       <boolean />
     </parameter>
     <parameter default="12.0" name="COM_RC_STICK_OV" type="FLOAT">
