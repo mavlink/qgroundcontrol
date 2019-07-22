@@ -13,7 +13,6 @@
 #include "VideoManager.h"
 
 QGC_LOGGING_CATEGORY(MicrohardLog,     "MicrohardLog")
-QGC_LOGGING_CATEGORY(MicrohardVerbose, "MicrohardVerbose")
 
 //-----------------------------------------------------------------------------
 MicrohardHandler::MicrohardHandler(QObject* parent)
@@ -53,10 +52,10 @@ MicrohardHandler::_start(uint16_t port, QHostAddress addr)
     qCDebug(MicrohardLog) << "Connecting to" << addr;
     _tcpSocket->connectToHost(addr, port);
     if (!_tcpSocket->waitForConnected(1000)) {
+        emit connected(0);
         close();
         return false;
     }
-    emit connected();
 
     return true;
 }
