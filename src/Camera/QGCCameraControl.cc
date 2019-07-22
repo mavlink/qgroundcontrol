@@ -1564,9 +1564,7 @@ QGCCameraControl::handleVideoStatus(const mavlink_video_stream_status_t* vs)
     qCDebug(CameraControlLog) << "handleVideoStatus:" << vs->stream_id;
     QGCVideoStreamInfo* pInfo = _findStream(vs->stream_id);
     if(pInfo) {
-        if(pInfo->update(vs)) {
-            emit _vehicle->dynamicCameras()->streamChanged();
-        }
+        pInfo->update(vs);
     }
 }
 
