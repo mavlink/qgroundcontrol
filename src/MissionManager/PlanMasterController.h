@@ -111,6 +111,7 @@ private slots:
     void _sendMissionComplete(void);
     void _sendGeoFenceComplete(void);
     void _sendRallyPointsComplete(void);
+    void _startFlightPlanning(void);
 
 private:
     void _showPlanFromManagerVehicle(void);
