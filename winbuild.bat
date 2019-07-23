@@ -7,6 +7,7 @@ SET PATH=%MSVC_PATH%;%QT_PATH%;%PATH%
 ECHO %PATH%
 
 rem cmd /c "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+call vcvarsall.bat
 
 RMDIR BUILD
 mkdir build
