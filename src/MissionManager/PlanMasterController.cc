@@ -82,7 +82,8 @@ void PlanMasterController::start(bool flyView)
 #if defined(QGC_AIRMAP_ENABLED)
     //-- This assumes there is one single instance of PlanMasterController in edit mode.
     if(!flyView) {
-        qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
+        // Wait for signal confirming AirMap client connection before starting flight planning
+        connect(qgcApp()->toolbox()->airspaceManager(), &AirspaceManager::connectStatusChanged, this, &PlanMasterController::_startFlightPlanning);
     }
 #endif
 }
@@ -269,6 +270,10 @@ void PlanMasterController::_sendRallyPointsComplete(void)
     if (_deleteWhenSendCompleted) {
         this->deleteLater();
     }
+}
+
+void PlanMasterController::_startFlightPlanning(void) {
+    qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
 }
 
 void PlanMasterController::sendToVehicle(void)
