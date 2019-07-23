@@ -24,6 +24,7 @@ pipeline {
 					//}
 					steps {
 						echo "Test"
+						bat "call vcvarsall.bat"
 						bat "call winbuild.bat"
 						//sh '"mkdir %LOCALAPPDATA%/QtProject && copy test/qtlogging.ini %LOCALAPPDATA%/QtProject/"'
 						//withCredentials(bindings: [file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {

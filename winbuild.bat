@@ -6,7 +6,7 @@ SET "QT_PATH=C:\Qt\Tools\QtCreator\bin"
 SET PATH=%MSVC_PATH%;%QT_PATH%;%PATH%
 ECHO %PATH%
 
-cmd /c "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+rem cmd /c "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
 
 RMDIR BUILD
 mkdir build
