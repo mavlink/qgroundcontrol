@@ -3,6 +3,74 @@ pipeline {
 	stages {
 		stage('build') {
 			parallel {
+
+				stage('Android Release') {
+					environment {
+						CCACHE_BASEDIR = "${env.WORKSPACE}"
+						QGC_CONFIG = 'release'
+						QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
+					}
+					agent {
+						docker {
+							image 'mavlink/qgc-build-android:2019-02-03'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+						}
+					}
+					steps {
+						sh 'export'
+						sh 'ccache -z'
+						sh 'git submodule deinit -f .'
+						sh 'git clean -ff -x -d .'
+						sh 'git submodule update --init --recursive --force'
+						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+						sh 'cd build; make -j`nproc --all`'
+						sh 'ccache -s'
+					}
+					post {
+						always {
+							archiveArtifacts artifacts: "build/*"
+						}
+						cleanup {
+							sh 'git clean -ff -x -d .'
+						}
+					}
+				}
+
+
+				stage('Linux Release') {
+					environment {
+						CCACHE_BASEDIR = "${env.WORKSPACE}"
+						QGC_CONFIG = 'release'
+						QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
+					}
+					agent {
+						docker {
+							image 'mavlink/qgc-build-linux:2019-02-03'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+						}
+					}
+					steps {
+						sh 'export'
+						sh 'ccache -z'
+						sh 'git submodule deinit -f .'
+						sh 'git clean -ff -x -d .'
+						sh 'git submodule update --init --recursive --force'
+						withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
+							sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
+						}
+						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+						sh 'cd build; make -j`nproc --all`'
+						sh 'ccache -s'
+					}
+					post {
+						cleanup {
+							sh 'git clean -ff -x -d .'
+						}
+					}
+				}
+
+
+
 				stage('Windows Release') {
 					agent {
 						node {
@@ -10,29 +78,22 @@ pipeline {
 						}
 
 					}
-					//environment {
-					//	CCACHE_BASEDIR = "${env.WORKSPACE}"
-					//	QGC_CONFIG = 'release'
-					//	QMAKE_VER = '5.11.0/gcc_64/bin/qmake'
-					//}
-					//post {
-					//	cleanup {
-					//		sh 'git clean -ff -x -d .'
-
-					//	}
-
-					//}
+					environment {
+						QGC_CONFIG = 'release'
+						QMAKE_VER = '5.11.0/gcc_64/bin/qmake'
+					}
 					steps {
 						echo "Test"
 						bat "call vcvarsall.bat"
+						withCredentials(bindings: [file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
+							sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
+						}
 						bat "call winbuild.bat"
-						//sh '"mkdir %LOCALAPPDATA%/QtProject && copy test/qtlogging.ini %LOCALAPPDATA%/QtProject/"'
-						//withCredentials(bindings: [file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
-						//	sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
-						//}
-
-						//bat 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
-						//bat 'cd build; jom`'
+					}
+					post {
+						always {
+							archiveArtifacts artifacts: "${WORKSPACE}/build"
+						}
 					}
 				}
 			}
