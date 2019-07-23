@@ -272,12 +272,14 @@ void PlanMasterController::_sendRallyPointsComplete(void)
     }
 }
 
+#if defined(QGC_AIRMAP_ENABLED)
 void PlanMasterController::_startFlightPlanning(void) {
     if (qgcApp()->toolbox()->airspaceManager()->connected()) {
         qCDebug(PlanMasterControllerLog) << "PlanMasterController::_startFlightPlanning client connected, start flight planning";
         qgcApp()->toolbox()->airspaceManager()->flightPlan()->startFlightPlanning(this);
     }
 }
+#endif
 
 void PlanMasterController::sendToVehicle(void)
 {
