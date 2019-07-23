@@ -60,11 +60,17 @@ AnalyzePage {
                     title: qsTr("Id")
                     width: ScreenTools.defaultFontPixelWidth * 6
                     horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
-                        horizontalAlignment: Text.AlignHCenter
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            return o ? o.id : ""
+                    delegate : Rectangle {
+                        color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
+                        Text  {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            color: palette.text
+                            text: {
+                                var o = logController.model.get(styleData.row)
+                                return o ? o.id : ""
+                            }
                         }
                     }
                 }
@@ -73,20 +79,26 @@ AnalyzePage {
                     title: qsTr("Date")
                     width: ScreenTools.defaultFontPixelWidth * 34
                     horizontalAlignment: Text.AlignHCenter
-                    delegate: Text  {
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            if (o) {
-                                //-- Have we received this entry already?
-                                if(logController.model.get(styleData.row).received) {
-                                    var d = logController.model.get(styleData.row).time
-                                    if(d.getUTCFullYear() < 2010)
-                                        return qsTr("Date Unknown")
-                                    else
-                                        return d.toLocaleString()
+                    delegate: Rectangle {
+                        color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
+                        Text  {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: palette.text
+                            text: {
+                                var o = logController.model.get(styleData.row)
+                                if (o) {
+                                    //-- Have we received this entry already?
+                                    if(logController.model.get(styleData.row).received) {
+                                        var d = logController.model.get(styleData.row).time
+                                        if(d.getUTCFullYear() < 2010)
+                                            return qsTr("Date Unknown")
+                                        else
+                                            return d.toLocaleString()
+                                    }
                                 }
+                                return ""
                             }
-                            return ""
                         }
                     }
                 }
@@ -95,11 +107,17 @@ AnalyzePage {
                     title: qsTr("Size")
                     width: ScreenTools.defaultFontPixelWidth * 18
                     horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
-                        horizontalAlignment: Text.AlignRight
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            return o ? o.sizeStr : ""
+                    delegate : Rectangle {
+                        color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
+                        Text  {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            horizontalAlignment: Text.AlignRight
+                            color: palette.text
+                            text: {
+                                var o = logController.model.get(styleData.row)
+                                return o ? o.sizeStr : ""
+                            }
                         }
                     }
                 }
@@ -108,11 +126,17 @@ AnalyzePage {
                     title: qsTr("Status")
                     width: ScreenTools.defaultFontPixelWidth * 22
                     horizontalAlignment: Text.AlignHCenter
-                    delegate : Text  {
-                        horizontalAlignment: Text.AlignHCenter
-                        text: {
-                            var o = logController.model.get(styleData.row)
-                            return o ? o.status : ""
+                    delegate : Rectangle {
+                        color: styleData.selected ? palette.buttonHighlight : ((styleData.row % 2) ? palette.window : palette.windowShade)
+                        Text  {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            color: palette.text
+                            text: {
+                                var o = logController.model.get(styleData.row)
+                                return o ? o.status : ""
+                            }
                         }
                     }
                 }
@@ -151,11 +175,11 @@ AnalyzePage {
                         fileDialog.selectExisting = true
                         fileDialog.folder =         QGroundControl.settingsManager.appSettings.logSavePath
                         fileDialog.selectFolder =   true
-                        fileDialog.openForLoad()
+                        fileDialog.openForSave()
                     }
                     QGCFileDialog {
                         id: fileDialog
-                        onAcceptedForLoad: {
+                        onAcceptedForSave: {
                             logController.download(file)
                             close()
                         }
