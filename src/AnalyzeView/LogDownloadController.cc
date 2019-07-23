@@ -604,6 +604,7 @@ LogDownloadController::_prepareLogDownload()
     } else {
         _downloadData->filename += ".bin";
     }
+
     _downloadData->file.setFileName(_downloadPath + _downloadData->filename);
     //-- Append a number to the end if the filename already exists
     if (_downloadData->file.exists()){
@@ -611,12 +612,22 @@ LogDownloadController::_prepareLogDownload()
         QStringList filename_spl = _downloadData->filename.split('.');
         do {
             num_dups +=1;
-            _downloadData->file.setFileName(filename_spl[0] + '_' + QString::number(num_dups) + '.' + filename_spl[1]);
+            _downloadData->file.setFileName(_downloadPath + (filename_spl[0] + '_' + QString::number(num_dups) + '.' + filename_spl[1]));
         } while( _downloadData->file.exists());
+    }
+
+    // On Android the directory inside Logs folder where to save the selected files is entered manually. Therefore it migh be missing.
+    if(_downloadPath.endsWith(QDir::separator())) {
+        QDir dir(_downloadPath);
+        if(!dir.exists()) {
+            if(!dir.mkpath(".")) {
+                qWarning() << "Failed to create directory:" << dir.path();
+            }
+        }
     }
     //-- Create file
     if (!_downloadData->file.open(QIODevice::WriteOnly)) {
-        qWarning() << "Failed to create log file:" <<  _downloadData->filename;
+        qWarning() << "Failed to create log file:" <<  _downloadData->file.fileName();
     } else {
         //-- Preallocate file
         if(!_downloadData->file.resize(entry->size())) {
