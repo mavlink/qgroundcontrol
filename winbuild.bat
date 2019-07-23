@@ -6,10 +6,9 @@ SET "QT_PATH=C:\Qt\Tools\QtCreator\bin"
 SET PATH=%MSVC_PATH%;%QT_PATH%;%PATH%
 ECHO %PATH%
 
-rem cmd /c "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
 call vcvarsall.bat
 
-RMDIR BUILD
+del /F /Q BUILD
 mkdir build
 cd build
 call "%MSVC_PATH%/qmake.exe" CONFIG-=debug_and_release CONFIG+=installer ../qgroundcontrol.pro
