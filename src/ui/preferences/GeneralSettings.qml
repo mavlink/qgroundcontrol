@@ -461,6 +461,13 @@ Rectangle {
 
                                 property Fact _virtualJoystickCentralized: QGroundControl.settingsManager.appSettings.virtualJoystickCentralized
                             }
+                            FactCheckBox {
+                                text:       qsTr("Use Vertical Instrument Panel")
+                                visible:    _alternateInstrumentPanel.visible
+                                fact:       _alternateInstrumentPanel
+
+                                property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
+                            }
 
                             GridLayout {
                                 columns: 2
