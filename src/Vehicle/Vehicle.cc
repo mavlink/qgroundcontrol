@@ -77,7 +77,6 @@ const char* Vehicle::_hobbsFactName =               "hobbs";
 const char* Vehicle::_throttlePctFactName =         "throttlePct";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
-const char* Vehicle::_batterySummaryFactGroupName =     "batterySummary";
 const char* Vehicle::_battery1FactGroupName =           "battery";
 const char* Vehicle::_battery2FactGroupName =           "battery2";
 const char* Vehicle::_windFactGroupName =               "wind";
@@ -208,7 +207,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
-    , _batterySummaryFactGroup(this)
     , _battery1FactGroup(this)
     , _battery2FactGroup(this)
     , _windFactGroup(this)
@@ -411,7 +409,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _hobbsFact            (0, _hobbsFactName,             FactMetaData::valueTypeString)
     , _throttlePctFact      (0, _throttlePctFactName,       FactMetaData::valueTypeUint16)
     , _gpsFactGroup(this)
-    , _batterySummaryFactGroup(this)
     , _battery1FactGroup(this)
     , _battery2FactGroup(this)
     , _windFactGroup(this)
@@ -490,7 +487,6 @@ void Vehicle::_commonInit(void)
     _addFact(&_hobbsFact,               _hobbsFactName);
 
     _addFactGroup(&_gpsFactGroup,               _gpsFactGroupName);
-    _addFactGroup(&_batterySummaryFactGroup,    _batterySummaryFactGroupName);
     _addFactGroup(&_battery1FactGroup,          _battery1FactGroupName);
     _addFactGroup(&_battery2FactGroup,          _battery2FactGroupName);
     _addFactGroup(&_windFactGroup,              _windFactGroupName);
@@ -664,7 +660,7 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         }
     } else {
         if(_compID == message.compid) {
-            uint16_t seq_received = (uint16_t)message.seq;
+            uint16_t seq_received = static_cast<uint16_t>(message.seq);
             uint16_t packet_lost_count = 0;
             //-- Account for overflow during packet loss
             if(seq_received < _messageSeq) {
@@ -812,6 +808,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_PING:
         _handlePing(link, message);
+        break;
+    case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
+        _handleGimbalOrientation(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -1219,7 +1218,7 @@ void Vehicle::_handleHighLatency2(mavlink_message_t& message)
     _windFactGroup.direction()->setRawValue((double)highLatency2.wind_heading * 2.0);
     _windFactGroup.speed()->setRawValue((double)highLatency2.windspeed / 5.0);
 
-    _batterySummaryFactGroup.percentRemaining()->setRawValue(highLatency2.battery);
+    _battery1FactGroup.percentRemaining()->setRawValue(highLatency2.battery);
 
     _temperatureFactGroup.temperature1()->setRawValue(highLatency2.temperature_air);
 
@@ -1526,26 +1525,24 @@ void Vehicle::_handleSysStatus(mavlink_message_t& message)
     mavlink_msg_sys_status_decode(&message, &sysStatus);
 
     if (sysStatus.current_battery == -1) {
-        _batterySummaryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
+        _battery1FactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
     } else {
         // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
-        _batterySummaryFactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
+        _battery1FactGroup.current()->setRawValue((float)sysStatus.current_battery / 100.0f);
     }
     if (sysStatus.voltage_battery == UINT16_MAX) {
-        _batterySummaryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
+        _battery1FactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
     } else {
-        _batterySummaryFactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
-        if (sysStatus.current_battery != -1) {
-            // current_battery is 10 mA and voltage_battery is 1mV. (10/1e3 times 1/1e3 = 1/1e5)
-            _batterySummaryFactGroup.instantPower()->setRawValue((float)(sysStatus.current_battery*sysStatus.voltage_battery)/(100000.0));
-        }
+        _battery1FactGroup.voltage()->setRawValue((double)sysStatus.voltage_battery / 1000.0);
+        // current_battery is 10 mA and voltage_battery is 1mV. (10/1e3 times 1/1e3 = 1/1e5)
+        _battery1FactGroup.instantPower()->setRawValue((float)(sysStatus.current_battery*sysStatus.voltage_battery)/(100000.0));
     }
-    _batterySummaryFactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
+    _battery1FactGroup.percentRemaining()->setRawValue(sysStatus.battery_remaining);
 
     if (sysStatus.battery_remaining > 0) {
         if (sysStatus.battery_remaining < _settingsManager->appSettings()->batteryPercentRemainingAnnounce()->rawValue().toInt() &&
                 sysStatus.battery_remaining < _lastAnnouncedLowBatteryPercent) {
-            _say(QString(tr("%1 low battery: %2 percent remaining")).arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
+            _say(tr("%1 low battery: %2 percent remaining").arg(_vehicleIdSpeech()).arg(sysStatus.battery_remaining));
         }
         _lastAnnouncedLowBatteryPercent = sysStatus.battery_remaining;
     }
@@ -1595,48 +1592,27 @@ void Vehicle::_handleBatteryStatus(mavlink_message_t& message)
     } else {
         batteryFactGroup.mahConsumed()->setRawValue(bat_status.current_consumed);
     }
-    if (bat_status.current_battery == -1) {
-        batteryFactGroup.current()->setRawValue(VehicleBatteryFactGroup::_currentUnavailable);
-    } else {
-        // Current is in Amps, current_battery is 10 * milliamperes (1 = 10 milliampere)
-        batteryFactGroup.current()->setRawValue((float)bat_status.current_battery / 100.0f);
-    }
 
-
-    int16_t voltage = 0;
     int cellCount = 0;
     for (int i=0; i<10; i++) {
         if (bat_status.voltages[i] != UINT16_MAX) {
             cellCount++;
-            voltage += bat_status.voltages[i];
         }
     }
     if (cellCount == 0) {
         cellCount = -1;
-    }
-    if (voltage > 0) {
-        batteryFactGroup.voltage()->setRawValue((double)voltage / 1000.0);
-        if(bat_status.current_battery != -1) {
-            // current_battery is 10 mA and voltage_battery is 1mV. (10/1e3 times 1/1e3 = 1/1e5)
-            batteryFactGroup.instantPower()->setRawValue((double)(bat_status.current_battery*voltage)/(100000.0));
-        }
-    } else {
-        batteryFactGroup.voltage()->setRawValue(VehicleBatteryFactGroup::_voltageUnavailable);
     }
 
     batteryFactGroup.cellCount()->setRawValue(cellCount);
 
     //-- Time remaining in seconds (0 means not supported)
     batteryFactGroup.timeRemaining()->setRawValue(bat_status.time_remaining);
-    //-- Percent remaining in % (0 - 100)
-    batteryFactGroup.percentRemaining()->setRawValue(bat_status.battery_remaining);
     //-- Battery charge state (0 means not supported)
     if(bat_status.charge_state <= MAV_BATTERY_CHARGE_STATE_UNHEALTHY) {
         batteryFactGroup.chargeState()->setRawValue(bat_status.charge_state);
     } else {
         batteryFactGroup.chargeState()->setRawValue(0);
     }
-
     //-- TODO: Somewhere, actions would be taken based on this chargeState:
     //   MAV_BATTERY_CHARGE_STATE_CRITICAL:     Battery state is critical, return / abort immediately
     //   MAV_BATTERY_CHARGE_STATE_EMERGENCY:    Battery state is too low for ordinary abortion, fastest possible emergency stop preventing damage
@@ -2268,18 +2244,13 @@ void Vehicle::_loadSettings(void)
     if (!_active) {
         return;
     }
-
     QSettings settings;
-
     settings.beginGroup(QString(_settingsGroup).arg(_id));
-
     bool convertOk;
-
-    _joystickMode = (JoystickMode_t)settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk);
+    _joystickMode = static_cast<JoystickMode_t>(settings.value(_joystickModeSettingsKey, JoystickModeRC).toInt(&convertOk));
     if (!convertOk) {
         _joystickMode = JoystickModeRC;
     }
-
     // Joystick enabled is a global setting so first make sure there are any joysticks connected
     if (_toolbox->joystickManager()->joysticks().count()) {
         setJoystickEnabled(settings.value(_joystickEnabledSettingsKey, false).toBool());
@@ -2772,7 +2743,12 @@ void Vehicle::virtualTabletJoystickValue(double roll, double pitch, double yaw, 
 {
     // The following if statement prevents the virtualTabletJoystick from sending values if the standard joystick is enabled
     if ( !_joystickEnabled && !_highLatencyLink) {
-        _uas->setExternalControlSetpoint(roll, pitch, yaw, thrust, 0, JoystickModeRC);
+        _uas->setExternalControlSetpoint(
+            static_cast<float>(roll),
+            static_cast<float>(pitch),
+            static_cast<float>(yaw),
+            static_cast<float>(thrust),
+            0, JoystickModeRC);
     }
 }
 
@@ -2961,7 +2937,7 @@ QString Vehicle::vehicleTypeName() const {
 QString Vehicle::_vehicleIdSpeech(void)
 {
     if (_toolbox->multiVehicleManager()->vehicles()->count() > 1) {
-        return QString(tr("vehicle %1")).arg(id());
+        return tr("vehicle %1").arg(id());
     } else {
         return QString();
     }
@@ -2969,13 +2945,13 @@ QString Vehicle::_vehicleIdSpeech(void)
 
 void Vehicle::_handleFlightModeChanged(const QString& flightMode)
 {
-    _say(QString(tr("%1 %2 flight mode")).arg(_vehicleIdSpeech()).arg(flightMode));
+    _say(tr("%1 %2 flight mode").arg(_vehicleIdSpeech()).arg(flightMode));
     emit guidedModeChanged(_firmwarePlugin->isGuidedMode(this));
 }
 
 void Vehicle::_announceArmedChanged(bool armed)
 {
-    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? QString(tr("armed")) : QString(tr("disarmed"))));
+    _say(QString("%1 %2").arg(_vehicleIdSpeech()).arg(armed ? tr("armed") : tr("disarmed")));
 }
 
 void Vehicle::_setFlying(bool flying)
@@ -3088,26 +3064,29 @@ void Vehicle::guidedModeOrbit(const QGeoCoordinate& centerCoord, double radius, 
         qgcApp()->showMessage(QStringLiteral("Orbit mode not supported by Vehicle."));
         return;
     }
-
     if (capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
-        sendMavCommandInt(defaultComponentId(),
-                          MAV_CMD_DO_ORBIT,
-                          MAV_FRAME_GLOBAL,
-                          true,            // show error if fails
-                          radius,
-                          qQNaN(),         // Use default velocity
-                          0,               // Vehicle points to center
-                          qQNaN(),         // reserved
-                          centerCoord.latitude(), centerCoord.longitude(), amslAltitude);
+        sendMavCommandInt(
+            defaultComponentId(),
+            MAV_CMD_DO_ORBIT,
+            MAV_FRAME_GLOBAL,
+            true,                           // show error if fails
+            static_cast<float>(radius),
+            static_cast<float>(qQNaN()),    // Use default velocity
+            0,                              // Vehicle points to center
+            static_cast<float>(qQNaN()),    // reserved
+            centerCoord.latitude(), centerCoord.longitude(), static_cast<float>(amslAltitude));
     } else {
-        sendMavCommand(defaultComponentId(),
-                       MAV_CMD_DO_ORBIT,
-                       true,            // show error if fails
-                       radius,
-                       qQNaN(),         // Use default velocity
-                       0,               // Vehicle points to center
-                       qQNaN(),         // reserved
-                       centerCoord.latitude(), centerCoord.longitude(), amslAltitude);
+        sendMavCommand(
+            defaultComponentId(),
+            MAV_CMD_DO_ORBIT,
+            true,                           // show error if fails
+            static_cast<float>(radius),
+            static_cast<float>(qQNaN()),    // Use default velocity
+            0,                              // Vehicle points to center
+            static_cast<float>(qQNaN()),    // reserved
+            static_cast<float>(centerCoord.latitude()),
+            static_cast<float>(centerCoord.longitude()),
+            static_cast<float>(amslAltitude));
     }
 }
 
@@ -3122,10 +3101,11 @@ void Vehicle::pauseVehicle(void)
 
 void Vehicle::abortLanding(double climbOutAltitude)
 {
-    sendMavCommand(defaultComponentId(),
-                   MAV_CMD_DO_GO_AROUND,
-                   true,        // show error if fails
-                   climbOutAltitude);
+    sendMavCommand(
+        defaultComponentId(),
+        MAV_CMD_DO_GO_AROUND,
+        true,        // show error if fails
+        static_cast<float>(climbOutAltitude));
 }
 
 bool Vehicle::guidedMode(void) const
@@ -3140,11 +3120,12 @@ void Vehicle::setGuidedMode(bool guidedMode)
 
 void Vehicle::emergencyStop(void)
 {
-    sendMavCommand(_defaultComponentId,
-                   MAV_CMD_COMPONENT_ARM_DISARM,
-                   true,        // show error if fails
-                   0.0f,
-                   21196.0f);  // Magic number for emergency stop
+    sendMavCommand(
+        _defaultComponentId,
+        MAV_CMD_COMPONENT_ARM_DISARM,
+        true,        // show error if fails
+        0.0f,
+        21196.0f);  // Magic number for emergency stop
 }
 
 void Vehicle::setCurrentMissionSequence(int seq)
@@ -3153,13 +3134,14 @@ void Vehicle::setCurrentMissionSequence(int seq)
         seq--;
     }
     mavlink_message_t msg;
-    mavlink_msg_mission_set_current_pack_chan(_mavlink->getSystemId(),
-                                              _mavlink->getComponentId(),
-                                              priorityLink()->mavlinkChannel(),
-                                              &msg,
-                                              id(),
-                                              _compID,
-                                              seq);
+    mavlink_msg_mission_set_current_pack_chan(
+        static_cast<uint8_t>(_mavlink->getSystemId()),
+        static_cast<uint8_t>(_mavlink->getComponentId()),
+        priorityLink()->mavlinkChannel(),
+        &msg,
+        static_cast<uint8_t>(id()),
+        _compID,
+        static_cast<uint8_t>(seq));
     sendMessageOnLink(priorityLink(), msg);
 }
 
@@ -3171,13 +3153,13 @@ void Vehicle::sendMavCommand(int component, MAV_CMD command, bool showError, flo
     entry.component = component;
     entry.command = command;
     entry.showError = showError;
-    entry.rgParam[0] = param1;
-    entry.rgParam[1] = param2;
-    entry.rgParam[2] = param3;
-    entry.rgParam[3] = param4;
-    entry.rgParam[4] = param5;
-    entry.rgParam[5] = param6;
-    entry.rgParam[6] = param7;
+    entry.rgParam[0] = static_cast<double>(param1);
+    entry.rgParam[1] = static_cast<double>(param2);
+    entry.rgParam[2] = static_cast<double>(param3);
+    entry.rgParam[3] = static_cast<double>(param4);
+    entry.rgParam[4] = static_cast<double>(param5);
+    entry.rgParam[5] = static_cast<double>(param6);
+    entry.rgParam[6] = static_cast<double>(param7);
 
     _mavCommandQueue.append(entry);
 
@@ -3196,13 +3178,13 @@ void Vehicle::sendMavCommandInt(int component, MAV_CMD command, MAV_FRAME frame,
     entry.command = command;
     entry.frame = frame;
     entry.showError = showError;
-    entry.rgParam[0] = param1;
-    entry.rgParam[1] = param2;
-    entry.rgParam[2] = param3;
-    entry.rgParam[3] = param4;
+    entry.rgParam[0] = static_cast<double>(param1);
+    entry.rgParam[1] = static_cast<double>(param2);
+    entry.rgParam[2] = static_cast<double>(param3);
+    entry.rgParam[3] = static_cast<double>(param4);
     entry.rgParam[4] = param5;
     entry.rgParam[5] = param6;
-    entry.rgParam[6] = param7;
+    entry.rgParam[6] = static_cast<double>(param7);
 
     _mavCommandQueue.append(entry);
 
@@ -3391,8 +3373,7 @@ void Vehicle::_handleCommandAck(mavlink_message_t& message)
     emit mavCommandResult(_id, message.compid, ack.command, ack.result, false /* noResponsefromVehicle */);
 
     if (showError) {
-        QString commandName = _toolbox->missionCommandTree()->friendlyName((MAV_CMD)ack.command);
-
+        QString commandName = _toolbox->missionCommandTree()->friendlyName(static_cast<MAV_CMD>(ack.command));
         switch (ack.result) {
         case MAV_RESULT_TEMPORARILY_REJECTED:
             qgcApp()->showMessage(tr("%1 command temporarily rejected").arg(commandName));
@@ -4015,6 +3996,7 @@ void Vehicle::flashBootloader(void)
 
 void Vehicle::gimbalControlValue(double pitch, double yaw)
 {
+    //qDebug() << "Gimbal:" << pitch << yaw;
     sendMavCommand(
         _defaultComponentId,
         MAV_CMD_DO_MOUNT_CONTROL,
@@ -4026,6 +4008,53 @@ void Vehicle::gimbalControlValue(double pitch, double yaw)
         0,                                   // Latitude (not used)
         0,                                   // Longitude (not used)
         MAV_MOUNT_MODE_MAVLINK_TARGETING);   // MAVLink Roll,Pitch,Yaw
+}
+
+void Vehicle::gimbalPitchStep(int direction)
+{
+    if(_haveGimbalData) {
+        //qDebug() << "Pitch:" << _curGimbalPitch << direction << (_curGimbalPitch + direction);
+        double p = static_cast<double>(_curGimbalPitch + direction);
+        gimbalControlValue(p, static_cast<double>(_curGinmbalYaw));
+    }
+}
+
+void Vehicle::gimbalYawStep(int direction)
+{
+    if(_haveGimbalData) {
+        //qDebug() << "Yaw:" << _curGinmbalYaw << direction << (_curGinmbalYaw + direction);
+        double y = static_cast<double>(_curGinmbalYaw + direction);
+        gimbalControlValue(static_cast<double>(_curGimbalPitch), y);
+    }
+}
+
+void Vehicle::centerGimbal()
+{
+    if(_haveGimbalData) {
+        gimbalControlValue(0.0, 0.0);
+    }
+}
+
+void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
+{
+    mavlink_mount_orientation_t o;
+    mavlink_msg_mount_orientation_decode(&message, &o);
+    if(fabsf(_curGimbalRoll - o.roll) > 0.5f) {
+        _curGimbalRoll = o.roll;
+        emit gimbalRollChanged();
+    }
+    if(fabsf(_curGimbalPitch - o.pitch) > 0.5f) {
+        _curGimbalPitch = o.pitch;
+        emit gimbalPitchChanged();
+    }
+    if(fabsf(_curGinmbalYaw - o.yaw) > 0.5f) {
+        _curGinmbalYaw = o.yaw;
+        emit gimbalYawChanged();
+    }
+    if(!_haveGimbalData) {
+        _haveGimbalData = true;
+        emit gimbalDataChanged();
+    }
 }
 
 //-----------------------------------------------------------------------------

@@ -1,5 +1,13 @@
 ## AGS Changelog
 
+### July 24 2019
+
+* Updated joystick settings
+* Fixed video restart issue
+* Microhard improvements
+* Updated localization strings
+* Warn users the effects of a full paramater reset (UAVCAN)
+
 ### July 08 2019
 
 * Implemented 2D axes gimbal control using virtual joystick

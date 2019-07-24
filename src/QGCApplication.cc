@@ -428,7 +428,7 @@ void QGCApplication::setLanguage()
     if(_QGCTranslatorQt.load("qt_" + _locale.name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath))) {
         _app->installTranslator(&_QGCTranslatorQt);
     } else {
-        qDebug() << "Error loading Qt localization for" << _locale.name();
+        qDebug() << "Qt localization for" << _locale.name() << "is not present";
     }
     if(_QGCTranslator.load(_locale, QLatin1String("qgc_"), "", ":/i18n")) {
         QLocale::setDefault(_locale);
@@ -625,7 +625,7 @@ void QGCApplication::saveTelemetryLogOnMainThread(QString tempLogfile)
 
         int tryIndex = 1;
         QString saveFileName = nameFormat.arg(
-            QDateTime::currentDateTime().toString(dtFormat)).arg("").arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);
+            QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral("")).arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);
         while (saveDir.exists(saveFileName)) {
             saveFileName = nameFormat.arg(
                 QDateTime::currentDateTime().toString(dtFormat)).arg(QStringLiteral(".%1").arg(tryIndex++)).arg(toolbox()->settingsManager()->appSettings()->telemetryFileExtension);

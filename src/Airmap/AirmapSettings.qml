@@ -205,7 +205,7 @@ Item {
                                 return qsTr("Not Connected")
                             switch(_authStatus) {
                             case AirspaceManager.Unknown:
-                                return qsTr("")
+                                return ""
                             case AirspaceManager.Anonymous:
                                 return qsTr("Anonymous")
                             case AirspaceManager.Authenticated:

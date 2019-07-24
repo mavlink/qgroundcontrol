@@ -28,6 +28,10 @@
 		<file alias="HealthPageWidget.qml">../src/FlightMap/Widgets/HealthPageWidget.qml</file>
 		<file alias="HelpSettings.qml">../src/ui/preferences/HelpSettings.qml</file>
 		<file alias="JoystickConfig.qml">../src/VehicleSetup/JoystickConfig.qml</file>
+		<file alias="JoystickConfigButtons.qml">../src/VehicleSetup/JoystickConfigButtons.qml</file>
+		<file alias="JoystickConfigAdvanced.qml">../src/VehicleSetup/JoystickConfigAdvanced.qml</file>
+		<file alias="JoystickConfigGeneral.qml">../src/VehicleSetup/JoystickConfigGeneral.qml</file>
+		<file alias="JoystickConfigCalibration.qml">../src/VehicleSetup/JoystickConfigCalibration.qml</file>
 		<file alias="LinkSettings.qml">../src/ui/preferences/LinkSettings.qml</file>
 		<file alias="LogDownloadPage.qml">../src/AnalyzeView/LogDownloadPage.qml</file>
 		<file alias="LogReplaySettings.qml">../src/ui/preferences/LogReplaySettings.qml</file>
@@ -50,6 +54,7 @@
 		<file alias="QGCViewDialogContainer.qml">../src/QmlControls/QGCViewDialogContainer.qml</file>
 		<file alias="QGroundControl/Controls/AnalyzePage.qml">../src/AnalyzeView/AnalyzePage.qml</file>
 		<file alias="QGroundControl/Controls/AppMessages.qml">../src/QmlControls/AppMessages.qml</file>
+		<file alias="QGroundControl/Controls/AxisMonitor.qml">../src/QmlControls/AxisMonitor.qml</file>
 		<file alias="QGroundControl/Controls/CameraCalc.qml">../src/PlanView/CameraCalc.qml</file>
 		<file alias="QGroundControl/Controls/CameraSection.qml">../src/PlanView/CameraSection.qml</file>
 		<file alias="QGroundControl/Controls/ClickableColor.qml">../src/QmlControls/ClickableColor.qml</file>
@@ -110,6 +115,8 @@
 		<file alias="QGroundControl/Controls/QGCRadioButton.qml">../src/QmlControls/QGCRadioButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCSlider.qml">../src/QmlControls/QGCSlider.qml</file>
 		<file alias="QGroundControl/Controls/QGCSwitch.qml">../src/QmlControls/QGCSwitch.qml</file>
+		<file alias="QGroundControl/Controls/QGCTabBar.qml">../src/QmlControls/QGCTabBar.qml</file>
+		<file alias="QGroundControl/Controls/QGCTabButton.qml">../src/QmlControls/QGCTabButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCTextField.qml">../src/QmlControls/QGCTextField.qml</file>
 		<file alias="QGroundControl/Controls/QGCToolBarButton.qml">../src/QmlControls/QGCToolBarButton.qml</file>
 		<file alias="QGroundControl/Controls/QGCViewDialog.qml">../src/QmlControls/QGCViewDialog.qml</file>

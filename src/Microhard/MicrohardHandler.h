@@ -17,7 +17,6 @@
 #define MICROHARD_SETTINGS_PORT   23
 
 Q_DECLARE_LOGGING_CATEGORY(MicrohardLog)
-Q_DECLARE_LOGGING_CATEGORY(MicrohardVerbose)
 
 class MicrohardHandler : public QObject
 {
@@ -36,7 +35,7 @@ protected slots:
     virtual void    _readBytes          () = 0;
 
 signals:
-    void connected                      ();
+    void connected                      (int status);
     void rssiUpdated                    (int rssi);
 
 protected:
