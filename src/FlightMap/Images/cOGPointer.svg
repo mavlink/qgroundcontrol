@@ -34,9 +34,9 @@
      inkscape:window-height="1059"
      id="namedview7"
      showgrid="false"
-     inkscape:zoom="0.81944445"
-     inkscape:cx="-403.29176"
-     inkscape:cy="267.11976"
+     inkscape:zoom="0.81944444"
+     inkscape:cx="-575.96973"
+     inkscape:cy="364.74688"
      inkscape:window-x="1920"
      inkscape:window-y="19"
      inkscape:window-maximized="1"
@@ -44,7 +44,7 @@
      points="144,46.2 133.2,17.4 154.8,17.4 "
      id="polygon3"
      transform="matrix(-1,0,0,-1,288,54.034031)"
-     style="fill:#008000" /><rect
+     style="fill:#24d3ee;fill-opacity:1" /><rect
      x="135"
      y="270"
      fill="none"
