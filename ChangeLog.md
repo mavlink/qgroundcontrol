@@ -10,6 +10,8 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.5.4 - Not yet released
 * Update windows drivers
+* Add support for FMUK66 flashing/connection
+* Guard against null geometry coming from gstreamer which can cause crashes
 * Add .apj file selection support to custom firmware flash
 
 ### 3.5.3 - Stable
