@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Rework joysticks. Fixed several issues and updated setup UI.
 * Adding support for UDP RTP h.265 video streams
 * For text to speech engine on Linux to English (all messages are in English)
 * Automated the ingestion of localization from Crowdin
@@ -33,6 +34,10 @@ Note: This file only contains high level features or important fixes.
 * Making the camera API available to all firmwares, not just PX4.
 * ArduPilot: Support configurable mavlink stream rates. Available from Settings/Mavlink page.
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
+
+### 3.5.4 - Not yet released
+* Guard against null geometry coming from gstreamer which can cause crashes
+* Add .apj file selection support to custom firmware flash
 
 ### 3.5.3 - Stable
 * Change minimum RTK Survey-In limit to 0.01 meters

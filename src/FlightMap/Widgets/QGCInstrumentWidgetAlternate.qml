@@ -19,15 +19,15 @@ import QGroundControl.Palette       1.0
 
 Rectangle {
     id:             root
-    width:          getPreferredInstrumentWidth()
-    height:         _outerRadius * 2
+    width:          getPreferredInstrumentWidth() * 0.7
+    height:         _outerRadius * 4 + _valuesWidget.height
     radius:         _outerRadius
     color:          qgcPal.window
     border.width:   1
     border.color:   _isSatellite ? qgcPal.mapWidgetBorderLight : qgcPal.mapWidgetBorderDark
 
-    property real   _innerRadius:       (width - (_topBottomMargin * 3)) / 4
-    property real   _outerRadius:       _innerRadius + _topBottomMargin
+    property real   _innerRadius:       (width - (_topBottomMargin * 2)) / 2
+    property real   _outerRadius:       _innerRadius + _topBottomMargin * 2
     property real   _defaultSize:       ScreenTools.defaultFontPixelHeight * (9)
     property real   _sizeRatio:         ScreenTools.isTinyScreen ? (width / _defaultSize) * 0.5 : width / _defaultSize
     property real   _bigFontSize:       ScreenTools.defaultFontPointSize * 2.5  * _sizeRatio
@@ -35,7 +35,7 @@ Rectangle {
     property real   _labelFontSize:     ScreenTools.defaultFontPointSize * 0.75 * _sizeRatio
     property real   _spacing:           ScreenTools.defaultFontPixelHeight * 0.33
     property real   _topBottomMargin:   (width * 0.05) / 2
-    property real   _availableValueHeight: maxHeight - (root.height + _valuesItem.anchors.topMargin)
+    property real   _availableValueHeight: maxHeight - (attitude.height + compass.height)
 
     // Prevent all clicks from going through to lower layers
     DeadMouseArea {
@@ -45,27 +45,21 @@ Rectangle {
     QGCPalette { id: qgcPal }
 
     QGCAttitudeWidget {
-        id:                 attitude
-        anchors.leftMargin: _topBottomMargin
-        anchors.left:       parent.left
-        size:               _innerRadius * 2
-        vehicle:            activeVehicle
-        anchors.verticalCenter: parent.verticalCenter
-    }
-
-    QGCCompassWidget {
-        id:                 compass
-        anchors.leftMargin: _spacing
-        anchors.left:       attitude.right
-        size:               _innerRadius * 2
-        vehicle:            activeVehicle
-        anchors.verticalCenter: parent.verticalCenter
+        id:                   attitude
+        anchors.topMargin :   _topBottomMargin
+        anchors.bottomMargin: _topBottomMargin
+        anchors.top:          parent.top
+        size:                 _innerRadius * 2
+        vehicle:              activeVehicle
+        anchors.horizontalCenter: parent.horizontalCenter
     }
 
     Item {
         id:                 _valuesItem
         anchors.topMargin:  ScreenTools.defaultFontPixelHeight / 4
-        anchors.top:        parent.bottom
+        anchors.bottomMargin:  ScreenTools.defaultFontPixelHeight / 4
+        anchors.top:        attitude.bottom
+        anchors.bottom:     compass.top
         width:              parent.width
         height:             _valuesWidget.height
         visible:            widgetRoot.showValues
@@ -87,5 +81,15 @@ Rectangle {
             anchors.right:      parent.right
             maxHeight:          _availableValueHeight
         }
+    }
+
+    QGCCompassWidget {
+        id:                         compass
+        anchors.bottom :            parent.bottom
+        anchors.bottomMargin:       _topBottomMargin
+        anchors.topMargin:          _topBottomMargin
+        size:                       _innerRadius * 2
+        vehicle:                    activeVehicle
+        anchors.horizontalCenter:   parent.horizontalCenter
     }
 }

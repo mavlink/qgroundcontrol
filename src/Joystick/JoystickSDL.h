@@ -24,16 +24,17 @@ public:
 private:
     static void _loadGameControllerMappings();
 
-    bool _open() final;
-    void _close() final;
-    bool _update() final;
+    bool _open      () final;
+    void _close     () final;
+    bool _update    () final;
 
-    bool _getButton(int i) final;
-    int _getAxis(int i) final;
-    uint8_t _getHat(int hat,int i) final;
+    bool _getButton (int i) final;
+    int  _getAxis   (int i) final;
+    bool _getHat    (int hat,int i) final;
 
-    SDL_Joystick *sdlJoystick;
-    SDL_GameController *sdlController;
+    SDL_Joystick*       sdlJoystick;
+    SDL_GameController* sdlController;
+
     bool    _isGameController;
     int     _index;      ///< Index for SDL_JoystickOpen
 

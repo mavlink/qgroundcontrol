@@ -32,17 +32,17 @@ GenericSurfacePainter::GenericSurfacePainter()
 //static
 QSet<GstVideoFormat> GenericSurfacePainter::supportedPixelFormats()
 {
-    return QSet<GstVideoFormat>()
+    return QSet<GstVideoFormat>({
 #if Q_BYTE_ORDER == Q_BIG_ENDIAN
-        << GST_VIDEO_FORMAT_ARGB
-        << GST_VIDEO_FORMAT_xRGB
+        GST_VIDEO_FORMAT_ARGB,
+        GST_VIDEO_FORMAT_xRGB,
 #else
-        << GST_VIDEO_FORMAT_BGRA
-        << GST_VIDEO_FORMAT_BGRx
+        GST_VIDEO_FORMAT_BGRA,
+        GST_VIDEO_FORMAT_BGRx,
 #endif
-        << GST_VIDEO_FORMAT_RGB
-        << GST_VIDEO_FORMAT_RGB16
-        ;
+        GST_VIDEO_FORMAT_RGB,
+        GST_VIDEO_FORMAT_RGB16,
+    });
 }
 
 void GenericSurfacePainter::init(const BufferFormat &format)

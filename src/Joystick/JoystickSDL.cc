@@ -19,7 +19,6 @@ bool JoystickSDL::init(void) {
         qWarning() << "Couldn't initialize SimpleDirectMediaLayer:" << SDL_GetError();
         return false;
     }
-
     _loadGameControllerMappings();
     return true;
 }
@@ -78,7 +77,7 @@ QMap<QString, Joystick*> JoystickSDL::discover(MultiVehicleManager* _multiVehicl
             newRet[name] = new JoystickSDL(name, qMax(0,axisCount), qMax(0,buttonCount), qMax(0,hatCount), i, isGameController, _multiVehicleManager);
         } else {
             newRet[name] = ret[name];
-            JoystickSDL *j = (JoystickSDL*)newRet[name];
+            JoystickSDL *j = static_cast<JoystickSDL*>(newRet[name]);
             if (j->index() != i) {
                 j->setIndex(i); // This joystick index has been remapped by SDL
             }
@@ -131,7 +130,7 @@ bool JoystickSDL::_open(void) {
 }
 
 void JoystickSDL::_close(void) {
-    if (sdlJoystick == NULL) {
+    if (sdlJoystick == nullptr) {
         qCDebug(JoystickLog) << "Attempt to close null joystick!";
         return;
     }
@@ -152,8 +151,8 @@ void JoystickSDL::_close(void) {
         }
     }
 
-    sdlJoystick = NULL;
-    sdlController = NULL;
+    sdlJoystick   = nullptr;
+    sdlController = nullptr;
 }
 
 bool JoystickSDL::_update(void)
@@ -164,26 +163,25 @@ bool JoystickSDL::_update(void)
 }
 
 bool JoystickSDL::_getButton(int i) {
-    if ( _isGameController ) {
-        return !!SDL_GameControllerGetButton(sdlController, SDL_GameControllerButton(i));
+    if (_isGameController) {
+        return SDL_GameControllerGetButton(sdlController, SDL_GameControllerButton(i)) == 1;
     } else {
-        return !!SDL_JoystickGetButton(sdlJoystick, i);
+        return SDL_JoystickGetButton(sdlJoystick, i) == 1;
     }
 }
 
 int JoystickSDL::_getAxis(int i) {
-    if ( _isGameController ) {
+    if (_isGameController) {
         return SDL_GameControllerGetAxis(sdlController, SDL_GameControllerAxis(i));
     } else {
         return SDL_JoystickGetAxis(sdlJoystick, i);
     }
 }
 
-uint8_t JoystickSDL::_getHat(int hat,int i) {
+bool JoystickSDL::_getHat(int hat, int i) {
     uint8_t hatButtons[] = {SDL_HAT_UP,SDL_HAT_DOWN,SDL_HAT_LEFT,SDL_HAT_RIGHT};
-
-    if ( i < int(sizeof(hatButtons)) ) {
-        return !!(SDL_JoystickGetHat(sdlJoystick, hat) & hatButtons[i]);
+    if (i < int(sizeof(hatButtons))) {
+        return (SDL_JoystickGetHat(sdlJoystick, hat) & hatButtons[i]) != 0;
     }
-    return 0;
+    return false;
 }

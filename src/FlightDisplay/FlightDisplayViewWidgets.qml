@@ -38,6 +38,7 @@ Item {
     property bool   _airspaceEnabled:       QGroundControl.airmapSupported ? QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue : false
 
     readonly property real _margins:        ScreenTools.defaultFontPixelHeight * 0.5
+    readonly property bool _useAlternateInstrumentPanel:        QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel.value
 
     QGCMapPalette { id: mapPal; lightColors: useLightColors }
 
@@ -74,11 +75,20 @@ Item {
                     break;
                 }
             } else {
-                instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                if(_useAlternateInstrumentPanel){
+                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidgetAlternate.qml"
+                }
+                else{
+                    instrumentsLoader.source = "qrc:/qml/QGCInstrumentWidget.qml"
+                }
             }
         } else {
             instrumentsLoader.source = ""
         }
+    }
+    Connections {
+        target:          QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
+        onValueChanged:  _setInstrumentWidget()
     }
 
     Connections {
