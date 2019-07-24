@@ -22,13 +22,15 @@ pipeline {
 						sh 'git submodule deinit -f .'
 						sh 'git clean -ff -x -d .'
 						sh 'git submodule update --init --recursive --force'
-						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
 						sh 'cd build; make -j`nproc --all`'
+						sh 'ls -al build/'
+						sh 'ls -al build/release/'
 						sh 'ccache -s'
 					}
 					post {
 						always {
-							archiveArtifacts artifacts: "build/*"
+							archiveArtifacts artifacts: 'build/release/package/*.apk'
 						}
 						cleanup {
 							sh 'git clean -ff -x -d .'
@@ -58,11 +60,14 @@ pipeline {
 						withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
 							sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
 						}
-						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
+						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
 						sh 'cd build; make -j`nproc --all`'
 						sh 'ccache -s'
 					}
 					post {
+						always {
+							archiveArtifacts artifacts: 'build/**/*.AppImage'
+						}
 						cleanup {
 							sh 'git clean -ff -x -d .'
 						}
@@ -92,7 +97,7 @@ pipeline {
 					}
 					post {
 						always {
-							archiveArtifacts artifacts: "${WORKSPACE}/build"
+							archiveArtifacts artifacts: 'build/release/*installer*.exe'
 						}
 					}
 				}
