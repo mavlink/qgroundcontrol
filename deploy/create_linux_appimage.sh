@@ -90,15 +90,10 @@ echo ${QGC_CUSTOM_APP_NAME} Version: ${VERSION}
 
 # Go out of AppImage
 cd ${TMPDIR}
-#wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/5/AppImageAssistant" # (64-bit)
-#chmod a+x ./AppImageAssistant
-wget -c --quiet "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
-chmod a+x ./linuxdeploy-x86_64.AppImage
-./linuxdeploy-x86_64.AppImage --appimage-extract
-dpkg -i libdirectfb-1.2-9_1.2.10.0-5.1_amd64.deb
-./squashfs-root/AppRun --appdir ./$APP.AppDir -d ./$APP.desktop -o ${TMPDIR}/$APP".AppImage"
-
-#./AppImageAssistant ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
+wget -c --quiet 'https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage'
+chmod a+x ./appimagetool-x86_64.AppImage
+./appimagetool-x86_64.AppImage --appimage-extract
+./squashfs-root/AppRun ./$APP.AppDir ${TMPDIR}/$APP".AppImage"
 
 cp ${TMPDIR}/$APP".AppImage" ${OUTPUT_DIR}/$APP".AppImage"
 

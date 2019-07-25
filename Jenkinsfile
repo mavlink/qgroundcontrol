@@ -20,7 +20,7 @@ pipeline {
 
 					steps {
                         //sh 'wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
-                        sh 'wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2"
+                        sh 'wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
                         sh 'apt update'
                         sh 'apt install -y bzip2'
                         sh 'mkdir gstreamer-1.0-android-universal-1.14.4'
@@ -68,7 +68,7 @@ pipeline {
 					}
 					steps {
                         sh 'apt update'
-                        sh 'apt install -y rsync'
+                        sh 'apt install -y rsync file'
 						sh 'export'
 						sh 'ccache -z'
 						sh 'git submodule deinit -f .'
