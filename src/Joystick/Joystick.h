@@ -21,10 +21,33 @@
 Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
+//-- Action assigned to button
+class  AssignedButtonAction : public QObject {
+    Q_OBJECT
+public:
+    QString action;
+    QTime   buttonTime;
+    bool    repeat      = false;
+    int     frequency   = 1;
+};
+
+//-- Assignable Button Action
+class ButtonAction : public QObject {
+    Q_OBJECT
+public:
+    ButtonAction(QObject* parent, QString action_, bool canRepeat_ = false);
+    Q_PROPERTY(QString  action      READ action     CONSTANT)
+    Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
+    QString action  () { return _action; }
+    bool    repeat  () { return _repeat; }
+private:
+    QString _action;
+    bool    _repeat = false;
+};
+
 class Joystick : public QThread
 {
     Q_OBJECT
-
 public:
     Joystick(const QString& name, int axisCount, int buttonCount, int hatCount, MultiVehicleManager* multiVehicleManager);
 
@@ -60,13 +83,13 @@ public:
         ThrottleModeMax
     } ThrottleMode_t;
 
-    Q_PROPERTY(QString  name                READ name                   CONSTANT)
-    Q_PROPERTY(bool     calibrated          MEMBER _calibrated          NOTIFY calibratedChanged)
-    Q_PROPERTY(int      totalButtonCount    READ totalButtonCount       CONSTANT)
-    Q_PROPERTY(int      axisCount           READ axisCount              CONSTANT)
-    Q_PROPERTY(bool     requiresCalibration READ requiresCalibration    CONSTANT)
-    Q_PROPERTY(QStringList actions          READ actions                CONSTANT)
-    Q_PROPERTY(QVariantList buttonActions   READ buttonActions          NOTIFY buttonActionsChanged)
+    Q_PROPERTY(QString  name                    READ name                   CONSTANT)
+    Q_PROPERTY(bool     calibrated              MEMBER _calibrated          NOTIFY calibratedChanged)
+    Q_PROPERTY(int      totalButtonCount        READ totalButtonCount       CONSTANT)
+    Q_PROPERTY(int      axisCount               READ axisCount              CONSTANT)
+    Q_PROPERTY(bool     requiresCalibration     READ requiresCalibration    CONSTANT)
+    Q_PROPERTY(QList<ButtonAction*> actions     READ actions                CONSTANT)
+    Q_PROPERTY(QStringList actionTitles         READ actionTitles           NOTIFY actionTitlesChanged)
 
     Q_PROPERTY(bool     gimbalEnabled       READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
     Q_PROPERTY(int      throttleMode        READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
@@ -85,8 +108,8 @@ public:
     int         totalButtonCount    () { return _totalButtonCount; }
     int         axisCount           () { return _axisCount; }
     bool        gimbalEnabled       () { return _gimbalEnabled; }
-    QStringList  actions            ();
-    QVariantList buttonActions      ();
+    QList<ButtonAction*> actions    ();
+    QStringList actionTitles        ();
 
     void setGimbalEnabled           (bool set);
 
@@ -143,7 +166,7 @@ signals:
     void rawAxisValueChanged(int index, int value);
     void rawButtonPressedChanged(int index, int pressed);
 
-    void buttonActionsChanged(QVariantList actions);
+    void actionTitlesChanged(QStringList actions);
 
     void throttleModeChanged(int mode);
 
@@ -166,7 +189,7 @@ signals:
     void manualControl          (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
     void manualControlGimbal    (float gimbalPitch, float gimbalYaw);
 
-    void buttonActionTriggered(int action);
+    void buttonActionTriggered  (int action);
 
     void gimbalEnabledChanged   ();
     void frequencyChanged       ();
@@ -192,6 +215,8 @@ protected:
     void    _buttonAction           (const QString& action);
     bool    _validAxis              (int axis);
     bool    _validButton            (int button);
+    void    _handleAxis             ();
+    void    _handleButtons          ();
 
 private:
     virtual bool _open      ()          = 0;
@@ -244,19 +269,21 @@ protected:
     int     _totalButtonCount;
 
     static int          _transmitterMode;
-
     int                 _rgFunctionAxis[maxFunction] = {};
+    QTime               _axisTime;
 
-    QStringList         _rgButtonActions;
-
-    MultiVehicleManager* _multiVehicleManager = nullptr;
+    QList<ButtonAction*>           _actions;
+    QList<AssignedButtonAction*>   _buttonActionArray;
+    MultiVehicleManager*    _multiVehicleManager = nullptr;
 
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
 
     static const char* _settingsGroup;
     static const char* _calibratedSettingsKey;
-    static const char* _buttonActionSettingsKey;
+    static const char* _buttonActionNameKey;
+    static const char* _buttonActionRepeatKey;
+    static const char* _buttonActionFrequencyKey;
     static const char* _throttleModeSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;

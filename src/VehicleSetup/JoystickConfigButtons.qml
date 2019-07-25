@@ -48,7 +48,7 @@ Item {
                 property bool pressed
                 QGCCheckBox {
                     anchors.verticalCenter:     parent.verticalCenter
-                    checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] !== "" : false
+                    checked:                    _activeJoystick ? _activeJoystick.actionTitles[modelData] !== "" : false
                     onClicked:                  _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
                 }
                 Rectangle {
@@ -69,9 +69,23 @@ Item {
                 QGCComboBox {
                     id:                         buttonActionCombo
                     width:                      ScreenTools.defaultFontPixelWidth * 26
-                    model:                      _activeJoystick ? _activeJoystick.actions : 0
+                    model:                      _activeJoystick ? _activeJoystick.actions : []
                     onActivated:                _activeJoystick.setButtonAction(modelData, textAt(index))
-                    Component.onCompleted:      currentIndex = find(_activeJoystick.buttonActions[modelData])
+                    Component.onCompleted:      currentIndex = find(_activeJoystick.actionTitles[modelData])
+                }
+                QGCCheckBox {
+                    id:                         repeatCheck
+                    text:                       qsTr("Repeat")
+                    anchors.verticalCenter:     parent.verticalCenter
+                }
+                QGCComboBox {
+                    width:                      ScreenTools.defaultFontPixelWidth * 10
+                    model:                      ["1Hz","2Hz","5Hz","10Hz"]
+                    enabled:                    repeatCheck.checked
+                }
+                Item {
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     1
                 }
             }
         }
