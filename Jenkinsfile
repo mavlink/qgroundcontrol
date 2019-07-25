@@ -19,12 +19,10 @@ pipeline {
 					}
 
 					steps {
-                        //sh 'wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
-                        sh 'wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
+                        sh 'wget http://192.168.2.153:8086/artifactory/gstreamer-android-qgroundcontrol/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
                         sh 'apt update'
                         sh 'apt install -y bzip2'
-                        sh 'mkdir gstreamer-1.0-android-universal-1.14.4'
-                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ./gstreamer-1.0-android-universal-1.14.4'
+                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
                         sh 'echo $PATH'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
 							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
@@ -80,7 +78,7 @@ pipeline {
 						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG} -spec linux-g++-64'
 						sh 'cd build; make -j`nproc --all`'
 						sh 'ccache -s'
-                        sh './deploy/create_linux_appimage.sh /qgroundcontrol /qgroundcontrol/build/release /qgroundcontrol/build/release/package'
+                        sh './deploy/create_linux_appimage.sh ${WORKSPACE} ${WORKSPACE}/build/release ${WORKSPACE}/build/release/package'
 					}
 					post {
 						always {
