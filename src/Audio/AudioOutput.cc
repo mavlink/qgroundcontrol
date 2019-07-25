@@ -125,6 +125,9 @@ QString AudioOutput::fixTextMessageForAudio(const QString& string) {
     if(result.contains("PREARM", Qt::CaseInsensitive)) {
         result.replace("PREARM", "pre arm", Qt::CaseInsensitive);
     }
+    if(result.contains("PITOT", Qt::CaseInsensitive)) {
+        result.replace("PITOT", "pee toe", Qt::CaseInsensitive);
+    }
 
     // Convert negative numbers
     QRegularExpression re(QStringLiteral("(-)[0-9]*\\.?[0-9]"));
