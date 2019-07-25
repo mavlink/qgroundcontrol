@@ -8,20 +8,20 @@ Note: This file only contains high level features or important fixes.
 
 * Major rewrite and bug fix pass through Structure Scan. Previous version had such bad problems that it can no longer be supported. Plans with Structure Scan will need to be recreated. New QGC will not load old Structure Scan plans.
 
-### 3.5.4 - Not yet released
+### 3.5.4 - Stable
 * Update windows drivers
 * Add support for FMUK66 flashing/connection
 * Guard against null geometry coming from gstreamer which can cause crashes
 * Add .apj file selection support to custom firmware flash
 
-### 3.5.3 - Stable
+### 3.5.3
 * Change minimum RTK Survey-In limit to 0.01 meters
 * Change Windows driver detection logic
 * Fix crash when clicking on GeoFence polygon vertex
 * PX4: Fix missing ```MC_YAW_FF``` parameter in PID Tuning
 * ArduPilot: Fix parameter file save generating bad characters from git hash
 
-### 3.5.2 - Stable
+### 3.5.2
 * Fix Ubuntu AppImage startup failure
 
 ### 3.5.1
