@@ -19,12 +19,12 @@ pipeline {
 					}
 
 					steps {
-                        sh 'wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
+                        //sh 'wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
+                        sh 'wget --quiet https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2"
                         sh 'apt update'
                         sh 'apt install -y bzip2'
-                        //sh 'apt-get -y install speech-dispatcher libgstreamer-plugins-base1.0-dev libgstreamer1.0-0:amd64 libgstreamer1.0-dev libsdl2-dev libudev-dev wget'
-                        sh 'mkdir ${WORKSPACE}/gstreamer'
-                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C /qgroundcontrol/gstreamer/'
+                        sh 'mkdir gstreamer-1.0-android-universal-1.14.4'
+                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ./gstreamer-1.0-android-universal-1.14.4'
                         sh 'echo $PATH'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
 							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
@@ -63,10 +63,12 @@ pipeline {
 					agent {
 						docker {
 							image 'mavlink/qgc-build-linux:2019-02-03'
-							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -u root:root'
 						}
 					}
 					steps {
+                        sh 'apt update'
+                        sh 'apt install -y rsync'
 						sh 'export'
 						sh 'ccache -z'
 						sh 'git submodule deinit -f .'
@@ -75,10 +77,10 @@ pipeline {
 						withCredentials([file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
 							sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
 						}
-						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG}'
+						sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG} -spec linux-g++-64'
 						sh 'cd build; make -j`nproc --all`'
 						sh 'ccache -s'
-                        sh './deploy/create_linux_appimage.sh . build/release build/release/package;'
+                        sh './deploy/create_linux_appimage.sh /qgroundcontrol /qgroundcontrol/build/release /qgroundcontrol/build/release/package'
 					}
 					post {
 						always {
