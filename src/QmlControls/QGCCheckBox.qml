@@ -6,9 +6,12 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 CheckBox {
+    id: _root
+
     property color  textColor:          _qgcPal.text
     property bool   textBold:           false
     property real   textFontPointSize:  ScreenTools.defaultFontPointSize
+    property real   radius:             0
 
     property var    _qgcPal: QGCPalette { colorGroupEnabled: enabled }
     property bool   _noText: text === ""
@@ -43,6 +46,7 @@ CheckBox {
                 border.color:   qgcPal.text
                 border.width:   1
                 opacity:        control.checkedState === Qt.PartiallyChecked ? 0.5 : 1
+                radius:         _root.radius
                 QGCColoredImage {
                     source:     "/qmlimages/checkbox-check.svg"
                     color:      "black"

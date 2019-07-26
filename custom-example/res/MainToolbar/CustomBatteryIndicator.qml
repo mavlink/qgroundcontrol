@@ -28,7 +28,7 @@ Item {
     anchors.bottom:         parent.bottom
 
     property var    batterySummary:     activeVehicle ? activeVehicle.batterySummary : null
-    property var    battery1:           activeVehicle ? activeVehicle.battery        : null
+    property var    battery1:           activeVehicle ? activeVehicle.battery1       : null
     property var    battery2:           activeVehicle ? activeVehicle.battery2       : null
     property bool   hasSecondBattery:   battery2 && battery2.voltage.value !== -1
 
@@ -37,11 +37,11 @@ Item {
             if(batterySummary && (batterySummary.voltage.value !== -1 || batterySummary.percentRemaining.value > 0.1)) {
                 return batterySummary;
             } else if(hasSecondBattery) {
-                if(activeVehicle.battery2.percentRemaining.value < activeVehicle.battery.percentRemaining.value) {
-                    return activeVehicle.battery2
+                if(battery2.percentRemaining.value < battery1.percentRemaining.value) {
+                    return battery2
                 }
             }
-            return activeVehicle.battery
+            return battery1
         }
         return null
     }
@@ -119,11 +119,11 @@ Item {
                         color:          qgcPal.text
                         fillMode:       Image.PreserveAspectFit
                         Rectangle {
-                            color:              getBatteryColor(activeVehicle ? activeVehicle.battery : null)
+                            color:              getBatteryColor(activeVehicle ? activeVehicle.battery1 : null)
                             anchors.left:       parent.left
                             anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.125
                             height:             parent.height * 0.35
-                            width:              activeVehicle ? (activeVehicle.battery.percentRemaining.value / 100) * parent.width * 0.875 : 0
+                            width:              activeVehicle ? (activeVehicle.battery1.percentRemaining.value / 100) * parent.width * 0.875 : 0
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }

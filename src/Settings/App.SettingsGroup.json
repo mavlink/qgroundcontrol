@@ -271,4 +271,12 @@
     "type":             "bool",
     "defaultValue":     false
 }
+,
+{
+    "name":             "showDetailedBatteryInfo",
+    "shortDescription": "Additional battery info",
+    "longDescription":  "Show or hide additional battery info in battery dropdown",
+    "type":             "bool",
+    "defaultValue":     false
+}
 ]

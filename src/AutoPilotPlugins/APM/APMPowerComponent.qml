@@ -130,8 +130,8 @@ SetupPage {
                         property Fact battMonitor:      controller.getParameterFact(-1, "BATT_MONITOR", false /* reportMissing */)
                         property Fact battVoltMult:     controller.getParameterFact(-1, "BATT_VOLT_MULT", false /* reportMissing */)
                         property Fact battVoltPin:      controller.getParameterFact(-1, "BATT_VOLT_PIN", false /* reportMissing */)
-                        property Fact vehicleVoltage:   controller.vehicle.battery.voltage
-                        property Fact vehicleCurrent:   controller.vehicle.battery.current
+                        property Fact vehicleVoltage:   controller.vehicle.battery1.voltage
+                        property Fact vehicleCurrent:   controller.vehicle.battery1.current
                     }
                 }
             }

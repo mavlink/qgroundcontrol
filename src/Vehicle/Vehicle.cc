@@ -84,7 +84,7 @@ const char* Vehicle::_throttlePctFactName =         "throttlePct";
 
 const char* Vehicle::_gpsFactGroupName =                "gps";
 const char* Vehicle::_batterySummaryFactGroupName =     "batterySummary";
-const char* Vehicle::_battery1FactGroupName =           "battery";
+const char* Vehicle::_battery1FactGroupName =           "battery1";
 const char* Vehicle::_battery2FactGroupName =           "battery2";
 const char* Vehicle::_windFactGroupName =               "wind";
 const char* Vehicle::_vibrationFactGroupName =          "vibration";
