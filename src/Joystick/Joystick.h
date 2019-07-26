@@ -22,9 +22,10 @@ Q_DECLARE_LOGGING_CATEGORY(JoystickLog)
 Q_DECLARE_LOGGING_CATEGORY(JoystickValuesLog)
 
 //-- Action assigned to button
-class  AssignedButtonAction : public QObject {
+class AssignedButtonAction : public QObject {
     Q_OBJECT
 public:
+    AssignedButtonAction(QObject* parent, const QString name);
     QString action;
     QTime   buttonTime;
     bool    repeat      = false;
@@ -32,14 +33,14 @@ public:
 };
 
 //-- Assignable Button Action
-class ButtonAction : public QObject {
+class AssignableButtonAction : public QObject {
     Q_OBJECT
 public:
-    ButtonAction(QObject* parent, QString action_, bool canRepeat_ = false);
+    AssignableButtonAction(QObject* parent, QString action_, bool canRepeat_ = false);
     Q_PROPERTY(QString  action      READ action     CONSTANT)
     Q_PROPERTY(bool     canRepeat   READ canRepeat  CONSTANT)
-    QString action  () { return _action; }
-    bool    repeat  () { return _repeat; }
+    QString action      () { return _action; }
+    bool    canRepeat   () { return _repeat; }
 private:
     QString _action;
     bool    _repeat = false;
@@ -88,19 +89,27 @@ public:
     Q_PROPERTY(int      totalButtonCount        READ totalButtonCount       CONSTANT)
     Q_PROPERTY(int      axisCount               READ axisCount              CONSTANT)
     Q_PROPERTY(bool     requiresCalibration     READ requiresCalibration    CONSTANT)
-    Q_PROPERTY(QList<ButtonAction*> actions     READ actions                CONSTANT)
-    Q_PROPERTY(QStringList actionTitles         READ actionTitles           NOTIFY actionTitlesChanged)
 
-    Q_PROPERTY(bool     gimbalEnabled       READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
-    Q_PROPERTY(int      throttleMode        READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
-    Q_PROPERTY(float    frequency           READ frequency              WRITE setFrequency          NOTIFY frequencyChanged)
-    Q_PROPERTY(bool     negativeThrust      READ negativeThrust         WRITE setNegativeThrust     NOTIFY negativeThrustChanged)
-    Q_PROPERTY(float    exponential         READ exponential            WRITE setExponential        NOTIFY exponentialChanged)
-    Q_PROPERTY(bool     accumulator         READ accumulator            WRITE setAccumulator        NOTIFY accumulatorChanged)
-    Q_PROPERTY(bool     circleCorrection    READ circleCorrection       WRITE setCircleCorrection   NOTIFY circleCorrectionChanged)
+    //-- Actions assigned to buttons
+    Q_PROPERTY(QStringList buttonActions        READ buttonActions          NOTIFY buttonActionsChanged)
 
-    Q_INVOKABLE void    setButtonAction (int button, const QString& action);
-    Q_INVOKABLE QString getButtonAction (int button);
+    //-- Actions that can be assigned to buttons
+    Q_PROPERTY(QmlObjectListModel* assignableActions    READ assignableActions          CONSTANT)
+    Q_PROPERTY(QStringList assignableActionTitles       READ assignableActionTitles     CONSTANT)
+    Q_PROPERTY(QString  disabledActionName              READ disabledActionName         CONSTANT)
+
+    Q_PROPERTY(bool     gimbalEnabled           READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
+    Q_PROPERTY(int      throttleMode            READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
+    Q_PROPERTY(float    frequency               READ frequency              WRITE setFrequency          NOTIFY frequencyChanged)
+    Q_PROPERTY(bool     negativeThrust          READ negativeThrust         WRITE setNegativeThrust     NOTIFY negativeThrustChanged)
+    Q_PROPERTY(float    exponential             READ exponential            WRITE setExponential        NOTIFY exponentialChanged)
+    Q_PROPERTY(bool     accumulator             READ accumulator            WRITE setAccumulator        NOTIFY accumulatorChanged)
+    Q_PROPERTY(bool     circleCorrection        READ circleCorrection       WRITE setCircleCorrection   NOTIFY circleCorrectionChanged)
+
+    Q_INVOKABLE void    setButtonRepeat     (int button, bool repeat);
+    Q_INVOKABLE void    setButtonFrequency  (int button, int freq);
+    Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
+    Q_INVOKABLE QString getButtonAction     (int button);
 
     // Property accessors
 
@@ -108,8 +117,11 @@ public:
     int         totalButtonCount    () { return _totalButtonCount; }
     int         axisCount           () { return _axisCount; }
     bool        gimbalEnabled       () { return _gimbalEnabled; }
-    QList<ButtonAction*> actions    ();
-    QStringList actionTitles        ();
+    QStringList buttonActions       ();
+
+    QmlObjectListModel* assignableActions   () { return &_assignableButtonActions; }
+    QStringList assignableActionTitles      () { return _availableActionTitles; }
+    QString     disabledActionName          () { return _buttonActionNone; }
 
     void setGimbalEnabled           (bool set);
 
@@ -132,53 +144,45 @@ public:
 */
 	virtual bool requiresCalibration(void) { return true; }
 
-    int throttleMode(void);
-    void setThrottleMode(int mode);
+    int throttleMode        ();
+    void setThrottleMode    (int mode);
 
-    bool negativeThrust(void);
-    void setNegativeThrust(bool allowNegative);
+    bool negativeThrust     ();
+    void setNegativeThrust  (bool allowNegative);
 
-    float exponential(void);
-    void setExponential(float expo);
+    float exponential       ();
+    void setExponential     (float expo);
 
-    bool accumulator(void);
-    void setAccumulator(bool accu);
+    bool accumulator        ();
+    void setAccumulator     (bool accu);
 
-    bool deadband(void);
-    void setDeadband(bool accu);
+    bool deadband           ();
+    void setDeadband        (bool accu);
 
-    bool circleCorrection(void);
+    bool circleCorrection   ();
     void setCircleCorrection(bool circleCorrection);
 
-    void setTXMode(int mode);
-    int getTXMode(void) { return _transmitterMode; }
+    void setTXMode          (int mode);
+    int getTXMode           () { return _transmitterMode; }
 
     /// Set the current calibration mode
-    void setCalibrationMode(bool calibrating);
+    void setCalibrationMode (bool calibrating);
 
-    float frequency();
-    void setFrequency(float val);
+    float frequency         ();
+    void setFrequency       (float val);
 
 signals:
-    void calibratedChanged(bool calibrated);
-
     // The raw signals are only meant for use by calibration
-    void rawAxisValueChanged(int index, int value);
-    void rawButtonPressedChanged(int index, int pressed);
-
-    void actionTitlesChanged(QStringList actions);
-
-    void throttleModeChanged(int mode);
-
-    void negativeThrustChanged(bool allowNegative);
-
-    void exponentialChanged(float exponential);
-
-    void accumulatorChanged(bool accumulator);
-
-    void enabledChanged(bool enabled);
-
-    void circleCorrectionChanged(bool circleCorrection);
+    void rawAxisValueChanged        (int index, int value);
+    void rawButtonPressedChanged    (int index, int pressed);
+    void calibratedChanged          (bool calibrated);
+    void buttonActionsChanged       ();
+    void throttleModeChanged        (int mode);
+    void negativeThrustChanged      (bool allowNegative);
+    void exponentialChanged         (float exponential);
+    void accumulatorChanged         (bool accumulator);
+    void enabledChanged             (bool enabled);
+    void circleCorrectionChanged    (bool circleCorrection);
 
     /// Signal containing new joystick information
     ///     @param roll         Range is -1:1, negative meaning roll left, positive meaning roll right
@@ -186,33 +190,37 @@ signals:
     ///     @param yaw          Range is -1:1, negative meaning yaw left, positive meaning yaw right
     ///     @param throttle     Range is 0:1, 0 meaning no throttle, 1 meaning full throttle
     ///     @param mode     See Vehicle::JoystickMode_t enum
-    void manualControl          (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
-    void manualControlGimbal    (float gimbalPitch, float gimbalYaw);
+    void manualControl              (float roll, float pitch, float yaw, float throttle, quint16 buttons, int joystickMmode);
+    void manualControlGimbal        (float gimbalPitch, float gimbalYaw);
 
-    void buttonActionTriggered  (int action);
+    void buttonActionTriggered      (int action);
 
-    void gimbalEnabledChanged   ();
-    void frequencyChanged       ();
-    void stepZoom               (int direction);
-    void stepCamera             (int direction);
-    void stepStream             (int direction);
-    void triggerCamera          ();
-    void startVideoRecord       ();
-    void stopVideoRecord        ();
-    void toggleVideoRecord      ();
-    void gimbalPitchStep        (int direction);
-    void gimbalYawStep          (int direction);
-    void centerGimbal           ();
-    void setArmed               (bool arm);
-    void setVtolInFwdFlight     (bool set);
-    void setFlightMode          (const QString& flightMode);
+    void gimbalEnabledChanged       ();
+    void frequencyChanged           ();
+    void startContinuousZoom        (int direction);
+    void stopContinuousZoom         ();
+    void stepZoom                   (int direction);
+    void stepCamera                 (int direction);
+    void stepStream                 (int direction);
+    void triggerCamera              ();
+    void startVideoRecord           ();
+    void stopVideoRecord            ();
+    void toggleVideoRecord          ();
+    void gimbalPitchStep            (int direction);
+    void gimbalYawStep              (int direction);
+    void centerGimbal               ();
+    void setArmed                   (bool arm);
+    void setVtolInFwdFlight         (bool set);
+    void setFlightMode              (const QString& flightMode);
 
 protected:
     void    _setDefaultCalibration  ();
     void    _saveSettings           ();
+    void    _saveButtonSettings     ();
     void    _loadSettings           ();
     float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
-    void    _buttonAction           (const QString& action);
+    void    _executeButtonAction    (const QString& action);
+    int     _findAssignableButtonAction(const QString& action);
     bool    _validAxis              (int axis);
     bool    _validButton            (int button);
     void    _handleAxis             ();
@@ -272,9 +280,10 @@ protected:
     int                 _rgFunctionAxis[maxFunction] = {};
     QTime               _axisTime;
 
-    QList<ButtonAction*>           _actions;
-    QList<AssignedButtonAction*>   _buttonActionArray;
-    MultiVehicleManager*    _multiVehicleManager = nullptr;
+    QmlObjectListModel              _assignableButtonActions;
+    QList<AssignedButtonAction*>    _buttonActionArray;
+    QStringList                     _availableActionTitles;
+    MultiVehicleManager*            _multiVehicleManager = nullptr;
 
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
@@ -298,13 +307,16 @@ private:
     static const char* _submarineTXModeSettingsKey;
     static const char* _gimbalSettingsKey;
 
+    static const char* _buttonActionNone;
     static const char* _buttonActionArm;
     static const char* _buttonActionDisarm;
     static const char* _buttonActionToggleArm;
     static const char* _buttonActionVTOLFixedWing;
     static const char* _buttonActionVTOLMultiRotor;
-    static const char* _buttonActionZoomIn;
-    static const char* _buttonActionZoomOut;
+    static const char* _buttonActionStepZoomIn;
+    static const char* _buttonActionStepZoomOut;
+    static const char* _buttonActionContinuousZoomIn;
+    static const char* _buttonActionContinuousZoomOut;
     static const char* _buttonActionNextStream;
     static const char* _buttonActionPreviousStream;
     static const char* _buttonActionNextCamera;
