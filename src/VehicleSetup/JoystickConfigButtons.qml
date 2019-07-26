@@ -46,11 +46,7 @@ Item {
             Row {
                 spacing:    ScreenTools.defaultFontPixelWidth
                 property bool pressed
-                QGCCheckBox {
-                    anchors.verticalCenter:     parent.verticalCenter
-                    checked:                    _activeJoystick ? _activeJoystick.buttonActions[modelData] !== "" : false
-                    onClicked:                  _activeJoystick.setButtonAction(modelData, checked ? buttonActionCombo.textAt(buttonActionCombo.currentIndex) : "")
-                }
+                property var  currentAssignableAction: _activeJoystick ? _activeJoystick.assignableActions.get(buttonActionCombo.currentIndex) : null
                 Rectangle {
                     anchors.verticalCenter:     parent.verticalCenter
                     width:                      ScreenTools.defaultFontPixelHeight * 1.5
@@ -69,9 +65,35 @@ Item {
                 QGCComboBox {
                     id:                         buttonActionCombo
                     width:                      ScreenTools.defaultFontPixelWidth * 26
-                    model:                      _activeJoystick ? _activeJoystick.actions : 0
-                    onActivated:                _activeJoystick.setButtonAction(modelData, textAt(index))
-                    Component.onCompleted:      currentIndex = find(_activeJoystick.buttonActions[modelData])
+                    model:                      _activeJoystick ? _activeJoystick.assignableActionTitles : []
+                    onActivated: {
+                        _activeJoystick.setButtonAction(modelData, textAt(index))
+                    }
+                    Component.onCompleted: {
+                        if(_activeJoystick) {
+                            var i = find(_activeJoystick.buttonActions[modelData])
+                            if(i < 0) i = 0
+                            currentIndex = i
+                        }
+                    }
+                }
+                QGCCheckBox {
+                    id:                         repeatCheck
+                    text:                       qsTr("Repeat")
+                    enabled:                    currentAssignableAction && _activeJoystick.calibrated && currentAssignableAction.canRepeat
+                    onClicked: {
+                        _activeJoystick.setButtonRepeat(modelData, checked)
+                    }
+                    Component.onCompleted: {
+                        if(_activeJoystick) {
+                            checked = _activeJoystick.getButtonRepeat(modelData)
+                        }
+                    }
+                    anchors.verticalCenter:     parent.verticalCenter
+                }
+                Item {
+                    width:                      ScreenTools.defaultFontPixelWidth * 2
+                    height:                     1
                 }
             }
         }
