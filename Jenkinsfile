@@ -19,13 +19,14 @@ pipeline {
 					}
 
 					steps {
+						sh 'pwd'
                         sh 'wget http://192.168.2.153:8086/artifactory/gstreamer-android-qgroundcontrol/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
                         sh 'apt update'
                         sh 'apt install -y bzip2'
-                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
+                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C .' 
                         sh 'echo $PATH'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
-							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore'
+							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
 						}
 
                         sh './tools/update_android_version.sh;'
