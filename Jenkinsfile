@@ -25,7 +25,7 @@ pipeline {
                         sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
                         sh 'echo $PATH'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
-							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
+							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore'
 						}
 
                         sh './tools/update_android_version.sh;'
