@@ -61,6 +61,9 @@ SetupPage {
             QGCTabBar {
                 id:             bar
                 width:          parent.width
+                Component.onCompleted: {
+                    currentIndex = _activeJoystick && _activeJoystick.calibrated ? 0 : 2
+                }
                 anchors.top:    parent.top
                 QGCTabButton {
                     text:       qsTr("General")

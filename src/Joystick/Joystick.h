@@ -28,8 +28,7 @@ public:
     AssignedButtonAction(QObject* parent, const QString name);
     QString action;
     QTime   buttonTime;
-    bool    repeat      = false;
-    int     frequency   = 1;
+    bool    repeat = false;
 };
 
 //-- Assignable Button Action
@@ -100,14 +99,15 @@ public:
 
     Q_PROPERTY(bool     gimbalEnabled           READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
     Q_PROPERTY(int      throttleMode            READ throttleMode           WRITE setThrottleMode       NOTIFY throttleModeChanged)
-    Q_PROPERTY(float    frequency               READ frequency              WRITE setFrequency          NOTIFY frequencyChanged)
+    Q_PROPERTY(float    axisFrequency           READ axisFrequency          WRITE setAxisFrequency      NOTIFY axisFrequencyChanged)
+    Q_PROPERTY(float    buttonFrequency         READ buttonFrequency        WRITE setButtonFrequency    NOTIFY buttonFrequencyChanged)
     Q_PROPERTY(bool     negativeThrust          READ negativeThrust         WRITE setNegativeThrust     NOTIFY negativeThrustChanged)
     Q_PROPERTY(float    exponential             READ exponential            WRITE setExponential        NOTIFY exponentialChanged)
     Q_PROPERTY(bool     accumulator             READ accumulator            WRITE setAccumulator        NOTIFY accumulatorChanged)
     Q_PROPERTY(bool     circleCorrection        READ circleCorrection       WRITE setCircleCorrection   NOTIFY circleCorrectionChanged)
 
     Q_INVOKABLE void    setButtonRepeat     (int button, bool repeat);
-    Q_INVOKABLE void    setButtonFrequency  (int button, int freq);
+    Q_INVOKABLE bool    getButtonRepeat     (int button);
     Q_INVOKABLE void    setButtonAction     (int button, const QString& action);
     Q_INVOKABLE QString getButtonAction     (int button);
 
@@ -144,32 +144,35 @@ public:
 */
 	virtual bool requiresCalibration(void) { return true; }
 
-    int throttleMode        ();
-    void setThrottleMode    (int mode);
+    int   throttleMode      ();
+    void  setThrottleMode   (int mode);
 
-    bool negativeThrust     ();
-    void setNegativeThrust  (bool allowNegative);
+    bool  negativeThrust    ();
+    void  setNegativeThrust (bool allowNegative);
 
     float exponential       ();
-    void setExponential     (float expo);
+    void  setExponential    (float expo);
 
-    bool accumulator        ();
-    void setAccumulator     (bool accu);
+    bool  accumulator       ();
+    void  setAccumulator    (bool accu);
 
-    bool deadband           ();
-    void setDeadband        (bool accu);
+    bool  deadband          ();
+    void  setDeadband       (bool accu);
 
-    bool circleCorrection   ();
-    void setCircleCorrection(bool circleCorrection);
+    bool  circleCorrection  ();
+    void  setCircleCorrection(bool circleCorrection);
 
-    void setTXMode          (int mode);
-    int getTXMode           () { return _transmitterMode; }
+    void  setTXMode         (int mode);
+    int   getTXMode         () { return _transmitterMode; }
 
     /// Set the current calibration mode
-    void setCalibrationMode (bool calibrating);
+    void  setCalibrationMode (bool calibrating);
 
-    float frequency         ();
-    void setFrequency       (float val);
+    float axisFrequency     () { return _axisFrequency; }
+    void  setAxisFrequency  (float val);
+
+    float buttonFrequency   () { return _buttonFrequency; }
+    void  setButtonFrequency(float val);
 
 signals:
     // The raw signals are only meant for use by calibration
@@ -196,7 +199,8 @@ signals:
     void buttonActionTriggered      (int action);
 
     void gimbalEnabledChanged       ();
-    void frequencyChanged           ();
+    void axisFrequencyChanged       ();
+    void buttonFrequencyChanged     ();
     void startContinuousZoom        (int direction);
     void stopContinuousZoom         ();
     void stepZoom                   (int direction);
@@ -262,7 +266,8 @@ protected:
     bool    _accumulator            = false;
     bool    _deadband               = false;
     bool    _circleCorrection       = true;
-    float   _frequency              = 25.0f;
+    float   _axisFrequency          = 25.0f;
+    float   _buttonFrequency        = 5.0f;
     Vehicle* _activeVehicle         = nullptr;
     bool    _gimbalEnabled          = false;
 
@@ -292,13 +297,13 @@ private:
     static const char* _calibratedSettingsKey;
     static const char* _buttonActionNameKey;
     static const char* _buttonActionRepeatKey;
-    static const char* _buttonActionFrequencyKey;
     static const char* _throttleModeSettingsKey;
     static const char* _exponentialSettingsKey;
     static const char* _accumulatorSettingsKey;
     static const char* _deadbandSettingsKey;
     static const char* _circleCorrectionSettingsKey;
-    static const char* _frequencySettingsKey;
+    static const char* _axisFrequencySettingsKey;
+    static const char* _buttonFrequencySettingsKey;
     static const char* _txModeSettingsKey;
     static const char* _fixedWingTXModeSettingsKey;
     static const char* _multiRotorTXModeSettingsKey;

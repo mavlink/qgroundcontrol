@@ -144,20 +144,38 @@ Item {
             visible:            advancedSettings.checked
         }
         //-----------------------------------------------------------------
-        //-- Message Frequency
+        //-- Axis Message Frequency
         QGCLabel {
-            text:               qsTr("Message frequency (Hz):")
+            text:               qsTr("Axis frequency (Hz):")
             Layout.alignment:   Qt.AlignVCenter
             visible:            advancedSettings.checked
         }
         QGCTextField {
-            text:               _activeJoystick.frequency
+            text:               _activeJoystick.axisFrequency
             enabled:            advancedSettings.checked
-            validator:          DoubleValidator { bottom: 0.25; top: 100.0; }
+            validator:          DoubleValidator { bottom: 0.25; top: 50.0; }
             inputMethodHints:   Qt.ImhFormattedNumbersOnly
             Layout.alignment:   Qt.AlignVCenter
             onEditingFinished: {
-                _activeJoystick.frequency = parseFloat(text)
+                _activeJoystick.axisFrequency = parseFloat(text)
+            }
+            visible:            advancedSettings.checked
+        }
+        //-----------------------------------------------------------------
+        //-- Button Repeat Frequency
+        QGCLabel {
+            text:               qsTr("Button repeat frequency (Hz):")
+            Layout.alignment:   Qt.AlignVCenter
+            visible:            advancedSettings.checked
+        }
+        QGCTextField {
+            text:               _activeJoystick.buttonFrequency
+            enabled:            advancedSettings.checked
+            validator:          DoubleValidator { bottom: 0.25; top: 50.0; }
+            inputMethodHints:   Qt.ImhFormattedNumbersOnly
+            Layout.alignment:   Qt.AlignVCenter
+            onEditingFinished: {
+                _activeJoystick.buttonFrequency = parseFloat(text)
             }
             visible:            advancedSettings.checked
         }
