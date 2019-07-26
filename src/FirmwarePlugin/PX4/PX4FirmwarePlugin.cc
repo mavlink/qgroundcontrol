@@ -557,19 +557,6 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
     }
 }
 
-bool PX4FirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle* vehicle) const
-{
-    if (vehicle->isOfflineEditingVehicle()) {
-        return FirmwarePlugin::vehicleYawsToNextWaypointInMission(vehicle);
-    } else {
-        if (vehicle->multiRotor() && vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"))) {
-            Fact* yawMode = vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, QStringLiteral("MIS_YAWMODE"));
-            return yawMode && yawMode->rawValue().toInt() == 1;
-        }
-    }
-    return true;
-}
-
 uint32_t PX4FirmwarePlugin::highLatencyCustomModeTo32Bits(uint16_t hlCustomMode)
 {
     union px4_custom_mode px4_cm;
