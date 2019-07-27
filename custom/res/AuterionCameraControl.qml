@@ -26,6 +26,7 @@ import QGroundControl.Vehicle           1.0
 
 import AuterionQuickInterface           1.0
 import Auterion.Widgets                 1.0
+import Auterion.Camera                  1.0
 
 Item {
     height:         mainRow.height
@@ -72,6 +73,7 @@ Item {
         anchors.fill:   parent
     }
 
+    Column {
     Row {
         id:         mainRow
         spacing:    _spacers * 0.5
@@ -112,7 +114,7 @@ Item {
                         checked = isChecked
                     }
                 }
-                AuterionQuickSettingButton {
+                /*AuterionQuickSettingButton {
                     id:                 zoomButton
                     visible:            _hasZoom
                     icon.source:        "/auterion/img/zoom_icon.svg"
@@ -121,7 +123,7 @@ Item {
                         checked = true
                         if(!zoomQuickSetting.visible) zoomQuickSetting.open()
                     }
-                }
+                }*/
                 AuterionQuickSettingButton {
                     id:                 paletteButton
                     icon.source:        "/auterion/img/palette_icon.svg"
@@ -360,8 +362,57 @@ Item {
                     width:      1
                 }
             }
+        } // Rectangle ()
+
+        GimbalVerticalControl {
+            id: gimbalControl
+
+            width: ScreenTools.defaultFontPointSize * 3
+            height: mainRow.height - mainRow.spacing
+
+            radius: quickSettingMenu.radius
+
+            mainColor: qgcPal.window
         }
-    }
+    } // Row (Camera controls)
+        Item {
+            width: mainRow.width
+            height: zoomControl.height * 1.3
+
+            ZoomControl {
+                id: zoomControl
+
+                anchors.centerIn: parent
+
+                mainColor: qgcPal.window
+                contentColor: qgcPal.text
+                fontPointSize: ScreenTools.defaultFontPointSize * 1.2
+
+                zoomLevel: _hasZoom ? _camera.zoomLevel : NaN
+
+                onZoomIn: {
+                    if(_hasZoom) {
+                        _camera.stepZoom(1)
+                    }
+                }
+                onZoomOut: {
+                    if(_hasZoom) {
+                        _camera.stepZoom(-1)
+                    }
+                }
+                onContinuousZoomStart: {
+                    if(_hasZoom) {
+                        _camera.startZoom(zoomIn ? 1 : -1)
+                    }
+                }
+                onContinuousZoomStop: {
+                    if(_hasZoom) {
+                        _camera.stopZoom()
+                    }
+                }
+            }
+        }
+    } // Column
 
     //-------------------------------------------------------------------------
     //-- EV Quick Setting

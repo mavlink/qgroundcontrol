@@ -1,0 +1,4 @@
+module Auterion.Camera
+
+ZoomControl 1.0 ZoomControl.qml
+GimbalVerticalControl 1.0 GimbalVerticalControl.qml

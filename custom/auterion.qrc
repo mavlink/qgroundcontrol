@@ -103,9 +103,12 @@
         <file alias="Auterion/Widgets/OnOffSwitch.qml">res/Auterion/Widgets/OnOffSwitch.qml</file>
         <file alias="Auterion/Widgets/qmldir">res/Auterion/Widgets/qmldir</file>
         <file alias="Auterion/Controls/qmldir">res/Auterion/Controls/qmldir</file>
-        <file alias="Auterion/Controls/VirtualJoystick.qml">src/QmlControls/QGroundControl/Controls/VirtualJoystick.qml</file>
+        <file alias="Auterion/Controls/VirtualJoystick.qml">res/Auterion/Controls/VirtualJoystick.qml</file>
         <file alias="Auterion/Specific/qmldir">res/Auterion/Specific/qmldir</file>
-        <file alias="Auterion/Specific/GimbalVirtualJoystick.qml">src/QmlControls/QGroundControl/Specific/GimbalVirtualJoystick.qml</file>
+        <file alias="Auterion/Specific/GimbalVirtualJoystick.qml">res/Auterion/Specific/GimbalVirtualJoystick.qml</file>
+        <file alias="Auterion/Camera/qmldir">res/Auterion/Camera/qmldir</file>
+        <file alias="Auterion/Camera/ZoomControl.qml">res/Auterion/Camera/ZoomControl.qml</file>
+        <file alias="Auterion/Camera/GimbalVerticalControl.qml">res/Auterion/Camera/GimbalVerticalControl.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
