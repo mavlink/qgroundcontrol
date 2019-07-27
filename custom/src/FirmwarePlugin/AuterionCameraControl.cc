@@ -25,8 +25,6 @@ AuterionCameraControl::AuterionCameraControl(const mavlink_camera_information_t 
     _videoSound.setVolume(0.9);
     _errorSound.setSource(QUrl::fromUserInput("qrc:/auterion/wav/boop.wav"));
     _errorSound.setVolume(0.9);
-
-    connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &AuterionCameraControl::_mavlinkMessageReceived);
 }
 
 //-----------------------------------------------------------------------------
@@ -139,41 +137,6 @@ AuterionCameraControl::_setVideoStatus(VideoStatus status)
             }
             _videoSound.play();
         }
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-AuterionCameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
-{
-    switch (message.msgid) {
-        case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
-            _handleGimbalOrientation(message);
-            break;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-AuterionCameraControl::_handleGimbalOrientation(const mavlink_message_t& message)
-{
-    mavlink_mount_orientation_t o;
-    mavlink_msg_mount_orientation_decode(&message, &o);
-    if(fabsf(_gimbalRoll - o.roll) > 0.5f) {
-        _gimbalRoll = o.roll;
-        emit gimbalRollChanged();
-    }
-    if(fabsf(_gimbalPitch - o.pitch) > 0.5f) {
-        _gimbalPitch = o.pitch;
-        emit gimbalPitchChanged();
-    }
-    if(fabsf(_gimbalYaw - o.yaw) > 0.5f) {
-        _gimbalYaw = o.yaw;
-        emit gimbalYawChanged();
-    }
-    if(!_gimbalData) {
-        _gimbalData = true;
-        emit gimbalDataChanged();
     }
 }
 

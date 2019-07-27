@@ -27,7 +27,7 @@ public:
     /// a dirty property and dirtyChanged signal.
     Q_PROPERTY(bool dirty READ dirty WRITE setDirty NOTIFY dirtyChanged)
 
-    Q_INVOKABLE QObject* get(int index)     { return _objectList[index]; }
+    Q_INVOKABLE QObject* get(int index);
 
     // Property accessors
     
