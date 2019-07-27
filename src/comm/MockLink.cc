@@ -104,6 +104,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
 
     _adsbVehicleCoordinate = QGeoCoordinate(_vehicleLatitude, _vehicleLongitude).atDistanceAndAzimuth(1000, _adsbAngle);
     _adsbVehicleCoordinate.setAltitude(100);
+    _runningTime.start();
 }
 
 MockLink::~MockLink(void)
@@ -176,6 +177,7 @@ void MockLink::_run1HzTasks(void)
             _sendHighLatency2();
         } else {
             _sendVibration();
+            _sendSysStatus();
             _sendADSBVehicles();
             if (!qgcApp()->runningUnitTests()) {
                 // Sending RC Channels during unit test breaks RC tests which does it's own RC simulation
@@ -354,6 +356,28 @@ void MockLink::_sendHighLatency2(void)
                                         0,                          // wp_num
                                         0,                          // failure_flags
                                         0, 0, 0);                   // custom0, custom1, custom2
+    respondWithMavlinkMessage(msg);
+}
+
+void MockLink::_sendSysStatus(void)
+{
+    if(_batteryRemaining > 50) {
+        _batteryRemaining = static_cast<int8_t>(100 - (_runningTime.elapsed() / 1000));
+    }
+    mavlink_message_t   msg;
+    mavlink_msg_sys_status_pack_chan(
+        _vehicleSystemId,
+        _vehicleComponentId,
+        static_cast<uint8_t>(_mavlinkChannel),
+        &msg,
+        0,          // onboard_control_sensors_present
+        0,          // onboard_control_sensors_enabled
+        0,          // onboard_control_sensors_health
+        250,        // load
+        4200 * 4,   // voltage_battery
+        8000,       // current_battery
+        _batteryRemaining, // battery_remaining
+        0,0,0,0,0,0);
     respondWithMavlinkMessage(msg);
 }
 
