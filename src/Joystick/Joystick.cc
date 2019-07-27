@@ -680,6 +680,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
+            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
         }
         // Always set up the new vehicle
         _activeVehicle = vehicle;
@@ -700,6 +701,7 @@ void Joystick::startPolling(Vehicle* vehicle)
             connect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
             connect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             connect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
+            connect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
             // FIXME: ****
             //connect(this, &Joystick::buttonActionTriggered, uas, &UAS::triggerAction);
         }
@@ -724,6 +726,7 @@ void Joystick::stopPolling(void)
             disconnect(this, &Joystick::gimbalPitchStep,    _activeVehicle, &Vehicle::gimbalPitchStep);
             disconnect(this, &Joystick::gimbalYawStep,      _activeVehicle, &Vehicle::gimbalYawStep);
             disconnect(this, &Joystick::centerGimbal,       _activeVehicle, &Vehicle::centerGimbal);
+            disconnect(this, &Joystick::gimbalControlValue, _activeVehicle, &Vehicle::gimbalControlValue);
         }
         // FIXME: ****
         //disconnect(this, &Joystick::buttonActionTriggered,  uas, &UAS::triggerAction);
@@ -1003,18 +1006,37 @@ void Joystick::_executeButtonAction(const QString& action)
     } else if(action == _buttonActionToggleVideoRecord) {
         emit toggleVideoRecord();
     } else if(action == _buttonActionGimbalUp) {
-        emit gimbalPitchStep(1);
+        _pitchStep(1);
     } else if(action == _buttonActionGimbalDown) {
-        emit gimbalPitchStep(-1);
+        _pitchStep(-1);
     } else if(action == _buttonActionGimbalLeft) {
-        emit gimbalYawStep(-1);
+        _yawStep(-1);
     } else if(action == _buttonActionGimbalRight) {
-        emit gimbalYawStep(1);
+        _yawStep(1);
     } else if(action == _buttonActionGimbalCenter) {
-        emit centerGimbal();
+        _localPitch = 0.0;
+        _localYaw   = 0.0;
+        emit gimbalControlValue(0.0, 0.0);
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
+}
+
+void Joystick::_pitchStep(int direction)
+{
+    _localPitch += static_cast<double>(direction);
+    //-- Arbitrary range
+    if(_localPitch < -90.0) _localPitch = -90.0;
+    if(_localPitch >  35.0) _localPitch =  35.0;
+    emit gimbalControlValue(_localPitch, _localYaw);
+}
+
+void Joystick::_yawStep(int direction)
+{
+    _localYaw += static_cast<double>(direction);
+    if(_localYaw < -180.0) _localYaw = -180.0;
+    if(_localYaw >  180.0) _localYaw =  180.0;
+    emit gimbalControlValue(_localPitch, _localYaw);
 }
 
 bool Joystick::_validAxis(int axis)
