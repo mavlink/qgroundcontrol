@@ -213,6 +213,7 @@ signals:
     void gimbalPitchStep            (int direction);
     void gimbalYawStep              (int direction);
     void centerGimbal               ();
+    void gimbalControlValue         (double pitch, double yaw);
     void setArmed                   (bool arm);
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
@@ -229,6 +230,11 @@ protected:
     bool    _validButton            (int button);
     void    _handleAxis             ();
     void    _handleButtons          ();
+
+    void    _pitchStep              (int direction);
+    void    _yawStep                (int direction);
+    double  _localYaw       = 0.0;
+    double  _localPitch     = 0.0;
 
 private:
     virtual bool _open      ()          = 0;
@@ -289,6 +295,7 @@ protected:
     QList<AssignedButtonAction*>    _buttonActionArray;
     QStringList                     _availableActionTitles;
     MultiVehicleManager*            _multiVehicleManager = nullptr;
+
 
 private:
     static const char*  _rgFunctionSettingsKey[maxFunction];
