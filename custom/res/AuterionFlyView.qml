@@ -373,7 +373,7 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
             Layout.minimumWidth:    indicatorValueWidth
-            horizontalAlignment:    Text.AlignRight
+            horizontalAlignment:    Text.AlignLeft
         }
             //-- Ground Speed
             QGCColoredImage {
@@ -391,7 +391,7 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
+                horizontalAlignment:    Text.AlignLeft
             }
             //-- Vertical Speed
             QGCColoredImage {
@@ -410,7 +410,7 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
+                horizontalAlignment:    Text.AlignLeft
             }
             //-- Compass
             Item {
@@ -499,7 +499,7 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignRight
+                horizontalAlignment:    Text.AlignLeft
             }
         //-- Altitude
             QGCColoredImage {
@@ -518,7 +518,7 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
             Layout.minimumWidth:    indicatorValueWidth
-            horizontalAlignment:    Text.AlignRight
+            horizontalAlignment:    Text.AlignLeft
         }
         //-- Distance
             QGCColoredImage {
@@ -537,7 +537,7 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
             Layout.minimumWidth:    indicatorValueWidth
-            horizontalAlignment:    Text.AlignRight
+            horizontalAlignment:    Text.AlignLeft
         }
         }
         MouseArea {
