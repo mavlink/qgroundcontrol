@@ -281,8 +281,8 @@ Item {
         dragMinY: 0
         dragMaxY: parent.height - joystick.height
 
-        panDegrees: _isCamera && _camera ? _camera.gimbalYaw : NaN
-        tiltDegrees: _isCamera && _camera ? _camera.gimbalPitch : NaN
+        panDegrees:     _activeVehicle ? _activeVehicle.gimbalYaw   : NaN
+        tiltDegrees:    _activeVehicle ? _activeVehicle.gimbalPitch : NaN
 
         returnAnimationDurationMs: 100
 
@@ -291,7 +291,7 @@ Item {
 
     Timer {
 
-        interval:   100
+        interval:   40
         running:    joystick.visible
         repeat:     true
 
