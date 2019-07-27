@@ -491,7 +491,7 @@ Item {
         id:                     multiVehicleSelector
         spacing:                ScreenTools.defaultFontPixelWidth
         anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * 1.5
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
@@ -501,6 +501,9 @@ Item {
                 property var _vehicle: QGroundControl.multiVehicleManager.vehicles.get(modelData)
                 vehicle:        _vehicle
                 checked:        (_vehicle && activeVehicle) ? _vehicle.id === activeVehicle.id : false
+                onClicked: {
+                    QGroundControl.multiVehicleManager.activeVehicle = _vehicle
+                }
             }
         }
     }
