@@ -10,6 +10,7 @@ Item {
     property color contentColor: "#FFFFFF"
     property alias fontPointSize: zoomStatusTextItem.font.pointSize
     property real  zoomLevel: NaN
+    property alias zoomLevelVisible: zoomStatusItem.visible
     property bool  showZoomPrecision: true
 
     signal zoomIn()
@@ -18,22 +19,25 @@ Item {
     signal continuousZoomStop()
 
     height: zoomStatusTextItem.height * 2
-    width: (zoomStatusItem.width - zoomInButton.width/2) + zoomInButton.width + zoomOutButton.width
+    width: (zoomLevelVisible ? (zoomStatusItem.width - zoomInButton.width/2) : 0) + zoomInButton.width + zoomOutButton.width
 
     Rectangle {
         id: zoomStatusItem
+
         color: mainColor
         opacity: 0.5
         radius: height/2
 
         anchors.left: _root.left
-        anchors.top: _root.top
+        anchors.verticalCenter: _root.verticalCenter
 
         width: height * 2
-        height: _root.height
+        height: _root.height * 0.8
     }
 
     Item {
+        visible: zoomStatusItem.visible
+
         anchors.left: zoomStatusItem.left
         anchors.top: zoomStatusItem.top
         anchors.right: zoomStatusItem.horizontalCenter
@@ -57,10 +61,10 @@ Item {
         id: zoomInButton
         flat: true
 
-        anchors.left: zoomStatusItem.horizontalCenter
-        anchors.top: zoomStatusItem.top
+        anchors.left: zoomLevelVisible ? zoomStatusItem.horizontalCenter : _root.left
+        anchors.top: _root.top
         width: height
-        height: zoomStatusItem.height
+        height: _root.height
 
         property bool holding: false
 
@@ -115,6 +119,7 @@ Item {
 
         Rectangle {
             radius: width * 0.2
+            anchors.centerIn: parent
 
             width: zoomInButton.width * 0.01
             height: parent.height * 0.8

@@ -29,8 +29,8 @@ import Auterion.Widgets                 1.0
 import Auterion.Camera                  1.0
 
 Item {
-    height:         mainRow.height
-    width:          mainRow.width + (ScreenTools.defaultFontPixelWidth * 2)
+    height:         mainColumn.height
+    width:          mainColumn.width + (ScreenTools.defaultFontPixelWidth * 2)
     visible:        !QGroundControl.videoManager.fullScreen
 
     readonly property string _commLostStr: qsTr("NO CAMERA")
@@ -74,6 +74,40 @@ Item {
     }
 
     Column {
+        id: mainColumn
+
+        anchors.centerIn: parent
+
+        Item {
+            width: cameraPresets.width
+            height: zoomControl.height * 1.2
+
+            CameraPresets {
+                id: cameraPresets
+                width: mainRow.width
+                anchors.top: parent.top
+
+                onActivateStandardVisual: {
+                    if(_camera) {
+                        _camera.thermalMode = QGCCameraControl.THERMAL_OFF
+                    }
+                }
+                onActivateHighBrightnessVisual: {
+
+                }
+
+                onActivateColorMapVisual: {
+                    if(_irPaletteFact) {
+                        var entryIdx = _irPaletteFact.enumStrings.find("Rainbow")
+                        if(entryIdx !== undefined) {
+                            _irPaletteFact.value = entryIdx;
+                        }
+                        _camera.thermalMode = QGCCameraControl.THERMAL_FULL
+                    }
+                }
+            }
+        }
+
     Row {
         id:         mainRow
         spacing:    _spacers * 0.5
@@ -377,17 +411,19 @@ Item {
     } // Row (Camera controls)
         Item {
             width: mainRow.width
-            height: zoomControl.height * 1.3
+            height: zoomControl.height * 1.2
 
             ZoomControl {
                 id: zoomControl
 
+                anchors.bottom: parent.bottom
                 anchors.centerIn: parent
 
                 mainColor: qgcPal.window
                 contentColor: qgcPal.text
-                fontPointSize: ScreenTools.defaultFontPointSize * 1.2
+                fontPointSize: ScreenTools.defaultFontPointSize * 2
 
+                zoomLevelVisible: false
                 zoomLevel: _hasZoom ? _camera.zoomLevel : NaN
 
                 onZoomIn: {

@@ -85,6 +85,9 @@
         <file alias="vertical_speed.svg">res/images/vertical_speed.svg</file>
         <file alias="void.png">res/images/void.png</file>
         <file alias="zoom_icon.svg">res/images/zoom_icon.svg</file>
+        <file alias="thermal-brightness.svg">res/images/thermal-brightness.svg</file>
+        <file alias="thermal-palette.svg">res/images/thermal-palette.svg</file>
+        <file alias="thermal-standard.svg">res/images/thermal-standard.svg</file>
     </qresource>
     <qresource prefix="/Auterion/Widgets">
         <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
@@ -109,6 +112,7 @@
         <file alias="Auterion/Camera/qmldir">res/Auterion/Camera/qmldir</file>
         <file alias="Auterion/Camera/ZoomControl.qml">res/Auterion/Camera/ZoomControl.qml</file>
         <file alias="Auterion/Camera/GimbalVerticalControl.qml">res/Auterion/Camera/GimbalVerticalControl.qml</file>
+        <file alias="Auterion/Camera/CameraPresets.qml">res/Auterion/Camera/CameraPresets.qml</file>
     </qresource>
     <qresource prefix="/auterion/wav">
         <file alias="beep.wav">res/audio/beep.wav</file>
