@@ -374,6 +374,11 @@
       <type>Quadrotor x</type>
       <url>https://docs.px4.io/en/frames_multicopter/holybro_qav250_pixhawk4_mini.html</url>
     </airframe>
+    <airframe id="4053" maintainer="Beat Kueng &lt;beat@px4.io&gt;" name="Holybro Kopis 2">
+      <class>Copter</class>
+      <maintainer>Beat Kueng &lt;beat@px4.io&gt;</maintainer>
+      <type>Quadrotor x</type>
+    </airframe>
     <airframe id="4060" maintainer="James Goppert &lt;james.goppert@gmail.com&gt;" name="DJI Matrice 100">
       <class>Copter</class>
       <maintainer>James Goppert &lt;james.goppert@gmail.com&gt;</maintainer>
