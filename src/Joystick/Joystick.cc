@@ -1025,8 +1025,9 @@ void Joystick::_executeButtonAction(const QString& action)
 void Joystick::_pitchStep(int direction)
 {
     _localPitch += static_cast<double>(direction);
-    if(_localPitch < -180.0) _localPitch = -180.0;
-    if(_localPitch >  180.0) _localPitch =  180.0;
+    //-- Arbitrary range
+    if(_localPitch < -90.0) _localPitch = -90.0;
+    if(_localPitch >  35.0) _localPitch =  35.0;
     emit gimbalControlValue(_localPitch, _localYaw);
 }
 
