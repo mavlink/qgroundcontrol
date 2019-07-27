@@ -61,7 +61,7 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  qgcPal.buttonText
+            color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             source:                 "/qmlimages/PaperPlane.svg"
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -71,13 +71,13 @@ Button {
             QGCLabel {
                 text:               qsTr("Vehicle ") + (vehicle ? vehicle.id : qsTr("None"))
                 font.family:        ScreenTools.demiboldFontFamily
-                color:              qgcPal.buttonText
+                color:              button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             }
             Row {
                 spacing:            ScreenTools.defaultFontPixelWidth
                 QGCLabel {
                     text:           vehicle ? vehicle.flightMode : qsTr("None")
-                    color:          qgcPal.buttonText
+                    color:          button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
                 }
                 Rectangle {
                     height:         ScreenTools.defaultFontPixelHeight * 0.5
