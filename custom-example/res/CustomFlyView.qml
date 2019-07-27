@@ -60,7 +60,7 @@ Item {
     property real   _distance:              0.0
     property string _messageTitle:          ""
     property string _messageText:           ""
-    property bool   _showAttitude:          false
+    property bool   _showAttitude:          true
 
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
@@ -508,6 +508,42 @@ Item {
         }
     }
 
+    //-- Gimbal Control
+    Item {
+        id:                     gimbalControl
+        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl
+        anchors.top:            camControlLoader.bottom
+        anchors.topMargin:      height * -0.5
+        anchors.right:          camControlLoader.left
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
+        height:                 parent.width * 0.125
+        width:                  height
+        property real curPitch: 0
+        property real curYaw:   0
+        Timer {
+            interval:   100  //-- 10Hz
+            running:    gimbalControl.visible && activeVehicle
+            repeat:     true
+            onTriggered: {
+                if (activeVehicle) {
+                    var p = Math.round(stick.yAxis * -90)
+                    var y = Math.round(stick.xAxis * 180)
+                    if(p !== gimbalControl.curPitch || y !== gimbalControl.curYaw) {
+                        gimbalControl.curPitch = p
+                        gimbalControl.curYaw   = y
+                        activeVehicle.gimbalControlValue(p, y)
+                    }
+                }
+            }
+        }
+        JoystickThumbPad {
+            id:                     stick
+            anchors.fill:           parent
+            lightColors:            true
+            yAxisThrottleCentered:  true
+            springYToCenter:        false
+        }
+    }
     //-- Connection Lost While Armed
     Popup {
         id:         connectionLostArmed
