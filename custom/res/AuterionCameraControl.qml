@@ -87,18 +87,29 @@ Item {
                 width: mainRow.width
                 anchors.top: parent.top
 
+                onActivatePip: {
+                    if(_camera) {
+                        _camera.thermalMode = QGCCameraControl.THERMAL_PIP
+                    }
+                }
+
                 onActivateStandardVisual: {
                     if(_camera) {
                         _camera.thermalMode = QGCCameraControl.THERMAL_OFF
                     }
                 }
+
                 onActivateHighBrightnessVisual: {
 
                 }
 
+                function isEntry(name) {
+                    return name === 'Rainbow';
+                }
+
                 onActivateColorMapVisual: {
                     if(_irPaletteFact) {
-                        var entryIdx = _irPaletteFact.enumStrings.find("Rainbow")
+                        var entryIdx = _irPaletteFact.enumStrings.find(isEntry)
                         if(entryIdx !== undefined) {
                             _irPaletteFact.value = entryIdx;
                         }

@@ -17,6 +17,7 @@ Item {
     height: backgroundRect.height
     width: backgroundRect.width
 
+    signal activatePip()
     signal activateStandardVisual()
     signal activateHighBrightnessVisual()
     signal activateColorMapVisual()
@@ -29,16 +30,17 @@ Item {
 
         // Standard visual
         QGCHoverButton {
-            id: svButton
+            id: pipButton
             width: 7 * ScreenTools.defaultFontPixelWidth
             height: width
             checkable: true
             radius: ScreenTools.defaultFontPixelWidth / 2
 
-            onPressed: {
-                hbButton.checked = false;
-                cmButton.checked = false;
-                _root.activateStandardVisual()
+            onCheckedChanged: {
+                if(checked) {
+                    hbButton.checked = false;
+                    cmButton.checked = false;
+                }
             }
 
             QGCColoredImage {
@@ -50,15 +52,16 @@ Item {
         // Visual with high brightness
         QGCHoverButton {
             id: hbButton
-            width: svButton.width
+            width: pipButton.width
             height: width
             checkable: true
-            radius: svButton.radius
+            radius: pipButton.radius
 
-            onPressed: {
-                svButton.checked = false;
-                cmButton.checked = false;
-                _root.activateHighBrightnessVisual()
+            onCheckedChanged: {
+                if(checked) {
+                    pipButton.checked = false;
+                    cmButton.checked = false;
+                }
             }
 
             QGCColoredImage {
@@ -70,15 +73,16 @@ Item {
         // Thermal with color-map
         QGCHoverButton {
             id: cmButton
-            width: svButton.width
+            width: pipButton.width
             height: width
             checkable: true
-            radius: svButton.radius
+            radius: pipButton.radius
 
-            onClicked: {
-                svButton.checked = false;
-                hbButton.checked = false;
-                _root.activateColorMapVisual()
+            onCheckedChanged: {
+                if(checked) {
+                    pipButton.checked = false;
+                    hbButton.checked = false;
+                }
             }
 
             QGCColoredImage {
@@ -100,4 +104,40 @@ Item {
 
         z: buttonsRow.z - 1
     }
+
+    state: "none"
+
+    onStateChanged: {
+        if(state === "pip") {
+            _root.activatePip()
+        }
+        else if (state === "hb") {
+            _root.activateHighBrightnessVisual()
+        }
+        else if (state === "cm") {
+            _root.activateColorMapVisual()
+        }
+        else {
+            _root.activateStandardVisual()
+        }
+    }
+
+    states: [
+        State {
+            name: "none"
+            when: !pipButton.checked && !hbButton.checked && !cmButton.checked
+        },
+        State {
+            name: "pip"
+            when: pipButton.checked
+        },
+        State {
+            name: "hb"
+            when: hbButton.checked
+        },
+        State {
+            name: "cm"
+            when: cmButton.checked
+        }
+    ]
 }
