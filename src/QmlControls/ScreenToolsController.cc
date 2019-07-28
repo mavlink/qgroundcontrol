@@ -26,6 +26,12 @@ ScreenToolsController::ScreenToolsController()
 
 }
 
+bool
+ScreenToolsController::hasTouch() const
+{
+    return QTouchDevice::devices().count() > 0 || isMobile();
+}
+
 QString
 ScreenToolsController::iOSDevice() const
 {
