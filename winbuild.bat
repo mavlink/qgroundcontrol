@@ -11,6 +11,6 @@ call vcvarsall.bat
 del /F /Q BUILD
 mkdir build
 cd build
-call "%MSVC_PATH%/qmake.exe" -r CONFIG-=debug_and_release CONFIG+=WarningsAsErrorsOn CONFIG+=installer ../qgroundcontrol.pro
+call "%MSVC_PATH%/qmake.exe" -r CONFIG-=debug_and_release CONFIG+=WarningsAsErrorsOn CONFIG+=installer -spec win32-msvc ../qgroundcontrol.pro
 jom
 cd ..
