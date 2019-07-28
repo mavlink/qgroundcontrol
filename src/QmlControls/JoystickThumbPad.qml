@@ -14,6 +14,7 @@ Item {
     property bool   yAxisThrottleCentered: false        ///< false: center yAxis in throttle for reverser and forward
     property real   xPositionDelta: 0                   ///< Amount to move the control on x axis
     property real   yPositionDelta: 0                   ///< Amount to move the control on y axis
+    property bool   springYToCenter:true                ///< true: Spring Y to center on release
 
     property real   _centerXY:              width / 2
     property bool   _processTouchPoints:    false
@@ -72,7 +73,6 @@ Item {
         } else {
             yPositionDelta = touchPoints[0].y - _centerXY
         }
-
         // We need to wait until we move the control to the right position before we process touch points
         _processTouchPoints = true
     }
@@ -199,8 +199,10 @@ Item {
         minimumTouchPoints: 1
         maximumTouchPoints: 1
         touchPoints:        [ TouchPoint { id: touchPoint } ]
-
-        onPressed:  _joyRoot.thumbDown(touchPoints)
-        onReleased: _joyRoot.reCenter()
+        onPressed:          _joyRoot.thumbDown(touchPoints)
+        onReleased: {
+            if(springYToCenter)
+                _joyRoot.reCenter()
+        }
     }
 }

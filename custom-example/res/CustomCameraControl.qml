@@ -37,8 +37,9 @@ Item {
     readonly property string _commLostStr: qsTr("NO CAMERA")
 
     property real   _spacers:               ScreenTools.defaultFontPixelHeight
-    property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth * 28
-    property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth * 30
+    property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth  * 28
+    property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth  * 30
+    property real   _editFieldHeight:       ScreenTools.defaultFontPixelHeight * 2
 
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -364,6 +365,7 @@ Item {
                         QGCComboBox {
                             model:          _isCamera ? _dynamicCameras.cameraLabels : []
                             width:          _editFieldWidth
+                            height:         _editFieldHeight
                             onActivated:    _dynamicCameras.currentCamera = index
                             currentIndex:   _dynamicCameras ? _dynamicCameras.currentCamera : 0
                         }
@@ -388,6 +390,7 @@ Item {
                         QGCComboBox {
                             model:          _camera ? _camera.streamLabels : []
                             width:          _editFieldWidth
+                            height:         _editFieldHeight
                             onActivated:    _camera.currentStream = index
                             currentIndex:   _camera ? _camera.currentStream : 0
                         }
@@ -412,6 +415,7 @@ Item {
                         }
                         QGCComboBox {
                             width:          _editFieldWidth
+                            height:         _editFieldHeight
                             model:          parent.thermalModes
                             currentIndex:   _camera ? _camera.thermalMode : 0
                             onActivated:    _camera.thermalMode = index
@@ -436,6 +440,7 @@ Item {
                         }
                         Slider {
                             width:          _editFieldWidth
+                            height:         _editFieldHeight
                             to:             100
                             from:           0
                             value:          _camera ? _camera.thermalOpacity : 0
@@ -476,7 +481,8 @@ Item {
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     FactComboBox {
-                                        width:      parent._isCombo ? _editFieldWidth : 0
+                                        width:      parent._isCombo ? _editFieldWidth  : 0
+                                        height:     parent._isCombo ? _editFieldHeight : 0
                                         fact:       parent.parent._fact
                                         indexModel: false
                                         visible:    parent._isCombo
@@ -484,14 +490,16 @@ Item {
                                     }
                                     QGCButton {
                                         visible:    parent._isEdit
-                                        width:      parent._isEdit ? _editFieldWidth : 0
+                                        width:      parent._isEdit ? _editFieldWidth  : 0
+                                        height:     parent._isEdit ? _editFieldHeight : 0
                                         text:       parent.parent._fact.valueString
                                         onClicked: {
                                             showEditFact(parent.parent._fact)
                                         }
                                     }
                                     QGCSlider {
-                                        width:          parent._isSlider ? _editFieldWidth : 0
+                                        width:          parent._isSlider ? _editFieldWidth  : 0
+                                        height:         parent._isSlider ? _editFieldHeight : 0
                                         maximumValue:   parent.parent._fact.max
                                         minimumValue:   parent.parent._fact.min
                                         stepSize:       parent.parent._fact.increment
@@ -506,7 +514,8 @@ Item {
                                         }
                                     }
                                     CustomOnOffSwitch {
-                                        width:      parent._isBool ? _editFieldWidth : 0
+                                        width:      parent._isBool ? _editFieldWidth  : 0
+                                        height:     parent._isBool ? _editFieldHeight : 0
                                         checked:    parent.parent._fact ? parent.parent._fact.value : false
                                         onClicked:  parent.parent._fact.value = checked ? 1 : 0
                                         visible:    parent._isBool
@@ -535,6 +544,7 @@ Item {
                         }
                         QGCComboBox {
                             width:          _editFieldWidth
+                            height:         _editFieldHeight
                             model:          parent.photoModes
                             currentIndex:   _camera ? _camera.photoMode : 0
                             onActivated:    _camera.photoMode = index
@@ -559,6 +569,7 @@ Item {
                         }
                         QGCSlider {
                             width:          _editFieldWidth
+                            height:         _editFieldHeight
                             maximumValue:   60
                             minimumValue:   _camera ? (_camera.isE90 ? 3 : 5) : 5
                             stepSize:       1
@@ -579,6 +590,31 @@ Item {
                         visible:    _cameraPhotoMode && _camera.photoMode === QGCCameraControl.PHOTO_CAPTURE_TIMELAPSE && !_noSdCard
                     }
                     //-------------------------------------------
+                    //-- Gimbal Control
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        visible:        _camera && !_camera.isThermal
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:       qsTr("Show Gimbal Control")
+                            width:      _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        CustomOnOffSwitch {
+                            checked:    CustomQuickInterface.showGimbalControl
+                            width:      _editFieldWidth
+                            height:     _editFieldHeight
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked:  CustomQuickInterface.showGimbalControl = checked
+                        }
+                    }
+                    Rectangle {
+                        color:      qgcPal.button
+                        height:     1
+                        width:      cameraSettingsCol.width
+                        visible:    _camera && !_camera.isThermal
+                    }
+                    //-------------------------------------------
                     //-- Screen Grid
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
@@ -592,6 +628,7 @@ Item {
                         CustomOnOffSwitch {
                             checked:     QGroundControl.settingsManager.videoSettings.gridLines.rawValue
                             width:      _editFieldWidth
+                            height:     _editFieldHeight
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked:  QGroundControl.settingsManager.videoSettings.gridLines.rawValue = checked
                         }
@@ -615,6 +652,7 @@ Item {
                         }
                         FactComboBox {
                             width:      _editFieldWidth
+                            height:     _editFieldHeight
                             fact:       QGroundControl.settingsManager.videoSettings.videoFit
                             indexModel: false
                             anchors.verticalCenter: parent.verticalCenter
@@ -640,6 +678,7 @@ Item {
                             text:       qsTr("Reset")
                             onClicked:  resetPrompt.open()
                             width:      _editFieldWidth
+                            height:     _editFieldHeight
                             enabled:    !_recordingVideo
                             anchors.verticalCenter: parent.verticalCenter
                             MessageDialog {
