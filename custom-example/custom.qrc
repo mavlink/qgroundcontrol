@@ -27,6 +27,10 @@
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
+        <file alias="thermal-brightness.svg">res/images/thermal-brightness.svg</file>
+        <file alias="thermal-palette.svg">res/images/thermal-palette.svg</file>
+        <file alias="thermal-pip.svg">res/images/thermal-pip.svg</file>
+        <file alias="thermal-standard.svg">res/images/thermal-standard.svg</file>
         <file alias="vertical_speed.svg">res/Images/vertical_speed.svg</file>
         <file alias="void.png">res/Images/void.png</file>
     </qresource>

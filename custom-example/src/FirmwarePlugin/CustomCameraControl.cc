@@ -17,11 +17,12 @@
 QGC_LOGGING_CATEGORY(CustomCameraLog, "CustomCameraLog")
 QGC_LOGGING_CATEGORY(CustomCameraVerboseLog, "CustomCameraVerboseLog")
 
+static const char* kCAM_IRPALETTE = "CAM_IRPALETTE";
+
 //-----------------------------------------------------------------------------
 CustomCameraControl::CustomCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
     : QGCCameraControl(info, vehicle, compID, parent)
 {
-    connect(_vehicle,   &Vehicle::mavlinkMessageReceived,   this, &CustomCameraControl::_mavlinkMessageReceived);
 }
 
 //-----------------------------------------------------------------------------
@@ -94,42 +95,15 @@ CustomCameraControl::_setVideoStatus(VideoStatus status)
 
 //-----------------------------------------------------------------------------
 void
-CustomCameraControl::_mavlinkMessageReceived(const mavlink_message_t& message)
-{
-    switch (message.msgid) {
-        case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
-            _handleGimbalOrientation(message);
-            break;
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
-CustomCameraControl::_handleGimbalOrientation(const mavlink_message_t& message)
-{
-    mavlink_mount_orientation_t o;
-    mavlink_msg_mount_orientation_decode(&message, &o);
-    if(fabsf(_gimbalRoll - o.roll) > 0.5f) {
-        _gimbalRoll = o.roll;
-        emit gimbalRollChanged();
-    }
-    if(fabsf(_gimbalPitch - o.pitch) > 0.5f) {
-        _gimbalPitch = o.pitch;
-        emit gimbalPitchChanged();
-    }
-    if(fabsf(_gimbalYaw - o.yaw) > 0.5f) {
-        _gimbalYaw = o.yaw;
-        emit gimbalYawChanged();
-    }
-    if(!_gimbalData) {
-        _gimbalData = true;
-        emit gimbalDataChanged();
-    }
-}
-
-//-----------------------------------------------------------------------------
-void
 CustomCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& cap)
 {
     QGCCameraControl::handleCaptureStatus(cap);
 }
+
+//-----------------------------------------------------------------------------
+Fact*
+CustomCameraControl::irPalette()
+{
+    return (_paramComplete && _activeSettings.contains(kCAM_IRPALETTE)) ? getFact(kCAM_IRPALETTE) : nullptr;
+}
+
