@@ -176,8 +176,6 @@ private:
     QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
     QStringList         _missingParams;                                     ///< List of missing facts to be displayed
 
-    QPair<bool, QString>    _preInitMessage;                                ///< First param: `true` if the initialization failed and second value holds the message
-
     QQmlApplicationEngine* _qmlAppEngine        = nullptr;
     bool                _logOutput              = false;                    ///< true: Log Qt debug output to file
     bool				_fakeMobile             = false;                    ///< true: Fake ui into displaying mobile interface
