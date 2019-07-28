@@ -205,6 +205,7 @@ CustomPlugin::createRootWindow(QObject *parent)
     QQmlApplicationEngine* pEngine = new QQmlApplicationEngine(parent);
     pEngine->addImportPath("qrc:/qml");
     pEngine->addImportPath("qrc:/Custom/Widgets");
+    pEngine->addImportPath("qrc:/Custom/Camera");
     pEngine->rootContext()->setContextProperty("joystickManager",   qgcApp()->toolbox()->joystickManager());
     pEngine->rootContext()->setContextProperty("debugMessageModel", AppMessages::getModel());
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/MainRootWindow.qml")));
