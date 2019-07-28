@@ -19,11 +19,6 @@ pipeline {
 					}
 
 					steps {
-						sh 'pwd'
-                        sh 'wget http://192.168.2.153:8086/artifactory/gstreamer-android-qgroundcontrol/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
-                        sh 'apt update'
-                        sh 'apt install -y bzip2'
-                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C .' 
                         sh 'echo $PATH'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
 							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
@@ -35,6 +30,10 @@ pipeline {
 						sh 'git submodule deinit -f .'
 						sh 'git clean -ff -x -d .'
                         sh 'git submodule update --init --recursive --force'
+                        sh 'wget --quiet http://192.168.2.153:8086/artifactory/gstreamer-android-qgroundcontrol/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
+                        sh 'apt update'
+                        sh 'apt install -y bzip2'
+                        sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
                         sh 'cp ${WORKSPACE}/android/strings.xml /opt/Qt/5.11.0/android_armv7/src/android/java/res/values/strings.xml'
                         withCredentials([string(credentialsId: 'ANDROID_STOREPASS', variable: 'ANDROID_STOREPASS')]) {
                             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG}'
