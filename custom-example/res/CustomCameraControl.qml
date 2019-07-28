@@ -161,15 +161,20 @@ Item {
                         sourceSize.height:  height
                     }
                 }
+
                 // Thermal with color-map
                 QGCHoverButton {
                     width:              buttonSize
                     height:             width
                     checkable:          true
                     radius:             buttonRadius
+
+                    function isDesiredThermalPalette(name) {
+                        return name === 'Rainbow';
+                    }
                     onClicked: {
                         if(_irPaletteFact) {
-                            var entryIdx = _irPaletteFact.enumStrings.find("Rainbow")
+                            var entryIdx = _irPaletteFact.enumStrings.find(isDesiredThermalPalette)
                             if(entryIdx !== undefined) {
                                 _irPaletteFact.value = entryIdx;
                             }
@@ -421,7 +426,7 @@ Item {
         ZoomControl {
             id:             zoomControl
             visible:        _hasZoom
-            mainColor:      qgcPal.window
+            mainColor:      qgcPal.windowShade
             contentColor:   qgcPal.text
             fontPointSize:  ScreenTools.defaultFontPointSize * 1.25
             zoomLevelVisible: false
