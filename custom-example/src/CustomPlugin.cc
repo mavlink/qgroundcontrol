@@ -395,8 +395,8 @@ CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t&
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#585858");
     }
     else if (colorName == QStringLiteral("hoverColor")) {
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#E7D8AE");
-        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#E7D8AE");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#746D59");
+        colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#746D59");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#464f5a");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#464f5a");
     }
