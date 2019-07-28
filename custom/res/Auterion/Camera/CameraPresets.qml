@@ -1,6 +1,6 @@
-import QtQuick 2.0
-import QtQuick.Controls 2.4
-import QtGraphicalEffects 1.0
+import QtQuick              2.0
+import QtQuick.Controls     2.4
+import QtGraphicalEffects   1.0
 
 import QGroundControl                   1.0
 import QGroundControl.FlightDisplay     1.0
@@ -15,129 +15,99 @@ Item {
     id: _root
 
     height: backgroundRect.height
-    width: backgroundRect.width
+    width:  backgroundRect.width
 
     signal activatePip()
     signal activateStandardVisual()
     signal activateHighBrightnessVisual()
     signal activateColorMapVisual()
 
-    Row {
-        id: buttonsRow
+    readonly property real buttonSize:      ScreenTools.defaultFontPixelWidth * 4
+    readonly property real buttonRadius:    ScreenTools.defaultFontPixelWidth * 0.5
+    readonly property real iconRatio:       0.666
+
+    ButtonGroup {
+        id:             buttonGroup
+        exclusive:      true
+        buttons:        buttonsRow.children
+    }
+
+    Rectangle {
+        id:             backgroundRect
+        width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
+        height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
+        color:          qgcPal.window
+        radius:         height * 0.5
         anchors.centerIn: parent
+    }
 
-        spacing: ScreenTools.defaultFontPixelWidth * 0.5
-
-        // Standard visual
+    Row {
+        id:             buttonsRow
+        spacing:        ScreenTools.defaultFontPixelWidth * 0.25
+        anchors.centerIn: backgroundRect
+        // Standard
         QGCHoverButton {
-            id: pipButton
-            width: 7 * ScreenTools.defaultFontPixelWidth
-            height: width
-            checkable: true
-            radius: ScreenTools.defaultFontPixelWidth / 2
-
-            onCheckedChanged: {
-                if(checked) {
-                    hbButton.checked = false;
-                    cmButton.checked = false;
-                }
-            }
-
+            width:              buttonSize
+            height:             width
+            checkable:          true
+            radius:             buttonRadius
+            onClicked:          _root.activateStandardVisual()
             QGCColoredImage {
                 source:         "/auterion/img/thermal-standard.svg"
                 color:          qgcPal.buttonText
-                anchors.fill:   parent
+                width:          parent.width * iconRatio
+                height:         width
+                anchors.centerIn:   parent
+                sourceSize.height:  height
+            }
+        }
+        // PIP
+        QGCHoverButton {
+            width:              buttonSize
+            height:             width
+            checkable:          true
+            radius:             buttonRadius
+            onClicked:          _root.activatePip()
+            QGCColoredImage {
+                source:         "/auterion/img/thermal-pip.svg"
+                color:          qgcPal.buttonText
+                width:          parent.width * iconRatio
+                height:         width
+                anchors.centerIn:   parent
+                sourceSize.height:  height
             }
         }
         // Visual with high brightness
         QGCHoverButton {
-            id: hbButton
-            width: pipButton.width
-            height: width
-            checkable: true
-            radius: pipButton.radius
-
-            onCheckedChanged: {
-                if(checked) {
-                    pipButton.checked = false;
-                    cmButton.checked = false;
-                }
-            }
-
+            width:              buttonSize
+            height:             width
+            checkable:          true
+            radius:             buttonRadius
+            onClicked:          _root.activateHighBrightnessVisual()
             QGCColoredImage {
-                source: "/auterion/img/thermal-brightness.svg"
-                color: qgcPal.buttonText
-                anchors.fill: parent
+                source:         "/auterion/img/thermal-brightness.svg"
+                color:          qgcPal.buttonText
+                width:          parent.width * iconRatio
+                height:         width
+                anchors.centerIn:   parent
+                sourceSize.height:  height
             }
         }
         // Thermal with color-map
         QGCHoverButton {
-            id: cmButton
-            width: pipButton.width
-            height: width
-            checkable: true
-            radius: pipButton.radius
-
-            onCheckedChanged: {
-                if(checked) {
-                    pipButton.checked = false;
-                    hbButton.checked = false;
-                }
-            }
-
+            width:              buttonSize
+            height:             width
+            checkable:          true
+            radius:             buttonRadius
+            onClicked:          _root.activateColorMapVisual()
             QGCColoredImage {
-                source: "/auterion/img/thermal-palette.svg"
-                color: qgcPal.buttonText
-                anchors.fill: parent
+                source:         "/auterion/img/thermal-palette.svg"
+                color:          qgcPal.buttonText
+                width:          parent.width * iconRatio
+                height:         width
+                anchors.centerIn:   parent
+                sourceSize.height:  height
             }
         }
     }
-    Rectangle {
-        id: backgroundRect
-
-        anchors.centerIn: buttonsRow
-        width: buttonsRow.width * 1.2
-        height: buttonsRow.height * 1.2
-        color: qgcPal.window
-
-        radius: height/2
-
-        z: buttonsRow.z - 1
-    }
-
-    state: "none"
-
-    onStateChanged: {
-        if(state === "pip") {
-            _root.activatePip()
-        }
-        else if (state === "hb") {
-            _root.activateHighBrightnessVisual()
-        }
-        else if (state === "cm") {
-            _root.activateColorMapVisual()
-        }
-        else {
-            _root.activateStandardVisual()
-        }
-    }
-
-    states: [
-        State {
-            name: "none"
-            when: !pipButton.checked && !hbButton.checked && !cmButton.checked
-        },
-        State {
-            name: "pip"
-            when: pipButton.checked
-        },
-        State {
-            name: "hb"
-            when: hbButton.checked
-        },
-        State {
-            name: "cm"
-            when: cmButton.checked
-        }
-    ]
 }

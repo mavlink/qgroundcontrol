@@ -80,14 +80,15 @@
         <file alias="plus_icon.svg">res/images/plus_icon.svg</file>
         <file alias="settings.svg">res/images/settings.svg</file>
         <file alias="sliders.svg">res/images/sliders.svg</file>
+        <file alias="thermal-brightness.svg">res/images/thermal-brightness.svg</file>
+        <file alias="thermal-palette.svg">res/images/thermal-palette.svg</file>
+        <file alias="thermal-pip.svg">res/images/thermal-pip.svg</file>
+        <file alias="thermal-standard.svg">res/images/thermal-standard.svg</file>
         <file alias="vehicle.svg">res/images/vehicle.svg</file>
         <file alias="vehicle_settings.svg">res/images/vehicle_settings.svg</file>
         <file alias="vertical_speed.svg">res/images/vertical_speed.svg</file>
         <file alias="void.png">res/images/void.png</file>
         <file alias="zoom_icon.svg">res/images/zoom_icon.svg</file>
-        <file alias="thermal-brightness.svg">res/images/thermal-brightness.svg</file>
-        <file alias="thermal-palette.svg">res/images/thermal-palette.svg</file>
-        <file alias="thermal-standard.svg">res/images/thermal-standard.svg</file>
     </qresource>
     <qresource prefix="/Auterion/Widgets">
         <file alias="Auterion/Widgets/AuterionArtificialHorizon.qml">res/Auterion/Widgets/AuterionArtificialHorizon.qml</file>
