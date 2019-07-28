@@ -16,7 +16,7 @@ import QGroundControl.Controls      1.0
 
 Rectangle {
     id:         _root
-    color:      qgcPal.windowShade
+    color:      qgcPal.window
     width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
     height:     toolStripColumn.height + (toolStripColumn.anchors.margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2
