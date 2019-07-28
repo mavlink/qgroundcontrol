@@ -517,30 +517,49 @@ Item {
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -4 : 2)
         height:                 parent.width * 0.125
         width:                  height
-        property real curPitch: 0
-        property real curYaw:   0
+
+        property real _currentPitch: 0
+        property real _currentYaw: 0
+        property real _lastHackedYaw: 0
+        property real speedMultiplier: 5.0
+
         Timer {
             interval:   100  //-- 10Hz
             running:    gimbalControl.visible && activeVehicle
             repeat:     true
             onTriggered: {
                 if (activeVehicle) {
-                    var p = Math.round(stick.yAxis * -90)
-                    var y = Math.round(stick.xAxis * 180)
-                    if(p !== gimbalControl.curPitch || y !== gimbalControl.curYaw) {
-                        gimbalControl.curPitch = p
-                        gimbalControl.curYaw   = y
-                        activeVehicle.gimbalControlValue(p, y)
+                    var yaw = gimbalControl._currentYaw
+                    var pitch = gimbalControl._currentPitch
+                    var oldYaw = yaw;
+                    var oldPitch = pitch;
+                    yaw += stick.xAxis * gimbalControl.speedMultiplier
+                    var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 100)
+                    pitch += (stick.yAxis * 2.0 - 1.0) * gimbalControl.speedMultiplier
+                    hackedYaw = clamp(hackedYaw, -180, 180)
+                    yaw = clamp(yaw, -180, 180)
+                    pitch = clamp(pitch, -90, 90)
+                    if(gimbalControl._lastHackedYaw !== hackedYaw || gimbalControl.hackedYaw !== oldYaw || pitch !== oldPitch) {
+                        activeVehicle.gimbalControlValue(pitch, hackedYaw)
+                        gimbalControl._lastHackedYaw = hackedYaw
+                        gimbalControl._currentPitch = pitch
+                        gimbalControl._currentYaw = yaw
                     }
                 }
+            }
+
+            function clamp(num, min, max) {
+                return Math.min(Math.max(num, min), max);
             }
         }
         JoystickThumbPad {
             id:                     stick
             anchors.fill:           parent
-            lightColors:            true
+            lightColors:            qgcPal.globalTheme === QGCPalette.Light
+            yAxisThrottle:          true
             yAxisThrottleCentered:  true
-            springYToCenter:        false
+            xAxis: 0
+            yAxis: 0.5
         }
     }
     //-- Connection Lost While Armed
