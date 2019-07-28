@@ -42,7 +42,12 @@ sudo yum install SDL2 SDL2-devel -y
 ```
 
 ## Update Kernel to support all USB Joysticks
-Chances are that your USB Joystick does not get recognized under CentOS. If your Joystick gets recognized fine and shows up as `/dev/input/js0` when you run the command `/dev/input/*` you can skip this step. To fix the joystick not being recognized even if the same unit is working under Windows or Ubuntu please follow this guide to update the kernel: https://www.howtoforge.com/tutorial/how-to-upgrade-kernel-in-centos-7-server/
+Chances are that your USB Joystick does not get recognized under CentOS. In our tests the following joysticks did not work out of the box:
+- Logitech F310
+- Microsoft Xbox controller (USB)
+If your Joystick gets recognized fine and shows up as `/dev/input/js0` when you run the command `/dev/input/*` you can skip this step.
+
+To fix the joystick not being recognized even if the same unit is working under Windows or Ubuntu please follow this guide to update the kernel: https://www.howtoforge.com/tutorial/how-to-upgrade-kernel-in-centos-7-server/
 
 Here's a short summary of the commands that you need to execute to update the kernel:
 ```
