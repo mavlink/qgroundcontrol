@@ -626,7 +626,7 @@ QGCCameraControl::startZoom(int direction)
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
-            true,                                   // ShowError
+            false,                                  // ShowError
             ZOOM_TYPE_CONTINUOUS,                   // Zoom type
             direction);                             // Direction (-1 wide, 1 tele)
     }
@@ -641,7 +641,7 @@ QGCCameraControl::stopZoom()
         _vehicle->sendMavCommand(
             _compID,                                // Target component
             MAV_CMD_SET_CAMERA_ZOOM,                // Command id
-            true,                                   // ShowError
+            false,                                  // ShowError
             ZOOM_TYPE_CONTINUOUS,                   // Zoom type
             0);                                     // Direction (-1 wide, 1 tele)
     }
