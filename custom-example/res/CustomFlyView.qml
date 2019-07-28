@@ -251,7 +251,7 @@ Item {
     //-- Vehicle Indicator
     Rectangle {
         id:                     vehicleIndicator
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.window
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2
@@ -460,7 +460,7 @@ Item {
 
     //-- Attitude Indicator
     Rectangle {
-        color:                  qgcPal.windowShade
+        color:                  qgcPal.window
         width:                  attitudeIndicator.width * 0.5
         height:                 vehicleIndicator.height
         visible:                _showAttitude
@@ -581,7 +581,7 @@ Item {
                     }
                     QGCLabel {
                         text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
-                width:          connectionLostArmed.width * 0.75
+                        width:          connectionLostArmed.width * 0.75
                         wrapMode:       Text.WordWrap
                         color:          qgcPal.alertText
                         font.family:    ScreenTools.demiboldFontFamily
