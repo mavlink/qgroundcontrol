@@ -45,4 +45,8 @@
         <file alias="Custom/Widgets/CustomVehicleButton.qml">res/Custom/Widgets/CustomVehicleButton.qml</file>
         <file alias="Custom/Widgets/qmldir">res/Custom/Widgets/qmldir</file>
     </qresource>
+    <qresource prefix="Custom/Camera">
+        <file alias="Custom/Camera/qmldir">res/Custom/Camera/qmldir</file>
+        <file alias="Custom/Camera/ZoomControl.qml">res/Custom/Camera/ZoomControl.qml</file>
+    </qresource>
 </RCC>

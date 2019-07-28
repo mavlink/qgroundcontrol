@@ -28,6 +28,7 @@ import QGroundControl.Vehicle           1.0
 
 import CustomQuickInterface             1.0
 import Custom.Widgets                   1.0
+import Custom.Camera                    1.0
 
 Item {
     height:         mainColumn.height
@@ -160,15 +161,20 @@ Item {
                         sourceSize.height:  height
                     }
                 }
+
                 // Thermal with color-map
                 QGCHoverButton {
                     width:              buttonSize
                     height:             width
                     checkable:          true
                     radius:             buttonRadius
+
+                    function isDesiredThermalPalette(name) {
+                        return name === 'Rainbow';
+                    }
                     onClicked: {
                         if(_irPaletteFact) {
-                            var entryIdx = _irPaletteFact.enumStrings.find("Rainbow")
+                            var entryIdx = _irPaletteFact.enumStrings.find(isDesiredThermalPalette)
                             if(entryIdx !== undefined) {
                                 _irPaletteFact.value = entryIdx;
                             }
@@ -414,6 +420,29 @@ Item {
                     height:     1
                     width:      1
                 }
+            }
+        }
+        //-- Zoom Buttons
+        ZoomControl {
+            id:             zoomControl
+            visible:        _hasZoom
+            mainColor:      qgcPal.windowShade
+            contentColor:   qgcPal.text
+            fontPointSize:  ScreenTools.defaultFontPointSize * 1.25
+            zoomLevelVisible: false
+            zoomLevel:      _hasZoom ? _camera.zoomLevel : NaN
+            anchors.horizontalCenter: parent.horizontalCenter
+            onZoomIn: {
+                _camera.stepZoom(1)
+            }
+            onZoomOut: {
+                _camera.stepZoom(-1)
+            }
+            onContinuousZoomStart: {
+                _camera.startZoom(zoomIn ? 1 : -1)
+            }
+            onContinuousZoomStop: {
+                _camera.stopZoom()
             }
         }
     }
