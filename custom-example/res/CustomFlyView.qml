@@ -512,10 +512,9 @@ Item {
     Item {
         id:                     gimbalControl
         visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl
-        anchors.top:            camControlLoader.bottom
-        anchors.topMargin:      height * -0.5
+        anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * 2
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -4 : 2)
         height:                 parent.width * 0.125
         width:                  height
         property real curPitch: 0
