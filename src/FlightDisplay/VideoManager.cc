@@ -291,14 +291,20 @@ VideoManager::_updateSettings()
             qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
             switch(pInfo->type()) {
                 case VIDEO_STREAM_TYPE_RTSP:
+                    _videoReceiver->setUri(pInfo->uri());
+                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceRTSP);
+                    break;
                 case VIDEO_STREAM_TYPE_TCP_MPEG:
                     _videoReceiver->setUri(pInfo->uri());
+                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceTCP);
                     break;
                 case VIDEO_STREAM_TYPE_RTPUDP:
                     _videoReceiver->setUri(QStringLiteral("udp://0.0.0.0:%1").arg(pInfo->uri()));
+                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceUDPH264);
                     break;
                 case VIDEO_STREAM_TYPE_MPEG_TS_H264:
                     _videoReceiver->setUri(QStringLiteral("mpegts://0.0.0.0:%1").arg(pInfo->uri()));
+                    _toolbox->settingsManager()->videoSettings()->videoSource()->setRawValue(VideoSettings::videoSourceMPEGTS);
                     break;
                 default:
                     _videoReceiver->setUri(pInfo->uri());
