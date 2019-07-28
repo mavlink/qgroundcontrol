@@ -100,9 +100,12 @@ Item {
                     _evFact.value = 10
                 }
             }
+            function isDesiredThermalPalette(name) {
+                return name === 'Rainbow';
+            }
             onActivateColorMapVisual: {
                 if(_irPaletteFact) {
-                    var entryIdx = _irPaletteFact.enumStrings.find("Rainbow")
+                    var entryIdx = _irPaletteFact.enumStrings.find(isDesiredThermalPalette)
                     if(entryIdx !== undefined) {
                         _irPaletteFact.value = entryIdx;
                     }
