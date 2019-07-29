@@ -1024,7 +1024,8 @@
             "rawName": "MAV_CMD_IMAGE_STOP_CAPTURE",
             "friendlyName": "Stop image capture",
             "description":  "Stop taking photos.",
-            "category":     "Camera"
+            "category":     "Camera",
+            "friendlyEdit": true
         },
         { "id": 2003, "rawName": "MAV_CMD_DO_TRIGGER_CONTROL", "friendlyName": "Trigger control" },
         {
@@ -1045,7 +1046,8 @@
             "rawName":      "MAV_CMD_VIDEO_STOP_CAPTURE",
             "friendlyName": "Stop video capture",
             "description":  "Stop video capture.",
-            "category":     "Camera"
+            "category":     "Camera",
+            "friendlyEdit": true
         },
         { "id": 2800, "rawName": "MAV_CMD_PANORAMA_CREATE", "friendlyName": "Create panorama" },
         {

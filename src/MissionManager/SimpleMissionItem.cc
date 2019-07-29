@@ -20,12 +20,12 @@
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
 
-FactMetaData* SimpleMissionItem::_altitudeMetaData =        NULL;
-FactMetaData* SimpleMissionItem::_commandMetaData =         NULL;
-FactMetaData* SimpleMissionItem::_defaultParamMetaData =    NULL;
-FactMetaData* SimpleMissionItem::_frameMetaData =           NULL;
-FactMetaData* SimpleMissionItem::_latitudeMetaData =        NULL;
-FactMetaData* SimpleMissionItem::_longitudeMetaData =       NULL;
+FactMetaData* SimpleMissionItem::_altitudeMetaData =        nullptr;
+FactMetaData* SimpleMissionItem::_commandMetaData =         nullptr;
+FactMetaData* SimpleMissionItem::_defaultParamMetaData =    nullptr;
+FactMetaData* SimpleMissionItem::_frameMetaData =           nullptr;
+FactMetaData* SimpleMissionItem::_latitudeMetaData =        nullptr;
+FactMetaData* SimpleMissionItem::_longitudeMetaData =       nullptr;
 
 const char* SimpleMissionItem::_jsonAltitudeModeKey =           "AltitudeMode";
 const char* SimpleMissionItem::_jsonAltitudeKey =               "Altitude";
@@ -152,8 +152,8 @@ SimpleMissionItem::SimpleMissionItem(const SimpleMissionItem& other, bool flyVie
     , _rawEdit                  (false)
     , _dirty                    (false)
     , _ignoreDirtyChangeSignals (false)
-    , _speedSection             (NULL)
-    , _cameraSection            (NULL)
+    , _speedSection             (nullptr)
+    , _cameraSection            (nullptr)
     , _commandTree              (qgcApp()->toolbox()->missionCommandTree())
     , _supportedCommandFact     (0,         "Command:",             FactMetaData::valueTypeUint32)
     , _altitudeMode             (other._altitudeMode)
@@ -595,7 +595,7 @@ void SimpleMissionItem::_rebuildFacts(void)
 
 bool SimpleMissionItem::friendlyEditAllowed(void) const
 {
-    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, (MAV_CMD)command());
+    const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, static_cast<MAV_CMD>(command()));
     if (uiInfo && uiInfo->friendlyEdit()) {
         if (!_missionItem.autoContinue()) {
             return false;
@@ -607,7 +607,6 @@ bool SimpleMissionItem::friendlyEditAllowed(void) const
             case MAV_FRAME_GLOBAL:
             case MAV_FRAME_GLOBAL_RELATIVE_ALT:
                 return true;
-                break;
 
             case MAV_FRAME_GLOBAL_TERRAIN_ALT:
                 return supportsTerrainFrame();
@@ -759,7 +758,7 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
         _missionItem._param7Fact.setRawValue(0);
     }
 
-    MAV_CMD command = (MAV_CMD)this->command();
+    MAV_CMD command = static_cast<MAV_CMD>(this->command());
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
     if (uiInfo) {
         for (int i=1; i<=7; i++) {
@@ -806,13 +805,13 @@ void SimpleMissionItem::_sendFriendlyEditAllowedChanged(void)
 
 QString SimpleMissionItem::category(void) const
 {
-    return _commandTree->getUIInfo(_vehicle, (MAV_CMD)command())->category();
+    return _commandTree->getUIInfo(_vehicle, static_cast<MAV_CMD>(command()))->category();
 }
 
 void SimpleMissionItem::setCommand(int command)
 {
-    if ((MAV_CMD)command != _missionItem.command()) {
-        _missionItem.setCommand((MAV_CMD)command);
+    if (static_cast<MAV_CMD>(command) != _missionItem.command()) {
+        _missionItem.setCommand(static_cast<MAV_CMD>(command));
         _updateOptionalSections();
     }
 }
@@ -876,18 +875,18 @@ void SimpleMissionItem::_updateOptionalSections(void)
     // Remove previous sections
     if (_cameraSection) {
         _cameraSection->deleteLater();
-        _cameraSection = NULL;
+        _cameraSection = nullptr;
     }
     if (_speedSection) {
         _speedSection->deleteLater();
-        _speedSection = NULL;
+        _speedSection = nullptr;
     }
 
     // Add new sections
 
     _cameraSection = new CameraSection(_vehicle, this);
     _speedSection = new SpeedSection(_vehicle, this);
-    if ((MAV_CMD)command() == MAV_CMD_NAV_WAYPOINT) {
+    if (static_cast<MAV_CMD>(command()) == MAV_CMD_NAV_WAYPOINT) {
         _cameraSection->setAvailable(true);
         _speedSection->setAvailable(true);
     }
@@ -938,11 +937,11 @@ void SimpleMissionItem::appendMissionItems(QList<MissionItem*>& items, QObject* 
 
 void SimpleMissionItem::applyNewAltitude(double newAltitude)
 {
-    MAV_CMD command = (MAV_CMD)this->command();
+    MAV_CMD command = static_cast<MAV_CMD>(this->command());
     const MissionCommandUIInfo* uiInfo = _commandTree->getUIInfo(_vehicle, command);
 
     if (uiInfo->specifiesCoordinate() || uiInfo->specifiesAltitudeOnly()) {
-        switch ((MAV_CMD)this->command()) {
+        switch (static_cast<MAV_CMD>(this->command())) {
         case MAV_CMD_NAV_LAND:
         case MAV_CMD_NAV_VTOL_LAND:
             // Leave alone
