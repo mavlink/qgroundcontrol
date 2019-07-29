@@ -10,7 +10,6 @@
 #include "VideoSettings.h"
 #include "QGCApplication.h"
 #include "VideoManager.h"
-#include "VideoReceiver.h"
 
 #include <QQmlEngine>
 #include <QtQml>
