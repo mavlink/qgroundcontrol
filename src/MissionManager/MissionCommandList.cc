@@ -104,7 +104,7 @@ void MissionCommandList::_loadMavCmdInfoJson(const QString& jsonFilename, bool b
 MissionCommandUIInfo* MissionCommandList::getUIInfo(MAV_CMD command) const
 {
     if (!_infoMap.contains(command)) {
-        return NULL;
+        return nullptr;
     }
 
     return _infoMap[command];

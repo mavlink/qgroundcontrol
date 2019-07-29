@@ -24,7 +24,7 @@
 MissionCommandTree::MissionCommandTree(QGCApplication* app, QGCToolbox* toolbox, bool unitTest)
     : QGCTool(app, toolbox)
     , _allCommandsCategory(tr("All commands"))
-    , _settingsManager(NULL)
+    , _settingsManager(nullptr)
     , _unitTest(unitTest)
 {
 }
