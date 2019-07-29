@@ -88,7 +88,7 @@ Item {
             id:             backgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            color:          qgcPal.windowShade
+            color:          qgcPal.window
             radius:         height * 0.5
             visible:        _camera && _camera.modelName === "DSC-QX30" && QGroundControl.videoManager.hasThermal
             anchors.horizontalCenter: parent.horizontalCenter
@@ -198,7 +198,7 @@ Item {
             id:             cameraRect
             height:         cameraCol.height
             width:          cameraCol.width + (ScreenTools.defaultFontPixelWidth * 4)
-            color:          qgcPal.windowShade
+            color:          qgcPal.window
             radius:         ScreenTools.defaultFontPixelWidth * 0.5
             anchors.horizontalCenter: parent.horizontalCenter
             Column {
@@ -274,7 +274,7 @@ Item {
                             fillMode:           Image.PreserveAspectFit
                             mipmap:             true
                             smooth:             true
-                            color:              qgcPal.windowShade
+                            color:              qgcPal.window
                             visible: {
                                 if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
                                     return true
@@ -426,7 +426,7 @@ Item {
         ZoomControl {
             id:             zoomControl
             visible:        _hasZoom
-            mainColor:      qgcPal.windowShade
+            mainColor:      qgcPal.window
             contentColor:   qgcPal.text
             fontPointSize:  ScreenTools.defaultFontPointSize * 1.25
             zoomLevelVisible: false
