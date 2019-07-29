@@ -79,10 +79,12 @@ pipeline {
 						sh 'cd build; make -j`nproc --all`'
 						sh 'ccache -s'
                         sh './deploy/create_linux_appimage.sh ${WORKSPACE} ${WORKSPACE}/build/release ${WORKSPACE}/build/release/package'
+                        sh './deploy/create_linux_deb.sh ${WORKSPACE}/build/release/QGroundControl ${WORKSPACE}/deploy/control ${WORKSPACE}/build/release/package'
 					}
 					post {
 						always {
 							archiveArtifacts artifacts: 'build/**/*.AppImage'
+							archiveArtifacts artifacts: 'build/**/*.deb'
 						}
 						cleanup {
 							sh 'git clean -ff -x -d .'

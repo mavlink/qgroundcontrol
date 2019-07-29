@@ -1,0 +1,9 @@
+Package: QGroundControl
+Version: 1.0-1
+Section: base
+Priority: optional
+Architecture: amd64
+Maintainer: Pierre-Louis TILAK <pierre.tilak@aeronavics.com>
+Depends: gstreamer1.0-plugins-bad, gstreamer1.0-libav
+Description: QGroundControl
+ Cross-platform ground control station for drones (Android, iOS, Mac OS, Linux, Windows) http://qgroundcontrol.io
