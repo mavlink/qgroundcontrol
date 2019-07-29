@@ -409,13 +409,13 @@ bool MissionCommandUIInfo::loadJsonInfo(const QJsonObject& jsonObject, bool requ
 
 const MissionCmdParamInfo* MissionCommandUIInfo::getParamInfo(int index, bool& showUI) const
 {
-    const MissionCmdParamInfo* paramInfo = NULL;
+    const MissionCmdParamInfo* paramInfo = nullptr;
 
     if (_paramInfoMap.contains(index)) {
         paramInfo = _paramInfoMap[index];
     }
 
-    showUI = (paramInfo != NULL) && !_paramRemoveList.contains(index);
+    showUI = (paramInfo != nullptr) && !_paramRemoveList.contains(index);
 
     return paramInfo;
 }
