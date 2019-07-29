@@ -234,7 +234,7 @@ Item {
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 4
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
 
         onLoaded: {
             item.showGimbalControl.connect(showGimbalJoystick)

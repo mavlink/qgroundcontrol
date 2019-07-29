@@ -48,7 +48,6 @@ Column {
     property bool   _storageIgnored:        _camera && _camera.storageStatus === QGCCameraControl.STORAGE_NOT_SUPPORTED
     property bool   _canShoot:              !_videoRecording && _cameraPhotoIdle && ((_storageReady && _camera.storageFree > 0) || _storageIgnored)
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
-    property bool   _isZoom:                _camera && _camera.isZoom
 
     function showSettings() {
         mainWindow.showComponentDialog(cameraSettings, _cameraVideoMode ? qsTr("Video Settings") : qsTr("Camera Settings"), 70, StandardButton.Ok)
@@ -189,54 +188,6 @@ Column {
         font.pointSize: ScreenTools.smallFontPointSize
         visible: _cameraPhotoMode
         anchors.horizontalCenter: parent.horizontalCenter
-    }
-    Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isZoom; }
-    Row {
-        spacing:    ScreenTools.defaultFontPixelWidth * 4
-        visible:    _isZoom
-        anchors.horizontalCenter: parent.horizontalCenter
-        Rectangle {
-            color:  qgcPal.button
-            height: ScreenTools.defaultFontPixelHeight * 2
-            width:  height
-            radius: width * 0.5
-            border.color: qgcPal.buttonText
-            border.width: 1
-            QGCLabel {
-                text:   qsTr("W")
-                anchors.centerIn: parent
-            }
-            MouseArea {
-                anchors.fill: parent
-                onPressAndHold: {
-                    _camera.startZoom(-1)
-                }
-                onReleased: {
-                    _camera.stopZoom()
-                }
-            }
-        }
-        Rectangle {
-            color:  qgcPal.button
-            height: ScreenTools.defaultFontPixelHeight * 2
-            width:  height
-            radius: width * 0.5
-            border.color: qgcPal.buttonText
-            border.width: 1
-            QGCLabel {
-                text:   qsTr("T")
-                anchors.centerIn: parent
-            }
-            MouseArea {
-                anchors.fill: parent
-                onPressAndHold: {
-                    _camera.startZoom(1)
-                }
-                onReleased: {
-                    _camera.stopZoom()
-                }
-            }
-        }
     }
     Item { width: 1; height: ScreenTools.defaultFontPixelHeight; visible: _isCamera; }
     Component {
