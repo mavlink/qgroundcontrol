@@ -281,8 +281,8 @@ Item {
         dragMinY: 0
         dragMaxY: parent.height - joystick.height
 
-        panDegrees:     _activeVehicle ? _activeVehicle.gimbalYaw   : NaN
-        tiltDegrees:    _activeVehicle ? _activeVehicle.gimbalPitch : NaN
+        panDegrees:     activeVehicle ? activeVehicle.gimbalYaw   : NaN
+        tiltDegrees:    activeVehicle ? activeVehicle.gimbalPitch : NaN
 
         returnAnimationDurationMs: 100
 
