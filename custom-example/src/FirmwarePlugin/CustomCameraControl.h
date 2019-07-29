@@ -38,6 +38,7 @@ public:
     void        setVideoMode        () override;
     void        setPhotoMode        () override;
     void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
+    void        setThermalMode      (ThermalViewMode mode);
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;

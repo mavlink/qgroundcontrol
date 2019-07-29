@@ -63,6 +63,8 @@ Item {
     property Fact   _evFact:                _camera ? _camera.ev : null
     property Fact   _irPaletteFact:         _camera ? _camera.irPalette : null
 
+    property bool _hasThermal: _camera && (QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision")
+
     Connections {
         target: QGroundControl.multiVehicleManager.activeVehicle
         onConnectionLostChanged: {
@@ -90,7 +92,7 @@ Item {
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
             color:          qgcPal.windowShade
             radius:         height * 0.5
-            visible:        _camera && _camera.modelName === "DSC-QX30" && QGroundControl.videoManager.hasThermal
+            visible:        _hasThermal
             anchors.horizontalCenter: parent.horizontalCenter
             ButtonGroup {
                 id:         buttonGroup
@@ -107,6 +109,7 @@ Item {
                     height:             width
                     checkable:          true
                     radius:             buttonRadius
+                    checked:            true
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_OFF
                         //-- Restore EV to 0
@@ -129,6 +132,7 @@ Item {
                     height:             width
                     checkable:          true
                     radius:             buttonRadius
+                    visible:            _camera.modelName === "DSC-QX30"
                     onClicked:          _camera.thermalMode = QGCCameraControl.THERMAL_PIP
                     QGCColoredImage {
                         source:         "/custom/img/thermal-pip.svg"
@@ -145,6 +149,7 @@ Item {
                     height:             width
                     checkable:          true
                     radius:             buttonRadius
+                    visible:            _camera.modelName === "DSC-QX30"
                     onClicked: {
                         _camera.thermalMode = QGCCameraControl.THERMAL_OFF
                         //-- Set EV to +1.3
@@ -554,7 +559,7 @@ Item {
                     Row {
                         spacing:            ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
-                        visible:            QGroundControl.videoManager.hasThermal
+                        visible:            _hasThermal
                         property var thermalModes: [qsTr("Off"), qsTr("Blend"), qsTr("Full"), qsTr("Picture In Picture")]
                         QGCLabel {
                             text:           qsTr("Thermal View Mode")
@@ -573,14 +578,14 @@ Item {
                         color:      qgcPal.button
                         height:     1
                         width:      cameraSettingsCol.width
-                        visible:            QGroundControl.videoManager.hasThermal
+                        visible:    _hasThermal
                     }
                     //-------------------------------------------
                     //-- Thermal Video Opacity
                     Row {
                         spacing:            ScreenTools.defaultFontPixelWidth
                         anchors.horizontalCenter: parent.horizontalCenter
-                        visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                        visible:            _hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
                         QGCLabel {
                             text:           qsTr("Blend Opacity")
                             width:          _labelFieldWidth
@@ -602,7 +607,7 @@ Item {
                         color:      qgcPal.button
                         height:     1
                         width:      cameraSettingsCol.width
-                        visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
+                        visible:    _hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_BLEND
                     }
                     //-------------------------------------------
                     //-- Settings from Camera Definition File
