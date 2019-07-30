@@ -50,6 +50,7 @@ Item {
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _cameraPresent:         _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property var    _flightPermit:          QGroundControl.airmapSupported ? QGroundControl.airspaceManager.flightPlan.flightPermitStatus : null
+    property bool   _hasGimbal:             activeVehicle && activeVehicle.gimbalData
 
     property bool   _airspaceIndicatorVisible: QGroundControl.airmapSupported && mainIsMap && _flightPermit && _flightPermit !== AirspaceFlightPlanProvider.PermitNone
 
@@ -143,7 +144,7 @@ Item {
             connectionLostDisarmedDialog.close()
         }
     }
-
+    //-------------------------------------------------------------------------
     MessageDialog {
         id:                 connectionLostDisarmedDialog
         title:              qsTr("Communication Lost")
@@ -153,7 +154,7 @@ Item {
             connectionLostDisarmedDialog.close()
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Heading Indicator
     Rectangle {
         id:             compassBar
@@ -163,7 +164,7 @@ Item {
         radius:         2
         clip:           true
         anchors.top:    parent.top
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 2)
+        anchors.topMargin: ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 1)
         anchors.horizontalCenter: parent.horizontalCenter
         visible:        !mainIsMap
         Repeater {
@@ -225,7 +226,7 @@ Item {
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * -0.5
         anchors.horizontalCenter:   parent.horizontalCenter
     }
-
+    //-------------------------------------------------------------------------
     //-- Camera Control
     Loader {
         id:                     camControlLoader
@@ -234,9 +235,9 @@ Item {
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 4
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight
     }
-
+    //-------------------------------------------------------------------------
     //-- Map Scale
     MapScale {
         id:                     mapScale
@@ -247,7 +248,7 @@ Item {
         mapControl:             mainWindow.flightDisplayMap
         visible:                rootBackground.visible && mainIsMap
     }
-
+    //-------------------------------------------------------------------------
     //-- Vehicle Indicator
     Rectangle {
         id:                     vehicleIndicator
@@ -457,7 +458,7 @@ Item {
             onDoubleClicked:    _showAttitude = !_showAttitude
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Attitude Indicator
     Rectangle {
         color:                  qgcPal.window
@@ -485,7 +486,7 @@ Item {
             anchors.centerIn:   parent
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Multi Vehicle Selector
     Row {
         id:                     multiVehicleSelector
@@ -507,47 +508,104 @@ Item {
             }
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Gimbal Control
-    Item {
+    Rectangle {
         id:                     gimbalControl
-        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl
+        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl && _hasGimbal
         anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
-        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -4 : 2)
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -1 : 1)
         height:                 parent.width * 0.125
         width:                  height
-        property real curPitch: 0
-        property real curYaw:   0
+        color:                  Qt.rgba(1,1,1,0.25)
+        radius:                 width * 0.5
+
+        property real _currentPitch:    0
+        property real _currentYaw:      0
+        property real time_last_seconds:0
+        property real _lastHackedYaw:   0
+        property real speedMultiplier:  5
+
+        property real maxRate:          20
+        property real exponentialFactor:0.6
+        property real kPFactor:         3
+
+        property real reportedYawDeg:   activeVehicle ? activeVehicle.gimbalYaw   : NaN
+        property real reportedPitchDeg: activeVehicle ? activeVehicle.gimbalPitch : NaN
+
         Timer {
             interval:   100  //-- 10Hz
             running:    gimbalControl.visible && activeVehicle
             repeat:     true
             onTriggered: {
                 if (activeVehicle) {
-                    var p = Math.round(stick.yAxis * -90)
-                    var y = Math.round(stick.xAxis * 180)
-                    if(p !== gimbalControl.curPitch || y !== gimbalControl.curYaw) {
-                        gimbalControl.curPitch = p
-                        gimbalControl.curYaw   = y
-                        activeVehicle.gimbalControlValue(p, y)
+                    var yaw = gimbalControl._currentYaw
+                    var oldYaw = yaw;
+                    var pitch = gimbalControl._currentPitch
+                    var oldPitch = pitch;
+                    var pitch_stick = (stick.yAxis * 2.0 - 1.0)
+                    if(_camera && _camera.vendor === "NextVision") {
+                        var time_current_seconds = ((new Date()).getTime())/1000.0
+                        if(gimbalControl.time_last_seconds === 0.0)
+                            gimbalControl.time_last_seconds = time_current_seconds
+                        var pitch_angle = gimbalControl._currentPitch
+                        // Preparing stick input with exponential curve and maximum rate
+                        var pitch_expo = (1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick
+                        var pitch_rate = pitch_stick * gimbalControl.maxRate
+                        var pitch_angle_reported = gimbalControl.reportedPitchDeg
+                        // Integrate the angular rate to an angle time abstracted
+                        pitch_angle += pitch_rate * (time_current_seconds - gimbalControl.time_last_seconds)
+                        // Control the angle quicker by driving the gimbal internal angle controller into saturation
+                        var pitch_angle_error = pitch_angle - pitch_angle_reported
+                        pitch_angle_error = Math.round(pitch_angle_error)
+                        var pitch_setpoint = pitch_angle + pitch_angle_error * gimbalControl.kPFactor
+                        //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
+                        pitch = pitch_setpoint
+                        yaw += stick.xAxis * gimbalControl.speedMultiplier
+                        yaw = clamp(yaw, -180, 180)
+                        pitch = clamp(pitch, -45, 45)
+                        //console.info("P: " + pitch + "; Y: " + yaw)
+                        activeVehicle.gimbalControlValue(pitch, yaw);
+                        gimbalControl._currentYaw = yaw
+                        gimbalControl._currentPitch = pitch_angle
+                        gimbalControl.time_last_seconds = time_current_seconds
+                    } else {
+                        yaw += stick.xAxis * gimbalControl.speedMultiplier
+                        var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 25)
+                        pitch += pitch_stick * gimbalControl.speedMultiplier
+                        hackedYaw = clamp(hackedYaw, -180, 180)
+                        yaw = clamp(yaw, -180, 180)
+                        pitch = clamp(pitch, -90, 90)
+                        if(gimbalControl._lastHackedYaw !== hackedYaw || gimbalControl.hackedYaw !== oldYaw || pitch !== oldPitch) {
+                            activeVehicle.gimbalControlValue(pitch, hackedYaw)
+                            gimbalControl._lastHackedYaw = hackedYaw
+                            gimbalControl._currentPitch = pitch
+                            gimbalControl._currentYaw = yaw
+                        }
                     }
                 }
+            }
+            function clamp(num, min, max) {
+                return Math.min(Math.max(num, min), max);
             }
         }
         JoystickThumbPad {
             id:                     stick
             anchors.fill:           parent
-            lightColors:            true
+            lightColors:            qgcPal.globalTheme === QGCPalette.Light
+            yAxisThrottle:          true
             yAxisThrottleCentered:  true
-            springYToCenter:        false
+            xAxis:                  0
+            yAxis:                  0.5
         }
     }
+    //-------------------------------------------------------------------------
     //-- Connection Lost While Armed
     Popup {
-        id:         connectionLostArmed
+        id:                     connectionLostArmed
         width:                  mainWindow.width  * 0.666
-                height:             connectionLostArmedCol.height * 1.5
+        height:                 connectionLostArmedCol.height * 1.5
         modal:                  true
         focus:                  true
         parent:                 Overlay.overlay
@@ -556,38 +614,38 @@ Item {
         closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             anchors.fill:       parent
-                color:              qgcPal.alertBackground
-                border.color:       qgcPal.alertBorder
+            color:              qgcPal.alertBackground
+            border.color:       qgcPal.alertBorder
             radius:             ScreenTools.defaultFontPixelWidth
         }
-                Column {
-                    id:                 connectionLostArmedCol
-                    spacing:            ScreenTools.defaultFontPixelHeight * 3
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           qsTr("Communication Lost")
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        color:          qgcPal.alertText
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("Warning: Connection to vehicle lost.")
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
-                        width:          connectionLostArmed.width * 0.75
-                        wrapMode:       Text.WordWrap
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
+        Column {
+            id:                 connectionLostArmedCol
+            spacing:            ScreenTools.defaultFontPixelHeight * 3
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn:   parent
+            QGCLabel {
+                text:           qsTr("Communication Lost")
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.largeFontPointSize
+                color:          qgcPal.alertText
+                anchors.horizontalCenter: parent.horizontalCenter
             }
+            QGCLabel {
+                text:           qsTr("Warning: Connection to vehicle lost.")
+                color:          qgcPal.alertText
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.mediumFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCLabel {
+                text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
+                width:          connectionLostArmed.width * 0.75
+                wrapMode:       Text.WordWrap
+                color:          qgcPal.alertText
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.mediumFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
 }
