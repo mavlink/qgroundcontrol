@@ -98,17 +98,17 @@ public:
 #endif
 
 #ifdef QT_DEBUG
-    bool    isDebug                () { return true; }
+    bool isDebug                () { return true; }
 #else
-    bool    isDebug                () { return false; }
+    bool isDebug                () { return false; }
 #endif
 
     bool    hasTouch() const;
 
-    QString iOSDevice          () const;
-    QString fixedFontFamily    () const;
-    QString normalFontFamily   () const;
-    QString boldFontFamily     () const;
+    QString  iOSDevice          () const;
+    QString  fixedFontFamily    () const;
+    QString  normalFontFamily   () const;
+    QString  boldFontFamily     () const;
 };
 
 #endif
