@@ -23,6 +23,10 @@ Rectangle {
 
     property alias model: checkListRepeater.model
 
+    function setResetEnabled(resetEnabled) {
+        resetButton.enabled = resetEnabled
+    }
+
     property bool _passed:  false
 
     function _handleGroupPassedChanged(index, passed) {
@@ -80,6 +84,7 @@ Rectangle {
                 font.pointSize:         ScreenTools.mediumFontPointSize
             }
             QGCButton {
+                id:                     resetButton
                 width:                  1.2*ScreenTools.defaultFontPixelHeight
                 height:                 1.2*ScreenTools.defaultFontPixelHeight
                 anchors.right:          parent.right
