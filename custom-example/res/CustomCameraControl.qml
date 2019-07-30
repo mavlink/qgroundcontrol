@@ -36,11 +36,9 @@ Item {
     visible:        !QGroundControl.videoManager.fullScreen
 
     readonly property string _commLostStr:  qsTr("NO CAMERA")
-    readonly property real   buttonSize:    ScreenTools.defaultFontPixelWidth * 4
-    readonly property real   buttonRadius:  ScreenTools.defaultFontPixelWidth * 0.5
-    readonly property real   iconRatio:     0.666
+    readonly property real   buttonSize:    ScreenTools.defaultFontPixelWidth * 5
 
-    property real   _spacers:               ScreenTools.defaultFontPixelHeight
+    property real   _spacers:               ScreenTools.defaultFontPixelHeight * 0.5
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth  * 28
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth  * 30
     property real   _editFieldHeight:       ScreenTools.defaultFontPixelHeight * 2
@@ -60,9 +58,11 @@ Item {
     property bool   _recordingVideo:        _cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING
     property bool   _settingsEnabled:       !_communicationLost && _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED && _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_IDLE && !_recordingVideo
     property bool   _hasZoom:               _camera && _camera.hasZoom
-    property Fact   _evFact:                _camera ? _camera.ev : null
     property Fact   _irPaletteFact:         _camera ? _camera.irPalette : null
-
+    property bool   _isShortScreen:         mainWindow.height / ScreenTools.realPixelDensity < 120
+    property real   _gimbalPitch:           activeVehicle ? -activeVehicle.gimbalPitch : 0
+    property real   _gimbalYaw:             activeVehicle ? activeVehicle.gimbalYaw : 0
+    property bool   _hasGimbal:             activeVehicle && activeVehicle.gimbalData
     Connections {
         target: QGroundControl.multiVehicleManager.activeVehicle
         onConnectionLostChanged: {
@@ -80,18 +80,26 @@ Item {
     //-- Main Column
     Column {
         id:             mainColumn
-        spacing:        ScreenTools.defaultFontPixelHeight
+        spacing:        _spacers
         anchors.centerIn: parent
         //---------------------------------------------------------------------
         //-- Quick Thermal Modes
-        Rectangle {
+        Item {
             id:             backgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            color:          qgcPal.window
-            radius:         height * 0.5
-            visible:        _camera && _camera.modelName === "DSC-QX30" && QGroundControl.videoManager.hasThermal
+            visible:        _irPaletteFact && QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision"
             anchors.horizontalCenter: parent.horizontalCenter
+            Component.onCompleted: {
+                if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
+                    if(_camera.thermalMode === QGCCameraControl.THERMAL_OFF)
+                        standardMode.checked = true
+                    if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP)
+                        thermalPip.checked = true
+                    if(_camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+                        thermalFull.checked = true
+                }
+            }
             ButtonGroup {
                 id:         buttonGroup
                 exclusive:  true
@@ -99,326 +107,356 @@ Item {
             }
             Row {
                 id:                     buttonsRow
-                spacing:                ScreenTools.defaultFontPixelWidth * 0.25
+                spacing:                ScreenTools.defaultFontPixelWidth * 0.5
                 anchors.centerIn:       parent
                 //-- Standard
-                QGCHoverButton {
+                CustomQuickButton {
+                    id:                 standardMode
                     width:              buttonSize
-                    height:             width
-                    checkable:          true
-                    radius:             buttonRadius
+                    height:             buttonSize
+                    iconSource:        "/custom/img/thermal-standard.svg"
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_OFF
-                        //-- Restore EV to 0
-                        if(_evFact) {
-                            _evFact.value = 6
-                        }
-                    }
-                    QGCColoredImage {
-                        source:         "/custom/img/thermal-standard.svg"
-                        color:          parent.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                        width:          parent.width * iconRatio
-                        height:         width
-                        anchors.centerIn:   parent
-                        sourceSize.height:  height
                     }
                 }
                 //-- PIP
-                QGCHoverButton {
+                CustomQuickButton {
+                    id:                 thermalPip
                     width:              buttonSize
-                    height:             width
-                    checkable:          true
-                    radius:             buttonRadius
-                    onClicked:          _camera.thermalMode = QGCCameraControl.THERMAL_PIP
-                    QGCColoredImage {
-                        source:         "/custom/img/thermal-pip.svg"
-                        color:          parent.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                        width:          parent.width * iconRatio
-                        height:         width
-                        anchors.centerIn:   parent
-                        sourceSize.height:  height
+                    height:             buttonSize
+                    visible:            _camera.vendor !== "NextVision"
+                    iconSource:        "/custom/img/thermal-pip.svg"
+                    onClicked:  {
+                        _camera.thermalMode = QGCCameraControl.THERMAL_PIP
                     }
                 }
-                // Visual with high brightness
-                QGCHoverButton {
+                // Thermal
+                CustomQuickButton {
+                    id:                 thermalFull
                     width:              buttonSize
-                    height:             width
-                    checkable:          true
-                    radius:             buttonRadius
-                    onClicked: {
-                        _camera.thermalMode = QGCCameraControl.THERMAL_OFF
-                        //-- Set EV to +1.3
-                        if(_evFact) {
-                            _evFact.value = 10
-                        }
-                    }
-                    QGCColoredImage {
-                        source:         "/custom/img/thermal-brightness.svg"
-                        color:          parent.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                        width:          parent.width * iconRatio
-                        height:         width
-                        anchors.centerIn:   parent
-                        sourceSize.height:  height
+                    height:             buttonSize
+                    iconSource:         "/custom/img/thermal-brightness.svg"
+                    onClicked:  {
+                        _camera.thermalMode = QGCCameraControl.THERMAL_FULL
                     }
                 }
-
-                // Thermal with color-map
-                QGCHoverButton {
+                // Thermal palette options
+                CustomQuickButton {
+                    checkable:          false
+                    enabled:            thermalFull.checked || thermalPip.checked
                     width:              buttonSize
-                    height:             width
-                    checkable:          true
-                    radius:             buttonRadius
-
-                    function isDesiredThermalPalette(name) {
-                        return name === 'Rainbow';
-                    }
-                    onClicked: {
+                    height:             buttonSize
+                    iconSource:        "/custom/img/thermal-palette.svg"
+                    onClicked:  {
                         if(_irPaletteFact) {
-                            var entryIdx = _irPaletteFact.enumStrings.find(isDesiredThermalPalette)
-                            if(entryIdx !== undefined) {
-                                _irPaletteFact.value = entryIdx;
-                            }
-                            _camera.thermalMode = QGCCameraControl.THERMAL_FULL
+                            thermalPalettes.open()
                         }
-                    }
-                    QGCColoredImage {
-                        source:         "/custom/img/thermal-palette.svg"
-                        color:          parent.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-                        width:          parent.width * iconRatio
-                        height:         width
-                        anchors.centerIn:   parent
-                        sourceSize.height:  height
                     }
                 }
             }
         }
         //---------------------------------------------------------------------
         //-- Main Camera Control
-        Rectangle {
-            id:             cameraRect
-            height:         cameraCol.height
-            width:          cameraCol.width + (ScreenTools.defaultFontPixelWidth * 4)
-            color:          qgcPal.window
-            radius:         ScreenTools.defaultFontPixelWidth * 0.5
+        Row {
+            spacing:            ScreenTools.defaultFontPixelWidth * 0.5
             anchors.horizontalCenter: parent.horizontalCenter
-            Column {
-                id:         cameraCol
-                spacing:    _spacers
-                anchors.centerIn: parent
-                Item {
-                    height:     1
-                    width:      1
-                }
-                //-----------------------------------------------------------------
-                //-- Camera Name
-                QGCLabel {
-                    text:                   activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
-                    font.pointSize:         ScreenTools.smallFontPointSize
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                //-----------------------------------------------------------------
-                //-- Camera Mode
-                Item {
-                    width:                  modeCol.width
-                    height:                 modeCol.height
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Column {
-                        id:                 modeCol
-                        spacing:            _spacers * 0.5
-                        QGCColoredImage {
-                            height:         ScreenTools.defaultFontPixelHeight * 1.25
-                            width:          height
-                            source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/custom/img/camera_photo.svg" : "/custom/img/camera_video.svg"
-                            color:          qgcPal.text
-                            fillMode:       Image.PreserveAspectFit
-                            sourceSize.height:  height
-                            anchors.horizontalCenter: parent.horizontalCenter
+            Rectangle {
+                id:             cameraRect
+                height:         cameraCol.height
+                width:          cameraCol.width + (ScreenTools.defaultFontPixelWidth * 4)
+                color:          qgcPal.window
+                radius:         ScreenTools.defaultFontPixelWidth * 0.5
+                Column {
+                    id:         cameraCol
+                    spacing:    _spacers
+                    anchors.centerIn: parent
+                    Item {
+                        height:     1
+                        width:      1
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Camera Name
+                    QGCLabel {
+                        text:                   activeVehicle ? (_camera && _camera.modelName !== "" ? _camera.modelName : _commLostStr) : _commLostStr
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    QGCLabel {
+                        text: {
+                            if(_noSdCard)   return qsTr("NONE")
+                            if(_fullSD)     return qsTr("FULL")
+                            return _camera ? _camera.storageFreeStr : ""
                         }
-                        QGCLabel {
-                            text:           _cameraVideoMode ? qsTr("Video") : qsTr("Photo")
-                            font.pointSize: ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter: parent.horizontalCenter
+                        visible:                _isShortScreen
+                        color:                  (_noSdCard || _fullSD) ? qgcPal.colorOrange : qgcPal.text
+                        font.pointSize:         ScreenTools.smallFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    //-----------------------------------------------------------------
+                    //-- Camera Mode
+                    Item {
+                        width:                  modeCol.width
+                        height:                 modeCol.height
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Column {
+                            id:                 modeCol
+                            spacing:            _spacers
+                            QGCColoredImage {
+                                height:         ScreenTools.defaultFontPixelHeight * 1.25
+                                width:          height
+                                source:         (_cameraModeUndefined || _cameraPhotoMode) ? "/custom/img/camera_photo.svg" : "/custom/img/camera_video.svg"
+                                color:          qgcPal.text
+                                fillMode:       Image.PreserveAspectFit
+                                sourceSize.height:  height
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            QGCLabel {
+                                text:           _cameraVideoMode ? qsTr("Video") : qsTr("Photo")
+                                font.pointSize: ScreenTools.smallFontPointSize
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill:       parent
+                            enabled:            !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
+                            onClicked: {
+                                _camera.toggleMode()
+                            }
                         }
                     }
-                    MouseArea {
-                        anchors.fill:       parent
-                        enabled:            !_cameraModeUndefined && _camera && _camera.videoStatus !== QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING && _cameraPhotoIdle
-                        onClicked: {
-                            _camera.toggleMode()
-                        }
-                    }
-                }
-                //-----------------------------------------------------------------
-                //-- Shutter
-                Rectangle {
-                    color:                  Qt.rgba(0,0,0,0)
-                    width:                  height
-                    height:                 ScreenTools.defaultFontPixelHeight * 4
-                    radius:                 width * 0.5
-                    border.color:           qgcPal.buttonText
-                    border.width:           2
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    //-----------------------------------------------------------------
+                    //-- Shutter
                     Rectangle {
-                        width:              parent.width * 0.75
-                        height:             width
-                        radius:             width * 0.5
-                        color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
-                        visible:            !pauseVideo.visible
-                        anchors.centerIn:   parent
-                        QGCColoredImage {
-                            id:                 busyIndicator
-                            height:             parent.height * 0.75
-                            width:              height
-                            source:             "/qmlimages/MapSync.svg"
-                            sourceSize.height:  height
-                            fillMode:           Image.PreserveAspectFit
-                            mipmap:             true
-                            smooth:             true
-                            color:              qgcPal.window
-                            visible: {
-                                if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
-                                    return true
+                        color:                  Qt.rgba(0,0,0,0)
+                        width:                  height
+                        height:                 ScreenTools.defaultFontPixelHeight * 4
+                        radius:                 width * 0.5
+                        border.color:           qgcPal.buttonText
+                        border.width:           2
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Rectangle {
+                            width:              parent.width * 0.95
+                            height:             width
+                            radius:             width * 0.5
+                            color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
+                            visible:            !pauseVideo.visible
+                            anchors.centerIn:   parent
+                            QGCColoredImage {
+                                id:                 busyIndicator
+                                height:             parent.height * 0.75
+                                width:              height
+                                source:             "/qmlimages/MapSync.svg"
+                                sourceSize.height:  height
+                                fillMode:           Image.PreserveAspectFit
+                                mipmap:             true
+                                smooth:             true
+                                color:              qgcPal.window
+                                visible: {
+                                    if(_cameraPhotoMode && !_cameraPhotoIdle && !_cameraElapsedMode) {
+                                        return true
+                                    }
+                                    return false
                                 }
-                                return false
+                                anchors.centerIn:   parent
+                                RotationAnimation on rotation {
+                                    loops:          Animation.Infinite
+                                    from:           360
+                                    to:             0
+                                    duration:       740
+                                    running:        busyIndicator.visible
+                                }
                             }
-                            anchors.centerIn:   parent
-                            RotationAnimation on rotation {
-                                loops:          Animation.Infinite
-                                from:           360
-                                to:             0
-                                duration:       740
-                                running:        busyIndicator.visible
+                            QGCLabel {
+                                text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : qsTr('N/A')
+                                font.family:        ScreenTools.demiboldFontFamily
+                                color:              qgcPal.colorBlue
+                                visible:            _cameraElapsedMode
+                                anchors.centerIn:   parent
                             }
                         }
-                        QGCLabel {
-                            text:               _camera ? _camera.photoLapse.toFixed(0) + 's' : qsTr('N/A')
-                            font.family:        ScreenTools.demiboldFontFamily
-                            color:              qgcPal.colorBlue
-                            visible:            _cameraElapsedMode
-                            anchors.centerIn:   parent
-                        }
-                    }
-                    Rectangle {
-                        id:         pauseVideo
-                        width:      parent.width * 0.5
-                        height:     width
-                        color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
-                        visible: {
-                           if(_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
-                               return true
-                           }
-                           if(_cameraPhotoMode) {
-                               if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                        Rectangle {
+                            id:         pauseVideo
+                            width:      parent.width * 0.5
+                            height:     width
+                            color:      _cameraModeUndefined ? qgcPal.colorGrey : qgcPal.colorRed
+                            visible: {
+                               if(_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
                                    return true
                                }
-                           }
-                           return false
+                               if(_cameraPhotoMode) {
+                                   if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                                       return true
+                                   }
+                               }
+                               return false
+                            }
+                            anchors.centerIn:   parent
                         }
-                        anchors.centerIn:   parent
-                    }
-                    MouseArea {
-                        anchors.fill:   parent
-                        enabled:        !_noSdCard
-                        onClicked: {
-                            if(_cameraVideoMode) {
-                                if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
-                                    _camera.stopVideo()
-                                } else {
-                                    if(!_fullSD) {
-                                        _camera.startVideo()
+                        MouseArea {
+                            anchors.fill:   parent
+                            enabled:        !_noSdCard
+                            onClicked: {
+                                if(_cameraVideoMode) {
+                                    if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
+                                        _camera.stopVideo()
+                                    } else {
+                                        if(!_fullSD) {
+                                            _camera.startVideo()
+                                        }
                                     }
-                                }
-                            } else {
-                                if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
-                                    _camera.stopTakePhoto()
                                 } else {
-                                    if(!_fullSD) {
-                                        _camera.takePhoto()
+                                    if(_camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IDLE || _camera.photoStatus === QGCCameraControl.PHOTO_CAPTURE_INTERVAL_IN_PROGRESS) {
+                                        _camera.stopTakePhoto()
+                                    } else {
+                                        if(!_fullSD) {
+                                            _camera.takePhoto()
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                //-----------------------------------------------------------------
-                //-- Settings
-                Item {
-                    width:                  settingsCol.width
-                    height:                 settingsCol.height
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    Column {
-                        id:                 settingsCol
-                        spacing:            _spacers * 0.5
+                    //-----------------------------------------------------------------
+                    //-- Settings
+                    Item {
+                        width:                  settingsCol.width
+                        height:                 settingsCol.height
                         anchors.horizontalCenter: parent.horizontalCenter
+                        Column {
+                            id:                 settingsCol
+                            spacing:            _spacers
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            QGCColoredImage {
+                                width:                      ScreenTools.defaultFontPixelHeight * 1.25
+                                height:                     width
+                                sourceSize.width:           width
+                                source:                     "qrc:/custom/img/camera_settings.svg"
+                                color:                      qgcPal.text
+                                fillMode:                   Image.PreserveAspectFit
+                                opacity:                    _settingsEnabled ? 1 : 0.5
+                                anchors.horizontalCenter:   parent.horizontalCenter
+                            }
+                            QGCLabel {
+                                text:                       qsTr("Settings")
+                                font.pointSize:             ScreenTools.smallFontPointSize
+                                anchors.horizontalCenter:   parent.horizontalCenter
+                            }
+                        }
+                        MouseArea {
+                            anchors.fill:       parent
+                            enabled:            _settingsEnabled
+                            onClicked: {
+                                cameraSettings.open()
+                            }
+                        }
+                    }
+                    //-----------------------------------------------------------------
+                    //-- microSD Card
+                    Column {
+                        spacing:                        _spacers
+                        visible:                        !_isShortScreen
+                        anchors.horizontalCenter:       parent.horizontalCenter
                         QGCColoredImage {
                             width:                      ScreenTools.defaultFontPixelHeight * 1.25
                             height:                     width
                             sourceSize.width:           width
-                            source:                     "qrc:/custom/img/camera_settings.svg"
+                            source:                     "qrc:/custom/img/microSD.svg"
                             color:                      qgcPal.text
                             fillMode:                   Image.PreserveAspectFit
                             opacity:                    _settingsEnabled ? 1 : 0.5
                             anchors.horizontalCenter:   parent.horizontalCenter
                         }
                         QGCLabel {
-                            text:                       qsTr("Settings")
-                            font.pointSize:             ScreenTools.smallFontPointSize
-                            anchors.horizontalCenter:   parent.horizontalCenter
+                            text: {
+                                if(_noSdCard)   return qsTr("NONE")
+                                if(_fullSD)     return qsTr("FULL")
+                                return _camera ? _camera.storageFreeStr : ""
+                            }
+                            color:          (_noSdCard || _fullSD) ? qgcPal.colorOrange : qgcPal.text
+                            font.pointSize: ScreenTools.smallFontPointSize
+                            anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
-                    MouseArea {
-                        anchors.fill:       parent
-                        enabled:            _settingsEnabled
-                        onClicked: {
-                            cameraSettings.open()
-                        }
-                    }
-                }
-                //-----------------------------------------------------------------
-                //-- microSD Card
-                Column {
-                    spacing:                        _spacers * 0.5
-                    anchors.horizontalCenter:       parent.horizontalCenter
-                    QGCColoredImage {
-                        width:                      ScreenTools.defaultFontPixelHeight * 1.25
-                        height:                     width
-                        sourceSize.width:           width
-                        source:                     "qrc:/custom/img/microSD.svg"
-                        color:                      qgcPal.text
-                        fillMode:                   Image.PreserveAspectFit
-                        opacity:                    _settingsEnabled ? 1 : 0.5
-                        anchors.horizontalCenter:   parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text: {
-                            if(_noSdCard) return qsTr("NONE")
-                            if(_fullSD) return qsTr("FULL")
-                            return _camera ? _camera.storageFreeStr : ""
-                        }
-                        color:          (_noSdCard || _fullSD) ? qgcPal.colorOrange : qgcPal.text
-                        font.pointSize: ScreenTools.smallFontPointSize
+                    /*
+                    //-----------------------------------------------------------------
+                    //-- Recording Time / Images Captured
+                    CustomLabel {
+                        text:               (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
+                        visible:            _cameraVideoMode
+                        pointSize:          ScreenTools.smallFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
+                    CustomLabel {
+                        text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+                        visible:            _cameraPhotoMode
+                        pointSize:          ScreenTools.smallFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    */
+                    Item {
+                        height:     1
+                        width:      1
+                    }
                 }
-                /*
-                //-----------------------------------------------------------------
-                //-- Recording Time / Images Captured
-                CustomLabel {
-                    text:               (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
-                    visible:            _cameraVideoMode
-                    pointSize:          ScreenTools.smallFontPointSize
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                CustomLabel {
-                    text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
-                    visible:            _cameraPhotoMode
-                    pointSize:          ScreenTools.smallFontPointSize
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                */
-                Item {
-                    height:     1
-                    width:      1
+            }
+            //-- Gimbal Indicator
+            Rectangle {
+                width:                  _hasGimbal ? ScreenTools.defaultFontPixelWidth * 6 : 0
+                height:                 _hasGimbal ? (gimbalCol.height + (ScreenTools.defaultFontPixelHeight * 2)) : 0
+                visible:                _hasGimbal
+                color:                  Qt.rgba(0,0,0,0.5)
+                radius:                 ScreenTools.defaultFontPixelWidth * 0.5
+                anchors.verticalCenter: cameraRect.verticalCenter
+                Column {
+                    id:                 gimbalCol
+                    spacing:            ScreenTools.defaultFontPixelHeight * 0.75
+                    anchors.centerIn:   parent
+                    Image {
+                        source:         "/custom/img/gimbal_icon.svg"
+                        width:          ScreenTools.defaultFontPixelWidth * 2
+                        height:         width
+                        smooth:         true
+                        mipmap:         true
+                        antialiasing:   true
+                        fillMode:       Image.PreserveAspectFit
+                        sourceSize.width: width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
+                    Image {
+                        id:                 pitchScale
+                        height:             cameraRect.height * 0.65
+                        source:             "/custom/img/gimbal_pitch.svg"
+                        fillMode:           Image.PreserveAspectFit
+                        sourceSize.height:  height
+                        smooth:             true
+                        mipmap:             true
+                        antialiasing:       true
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Image {
+                            id:                 yawIndicator
+                            width:              ScreenTools.defaultFontPixelWidth * 4
+                            source:             "/custom/img/gimbal_position.svg"
+                            fillMode:           Image.PreserveAspectFit
+                            sourceSize.width:   width
+                            y:                  (parent.height * _pitch / 105)
+                            smooth:             true
+                            mipmap:             true
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            transform: Rotation {
+                                origin.x:       yawIndicator.width  / 2
+                                origin.y:       yawIndicator.height / 2
+                                angle:          _gimbalYaw
+                            }
+                            property real _pitch: _gimbalPitch < -15 ? -15  : (_gimbalPitch > 90 ? 90 : _gimbalPitch)
+                        }
+                    }
+                    QGCLabel {
+                        id:             gimbalLabel
+                        text:           _gimbalPitch ? _gimbalPitch.toFixed(0) : 0
+                        color:          "#FFF"
+                        font.pointSize:  ScreenTools.smallFontPointSize
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
                 }
             }
         }
@@ -496,7 +534,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 Column {
                     id:                 cameraSettingsCol
-                    spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                    spacing:            _spacers
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
                     //-------------------------------------------
@@ -613,7 +651,7 @@ Item {
                             height:  repCol.height
                             Column {
                                 id:                 repCol
-                                spacing:            ScreenTools.defaultFontPixelHeight * 0.5
+                                spacing:            _spacers
                                 property var _fact: _camera.getFact(modelData)
                                 Row {
                                     height:         visible ? undefined : 0
@@ -891,6 +929,58 @@ Item {
                             onClicked: {
                                 factEditor.completeEditing()
                                 hideEditFact()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
+    //-- Thermal Palettes
+    Popup {
+        id:                     thermalPalettes
+        width:                  Math.min(mainWindow.width * 0.666, ScreenTools.defaultFontPixelWidth * 40)
+        height:                 mainWindow.height * 0.5
+        modal:                  true
+        focus:                  true
+        parent:                 Overlay.overlay
+        x:                      Math.round((mainWindow.width  - width)  * 0.5)
+        y:                      Math.round((mainWindow.height - height) * 0.5)
+        closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        property int selectedIndex: 0
+        background: Rectangle {
+            anchors.fill:       parent
+            color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+            border.color:       qgcPal.text
+            radius:             ScreenTools.defaultFontPixelWidth
+        }
+        Item {
+            anchors.fill:       parent
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            QGCFlickable {
+                clip:               true
+                anchors.fill:       parent
+                width:              comboListCol.width + (ScreenTools.defaultFontPixelWidth * 2)
+                contentHeight:      comboListCol.height
+                contentWidth:       comboListCol.width
+                anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    id:                 comboListCol
+                    spacing:            ScreenTools.defaultFontPixelHeight
+                    anchors.margins:    ScreenTools.defaultFontPixelHeight
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Repeater {
+                        model:          _irPaletteFact ? _irPaletteFact.enumStrings : []
+                        QGCButton {
+                            text:       modelData
+                            width:      ScreenTools.defaultFontPixelWidth  * 30
+                            height:     ScreenTools.defaultFontPixelHeight * 2
+                            checked:    index === _irPaletteFact.value
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            onClicked: {
+                                _irPaletteFact.value = index
+                                thermalPalettes.close()
                             }
                         }
                     }

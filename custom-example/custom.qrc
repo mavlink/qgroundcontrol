@@ -24,6 +24,9 @@
         <file alias="compass_needle.svg">res/Images/compass_needle.svg</file>
         <file alias="compass_pointer.svg">res/Images/compass_pointer.svg</file>
         <file alias="distance.svg">res/Images/distance.svg</file>
+        <file alias="gimbal_icon.svg">res/Images/gimbal_icon.svg</file>
+        <file alias="gimbal_pitch.svg">res/Images/gimbal_pitch.svg</file>
+        <file alias="gimbal_position.svg">res/Images/gimbal_position.svg</file>
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
@@ -40,6 +43,7 @@
         <file alias="Custom/Widgets/CustomComboBox.qml">res/Custom/Widgets/CustomComboBox.qml</file>
         <file alias="Custom/Widgets/CustomIconButton.qml">res/Custom/Widgets/CustomIconButton.qml</file>
         <file alias="Custom/Widgets/CustomOnOffSwitch.qml">res/Custom/Widgets/CustomOnOffSwitch.qml</file>
+        <file alias="Custom/Widgets/CustomQuickButton.qml">res/Custom/Widgets/CustomQuickButton.qml</file>
         <file alias="Custom/Widgets/CustomSignalStrength.qml">res/Custom/Widgets/CustomSignalStrength.qml</file>
         <file alias="Custom/Widgets/CustomToolBarButton.qml">res/Custom/Widgets/CustomToolBarButton.qml</file>
         <file alias="Custom/Widgets/CustomVehicleButton.qml">res/Custom/Widgets/CustomVehicleButton.qml</file>
