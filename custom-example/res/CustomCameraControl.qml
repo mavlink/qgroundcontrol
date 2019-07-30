@@ -965,23 +965,25 @@ Item {
                 contentHeight:      comboListCol.height
                 contentWidth:       comboListCol.width
                 anchors.horizontalCenter: parent.horizontalCenter
-                Column {
+                ColumnLayout {
                     id:                 comboListCol
                     spacing:            ScreenTools.defaultFontPixelHeight
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        text:       qsTr("Thermal Palettes")
-                        anchors.horizontalCenter: parent.horizontalCenter
+                        text:           qsTr("Thermal Palettes")
+                        Layout.alignment: Qt.AlignHCenter
                     }
                     Repeater {
                         model:          _irPaletteFact ? _irPaletteFact.enumStrings : []
                         QGCButton {
-                            text:       modelData
-                            width:      ScreenTools.defaultFontPixelWidth  * 30
-                            height:     ScreenTools.defaultFontPixelHeight * 2
-                            checked:    index === _irPaletteFact.value
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            text:                   modelData
+                            Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 3
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth  * 30
+                            Layout.fillHeight:      true
+                            Layout.fillWidth:       true
+                            Layout.alignment:       Qt.AlignHCenter
+                            checked:                index === _irPaletteFact.value
                             onClicked: {
                                 _irPaletteFact.value = index
                                 thermalPalettes.close()
