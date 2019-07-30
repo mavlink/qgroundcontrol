@@ -73,21 +73,23 @@ Item {
             border.color:       qgcPal.text
             radius:             ScreenTools.defaultFontPixelWidth
         }
-        Column {
+        ColumnLayout {
             id:                 comboListCol
             spacing:            ScreenTools.defaultFontPixelHeight
             anchors.centerIn:   parent
             QGCLabel {
-                text:       qsTr("Flight Modes")
-                anchors.horizontalCenter: parent.horizontalCenter
+                text:           qsTr("Flight Modes")
+                Layout.alignment:  Qt.AlignHCenter
             }
             Repeater {
                 model:          activeVehicle ? activeVehicle.flightModes : [ ]
                 QGCButton {
                     text:       modelData
-                    width:      ScreenTools.defaultFontPixelWidth  * 30
-                    height:     ScreenTools.defaultFontPixelHeight * 2
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 3
+                    Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth  * 30
+                    Layout.fillHeight:      true
+                    Layout.fillWidth:       true
+                    Layout.alignment:       Qt.AlignHCenter
                     onClicked: {
                         activeVehicle.flightMode = modelData
                         flightModesMenu.close()
