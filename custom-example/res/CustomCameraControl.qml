@@ -85,7 +85,7 @@ Item {
         //---------------------------------------------------------------------
         //-- Quick Thermal Modes
         Item {
-            id:             backgroundRect
+            id:             thermalBackgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
             visible:        _irPaletteFact && QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision"
@@ -143,14 +143,12 @@ Item {
                 // Thermal palette options
                 CustomQuickButton {
                     checkable:          false
-                    enabled:            thermalFull.checked || thermalPip.checked
                     width:              buttonSize
                     height:             buttonSize
+                    visible:            _irPaletteFact
                     iconSource:        "/custom/img/thermal-palette.svg"
                     onClicked:  {
-                        if(_irPaletteFact) {
-                            thermalPalettes.open()
-                        }
+                        thermalPalettes.open()
                     }
                 }
             }
@@ -466,7 +464,7 @@ Item {
             visible:        _hasZoom
             mainColor:      qgcPal.window
             contentColor:   qgcPal.text
-            fontPointSize:  ScreenTools.defaultFontPointSize * 1.25
+            fontPointSize:  ScreenTools.defaultFontPointSize * 1.75
             zoomLevelVisible: false
             zoomLevel:      _hasZoom ? _camera.zoomLevel : NaN
             anchors.horizontalCenter: parent.horizontalCenter
@@ -942,7 +940,7 @@ Item {
         id:                     thermalPalettes
         width:                  Math.min(mainWindow.width * 0.666, ScreenTools.defaultFontPixelWidth * 40)
         height:                 mainWindow.height * 0.5
-        modal:                  true
+        //modal:                  true
         focus:                  true
         parent:                 Overlay.overlay
         x:                      Math.round((mainWindow.width  - width)  * 0.5)
@@ -980,6 +978,12 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                             onClicked: {
                                 _irPaletteFact.value = index
+                                if(thermalBackgroundRect.visible) {
+                                    if(_camera.thermalMode !== QGCCameraControl.THERMAL_PIP && _camera.thermalMode !== QGCCameraControl.THERMAL_FULL) {
+                                        _camera.thermalMode = QGCCameraControl.THERMAL_FULL
+                                    }
+                                }
+
                                 thermalPalettes.close()
                             }
                         }
