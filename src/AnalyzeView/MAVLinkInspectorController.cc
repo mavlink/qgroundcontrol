@@ -404,7 +404,7 @@ MAVLinkInspectorController::_vehicleAdded(Vehicle* vehicle)
 {
     QGCMAVLinkVehicle* v = _findVehicle(static_cast<uint8_t>(vehicle->id()));
     if(v) {
-        v->messages()->deleteListAndContents();
+        v->messages()->clearAndDeleteContents();
         emit v->messagesChanged();
     } else {
         v = new QGCMAVLinkVehicle(this, static_cast<uint8_t>(vehicle->id()));
