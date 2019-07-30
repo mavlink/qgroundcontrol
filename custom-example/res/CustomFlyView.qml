@@ -256,7 +256,7 @@ Item {
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2
-        anchors.bottom:         multiVehicleSelector.visible ? multiVehicleSelector.top : parent.bottom
+        anchors.bottom:         parent.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
         anchors.right:          attitudeIndicator.visible ? attitudeIndicator.left : parent.right
         anchors.rightMargin:    attitudeIndicator.visible ? -ScreenTools.defaultFontPixelWidth : ScreenTools.defaultFontPixelWidth
@@ -493,7 +493,7 @@ Item {
         spacing:                ScreenTools.defaultFontPixelWidth
         anchors.bottom:         parent.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * 1.5
-        anchors.right:          parent.right
+        anchors.right:          vehicleIndicator.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
         Repeater {

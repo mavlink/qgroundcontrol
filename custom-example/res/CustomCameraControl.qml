@@ -232,10 +232,10 @@ Item {
                         height:                 ScreenTools.defaultFontPixelHeight * 4
                         radius:                 width * 0.5
                         border.color:           qgcPal.buttonText
-                        border.width:           2
+                        border.width:           1
                         anchors.horizontalCenter: parent.horizontalCenter
                         Rectangle {
-                            width:              parent.width * 0.95
+                            width:              parent.width * 0.85
                             height:             width
                             radius:             width * 0.5
                             color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
