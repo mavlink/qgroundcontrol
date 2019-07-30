@@ -172,12 +172,14 @@ VideoManager::hasThermal()
 bool
 VideoManager::autoStreamConfigured()
 {
+#if defined(QGC_GST_STREAMING)
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             return !pInfo->uri().isEmpty();
         }
     }
+#endif
     return false;
 }
 

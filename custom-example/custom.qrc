@@ -24,9 +24,16 @@
         <file alias="compass_needle.svg">res/Images/compass_needle.svg</file>
         <file alias="compass_pointer.svg">res/Images/compass_pointer.svg</file>
         <file alias="distance.svg">res/Images/distance.svg</file>
+        <file alias="gimbal_icon.svg">res/Images/gimbal_icon.svg</file>
+        <file alias="gimbal_pitch.svg">res/Images/gimbal_pitch.svg</file>
+        <file alias="gimbal_position.svg">res/Images/gimbal_position.svg</file>
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
+        <file alias="thermal-brightness.svg">res/Images/thermal-brightness.svg</file>
+        <file alias="thermal-palette.svg">res/Images/thermal-palette.svg</file>
+        <file alias="thermal-pip.svg">res/Images/thermal-pip.svg</file>
+        <file alias="thermal-standard.svg">res/Images/thermal-standard.svg</file>
         <file alias="vertical_speed.svg">res/Images/vertical_speed.svg</file>
         <file alias="void.png">res/Images/void.png</file>
     </qresource>
@@ -36,9 +43,14 @@
         <file alias="Custom/Widgets/CustomComboBox.qml">res/Custom/Widgets/CustomComboBox.qml</file>
         <file alias="Custom/Widgets/CustomIconButton.qml">res/Custom/Widgets/CustomIconButton.qml</file>
         <file alias="Custom/Widgets/CustomOnOffSwitch.qml">res/Custom/Widgets/CustomOnOffSwitch.qml</file>
+        <file alias="Custom/Widgets/CustomQuickButton.qml">res/Custom/Widgets/CustomQuickButton.qml</file>
         <file alias="Custom/Widgets/CustomSignalStrength.qml">res/Custom/Widgets/CustomSignalStrength.qml</file>
         <file alias="Custom/Widgets/CustomToolBarButton.qml">res/Custom/Widgets/CustomToolBarButton.qml</file>
         <file alias="Custom/Widgets/CustomVehicleButton.qml">res/Custom/Widgets/CustomVehicleButton.qml</file>
         <file alias="Custom/Widgets/qmldir">res/Custom/Widgets/qmldir</file>
+    </qresource>
+    <qresource prefix="Custom/Camera">
+        <file alias="Custom/Camera/qmldir">res/Custom/Camera/qmldir</file>
+        <file alias="Custom/Camera/ZoomControl.qml">res/Custom/Camera/ZoomControl.qml</file>
     </qresource>
 </RCC>

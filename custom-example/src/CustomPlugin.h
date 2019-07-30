@@ -42,6 +42,9 @@ class CustomOptions : public QGCOptions
 public:
     CustomOptions(CustomPlugin*, QObject* parent = nullptr);
     bool        wifiReliableForCalibration      () const final { return true; }
+#if defined(Q_OS_LINUX)
+    double      toolbarHeightMultiplier         () final { return 1.25; }
+#endif
     QUrl        flyViewOverlay                  () const final { return QUrl::fromUserInput("qrc:/custom/CustomFlyView.qml"); }
     QUrl        preFlightChecklistUrl           () const final { return QUrl::fromUserInput("qrc:/custom/PreFlightCheckList.qml"); }
     //-- We have our own toolbar
