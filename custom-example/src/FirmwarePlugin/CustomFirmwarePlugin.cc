@@ -19,6 +19,14 @@
 //-----------------------------------------------------------------------------
 CustomFirmwarePlugin::CustomFirmwarePlugin()
 {
+    for (int i = 0; i < _flightModeInfoList.count(); i++) {
+        FlightModeInfo_t& info = _flightModeInfoList[i];
+        //-- Narrow the options to only these two
+        if (info.name != _altCtlFlightMode &&
+            info.name != _posCtlFlightMode) {
+            info.canBeSet = false;
+        }
+    }
 }
 
 //-----------------------------------------------------------------------------
