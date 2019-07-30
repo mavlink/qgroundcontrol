@@ -43,7 +43,7 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { GUIDED_NOGPS, "Guided No GPS"},
         { SMART_RTL,    "Smart RTL"},
         { FLOWHOLD,     "Flow Hold" },
-        { FOLLOW,       "Follow" },
+        { FOLLOW,       "Follow Vehicle" },
         { ZIGZAG,       "ZigZag" },
     });
 }
