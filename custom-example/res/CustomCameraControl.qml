@@ -88,7 +88,7 @@ Item {
             id:             backgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            visible:        _irPaletteFact && QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision"
+            visible:        _irPaletteFact && (QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision")
             anchors.horizontalCenter: parent.horizontalCenter
             Component.onCompleted: {
                 if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
@@ -970,6 +970,10 @@ Item {
                     spacing:            ScreenTools.defaultFontPixelHeight
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        text:       qsTr("Thermal Palettes")
+                        anchors.horizontalCenter: parent.horizontalCenter
+                    }
                     Repeater {
                         model:          _irPaletteFact ? _irPaletteFact.enumStrings : []
                         QGCButton {
