@@ -17,7 +17,8 @@
 QGC_LOGGING_CATEGORY(CustomCameraLog, "CustomCameraLog")
 QGC_LOGGING_CATEGORY(CustomCameraVerboseLog, "CustomCameraVerboseLog")
 
-static const char* kCAM_IRPALETTE = "CAM_IRPALETTE";
+static const char* kCAM_IRPALETTE            = "CAM_IRPALETTE";
+static const char* kCAM_NEXTVISION_IRPALETTE = "IR_SENS_POL";
 
 //-----------------------------------------------------------------------------
 CustomCameraControl::CustomCameraControl(const mavlink_camera_information_t *info, Vehicle* vehicle, int compID, QObject* parent)
@@ -104,6 +105,30 @@ CustomCameraControl::handleCaptureStatus(const mavlink_camera_capture_status_t& 
 Fact*
 CustomCameraControl::irPalette()
 {
-    return (_paramComplete && _activeSettings.contains(kCAM_IRPALETTE)) ? getFact(kCAM_IRPALETTE) : nullptr;
+    if(_paramComplete) {
+        if(_activeSettings.contains(kCAM_IRPALETTE)) {
+            return getFact(kCAM_IRPALETTE);
+        }
+        else if(_activeSettings.contains(kCAM_NEXTVISION_IRPALETTE)) {
+            return getFact(kCAM_NEXTVISION_IRPALETTE);
+        }
+    }
+    return nullptr;
 }
 
+//-----------------------------------------------------------------------------
+void
+CustomCameraControl::setThermalMode(ThermalViewMode mode)
+{
+    if(_paramComplete) {
+        if(vendor() == "NextVision" && _activeSettings.contains("CAM_SENSOR")) {
+            if(mode == THERMAL_FULL) {
+                getFact("CAM_SENSOR")->setRawValue(1);
+            }
+            else if(mode == THERMAL_OFF) {
+                getFact("CAM_SENSOR")->setRawValue(0);
+            }
+        }
+    }
+    QGCCameraControl::setThermalMode(mode);
+}

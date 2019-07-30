@@ -218,7 +218,7 @@ CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& 
 {
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::appFontPointSizeName) {
-        #if defined(WIN32)
+        #if defined(Q_OS_LINUX)
             int defaultFontPointSize = 11;
             metaData.setRawDefaultValue(defaultFontPointSize);
         #endif
@@ -230,7 +230,6 @@ CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& 
     }
     return true;
 }
-
 
 const QColor     CustomPlugin::_windowShadeEnabledLightColor("#FFFFFF");
 const QColor     CustomPlugin::_windowShadeEnabledDarkColor("#212529");
