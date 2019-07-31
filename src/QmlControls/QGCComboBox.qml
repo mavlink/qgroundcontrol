@@ -30,6 +30,20 @@ ComboBox {
         border.width:                   enabled ? 1 : 0
         border.color:                   "#999"
     }
+    delegate: ItemDelegate {
+            width:                      control.width
+
+            contentItem: Text {
+                text:                   modelData
+                color:                  qgcPal.text
+                verticalAlignment:      Text.AlignVCenter
+            }
+            background: Rectangle {
+                color:                  qgcPal.window
+
+                }
+            highlighted:                control.highlightedIndex === index
+        }
 
     /*! This defines the label of the button.  */
     contentItem: Item {
