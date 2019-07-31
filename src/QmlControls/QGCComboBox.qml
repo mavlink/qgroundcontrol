@@ -30,6 +30,9 @@ ComboBox {
         border.width:                   enabled ? 1 : 0
         border.color:                   "#999"
     }
+
+    /*! Adding the Combobox list item to the theme.  */
+
     delegate: ItemDelegate {
             width:                      control.width
 
@@ -38,10 +41,11 @@ ComboBox {
                 color:                  qgcPal.text
                 verticalAlignment:      Text.AlignVCenter
             }
-            background: Rectangle {
-                color:                  qgcPal.window
 
-                }
+            background: Rectangle {
+                color:                  control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+            }
+
             highlighted:                control.highlightedIndex === index
         }
 
@@ -49,6 +53,7 @@ ComboBox {
     contentItem: Item {
         implicitWidth:                  text.implicitWidth
         implicitHeight:                 text.implicitHeight
+
         QGCLabel {
             id:                         text
             anchors.verticalCenter:     parent.verticalCenter
