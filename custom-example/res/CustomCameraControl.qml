@@ -402,7 +402,7 @@ Item {
                 width:                  _hasGimbal ? ScreenTools.defaultFontPixelWidth * 6 : 0
                 height:                 _hasGimbal ? (gimbalCol.height + (ScreenTools.defaultFontPixelHeight * 2)) : 0
                 visible:                _hasGimbal
-                color:                  Qt.rgba(0,0,0,0.5)
+                color:                  qgcPal.window
                 radius:                 ScreenTools.defaultFontPixelWidth * 0.5
                 anchors.verticalCenter: cameraRect.verticalCenter
                 Column {
