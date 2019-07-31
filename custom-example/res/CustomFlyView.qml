@@ -563,8 +563,11 @@ Item {
                         //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
                         pitch = pitch_setpoint
                         yaw += stick.xAxis * gimbalControl.speedMultiplier
+
                         yaw = clamp(yaw, -180, 180)
-                        pitch = clamp(pitch, -45, 45)
+                        pitch = clamp(pitch, -90, 45)
+                        pitch_angle = clamp(pitch_angle, -90, 45)
+
                         //console.info("P: " + pitch + "; Y: " + yaw)
                         activeVehicle.gimbalControlValue(pitch, yaw);
                         gimbalControl._currentYaw = yaw
@@ -572,7 +575,7 @@ Item {
                         gimbalControl.time_last_seconds = time_current_seconds
                     } else {
                         yaw += stick.xAxis * gimbalControl.speedMultiplier
-                        var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 25)
+                        var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 50)
                         pitch += pitch_stick * gimbalControl.speedMultiplier
                         hackedYaw = clamp(hackedYaw, -180, 180)
                         yaw = clamp(yaw, -180, 180)
