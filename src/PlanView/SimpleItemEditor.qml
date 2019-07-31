@@ -92,7 +92,7 @@ Rectangle {
                     indexModel:         false
                     model:              object.enumStrings
                     fact:               object
-                    pointSize:          ScreenTools.smallFontPointSize
+                    font.pointSize:     ScreenTools.smallFontPointSize
                     Layout.column:      1
                     Layout.row:         index
                     Layout.fillWidth:   true

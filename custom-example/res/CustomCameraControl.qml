@@ -85,10 +85,10 @@ Item {
         //---------------------------------------------------------------------
         //-- Quick Thermal Modes
         Item {
-            id:             backgroundRect
+            id:             thermalBackgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            visible:        _irPaletteFact && QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision"
+            visible:        _irPaletteFact && (QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision")
             anchors.horizontalCenter: parent.horizontalCenter
             Component.onCompleted: {
                 if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
@@ -143,14 +143,12 @@ Item {
                 // Thermal palette options
                 CustomQuickButton {
                     checkable:          false
-                    enabled:            thermalFull.checked || thermalPip.checked
                     width:              buttonSize
                     height:             buttonSize
+                    visible:            _irPaletteFact
                     iconSource:        "/custom/img/thermal-palette.svg"
                     onClicked:  {
-                        if(_irPaletteFact) {
-                            thermalPalettes.open()
-                        }
+                        thermalPalettes.open()
                     }
                 }
             }
@@ -232,10 +230,10 @@ Item {
                         height:                 ScreenTools.defaultFontPixelHeight * 4
                         radius:                 width * 0.5
                         border.color:           qgcPal.buttonText
-                        border.width:           2
+                        border.width:           1
                         anchors.horizontalCenter: parent.horizontalCenter
                         Rectangle {
-                            width:              parent.width * 0.95
+                            width:              parent.width * 0.85
                             height:             width
                             radius:             width * 0.5
                             color:              _cameraModeUndefined ? qgcPal.colorGrey : ( _cameraVideoMode ? qgcPal.colorRed : qgcPal.text )
@@ -466,7 +464,7 @@ Item {
             visible:        _hasZoom
             mainColor:      qgcPal.window
             contentColor:   qgcPal.text
-            fontPointSize:  ScreenTools.defaultFontPointSize * 1.25
+            fontPointSize:  ScreenTools.defaultFontPointSize * 1.75
             zoomLevelVisible: false
             zoomLevel:      _hasZoom ? _camera.zoomLevel : NaN
             anchors.horizontalCenter: parent.horizontalCenter
@@ -942,7 +940,7 @@ Item {
         id:                     thermalPalettes
         width:                  Math.min(mainWindow.width * 0.666, ScreenTools.defaultFontPixelWidth * 40)
         height:                 mainWindow.height * 0.5
-        modal:                  true
+        //modal:                  true
         focus:                  true
         parent:                 Overlay.overlay
         x:                      Math.round((mainWindow.width  - width)  * 0.5)
@@ -965,21 +963,33 @@ Item {
                 contentHeight:      comboListCol.height
                 contentWidth:       comboListCol.width
                 anchors.horizontalCenter: parent.horizontalCenter
-                Column {
+                ColumnLayout {
                     id:                 comboListCol
                     spacing:            ScreenTools.defaultFontPixelHeight
                     anchors.margins:    ScreenTools.defaultFontPixelHeight
                     anchors.horizontalCenter: parent.horizontalCenter
+                    QGCLabel {
+                        text:           qsTr("Thermal Palettes")
+                        Layout.alignment: Qt.AlignHCenter
+                    }
                     Repeater {
                         model:          _irPaletteFact ? _irPaletteFact.enumStrings : []
                         QGCButton {
-                            text:       modelData
-                            width:      ScreenTools.defaultFontPixelWidth  * 30
-                            height:     ScreenTools.defaultFontPixelHeight * 2
-                            checked:    index === _irPaletteFact.value
-                            anchors.horizontalCenter: parent.horizontalCenter
+                            text:                   modelData
+                            Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 3
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth  * 30
+                            Layout.fillHeight:      true
+                            Layout.fillWidth:       true
+                            Layout.alignment:       Qt.AlignHCenter
+                            checked:                index === _irPaletteFact.value
                             onClicked: {
                                 _irPaletteFact.value = index
+                                if(thermalBackgroundRect.visible) {
+                                    if(_camera.thermalMode !== QGCCameraControl.THERMAL_PIP && _camera.thermalMode !== QGCCameraControl.THERMAL_FULL) {
+                                        _camera.thermalMode = QGCCameraControl.THERMAL_FULL
+                                    }
+                                }
+
                                 thermalPalettes.close()
                             }
                         }

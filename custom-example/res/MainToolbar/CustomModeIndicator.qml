@@ -9,8 +9,11 @@
  *   @author Gus Grubba <gus@auterion.com>
  */
 
-import QtQuick          2.11
-import QtQuick.Controls 1.4
+
+import QtQuick                  2.11
+import QtQuick.Controls         2.4
+import QtQuick.Layouts          1.11
+import QtQuick.Dialogs          1.3
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -25,10 +28,6 @@ Item {
     anchors.bottom:                 parent.bottom
     width:                          selectorRow.width
 
-    property var _flightModes:      activeVehicle ? activeVehicle.flightModes : [ ]
-
-    on_FlightModesChanged:          flightModeSelector.updateFlightModesMenu()
-
     Row {
         id:                         selectorRow
         spacing:                    ScreenTools.defaultFontPixelWidth
@@ -39,32 +38,6 @@ Item {
             color:                  qgcPal.text
             font.pointSize:         ScreenTools.defaultFontPointSize
             anchors.verticalCenter:     parent.verticalCenter
-            Menu {
-                id: flightModesMenu
-            }
-            Component {
-                id: flightModeMenuItemComponent
-                MenuItem {
-                    onTriggered: activeVehicle.flightMode = text
-                }
-            }
-            property var flightModesMenuItems: []
-            function updateFlightModesMenu() {
-                if (activeVehicle && activeVehicle.flightModeSetAvailable) {
-                    // Remove old menu items
-                    var i = 0
-                    for (i = 0; i < flightModesMenuItems.length; i++) {
-                        flightModesMenu.removeItem(flightModesMenuItems[i])
-                    }
-                    flightModesMenuItems.length = 0
-                    // Add new items
-                    for (i = 0; i < _flightModes.length; i++) {
-                        var menuItem = flightModeMenuItemComponent.createObject(null, { "text": _flightModes[i] })
-                        flightModesMenuItems.push(menuItem)
-                        flightModesMenu.insertItem(i, menuItem)
-                    }
-                }
-            }
         }
         QGCColoredImage {
             anchors.verticalCenter: parent.verticalCenter
@@ -76,10 +49,53 @@ Item {
             color:                  qgcPal.text
         }
     }
-    Component.onCompleted: flightModeSelector.updateFlightModesMenu()
     MouseArea {
         visible:        activeVehicle && activeVehicle.flightModeSetAvailable
         anchors.fill:   parent
-        onClicked:      flightModesMenu.popup()
+        onClicked:      flightModesMenu.open()
+    }
+    //-------------------------------------------------------------------------
+    //-- Flight Modes
+    Popup {
+        id:                     flightModesMenu
+        width:                  Math.min(mainWindow.width * 0.666, ScreenTools.defaultFontPixelWidth * 40)
+        height:                 mainWindow.height * 0.5
+        modal:                  true
+        focus:                  true
+        parent:                 Overlay.overlay
+        x:                      Math.round((mainWindow.width  - width)  * 0.5)
+        y:                      Math.round((mainWindow.height - height) * 0.5)
+        closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        property int selectedIndex: 0
+        background: Rectangle {
+            anchors.fill:       parent
+            color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
+            border.color:       qgcPal.text
+            radius:             ScreenTools.defaultFontPixelWidth
+        }
+        ColumnLayout {
+            id:                 comboListCol
+            spacing:            ScreenTools.defaultFontPixelHeight
+            anchors.centerIn:   parent
+            QGCLabel {
+                text:           qsTr("Flight Modes")
+                Layout.alignment:  Qt.AlignHCenter
+            }
+            Repeater {
+                model:          activeVehicle ? activeVehicle.flightModes : [ ]
+                QGCButton {
+                    text:       modelData
+                    Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 3
+                    Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth  * 30
+                    Layout.fillHeight:      true
+                    Layout.fillWidth:       true
+                    Layout.alignment:       Qt.AlignHCenter
+                    onClicked: {
+                        activeVehicle.flightMode = modelData
+                        flightModesMenu.close()
+                    }
+                }
+            }
+        }
     }
 }
