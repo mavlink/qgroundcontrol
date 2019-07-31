@@ -379,6 +379,8 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
     qCDebug(CameraManagerLog) << "Joystick changed";
     if(_activeJoystick) {
         disconnect(_activeJoystick, &Joystick::stepZoom,            this, &QGCCameraManager::_stepZoom);
+        disconnect(_activeJoystick, &Joystick::startContinuousZoom, this, &QGCCameraManager::_startZoom);
+        disconnect(_activeJoystick, &Joystick::stopContinuousZoom,  this, &QGCCameraManager::_stopZoom);
         disconnect(_activeJoystick, &Joystick::stepCamera,          this, &QGCCameraManager::_stepCamera);
         disconnect(_activeJoystick, &Joystick::stepStream,          this, &QGCCameraManager::_stepStream);
         disconnect(_activeJoystick, &Joystick::triggerCamera,       this, &QGCCameraManager::_triggerCamera);
@@ -388,13 +390,15 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
     }
     _activeJoystick = joystick;
     if(_activeJoystick) {
-        connect(_activeJoystick, &Joystick::stepZoom,           this, &QGCCameraManager::_stepZoom);
-        connect(_activeJoystick, &Joystick::stepCamera,         this, &QGCCameraManager::_stepCamera);
-        connect(_activeJoystick, &Joystick::stepStream,         this, &QGCCameraManager::_stepStream);
-        connect(_activeJoystick, &Joystick::triggerCamera,      this, &QGCCameraManager::_triggerCamera);
-        connect(_activeJoystick, &Joystick::startVideoRecord,   this, &QGCCameraManager::_startVideoRecording);
-        connect(_activeJoystick, &Joystick::stopVideoRecord,    this, &QGCCameraManager::_stopVideoRecording);
-        connect(_activeJoystick, &Joystick::toggleVideoRecord,  this, &QGCCameraManager::_toggleVideoRecording);
+        connect(_activeJoystick, &Joystick::stepZoom,               this, &QGCCameraManager::_stepZoom);
+        connect(_activeJoystick, &Joystick::startContinuousZoom,    this, &QGCCameraManager::_startZoom);
+        connect(_activeJoystick, &Joystick::stopContinuousZoom,     this, &QGCCameraManager::_stopZoom);
+        connect(_activeJoystick, &Joystick::stepCamera,             this, &QGCCameraManager::_stepCamera);
+        connect(_activeJoystick, &Joystick::stepStream,             this, &QGCCameraManager::_stepStream);
+        connect(_activeJoystick, &Joystick::triggerCamera,          this, &QGCCameraManager::_triggerCamera);
+        connect(_activeJoystick, &Joystick::startVideoRecord,       this, &QGCCameraManager::_startVideoRecording);
+        connect(_activeJoystick, &Joystick::stopVideoRecord,        this, &QGCCameraManager::_stopVideoRecording);
+        connect(_activeJoystick, &Joystick::toggleVideoRecord,      this, &QGCCameraManager::_toggleVideoRecording);
     }
 }
 
@@ -442,13 +446,35 @@ QGCCameraManager::_toggleVideoRecording()
 void
 QGCCameraManager::_stepZoom(int direction)
 {
-    if(_lastZoomChange.elapsed() > 250) {
+    if(_lastZoomChange.elapsed() > 40) {
         _lastZoomChange.start();
         qCDebug(CameraManagerLog) << "Step Camera Zoom" << direction;
         QGCCameraControl* pCamera = currentCameraInstance();
         if(pCamera) {
             pCamera->stepZoom(direction);
         }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_startZoom(int direction)
+{
+    qCDebug(CameraManagerLog) << "Start Camera Zoom" << direction;
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->startZoom(direction);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_stopZoom()
+{
+    qCDebug(CameraManagerLog) << "Stop Camera Zoom";
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        pCamera->stopZoom();
     }
 }
 
