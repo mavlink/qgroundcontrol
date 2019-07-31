@@ -27,7 +27,7 @@ Rectangle {
         model:          _instrumentPages
         textRole:       "title"
         centeredLabel:  true
-        pointSize:      ScreenTools.smallFontPointSize
+        font.pointSize: ScreenTools.smallFontPointSize
 
         Image {
             anchors.leftMargin:     _margins

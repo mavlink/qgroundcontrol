@@ -75,7 +75,7 @@ Item {
     property bool isDebug:                          ScreenToolsController.isDebug
     property bool isMac:                            ScreenToolsController.isMacOS
     property bool isTinyScreen:                     (Screen.width / realPixelDensity) < 120 // 120mm
-    property bool isShortScreen:                    ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6) // Nexus 7 for example
+    property bool isShortScreen:                    ((Screen.height / realPixelDensity) < 120) || (ScreenToolsController.isMobile && ((Screen.height / Screen.width) < 0.6))
     property bool isHugeScreen:                     (Screen.width / realPixelDensity) >= (23.5 * 25.4) // 27" monitor
     property bool isSerialAvailable:                ScreenToolsController.isSerialAvailable
 
@@ -90,6 +90,7 @@ Item {
     property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0))
+    property real comboBoxPadding:                  Math.round(defaultFontPixelWidth *  (isShortScreen ? 1 : 0.5))
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
     // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization
     property real checkBoxIndicatorSize:            2 * Math.floor(defaultFontPixelHeight * (isMobile ? 1.5 : 1.0) / 2) + 1
