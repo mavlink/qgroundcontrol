@@ -45,7 +45,7 @@ Rectangle {
     }
     Rectangle {
         width:      parent.width  * 0.5
-        height:     parent.height * 0.95
+        height:     parent.height
         color:      checked ? qgcPal.buttonHighlight : qgcPal.button
         border.color: qgcPal.text
         border.width: 0
