@@ -225,7 +225,7 @@ protected:
     void    _saveButtonSettings     ();
     void    _loadSettings           ();
     float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
-    void    _executeButtonAction    (const QString& action);
+    void    _executeButtonAction    (const QString& action, bool buttonDown);
     int     _findAssignableButtonAction(const QString& action);
     bool    _validAxis              (int axis);
     bool    _validButton            (int button);
