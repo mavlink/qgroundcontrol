@@ -283,25 +283,25 @@ CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t&
     else if (colorName == QStringLiteral("buttonHighlight")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#07916d");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#495057");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#12b886");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#aeebd0");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#e4e4e4");
     }
     else if (colorName == QStringLiteral("buttonHighlightText")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#ffffff");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#777c89");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#ffffff");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#212529");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#2c2c2c");
     }
     else if (colorName == QStringLiteral("primaryButton")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#12b886");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#495057");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#33c494");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#aeebd0");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#585858");
     }
     else if (colorName == QStringLiteral("primaryButtonText")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#ffffff");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#ffffff");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#ffffff");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#212529");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#cad0d0");
     }
     else if (colorName == QStringLiteral("textField")) {
@@ -373,7 +373,7 @@ CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t&
     else if (colorName == QStringLiteral("alertBackground")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#d4b106");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#d4b106");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#b45d48");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#fffb8f");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#b45d48");
     }
     else if (colorName == QStringLiteral("alertBorder")) {
@@ -385,7 +385,7 @@ CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t&
     else if (colorName == QStringLiteral("alertText")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#000000");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#fff9ed");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#fff9ed");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#212529");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#fff9ed");
     }
     else if (colorName == QStringLiteral("missionItemEditor")) {
@@ -397,7 +397,7 @@ CustomPlugin::paletteOverride(QString colorName, QGCPalette::PaletteColorInfo_t&
     else if (colorName == QStringLiteral("hoverColor")) {
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupEnabled]   = QColor("#07916d");
         colorInfo[QGCPalette::Dark][QGCPalette::ColorGroupDisabled]  = QColor("#33c494");
-        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#12b886");
+        colorInfo[QGCPalette::Light][QGCPalette::ColorGroupEnabled]  = QColor("#aeebd0");
         colorInfo[QGCPalette::Light][QGCPalette::ColorGroupDisabled] = QColor("#464f5a");
     }
     else if (colorName == QStringLiteral("mapWidgetBorderLight")) {
