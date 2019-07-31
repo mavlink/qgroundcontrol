@@ -93,8 +93,8 @@ public:
     Q_PROPERTY(QStringList buttonActions        READ buttonActions          NOTIFY buttonActionsChanged)
 
     //-- Actions that can be assigned to buttons
-    Q_PROPERTY(QmlObjectListModel* assignableActions    READ assignableActions          CONSTANT)
-    Q_PROPERTY(QStringList assignableActionTitles       READ assignableActionTitles     CONSTANT)
+    Q_PROPERTY(QmlObjectListModel* assignableActions    READ assignableActions          NOTIFY      assignableActionsChanged)
+    Q_PROPERTY(QStringList assignableActionTitles       READ assignableActionTitles     NOTIFY      assignableActionsChanged)
     Q_PROPERTY(QString  disabledActionName              READ disabledActionName         CONSTANT)
 
     Q_PROPERTY(bool     gimbalEnabled           READ gimbalEnabled          WRITE setGimbalEnabled      NOTIFY gimbalEnabledChanged)
@@ -180,6 +180,7 @@ signals:
     void rawButtonPressedChanged    (int index, int pressed);
     void calibratedChanged          (bool calibrated);
     void buttonActionsChanged       ();
+    void assignableActionsChanged   ();
     void throttleModeChanged        (int mode);
     void negativeThrustChanged      (bool allowNegative);
     void exponentialChanged         (float exponential);
@@ -224,12 +225,13 @@ protected:
     void    _saveButtonSettings     ();
     void    _loadSettings           ();
     float   _adjustRange            (int value, Calibration_t calibration, bool withDeadbands);
-    void    _executeButtonAction    (const QString& action);
+    void    _executeButtonAction    (const QString& action, bool buttonDown);
     int     _findAssignableButtonAction(const QString& action);
     bool    _validAxis              (int axis);
     bool    _validButton            (int button);
     void    _handleAxis             ();
     void    _handleButtons          ();
+    void    _buildActionList        (Vehicle* activeVehicle);
 
     void    _pitchStep              (int direction);
     void    _yawStep                (int direction);

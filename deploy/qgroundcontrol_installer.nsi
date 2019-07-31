@@ -73,7 +73,11 @@ Section
 doinstall:
   SetOutPath $INSTDIR
   File /r /x ${EXENAME}.pdb /x ${EXENAME}.lib /x ${EXENAME}.exp ${DESTDIR}\*.*
-  File deploy\px4driver.msi
+
+  ; Driver location is http://firmware.ardupilot.org/Tools/MissionPlanner/driver.msi
+  ; Whenever this driver is updated in the repo QGCCURRENTDRIVERVERSION must be bumped by 1
+  File deploy\driver.msi
+
   WriteUninstaller $INSTDIR\${EXENAME}-Uninstall.exe
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
   WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\${EXENAME}-Uninstall.exe$\""
@@ -82,20 +86,39 @@ doinstall:
   WriteRegDWORD HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpType" 1
   WriteRegExpandStr HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe" "DumpFolder" "%LOCALAPPDATA%\QGCCrashDumps"
 
-  ; Only attempt to install the PX4 driver if the version isn't present
-  !define DRIVERKEY "SOFTWARE\MichaelOborne\driver"
+  ; QGC stores its own driver version key to prevent installation if already up to date
+  ; This prevents running the driver install a second time which will start up in repair mode which is confusing
+  !define QGCDRIVERVERSIONKEY "SOFTWARE\QGroundControlUAVDrivers"
+  !define QGCCURRENTDRIVERVERSION 1
 
+  ; If the drivers are already installed the key "HKCU/SOFTWARE\MichaelOborne\driver\installed" will be present and set to 1
   SetRegView 64
+  !define DRIVERKEY "SOFTWARE\MichaelOborne\driver"
   ReadRegDWORD $0 HKCU "${DRIVERKEY}" "installed"
-  IntCmp $0 1 found_provider notfound notfound
+  IntCmp $0 1 driversInstalled driversNotInstalled driversNotInstalled
 
-found_provider:
-  DetailPrint "USB Drivers already installed"
-  goto done
+driversInstalled:
+  DetailPrint "UAV Drivers already installed. Checking version..."
 
-notfound:
-  DetailPrint "USB Driver not found... installing"
-  ExecWait '"msiexec" /i "px4driver.msi"'
+  ; Check if the installed drivers are out of date. 
+  ; Latest version is tagged as 1. Missing key also indicates out of date driver install.
+  ReadRegDWORD $0 HKCU "${QGCDRIVERVERSIONKEY}" "version"
+  IntCmp $0 ${QGCCURRENTDRIVERVERSION} done driversOutOfDate done
+
+driversOutOfDate:
+  DetailPrint "UAV Drivers out of date."
+  goto installDrivers
+  
+driversNotInstalled:
+  DetailPrint "UAV Drivers not installed."
+  ; Delete abandoned possibly out of date version key
+  DeleteRegKey HKCU "SOFTWARE\QGroundControlUAVDrivers"
+
+installDrivers:
+  DetailPrint "Installing UAV Drivers..."
+  ExecWait '"msiexec" /i "driver.msi"'
+  ; Set current driver version value
+  WriteRegDWORD HKCU "${QGCDRIVERVERSIONKEY}" "version" 1
   goto done
 
 done:
@@ -115,6 +138,7 @@ Section "Uninstall"
   ${Endif}
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
   DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\${EXENAME}.exe"
+  ; NOTE: We specifically do not delete the driver version key since we need it to persist around uninstalls
 SectionEnd
 
 Section "create Start Menu Shortcuts"

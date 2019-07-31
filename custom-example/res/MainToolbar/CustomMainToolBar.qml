@@ -45,8 +45,6 @@ Item {
     Component.onCompleted: {
         flyButton.checked = true
         sectionTitle = flyButton.text
-        //-- Show full screen
-        mainWindow.showFullScreen()
     }
     //-------------------------------------------------------------------------
     //-- Fly/Plan state toggle
