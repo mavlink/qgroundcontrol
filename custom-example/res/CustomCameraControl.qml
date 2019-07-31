@@ -409,8 +409,9 @@ Item {
                     id:                 gimbalCol
                     spacing:            ScreenTools.defaultFontPixelHeight * 0.75
                     anchors.centerIn:   parent
-                    Image {
+                    QGCColoredImage {
                         source:         "/custom/img/gimbal_icon.svg"
+                        color:          qgcPal.text
                         width:          ScreenTools.defaultFontPixelWidth * 2
                         height:         width
                         smooth:         true
@@ -419,11 +420,12 @@ Item {
                         fillMode:       Image.PreserveAspectFit
                         sourceSize.width: width
                         anchors.horizontalCenter: parent.horizontalCenter
+
                     }
                     Image {
                         id:                 pitchScale
                         height:             cameraRect.height * 0.65
-                        source:             "/custom/img/gimbal_pitch.svg"
+                        source:             qgcPal.globalTheme === QGCPalette.Light ? "/custom/img/gimbal_pitch_indoors.svg" : "/custom/img/gimbal_pitch_outdoors.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
                         smooth:             true
@@ -451,7 +453,7 @@ Item {
                     QGCLabel {
                         id:             gimbalLabel
                         text:           _gimbalPitch ? _gimbalPitch.toFixed(0) : 0
-                        color:          "#FFF"
+                        color:          qgcPal.text
                         font.pointSize:  ScreenTools.smallFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
