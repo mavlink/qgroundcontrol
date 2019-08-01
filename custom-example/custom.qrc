@@ -25,8 +25,9 @@
         <file alias="compass_pointer.svg">res/Images/compass_pointer.svg</file>
         <file alias="distance.svg">res/Images/distance.svg</file>
         <file alias="gimbal_icon.svg">res/Images/gimbal_icon.svg</file>
-        <file alias="gimbal_pitch.svg">res/Images/gimbal_pitch.svg</file>
         <file alias="gimbal_position.svg">res/Images/gimbal_position.svg</file>
+        <file alias="gimbal_pitch_indoors.svg">res/Images/gimbal_pitch_indoors.svg</file>
+        <file alias="gimbal_pitch_outdoors.svg">res/Images/gimbal_pitch_outdoors.svg</file>
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
