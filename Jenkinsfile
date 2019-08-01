@@ -30,7 +30,7 @@ pipeline {
 						sh 'git submodule deinit -f .'
 						sh 'git clean -ff -x -d .'
                         sh 'git submodule update --init --recursive --force'
-                        sh 'wget --quiet http://192.168.2.153:8086/artifactory/gstreamer-android-qgroundcontrol/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
+                        sh 'wget --quiet http://192.168.2.144:8086/repository/gstreamer-android-qgroundcontrol/gstreamer/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
                         sh 'apt update'
                         sh 'apt install -y bzip2'
                         sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
