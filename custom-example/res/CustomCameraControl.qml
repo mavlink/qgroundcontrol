@@ -90,7 +90,7 @@ Item {
             id:             thermalBackgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            visible:        _irPaletteFact && (QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision")
+            visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact || _camera.vendor === "NextVision"
             anchors.horizontalCenter: parent.horizontalCenter
             Component.onCompleted: {
                 if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
@@ -101,6 +101,8 @@ Item {
                     if(_camera.thermalMode === QGCCameraControl.THERMAL_FULL)
                         thermalFull.checked = true
                 }
+                else
+                    standardMode.checked = true
             }
             ButtonGroup {
                 id:         buttonGroup
@@ -464,8 +466,11 @@ Item {
                     }
                     QGCLabel {
                         id:             gimbalLabel
+                        width:          gimbalCol.width
                         color:          qgcPal.text
-                        font.pointSize:  ScreenTools.smallFontPointSize
+                        font.pointSize: ScreenTools.smallFontPointSize
+                        text:           activeVehicle ? activeVehicle.gimbalPitch.toFixed(0) : "-"
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
             } // Gimbal Indicator
