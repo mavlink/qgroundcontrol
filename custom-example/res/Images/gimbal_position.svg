@@ -1,30 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 23.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#48D6FF;}
-	.st1{fill-rule:evenodd;clip-rule:evenodd;fill:url(#Rectangle_1_);}
-</style>
-<title>gimbal position</title>
-<desc>Created with Sketch.</desc>
-<g id="Camera-focused">
-	<g transform="translate(-972.000000, -253.000000)">
-		<g id="middle" transform="translate(29.000000, 162.000000)">
-			<g id="right" transform="translate(841.000000, 0.000000)">
-				<g id="gimbal" transform="translate(102.000000, 53.000000)">
-					<g id="gimbal-position" transform="translate(0.000000, 38.000000)">
-						<ellipse id="Oval" class="st0" cx="36" cy="35.24" rx="9.683" ry="9.36"/>
-						
-							<linearGradient id="Rectangle_1_" gradientUnits="userSpaceOnUse" x1="-295.5833" y1="277.1371" x2="-295.5833" y2="278.9163" gradientTransform="matrix(24 0 0 20.082 7130 -5563.6465)">
-							<stop  offset="0" style="stop-color:#48D6FF;stop-opacity:0"/>
-							<stop  offset="1" style="stop-color:#48D6FF"/>
-						</linearGradient>
-						<polygon id="Rectangle" class="st1" points="14.4,1.4 57.6,1.4 45.387,37.548 26.585,37.434 						"/>
-					</g>
-				</g>
-			</g>
-		</g>
-	</g>
-</g>
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M36 44.6C41.3478 44.6 45.683 40.4094 45.683 35.24C45.683 30.0706 41.3478 25.88 36 25.88C30.6522 25.88 26.317 30.0706 26.317 35.24C26.317 40.4094 30.6522 44.6 36 44.6Z" fill="#07916D"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M14.4 1.40002H57.6L45.387 37.548L26.585 37.434L14.4 1.40002Z" fill="url(#paint0_linear)"/>
+<defs>
+<linearGradient id="paint0_linear" x1="36.0008" y1="1.82077" x2="36.0008" y2="37.5507" gradientUnits="userSpaceOnUse">
+<stop stop-color="#0CA678" stop-opacity="0"/>
+<stop offset="1" stop-color="#07916D"/>
+</linearGradient>
+</defs>
 </svg>

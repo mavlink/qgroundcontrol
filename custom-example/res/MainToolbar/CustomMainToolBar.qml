@@ -169,10 +169,10 @@ Item {
         }
         ColumnLayout {
             id:                             buttons
+            spacing:                        0
             anchors.top:                    parent.top
             anchors.left:                   parent.left
             anchors.right:                  parent.right
-            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
             Rectangle {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
@@ -181,6 +181,7 @@ Item {
             }
             CustomToolBarButton {
                 id:                         flyButton
+                spacing:                    1
                 text:                       qsTr("Fly")
                 icon.source:                "/qmlimages/PaperPlane.svg"
                 Layout.fillWidth:           true
@@ -254,10 +255,9 @@ Item {
         ColumnLayout {
             id:                             lowerButtons
             anchors.bottom:                 parent.bottom
-            anchors.bottomMargin:           ScreenTools.defaultFontPixelHeight * 0.125
             anchors.left:                   parent.left
             anchors.right:                  parent.right
-            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
+            spacing:                        0
             Rectangle {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
