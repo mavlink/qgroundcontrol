@@ -12,7 +12,7 @@ MenuItem {
     QGCPalette { id: qgcPal; colorGroupEnabled: true }
 
     implicitWidth: textLabel.contentWidth * 1.2
-    implicitHeight: textLabel.contentHeight * 1.2
+    implicitHeight: textLabel.contentHeight * 2
 
     background: Rectangle {
         anchors.fill: _root
@@ -24,5 +24,6 @@ MenuItem {
         text: _root.text
         color: qgcPal.text
         font.pointSize: ScreenTools.defaultFontPixelHeight
+        verticalAlignment: Text.AlignVCenter
     }
 }
