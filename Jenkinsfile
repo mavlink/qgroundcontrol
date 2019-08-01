@@ -46,6 +46,8 @@ pipeline {
 							archiveArtifacts artifacts: 'build/release/package/*.apk'
 						}
 						cleanup {
+						    sh 'rm -r ${WORKSPACE}/build'
+						    sh 'rm -r ${WORKSPACE}/gstreamer*'
 							sh 'git clean -ff -x -d .'
 						}
 					}
@@ -87,6 +89,7 @@ pipeline {
 							archiveArtifacts artifacts: 'build/**/*.deb'
 						}
 						cleanup {
+						    sh 'rm -r ${WORKSPACE}/build'
 							sh 'git clean -ff -x -d .'
 						}
 					}
