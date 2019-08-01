@@ -13,6 +13,7 @@ import QtQuick                  2.11
 import QtQuick.Controls         2.4
 import QtQuick.Layouts          1.11
 import QtQuick.Dialogs          1.3
+import QtGraphicalEffects       1.0
 
 import QtMultimedia             5.9
 import QtPositioning            5.2
@@ -31,6 +32,7 @@ import Custom.Widgets                   1.0
 import Custom.Camera                    1.0
 
 Item {
+    id:             _root
     height:         mainColumn.height
     width:          mainColumn.width + (ScreenTools.defaultFontPixelWidth * 2)
     visible:        !QGroundControl.videoManager.fullScreen
@@ -399,10 +401,11 @@ Item {
             }
             //-- Gimbal Indicator
             Rectangle {
+                id: gimbalBackground
                 width:                  _hasGimbal ? ScreenTools.defaultFontPixelWidth * 6 : 0
                 height:                 _hasGimbal ? (gimbalCol.height + (ScreenTools.defaultFontPixelHeight * 2)) : 0
                 visible:                _hasGimbal
-                color:                  qgcPal.window
+                color:                  Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.75)
                 radius:                 ScreenTools.defaultFontPixelWidth * 0.5
                 anchors.verticalCenter: cameraRect.verticalCenter
                 Column {
@@ -410,6 +413,7 @@ Item {
                     spacing:            ScreenTools.defaultFontPixelHeight * 0.75
                     anchors.centerIn:   parent
                     QGCColoredImage {
+                        id:             gimbalIcon
                         source:         "/custom/img/gimbal_icon.svg"
                         color:          qgcPal.text
                         width:          ScreenTools.defaultFontPixelWidth * 2
@@ -420,7 +424,6 @@ Item {
                         fillMode:       Image.PreserveAspectFit
                         sourceSize.width: width
                         anchors.horizontalCenter: parent.horizontalCenter
-
                     }
                     Image {
                         id:                 pitchScale
@@ -431,34 +434,41 @@ Item {
                         smooth:             true
                         mipmap:             true
                         antialiasing:       true
-                        anchors.horizontalCenter: parent.horizontalCenter
+
                         Image {
                             id:                 yawIndicator
                             width:              ScreenTools.defaultFontPixelWidth * 4
                             source:             "/custom/img/gimbal_position.svg"
                             fillMode:           Image.PreserveAspectFit
                             sourceSize.width:   width
-                            y:                  (parent.height * _pitch / 105)
+                            x:                  pitchScale.width/2
+                            y:                  (pitchScale.height * pitchScale.scaleRatio) + (pitchScale._pitch / pitchScale.rangeValue) * pitchScale.height
                             smooth:             true
                             mipmap:             true
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            transform: Rotation {
-                                origin.x:       yawIndicator.width  / 2
-                                origin.y:       yawIndicator.height / 2
-                                angle:          _gimbalYaw
-                            }
-                            property real _pitch: _gimbalPitch < -15 ? -15  : (_gimbalPitch > 90 ? 90 : _gimbalPitch)
+                            transform: [
+                                Translate {
+                                    x: -yawIndicator.width / 2
+                                    y: -yawIndicator.height / 2
+                                },
+                                Rotation {
+                                    angle: _gimbalYaw
+                                }
+                            ]
                         }
+                        readonly property real minValue: -15
+                        readonly property real centerValue: 0
+                        readonly property real maxValue: 90
+                        readonly property real rangeValue: maxValue - minValue
+                        readonly property real scaleRatio: 1/7
+                        property real          _pitch: _gimbalPitch < minValue ? minValue  : (_gimbalPitch > maxValue ? maxValue : _gimbalPitch)
                     }
                     QGCLabel {
                         id:             gimbalLabel
-                        text:           _gimbalPitch ? _gimbalPitch.toFixed(0) : 0
                         color:          qgcPal.text
                         font.pointSize:  ScreenTools.smallFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                 }
-            }
+            } // Gimbal Indicator
         }
         //-- Zoom Buttons
         ZoomControl {
@@ -470,6 +480,7 @@ Item {
             zoomLevelVisible: false
             zoomLevel:      _hasZoom ? _camera.zoomLevel : NaN
             anchors.horizontalCenter: parent.horizontalCenter
+            onlyContinousZoom: true
             onZoomIn: {
                 _camera.stepZoom(1)
             }
@@ -942,18 +953,18 @@ Item {
         id:                     thermalPalettes
         width:                  Math.min(mainWindow.width * 0.666, ScreenTools.defaultFontPixelWidth * 40)
         height:                 mainWindow.height * 0.5
-        //modal:                  true
+        modal:                  true
         focus:                  true
         parent:                 Overlay.overlay
         x:                      Math.round((mainWindow.width  - width)  * 0.5)
         y:                      Math.round((mainWindow.height - height) * 0.5)
         closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        property int selectedIndex: 0
+
         background: Rectangle {
             anchors.fill:       parent
             color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
             border.color:       qgcPal.text
-            radius:             ScreenTools.defaultFontPixelWidth
+            radius:             ScreenTools.defaultFontPixelWidth * 0.5
         }
         Item {
             anchors.fill:       parent
@@ -989,6 +1000,7 @@ Item {
                                 if(thermalBackgroundRect.visible) {
                                     if(_camera.thermalMode !== QGCCameraControl.THERMAL_PIP && _camera.thermalMode !== QGCCameraControl.THERMAL_FULL) {
                                         _camera.thermalMode = QGCCameraControl.THERMAL_FULL
+                                        thermalFull.checked = true
                                     }
                                 }
 
