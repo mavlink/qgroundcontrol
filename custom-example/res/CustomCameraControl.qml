@@ -405,16 +405,17 @@ Item {
                 width:                  _hasGimbal ? ScreenTools.defaultFontPixelWidth * 6 : 0
                 height:                 _hasGimbal ? (gimbalCol.height + (ScreenTools.defaultFontPixelHeight * 2)) : 0
                 visible:                _hasGimbal
-                color:                  Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.5)
+                color:                  Qt.rgba(qgcPal.window.r, qgcPal.window.g, qgcPal.window.b, 0.75)
                 radius:                 ScreenTools.defaultFontPixelWidth * 0.5
                 anchors.verticalCenter: cameraRect.verticalCenter
                 Column {
                     id:                 gimbalCol
                     spacing:            ScreenTools.defaultFontPixelHeight * 0.75
                     anchors.centerIn:   parent
-                    Image {
+                    QGCColoredImage {
                         id:             gimbalIcon
                         source:         "/custom/img/gimbal_icon.svg"
+                        color:          qgcPal.text
                         width:          ScreenTools.defaultFontPixelWidth * 2
                         height:         width
                         smooth:         true
@@ -422,12 +423,12 @@ Item {
                         antialiasing:   true
                         fillMode:       Image.PreserveAspectFit
                         sourceSize.width: width
-                        z:              stickItem.z + 1
+                        anchors.horizontalCenter: parent.horizontalCenter
                     }
                     Image {
                         id:                 pitchScale
                         height:             cameraRect.height * 0.65
-                        source:             "/custom/img/gimbal_pitch.svg"
+                        source:             qgcPal.globalTheme === QGCPalette.Light ? "/custom/img/gimbal_pitch_indoors.svg" : "/custom/img/gimbal_pitch_outdoors.svg"
                         fillMode:           Image.PreserveAspectFit
                         sourceSize.height:  height
                         smooth:             true
@@ -463,8 +464,7 @@ Item {
                     }
                     QGCLabel {
                         id:             gimbalLabel
-                        text:           _gimbalPitch ? pitchScale._pitch.toFixed(0) : 0
-                        color:          "#FFF"
+                        color:          qgcPal.text
                         font.pointSize:  ScreenTools.smallFontPointSize
                     }
                 }

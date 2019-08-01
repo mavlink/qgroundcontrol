@@ -31,10 +31,29 @@ ComboBox {
         border.color:                   "#999"
     }
 
+    /*! Adding the Combobox list item to the theme.  */
+
+    delegate: ItemDelegate {
+            width:                      control.width
+
+            contentItem: Text {
+                text:                   modelData
+                color:                  qgcPal.text
+                verticalAlignment:      Text.AlignVCenter
+            }
+
+            background: Rectangle {
+                color:                  control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+            }
+
+            highlighted:                control.highlightedIndex === index
+        }
+
     /*! This defines the label of the button.  */
     contentItem: Item {
         implicitWidth:                  text.implicitWidth
         implicitHeight:                 text.implicitHeight
+
         QGCLabel {
             id:                         text
             anchors.verticalCenter:     parent.verticalCenter
