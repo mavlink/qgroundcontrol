@@ -106,7 +106,7 @@ pipeline {
 						QMAKE_VER = '5.11.0/gcc_64/bin/qmake'
 					}
 					steps {
-						echo "Test"
+						bat 'git fetch --tags'
 						bat "call vcvarsall.bat"
 						withCredentials(bindings: [file(credentialsId: 'QGC_Airmap_api_key', variable: 'AIRMAP_API_HEADER')]) {
 							sh 'cp $AIRMAP_API_HEADER ${WORKSPACE}/src/Airmap/Airmap_api_key.h'
