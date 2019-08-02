@@ -359,7 +359,16 @@ QGCCameraControl::takePhoto()
 {
     qCDebug(CameraControlLog) << "takePhoto()";
     //-- Check if camera can capture photos or if it can capture it while in Video Mode
-    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) || photoStatus() != PHOTO_CAPTURE_IDLE) {
+    if(!capturesPhotos()) {
+        qCWarning(CameraControlLog) << "Camera does not handle image capture";
+        return false;
+    }
+    if(cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) {
+        qCWarning(CameraControlLog) << "Camera does not handle image capture while in video mode";
+        return false;
+    }
+    if(photoStatus() != PHOTO_CAPTURE_IDLE) {
+        qCWarning(CameraControlLog) << "Camera not idle";
         return false;
     }
     if(!_resetting) {
@@ -779,6 +788,7 @@ void
 QGCCameraControl::_setPhotoStatus(PhotoStatus status)
 {
     if(_photo_status != status) {
+        qCDebug(CameraControlLog) << "Set Photo Status:" << status;
         _photo_status = status;
         emit photoStatusChanged();
     }
