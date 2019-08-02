@@ -79,7 +79,7 @@ QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
         return new QGeoTiledMapReplyQGC(_networkManager, request, spec);
     }
     else {
-        return NULL;
+        return nullptr;
     }
 }
 
