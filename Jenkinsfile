@@ -14,8 +14,8 @@ pipeline {
 					}
 					agent {
 						docker {
-							image 'mavlink/qgc-build-android:2019-02-03'
-							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -u root:root'
+							image 'aeronavics/qgc-build-android'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -e CCACHE_DIR=/ccache'
 						}
 					}
 
@@ -34,8 +34,6 @@ pipeline {
 						sh 'git clean -ff -x -d .'
                         sh 'git submodule update --init --recursive --force'
                         sh 'wget --quiet http://192.168.2.144:8086/repository/gstreamer-android-qgroundcontrol/gstreamer/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
-                        sh 'apt update'
-                        sh 'apt install -y bzip2'
                         sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
                         sh 'cp ${WORKSPACE}/android/strings.xml /opt/Qt/5.11.0/android_armv7/src/android/java/res/values/strings.xml'
                         withCredentials([string(credentialsId: 'ANDROID_STOREPASS', variable: 'ANDROID_STOREPASS')]) {
@@ -78,15 +76,13 @@ pipeline {
 					}
 					agent {
 						docker {
-							image 'mavlink/qgc-build-linux:2019-02-03'
-							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -u root:root'
+							image 'aeronavics/qgroundcontrol_linux_container'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -e CCACHE_DIR=/ccache'
 						}
 					}
 					steps {
 						sh 'git fetch --tags'
                         sh 'echo Version ${VERSION_NAME}'
-                        sh 'apt update'
-                        sh 'apt install -y rsync file'
 						sh 'export'
 						sh 'ccache -z'
 						sh 'git submodule deinit -f .'
