@@ -543,7 +543,10 @@ QGCCreateTileSetTask::~QGCCreateTileSetTask()
 void
 QGCMapEngine::testInternet()
 {
-    getQGCMapEngine()->addTask(new QGCTestInternetTask());
+    if(qgcApp()->toolbox()->settingsManager()->appSettings()->checkInternet()->rawValue().toBool())
+        getQGCMapEngine()->addTask(new QGCTestInternetTask());
+    else
+        _internetStatus(true);
 }
 
 //-----------------------------------------------------------------------------
