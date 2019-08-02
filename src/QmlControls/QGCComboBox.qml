@@ -26,7 +26,7 @@ ComboBox {
     background: Rectangle {
         implicitWidth:                  ScreenTools.implicitComboBoxWidth
         implicitHeight:                 ScreenTools.implicitComboBoxHeight
-        color:                          qgcPal.textField
+        color:                          qgcPal.window
         border.width:                   enabled ? 1 : 0
         border.color:                   "#999"
     }
@@ -37,8 +37,8 @@ ComboBox {
             width:                      control.width
 
             contentItem: Text {
-                text:                   modelData
-                color:                  qgcPal.text
+                text:                   textRole ? modelData[textRole] : modelData
+                color:                  control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
                 verticalAlignment:      Text.AlignVCenter
             }
 
@@ -59,7 +59,7 @@ ComboBox {
             anchors.verticalCenter:     parent.verticalCenter
             anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
             text:                       control.currentText
-            color:                      qgcPal.textFieldText
+            color:                      qgcPal.text
         }
     }
 }
