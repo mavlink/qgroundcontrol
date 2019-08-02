@@ -10,6 +10,7 @@ pipeline {
 						QGC_CONFIG = 'release'
 						QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
 						GSTREAMER_ROOT_ANDROID = "/qgroundcontrol/gstreamerr"
+		                VERSION_NAME = getVersion()
 					}
 					agent {
 						docker {
@@ -19,7 +20,9 @@ pipeline {
 					}
 
 					steps {
+						sh 'git fetch --tags'
                         sh 'echo $PATH'
+                        sh 'echo Version ${VERSION_NAME}'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
 							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
 						}
@@ -43,8 +46,20 @@ pipeline {
 					}
 					post {
 						always {
-							archiveArtifacts artifacts: 'build/release/package/*.apk'
-						}
+                            archiveArtifacts artifacts: 'build/release/package/*.apk'
+                            nexusArtifactUploader(
+                                credentialsId: 'qgc_uploader',
+                                groupId: 'qgroundcontrol',
+                                nexusUrl: 'pelardon.aeronavics.com:8086',
+                                nexusVersion: 'nexus3',
+                                protocol: 'http',
+                                repository: 'qgroundcontrol',
+                                version: "${VERSION_NAME}",
+                                artifacts: [
+                                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/package/QGroundControl.apk', type: 'apk']
+                                ]
+                                )
+                        }
 						cleanup {
 						    sh 'rm -r ${WORKSPACE}/build'
 						    sh 'rm -r ${WORKSPACE}/gstreamer*'
@@ -59,6 +74,7 @@ pipeline {
 						CCACHE_BASEDIR = "${env.WORKSPACE}"
 						QGC_CONFIG = 'release'
 						QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
+		                VERSION_NAME = getVersion()
 					}
 					agent {
 						docker {
@@ -67,6 +83,8 @@ pipeline {
 						}
 					}
 					steps {
+						sh 'git fetch --tags'
+                        sh 'echo Version ${VERSION_NAME}'
                         sh 'apt update'
                         sh 'apt install -y rsync file'
 						sh 'export'
@@ -87,6 +105,19 @@ pipeline {
 						always {
 							archiveArtifacts artifacts: 'build/**/*.AppImage'
 							archiveArtifacts artifacts: 'build/**/*.deb'
+                            nexusArtifactUploader(
+                                credentialsId: 'qgc_uploader',
+                                groupId: 'qgroundcontrol',
+                                nexusUrl: 'pelardon.aeronavics.com:8086',
+                                nexusVersion: 'nexus3',
+                                protocol: 'http',
+                                repository: 'qgroundcontrol',
+                                version: "${env.VERSION_NAME}",
+                                artifacts: [
+                                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/package/QGroundControl.AppImage', type: 'AppImage'],
+                                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/package/QGroundControl.deb', type: 'DEB'],
+                                ]
+                                )
 						}
 						cleanup {
 						    sh 'rm -r ${WORKSPACE}/build'
@@ -107,6 +138,7 @@ pipeline {
 					environment {
 						QGC_CONFIG = 'release'
 						QMAKE_VER = '5.11.0/gcc_64/bin/qmake'
+		                VERSION_NAME = getVersion()
 					}
 					steps {
 						bat 'git fetch --tags'
@@ -119,6 +151,18 @@ pipeline {
 					post {
 						always {
 							archiveArtifacts artifacts: 'build/release/*installer*.exe'
+                            nexusArtifactUploader(
+                                credentialsId: 'qgc_uploader',
+                                groupId: 'qgroundcontrol',
+                                nexusUrl: 'pelardon.aeronavics.com:8086',
+                                nexusVersion: 'nexus3',
+                                protocol: 'http',
+                                repository: 'qgroundcontrol',
+                                version: "${env.VERSION_NAME}",
+                                artifacts: [
+                                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/QGroundControl-installer.exe', type: 'exe'],
+                                ]
+                                )
 						}
 					}
 				}
@@ -130,8 +174,13 @@ pipeline {
 		CCACHE_DIR = '/tmp/ccache'
 		QT_FATAL_WARNINGS = '1'
 	}
-	options {
-		buildDiscarder(logRotator(numToKeepStr: '10', artifactDaysToKeepStr: '30'))
-			timeout(time: 60, unit: 'MINUTES')
-	}
+
+
+}
+
+def getVersion()
+{
+    tags = sh(returnStdout: true, script: "git describe --tags").trim()
+    print tags
+    return tags
 }
