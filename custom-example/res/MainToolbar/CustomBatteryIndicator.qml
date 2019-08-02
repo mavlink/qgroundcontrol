@@ -27,16 +27,13 @@ Item {
     anchors.top:            parent.top
     anchors.bottom:         parent.bottom
 
-    property var    batterySummary:     activeVehicle ? activeVehicle.batterySummary : null
-    property var    battery1:           activeVehicle ? activeVehicle.battery        : null
-    property var    battery2:           activeVehicle ? activeVehicle.battery2       : null
+    property var    battery1:           activeVehicle ? activeVehicle.battery  : null
+    property var    battery2:           activeVehicle ? activeVehicle.battery2 : null
     property bool   hasSecondBattery:   battery2 && battery2.voltage.value !== -1
 
     function lowestBattery() {
         if(activeVehicle) {
-            if(batterySummary && (batterySummary.voltage.value !== -1 || batterySummary.percentRemaining.value > 0.1)) {
-                return batterySummary;
-            } else if(hasSecondBattery) {
+            if(hasSecondBattery) {
                 if(activeVehicle.battery2.percentRemaining.value < activeVehicle.battery.percentRemaining.value) {
                     return activeVehicle.battery2
                 }

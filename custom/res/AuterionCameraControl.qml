@@ -703,7 +703,8 @@ Item {
                             value:          _camera ? _camera.thermalOpacity : 0
                             live:           true
                             onValueChanged: {
-                                _camera.thermalOpacity = value
+                                if(_camera)
+                                    _camera.thermalOpacity = value
                             }
                         }
                     }
