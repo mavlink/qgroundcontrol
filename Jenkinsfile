@@ -15,13 +15,14 @@ pipeline {
 					agent {
 						docker {
 							image 'aeronavics/qgc-build-android'
-							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -e CCACHE_DIR=/ccache'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
 						}
 					}
 
 					steps {
 						sh 'git fetch --tags'
                         sh 'echo $PATH'
+                        sh 'echo ${CCACHE_BASEDIR}'
                         sh 'echo Version ${VERSION_NAME}'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
 							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
@@ -35,7 +36,6 @@ pipeline {
                         sh 'git submodule update --init --recursive --force'
                         sh 'wget --quiet http://192.168.2.144:8086/repository/gstreamer-android-qgroundcontrol/gstreamer/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
                         sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
-                        sh 'cp ${WORKSPACE}/android/strings.xml /opt/Qt/5.11.0/android_armv7/src/android/java/res/values/strings.xml'
                         withCredentials([string(credentialsId: 'ANDROID_STOREPASS', variable: 'ANDROID_STOREPASS')]) {
                             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG}'
                             sh 'cd build; make -j`nproc --all`'
@@ -77,7 +77,7 @@ pipeline {
 					agent {
 						docker {
 							image 'aeronavics/qgroundcontrol_linux_container'
-							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw -e CCACHE_DIR=/ccache'
+							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
 						}
 					}
 					steps {
