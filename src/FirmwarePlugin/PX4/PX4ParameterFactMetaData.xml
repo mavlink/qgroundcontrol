@@ -7421,6 +7421,78 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       </values>
     </parameter>
   </group>
+  <group name="Roboclaw">
+    <parameter default="0" name="RBCLW_SER_CFG" type="INT32">
+      <short_desc>Serial Configuration for Roboclaw Driver</short_desc>
+      <long_desc>Configure on which serial port to run Roboclaw Driver.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="Roboclaw driver">
+    <parameter default="128" name="RBCLW_ADDRESS" type="INT32">
+      <short_desc>Address of the Roboclaw</short_desc>
+      <long_desc>The Roboclaw can be configured to have an address from 0x80 to 0x87, inclusive. It must be configured to match this parameter.</long_desc>
+      <min>128</min>
+      <max>135</max>
+      <values>
+        <value code="128">0x80</value>
+        <value code="129">0x81</value>
+        <value code="130">0x82</value>
+        <value code="131">0x83</value>
+        <value code="132">0x84</value>
+        <value code="133">0x85</value>
+        <value code="134">0x86</value>
+        <value code="135">0x87</value>
+      </values>
+    </parameter>
+    <parameter default="2400" name="RBCLW_BAUD" type="INT32">
+      <short_desc>Roboclaw serial baud rate</short_desc>
+      <long_desc>Baud rate of the serial communication with the Roboclaw. The Roboclaw must be configured to match this rate.</long_desc>
+      <min>2400</min>
+      <max>460800</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="2400">2400 baud</value>
+        <value code="9600">9600 baud</value>
+        <value code="19200">19200 baud</value>
+        <value code="38400">38400 baud</value>
+        <value code="57600">57600 baud</value>
+        <value code="115200">115200 baud</value>
+        <value code="230400">230400 baud</value>
+        <value code="460800">460800 baud</value>
+      </values>
+    </parameter>
+    <parameter default="1200" name="RBCLW_COUNTS_REV" type="INT32">
+      <short_desc>Encoder counts per revolution</short_desc>
+      <long_desc>Number of encoder counts for one revolution. The roboclaw treats analog encoders (potentiometers) as having 2047 counts per rev. The default value of 1200 corresponds to the default configuration of the Aion R1 rover.</long_desc>
+      <min>1</min>
+    </parameter>
+    <parameter default="10" name="RBCLW_READ_PER" type="INT32">
+      <short_desc>Encoder read period</short_desc>
+      <long_desc>How long to wait, in Milliseconds, between reading wheel encoder values over Uart from the Roboclaw</long_desc>
+      <min>1</min>
+      <max>1000</max>
+      <unit>ms</unit>
+    </parameter>
+    <parameter default="10" name="RBCLW_WRITE_PER" type="INT32">
+      <short_desc>Uart write period</short_desc>
+      <long_desc>How long to wait, in Milliseconds, between writing actuator controls over Uart to the Roboclaw</long_desc>
+      <min>1</min>
+      <max>1000</max>
+      <unit>ms</unit>
+    </parameter>
+  </group>
   <group name="Rover Position Control">
     <parameter default="0.75" name="GND_L1_DAMPING" type="FLOAT">
       <short_desc>L1 damping</short_desc>
