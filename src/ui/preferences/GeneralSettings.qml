@@ -256,6 +256,13 @@ Rectangle {
                                 }
 
                                 FactCheckBox {
+                                    text:       qsTr("Check for Internet connection")
+                                    fact:       _checkInternet
+                                    visible:    _checkInternet.visible
+                                    property Fact _checkInternet: QGroundControl.settingsManager.appSettings.checkInternet
+                                }
+
+                                FactCheckBox {
                                     text:       qsTr("AutoLoad Missions")
                                     fact:       _autoLoad
                                     visible:    _autoLoad.visible
