@@ -97,6 +97,13 @@
     "defaultValue":     false
 },
 {
+    "name":             "checkInternet",
+    "shortDescription": "Check Internet connection",
+    "longDescription":  "Check Internet connection before accessing Internet resources.",
+    "type":             "bool",
+    "defaultValue":     true
+},
+{
     "name":             "virtualJoystick",
     "shortDescription": "Show virtual joystick",
     "longDescription":  "If this option is enabled the virtual joystick will be shown on the Fly view.",
