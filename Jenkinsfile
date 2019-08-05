@@ -176,7 +176,7 @@ pipeline {
 
 def getVersion()
 {
-    tags = sh(returnStdout: true, script: "git describe --tags").trim()
+    tags = sh(returnStdout: true, script: "git describe --tags --abbrev=7").trim()
     print tags
     return tags
 }
