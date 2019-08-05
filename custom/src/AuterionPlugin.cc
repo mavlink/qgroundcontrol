@@ -246,11 +246,14 @@ AuterionPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData
             QVariant indoorPalette = 1;
             metaData.setRawDefaultValue(indoorPalette);
             return true;
+        } else if (metaData.name() == AppSettings::useChecklistName) {
+            //-- Use checklist by default
+            metaData.setRawDefaultValue(true);
+            return true;
         }
     }
     return true;
 }
-
 
 const QColor     AuterionPlugin::_windowShadeEnabledLightColor("#FFFFFF");
 const QColor     AuterionPlugin::_windowShadeEnabledDarkColor("#0B1420");
