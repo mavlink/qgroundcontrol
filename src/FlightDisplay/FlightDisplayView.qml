@@ -582,7 +582,7 @@ Item {
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
 
             buttonVisible:      [true, _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, _guidedController.showPause, !_guidedController.showPause ]
-            buttonEnabled:      [true, _useChecklist && activeVehicle, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
+            buttonEnabled:      [true, _useChecklist && activeVehicle && !activeVehicle.armed, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
 
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
