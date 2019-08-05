@@ -14,7 +14,7 @@ pipeline {
 					}
 					agent {
 						docker {
-							image 'aeronavics/qgc-build-android'
+							image 'pelardon.aeronavics.com:8084/qgc_android'
 							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
 						}
 					}
@@ -22,7 +22,7 @@ pipeline {
 					steps {
 						sh 'git fetch --tags'
                         sh 'echo $PATH'
-                        sh 'echo ${CCACHE_BASEDIR}'
+                        sh 'echo $CCACHE_BASEDIR'
                         sh 'echo Version ${VERSION_NAME}'
 						withCredentials(bindings: [file(credentialsId: 'AndroidReleaseKey', variable: 'ANDROID_KEYSTORE')]) {
 							sh 'cp $ANDROID_KEYSTORE ${WORKSPACE}/android/android_release.keystore.h'
@@ -76,7 +76,7 @@ pipeline {
 					}
 					agent {
 						docker {
-							image 'aeronavics/qgroundcontrol_linux_container'
+							image 'pelardon.aeronavics.com:8084/qgc_linux'
 							args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
 						}
 					}
