@@ -611,14 +611,14 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
     */
 
     if (encoding == H265_HW || encoding == H265_SW) {
-        _depayName = "rtph265depay";
+        _depayName  = "rtph265depay";
         _parserName = "h265parse";
 #if defined(__android__)
         _hwDecoderName = "amcviddec-omxgooglehevcdecoder";
 #endif
         _swDecoderName = "avdec_h265";
     } else {
-        _depayName = "rtph264depay";
+        _depayName  = "rtph264depay";
         _parserName = "h264parse";
 #if defined(__android__)
         _hwDecoderName = "amcviddec-omxgoogleh264decoder";
@@ -630,6 +630,7 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _hwDecoderName = nullptr;
     }
 }
+
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
