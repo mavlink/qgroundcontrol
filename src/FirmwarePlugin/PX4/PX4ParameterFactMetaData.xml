@@ -602,13 +602,12 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="0.15" name="COM_ARM_MAG" type="FLOAT">
-      <short_desc>Maximum magnetic field inconsistency between units that will allow arming</short_desc>
-      <min>0.05</min>
-      <max>0.5</max>
-      <unit>Gauss</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
+    <parameter default="30" name="COM_ARM_MAG_ANG" type="INT32">
+      <short_desc>Maximum magnetic field inconsistency between units that will allow arming
+Set -1 to disable the check</short_desc>
+      <min>3</min>
+      <max>180</max>
+      <unit>deg</unit>
     </parameter>
     <parameter default="0" name="COM_ARM_MIS_REQ" type="INT32">
       <short_desc>Require valid mission to arm</short_desc>
