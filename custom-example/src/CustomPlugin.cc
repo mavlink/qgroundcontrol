@@ -17,6 +17,7 @@
 
 #include "CustomPlugin.h"
 #include "CustomQuickInterface.h"
+#include "CustomVideoManager.h"
 
 #include "MultiVehicleManager.h"
 #include "QGCApplication.h"
@@ -189,6 +190,13 @@ CustomPlugin::overrideSettingsGroupVisibility(QString name)
         return false;
     }
     return true;
+}
+
+//-----------------------------------------------------------------------------
+VideoManager*
+CustomPlugin::createVideoManager(QGCApplication *app, QGCToolbox *toolbox)
+{
+    return new CustomVideoManager(app, toolbox);
 }
 
 //-----------------------------------------------------------------------------
