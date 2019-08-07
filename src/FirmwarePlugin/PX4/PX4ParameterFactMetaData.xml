@@ -4445,6 +4445,13 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="1">Jerk-limited trajectory</value>
       </values>
     </parameter>
+    <parameter default="45." name="MPC_COL_PREV_ANG" type="FLOAT">
+      <short_desc>Angle left/right from the commanded setpoint in which the range data is used to calculate speed limitations. All data further from the commanded direction is not considered</short_desc>
+      <long_desc>Only used in Position mode.</long_desc>
+      <min>0</min>
+      <max>90</max>
+      <unit>[deg]</unit>
+    </parameter>
     <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
       <short_desc>Minimum distance the vehicle should keep to all obstacles</short_desc>
       <long_desc>Only used in Position mode. Collision avoidace is disabled by setting this parameter to a negative value</long_desc>
