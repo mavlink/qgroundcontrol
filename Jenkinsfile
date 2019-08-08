@@ -34,7 +34,7 @@ pipeline {
 						sh 'git submodule deinit -f .'
 						sh 'git clean -ff -x -d .'
                         sh 'git submodule update --init --recursive --force'
-                        sh 'wget --quiet http://192.168.2.144:8086/repository/gstreamer-android-qgroundcontrol/gstreamer/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
+                        sh 'wget --quiet http://192.168.2.144:8086/nexus/repository/gstreamer-android-qgroundcontrol/gstreamer/gstreamer-1.0-android-universal-1.14.4.tar.bz2'
                         sh 'tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${WORKSPACE}' 
                         withCredentials([string(credentialsId: 'ANDROID_STOREPASS', variable: 'ANDROID_STOREPASS')]) {
                             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=installer CONFIG+=${QGC_CONFIG}'
@@ -48,7 +48,7 @@ pipeline {
                             nexusArtifactUploader(
                                 credentialsId: 'qgc_uploader',
                                 groupId: 'qgroundcontrol',
-                                nexusUrl: 'pelardon.aeronavics.com:8086',
+                                nexusUrl: 'pelardon.aeronavics.com:8086/nexus',
                                 nexusVersion: 'nexus3',
                                 protocol: 'http',
                                 repository: 'qgroundcontrol',
@@ -104,7 +104,7 @@ pipeline {
                             nexusArtifactUploader(
                                 credentialsId: 'qgc_uploader',
                                 groupId: 'qgroundcontrol',
-                                nexusUrl: 'pelardon.aeronavics.com:8086',
+                                nexusUrl: 'pelardon.aeronavics.com:8086/nexus',
                                 nexusVersion: 'nexus3',
                                 protocol: 'http',
                                 repository: 'qgroundcontrol',
@@ -150,7 +150,7 @@ pipeline {
                             nexusArtifactUploader(
                                 credentialsId: 'qgc_uploader',
                                 groupId: 'qgroundcontrol',
-                                nexusUrl: 'pelardon.aeronavics.com:8086',
+                                nexusUrl: 'pelardon.aeronavics.com:8086/nexus',
                                 nexusVersion: 'nexus3',
                                 protocol: 'http',
                                 repository: 'qgroundcontrol',
