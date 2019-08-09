@@ -137,6 +137,61 @@
       <min>0</min>
     </parameter>
   </group>
+  <group name="Airspeed Validator">
+    <parameter default="1.0" name="ARSP_ARSP_SCALE" type="FLOAT">
+      <short_desc>Airspeed scale (scale from IAS to CAS/EAS)</short_desc>
+      <long_desc>Scale can either be entered manually, or estimated in-flight by setting ARSP_SCALE_EST to 1.</long_desc>
+      <min>0.5</min>
+      <max>1.5</max>
+    </parameter>
+    <parameter default="1" name="ARSP_BETA_GATE" type="INT32">
+      <short_desc>Airspeed Selector: Gate size for true sideslip fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1</min>
+      <max>5</max>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="0.3" name="ARSP_BETA_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator sideslip measurement noise</short_desc>
+      <long_desc>Sideslip measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>rad</unit>
+    </parameter>
+    <parameter default="0" name="ARSP_SCALE_EST" type="INT32">
+      <short_desc>Automatic airspeed scale estimation on</short_desc>
+      <long_desc>Turns the automatic airspeed scale (scale from IAS to CAS/EAS) on or off. It is recommended level (keeping altitude) while performing the estimation. Set to 1 to start estimation (best when already flying). Set to 0 to end scale estimation. The estimated scale is then saved in the ARSP_ARSP_SCALE parameter.</long_desc>
+      <boolean />
+    </parameter>
+    <parameter default="0.0001" name="ARSP_SC_P_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise</short_desc>
+      <long_desc>Airspeed scale process noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>0.1</max>
+      <unit>1/s</unit>
+    </parameter>
+    <parameter default="3" name="ARSP_TAS_GATE" type="INT32">
+      <short_desc>Airspeed Selector: Gate size for true airspeed fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1</min>
+      <max>5</max>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="1.4" name="ARSP_TAS_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator true airspeed measurement noise</short_desc>
+      <long_desc>True airspeed measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>4</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="0.1" name="ARSP_W_P_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator wind process noise</short_desc>
+      <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>m/s/s</unit>
+    </parameter>
+  </group>
   <group name="Attitude Q estimator">
     <parameter default="1" name="ATT_ACC_COMP" type="INT32">
       <short_desc>Acceleration compensation based on GPS
@@ -10490,50 +10545,6 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <unit>1/s</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
-    </parameter>
-  </group>
-  <group name="Wind Estimator">
-    <parameter default="1" name="WEST_BETA_GATE" type="INT32">
-      <short_desc>Gate size for true sideslip fusion</short_desc>
-      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
-      <min>1</min>
-      <max>5</max>
-      <unit>SD</unit>
-    </parameter>
-    <parameter default="0.3" name="WEST_BETA_NOISE" type="FLOAT">
-      <short_desc>Wind estimator sideslip measurement noise</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <unit>rad</unit>
-    </parameter>
-    <parameter default="0" name="WEST_EN" type="INT32">
-      <short_desc>Enable Wind estimator</short_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter default="0.0001" name="WEST_SC_P_NOISE" type="FLOAT">
-      <short_desc>Wind estimator true airspeed scale process noise</short_desc>
-      <min>0</min>
-      <max>0.1</max>
-    </parameter>
-    <parameter default="3" name="WEST_TAS_GATE" type="INT32">
-      <short_desc>Gate size for true airspeed fusion</short_desc>
-      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
-      <min>1</min>
-      <max>5</max>
-      <unit>SD</unit>
-    </parameter>
-    <parameter default="1.4" name="WEST_TAS_NOISE" type="FLOAT">
-      <short_desc>Wind estimator true airspeed measurement noise</short_desc>
-      <min>0</min>
-      <max>4</max>
-      <unit>m/s</unit>
-    </parameter>
-    <parameter default="0.1" name="WEST_W_P_NOISE" type="FLOAT">
-      <short_desc>Wind estimator wind process noise</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <unit>m/s/s</unit>
     </parameter>
   </group>
   <group name="Miscellaneous">
