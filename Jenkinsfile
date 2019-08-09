@@ -59,8 +59,8 @@ pipeline {
                                 )
                         }
 						cleanup {
-						    sh 'rm -r ${WORKSPACE}/build'
-						    sh 'rm -r ${WORKSPACE}/gstreamer*'
+						    sh 'rm -r ${WORKSPACE}/build || true'
+						    sh 'rm -r ${WORKSPACE}/gstreamer* || true'
 							sh 'git clean -ff -x -d .'
 						}
 					}
@@ -116,7 +116,7 @@ pipeline {
                                 )
 						}
 						cleanup {
-						    sh 'rm -r ${WORKSPACE}/build'
+						    sh 'rm -r ${WORKSPACE}/build || true'
 							sh 'git clean -ff -x -d .'
 						}
 					}
