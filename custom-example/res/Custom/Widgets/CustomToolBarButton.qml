@@ -22,7 +22,8 @@ Button {
 
     background: Rectangle {
         anchors.fill:               parent
-        color:                      mouseArea.pressed ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
+        color:                      qgcPal.buttonHighlight
+        visible:                    (mouseArea.pressed || button.checked)
     }
 
     contentItem: Row {
@@ -40,7 +41,7 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  (mouseArea.pressed || button.checked) ? qgcPal.primaryButton : qgcPal.buttonText
+            color:                  qgcPal.buttonText
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -48,7 +49,7 @@ Button {
             id:                     _label
             visible:                text !== ""
             text:                   button.text
-            color:                  (mouseArea.pressed || button.checked) ? qgcPal.primaryButton : qgcPal.buttonText
+            color:                  qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }
     }

@@ -70,9 +70,6 @@ const char* QGCCameraControl::kCAM_SHUTTERSPD  = "CAM_SHUTTERSPD";
 const char* QGCCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
 const char* QGCCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
 const char* QGCCameraControl::kCAM_MODE        = "CAM_MODE";
-const char* QGCCameraControl::kCAM_BITRATE     = "CAM_BITRATE";
-const char* QGCCameraControl::kCAM_FPS         = "CAM_FPS";
-const char* QGCCameraControl::kCAM_ENC         = "CAM_ENC";
 
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
@@ -359,7 +356,16 @@ QGCCameraControl::takePhoto()
 {
     qCDebug(CameraControlLog) << "takePhoto()";
     //-- Check if camera can capture photos or if it can capture it while in Video Mode
-    if(!capturesPhotos() || (cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) || photoStatus() != PHOTO_CAPTURE_IDLE) {
+    if(!capturesPhotos()) {
+        qCWarning(CameraControlLog) << "Camera does not handle image capture";
+        return false;
+    }
+    if(cameraMode() == CAM_MODE_VIDEO && !photosInVideoMode()) {
+        qCWarning(CameraControlLog) << "Camera does not handle image capture while in video mode";
+        return false;
+    }
+    if(photoStatus() != PHOTO_CAPTURE_IDLE) {
+        qCWarning(CameraControlLog) << "Camera not idle";
         return false;
     }
     if(!_resetting) {
@@ -719,10 +725,11 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
             switch(command) {
                 case MAV_CMD_IMAGE_START_CAPTURE:
                 case MAV_CMD_IMAGE_STOP_CAPTURE:
-                    if(++_captureInfoRetries < 5) {
+                    if(++_captureInfoRetries < 3) {
                         _captureStatusTimer.start(1000);
                     } else {
-                        qCDebug(CameraControlLog) << "Giving up requesting capture status";
+                        qCDebug(CameraControlLog) << "Giving up start/stop image capture";
+                        _setPhotoStatus(PHOTO_CAPTURE_IDLE);
                     }
                     break;
                 case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
@@ -778,6 +785,7 @@ void
 QGCCameraControl::_setPhotoStatus(PhotoStatus status)
 {
     if(_photo_status != status) {
+        qCDebug(CameraControlLog) << "Set Photo Status:" << status;
         _photo_status = status;
         emit photoStatusChanged();
     }
@@ -2103,27 +2111,6 @@ Fact*
 QGCCameraControl::mode()
 {
     return _paramComplete ? getFact(kCAM_MODE) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::bitRate()
-{
-    return _paramComplete ? getFact(kCAM_BITRATE) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::frameRate()
-{
-    return _paramComplete ? getFact(kCAM_FPS) : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-Fact*
-QGCCameraControl::videoEncoding()
-{
-    return _paramComplete ? getFact(kCAM_ENC) : nullptr;
 }
 
 //-----------------------------------------------------------------------------

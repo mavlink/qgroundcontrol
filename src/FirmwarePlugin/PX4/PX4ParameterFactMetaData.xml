@@ -137,6 +137,61 @@
       <min>0</min>
     </parameter>
   </group>
+  <group name="Airspeed Validator">
+    <parameter default="1.0" name="ARSP_ARSP_SCALE" type="FLOAT">
+      <short_desc>Airspeed scale (scale from IAS to CAS/EAS)</short_desc>
+      <long_desc>Scale can either be entered manually, or estimated in-flight by setting ARSP_SCALE_EST to 1.</long_desc>
+      <min>0.5</min>
+      <max>1.5</max>
+    </parameter>
+    <parameter default="1" name="ARSP_BETA_GATE" type="INT32">
+      <short_desc>Airspeed Selector: Gate size for true sideslip fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1</min>
+      <max>5</max>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="0.3" name="ARSP_BETA_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator sideslip measurement noise</short_desc>
+      <long_desc>Sideslip measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>rad</unit>
+    </parameter>
+    <parameter default="0" name="ARSP_SCALE_EST" type="INT32">
+      <short_desc>Automatic airspeed scale estimation on</short_desc>
+      <long_desc>Turns the automatic airspeed scale (scale from IAS to CAS/EAS) on or off. It is recommended level (keeping altitude) while performing the estimation. Set to 1 to start estimation (best when already flying). Set to 0 to end scale estimation. The estimated scale is then saved in the ARSP_ARSP_SCALE parameter.</long_desc>
+      <boolean />
+    </parameter>
+    <parameter default="0.0001" name="ARSP_SC_P_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator true airspeed scale process noise</short_desc>
+      <long_desc>Airspeed scale process noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>0.1</max>
+      <unit>1/s</unit>
+    </parameter>
+    <parameter default="3" name="ARSP_TAS_GATE" type="INT32">
+      <short_desc>Airspeed Selector: Gate size for true airspeed fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1</min>
+      <max>5</max>
+      <unit>SD</unit>
+    </parameter>
+    <parameter default="1.4" name="ARSP_TAS_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator true airspeed measurement noise</short_desc>
+      <long_desc>True airspeed measurement noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>4</max>
+      <unit>m/s</unit>
+    </parameter>
+    <parameter default="0.1" name="ARSP_W_P_NOISE" type="FLOAT">
+      <short_desc>Airspeed Selector: Wind estimator wind process noise</short_desc>
+      <long_desc>Wind process noise of the internal wind estimator(s) of the airspeed selector.</long_desc>
+      <min>0</min>
+      <max>1</max>
+      <unit>m/s/s</unit>
+    </parameter>
+  </group>
   <group name="Attitude Q estimator">
     <parameter default="1" name="ATT_ACC_COMP" type="INT32">
       <short_desc>Acceleration compensation based on GPS
@@ -537,6 +592,11 @@ Set to 2 to use heading from motion capture</short_desc>
 * the MSB bit is not used to avoid problems in the conversion between int and uint</short_desc>
       <long_desc>Default value: (10 &lt;&lt; 0 | 1000 &lt;&lt; 8 | 0 &lt;&lt; 24) = 256010 - authorizer system id = 10 - authentication method parameter = 10000msec of timeout - authentication method = during arm</long_desc>
     </parameter>
+    <parameter default="1" name="COM_ARM_CHK_ESCS" type="INT32">
+      <short_desc>Require all the ESCs to be detected to arm</short_desc>
+      <long_desc>This param is specific for ESCs reporting status. Normal ESCs configurations are not affected by the change of this param.</long_desc>
+      <boolean />
+    </parameter>
     <parameter default="1.73e-3" name="COM_ARM_EKF_AB" type="FLOAT">
       <short_desc>Maximum value of EKF accelerometer delta velocity bias estimate that will allow arming.
 Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than EKF2_ABL_LIM * FILTER_UPDATE_PERIOD_MS * 0.001 so this parameter must be less than that to be useful</short_desc>
@@ -602,13 +662,12 @@ Note: ekf2 will limit the delta velocity bias estimate magnitude to be less than
       <decimal>3</decimal>
       <increment>0.01</increment>
     </parameter>
-    <parameter default="0.15" name="COM_ARM_MAG" type="FLOAT">
-      <short_desc>Maximum magnetic field inconsistency between units that will allow arming</short_desc>
-      <min>0.05</min>
-      <max>0.5</max>
-      <unit>Gauss</unit>
-      <decimal>2</decimal>
-      <increment>0.05</increment>
+    <parameter default="30" name="COM_ARM_MAG_ANG" type="INT32">
+      <short_desc>Maximum magnetic field inconsistency between units that will allow arming
+Set -1 to disable the check</short_desc>
+      <min>3</min>
+      <max>180</max>
+      <unit>deg</unit>
     </parameter>
     <parameter default="0" name="COM_ARM_MIS_REQ" type="INT32">
       <short_desc>Require valid mission to arm</short_desc>
@@ -2622,6 +2681,15 @@ Set to 0 to disable heading hold</short_desc>
       <decimal>1</decimal>
       <increment>0.5</increment>
     </parameter>
+    <parameter default="5.0" name="FW_GND_SPD_MIN" type="FLOAT">
+      <short_desc>Minimum groundspeed</short_desc>
+      <long_desc>The controller will increase the commanded airspeed to maintain this minimum groundspeed to the next waypoint.</long_desc>
+      <min>0.0</min>
+      <max>40</max>
+      <unit>m/s</unit>
+      <decimal>1</decimal>
+      <increment>0.5</increment>
+    </parameter>
     <parameter default="5.0" name="FW_T_CLMB_MAX" type="FLOAT">
       <short_desc>Maximum climb rate</short_desc>
       <long_desc>This is the best climb rate that the aircraft can achieve with the throttle set to THR_MAX and the airspeed set to the default value. For electric aircraft make sure this number can be achieved towards the end of flight when the battery voltage has reduced. The setting of this parameter can be checked by commanding a positive altitude change of 100m in loiter, RTL or guided mode. If the throttle required to climb is close to THR_MAX and the aircraft is maintaining airspeed, then this parameter is set correctly. If the airspeed starts to reduce, then the parameter is set to high, and if the throttle demand required to climb and maintain speed is noticeably less than FW_THR_MAX, then either FW_T_CLMB_MAX should be increased or FW_THR_MAX reduced.</long_desc>
@@ -4445,6 +4513,13 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="1">Jerk-limited trajectory</value>
       </values>
     </parameter>
+    <parameter default="45." name="MPC_COL_PREV_ANG" type="FLOAT">
+      <short_desc>Angle left/right from the commanded setpoint in which the range data is used to calculate speed limitations. All data further from the commanded direction is not considered</short_desc>
+      <long_desc>Only used in Position mode.</long_desc>
+      <min>0</min>
+      <max>90</max>
+      <unit>[deg]</unit>
+    </parameter>
     <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
       <short_desc>Minimum distance the vehicle should keep to all obstacles</short_desc>
       <long_desc>Only used in Position mode. Collision avoidace is disabled by setting this parameter to a negative value</long_desc>
@@ -4690,10 +4765,10 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <max>2.0</max>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.3" name="MPC_XY_TRAJ_P" type="FLOAT">
+    <parameter default="0.5" name="MPC_XY_TRAJ_P" type="FLOAT">
       <short_desc>Proportional gain for horizontal trajectory position error</short_desc>
       <min>0.1</min>
-      <max>5.0</max>
+      <max>1.0</max>
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.01" name="MPC_XY_VEL_D" type="FLOAT">
@@ -4747,7 +4822,7 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
     <parameter default="0.3" name="MPC_Z_TRAJ_P" type="FLOAT">
       <short_desc>Proportional gain for vertical trajectory position error</short_desc>
       <min>0.1</min>
-      <max>5.0</max>
+      <max>1.0</max>
       <decimal>1</decimal>
     </parameter>
     <parameter default="0.0" name="MPC_Z_VEL_D" type="FLOAT">
@@ -5650,178 +5725,6 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <min>30.0</min>
       <max>500.0</max>
       <unit>m</unit>
-    </parameter>
-  </group>
-  <group name="Position Estimator INAV">
-    <parameter category="Developer" default="0" name="CBRK_NO_VISION" type="INT32">
-      <short_desc>Disable vision input</short_desc>
-      <long_desc>Set to the appropriate key (328754) to disable vision input.</long_desc>
-      <min>0</min>
-      <max>328754</max>
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter default="0.2" name="INAV_DELAY_GPS" type="FLOAT">
-      <short_desc>GPS delay</short_desc>
-      <long_desc>GPS delay compensation</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>s</unit>
-    </parameter>
-    <parameter default="0" name="INAV_DISAB_MOCAP" type="FLOAT">
-      <short_desc>Mo-cap</short_desc>
-      <long_desc>Set to 0 if using fake GPS</long_desc>
-      <values>
-        <value code="0">Mo-cap enabled</value>
-        <value code="1">Mo-cap disabled</value>
-      </values>
-    </parameter>
-    <parameter default="0.0" name="INAV_FLOW_DIST_X" type="FLOAT">
-      <short_desc>Flow module offset (center of rotation) in X direction</short_desc>
-      <long_desc>Yaw X flow compensation</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <unit>m</unit>
-    </parameter>
-    <parameter default="0.0" name="INAV_FLOW_DIST_Y" type="FLOAT">
-      <short_desc>Flow module offset (center of rotation) in Y direction</short_desc>
-      <long_desc>Yaw Y flow compensation</long_desc>
-      <min>-1.0</min>
-      <max>1.0</max>
-      <unit>m</unit>
-    </parameter>
-    <parameter default="1.35" name="INAV_FLOW_K" type="FLOAT">
-      <short_desc>Optical flow scale factor</short_desc>
-      <long_desc>Factor to scale optical flow</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.3" name="INAV_FLOW_Q_MIN" type="FLOAT">
-      <short_desc>Minimal acceptable optical flow quality</short_desc>
-      <long_desc>0 - lowest quality, 1 - best quality.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="0.7" name="INAV_LAND_DISP" type="FLOAT">
-      <short_desc>Land detector altitude dispersion threshold</short_desc>
-      <long_desc>Dispersion threshold for triggering land detector.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-      <unit>m</unit>
-    </parameter>
-    <parameter default="3.0" name="INAV_LAND_T" type="FLOAT">
-      <short_desc>Land detector time</short_desc>
-      <long_desc>Vehicle assumed landed if no altitude changes happened during this time on low throttle.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-      <unit>s</unit>
-    </parameter>
-    <parameter default="0.2" name="INAV_LAND_THR" type="FLOAT">
-      <short_desc>Land detector throttle threshold</short_desc>
-      <long_desc>Value should be lower than minimal hovering thrust. Half of it is good choice.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="0.2" name="INAV_LIDAR_ERR" type="FLOAT">
-      <short_desc>Sonar maximal error for new surface</short_desc>
-      <long_desc>If sonar measurement error is larger than this value it skiped (spike) or accepted as new surface level (if offset is stable).</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>m</unit>
-    </parameter>
-    <parameter default="0" name="INAV_LIDAR_EST" type="FLOAT">
-      <short_desc>LIDAR for altitude estimation</short_desc>
-      <boolean />
-    </parameter>
-    <parameter default="0.0" name="INAV_LIDAR_OFF" type="FLOAT">
-      <short_desc>LIDAR calibration offset</short_desc>
-      <long_desc>LIDAR calibration offset. Value will be added to the measured distance</long_desc>
-      <min>-20</min>
-      <max>20</max>
-      <unit>m</unit>
-    </parameter>
-    <parameter default="0.05" name="INAV_W_ACC_BIAS" type="FLOAT">
-      <short_desc>Accelerometer bias estimation weight</short_desc>
-      <long_desc>Weight (cutoff frequency) for accelerometer bias estimation. 0 to disable.</long_desc>
-      <min>0.0</min>
-      <max>0.1</max>
-    </parameter>
-    <parameter default="0.1" name="INAV_W_GPS_FLOW" type="FLOAT">
-      <short_desc>XY axis weight factor for GPS when optical flow available</short_desc>
-      <long_desc>When optical flow data available, multiply GPS weights (for position and velocity) by this factor.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-    </parameter>
-    <parameter default="10.0" name="INAV_W_MOC_P" type="FLOAT">
-      <short_desc>Weight for mocap system</short_desc>
-      <long_desc>Weight (cutoff frequency) for mocap position measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.8" name="INAV_W_XY_FLOW" type="FLOAT">
-      <short_desc>XY axis weight for optical flow</short_desc>
-      <long_desc>Weight (cutoff frequency) for optical flow (velocity) measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="1.0" name="INAV_W_XY_GPS_P" type="FLOAT">
-      <short_desc>XY axis weight for GPS position</short_desc>
-      <long_desc>Weight (cutoff frequency) for GPS position measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="2.0" name="INAV_W_XY_GPS_V" type="FLOAT">
-      <short_desc>XY axis weight for GPS velocity</short_desc>
-      <long_desc>Weight (cutoff frequency) for GPS velocity measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.5" name="INAV_W_XY_RES_V" type="FLOAT">
-      <short_desc>XY axis weight for resetting velocity</short_desc>
-      <long_desc>When velocity sources lost slowly decrease estimated horizontal velocity with this weight.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="7.0" name="INAV_W_XY_VIS_P" type="FLOAT">
-      <short_desc>XY axis weight for vision position</short_desc>
-      <long_desc>Weight (cutoff frequency) for vision position measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.0" name="INAV_W_XY_VIS_V" type="FLOAT">
-      <short_desc>XY axis weight for vision velocity</short_desc>
-      <long_desc>Weight (cutoff frequency) for vision velocity measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.5" name="INAV_W_Z_BARO" type="FLOAT">
-      <short_desc>Z axis weight for barometer</short_desc>
-      <long_desc>Weight (cutoff frequency) for barometer altitude measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.005" name="INAV_W_Z_GPS_P" type="FLOAT">
-      <short_desc>Z axis weight for GPS</short_desc>
-      <long_desc>Weight (cutoff frequency) for GPS altitude measurements. GPS altitude data is very noisy and should be used only as slow correction for baro offset.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="0.0" name="INAV_W_Z_GPS_V" type="FLOAT">
-      <short_desc>Z velocity weight for GPS</short_desc>
-      <long_desc>Weight (cutoff frequency) for GPS altitude velocity measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="3.0" name="INAV_W_Z_LIDAR" type="FLOAT">
-      <short_desc>Z axis weight for lidar</short_desc>
-      <long_desc>Weight (cutoff frequency) for lidar measurements.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
-    </parameter>
-    <parameter default="5.0" name="INAV_W_Z_VIS_P" type="FLOAT">
-      <short_desc>Z axis weight for vision</short_desc>
-      <long_desc>Weight (cutoff frequency) for vision altitude measurements. vision altitude data is very noisy and should be used only as slow correction for baro offset.</long_desc>
-      <min>0.0</min>
-      <max>10.0</max>
     </parameter>
   </group>
   <group name="Precision Land">
@@ -7593,6 +7496,78 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       </values>
     </parameter>
   </group>
+  <group name="Roboclaw">
+    <parameter default="0" name="RBCLW_SER_CFG" type="INT32">
+      <short_desc>Serial Configuration for Roboclaw Driver</short_desc>
+      <long_desc>Configure on which serial port to run Roboclaw Driver.</long_desc>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="6">UART 6</value>
+        <value code="101">TELEM 1</value>
+        <value code="102">TELEM 2</value>
+        <value code="103">TELEM 3</value>
+        <value code="104">TELEM/SERIAL 4</value>
+        <value code="201">GPS 1</value>
+        <value code="202">GPS 2</value>
+        <value code="300">Radio Controller</value>
+      </values>
+    </parameter>
+  </group>
+  <group name="Roboclaw driver">
+    <parameter default="128" name="RBCLW_ADDRESS" type="INT32">
+      <short_desc>Address of the Roboclaw</short_desc>
+      <long_desc>The Roboclaw can be configured to have an address from 0x80 to 0x87, inclusive. It must be configured to match this parameter.</long_desc>
+      <min>128</min>
+      <max>135</max>
+      <values>
+        <value code="128">0x80</value>
+        <value code="129">0x81</value>
+        <value code="130">0x82</value>
+        <value code="131">0x83</value>
+        <value code="132">0x84</value>
+        <value code="133">0x85</value>
+        <value code="134">0x86</value>
+        <value code="135">0x87</value>
+      </values>
+    </parameter>
+    <parameter default="2400" name="RBCLW_BAUD" type="INT32">
+      <short_desc>Roboclaw serial baud rate</short_desc>
+      <long_desc>Baud rate of the serial communication with the Roboclaw. The Roboclaw must be configured to match this rate.</long_desc>
+      <min>2400</min>
+      <max>460800</max>
+      <reboot_required>true</reboot_required>
+      <values>
+        <value code="2400">2400 baud</value>
+        <value code="9600">9600 baud</value>
+        <value code="19200">19200 baud</value>
+        <value code="38400">38400 baud</value>
+        <value code="57600">57600 baud</value>
+        <value code="115200">115200 baud</value>
+        <value code="230400">230400 baud</value>
+        <value code="460800">460800 baud</value>
+      </values>
+    </parameter>
+    <parameter default="1200" name="RBCLW_COUNTS_REV" type="INT32">
+      <short_desc>Encoder counts per revolution</short_desc>
+      <long_desc>Number of encoder counts for one revolution. The roboclaw treats analog encoders (potentiometers) as having 2047 counts per rev. The default value of 1200 corresponds to the default configuration of the Aion R1 rover.</long_desc>
+      <min>1</min>
+    </parameter>
+    <parameter default="10" name="RBCLW_READ_PER" type="INT32">
+      <short_desc>Encoder read period</short_desc>
+      <long_desc>How long to wait, in Milliseconds, between reading wheel encoder values over Uart from the Roboclaw</long_desc>
+      <min>1</min>
+      <max>1000</max>
+      <unit>ms</unit>
+    </parameter>
+    <parameter default="10" name="RBCLW_WRITE_PER" type="INT32">
+      <short_desc>Uart write period</short_desc>
+      <long_desc>How long to wait, in Milliseconds, between writing actuator controls over Uart to the Roboclaw</long_desc>
+      <min>1</min>
+      <max>1000</max>
+      <unit>ms</unit>
+    </parameter>
+  </group>
   <group name="Rover Position Control">
     <parameter default="0.75" name="GND_L1_DAMPING" type="FLOAT">
       <short_desc>L1 damping</short_desc>
@@ -8540,6 +8515,11 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="0" name="SENS_EN_PGA460" type="INT32">
       <short_desc>PGA460 Ultrasonic driver (PGA460)</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="0" name="SENS_EN_PX4FLOW" type="INT32">
+      <short_desc>PX4 Flow Optical Flow</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
@@ -10565,50 +10545,6 @@ to fixed wing mode. Zero or negative values will produce an instant throttle ris
       <unit>1/s</unit>
       <decimal>3</decimal>
       <increment>0.01</increment>
-    </parameter>
-  </group>
-  <group name="Wind Estimator">
-    <parameter default="1" name="WEST_BETA_GATE" type="INT32">
-      <short_desc>Gate size for true sideslip fusion</short_desc>
-      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
-      <min>1</min>
-      <max>5</max>
-      <unit>SD</unit>
-    </parameter>
-    <parameter default="0.3" name="WEST_BETA_NOISE" type="FLOAT">
-      <short_desc>Wind estimator sideslip measurement noise</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <unit>rad</unit>
-    </parameter>
-    <parameter default="0" name="WEST_EN" type="INT32">
-      <short_desc>Enable Wind estimator</short_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter default="0.0001" name="WEST_SC_P_NOISE" type="FLOAT">
-      <short_desc>Wind estimator true airspeed scale process noise</short_desc>
-      <min>0</min>
-      <max>0.1</max>
-    </parameter>
-    <parameter default="3" name="WEST_TAS_GATE" type="INT32">
-      <short_desc>Gate size for true airspeed fusion</short_desc>
-      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
-      <min>1</min>
-      <max>5</max>
-      <unit>SD</unit>
-    </parameter>
-    <parameter default="1.4" name="WEST_TAS_NOISE" type="FLOAT">
-      <short_desc>Wind estimator true airspeed measurement noise</short_desc>
-      <min>0</min>
-      <max>4</max>
-      <unit>m/s</unit>
-    </parameter>
-    <parameter default="0.1" name="WEST_W_P_NOISE" type="FLOAT">
-      <short_desc>Wind estimator wind process noise</short_desc>
-      <min>0</min>
-      <max>1</max>
-      <unit>m/s/s</unit>
     </parameter>
   </group>
   <group name="Miscellaneous">
