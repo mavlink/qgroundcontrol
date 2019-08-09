@@ -741,7 +741,9 @@ void QGCApplication::qmlAttemptWindowClose()
 
 bool QGCApplication::isInternetAvailable()
 {
-    return getQGCMapEngine()->isInternetActive();
+    if(_toolbox->settingsManager()->appSettings()->checkInternet()->rawValue().toBool())
+        return getQGCMapEngine()->isInternetActive();
+    return true;
 }
 
 void QGCApplication::_checkForNewVersion()

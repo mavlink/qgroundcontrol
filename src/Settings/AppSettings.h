@@ -32,6 +32,7 @@ public:
     DEFINE_SETTINGFACT(telemetrySave)
     DEFINE_SETTINGFACT(telemetrySaveNotArmed)
     DEFINE_SETTINGFACT(audioMuted)
+    DEFINE_SETTINGFACT(checkInternet)
     DEFINE_SETTINGFACT(virtualJoystick)
     DEFINE_SETTINGFACT(virtualJoystickCentralized)
     DEFINE_SETTINGFACT(appFontPointSize)

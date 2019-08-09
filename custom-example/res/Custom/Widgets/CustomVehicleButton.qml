@@ -47,7 +47,7 @@ Button {
 
     background: Rectangle {
         anchors.fill:               parent
-        color:                      button.checked ? qgcPal.window : qgcPal.button
+        color:                      button.checked ? qgcPal.buttonHighlight : qgcPal.button
         radius:                     ScreenTools.defaultFontPixelWidth * 0.5
     }
 

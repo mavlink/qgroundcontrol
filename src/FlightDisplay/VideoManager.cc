@@ -279,13 +279,6 @@ VideoManager::_updateSettings()
         return;
     //-- Auto discovery
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
-        if(pCamera) {
-            Fact *fact = pCamera->videoEncoding();
-            if (fact) {
-                _videoReceiver->setVideoDecoder(static_cast<VideoReceiver::VideoEncoding>(fact->rawValue().toInt()));
-            }
-        }
         QGCVideoStreamInfo* pInfo = _activeVehicle->dynamicCameras()->currentStreamInstance();
         if(pInfo) {
             qCDebug(VideoManagerLog) << "Configure primary stream: " << pInfo->uri();
