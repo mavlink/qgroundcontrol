@@ -24,13 +24,13 @@ Button {
 
     function getBatteryColor() {
         if(vehicle) {
-            if(vehicle.batterySummary.percentRemaining.value > 75) {
+            if(vehicle.battery.percentRemaining.value > 75) {
                 return qgcPal.colorGreen
             }
-            if(vehicle.batterySummary.percentRemaining.value > 50) {
+            if(vehicle.battery.percentRemaining.value > 50) {
                 return qgcPal.colorOrange
             }
-            if(vehicle.batterySummary.percentRemaining.value > 0.1) {
+            if(vehicle.battery.percentRemaining.value > 0.1) {
                 return qgcPal.colorRed
             }
         }
@@ -39,7 +39,7 @@ Button {
 
     function getBatteryPercentage() {
         if(vehicle) {
-            return vehicle.batterySummary.percentRemaining.value / 100.0
+            return vehicle.battery.percentRemaining.value / 100.0
         }
         return 1
     }

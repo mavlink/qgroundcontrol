@@ -27,16 +27,13 @@ Item {
     anchors.top:            parent.top
     anchors.bottom:         parent.bottom
 
-    property var    batterySummary:     activeVehicle ? activeVehicle.batterySummary : null
-    property var    battery1:           activeVehicle ? activeVehicle.battery        : null
-    property var    battery2:           activeVehicle ? activeVehicle.battery2       : null
+    property var    battery1:           activeVehicle ? activeVehicle.battery  : null
+    property var    battery2:           activeVehicle ? activeVehicle.battery2 : null
     property bool   hasSecondBattery:   battery2 && battery2.voltage.value !== -1
 
     function lowestBattery() {
         if(activeVehicle) {
-            if(batterySummary && (batterySummary.voltage.value !== -1 || batterySummary.percentRemaining.value > 0.1)) {
-                return batterySummary;
-            } else if(hasSecondBattery) {
+            if(hasSecondBattery) {
                 if(activeVehicle.battery2.percentRemaining.value < activeVehicle.battery.percentRemaining.value) {
                     return activeVehicle.battery2
                 }
@@ -175,7 +172,7 @@ Item {
         id:             batteryIndicatorRow
         anchors.top:    parent.top
         anchors.bottom: parent.bottom
-        opacity:        (activeVehicle && activeVehicle.batterySummary.voltage.value >= 0) ? 1 : 0.5
+        opacity:        (activeVehicle && activeVehicle.battery.voltage.value >= 0) ? 1 : 0.5
         spacing:        ScreenTools.defaultFontPixelWidth
         QGCColoredImage {
             anchors.top:        parent.top
@@ -190,7 +187,7 @@ Item {
                 anchors.left:       parent.left
                 anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 0.25
                 height:             parent.height * 0.35
-                width:              activeVehicle ? (activeVehicle.batterySummary.percentRemaining.value / 100) * parent.width * 0.75 : 0
+                width:              activeVehicle ? (activeVehicle.battery.percentRemaining.value / 100) * parent.width * 0.75 : 0
                 anchors.verticalCenter: parent.verticalCenter
             }
         }

@@ -25,6 +25,6 @@ PreFlightCheckButton {
 
     property int    failurePercent:                 40
     property bool   allowFailurePercentOverride:    false
-    property var    _batPercentRemaining:           activeVehicle ? activeVehicle.batterySummary.percentRemaining.value : 0
+    property var    _batPercentRemaining:           activeVehicle ? activeVehicle.battery.percentRemaining.value : 0
     property bool   _batLow:                        _batPercentRemaining < failurePercent
 }
