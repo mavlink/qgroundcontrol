@@ -29,7 +29,7 @@ EditPositionDialogController::EditPositionDialogController(void)
     , _northingFact     (0, _northingFactName,      FactMetaData::valueTypeDouble)
 {
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/EditPositionDialog.FactMetaData.json"), NULL /* QObject parent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/EditPositionDialog.FactMetaData.json"), nullptr /* QObject parent */);
     }
 
     _latitudeFact.setMetaData   (_metaDataMap[_latitudeFactName]);
