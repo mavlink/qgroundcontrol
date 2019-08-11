@@ -335,7 +335,7 @@ void CorridorScanComplexItem::_rebuildTransectsPhase1(void)
     if (_loadedMissionItemsParent) {
         _loadedMissionItems.clear();
         _loadedMissionItemsParent->deleteLater();
-        _loadedMissionItemsParent = NULL;
+        _loadedMissionItemsParent = nullptr;
     }
 
     _transects.clear();
