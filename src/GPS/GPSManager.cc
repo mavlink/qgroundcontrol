@@ -84,8 +84,8 @@ void GPSManager::disconnectGPS(void)
     if (_rtcmMavlink) {
         delete(_rtcmMavlink);
     }
-    _gpsProvider = NULL;
-    _rtcmMavlink = NULL;
+    _gpsProvider = nullptr;
+    _rtcmMavlink = nullptr;
 }
 
 
