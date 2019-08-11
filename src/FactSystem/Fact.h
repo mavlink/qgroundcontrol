@@ -30,13 +30,13 @@ class Fact : public QObject
     Q_OBJECT
     
 public:
-    Fact(QObject* parent = NULL);
-    Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = NULL);
-    Fact(const Fact& other, QObject* parent = NULL);
+    Fact(QObject* parent = nullptr);
+    Fact(int componentId, QString name, FactMetaData::ValueType_t type, QObject* parent = nullptr);
+    Fact(const Fact& other, QObject* parent = nullptr);
 
     /// Creates a Fact using the name and type from metaData. Also calls QGCCorePlugin::adjustSettingsMetaData allowing
     /// custom builds to override the metadata.
-    Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent = NULL);
+    Fact(const QString& settingsGroup, FactMetaData* metaData, QObject* parent = nullptr);
 
     const Fact& operator=(const Fact& other);
 
