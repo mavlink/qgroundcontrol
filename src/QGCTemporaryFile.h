@@ -28,7 +28,7 @@ public:
 	//			QStandardPaths::TempLocation directory.
 	//		@param template Template for file name following QTemporaryFile rules. Template should NOT include
 	//							directory path, only file name.
-    QGCTemporaryFile(const QString& fileTemplate, QObject* parent = NULL);
+    QGCTemporaryFile(const QString& fileTemplate, QObject* parent = nullptr);
 
 	/// @brief Opens the file in ReadWrite mode.
 	///		@returns false - open failed

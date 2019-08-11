@@ -18,7 +18,7 @@ class QGCQGeoCoordinate : public QObject
     Q_OBJECT
 
 public:
-    QGCQGeoCoordinate(const QGeoCoordinate& coord, QObject* parent = NULL);
+    QGCQGeoCoordinate(const QGeoCoordinate& coord, QObject* parent = nullptr);
 
     Q_PROPERTY(QGeoCoordinate   coordinate  READ coordinate WRITE setCoordinate NOTIFY coordinateChanged)
     Q_PROPERTY(bool             dirty       READ dirty      WRITE setDirty      NOTIFY dirtyChanged)
