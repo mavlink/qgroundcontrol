@@ -43,7 +43,8 @@ pipeline {
 						sh 'ccache -s'
 					}
 					post {
-						always {
+						success {
+						    stash includes: 'build/release/package/*.apk', name: 'android_binary'
                             archiveArtifacts artifacts: 'build/release/package/*.apk'
                             nexusArtifactUploader(
                                 credentialsId: 'qgc_uploader',
@@ -98,7 +99,8 @@ pipeline {
                         sh './deploy/create_linux_deb.sh ${WORKSPACE}/build/release/QGroundControl ${WORKSPACE}/deploy/control ${WORKSPACE}/build/release/package'
 					}
 					post {
-						always {
+						success {
+						    stash includes: ['build/**/*.AppImage','build/**/*.deb'], name: 'linux_binary'
 							archiveArtifacts artifacts: 'build/**/*.AppImage'
 							archiveArtifacts artifacts: 'build/**/*.deb'
                             nexusArtifactUploader(
@@ -145,7 +147,8 @@ pipeline {
 						bat "call winbuild.bat"
 					}
 					post {
-						always {
+						success {
+						    stash includes: 'build/release/*installer*.exe', name: 'windows_binary'
 							archiveArtifacts artifacts: 'build/release/*installer*.exe'
                             nexusArtifactUploader(
                                 credentialsId: 'qgc_uploader',
@@ -164,6 +167,29 @@ pipeline {
 				}
 			}
 		}
+        stage('deploy'){
+            steps {
+                unstash name: 'windows_binary'
+                unstash name: 'linux_binary'
+                unstash name: 'android_binary'
+
+                nexusArtifactUploader(
+                    credentialsId: 'qgc_uploader',
+                    groupId: 'latest',
+                    nexusUrl: 'pelardon.aeronavics.com:8086/nexus',
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    repository: 'qgroundcontrol',
+                    version: "${env.VERSION_NAME}",
+                    artifacts: [
+                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/QGroundControl-installer.exe', type: 'exe'],
+                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/package/QGroundControl.AppImage', type: 'AppImage'],
+                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/package/QGroundControl.deb', type: 'DEB'],
+                    [artifactId: 'QGroundControl', classifier: "${env.GIT_COMMIT}", file: 'build/release/package/QGroundControl.apk', type: 'apk']
+                    ]
+                )
+            }
+        }
 	}
 	environment {
 		CCACHE_CPP2 = '1'
