@@ -17,7 +17,7 @@ class GPSRTKFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    GPSRTKFactGroup(QObject* parent = NULL);
+    GPSRTKFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* connected            READ connected            CONSTANT)
     Q_PROPERTY(Fact* currentDuration      READ currentDuration      CONSTANT)
