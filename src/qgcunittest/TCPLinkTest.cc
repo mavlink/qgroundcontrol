@@ -17,8 +17,8 @@
 #include "TCPLoopBackServer.h"
 
 TCPLinkTest::TCPLinkTest(void)
-    : _link(NULL)
-    , _multiSpy(NULL)
+    : _link(nullptr)
+    , _multiSpy(nullptr)
 {
 
 }
