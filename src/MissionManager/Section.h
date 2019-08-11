@@ -21,7 +21,7 @@ class Section : public QObject
     Q_OBJECT
 
 public:
-    Section(Vehicle* vehicle, QObject* parent = NULL)
+    Section(Vehicle* vehicle, QObject* parent = nullptr)
         : QObject(parent)
         , _vehicle(vehicle)
     {
