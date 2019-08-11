@@ -33,11 +33,11 @@ MultiVehicleManager::MultiVehicleManager(QGCApplication* app, QGCToolbox* toolbo
     : QGCTool(app, toolbox)
     , _activeVehicleAvailable(false)
     , _parameterReadyVehicleAvailable(false)
-    , _activeVehicle(NULL)
-    , _offlineEditingVehicle(NULL)
-    , _firmwarePluginManager(NULL)
-    , _joystickManager(NULL)
-    , _mavlinkProtocol(NULL)
+    , _activeVehicle(nullptr)
+    , _offlineEditingVehicle(nullptr)
+    , _firmwarePluginManager(nullptr)
+    , _joystickManager(nullptr)
+    , _mavlinkProtocol(nullptr)
     , _gcsHeartbeatEnabled(true)
 {
     QSettings settings;
@@ -236,7 +236,7 @@ void MultiVehicleManager::_deleteVehiclePhase2(void)
     /// Qml has been notified of vehicle about to go away and should be disconnected from it by now.
     /// This means we can now clear the active vehicle property and delete the Vehicle for real.
 
-    Vehicle* newActiveVehicle = NULL;
+    Vehicle* newActiveVehicle = nullptr;
     if (_vehicles.count()) {
         newActiveVehicle = qobject_cast<Vehicle*>(_vehicles[0]);
     }
@@ -338,7 +338,7 @@ Vehicle* MultiVehicleManager::getVehicleById(int vehicleId)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void MultiVehicleManager::setGcsHeartbeatEnabled(bool gcsHeartBeatEnabled)
