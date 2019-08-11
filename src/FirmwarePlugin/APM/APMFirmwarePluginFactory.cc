@@ -16,10 +16,10 @@
 APMFirmwarePluginFactory APMFirmwarePluginFactory;
 
 APMFirmwarePluginFactory::APMFirmwarePluginFactory(void)
-    : _arduCopterPluginInstance(NULL)
-    , _arduPlanePluginInstance(NULL)
-    , _arduRoverPluginInstance(NULL)
-    , _arduSubPluginInstance(NULL)
+    : _arduCopterPluginInstance(nullptr)
+    , _arduPlanePluginInstance(nullptr)
+    , _arduRoverPluginInstance(nullptr)
+    , _arduSubPluginInstance(nullptr)
 {
 
 }
@@ -74,5 +74,5 @@ FirmwarePlugin* APMFirmwarePluginFactory::firmwarePluginForAutopilot(MAV_AUTOPIL
         }
     }
 
-    return NULL;
+    return nullptr;
 }

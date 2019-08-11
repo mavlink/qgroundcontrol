@@ -33,7 +33,7 @@ class APMSubmarineFactGroup : public FactGroup
     Q_OBJECT
 
 public:
-    APMSubmarineFactGroup(QObject* parent = NULL);
+    APMSubmarineFactGroup(QObject* parent = nullptr);
 
     Q_PROPERTY(Fact* camTilt             READ camTilt             CONSTANT)
     Q_PROPERTY(Fact* tetherTurns         READ tetherTurns         CONSTANT)
