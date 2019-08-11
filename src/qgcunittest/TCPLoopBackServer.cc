@@ -18,7 +18,7 @@
 TCPLoopBackServer::TCPLoopBackServer(QHostAddress hostAddress, quint16 port) :
     _hostAddress(hostAddress),
     _port(port),
-    _tcpSocket(NULL)
+    _tcpSocket(nullptr)
 {
     moveToThread(this);
     start(HighPriority);
