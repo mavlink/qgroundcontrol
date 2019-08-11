@@ -27,7 +27,7 @@
 TCPLink::TCPLink(SharedLinkConfigurationPointer& config)
     : LinkInterface(config)
     , _tcpConfig(qobject_cast<TCPConfiguration*>(config.data()))
-    , _socket(NULL)
+    , _socket(nullptr)
     , _socketIsConnected(false)
 {
     Q_ASSERT(_tcpConfig);
@@ -123,7 +123,7 @@ void TCPLink::_disconnect(void)
         _socket->disconnectFromHost(); // Disconnect tcp
         _socket->waitForDisconnected();        
         _socket->deleteLater(); // Make sure delete happens on correct thread
-        _socket = NULL;
+        _socket = nullptr;
         emit disconnected();
     }
 }
@@ -146,7 +146,7 @@ bool TCPLink::_connect(void)
 
 bool TCPLink::_hardwareConnect()
 {
-    Q_ASSERT(_socket == NULL);
+    Q_ASSERT(_socket == nullptr);
     _socket = new QTcpSocket();
 
     QSignalSpy errorSpy(_socket, static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error));
@@ -165,7 +165,7 @@ bool TCPLink::_hardwareConnect()
             emit communicationError(tr("Link Error"), tr("Error on link %1. Connection failed").arg(getName()));
         }
         delete _socket;
-        _socket = NULL;
+        _socket = nullptr;
         return false;
     }
     _socketIsConnected = true;
@@ -281,7 +281,7 @@ void TCPConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
     TCPConfiguration* usource = dynamic_cast<TCPConfiguration*>(source);
-    Q_ASSERT(usource != NULL);
+    Q_ASSERT(usource != nullptr);
     _port    = usource->port();
     _address = usource->address();
 }
