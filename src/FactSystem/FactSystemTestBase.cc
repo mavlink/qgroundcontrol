@@ -48,7 +48,7 @@ void FactSystemTestBase::_parameter_default_component_id_test(void)
 {
     QVERIFY(_vehicle->parameterManager()->parameterExists(FactSystem::defaultComponentId, "RC_MAP_THROTTLE"));
     Fact* fact = _vehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, "RC_MAP_THROTTLE");
-    QVERIFY(fact != NULL);
+    QVERIFY(fact != nullptr);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
 
@@ -59,7 +59,7 @@ void FactSystemTestBase::_parameter_specific_component_id_test(void)
 {
     QVERIFY(_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1, "RC_MAP_THROTTLE"));
     Fact* fact = _vehicle->parameterManager()->getParameter(MAV_COMP_ID_AUTOPILOT1, "RC_MAP_THROTTLE");
-    QVERIFY(fact != NULL);
+    QVERIFY(fact != nullptr);
     QVariant factValue = fact->rawValue();
     QCOMPARE(factValue.isValid(), true);
     QCOMPARE(factValue.toInt(), 3);
