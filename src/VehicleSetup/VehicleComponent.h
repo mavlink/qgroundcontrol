@@ -40,7 +40,7 @@ class VehicleComponent : public QObject
     Q_PROPERTY(bool     allowSetupWhileFlying   READ allowSetupWhileFlying  CONSTANT)
 
 public:
-    VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    VehicleComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     ~VehicleComponent();
     
     virtual QString name(void) const = 0;
