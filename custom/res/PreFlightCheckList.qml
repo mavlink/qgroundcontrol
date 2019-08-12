@@ -7,16 +7,16 @@
  *
  ****************************************************************************/
 
-import QtQuick                              2.11
-import QtQuick.Controls                     2.4
-import QtQml.Models                         2.1
+import QtQuick                      2.11
+import QtQuick.Controls             2.4
+import QtQml.Models                 2.1
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
 
-import AuterionQuickInterface       1.0
+import CustomQuickInterface         1.0
 
 Rectangle {
     width:      mainColumn.width  + ScreenTools.defaultFontPixelWidth * 3
@@ -36,18 +36,18 @@ Rectangle {
                 color:      qgcPal.button
                 property bool   passed: true
                 function reset() {
-                    AuterionQuickInterface.testFlight = false
-                    AuterionQuickInterface.checkListState = AuterionQuickInterface.NotSetup
+                    CustomQuickInterface.testFlight = false
+                    CustomQuickInterface.checkListState = CustomQuickInterface.NotSetup
                 }
                 QGCCheckBox {
                     id:             testFlight
                     text:           "Test Flight"
-                    enabled:        !AuterionQuickInterface.debugBuild
-                    checked:        AuterionQuickInterface.testFlight
+                    enabled:        !CustomQuickInterface.debugBuild
+                    checked:        CustomQuickInterface.testFlight
                     anchors.centerIn: parent
-                    onClicked:      AuterionQuickInterface.testFlight = checked
+                    onClicked:      CustomQuickInterface.testFlight = checked
                     Component.onCompleted: {
-                        AuterionQuickInterface.testFlight = false
+                        CustomQuickInterface.testFlight = false
                     }
                 }
             }
@@ -137,9 +137,9 @@ Rectangle {
     onVisibleChanged: {
         if(!visible) {
             if(listModel.isPassed()) {
-                AuterionQuickInterface.checkListState = AuterionQuickInterface.Passed
+                CustomQuickInterface.checkListState = CustomQuickInterface.Passed
             } else {
-                AuterionQuickInterface.checkListState = AuterionQuickInterface.Failed
+                CustomQuickInterface.checkListState = CustomQuickInterface.Failed
             }
         }
     }

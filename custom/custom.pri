@@ -1,4 +1,4 @@
-message("Adding Auterion Plugin")
+message("Adding Custom Plugin")
 
 exists($$PWD/custom/custom.pri) {
     # Nested Custom Build
@@ -13,54 +13,53 @@ exists($$PWD/custom/custom.pri) {
     #-- Version control
     #   Major and minor versions are defined here (manually)
 
-    AUTERION_QGC_VER_MAJOR = 1
-    AUTERION_QGC_VER_MINOR = 2
-    AUTERION_QGC_VER_FIRST_BUILD = 146
+    CUSTOM_QGC_VER_MAJOR = 0
+    CUSTOM_QGC_VER_MINOR = 0
+    CUSTOM_QGC_VER_FIRST_BUILD = 0
 
-    #   Build number is automatic
-    #   Uses the current branch. This way it works on any branch including build-server's PR branches
-    AUTERION_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list $$GIT_BRANCH --first-parent --count)
+    # Build number is automatic
+    # Uses the current branch. This way it works on any branch including build-server's PR branches
+    CUSTOM_QGC_VER_BUILD = $$system(git --git-dir ../.git rev-list $$GIT_BRANCH --first-parent --count)
     win32 {
-        AUTERION_QGC_VER_BUILD = $$system("set /a $$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD")
+        CUSTOM_QGC_VER_BUILD = $$system("set /a $$CUSTOM_QGC_VER_BUILD - $$CUSTOM_QGC_VER_FIRST_BUILD")
     } else {
-        AUTERION_QGC_VER_BUILD = $$system("echo $(($$AUTERION_QGC_VER_BUILD - $$AUTERION_QGC_VER_FIRST_BUILD))")
+        CUSTOM_QGC_VER_BUILD = $$system("echo $(($$CUSTOM_QGC_VER_BUILD - $$CUSTOM_QGC_VER_FIRST_BUILD))")
     }
-    AUTERION_QGC_VERSION = $${AUTERION_QGC_VER_MAJOR}.$${AUTERION_QGC_VER_MINOR}.$${AUTERION_QGC_VER_BUILD}
+    CUSTOM_QGC_VERSION = $${CUSTOM_QGC_VER_MAJOR}.$${CUSTOM_QGC_VER_MINOR}.$${CUSTOM_QGC_VER_BUILD}
 
     DEFINES -= GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
-    DEFINES += GIT_VERSION=\"\\\"$$AUTERION_QGC_VERSION\\\"\"
+    DEFINES += GIT_VERSION=\"\\\"$$CUSTOM_QGC_VERSION\\\"\"
 
-    message(Auterion GS Version: $${AUTERION_QGC_VERSION})
+    message(Custom QGC Version: $${CUSTOM_QGC_VERSION})
 
     #   MAVLink Development
-    exists($$PWD/mavlink_dev) {
+        exists($$PWD/mavlink_dev) {
         MAVLINKPATH_REL = $$PWD/mavlink_dev
         MAVLINKPATH = $$PWD/mavlink_dev
         message($$sprintf("Using user-supplied mavlink development path '%1'", $$MAVLINKPATH))
     }
 
-    #   Disable APM support
+    # Build a single flight stack by disabling APM support
     MAVLINK_CONF = common
     CONFIG  += QGC_DISABLE_APM_MAVLINK
+    CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY
+
+    # We implement our own PX4 plugin factory
+    CONFIG  += QGC_DISABLE_PX4_PLUGIN_FACTORY
 
     #   Disable UVC support
     DEFINES += QGC_DISABLE_UVC
 
-    #   Branding
+    # Branding
 
-    DEFINES += CUSTOMHEADER=\"\\\"AuterionPlugin.h\\\"\"
-    DEFINES += CUSTOMCLASS=AuterionPlugin
-
-    CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY QGC_DISABLE_PX4_PLUGIN_FACTORY
+    DEFINES += CUSTOMHEADER=\"\\\"CustomPlugin.h\\\"\"
+    DEFINES += CUSTOMCLASS=CustomPlugin
 
     TARGET   = AuterionGS
     DEFINES += QGC_APPLICATION_NAME=\"\\\"AuterionGS\\\"\"
 
     DEFINES += QGC_ORG_NAME=\"\\\"auterion.com\\\"\"
     DEFINES += QGC_ORG_DOMAIN=\"\\\"com.auterion\\\"\"
-
-    RESOURCES += \
-        $$QGCROOT/custom/auterion.qrc
 
     QGC_APP_NAME        = "Auterion GS"
     QGC_BINARY_NAME     = "AuterionGS"
@@ -69,6 +68,10 @@ exists($$PWD/custom/custom.pri) {
     QGC_APP_DESCRIPTION = "Auterion Ground Station"
     QGC_APP_COPYRIGHT   = "Copyright (C) 2018 Auterion AG. All rights reserved."
 
+    # Our own, custom resources
+    RESOURCES += \
+        $$QGCROOT/custom/custom.qrc
+
     MacBuild {
         QMAKE_INFO_PLIST    = $$PWD/macOS/AGSInfo.plist
         ICON                = $$PWD/macOS/icon.icns
@@ -76,7 +79,7 @@ exists($$PWD/custom/custom.pri) {
     }
 
     WindowsBuild {
-        VERSION             = $${AUTERION_QGC_VERSION}.0
+        VERSION             = $${CUSTOM_QGC_VERSION}.0
         QGCWINROOT          = $$replace(QGCROOT, "/", "\\")
         RC_ICONS            = $$QGCWINROOT\\custom\\Windows\\icon.ico
         QGC_INSTALLER_ICON          = $$QGCWINROOT\\custom\\Windows\\icon.ico
@@ -132,13 +135,16 @@ exists($$PWD/custom/custom.pri) {
     QML_IMPORT_PATH += \
         $$QGCROOT/custom/res
 
+    # Our own, custom sources
     SOURCES += \
-        $$PWD/src/AuterionPlugin.cc \
-        $$PWD/src/AuterionQuickInterface.cc
+        $$PWD/src/CustomPlugin.cc \
+        $$PWD/src/CustomQuickInterface.cc \
+        $$PWD/src/CustomVideoManager.cc
 
     HEADERS += \
-        $$PWD/src/AuterionPlugin.h \
-        $$PWD/src/AuterionQuickInterface.h
+        $$PWD/src/CustomPlugin.h \
+        $$PWD/src/CustomQuickInterface.h \
+        $$PWD/src/CustomVideoManager.h
 
     INCLUDEPATH += \
         $$PWD/src \
@@ -153,25 +159,25 @@ exists($$PWD/custom/custom.pri) {
     }
 
     #-------------------------------------------------------------------------------------
-    # Firmware/AutoPilot Plugin
+    # Custom Firmware/AutoPilot Plugin
 
     INCLUDEPATH += \
         $$QGCROOT/custom/src/FirmwarePlugin \
         $$QGCROOT/custom/src/AutoPilotPlugin
 
     HEADERS+= \
-        $$QGCROOT/custom/src/AutoPilotPlugin/AuterionAutoPilotPlugin.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraControl.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraManager.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePlugin.h \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePluginFactory.h \
+        $$QGCROOT/custom/src/AutoPilotPlugin/CustomAutoPilotPlugin.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraControl.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraManager.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePlugin.h \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePluginFactory.h \
 
     SOURCES += \
-        $$QGCROOT/custom/src/AutoPilotPlugin/AuterionAutoPilotPlugin.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraControl.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionCameraManager.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePlugin.cc \
-        $$QGCROOT/custom/src/FirmwarePlugin/AuterionFirmwarePluginFactory.cc \
+        $$QGCROOT/custom/src/AutoPilotPlugin/CustomAutoPilotPlugin.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraControl.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomCameraManager.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePlugin.cc \
+        $$QGCROOT/custom/src/FirmwarePlugin/CustomFirmwarePluginFactory.cc \
 
     #-------------------------------------------------------------------------------------
     # Android

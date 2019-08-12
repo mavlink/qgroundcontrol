@@ -5,6 +5,6 @@ export QML2_IMPORT_PATH="${HERE}/Qt/qml"
 export QT_PLUGIN_PATH="${HERE}/Qt/plugins"
 
 # hack until icon issue with AppImage is resolved
-mkdir -p ~/.icons && \cp -f ${HERE}/Auterion_Icon.png ~/.icons
+mkdir -p ~/.icons && \cp -f ${HERE}/qgroundcontrol.png ~/.icons
 
-"${HERE}/AuterionGS" "$@"
+"${HERE}/CustomQGC" "$@"
