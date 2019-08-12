@@ -39,7 +39,7 @@ Item {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            source:                 "/qmlimages/PaperPlane.svg"
+            source:                 "/custom/img/vehicle.svg"
             color:                  qgcPal.buttonText
         }
         QGCLabel {
@@ -76,7 +76,7 @@ Item {
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.margins:        _indicatorMargins
-            source:                 "/toolbar/MessageIndicator.qml"
+            source:                 "/custom/CustomMessageIndicator.qml"
         }
     }
 }

@@ -62,7 +62,7 @@ Button {
 //            sourceSize.height:      parent.height
 //            fillMode:               Image.PreserveAspectFit
 //            color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
-//            source:                 "/qmlimages/PaperPlane.svg"
+//            source:                 "/custom/img/vehicle.svg"
 //            anchors.verticalCenter: parent.verticalCenter
 //        }
         Column {

@@ -21,6 +21,9 @@
 
 class CustomPlugin;
 class CustomSettings;
+#if defined(USE_BREAKPAD)
+class CrashHandler;
+#endif
 
 Q_DECLARE_LOGGING_CATEGORY(CustomLog)
 
@@ -103,4 +106,7 @@ private:
 private:
     CustomOptions*      _pOptions = nullptr;
     QVariantList        _customSettingsList; // Not to be mixed up with QGCCorePlugin implementation
+#if defined(USE_BREAKPAD)
+    CrashHandler*        _pCrashHandler = nullptr;
+#endif
 };

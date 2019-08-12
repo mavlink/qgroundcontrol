@@ -40,7 +40,7 @@ Button {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.rightMargin:    _dropImageMargin
                 anchors.right:          parent.right
-                source:                 "/auterion/img/menu_dropdown.svg"
+                source:                 "/custom/img/menu_dropdown.svg"
             }
             */
         }

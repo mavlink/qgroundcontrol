@@ -50,7 +50,7 @@ Button {
             mipmap:                 true
             antialiasing:           true
             fillMode:               Image.PreserveAspectFit
-            source:                 qgcPal.globalTheme === QGCPalette.Light ? "/res/QGCLogoBlack" : "/res/QGCLogoWhite"
+            source:                 qgcPal.globalTheme === QGCPalette.Light ? "/custom/img/menu_logo_advanced.svg" : "/custom/img/menu_logo.svg"
             sourceSize.height:      height
             anchors.left:           _edge.right
             anchors.leftMargin:     ScreenTools.defaultFontPixelWidth

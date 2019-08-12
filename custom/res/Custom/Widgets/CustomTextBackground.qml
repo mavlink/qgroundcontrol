@@ -18,7 +18,7 @@ Row {
     property real contentWidth:     0
     property real contentHeight:    ScreenTools.defaultFontPixelHeight * 2
     Image {
-        source:                 "/auterion/img/label_left_edge.svg"
+        source:                 "/custom/img/label_left_edge.svg"
         height:                 parent.contentHeight
         width:                  Math.round(height * 0.5)
         antialiasing:           true
@@ -31,7 +31,7 @@ Row {
         color:                  "#000000"
     }
     Image {
-        source:                 "/auterion/img/label_right_edge.svg"
+        source:                 "/custom/img/label_right_edge.svg"
         height:                 parent.contentHeight
         width:                  Math.round(height * 0.5)
         antialiasing:           true

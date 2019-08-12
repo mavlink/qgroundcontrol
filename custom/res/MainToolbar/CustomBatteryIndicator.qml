@@ -112,7 +112,7 @@ Item {
                         height:         batteryLabel.height
                         width:          height
                         sourceSize.width:   width
-                        source:         "/qmlimages/Battery.svg"
+                        source:         "/custom/img/menu_battery.svg"
                         color:          qgcPal.text
                         fillMode:       Image.PreserveAspectFit
                         Rectangle {
@@ -145,7 +145,7 @@ Item {
                         height:         batteryLabel.height
                         width:          height
                         sourceSize.width:   width
-                        source:         "/qmlimages/Battery.svg"
+                        source:         "/custom/img/menu_battery.svg"
                         color:          qgcPal.text
                         visible:        hasSecondBattery
                         fillMode:       Image.PreserveAspectFit
@@ -179,7 +179,7 @@ Item {
             anchors.bottom:     parent.bottom
             width:              height
             sourceSize.width:   width
-            source:             "/qmlimages/Battery.svg"
+            source:             "/custom/img/menu_battery.svg"
             color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             Rectangle {

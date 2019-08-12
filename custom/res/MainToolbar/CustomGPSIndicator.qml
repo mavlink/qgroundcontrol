@@ -99,7 +99,7 @@ Item {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
-            source:             "/qmlimages/Gps.svg"
+            source:             "/custom/img/menu_gps.svg"
             color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             opacity:            getGPSSignal() > 0 ? 1 : 0.5

@@ -183,7 +183,7 @@ Item {
                 id:                         flyButton
                 spacing:                    1
                 text:                       qsTr("Fly")
-                icon.source:                "/qmlimages/PaperPlane.svg"
+                icon.source:                "/custom/img/vehicle.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
@@ -201,7 +201,7 @@ Item {
             CustomToolBarButton {
                 id:                         planButton
                 text:                       qsTr("Plan")
-                icon.source:                "/qmlimages/Plan.svg"
+                icon.source:                "/custom/img/plan.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
@@ -236,7 +236,7 @@ Item {
             CustomToolBarButton {
                 id:                         vehicleSetup
                 text:                       qsTr("Vehicle Setup")
-                icon.source:                "/qmlimages/Gears.svg"
+                icon.source:                "/custom/img/vehicle_settings.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
@@ -267,7 +267,7 @@ Item {
             CustomToolBarButton {
                 id:                         settingsButton
                 text:                       qsTr("Settings")
-                icon.source:                "/qmlimages/Gears.svg"
+                icon.source:                "/custom/img/settings.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true

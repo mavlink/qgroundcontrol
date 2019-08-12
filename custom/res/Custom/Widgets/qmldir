@@ -8,3 +8,10 @@ CustomQuickButton       1.0     CustomQuickButton.qml
 CustomSignalStrength    1.0     CustomSignalStrength.qml
 CustomToolBarButton     1.0     CustomToolBarButton.qml
 CustomVehicleButton     1.0     CustomVehicleButton.qml
+
+CustomComboBox                1.0     CustomComboBox.qml
+CustomFactCombo               1.0     CustomFactCombo.qml
+CustomLabel                   1.0     CustomLabel.qml
+CustomQuickSetting            1.0     CustomQuickSetting.qml
+CustomSimpleIconButton        1.0     CustomSimpleIconButton.qml
+CustomTextBackground          1.0     CustomTextBackground.qml

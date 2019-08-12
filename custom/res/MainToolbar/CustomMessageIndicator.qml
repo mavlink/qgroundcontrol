@@ -57,7 +57,7 @@ Item {
 
     QGCColoredImage {
         anchors.fill:       parent
-        source:             "/auterion/img/messages.svg"
+        source:             "/custom/img/messages.svg"
         sourceSize.height:  height
         fillMode:           Image.PreserveAspectFit
         color:              getMessageColor()

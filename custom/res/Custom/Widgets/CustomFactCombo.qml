@@ -16,7 +16,7 @@ import QGroundControl.FactSystem    1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
-import Auterion.Widgets             1.0
+import Custom.Widgets             1.0
 
 Item {
     id:                 _root
@@ -30,14 +30,14 @@ Item {
     property int        currentIndex:   comboBox.currentIndex
     property real       level:          0.5
 
-    AuterionTextBackground {
+    CustomTextBackground {
         id:                         background
         contentWidth:               menuRow.width
         contentHeight:              labelText.height * 2
         opacity:                    parent.level
     }
     Image {
-        source:                     "/auterion/img/menu_dropdown.svg"
+        source:                     "/custom/img/menu_dropdown.svg"
         height:                     background.height * 0.25
         width:                      height
         antialiasing:               true
@@ -59,7 +59,7 @@ Item {
             font.pointSize:         _root.pointSize
             anchors.verticalCenter: parent.verticalCenter
         }
-        AuterionComboBox {
+        CustomComboBox {
             id:                     comboBox
             model:                  _root.fact ? _root.fact.enumStrings : []
             centeredLabel:          true

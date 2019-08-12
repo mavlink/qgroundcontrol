@@ -15,6 +15,7 @@
 
 #include "QGCCameraControl.h"
 
+#include <QSoundEffect>
 #include <QSize>
 #include <QPoint>
 
@@ -46,4 +47,9 @@ public:
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
 
+private:
+    QSoundEffect            _cameraSound;
+    QSoundEffect            _videoSound;
+    QSoundEffect            _errorSound;
+    bool                    _firstPhotoLapse    = false;
 };

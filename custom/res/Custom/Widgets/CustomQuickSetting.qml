@@ -15,7 +15,7 @@ import QtQuick.Layouts              1.11
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
-import Auterion.Widgets             1.0
+import Custom.Widgets             1.0
 
 Item {
     id:                 _root
@@ -32,9 +32,9 @@ Item {
     Column {
         id:                 valueCol
         spacing:            _spacers
-        AuterionSimpleIconButton {
+        CustomSimpleIconButton {
             size:           _root.size
-            source:         "/auterion/img/plus_icon.svg"
+            source:         "/custom/img/plus_icon.svg"
             onClicked:      _root.incremented();
         }
         QGCLabel {
@@ -43,9 +43,9 @@ Item {
             font.pointSize: ScreenTools.smallFontPointSize
             anchors.horizontalCenter: parent.horizontalCenter
         }
-        AuterionSimpleIconButton {
+        CustomSimpleIconButton {
             size:           _root.size
-            source:         "/auterion/img/minus_icon.svg"
+            source:         "/custom/img/minus_icon.svg"
             onClicked:      _root.decremented();
         }
     }

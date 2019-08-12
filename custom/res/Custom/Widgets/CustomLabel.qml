@@ -14,7 +14,7 @@ import QtQuick.Controls             1.2
 import QGroundControl.Controls      1.0
 import QGroundControl.ScreenTools   1.0
 
-import Auterion.Widgets             1.0
+import Custom.Widgets             1.0
 
 Item {
     id:                 _root
@@ -25,7 +25,7 @@ Item {
     property color      color:      "#FFF"
     property real       level:      0.5
     property string     title:      ""
-    AuterionTextBackground {
+    CustomTextBackground {
         id:                         background
         contentWidth:               labelRow.width
         contentHeight:              labelText.height * 2

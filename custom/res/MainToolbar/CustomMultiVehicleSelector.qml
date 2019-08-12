@@ -42,7 +42,7 @@ Item {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            source:                 "/qmlimages/PaperPlane.svg"
+            source:                 "/custom/img/vehicle.svg"
             color:                  qgcPal.text
         }
         QGCLabel {
@@ -58,7 +58,7 @@ Item {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            source:                 "/res/DropArrow.svg"
+            source:                 "/custom/img/drop_down.svg"
             color:                  qgcPal.text
         }
     }

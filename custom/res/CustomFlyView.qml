@@ -28,8 +28,10 @@ import QGroundControl.Airspace              1.0
 
 import CustomQuickInterface                 1.0
 import Custom.Widgets                       1.0
+import Custom.Specific                      1.0
 
 Item {
+    id: _root
     anchors.fill:                           parent
     visible:                                !QGroundControl.videoManager.fullScreen
 
@@ -508,18 +510,44 @@ Item {
             }
         }
     }
+
     //-------------------------------------------------------------------------
     //-- Gimbal Control
-    Rectangle {
-        id:                     gimbalControl
+    GimbalVirtualJoystick {
+        id: stick
+
         visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl && _hasGimbal
         anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -1 : 1)
-        height:                 parent.width * 0.125
-        width:                  height
-        color:                  Qt.rgba(1,1,1,0.25)
-        radius:                 width * 0.5
+
+        dpadPos: "None"
+
+        onXChanged: {
+            dpadPos = (x > ((_root.width - width)/2)) ? "Left" : "Right"
+        }
+
+        textPointSize: ScreenTools.largeFontPointSize * 1.3
+
+        mainColor: qgcPal.windowShadeDark
+        secondaryColor: qgcPal.windowShade
+        stickColor: qgcPal.buttonText
+        darkerBorders: 1.4
+        buttonBackgroundColor: qgcPal.buttonText
+        buttonContentColor: qgcPal.button
+        textColor: qgcPal.text
+
+        dragActive: true
+        dragMinX: 0
+        dragMaxX: _root.width - stick.width
+        dragMinY: 0
+        dragMaxY: _root.height - stick.height
+
+        panDegrees:     activeVehicle ? activeVehicle.gimbalYaw   : NaN
+        tiltDegrees:    activeVehicle ? activeVehicle.gimbalPitch : NaN
+
+        returnAnimationDurationMs: 100
+
 
         property real _currentPitch:    0
         property real _currentYaw:      0
@@ -536,33 +564,33 @@ Item {
 
         Timer {
             interval:   100  //-- 10Hz
-            running:    gimbalControl.visible && activeVehicle
+            running:    stick.visible && activeVehicle
             repeat:     true
             onTriggered: {
                 if (activeVehicle) {
-                    var yaw = gimbalControl._currentYaw
+                    var yaw = stick._currentYaw
                     var oldYaw = yaw;
-                    var pitch = gimbalControl._currentPitch
+                    var pitch = stick._currentPitch
                     var oldPitch = pitch;
-                    var pitch_stick = (stick.yAxis * 2.0 - 1.0)
+                    var pitch_stick = stick.yUnitVal
                     if(_camera && _camera.vendor === "NextVision") {
                         var time_current_seconds = ((new Date()).getTime())/1000.0
-                        if(gimbalControl.time_last_seconds === 0.0)
-                            gimbalControl.time_last_seconds = time_current_seconds
-                        var pitch_angle = gimbalControl._currentPitch
+                        if(stick.time_last_seconds === 0.0)
+                            stick.time_last_seconds = time_current_seconds
+                        var pitch_angle = stick._currentPitch
                         // Preparing stick input with exponential curve and maximum rate
-                        var pitch_expo = (1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick
-                        var pitch_rate = pitch_stick * gimbalControl.maxRate
-                        var pitch_angle_reported = gimbalControl.reportedPitchDeg
+                        var pitch_expo = (1 - stick.exponentialFactor) * pitch_stick + stick.exponentialFactor * pitch_stick * pitch_stick * pitch_stick
+                        var pitch_rate = pitch_stick * stick.maxRate
+                        var pitch_angle_reported = stick.reportedPitchDeg
                         // Integrate the angular rate to an angle time abstracted
-                        pitch_angle += pitch_rate * (time_current_seconds - gimbalControl.time_last_seconds)
+                        pitch_angle += pitch_rate * (time_current_seconds - stick.time_last_seconds)
                         // Control the angle quicker by driving the gimbal internal angle controller into saturation
                         var pitch_angle_error = pitch_angle - pitch_angle_reported
                         pitch_angle_error = Math.round(pitch_angle_error)
-                        var pitch_setpoint = pitch_angle + pitch_angle_error * gimbalControl.kPFactor
+                        var pitch_setpoint = pitch_angle + pitch_angle_error * stick.kPFactor
                         //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
                         pitch = pitch_setpoint
-                        yaw += stick.xAxis * gimbalControl.speedMultiplier
+                        yaw += stick.xUnitVal * stick.speedMultiplier
 
                         yaw = clamp(yaw, -180, 180)
                         pitch = clamp(pitch, -90, 45)
@@ -570,21 +598,21 @@ Item {
 
                         //console.info("P: " + pitch + "; Y: " + yaw)
                         activeVehicle.gimbalControlValue(pitch, yaw);
-                        gimbalControl._currentYaw = yaw
-                        gimbalControl._currentPitch = pitch_angle
-                        gimbalControl.time_last_seconds = time_current_seconds
+                        stick._currentYaw = yaw
+                        stick._currentPitch = pitch_angle
+                        stick.time_last_seconds = time_current_seconds
                     } else {
-                        yaw += stick.xAxis * gimbalControl.speedMultiplier
-                        var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 50)
-                        pitch += pitch_stick * gimbalControl.speedMultiplier
+                        yaw += stick.xUnitVal * stick.speedMultiplier
+                        var hackedYaw = yaw + (stick.xUnitVal * stick.speedMultiplier * 50)
+                        pitch += pitch_stick * stick.speedMultiplier
                         hackedYaw = clamp(hackedYaw, -180, 180)
                         yaw = clamp(yaw, -180, 180)
                         pitch = clamp(pitch, -90, 90)
-                        if(gimbalControl._lastHackedYaw !== hackedYaw || gimbalControl.hackedYaw !== oldYaw || pitch !== oldPitch) {
+                        if(stick._lastHackedYaw !== hackedYaw || yaw !== oldYaw || pitch !== oldPitch) {
                             activeVehicle.gimbalControlValue(pitch, hackedYaw)
-                            gimbalControl._lastHackedYaw = hackedYaw
-                            gimbalControl._currentPitch = pitch
-                            gimbalControl._currentYaw = yaw
+                            stick._lastHackedYaw = hackedYaw
+                            stick._currentPitch = pitch
+                            stick._currentYaw = yaw
                         }
                     }
                 }
@@ -592,15 +620,6 @@ Item {
             function clamp(num, min, max) {
                 return Math.min(Math.max(num, min), max);
             }
-        }
-        JoystickThumbPad {
-            id:                     stick
-            anchors.fill:           parent
-            lightColors:            qgcPal.globalTheme === QGCPalette.Light
-            yAxisThrottle:          true
-            yAxisThrottleCentered:  true
-            xAxis:                  0
-            yAxis:                  0.5
         }
     }
     //-------------------------------------------------------------------------
