@@ -1,11 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick          2.11
 import QtQuick.Controls 2.4
@@ -18,7 +20,7 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Controllers           1.0
 
-import Auterion.Widgets                     1.0
+import Custom.Widgets                       1.0
 
 Item {
     id:                                     toolBar
@@ -26,6 +28,7 @@ Item {
     property string sectionTitle:           qsTr("Fly")
     property bool   inPlanView:             planViewLoader.visible
     property bool   inFlyView:              rootBackground.visible
+    property color  menuSeparatorColor:     qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.25) : Qt.rgba(1,1,1,0.25)
     //-------------------------------------------------------------------------
     //-- Setup can be invoked from c++ side
     Connections {
@@ -63,7 +66,7 @@ Item {
         anchors.left:                       parent.left
         spacing:                            ScreenTools.defaultFontPixelWidth * 2
 
-        AuterionIconButton {
+        CustomIconButton {
             height:                         parent.height
             onPressed: {
                 if(drawer.visible) {
@@ -95,13 +98,13 @@ Item {
         Loader {
             anchors.top:                    parent.top
             anchors.bottom:                 parent.bottom
-            source:                         "/auterion/AuterionMultiVehicleSelector.qml"
+            source:                         "/custom/CustomMultiVehicleSelector.qml"
             visible:                        activeVehicle && !inPlanView
         }
         Rectangle {
             width:                          1
             height:                         parent.height
-            color:                          qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
+            color:                          menuSeparatorColor
             visible:                        activeVehicle && !inPlanView
         }
         //-------------------------------------------------------------------------
@@ -109,7 +112,7 @@ Item {
         Loader {
             anchors.top:                    parent.top
             anchors.bottom:                 parent.bottom
-            source:                         "/auterion/AuterionModeIndicator.qml"
+            source:                         "/custom/CustomModeIndicator.qml"
             visible:                        activeVehicle && !inPlanView
         }
     }
@@ -119,13 +122,13 @@ Item {
         anchors.top:                        parent.top
         anchors.bottom:                     parent.bottom
         anchors.horizontalCenter:           parent.horizontalCenter
-        source:                             "/auterion/AuterionArmedIndicator.qml"
+        source:                             "/custom/CustomArmedIndicator.qml"
         visible:                            activeVehicle && !inPlanView
     }
     //-------------------------------------------------------------------------
     // Indicators
     Loader {
-        source:                             inPlanView ? "/qml/PlanToolBarIndicators.qml" : "/auterion/AuterionMainToolBarIndicators.qml"
+        source:                             inPlanView ? "/qml/PlanToolBarIndicators.qml" : "/custom/CustomMainToolBarIndicators.qml"
         anchors.left:                       iconRow.right
         anchors.leftMargin:                 ScreenTools.defaultFontPixelWidth * 2
         anchors.right:                      parent.right
@@ -147,7 +150,7 @@ Item {
         anchors.right:                      parent.right
         anchors.bottom:                     parent.bottom
         height:                             1
-        color:                              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.15) : Qt.rgba(1,1,1,0.15)
+        color:                              menuSeparatorColor
     }
     //-------------------------------------------------------------------------
     //-- Navigation Drawer (Left to Right, on command or using touch gestures)
@@ -158,7 +161,7 @@ Item {
         height:                             mainWindow.height - header.height
         closePolicy:                        Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
-        color:                              qgcPal.window
+            color:                          qgcPal.window
         }
         ButtonGroup {
             id:                             buttonGroup
@@ -166,20 +169,21 @@ Item {
         }
         ColumnLayout {
             id:                             buttons
+            spacing:                        0
             anchors.top:                    parent.top
             anchors.left:                   parent.left
             anchors.right:                  parent.right
-            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
             Rectangle {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
-            AuterionToolBarButton {
+            CustomToolBarButton {
                 id:                         flyButton
+                spacing:                    1
                 text:                       qsTr("Fly")
-                icon.source:                "/auterion/img/vehicle.svg"
+                icon.source:                "/qmlimages/PaperPlane.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
@@ -192,12 +196,12 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
-            AuterionToolBarButton {
+            CustomToolBarButton {
                 id:                         planButton
                 text:                       qsTr("Plan")
-                icon.source:                "/auterion/img/plan.svg"
+                icon.source:                "/qmlimages/Plan.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
@@ -210,9 +214,9 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
-            AuterionToolBarButton {
+            CustomToolBarButton {
                 text:                       qsTr("Analyze")
                 icon.source:                "/qmlimages/Analyze.svg"
                 Layout.fillWidth:           true
@@ -227,12 +231,12 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
-            AuterionToolBarButton {
+            CustomToolBarButton {
                 id:                         vehicleSetup
                 text:                       qsTr("Vehicle Setup")
-                icon.source:                "/auterion/img/vehicle_settings.svg"
+                icon.source:                "/qmlimages/Gears.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true
@@ -245,26 +249,25 @@ Item {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
         }
         ColumnLayout {
             id:                             lowerButtons
             anchors.bottom:                 parent.bottom
-            anchors.bottomMargin:           ScreenTools.defaultFontPixelHeight * 0.125
             anchors.left:                   parent.left
             anchors.right:                  parent.right
-            spacing:                        ScreenTools.defaultFontPixelHeight * 0.125
+            spacing:                        0
             Rectangle {
                 Layout.alignment:           Qt.AlignVCenter
                 width:                      parent.width
                 height:                     1
-                color:                      Qt.rgba(1,1,1,0.15)
+                color:                      menuSeparatorColor
             }
-            AuterionToolBarButton {
+            CustomToolBarButton {
                 id:                         settingsButton
                 text:                       qsTr("Settings")
-                icon.source:                "/auterion/img/settings.svg"
+                icon.source:                "/qmlimages/Gears.svg"
                 Layout.fillWidth:           true
                 onClicked: {
                     checked = true

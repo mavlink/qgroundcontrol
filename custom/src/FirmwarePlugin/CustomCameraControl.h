@@ -1,7 +1,13 @@
-/*!
+/****************************************************************************
+ *
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *
+ * QGroundControl is licensed according to the terms in the file
+ * COPYING.md in the root of the source code directory.
+ *
  * @file
  *   @brief Camera Controller
- *   @author Gus Grubba <mavlink@grubba.com>
+ *   @author Gus Grubba <gus@auterion.com>
  *
  */
 
@@ -9,22 +15,24 @@
 
 #include "QGCCameraControl.h"
 
-#include <QSoundEffect>
 #include <QSize>
 #include <QPoint>
 
-Q_DECLARE_LOGGING_CATEGORY(AuterionCameraLog)
-Q_DECLARE_LOGGING_CATEGORY(AuterionCameraVerboseLog)
+Q_DECLARE_LOGGING_CATEGORY(CustomCameraLog)
+Q_DECLARE_LOGGING_CATEGORY(CustomCameraVerboseLog)
 
 //-----------------------------------------------------------------------------
-class AuterionCameraControl : public QGCCameraControl
+class CustomCameraControl : public QGCCameraControl
 {
     Q_OBJECT
 public:
-    AuterionCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
+    CustomCameraControl(const mavlink_camera_information_t* info, Vehicle* vehicle, int compID, QObject* parent = nullptr);
 
-    Q_PROPERTY(Fact*        videoRes        READ    videoRes            NOTIFY parametersReady)
     Q_PROPERTY(Fact*        irPalette       READ    irPalette           NOTIFY parametersReady)
+    Q_PROPERTY(Fact*        videoEncoding   READ    videoEncoding       NOTIFY parametersReady)
+
+    Fact*       irPalette           ();
+    Fact*       videoEncoding       ();
 
     bool        takePhoto           () override;
     bool        stopTakePhoto       () override;
@@ -33,16 +41,9 @@ public:
     void        setVideoMode        () override;
     void        setPhotoMode        () override;
     void        handleCaptureStatus (const mavlink_camera_capture_status_t& capStatus) override;
-
-    Fact*       videoRes            ();
-    Fact*       irPalette           ();
+    void        setThermalMode      (ThermalViewMode mode) override;
 
 protected:
     void    _setVideoStatus         (VideoStatus status) override;
 
-private:
-    QSoundEffect            _cameraSound;
-    QSoundEffect            _videoSound;
-    QSoundEffect            _errorSound;
-    bool                    _firstPhotoLapse    = false;
 };

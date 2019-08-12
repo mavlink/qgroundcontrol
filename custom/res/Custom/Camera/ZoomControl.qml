@@ -12,11 +12,17 @@ Item {
     property real  zoomLevel: NaN
     property alias zoomLevelVisible: zoomStatusItem.visible
     property bool  showZoomPrecision: true
+    property bool  onlyContinousZoom: false
 
     signal zoomIn()
     signal zoomOut()
     signal continuousZoomStart(var zoomIn)
     signal continuousZoomStop()
+
+    //
+    // Beware the buttons were switched
+    //
+    //
 
     height: zoomStatusTextItem.height * 2
     width: (zoomLevelVisible ? (zoomStatusItem.width - zoomInButton.width/2) : 0) + zoomInButton.width + zoomOutButton.width
@@ -69,7 +75,12 @@ Item {
         property bool holding: false
 
         onPressed: {
-            _root.zoomIn()
+            if(onlyContinousZoom) {
+                holding = true
+            }
+            else {
+                _root.zoomOut()
+            }
         }
 
         onPressAndHold: {
@@ -82,7 +93,7 @@ Item {
 
         background: Rectangle {
             anchors.fill: zoomInButton
-            radius: zoomInButton.width/2
+            radius: zoomInButton.width/10
 
             color: _root.mainColor
         }
@@ -95,14 +106,6 @@ Item {
 
                 width: zoomInButton.width * 0.4
                 height: zoomInButton.height * 0.05
-
-                color: _root.contentColor
-            }
-            Rectangle {
-                anchors.centerIn: parent
-
-                width: zoomInMinusRectangle.height
-                height: zoomInMinusRectangle.width
 
                 color: _root.contentColor
             }
@@ -140,7 +143,12 @@ Item {
         property bool holding: false
 
         onPressed: {
-            _root.zoomOut()
+            if(onlyContinousZoom) {
+                holding = true
+            }
+            else {
+                _root.zoomIn()
+            }
         }
 
         onPressAndHold: {
@@ -153,7 +161,7 @@ Item {
 
         background: Rectangle {
             anchors.fill: zoomOutButton
-            radius: zoomOutButton.width/2
+            radius: zoomOutButton.width/10
 
             color: _root.mainColor
         }
@@ -166,6 +174,14 @@ Item {
 
                 width: zoomInMinusRectangle.width
                 height: zoomInMinusRectangle.height
+
+                color: _root.contentColor
+            }
+            Rectangle {
+                anchors.centerIn: parent
+
+                width: zoomOutMinusRectangle.height
+                height: zoomOutMinusRectangle.width
 
                 color: _root.contentColor
             }
@@ -203,11 +219,11 @@ Item {
         },
         State {
             name: "ZoomingIn"
-            when: zoomInButton.holding === true
+            when: zoomOutButton.holding === true
         },
         State {
             name: "ZoomingOut"
-            when: zoomOutButton.holding === true
+            when: zoomInButton.holding === true
         }
     ]
 }

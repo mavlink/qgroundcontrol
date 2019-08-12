@@ -1,11 +1,13 @@
 /****************************************************************************
  *
- * (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick                  2.11
 import QtQuick.Controls         2.4
@@ -24,21 +26,19 @@ import QGroundControl.Vehicle               1.0
 import QGroundControl.QGCPositionManager    1.0
 import QGroundControl.Airspace              1.0
 
-import AuterionQuickInterface               1.0
-import Auterion.Widgets                     1.0
-import Auterion.Specific                    1.0
+import CustomQuickInterface                 1.0
+import Custom.Widgets                       1.0
 
 Item {
-    anchors.fill: parent
-    visible:    !QGroundControl.videoManager.fullScreen
+    anchors.fill:                           parent
+    visible:                                !QGroundControl.videoManager.fullScreen
 
-    QGCPalette { id: qgcPal; colorGroupEnabled: true }
-
-    readonly property string scaleState:            "topMode"
-    readonly property string noGPS:                 qsTr("NO GPS")
+    readonly property string scaleState:    "topMode"
+    readonly property string noGPS:         qsTr("NO GPS")
     readonly property real   indicatorValueWidth:   ScreenTools.defaultFontPixelWidth * 7
 
     property real   _indicatorDiameter:     ScreenTools.defaultFontPixelWidth * 18
+    property real   _indicatorsHeight:      ScreenTools.defaultFontPixelHeight
     property var    _sepColor:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(0,0,0,0.5) : Qt.rgba(1,1,1,0.5)
     property color  _indicatorsColor:       qgcPal.text
 
@@ -50,6 +50,7 @@ Item {
     property var    _camera:                _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _cameraPresent:         _camera && _camera.cameraMode !== QGCCameraControl.CAM_MODE_UNDEFINED
     property var    _flightPermit:          QGroundControl.airmapSupported ? QGroundControl.airspaceManager.flightPlan.flightPermitStatus : null
+    property bool   _hasGimbal:             activeVehicle && activeVehicle.gimbalData
 
     property bool   _airspaceIndicatorVisible: QGroundControl.airmapSupported && mainIsMap && _flightPermit && _flightPermit !== AirspaceFlightPlanProvider.PermitNone
 
@@ -60,7 +61,7 @@ Item {
     property real   _distance:              0.0
     property string _messageTitle:          ""
     property string _messageText:           ""
-    property bool   _showAttitude:          false
+    property bool   _showAttitude:          true
 
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
@@ -143,7 +144,7 @@ Item {
             connectionLostDisarmedDialog.close()
         }
     }
-
+    //-------------------------------------------------------------------------
     MessageDialog {
         id:                 connectionLostDisarmedDialog
         title:              qsTr("Communication Lost")
@@ -153,7 +154,7 @@ Item {
             connectionLostDisarmedDialog.close()
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Heading Indicator
     Rectangle {
         id:             compassBar
@@ -163,7 +164,7 @@ Item {
         radius:         2
         clip:           true
         anchors.top:    parent.top
-        anchors.topMargin:          ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 2)
+        anchors.topMargin: ScreenTools.defaultFontPixelHeight * (_airspaceIndicatorVisible ? 3 : 1)
         anchors.horizontalCenter: parent.horizontalCenter
         visible:        !mainIsMap
         Repeater {
@@ -215,9 +216,9 @@ Item {
         }
     }
     Image {
-        height:                     ScreenTools.defaultFontPixelHeight * 0.75
+        height:                     _indicatorsHeight
         width:                      height
-        source:                     "/auterion/img/compass_pointer.svg"
+        source:                     "/custom/img/compass_pointer.svg"
         visible:                    !mainIsMap
         fillMode:                   Image.PreserveAspectFit
         sourceSize.height:          height
@@ -225,106 +226,18 @@ Item {
         anchors.topMargin:          ScreenTools.defaultFontPixelHeight * -0.5
         anchors.horizontalCenter:   parent.horizontalCenter
     }
-
+    //-------------------------------------------------------------------------
     //-- Camera Control
     Loader {
         id:                     camControlLoader
-        visible:                (!mainIsMap && _cameraPresent && _camera.paramComplete)
-        source:                 visible ? "/auterion/AuterionCameraControl.qml" : ""
+        visible:                !mainIsMap && _cameraPresent && _camera.paramComplete
+        source:                 visible ? "/custom/CustomCameraControl.qml" : ""
         anchors.right:          parent.right
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         anchors.top:            parent.top
-        anchors.topMargin:      ScreenTools.defaultFontPixelHeight * 2
-
-        onLoaded: {
-            item.showGimbalControl.connect(showGimbalJoystick)
-            item.gimbalControlVisibleChanged.connect(gimbalControlVisibleChanged)
-            item.gimbalControlVisible = joystick.visible
-        }
-        function showGimbalJoystick(spawnX, spawnY) {
-            if(!joystick.shownFirstTime) {
-                joystick.x = spawnX - joystick.width;
-                joystick.y = spawnY;
-                joystick.shownFirstTime = true;
-            }
-            joystick.dpadPos = joystick.x > (parent.width -joystick.width)/2 ? "Left" : "Right"
-        }
-        function gimbalControlVisibleChanged() {
-            joystick.visible = item.gimbalControlVisible;
-        }
+        anchors.topMargin:      ScreenTools.defaultFontPixelHeight
     }
-
-    GimbalVirtualJoystick {
-        id: joystick
-
-        visible: false
-
-        onXChanged: {
-            dpadPos = (x > ((parent.width - width)/2)) ? "Left" : "Right"
-        }
-
-        x: 0
-        y: 0
-        textPointSize: ScreenTools.largeFontPointSize
-
-        mainColor: qgcPal.windowShadeDark
-        secondaryColor: qgcPal.windowShade
-        stickColor: qgcPal.buttonText
-        darkerBorders: 1.4
-        buttonBackgroundColor: qgcPal.buttonText
-        buttonContentColor: qgcPal.button
-        textColor: qgcPal.text
-
-        dragActive: true
-        dragMinX: 0
-        dragMaxX: parent.width - joystick.width
-        dragMinY: 0
-        dragMaxY: parent.height - joystick.height
-
-        panDegrees:     activeVehicle ? activeVehicle.gimbalYaw   : NaN
-        tiltDegrees:    activeVehicle ? activeVehicle.gimbalPitch : NaN
-
-        returnAnimationDurationMs: 100
-
-        property bool shownFirstTime: false
-    }
-
-    Timer {
-
-        interval:   40
-        running:    joystick.visible
-        repeat:     true
-
-        property real absoluteAnglePitch: 0
-        property real absoluteAngleYaw: 0
-        property real joystickXPos: NaN
-        property real joystickYPos: NaN
-
-        onTriggered: {
-            if (activeVehicle) {
-                var yaw = absoluteAngleYaw
-                var pitch = absoluteAnglePitch
-                var oldYaw = absoluteAngleYaw;
-                var oldPitch = absoluteAnglePitch;
-                yaw += joystick.xUnitVal
-                pitch -= joystick.yUnitVal
-                yaw = clamp(yaw, -90, 90)
-                pitch = clamp(pitch, -90, 90)
-                if(yaw !== oldYaw || pitch !== oldPitch) {
-                    absoluteAnglePitch = pitch
-                    absoluteAngleYaw = yaw
-                    activeVehicle.gimbalControlValue(pitch, yaw)
-                    //joystick.panDegrees = absoluteAngleYaw
-                    //joystick.tiltDegrees = absoluteAnglePitch
-                }
-            }
-        }
-
-        function clamp(num, min, max) {
-            return Math.min(Math.max(num, min), max);
-        }
-    }
-
+    //-------------------------------------------------------------------------
     //-- Map Scale
     MapScale {
         id:                     mapScale
@@ -335,7 +248,7 @@ Item {
         mapControl:             mainWindow.flightDisplayMap
         visible:                rootBackground.visible && mainIsMap
     }
-
+    //-------------------------------------------------------------------------
     //-- Vehicle Indicator
     Rectangle {
         id:                     vehicleIndicator
@@ -343,7 +256,7 @@ Item {
         width:                  vehicleStatusGrid.width  + (ScreenTools.defaultFontPixelWidth  * 3)
         height:                 vehicleStatusGrid.height + (ScreenTools.defaultFontPixelHeight * 1.5)
         radius:                 2
-        anchors.bottom:         multiVehicleSelector.visible ? multiVehicleSelector.top : parent.bottom
+        anchors.bottom:         parent.bottom
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
         anchors.right:          attitudeIndicator.visible ? attitudeIndicator.left : parent.right
         anchors.rightMargin:    attitudeIndicator.visible ? -ScreenTools.defaultFontPixelWidth : ScreenTools.defaultFontPixelWidth
@@ -355,9 +268,9 @@ Item {
             anchors.centerIn:       parent
         //-- Chronometer
             QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight * 0.75
+                height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/auterion/img/chronometer.svg"
+                source:                 "/custom/img/chronometer.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -373,13 +286,13 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
             Layout.minimumWidth:    indicatorValueWidth
-            horizontalAlignment:    Text.AlignLeft
+            horizontalAlignment:    Text.AlignRight
         }
             //-- Ground Speed
             QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight * 0.75
+                height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/auterion/img/horizontal_speed.svg"
+                source:                 "/custom/img/horizontal_speed.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -391,13 +304,13 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignLeft
+                horizontalAlignment:    Text.AlignRight
             }
             //-- Vertical Speed
             QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight * 0.75
+                height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/auterion/img/vertical_speed.svg"
+                source:                 "/custom/img/vertical_speed.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -410,7 +323,7 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignLeft
+                horizontalAlignment:    Text.AlignRight
             }
             //-- Compass
             Item {
@@ -434,7 +347,7 @@ Item {
                     height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
                     width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 2 : 0
                     radius:             ScreenTools.defaultFontPixelWidth  * 0.25
-                    color:              qgcPal.window
+                    color:              qgcPal.windowShade
                     visible:            mainIsMap
                     anchors.top:        parent.top
                     anchors.topMargin:  ScreenTools.defaultFontPixelHeight * -0.25
@@ -452,7 +365,7 @@ Item {
                     anchors.centerIn:   parent
                     height:             mainIsMap ? parent.height * 0.75 : 0
                     width:              height
-                    source:             "/auterion/img/compass_needle.svg"
+                    source:             "/custom/img/compass_needle.svg"
                     fillMode:           Image.PreserveAspectFit
                     visible:            mainIsMap
                     sourceSize.height:  height
@@ -468,7 +381,7 @@ Item {
                     height:             mainIsMap ? ScreenTools.defaultFontPixelHeight * 0.75 : 0
                     width:              mainIsMap ? ScreenTools.defaultFontPixelWidth  * 3.5 : 0
                     radius:             ScreenTools.defaultFontPixelWidth  * 0.25
-                    color:              qgcPal.window
+                    color:              qgcPal.windowShade
                     visible:            mainIsMap
                     anchors.bottom:         parent.bottom
                     anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * -0.25
@@ -484,9 +397,9 @@ Item {
             //-- Second Row
             //-- Odometer
             QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight * 0.75
+                height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/auterion/img/odometer.svg"
+                source:                 "/custom/img/odometer.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -499,13 +412,13 @@ Item {
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    Text.AlignLeft
+                horizontalAlignment:    Text.AlignRight
             }
         //-- Altitude
             QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight * 0.75
+                height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/auterion/img/altitude.svg"
+                source:                 "/custom/img/altitude.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -518,13 +431,13 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
             Layout.minimumWidth:    indicatorValueWidth
-            horizontalAlignment:    Text.AlignLeft
+            horizontalAlignment:    Text.AlignRight
         }
         //-- Distance
             QGCColoredImage {
-                height:                 ScreenTools.defaultFontPixelHeight * 0.75
+                height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/auterion/img/distance.svg"
+                source:                 "/custom/img/distance.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -537,7 +450,7 @@ Item {
             font.pointSize:         ScreenTools.smallFontPointSize
             Layout.fillWidth:       true
             Layout.minimumWidth:    indicatorValueWidth
-            horizontalAlignment:    Text.AlignLeft
+            horizontalAlignment:    Text.AlignRight
         }
         }
         MouseArea {
@@ -545,7 +458,7 @@ Item {
             onDoubleClicked:    _showAttitude = !_showAttitude
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Attitude Indicator
     Rectangle {
         color:                  qgcPal.window
@@ -564,40 +477,138 @@ Item {
         height:                 ScreenTools.defaultFontPixelHeight * 6
         width:                  height
         radius:                 height * 0.5
-        color:                  qgcPal.window
+        color:                  qgcPal.windowShade
         visible:                _showAttitude
-            AuterionAttitudeWidget {
+            CustomAttitudeWidget {
             size:               parent.height * 0.95
             vehicle:            activeVehicle
                 showHeading:        false
             anchors.centerIn:   parent
         }
     }
-
+    //-------------------------------------------------------------------------
     //-- Multi Vehicle Selector
     Row {
         id:                     multiVehicleSelector
         spacing:                ScreenTools.defaultFontPixelWidth
         anchors.bottom:         parent.bottom
-        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
-        anchors.right:          parent.right
+        anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth * 1.5
+        anchors.right:          vehicleIndicator.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
         visible:                QGroundControl.multiVehicleManager.vehicles.count > 1
         Repeater {
             model:              QGroundControl.multiVehicleManager.vehicles.count
-            AuterionVehicleButton {
+            CustomVehicleButton {
                 property var _vehicle: QGroundControl.multiVehicleManager.vehicles.get(modelData)
                 vehicle:        _vehicle
                 checked:        (_vehicle && activeVehicle) ? _vehicle.id === activeVehicle.id : false
+                onClicked: {
+                    QGroundControl.multiVehicleManager.activeVehicle = _vehicle
+                }
             }
         }
     }
+    //-------------------------------------------------------------------------
+    //-- Gimbal Control
+    Rectangle {
+        id:                     gimbalControl
+        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl && _hasGimbal
+        anchors.bottom:         camControlLoader.bottom
+        anchors.right:          camControlLoader.left
+        anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -1 : 1)
+        height:                 parent.width * 0.125
+        width:                  height
+        color:                  Qt.rgba(1,1,1,0.25)
+        radius:                 width * 0.5
 
+        property real _currentPitch:    0
+        property real _currentYaw:      0
+        property real time_last_seconds:0
+        property real _lastHackedYaw:   0
+        property real speedMultiplier:  5
+
+        property real maxRate:          20
+        property real exponentialFactor:0.6
+        property real kPFactor:         3
+
+        property real reportedYawDeg:   activeVehicle ? activeVehicle.gimbalYaw   : NaN
+        property real reportedPitchDeg: activeVehicle ? activeVehicle.gimbalPitch : NaN
+
+        Timer {
+            interval:   100  //-- 10Hz
+            running:    gimbalControl.visible && activeVehicle
+            repeat:     true
+            onTriggered: {
+                if (activeVehicle) {
+                    var yaw = gimbalControl._currentYaw
+                    var oldYaw = yaw;
+                    var pitch = gimbalControl._currentPitch
+                    var oldPitch = pitch;
+                    var pitch_stick = (stick.yAxis * 2.0 - 1.0)
+                    if(_camera && _camera.vendor === "NextVision") {
+                        var time_current_seconds = ((new Date()).getTime())/1000.0
+                        if(gimbalControl.time_last_seconds === 0.0)
+                            gimbalControl.time_last_seconds = time_current_seconds
+                        var pitch_angle = gimbalControl._currentPitch
+                        // Preparing stick input with exponential curve and maximum rate
+                        var pitch_expo = (1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick
+                        var pitch_rate = pitch_stick * gimbalControl.maxRate
+                        var pitch_angle_reported = gimbalControl.reportedPitchDeg
+                        // Integrate the angular rate to an angle time abstracted
+                        pitch_angle += pitch_rate * (time_current_seconds - gimbalControl.time_last_seconds)
+                        // Control the angle quicker by driving the gimbal internal angle controller into saturation
+                        var pitch_angle_error = pitch_angle - pitch_angle_reported
+                        pitch_angle_error = Math.round(pitch_angle_error)
+                        var pitch_setpoint = pitch_angle + pitch_angle_error * gimbalControl.kPFactor
+                        //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
+                        pitch = pitch_setpoint
+                        yaw += stick.xAxis * gimbalControl.speedMultiplier
+
+                        yaw = clamp(yaw, -180, 180)
+                        pitch = clamp(pitch, -90, 45)
+                        pitch_angle = clamp(pitch_angle, -90, 45)
+
+                        //console.info("P: " + pitch + "; Y: " + yaw)
+                        activeVehicle.gimbalControlValue(pitch, yaw);
+                        gimbalControl._currentYaw = yaw
+                        gimbalControl._currentPitch = pitch_angle
+                        gimbalControl.time_last_seconds = time_current_seconds
+                    } else {
+                        yaw += stick.xAxis * gimbalControl.speedMultiplier
+                        var hackedYaw = yaw + (stick.xAxis * gimbalControl.speedMultiplier * 50)
+                        pitch += pitch_stick * gimbalControl.speedMultiplier
+                        hackedYaw = clamp(hackedYaw, -180, 180)
+                        yaw = clamp(yaw, -180, 180)
+                        pitch = clamp(pitch, -90, 90)
+                        if(gimbalControl._lastHackedYaw !== hackedYaw || gimbalControl.hackedYaw !== oldYaw || pitch !== oldPitch) {
+                            activeVehicle.gimbalControlValue(pitch, hackedYaw)
+                            gimbalControl._lastHackedYaw = hackedYaw
+                            gimbalControl._currentPitch = pitch
+                            gimbalControl._currentYaw = yaw
+                        }
+                    }
+                }
+            }
+            function clamp(num, min, max) {
+                return Math.min(Math.max(num, min), max);
+            }
+        }
+        JoystickThumbPad {
+            id:                     stick
+            anchors.fill:           parent
+            lightColors:            qgcPal.globalTheme === QGCPalette.Light
+            yAxisThrottle:          true
+            yAxisThrottleCentered:  true
+            xAxis:                  0
+            yAxis:                  0.5
+        }
+    }
+    //-------------------------------------------------------------------------
     //-- Connection Lost While Armed
     Popup {
-        id:         connectionLostArmed
+        id:                     connectionLostArmed
         width:                  mainWindow.width  * 0.666
-                height:             connectionLostArmedCol.height * 1.5
+        height:                 connectionLostArmedCol.height * 1.5
         modal:                  true
         focus:                  true
         parent:                 Overlay.overlay
@@ -606,38 +617,38 @@ Item {
         closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: Rectangle {
             anchors.fill:       parent
-                color:              qgcPal.alertBackground
-                border.color:       qgcPal.alertBorder
+            color:              qgcPal.alertBackground
+            border.color:       qgcPal.alertBorder
             radius:             ScreenTools.defaultFontPixelWidth
         }
-                Column {
-                    id:                 connectionLostArmedCol
-                    spacing:            ScreenTools.defaultFontPixelHeight * 3
-                    anchors.margins:    ScreenTools.defaultFontPixelHeight
-                    anchors.centerIn:   parent
-                    QGCLabel {
-                        text:           qsTr("Communication Lost")
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.largeFontPointSize
-                        color:          qgcPal.alertText
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("Warning: Connection to vehicle lost.")
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                    QGCLabel {
-                        text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
-                width:          connectionLostArmed.width * 0.75
-                        wrapMode:       Text.WordWrap
-                        color:          qgcPal.alertText
-                        font.family:    ScreenTools.demiboldFontFamily
-                        font.pointSize: ScreenTools.mediumFontPointSize
-                        anchors.horizontalCenter: parent.horizontalCenter
-                    }
-                }
+        Column {
+            id:                 connectionLostArmedCol
+            spacing:            ScreenTools.defaultFontPixelHeight * 3
+            anchors.margins:    ScreenTools.defaultFontPixelHeight
+            anchors.centerIn:   parent
+            QGCLabel {
+                text:           qsTr("Communication Lost")
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.largeFontPointSize
+                color:          qgcPal.alertText
+                anchors.horizontalCenter: parent.horizontalCenter
             }
+            QGCLabel {
+                text:           qsTr("Warning: Connection to vehicle lost.")
+                color:          qgcPal.alertText
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.mediumFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            QGCLabel {
+                text:           qsTr("The vehicle will automatically cancel the flight and return to land. Ensure a clear line of sight between transmitter and vehicle. Ensure the takeoff location is clear.")
+                width:          connectionLostArmed.width * 0.75
+                wrapMode:       Text.WordWrap
+                color:          qgcPal.alertText
+                font.family:    ScreenTools.demiboldFontFamily
+                font.pointSize: ScreenTools.mediumFontPointSize
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+        }
+    }
 }

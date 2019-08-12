@@ -1,12 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
-
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick                      2.11
 import QtQuick.Controls             2.4
@@ -21,7 +22,8 @@ Button {
 
     background: Rectangle {
         anchors.fill:               parent
-        color:                      mouseArea.pressed ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0)
+        color:                      qgcPal.buttonHighlight
+        visible:                    (mouseArea.pressed || button.checked)
     }
 
     contentItem: Row {
@@ -39,7 +41,7 @@ Button {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  qgcPal.buttonText
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -47,7 +49,7 @@ Button {
             id:                     _label
             visible:                text !== ""
             text:                   button.text
-            color:                  (mouseArea.pressed || button.checked) ? qgcPal.buttonHighlightText : qgcPal.buttonText
+            color:                  qgcPal.buttonText
             anchors.verticalCenter: parent.verticalCenter
         }
     }

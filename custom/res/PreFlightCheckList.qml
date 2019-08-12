@@ -7,16 +7,14 @@
  *
  ****************************************************************************/
 
-import QtQuick                              2.11
-import QtQuick.Controls                     2.4
-import QtQml.Models                         2.1
+import QtQuick          2.3
+import QtQuick.Controls 1.2
+import QtQml.Models     2.1
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightDisplay 1.0
-
-import AuterionQuickInterface       1.0
 
 Rectangle {
     width:      mainColumn.width  + ScreenTools.defaultFontPixelWidth * 3
@@ -30,28 +28,6 @@ Rectangle {
             name: qsTr("Initial checks")
 
             // Standard check list items (group 0) - Available from the start
-            Rectangle {
-                width:      ScreenTools.defaultFontPixelWidth * 40
-                height:     testFlight.height + ScreenTools.defaultFontPixelHeight
-                color:      qgcPal.button
-                property bool   passed: true
-                function reset() {
-                    AuterionQuickInterface.testFlight = false
-                    AuterionQuickInterface.checkListState = AuterionQuickInterface.NotSetup
-                }
-                QGCCheckBox {
-                    id:             testFlight
-                    text:           "Test Flight"
-                    enabled:        !AuterionQuickInterface.debugBuild
-                    checked:        AuterionQuickInterface.testFlight
-                    anchors.centerIn: parent
-                    onClicked:      AuterionQuickInterface.testFlight = checked
-                    Component.onCompleted: {
-                        AuterionQuickInterface.testFlight = false
-                    }
-                }
-            }
-
             PreFlightCheckButton {
                 name:           qsTr("Hardware")
                 manualText:     qsTr("Props mounted? Wings secured? Tail secured?")
@@ -134,16 +110,6 @@ Rectangle {
         _passed = passed
     }
 
-    onVisibleChanged: {
-        if(!visible) {
-            if(listModel.isPassed()) {
-                AuterionQuickInterface.checkListState = AuterionQuickInterface.Passed
-            } else {
-                AuterionQuickInterface.checkListState = AuterionQuickInterface.Failed
-            }
-        }
-    }
-
     // We delay the updates when a group passes so the user can see all items green for a moment prior to hiding
     Timer {
         id:         delayedGroupPassed
@@ -190,7 +156,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 tooltip:                qsTr("Reset the checklist (e.g. after a vehicle reboot)")
 
-                onClicked:              checkListRepeater.model.reset()
+                onClicked:              model.reset()
 
                 QGCColoredImage {
                     source:         "/qmlimages/MapSyncBlack.svg"

@@ -1,15 +1,16 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
-
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick                              2.11
-import QtQuick.Controls                     2.4
+import QtQuick.Controls                     1.4
 import QtQuick.Layouts                      1.11
 
 import QGroundControl                       1.0
@@ -17,8 +18,6 @@ import QGroundControl.Controls              1.0
 import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
-
-import Auterion.Widgets                     1.0
 
 //-------------------------------------------------------------------------
 //-- Battery Indicator
@@ -113,7 +112,7 @@ Item {
                         height:         batteryLabel.height
                         width:          height
                         sourceSize.width:   width
-                        source:         "/auterion/img/menu_battery.svg"
+                        source:         "/qmlimages/Battery.svg"
                         color:          qgcPal.text
                         fillMode:       Image.PreserveAspectFit
                         Rectangle {
@@ -146,7 +145,7 @@ Item {
                         height:         batteryLabel.height
                         width:          height
                         sourceSize.width:   width
-                        source:         "/auterion/img/menu_battery.svg"
+                        source:         "/qmlimages/Battery.svg"
                         color:          qgcPal.text
                         visible:        hasSecondBattery
                         fillMode:       Image.PreserveAspectFit
@@ -180,7 +179,7 @@ Item {
             anchors.bottom:     parent.bottom
             width:              height
             sourceSize.width:   width
-            source:             "/auterion/img/menu_battery.svg"
+            source:             "/qmlimages/Battery.svg"
             color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             Rectangle {
@@ -202,7 +201,7 @@ Item {
     MouseArea {
         anchors.fill:   parent
         onClicked: {
-           mainWindow.showPopUp(_root, batteryInfo)
+            mainWindow.showPopUp(_root, batteryInfo)
         }
     }
 }

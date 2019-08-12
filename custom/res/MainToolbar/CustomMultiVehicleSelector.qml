@@ -1,15 +1,16 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
-
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick                              2.11
-import QtQuick.Controls                     2.4
+import QtQuick.Controls                     1.4
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -41,7 +42,7 @@ Item {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            source:                 "/auterion/img/vehicle.svg"
+            source:                 "/qmlimages/PaperPlane.svg"
             color:                  qgcPal.text
         }
         QGCLabel {
@@ -57,7 +58,7 @@ Item {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            source:                 "/auterion/img/drop_down.svg"
+            source:                 "/res/DropArrow.svg"
             color:                  qgcPal.text
         }
     }

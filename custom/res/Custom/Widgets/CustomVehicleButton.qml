@@ -1,12 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
-
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick                      2.11
 import QtQuick.Controls             2.4
@@ -54,29 +55,29 @@ Button {
         spacing:                    ScreenTools.defaultFontPixelWidth
         anchors.margins:            ScreenTools.defaultFontPixelWidth
         anchors.verticalCenter:     button.verticalCenter
-        QGCColoredImage {
-            id:                     _icon
-            height:                 ScreenTools.defaultFontPixelHeight * 1.5
-            width:                  height
-            sourceSize.height:      parent.height
-            fillMode:               Image.PreserveAspectFit
-            color:                  qgcPal.buttonText
-            source:                 "/auterion/img/vehicle.svg"
-            anchors.verticalCenter: parent.verticalCenter
-        }
+//        QGCColoredImage {
+//            id:                     _icon
+//            height:                 ScreenTools.defaultFontPixelHeight * 1.5
+//            width:                  height
+//            sourceSize.height:      parent.height
+//            fillMode:               Image.PreserveAspectFit
+//            color:                  button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
+//            source:                 "/qmlimages/PaperPlane.svg"
+//            anchors.verticalCenter: parent.verticalCenter
+//        }
         Column {
             id:                     _infoCol
             spacing:                ScreenTools.defaultFontPixelHeight * 0.25
             QGCLabel {
                 text:               qsTr("Vehicle ") + (vehicle ? vehicle.id : qsTr("None"))
                 font.family:        ScreenTools.demiboldFontFamily
-                color:              qgcPal.buttonText
+                color:              button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
             }
             Row {
                 spacing:            ScreenTools.defaultFontPixelWidth
                 QGCLabel {
                     text:           vehicle ? vehicle.flightMode : qsTr("None")
-                    color:          qgcPal.buttonText
+                    color:          button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText
                 }
                 Rectangle {
                     height:         ScreenTools.defaultFontPixelHeight * 0.5

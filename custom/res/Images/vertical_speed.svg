@@ -1,4 +1,12 @@
-<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M31.7279 53.4072L36.2319 71L40.5044 53.3347L44.3756 37.3235L51 37.3154L43.4912 27.1569L35.9802 17L28.4908 27.1754L21 37.3517L27.6158 37.3436L31.7279 53.4072Z" fill="white"/>
-<rect x="13.907" y="7.701" width="5.53266" height="44.2612" transform="rotate(-90 13.907 7.701)" fill="white"/>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 23.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill-rule:evenodd;clip-rule:evenodd;fill:#FFFFFF;}
+	.st1{fill:#FFFFFF;}
+</style>
+<path class="st0" d="M31.7,53.4l3.4,13.3c0.3,1.1,1.9,1.1,2.1,0l3.2-13.4l3.9-16l6.6,0l-7.5-10.2l-5.1-6.9c-1.2-1.6-3.6-1.6-4.8,0
+	l-5.1,6.9L21,37.4l6.6,0L31.7,53.4z"/>
+<rect x="13.9" y="2.2" class="st1" width="44.3" height="5.5"/>
 </svg>

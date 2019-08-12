@@ -1,27 +1,30 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
+ * @file
+ *   @brief Custom Autopilot Plugin
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
-#include "AuterionAutoPilotPlugin.h"
+#include "CustomAutoPilotPlugin.h"
 
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
 //-----------------------------------------------------------------------------
-AuterionAutoPilotPlugin::AuterionAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
+CustomAutoPilotPlugin::CustomAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     : PX4AutoPilotPlugin(vehicle, parent)
 {
-    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &AuterionAutoPilotPlugin::_advancedChanged);
+    connect(qgcApp()->toolbox()->corePlugin(), &QGCCorePlugin::showAdvancedUIChanged, this, &CustomAutoPilotPlugin::_advancedChanged);
 }
 
 //-----------------------------------------------------------------------------
 void
-AuterionAutoPilotPlugin::_advancedChanged(bool)
+CustomAutoPilotPlugin::_advancedChanged(bool)
 {
     _components.clear();
     emit vehicleComponentsChanged();
@@ -29,7 +32,7 @@ AuterionAutoPilotPlugin::_advancedChanged(bool)
 
 //-----------------------------------------------------------------------------
 const QVariantList&
-AuterionAutoPilotPlugin::vehicleComponents()
+CustomAutoPilotPlugin::vehicleComponents()
 {
     if (_components.count() == 0 && !_incorrectParameterVersion) {
         if (_vehicle) {

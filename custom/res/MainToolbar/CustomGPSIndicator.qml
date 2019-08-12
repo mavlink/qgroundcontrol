@@ -1,16 +1,17 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
-
-import QtQuick                              2.11
-import QtQuick.Controls                     2.4
-import QtQuick.Layouts                      1.11
+import QtQuick          2.11
+import QtQuick.Controls 1.4
+import QtQuick.Layouts  1.11
 
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
@@ -18,7 +19,7 @@ import QGroundControl.MultiVehicleManager   1.0
 import QGroundControl.ScreenTools           1.0
 import QGroundControl.Palette               1.0
 
-import Auterion.Widgets                     1.0
+import Custom.Widgets                       1.0
 
 //-------------------------------------------------------------------------
 //-- GPS Indicator
@@ -98,12 +99,12 @@ Item {
             anchors.top:        parent.top
             anchors.bottom:     parent.bottom
             sourceSize.height:  height
-            source:             "/auterion/img/menu_gps.svg"
+            source:             "/qmlimages/Gps.svg"
             color:              qgcPal.text
             fillMode:           Image.PreserveAspectFit
             opacity:            getGPSSignal() > 0 ? 1 : 0.5
         }
-        AuterionSignalStrength {
+        CustomSignalStrength {
             anchors.verticalCenter: parent.verticalCenter
             size:                   parent.height * 0.75
             percent:                getGPSSignal()

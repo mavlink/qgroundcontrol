@@ -1,11 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick              2.11
 import QtGraphicalEffects   1.0
@@ -37,7 +39,7 @@ Item {
 
         //----------------------------------------------------
         //-- Artificial Horizon
-        AuterionArtificialHorizon {
+        CustomArtificialHorizon {
             rollAngle:          _rollAngle
             pitchAngle:         _pitchAngle
             skyColor1:          "#0a2e50"
@@ -50,7 +52,7 @@ Item {
         //-- Instrument Dial
         Image {
             id:                 instrumentDial
-            source:             "/auterion/img/attitude_dial.svg"
+            source:             "/custom/img/attitude_dial.svg"
             mipmap:             true
             fillMode:           Image.PreserveAspectFit
             anchors.fill:       parent
@@ -67,7 +69,7 @@ Item {
             id:                 pointer
             height:             size * 0.0625
             width:              height
-            source:             "/auterion/img/attitude_pointer.svg"
+            source:             "/custom/img/attitude_pointer.svg"
             antialiasing:       true
             fillMode:           Image.PreserveAspectFit
             sourceSize.height:  height
@@ -90,7 +92,7 @@ Item {
         Image {
             id:                 crossHair
             anchors.centerIn:   parent
-            source:             "/auterion/img/attitude_crosshair.svg"
+            source:             "/custom/img/attitude_crosshair.svg"
             mipmap:             true
             width:              size * 0.75
             sourceSize.width:   width

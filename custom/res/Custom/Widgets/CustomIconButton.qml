@@ -1,12 +1,13 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
-
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick                      2.11
 import QtQuick.Controls             2.4
@@ -17,50 +18,43 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 import QtGraphicalEffects           1.0
 
-
-import AuterionQuickInterface       1.0
-
 Button {
-    id: _rootButton
-
-    width:  edge.width + icon.width
-    height: parent.height
-
-    flat:   true
-
+    id:                             _rootButton
+    width:                          parent.height * 1.25
+    height:                         parent.height
+    flat:                           true
     contentItem: Item {
         id:                         _content
         anchors.fill:               _rootButton
-        QGCColoredImage {
-            id:                     edge
-            height:                 ScreenTools.defaultFontPixelHeight
-            width:                  height
-            sourceSize.height:      _rootButton.height
-            fillMode:               Image.PreserveAspectFit
-            source:                 "/auterion/img/menu_left_edge.svg"
-            color:                  qgcPal.text
+        Row {
+            id:                     _edge
+            spacing:                ScreenTools.defaultFontPixelWidth * 0.25
             anchors.left:           parent.left
-            anchors.verticalCenter: parent.verticalCenter
             anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+            anchors.verticalCenter: parent.verticalCenter
+            Repeater {
+                model: [1,2,3]
+                Rectangle {
+                    height:         ScreenTools.defaultFontPixelHeight
+                    width:          ScreenTools.defaultFontPixelWidth * 0.25
+                    color:          qgcPal.text
+                    opacity:        0.75
+                }
+            }
         }
         Image {
-            id:                     icon
-            height:                 _rootButton.height
+            id:                     _icon
+            height:                 _rootButton.height * 0.75
             width:                  height
             smooth:                 true
             mipmap:                 true
             antialiasing:           true
-            visible:                !QGroundControl.corePlugin.showAdvancedUI && qgcPal.globalTheme === QGCPalette.Dark
             fillMode:               Image.PreserveAspectFit
-            anchors.left:           edge.right
-            source:                 QGroundControl.corePlugin.showAdvancedUI ? "/auterion/img/menu_logo_advanced.svg" : "/auterion/img/menu_logo.svg"
+            source:                 qgcPal.globalTheme === QGCPalette.Light ? "/res/QGCLogoBlack" : "/res/QGCLogoWhite"
             sourceSize.height:      height
-        }
-        ColorOverlay {
-            anchors.fill:   icon
-            source:         icon
-            color:          QGroundControl.corePlugin.showAdvancedUI  ? qgcPal.text : (qgcPal.globalTheme === QGCPalette.Dark ? "black" : qgcPal.text )
-            visible:        !icon.visible
+            anchors.left:           _edge.right
+            anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
+            anchors.verticalCenter: parent.verticalCenter
         }
     }
     background: Item {

@@ -1,11 +1,13 @@
 /****************************************************************************
  *
- * (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- ****************************************************************************/
+ * @file
+ *   @author Gus Grubba <gus@auterion.com>
+ */
 
 import QtQuick 2.3
 
@@ -18,8 +20,8 @@ Rectangle {
     height: Math.round(ScreenTools.defaultFontPixelHeight * 2)
     width:  ScreenTools.defaultFontPixelWidth  * 10
     color:  qgcPal.button
-    border.color: qgcPal.text
-    border.width: 1
+    border.color: qgcPal.windowShade
+    border.width: 0
 
     property bool checked: true
 
@@ -30,24 +32,23 @@ Rectangle {
     Rectangle {
         width:      parent.width  * 0.5
         height:     parent.height
-        color:      qgcPal.windowShade
-        visible:    !checked
+        color:      checked ? qgcPal.button : qgcPal.buttonHighlight
         border.color: qgcPal.text
-        border.width: 1
+        border.width: 0
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
             text: qsTr("Off")
             anchors.centerIn: parent
+            color:      qgcPal.text
         }
     }
     Rectangle {
         width:      parent.width  * 0.5
-        height:     parent.height * 0.95
-        color:      qgcPal.buttonHighlight
-        visible:    checked
+        height:     parent.height
+        color:      checked ? qgcPal.buttonHighlight : qgcPal.button
         border.color: qgcPal.text
-        border.width: 1
+        border.width: 0
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         QGCLabel {
