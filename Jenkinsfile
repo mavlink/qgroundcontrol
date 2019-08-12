@@ -176,7 +176,7 @@ pipeline {
                 QGC_REGISTRY_CREDS = credentials('qgc_uploader')
             }
             when {
-                branch 'work_on_pipeline'
+                branch 'master'
             }
             steps {
                 script {
