@@ -43,6 +43,7 @@ public:
     Q_PROPERTY(QString      pilotID             READ    pilotID            WRITE setPilotID            NOTIFY pilotIDChanged)
     Q_PROPERTY(CheckList    checkListState      READ    checkListState     WRITE setCheckListState     NOTIFY checkListStateChanged)
     Q_PROPERTY(QStringList  batteries           READ    batteries          NOTIFY batteriesChanged)
+    Q_PROPERTY(bool         showAttitudeWidget  READ    showAttitudeWidget WRITE setShowAttitudeWidget NOTIFY showAttitudeWidgetChanged)
 
     Q_INVOKABLE bool addBatteryScan (QString batteryID);
     Q_INVOKABLE void resetBatteries ();
@@ -66,12 +67,16 @@ public:
     void    setPilotID              (QString pid)   { _pilotID = pid; emit pilotIDChanged(); }
     void    setCheckListState       (CheckList cl)  { _checkListState = cl; emit checkListStateChanged(); }
 
+    bool    showAttitudeWidget      () { return _showAttitudeWidget; }
+    void    setShowAttitudeWidget   (bool set);
+
 signals:
-    void    showGimbalControlChanged    ();
+    void    showGimbalControlChanged();
     void    testFlightChanged       ();
     void    pilotIDChanged          ();
     void    checkListStateChanged   ();
     void    batteriesChanged        ();
+    void    showAttitudeWidgetChanged();
 
 private slots:
     void _activeVehicleChanged      (Vehicle* vehicle);
@@ -79,6 +84,7 @@ private slots:
 
 private:
     bool _showGimbalControl  = false;
+    bool _showAttitudeWidget = false;
 
     void _sendLogMessage();
 

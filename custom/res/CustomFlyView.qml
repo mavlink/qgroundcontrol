@@ -63,7 +63,6 @@ Item {
     property real   _distance:              0.0
     property string _messageTitle:          ""
     property string _messageText:           ""
-    property bool   _showAttitude:          true
 
     function secondsToHHMMSS(timeS) {
         var sec_num = parseInt(timeS, 10);
@@ -262,19 +261,25 @@ Item {
         anchors.bottomMargin:   ScreenTools.defaultFontPixelWidth
         anchors.right:          attitudeIndicator.visible ? attitudeIndicator.left : parent.right
         anchors.rightMargin:    attitudeIndicator.visible ? -ScreenTools.defaultFontPixelWidth : ScreenTools.defaultFontPixelWidth
-    GridLayout {
-        id:                     vehicleStatusGrid
-        columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
+
+        readonly property bool  _showGps: CustomQuickInterface.showAttitudeWidget
+
+
+        GridLayout {
+            id:                     vehicleStatusGrid
+            columnSpacing:          ScreenTools.defaultFontPixelWidth  * 1.5
             rowSpacing:             ScreenTools.defaultFontPixelHeight * 0.5
             columns:                7
             anchors.centerIn:       parent
+
             //-- Latitude
             QGCLabel {
                 height:                 _indicatorsHeight
                 width:                  height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
                 color:                  qgcPal.text
-                text:                   "lat:"
+                text:                   "Lat:"
+                visible:                vehicleIndicator._showGps
             }
             QGCLabel {
                 id:                     firstLabel
@@ -284,6 +289,7 @@ Item {
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    Text.AlignLeft
+                visible:                vehicleIndicator._showGps
             }
             //-- Longitude
             QGCLabel {
@@ -291,7 +297,8 @@ Item {
                 width:                  height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
                 color:                  qgcPal.text
-                text:                   "lon:"
+                text:                   "Lon:"
+                visible:                vehicleIndicator._showGps
             }
             QGCLabel {
                 text:                   activeVehicle ? activeVehicle.gps.lon.value.toFixed(activeVehicle.gps.lon.decimalPlaces) : "-"
@@ -300,6 +307,7 @@ Item {
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    firstLabel.horizontalAlignment
+                visible:                vehicleIndicator._showGps
             }
             //-- HDOP
             QGCLabel {
@@ -308,6 +316,7 @@ Item {
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
                 color:                  qgcPal.text
                 text:                   "HDOP:"
+                visible:                vehicleIndicator._showGps
             }
             QGCLabel {
                 text:                   activeVehicle ? activeVehicle.gps.hdop.value.toFixed(activeVehicle.gps.hdop.decimalPlaces) : "-"
@@ -316,6 +325,7 @@ Item {
                 Layout.fillWidth:       true
                 Layout.minimumWidth:    indicatorValueWidth
                 horizontalAlignment:    firstLabel.horizontalAlignment
+                visible:                vehicleIndicator._showGps
             }
 
             //-- Compass
@@ -508,7 +518,7 @@ Item {
         }
         MouseArea {
             anchors.fill:       parent
-            onDoubleClicked:    _showAttitude = !_showAttitude
+            onDoubleClicked:    CustomQuickInterface.showAttitudeWidget = !CustomQuickInterface.showAttitudeWidget
         }
     }
     //-------------------------------------------------------------------------
@@ -517,7 +527,7 @@ Item {
         color:                  qgcPal.window
         width:                  attitudeIndicator.width * 0.5
         height:                 vehicleIndicator.height
-        visible:                _showAttitude
+        visible:                CustomQuickInterface.showAttitudeWidget
         anchors.top:            vehicleIndicator.top
         anchors.left:           vehicleIndicator.right
     }
@@ -531,7 +541,7 @@ Item {
         width:                  height
         radius:                 height * 0.5
         color:                  qgcPal.windowShade
-        visible:                _showAttitude
+        visible:                CustomQuickInterface.showAttitudeWidget
             CustomAttitudeWidget {
             size:               parent.height * 0.95
             vehicle:            activeVehicle

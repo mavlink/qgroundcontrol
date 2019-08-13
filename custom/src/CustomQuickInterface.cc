@@ -25,6 +25,7 @@
 
 static const char* kGroupName       = "CustomSettings";
 static const char* kShowGimbalCtl   = "ShowGimbalCtl";
+static const char* kShowAttitudeWidget = "ShowAttitudeWidget";
 
 //-----------------------------------------------------------------------------
 CustomQuickInterface::CustomQuickInterface(QObject* parent)
@@ -46,6 +47,7 @@ CustomQuickInterface::init()
     QSettings settings;
     settings.beginGroup(kGroupName);
     _showGimbalControl = settings.value(kShowGimbalCtl, false).toBool();
+    _showAttitudeWidget = settings.value(kShowAttitudeWidget, false).toBool();
     QGCToolbox* toolbox = qgcApp()->toolbox();
     connect(toolbox->multiVehicleManager(), &MultiVehicleManager::activeVehicleChanged, this, &CustomQuickInterface::_activeVehicleChanged);
 }
@@ -149,4 +151,17 @@ CustomQuickInterface::resetBatteries()
 {
     _batteries.clear();
     emit batteriesChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setShowAttitudeWidget(bool set)
+{
+    if(_showAttitudeWidget != set) {
+        _showAttitudeWidget = set;
+        QSettings settings;
+        settings.beginGroup(kGroupName);
+        settings.setValue(kShowAttitudeWidget,set);
+        emit showAttitudeWidgetChanged();
+    }
 }
