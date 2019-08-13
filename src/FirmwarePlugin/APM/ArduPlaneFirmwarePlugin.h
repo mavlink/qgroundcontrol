@@ -42,7 +42,6 @@ public:
         QLOITER       = 19,
         QLAND         = 20,
         QRTL          = 21,
-        modeCount
     };
 
     APMPlaneMode(uint32_t mode, bool settable);
