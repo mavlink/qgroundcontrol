@@ -14,6 +14,7 @@ import QtQuick.Controls.Styles  1.4
 import QtQuick.Layouts          1.2
 import QtGraphicalEffects       1.0
 
+import QGroundControl               1.0
 import QGroundControl.FactSystem    1.0
 import QGroundControl.FactControls  1.0
 import QGroundControl.Controls      1.0
@@ -197,7 +198,7 @@ SetupPage {
                             }
 
                             QGCLabel {
-                                text:               qsTr("Minimum Distance:")
+                                text:               qsTr("Minimum Distance: (") + QGroundControl.appSettingsDistanceUnitsString + ")"
                                 Layout.fillWidth:   true
                                 Layout.alignment:   Qt.AlignVCenter
                             }
@@ -208,20 +209,24 @@ SetupPage {
                                 Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 2
                                 Layout.fillWidth:   true
                                 Layout.fillHeight:  true
-                                maximumValue:       15
-                                minimumValue:       0
+                                maximumValue:       QGroundControl.metersToAppSettingsDistanceUnits(15)
+                                minimumValue:       QGroundControl.metersToAppSettingsDistanceUnits(1)
                                 stepSize:           1
                                 displayValue:       true
                                 updateValueWhileDragging:   false
                                 Layout.alignment:   Qt.AlignVCenter
-                                //-- Looking at raw value on purpose. I don't know how to handle the
-                                //   slider range when not using metric system.
-                                value:              (_collisionPrevention && _collisionPrevention.rawValue > 0) ? _collisionPrevention.rawValue : 0
+                                value: {
+                                    if (_collisionPrevention && _collisionPrevention.rawValue > 0) {
+                                        return QGroundControl.metersToAppSettingsDistanceUnits(_collisionPrevention.rawValue)
+                                    } else {
+                                        return 1;
+                                    }
+                                }
                                 onValueChanged: {
                                     if(_collisionPrevention) {
                                         //-- Negative means disabled
                                         if(_collisionPrevention.rawValue >= 0) {
-                                            _collisionPrevention.rawValue = value
+                                            _collisionPrevention.rawValue = QGroundControl.appSettingsDistanceUnitsToMeters(value)
                                         }
                                     }
                                 }
