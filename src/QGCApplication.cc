@@ -478,6 +478,12 @@ bool QGCApplication::_initForNormalAppBoot(void)
 
 #ifdef __mobile__
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
+
+    // Safe to show popup error messages now that main window is created
+    UASMessageHandler* msgHandler = qgcApp()->toolbox()->uasMessageHandler();
+    if (msgHandler) {
+        msgHandler->showErrorsInToolbar();
+    }
 #else
     // Start the user interface
     MainWindow* mainWindow = MainWindow::_create();
