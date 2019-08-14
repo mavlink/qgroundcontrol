@@ -67,11 +67,38 @@ Vagrant.configure(2) do |config|
      su - vagrant -c 'rm -rf %{shadow_build_dir}'
 
      su - vagrant -c 'mkdir -p %{shadow_build_dir}'
-     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}"
-     su - vagrant -c "cd %{shadow_build_dir}; LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir} PATH=%{qt_deps_bin_unpack_dir}:\$PATH make -j${JOBS}"
 
-     #su - vagrant -c 'mkdir -p %{shadow_build_dir}/release/package'
-     #su - vagrant -c 'cd %{project_root_dir}; ./deploy/create_linux_appimage.sh %{project_root_dir} %{shadow_build_dir}/release %{shadow_build_dir}/release/package'
+     # write out a pair of scripts to make rebuilding on the VM easy:
+     su - vagrant -c "cat <<QMAKE >do-qmake.sh
+#!/bin/bash
+
+set -e
+set -x
+
+cd %{shadow_build_dir}
+export LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir}
+export PATH=%{qt_deps_bin_unpack_dir}:\$PATH
+qmake -r %{pro} CONFIG+=\${CONFIG} CONFIG+=WarningsAsErrorsOn -spec %{spec}
+QMAKE
+"
+
+     su - vagrant -c "cat <<MAKE >do-make.sh
+#!/bin/bash
+
+set -e
+set -x
+
+cd %{shadow_build_dir}
+export LD_LIBRARY_PATH=%{qt_deps_lib_unpack_dir}
+export PATH=%{qt_deps_bin_unpack_dir}:\$PATH
+make -j${JOBS}
+MAKE
+"
+    su - vagrant -c "chmod +x do-qmake.sh do-make.sh"
+
+    # now run the scripts:
+    su - vagrant -c ./do-qmake.sh
+    su - vagrant -c ./do-make.sh
 
    SHELL
 
