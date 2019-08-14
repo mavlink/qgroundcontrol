@@ -33,7 +33,6 @@ public:
         GUIDED          = 15,
         INITIALIZING    = 16,
     };
-    static const int modeCount = 17;
 
     APMRoverMode(uint32_t mode, bool settable);
 };
