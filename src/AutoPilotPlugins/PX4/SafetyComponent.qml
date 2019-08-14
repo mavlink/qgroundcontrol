@@ -170,12 +170,11 @@ SetupPage {
                                 enabled:            _collisionPrevention
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.fillWidth:   true
-                                Component.onCompleted: {
-                                    currentIndex = _collisionPrevention ? (_collisionPrevention.value > 0 ? 1 : 0) : 0
-                                }
+                                currentIndex:       _collisionPrevention ? (_collisionPrevention.rawValue > 0 ? 1 : 0) : 0
                                 onActivated: {
                                     if(_collisionPrevention) {
                                         _collisionPrevention.value = index > 0 ? 5 : -1
+                                        console.log('Collision prevention enabled: ' + _collisionPrevention.value)
                                     }
                                 }
                             }
@@ -186,14 +185,10 @@ SetupPage {
                             }
                             QGCComboBox {
                                 model:              [qsTr("Disabled"), qsTr("Enabled")]
-                                enabled:            _objectAvoidance
+                                enabled:            _objectAvoidance && _collisionPrevention.rawValue > 0
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.fillWidth:   true
-                                Component.onCompleted: {
-                                    if(_objectAvoidance) {
-                                        currentIndex = _objectAvoidance.value === 0 ? 0 : 1
-                                    }
-                                }
+                                currentIndex:       _objectAvoidance ? (_objectAvoidance.value === 0 ? 0 : 1) : 0
                                 onActivated: {
                                     if(_objectAvoidance) {
                                         _objectAvoidance.value = index > 0 ? 1 : 0
@@ -208,25 +203,26 @@ SetupPage {
                             }
                             QGCSlider {
                                 width:              _editFieldWidth
-                                enabled:            _collisionPrevention
+                                enabled:            _collisionPrevention && _collisionPrevention.rawValue > 0
                                 Layout.minimumWidth:_editFieldWidth
                                 Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight * 2
                                 Layout.fillWidth:   true
                                 Layout.fillHeight:  true
-                                maximumValue:       1
-                                minimumValue:       15
+                                maximumValue:       15
+                                minimumValue:       0
                                 stepSize:           1
                                 displayValue:       true
                                 updateValueWhileDragging:   false
                                 Layout.alignment:   Qt.AlignVCenter
-                                Component.onCompleted: {
-                                    if(_collisionPrevention && _collisionPrevention.value > 0) {
-                                        value = _collisionPrevention.value
-                                    }
-                                }
+                                //-- Looking at raw value on purpose. I don't know how to handle the
+                                //   slider range when not using metric system.
+                                value:              (_collisionPrevention && _collisionPrevention.rawValue > 0) ? _collisionPrevention.rawValue : 0
                                 onValueChanged: {
                                     if(_collisionPrevention) {
-                                        _collisionPrevention.value = value
+                                        //-- Negative means disabled
+                                        if(_collisionPrevention.rawValue >= 0) {
+                                            _collisionPrevention.rawValue = value
+                                        }
                                     }
                                 }
                             }

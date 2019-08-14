@@ -605,12 +605,11 @@ Item {
     }
     //-------------------------------------------------------------------------
     //-- Object Avoidance
-    Rectangle {
+    Item {
         visible:                activeVehicle && activeVehicle.objectAvoidance.available && activeVehicle.objectAvoidance.enabled
         anchors.centerIn:       parent
         width:                  parent.width  * 0.5
         height:                 parent.height * 0.5
-        color:                  Qt.rgba(0,0,0,0.25)
         Repeater {
             model:              activeVehicle && activeVehicle.objectAvoidance.gridSize > 0 ? activeVehicle.objectAvoidance.gridSize : []
             Rectangle {
