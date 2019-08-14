@@ -66,7 +66,7 @@ Rectangle {
                 anchors.left:   parent.left
                 anchors.right:  parent.right
                 factList:       [ missionItem.loiterAltitude, missionItem.loiterRadius ]
-                factLabels:     [ qsTr("Altitude"), qsTr("Radius") ]
+                factLabels:     [ qsTr("Approach Alt"), qsTr("Radius") ]
             }
 
             Item { width: 1; height: _spacer }
