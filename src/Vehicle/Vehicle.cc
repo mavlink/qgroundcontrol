@@ -3046,7 +3046,7 @@ void Vehicle::guidedModeGotoLocation(const QGeoCoordinate& gotoCoord)
     if (!coordinate().isValid()) {
         return;
     }
-    double maxDistance = 1000.0;
+    double maxDistance = 10000.0;
     if (coordinate().distanceTo(gotoCoord) > maxDistance) {
         qgcApp()->showMessage(QString("New location is too far. Must be less than %1 %2").arg(qRound(FactMetaData::metersToAppSettingsDistanceUnits(maxDistance).toDouble())).arg(FactMetaData::appSettingsDistanceUnitsString()));
         return;
