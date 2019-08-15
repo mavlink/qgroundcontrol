@@ -519,6 +519,7 @@ Item {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
+            anchors.top:        singleMultiSelector.visible? singleMultiSelector.bottom:undefined
             useLightColors:     isBackgroundDark
             missionController:  _missionController
             visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
