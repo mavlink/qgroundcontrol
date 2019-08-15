@@ -331,6 +331,7 @@ Item {
             //-- Compass
             Item {
                 Layout.rowSpan:         3
+                Layout.column:          6
                 Layout.minimumWidth:    mainIsMap ? parent.height * 1.25 : 0
                 Layout.fillHeight:      true
                 Layout.fillWidth:       true
