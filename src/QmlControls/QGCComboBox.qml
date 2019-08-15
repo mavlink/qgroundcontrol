@@ -37,7 +37,7 @@ ComboBox {
             width:                      control.width
 
             contentItem: Text {
-                text:                   textRole ? modelData[textRole] : modelData
+                text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
                 color:                  control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
                 verticalAlignment:      Text.AlignVCenter
             }
