@@ -27,7 +27,7 @@ QString SafetyComponent::name(void) const
 
 QString SafetyComponent::description(void) const
 {
-    return tr("Safety Setup is used to setup triggers for Return to Land as well as the settings for Return to Land itself.");
+    return QString();
 }
 
 QString SafetyComponent::iconResource(void) const
