@@ -7,6 +7,7 @@ Note: This file only contains high level features or important fixes.
 ### 3.6.0 - Daily Build
 
 * Log Replay: Support changing speed of playback
+* Basic object avoidance added to vehicles.
 * Added ability to set a joystick button to be single action or repeated action while the button is held down.
 * Rework joysticks. Fixed several issues and updated setup UI.
 * Adding support for UDP RTP h.265 video streams

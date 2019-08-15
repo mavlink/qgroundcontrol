@@ -41,6 +41,8 @@
 #include "VideoManager.h"
 #include "VideoSettings.h"
 #include "PositionManager.h"
+#include "VehicleObjectAvoidance.h"
+
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
 #endif
@@ -156,7 +158,6 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _geoFenceManagerInitialRequestSent(false)
     , _rallyPointManager(nullptr)
     , _rallyPointManagerInitialRequestSent(false)
-    , _parameterManager(nullptr)
 #if defined(QGC_AIRMAP_ENABLED)
     , _airspaceVehicleManager(nullptr)
 #endif
@@ -359,7 +360,6 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _geoFenceManagerInitialRequestSent(false)
     , _rallyPointManager(nullptr)
     , _rallyPointManagerInitialRequestSent(false)
-    , _parameterManager(nullptr)
 #if defined(QGC_AIRMAP_ENABLED)
     , _airspaceVehicleManager(nullptr)
 #endif
@@ -450,6 +450,8 @@ void Vehicle::_commonInit(void)
 
     _parameterManager = new ParameterManager(this);
     connect(_parameterManager, &ParameterManager::parametersReadyChanged, this, &Vehicle::_parametersReady);
+
+    _objectAvoidance = new VehicleObjectAvoidance(this, this);
 
     // GeoFenceManager needs to access ParameterManager so make sure to create after
     _geoFenceManager = new GeoFenceManager(this);
@@ -811,6 +813,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
         break;
     case MAVLINK_MSG_ID_MOUNT_ORIENTATION:
         _handleGimbalOrientation(message);
+        break;
+    case MAVLINK_MSG_ID_OBSTACLE_DISTANCE:
+        _handleObstacleDistance(message);
         break;
 
     case MAVLINK_MSG_ID_SERIAL_CONTROL:
@@ -4055,6 +4060,13 @@ void Vehicle::_handleGimbalOrientation(const mavlink_message_t& message)
         _haveGimbalData = true;
         emit gimbalDataChanged();
     }
+}
+
+void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
+{
+    mavlink_obstacle_distance_t o;
+    mavlink_msg_obstacle_distance_decode(&message, &o);
+    _objectAvoidance->update(&o);
 }
 
 //-----------------------------------------------------------------------------

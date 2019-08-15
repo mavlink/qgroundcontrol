@@ -855,6 +855,7 @@ HEADERS+= \
     src/Vehicle/MultiVehicleManager.h \
     src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/Vehicle.h \
+    src/Vehicle/VehicleObjectAvoidance.h \
     src/VehicleSetup/VehicleComponent.h \
 
 !MobileBuild { !NoSerialBuild {
@@ -881,6 +882,7 @@ SOURCES += \
     src/Vehicle/MultiVehicleManager.cc \
     src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/Vehicle.cc \
+    src/Vehicle/VehicleObjectAvoidance.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
 !MobileBuild { !NoSerialBuild {
