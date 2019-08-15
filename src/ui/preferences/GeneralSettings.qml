@@ -479,16 +479,38 @@ Rectangle {
                             GridLayout {
                                 columns: 2
 
-                                QGCLabel { text: qsTr("Guided Minimum Altitude") }
+                                property Fact _guidedMinimumAltitude:   QGroundControl.settingsManager.flyViewSettings.guidedMinimumAltitude
+                                property Fact _guidedMaximumAltitude:   QGroundControl.settingsManager.flyViewSettings.guidedMaximumAltitude
+                                property Fact _maxGoToLocationDistance: QGroundControl.settingsManager.flyViewSettings.maxGoToLocationDistance
+
+                                QGCLabel {
+                                    text:       qsTr("Guided Minimum Altitude")
+                                    visible:    parent._guidedMinimumAltitude.visible
+                                }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
-                                    fact:                   QGroundControl.settingsManager.flyViewSettings.guidedMinimumAltitude
+                                    visible:                parent._guidedMinimumAltitude.visible
+                                    fact:                   parent._guidedMinimumAltitude
                                 }
 
-                                QGCLabel { text: qsTr("Guided Maximum Altitude") }
+                                QGCLabel {
+                                    text:       qsTr("Guided Maximum Altitude")
+                                    visible:    parent._guidedMaximumAltitude.visible
+                                }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
-                                    fact:                   QGroundControl.settingsManager.flyViewSettings.guidedMaximumAltitude
+                                    visible:                parent._guidedMaximumAltitude.visible
+                                    fact:                   parent._guidedMaximumAltitude
+                                }
+
+                                QGCLabel {
+                                    text:       qsTr("Go To Location Max Distance")
+                                    visible:    parent._maxGoToLocationDistance.visible
+                                }
+                                FactTextField {
+                                    Layout.preferredWidth:  _valueFieldWidth
+                                    visible:                parent._maxGoToLocationDistance.visible
+                                    fact:                   parent._maxGoToLocationDistance
                                 }
                             }
                         }
