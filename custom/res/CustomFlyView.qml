@@ -633,7 +633,7 @@ Item {
                     var oldYaw = yaw;
                     var pitch = stick._currentPitch
                     var oldPitch = pitch;
-                    var pitch_stick = stick.yUnitVal
+                    var pitch_stick = -stick.yUnitVal
                     if(_camera && _camera.vendor === "NextVision") {
                         var time_current_seconds = ((new Date()).getTime())/1000.0
                         if(stick.time_last_seconds === 0.0)
