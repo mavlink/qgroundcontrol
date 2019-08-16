@@ -67,10 +67,10 @@ QString LogReplayLinkConfiguration::logFilenameShort(void)
 }
 
 LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
-    : LinkInterface(config)
-    , _logReplayConfig(qobject_cast<LogReplayLinkConfiguration*>(config.data()))
-    , _connected(false)
-    , _replayAccelerationFactor(1.0f)
+    : LinkInterface     (config)
+    , _logReplayConfig  (qobject_cast<LogReplayLinkConfiguration*>(config.data()))
+    , _connected        (false)
+    , _playbackSpeed    (1)
 {
     if (!_logReplayConfig) {
         qWarning() << "Internal error";
@@ -80,10 +80,10 @@ LogReplayLink::LogReplayLink(SharedLinkConfigurationPointer& config)
     
     _readTickTimer.moveToThread(this);
     
-    QObject::connect(&_readTickTimer, &QTimer::timeout, this, &LogReplayLink::_readNextLogEntry);
-    QObject::connect(this, &LogReplayLink::_playOnThread, this, &LogReplayLink::_play);
-    QObject::connect(this, &LogReplayLink::_pauseOnThread, this, &LogReplayLink::_pause);
-    QObject::connect(this, &LogReplayLink::_setAccelerationFactorOnThread, this, &LogReplayLink::_setAccelerationFactor);
+    QObject::connect(&_readTickTimer, &QTimer::timeout,                 this, &LogReplayLink::_readNextLogEntry);
+    QObject::connect(this, &LogReplayLink::_playOnThread,               this, &LogReplayLink::_play);
+    QObject::connect(this, &LogReplayLink::_pauseOnThread,              this, &LogReplayLink::_pause);
+    QObject::connect(this, &LogReplayLink::_setPlaybackSpeedOnThread,   this, &LogReplayLink::_setPlaybackSpeed);
     
     moveToThread(this);
 }
@@ -269,7 +269,9 @@ bool LogReplayLink::_loadLogFile(void)
     QString logFilename = _logReplayConfig->logFilename();
     QFileInfo logFileInfo;
     int logDurationSecondsTotal;
-    
+    quint64 startTimeUSecs;
+    quint64 endTimeUSecs;
+
     if (_logFile.isOpen()) {
         errorMsg = tr("Attempt to load new log while log being played");
         goto Error;
@@ -283,52 +285,26 @@ bool LogReplayLink::_loadLogFile(void)
     logFileInfo.setFile(logFilename);
     _logFileSize = logFileInfo.size();
     
-    _logTimestamped = logFilename.endsWith(".tlog");
-    
-    if (_logTimestamped) {
-        quint64 startTimeUSecs = _parseTimestamp(_logFile.read(cbTimestamp));
-        quint64 endTimeUSecs = _findLastTimestamp();
+    startTimeUSecs = _parseTimestamp(_logFile.read(cbTimestamp));
+    endTimeUSecs = _findLastTimestamp();
 
-        if (endTimeUSecs <= startTimeUSecs) {
-            errorMsg = tr("The log file '%1' is corrupt or empty.").arg(logFilename);
-            goto Error;
-        }
-        
-        // Remember the start and end time so we can move around this _logFile with the slider.
-        _logEndTimeUSecs = endTimeUSecs;
-        _logStartTimeUSecs = startTimeUSecs;
-        _logDurationUSecs = endTimeUSecs - startTimeUSecs;
-        _logCurrentTimeUSecs = startTimeUSecs;
-
-        // Reset our log file so when we go to read it for the first time, we start at the beginning.
-        _logFile.reset();
-        
-        logDurationSecondsTotal = (_logDurationUSecs) / 1000000;
-    } else {
-        // Load in binary mode. In this mode, files should be have a filename postfix
-        // of the baud rate they were recorded at, like `test_run_115200.bin`. Then on
-        // playback, the datarate is equal to set to this value.
-        
-        
-        // Set baud rate if any present. Otherwise we default to 57600.
-        QStringList parts = logFileInfo.baseName().split("_");
-        _binaryBaudRate = _defaultBinaryBaudRate;
-        if (parts.count() > 1)
-        {
-            bool ok;
-            int rate = parts.last().toInt(&ok);
-            // 9600 baud to 100 MBit
-            if (ok && (rate > 9600 && rate < 100000000))
-            {
-                // Accept this as valid baudrate
-                _binaryBaudRate = rate;
-            }
-        }
-        
-        logDurationSecondsTotal = logFileInfo.size() / (_binaryBaudRate / 10);
+    if (endTimeUSecs <= startTimeUSecs) {
+        errorMsg = tr("The log file '%1' is corrupt or empty.").arg(logFilename);
+        goto Error;
     }
+
+    // Remember the start and end time so we can move around this _logFile with the slider.
+    _logEndTimeUSecs = endTimeUSecs;
+    _logStartTimeUSecs = startTimeUSecs;
+    _logDurationUSecs = endTimeUSecs - startTimeUSecs;
+    _logCurrentTimeUSecs = startTimeUSecs;
+
+    // Reset our log file so when we go to read it for the first time, we start at the beginning.
+    _logFile.reset();
+
+    logDurationSecondsTotal = (_logDurationUSecs) / 1000000;
     
-    emit logFileStats(_logTimestamped, logDurationSecondsTotal, _binaryBaudRate);
+    emit logFileStats(logDurationSecondsTotal);
     
     return true;
     
@@ -348,59 +324,40 @@ void LogReplayLink::_readNextLogEntry(void)
 {
     QByteArray bytes;
 
-    // If we have a file with timestamps, try and pace this out following the time differences
-    // between the timestamps and the current playback speed.
-    if (_logTimestamped) {
-        // Now parse MAVLink messages, grabbing their timestamps as we go. We stop once we
-        // have at least 3ms until the next one.
-        
-        // We track what the next execution time should be in milliseconds, which we use to set
-        // the next timer interrupt.
-        int timeToNextExecutionMSecs = 0;
-        
-        while (timeToNextExecutionMSecs < 3) {
-            // Read the next mavlink message from the log
-            qint64 nextTimeUSecs = _readNextMavlinkMessage(bytes);
-            emit bytesReceived(this, bytes);
-            emit playbackPercentCompleteChanged(((float)(_logCurrentTimeUSecs - _logStartTimeUSecs) / (float)_logDurationUSecs) * 100);
-            
-            if (_logFile.atEnd()) {
-                _finishPlayback();
-                return;
-            }
-            
-            _logCurrentTimeUSecs = nextTimeUSecs;
-            
-            // Calculate how long we should wait in real time until parsing this message.
-            // We pace ourselves relative to the start time of playback to fix any drift (initially set in play())
-            qint64 timeDiffMSecs = ((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000) / _replayAccelerationFactor;
-            quint64 desiredPacedTimeMSecs = _playbackStartTimeMSecs + timeDiffMSecs;
-            quint64 currentTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
-            timeToNextExecutionMSecs = desiredPacedTimeMSecs - currentTimeMSecs;
-        }
+    // Now parse MAVLink messages, grabbing their timestamps as we go. We stop once we
+    // have at least 3ms until the next one.
 
-        _signalCurrentLogTimeSecs();
+    // We track what the next execution time should be in milliseconds, which we use to set
+    // the next timer interrupt.
+    int timeToNextExecutionMSecs = 0;
 
-        // And schedule the next execution of this function.
-        _readTickTimer.start(timeToNextExecutionMSecs);
-    }
-    else
-    {
-        // Binary format - read at fixed rate
-        const int len = 100;
-        QByteArray chunk = _logFile.read(len);
-        
-        emit bytesReceived(this, chunk);
-        emit playbackPercentCompleteChanged(((float)_logFile.pos() / (float)_logFileSize) * 100);
-        
-        // Check if reached end of file before reading next timestamp
-        if (chunk.length() < len || _logFile.atEnd())
-        {
+    while (timeToNextExecutionMSecs < 3) {
+        // Read the next mavlink message from the log
+        qint64 nextTimeUSecs = _readNextMavlinkMessage(bytes);
+        emit bytesReceived(this, bytes);
+        emit playbackPercentCompleteChanged(((float)(_logCurrentTimeUSecs - _logStartTimeUSecs) / (float)_logDurationUSecs) * 100);
+
+        if (_logFile.atEnd()) {
             _finishPlayback();
             return;
         }
+
+        _logCurrentTimeUSecs = nextTimeUSecs;
+
+        // Calculate how long we should wait in real time until parsing this message.
+        // We pace ourselves relative to the start time of playback to fix any drift (initially set in play())
+
+        quint64 currentTimeMSecs =                  (quint64)QDateTime::currentMSecsSinceEpoch();
+        quint64 desiredPlayheadMovementTimeMSecs =  ((_logCurrentTimeUSecs - _playbackStartLogTimeUSecs) / 1000) / _playbackSpeed;
+        quint64 desiredCurrentTimeMSecs =           _playbackStartTimeMSecs + desiredPlayheadMovementTimeMSecs;
+
+        timeToNextExecutionMSecs = desiredCurrentTimeMSecs - currentTimeMSecs;
     }
-    
+
+    _signalCurrentLogTimeSecs();
+
+    // And schedule the next execution of this function.
+    _readTickTimer.start(timeToNextExecutionMSecs);
 }
 
 void LogReplayLink::_play(void)
@@ -415,22 +372,9 @@ void LogReplayLink::_play(void)
         _resetPlaybackToBeginning();
     }
     
-    // Always correct the current start time such that the next message will play immediately at playback.
-    // We do this by subtracting the current file playback offset  from now()
-    _playbackStartTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch() - ((_logCurrentTimeUSecs - _logStartTimeUSecs) / 1000);
-    
-    // Start timer
-    if (_logTimestamped) {
-        _readTickTimer.start(1);
-    } else {
-        // Read len bytes at a time
-        int len = 100;
-        // Calculate the number of times to read 100 bytes per second
-        // to guarantee the baud rate, then divide 1000 by the number of read
-        // operations to obtain the interval in milliseconds
-        int interval = 1000 / ((_binaryBaudRate / 10) / len);
-        _readTickTimer.start(interval / _replayAccelerationFactor);
-    }
+    _playbackStartTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
+    _playbackStartLogTimeUSecs = _logCurrentTimeUSecs;
+    _readTickTimer.start(1);
     
     emit playbackStarted();
 }
@@ -455,6 +399,7 @@ void LogReplayLink::_resetPlaybackToBeginning(void)
     
     // And since we haven't starting playback, clear the time of initial playback and the current timestamp.
     _playbackStartTimeMSecs = 0;
+    _playbackStartLogTimeUSecs = 0;
     _logCurrentTimeUSecs = _logStartTimeUSecs;
 }
 
@@ -462,7 +407,7 @@ void LogReplayLink::movePlayhead(qreal percentComplete)
 {
     if (isPlaying()) {
         _pauseOnThread();
-        QSignalSpy waitForPause(this, SIGNAL(playbackPaused));
+        QSignalSpy waitForPause(this, SIGNAL(playbackPaused()));
         waitForPause.wait();
         if (_readTickTimer.isActive()) {
             return;
@@ -478,90 +423,55 @@ void LogReplayLink::movePlayhead(qreal percentComplete)
     
     qreal percentCompleteMult = percentComplete / 100.0;
     
-    if (_logTimestamped) {
-        // But if we have a timestamped MAVLink log, then actually aim to hit that percentage in terms of
-        // time through the file.
-        qint64 newFilePos = (qint64)(percentCompleteMult * (qreal)_logFile.size());
-        
-        // Now seek to the appropriate position, failing gracefully if we can't.
-        if (!_logFile.seek(newFilePos)) {
-            _replayError(tr("Unable to seek to new position"));
-            return;
-        }
-        
-        // But we do align to the next MAVLink message for consistency.
-        mavlink_message_t dummy;
-        _logCurrentTimeUSecs = _seekToNextMavlinkMessage(&dummy);
-        
-        // Now calculate the current file location based on time.
-        qreal newRelativeTimeUSecs = (qreal)(_logCurrentTimeUSecs - _logStartTimeUSecs);
-        
-        // Calculate the effective baud rate of the file in bytes/s.
-        qreal baudRate = _logFile.size() / (qreal)_logDurationUSecs / 1e6;
-        
-        // And the desired time is:
-        qreal desiredTimeUSecs = percentCompleteMult * _logDurationUSecs;
-        
-        // And now jump the necessary number of bytes in the proper direction
-        qint64 offset = (newRelativeTimeUSecs - desiredTimeUSecs) * baudRate;
-        if (!_logFile.seek(_logFile.pos() + offset)) {
-            _replayError(tr("Unable to seek to new position"));
-            return;
-        }
-        
-        // And scan until we reach the start of a MAVLink message. We make sure to record this timestamp for
-        // smooth jumping around the file.
-        _logCurrentTimeUSecs = _seekToNextMavlinkMessage(&dummy);
-        _signalCurrentLogTimeSecs();
+    // But if we have a timestamped MAVLink log, then actually aim to hit that percentage in terms of
+    // time through the file.
+    qint64 newFilePos = (qint64)(percentCompleteMult * (qreal)_logFile.size());
 
-        // Now update the UI with our actual final position.
-        newRelativeTimeUSecs = (qreal)(_logCurrentTimeUSecs - _logStartTimeUSecs);
-        percentComplete = (newRelativeTimeUSecs / _logDurationUSecs) * 100;
-        emit playbackPercentCompleteChanged(percentComplete);
-    } else {
-        // If we're working with a non-timestamped file, we just jump to that percentage of the file,
-        // align to the next MAVLink message and roll with it. No reason to do anything more complicated.
-        qint64 newFilePos = (qint64)(percentCompleteMult * (qreal)_logFile.size());
-        
-        // Now seek to the appropriate position, failing gracefully if we can't.
-        if (!_logFile.seek(newFilePos)) {
-            _replayError(tr("Unable to seek to new position"));
-            return;
-        }
-        
-        // But we do align to the next MAVLink message for consistency.
-        mavlink_message_t dummy;
-        _seekToNextMavlinkMessage(&dummy);
+    // Now seek to the appropriate position, failing gracefully if we can't.
+    if (!_logFile.seek(newFilePos)) {
+        _replayError(tr("Unable to seek to new position"));
+        return;
     }
+
+    // But we do align to the next MAVLink message for consistency.
+    mavlink_message_t dummy;
+    _logCurrentTimeUSecs = _seekToNextMavlinkMessage(&dummy);
+
+    // Now calculate the current file location based on time.
+    qreal newRelativeTimeUSecs = (qreal)(_logCurrentTimeUSecs - _logStartTimeUSecs);
+
+    // Calculate the effective baud rate of the file in bytes/s.
+    qreal baudRate = _logFile.size() / (qreal)_logDurationUSecs / 1e6;
+
+    // And the desired time is:
+    qreal desiredTimeUSecs = percentCompleteMult * _logDurationUSecs;
+
+    // And now jump the necessary number of bytes in the proper direction
+    qint64 offset = (newRelativeTimeUSecs - desiredTimeUSecs) * baudRate;
+    if (!_logFile.seek(_logFile.pos() + offset)) {
+        _replayError(tr("Unable to seek to new position"));
+        return;
+    }
+
+    // And scan until we reach the start of a MAVLink message. We make sure to record this timestamp for
+    // smooth jumping around the file.
+    _logCurrentTimeUSecs = _seekToNextMavlinkMessage(&dummy);
+    _signalCurrentLogTimeSecs();
+
+    // Now update the UI with our actual final position.
+    newRelativeTimeUSecs = (qreal)(_logCurrentTimeUSecs - _logStartTimeUSecs);
+    percentComplete = (newRelativeTimeUSecs / _logDurationUSecs) * 100;
+    emit playbackPercentCompleteChanged(percentComplete);
 }
 
-void LogReplayLink::_setAccelerationFactor(int factor)
+void LogReplayLink::_setPlaybackSpeed(qreal playbackSpeed)
 {
-    // factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
+    _playbackSpeed = playbackSpeed;
     
-    if (factor < 0) {
-        _replayAccelerationFactor = 0.01f;
-        factor -= -100;
-        if (factor > 0) {
-            _replayAccelerationFactor *= (float)factor;
-        }
-    } else if (factor > 0) {
-        _replayAccelerationFactor = 1.0f * (float)factor;
-    } else {
-        _replayAccelerationFactor = 1.0f;
-    }
-    
-    // Update timer interval
-    if (!_logTimestamped) {
-        // Read len bytes at a time
-        int len = 100;
-        // Calculate the number of times to read 100 bytes per second
-        // to guarantee the baud rate, then divide 1000 by the number of read
-        // operations to obtain the interval in milliseconds
-        int interval = 1000 / ((_binaryBaudRate / 10) / len);
-        _readTickTimer.stop();
-        _readTickTimer.start(interval / _replayAccelerationFactor);
-    }
+    // Let _readNextLogEntry update to correct speed
+    _playbackStartTimeMSecs = (quint64)QDateTime::currentMSecsSinceEpoch();
+    _playbackStartLogTimeUSecs = _logCurrentTimeUSecs;
+    _readTickTimer.start(1);
 }
 
 /// @brief Called when playback is complete
@@ -582,14 +492,15 @@ LogReplayLinkController::LogReplayLinkController(void)
     , _isPlaying        (false)
     , _percentComplete  (0)
     , _playheadSecs     (0)
+    , _playbackSpeed    (1)
 {
-
 }
 
 void LogReplayLinkController::setLink(LogReplayLink* link)
 {
     if (_link) {
         disconnect(_link);
+        disconnect(this, &LogReplayLinkController::playbackSpeedChanged, _link, &LogReplayLink::setPlaybackSpeed);
         _isPlaying = false;
         _percentComplete = 0;
         _playheadTime.clear();
@@ -605,12 +516,16 @@ void LogReplayLinkController::setLink(LogReplayLink* link)
 
     if (link) {
         _link = link;
+
         connect(_link, &LogReplayLink::logFileStats,                      this, &LogReplayLinkController::_logFileStats);
         connect(_link, &LogReplayLink::playbackStarted,                   this, &LogReplayLinkController::_playbackStarted);
         connect(_link, &LogReplayLink::playbackPaused,                    this, &LogReplayLinkController::_playbackPaused);
         connect(_link, &LogReplayLink::playbackPercentCompleteChanged,    this, &LogReplayLinkController::_playbackPercentCompleteChanged);
         connect(_link, &LogReplayLink::currentLogTimeSecs,                this, &LogReplayLinkController::_currentLogTimeSecs);
         connect(_link, &LogReplayLink::disconnected,                      this, &LogReplayLinkController::_linkDisconnected);
+
+        connect(this, &LogReplayLinkController::playbackSpeedChanged, _link, &LogReplayLink::setPlaybackSpeed);
+
         emit linkChanged(_link);
     }
 }
@@ -629,11 +544,8 @@ void LogReplayLinkController::setPercentComplete(qreal percentComplete)
     _link->movePlayhead(percentComplete);
 }
 
-void LogReplayLinkController::_logFileStats(bool logTimestamped, int logDurationSecs, int binaryBaudRate)
+void LogReplayLinkController::_logFileStats(int logDurationSecs)
 {
-    Q_UNUSED(logTimestamped);
-    Q_UNUSED(binaryBaudRate);
-
     _totalTime = _secondsToHMS(logDurationSecs);
     emit totalTimeChanged(_totalTime);
 }
@@ -684,5 +596,9 @@ QString LogReplayLinkController::_secondsToHMS(int seconds)
     secondsPart -= 60 * minutesPart;
     minutesPart -= 60 * hoursPart;
 
-    return tr("%1h:%2m:%3s").arg(hoursPart, 2).arg(minutesPart, 2).arg(secondsPart, 2);
+    if (hoursPart == 0) {
+        return tr("%2m:%3s").arg(minutesPart, 2, 10, QLatin1Char('0')).arg(secondsPart, 2, 10, QLatin1Char('0'));
+    } else {
+        return tr("%1h:%2m:%3s").arg(hoursPart, 2, 10, QLatin1Char('0')).arg(minutesPart, 2, 10, QLatin1Char('0')).arg(secondsPart, 2, 10, QLatin1Char('0'));
+    }
 }
