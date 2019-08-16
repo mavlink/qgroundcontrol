@@ -1,3 +1,5 @@
+add_subdirectory(preferences)
+add_subdirectory(toolbar)
 
 add_library(ui
 
@@ -17,6 +19,13 @@ add_library(ui
 	QGCMapRCToParamDialog.ui
 	QGCPluginHost.ui
 	QMap3D.ui
+)
+
+add_custom_target(uiQml
+SOURCES
+	AppSettings.qml
+	ExitWithErrorWindow.qml
+	MainRootWindow.qml
 )
 
 target_link_libraries(ui
