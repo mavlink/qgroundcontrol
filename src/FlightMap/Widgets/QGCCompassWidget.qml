@@ -40,16 +40,20 @@ Item {
     property real _headingToNextWP: vehicle ? vehicle.headingToNextWP.rawValue : 0
     property real _courseOverGround:activeVehicle ? activeVehicle.gps.courseOverGround.rawValue : 0
 
+    property bool usedByMultipleVehicleList:  false
+
     function isCOGAngleOK(){
-        if(_groundSpeed < 0.5 && _showAdditionalIndicatorsCompass){
+        if(_groundSpeed < 0.5){
             return false
         }
         else{
-            return vehicle
+            return vehicle && _showAdditionalIndicatorsCompass
         }
     }
 
     function isHeadingHomeOK(){
+        console.log('isHeadingHomeOK',vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToHome))
+        console.log('headingHome',_headingToHome)
         return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToHome)
     }
 
@@ -61,7 +65,7 @@ Item {
         return _lockNoseUpCompass
     }
 
-    readonly property bool _showAdditionalIndicatorsCompass:     QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass.value
+    readonly property bool _showAdditionalIndicatorsCompass:     QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass.value && !usedByMultipleVehicleList
     readonly property bool _lockNoseUpCompass:        QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass.value
 
     QGCPalette { id: qgcPal; colorGroupEnabled: enabled }
