@@ -37,15 +37,7 @@ ComboBox {
             width:                      control.width
 
             contentItem: Text {
-                text: {
-                    if(modelData) {
-                        return textRole ? modelData[textRole] : modelData
-                    }
-                    else {
-                        console.warn("ComboBox: no model data")
-                        return ""
-                    }
-                }
+                text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
                 color:                  control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
                 verticalAlignment:      Text.AlignVCenter
             }
