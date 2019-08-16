@@ -52,8 +52,6 @@ Item {
     }
 
     function isHeadingHomeOK(){
-        console.log('isHeadingHomeOK',vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToHome))
-        console.log('headingHome',_headingToHome)
         return vehicle && _showAdditionalIndicatorsCompass && !isNaN(_headingToHome)
     }
 
