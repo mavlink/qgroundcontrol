@@ -494,7 +494,6 @@ Item {
             anchors.topMargin:      ScreenTools.toolbarHeight + _margins
             anchors.rightMargin:    _margins
             anchors.right:          parent.right
-            anchors.top:            parent.top
             spacing:                ScreenTools.defaultFontPixelWidth
             z:                      _mapAndVideo.z + 4
             visible:                QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.enableMultiVehicleList
