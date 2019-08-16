@@ -38,6 +38,7 @@
         <file alias="CustomMultiVehicleSelector.qml">res/MainToolbar/CustomMultiVehicleSelector.qml</file>
         <file alias="CustomRCRSSIIndicator.qml">res/MainToolbar/CustomRCRSSIIndicator.qml</file>
         <file alias="PreFlightCheckList.qml">res/PreFlightCheckList.qml</file>
+        <file alias="BarcodeReader.qml">res/BarcodeReader.qml</file>
     </qresource>
     <qresource prefix="custom/img">
         <file alias="altitude.svg">res/Images/altitude.svg</file>

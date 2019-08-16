@@ -229,6 +229,7 @@ Your vehicle will also be restarted in order to complete the process.")
                                 anchors.left:       parent.left
                                 anchors.right:      parent.right
                                 model:              modelData.airframes
+                                textRole:           "text"
 
                                 Component.onCompleted: {
                                     if (airframeCheckBox.checked) {
