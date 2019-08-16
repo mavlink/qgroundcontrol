@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 19.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!-- Generator: Adobe Illustrator 23.0.4, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 59.671 87.808" style="enable-background:new 0 0 59.671 87.808;" xml:space="preserve">
+	 viewBox="0 0 72 72" style="enable-background:new 0 0 72 72;" xml:space="preserve">
 <style type="text/css">
-	.st0{fill:none;stroke:#FFFFFF;stroke-width:2;stroke-miterlimit:10;}
-	.st1{fill:none;stroke:#FFFFFF;stroke-width:2;stroke-miterlimit:10;stroke-dasharray:2.8321,2.8321;}
+	.st0{fill:none;stroke:#FFFFFF;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#FFFFFF;stroke-miterlimit:10;stroke-dasharray:3.0018,3.0018;}
 	.st2{fill:#FFFFFF;}
 	.st3{fill:#FFFFFF;stroke:#FFFFFF;}
 	.st4{fill:none;stroke:#FFFFFF;stroke-width:3;stroke-linecap:round;}
@@ -13,69 +13,38 @@
 </style>
 <g>
 	<g>
-		<line class="st0" x1="29.835" y1="77.217" x2="29.835" y2="75.717"/>
-		<line class="st1" x1="29.835" y1="72.885" x2="29.835" y2="40.315"/>
-		<line class="st0" x1="29.835" y1="38.899" x2="29.835" y2="37.399"/>
+		<line class="st0" x1="36" y1="65.5" x2="36" y2="63.7"/>
+		<line class="st1" x1="36" y1="60.2" x2="36" y2="40.5"/>
+		<line class="st0" x1="36" y1="38.7" x2="36" y2="36.9"/>
 		<g>
-			<polygon class="st2" points="29.835,87.808 35.934,72.884 29.835,76.425 23.739,72.884 			"/>
+			<polygon class="st2" points="36,71.8 39.6,62.9 36,65 32.4,62.9 			"/>
 		</g>
 	</g>
 </g>
-<sodipodi:namedview  bordercolor="#666666" borderopacity="1.0" id="base" inkscape:current-layer="layer1" inkscape:cx="282.69484" inkscape:cy="221.0125" inkscape:document-units="px" inkscape:guide-bbox="true" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:window-height="1017" inkscape:window-maximized="1" inkscape:window-width="1920" inkscape:window-x="-8" inkscape:window-y="-8" inkscape:zoom="2.8" pagecolor="#ffffff" showgrid="true" showguides="true">
-	<sodipodi:guide  id="guide2985" orientation="1,0" position="250,420"></sodipodi:guide>
-	<inkscape:grid  empspacing="10" enabled="true" id="grid2987" snapvisiblegridlinesonly="true" type="xygrid" visible="true">
-		</inkscape:grid>
-	<sodipodi:guide  id="guide2989" orientation="0,1" position="270,250"></sodipodi:guide>
-</sodipodi:namedview>
 <g>
-	<defs>
-		
-		
-			<inkscape:path-effect  copytype="repeated" effect="skeletal" fuse_tolerance="0" id="path-effect4881" is_visible="true" normal_offset="0" pattern="M 0,0 1,0" prop_scale="1" prop_units="false" scale_y_rel="false" spacing="0" tang_offset="0" vertical_pattern="false">
-			</inkscape:path-effect>
-		
-			<inkscape:path-effect  bendpath="m 110,180 140,0" effect="bend_path" id="path-effect3765" is_visible="true" prop_scale="1" scale_y_rel="false" vertical="false">
-			</inkscape:path-effect>
-	</defs>
 	<g>
 		<g>
-			
-				<path id="path2991_3_" sodipodi:cx="110" sodipodi:cy="110" sodipodi:rx="20" sodipodi:ry="20" sodipodi:type="arc" class="st3" d="
-				M18.734,7.918c-0.169,0.83-1.147,1.355-2.178,1.136c-1.031-0.218-1.679-1.087-1.455-1.906c0.225-0.819,1.193-1.288,2.168-1.081
-				C18.245,6.273,18.903,7.087,18.734,7.918z"/>
-			
-				<path id="path3761_3_" sodipodi:cx="110" sodipodi:cy="110" sodipodi:end="6.4866523" sodipodi:open="true" sodipodi:rx="50" sodipodi:ry="50" sodipodi:start="1.374765" sodipodi:type="arc" class="st4" d="
-				M17.012,12.188c-3.308-0.136-5.924-2.602-5.69-5.147c0.234-2.545,2.84-4.234,5.668-4.091s5.181,2.08,5.427,4.618
-				c0.059,0.614-0.023,1.229-0.256,1.807"/>
-			
-				<path id="path2991-6_3_" inkscape:transform-center-x="-140.5" inkscape:transform-center-y="-140.5" sodipodi:cx="110" sodipodi:cy="110" sodipodi:rx="20" sodipodi:ry="20" sodipodi:type="arc" class="st3" d="
-				M43.115,9.054c-1.031,0.218-2.009-0.306-2.178-1.136c-0.169-0.83,0.489-1.644,1.464-1.851c0.976-0.207,1.944,0.263,2.168,1.081
-				C44.794,7.967,44.146,8.835,43.115,9.054z"/>
-			
-				<path id="path3761-1_3_" inkscape:transform-center-x="-140.5" inkscape:transform-center-y="-140.50478" sodipodi:cx="110" sodipodi:cy="110" sodipodi:end="6.4866523" sodipodi:open="true" sodipodi:rx="50" sodipodi:ry="50" sodipodi:start="1.374765" sodipodi:type="arc" class="st4" d="
-				M37.498,9.343c-0.942-2.394,0.618-4.969,3.233-5.979c2.615-1.011,5.647-0.216,7.03,1.977c1.384,2.192,0.25,5.149-2.807,6.362
-				c-0.74,0.293-1.54,0.46-2.34,0.488"/>
-			
-				<path id="path2991-9_3_" sodipodi:cx="110" sodipodi:cy="110" sodipodi:rx="20" sodipodi:ry="20" sodipodi:type="arc" class="st3" d="
-				M45.245,29.041c-0.169-0.83,0.806-1.701,2.171-1.99s2.647,0.103,2.872,0.921s-0.737,1.765-2.158,2.066
-				C46.71,30.34,45.415,29.872,45.245,29.041z"/>
-			
-				<path id="path3761-2_3_" sodipodi:cx="110" sodipodi:cy="110" sodipodi:end="6.4866523" sodipodi:open="true" sodipodi:rx="50" sodipodi:ry="50" sodipodi:start="1.374765" sodipodi:type="arc" class="st4" d="
-				M45.334,24.432c3.764-1.233,7.892-0.762,9.499,1.362c1.607,2.124-0.252,5.327-4.451,6.802c-4.199,1.475-8.784,0.445-9.957-1.921
-				c-0.284-0.572-0.359-1.188-0.237-1.809"/>
-			
-				<path id="path2991-6-9_3_" inkscape:transform-center-x="140.5" inkscape:transform-center-y="140.50002" sodipodi:cx="110" sodipodi:cy="110" sodipodi:rx="20" sodipodi:ry="20" sodipodi:type="arc" class="st3" d="
-				M12.254,27.051c1.365,0.289,2.341,1.159,2.171,1.99c-0.169,0.83-1.465,1.298-2.885,0.997c-1.42-0.301-2.382-1.247-2.158-2.066
-				C9.608,27.154,10.889,26.762,12.254,27.051z"/>
-			
-				<path id="path3761-1-5_3_" inkscape:transform-center-x="140.5" inkscape:transform-center-y="140.50476" sodipodi:cx="110" sodipodi:cy="110" sodipodi:end="6.4866523" sodipodi:open="true" sodipodi:rx="50" sodipodi:ry="50" sodipodi:start="1.374765" sodipodi:type="arc" class="st4" d="
-				M19.49,28.9c0.476,2.566-2.624,4.715-7.081,4.356c-4.457-0.359-8.169-3.149-8.159-5.762c0.01-2.613,3.343-4.056,7.313-3.651
-				c0.96,0.098,1.916,0.303,2.825,0.604"/>
+			<path id="path2991_3_" class="st3" d="M24.094,8.095c-0.183,0.891-1.233,1.453-2.338,1.218c-1.106-0.236-1.8-1.169-1.557-2.048
+				c0.243-0.879,1.282-1.381,2.328-1.159C23.572,6.33,24.277,7.204,24.094,8.095z"/>
+			<path id="path3761_3_" class="st4" d="M22.241,12.679c-3.549-0.149-6.353-2.801-6.097-5.533C16.4,4.414,19.2,2.605,22.231,2.761
+				s5.552,2.237,5.813,4.962c0.063,0.659-0.026,1.319-0.277,1.939"/>
+			<path id="path2991-6_3_" class="st3" d="M50.244,9.313c-1.106,0.236-2.156-0.326-2.338-1.218
+				c-0.183-0.891,0.522-1.766,1.568-1.989c1.046-0.223,2.085,0.28,2.328,1.159C52.044,8.144,51.35,9.078,50.244,9.313z"/>
+			<path id="path3761-1_3_" class="st4" d="M44.219,9.628c-1.012-2.57,0.658-5.335,3.46-6.422c2.801-1.087,6.054-0.237,7.543,2.115
+				c1.489,2.352,0.28,5.528-2.999,6.834c-0.793,0.316-1.652,0.496-2.51,0.526"/>
+			<path id="path2991-9_3_" class="st3" d="M52.556,30.77c-0.183-0.891,0.864-1.827,2.331-2.139
+				c1.466-0.312,2.844,0.107,3.086,0.985c0.243,0.879-0.79,1.896-2.316,2.221S52.739,31.662,52.556,30.77z"/>
+			<path id="path3761-2_3_" class="st4" d="M52.646,25.821c4.042-1.329,8.476-0.83,10.206,1.447c1.73,2.277-0.263,5.721-4.774,7.312
+				c-4.511,1.591-9.44,0.489-10.701-2.051c-0.305-0.614-0.387-1.275-0.256-1.942"/>
+			<path id="path2991-6-9_3_" class="st3" d="M17.113,28.631c1.466,0.312,2.513,1.248,2.331,2.139
+				c-0.183,0.891-1.575,1.392-3.101,1.067c-1.526-0.325-2.558-1.343-2.316-2.221C14.269,28.738,15.647,28.319,17.113,28.631z"/>
+			<path id="path3761-1-5_3_" class="st4" d="M24.885,30.624c0.51,2.756-2.823,5.061-7.612,4.67c-4.789-0.391-8.776-3.394-8.76-6.2
+				c0.015-2.806,3.598-4.348,7.862-3.907c1.032,0.107,2.058,0.327,3.034,0.653"/>
 		</g>
-		<path class="st5" d="M11.897,28.545C23.883,24.596,34.911,17.522,42.758,7.56"/>
-		<path class="st5" d="M47.777,28.545C35.791,24.596,24.763,17.522,16.915,7.56"/>
-		<path class="st6" d="M38.681,19.141c0.453,3.364-3.496,6.665-8.845,6.665s-9.299-3.302-8.845-6.665
-			c0.453-3.364,4.404-5.613,8.845-5.613C34.276,13.527,38.228,15.777,38.681,19.141z"/>
+		<path class="st5" d="M16.727,30.234c12.96-5.401,24.266-11.232,33.132-22.524"/>
+		<path class="st5" d="M55.276,30.234C42.316,24.833,31.01,19.002,22.143,7.71"/>
+		<path class="st6" d="M45.497,20.147c0.489,3.611-3.751,7.159-9.497,7.159s-9.986-3.548-9.497-7.159
+			c0.489-3.611,4.731-6.024,9.497-6.024S45.007,16.535,45.497,20.147z"/>
 	</g>
 </g>
 </svg>

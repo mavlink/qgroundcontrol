@@ -96,7 +96,6 @@ public:
         RESERVED_18       = 18,
         MANUAL            = 19
     };
-    static const int modeCount = 20;
 
     APMSubMode(uint32_t mode, bool settable);
 };

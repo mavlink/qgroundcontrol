@@ -37,6 +37,8 @@ class SettingsManager;
 class ADSBVehicle;
 class QGCCameraManager;
 class Joystick;
+class VehicleObjectAvoidance;
+
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
 #endif
@@ -484,7 +486,6 @@ private:
 #endif
 };
 
-
 class Vehicle : public FactGroup
 {
     Q_OBJECT
@@ -652,7 +653,8 @@ public:
     Q_PROPERTY(bool     takeoffVehicleSupported READ takeoffVehicleSupported                        CONSTANT)                   ///< Guided takeoff supported
     Q_PROPERTY(QString  gotoFlightMode          READ gotoFlightMode                                 CONSTANT)                   ///< Flight mode vehicle is in while performing goto
 
-    Q_PROPERTY(ParameterManager* parameterManager READ parameterManager CONSTANT)
+    Q_PROPERTY(ParameterManager*        parameterManager    READ parameterManager   CONSTANT)
+    Q_PROPERTY(VehicleObjectAvoidance*  objectAvoidance     READ objectAvoidance    CONSTANT)
 
     // FactGroup object model properties
 
@@ -989,8 +991,9 @@ public:
 
     void setConnectionLostEnabled(bool connectionLostEnabled);
 
-    ParameterManager* parameterManager(void) { return _parameterManager; }
-    ParameterManager* parameterManager(void) const { return _parameterManager; }
+    ParameterManager*       parameterManager() { return _parameterManager; }
+    ParameterManager*       parameterManager() const { return _parameterManager; }
+    VehicleObjectAvoidance* objectAvoidance()  { return _objectAvoidance; }
 
     static const int cMaxRcChannels = 18;
 
@@ -1295,6 +1298,7 @@ private:
     void _handleOrbitExecutionStatus(const mavlink_message_t& message);
     void _handleMessageInterval(const mavlink_message_t& message);
     void _handleGimbalOrientation(const mavlink_message_t& message);
+    void _handleObstacleDistance(const mavlink_message_t& message);
     // ArduPilot dialect messages
 #if !defined(NO_ARDUPILOT_DIALECT)
     void _handleCameraFeedback(const mavlink_message_t& message);
@@ -1425,7 +1429,8 @@ private:
     RallyPointManager*  _rallyPointManager;
     bool                _rallyPointManagerInitialRequestSent;
 
-    ParameterManager*   _parameterManager;
+    ParameterManager*       _parameterManager   = nullptr;
+    VehicleObjectAvoidance* _objectAvoidance    = nullptr;
 
 #if defined(QGC_AIRMAP_ENABLED)
     AirspaceVehicleManager* _airspaceVehicleManager;

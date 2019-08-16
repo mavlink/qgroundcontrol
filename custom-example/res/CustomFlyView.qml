@@ -665,6 +665,26 @@ Item {
         }
     }
     //-------------------------------------------------------------------------
+    //-- Object Avoidance
+    Item {
+        visible:                activeVehicle && activeVehicle.objectAvoidance.available && activeVehicle.objectAvoidance.enabled
+        anchors.centerIn:       parent
+        width:                  parent.width  * 0.5
+        height:                 parent.height * 0.5
+        Repeater {
+            model:              activeVehicle && activeVehicle.objectAvoidance.gridSize > 0 ? activeVehicle.objectAvoidance.gridSize : []
+            Rectangle {
+                width:          ScreenTools.defaultFontPixelWidth
+                height:         width
+                radius:         width * 0.5
+                color:          distance < 0.25 ? "red" : "orange"
+                x:              (parent.width  * activeVehicle.objectAvoidance.grid(modelData).x) + (parent.width  * 0.5)
+                y:              (parent.height * activeVehicle.objectAvoidance.grid(modelData).y) + (parent.height * 0.5)
+                property real distance: activeVehicle.objectAvoidance.distance(modelData)
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
     //-- Connection Lost While Armed
     Popup {
         id:                     connectionLostArmed
