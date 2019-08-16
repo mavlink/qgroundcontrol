@@ -714,9 +714,13 @@ Set -1 to disable the check</short_desc>
     </parameter>
     <parameter default="2.0" name="COM_DISARM_LAND" type="FLOAT">
       <short_desc>Time-out for auto disarm after landing</short_desc>
-      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. The vehicle will also auto-disarm right after arming if it has not even flown, however the time will always be 10 seconds such that the pilot has enough time to take off. A negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
-      <min>-1</min>
-      <max>20</max>
+      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A zero or negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
+      <unit>s</unit>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter default="10.0" name="COM_DISARM_PRFLT" type="FLOAT">
+      <short_desc>Time-out for auto disarm if too slow to takeoff</short_desc>
+      <long_desc>A non-zero, positive value specifies the time after arming, in seconds, within which the vehicle must take off (after which it will automatically disarm). A zero or negative value means that automatic disarming triggered by a pre-takeoff timeout is disabled.</long_desc>
       <unit>s</unit>
       <decimal>2</decimal>
     </parameter>

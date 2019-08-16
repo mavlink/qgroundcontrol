@@ -296,7 +296,7 @@ FlightMap {
         sourceItem: MissionItemIndexLabel {
             checked:    true
             index:      -1
-            label:      qsTr("Goto here", "Goto here waypoint")
+            label:      qsTr("Go here", "Go to location waypoint")
         }
 
         property bool inGotoFlightMode: activeVehicle ? activeVehicle.flightMode === activeVehicle.gotoFlightMode : false
