@@ -136,3 +136,44 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     return true;
 }
 
+void ArduCopterFirmwarePlugin::guidedModeGotoLocation(Vehicle* vehicle, const QGeoCoordinate& gotoCoord)
+{
+    if (qIsNaN(vehicle->altitudeRelative()->rawValue().toDouble())) {
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle position not known."));
+        return;
+    }
+
+    setGuidedMode(vehicle, true);
+
+    if (vehicle->capabilityBits() & MAV_PROTOCOL_CAPABILITY_COMMAND_INT) {
+
+        mavlink_message_t msg;
+        mavlink_set_position_target_global_int_t cmd;
+
+        memset(&cmd, 0, sizeof(cmd));
+
+        cmd.target_system    = static_cast<uint8_t>(vehicle->id());
+        cmd.target_component = static_cast<uint8_t>(vehicle->defaultComponentId());
+        cmd.coordinate_frame = MAV_FRAME_GLOBAL_RELATIVE_ALT;
+        cmd.type_mask = 0x0DF8; // Position Only
+        cmd.lat_int = static_cast<int>(gotoCoord.latitude()*1e7);
+        cmd.lon_int = static_cast<int>(gotoCoord.longitude()*1e7);
+        cmd.alt = vehicle->altitudeRelative()->rawValue().toFloat();
+
+        MAVLinkProtocol* mavlink = qgcApp()->toolbox()->mavlinkProtocol();
+
+        mavlink_msg_set_position_target_global_int_encode_chan(
+                static_cast<uint8_t>(mavlink->getSystemId()),
+                static_cast<uint8_t>(mavlink->getComponentId()),
+                vehicle->priorityLink()->mavlinkChannel(),
+                &msg,
+                &cmd);
+
+        vehicle->sendMessageOnLink(vehicle->priorityLink(), msg);
+    }
+    else{
+        qgcApp()->showMessage(QStringLiteral("Unable to go to location, vehicle cannot receive INT command."));
+        return;
+    }
+
+}

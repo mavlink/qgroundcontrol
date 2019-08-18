@@ -59,6 +59,7 @@ public:
 
     // Overrides from FirmwarePlugin
     void    guidedModeLand                      (Vehicle* vehicle) final;
+    void    guidedModeGotoLocation          (Vehicle* vehicle, const QGeoCoordinate& gotoCoord) override;
     const FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     int     remapParamNameHigestMinorVersionNumber(int majorVersionNumber) const final;
     bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
