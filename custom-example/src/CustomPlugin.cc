@@ -47,7 +47,7 @@ customQuickInterfaceSingletonFactory(QQmlEngine*, QJSEngine*)
 {
     qCDebug(CustomLog) << "Creating CustomQuickInterface instance";
     CustomQuickInterface* pIFace = new CustomQuickInterface();
-    CustomPlugin* pPlug = dynamic_cast<CustomPlugin*>(qgcApp()->toolbox()->corePlugin());
+    auto* pPlug = qobject_cast<CustomPlugin*>(qgcApp()->toolbox()->corePlugin());
     if(pPlug) {
         pIFace->init();
     } else {
