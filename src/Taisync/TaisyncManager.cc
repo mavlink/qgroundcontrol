@@ -318,7 +318,7 @@ TaisyncManager::_setEnabled()
 void
 TaisyncManager::_restoreVideoSettings(Fact* setting)
 {
-    SettingsFact* pFact = dynamic_cast<SettingsFact*>(setting);
+    auto* pFact = qobject_cast<SettingsFact*>(setting);
     if(pFact) {
         pFact->setVisible(qgcApp()->toolbox()->corePlugin()->adjustSettingMetaData(VideoSettings::settingsGroup, *setting->metaData()));
     }

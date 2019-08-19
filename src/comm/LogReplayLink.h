@@ -57,70 +57,66 @@ public:
     /// @return true: log is currently playing, false: log playback is paused
     bool isPlaying(void) { return _readTickTimer.isActive(); }
 
-    /// Start replay at current position
-    void play(void) { emit _playOnThread(); }
-
-    /// Pause replay
-    void pause(void) { emit _pauseOnThread(); }
-
-    /// Move the playhead to the specified percent complete
-    void movePlayhead(qreal percentComplete);
-
-    /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
-    void setAccelerationFactor(int factor) { emit _setAccelerationFactorOnThread(factor); }
+    void play           (void) { emit _playOnThread(); }
+    void pause          (void) { emit _pauseOnThread(); }
+    void movePlayhead   (qreal percentComplete);
 
     // Virtuals from LinkInterface
-    virtual QString getName(void) const { return _config->name(); }
-    virtual void requestReset(void){ }
-    virtual bool isConnected(void) const { return _connected; }
-    virtual qint64 getConnectionSpeed(void) const { return 100000000; }
-    virtual qint64 bytesAvailable(void) { return 0; }
-    virtual bool isLogReplay(void) { return true; }
+    virtual QString getName             (void) const { return _config->name(); }
+    virtual void    requestReset        (void){ }
+    virtual bool    isConnected         (void) const { return _connected; }
+    virtual qint64  getConnectionSpeed  (void) const { return 100000000; }
+    virtual qint64  bytesAvailable      (void) { return 0; }
+    virtual bool    isLogReplay         (void) { return true; }
 
     // These are left unimplemented in order to cause linker errors which indicate incorrect usage of
     // connect/disconnect on link directly. All connect/disconnect calls should be made through LinkManager.
-    bool connect(void);
-    bool disconnect(void);
+    bool connect    (void);
+    bool disconnect (void);
+
+public slots:
+    /// Sets the acceleration factor: -100: 0.01X, 0: 1.0X, 100: 100.0X
+    void setPlaybackSpeed(qreal playbackSpeed) { emit _setPlaybackSpeedOnThread(playbackSpeed); }
 
 private slots:
     virtual void _writeBytes(const QByteArray bytes);
 
 signals:
-    void logFileStats(bool logTimestamped, int logDurationSecs, int binaryBaudRate);
-    void playbackStarted(void);
-    void playbackPaused(void);
-    void playbackAtEnd(void);
-    void playbackPercentCompleteChanged(qreal percentComplete);
-    void currentLogTimeSecs(int secs);
+    void logFileStats                   (int logDurationSecs);
+    void playbackStarted                (void);
+    void playbackPaused                 (void);
+    void playbackAtEnd                  (void);
+    void playbackPercentCompleteChanged (qreal percentComplete);
+    void currentLogTimeSecs             (int secs);
 
     // Internal signals
-    void _playOnThread(void);
-    void _pauseOnThread(void);
-    void _setAccelerationFactorOnThread(int factor);
+    void _playOnThread              (void);
+    void _pauseOnThread             (void);
+    void _setPlaybackSpeedOnThread  (qreal playbackSpeed);
 
 private slots:
-    void _readNextLogEntry(void);
-    void _play(void);
-    void _pause(void);
-    void _setAccelerationFactor(int factor);
+    void _readNextLogEntry  (void);
+    void _play              (void);
+    void _pause             (void);
+    void _setPlaybackSpeed  (qreal playbackSpeed);
 
 private:
     // Links are only created/destroyed by LinkManager so constructor/destructor is not public
     LogReplayLink(SharedLinkConfigurationPointer& config);
     ~LogReplayLink();
 
-    void _replayError(const QString& errorMsg);
-    quint64 _parseTimestamp(const QByteArray& bytes);
-    quint64 _seekToNextMavlinkMessage(mavlink_message_t* nextMsg);
-    quint64 _findLastTimestamp(void);
-    quint64 _readNextMavlinkMessage(QByteArray& bytes);
-    bool _loadLogFile(void);
-    void _finishPlayback(void);
-    void _resetPlaybackToBeginning(void);
-    void _signalCurrentLogTimeSecs(void);
+    void    _replayError                (const QString& errorMsg);
+    quint64 _parseTimestamp             (const QByteArray& bytes);
+    quint64 _seekToNextMavlinkMessage   (mavlink_message_t* nextMsg);
+    quint64 _findLastTimestamp          (void);
+    quint64 _readNextMavlinkMessage     (QByteArray& bytes);
+    bool    _loadLogFile                (void);
+    void    _finishPlayback             (void);
+    void    _resetPlaybackToBeginning   (void);
+    void    _signalCurrentLogTimeSecs   (void);
 
     // Virtuals from LinkInterface
-    virtual bool _connect(void);
+    virtual bool _connect   (void);
     virtual void _disconnect(void);
 
     // Virtuals from QThread
@@ -139,16 +135,13 @@ private:
     quint64 _logEndTimeUSecs;       ///< The last timestamp in the current log file.
     quint64 _logDurationUSecs;
 
-    static const int    _defaultBinaryBaudRate = 57600;
-    int                 _binaryBaudRate;        ///< Playback rate for binary log format
-
-    float   _replayAccelerationFactor;  ///< Factor to apply to playback rate
+    qreal   _playbackSpeed;
     quint64 _playbackStartTimeMSecs;    ///< The time when the logfile was first played back. This is used to pace out replaying the messages to fix long-term drift/skew. 0 indicates that the player hasn't initiated playback of this log file.
+    quint64 _playbackStartLogTimeUSecs;
 
     MAVLinkProtocol*    _mavlink;
     QFile               _logFile;
     quint64             _logFileSize;
-    bool                _logTimestamped;    ///< true: Timestamped log format, false: no timestamps
 
     static const int cbTimestamp = sizeof(quint64);
 };
@@ -163,6 +156,7 @@ public:
     Q_PROPERTY(qreal            percentComplete READ percentComplete    WRITE setPercentComplete    NOTIFY percentCompleteChanged)
     Q_PROPERTY(QString          totalTime       MEMBER _totalTime                                   NOTIFY totalTimeChanged)
     Q_PROPERTY(QString          playheadTime    MEMBER _playheadTime                                NOTIFY playheadTimeChanged)
+    Q_PROPERTY(qreal            playbackSpeed   MEMBER _playbackSpeed                               NOTIFY playbackSpeedChanged)
 
     LogReplayLinkController(void);
 
@@ -180,9 +174,10 @@ signals:
     void percentCompleteChanged (qreal percentComplete);
     void playheadTimeChanged    (QString playheadTime);
     void totalTimeChanged       (QString totalTime);
+    void playbackSpeedChanged   (qreal playbackSpeed);
 
 private slots:
-    void _logFileStats                   (bool logTimestamped, int logDurationSecs, int binaryBaudRate);
+    void _logFileStats                   (int logDurationSecs);
     void _playbackStarted                (void);
     void _playbackPaused                 (void);
     void _playbackAtEnd                  (void);
@@ -199,5 +194,6 @@ private:
     int             _playheadSecs;
     QString         _playheadTime;
     QString         _totalTime;
+    qreal           _playbackSpeed;
 };
 

@@ -280,7 +280,7 @@ TCPConfiguration::TCPConfiguration(TCPConfiguration* source) : LinkConfiguration
 void TCPConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    TCPConfiguration* usource = dynamic_cast<TCPConfiguration*>(source);
+    auto* usource = qobject_cast<TCPConfiguration*>(source);
     Q_ASSERT(usource != nullptr);
     _port    = usource->port();
     _address = usource->address();
@@ -302,7 +302,7 @@ void TCPConfiguration::setHost(const QString host)
     if(ipAdd.isEmpty()) {
         qWarning() << "TCP:" << "Could not resolve host:" << host;
     } else {
-        _address = ipAdd;
+        _address = QHostAddress(ipAdd);
     }
 }
 
@@ -326,7 +326,7 @@ void TCPConfiguration::loadSettings(QSettings& settings, const QString& root)
 void TCPConfiguration::updateSettings()
 {
     if(_link) {
-        TCPLink* ulink = dynamic_cast<TCPLink*>(_link);
+        auto* ulink = qobject_cast<TCPLink*>(_link);
         if(ulink) {
             ulink->_restartConnection();
         }

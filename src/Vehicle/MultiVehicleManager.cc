@@ -304,7 +304,7 @@ void MultiVehicleManager::_setActiveVehiclePhase2(void)
 
 void MultiVehicleManager::_vehicleParametersReadyChanged(bool parametersReady)
 {
-    ParameterManager* paramMgr = dynamic_cast<ParameterManager*>(sender());
+    auto* paramMgr = qobject_cast<ParameterManager*>(sender());
 
     if (!paramMgr) {
         qWarning() << "Dynamic cast failed!";

@@ -410,7 +410,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
                     server += "mapbox.high-contrast";
                     break;
                 default:
-                    return QString::null;
+                    return {};
             }
             server += QString("/%1/%2/%3.jpg80?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
             return server;
@@ -473,7 +473,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         qWarning("Unknown map id %d\n", type);
         break;
     }
-    return QString::null;
+    return {};
 }
 
 //-----------------------------------------------------------------------------

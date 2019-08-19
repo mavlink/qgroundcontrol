@@ -51,7 +51,7 @@ public:
     Q_PROPERTY(QStringList  enumStrings             READ enumStrings                                        NOTIFY enumsChanged)
     Q_PROPERTY(QString      enumStringValue         READ enumStringValue        WRITE setEnumStringValue    NOTIFY valueChanged)
     Q_PROPERTY(QVariantList enumValues              READ enumValues                                         NOTIFY enumsChanged)
-    Q_PROPERTY(QString      category                READ category                                              CONSTANT)
+    Q_PROPERTY(QString      category                READ category                                           CONSTANT)
     Q_PROPERTY(QString      group                   READ group                                              CONSTANT)
     Q_PROPERTY(QString      longDescription         READ longDescription                                    CONSTANT)
     Q_PROPERTY(QVariant     max                     READ cookedMax                                          CONSTANT)

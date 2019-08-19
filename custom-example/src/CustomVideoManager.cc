@@ -26,7 +26,7 @@ CustomVideoManager::_updateSettings()
         return;
     //-- Check encoding
     if(_activeVehicle && _activeVehicle->dynamicCameras()) {
-        CustomCameraControl* pCamera = dynamic_cast<CustomCameraControl*>(_activeVehicle->dynamicCameras()->currentCameraInstance());
+        auto* pCamera = qobject_cast<CustomCameraControl*>(_activeVehicle->dynamicCameras()->currentCameraInstance());
         if(pCamera) {
             Fact *fact = pCamera->videoEncoding();
             if (fact) {

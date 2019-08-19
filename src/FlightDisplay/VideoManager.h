@@ -73,7 +73,7 @@ public:
     virtual bool        uvcEnabled          ();
 #endif
 
-    virtual void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
+    virtual void        setfullScreen       (bool f);
     virtual void        setIsTaisync        (bool t) { _isTaisync = t;  emit isTaisyncChanged(); }
 
     // Override from QGCTool
@@ -100,6 +100,7 @@ protected slots:
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
+    void _connectionLostChanged     (bool connectionLost);
 
 protected:
     void _updateSettings            ();

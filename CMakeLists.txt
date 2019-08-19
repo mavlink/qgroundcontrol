@@ -10,6 +10,10 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	add_compile_options(-Wall -Wextra -Wno-address-of-packed-member)
+endif()
+
 # CMake build type
 # Debug Release RelWithDebInfo MinSizeRel Coverage
 if (NOT CMAKE_BUILD_TYPE)
@@ -142,7 +146,6 @@ set(QGC_RESOURCES
 	qgcresources.qrc
 	qgroundcontrol.qrc
 	qgcimages.qrc
-
 	src/FirmwarePlugin/APM/APMResources.qrc
 	src/FirmwarePlugin/PX4/PX4Resources.qrc
 	src/Airmap/airmap.qrc

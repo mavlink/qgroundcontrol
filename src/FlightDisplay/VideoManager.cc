@@ -273,6 +273,20 @@ VideoManager::uvcEnabled()
 
 //-----------------------------------------------------------------------------
 void
+VideoManager::setfullScreen(bool f)
+{
+    if(f) {
+        //-- No can do if no vehicle or connection lost
+        if(!_activeVehicle || _activeVehicle->connectionLost()) {
+            f = false;
+        }
+    }
+    _fullScreen = f;
+    emit fullScreenChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
 VideoManager::_updateSettings()
 {
     if(!_videoSettings || !_videoReceiver)
@@ -357,6 +371,7 @@ void
 VideoManager::_setActiveVehicle(Vehicle* vehicle)
 {
     if(_activeVehicle) {
+        disconnect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
         if(_activeVehicle->dynamicCameras()) {
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
             if(pCamera) {
@@ -367,6 +382,7 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
     }
     _activeVehicle = vehicle;
     if(_activeVehicle) {
+        connect(_activeVehicle, &Vehicle::connectionLostChanged, this, &VideoManager::_connectionLostChanged);
         if(_activeVehicle->dynamicCameras()) {
             connect(_activeVehicle->dynamicCameras(), &QGCCameraManager::streamChanged, this, &VideoManager::restartVideo);
             QGCCameraControl* pCamera = _activeVehicle->dynamicCameras()->currentCameraInstance();
@@ -374,9 +390,22 @@ VideoManager::_setActiveVehicle(Vehicle* vehicle)
                 pCamera->resumeStream();
             }
         }
+    } else {
+        //-- Disable full screen video if vehicle is gone
+        setfullScreen(false);
     }
     emit autoStreamConfiguredChanged();
     restartVideo();
+}
+
+//----------------------------------------------------------------------------------------
+void
+VideoManager::_connectionLostChanged(bool connectionLost)
+{
+    if(connectionLost) {
+        //-- Disable full screen video if connection is lost
+        setfullScreen(false);
+    }
 }
 
 //----------------------------------------------------------------------------------------
