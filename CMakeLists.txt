@@ -10,6 +10,10 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	add_compile_options(-Wall -Wextra -Wno-address-of-packed-member)
+endif()
+
 # CMake build type
 # Debug Release RelWithDebInfo MinSizeRel Coverage
 if (NOT CMAKE_BUILD_TYPE)
