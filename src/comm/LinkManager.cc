@@ -355,74 +355,82 @@ void LinkManager::saveLinkConfigurationList()
     emit linkConfigurationsChanged();
 }
 
+namespace {
+LinkConfiguration *loadLinkConfigurationFromType(LinkConfiguration::LinkType type, const QString& name)
+{
+    switch(type) {
+#ifndef NO_SERIAL_LINK
+    case LinkConfiguration::TypeSerial:
+        return new SerialConfiguration(name);
+#endif
+    case LinkConfiguration::TypeUdp:
+        return new UDPConfiguration(name);
+    case LinkConfiguration::TypeTcp:
+        return new TCPConfiguration(name);
+#ifdef QGC_ENABLE_BLUETOOTH
+    case LinkConfiguration::TypeBluetooth:
+        return new BluetoothConfiguration(name);
+#endif
+    case LinkConfiguration::TypeLogReplay:
+        return new LogReplayLinkConfiguration(name);
+#ifdef QT_DEBUG
+    case LinkConfiguration::TypeMock:
+        return new MockConfiguration(name);
+#endif
+    case LinkConfiguration::TypeLast:
+        return nullptr;
+    }
+    return nullptr;    
+}
+} // namespace
+
 void LinkManager::loadLinkConfigurationList()
 {
     bool linksChanged = false;
     QSettings settings;
     // Is the group even there?
-    if(settings.contains(LinkConfiguration::settingsRoot() + "/count")) {
+    if(settings.contains(LinkConfiguration::settingsRoot() + QStringLiteral("/count"))) {
         // Find out how many configurations we have
         int count = settings.value(LinkConfiguration::settingsRoot() + "/count").toInt();
         for(int i = 0; i < count; i++) {
-            QString root(LinkConfiguration::settingsRoot());
-            root += QString("/Link%1").arg(i);
-            if(settings.contains(root + "/type")) {
-                LinkConfiguration::LinkType type = static_cast<LinkConfiguration::LinkType>(settings.value(root + "/type").toInt());
-                if(type < LinkConfiguration::TypeLast) {
-                    if(settings.contains(root + "/name")) {
-                        QString name = settings.value(root + "/name").toString();
-                        if(!name.isEmpty()) {
-                            LinkConfiguration* pLink = nullptr;
-                            bool autoConnect = settings.value(root + "/auto").toBool();
-                            bool highLatency = settings.value(root + "/high_latency").toBool();
-                            switch(type) {
-#ifndef NO_SERIAL_LINK
-                            case LinkConfiguration::TypeSerial:
-                                pLink = new SerialConfiguration(name);
-                                break;
-#endif
-                            case LinkConfiguration::TypeUdp:
-                                pLink = new UDPConfiguration(name);
-                                break;
-                            case LinkConfiguration::TypeTcp:
-                                pLink = new TCPConfiguration(name);
-                                break;
-#ifdef QGC_ENABLE_BLUETOOTH
-                            case LinkConfiguration::TypeBluetooth:
-                                pLink = new BluetoothConfiguration(name);
-                                break;
-#endif
-                            case LinkConfiguration::TypeLogReplay:
-                                pLink = new LogReplayLinkConfiguration(name);
-                                break;
-#ifdef QT_DEBUG
-                            case LinkConfiguration::TypeMock:
-                                pLink = new MockConfiguration(name);
-                                break;
-#endif
-                            case LinkConfiguration::TypeLast:
-                                break;
-                            }
-                            if(pLink) {
-                                //-- Have the instance load its own values
-                                pLink->setAutoConnect(autoConnect);
-                                pLink->setHighLatency(highLatency);
-                                pLink->loadSettings(settings, root);
-                                addConfiguration(pLink);
-                                linksChanged = true;
-                            }
-                        } else {
-                            qWarning() << "Link Configuration" << root << "has an empty name." ;
-                        }
-                    } else {
-                        qWarning() << "Link Configuration" << root << "has no name." ;
-                    }
-                } else {
-                    qWarning() << "Link Configuration" << root << "an invalid type: " << type;
-                }
-            } else {
+            QString root = LinkConfiguration::settingsRoot() + QStringLiteral("/Link%1").arg(i); 
+
+            if (!settings.contains(root + QStringLiteral("/type"))) {
                 qWarning() << "Link Configuration" << root << "has no type." ;
+                continue;
             }
+
+            auto type = static_cast<LinkConfiguration::LinkType>(settings.value(root + QStringLiteral("/type")).toInt());
+            if (type >= LinkConfiguration::TypeLast) {
+                qWarning() << "Link Configuration" << root << "an invalid type: " << type;
+                continue;
+            }
+
+            if (!settings.contains(root + QStringLiteral("/name"))) {
+                qWarning() << "Link Configuration" << root << "has no name." ;
+                continue;
+            }
+
+            QString name = settings.value(root + QStringLiteral("/name")).toString();
+            if (name.isEmpty()) {
+                qWarning() << "Link Configuration" << root << "has an empty name." ;
+                continue;
+            }
+
+            LinkConfiguration* pLink = loadLinkConfigurationFromType(type, name);
+            if (!pLink) {
+                continue;
+            }
+
+            const bool autoConnect = settings.value(root + QStringLiteral("/auto")).toBool();
+            const bool highLatency = settings.value(root + QStringLiteral("/high_latency")).toBool();
+
+            //-- Have the instance load its own values
+            pLink->setAutoConnect(autoConnect);
+            pLink->setHighLatency(highLatency);
+            pLink->loadSettings(settings, root);
+            addConfiguration(pLink);
+            linksChanged = true;
         }
     }
 
