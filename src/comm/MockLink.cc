@@ -1134,7 +1134,7 @@ MockConfiguration::MockConfiguration(MockConfiguration* source)
 void MockConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    MockConfiguration* usource = dynamic_cast<MockConfiguration*>(source);
+    auto* usource = qobject_cast<MockConfiguration*>(source);
 
     if (!usource) {
         qWarning() << "dynamic_cast failed" << source << usource;
