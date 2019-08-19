@@ -114,11 +114,11 @@ LinkInterface* LinkManager::createConnectedLink(SharedLinkConfigurationPointer& 
 #ifndef NO_SERIAL_LINK
     case LinkConfiguration::TypeSerial:
     {
-        SerialConfiguration* serialConfig = dynamic_cast<SerialConfiguration*>(config.data());
+        auto* serialConfig = qobject_cast<SerialConfiguration*>(config.data());
         if (serialConfig) {
             pLink = new SerialLink(config, isPX4Flow);
             if (serialConfig->usbDirect()) {
-                _activeLinkCheckList.append(dynamic_cast<SerialLink*>(pLink));
+                _activeLinkCheckList.append(qobject_cast<SerialLink*>(pLink));
                 if (!_activeLinkCheckTimer.isActive()) {
                     _activeLinkCheckTimer.start();
                 }
@@ -378,26 +378,26 @@ void LinkManager::loadLinkConfigurationList()
                             switch(type) {
 #ifndef NO_SERIAL_LINK
                             case LinkConfiguration::TypeSerial:
-                                pLink = dynamic_cast<LinkConfiguration*>(new SerialConfiguration(name));
+                                pLink = new SerialConfiguration(name);
                                 break;
 #endif
                             case LinkConfiguration::TypeUdp:
-                                pLink = dynamic_cast<LinkConfiguration*>(new UDPConfiguration(name));
+                                pLink = new UDPConfiguration(name);
                                 break;
                             case LinkConfiguration::TypeTcp:
-                                pLink = dynamic_cast<LinkConfiguration*>(new TCPConfiguration(name));
+                                pLink = new TCPConfiguration(name);
                                 break;
 #ifdef QGC_ENABLE_BLUETOOTH
                             case LinkConfiguration::TypeBluetooth:
-                                pLink = dynamic_cast<LinkConfiguration*>(new BluetoothConfiguration(name));
+                                pLink = new BluetoothConfiguration(name);
                                 break;
 #endif
                             case LinkConfiguration::TypeLogReplay:
-                                pLink = dynamic_cast<LinkConfiguration*>(new LogReplayLinkConfiguration(name));
+                                pLink = new LogReplayLinkConfiguration(name);
                                 break;
 #ifdef QT_DEBUG
                             case LinkConfiguration::TypeMock:
-                                pLink = dynamic_cast<LinkConfiguration*>(new MockConfiguration(name));
+                                pLink = new MockConfiguration(name);
                                 break;
 #endif
                             case LinkConfiguration::TypeLast:
