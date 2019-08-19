@@ -49,7 +49,7 @@ Item {
     readonly property string orbitTitle:                    qsTr("Orbit")
     readonly property string landAbortTitle:                qsTr("Land Abort")
     readonly property string setWaypointTitle:              qsTr("Set Waypoint")
-    readonly property string gotoTitle:                     qsTr("Goto Location")
+    readonly property string gotoTitle:                     qsTr("Go To Location")
     readonly property string vtolTransitionTitle:           qsTr("VTOL Transition")
 
     readonly property string armMessage:                        qsTr("Arm the vehicle.")

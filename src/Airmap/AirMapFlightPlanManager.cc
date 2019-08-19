@@ -428,7 +428,7 @@ AirMapFlightPlanManager::_createFlightPlan()
 void
 AirMapFlightPlanManager::_updateRulesAndFeatures(std::vector<RuleSet::Id>& rulesets, std::unordered_map<std::string, RuleSet::Feature::Value>& features, bool updateFeatures)
 {
-    AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
+    auto* pRulesMgr = qobject_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
     if(pRulesMgr) {
         for(int rs = 0; rs < pRulesMgr->ruleSets()->count(); rs++) {
             AirMapRuleSet* ruleSet = qobject_cast<AirMapRuleSet*>(pRulesMgr->ruleSets()->get(rs));

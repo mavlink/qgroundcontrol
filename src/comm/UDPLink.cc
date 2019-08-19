@@ -396,7 +396,7 @@ void UDPConfiguration::copyFrom(LinkConfiguration *source)
 
 void UDPConfiguration::_copyFrom(LinkConfiguration *source)
 {
-    UDPConfiguration* usource = dynamic_cast<UDPConfiguration*>(source);
+    auto* usource = qobject_cast<UDPConfiguration*>(source);
     if (usource) {
         _localPort = usource->localPort();
         _clearTargetHosts();

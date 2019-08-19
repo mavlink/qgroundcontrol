@@ -478,7 +478,7 @@ Set to 2 to use heading from motion capture</short_desc>
     </parameter>
     <parameter default="56" name="TRIG_PINS" type="INT32">
       <short_desc>Camera trigger pin</short_desc>
-      <long_desc>Selects which pin is used, ranges from 1 to 6 (AUX1-AUX6 on px4_fmu-v2 and the rail pins on px4_fmu-v4). The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6. For GPIO mode Pin 6 will be triggered followed by 5. With a value of 65 pin 5 will be triggered followed by 6. Pins may be non contiguous. I.E. 16 or 61. In GPIO mode the delay pin to pin is &lt; .2 uS.</long_desc>
+      <long_desc>Selects which FMU pin is used (range: AUX1-AUX6 on Pixhawk controllers with an I/O board, MAIN1-MAIN6 on controllers without an I/O board. The PWM interface takes two pins per camera, while relay triggers on every pin individually. Example: Value 56 would trigger on pins 5 and 6. For GPIO mode Pin 6 will be triggered followed by 5. With a value of 65 pin 5 will be triggered followed by 6. Pins may be non contiguous. I.E. 16 or 61. In GPIO mode the delay pin to pin is &lt; .2 uS.</long_desc>
       <min>1</min>
       <max>123456</max>
       <decimal>0</decimal>
@@ -714,9 +714,13 @@ Set -1 to disable the check</short_desc>
     </parameter>
     <parameter default="2.0" name="COM_DISARM_LAND" type="FLOAT">
       <short_desc>Time-out for auto disarm after landing</short_desc>
-      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. The vehicle will also auto-disarm right after arming if it has not even flown, however the time will always be 10 seconds such that the pilot has enough time to take off. A negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
-      <min>-1</min>
-      <max>20</max>
+      <long_desc>A non-zero, positive value specifies the time-out period in seconds after which the vehicle will be automatically disarmed in case a landing situation has been detected during this period. A zero or negative value means that automatic disarming triggered by landing detection is disabled.</long_desc>
+      <unit>s</unit>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter default="10.0" name="COM_DISARM_PRFLT" type="FLOAT">
+      <short_desc>Time-out for auto disarm if too slow to takeoff</short_desc>
+      <long_desc>A non-zero, positive value specifies the time after arming, in seconds, within which the vehicle must take off (after which it will automatically disarm). A zero or negative value means that automatic disarming triggered by a pre-takeoff timeout is disabled.</long_desc>
       <unit>s</unit>
       <decimal>2</decimal>
     </parameter>

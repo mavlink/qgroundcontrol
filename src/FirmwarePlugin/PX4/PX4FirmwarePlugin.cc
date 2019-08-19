@@ -360,7 +360,7 @@ void PX4FirmwarePlugin::_mavCommandResult(int vehicleId, int component, int comm
     Q_UNUSED(component);
     Q_UNUSED(noReponseFromVehicle);
 
-    Vehicle* vehicle = dynamic_cast<Vehicle*>(sender());
+    auto* vehicle = qobject_cast<Vehicle*>(sender());
     if (!vehicle) {
         qWarning() << "Dynamic cast failed!";
         return;
@@ -520,7 +520,7 @@ void PX4FirmwarePlugin::_handleAutopilotVersion(Vehicle* vehicle, mavlink_messag
 {
     Q_UNUSED(vehicle);
 
-    PX4FirmwarePluginInstanceData* instanceData = qobject_cast<PX4FirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
+    auto* instanceData = qobject_cast<PX4FirmwarePluginInstanceData*>(vehicle->firmwarePluginInstanceData());
     if (!instanceData->versionNotified) {
         bool notifyUser = false;
         int supportedMajorVersion = 1;

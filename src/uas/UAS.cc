@@ -1094,7 +1094,7 @@ void UAS::pairRX(int rxType, int rxSubType)
 #ifndef __mobile__
 void UAS::enableHilJSBSim(bool enable, QString options)
 {
-    QGCJSBSimLink* link = dynamic_cast<QGCJSBSimLink*>(simulation);
+    auto* link = qobject_cast<QGCJSBSimLink*>(simulation);
     if (!link) {
         // Delete wrong sim
         if (simulation) {
@@ -1104,7 +1104,7 @@ void UAS::enableHilJSBSim(bool enable, QString options)
         simulation = new QGCJSBSimLink(_vehicle, options);
     }
     // Connect Flight Gear Link
-    link = dynamic_cast<QGCJSBSimLink*>(simulation);
+    link = qobject_cast<QGCJSBSimLink*>(simulation);
     link->setStartupArguments(options);
     if (enable)
     {
@@ -1123,7 +1123,7 @@ void UAS::enableHilJSBSim(bool enable, QString options)
 #ifndef __mobile__
 void UAS::enableHilXPlane(bool enable)
 {
-    QGCXPlaneLink* link = dynamic_cast<QGCXPlaneLink*>(simulation);
+    auto* link = qobject_cast<QGCXPlaneLink*>(simulation);
     if (!link) {
         if (simulation) {
             stopHil();
