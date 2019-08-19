@@ -302,7 +302,7 @@ void TCPConfiguration::setHost(const QString host)
     if(ipAdd.isEmpty()) {
         qWarning() << "TCP:" << "Could not resolve host:" << host;
     } else {
-        _address = ipAdd;
+        _address = QHostAddress(ipAdd);
     }
 }
 
