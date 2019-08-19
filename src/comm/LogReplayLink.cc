@@ -33,7 +33,7 @@ LogReplayLinkConfiguration::LogReplayLinkConfiguration(LogReplayLinkConfiguratio
 void LogReplayLinkConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    LogReplayLinkConfiguration* ssource = dynamic_cast<LogReplayLinkConfiguration*>(source);
+    auto* ssource = qobject_cast<LogReplayLinkConfiguration*>(source);
     if (ssource) {
         _logFilename = ssource->logFilename();
     } else {
