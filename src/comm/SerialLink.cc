@@ -405,7 +405,7 @@ SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfig
 void SerialConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    SerialConfiguration* ssource = dynamic_cast<SerialConfiguration*>(source);
+    auto* ssource = qobject_cast<SerialConfiguration*>(source);
     if (ssource) {
         _baud               = ssource->baud();
         _flowControl        = ssource->flowControl();
@@ -423,7 +423,7 @@ void SerialConfiguration::copyFrom(LinkConfiguration *source)
 void SerialConfiguration::updateSettings()
 {
     if(_link) {
-        SerialLink* serialLink = dynamic_cast<SerialLink*>(_link);
+        auto* serialLink = qobject_cast<SerialLink*>(_link);
         if(serialLink) {
             serialLink->_resetConfiguration();
         }
