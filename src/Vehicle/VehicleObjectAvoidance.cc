@@ -46,7 +46,7 @@ VehicleObjectAvoidance::update(mavlink_obstacle_distance_t* message)
     //-- Create a plottable grid with found objects
     _objGrid.clear();
     _objDistance.clear();
-    VehicleSetpointFactGroup* sp = dynamic_cast<VehicleSetpointFactGroup*>(_vehicle->setpointFactGroup());
+    auto* sp = qobject_cast<VehicleSetpointFactGroup*>(_vehicle->setpointFactGroup());
     qreal startAngle = sp->yaw()->rawValue().toDouble() + _angleOffset;
     for(int i = 0; i < MAVLINK_MSG_OBSTACLE_DISTANCE_FIELD_DISTANCES_LEN; i++) {
         if(_distances[i] < _maxDistance && message->distances[i] != UINT16_MAX) {
