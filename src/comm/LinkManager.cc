@@ -393,25 +393,15 @@ void LinkManager::loadLinkConfigurationList()
         // Find out how many configurations we have
         int count = settings.value(LinkConfiguration::settingsRoot() + "/count").toInt();
         for(int i = 0; i < count; i++) {
-            QString root = LinkConfiguration::settingsRoot() + QStringLiteral("/Link%1").arg(i); 
+            const QString root = LinkConfiguration::settingsRoot() + QStringLiteral("/Link%1").arg(i);
 
-            if (!settings.contains(root + QStringLiteral("/type"))) {
-                qWarning() << "Link Configuration" << root << "has no type." ;
-                continue;
-            }
-
-            auto type = static_cast<LinkConfiguration::LinkType>(settings.value(root + QStringLiteral("/type")).toInt());
+            auto type = static_cast<LinkConfiguration::LinkType>(settings.value(root + QStringLiteral("/type"), LinkConfiguration::TypeLast).toInt());
             if (type >= LinkConfiguration::TypeLast) {
                 qWarning() << "Link Configuration" << root << "an invalid type: " << type;
                 continue;
             }
 
-            if (!settings.contains(root + QStringLiteral("/name"))) {
-                qWarning() << "Link Configuration" << root << "has no name." ;
-                continue;
-            }
-
-            QString name = settings.value(root + QStringLiteral("/name")).toString();
+            QString name = settings.value(root + QStringLiteral("/name"), QString()).toString();
             if (name.isEmpty()) {
                 qWarning() << "Link Configuration" << root << "has an empty name." ;
                 continue;
