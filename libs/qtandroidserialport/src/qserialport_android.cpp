@@ -189,7 +189,7 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
         "(Landroid/content/Context;Ljava/lang/String;I)I",
         QtAndroid::androidActivity().object(),
         jnameL.object<jstring>(),
-        reinterpret_cast<jint>(this));
+        reinterpret_cast<jlong>(this));
     cleanJavaException();
 
     isReadStopped = false;
