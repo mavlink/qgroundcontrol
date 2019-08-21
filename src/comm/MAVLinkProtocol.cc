@@ -160,6 +160,52 @@ void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
 }
 
 /**
+ * This method parses all outcoming bytes and log a MAVLink packet.
+ * @param link The interface to read from
+ * @see LinkInterface
+ **/
+
+void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
+
+    uint8_t mavlinkChannel = link->mavlinkChannel();
+    static mavlink_message_t _sent_message;
+
+    for (int position = 0; position < b.size(); position++) {
+
+        if(mavlink_parse_char(mavlinkChannel, static_cast<uint8_t>(b[position]), &_sent_message, &_status)){
+
+            if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
+                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
+
+                // Write the uint64 time in microseconds in big endian format before the message.
+                // This timestamp is saved in UTC time. We are only saving in ms precision because
+                // getting more than this isn't possible with Qt without a ton of extra code.
+                quint64 time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch() * 1000);
+                qToBigEndian(time, buf);
+
+                // Then write the message to the buffer
+                int len = mavlink_msg_to_send_buffer(buf + sizeof(quint64), &_sent_message);
+
+                // Determine how many bytes were written by adding the timestamp size to the message size
+                len += sizeof(quint64);
+
+                // Now write this timestamp/message pair to the log.
+                QByteArray b(reinterpret_cast<const char*>(buf), len);
+
+                if(_tempLogFile.write(b) != len)
+                {
+                    // If there's an error logging data, raise an alert and stop logging.
+                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
+                    _stopLogging();
+                    _logSuspendError = true;
+                }
+            }
+        }
+    }
+
+}
+
+/**
  * This method parses all incoming bytes and constructs a MAVLink packet.
  * It can handle multiple links in parallel, as each link has it's own buffer/
  * parsing state machine.
