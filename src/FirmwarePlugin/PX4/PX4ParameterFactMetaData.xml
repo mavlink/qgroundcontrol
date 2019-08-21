@@ -950,21 +950,27 @@ Set -1 to disable the check</short_desc>
       <short_desc>Set offboard loss failsafe mode</short_desc>
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
       <values>
+        <value code="-1">Disabled</value>
         <value code="0">Land mode</value>
         <value code="1">Hold mode</value>
         <value code="2">Return mode</value>
+        <value code="3">Terminate</value>
+        <value code="4">Lockdown</value>
       </values>
     </parameter>
     <parameter default="0" name="COM_OBL_RC_ACT" type="INT32">
       <short_desc>Set offboard loss failsafe mode when RC is available</short_desc>
       <long_desc>The offboard loss failsafe will only be entered after a timeout, set by COM_OF_LOSS_T in seconds.</long_desc>
       <values>
+        <value code="-1">Disabled</value>
         <value code="0">Position mode</value>
         <value code="1">Altitude mode</value>
         <value code="2">Manual</value>
         <value code="3">Return mode</value>
         <value code="4">Land mode</value>
         <value code="5">Hold mode</value>
+        <value code="6">Terminate</value>
+        <value code="7">Lockdown</value>
       </values>
     </parameter>
     <parameter default="0.0" name="COM_OF_LOSS_T" type="FLOAT">
@@ -979,8 +985,8 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <short_desc>Position control navigation loss response</short_desc>
       <long_desc>This sets the flight mode that will be used if navigation accuracy is no longer adequate for position control. Navigation accuracy checks can be disabled using the CBRK_VELPOSERR parameter, but doing so will remove protection for all flight modes.</long_desc>
       <values>
-        <value code="0">Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
-        <value code="1">Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
+        <value code="0">Altitude/Manual. Assume use of remote control after fallback. Switch to Altitude mode if a height estimate is available, else switch to MANUAL.</value>
+        <value code="1">Land/Terminate.  Assume no use of remote control after fallback. Switch to Land mode if a height estimate is available, else switch to TERMINATION.</value>
       </values>
     </parameter>
     <parameter default="1" name="COM_POS_FS_DELAY" type="INT32">
