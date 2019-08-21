@@ -9615,12 +9615,6 @@ is less than 50% of this value</short_desc>
       <long_desc>Temperature calibration for each sensor will ignore data if the temperature is lower than the value set by SYS_CAL_TMIN.</long_desc>
       <unit>deg C</unit>
     </parameter>
-    <parameter default="1" name="SYS_FMU_TASK" type="INT32">
-      <short_desc>Run the FMU as a task to reduce latency</short_desc>
-      <long_desc>If true, the FMU will run in a separate task instead of on the work queue. Set this if low latency is required, for example for racing. This is a trade-off between RAM usage and latency: running as a task, it requires a separate stack and directly polls on the control topics, whereas running on the work queue, it runs at a fixed update rate.</long_desc>
-      <boolean />
-      <reboot_required>true</reboot_required>
-    </parameter>
     <parameter default="1" name="SYS_HAS_BARO" type="INT32">
       <short_desc>Control if the vehicle has a barometer</short_desc>
       <long_desc>Disable this if the board has no barometer, such as some of the the Omnibus F4 SD variants. If disabled, the preflight checks will not check for the presence of a barometer.</long_desc>
