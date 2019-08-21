@@ -182,6 +182,16 @@ signals:
     void bytesReceived(LinkInterface* link, QByteArray data);
 
     /**
+     * @brief New data has been sent
+     * *
+     * The new data is contained in the QByteArray data.
+     * The data is logged into telemetry logging system
+     *
+     * @param data the new bytes
+     */
+    void bytesSent(LinkInterface* link, QByteArray data);
+
+    /**
      * @brief This signal is emitted instantly when the link is connected
      **/
     void connected();

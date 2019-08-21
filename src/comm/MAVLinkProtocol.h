@@ -81,6 +81,9 @@ public:
 public slots:
     /** @brief Receive bytes from a communication interface */
     void receiveBytes(LinkInterface* link, QByteArray b);
+
+    /** @brief Log bytes sent from a communication interface */
+    void logSentBytes(LinkInterface* link, QByteArray b);
     
     /** @brief Set the system id of this application */
     void setSystemId(int id);

@@ -169,6 +169,7 @@ void UDPLink::_writeBytes(const QByteArray data)
     if (!_socket) {
         return;
     }
+    emit bytesSent(this, data);
     // Send to all manually targeted systems
     for(UDPCLient* target: _udpConfig->targetHosts()) {
         // Skip it if it's part of the session clients below
