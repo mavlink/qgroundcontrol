@@ -41,7 +41,7 @@ AirspaceFlightInfo*
 AirspaceFlightModel::get(int index)
 {
     if (index < 0 || index >= _flightEntries.count()) {
-        return NULL;
+        return nullptr;
     }
     return _flightEntries[index];
 }

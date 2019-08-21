@@ -12,7 +12,7 @@
 #include "QGCApplication.h"
 
 VisualMissionItemTest::VisualMissionItemTest(void)
-    : _offlineVehicle(NULL)
+    : _offlineVehicle(nullptr)
 {
     
 }
@@ -60,7 +60,7 @@ void VisualMissionItemTest::cleanup(void)
 
 void VisualMissionItemTest::_createSpy(SimpleMissionItem* simpleItem, MultiSignalSpy** visualSpy)
 {
-    *visualSpy = NULL;
+    *visualSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
     QCOMPARE(spy->init(simpleItem, rgVisualItemSignals, cVisualItemSignals), true);
     *visualSpy = spy;

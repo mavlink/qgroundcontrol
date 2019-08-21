@@ -89,5 +89,5 @@ FirmwarePluginFactory* FirmwarePluginManager::_findPluginFactory(MAV_AUTOPILOT f
         }
     }
 
-    return NULL;
+    return nullptr;
 }

@@ -24,7 +24,7 @@ class PlanElementController : public QObject
     Q_OBJECT
     
 public:
-    PlanElementController(PlanMasterController* masterController, QObject* parent = NULL);
+    PlanElementController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~PlanElementController();
     
     Q_PROPERTY(bool supported       READ supported                      NOTIFY supportedChanged)        ///< true: Element is supported by Vehicle

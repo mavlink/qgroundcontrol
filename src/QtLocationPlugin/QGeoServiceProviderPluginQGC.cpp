@@ -82,7 +82,7 @@ QGeoServiceProviderFactoryQGC::createRoutingManagerEngine(
     const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
 {
     // Not implemented for QGC
-    return NULL;
+    return nullptr;
 }
 
 //-----------------------------------------------------------------------------
@@ -91,5 +91,5 @@ QGeoServiceProviderFactoryQGC::createPlaceManagerEngine(
     const QVariantMap &, QGeoServiceProvider::Error *, QString *) const
 {
     // Not implemented for QGC
-    return NULL;
+    return nullptr;
 }

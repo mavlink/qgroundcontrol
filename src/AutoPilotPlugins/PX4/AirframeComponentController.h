@@ -71,7 +71,7 @@ class Airframe : public QObject
     Q_OBJECT
     
 public:
-    Airframe(const QString& name, int autostartId, QObject* parent = NULL);
+    Airframe(const QString& name, int autostartId, QObject* parent = nullptr);
     ~Airframe();
     
     Q_PROPERTY(QString text MEMBER _name CONSTANT)
@@ -87,7 +87,7 @@ class AirframeType : public QObject
     Q_OBJECT
     
 public:
-    AirframeType(const QString& name, const QString& imageResource, QObject* parent = NULL);
+    AirframeType(const QString& name, const QString& imageResource, QObject* parent = nullptr);
     ~AirframeType();
     
     Q_PROPERTY(QString name MEMBER _name CONSTANT)
