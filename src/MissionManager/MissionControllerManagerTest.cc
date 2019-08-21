@@ -21,7 +21,7 @@ MissionControllerManagerTest::MissionControllerManagerTest(void)
 void MissionControllerManagerTest::cleanup(void)
 {
     delete _multiSpyMissionManager;
-    _multiSpyMissionManager = NULL;
+    _multiSpyMissionManager = nullptr;
 
     UnitTest::cleanup();
 }

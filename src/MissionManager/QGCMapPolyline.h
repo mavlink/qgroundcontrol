@@ -20,8 +20,8 @@ class QGCMapPolyline : public QObject
     Q_OBJECT
 
 public:
-    QGCMapPolyline(QObject* parent = NULL);
-    QGCMapPolyline(const QGCMapPolyline& other, QObject* parent = NULL);
+    QGCMapPolyline(QObject* parent = nullptr);
+    QGCMapPolyline(const QGCMapPolyline& other, QObject* parent = nullptr);
 
     const QGCMapPolyline& operator=(const QGCMapPolyline& other);
 

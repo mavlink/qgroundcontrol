@@ -18,9 +18,9 @@
 #include "AppSettings.h"
 
 MissionControllerTest::MissionControllerTest(void)
-    : _multiSpyMissionController(NULL)
-    , _multiSpyMissionItem(NULL)
-    , _missionController(NULL)
+    : _multiSpyMissionController(nullptr)
+    , _multiSpyMissionItem(nullptr)
+    , _missionController(nullptr)
 {
     
 }
@@ -28,13 +28,13 @@ MissionControllerTest::MissionControllerTest(void)
 void MissionControllerTest::cleanup(void)
 {
     delete _masterController;
-    _masterController = NULL;
+    _masterController = nullptr;
 
     delete _multiSpyMissionController;
-    _multiSpyMissionController = NULL;
+    _multiSpyMissionController = nullptr;
 
     delete _multiSpyMissionItem;
-    _multiSpyMissionItem = NULL;
+    _multiSpyMissionItem = nullptr;
 
     MissionControllerManagerTest::cleanup();
 }

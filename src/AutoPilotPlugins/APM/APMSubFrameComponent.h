@@ -18,7 +18,7 @@ class APMSubFrameComponent : public VehicleComponent
     Q_OBJECT
 
 public:
-    APMSubFrameComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMSubFrameComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
 
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;

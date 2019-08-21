@@ -70,7 +70,7 @@ MockLink::MockLink(SharedLinkConfigurationPointer& config)
     , _vehicleLatitude                      (_defaultVehicleLatitude + ((_vehicleSystemId - 128) * 0.0001))     // Slight offset for each vehicle
     , _vehicleLongitude                     (_defaultVehicleLongitude + ((_vehicleSystemId - 128) * 0.0001))
     , _vehicleAltitude                      (_defaultVehicleAltitude)
-    , _fileServer                           (NULL)
+    , _fileServer                           (nullptr)
     , _sendStatusText                       (false)
     , _apmSendHomePositionOnEmptyList       (false)
     , _failureMode                          (MockConfiguration::FailNone)

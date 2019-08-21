@@ -18,7 +18,7 @@ class PX4RadioComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    PX4RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    PX4RadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;

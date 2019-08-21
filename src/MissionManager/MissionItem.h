@@ -38,7 +38,7 @@ class MissionItem : public QObject
     Q_OBJECT
     
 public:
-    MissionItem(QObject* parent = NULL);
+    MissionItem(QObject* parent = nullptr);
 
     MissionItem(int             sequenceNumber,
                 MAV_CMD         command,
@@ -52,9 +52,9 @@ public:
                 double          param7,
                 bool            autoContinue,
                 bool            isCurrentItem,
-                QObject*        parent = NULL);
+                QObject*        parent = nullptr);
 
-    MissionItem(const MissionItem& other, QObject* parent = NULL);
+    MissionItem(const MissionItem& other, QObject* parent = nullptr);
 
     ~MissionItem();
 

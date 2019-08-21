@@ -37,7 +37,7 @@ BaseDelegate::BaseDelegate(GstElement * sink, QObject * parent)
     , m_forceAspectRatio(false)
     , m_formatDirty(true)
     , m_isActive(false)
-    , m_buffer(NULL)
+    , m_buffer(nullptr)
     , m_sink(sink)
 {
 }
@@ -187,7 +187,7 @@ bool BaseDelegate::event(QEvent *event)
     {
         GST_LOG_OBJECT(m_sink, "Received deactivate event");
 
-        gst_buffer_replace (&m_buffer, NULL);
+        gst_buffer_replace (&m_buffer, nullptr);
         update();
 
         return true;

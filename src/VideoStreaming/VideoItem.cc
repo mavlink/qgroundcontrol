@@ -57,7 +57,7 @@ VideoSurface *VideoItem::surface() const
 #if defined(QGC_GST_STREAMING)
     return _data->surface.data();
 #else
-    return NULL;
+    return nullptr;
 #endif
 }
 
@@ -92,15 +92,15 @@ QSGGeometry* VideoItem::_createDefaultGeometry(QRectF& rectBound)
 QSGNode* VideoItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData*)
 {
     QRectF r = boundingRect();
-    QSGNode* newNode = 0;
+    QSGNode* newNode = nullptr;
 
     if (_data->surfaceDirty) {
         delete oldNode;
-        oldNode = 0;
+        oldNode = nullptr;
         _data->surfaceDirty = false;
     }
 
-    if (!_data->surface || _data->surface.data()->_data->videoSink == NULL) {
+    if (!_data->surface || _data->surface.data()->_data->videoSink == nullptr) {
         if (!oldNode) {
             QSGFlatColorMaterial *material = new QSGFlatColorMaterial;
             material->setColor(Qt::black);
