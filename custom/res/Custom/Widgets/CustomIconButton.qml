@@ -50,11 +50,18 @@ Button {
             mipmap:                 true
             antialiasing:           true
             fillMode:               Image.PreserveAspectFit
-            source:                 qgcPal.globalTheme === QGCPalette.Light ? "/custom/img/menu_logo_advanced.svg" : "/custom/img/menu_logo.svg"
+            source:                 QGroundControl.corePlugin.showAdvancedUI ? "/custom/img/menu_logo_advanced.svg" : "/custom/img/menu_logo.svg"
+            visible:                !QGroundControl.corePlugin.showAdvancedUI && qgcPal.globalTheme === QGCPalette.Dark
             sourceSize.height:      height
             anchors.left:           _edge.right
             anchors.leftMargin:     ScreenTools.defaultFontPixelWidth
             anchors.verticalCenter: parent.verticalCenter
+        }
+        ColorOverlay {
+            anchors.fill:   _icon
+            source:         _icon
+            color:          QGroundControl.corePlugin.showAdvancedUI ? qgcPal.text : (qgcPal.globalTheme === QGCPalette.Dark ? "black" : qgcPal.text )
+            visible:        !_icon.visible
         }
     }
     background: Item {
