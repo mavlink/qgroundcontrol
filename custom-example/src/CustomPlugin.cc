@@ -136,6 +136,9 @@ CustomPlugin::settingsPages()
     if(_customSettingsList.isEmpty()) {
         addSettingsEntry(tr("General"),     "qrc:/qml/GeneralSettings.qml", "qrc:/res/gear-white.svg");
         addSettingsEntry(tr("Comm Links"),  "qrc:/qml/LinkSettings.qml",    "qrc:/res/waves.svg");
+#if defined(QGC_ENABLE_PAIRING)
+        addSettingsEntry(tr("Pairing"),     "qrc:/qml/PairingSettings.qml", "qrc:/res/waves.svg");
+#endif
         addSettingsEntry(tr("Offline Maps"),"qrc:/qml/OfflineMap.qml",      "qrc:/res/waves.svg");
 #if defined(QGC_GST_MICROHARD_ENABLED)
         addSettingsEntry(tr("Microhard"),   "qrc:/qml/MicrohardSettings.qml");
@@ -224,6 +227,7 @@ CustomPlugin::createRootWindow(QObject *parent)
 bool
 CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
+    bool parentResult = QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData);
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::appFontPointSizeName) {
         #if defined(Q_OS_LINUX)
@@ -233,10 +237,10 @@ CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& 
         } else if (metaData.name() == AppSettings::indoorPaletteName) {
             QVariant indoorPalette = 1;
             metaData.setRawDefaultValue(indoorPalette);
-            return true;
+            parentResult = true;
         }
     }
-    return true;
+    return parentResult;
 }
 
 const QColor     CustomPlugin::_windowShadeEnabledLightColor("#FFFFFF");

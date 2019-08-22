@@ -82,6 +82,9 @@ int WindowsCrtReportHook(int reportType, char* message, int* returnValue)
 #if defined(__android__)
 #include <jni.h>
 #include "JoystickAndroid.h"
+#if defined(QGC_ENABLE_PAIRING)
+#include "PairingManager.h"
+#endif
 #if !defined(NO_SERIAL_LINK)
 #include "qserialport.h"
 #endif
@@ -188,6 +191,9 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved)
     QSerialPort::setNativeMethods();
  #endif
     JoystickAndroid::setNativeMethods();
+#if defined(QGC_ENABLE_PAIRING)
+    PairingManager::setNativeMethods();
+#endif
 
     return JNI_VERSION_1_6;
 }

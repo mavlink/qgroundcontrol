@@ -42,6 +42,10 @@ public:
             delete pCommLinks;
         if(pOfflineMaps)
             delete pOfflineMaps;
+#if defined(QGC_ENABLE_PAIRING)
+        if(pPairing)
+            delete pPairing;
+#endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
         if(pTaisync)
             delete pTaisync;
@@ -72,6 +76,9 @@ public:
 
     QmlComponentInfo* pGeneral                  = nullptr;
     QmlComponentInfo* pCommLinks                = nullptr;
+#if defined(QGC_ENABLE_PAIRING)
+    QmlComponentInfo* pPairing                  = nullptr;
+#endif
     QmlComponentInfo* pOfflineMaps              = nullptr;
 #if defined(QGC_GST_TAISYNC_ENABLED)
     QmlComponentInfo* pTaisync                  = nullptr;
@@ -218,6 +225,12 @@ QVariantList &QGCCorePlugin::settingsPages()
             QUrl::fromUserInput("qrc:/qml/LinkSettings.qml"),
             QUrl::fromUserInput("qrc:/res/waves.svg"));
         _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pCommLinks)));
+#if defined(QGC_ENABLE_PAIRING)
+        _p->pPairing = new QmlComponentInfo(tr("Pairing"),
+            QUrl::fromUserInput("qrc:/qml/PairingSettings.qml"),
+            QUrl::fromUserInput(""));
+        _p->settingsList.append(QVariant::fromValue(reinterpret_cast<QmlComponentInfo*>(_p->pPairing)));
+#endif
         _p->pOfflineMaps = new QmlComponentInfo(tr("Offline Maps"),
             QUrl::fromUserInput("qrc:/qml/OfflineMap.qml"),
             QUrl::fromUserInput("qrc:/res/waves.svg"));
@@ -316,6 +329,14 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMeta
 {
     if (settingsGroup != AppSettings::settingsGroup) {
         // All changes refer to AppSettings
+#if !defined(QGC_ENABLE_PAIRING)
+        //-- If we don't support pairing, disable it.
+        if (metaData.name() == AppSettings::usePairingName) {
+            metaData.setRawDefaultValue(false);
+            //-- And hide the option
+            return false;
+        }
+#endif
         return true;
     }
 
