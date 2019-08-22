@@ -115,16 +115,53 @@ MicrohardManager::setToolbox(QGCToolbox* toolbox)
 }
 
 //-----------------------------------------------------------------------------
+void
+MicrohardManager::switchToConnectionEncryptionKey(QString encryptionKey)
+{
+    _communicationEncryptionKey = encryptionKey;
+    _useCommunicationEncryptionKey = true;
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::switchToPairingEncryptionKey()
+{
+    _useCommunicationEncryptionKey = false;
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::setEncryptionKey()
+{
+    if (_mhSettingsLoc) {
+        _mhSettingsLoc->setEncryptionKey(_useCommunicationEncryptionKey ? _communicationEncryptionKey : _encryptionKey);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::updateSettings()
+{
+    setEncryptionKey();
+    QSettings settings;
+    settings.beginGroup(kMICROHARD_GROUP);
+    settings.setValue(kLOCAL_IP, _localIPAddr);
+    settings.setValue(kREMOTE_IP, _remoteIPAddr);
+    settings.setValue(kNET_MASK, _netMask);
+    settings.setValue(kCFG_PASSWORD, _configPassword);
+    settings.setValue(kENC_KEY, _encryptionKey);
+    settings.endGroup();
+
+    _reset();
+}
+
+//-----------------------------------------------------------------------------
 bool
 MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_, QString cfgUserName_, QString cfgPassword_, QString encryptionKey_)
 {
     if (_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_ ||
         _configUserName != cfgUserName_ || _configPassword != cfgPassword_ || _encryptionKey != encryptionKey_)
     {
-        if (_mhSettingsLoc && _encryptionKey != encryptionKey_) {
-            _mhSettingsLoc->setEncryptionKey(encryptionKey_);
-        }
-
         _localIPAddr    = localIP_;
         _remoteIPAddr   = remoteIP_;
         _netMask        = netMask_;
@@ -132,17 +169,7 @@ MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString net
         _configPassword = cfgPassword_;
         _encryptionKey  = encryptionKey_;
 
-        QSettings settings;
-        settings.beginGroup(kMICROHARD_GROUP);
-        settings.setValue(kLOCAL_IP, localIP_);
-        settings.setValue(kREMOTE_IP, remoteIP_);
-        settings.setValue(kNET_MASK, netMask_);
-        settings.setValue(kCFG_USERNAME, cfgUserName_);
-        settings.setValue(kCFG_PASSWORD, cfgPassword_);
-        settings.setValue(kENC_KEY, encryptionKey_);
-        settings.endGroup();
-
-        _reset();
+        updateSettings();
 
         return true;
     }
