@@ -23,6 +23,9 @@
 #include <QtQml>
 #include <QQmlEngine>
 
+const char* QGCCorePlugin::_kSettingsGroupName = "CorePlugin";
+const char* QGCCorePlugin::_kShowAdvancedUI = "ShowAdvacedUI";
+
 /// @file
 ///     @brief Core Plugin Interface for QGroundControl - Default Implementation
 ///     @author Gus Grubba <mavlink@grubba.com>
@@ -114,8 +117,9 @@ QGCCorePlugin::~QGCCorePlugin()
 QGCCorePlugin::QGCCorePlugin(QGCApplication *app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _showTouchAreas(false)
-    , _showAdvancedUI(true)
 {
+    _settings.beginGroup(_kSettingsGroupName);
+    _showAdvancedUI = _settings.value(_kShowAdvancedUI, true).toBool();
     _p = new QGCCorePlugin_p;
 }
 
@@ -361,6 +365,7 @@ void QGCCorePlugin::setShowAdvancedUI(bool show)
 {
     if (show != _showAdvancedUI) {
         _showAdvancedUI = show;
+        _settings.setValue(_kShowAdvancedUI, QVariant(_showAdvancedUI));
         emit showAdvancedUIChanged(show);
     }
 }
