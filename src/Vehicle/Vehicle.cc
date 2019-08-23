@@ -303,7 +303,10 @@ Vehicle::Vehicle(LinkInterface*             link,
     connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
     _adsbTimer.setSingleShot(false);
     _adsbTimer.start(1000);
-    _initializeCsv();
+
+    // Start csv logger
+    connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
+    _csvLogTimer.start(1000);
 }
 
 // Disconnected Vehicle for offline editing
@@ -4010,6 +4013,9 @@ void Vehicle::_pidTuningAdjustRates(bool setRatesForTuning)
 
 void Vehicle::_initializeCsv()
 {
+    if(!_toolbox->settingsManager()->appSettings()->saveCsvTelemetry()->rawValue().toBool()){
+        return;
+    }
     QString now = QDateTime::currentDateTime().toString("yyyy-MM-dd hh-mm-ss");
     QString fileName = QString("%1 vehicle%2.csv").arg(now).arg(_id);
     QDir saveDir(_toolbox->settingsManager()->appSettings()->telemetrySavePath());
@@ -4030,13 +4036,20 @@ void Vehicle::_initializeCsv()
     }
     qCDebug(VehicleLog) << "Facts logged to csv:" << allFactNames;
     stream << "Timestamp," << allFactNames.join(",") << "\n";
-
-    connect(&_csvLogTimer, &QTimer::timeout, this, &Vehicle::_writeCsvLine);
-    _csvLogTimer.start(1000);
 }
 
 void Vehicle::_writeCsvLine()
 {
+    // Only save the logs after the the vehicle gets armed, unless "Save logs even if vehicle was not armed" is checked
+    if(!_csvLogFile.isOpen() &&
+           (_armed || _toolbox->settingsManager()->appSettings()->telemetrySaveNotArmed()->rawValue().toBool())){
+        _initializeCsv();
+    }
+
+    if(!_csvLogFile.isOpen()){
+        return;
+    }
+
     QStringList allFactValues;
     QTextStream stream(&_csvLogFile);
 

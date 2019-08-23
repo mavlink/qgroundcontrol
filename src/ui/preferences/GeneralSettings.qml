@@ -420,6 +420,14 @@ Rectangle {
                                 enabled:    promptSaveLog.checked && !disableDataPersistence.checked
                                 property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                             }
+                            FactCheckBox {
+                                id:         promptSaveCsv
+                                text:       qsTr("Save CSV log of telemetry data")
+                                fact:       _saveCsvTelemetry
+                                visible:    _saveCsvTelemetry.visible
+                                enabled:    !disableDataPersistence.checked
+                                property Fact _saveCsvTelemetry: QGroundControl.settingsManager.appSettings.saveCsvTelemetry
+                            }
                         }
                     }
 
