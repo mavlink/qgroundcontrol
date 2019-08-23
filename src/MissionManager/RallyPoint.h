@@ -22,8 +22,8 @@ class RallyPoint : public QObject
     Q_OBJECT
     
 public:
-    RallyPoint(const QGeoCoordinate& coordinate, QObject* parent = NULL);
-    RallyPoint(const RallyPoint& other, QObject* parent = NULL);
+    RallyPoint(const QGeoCoordinate& coordinate, QObject* parent = nullptr);
+    RallyPoint(const RallyPoint& other, QObject* parent = nullptr);
 
     ~RallyPoint();
 

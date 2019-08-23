@@ -256,5 +256,12 @@
     "longDescription":  "If this option is set, nothing will be saved to disk.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "usePairing",
+    "shortDescription": "Use Pairing",
+    "longDescription":  "Use Link Pairing.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]

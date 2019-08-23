@@ -24,11 +24,11 @@ QGC_LOGGING_CATEGORY(APMSensorsComponentControllerVerboseLog, "APMSensorsCompone
 const char* APMSensorsComponentController::_compassCalFitnessParam = "COMPASS_CAL_FIT";
 
 APMSensorsComponentController::APMSensorsComponentController(void)
-    : _sensorsComponent(NULL)
-    , _statusLog(NULL)
-    , _progressBar(NULL)
-    , _nextButton(NULL)
-    , _cancelButton(NULL)
+    : _sensorsComponent(nullptr)
+    , _statusLog(nullptr)
+    , _progressBar(nullptr)
+    , _nextButton(nullptr)
+    , _cancelButton(nullptr)
     , _showOrientationCalArea(false)
     , _calTypeInProgress(CalTypeNone)
     , _orientationCalDownSideDone(false)

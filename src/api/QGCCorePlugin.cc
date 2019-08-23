@@ -320,6 +320,14 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMeta
 {
     if (settingsGroup != AppSettings::settingsGroup) {
         // All changes refer to AppSettings
+#if !defined(QGC_ENABLE_PAIRING)
+        //-- If we don't support pairing, disable it.
+        if (metaData.name() == AppSettings::usePairingName) {
+            metaData.setRawDefaultValue(false);
+            //-- And hide the option
+            return false;
+        }
+#endif
         return true;
     }
 

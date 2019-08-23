@@ -15,10 +15,10 @@ QGCPositionManager::QGCPositionManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool           (app, toolbox)
     , _updateInterval   (0)
     , _gcsHeading       (NAN)
-    , _currentSource    (NULL)
-    , _defaultSource    (NULL)
-    , _nmeaSource       (NULL)
-    , _simulatedSource  (NULL)
+    , _currentSource    (nullptr)
+    , _defaultSource    (nullptr)
+    , _nmeaSource       (nullptr)
+    , _simulatedSource  (nullptr)
 {
 
 }

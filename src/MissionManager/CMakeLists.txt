@@ -64,6 +64,13 @@ add_library(MissionManager
 	${EXTRA_SRC}
 )
 
+add_custom_Target(MisionManagerQml
+SOURCES
+	QGCMapCircleVisuals.qml  
+	QGCMapPolygonVisuals.qml  
+	QGCMapPolylineVisuals.qml
+)
+
 target_link_libraries(MissionManager
 	PUBLIC
 		Qt5::Xml

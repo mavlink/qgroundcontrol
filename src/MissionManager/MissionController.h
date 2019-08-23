@@ -40,7 +40,7 @@ class MissionController : public PlanElementController
     Q_OBJECT
 
 public:
-    MissionController(PlanMasterController* masterController, QObject* parent = NULL);
+    MissionController(PlanMasterController* masterController, QObject* parent = nullptr);
     ~MissionController();
 
     typedef struct _MissionFlightStatus_t {

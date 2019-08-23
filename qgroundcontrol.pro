@@ -187,6 +187,30 @@ contains (DEFINES, QGC_DISABLE_BLUETOOTH) {
     DEFINES += QGC_ENABLE_BLUETOOTH
 }
 
+# NFC
+contains (DEFINES, QGC_DISABLE_NFC) {
+    message("Skipping support for NFC (manual override from command line)")
+    DEFINES -= QGC_ENABLE_NFC
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_NFC) {
+    message("Skipping support for NFC (manual override from user_config.pri)")
+    DEFINES -= QGC_ENABLE_NFC
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_NFC) {
+    message("Including support for NFC (manual override from user_config.pri)")
+    DEFINES += QGC_ENABLE_NFC
+}
+
+# QTNFC
+contains (DEFINES, QGC_DISABLE_QTNFC) {
+    message("Skipping support for QTNFC (manual override from command line)")
+    DEFINES -= QGC_ENABLE_QTNFC
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_QTNFC) {
+    message("Skipping support for QTNFC (manual override from user_config.pri)")
+    DEFINES -= QGC_ENABLE_QTNFC
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_ENABLE_QTNFC) {
+    message("Including support for QTNFC (manual override from user_config.pri)")
+    DEFINES += QGC_ENABLE_QTNFC
+}
+
 # USB Camera and UVC Video Sources
 contains (DEFINES, QGC_DISABLE_UVC) {
     message("Skipping support for UVC devices (manual override from command line)")
@@ -261,6 +285,11 @@ QT += \
     bluetooth \
 }
 
+contains(DEFINES, QGC_ENABLE_QTNFC) {
+QT += \
+    nfc \
+}
+
 #  testlib is needed even in release flavor for QSignalSpy support
 QT += testlib
 ReleaseBuild {
@@ -289,6 +318,18 @@ include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 #
 
 include(QGCExternalLibs.pri)
+
+# Pairing
+contains (DEFINES, QGC_DISABLE_PAIRING) {
+    message("Skipping support for Pairing")
+    DEFINES -= QGC_ENABLE_NFC
+} else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
+    message("Skipping support for Pairing (manual override from user_config.pri)")
+    DEFINES -= QGC_ENABLE_NFC
+} else {
+    message("Enabling support for Pairing")
+    DEFINES += QGC_ENABLE_PAIRING
+}
 
 #
 # Resources (custom code can replace them)
@@ -384,6 +425,11 @@ INCLUDEPATH += \
     src/ui/toolbar \
     src/ui/uas \
 
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    INCLUDEPATH += \
+        src/PairingManager \
+}
+
 #
 # Plugin API
 #
@@ -394,14 +440,24 @@ HEADERS += \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
     src/comm/MavlinkMessagesTimer.h \
-    src/GPS/Drivers/src/base_station.h
+    src/GPS/Drivers/src/base_station.h \
+
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    HEADERS += \
+        src/PairingManager/aes.h
+}
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
     src/api/QGCOptions.cc \
     src/api/QGCSettings.cc \
     src/api/QmlComponentInfo.cc \
-    src/comm/MavlinkMessagesTimer.cc
+    src/comm/MavlinkMessagesTimer.cc \
+
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    SOURCES += \
+        src/PairingManager/aes.cpp
+}
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
@@ -618,7 +674,12 @@ HEADERS += \
     src/UTM.h \
     src/AnalyzeView/GeoTagController.h \
     src/AnalyzeView/ExifParser.h \
+    src/uas/FileManager.h \
 
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    HEADERS += \
+        src/PairingManager/PairingManager.h \
+}
 
 AndroidBuild {
 HEADERS += \
@@ -642,6 +703,44 @@ WindowsBuild {
 contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     HEADERS += \
     src/comm/BluetoothLink.h \
+}
+
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    contains(DEFINES, QGC_ENABLE_QTNFC) {
+        HEADERS += \
+            src/PairingManager/QtNFC.h
+    }
+}
+
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    contains(DEFINES, QGC_ENABLE_NFC) {
+        HEADERS += \
+            src/PairingManager/PairingNFC.h \
+            src/PairingManager/NfcLibrary/inc/Nfc.h \
+            src/PairingManager/NfcLibrary/inc/Nfc_settings.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/P2P_NDEF.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T1T.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T2T.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T3T.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/RW_NDEF_T4T.h \
+            src/PairingManager/NfcLibrary/NdefLibrary/inc/T4T_NDEF_emu.h \
+            src/PairingManager/NfcLibrary/NxpNci/inc/NxpNci.h \
+            src/PairingManager/NfcTask/inc/ndef_helper.h \
+            src/PairingManager/TML/inc/framework_Allocator.h \
+            src/PairingManager/TML/inc/framework_Interface.h \
+            src/PairingManager/TML/inc/framework_Map.h \
+            src/PairingManager/TML/inc/framework_Timer.h \
+            src/PairingManager/TML/inc/lpcusbsio.h \
+            src/PairingManager/TML/inc/tml.h \
+            src/PairingManager/TML/inc/tool.h \
+            src/PairingManager/TML/inc/framework_Container.h \
+            src/PairingManager/TML/inc/framework_linux.h \
+            src/PairingManager/TML/inc/framework_Parcel.h \
+            src/PairingManager/TML/inc/hidapi.h \
+            src/PairingManager/TML/inc/lpcusbsio_i2c.h \
+            src/PairingManager/TML/inc/tml_hid.h
+    }
 }
 
 !NoSerialBuild {
@@ -669,7 +768,6 @@ HEADERS += \
     src/comm/QGCHilLink.h \
     src/comm/QGCJSBSimLink.h \
     src/comm/QGCXPlaneLink.h \
-    src/uas/FileManager.h \
 }
 
 iOSBuild {
@@ -793,6 +891,12 @@ SOURCES += \
     src/UTM.cpp \
     src/AnalyzeView/GeoTagController.cc \
     src/AnalyzeView/ExifParser.cc \
+    src/uas/FileManager.cc \
+
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    SOURCES += \
+        src/PairingManager/PairingManager.cc \
+}
 
 DebugBuild {
 SOURCES += \
@@ -812,6 +916,43 @@ contains(DEFINES, QGC_ENABLE_BLUETOOTH) {
     src/comm/BluetoothLink.cc \
 }
 
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    contains(DEFINES, QGC_ENABLE_QTNFC) {
+        SOURCES += \
+        src/PairingManager/QtNFC.cc
+    }
+}
+
+contains (DEFINES, QGC_ENABLE_PAIRING) {
+    contains(DEFINES, QGC_ENABLE_NFC) {
+        SOURCES += \
+        src/PairingManager/PairingNFC.cc \
+        src/PairingManager/NfcLibrary/NxpNci/src/NxpNci.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T4T.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/P2P_NDEF.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T3T.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T1T.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/RW_NDEF_T2T.c \
+        src/PairingManager/NfcLibrary/NdefLibrary/src/T4T_NDEF_emu.c \
+        src/PairingManager/TML/src/framework_Map.c \
+        src/PairingManager/TML/src/framework_log.c \
+        src/PairingManager/TML/src/framework_Parcel.c \
+        src/PairingManager/TML/src/framework_sem.c \
+        src/PairingManager/TML/src/framework_mutex.c \
+        src/PairingManager/TML/src/hid.c \
+        src/PairingManager/TML/src/framework_Allocator.c \
+        src/PairingManager/TML/src/tml_hid.c \
+        src/PairingManager/TML/src/framework_Container.c \
+        src/PairingManager/TML/src/framework_thread.c \
+        src/PairingManager/TML/src/framework_Timer.c \
+        src/PairingManager/TML/src/lpcusbsio.c \
+        src/PairingManager/TML/src/tml.c \
+        src/PairingManager/NfcTask/src/ndef_helper.c
+        LIBS += -lrt -ludev
+    }
+}
+
 !MobileBuild {
 SOURCES += \
     src/GPS/Drivers/src/gps_helper.cpp \
@@ -826,7 +967,6 @@ SOURCES += \
     src/RunGuard.cc \
     src/comm/QGCJSBSimLink.cc \
     src/comm/QGCXPlaneLink.cc \
-    src/uas/FileManager.cc \
 }
 
 #

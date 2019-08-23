@@ -35,7 +35,7 @@ VideoSurface::VideoSurface(QObject *parent)
 VideoSurface::~VideoSurface()
 {
 #if defined(QGC_GST_STREAMING)
-    if (!_refed && _data->videoSink != NULL) {
+    if (!_refed && _data->videoSink != nullptr) {
         gst_element_set_state(_data->videoSink, GST_STATE_NULL);
     }
     delete _data;
@@ -45,12 +45,12 @@ VideoSurface::~VideoSurface()
 #if defined(QGC_GST_STREAMING)
 GstElement* VideoSurface::videoSink()
 {
-    if (_data->videoSink == NULL) {
-        if ((_data->videoSink = gst_element_factory_make("qtquick2videosink", NULL)) == NULL) {
+    if (_data->videoSink == nullptr) {
+        if ((_data->videoSink = gst_element_factory_make("qtquick2videosink", nullptr)) == nullptr) {
             qCritical("Failed to create qtquick2videosink. Make sure it is installed correctly");
-            return NULL;
+            return nullptr;
         }
-        g_object_set(G_OBJECT(_data->videoSink), "sync", gboolean(false), NULL);
+        g_object_set(G_OBJECT(_data->videoSink), "sync", gboolean(false), nullptr);
         g_signal_connect(_data->videoSink, "update", G_CALLBACK(onUpdateThunk), (void* )this);
         _refed = true;
     }
@@ -59,7 +59,7 @@ GstElement* VideoSurface::videoSink()
 
 void VideoSurface::onUpdate()
 {
-    _lastFrame = time(0);
+    _lastFrame = time(nullptr);
     Q_FOREACH(QQuickItem *item, _data->items) {
         item->update();
     }

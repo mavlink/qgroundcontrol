@@ -51,7 +51,7 @@ public:
 
     Q_INVOKABLE Vehicle* getVehicleById(int vehicleId);
 
-    UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : NULL; }
+    UAS* activeUas(void) { return _activeVehicle ? _activeVehicle->uas() : nullptr; }
 
     // Property accessors
 

@@ -675,7 +675,7 @@ QGCCacheWorker::_importSets(QGCMapTask* mtask)
         //-- Close and delete old database
         if(_db) {
             delete _db;
-            _db = NULL;
+            _db = nullptr;
             QSqlDatabase::removeDatabase(kSession);
         }
         QFile file(_databasePath);
@@ -989,7 +989,7 @@ QGCCacheWorker::_init()
             _failed = true;
         }
         delete _db;
-        _db = NULL;
+        _db = nullptr;
         QSqlDatabase::removeDatabase(kSession);
     } else {
         qCritical() << "Could not find suitable cache directory.";

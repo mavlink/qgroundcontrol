@@ -104,9 +104,9 @@ QGCLogEntry::sizeStr() const
 
 //----------------------------------------------------------------------------------------
 LogDownloadController::LogDownloadController(void)
-    : _uas(NULL)
-    , _downloadData(NULL)
-    , _vehicle(NULL)
+    : _uas(nullptr)
+    , _downloadData(nullptr)
+    , _vehicle(nullptr)
     , _requestingLogEntries(false)
     , _downloadingLogs(false)
     , _retries(0)
@@ -137,7 +137,7 @@ LogDownloadController::_setActiveVehicle(Vehicle* vehicle)
         _logEntriesModel.clear();
         disconnect(_uas, &UASInterface::logEntry, this, &LogDownloadController::_logEntry);
         disconnect(_uas, &UASInterface::logData,  this, &LogDownloadController::_logData);
-        _uas = NULL;
+        _uas = nullptr;
     }
     _vehicle = vehicle;
     if(_vehicle) {
@@ -566,7 +566,7 @@ LogDownloadController::_getNextSelected()
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 //----------------------------------------------------------------------------------------
@@ -575,7 +575,7 @@ LogDownloadController::_prepareLogDownload()
 {
     if(_downloadData) {
         delete _downloadData;
-        _downloadData = NULL;
+        _downloadData = nullptr;
     }
     QGCLogEntry* entry = _getNextSelected();
     if(!entry) {
@@ -645,7 +645,7 @@ LogDownloadController::_prepareLogDownload()
         }
         _downloadData->entry->setStatus(tr("Error"));
         delete _downloadData;
-        _downloadData = NULL;
+        _downloadData = nullptr;
     }
     return result;
 }
@@ -720,7 +720,7 @@ QGCLogEntry*
 QGCLogModel::get(int index)
 {
     if (index < 0 || index >= _logEntries.count()) {
-        return NULL;
+        return nullptr;
     }
     return _logEntries[index];
 }

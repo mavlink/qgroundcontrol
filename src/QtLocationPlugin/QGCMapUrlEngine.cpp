@@ -42,7 +42,7 @@ UrlFactory::UrlFactory()
     : _timeout(5 * 1000)
 #ifndef QGC_NO_GOOGLE_MAPS
     , _googleVersionRetrieved(false)
-    , _googleReply(NULL)
+    , _googleReply(nullptr)
 #endif
 {
     QStringList langs = QLocale::system().uiLanguages();
@@ -410,7 +410,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
                     server += "mapbox.high-contrast";
                     break;
                 default:
-                    return QString::null;
+                    return {};
             }
             server += QString("/%1/%2/%3.jpg80?access_token=%4").arg(zoom).arg(x).arg(y).arg(mapBoxToken);
             return server;
@@ -473,7 +473,7 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         qWarning("Unknown map id %d\n", type);
         break;
     }
-    return QString::null;
+    return {};
 }
 
 //-----------------------------------------------------------------------------
@@ -512,7 +512,7 @@ UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
     if(_googleReply)
     {
         _googleReply->deleteLater();
-        _googleReply = NULL;
+        _googleReply = nullptr;
     }
 }
 #endif
@@ -521,7 +521,7 @@ UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
 void
 UrlFactory::_replyDestroyed()
 {
-    _googleReply = NULL;
+    _googleReply = nullptr;
 }
 #endif
 
@@ -563,7 +563,7 @@ UrlFactory::_googleVersionCompleted()
         _versionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
     }
     _googleReply->deleteLater();
-    _googleReply = NULL;
+    _googleReply = nullptr;
 }
 #endif
 
