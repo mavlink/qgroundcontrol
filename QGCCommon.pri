@@ -3,7 +3,7 @@
 # Please see our website at <http://qgroundcontrol.org>
 # Maintainer:
 # Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2014 QGroundControl Developers
+# (c) 2009-2019 QGroundControl Developers
 # License terms set in COPYING.md
 # -------------------------------------------------
 
@@ -21,6 +21,7 @@ linux {
         message("Linux build")
         CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_ENABLE_NFC RW_SUPPORT
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         linux-clang {
@@ -254,6 +255,10 @@ ReleaseBuild {
     }
 
     WindowsBuild {
+        *msvc* { # visual studio spec filter
+            # Run compilation using VS compiler using multiple threads
+            QMAKE_CXXFLAGS += -MP
+        }
         # Enable function level linking and enhanced optimized debugging
         QMAKE_CFLAGS_RELEASE   += /Gy /Zo
         QMAKE_CXXFLAGS_RELEASE += /Gy /Zo

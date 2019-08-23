@@ -179,5 +179,9 @@
         <file alias="Yield.svg">src/ui/toolbar/Images/Yield.svg</file>
         <file alias="ZoomMinus.svg">src/FlightMap/Images/ZoomMinus.svg</file>
         <file alias="ZoomPlus.svg">src/FlightMap/Images/ZoomPlus.svg</file>
+
+        <file alias="PairingIcon.svg">src/PairingManager/Images/PairingIcon.svg</file>
+        <file alias="PairingIconLight.svg">src/PairingManager/Images/PairingIconLight.svg</file>
+
     </qresource>
 </RCC>
