@@ -575,6 +575,19 @@ const QVariantList& FirmwarePlugin::cameraList(const Vehicle* vehicle)
             2.0,                // minimum trigger interval
             this);              // parent
         _cameraList.append(QVariant::fromValue(metaData));
+        
+        metaData = new CameraMetaData(
+            tr("Sony DSC-RX0"),
+            13.2,               // sensorWidth
+            8.8,                // sensorHeight
+            4800,               // imageWidth
+            3200,               // imageHeight
+            7.7,                // focalLength
+            true,               // true: landscape orientation
+            false,              // true: camera is fixed orientation
+            0,                  // minimum trigger interval
+            this);              // parent
+        _cameraList.append(QVariant::fromValue(metaData));
 
         metaData = new CameraMetaData(
             //-- http://www.sony.co.uk/electronics/interchangeable-lens-cameras/ilce-qx1-body-kit/specifications
