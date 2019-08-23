@@ -251,7 +251,7 @@ Rectangle {
                                 FactCheckBox {
                                     text:       qsTr("Use Vehicle Pairing")
                                     fact:       _usePairing
-                                    visible:    _usePairing && _usePairing.visible
+                                    visible:    _usePairing && _usePairing.visible && QGroundControl.supportsPairing
                                     property Fact _usePairing: QGroundControl.settingsManager.appSettings.usePairing
                                 }
 
