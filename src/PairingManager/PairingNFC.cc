@@ -144,7 +144,7 @@ void PairingNFC::run()
     while(!_exitThread)
     {
         qCDebug(PairingNFCLog) << "Waiting for NFC connection";
-        qgcApp()->toolbox()->pairingManager()->setStatusMessage(tr("Waiting for NFC connection"));
+        qgcApp()->toolbox()->pairingManager()->setStatusMessage(PairingManager::PairingActive, tr("Waiting for NFC connection"));
 
         // Wait until a peer is discovered
         while(NxpNci_WaitForDiscoveryNotification(&RfInterface) != NFC_SUCCESS);
@@ -158,14 +158,14 @@ void PairingNFC::run()
             qCDebug(PairingNFCLog) << "Wrong discovery";
         }
     }
-    qgcApp()->toolbox()->pairingManager()->setStatusMessage("");
+    qgcApp()->toolbox()->pairingManager()->setStatusMessage(PairingManager::PairingIdle, "");
     qCDebug(PairingNFCLog) << "NFC: Stop";
 }
 
 //-----------------------------------------------------------------------------
 void PairingNFC::task_nfc_reader(NxpNci_RfIntf_t RfIntf)
 {
-    qgcApp()->toolbox()->pairingManager()->setStatusMessage(tr("Device detected"));
+    qgcApp()->toolbox()->pairingManager()->setStatusMessage(PairingManager::PairingActive, tr("Device detected"));
     qCDebug(PairingNFCLog) << "NFC: Device detected";
     // For each discovered cards
     while(!_exitThread) {
@@ -202,7 +202,7 @@ void PairingNFC::task_nfc_reader(NxpNci_RfIntf_t RfIntf)
     // Wait for card removal
     NxpNci_ProcessReaderMode(RfIntf, PRESENCE_CHECK);
 
-    qgcApp()->toolbox()->pairingManager()->setStatusMessage(tr("Device removed"));
+    qgcApp()->toolbox()->pairingManager()->setStatusMessage(PairingManager::PairingActive, tr("Device removed"));
     qCDebug(PairingNFCLog) << "NFC device removed";
 
     // Restart discovery loop

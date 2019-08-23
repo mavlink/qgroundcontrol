@@ -24,8 +24,9 @@ Item {
     width:          pairingRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    property bool _light:        qgcPal.globalTheme === QGCPalette.Light && !activeVehicle
-    property real _contentWidth: ScreenTools.defaultFontPixelWidth * 30
+    property bool _light:           qgcPal.globalTheme === QGCPalette.Light && !activeVehicle
+    property real _contentWidth:    ScreenTools.defaultFontPixelWidth  * 30
+    property real _contentSpacing:  ScreenTools.defaultFontPixelHeight * 0.5
     Row {
         id:                     pairingRow
         spacing:                ScreenTools.defaultFontPixelWidth
@@ -91,7 +92,7 @@ Item {
             anchors.centerIn:   parent
             Column {
                 id:                 comboListCol
-                spacing:            ScreenTools.defaultFontPixelHeight
+                spacing:            _contentSpacing
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
@@ -103,7 +104,7 @@ Item {
                 Item { width: 1; height: 1; }
                 Rectangle {
                     width:          ScreenTools.defaultFontPixelWidth  * 40
-                    height:         ScreenTools.defaultFontPixelHeight * 12
+                    height:         ScreenTools.defaultFontPixelHeight * 8
                     color:          Qt.rgba(0,0,0,0)
                     border.color:   qgcPal.text
                     border.width:   1
@@ -166,7 +167,7 @@ Item {
             anchors.centerIn:   parent
             Column {
                 id:                 mhCol
-                spacing:            ScreenTools.defaultFontPixelHeight
+                spacing:            _contentSpacing
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
@@ -186,7 +187,7 @@ Item {
                 Item { width: 1; height: 1; }
                 Rectangle {
                     width:          ScreenTools.defaultFontPixelWidth  * 40
-                    height:         ScreenTools.defaultFontPixelHeight * 12
+                    height:         ScreenTools.defaultFontPixelHeight * 8
                     color:          Qt.rgba(0,0,0,0)
                     border.color:   qgcPal.text
                     border.width:   1
@@ -235,7 +236,7 @@ Item {
             anchors.centerIn:   parent
             Column {
                 id:                 nfcCol
-                spacing:            ScreenTools.defaultFontPixelHeight
+                spacing:            _contentSpacing
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
@@ -304,7 +305,7 @@ Item {
             anchors.centerIn:   parent
             Column {
                 id:                 connectionCol
-                spacing:            ScreenTools.defaultFontPixelHeight
+                spacing:            _contentSpacing * 2
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
