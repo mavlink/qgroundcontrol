@@ -92,6 +92,20 @@ exists($$MAVLINKPATH/common) {
 INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
+# Pairing
+MacBuild {
+    #- Pairing is generally not supported on macOS. This is here solely for development.
+    exists(/usr/local/Cellar/openssl/1.0.2s/include) {
+        INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2s/include
+        LIBS += -L/usr/local/Cellar/openssl/1.0.2s/lib
+        LIBS += -lcrypto -lz
+    } else {
+        DEFINES += QGC_DISABLE_PAIRING
+    }
+} else {
+    LIBS += -lcrypto -lz
+}
+
 #
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib
@@ -115,24 +129,36 @@ MacBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
     INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
+    INCLUDEPATH += $$BASEDIR/libs/zlib/Windows/include
 
     contains(QT_ARCH, i386) {
+        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x86/include
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x86
+        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x86/lib
     } else {
+        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Windows/x64/include
         LIBS += -L$$BASEDIR/libs/lib/sdl2/msvc/lib/x64
+        LIBS += -L$$BASEDIR/libs/OpenSSL/Windows/x64/lib
     }
+    LIBS += -L$$BASEDIR/libs/zlib/Windows/libs
     LIBS += \
         -lSDL2main \
-        -lSDL2
+        -lSDL2 \
+		-lz \
+		-llibeay32
 }
 
 AndroidBuild {
     contains(QT_ARCH, arm) {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-armeabi-v7a/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-armeabi-v7a/lib/libssl.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
+        LIBS += $$ANDROID_EXTRA_LIBS
+        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
     } else {
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-x86/lib/libcrypto.so
-        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/AndroidOpenSSL/arch-x86/lib/libssl.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
+        LIBS += $$ANDROID_EXTRA_LIBS
+        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
     }
 }
 
@@ -165,7 +191,7 @@ contains (DEFINES, DISABLE_AIRMAP) {
 } else {
     AIRMAPD_PATH    = $$PWD/libs/airmapd
     AIRMAP_QT_PATH  = Qt.$${QT_MAJOR_VERSION}.$${QT_MINOR_VERSION}
-    message(Looking for Airmap in $$AIRMAP_QT_PATH)
+    message('Looking for Airmap in folder "$${AIRMAPD_PATH}", variant: "$$AIRMAP_QT_PATH"')
     MacBuild {
         exists($${AIRMAPD_PATH}/macOS/$$AIRMAP_QT_PATH) {
             message("Including support for AirMap for macOS")

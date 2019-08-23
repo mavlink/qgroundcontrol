@@ -22,6 +22,16 @@ ObjectModel {
         }
     }
 
+    function isPassed() {
+        for (var i = 0; i < _root.count; i++) {
+            var group = _root.get(i)
+            if(!group.passed) {
+                return false
+            }
+        }
+        return true
+    }
+
     Component.onCompleted: reset()
 
 }

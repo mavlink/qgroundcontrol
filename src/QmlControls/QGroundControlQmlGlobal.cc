@@ -66,6 +66,9 @@ void QGroundControlQmlGlobal::setToolbox(QGCToolbox* toolbox)
     _settingsManager        = toolbox->settingsManager();
     _gpsRtkFactGroup        = qgcApp()->gpsRtkFactGroup();
     _airspaceManager        = toolbox->airspaceManager();
+#if defined(QGC_ENABLE_PAIRING)
+    _pairingManager         = toolbox->pairingManager();
+#endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
     _taisyncManager         = toolbox->taisyncManager();
 #endif
