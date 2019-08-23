@@ -6,7 +6,6 @@
         <file alias="ArmedIndicator.qml">src/ui/toolbar/ArmedIndicator.qml</file>
         <file alias="BatteryIndicator.qml">src/ui/toolbar/BatteryIndicator.qml</file>
         <file alias="GPSIndicator.qml">src/ui/toolbar/GPSIndicator.qml</file>
-        <file alias="PairingIndicator.qml">src/ui/toolbar/PairingIndicator.qml</file>
         <file alias="GPSRTKIndicator.qml">src/ui/toolbar/GPSRTKIndicator.qml</file>
         <file alias="JoystickIndicator.qml">src/ui/toolbar/JoystickIndicator.qml</file>
         <file alias="LinkIndicator.qml">src/ui/toolbar/LinkIndicator.qml</file>
@@ -15,6 +14,7 @@
         <file alias="MessageIndicator.qml">src/ui/toolbar/MessageIndicator.qml</file>
         <file alias="ModeIndicator.qml">src/ui/toolbar/ModeIndicator.qml</file>
         <file alias="MultiVehicleSelector.qml">src/ui/toolbar/MultiVehicleSelector.qml</file>
+        <file alias="PairingIndicator.qml">src/ui/toolbar/PairingIndicator.qml</file>
         <file alias="RCRSSIIndicator.qml">src/ui/toolbar/RCRSSIIndicator.qml</file>
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="VTOLModeIndicator.qml">src/ui/toolbar/VTOLModeIndicator.qml</file>
@@ -56,7 +56,6 @@
         <file alias="MockLinkSettings.qml">src/ui/preferences/MockLinkSettings.qml</file>
         <file alias="MotorComponent.qml">src/AutoPilotPlugins/Common/MotorComponent.qml</file>
         <file alias="OfflineMap.qml">src/QtLocationPlugin/QMLControl/OfflineMap.qml</file>
-        <file alias="PairingSettings.qml">src/PairingManager/PairingSettings.qml</file>
         <file alias="PlanToolBar.qml">src/PlanView/PlanToolBar.qml</file>
         <file alias="PlanToolBarIndicators.qml">src/PlanView/PlanToolBarIndicators.qml</file>
         <file alias="PlanView.qml">src/PlanView/PlanView.qml</file>
