@@ -124,7 +124,7 @@ Item {
                 }
                 Item { width: 1; height: 1; }
                 Repeater {
-                    model:          QGroundControl.pairingManager.pairingLinkTypeStrings
+                    model:          QGroundControl.pairingManager ? QGroundControl.pairingManager.pairingLinkTypeStrings : []
                     delegate:       QGCButton {
                         text:       modelData
                         width:      _contentWidth
@@ -309,7 +309,7 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           QGroundControl.pairingManager.pairingStatusStr
+                    text:           QGroundControl.pairingManager ? QGroundControl.pairingManager.pairingStatusStr : ""
                     font.pointSize: ScreenTools.mediumFontPointSize
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -336,20 +336,20 @@ Item {
                     }
                 }
                 QGCLabel {
-                    text:           qsTr("List Of Available Devices")
-                    visible:        QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                    font.family:    ScreenTools.demiboldFontFamily
+                    text:               qsTr("List Of Available Devices")
+                    visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
+                    font.pointSize:     ScreenTools.mediumFontPointSize
+                    font.family:        ScreenTools.demiboldFontFamily
                 }
                 Item { width: 1; height: 1; }
                 GridLayout {
-                    columns:        3
-                    visible:        QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible
-                    columnSpacing:  ScreenTools.defaultFontPixelWidth
-                    rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
+                    columns:            3
+                    visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
                     anchors.horizontalCenter: parent.horizontalCenter
                     Repeater {
-                        model:      QGroundControl.pairingManager.pairedDeviceNameList
+                        model:          QGroundControl.pairingManager ? QGroundControl.pairingManager.pairedDeviceNameList : []
                         QGCLabel {
                             text:   modelData
                             Layout.row:         index
@@ -359,7 +359,7 @@ Item {
                         }
                     }
                     Repeater {
-                        model:      QGroundControl.pairingManager.pairedDeviceNameList
+                        model:          QGroundControl.pairingManager ? QGroundControl.pairingManager.pairedDeviceNameList : []
                         QGCButton {
                             text:               qsTr("Connect")
                             Layout.row:         index
@@ -370,7 +370,7 @@ Item {
                         }
                     }
                     Repeater {
-                        model:      QGroundControl.pairingManager.pairedDeviceNameList
+                        model:          QGroundControl.pairingManager ? QGroundControl.pairingManager.pairedDeviceNameList : []
                         QGCColoredImage {
                             height:             ScreenTools.defaultFontPixelHeight * 1.5
                             width:              height
@@ -391,7 +391,7 @@ Item {
                 Item { width: 1; height: 1; }
                 RowLayout {
                     id:                         connectedButtons
-                    visible:                    QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingIdle
+                    visible:                    QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingIdle) : false
                     spacing:                    ScreenTools.defaultFontPixelWidth * 4
                     anchors.horizontalCenter:   parent.horizontalCenter
                     QGCButton {
@@ -408,7 +408,7 @@ Item {
                         }
                     }
                     QGCButton {
-                        text:                   QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected ? qsTr("Go And Fly") : qsTr("Close")
+                        text:                   QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected ? qsTr("Go And Fly") : qsTr("Close")) : ""
                         Layout.minimumWidth:    _contentWidth * 0.333
                         Layout.fillWidth:       true
                         onClicked: {
@@ -418,7 +418,7 @@ Item {
                 }
                 QGCButton {
                     id:                         cancelButton
-                    visible:                    QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnecting
+                    visible:                    QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnecting) : false
                     text:                       qsTr("Cancel")
                     width:                      _contentWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
