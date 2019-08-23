@@ -59,7 +59,7 @@ signals:
 
 protected:
     /// All access to AutoPilotPugin objects is through getInstanceForAutoPilotPlugin
-    AutoPilotPlugin(QObject* parent = NULL) : QObject(parent) { }
+    AutoPilotPlugin(QObject* parent = nullptr) : QObject(parent) { }
 
     Vehicle*        _vehicle;
     FirmwarePlugin* _firmwarePlugin;

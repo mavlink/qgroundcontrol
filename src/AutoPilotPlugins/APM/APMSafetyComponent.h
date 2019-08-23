@@ -18,7 +18,7 @@ class APMSafetyComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMSafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;

@@ -3,7 +3,7 @@
 # Please see our website at <http://qgroundcontrol.org>
 # Maintainer:
 # Lorenz Meier <lm@inf.ethz.ch>
-# (c) 2009-2014 QGroundControl Developers
+# (c) 2009-2019 QGroundControl Developers
 # License terms set in COPYING.md
 # -------------------------------------------------
 
@@ -21,6 +21,7 @@ linux {
         message("Linux build")
         CONFIG  += LinuxBuild
         DEFINES += __STDC_LIMIT_MACROS
+        DEFINES += QGC_ENABLE_NFC RW_SUPPORT
         DEFINES += QGC_GST_TAISYNC_ENABLED
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         linux-clang {
@@ -132,14 +133,15 @@ exists ($$PWD/.git) {
     contains(GIT_DESCRIBE, v[0-9]+.[0-9]+.[0-9]+) {
         # release version "vX.Y.Z"
         GIT_VERSION = $${GIT_DESCRIBE}
+        VERSION      = $$replace(GIT_DESCRIBE, "v", "")
+        VERSION      = $$replace(VERSION, "-", ".")
+        VERSION      = $$section(VERSION, ".", 0, 3)
     } else {
         # development version "Development branch:sha date"
         GIT_VERSION = "Development $${GIT_BRANCH}:$${GIT_HASH} $${GIT_TIME}"
+        VERSION         = 0.0.0
     }
 
-    VERSION      = $$replace(GIT_DESCRIBE, "v", "")
-    VERSION      = $$replace(VERSION, "-", ".")
-    VERSION      = $$section(VERSION, ".", 0, 3)
     MacBuild {
         MAC_VERSION  = $$section(VERSION, ".", 0, 2)
         MAC_BUILD    = $$section(VERSION, ".", 3, 3)

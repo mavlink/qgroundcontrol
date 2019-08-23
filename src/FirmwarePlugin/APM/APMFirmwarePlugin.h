@@ -148,7 +148,7 @@ class APMFirmwarePluginInstanceData : public QObject
     Q_OBJECT
 
 public:
-    APMFirmwarePluginInstanceData(QObject* parent = NULL);
+    APMFirmwarePluginInstanceData(QObject* parent = nullptr);
 
     bool                    textSeverityAdjustmentNeeded;
 };

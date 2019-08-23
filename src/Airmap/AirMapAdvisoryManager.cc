@@ -84,7 +84,7 @@ AirMapAdvisoryManager::_requestAdvisories()
     }
     params.geometry = Geometry(polygon);
     //-- Rulesets
-    AirMapRulesetsManager* pRulesMgr = dynamic_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
+    auto* pRulesMgr = qobject_cast<AirMapRulesetsManager*>(qgcApp()->toolbox()->airspaceManager()->ruleSets());
     QString ruleIDs;
     if(pRulesMgr) {
         for(int rs = 0; rs < pRulesMgr->ruleSets()->count(); rs++) {

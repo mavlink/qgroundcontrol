@@ -18,7 +18,7 @@ class SpeedSection : public Section
     Q_OBJECT
 
 public:
-    SpeedSection(Vehicle* vehicle, QObject* parent = NULL);
+    SpeedSection(Vehicle* vehicle, QObject* parent = nullptr);
 
     Q_PROPERTY(bool     specifyFlightSpeed  READ specifyFlightSpeed WRITE setSpecifyFlightSpeed NOTIFY specifyFlightSpeedChanged)
     Q_PROPERTY(Fact*    flightSpeed         READ flightSpeed                                    CONSTANT)

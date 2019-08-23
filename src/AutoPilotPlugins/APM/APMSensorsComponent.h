@@ -18,7 +18,7 @@ class APMSensorsComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMSensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMSensorsComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
 
     bool compassSetupNeeded(void) const;
     bool accelSetupNeeded(void) const;

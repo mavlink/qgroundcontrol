@@ -19,7 +19,7 @@ class APMRadioComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMRadioComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;

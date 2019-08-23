@@ -1,0 +1,29 @@
+add_custom_target(PlanViewQml
+SOURCES
+    RallyPointMapVisuals.qml
+    CorridorScanEditor.qml
+    CameraSection.qml
+    SurveyMapVisual.qml
+    CameraCalc.qml
+    SurveyItemEditor.qml
+    RallyPointEditorHeader.qml
+    GeoFenceMapVisuals.qml
+    CorridorScanMapVisual.qml
+    CMakeLists.txt
+    PlanToolBarIndicators.qml
+    MissionItemEditor.qml
+    MissionItemStatus.qml
+    RallyPointItemEditor.qml
+    PlanView.qml
+    FWLandingPatternMapVisual.qml
+    GeoFenceEditor.qml
+    MissionItemMapVisual.qml
+    SimpleItemMapVisual.qml
+    StructureScanEditor.qml
+    PlanToolBar.qml
+    TransectStyleComplexItemStats.qml
+    MissionSettingsEditor.qml
+    SimpleItemEditor.qml
+    StructureScanMapVisual.qml
+    FWLandingPatternEditor.qml
+)

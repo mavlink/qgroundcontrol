@@ -140,7 +140,7 @@ public:
     bool        enableAutoStart     () { return _enableAutoStart; }
     bool        uploading                ();
     bool        logRunning          () { return _logRunning; }
-    bool        canStartLog         () { return _vehicle != NULL && !_logginDenied; }
+    bool        canStartLog         () { return _vehicle != nullptr && !_logginDenied; }
     bool        deleteAfterUpload   () { return _deleteAfterUpload; }
     bool        publicLog           () { return _publicLog; }
     int         windSpeed           () { return _windSpeed; }
