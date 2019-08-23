@@ -55,7 +55,8 @@ public:
         PairingConnecting,
         PairingConnected,
         PairingRejected,
-        PairingConnectionRejected
+        PairingConnectionRejected,
+        PairingError
     };
 
     Q_ENUM(PairingStatus)
@@ -66,7 +67,7 @@ public:
     PairingStatus   pairingStatus() { return _status; }
     int             nfcIndex(void) { return _nfcIndex; }
     int             microhardIndex(void) { return _microhardIndex; }
-    void            setStatusMessage(QString status) { emit setPairingStatus(status); }
+    void            setStatusMessage(PairingStatus status, QString statusStr) { emit setPairingStatus(status, statusStr); }
     void            jsonReceived(QString json) { emit parsePairingJson(json); }
 #ifdef __android__
     static void     setNativeMethods(void);
@@ -95,7 +96,7 @@ signals:
     void nameListChanged();
     void pairingStatusChanged();
     void parsePairingJson(QString json);
-    void setPairingStatus(QString pairingStatus);
+    void setPairingStatus(PairingStatus status, QString pairingStatus);
     void pairedListChanged();
 
 private slots:
@@ -103,14 +104,15 @@ private slots:
     void _stopUpload();
     void _startUploadRequest();
     void _parsePairingJson(QString jsonEnc);
-    void _setPairingStatus(QString pairingStatus);
+    void _setPairingStatus(PairingStatus status, QString pairingStatus);
 
 private:
-    QString                 _pairingStatus;
+    QString                 _statusString;
     QString                 _jsonFileName;
     QVariantMap             _remotePairingMap;
     int                     _nfcIndex = -1;
     int                     _microhardIndex = -1;
+    int                     _pairRetryCount = 0;
     PairingStatus           _status = PairingIdle;
     AES                     _aes;
     QJsonDocument           _jsonDoc{};

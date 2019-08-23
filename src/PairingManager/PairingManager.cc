@@ -72,8 +72,7 @@ PairingManager::_pairingCompleted(QString name)
     _remotePairingMap["NM"] = name;
     emit pairedListChanged();
     _app->informationMessageBoxOnMainThread("", tr("Paired with %1").arg(name));
-    _status = PairingSuccess;
-    setPairingStatus(tr("Pairing successfull"));
+    setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
 }
 
 //-----------------------------------------------------------------------------
@@ -83,8 +82,7 @@ PairingManager::_connectionCompleted(QString name)
     //QString pwd = _remotePairingMap["PWD"].toString();
     //_toolbox->microhardManager()->switchToConnectionEncryptionKey(pwd);
     _app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
-    _status = PairingConnected;
-    setPairingStatus(tr("Connection successfull"));
+    setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
 //-----------------------------------------------------------------------------
@@ -111,7 +109,6 @@ PairingManager::_startUploadRequest()
     QNetworkRequest req;
     req.setUrl(QUrl(_uploadURL));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-
     QNetworkReply *reply = _uploadManager->post(req, _uploadData.toUtf8());
     connect(reply, &QNetworkReply::finished, this, &PairingManager::_uploadFinished);
 }
@@ -146,19 +143,24 @@ PairingManager::_uploadFinished(void)
                 } else if (a[0] == "Connected" && a.length() > 1) {
                     _connectionCompleted(a[1]);
                 } else if (a[0] == "Connection" && a.length() > 1) {
-                    _status = PairingConnectionRejected;
-                    setPairingStatus(tr("Connection rejected."));
+                    setPairingStatus(PairingConnectionRejected, tr("Connection Rejected"));
                     qCDebug(PairingManagerLog) << "Connection error: " << str;
                 } else {
-                    _status = PairingRejected;
-                    setPairingStatus(tr("Pairing rejected."));
+                    setPairingStatus(PairingRejected, tr("Pairing Rejected"));
                     qCDebug(PairingManagerLog) << "Pairing error: " << str;
                 }
-                delete _uploadManager;
+                _uploadManager->deleteLater();
                 _uploadManager = nullptr;
             } else {
-                qCDebug(PairingManagerLog) << "Upload error: " + reply->errorString();
-                _startUploadRequest();
+                if(++_pairRetryCount > 3) {
+                    qCDebug(PairingManagerLog) << "Giving up";
+                    setPairingStatus(PairingError, tr("Too Many Errors"));
+                    _uploadManager->deleteLater();
+                    _uploadManager = nullptr;
+                } else {
+                    qCDebug(PairingManagerLog) << "Upload error: " + reply->errorString();
+                    _startUploadRequest();
+                }
             }
         }
     }
@@ -181,8 +183,7 @@ PairingManager::_parsePairingJsonFile()
 void
 PairingManager::connectToPairedDevice(QString name)
 {
-    _status = PairingConnecting;
-    setPairingStatus(tr("Connecting to %1").arg(name));
+    setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     QFile file(_pairingCacheFile(name));
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json = file.readAll();
@@ -198,6 +199,7 @@ PairingManager::pairedDeviceNameList(void)
     while (it.hasNext()) {
         QFileInfo fileInfo(it.next());
         list.append(fileInfo.fileName());
+        qCDebug(PairingManagerLog) << "Listing: " << fileInfo.fileName();
     }
 
     return list;
@@ -234,10 +236,12 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     _jsonDoc = QJsonDocument::fromJson(json.toUtf8());
 
     if (_jsonDoc.isNull()) {
+        setPairingStatus(PairingError, tr("Invalid Pairing File"));
         qCDebug(PairingManagerLog) << "Failed to create Pairing JSON doc.";
         return;
     }
     if (!_jsonDoc.isObject()) {
+        setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON is not an object.";
         return;
     }
@@ -245,6 +249,7 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     QJsonObject jsonObj = _jsonDoc.object();
 
     if (jsonObj.isEmpty()) {
+        setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON object is empty.";
         return;
     }
@@ -257,6 +262,7 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     }
 
     if (linkType.length()==0) {
+        setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON is malformed.";
         return;
     }
@@ -452,9 +458,10 @@ PairingManager::pairingLinkTypeStrings(void)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_setPairingStatus(QString status)
+PairingManager::_setPairingStatus(PairingStatus status, QString statusStr)
 {
-    _pairingStatus = status;
+    _status = status;
+    _statusString = statusStr;
     emit pairingStatusChanged();
 }
 
@@ -462,7 +469,7 @@ PairingManager::_setPairingStatus(QString status)
 QString
 PairingManager::pairingStatusStr(void) const
 {
-    return _pairingStatus;
+    return _statusString;
 }
 
 #if QGC_GST_MICROHARD_ENABLED
@@ -471,8 +478,8 @@ void
 PairingManager::startMicrohardPairing()
 {
     stopPairing();
-    _status = PairingActive;
-    setPairingStatus(tr("Microhard pairing running."));
+    _pairRetryCount = 0;
+    setPairingStatus(PairingActive, tr("Pairing..."));
     _parsePairingJson(_assumeMicrohardPairingJson());
 }
 #endif
@@ -485,8 +492,7 @@ PairingManager::stopPairing()
     pairingNFC.stop();
 #endif
     _stopUpload();
-    _status = PairingIdle;
-    setPairingStatus("");
+    setPairingStatus(PairingIdle, "");
 }
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
@@ -495,7 +501,7 @@ void
 PairingManager::startNFCScan()
 {
     stopPairing();
-    emit pairingStatusChanged();
+    setPairingStatus(PairingActive, tr("Pairing..."));
     pairingNFC.start();
 }
 

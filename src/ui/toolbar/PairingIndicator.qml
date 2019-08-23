@@ -56,10 +56,14 @@ Item {
     MouseArea {
         anchors.fill:           parent
         onClicked: {
-            if(QGroundControl.pairingManager.pairingLinkTypeStrings.length > 1)
-                pairingPopup.open()
-            else {
-                mhPopup.open()
+            if(QGroundControl.pairingManager.pairedDeviceNameList.length > 1) {
+                connectionPopup.open()
+            } else {
+                if(QGroundControl.pairingManager.pairingLinkTypeStrings.length > 1)
+                    pairingPopup.open()
+                else {
+                    mhPopup.open()
+                }
             }
         }
     }
@@ -91,7 +95,7 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           qsTr("No Vehicles Available")
+                    text:           qsTr("Pair New Vehicle")
                     font.pointSize: ScreenTools.mediumFontPointSize
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -166,7 +170,7 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           qsTr("No Vehicles Available")
+                    text:           qsTr("Pair New Vehicle")
                     font.pointSize: ScreenTools.mediumFontPointSize
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -235,7 +239,7 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           qsTr("No Vehicles Available")
+                    text:           qsTr("Pair New Vehicle")
                     font.pointSize: ScreenTools.mediumFontPointSize
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -287,7 +291,7 @@ Item {
         parent:                 Overlay.overlay
         x:                      Math.round((mainWindow.width  - width)  * 0.5)
         y:                      Math.round((mainWindow.height - height) * 0.5)
-        closePolicy:            Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        closePolicy:            cancelButton.visible ? Popup.NoAutoClose : (Popup.CloseOnEscape | Popup.CloseOnPressOutside)
         background: Rectangle {
             anchors.fill:       parent
             color:              qgcPal.globalTheme === QGCPalette.Light ? Qt.rgba(1,1,1,0.95) : Qt.rgba(0,0,0,0.75)
@@ -310,29 +314,58 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Item { width: 1; height: 1; }
+                QGCColoredImage {
+                    id:                 busyIndicator
+                    height:             ScreenTools.defaultFontPixelHeight * 2
+                    width:              height
+                    source:             "/qmlimages/MapSync.svg"
+                    sourceSize.height:  height
+                    fillMode:           Image.PreserveAspectFit
+                    mipmap:             true
+                    smooth:             true
+                    color:              qgcPal.text
+                    visible:            cancelButton.visible
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    RotationAnimation on rotation {
+                        loops:          Animation.Infinite
+                        from:           360
+                        to:             0
+                        duration:       720
+                        running:        busyIndicator.visible
+                    }
+                }
                 QGCLabel {
                     text:           qsTr("List Of Available Devices")
-                    visible:        QGroundControl.pairingManager.pairedDeviceNameList.length > 0
+                    visible:        QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible
                     font.pointSize: ScreenTools.mediumFontPointSize
                     font.family:    ScreenTools.demiboldFontFamily
                 }
                 Item { width: 1; height: 1; }
                 GridLayout {
                     columns:        3
-                    visible:        QGroundControl.pairingManager.pairedDeviceNameList.length > 0
+                    visible:        QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible
+                    columnSpacing:  ScreenTools.defaultFontPixelWidth
+                    rowSpacing:     ScreenTools.defaultFontPixelHeight * 0.25
                     anchors.horizontalCenter: parent.horizontalCenter
                     Repeater {
                         model:      QGroundControl.pairingManager.pairedDeviceNameList
                         QGCLabel {
                             text:   modelData
-                            Layout.minimumWidth: ScreenTools.defaultFontPixelWidth * 20
-                            Layout.fillWidth:    true
+                            Layout.row:         index
+                            Layout.column:      0
+                            Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
+                            Layout.fillWidth:   true
                         }
                     }
                     Repeater {
                         model:      QGroundControl.pairingManager.pairedDeviceNameList
                         QGCButton {
-                            text:   qsTr("Connect")
+                            text:               qsTr("Connect")
+                            Layout.row:         index
+                            Layout.column:      1
+                            onClicked: {
+                                QGroundControl.pairingManager.connectToPairedDevice(modelData)
+                            }
                         }
                     }
                     Repeater {
@@ -343,6 +376,8 @@ Item {
                             sourceSize.height:   height
                             source:             "/res/TrashDelete.svg"
                             color:              qgcPal.colorRed
+                            Layout.row:         index
+                            Layout.column:      2
                             MouseArea {
                                 anchors.fill:   parent
                                 onClicked: {
@@ -354,8 +389,8 @@ Item {
                 }
                 Item { width: 1; height: 1; }
                 RowLayout {
-                    id:                         pairingButtons
-                    visible:                    QGroundControl.pairingManager.status === PairingManager.PairingConnected
+                    id:                         connectedButtons
+                    visible:                    QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingIdle
                     spacing:                    ScreenTools.defaultFontPixelWidth * 4
                     anchors.horizontalCenter:   parent.horizontalCenter
                     QGCButton {
@@ -372,7 +407,7 @@ Item {
                         }
                     }
                     QGCButton {
-                        text:                   qsTr("Go And Fly")
+                        text:                   QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected ? qsTr("Go And Fly") : qsTr("Close")
                         Layout.minimumWidth:    _contentWidth * 0.333
                         Layout.fillWidth:       true
                         onClicked: {
@@ -382,12 +417,12 @@ Item {
                 }
                 QGCButton {
                     id:                         cancelButton
-                    visible:                    QGroundControl.pairingManager.status === PairingManager.PairingActive || QGroundControl.pairingManager.status === PairingManager.PairingConnecting
+                    visible:                    QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnecting
                     text:                       qsTr("Cancel")
                     width:                      _contentWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
                     onClicked: {
-                        if(QGroundControl.pairingManager.status === PairingManager.PairingActive)
+                        if(QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive)
                             QGroundControl.pairingManager.stopPairing()
                         else {
                             //-- TODO: Cancel connection to paired device
@@ -396,7 +431,7 @@ Item {
                     }
                 }
                 QGCButton {
-                    visible:                    !cancelButton.visible && !pairingButtons.visible
+                    visible:                    !cancelButton.visible && !connectedButtons.visible
                     text:                       qsTr("Close")
                     width:                      _contentWidth
                     anchors.horizontalCenter:   parent.horizontalCenter
