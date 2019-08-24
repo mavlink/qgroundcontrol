@@ -67,11 +67,11 @@ Item {
             property var rallyPointObject
 
             sourceItem: MissionItemIndexLabel {
-                id:         itemIndexLabel
-                label:      qsTr("R", "rally point map item label")
-                checked:    _editingLayer == _layerRallyPoints ? rallyPointObject === myRallyPointController.currentRallyPoint : false
-
-                onClicked: myRallyPointController.currentRallyPoint = rallyPointObject
+                id:                 itemIndexLabel
+                label:              qsTr("R", "rally point map item label")
+                checked:            _editingLayer == _layerRallyPoints ? rallyPointObject === myRallyPointController.currentRallyPoint : false
+                highlightSelected:  true
+                onClicked:          myRallyPointController.currentRallyPoint = rallyPointObject
             }
         }
     }
