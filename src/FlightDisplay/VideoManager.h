@@ -34,7 +34,7 @@ class VideoManager : public QGCTool
 
 public:
     VideoManager    (QGCApplication* app, QGCToolbox* toolbox);
-    ~VideoManager   ();
+    virtual ~VideoManager   ();
 
     Q_PROPERTY(bool             hasVideo                READ    hasVideo                                    NOTIFY hasVideoChanged)
     Q_PROPERTY(bool             isGStreamer             READ    isGStreamer                                 NOTIFY isGStreamerChanged)
@@ -51,34 +51,33 @@ public:
     Q_PROPERTY(bool             autoStreamConfigured    READ    autoStreamConfigured                        NOTIFY autoStreamConfiguredChanged)
     Q_PROPERTY(bool             hasThermal              READ    hasThermal                                  NOTIFY aspectRatioChanged)
 
-    bool        hasVideo            ();
-    bool        isGStreamer         ();
-    bool        isAutoStream        ();
-    bool        isTaisync           () { return _isTaisync; }
-    bool        fullScreen          () { return _fullScreen; }
-    QString     videoSourceID       () { return _videoSourceID; }
-    double      aspectRatio         ();
-    double      thermalAspectRatio  ();
-    double      hfov                ();
-    double      thermalHfov         ();
-    bool        autoStreamConfigured();
-    bool        hasThermal          ();
-    void        restartVideo        ();
+    virtual bool        hasVideo            ();
+    virtual bool        isGStreamer         ();
+    virtual bool        isTaisync           () { return _isTaisync; }
+    virtual bool        fullScreen          () { return _fullScreen; }
+    virtual QString     videoSourceID       () { return _videoSourceID; }
+    virtual double      aspectRatio         ();
+    virtual double      thermalAspectRatio  ();
+    virtual double      hfov                ();
+    virtual double      thermalHfov         ();
+    virtual bool        autoStreamConfigured();
+    virtual bool        hasThermal          ();
+    virtual void        restartVideo        ();
 
-    VideoReceiver*  videoReceiver           () { return _videoReceiver; }
-    VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
+    virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
+    virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
 
 #if defined(QGC_DISABLE_UVC)
-    bool        uvcEnabled          () { return false; }
+    virtual bool        uvcEnabled          () { return false; }
 #else
-    bool        uvcEnabled          ();
+    virtual bool        uvcEnabled          ();
 #endif
 
-    void        setfullScreen       (bool f) { _fullScreen = f; emit fullScreenChanged(); }
-    void        setIsTaisync        (bool t) { _isTaisync = t;  emit isTaisyncChanged(); }
+    virtual void        setfullScreen       (bool f);
+    virtual void        setIsTaisync        (bool t) { _isTaisync = t;  emit isTaisyncChanged(); }
 
     // Override from QGCTool
-    void        setToolbox          (QGCToolbox *toolbox);
+    virtual void        setToolbox          (QGCToolbox *toolbox);
 
     Q_INVOKABLE void startVideo     ();
     Q_INVOKABLE void stopVideo      ();
@@ -93,7 +92,7 @@ signals:
     void aspectRatioChanged         ();
     void autoStreamConfiguredChanged();
 
-private slots:
+protected slots:
     void _videoSourceChanged        ();
     void _udpPortChanged            ();
     void _rtspUrlChanged            ();
@@ -101,11 +100,12 @@ private slots:
     void _updateUVC                 ();
     void _setActiveVehicle          (Vehicle* vehicle);
     void _aspectRatioChanged        ();
+    void _connectionLostChanged     (bool connectionLost);
 
-private:
+protected:
     void _updateSettings            ();
 
-private:
+protected:
     SubtitleWriter  _subtitleWriter;
     bool            _isTaisync              = false;
     VideoReceiver*  _videoReceiver          = nullptr;

@@ -25,4 +25,5 @@ public:
     DEFINE_SETTINGFACT(alternateInstrumentPanel)
     DEFINE_SETTINGFACT(showAdditionalIndicatorsCompass)
     DEFINE_SETTINGFACT(lockNoseUpCompass)
+    DEFINE_SETTINGFACT(maxGoToLocationDistance)
 };

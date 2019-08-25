@@ -99,6 +99,7 @@ public:
     static QString              getTileHash         (UrlFactory::MapType type, int x, int y, int z);
     static UrlFactory::MapType  getTypeFromName     (const QString &name);
     static QString              bigSizeToString     (quint64 size);
+    static QString              storageFreeSizeToString(quint64 size_MB);
     static QString              numberToString      (quint64 number);
     static int                  concurrentDownloads (UrlFactory::MapType type);
 

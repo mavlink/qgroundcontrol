@@ -17,8 +17,8 @@ class QGCFencePolygon : public QGCMapPolygon
     Q_OBJECT
 
 public:
-    QGCFencePolygon(bool inclusion, QObject* parent = NULL);
-    QGCFencePolygon(const QGCFencePolygon& other, QObject* parent = NULL);
+    QGCFencePolygon(bool inclusion, QObject* parent = nullptr);
+    QGCFencePolygon(const QGCFencePolygon& other, QObject* parent = nullptr);
 
     const QGCFencePolygon& operator=(const QGCFencePolygon& other);
 

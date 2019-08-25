@@ -26,7 +26,7 @@ class PlanMasterController : public QObject
     Q_OBJECT
     
 public:
-    PlanMasterController(QObject* parent = NULL);
+    PlanMasterController(QObject* parent = nullptr);
     ~PlanMasterController();
     
     Q_PROPERTY(MissionController*       missionController       READ missionController      CONSTANT)

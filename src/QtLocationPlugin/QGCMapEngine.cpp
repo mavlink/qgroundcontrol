@@ -473,6 +473,18 @@ QGCMapEngine::bigSizeToString(quint64 size)
 
 //-----------------------------------------------------------------------------
 QString
+QGCMapEngine::storageFreeSizeToString(quint64 size_MB)
+{
+    if(size_MB < 1024)
+        return kLocale.toString(static_cast<double>(size_MB) , 'f', 0) + " MB";
+    else if(size_MB < 1024.0 * 1024.0)
+        return kLocale.toString(static_cast<double>(size_MB) / (1024.0), 'f', 2) + " GB";
+    else
+        return kLocale.toString(static_cast<double>(size_MB) / (1024.0 * 1024), 'f', 2) + " TB";
+}
+
+//-----------------------------------------------------------------------------
+QString
 QGCMapEngine::numberToString(quint64 number)
 {
     return kLocale.toString(number);

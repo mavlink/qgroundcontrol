@@ -97,7 +97,7 @@ void GstQtGLVideoSink::class_init(gpointer g_class, gpointer class_data)
         g_signal_new("paint", G_TYPE_FROM_CLASS(g_class),
                      static_cast<GSignalFlags>(G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION),
                      G_STRUCT_OFFSET(GstQtGLVideoSinkClass, paint),
-                     NULL, NULL,
+                     nullptr, nullptr,
                      qRealIsDouble() ?
                         g_cclosure_user_marshal_VOID__POINTER_DOUBLE_DOUBLE_DOUBLE_DOUBLE :
                         g_cclosure_user_marshal_VOID__POINTER_FLOAT_FLOAT_FLOAT_FLOAT,
@@ -114,7 +114,7 @@ void GstQtGLVideoSink::class_init(gpointer g_class, gpointer class_data)
     s_signals[UPDATE_SIGNAL] =
         g_signal_new("update", G_TYPE_FROM_CLASS(g_class),
                      G_SIGNAL_RUN_LAST,
-                     0, NULL, NULL,
+                     0, nullptr, nullptr,
                      g_cclosure_marshal_VOID__VOID,
                      G_TYPE_NONE, 0);
 

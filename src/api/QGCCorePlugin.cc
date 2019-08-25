@@ -15,6 +15,7 @@
 #include "SettingsManager.h"
 #include "AppMessages.h"
 #include "QmlObjectListModel.h"
+#include "VideoManager.h"
 #include "VideoReceiver.h"
 #include "QGCLoggingCategory.h"
 #include "QGCCameraManager.h"
@@ -315,6 +316,14 @@ bool QGCCorePlugin::adjustSettingMetaData(const QString& settingsGroup, FactMeta
 {
     if (settingsGroup != AppSettings::settingsGroup) {
         // All changes refer to AppSettings
+#if !defined(QGC_ENABLE_PAIRING)
+        //-- If we don't support pairing, disable it.
+        if (metaData.name() == AppSettings::usePairingName) {
+            metaData.setRawDefaultValue(false);
+            //-- And hide the option
+            return false;
+        }
+#endif
         return true;
     }
 
@@ -406,6 +415,11 @@ bool QGCCorePlugin::mavlinkMessage(Vehicle* vehicle, LinkInterface* link, mavlin
 QmlObjectListModel* QGCCorePlugin::customMapItems()
 {
     return &_p->_emptyCustomMapItems;
+}
+
+VideoManager* QGCCorePlugin::createVideoManager(QGCApplication *app, QGCToolbox *toolbox)
+{
+    return new VideoManager(app, toolbox);
 }
 
 VideoReceiver* QGCCorePlugin::createVideoReceiver(QObject* parent)

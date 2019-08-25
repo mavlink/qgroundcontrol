@@ -17,6 +17,17 @@ add_library(AnalyzeView
 	${EXTRA_SRC}
 )
 
+add_custom_target(
+	AnalyzeViewQml
+SOURCES
+	AnalyzePage.qml
+	AnalyzeView.qml
+	GeoTagPage.qml
+	LogDownloadPage.qml
+	MavlinkConsolePage.qml
+	MAVLinkInspectorPage.qml
+)
+
 target_link_libraries(AnalyzeView
 	PRIVATE
 		qgc

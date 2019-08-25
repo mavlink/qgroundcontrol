@@ -35,7 +35,7 @@ void MissionManagerTest::_writeItems(MockLinkMissionItemHandler::FailureMode_t f
     QList<MissionItem*> missionItems;
     
     // Editor has a home position item on the front, so we do the same
-    MissionItem* homeItem = new MissionItem(NULL /* Vehicle */, this);
+    MissionItem* homeItem = new MissionItem(nullptr /* Vehicle */, this);
     homeItem->setCommand(MAV_CMD_NAV_WAYPOINT);
     homeItem->setParam5(47.3769);
     homeItem->setParam6(8.549444);

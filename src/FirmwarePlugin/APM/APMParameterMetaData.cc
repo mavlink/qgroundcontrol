@@ -157,7 +157,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
 
     bool                badMetaData = true;
     QStack<int>         xmlState;
-    APMFactMetaDataRaw* rawMetaData = NULL;
+    APMFactMetaDataRaw* rawMetaData = nullptr;
 
     xmlState.push(XmlStateNone);
 
@@ -285,7 +285,7 @@ void APMParameterMetaData::loadParameterFactMetaDataFile(const QString& metaData
                 // Done loading this parameter
                 // Reset for next parameter
                 qCDebug(APMParameterMetaDataVerboseLog) << "done loading parameter";
-                rawMetaData = NULL;
+                rawMetaData = nullptr;
                 badMetaData = false;
                 xmlState.pop();
             } else if (elementName == "parameters") {
@@ -422,7 +422,7 @@ bool APMParameterMetaData::parseParameterAttributes(QXmlStreamReader& xml, APMFa
 void APMParameterMetaData::addMetaDataToFact(Fact* fact, MAV_TYPE vehicleType)
 {
     const QString mavTypeString = mavTypeToString(vehicleType);
-    APMFactMetaDataRaw* rawMetaData = NULL;
+    APMFactMetaDataRaw* rawMetaData = nullptr;
 
     // check if we have metadata for fact, use generic otherwise
     if (_vehicleTypeToParametersMap[mavTypeString].contains(fact->name())) {

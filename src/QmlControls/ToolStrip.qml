@@ -10,13 +10,14 @@
 import QtQuick          2.11
 import QtQuick.Controls 2.2
 
+import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 
 Rectangle {
     id:         _root
-    color:      qgcPal.window
+    color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
     width:      _idealWidth < repeater.contentWidth ? repeater.contentWidth : _idealWidth
     height:     toolStripColumn.height + (toolStripColumn.anchors.margins * 2)
     radius:     ScreenTools.defaultFontPixelWidth / 2

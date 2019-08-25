@@ -23,7 +23,7 @@ class VideoSurfacePrivate
 {
 public:
     VideoSurfacePrivate()
-        : videoSink(NULL)
+        : videoSink(nullptr)
     {
     }
     QSet<VideoItem*> items;

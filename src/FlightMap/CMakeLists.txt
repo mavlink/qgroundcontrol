@@ -1,4 +1,7 @@
 
+add_subdirectory(MapItems)
+add_subdirectory(Widgets)
+
 add_library(FlightMap
 	Widgets/ValuesWidgetController.cc
 )
@@ -15,3 +18,8 @@ target_include_directories(FlightMap
 		Widgets
 	)
 
+add_custom_target(FligthMapQml
+	QGCVideoBackground.qml
+	FlightMap.qml
+	MapScale.qml
+)
