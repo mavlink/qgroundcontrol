@@ -32,7 +32,7 @@ const char * const GstQtGLVideoSinkBase::s_colorbalance_labels[] = {
     "contrast", "brightness", "hue", "saturation"
 };
 
-GstQtVideoSinkBaseClass *GstQtGLVideoSinkBase::s_parent_class = 0;
+GstQtVideoSinkBaseClass *GstQtGLVideoSinkBase::s_parent_class = nullptr;
 
 //------------------------------
 
@@ -41,7 +41,7 @@ DEFINE_TYPE_WITH_CODE(GstQtGLVideoSinkBase, GST_TYPE_QT_VIDEO_SINK_BASE, init_in
 void GstQtGLVideoSinkBase::init_interfaces(GType type)
 {
     static const GInterfaceInfo colorbalance_info = {
-        (GInterfaceInitFunc) &GstQtGLVideoSinkBase::colorbalance_init, NULL, NULL
+        (GInterfaceInitFunc) &GstQtGLVideoSinkBase::colorbalance_init, nullptr, nullptr
     };
 
     g_type_add_interface_static(type, GST_TYPE_COLOR_BALANCE, &colorbalance_info);
@@ -52,7 +52,7 @@ void GstQtGLVideoSinkBase::init_interfaces(GType type)
 void GstQtGLVideoSinkBase::base_init(gpointer g_class)
 {
     GstElementClass *element_class = GST_ELEMENT_CLASS(g_class);
-    element_class->padtemplates = NULL; //get rid of the pad template of the base class
+    element_class->padtemplates = nullptr; //get rid of the pad template of the base class
 
     static GstStaticPadTemplate sink_pad_template =
         GST_STATIC_PAD_TEMPLATE("sink", GST_PAD_SINK, GST_PAD_ALWAYS,
@@ -98,10 +98,10 @@ void GstQtGLVideoSinkBase::init(GTypeInstance *instance, gpointer g_class)
     GstQtGLVideoSinkBase *self = GST_QT_GL_VIDEO_SINK_BASE(instance);
 
     GstColorBalanceChannel *channel;
-    self->m_channels_list = NULL;
+    self->m_channels_list = nullptr;
 
     for (int i=0; i < LABEL_LAST; i++) {
-        channel = GST_COLOR_BALANCE_CHANNEL(g_object_new(GST_TYPE_COLOR_BALANCE_CHANNEL, NULL));
+        channel = GST_COLOR_BALANCE_CHANNEL(g_object_new(GST_TYPE_COLOR_BALANCE_CHANNEL, nullptr));
         channel->label = g_strdup(s_colorbalance_labels[i]);
         channel->min_value = -100;
         channel->max_value = 100;

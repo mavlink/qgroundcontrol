@@ -17,9 +17,9 @@ class QGCFenceCircle : public QGCMapCircle
     Q_OBJECT
 
 public:
-    QGCFenceCircle(QObject* parent = NULL);
-    QGCFenceCircle(const QGeoCoordinate& center, double radius, bool inclusion, QObject* parent = NULL);
-    QGCFenceCircle(const QGCFenceCircle& other, QObject* parent = NULL);
+    QGCFenceCircle(QObject* parent = nullptr);
+    QGCFenceCircle(const QGeoCoordinate& center, double radius, bool inclusion, QObject* parent = nullptr);
+    QGCFenceCircle(const QGCFenceCircle& other, QObject* parent = nullptr);
 
     const QGCFenceCircle& operator=(const QGCFenceCircle& other);
 

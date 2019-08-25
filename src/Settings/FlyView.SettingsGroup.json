@@ -36,5 +36,13 @@
     "shortDescription": "Lock Compass Nose-Up",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "maxGoToLocationDistance",
+    "shortDescription": "Maximum distance allowed for Go To Location.",
+    "type":             "double",
+    "units":            "m",
+    "defaultValue":     1000,
+    "min":              1
 }
 ]

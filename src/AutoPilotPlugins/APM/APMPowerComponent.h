@@ -18,7 +18,7 @@ class APMPowerComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMPowerComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Overrides from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override { return QStringList(); }

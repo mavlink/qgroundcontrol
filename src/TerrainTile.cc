@@ -24,7 +24,7 @@ TerrainTile::TerrainTile()
     : _minElevation(-1.0)
     , _maxElevation(-1.0)
     , _avgElevation(-1.0)
-    , _data(NULL)
+    , _data(nullptr)
     , _gridSizeLat(-1)
     , _gridSizeLon(-1)
     , _isValid(false)
@@ -39,7 +39,7 @@ TerrainTile::~TerrainTile()
             delete _data[i];
         }
         delete _data;
-        _data = NULL;
+        _data = nullptr;
     }
 }
 
@@ -48,7 +48,7 @@ TerrainTile::TerrainTile(QByteArray byteArray)
     : _minElevation(-1.0)
     , _maxElevation(-1.0)
     , _avgElevation(-1.0)
-    , _data(NULL)
+    , _data(nullptr)
     , _gridSizeLat(-1)
     , _gridSizeLon(-1)
     , _isValid(false)

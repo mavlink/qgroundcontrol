@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 
 CameraCalcTest::CameraCalcTest(void)
-    : _offlineVehicle(NULL)
+    : _offlineVehicle(nullptr)
 {
 
 }

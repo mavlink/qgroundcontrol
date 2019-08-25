@@ -91,10 +91,10 @@ gst_qt_quick2_video_sink_init (GstQtQuick2VideoSink *self)
 
     // colorbalance
     GstColorBalanceChannel *channel;
-    self->priv->channels_list = NULL;
+    self->priv->channels_list = nullptr;
 
     for (int i=0; i < LABEL_LAST; i++) {
-        channel = GST_COLOR_BALANCE_CHANNEL(g_object_new(GST_TYPE_COLOR_BALANCE_CHANNEL, NULL));
+        channel = GST_COLOR_BALANCE_CHANNEL(g_object_new(GST_TYPE_COLOR_BALANCE_CHANNEL, nullptr));
         channel->label = g_strdup(s_colorbalance_labels[i]);
         channel->min_value = -100;
         channel->max_value = 100;
@@ -109,7 +109,7 @@ gst_qt_quick2_video_sink_finalize (GObject *gobject)
     GstQtQuick2VideoSink *self = GST_QT_QUICK2_VIDEO_SINK (gobject);
 
     delete self->priv->delegate;
-    self->priv->delegate = 0;
+    self->priv->delegate = nullptr;
 
     while (self->priv->channels_list) {
         GstColorBalanceChannel *channel =
@@ -422,7 +422,7 @@ gst_qt_quick2_video_sink_class_init (GstQtQuick2VideoSinkClass *klass)
         g_signal_new("update-node", G_TYPE_FROM_CLASS(klass),
             static_cast<GSignalFlags>(G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION),
             G_STRUCT_OFFSET(GstQtQuick2VideoSinkClass, update_node),
-            NULL, NULL,
+            nullptr, nullptr,
             qRealIsDouble() ?
               g_cclosure_user_marshal_POINTER__POINTER_DOUBLE_DOUBLE_DOUBLE_DOUBLE :
               g_cclosure_user_marshal_POINTER__POINTER_FLOAT_FLOAT_FLOAT_FLOAT,
@@ -438,7 +438,7 @@ gst_qt_quick2_video_sink_class_init (GstQtQuick2VideoSinkClass *klass)
     s_signals[SIGNAL_UPDATE] =
         g_signal_new("update", G_TYPE_FROM_CLASS(klass),
             G_SIGNAL_RUN_LAST,
-            0, NULL, NULL,
+            0, nullptr, nullptr,
             g_cclosure_marshal_VOID__VOID,
             G_TYPE_NONE, 0);
 

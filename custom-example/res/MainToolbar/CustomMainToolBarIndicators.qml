@@ -34,6 +34,7 @@ Item {
         anchors.left:               parent.left
         QGCColoredImage {
             id:                     menuEdge
+            visible:                !QGroundControl.supportsPairing || !QGroundControl.settingsManager.appSettings.usePairing.rawValue
             anchors.verticalCenter: parent.verticalCenter
             height:                 ScreenTools.defaultFontPixelHeight
             width:                  height
@@ -43,10 +44,18 @@ Item {
             color:                  qgcPal.buttonText
         }
         QGCLabel {
+            visible:                menuEdge.visible
             anchors.verticalCenter: parent.verticalCenter
             text:                   qsTr("Waiting for a vehicle")
             font.pointSize:         ScreenTools.mediumFontPointSize
             font.family:            ScreenTools.demiboldFontFamily
+        }
+        Loader {
+            visible:                !menuEdge.visible
+            anchors.top:            parent.top
+            anchors.bottom:         parent.bottom
+            anchors.margins:        _indicatorMargins
+            source:                 "/toolbar/PairingIndicator.qml"
         }
     }
     //-------------------------------------------------------------------------

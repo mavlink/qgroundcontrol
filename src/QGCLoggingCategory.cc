@@ -25,7 +25,7 @@ QGC_LOGGING_CATEGORY(GeotaggingLog,                 "GeotaggingLog")
 QGC_LOGGING_CATEGORY(RTKGPSLog,                     "RTKGPSLog")
 QGC_LOGGING_CATEGORY(GuidedActionsControllerLog,    "GuidedActionsControllerLog")
 
-QGCLoggingCategoryRegister* _instance = NULL;
+QGCLoggingCategoryRegister* _instance = nullptr;
 const char* QGCLoggingCategoryRegister::_filterRulesSettingsGroup = "LoggingFilters";
 
 QGCLoggingCategoryRegister* QGCLoggingCategoryRegister::instance(void)

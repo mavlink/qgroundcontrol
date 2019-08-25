@@ -16,7 +16,7 @@ class CameraSpec : public QObject
     Q_OBJECT
 
 public:
-    CameraSpec(const QString& settingsGroup, QObject* parent = NULL);
+    CameraSpec(const QString& settingsGroup, QObject* parent = nullptr);
 
     const CameraSpec& operator=(const CameraSpec& other);
 

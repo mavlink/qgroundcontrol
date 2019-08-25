@@ -48,11 +48,11 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
     , _downloading(false)
     , _id(0)
     , _type(UrlFactory::Invalid)
-    , _networkManager(NULL)
+    , _networkManager(nullptr)
     , _errorCount(0)
     , _noMoreTiles(false)
     , _batchRequested(false)
-    , _manager(NULL)
+    , _manager(nullptr)
     , _selected(false)
 {
 

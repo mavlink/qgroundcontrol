@@ -32,7 +32,7 @@ static QStringList kSupportedBaudRates;
 
 SerialLink::SerialLink(SharedLinkConfigurationPointer& config, bool isPX4Flow)
     : LinkInterface(config, isPX4Flow)
-    , _port(NULL)
+    , _port(nullptr)
     , _bytesRead(0)
     , _stopp(false)
     , _reqReset(false)
@@ -103,7 +103,7 @@ void SerialLink::_disconnect(void)
     if (_port) {
         _port->close();
         _port->deleteLater();
-        _port = NULL;
+        _port = nullptr;
     }
 
 #ifdef __android__
@@ -161,7 +161,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
             qgcApp()->processEvents(QEventLoop::ExcludeUserInputEvents);
         }
         delete _port;
-        _port = NULL;
+        _port = nullptr;
     }
 
     qCDebug(SerialLinkLog) << "SerialLink: hardwareConnect to " << _serialConfig->portName();
@@ -234,7 +234,7 @@ bool SerialLink::_hardwareConnect(QSerialPort::SerialPortError& error, QString& 
         emit communicationUpdate(getName(), tr("Error opening port: %1").arg(_port->errorString()));
         _port->close();
         delete _port;
-        _port = NULL;
+        _port = nullptr;
         return false; // couldn't open serial port
     }
 
@@ -405,7 +405,7 @@ SerialConfiguration::SerialConfiguration(SerialConfiguration* copy) : LinkConfig
 void SerialConfiguration::copyFrom(LinkConfiguration *source)
 {
     LinkConfiguration::copyFrom(source);
-    SerialConfiguration* ssource = dynamic_cast<SerialConfiguration*>(source);
+    auto* ssource = qobject_cast<SerialConfiguration*>(source);
     if (ssource) {
         _baud               = ssource->baud();
         _flowControl        = ssource->flowControl();
@@ -423,7 +423,7 @@ void SerialConfiguration::copyFrom(LinkConfiguration *source)
 void SerialConfiguration::updateSettings()
 {
     if(_link) {
-        SerialLink* serialLink = dynamic_cast<SerialLink*>(_link);
+        auto* serialLink = qobject_cast<SerialLink*>(_link);
         if(serialLink) {
             serialLink->_resetConfiguration();
         }

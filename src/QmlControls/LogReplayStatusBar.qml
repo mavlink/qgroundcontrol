@@ -1,5 +1,5 @@
 import QtQuick          2.3
-import QtQuick.Controls 1.2
+import QtQuick.Controls 2.4
 import QtQuick.Layouts  1.11
 import QtQuick.Dialogs  1.2
 
@@ -11,8 +11,8 @@ Rectangle {
     height:             visible ? (rowLayout.height + (_margins * 2)) : 0
     color:              qgcPal.window
 
-    property real _margins:         ScreenTools.defaultFontPixelHeight / 4
-    property var  _logReplayLink:   null
+    property real   _margins:       ScreenTools.defaultFontPixelHeight / 4
+    property var    _logReplayLink: null
 
     function pickLogFile() {
         if (mainWindow.activeVehicle) {
@@ -56,13 +56,29 @@ Rectangle {
             onClicked:  controller.isPlaying = !controller.isPlaying
         }
 
+        QGCComboBox {
+            textRole:       "text"
+            currentIndex:   3
+
+            model: ListModel {
+                ListElement { text: "0.1";  value: 0.1 }
+                ListElement { text: "0.25"; value: 0.25 }
+                ListElement { text: "0.5";  value: 0.5 }
+                ListElement { text: "1x";   value: 1 }
+                ListElement { text: "2x";   value: 2 }
+                ListElement { text: "5x";   value: 5 }
+            }
+
+            onActivated: controller.playbackSpeed = model.get(currentIndex).value
+        }
+
         QGCLabel { text: controller.playheadTime }
 
         Slider {
             id:                 slider
             Layout.fillWidth:   true
-            minimumValue:       0
-            maximumValue:       100
+            from:               0
+            to:                 100
             enabled:            controller.link
 
             property bool manualUpdate: false

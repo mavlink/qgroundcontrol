@@ -40,7 +40,7 @@ MissionSettingsItem::MissionSettingsItem(Vehicle* vehicle, bool flyView, QObject
     _editorQml = "qrc:/qml/MissionSettingsEditor.qml";
 
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), NULL /* metaDataParent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/MissionSettings.FactMetaData.json"), nullptr /* metaDataParent */);
     }
 
     _plannedHomePositionAltitudeFact.setMetaData    (_metaDataMap[_plannedHomePositionAltitudeName]);
@@ -163,7 +163,7 @@ void MissionSettingsItem::appendMissionItems(QList<MissionItem*>& items, QObject
 
 bool MissionSettingsItem::addMissionEndAction(QList<MissionItem*>& items, int seqNum, QObject* missionItemParent)
 {
-    MissionItem* item = NULL;
+    MissionItem* item = nullptr;
 
     // IMPORTANT NOTE: If anything changes here you must also change MissionSettingsItem::scanForMissionSettings
 

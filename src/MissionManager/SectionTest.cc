@@ -11,7 +11,7 @@
 #include "SurveyComplexItem.h"
 
 SectionTest::SectionTest(void)
-    : _simpleItem(NULL)
+    : _simpleItem(nullptr)
 {
     
 }
@@ -48,7 +48,7 @@ void SectionTest::cleanup(void)
 
 void SectionTest::_createSpy(Section* section, MultiSignalSpy** sectionSpy)
 {
-    *sectionSpy = NULL;
+    *sectionSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
     QCOMPARE(spy->init(section, rgSectionSignals, cSectionSignals), true);
     *sectionSpy = spy;
