@@ -581,9 +581,6 @@ Item {
             z:                  _mapAndVideo.z + 4
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y
 
-            buttonVisible:      [true, _useChecklist, _guidedController.showTakeoff || !_guidedController.showLand, _guidedController.showLand && !_guidedController.showTakeoff, true, _guidedController.showPause, !_guidedController.showPause ]
-            buttonEnabled:      [true, _useChecklist && activeVehicle && !activeVehicle.armed, _guidedController.showTakeoff, _guidedController.showLand, _guidedController.showRTL, _guidedController.showPause, _anyActionAvailable ]
-
             property bool _anyActionAvailable: _guidedController.showStartMission || _guidedController.showResumeMission || _guidedController.showChangeAlt || _guidedController.showLandAbort
             property var _actionModel: [
                 {
@@ -622,35 +619,49 @@ Item {
                 {
                     name:               "Plan",
                     iconSource:         "/qmlimages/Plan.svg",
+                    buttonVisible:      true,
+                    buttonEnabled:      true,
                 },
                 {
                     name:               "Checklist",
                     iconSource:         "/qmlimages/check.svg",
+                    buttonVisible:      _useChecklist,
+                    buttonEnabled:      _useChecklist && activeVehicle && !activeVehicle.armed,
                 },
                 {
-                    name:       _guidedController.takeoffTitle,
-                    iconSource: "/res/takeoff.svg",
-                    action:     _guidedController.actionTakeoff
+                    name:               _guidedController.takeoffTitle,
+                    iconSource:         "/res/takeoff.svg",
+                    buttonVisible:      _guidedController.showTakeoff || !_guidedController.showLand,
+                    buttonEnabled:      _guidedController.showTakeoff,
+                    action:             _guidedController.actionTakeoff
                 },
                 {
-                    name:       _guidedController.landTitle,
-                    iconSource: "/res/land.svg",
-                    action:     _guidedController.actionLand
+                    name:               _guidedController.landTitle,
+                    iconSource:         "/res/land.svg",
+                    buttonVisible:      _guidedController.showLand && !_guidedController.showTakeoff,
+                    buttonEnabled:      _guidedController.showLand,
+                    action:             _guidedController.actionLand
                 },
                 {
-                    name:       _guidedController.rtlTitle,
-                    iconSource: "/res/rtl.svg",
-                    action:     _guidedController.actionRTL
+                    name:               _guidedController.rtlTitle,
+                    iconSource:         "/res/rtl.svg",
+                    buttonVisible:      true,
+                    buttonEnabled:      _guidedController.showRTL,
+                    action:             _guidedController.actionRTL
                 },
                 {
-                    name:       _guidedController.pauseTitle,
-                    iconSource: "/res/pause-mission.svg",
-                    action:     _guidedController.actionPause
+                    name:               _guidedController.pauseTitle,
+                    iconSource:         "/res/pause-mission.svg",
+                    buttonVisible:      _guidedController.showPause,
+                    buttonEnabled:      _guidedController.showPause,
+                    action:             _guidedController.actionPause
                 },
                 {
-                    name:       qsTr("Action"),
-                    iconSource: "/res/action.svg",
-                    action:     -1
+                    name:               qsTr("Action"),
+                    iconSource:         "/res/action.svg",
+                    buttonVisible:      !_guidedController.showPause,
+                    buttonEnabled:      _anyActionAvailable,
+                    action:             -1
                 }
             ]
 
