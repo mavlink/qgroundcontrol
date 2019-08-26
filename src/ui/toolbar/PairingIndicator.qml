@@ -24,9 +24,15 @@ Item {
     width:          pairingRow.width * 1.1
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
-    property bool _light:           qgcPal.globalTheme === QGCPalette.Light && !activeVehicle
-    property real _contentWidth:    ScreenTools.defaultFontPixelWidth  * 30
-    property real _contentSpacing:  ScreenTools.defaultFontPixelHeight * 0.5
+
+    property bool _light:               qgcPal.globalTheme === QGCPalette.Light && !activeVehicle
+    property real _contentWidth:        ScreenTools.defaultFontPixelWidth  * 40
+    property real _contentSpacing:      ScreenTools.defaultFontPixelHeight * 0.5
+    property real _rectWidth:           _contentWidth
+    property real _rectHeight:          _contentWidth * 0.75
+
+    property string kPairingManager:    qsTr("Pairing Manager")
+
     Row {
         id:                     pairingRow
         spacing:                ScreenTools.defaultFontPixelWidth
@@ -49,7 +55,6 @@ Item {
             text:               qsTr("Pair Vehicle")
             width:              !activeVehicle ? (ScreenTools.defaultFontPixelWidth * 12) : 0
             visible:            !activeVehicle
-            font.pointSize:     ScreenTools.mediumFontPointSize
             font.family:        ScreenTools.demiboldFontFamily
             anchors.verticalCenter: parent.verticalCenter
         }
@@ -96,21 +101,20 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           qsTr("Pair New Vehicle")
-                    font.pointSize: ScreenTools.mediumFontPointSize
+                    text:           kPairingManager
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Item { width: 1; height: 1; }
                 Rectangle {
-                    width:          ScreenTools.defaultFontPixelWidth  * 40
-                    height:         ScreenTools.defaultFontPixelHeight * 8
+                    width:          _rectWidth
+                    height:         _rectHeight
                     color:          Qt.rgba(0,0,0,0)
                     border.color:   qgcPal.text
                     border.width:   1
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        text:       "Graphic"
+                        text:       "Pair Graphic"
                         anchors.centerIn: parent
                     }
                 }
@@ -171,8 +175,7 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           qsTr("Pair New Vehicle")
-                    font.pointSize: ScreenTools.mediumFontPointSize
+                    text:           kPairingManager
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -186,14 +189,14 @@ Item {
                 }
                 Item { width: 1; height: 1; }
                 Rectangle {
-                    width:          ScreenTools.defaultFontPixelWidth  * 40
-                    height:         ScreenTools.defaultFontPixelHeight * 8
+                    width:          _rectWidth
+                    height:         _rectHeight
                     color:          Qt.rgba(0,0,0,0)
                     border.color:   qgcPal.text
                     border.width:   1
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        text:       "Graphic"
+                        text:       "Button Positioning Graphic"
                         anchors.centerIn: parent
                     }
                 }
@@ -240,21 +243,20 @@ Item {
                 anchors.centerIn:   parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           qsTr("Pair New Vehicle")
-                    font.pointSize: ScreenTools.mediumFontPointSize
+                    text:           kPairingManager
                     font.family:    ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Item { width: 1; height: 1; }
                 Rectangle {
-                    width:          ScreenTools.defaultFontPixelWidth  * 40
-                    height:         ScreenTools.defaultFontPixelHeight * 12
+                    width:          _rectWidth
+                    height:         _rectHeight
                     color:          Qt.rgba(0,0,0,0)
                     border.color:   qgcPal.text
                     border.width:   1
                     anchors.horizontalCenter: parent.horizontalCenter
                     QGCLabel {
-                        text:       "Graphic"
+                        text:       "Vehicle and Tablet  Graphic"
                         anchors.centerIn: parent
                     }
                 }
@@ -304,15 +306,23 @@ Item {
             height:             connectionCol.height + (ScreenTools.defaultFontPixelHeight  * 2)
             anchors.centerIn:   parent
             Column {
-                id:                 connectionCol
-                spacing:            _contentSpacing * 2
-                anchors.centerIn:   parent
+                id:                     connectionCol
+                spacing:                _contentSpacing
+                anchors.centerIn:       parent
                 Item { width: 1; height: 1; }
                 QGCLabel {
-                    text:           QGroundControl.pairingManager ? QGroundControl.pairingManager.pairingStatusStr : ""
-                    font.pointSize: ScreenTools.mediumFontPointSize
-                    font.family:    ScreenTools.demiboldFontFamily
+                    text:               kPairingManager
+                    font.family:        ScreenTools.demiboldFontFamily
                     anchors.horizontalCenter: parent.horizontalCenter
+                }
+                QGCLabel {
+                    text:               QGroundControl.pairingManager ? QGroundControl.pairingManager.pairingStatusStr : ""
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Rectangle {
+                    width:              _contentWidth
+                    height:             1
+                    color:              qgcPal.globalTheme !== QGCPalette.Light ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
                 }
                 Item { width: 1; height: 1; }
                 QGCColoredImage {
@@ -338,7 +348,6 @@ Item {
                 QGCLabel {
                     text:               qsTr("List Of Available Devices")
                     visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
-                    font.pointSize:     ScreenTools.mediumFontPointSize
                     font.family:        ScreenTools.demiboldFontFamily
                 }
                 Item { width: 1; height: 1; }
@@ -388,40 +397,37 @@ Item {
                         }
                     }
                 }
-                Item { width: 1; height: 1; }
-                RowLayout {
-                    id:                         connectedButtons
-                    visible:                    QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingIdle) : false
-                    spacing:                    ScreenTools.defaultFontPixelWidth * 4
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    QGCButton {
-                        text:                   qsTr("Pair Another")
-                        Layout.minimumWidth:    _contentWidth * 0.333
-                        Layout.fillWidth:       true
-                        onClicked: {
-                            connectionPopup.close()
-                            if(QGroundControl.pairingManager.pairingLinkTypeStrings.length > 1)
-                                pairingPopup.open()
-                            else {
-                                mhPopup.open()
-                            }
-                        }
+                Item { width: 1; height: _contentSpacing; }
+                QGCButton {
+                    id:                     connectedButton
+                    width:                  _contentWidth
+                    visible:                QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingIdle) : false
+                    text:                   QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected ? qsTr("Done ") : qsTr("Close")) : ""
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: {
+                        connectionPopup.close()
                     }
-                    QGCButton {
-                        text:                   QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnected ? qsTr("Go And Fly") : qsTr("Close")) : ""
-                        Layout.minimumWidth:    _contentWidth * 0.333
-                        Layout.fillWidth:       true
-                        onClicked: {
-                            connectionPopup.close()
+                }
+                QGCButton {
+                    text:                   qsTr("Pair Another")
+                    width:                  _contentWidth
+                    visible:                connectedButton.visible
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: {
+                        connectionPopup.close()
+                        if(QGroundControl.pairingManager.pairingLinkTypeStrings.length > 1)
+                            pairingPopup.open()
+                        else {
+                            mhPopup.open()
                         }
                     }
                 }
                 QGCButton {
-                    id:                         cancelButton
-                    visible:                    QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnecting) : false
-                    text:                       qsTr("Cancel")
-                    width:                      _contentWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
+                    id:                     cancelButton
+                    width:                  _contentWidth
+                    visible:                QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive || QGroundControl.pairingManager.pairingStatus === PairingManager.PairingConnecting) : false
+                    text:                   qsTr("Cancel")
+                    anchors.horizontalCenter: parent.horizontalCenter
                     onClicked: {
                         if(QGroundControl.pairingManager.pairingStatus === PairingManager.PairingActive)
                             QGroundControl.pairingManager.stopPairing()
@@ -432,10 +438,10 @@ Item {
                     }
                 }
                 QGCButton {
-                    visible:                    !cancelButton.visible && !connectedButtons.visible
-                    text:                       qsTr("Close")
-                    width:                      _contentWidth
-                    anchors.horizontalCenter:   parent.horizontalCenter
+                    visible:                !cancelButton.visible && !connectedButton.visible
+                    text:                   qsTr("Close")
+                    width:                  _contentWidth
+                    anchors.horizontalCenter: parent.horizontalCenter
                     onClicked: {
                         connectionPopup.close()
                     }
