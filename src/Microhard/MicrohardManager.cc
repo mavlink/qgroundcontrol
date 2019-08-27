@@ -205,7 +205,13 @@ MicrohardManager::_setEnabled()
 void
 MicrohardManager::_connectedLoc(int status)
 {
-    qCDebug(MicrohardLog) << "GND Microhard Settings Connected";
+    static const char* msg = "GND Microhard Settings: ";
+    if(status > 0)
+        qCDebug(MicrohardLog) << msg << "Connected";
+    else if(status < 0)
+        qCDebug(MicrohardLog) << msg << "Error";
+    else
+        qCDebug(MicrohardLog) << msg << "Not Connected";
     _connectedStatus = status;
     _locTimer.start(LONG_TIMEOUT);
     emit connectedChanged();
@@ -215,7 +221,13 @@ MicrohardManager::_connectedLoc(int status)
 void
 MicrohardManager::_connectedRem(int status)
 {
-    qCDebug(MicrohardLog) << "AIR Microhard Settings Connected";
+    static const char* msg = "AIR Microhard Settings: ";
+    if(status > 0)
+        qCDebug(MicrohardLog) << msg << "Connected";
+    else if(status < 0)
+        qCDebug(MicrohardLog) << msg << "Error";
+    else
+        qCDebug(MicrohardLog) << msg << "Not Connected";
     _linkConnectedStatus = status;
     _remTimer.start(LONG_TIMEOUT);
     emit linkConnectedChanged();
