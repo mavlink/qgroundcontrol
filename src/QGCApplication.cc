@@ -97,6 +97,10 @@
 #include "LogReplayLink.h"
 #include "VehicleObjectAvoidance.h"
 
+#if defined(QGC_ENABLE_PAIRING)
+#include "PairingManager.h"
+#endif
+
 #ifndef __mobile__
 #include "FirmwareUpgradeController.h"
 #endif
@@ -486,6 +490,9 @@ void QGCApplication::_initCommon()
     qmlRegisterUncreatableType<MissionCommandTree>  ("QGroundControl",                      1, 0, "MissionCommandTree",         kRefOnly);
     qmlRegisterUncreatableType<CameraCalc>          ("QGroundControl",                      1, 0, "CameraCalc",                 kRefOnly);
     qmlRegisterUncreatableType<LogReplayLink>       ("QGroundControl",                      1, 0, "LogReplayLink",              kRefOnly);
+#if defined(QGC_ENABLE_PAIRING)
+    qmlRegisterUncreatableType<PairingManager>      ("QGroundControl",                      1, 0, "PairingManager",             kRefOnly);
+#endif
 
     qmlRegisterType<LogReplayLinkController>        ("QGroundControl",                      1, 0, "LogReplayLinkController");
 

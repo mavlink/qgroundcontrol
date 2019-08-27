@@ -1547,5 +1547,5 @@ void UAS::shutdownVehicle(void)
         simulation->deleteLater();
     }
 #endif
-    _vehicle = NULL;
+    _vehicle = nullptr;
 }

@@ -18,7 +18,7 @@ class QmlComponentInfo : public QObject
     Q_OBJECT
 
 public:
-    QmlComponentInfo(QString title, QUrl url, QUrl icon = QUrl(), QObject* parent = NULL);
+    QmlComponentInfo(QString title, QUrl url, QUrl icon = QUrl(), QObject* parent = nullptr);
 
     Q_PROPERTY(QString  title   READ title  CONSTANT)   ///< Title for page
     Q_PROPERTY(QUrl     url     READ url    CONSTANT)   ///< Qml source code

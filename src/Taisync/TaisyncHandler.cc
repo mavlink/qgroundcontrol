@@ -65,6 +65,7 @@ TaisyncHandler::_start(uint16_t port, QHostAddress addr)
         QObject::connect(_tcpSocket, &QIODevice::readyRead, this, &TaisyncHandler::_readBytes);
         qCDebug(TaisyncLog) << "Connecting to" << addr;
         _tcpSocket->connectToHost(addr, port);
+        //-- TODO: This has to be removed. It's blocking the main thread.
         if (!_tcpSocket->waitForConnected(1000)) {
             close();
             return false;

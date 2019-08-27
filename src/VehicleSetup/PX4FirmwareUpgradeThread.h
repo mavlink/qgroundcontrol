@@ -88,7 +88,7 @@ class PX4FirmwareUpgradeThreadController : public QObject
     Q_OBJECT
     
 public:
-    PX4FirmwareUpgradeThreadController(QObject* parent = NULL);
+    PX4FirmwareUpgradeThreadController(QObject* parent = nullptr);
     ~PX4FirmwareUpgradeThreadController(void);
     
     /// @brief Begins the process of searching for a supported board connected to any serial port. This will

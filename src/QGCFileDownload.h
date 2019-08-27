@@ -18,7 +18,7 @@ class QGCFileDownload : public QNetworkAccessManager
     Q_OBJECT
     
 public:
-    QGCFileDownload(QObject* parent = NULL);
+    QGCFileDownload(QObject* parent = nullptr);
     
     /// Download the specified remote file.
     ///     @param remoteFile File to download. Can be http address or file system path.

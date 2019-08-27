@@ -108,25 +108,20 @@ Item {
             z:              QGroundControl.zOrderMapItems
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber
-
-            onClicked: _root.clicked(_missionItem.sequenceNumber)
-
+            onClicked:      _root.clicked(_missionItem.sequenceNumber)
             // These are the non-coordinate child mission items attached to this item
             Row {
                 anchors.top:    parent.top
                 anchors.left:   parent.right
-
                 Repeater {
                     model: _missionItem.childItems
-
                     delegate: MissionItemIndexLabel {
                         z:                      2
                         label:                  object.abbreviation.length === 0 ? object.sequenceNumber : object.abbreviation.charAt(0)
                         checked:                object.isCurrentItem
                         child:                  true
                         specifiesCoordinate:    false
-
-                        onClicked: _root.clicked(object.sequenceNumber)
+                        onClicked:              _root.clicked(object.sequenceNumber)
                     }
                 }
             }

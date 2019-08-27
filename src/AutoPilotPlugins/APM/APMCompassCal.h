@@ -26,7 +26,7 @@ class CalWorkerThread : public QThread
     Q_OBJECT
 
 public:
-    CalWorkerThread(Vehicle* vehicle, QObject* parent = NULL);
+    CalWorkerThread(Vehicle* vehicle, QObject* parent = nullptr);
 
     // Cancel currently in progress calibration
     void cancel(void) { _cancel = true; }

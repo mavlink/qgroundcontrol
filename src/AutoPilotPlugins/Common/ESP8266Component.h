@@ -17,7 +17,7 @@ class ESP8266Component : public VehicleComponent
 {
     Q_OBJECT
 public:
-    ESP8266Component            (Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    ESP8266Component            (Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList() const;

@@ -17,7 +17,7 @@
 #include "AppSettings.h"
 
 PlanMasterControllerTest::PlanMasterControllerTest(void)
-    : _masterController(NULL)
+    : _masterController(nullptr)
 {
     
 }
@@ -33,7 +33,7 @@ void PlanMasterControllerTest::init(void)
 void PlanMasterControllerTest::cleanup(void)
 {
     delete _masterController;
-    _masterController = NULL;
+    _masterController = nullptr;
 
     UnitTest::cleanup();
 }

@@ -33,7 +33,7 @@
 # define CAPS_FORMATS "{ BGRA, BGRx, RGB, RGB16 }"
 #endif
 
-GstVideoSinkClass *GstQtVideoSinkBase::s_parent_class = NULL;
+GstVideoSinkClass *GstQtVideoSinkBase::s_parent_class = nullptr;
 
 DEFINE_TYPE(GstQtVideoSinkBase, GST_TYPE_VIDEO_SINK)
 
