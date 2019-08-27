@@ -9,12 +9,13 @@ import QGroundControl.ScreenTools   1.0
 TabButton {
     id: control
     property bool _showHighlight: (pressed | hovered | checked)
+    QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
     background: Rectangle {
-        color:                  _showHighlight ? qgcPal.buttonHighlight : qgcPal.button
+        color:                  enabled ? (_showHighlight ? qgcPal.buttonHighlight : qgcPal.button) : qgcPalDisabled.button
     }
     contentItem: QGCLabel {
         text:                   control.text
-        color:                  _showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText
+        color:                  enabled ? (_showHighlight ? qgcPal.buttonHighlightText : qgcPal.buttonText) : qgcPalDisabled.buttonText
         horizontalAlignment:    Text.AlignHCenter
         verticalAlignment:      Text.AlignVCenter
         elide:                  Text.ElideRight
