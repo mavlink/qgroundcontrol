@@ -225,7 +225,7 @@ void QtVideoSinkDelegate::changePainter(const BufferFormat & format)
     }
 
     GST_ELEMENT_ERROR(m_sink, RESOURCE, FAILED,
-            ("Failed to create a painter for the given format"), (NULL));
+            ("Failed to create a painter for the given format"), (nullptr));
 }
 
 void QtVideoSinkDelegate::destroyPainter()

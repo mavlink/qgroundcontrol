@@ -18,7 +18,7 @@ class APMFlightModesComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMFlightModesComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const final;

@@ -83,7 +83,7 @@ class TransectStyleItem : public TransectStyleComplexItem
     Q_OBJECT
 
 public:
-    TransectStyleItem(Vehicle* vehicle, QObject* parent = NULL);
+    TransectStyleItem(Vehicle* vehicle, QObject* parent = nullptr);
 
     // Overrides from ComplexMissionItem
     QString mapVisualQML        (void) const final { return QString(); }

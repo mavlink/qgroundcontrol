@@ -147,7 +147,7 @@ void CameraSection::appendSectionItems(QList<MissionItem*>& items, QObject* miss
     }
 
     if (_cameraActionFact.rawValue().toInt() != CameraActionNone) {
-        MissionItem* item = NULL;
+        MissionItem* item = nullptr;
 
         switch (_cameraActionFact.rawValue().toInt()) {
         case TakePhotosIntervalTime:

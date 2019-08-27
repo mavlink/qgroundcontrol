@@ -379,22 +379,20 @@ Item {
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
-                    /*
                     //-----------------------------------------------------------------
                     //-- Recording Time / Images Captured
-                    CustomLabel {
+                    QGCLabel {
                         text:               (_cameraVideoMode && _camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) ? _camera.recordTimeStr : "00:00:00"
                         visible:            _cameraVideoMode
-                        pointSize:          ScreenTools.smallFontPointSize
+                        font.pointSize:     ScreenTools.smallFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
-                    CustomLabel {
+                    QGCLabel {
                         text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
                         visible:            _cameraPhotoMode
-                        pointSize:          ScreenTools.smallFontPointSize
+                        font.pointSize:     ScreenTools.smallFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
-                    */
                     Item {
                         height:     1
                         width:      1

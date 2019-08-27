@@ -41,7 +41,7 @@ bool UASMessage::severityIsError()
 
 UASMessageHandler::UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
-    , _activeVehicle(NULL)
+    , _activeVehicle(nullptr)
     , _activeComponent(-1)
     , _multiComp(false)
     , _errorCount(0)
@@ -49,7 +49,7 @@ UASMessageHandler::UASMessageHandler(QGCApplication* app, QGCToolbox* toolbox)
     , _warningCount(0)
     , _normalCount(0)
     , _showErrorsInToolbar(false)
-    , _multiVehicleManager(NULL)
+    , _multiVehicleManager(nullptr)
 {
 
 }
@@ -66,7 +66,7 @@ void UASMessageHandler::setToolbox(QGCToolbox *toolbox)
    _multiVehicleManager = _toolbox->multiVehicleManager();
 
    connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &UASMessageHandler::_activeVehicleChanged);
-   emit textMessageReceived(NULL);
+   emit textMessageReceived(nullptr);
    emit textMessageCountChanged(0);
 }
 
@@ -89,9 +89,9 @@ void UASMessageHandler::_activeVehicleChanged(Vehicle* vehicle)
     // If we were already attached to an autopilot, disconnect it.
     if (_activeVehicle) {
         disconnect(_activeVehicle, &Vehicle::textMessageReceived, this, &UASMessageHandler::handleTextMessage);
-        _activeVehicle = NULL;
+        _activeVehicle = nullptr;
         clearMessages();
-        emit textMessageReceived(NULL);
+        emit textMessageReceived(nullptr);
     }
 
     // And now if there's an autopilot to follow, set up the UI.

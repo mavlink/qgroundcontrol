@@ -25,7 +25,7 @@ class MultiSignalSpy : public QObject
     Q_OBJECT
     
 public:
-    MultiSignalSpy(QObject* parent = NULL);
+    MultiSignalSpy(QObject* parent = nullptr);
     ~MultiSignalSpy();
 
     bool init(QObject* signalEmitter, const char** rgSignals, size_t cSignals);

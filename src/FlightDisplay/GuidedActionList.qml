@@ -74,7 +74,7 @@ Rectangle {
 
                         QGCLabel {
                             id:                     actionMessage
-                            text:                   modelData.text
+                            text:                   modelData.text ? modelData.text : ""
                             horizontalAlignment:    Text.AlignHCenter
                             wrapMode:               Text.WordWrap
                             Layout.minimumWidth:    _width
