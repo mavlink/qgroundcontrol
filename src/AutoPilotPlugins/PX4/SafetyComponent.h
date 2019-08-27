@@ -23,7 +23,7 @@ class SafetyComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    SafetyComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;

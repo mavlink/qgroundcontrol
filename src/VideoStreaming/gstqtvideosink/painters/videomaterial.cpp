@@ -191,7 +191,7 @@ public:
 
 VideoMaterial *VideoMaterial::create(const BufferFormat & format)
 {
-    VideoMaterial *material = NULL;
+    VideoMaterial *material = nullptr;
 
     switch (format.videoFormat()) {
     // BGRx
@@ -264,7 +264,7 @@ VideoMaterial::~VideoMaterial()
             funcs->glDeleteTextures(m_textureCount, m_textureIds);
         }
     }
-    gst_buffer_replace(&m_frame, NULL);
+    gst_buffer_replace(&m_frame, nullptr);
 }
 
 int VideoMaterial::compare(const QSGMaterial *other) const
@@ -426,7 +426,7 @@ void VideoMaterial::bind()
     if (!funcs)
         return;
 
-    GstBuffer *frame = NULL;
+    GstBuffer *frame = nullptr;
 
     m_frameMutex.lock();
     if (m_frame)

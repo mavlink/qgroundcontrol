@@ -26,8 +26,8 @@ class FactGroup : public QObject
     Q_OBJECT
     
 public:
-    FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent = NULL);
-    FactGroup(int updateRateMsecs, QObject* parent = NULL);
+    FactGroup(int updateRateMsecs, const QString& metaDataFile, QObject* parent = nullptr);
+    FactGroup(int updateRateMsecs, QObject* parent = nullptr);
 
     Q_PROPERTY(QStringList factNames        READ factNames      CONSTANT)
     Q_PROPERTY(QStringList factGroupNames   READ factGroupNames CONSTANT)

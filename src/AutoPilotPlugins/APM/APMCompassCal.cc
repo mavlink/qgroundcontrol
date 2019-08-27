@@ -73,9 +73,9 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
 
     for (size_t cur_mag=0; cur_mag<max_mags; cur_mag++) {
         // Initialize to no memory allocated
-        worker_data.x[cur_mag] = NULL;
-        worker_data.y[cur_mag] = NULL;
-        worker_data.z[cur_mag] = NULL;
+        worker_data.x[cur_mag] = nullptr;
+        worker_data.y[cur_mag] = nullptr;
+        worker_data.z[cur_mag] = nullptr;
         worker_data.calibration_counter_total[cur_mag] = 0;
     }
 
@@ -86,7 +86,7 @@ CalWorkerThread::calibrate_return CalWorkerThread::calibrate(void)
             worker_data.x[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
             worker_data.y[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
             worker_data.z[cur_mag] = reinterpret_cast<float *>(malloc(sizeof(float) * calibration_points_maxcount));
-            if (worker_data.x[cur_mag] == NULL || worker_data.y[cur_mag] == NULL || worker_data.z[cur_mag] == NULL) {
+            if (worker_data.x[cur_mag] == nullptr || worker_data.y[cur_mag] == nullptr || worker_data.z[cur_mag] == nullptr) {
                 _emitVehicleTextMessage(QStringLiteral("[cal] ERROR: out of memory"));
                 result = calibrate_return_error;
             }
@@ -576,8 +576,8 @@ int CalWorkerThread::sphere_fit_least_squares(const float x[], const float y[], 
 }
 
 APMCompassCal::APMCompassCal(void)
-    : _vehicle(NULL)
-    , _calWorkerThread(NULL)
+    : _vehicle(nullptr)
+    , _calWorkerThread(nullptr)
 {
 
 }

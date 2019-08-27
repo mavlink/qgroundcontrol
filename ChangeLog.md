@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* Compass Instrument: Add indicators for Home, COG and Next Waypoint headings.
 * Log Replay: Support changing speed of playback
 * Basic object avoidance added to vehicles.
 * Added ability to set a joystick button to be single action or repeated action while the button is held down.

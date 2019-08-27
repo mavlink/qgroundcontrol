@@ -55,7 +55,7 @@ LinkConfiguration::LinkConfiguration(LinkConfiguration* copy)
 
 void LinkConfiguration::copyFrom(LinkConfiguration* source)
 {
-    Q_ASSERT(source != NULL);
+    Q_ASSERT(source != nullptr);
     _link       = source->link();
     _name       = source->name();
     _dynamic    = source->isDynamic();

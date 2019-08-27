@@ -30,8 +30,8 @@
 
 QGCJSBSimLink::QGCJSBSimLink(Vehicle* vehicle, QString startupArguments, QString remoteHost, QHostAddress host, quint16 port)
     : _vehicle(vehicle)
-    , socket(NULL)
-    , process(NULL)
+    , socket(nullptr)
+    , process(nullptr)
     , startupArguments(startupArguments)
 {
     // We're doing it wrong - because the Qt folks got the API wrong:
@@ -337,13 +337,13 @@ bool QGCJSBSimLink::disconnectSimulation()
     {
         process->close();
         delete process;
-        process = NULL;
+        process = nullptr;
     }
     if (socket)
     {
         socket->close();
         delete socket;
-        socket = NULL;
+        socket = nullptr;
     }
 
     connectState = false;

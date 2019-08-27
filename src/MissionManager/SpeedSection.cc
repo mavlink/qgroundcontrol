@@ -24,7 +24,7 @@ SpeedSection::SpeedSection(Vehicle* vehicle, QObject* parent)
     , _flightSpeedFact      (0, _flightSpeedName,   FactMetaData::valueTypeDouble)
 {
     if (_metaDataMap.isEmpty()) {
-        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/SpeedSection.FactMetaData.json"), NULL /* metaDataParent */);
+        _metaDataMap = FactMetaData::createMapFromJsonFile(QStringLiteral(":/json/SpeedSection.FactMetaData.json"), nullptr /* metaDataParent */);
     }
 
     double flightSpeed = 0;

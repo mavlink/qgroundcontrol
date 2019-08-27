@@ -933,7 +933,7 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsDist
             return pAppSettingsTranslation;
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsAreaUnitsTranslation(const QString& rawUnits)
@@ -953,7 +953,7 @@ const FactMetaData::AppSettingsTranslation_s* FactMetaData::_findAppSettingsArea
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 QVariant FactMetaData::metersToAppSettingsDistanceUnits(const QVariant& meters)

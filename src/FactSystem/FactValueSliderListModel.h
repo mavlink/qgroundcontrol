@@ -19,7 +19,7 @@ class FactValueSliderListModel : public QAbstractListModel
     Q_OBJECT
     
 public:
-    FactValueSliderListModel(Fact& fact, QObject* parent = NULL);
+    FactValueSliderListModel(Fact& fact, QObject* parent = nullptr);
     ~FactValueSliderListModel();
 
     /// The initial value of the Fact at the meta data specified decimal place precision

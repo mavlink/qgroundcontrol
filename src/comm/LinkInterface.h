@@ -39,7 +39,7 @@ class LinkInterface : public QThread
 public:    
     virtual ~LinkInterface() {
         stopMavlinkMessagesTimer();
-        _config->setLink(NULL);
+        _config->setLink(nullptr);
     }
 
     Q_PROPERTY(bool active      READ active     NOTIFY activeChanged)

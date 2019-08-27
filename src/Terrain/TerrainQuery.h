@@ -60,7 +60,7 @@ class TerrainAirMapQuery : public TerrainQueryInterface {
     Q_OBJECT
 
 public:
-    TerrainAirMapQuery(QObject* parent = NULL);
+    TerrainAirMapQuery(QObject* parent = nullptr);
 
     // Overrides from TerrainQueryInterface
     void requestCoordinateHeights   (const QList<QGeoCoordinate>& coordinates) final;
@@ -95,7 +95,7 @@ class TerrainOfflineAirMapQuery : public TerrainQueryInterface {
     Q_OBJECT
 
 public:
-    TerrainOfflineAirMapQuery(QObject* parent = NULL);
+    TerrainOfflineAirMapQuery(QObject* parent = nullptr);
 
     // Overrides from TerrainQueryInterface
     void requestCoordinateHeights(const QList<QGeoCoordinate>& coordinates) final;
@@ -200,7 +200,7 @@ class TerrainAtCoordinateQuery : public QObject
 {
     Q_OBJECT
 public:
-    TerrainAtCoordinateQuery(QObject* parent = NULL);
+    TerrainAtCoordinateQuery(QObject* parent = nullptr);
 
     /// Async terrain query for a list of lon,lat coordinates. When the query is done, the terrainData() signal
     /// is emitted.
@@ -219,7 +219,7 @@ class TerrainPathQuery : public QObject
     Q_OBJECT
 
 public:
-    TerrainPathQuery(QObject* parent = NULL);
+    TerrainPathQuery(QObject* parent = nullptr);
 
     /// Async terrain query for terrain heights between two lat/lon coordinates. When the query is done, the terrainData() signal
     /// is emitted.
@@ -250,7 +250,7 @@ class TerrainPolyPathQuery : public QObject
     Q_OBJECT
 
 public:
-    TerrainPolyPathQuery(QObject* parent = NULL);
+    TerrainPolyPathQuery(QObject* parent = nullptr);
 
     /// Async terrain query for terrain heights for the paths between each specified QGeoCoordinate.
     /// When the query is done, the terrainData() signal is emitted.
@@ -278,7 +278,7 @@ class TerrainCarpetQuery : public QObject
     Q_OBJECT
 
 public:
-    TerrainCarpetQuery(QObject* parent = NULL);
+    TerrainCarpetQuery(QObject* parent = nullptr);
 
     /// Async terrain query for terrain information bounded by the specifed corners.
     /// When the query is done, the terrainData() signal is emitted.
