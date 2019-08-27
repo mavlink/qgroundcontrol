@@ -346,8 +346,10 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _globalPositionIntMessageAvailable(false)
     , _defaultCruiseSpeed(_settingsManager->appSettings()->offlineEditingCruiseSpeed()->rawValue().toDouble())
     , _defaultHoverSpeed(_settingsManager->appSettings()->offlineEditingHoverSpeed()->rawValue().toDouble())
+    , _mavlinkProtocolRequestComplete(true)
+    , _maxProtoVersion(200)
     , _vehicleCapabilitiesKnown(true)
-    , _capabilityBits(_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA ? 0 : MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
+    , _capabilityBits(MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
     , _cameras(nullptr)
@@ -568,12 +570,6 @@ void Vehicle::_offlineFirmwareTypeSettingChanged(QVariant value)
     _firmwareType = static_cast<MAV_AUTOPILOT>(value.toInt());
     _firmwarePlugin = _firmwarePluginManager->firmwarePluginForAutopilot(_firmwareType, _vehicleType);
     emit firmwareTypeChanged();
-    if (_firmwareType == MAV_AUTOPILOT_ARDUPILOTMEGA) {
-        _capabilityBits = 0;
-    } else {
-        _capabilityBits = MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY;
-    }
-    emit capabilityBitsChanged(_capabilityBits);
 }
 
 void Vehicle::_offlineVehicleTypeSettingChanged(QVariant value)
