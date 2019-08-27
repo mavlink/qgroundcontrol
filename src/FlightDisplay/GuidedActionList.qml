@@ -31,7 +31,10 @@ Rectangle {
     property var    altitudeSlider
     property alias  model:              actionRepeater.model
 
-    property real _margins: Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
+    property real _margins:             Math.round(ScreenTools.defaultFontPixelHeight * 0.66)
+    property real _actionWidth:         ScreenTools.defaultFontPixelWidth * 25
+    property real _actionHorizSpacing:  ScreenTools.defaultFontPixelHeight * 2
+
 
     QGCPalette { id: qgcPal }
 
@@ -58,11 +61,11 @@ Rectangle {
             Layout.minimumWidth:    _width
             Layout.maximumWidth:    _width
 
-            property real _width: Math.min(_root.width * 0.8, actionRow.width)
+            property real _width: Math.min((_actionWidth * 2) + _actionHorizSpacing, actionRow.width)
 
             RowLayout {
                 id:         actionRow
-                spacing:    ScreenTools.defaultFontPixelHeight * 2
+                spacing:    _actionHorizSpacing
 
                 Repeater {
                     id: actionRepeater
@@ -74,11 +77,11 @@ Rectangle {
 
                         QGCLabel {
                             id:                     actionMessage
-                            text:                   modelData.text ? modelData.text : ""
+                            text:                   modelData.text
                             horizontalAlignment:    Text.AlignHCenter
                             wrapMode:               Text.WordWrap
-                            Layout.minimumWidth:    _width
-                            Layout.maximumWidth:    _width
+                            Layout.minimumWidth:    _actionWidth
+                            Layout.maximumWidth:    _actionWidth
                             Layout.fillHeight:      true
 
                             property real _width: ScreenTools.defaultFontPixelWidth * 25
