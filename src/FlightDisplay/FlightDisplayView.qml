@@ -494,7 +494,6 @@ Item {
             anchors.topMargin:      ScreenTools.toolbarHeight + _margins
             anchors.rightMargin:    _margins
             anchors.right:          parent.right
-            anchors.top:            parent.top
             spacing:                ScreenTools.defaultFontPixelWidth
             z:                      _mapAndVideo.z + 4
             visible:                QGroundControl.multiVehicleManager.vehicles.count > 1 && QGroundControl.corePlugin.options.enableMultiVehicleList
@@ -519,6 +518,7 @@ Item {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
+            anchors.top:        singleMultiSelector.visible? singleMultiSelector.bottom:undefined
             useLightColors:     isBackgroundDark
             missionController:  _missionController
             visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen

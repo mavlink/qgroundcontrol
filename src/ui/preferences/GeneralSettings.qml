@@ -482,6 +482,21 @@ Rectangle {
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
                             }
+                            FactCheckBox {
+                                text:       qsTr("Show additional heading indicators on Compass")
+                                visible:    _showAdditionalIndicatorsCompass.visible
+                                fact:       _showAdditionalIndicatorsCompass
+
+                                property Fact _showAdditionalIndicatorsCompass: QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
+                            }
+                            FactCheckBox {
+                                text:       qsTr("Lock Compass Nose-Up")
+                                visible:    _lockNoseUpCompass.visible
+                                fact:       _lockNoseUpCompass
+
+                                property Fact _lockNoseUpCompass: QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass
+                            }
+
 
                             GridLayout {
                                 columns: 2
