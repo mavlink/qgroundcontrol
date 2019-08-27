@@ -18,7 +18,7 @@ class APMAirframeComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMAirframeComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     QStringList setupCompleteChangedTriggerList(void) const override;

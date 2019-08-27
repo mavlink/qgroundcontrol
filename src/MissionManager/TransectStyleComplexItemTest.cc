@@ -11,7 +11,7 @@
 #include "QGCApplication.h"
 
 TransectStyleComplexItemTest::TransectStyleComplexItemTest(void)
-    : _offlineVehicle(NULL)
+    : _offlineVehicle(nullptr)
 {
     _polygonVertices << QGeoCoordinate(47.633550640000003, -122.08982199)
                      << QGeoCoordinate(47.634129020000003, -122.08887249)

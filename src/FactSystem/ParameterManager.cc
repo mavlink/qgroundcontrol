@@ -35,7 +35,7 @@ const char* ParameterManager::_jsonParamValueKey =          "value";
 ParameterManager::ParameterManager(Vehicle* vehicle)
     : QObject                           (vehicle)
     , _vehicle                          (vehicle)
-    , _mavlink                          (NULL)
+    , _mavlink                          (nullptr)
     , _loadProgress                     (0.0)
     , _parametersReady                  (false)
     , _missingParameters                (false)
@@ -45,7 +45,7 @@ ParameterManager::ParameterManager(Vehicle* vehicle)
     , _metaDataAddedToFacts             (false)
     , _logReplay                        (vehicle->priorityLink() && vehicle->priorityLink()->isLogReplay())
     , _parameterSetMajorVersion         (-1)
-    , _parameterMetaData                (NULL)
+    , _parameterMetaData                (nullptr)
     , _prevWaitingReadParamIndexCount   (0)
     , _prevWaitingReadParamNameCount    (0)
     , _prevWaitingWriteParamNameCount   (0)
@@ -330,7 +330,7 @@ void ParameterManager::_parameterUpdate(int vehicleId, int componentId, QString 
 
     _dataMutex.unlock();
 
-    Fact* fact = NULL;
+    Fact* fact = nullptr;
     if (_mapParameterName2Variant[componentId].contains(parameterName)) {
         fact = _mapParameterName2Variant[componentId][parameterName].value<Fact*>();
     }
@@ -1052,7 +1052,7 @@ void ParameterManager::_clearMetaData(void)
 {
     if (_parameterMetaData) {
         _parameterMetaData->deleteLater();
-        _parameterMetaData = NULL;
+        _parameterMetaData = nullptr;
     }
 }
 
@@ -1288,7 +1288,7 @@ void ParameterManager::cacheMetaDataFile(const QString& metaDataFile, MAV_AUTOPI
 
     // Find the cache hit closest to this new file
     int cacheMajorVersion, cacheMinorVersion;
-    QString cacheHit = ParameterManager::parameterMetaDataFile(NULL, firmwareType, newMajorVersion, cacheMajorVersion, cacheMinorVersion);
+    QString cacheHit = ParameterManager::parameterMetaDataFile(nullptr, firmwareType, newMajorVersion, cacheMajorVersion, cacheMinorVersion);
     qCDebug(ParameterManagerLog) << "ParameterManager::cacheMetaDataFile cacheHit file:firmware:major;minor" << cacheHit << cacheMajorVersion << cacheMinorVersion;
 
     bool cacheNewFile = false;

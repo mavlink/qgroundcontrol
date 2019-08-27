@@ -13,7 +13,7 @@
 #include "SettingsManager.h"
 
 MissionSettingsTest::MissionSettingsTest(void)
-    : _settingsItem(NULL)
+    : _settingsItem(nullptr)
 {
     
 }

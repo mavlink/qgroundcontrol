@@ -18,7 +18,7 @@ class APMMotorComponent : public MotorComponent
     Q_OBJECT
 
 public:
-    APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    APMMotorComponent(Vehicle* vehicle, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
 
     QUrl setupSource(void) const final;
 

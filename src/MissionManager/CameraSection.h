@@ -21,7 +21,7 @@ class CameraSection : public Section
     Q_OBJECT
 
 public:
-    CameraSection(Vehicle* vehicle, QObject* parent = NULL);
+    CameraSection(Vehicle* vehicle, QObject* parent = nullptr);
 
     // These enum values must match the json meta data
 

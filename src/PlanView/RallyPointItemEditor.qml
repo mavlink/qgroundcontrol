@@ -14,11 +14,13 @@ Rectangle {
     color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius: _radius
 
+    signal clicked()
+
     property var rallyPoint ///< RallyPoint object associated with editor
     property var controller ///< RallyPointController
 
     property bool   _currentItem:       rallyPoint ? rallyPoint === controller.currentRallyPoint : false
-    property color  _outerTextColor:    _currentItem ? "black" : qgcPal.text
+    property color  _outerTextColor:    qgcPal.text // _currentItem ? "black" : qgcPal.text
 
     readonly property real  _margin:            ScreenTools.defaultFontPixelWidth / 2
     readonly property real  _radius:            ScreenTools.defaultFontPixelWidth / 2
@@ -101,7 +103,6 @@ Rectangle {
 
             Repeater {
                 model: rallyPoint ? rallyPoint.textFieldFacts : 0
-
                 QGCLabel {
                     text: modelData.name + ":"
                 }
@@ -109,7 +110,6 @@ Rectangle {
 
             Repeater {
                 model: rallyPoint ? rallyPoint.textFieldFacts : 0
-
                 FactTextField {
                     Layout.fillWidth:   true
                     showUnits:          true

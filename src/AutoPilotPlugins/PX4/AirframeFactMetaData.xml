@@ -92,6 +92,19 @@
       <output name="AUX2">feed-through of RC AUX2 channel</output>
       <output name="AUX3">feed-through of RC AUX3 channel</output>
     </airframe>
+    <airframe id="6002" maintainer="Hyon Lim &lt;lim@uvify.com&gt;" name="UVify Draco-R">
+      <class>Copter</class>
+      <maintainer>Hyon Lim &lt;lim@uvify.com&gt;</maintainer>
+      <type>Hexarotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+      <output name="MAIN5">motor 5</output>
+      <output name="MAIN6">motor 6</output>
+      <output name="AUX1">feed-through of RC AUX1 channel</output>
+      <output name="AUX2">feed-through of RC AUX2 channel</output>
+    </airframe>
   </airframe_group>
   <airframe_group image="OctoRotorXCoaxial" name="Octo Coax Wide">
     <airframe id="12002" maintainer="Simon Wilks &lt;simon@uaventure.com&gt;" name="Steadidrone MAVRIK">
@@ -388,6 +401,24 @@
       <class>Copter</class>
       <maintainer>Beat Kueng &lt;beat@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
+    </airframe>
+    <airframe id="4071" maintainer="Hyon Lim &lt;lim@uvify.com&gt;" name="UVify IFO">
+      <class>Copter</class>
+      <maintainer>Hyon Lim &lt;lim@uvify.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
+    </airframe>
+    <airframe id="4072" maintainer="Hyon Lim &lt;lim@uvify.com&gt;" name="UVify Draco">
+      <class>Copter</class>
+      <maintainer>Hyon Lim &lt;lim@uvify.com&gt;</maintainer>
+      <type>Quadrotor x</type>
+      <output name="MAIN1">motor 1</output>
+      <output name="MAIN2">motor 2</output>
+      <output name="MAIN3">motor 3</output>
+      <output name="MAIN4">motor 4</output>
     </airframe>
     <airframe id="4080" maintainer="Anton Matosov &lt;anton.matosov@gmail.com&gt;" name="ZMR250 Racer">
       <class>Copter</class>

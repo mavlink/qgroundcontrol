@@ -35,9 +35,9 @@ QGCXPlaneLink::QGCXPlaneLink(Vehicle* vehicle, QString remoteHost, QHostAddress 
     _vehicle(vehicle),
     remoteHost(QHostAddress("127.0.0.1")),
     remotePort(49000),
-    socket(NULL),
-    process(NULL),
-    terraSync(NULL),
+    socket(nullptr),
+    process(nullptr),
+    terraSync(nullptr),
     barometerOffsetkPa(-8.0f),
     airframeID(QGCXPlaneLink::AIRFRAME_UNKNOWN),
     xPlaneConnected(false),
@@ -75,7 +75,7 @@ QGCXPlaneLink::~QGCXPlaneLink()
     if (socket) {
         socket->close();
         socket->deleteLater();
-        socket = NULL;
+        socket = nullptr;
     }
 }
 
@@ -180,7 +180,7 @@ void QGCXPlaneLink::run()
         emit statusMessage("Binding socket failed!");
 
         socket->deleteLater();
-        socket = NULL;
+        socket = nullptr;
         return;
     }
 
@@ -260,7 +260,7 @@ void QGCXPlaneLink::run()
 
     socket->close();
     socket->deleteLater();
-    socket = NULL;
+    socket = nullptr;
 
     emit simulationDisconnected();
     emit simulationConnected(false);

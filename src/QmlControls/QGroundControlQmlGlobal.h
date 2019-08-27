@@ -23,6 +23,9 @@
 #include "QGCLoggingCategory.h"
 #include "AppSettings.h"
 #include "AirspaceManager.h"
+#if defined(QGC_ENABLE_PAIRING)
+#include "PairingManager.h"
+#endif
 #if defined(QGC_GST_TAISYNC_ENABLED)
 #include "TaisyncManager.h"
 #else
@@ -75,7 +78,10 @@ public:
     Q_PROPERTY(bool                 taisyncSupported    READ taisyncSupported       CONSTANT)
     Q_PROPERTY(MicrohardManager*    microhardManager    READ microhardManager       CONSTANT)
     Q_PROPERTY(bool                 microhardSupported  READ microhardSupported     CONSTANT)
-
+    Q_PROPERTY(bool                 supportsPairing     READ supportsPairing        CONSTANT)
+#if defined(QGC_ENABLE_PAIRING)
+    Q_PROPERTY(PairingManager*      pairingManager      READ pairingManager         CONSTANT)
+#endif
     Q_PROPERTY(int      supportedFirmwareCount          READ supportedFirmwareCount CONSTANT)
     Q_PROPERTY(int      supportedVehicleCount           READ supportedVehicleCount  CONSTANT)
     Q_PROPERTY(bool     px4ProFirmwareSupported         READ px4ProFirmwareSupported CONSTANT)
@@ -170,17 +176,23 @@ public:
     SettingsManager*        settingsManager     ()  { return _settingsManager; }
     FactGroup*              gpsRtkFactGroup     ()  { return _gpsRtkFactGroup; }
     AirspaceManager*        airspaceManager     ()  { return _airspaceManager; }
+#if defined(QGC_ENABLE_PAIRING)
+    bool                    supportsPairing     ()  { return true; }
+    PairingManager*         pairingManager      ()  { return _pairingManager; }
+#else
+    bool                    supportsPairing     ()  { return false; }
+#endif
     static QGeoCoordinate   flightMapPosition   ()  { return _coord; }
     static double           flightMapZoom       ()  { return _zoom; }
 
     TaisyncManager*         taisyncManager      ()  { return _taisyncManager; }
 #if defined(QGC_GST_TAISYNC_ENABLED)
-    bool                    taisyncSupported    () { return true; }
+    bool                    taisyncSupported    ()  { return true; }
 #else
     bool                    taisyncSupported    () { return false; }
 #endif
 
-    MicrohardManager*       microhardManager    ()  { return _microhardManager; }
+    MicrohardManager*       microhardManager    () { return _microhardManager; }
 #if defined(QGC_GST_TAISYNC_ENABLED)
     bool                    microhardSupported  () { return true; }
 #else
@@ -254,6 +266,9 @@ private:
     AirspaceManager*        _airspaceManager        = nullptr;
     TaisyncManager*         _taisyncManager         = nullptr;
     MicrohardManager*       _microhardManager       = nullptr;
+#if defined(QGC_ENABLE_PAIRING)
+    PairingManager*         _pairingManager         = nullptr;
+#endif
 
     bool                    _skipSetupPage          = false;
 

@@ -23,8 +23,7 @@ matrix:
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - os: android
-          dist: trusty
+        - dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer
           sudo: false

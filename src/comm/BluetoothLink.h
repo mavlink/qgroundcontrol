@@ -91,7 +91,7 @@ public:
     QString     devName                 () { return _device.name; }
     QString     address                 ();
     QStringList nameList                () { return _nameList; }
-    bool        scanning                () { return _deviceDiscover != NULL; }
+    bool        scanning                () { return _deviceDiscover != nullptr; }
 
     BluetoothData    device             () { return _device; }
 
