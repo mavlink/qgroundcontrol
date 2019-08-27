@@ -17,7 +17,7 @@ import QGroundControl.Controls      1.0
 import QGroundControl.Palette       1.0
 
 /// This is an example Qml file which is used to describe the QGroundControl coding style.
-/// In general almost everything in here has some coding style meaning including order of
+/// In general almost everything in here has same coding style meaning including order of
 /// code. Not all style choices are explained. If there is any confusison please ask
 /// and we'll answer and update style as needed.
 Item {
