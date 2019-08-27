@@ -22,7 +22,7 @@ class AirframeComponent : public VehicleComponent
     Q_OBJECT
     
 public:
-    AirframeComponent(Vehicle* vehicles, AutoPilotPlugin* autopilot, QObject* parent = NULL);
+    AirframeComponent(Vehicle* vehicles, AutoPilotPlugin* autopilot, QObject* parent = nullptr);
     
     // Virtuals from VehicleComponent
     virtual QStringList setupCompleteChangedTriggerList(void) const;

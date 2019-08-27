@@ -36,8 +36,8 @@ MapQuickItem {
             gimbalYaw:      missionItem.missionGimbalYaw
             vehicleYaw:     missionItem.missionVehicleYaw
             showGimbalYaw:  !isNaN(missionItem.missionGimbalYaw)
+            highlightSelected: true
             onClicked:      _item.clicked()
-
             property bool _isCurrentItem:   missionItem ? missionItem.isCurrentItem : false
         }
 }

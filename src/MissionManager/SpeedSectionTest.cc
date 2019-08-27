@@ -10,9 +10,9 @@
 #include "SpeedSectionTest.h"
 
 SpeedSectionTest::SpeedSectionTest(void)
-    : _spySpeed(NULL)
-    , _spySection(NULL)
-    , _speedSection(NULL)
+    : _spySpeed(nullptr)
+    , _spySection(nullptr)
+    , _speedSection(nullptr)
 {
     
 }
@@ -39,7 +39,7 @@ void SpeedSectionTest::cleanup(void)
 
 void SpeedSectionTest::_createSpy(SpeedSection* speedSection, MultiSignalSpy** speedSpy)
 {
-    *speedSpy = NULL;
+    *speedSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
     QCOMPARE(spy->init(speedSection, rgSpeedSignals, cSpeedSignals), true);
     *speedSpy = spy;
@@ -193,7 +193,7 @@ void SpeedSectionTest::_testScanForSection(void)
 
     double flightSpeed = 10.123456;
     MissionItem validSpeedItem(0, MAV_CMD_DO_CHANGE_SPEED, MAV_FRAME_MISSION, _offlineVehicle->multiRotor() ? 1 : 0, flightSpeed, -1, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleItem(_offlineVehicle, false /* flyView */, validSpeedItem, NULL);
+    SimpleMissionItem simpleItem(_offlineVehicle, false /* flyView */, validSpeedItem, nullptr);
     MissionItem& simpleMissionItem = simpleItem.missionItem();
     visualItems.append(&simpleItem);
     scanIndex = 0;
@@ -264,7 +264,7 @@ void SpeedSectionTest::_testScanForSection(void)
 
     // Valid item in wrong position
     MissionItem waypointMissionItem(0, MAV_CMD_NAV_WAYPOINT, MAV_FRAME_GLOBAL_RELATIVE_ALT, 0, 0, 0, 0, 0, 0, 0, true, false);
-    SimpleMissionItem simpleWaypointItem(_offlineVehicle, false /* flyView */, waypointMissionItem, NULL);
+    SimpleMissionItem simpleWaypointItem(_offlineVehicle, false /* flyView */, waypointMissionItem, nullptr);
     simpleMissionItem = validSpeedItem;
     visualItems.append(&simpleWaypointItem);
     visualItems.append(&simpleMissionItem);

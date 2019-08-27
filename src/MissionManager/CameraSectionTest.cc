@@ -13,16 +13,16 @@
 #include "MissionCommandUIInfo.h"
 
 CameraSectionTest::CameraSectionTest(void)
-    : _spyCamera                        (NULL)
-    , _spySection                       (NULL)
-    , _cameraSection                    (NULL)
-    , _validGimbalItem                  (NULL)
-    , _validDistanceItem                (NULL)
-    , _validTimeItem                    (NULL)
-    , _validStartVideoItem              (NULL)
-    , _validCameraPhotoModeItem         (NULL)
-    , _validCameraVideoModeItem         (NULL)
-    , _validCameraSurveyPhotoModeItem   (NULL)
+    : _spyCamera                        (nullptr)
+    , _spySection                       (nullptr)
+    , _cameraSection                    (nullptr)
+    , _validGimbalItem                  (nullptr)
+    , _validDistanceItem                (nullptr)
+    , _validTimeItem                    (nullptr)
+    , _validStartVideoItem              (nullptr)
+    , _validCameraPhotoModeItem         (nullptr)
+    , _validCameraVideoModeItem         (nullptr)
+    , _validCameraSurveyPhotoModeItem   (nullptr)
 {
     
 }
@@ -143,7 +143,7 @@ void CameraSectionTest::cleanup(void)
 
 void CameraSectionTest::_createSpy(CameraSection* cameraSection, MultiSignalSpy** cameraSpy)
 {
-    *cameraSpy = NULL;
+    *cameraSpy = nullptr;
     MultiSignalSpy* spy = new MultiSignalSpy();
     QCOMPARE(spy->init(cameraSection, rgCameraSignals, cCameraSignals), true);
     *cameraSpy = spy;
@@ -618,7 +618,7 @@ void CameraSectionTest::_testScanForGimbalSection(void)
 
     // Gimbal command but incorrect settings
 
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validGimbalItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validGimbalItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam2(10);    // roll is not supported
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
@@ -708,7 +708,7 @@ void CameraSectionTest::_testScanForCameraModeSection(void)
     */
 
     // Mode command but incorrect settings
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validCameraPhotoModeItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validCameraPhotoModeItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam3(1);   // Param3 should be NaN
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
@@ -747,7 +747,7 @@ void CameraSectionTest::_testScanForPhotoIntervalTimeSection(void)
 
     // Image start command but incorrect settings
 
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validTimeItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validTimeItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam3(10);    // must be 0 for unlimited
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
@@ -788,7 +788,7 @@ void CameraSectionTest::_testScanForPhotoIntervalDistanceSection(void)
 
     // Trigger distance command but incorrect settings
 
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validDistanceItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validDistanceItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam1(-1);    // must be >= 0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
@@ -873,7 +873,7 @@ void CameraSectionTest::_testScanForStartVideoSection(void)
 
     // Start Video command but incorrect settings
 
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validStartVideoItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validStartVideoItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam1(10);    // Reserved (must be 0)
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
@@ -909,7 +909,7 @@ void CameraSectionTest::_testScanForStopVideoSection(void)
 
     // Trigger distance command but incorrect settings
 
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validStopVideoItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validStopVideoItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam1(10);    // must be  0
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);
@@ -949,8 +949,8 @@ void CameraSectionTest::_testScanForStopPhotoSection(void)
 
     // Out of order commands
 
-    SimpleMissionItem validStopDistanceItem(_offlineVehicle, false /* flyView */, NULL);
-    SimpleMissionItem validStopTimeItem(_offlineVehicle, false /* flyView */, NULL);
+    SimpleMissionItem validStopDistanceItem(_offlineVehicle, false /* flyView */, nullptr);
+    SimpleMissionItem validStopTimeItem(_offlineVehicle, false /* flyView */, nullptr);
     validStopDistanceItem.missionItem() = _validStopDistanceItem->missionItem();
     validStopTimeItem.missionItem() = _validStopTimeItem->missionItem();
     visualItems.append(&validStopTimeItem);
@@ -990,7 +990,7 @@ void CameraSectionTest::_testScanForTakePhotoSection(void)
 
     // Take Photo command but incorrect settings
 
-    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validTimeItem->missionItem(), NULL);
+    SimpleMissionItem invalidSimpleItem(_offlineVehicle, false /* flyView */, _validTimeItem->missionItem(), nullptr);
     invalidSimpleItem.missionItem().setParam3(10);    // must be 1 for single photo
     visualItems.append(&invalidSimpleItem);
     QCOMPARE(_cameraSection->scanForSection(&visualItems, scanIndex), false);

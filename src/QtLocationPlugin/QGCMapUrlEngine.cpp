@@ -42,7 +42,7 @@ UrlFactory::UrlFactory()
     : _timeout(5 * 1000)
 #ifndef QGC_NO_GOOGLE_MAPS
     , _googleVersionRetrieved(false)
-    , _googleReply(NULL)
+    , _googleReply(nullptr)
 #endif
 {
     QStringList langs = QLocale::system().uiLanguages();
@@ -512,7 +512,7 @@ UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
     if(_googleReply)
     {
         _googleReply->deleteLater();
-        _googleReply = NULL;
+        _googleReply = nullptr;
     }
 }
 #endif
@@ -521,7 +521,7 @@ UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
 void
 UrlFactory::_replyDestroyed()
 {
-    _googleReply = NULL;
+    _googleReply = nullptr;
 }
 #endif
 
@@ -563,7 +563,7 @@ UrlFactory::_googleVersionCompleted()
         _versionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
     }
     _googleReply->deleteLater();
-    _googleReply = NULL;
+    _googleReply = nullptr;
 }
 #endif
 

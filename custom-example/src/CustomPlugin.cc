@@ -224,6 +224,7 @@ CustomPlugin::createRootWindow(QObject *parent)
 bool
 CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& metaData)
 {
+    bool parentResult = QGCCorePlugin::adjustSettingMetaData(settingsGroup, metaData);
     if (settingsGroup == AppSettings::settingsGroup) {
         if (metaData.name() == AppSettings::appFontPointSizeName) {
         #if defined(Q_OS_LINUX)
@@ -233,10 +234,10 @@ CustomPlugin::adjustSettingMetaData(const QString& settingsGroup, FactMetaData& 
         } else if (metaData.name() == AppSettings::indoorPaletteName) {
             QVariant indoorPalette = 1;
             metaData.setRawDefaultValue(indoorPalette);
-            return true;
+            parentResult = true;
         }
     }
-    return true;
+    return parentResult;
 }
 
 const QColor     CustomPlugin::_windowShadeEnabledLightColor("#FFFFFF");

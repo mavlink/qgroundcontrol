@@ -260,7 +260,7 @@ QGCCameraControl::photoStatus()
 QString
 QGCCameraControl::storageFreeStr()
 {
-    return QGCMapEngine::bigSizeToString(static_cast<quint64>(_storageFree) * 1024 * 1024);
+    return QGCMapEngine::storageFreeSizeToString(static_cast<quint64>(_storageFree));
 }
 
 //-----------------------------------------------------------------------------

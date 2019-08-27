@@ -55,6 +55,9 @@ CustomFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
 {
     Q_UNUSED(vehicle);
     if(_toolBarIndicatorList.size() == 0) {
+#if defined(QGC_ENABLE_PAIRING)
+        _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/PairingIndicator.qml")));
+#endif
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/GPSIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/TelemetryRSSIIndicator.qml")));
         _toolBarIndicatorList.append(QVariant::fromValue(QUrl::fromUserInput("qrc:/toolbar/RCRSSIIndicator.qml")));

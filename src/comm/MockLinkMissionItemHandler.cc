@@ -17,7 +17,7 @@ QGC_LOGGING_CATEGORY(MockLinkMissionItemHandlerLog, "MockLinkMissionItemHandlerL
 
 MockLinkMissionItemHandler::MockLinkMissionItemHandler(MockLink* mockLink, MAVLinkProtocol* mavlinkProtocol)
     : _mockLink(mockLink)
-    , _missionItemResponseTimer(NULL)
+    , _missionItemResponseTimer(nullptr)
     , _failureMode(FailNone)
     , _sendHomePositionOnEmptyList(false)
     , _mavlinkProtocol(mavlinkProtocol)

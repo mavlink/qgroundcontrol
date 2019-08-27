@@ -33,7 +33,7 @@ QWidgetVideoSinkDelegate::QWidgetVideoSinkDelegate(GstElement * sink, QObject * 
 
 QWidgetVideoSinkDelegate::~QWidgetVideoSinkDelegate()
 {
-    setWidget(NULL);
+    setWidget(nullptr);
 }
 
 QWidget *QWidgetVideoSinkDelegate::widget() const
@@ -50,7 +50,7 @@ void QWidgetVideoSinkDelegate::setWidget(QWidget *widget)
         m_widget.data()->setAttribute(Qt::WA_OpaquePaintEvent, m_opaquePaintEventAttribute);
         m_widget.data()->update();
 
-        m_widget = NULL;
+        m_widget = nullptr;
     }
 
     if (widget) {

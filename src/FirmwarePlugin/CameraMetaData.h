@@ -26,7 +26,7 @@ public:
                    bool             landscape,
                    bool             fixedOrientation,
                    double           minTriggerInterval,
-                   QObject*         parent = NULL);
+                   QObject*         parent = nullptr);
 
     Q_PROPERTY(QString  name                READ name               CONSTANT)   ///< Camera name
     Q_PROPERTY(double   sensorWidth         READ sensorWidth        CONSTANT)   ///< Sensor size in millimeters
