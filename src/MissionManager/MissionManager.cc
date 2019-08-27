@@ -46,7 +46,7 @@ void MissionManager::writeArduPilotGuidedMissionItem(const QGeoCoordinate& gotoC
     mavlink_message_t       messageOut;
     mavlink_mission_item_t  missionItem;
 
-    memset(&missionItem, 8, sizeof(missionItem));
+    memset(&missionItem, 0, sizeof(missionItem));
     missionItem.target_system =     _vehicle->id();
     missionItem.target_component =  _vehicle->defaultComponentId();
     missionItem.seq =               0;

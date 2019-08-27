@@ -69,6 +69,8 @@
         <file alias="CogWheel.svg">src/MissionManager/CogWheel.svg</file>
         <file alias="compassInstrumentArrow.svg">src/FlightMap/Images/compassInstrumentArrow.svg</file>
         <file alias="compassInstrumentDial.svg">src/FlightMap/Images/compassInstrumentDial.svg</file>
+        <file alias="compassDottedLine.svg">src/FlightMap/Images/compassDottedLine.svg</file>
+        <file alias="cOGPointer.svg">src/FlightMap/Images/cOGPointer.svg</file>
         <file alias="Connect.svg">src/ui/toolbar/Images/Connect.svg</file>
         <file alias="crossHair.svg">src/FlightMap/Images/crossHair.svg</file>
         <file alias="DatalinkLoss.svg">src/AutoPilotPlugins/PX4/Images/DatalinkLoss.svg</file>

@@ -17,6 +17,7 @@ Canvas {
     property bool   checked:                false
     property bool   small:                  false
     property bool   child:                  false
+    property bool   highlightSelected:      false
     property var    color:                  checked ? "green" : (child ? qgcPal.mapIndicatorChild : qgcPal.mapIndicator)
     property real   anchorPointX:           _height / 2
     property real   anchorPointY:           _height / 2
@@ -112,6 +113,17 @@ Canvas {
             fontSizeMode:           Text.Fit
             text:                   _index
         }
+    }
+
+    Rectangle {
+        width:          indicator.width * 2
+        height:         width
+        radius:         width * 0.5
+        color:          Qt.rgba(0,0,0,0)
+        border.color:   Qt.rgba(1,1,1,0.5)
+        border.width:   1
+        visible:        checked && highlightSelected
+        anchors.centerIn: indicator
     }
 
     QGCMouseArea {

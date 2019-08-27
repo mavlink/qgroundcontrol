@@ -33,19 +33,16 @@ MapItemView {
             parent._retaskSequence = object.sequenceNumber
             parent.flightWidgets.guidedModeBar.confirmAction(parent.flightWidgets.guidedModeBar.confirmRetask)
         }
-
         // These are the non-coordinate child mission items attached to this item
         Row {
             anchors.top:    parent.top
             anchors.left:   parent.right
-
             Repeater {
-                model: object.childItems
-
+                model:      object.childItems
                 delegate: MissionItemIndexLabel {
-                    label:      object.abbreviation
-                    checked:    object.isCurrentItem
-                    z:          2
+                    label:  object.abbreviation
+                    checked: object.isCurrentItem
+                    z:      2
                 }
             }
         }

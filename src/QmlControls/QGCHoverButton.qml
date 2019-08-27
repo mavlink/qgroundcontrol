@@ -30,10 +30,8 @@ Button {
     QGCPalette { id: qgcPalDisabled; colorGroupEnabled: false }
 
     // Initial state
-    state:         "Default"
+    state:                  "Default"
     // Update state on status changed
-    onEnabledChanged: state = "Default"
-
     // Content Icon + Text
     contentItem: Item {
         id:                 contentLayoutItem
@@ -79,8 +77,8 @@ Button {
             name: "Hovering"
             PropertyChanges {
                 target: button;
-                _currentColor: (checked || pressed) ? qgcPal.buttonHighlight : qgcPal.hoverColor
-                _currentContentColor: qgcPal.buttonHighlightText
+                _currentColor:          (checked || pressed) ? qgcPal.buttonHighlight : qgcPal.hoverColor
+                _currentContentColor:   qgcPal.buttonHighlightText
             }
             PropertyChanges {
                 target: buttonBkRect
@@ -91,8 +89,8 @@ Button {
             name: "Default"
             PropertyChanges {
                 target: button;
-                _currentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlight : qgcPal.button) : qgcPalDisabled.button
-                _currentContentColor: enabled ? ((checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText) : qgcPalDisabled.buttonText
+                _currentColor:          enabled ? ((checked || pressed) ? qgcPal.buttonHighlight : qgcPal.button) :         qgcPalDisabled.button
+                _currentContentColor:   enabled ? ((checked || pressed) ? qgcPal.buttonHighlightText : qgcPal.buttonText) : qgcPalDisabled.buttonText
             }
             PropertyChanges {
                 target: buttonBkRect
@@ -114,19 +112,19 @@ Button {
 
     // Process hover events
     MouseArea {
-        enabled:        !ScreenTools.isMobile
-        hoverEnabled:   true
+        enabled:            !ScreenTools.isMobile
         propagateComposedEvents: true
-        preventStealing: true
-        anchors.fill:   button
-        onEntered: { button.state = 'Hovering'; }
-        onExited: { button.state = 'Default'; }
+        hoverEnabled:       true
+        preventStealing:    true
+        anchors.fill:       button
+        onEntered:          button.state = 'Hovering'
+        onExited:           button.state = 'Default'
         // Propagate events down
-        onClicked: { mouse.accepted = false; }
-        onDoubleClicked: { mouse.accepted = false; }
-        onPositionChanged: { mouse.accepted = false; }
-        onPressAndHold: { mouse.accepted = false; }
-        onPressed: { mouse.accepted = false }
-        onReleased: { mouse.accepted = false }
+        onClicked:          { mouse.accepted = false; }
+        onDoubleClicked:    { mouse.accepted = false; }
+        onPositionChanged:  { mouse.accepted = false; }
+        onPressAndHold:     { mouse.accepted = false; }
+        onPressed:          { mouse.accepted = false }
+        onReleased:         { mouse.accepted = false }
     }
 }
