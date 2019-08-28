@@ -14,24 +14,29 @@ env:
 matrix:
     fast_finish: true
     include:
-        - os: linux
+        - name: "Linux Installer"
+          os: linux
           dist: xenial
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
-        - os: linux
+        - name: "Linux Debug"
+          os: linux
           dist: xenial
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - dist: trusty
+        - name: "Android 32 bit"
+          dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=32-bit
           sudo: false
-        - dist: trusty
+        - name: "Android 64 bit"
+          dist: trusty
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=64-bit
           sudo: false
-        - os: osx
+        - name: "OSX Installer"
+          os: osx
           osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
@@ -97,7 +102,7 @@ install:
         ;
     fi
 
-    - if [ "${BITNESS}" = "64-bit" ]; then
+    - if [ "${SPEC}" = "64-bit" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
