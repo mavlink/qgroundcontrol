@@ -228,8 +228,11 @@ PairingManager::_assumeMicrohardPairingJson()
     QJsonObject   jsonObject;
 
     jsonObject.insert("LT", "MH");
-    jsonObject.insert("IP", "192.168.168.10");
-    jsonObject.insert("AIP", _toolbox->microhardManager()->remoteIPAddr());
+
+    QString remoteIPAddr = _toolbox->microhardManager()->remoteIPAddr();
+    QString ipPrefix = remoteIPAddr.left(remoteIPAddr.lastIndexOf('.'));
+    jsonObject.insert("IP", ipPrefix + ".10");
+    jsonObject.insert("AIP", remoteIPAddr);
     jsonObject.insert("CU",  _toolbox->microhardManager()->configUserName());
     jsonObject.insert("CP",  _toolbox->microhardManager()->configPassword());
     jsonObject.insert("EK",  _toolbox->microhardManager()->encryptionKey());
