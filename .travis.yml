@@ -25,7 +25,11 @@ matrix:
           sudo: required
         - dist: trusty
           language: android
-          env: SPEC=android-clang CONFIG=installer
+          env: SPEC=android-clang CONFIG=installer BITNESS=32
+          sudo: false
+        - dist: trusty
+          language: android
+          env: SPEC=android-clang CONFIG=installer BITNESS=64
           sudo: false
         - os: osx
           osx_image: xcode9.2
@@ -141,7 +145,7 @@ before_script:
   - if [ "${SPEC}" = "android-clang" ]; then
         git remote set-branches origin 'master' &&
         git fetch --tags origin master &&
-        ./tools/update_android_version.sh;
+        ./tools/update_android_version.sh ${BITNESS};
     fi
 
 script:
@@ -185,7 +189,7 @@ after_success:
         pip install --user --upgrade oauth2client &&
         pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
+        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
     fi
 
 before_deploy:
