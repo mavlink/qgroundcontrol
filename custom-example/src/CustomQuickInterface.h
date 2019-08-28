@@ -29,20 +29,27 @@ public:
     CustomQuickInterface(QObject* parent = nullptr);
     ~CustomQuickInterface();
     Q_PROPERTY(bool     showGimbalControl   READ showGimbalControl  WRITE setShowGimbalControl  NOTIFY showGimbalControlChanged)
-    Q_PROPERTY(bool         showAttitudeWidget  READ    showAttitudeWidget WRITE setShowAttitudeWidget NOTIFY showAttitudeWidgetChanged)
+    Q_PROPERTY(bool     showAttitudeWidget  READ    showAttitudeWidget WRITE setShowAttitudeWidget NOTIFY showAttitudeWidgetChanged)
+    Q_PROPERTY(bool     joystickAsGimbalControl   READ joystickAsGimbalControl  WRITE setJoystickAsGimbalControl  NOTIFY joystickAsGimbalControlChanged)
 
     bool    showGimbalControl           () { return _showGimbalControl; }
     void    setShowGimbalControl        (bool set);
+
+    bool    joystickAsGimbalControl     () { return _joystickAsGimbalControl; }
+    void    setJoystickAsGimbalControl  (bool set);
+
     void    init                        ();
 
-    bool    showAttitudeWidget      () { return _showAttitudeWidget; }
-    void    setShowAttitudeWidget   (bool set);
+    bool    showAttitudeWidget          () { return _showAttitudeWidget; }
+    void    setShowAttitudeWidget       (bool set);
 
 signals:
-    void    showGimbalControlChanged    ();
+    void    showGimbalControlChanged();
     void    showAttitudeWidgetChanged();
+    void    joystickAsGimbalControlChanged();
 
 private:
-    bool    _showGimbalControl  = true;
-    bool _showAttitudeWidget = false;
+    bool    _showGimbalControl = false;
+    bool    _joystickAsGimbalControl = false;
+    bool    _showAttitudeWidget = false;
 };

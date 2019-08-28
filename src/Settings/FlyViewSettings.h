@@ -26,4 +26,8 @@ public:
     DEFINE_SETTINGFACT(showAdditionalIndicatorsCompass)
     DEFINE_SETTINGFACT(lockNoseUpCompass)
     DEFINE_SETTINGFACT(maxGoToLocationDistance)
+    DEFINE_SETTINGFACT(gimbalMaxRate)
+    DEFINE_SETTINGFACT(gimbalExpFactor)
+    DEFINE_SETTINGFACT(gimbalKPFactor)
+    DEFINE_SETTINGFACT(gimbalSuperExpoFactor)
 };

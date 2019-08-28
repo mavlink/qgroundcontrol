@@ -211,10 +211,17 @@ signals:
     void startVideoRecord           ();
     void stopVideoRecord            ();
     void toggleVideoRecord          ();
+    void toggleThermal              ();
+    void switchThermalOn            ();
+    void switchThermalOff           ();
+    void thermalNextPalette         ();
     void gimbalPitchStep            (int direction);
     void gimbalYawStep              (int direction);
+    void startGimbalPitch           (int direction);
     void centerGimbal               ();
     void gimbalControlValue         (double pitch, double yaw);
+    void startContinuousGimbalPitch (int direction);
+    void stopContinuousGimbalPitch  ();
     void setArmed                   (bool arm);
     void setVtolInFwdFlight         (bool set);
     void setFlightMode              (const QString& flightMode);
@@ -344,6 +351,12 @@ private:
     static const char* _buttonActionGimbalLeft;
     static const char* _buttonActionGimbalRight;
     static const char* _buttonActionGimbalCenter;
+    static const char* _buttonActionGimbalPitchUp;
+    static const char* _buttonActionGimbalPitchDown;
+    static const char* _buttonActionToggleThermal;
+    static const char* _buttonActionThermalOn;
+    static const char* _buttonActionThermalOff;
+    static const char* _buttonActionThermalNextPalette;
 
 private slots:
     void _activeVehicleChanged(Vehicle* activeVehicle);

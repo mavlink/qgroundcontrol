@@ -13,9 +13,25 @@
 
 #include "QGCApplication.h"
 #include "CustomCameraManager.h"
+#include "CustomCameraControl.h"
 
 //-----------------------------------------------------------------------------
 CustomCameraManager::CustomCameraManager(Vehicle *vehicle)
     : QGCCameraManager(vehicle)
 {
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomCameraManager::_thermalNextPalette()
+{
+    CustomCameraControl* pCamera = qobject_cast<CustomCameraControl*>(currentCameraInstance());
+    if(pCamera) {
+        qCDebug(CameraManagerLog) << "Switch to Next Palette";
+        auto palettes = pCamera->irPalette();
+        auto newIdx = palettes->enumIndex() + 1;
+        if(newIdx >= palettes->enumValues().count() )
+            newIdx = 0;
+        palettes->setEnumIndex(newIdx);
+    }
 }

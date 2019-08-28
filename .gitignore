@@ -4,7 +4,7 @@ libs/lib/Frameworks/GStreamer.framework
 *.nfs
 CMakeFiles
 tags
-build*/
+/build*/
 obj
 .DS_Store
 *.log

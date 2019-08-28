@@ -5,7 +5,7 @@ pipeline {
     stage('build') {
       parallel {
 
-        stage('Android Release') {
+        /*stage('Android Release') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'release'
@@ -92,7 +92,7 @@ pipeline {
             }
           }
         }
-
+        */
         stage('Linux Release') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
@@ -124,7 +124,7 @@ pipeline {
             }
           }
         }
-
+        /*
         stage('Linux Release (cmake)') {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
@@ -250,7 +250,9 @@ pipeline {
               steps {
                 sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG} CONFIG+=WarningsAsErrorsOn'
                 sh 'cd build; make -j`sysctl -n hw.ncpu`'
-                archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+                */
+                //archiveArtifacts(artifacts: 'build/**/*.dmg', fingerprint: true)
+                /*
                 sh 'ccache -s'
               }
             }
@@ -289,7 +291,85 @@ pipeline {
             }
           }
         }
+        */
 
+
+        stage('Custom CentOS Release') {
+          environment {
+            CCACHE_BASEDIR = "${env.WORKSPACE}"
+            QGC_CONFIG = 'release'
+            QMAKE_VER = "5.12.4/gcc_64/bin/qmake"
+
+            QGC_CUSTOM_APP_NAME = "Custom QGC"
+            QGC_CUSTOM_GENERIC_NAME = "Custom Ground Station"
+            QGC_CUSTOM_BINARY_NAME = "CustomQGC"
+            QGC_CUSTOM_LINUX_START_SH = "${env.WORKSPACE}/custom/deploy/qgroundcontrol-start.sh"
+            QGC_CUSTOM_APP_ICON = "${env.WORKSPACE}/resources/icons/qgroundcontrol.png"
+            QGC_CUSTOM_APP_ICON_NAME = "qgroundcontrol"
+          }
+          agent {
+            docker {
+              alwaysPull true
+              label 'docker'
+              image 'stefandunca/qgc:centos-5.12.4'
+              args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
+            }
+          }
+          steps {
+            sh 'export'
+            sh 'ccache -z'
+            sh 'git submodule sync && git submodule deinit -f .'
+            sh 'git clean -ff -x -d .'
+            sh 'git submodule update --init --recursive --force'
+            sh 'ln -s custom-example custom'
+            sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG}'
+            sh 'cd build; make -j`nproc --all`'
+            // Create AppImage
+            sh 'deploy/create_linux_appimage.sh ${WORKSPACE}/ ${WORKSPACE}/build/release/'
+            sh 'chmod +x *.AppImage'
+
+            // Cache build files
+            sh 'ccache -s'
+          }
+          post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*.AppImage'
+            }
+            cleanup {
+              sh 'git clean -ff -x -d .'
+            }
+          }
+        }
+
+
+        stage('Windows Release') {
+          environment {
+            QGC_CONFIG = 'release installer separate_debug_info force_debug_info qtquickcompiler'
+          }
+          agent {
+            node {
+              label 'windows'
+            }
+          }
+          steps {
+            bat 'git submodule sync && git submodule deinit -f .'
+            bat 'git clean -ff -x -d .'
+            bat 'git submodule update --init --recursive --force'
+            bat '.\\tools\\build\\build_windows.bat release build'
+            bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
+          }
+          post {
+            always {
+                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                archiveArtifacts artifacts: '*-installer.exe'
+            }
+            cleanup {
+              //bat 'git clean -ff -x -e build-dev -d .'
+              bat 'git clean -ff -x -d .'
+            }
+          }
+        }
       } // parallel
     } // stage('build')
   } // stages

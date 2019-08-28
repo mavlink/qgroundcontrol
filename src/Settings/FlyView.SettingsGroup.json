@@ -44,5 +44,45 @@
     "units":            "m",
     "defaultValue":     1000,
     "min":              1
+},
+{
+    "name":             "gimbalMaxRate",
+    "shortDescription": "Max rate for gimbal",
+    "longDescription":  "Max rate for gimbal",
+    "type":             "double",
+    "defaultValue":     12.0,
+    "min":              0.01,
+    "max":              200.0,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalExpFactor",
+    "shortDescription": "Gimbal exponential factor",
+    "longDescription":  "Gimbal exponential factor",
+    "type":             "double",
+    "defaultValue":     0.7,
+    "min":              0.01,
+    "max":              1.0,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalKPFactor",
+    "shortDescription": "Gimbal Proportional factor",
+    "longDescription":  "Gimbal Proportional factor",
+    "type":             "double",
+    "defaultValue":     3.5,
+    "min":              0.01,
+    "max":              10.0,
+    "decimalPlaces":    2
+},
+{
+    "name":             "gimbalSuperExpoFactor",
+    "shortDescription": "Gimbal Super-Exponential factor",
+    "longDescription":  "Gimbal Super-Exponential factor. The g in here: https://www.desmos.com/calculator/yty5kgurmc",
+    "type":             "double",
+    "defaultValue":     0.7,
+    "min":              0.01,
+    "max":              1.00,
+    "decimalPlaces":    2
 }
 ]

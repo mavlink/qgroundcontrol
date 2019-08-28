@@ -1,5 +1,10 @@
 message("Adding Custom Plugin")
 
+LinuxBuild {
+    QT += svg
+    QTPLUGIN += qtvirtualkeyboardplugin
+}
+
 #-- Version control
 #   Major and minor versions are defined here (manually)
 
@@ -18,7 +23,7 @@ win32 {
 CUSTOM_QGC_VERSION = $${CUSTOM_QGC_VER_MAJOR}.$${CUSTOM_QGC_VER_MINOR}.$${CUSTOM_QGC_VER_BUILD}
 
 DEFINES -= GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
-DEFINES += GIT_VERSION=\"\\\"$$CUSTOM_QGC_VERSION\\\"\"
+DEFINES += GIT_VERSION=\"\\\"v$$CUSTOM_QGC_VERSION\\\"\"
 
 message(Custom QGC Version: $${CUSTOM_QGC_VERSION})
 

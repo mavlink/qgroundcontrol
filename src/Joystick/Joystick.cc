@@ -64,6 +64,12 @@ const char* Joystick::_buttonActionGimbalUp =           QT_TR_NOOP("Gimbal Up");
 const char* Joystick::_buttonActionGimbalLeft =         QT_TR_NOOP("Gimbal Left");
 const char* Joystick::_buttonActionGimbalRight =        QT_TR_NOOP("Gimbal Right");
 const char* Joystick::_buttonActionGimbalCenter =       QT_TR_NOOP("Gimbal Center");
+const char* Joystick::_buttonActionGimbalPitchUp =      QT_TR_NOOP("Gimbal Pitching Up");
+const char* Joystick::_buttonActionGimbalPitchDown =    QT_TR_NOOP("Gimbal Pitching Down");
+const char* Joystick::_buttonActionToggleThermal =      QT_TR_NOOP("Thermal ON/OFF");
+const char* Joystick::_buttonActionThermalOn =          QT_TR_NOOP("Thermal ON");
+const char* Joystick::_buttonActionThermalOff =         QT_TR_NOOP("Thermal OFF");
+const char* Joystick::_buttonActionThermalNextPalette = QT_TR_NOOP("Thermal Next Palette");
 
 const char* Joystick::_rgFunctionSettingsKey[Joystick::maxFunction] = {
     "RollAxis",
@@ -1008,6 +1014,28 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
             _localYaw   = 0.0;
             emit gimbalControlValue(0.0, 0.0);
         }
+    } else if(action == _buttonActionGimbalPitchUp || action == _buttonActionGimbalPitchDown) {
+        if (buttonDown) {
+            emit startContinuousGimbalPitch(action == _buttonActionGimbalPitchUp ? 1 : -1);
+        } else {
+            emit stopContinuousGimbalPitch();
+        }
+    } else if(action == _buttonActionToggleThermal) {
+        if(buttonDown) {
+            emit toggleThermal();
+        }
+    } else if(action == _buttonActionThermalOn) {
+        if(buttonDown) {
+            emit switchThermalOn();
+        }
+    } else if(action == _buttonActionThermalOff) {
+        if(buttonDown) {
+            emit switchThermalOff();
+        }
+    } else if(action == _buttonActionThermalNextPalette) {
+        if(buttonDown) {
+            emit thermalNextPalette();
+        }
     } else {
         qCDebug(JoystickLog) << "_buttonAction unknown action:" << action;
     }
@@ -1092,6 +1120,13 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalPitchUp, true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalPitchDown, true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleThermal));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOn));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOff));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalNextPalette));
+
     for(int i = 0; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();

@@ -26,6 +26,7 @@
 static const char* kGroupName       = "CustomSettings";
 static const char* kShowGimbalCtl   = "ShowGimbalCtl";
 static const char* kShowAttitudeWidget = "ShowAttitudeWidget";
+static const char* kJoystickAsGimbalControl   = "JoystickAsGimbalControl";
 
 //-----------------------------------------------------------------------------
 CustomQuickInterface::CustomQuickInterface(QObject* parent)
@@ -48,6 +49,7 @@ CustomQuickInterface::init()
     settings.beginGroup(kGroupName);
     _showGimbalControl = settings.value(kShowGimbalCtl, false).toBool();
     _showAttitudeWidget = settings.value(kShowAttitudeWidget, false).toBool();
+    _joystickAsGimbalControl = settings.value(kJoystickAsGimbalControl, true).toBool();
 }
 
 //-----------------------------------------------------------------------------
@@ -73,5 +75,18 @@ CustomQuickInterface::setShowAttitudeWidget(bool set)
         settings.beginGroup(kGroupName);
         settings.setValue(kShowAttitudeWidget,set);
         emit showAttitudeWidgetChanged();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+CustomQuickInterface::setJoystickAsGimbalControl(bool set)
+{
+    if(_joystickAsGimbalControl != set) {
+        _joystickAsGimbalControl = set;
+        QSettings settings;
+        settings.beginGroup(kGroupName);
+        settings.setValue(kJoystickAsGimbalControl, set);
+        emit joystickAsGimbalControlChanged();
     }
 }

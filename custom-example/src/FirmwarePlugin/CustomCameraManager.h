@@ -21,4 +21,6 @@ class CustomCameraManager : public QGCCameraManager
     Q_OBJECT
 public:
     CustomCameraManager(Vehicle* vehicle);
+
+    void _thermalNextPalette();
 };

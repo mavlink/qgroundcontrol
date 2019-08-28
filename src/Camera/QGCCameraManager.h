@@ -66,6 +66,10 @@ protected slots:
     virtual void    _startVideoRecording    ();
     virtual void    _stopVideoRecording     ();
     virtual void    _toggleVideoRecording   ();
+    virtual void    _toggleThermal          ();
+    virtual void    _switchThermalOn        ();
+    virtual void    _switchThermalOff       ();
+    virtual void    _thermalNextPalette     ();
 
 protected:
     virtual QGCCameraControl* _findCamera   (int id);

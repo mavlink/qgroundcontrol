@@ -76,6 +76,45 @@ Item {
         }
     }
 
+    property real joystickPitch: 0
+    Connections {
+        target: joystickManager.activeJoystick
+        onStartContinuousGimbalPitch: {
+            _root.joystickPitch = (direction > 0 ? 1 : -1) * 1
+        }
+    }
+
+    Connections {
+        target: joystickManager.activeJoystick
+        onStopContinuousGimbalPitch: {
+            _root.joystickPitch = 0
+        }
+    }
+
+    Connections {
+        target: joystickManager.activeJoystick
+        onManualControlGimbal/*(float gimbalPitch, float gimbalYaw)*/: {
+            _root.joystickPitch = ((gimbalPitch)/45 - 1)
+        }
+    }
+    Connections {
+        target: _camera
+        onThermalModeChanged: {
+            if(QGroundControl.videoManager.hasThermal || _camera.vendor === "NextVision") {
+                if(_camera.thermalMode === QGCCameraControl.THERMAL_OFF)
+                    standardMode.checked = true
+                else if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP)
+                    thermalPip.checked = true
+                else if(_camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+                    thermalFull.checked = true
+                else
+                    standardMode.checked = true
+            }
+            else
+                standardMode.checked = true
+        }
+    }
+
     DeadMouseArea {
         anchors.fill:   parent
     }
@@ -94,18 +133,7 @@ Item {
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
             visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact || _camera.vendor === "NextVision"
             anchors.horizontalCenter: parent.horizontalCenter
-            Component.onCompleted: {
-                if(_irPaletteFact && QGroundControl.videoManager.hasThermal) {
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_OFF)
-                        standardMode.checked = true
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP)
-                        thermalPip.checked = true
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_FULL)
-                        thermalFull.checked = true
-                }
-                else
-                    standardMode.checked = true
-            }
+
             ButtonGroup {
                 id:         buttonGroup
                 exclusive:  true
@@ -120,7 +148,8 @@ Item {
                     id:                 standardMode
                     width:              buttonSize
                     height:             buttonSize
-                    iconSource:        "/custom/img/thermal-standard.svg"
+                    iconSource:         "/custom/img/thermal-standard.svg"
+                    checked:            _camera.thermalMode === QGCCameraControl.THERMAL_OFF
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_OFF
                     }
@@ -142,6 +171,7 @@ Item {
                     width:              buttonSize
                     height:             buttonSize
                     iconSource:         "/custom/img/thermal-brightness.svg"
+                    checked:            _camera.thermalMode === QGCCameraControl.THERMAL_FULL
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_FULL
                     }
@@ -411,7 +441,7 @@ Item {
             }
             //-- Gimbal Indicator
             Rectangle {
-                id: gimbalBackground
+                id:                     gimbalBackground
                 width:                  _hasGimbal ? ScreenTools.defaultFontPixelWidth * 6 : 0
                 height:                 _hasGimbal ? (gimbalCol.height + (ScreenTools.defaultFontPixelHeight * 2)) : 0
                 visible:                _hasGimbal
@@ -479,6 +509,152 @@ Item {
                         font.pointSize: ScreenTools.smallFontPointSize
                         text:           activeVehicle ? activeVehicle.gimbalPitch.toFixed(0) : "-"
                         horizontalAlignment: Text.AlignHCenter
+                    }
+                }
+                //-- Gimbal Control
+                Item {
+                    id:                 gimbalControl
+                    anchors.fill:       parent
+
+                    property real   xAxis:                  0
+                    property real   yAxis:                  0
+                    property real   stickPositionX:         _centerX
+                    property real   stickPositionY:         _centerY
+                    property bool   _processTouchPoints:    false
+                    property real   xPositionDelta:         0
+                    property real   yPositionDelta:         0
+                    property real   _centerX:               width  * 0.5
+                    property real   _centerY:               height * 0.5
+
+                    property real _currentPitch:            0
+                    property real _currentYaw:              0
+                    property real time_last_seconds:        0
+                    property real _lastHackedYaw:           0
+                    property real speedMultiplier:          5
+
+                    property real maxRate:          QGroundControl.settingsManager.flyViewSettings.gimbalMaxRate.rawValue
+                    property real exponentialFactor:QGroundControl.settingsManager.flyViewSettings.gimbalExpFactor.rawValue
+                    property real kPFactor:         QGroundControl.settingsManager.flyViewSettings.gimbalKPFactor.rawValue
+                    property real superExponentialFactor: QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor.rawValue
+
+                    property real reportedYawDeg:   activeVehicle ? activeVehicle.gimbalYaw   : NaN
+                    property real reportedPitchDeg: activeVehicle ? activeVehicle.gimbalPitch : NaN
+                    Timer {
+                        id:         controlTimer
+                        interval:   100  //-- 10Hz
+                        running:    gimbalBackground.visible && activeVehicle && (!CustomQuickInterface.showGimbalControl || CustomQuickInterface.joystickAsGimbalControl)
+                        repeat:     true
+                        onTriggered: {
+                            if (activeVehicle) {
+                                var yaw         = gimbalControl._currentYaw
+                                var oldYaw      = yaw;
+                                var pitch       = gimbalControl._currentPitch
+                                var oldPitch    = pitch;
+                                var pitch_stick = CustomQuickInterface.joystickAsGimbalControl ? _root.joystickPitch : (gimbalControl.yAxis * 2.0 - 1.0)
+                                if(_camera && _camera.vendor === "NextVision") {
+                                    var time_current_seconds = ((new Date()).getTime())/1000.0
+                                    if(gimbalControl.time_last_seconds === 0.0)
+                                        gimbalControl.time_last_seconds = time_current_seconds
+                                    var pitch_angle = gimbalControl._currentPitch
+                                    // Preparing stick input with exponential curve and maximum rate
+                                    var pitch_expo = ((1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick) * (1-gimbalControl.superExponentialFactor)/(1-gimbalControl.superExponentialFactor*Math.abs(pitch_stick))
+                                    var pitch_rate = pitch_expo * gimbalControl.maxRate
+                                    var pitch_angle_reported = gimbalControl.reportedPitchDeg
+                                    // Integrate the angular rate to an angle time abstracted
+                                    pitch_angle += pitch_rate * (time_current_seconds - gimbalControl.time_last_seconds)
+                                    // Control the angle quicker by driving the gimbal internal angle controller into saturation
+                                    var pitch_angle_error = pitch_angle - pitch_angle_reported
+                                    pitch_angle_error = Math.round(pitch_angle_error)
+                                    var pitch_setpoint = pitch_angle + pitch_angle_error * gimbalControl.kPFactor
+                                    //console.info("error: " + pitch_angle_error + "; angle_state: " + pitch_angle)
+                                    pitch = pitch_setpoint
+                                    yaw += gimbalControl.xAxis * gimbalControl.speedMultiplier
+
+                                    yaw = clamp(yaw, -180, 180)
+                                    pitch = clamp(pitch, -90, 45)
+                                    pitch_angle = clamp(pitch_angle, -90, 45)
+
+                                    //console.info("P: " + pitch + "; Y: " + yaw)
+                                    activeVehicle.gimbalControlValue(pitch, yaw);
+                                    gimbalControl._currentYaw = yaw
+                                    gimbalControl._currentPitch = pitch_angle
+                                    gimbalControl.time_last_seconds = time_current_seconds
+                                } else {
+                                    yaw += gimbalControl.xAxis * gimbalControl.speedMultiplier
+                                    var hackedYaw = yaw + (gimbalControl.xAxis * gimbalControl.speedMultiplier * 50)
+                                    pitch += pitch_stick * gimbalControl.speedMultiplier
+                                    hackedYaw = clamp(hackedYaw, -180, 180)
+                                    yaw = clamp(yaw, -180, 180)
+                                    pitch = clamp(pitch, -90, 90)
+                                    if(gimbalControl._lastHackedYaw !== hackedYaw || hackedYaw !== oldYaw || pitch !== oldPitch) {
+                                        activeVehicle.gimbalControlValue(pitch, hackedYaw)
+                                        gimbalControl._lastHackedYaw = hackedYaw
+                                        gimbalControl._currentPitch = pitch
+                                        gimbalControl._currentYaw = yaw
+                                    }
+                                }
+                            }
+                        }
+                        function clamp(num, min, max) {
+                            return Math.min(Math.max(num, min), max);
+                        }
+                    }
+                    onWidthChanged:             gimbalControl.calculateXAxis()
+                    onStickPositionXChanged:    gimbalControl.calculateXAxis()
+                    onHeightChanged:            gimbalControl.calculateYAxis()
+                    onStickPositionYChanged:    gimbalControl.calculateYAxis()
+                    function calculateXAxis() {
+                        var xAxisTemp = gimbalControl.stickPositionX / width
+                        xAxisTemp    *= 2.0
+                        xAxisTemp    -= 1.0
+                        gimbalControl.xAxis = xAxisTemp
+                    }
+                    function calculateYAxis() {
+                        var yAxisTemp = gimbalControl.stickPositionY / height
+                        yAxisTemp   *= 2.0
+                        yAxisTemp   -= 1.0
+                        yAxisTemp    = ((yAxisTemp * -1.0) / 2.0) + 0.5
+                        gimbalControl.yAxis = yAxisTemp
+                    }
+                    function reCenter() {
+                        gimbalControl._processTouchPoints = false
+                        // Move control back to original position
+                        gimbalControl.xPositionDelta = 0
+                        gimbalControl.yPositionDelta = 0
+                        // Center sticks
+                        gimbalControl.stickPositionX = gimbalControl._centerX
+                        gimbalControl.stickPositionY = gimbalControl._centerY
+                    }
+                    function thumbDown(touchPoints) {
+                        // Position the control around the initial thumb position
+                        gimbalControl.xPositionDelta = touchPoints[0].x - gimbalControl._centerX
+                        gimbalControl.yPositionDelta = touchPoints[0].y - gimbalControl.stickPositionY
+                        // We need to wait until we move the control to the right position before we process touch points
+                        gimbalControl._processTouchPoints = true
+                    }
+                    Connections {
+                        target: touchPoint
+                        onXChanged: {
+                            if (gimbalControl._processTouchPoints) {
+                                gimbalControl.stickPositionX = Math.max(Math.min(touchPoint.x, width), 0)
+                            }
+                        }
+                        onYChanged: {
+                            if (gimbalControl._processTouchPoints) {
+                                gimbalControl.stickPositionY = Math.max(Math.min(touchPoint.y, height), 0)
+                            }
+                        }
+                    }
+                    MultiPointTouchArea {
+                        anchors.fill:       parent
+                        enabled:            controlTimer.running
+                        minimumTouchPoints: 1
+                        maximumTouchPoints: 1
+                        touchPoints:        [ TouchPoint { id: touchPoint } ]
+                        onPressed:          gimbalControl.thumbDown(touchPoints)
+                        onReleased: {
+                            gimbalControl.reCenter()
+                        }
                     }
                 }
             } // Gimbal Indicator
@@ -803,10 +979,10 @@ Item {
                     //-- Gimbal Control
                     Row {
                         spacing:        ScreenTools.defaultFontPixelWidth
-                        visible:        _camera && !_camera.isThermal
+                        visible:        _camera && !_camera.isThermal && !CustomQuickInterface.joystickAsGimbalControl
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
-                            text:       qsTr("Show Gimbal Control")
+                            text:       qsTr("Use Gimbal Joystick Control")
                             width:      _labelFieldWidth
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -816,6 +992,23 @@ Item {
                             height:     _editFieldHeight
                             anchors.verticalCenter: parent.verticalCenter
                             onClicked:  CustomQuickInterface.showGimbalControl = checked
+                        }
+                    }
+                    Row {
+                        spacing:        ScreenTools.defaultFontPixelWidth
+                        visible:        _camera && !_camera.isThermal
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        QGCLabel {
+                            text:       qsTr("Use joystick for Gimbal Control")
+                            width:      _labelFieldWidth
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        CustomOnOffSwitch {
+                            checked:    CustomQuickInterface.joystickAsGimbalControl
+                            width:      _editFieldWidth
+                            height:     _editFieldHeight
+                            anchors.verticalCenter: parent.verticalCenter
+                            onClicked:  CustomQuickInterface.joystickAsGimbalControl = checked
                         }
                     }
                     Rectangle {
@@ -1013,7 +1206,6 @@ Item {
                                 if(thermalBackgroundRect.visible) {
                                     if(_camera.thermalMode !== QGCCameraControl.THERMAL_PIP && _camera.thermalMode !== QGCCameraControl.THERMAL_FULL) {
                                         _camera.thermalMode = QGCCameraControl.THERMAL_FULL
-                                        thermalFull.checked = true
                                     }
                                 }
 
@@ -1026,4 +1218,3 @@ Item {
         }
     }
 }
-

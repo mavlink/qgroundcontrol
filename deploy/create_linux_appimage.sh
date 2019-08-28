@@ -41,27 +41,28 @@ APPDIR=${TMPDIR}/$APP".AppDir"
 mkdir -p ${APPDIR}
 
 cd ${TMPDIR}
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/u/udev/udev_175-7.2_amd64.deb
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/s/speech-dispatcher/speech-dispatcher_0.8.8-1_amd64.deb
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/libs/libsdl2/libsdl2-2.0-0_2.0.2%2bdfsg1-6_amd64.deb
+   wget -c --quiet https://mirrors.mediatemple.net/debian-archive/debian/pool/main/u/udev/udev_175-7.2_amd64.deb \
+&& wget -c --quiet http://archive.ubuntu.com/ubuntu/pool/main/s/speech-dispatcher/speech-dispatcher_0.8.8-1ubuntu1_amd64.deb \
+&& wget -c --quiet http://ftp.us.debian.org/debian/pool/main/libs/libsdl2/libsdl2-2.0-0_2.0.2%2bdfsg1-6_amd64.deb \
+&& wget -c --quiet http://ftp.us.debian.org/debian/pool/main/d/directfb/libdirectfb-1.2-9_1.2.10.0-5.1_amd64.deb \
+&& wget -c --quiet http://archive.ubuntu.com/ubuntu/pool/universe/t/tslib/libts-0.0-0_1.0-12_amd64.deb
+if [ $? -ne 0 ]; then
+  echo "Failed to download deb dependencies. Err $?"
+  #exit 1
+fi
+
+   wget -c --quiet http://mirror.centos.org/centos/7/os/x86_64/Packages/libXScrnSaver-1.2.2-6.1.el7.x86_64.rpm \
+&& wget -c --quiet http://download-ib01.fedoraproject.org/pub/epel/7/x86_64/Packages/s/SDL2-2.0.9-1.el7.x86_64.rpm
+if [ $? -ne 0 ]; then
+  echo "Failed to download rpm dependencies. Err $?"
+  #exit 1
+fi
 
 cd ${APPDIR}
 find ../ -name *.deb -exec dpkg -x {} . \;
+find ../ -name *.rpm -exec sh -c 'rpm2cpio {} | cpio -idmv' \;
 
-# copy libdirectfb-1.2.so.9
-cd ${TMPDIR}
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/d/directfb/libdirectfb-1.2-9_1.2.10.0-5.1_amd64.deb
-mkdir libdirectfb
-dpkg -x libdirectfb-1.2-9_1.2.10.0-5.1_amd64.deb libdirectfb
-cp -L libdirectfb/usr/lib/x86_64-linux-gnu/libdirectfb-1.2.so.9 ${APPDIR}/usr/lib/x86_64-linux-gnu/
-cp -L libdirectfb/usr/lib/x86_64-linux-gnu/libfusion-1.2.so.9 ${APPDIR}/usr/lib/x86_64-linux-gnu/
-cp -L libdirectfb/usr/lib/x86_64-linux-gnu/libdirect-1.2.so.9 ${APPDIR}/usr/lib/x86_64-linux-gnu/
-
-# copy libts-0.0-0
-wget -c --quiet http://ftp.us.debian.org/debian/pool/main/t/tslib/libts-0.0-0_1.0-11_amd64.deb
-mkdir libts
-dpkg -x libts-0.0-0_1.0-11_amd64.deb libts
-cp -L libts/usr/lib/x86_64-linux-gnu/libts-0.0.so.0 ${APPDIR}/usr/lib/x86_64-linux-gnu/
+cp -L /usr/lib64/libSDL2* ${APPDIR}/usr/lib/x86_64-linux-gnu/
 
 # copy QGroundControl release into appimage
 rsync -av --exclude=*.cpp --exclude=*.h --exclude=*.o --exclude="CMake*" --exclude="*.cmake" ${QGC_RELEASE_DIR}/* ${APPDIR}/
@@ -71,8 +72,7 @@ cp ${QGC_CUSTOM_LINUX_START_SH} ${APPDIR}/AppRun
 # copy icon
 cp ${QGC_CUSTOM_APP_ICON} ${APPDIR}/
 
-cat > ./QGroundControl.desktop <<\EOF
-[Desktop Entry]
+echo "[Desktop Entry]
 Type=Application
 Name=${QGC_CUSTOM_APP_NAME}
 GenericName=${QGC_CUSTOM_GENERIC_NAME}
@@ -81,8 +81,7 @@ Icon=${QGC_CUSTOM_APP_ICON_NAME}
 Exec=AppRun
 Terminal=false
 Categories=Utility;
-Keywords=computer;
-EOF
+Keywords=computer;" > ./QGroundControl.desktop
 
 VERSION=$(strings ${APPDIR}/${QGC_CUSTOM_BINARY_NAME} | grep '^v[0-9*]\.[0-9*].[0-9*]' | head -n 1)
 echo ${QGC_CUSTOM_APP_NAME} Version: ${VERSION}

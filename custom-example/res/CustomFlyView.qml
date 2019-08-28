@@ -574,11 +574,11 @@ Item {
     //-- Gimbal Control
     Rectangle {
         id:                     gimbalControl
-        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl && _hasGimbal
+        visible:                camControlLoader.visible && CustomQuickInterface.showGimbalControl && _hasGimbal && !CustomQuickInterface.joystickAsGimbalControl
         anchors.bottom:         camControlLoader.bottom
         anchors.right:          camControlLoader.left
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth * (QGroundControl.videoManager.hasThermal ? -1 : 1)
-        height:                 parent.width * 0.125
+        height:                 parent.width * 0.225
         width:                  height
         color:                  Qt.rgba(1,1,1,0.25)
         radius:                 width * 0.5
@@ -589,9 +589,10 @@ Item {
         property real _lastHackedYaw:   0
         property real speedMultiplier:  5
 
-        property real maxRate:          20
-        property real exponentialFactor:0.6
-        property real kPFactor:         3
+        property real maxRate:          QGroundControl.settingsManager.flyViewSettings.gimbalMaxRate.rawValue
+        property real exponentialFactor:QGroundControl.settingsManager.flyViewSettings.gimbalExpFactor.rawValue
+        property real kPFactor:         QGroundControl.settingsManager.flyViewSettings.gimbalKPFactor.rawValue
+        property real superExponentialFactor: QGroundControl.settingsManager.flyViewSettings.gimbalSuperExpoFactor.rawValue
 
         property real reportedYawDeg:   activeVehicle ? activeVehicle.gimbalYaw   : NaN
         property real reportedPitchDeg: activeVehicle ? activeVehicle.gimbalPitch : NaN
@@ -613,8 +614,8 @@ Item {
                             gimbalControl.time_last_seconds = time_current_seconds
                         var pitch_angle = gimbalControl._currentPitch
                         // Preparing stick input with exponential curve and maximum rate
-                        var pitch_expo = (1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick
-                        var pitch_rate = pitch_stick * gimbalControl.maxRate
+                        var pitch_expo = ((1 - gimbalControl.exponentialFactor) * pitch_stick + gimbalControl.exponentialFactor * pitch_stick * pitch_stick * pitch_stick) * (1-gimbalControl.superExponentialFactor)/(1-gimbalControl.superExponentialFactor*Math.abs(pitch_stick))
+                        var pitch_rate = pitch_expo * gimbalControl.maxRate
                         var pitch_angle_reported = gimbalControl.reportedPitchDeg
                         // Integrate the angular rate to an angle time abstracted
                         pitch_angle += pitch_rate * (time_current_seconds - gimbalControl.time_last_seconds)

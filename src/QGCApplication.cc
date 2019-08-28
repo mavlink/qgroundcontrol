@@ -347,7 +347,7 @@ void QGCApplication::_exitWithError(QString errorMessage)
     pEngine->rootContext()->setContextProperty("errorMessage", errorMessage);
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/ExitWithErrorWindow.qml")));
     // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit, Qt::QueuedConnection);
 }
 
 void QGCApplication::setLanguage()
@@ -549,7 +549,7 @@ bool QGCApplication::_initForNormalAppBoot()
     QSettings settings;
 
     // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit, Qt::QueuedConnection);
 
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
 

@@ -21,6 +21,8 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
 
+import QtQuick.VirtualKeyboard      2.1
+
 /// Native QML top level window
 ApplicationWindow {
     id:             mainWindow
@@ -291,6 +293,26 @@ ApplicationWindow {
         }
     }
 
+    InputPanel {
+        id: inputPanel
+
+        visible: Qt.inputMethod.visible
+        active: Qt.inputMethod.visible
+
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+    }
+
+Item {
+    id: qtkHelper
+
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.bottom: inputPanel.visible ? inputPanel.top : parent.bottom
+
+
     //-------------------------------------------------------------------------
     //-- Fly View
     FlightDisplayView {
@@ -349,6 +371,7 @@ ApplicationWindow {
         id: rootLoader
         anchors.centerIn: parent
     }
+} // qtkHelper
 
     //-------------------------------------------------------------------------
     //-- Vehicle Messages
