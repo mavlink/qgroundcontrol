@@ -66,7 +66,7 @@ Item {
             height:             parent.height
             width:              height
             color:              qgcPal.text
-            source:             "/qmlimages/PairingIcon.svg"
+            source:             "/custom/img/PairingIcon.svg"
             sourceSize.width:   width
             fillMode:           Image.PreserveAspectFit
             smooth:             true
@@ -138,7 +138,7 @@ Item {
                 QGCColoredImage {
                     height:             ScreenTools.defaultFontPixelHeight * 6
                     width:              height
-                    source:             "/qmlimages/PairingButton.svg"
+                    source:             "/custom/img/PairingButton.svg"
                     sourceSize.height:  height
                     fillMode:           Image.PreserveAspectFit
                     mipmap:             true
@@ -306,7 +306,7 @@ Item {
                 Image {
                     height:             ScreenTools.defaultFontPixelHeight * 4
                     width:              height
-                    source:             "/qmlimages/PairingError.svg"
+                    source:             "/custom/img/PairingError.svg"
                     sourceSize.height:  height
                     fillMode:           Image.PreserveAspectFit
                     mipmap:             true
@@ -319,7 +319,7 @@ Item {
                     id:                 connectedIndicator
                     height:             width * 0.2
                     width:              _contentWidth
-                    source:             "/qmlimages/PairingConnected.svg"
+                    source:             "/custom/img/PairingConnected.svg"
                     sourceSize.height:  height
                     fillMode:           Image.PreserveAspectFit
                     mipmap:             true
