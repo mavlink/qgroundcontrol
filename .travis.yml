@@ -102,10 +102,9 @@ install:
         ;
     fi
 
-    - if [ "${SPEC}" = "64-bit" ]; then
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
-        tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
+    - if [ "${SPEC}" = "macx-clang" ]; then
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-clang_64-min.tar.bz2 &&
+        tar jxf Qt5.11.0-clang_64-min.tar.bz2 -C /tmp
         ;
     fi
 
