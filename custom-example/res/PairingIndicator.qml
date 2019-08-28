@@ -443,7 +443,7 @@ Item {
                     Repeater {
                         model:                  parent._pairModel
                         delegate: QGCLabel {
-                            text:               modelData + ' ' + QGroundControl.pairingManager.pairedDeviceNameList.length
+                            text:               modelData
                             Layout.row:         index
                             Layout.column:      0
                             Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
