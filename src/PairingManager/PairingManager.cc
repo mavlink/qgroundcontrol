@@ -88,7 +88,6 @@ PairingManager::_pairingCompleted(QString name, QString connectionKey)
 void
 PairingManager::_connectionCompleted(QString /*name*/)
 {
-    _app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
@@ -140,6 +139,9 @@ PairingManager::_uploadFinished()
     if (reply) {
         if (_uploadManager != nullptr) {
             if (reply->error() == QNetworkReply::NoError) {
+                _uploadManager->deleteLater();
+                _uploadManager = nullptr;
+                _uploadMutex.unlock();
                 qCDebug(PairingManagerLog) << "Upload finished.";
                 QByteArray bytes = reply->readAll();
                 QString str = QString::fromUtf8(bytes.data(), bytes.size());
@@ -156,8 +158,6 @@ PairingManager::_uploadFinished()
                     setPairingStatus(PairingRejected, tr("Pairing Rejected"));
                     qCDebug(PairingManagerLog) << "Pairing error: " << str;
                 }
-                _uploadManager->deleteLater();
-                _uploadManager = nullptr;
             } else {
                 if(++_pairRetryCount > 3) {
                     qCDebug(PairingManagerLog) << "Giving up";
