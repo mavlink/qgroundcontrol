@@ -226,6 +226,8 @@ bool checkAndroidWritePermission() {
 
 int main(int argc, char *argv[])
 {
+    qputenv("QT_IM_MODULE", QByteArray("qtvirtualkeyboard"));
+
 #ifndef __mobile__
     RunGuard guard("QGroundControlRunGuardKey");
     if (!guard.tryToRun()) {
@@ -342,6 +344,7 @@ int main(int argc, char *argv[])
     Q_CHECK_PTR(app);
     if(app->isErrorState()) {
         app->exec();
+        delete app;
         return -1;
     }
 

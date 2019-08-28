@@ -387,6 +387,10 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         disconnect(_activeJoystick, &Joystick::startVideoRecord,    this, &QGCCameraManager::_startVideoRecording);
         disconnect(_activeJoystick, &Joystick::stopVideoRecord,     this, &QGCCameraManager::_stopVideoRecording);
         disconnect(_activeJoystick, &Joystick::toggleVideoRecord,   this, &QGCCameraManager::_toggleVideoRecording);
+        disconnect(_activeJoystick, &Joystick::toggleThermal,       this, &QGCCameraManager::_toggleThermal);
+        disconnect(_activeJoystick, &Joystick::switchThermalOn,     this, &QGCCameraManager::_switchThermalOn);
+        disconnect(_activeJoystick, &Joystick::switchThermalOff,    this, &QGCCameraManager::_switchThermalOff);
+        disconnect(_activeJoystick, &Joystick::thermalNextPalette,  this, &QGCCameraManager::_thermalNextPalette);
     }
     _activeJoystick = joystick;
     if(_activeJoystick) {
@@ -399,6 +403,10 @@ QGCCameraManager::_activeJoystickChanged(Joystick* joystick)
         connect(_activeJoystick, &Joystick::startVideoRecord,       this, &QGCCameraManager::_startVideoRecording);
         connect(_activeJoystick, &Joystick::stopVideoRecord,        this, &QGCCameraManager::_stopVideoRecording);
         connect(_activeJoystick, &Joystick::toggleVideoRecord,      this, &QGCCameraManager::_toggleVideoRecording);
+        connect(_activeJoystick, &Joystick::toggleThermal,          this, &QGCCameraManager::_toggleThermal);
+        connect(_activeJoystick, &Joystick::switchThermalOn,        this, &QGCCameraManager::_switchThermalOn);
+        connect(_activeJoystick, &Joystick::switchThermalOff,       this, &QGCCameraManager::_switchThermalOff);
+        connect(_activeJoystick, &Joystick::thermalNextPalette,     this, &QGCCameraManager::_thermalNextPalette);
     }
 }
 
@@ -509,4 +517,52 @@ QGCCameraManager::_stepStream(int direction)
     }
 }
 
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_toggleThermal()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        qCDebug(CameraManagerLog) << "Toggle Thermal Mode";
+        if(pCamera->thermalMode() != QGCCameraControl::THERMAL_OFF) {
+            pCamera->setThermalMode(QGCCameraControl::THERMAL_OFF);
+        }
+        else {
+            pCamera->setThermalMode(QGCCameraControl::THERMAL_FULL);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_switchThermalOn()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        qCDebug(CameraManagerLog) << "Toggle Thermal On";
+        if(pCamera->thermalMode() != QGCCameraControl::THERMAL_FULL) {
+            pCamera->setThermalMode(QGCCameraControl::THERMAL_FULL);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_switchThermalOff()
+{
+    QGCCameraControl* pCamera = currentCameraInstance();
+    if(pCamera) {
+        qCDebug(CameraManagerLog) << "Toggle Thermal Off";
+        if(pCamera->thermalMode() != QGCCameraControl::THERMAL_OFF) {
+            pCamera->setThermalMode(QGCCameraControl::THERMAL_OFF);
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_thermalNextPalette()
+{
+    // There's no generic way
+}
 
