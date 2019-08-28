@@ -88,6 +88,7 @@ PairingManager::_pairingCompleted(QString name, QString connectionKey)
 void
 PairingManager::_connectionCompleted(QString /*name*/)
 {
+    _app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
