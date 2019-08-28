@@ -154,6 +154,8 @@ AndroidBuild {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
         LIBS += $$ANDROID_EXTRA_LIBS
         INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
+    } else:contains(QT_ARCH, arm64) {
+        # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
     } else {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
