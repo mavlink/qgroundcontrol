@@ -121,10 +121,6 @@
         <file alias="no-logging-light.svg">src/AutoPilotPlugins/PX4/Images/no-logging-light.svg</file>
         <file alias="no-logging.svg">src/AutoPilotPlugins/PX4/Images/no-logging.svg</file>
         <file alias="ObjectAvoidance.svg">src/AutoPilotPlugins/PX4/Images/ObjectAvoidance.svg</file>
-        <file alias="PairingButton.svg">src/PairingManager/Images/PairingButton.svg</file>
-        <file alias="PairingConnected.svg">src/PairingManager/Images/PairingConnected.svg</file>
-        <file alias="PairingError.svg">src/PairingManager/Images/PairingError.svg</file>
-        <file alias="PairingIcon.svg">src/PairingManager/Images/PairingIcon.svg</file>
         <file alias="PaperPlane.svg">src/ui/toolbar/Images/PaperPlane.svg</file>
         <file alias="PiP.svg">src/FlightMap/Images/PiP.svg</file>
         <file alias="pipHide.svg">src/FlightMap/Images/pipHide.svg</file>

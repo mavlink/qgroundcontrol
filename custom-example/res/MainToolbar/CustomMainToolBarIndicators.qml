@@ -87,7 +87,7 @@ Item {
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.margins:        _indicatorMargins
-            source:                 "/toolbar/PairingIndicator.qml"
+            source:                 "/custom/PairingIndicator.qml"
         }
     }
     //-------------------------------------------------------------------------
