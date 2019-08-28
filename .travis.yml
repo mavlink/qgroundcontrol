@@ -25,11 +25,11 @@ matrix:
           sudo: required
         - dist: trusty
           language: android
-          env: SPEC=android-clang CONFIG=installer BITNESS=32
+          env: SPEC=android-clang CONFIG=installer BITNESS=32-bit
           sudo: false
         - dist: trusty
           language: android
-          env: SPEC=android-clang CONFIG=installer BITNESS=64
+          env: SPEC=android-clang CONFIG=installer BITNESS=64-bit
           sudo: false
         - os: osx
           osx_image: xcode9.2
@@ -94,6 +94,13 @@ install:
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r20 &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
         export PATH=`pwd`/android-ndk-r20:$PATH
+        ;
+    fi
+
+    - if [ "${BITNESS}" = "64-bit" ]; then
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
+        tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
         ;
     fi
 
