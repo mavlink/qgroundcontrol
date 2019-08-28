@@ -28,9 +28,9 @@ matrix:
           env: SPEC=android-clang CONFIG=installer BITNESS=32
           sudo: false
         - dist: trusty
-		  language: android
-		  env: SPEC=android-clang CONFIG=installer BITNESS=64
-		  sudo: false
+          language: android
+          env: SPEC=android-clang CONFIG=installer BITNESS=64
+          sudo: false
         - os: osx
           osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
@@ -145,7 +145,7 @@ before_script:
   - if [ "${SPEC}" = "android-clang" ]; then
         git remote set-branches origin 'master' &&
         git fetch --tags origin master &&
-		./tools/update_android_version.sh ${BITNESS};
+        ./tools/update_android_version.sh ${BITNESS};
     fi
 
 script:
