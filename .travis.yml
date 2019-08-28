@@ -27,7 +27,7 @@ matrix:
           language: android
           env: SPEC=android-clang CONFIG=installer BITNESS=32
           sudo: false
-		- dist: trusty
+        - dist: trusty
 		  language: android
 		  env: SPEC=android-clang CONFIG=installer BITNESS=64
 		  sudo: false
