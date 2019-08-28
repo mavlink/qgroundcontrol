@@ -121,7 +121,6 @@ MicrohardManager::switchToConnectionEncryptionKey(QString encryptionKey)
 {
     _communicationEncryptionKey = encryptionKey;
     _useCommunicationEncryptionKey = true;
-    _toolbox->videoManager()->startVideo();
 }
 
 //-----------------------------------------------------------------------------
@@ -138,6 +137,9 @@ MicrohardManager::setEncryptionKey()
 {
     if (_mhSettingsLoc) {
         _mhSettingsLoc->setEncryptionKey(_useCommunicationEncryptionKey ? _communicationEncryptionKey : _encryptionKey);
+        if (_useCommunicationEncryptionKey) {
+            _toolbox->videoManager()->startVideo();
+        }
     }
 }
 
