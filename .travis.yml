@@ -86,7 +86,7 @@ install:
     fi
 
   # android dependencies: qt, gstreamer, android-ndk
-  - if [[ "${SPEC}" = "android-clang" ]]; then
+  - if [ "${SPEC}" = "android-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-universal-1.14.4.tar.bz2 &&
         tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${TRAVIS_BUILD_DIR} &&
         wget --quiet https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip &&
@@ -97,14 +97,14 @@ install:
         ;
     fi
 
-    - if [[ "${BITNESS}" = "64" ]]; then
+    - if [ "${BITNESS}" = "64" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
         ;
     fi
 
-    - if [[ "${BITNESS}" = "32" ]]; then
+    - if [ "${BITNESS}" = "32" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_armv7-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_armv7-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt5.12-android_armv7/5.12.4/android_armv7/bin:$PATH
