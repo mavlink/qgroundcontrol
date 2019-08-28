@@ -484,14 +484,14 @@ Rectangle {
                             }
                             FactCheckBox {
                                 text:       qsTr("Show additional heading indicators on Compass")
-                                visible:    _showAdditionalIndicatorsCompass.visible
+                                visible:    _showAdditionalIndicatorsCompass ? _showAdditionalIndicatorsCompass.visible : false
                                 fact:       _showAdditionalIndicatorsCompass
 
                                 property Fact _showAdditionalIndicatorsCompass: QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
                             }
                             FactCheckBox {
                                 text:       qsTr("Lock Compass Nose-Up")
-                                visible:    _lockNoseUpCompass.visible
+                                visible:    _lockNoseUpCompass ? _lockNoseUpCompass.visible : false
                                 fact:       _lockNoseUpCompass
 
                                 property Fact _lockNoseUpCompass: QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass
