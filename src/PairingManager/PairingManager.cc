@@ -70,7 +70,9 @@ PairingManager::_pairingCompleted(QString name)
 {
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
+    _lastPaired = name;
     emit pairedListChanged();
+    emit pairedVehicleChanged();
     _app->informationMessageBoxOnMainThread("", tr("Paired with %1").arg(name));
     setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
 }
@@ -154,7 +156,7 @@ PairingManager::_uploadFinished(void)
             } else {
                 if(++_pairRetryCount > 3) {
                     qCDebug(PairingManagerLog) << "Giving up";
-                    setPairingStatus(PairingError, tr("Too Many Errors"));
+                    setPairingStatus(PairingError, tr("No Response From Vehicle"));
                     _uploadManager->deleteLater();
                     _uploadManager = nullptr;
                 } else {
@@ -188,6 +190,15 @@ PairingManager::connectToPairedDevice(QString name)
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json = file.readAll();
     jsonReceived(json);
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::removePairedDevice(QString name)
+{
+    QFile file(_pairingCacheFile(name));
+    file.remove();
+    emit pairedListChanged();
 }
 
 //-----------------------------------------------------------------------------

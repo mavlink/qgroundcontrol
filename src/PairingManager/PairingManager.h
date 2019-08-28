@@ -61,18 +61,23 @@ public:
 
     Q_ENUM(PairingStatus)
 
-    QStringList     pairingLinkTypeStrings(void);
-    QString         pairingStatusStr(void) const;
-    QStringList     pairedDeviceNameList(void);
-    PairingStatus   pairingStatus() { return _status; }
-    int             nfcIndex(void) { return _nfcIndex; }
-    int             microhardIndex(void) { return _microhardIndex; }
-    void            setStatusMessage(PairingStatus status, QString statusStr) { emit setPairingStatus(status, statusStr); }
-    void            jsonReceived(QString json) { emit parsePairingJson(json); }
+    QStringList     pairingLinkTypeStrings      (void);
+    QString         pairingStatusStr            (void) const;
+    QStringList     pairedDeviceNameList        (void);
+    PairingStatus   pairingStatus               () { return _status; }
+    QString         pairedVehicle               () { return _lastPaired; }
+    int             nfcIndex                    (void) { return _nfcIndex; }
+    int             microhardIndex              (void) { return _microhardIndex; }
+    bool            firstBoot                   () { return _firstBoot; }
+    bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
+    void            setStatusMessage            (PairingStatus status, QString statusStr) { emit setPairingStatus(status, statusStr); }
+    void            jsonReceived                (QString json) { emit parsePairingJson(json); }
+    void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
 #ifdef __android__
-    static void     setNativeMethods(void);
+    static void     setNativeMethods            (void);
 #endif
-    Q_INVOKABLE void connectToPairedDevice(QString name);
+    Q_INVOKABLE void connectToPairedDevice      (QString name);
+    Q_INVOKABLE void removePairedDevice         (QString name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     Q_INVOKABLE void startNFCScan();
@@ -86,8 +91,11 @@ public:
     Q_PROPERTY(PairingStatus    pairingStatus           READ pairingStatus          NOTIFY pairingStatusChanged)
     Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList   NOTIFY pairedListChanged)
     Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings CONSTANT)
+    Q_PROPERTY(QString          pairedVehicle           READ pairedVehicle          NOTIFY pairedVehicleChanged)
+    Q_PROPERTY(bool             errorState              READ errorState             NOTIFY pairingStatusChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex               CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex         CONSTANT)
+    Q_PROPERTY(bool             firstBoot               READ firstBoot              WRITE setFirstBoot  NOTIFY firstBootChanged)
 
 signals:
     void startUpload(QString pairURL, QJsonDocument);
@@ -98,6 +106,8 @@ signals:
     void parsePairingJson(QString json);
     void setPairingStatus(PairingStatus status, QString pairingStatus);
     void pairedListChanged();
+    void pairedVehicleChanged();
+    void firstBootChanged();
 
 private slots:
     void _startUpload(QString pairURL, QJsonDocument);
@@ -109,6 +119,7 @@ private slots:
 private:
     QString                 _statusString;
     QString                 _jsonFileName;
+    QString                 _lastPaired;
     QVariantMap             _remotePairingMap;
     int                     _nfcIndex = -1;
     int                     _microhardIndex = -1;
@@ -121,20 +132,21 @@ private:
     QString                 _uploadURL{};
     QString                 _uploadData{};
 
-    void               _parsePairingJsonFile();
-    QJsonDocument      _createZeroTierConnectJson(QString cert2);
-    QJsonDocument      _createMicrohardConnectJson(QString cert2);
-    QJsonDocument      _createZeroTierPairingJson(QString cert1);
-    QJsonDocument      _createMicrohardPairingJson(QString pwd, QString cert1);
-    QString            _assumeMicrohardPairingJson();
-    void               _writeJson(QJsonDocument &jsonDoc, QString fileName);
-    QString            _getLocalIPInNetwork(QString remoteIP, int num);
-    void               _uploadFinished(void);
-    void               _uploadError(QNetworkReply::NetworkError code);
-    void               _pairingCompleted(QString name);
-    void               _connectionCompleted(QString name);
-    QDir               _pairingCacheDir();
-    QString            _pairingCacheFile(QString uavName);
+    void                _parsePairingJsonFile();
+    QJsonDocument       _createZeroTierConnectJson(QString cert2);
+    QJsonDocument       _createMicrohardConnectJson(QString cert2);
+    QJsonDocument       _createZeroTierPairingJson(QString cert1);
+    QJsonDocument       _createMicrohardPairingJson(QString pwd, QString cert1);
+    QString             _assumeMicrohardPairingJson();
+    void                _writeJson(QJsonDocument &jsonDoc, QString fileName);
+    QString             _getLocalIPInNetwork(QString remoteIP, int num);
+    void                _uploadFinished(void);
+    void                _uploadError(QNetworkReply::NetworkError code);
+    void                _pairingCompleted(QString name);
+    void                _connectionCompleted(QString name);
+    QDir                _pairingCacheDir();
+    QString             _pairingCacheFile(QString uavName);
+    bool                _firstBoot = true;
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC pairingNFC;

@@ -23,6 +23,29 @@ import QGroundControl.Palette               1.0
 Item {
     anchors.fill: parent
     readonly property real _indicatorMargins: ScreenTools.defaultFontPixelHeight * 0.75
+    Component.onCompleted: {
+        if(QGroundControl.pairingManager) {
+            if(!activeVehicle) {
+                pairingTimer.start()
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
+    //-- Launch pairing manager if nothing connected
+    Timer {
+        id:        pairingTimer
+        interval:  5000
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            if(!activeVehicle) {
+                if(QGroundControl.pairingManager.firstBoot && pairingLoader.item) {
+                    QGroundControl.pairingManager.firstBoot = false
+                    pairingLoader.item.runPairing()
+                }
+            }
+        }
+    }
     //-------------------------------------------------------------------------
     //-- Waiting for a vehicle
     Row {
@@ -60,6 +83,7 @@ Item {
         spacing:                    ScreenTools.defaultFontPixelWidth * 2
         visible:                    !indicatorRow.visible
         Loader {
+            id:                     pairingLoader
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.margins:        _indicatorMargins
