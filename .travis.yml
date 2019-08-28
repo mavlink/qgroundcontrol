@@ -93,22 +93,19 @@ install:
         unzip android-ndk-r20-linux-x86_64.zip > /dev/null &&
         export ANDROID_NDK_ROOT=`pwd`/android-ndk-r20 &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=`pwd`/android-ndk-r20:$PATH &&
-        echo $PATH
+        export PATH=`pwd`/android-ndk-r20:$PATH && echo $PATH
         ;
     fi
-    - if [[ "${SPEC}" = "android-clang"  && "${BITNESS}" = "64" ]]; then
+    - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "64" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH &&
-        echo $PATH
+        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH && echo $PATH
         ;
     fi
-    - if [[ "${SPEC}" = "android-clang"  && "${BITNESS}" = "32" ]]; then
+    - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "32" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_armv7-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_armv7-min.tar.bz2 -C /tmp &&
-        export PATH=/tmp/Qt5.12-android_armv7/5.12.4/android_armv7/bin:$PATH &&
-        echo $PATH
+        export PATH=/tmp/Qt5.12-android_armv7/5.12.4/android_armv7/bin:$PATH && echo $PATH
         ;
     fi
 
