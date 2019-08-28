@@ -135,16 +135,16 @@ private:
     QStringList             _deviceList;
 
     void                    _parsePairingJsonFile       ();
-    QJsonDocument           _createZeroTierConnectJson  (QString cert2);
-    QJsonDocument           _createMicrohardConnectJson (QString cert2);
-    QJsonDocument           _createZeroTierPairingJson  (QString cert1);
-    QJsonDocument           _createMicrohardPairingJson (QString pwd, QString cert1);
+    QJsonDocument           _createZeroTierConnectJson  ();
+    QJsonDocument           _createMicrohardConnectJson ();
+    QJsonDocument           _createZeroTierPairingJson  ();
+    QJsonDocument           _createMicrohardPairingJson ();
     QString                 _assumeMicrohardPairingJson ();
     void                    _writeJson                  (QJsonDocument &jsonDoc, QString fileName);
     QString                 _getLocalIPInNetwork        (QString remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (QString name);
+    void                    _pairingCompleted           (QString name, QString connectionKey);
     void                    _connectionCompleted        (QString name);
     QDir                    _pairingCacheDir            ();
     QString                 _pairingCacheFile           (QString uavName);
