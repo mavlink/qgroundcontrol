@@ -68,8 +68,11 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_pairingCompleted(QString name)
+PairingManager::_pairingCompleted(QString name, QString connectionKey)
 {
+    QJsonObject jsonObj = _jsonDoc.object();
+    jsonObj.insert("EK", connectionKey);
+    _jsonDoc.setObject(jsonObj);
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
     _lastPaired = name;
@@ -78,15 +81,14 @@ PairingManager::_pairingCompleted(QString name)
     emit pairedVehicleChanged();
     //_app->informationMessageBoxOnMainThread("", tr("Paired with %1").arg(name));
     setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
+    _toolbox->microhardManager()->switchToConnectionEncryptionKey(connectionKey);
 }
 
 //-----------------------------------------------------------------------------
 void
 PairingManager::_connectionCompleted(QString /*name*/)
 {
-    //QString pwd = _remotePairingMap["PWD"].toString();
-    //_toolbox->microhardManager()->switchToConnectionEncryptionKey(pwd);
-    //_app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
+    _app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
@@ -143,8 +145,8 @@ PairingManager::_uploadFinished()
                 QString str = QString::fromUtf8(bytes.data(), bytes.size());
                 qCDebug(PairingManagerLog) << "Reply: " << str;
                 auto a = str.split(QRegExp("\\s+"));
-                if (a[0] == "Accepted" && a.length() > 1) {
-                    _pairingCompleted(a[1]);
+                if (a[0] == "Accepted" && a.length() > 2) {
+                    _pairingCompleted(a[1], a[2]);
                 } else if (a[0] == "Connected" && a.length() > 1) {
                     _connectionCompleted(a[1]);
                 } else if (a[0] == "Connection" && a.length() > 1) {
@@ -280,34 +282,25 @@ PairingManager::_parsePairingJson(QString jsonEnc)
         return;
     }
 
-    _toolbox->microhardManager()->switchToPairingEncryptionKey();
-
     QString pairURL = "http://" + _remotePairingMap["IP"].toString() + ":" + pport;
-    bool connecting = jsonObj.contains("PWD");
+    bool connecting = jsonObj.contains("CONNECTING");
     QJsonDocument jsonDoc;
 
     if (!connecting) {
         pairURL +=  + "/pair";
-        QString pwd = random_string(8);
-        // TODO generate certificates
-        QString cert1 = "";
-        QString cert2 = "";
-        jsonObj.insert("PWD", pwd);
-        jsonObj.insert("CERT1", cert1);
-        jsonObj.insert("CERT2", cert2);
+        jsonObj.insert("CONNECTING", "true");
         _jsonDoc.setObject(jsonObj);
         if (linkType == "ZT") {
-            jsonDoc = _createZeroTierPairingJson(cert1);
+            jsonDoc = _createZeroTierPairingJson();
         } else if (linkType == "MH") {
-            jsonDoc = _createMicrohardPairingJson(pwd, cert1);
+            jsonDoc = _createMicrohardPairingJson();
         }
     } else {
         pairURL +=  + "/connect";
-        QString cert2 = _remotePairingMap["CERT2"].toString();
         if (linkType == "ZT") {
-            jsonDoc = _createZeroTierConnectJson(cert2);
+            jsonDoc = _createZeroTierConnectJson();
         } else if (linkType == "MH") {
-            jsonDoc = _createMicrohardConnectJson(cert2);
+            jsonDoc = _createMicrohardConnectJson();
         }
     }
 
@@ -327,9 +320,12 @@ PairingManager::_parsePairingJson(QString jsonEnc)
         if (_remotePairingMap.contains("CP")) {
             _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
         }
-        if (_remotePairingMap.contains("EK") && !connecting) {
-            _toolbox->microhardManager()->setEncryptionKey(_remotePairingMap["EK"].toString());
+        if (!connecting) {
+            _toolbox->microhardManager()->switchToPairingEncryptionKey();
+        } else if (_remotePairingMap.contains("EK")) {
+            _toolbox->microhardManager()->switchToConnectionEncryptionKey(_remotePairingMap["EK"].toString());
         }
+
         _toolbox->microhardManager()->updateSettings();
         emit startUpload(pairURL, jsonDoc);
     }
@@ -393,7 +389,7 @@ PairingManager::_writeJson(QJsonDocument &jsonDoc, QString fileName)
 
 //-----------------------------------------------------------------------------
 QJsonDocument
-PairingManager::_createZeroTierPairingJson(QString cert1)
+PairingManager::_createZeroTierPairingJson()
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 2);
 
@@ -401,13 +397,12 @@ PairingManager::_createZeroTierPairingJson(QString cert1)
     jsonObj.insert("LT", "ZT");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 14550);
-    jsonObj.insert("CERT1", cert1);
     return QJsonDocument(jsonObj);
 }
 
 //-----------------------------------------------------------------------------
 QJsonDocument
-PairingManager::_createMicrohardPairingJson(QString pwd, QString cert1)
+PairingManager::_createMicrohardPairingJson()
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 3);
 
@@ -415,14 +410,12 @@ PairingManager::_createMicrohardPairingJson(QString pwd, QString cert1)
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 14550);
-    jsonObj.insert("PWD", pwd);
-    jsonObj.insert("CERT1", cert1);
     return QJsonDocument(jsonObj);
 }
 
 //-----------------------------------------------------------------------------
 QJsonDocument
-PairingManager::_createZeroTierConnectJson(QString cert2)
+PairingManager::_createZeroTierConnectJson()
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 2);
 
@@ -430,13 +423,12 @@ PairingManager::_createZeroTierConnectJson(QString cert2)
     jsonObj.insert("LT", "ZT");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 14550);
-    jsonObj.insert("CERT2", cert2);
     return QJsonDocument(jsonObj);
 }
 
 //-----------------------------------------------------------------------------
 QJsonDocument
-PairingManager::_createMicrohardConnectJson(QString cert2)
+PairingManager::_createMicrohardConnectJson()
 {
     QString localIP = _getLocalIPInNetwork(_remotePairingMap["IP"].toString(), 3);
 
@@ -444,7 +436,6 @@ PairingManager::_createMicrohardConnectJson(QString cert2)
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 14550);
-    jsonObj.insert("CERT2", cert2);
     return QJsonDocument(jsonObj);
 }
 
