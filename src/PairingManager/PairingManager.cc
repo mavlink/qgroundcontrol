@@ -62,6 +62,8 @@ void
 PairingManager::setToolbox(QGCToolbox *toolbox)
 {
     QGCTool::setToolbox(toolbox);
+    _updatePairedDeviceNameList();
+    emit pairedListChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -71,19 +73,20 @@ PairingManager::_pairingCompleted(QString name)
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
     _lastPaired = name;
+    _updatePairedDeviceNameList();
     emit pairedListChanged();
     emit pairedVehicleChanged();
-    _app->informationMessageBoxOnMainThread("", tr("Paired with %1").arg(name));
+    //_app->informationMessageBoxOnMainThread("", tr("Paired with %1").arg(name));
     setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
 }
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_connectionCompleted(QString name)
+PairingManager::_connectionCompleted(QString /*name*/)
 {
     //QString pwd = _remotePairingMap["PWD"].toString();
     //_toolbox->microhardManager()->switchToConnectionEncryptionKey(pwd);
-    _app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
+    //_app->informationMessageBoxOnMainThread("", tr("Connected to %1").arg(name));
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
@@ -128,7 +131,7 @@ PairingManager::_stopUpload()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_uploadFinished(void)
+PairingManager::_uploadFinished()
 {
     QMutexLocker lock(&_uploadMutex);
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
@@ -198,22 +201,21 @@ PairingManager::removePairedDevice(QString name)
 {
     QFile file(_pairingCacheFile(name));
     file.remove();
+    _updatePairedDeviceNameList();
     emit pairedListChanged();
 }
 
 //-----------------------------------------------------------------------------
-QStringList
-PairingManager::pairedDeviceNameList(void)
+void
+PairingManager::_updatePairedDeviceNameList()
 {
-    QStringList list;
+    _deviceList.clear();
     QDirIterator it(_pairingCacheDir().absolutePath(), QDir::Files);
     while (it.hasNext()) {
         QFileInfo fileInfo(it.next());
-        list.append(fileInfo.fileName());
+        _deviceList.append(fileInfo.fileName());
         qCDebug(PairingManagerLog) << "Listing: " << fileInfo.fileName();
     }
-
-    return list;
 }
 
 //-----------------------------------------------------------------------------
@@ -226,9 +228,9 @@ PairingManager::_assumeMicrohardPairingJson()
     jsonObject.insert("LT", "MH");
     jsonObject.insert("IP", "192.168.168.10");
     jsonObject.insert("AIP", _toolbox->microhardManager()->remoteIPAddr());
-    jsonObject.insert("CU", _toolbox->microhardManager()->configUserName());
-    jsonObject.insert("CP", _toolbox->microhardManager()->configPassword());
-    jsonObject.insert("EK", _toolbox->microhardManager()->encryptionKey());
+    jsonObject.insert("CU",  _toolbox->microhardManager()->configUserName());
+    jsonObject.insert("CP",  _toolbox->microhardManager()->configPassword());
+    jsonObject.insert("EK",  _toolbox->microhardManager()->encryptionKey());
     json.setObject(jsonObject);
 
     return QString(json.toJson(QJsonDocument::Compact));
@@ -266,8 +268,8 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     }
 
     _remotePairingMap = jsonObj.toVariantMap();
-    QString linkType = _remotePairingMap["LT"].toString();
-    QString pport = _remotePairingMap["PP"].toString();
+    QString linkType  = _remotePairingMap["LT"].toString();
+    QString pport     = _remotePairingMap["PP"].toString();
     if (pport.length()==0) {
         pport = "29351";
     }
@@ -449,7 +451,7 @@ PairingManager::_createMicrohardConnectJson(QString cert2)
 //-----------------------------------------------------------------------------
 
 QStringList
-PairingManager::pairingLinkTypeStrings(void)
+PairingManager::pairingLinkTypeStrings()
 {
     //-- Must follow same order as enum LinkType in LinkConfiguration.h
     static QStringList list;
@@ -478,7 +480,7 @@ PairingManager::_setPairingStatus(PairingStatus status, QString statusStr)
 
 //-----------------------------------------------------------------------------
 QString
-PairingManager::pairingStatusStr(void) const
+PairingManager::pairingStatusStr() const
 {
     return _statusString;
 }
