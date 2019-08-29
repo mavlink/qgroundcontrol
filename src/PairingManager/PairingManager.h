@@ -69,6 +69,8 @@ public:
     int             nfcIndex                    () { return _nfcIndex; }
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
+    QString         firstDeviceToConnect        () { return _firstDeviceToConnect; }
+    bool            videoCanRestart             () { return !_connectedDeviceValid || !_connectedDevice.isEmpty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     void            setStatusMessage            (PairingStatus status, QString statusStr) { emit setPairingStatus(status, statusStr); }
     void            jsonReceived                (QString json) { emit parsePairingJson(json); }
@@ -135,7 +137,9 @@ private:
     QString                 _uploadURL{};
     QString                 _uploadData{};
     bool                    _firstBoot = true;
+    bool                    _connectedDeviceValid = false;
     QString                 _connectedDevice{};
+    QString                 _firstDeviceToConnect{};
     QStringList             _deviceList;
 
     void                    _parsePairingJsonFile       ();
@@ -156,6 +160,7 @@ private:
     QString                 _random_string              (uint length);
     void                    _readPairingConfig          ();
     void                    _resetPairingConfig         ();
+    void                    _setLastConnectedDevice     (QString name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
