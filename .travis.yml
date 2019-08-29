@@ -28,12 +28,12 @@ matrix:
         - name: "Android 32 bit"
           dist: trusty
           language: android
-          env: SPEC=android-clang CONFIG=installer BITNESS=32-bit
+          env: SPEC=android-clang CONFIG=installer BITNESS=32
           sudo: false
         - name: "Android 64 bit"
           dist: trusty
           language: android
-          env: SPEC=android-clang CONFIG=installer BITNESS=64-bit
+          env: SPEC=android-clang CONFIG=installer BITNESS=64
           sudo: false
         - name: "OSX Installer"
           os: osx
@@ -102,14 +102,14 @@ install:
         ;
     fi
 
-  - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "64-bit" ]]; then
+  - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "64" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
         ;
     fi
 
-  - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "32-bit" ]]; then
+  - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "32" ]]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_armv7-min.tar.bz2 &&
         tar jxf Qt5.12.4-android_armv7-min.tar.bz2 -C /tmp &&
         export PATH=/tmp/Qt5.12-android_armv7/5.12.4/android_armv7/bin:$PATH
