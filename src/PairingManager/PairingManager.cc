@@ -70,7 +70,7 @@ PairingManager::_pairingCompleted(QString name)
 void
 PairingManager::_connectionCompleted(QString name)
 {
-    _connectedDevice = name;
+    _setLastConnectedDevice(name);
     _toolbox->videoManager()->startVideo();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
@@ -192,6 +192,9 @@ PairingManager::_parsePairingJsonFile()
 void
 PairingManager::connectToPairedDevice(QString name)
 {
+    if (name.isEmpty()) {
+        return;
+    }
     setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     QFile file(_pairingCacheFile(name));
     file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -217,7 +220,7 @@ PairingManager::removePairedDevice(QString name)
     file.remove();
 
     if (_connectedDevice == name) {
-        _connectedDevice = "";
+        _setLastConnectedDevice("");
         _toolbox->videoManager()->stopVideo();
     }
 
@@ -266,7 +269,41 @@ PairingManager::_readPairingConfig()
         _resetPairingConfig();
         return;
     }
+
+    if (jsonObj.contains("CONNECTED_DEVICE")) {
+        _firstDeviceToConnect = jsonObj.value("CONNECTED_DEVICE").toString();
+    }
     _encryptionKey = jsonObj.value("EK").toString();
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_setLastConnectedDevice(QString name)
+{
+    if (!name.isEmpty()) {
+        _connectedDeviceValid = true;
+    }
+    _connectedDevice = name;
+
+    QFile file(_pairingCacheFile("gcs"));
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString jsonEnc = file.readAll();
+    QString json = QString::fromStdString(_aes.decrypt(jsonEnc.toStdString()));
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(json.toUtf8());
+    file.close();
+
+    if (jsonDoc.isNull() || !jsonDoc.isObject()) {
+        return;
+    }
+
+    QJsonObject jsonObj = jsonDoc.object();
+    jsonObj.remove("CONNECTED_DEVICE");
+    if (!_connectedDevice.isEmpty()) {
+        jsonObj.insert("CONNECTED_DEVICE", _connectedDevice);
+    }
+    jsonDoc.setObject(jsonObj);
+
+    _writeJson(jsonDoc, _pairingCacheFile("gcs"));
 }
 
 //-----------------------------------------------------------------------------
@@ -404,7 +441,7 @@ PairingManager::_parsePairingJson(QString jsonEnc)
             _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
         }
         if (!connecting) {
-            _connectedDevice = "";
+            _setLastConnectedDevice("");
             _toolbox->videoManager()->stopVideo();
             _toolbox->microhardManager()->switchToPairingEncryptionKey();
         } else if (_remotePairingMap.contains("EK")) {

@@ -22,6 +22,7 @@
 
 #include "ScreenToolsController.h"
 #include "VideoManager.h"
+#include "PairingManager.h"
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
@@ -358,6 +359,10 @@ void
 VideoManager::restartVideo()
 {
 #if defined(QGC_GST_STREAMING)
+    if (!qgcApp()->toolbox()->pairingManager()->videoCanRestart()) {
+        return;
+    }
+
     qCDebug(VideoManagerLog) << "Restart video streaming";
     stopVideo();
     _updateSettings();
