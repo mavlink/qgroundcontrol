@@ -135,6 +135,7 @@ private:
     QString                 _uploadURL{};
     QString                 _uploadData{};
     bool                    _firstBoot = true;
+    QString                 _connectedDevice{};
     QStringList             _deviceList;
 
     void                    _parsePairingJsonFile       ();
