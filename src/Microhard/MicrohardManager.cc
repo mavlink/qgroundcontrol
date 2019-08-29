@@ -10,7 +10,6 @@
 #include "MicrohardManager.h"
 #include "MicrohardSettings.h"
 #include "SettingsManager.h"
-#include "VideoManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
 
@@ -128,7 +127,6 @@ void
 MicrohardManager::switchToPairingEncryptionKey()
 {
     _useCommunicationEncryptionKey = false;
-    _toolbox->videoManager()->stopVideo();
 }
 
 //-----------------------------------------------------------------------------
@@ -137,9 +135,6 @@ MicrohardManager::setEncryptionKey()
 {
     if (_mhSettingsLoc) {
         _mhSettingsLoc->setEncryptionKey(_useCommunicationEncryptionKey ? _communicationEncryptionKey : _encryptionKey);
-        if (_useCommunicationEncryptionKey) {
-            _toolbox->videoManager()->startVideo();
-        }
     }
 }
 

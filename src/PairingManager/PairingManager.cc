@@ -12,6 +12,7 @@
 #include "MicrohardManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "VideoManager.h"
 
 #include <QSettings>
 #include <QJsonObject>
@@ -67,8 +68,10 @@ PairingManager::_pairingCompleted(QString name)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_connectionCompleted(QString /*name*/)
+PairingManager::_connectionCompleted(QString name)
 {
+    _connectedDevice = name;
+    _toolbox->videoManager()->startVideo();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 }
 
@@ -212,6 +215,11 @@ PairingManager::removePairedDevice(QString name)
     }
     file.close();
     file.remove();
+
+    if (_connectedDevice == name) {
+        _connectedDevice = "";
+        _toolbox->videoManager()->stopVideo();
+    }
 
     QString pairURL = "http://" + map["IP"].toString() + ":" + pport + "/unpair";;
     emit startCommand(pairURL);
@@ -396,6 +404,8 @@ PairingManager::_parsePairingJson(QString jsonEnc)
             _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
         }
         if (!connecting) {
+            _connectedDevice = "";
+            _toolbox->videoManager()->stopVideo();
             _toolbox->microhardManager()->switchToPairingEncryptionKey();
         } else if (_remotePairingMap.contains("EK")) {
             _toolbox->microhardManager()->switchToConnectionEncryptionKey(_remotePairingMap["EK"].toString());
