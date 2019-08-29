@@ -12,6 +12,7 @@
 #include "MicrohardManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+#include "VideoManager.h"
 
 #include <QSettings>
 #include <QJsonObject>
@@ -23,24 +24,6 @@ QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 static const char* jsonFileName = "pairing.json";
 
 //-----------------------------------------------------------------------------
-static QString
-random_string(uint length)
-{
-    auto randchar = []() -> char
-    {
-        const char charset[] =
-            "0123456789"
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            "abcdefghijklmnopqrstuvwxyz";
-        const uint max_index = (sizeof(charset) - 1);
-        return charset[static_cast<uint>(rand()) % max_index];
-    };
-    std::string str(length, 0);
-    std::generate_n(str.begin(), length, randchar);
-    return QString::fromStdString(str);
-}
-
-//-----------------------------------------------------------------------------
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
     , _aes("J6+KuWh9K2!hG(F'", 0x368de30e8ec063ce)
@@ -49,6 +32,8 @@ PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     connect(this, &PairingManager::parsePairingJson, this, &PairingManager::_parsePairingJson);
     connect(this, &PairingManager::setPairingStatus, this, &PairingManager::_setPairingStatus);
     connect(this, &PairingManager::startUpload, this, &PairingManager::_startUpload);
+    connect(this, &PairingManager::startCommand, this, &PairingManager::_startCommand);
+    _readPairingConfig();
 }
 
 //-----------------------------------------------------------------------------
@@ -81,14 +66,34 @@ PairingManager::_pairingCompleted(QString name, QString connectionKey)
     emit pairedVehicleChanged();
     //_app->informationMessageBoxOnMainThread("", tr("Paired with %1").arg(name));
     setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
-    _toolbox->microhardManager()->switchToConnectionEncryptionKey(connectionKey);
+    _toolbox->microhardManager()->switchToConnectionEncryptionKey(_encryptionKey);
 }
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_connectionCompleted(QString /*name*/)
+PairingManager::_connectionCompleted(QString name)
 {
+    _connectedDevice = name;
+    _toolbox->videoManager()->startVideo();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_startCommand(QString pairURL)
+{
+    QMutexLocker lock(&_uploadMutex);
+    if (_uploadManager != nullptr) {
+        return;
+    }
+    _uploadManager = new QNetworkAccessManager(this);
+
+    qCDebug(PairingManagerLog) << "Starting command: " << pairURL;
+    _uploadURL = pairURL;
+    QNetworkRequest req;
+    req.setUrl(QUrl(_uploadURL));
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    _uploadManager->post(req, "");
 }
 
 //-----------------------------------------------------------------------------
@@ -202,9 +207,83 @@ void
 PairingManager::removePairedDevice(QString name)
 {
     QFile file(_pairingCacheFile(name));
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString json = QString::fromStdString(_aes.decrypt(file.readAll().toStdString()));
+    _jsonDoc = QJsonDocument::fromJson(json.toUtf8());
+    QJsonObject jsonObj = _jsonDoc.object();
+    auto map = jsonObj.toVariantMap();
+    QString pport = map["PP"].toString();
+    if (pport.length() == 0) {
+        pport = "29351";
+    }
+    file.close();
     file.remove();
+
+    if (_connectedDevice == name) {
+        _connectedDevice = "";
+        _toolbox->videoManager()->stopVideo();
+    }
+
+    QString pairURL = "http://" + map["IP"].toString() + ":" + pport + "/unpair";;
+    emit startCommand(pairURL);
     _updatePairedDeviceNameList();
     emit pairedListChanged();
+}
+
+//-----------------------------------------------------------------------------
+QString
+PairingManager::_random_string(uint length)
+{
+    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    auto randchar = []() -> char
+    {
+        const char charset[] =
+            "0123456789"
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            "abcdefghijklmnopqrstuvwxyz";
+        const uint max_index = (sizeof(charset) - 1);
+        return charset[static_cast<uint>(std::rand()) % max_index];
+    };
+    std::string str(length, 0);
+    std::generate_n(str.begin(), length, randchar);
+    return QString::fromStdString(str);
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_readPairingConfig()
+{
+    QFile file(_pairingCacheFile("gcs"));
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString jsonEnc = file.readAll();
+    QString json = QString::fromStdString(_aes.decrypt(jsonEnc.toStdString()));
+    _jsonDoc = QJsonDocument::fromJson(json.toUtf8());
+
+    if (_jsonDoc.isNull() || !_jsonDoc.isObject()) {
+        _resetPairingConfig();
+        return;
+    }
+
+    QJsonObject jsonObj = _jsonDoc.object();
+    if (!jsonObj.contains("EK")) {
+        _resetPairingConfig();
+        return;
+    }
+    _encryptionKey = jsonObj.value("EK").toString();
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_resetPairingConfig()
+{
+    QJsonDocument json;
+    QJsonObject   jsonObject;
+
+    _encryptionKey = _random_string(8);
+    jsonObject.insert("EK", _encryptionKey);
+    json.setObject(jsonObject);
+
+    _writeJson(json, _pairingCacheFile("gcs"));
 }
 
 //-----------------------------------------------------------------------------
@@ -215,8 +294,12 @@ PairingManager::_updatePairedDeviceNameList()
     QDirIterator it(_pairingCacheDir().absolutePath(), QDir::Files);
     while (it.hasNext()) {
         QFileInfo fileInfo(it.next());
-        _deviceList.append(fileInfo.fileName());
-        qCDebug(PairingManagerLog) << "Listing: " << fileInfo.fileName();
+        if (fileInfo.fileName() != "gcs") {
+            _deviceList.append(fileInfo.fileName());
+        }
+    }
+    if (_deviceList.empty()) {
+        _resetPairingConfig();
     }
 }
 
@@ -235,7 +318,7 @@ PairingManager::_assumeMicrohardPairingJson()
     jsonObject.insert("AIP", remoteIPAddr);
     jsonObject.insert("CU",  _toolbox->microhardManager()->configUserName());
     jsonObject.insert("CP",  _toolbox->microhardManager()->configPassword());
-    jsonObject.insert("EK",  _toolbox->microhardManager()->encryptionKey());
+    jsonObject.insert("EK",  _encryptionKey);
     json.setObject(jsonObject);
 
     return QString(json.toJson(QJsonDocument::Compact));
@@ -275,11 +358,11 @@ PairingManager::_parsePairingJson(QString jsonEnc)
     _remotePairingMap = jsonObj.toVariantMap();
     QString linkType  = _remotePairingMap["LT"].toString();
     QString pport     = _remotePairingMap["PP"].toString();
-    if (pport.length()==0) {
+    if (pport.length() == 0) {
         pport = "29351";
     }
 
-    if (linkType.length()==0) {
+    if (linkType.length() == 0) {
         setPairingStatus(PairingError, tr("Error Parsing Pairing File"));
         qCDebug(PairingManagerLog) << "Pairing JSON is malformed.";
         return;
@@ -324,6 +407,8 @@ PairingManager::_parsePairingJson(QString jsonEnc)
             _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
         }
         if (!connecting) {
+            _connectedDevice = "";
+            _toolbox->videoManager()->stopVideo();
             _toolbox->microhardManager()->switchToPairingEncryptionKey();
         } else if (_remotePairingMap.contains("EK")) {
             _toolbox->microhardManager()->switchToConnectionEncryptionKey(_remotePairingMap["EK"].toString());
@@ -413,6 +498,7 @@ PairingManager::_createMicrohardPairingJson()
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 14550);
+    jsonObj.insert("EK", _encryptionKey);
     return QJsonDocument(jsonObj);
 }
 

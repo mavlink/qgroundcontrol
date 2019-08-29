@@ -99,6 +99,7 @@ public:
 
 signals:
     void startUpload                            (QString pairURL, QJsonDocument);
+    void startCommand                           (QString pairURL);
     void closeConnection                        ();
     void pairingConfigurationsChanged           ();
     void nameListChanged                        ();
@@ -110,6 +111,7 @@ signals:
     void firstBootChanged                       ();
 
 private slots:
+    void _startCommand                          (QString pairURL);
     void _startUpload                           (QString pairURL, QJsonDocument);
     void _stopUpload                            ();
     void _startUploadRequest                    ();
@@ -120,6 +122,7 @@ private:
     QString                 _statusString;
     QString                 _jsonFileName;
     QString                 _lastPaired;
+    QString                 _encryptionKey;
     QVariantMap             _remotePairingMap;
     int                     _nfcIndex = -1;
     int                     _microhardIndex = -1;
@@ -132,6 +135,7 @@ private:
     QString                 _uploadURL{};
     QString                 _uploadData{};
     bool                    _firstBoot = true;
+    QString                 _connectedDevice{};
     QStringList             _deviceList;
 
     void                    _parsePairingJsonFile       ();
@@ -149,6 +153,9 @@ private:
     QDir                    _pairingCacheDir            ();
     QString                 _pairingCacheFile           (QString uavName);
     void                    _updatePairedDeviceNameList ();
+    QString                 _random_string              (uint length);
+    void                    _readPairingConfig          ();
+    void                    _resetPairingConfig         ();
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;

@@ -92,20 +92,6 @@ exists($$MAVLINKPATH/common) {
 INCLUDEPATH += libs/eigen
 DEFINES += NOMINMAX
 
-# Pairing
-MacBuild {
-    #- Pairing is generally not supported on macOS. This is here solely for development.
-    exists(/usr/local/Cellar/openssl/1.0.2s/include) {
-        INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2s/include
-        LIBS += -L/usr/local/Cellar/openssl/1.0.2s/lib
-        LIBS += -lcrypto -lz
-    } else {
-        DEFINES += QGC_DISABLE_PAIRING
-    }
-} else {
-    LIBS += -lcrypto -lz
-}
-
 #
 # [REQUIRED] shapelib library
 INCLUDEPATH += libs/shapelib
@@ -148,17 +134,44 @@ MacBuild {
 		-llibeay32
 }
 
+# Include Android OpenSSL libs in order to make Qt OpenSSL support work
 AndroidBuild {
     contains(QT_ARCH, arm) {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
-        LIBS += $$ANDROID_EXTRA_LIBS
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
+    } else:contains(QT_ARCH, arm64) {
+        # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
     } else {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
-        LIBS += $$ANDROID_EXTRA_LIBS
-        INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
+    }
+}
+
+# Pairing
+contains(DEFINES, QGC_ENABLE_PAIRING) {
+    MacBuild {
+        #- Pairing is generally not supported on macOS. This is here solely for development.
+        exists(/usr/local/Cellar/openssl/1.0.2s/include) {
+            INCLUDEPATH += /usr/local/Cellar/openssl/1.0.2s/include
+            LIBS += -L/usr/local/Cellar/openssl/1.0.2s/lib
+            LIBS += -lcrypto -lz
+        } else {
+            # There is some circular reference settings going on between QGCExternalLibs.pri and gqgroundcontrol.pro.
+            # So this duplicates some of the enable/disable logic which would normally be in qgroundcontrol.pro.
+            DEFINES -= QGC_ENABLE_NFC
+            DEFINES -= QGC_ENABLE_PAIRING
+        }
+    } else {
+        LIBS += -lcrypto -lz
+        AndroidBuild {
+            contains(QT_ARCH, arm) {
+                LIBS += $$ANDROID_EXTRA_LIBS
+                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/include
+            } else {
+                LIBS += $$ANDROID_EXTRA_LIBS
+                INCLUDEPATH += $$BASEDIR/libs/OpenSSL/Android/arch-x86/include
+            }
+        }
     }
 }
 

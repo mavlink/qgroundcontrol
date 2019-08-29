@@ -14,20 +14,29 @@ env:
 matrix:
     fast_finish: true
     include:
-        - os: linux
+        - name: "Linux Installer"
+          os: linux
           dist: xenial
           env: SPEC=linux-g++-64 CONFIG=installer
           sudo: required
-        - os: linux
+        - name: "Linux Debug"
+          os: linux
           dist: xenial
           env: SPEC=linux-g++-64 CONFIG=debug
           services: xvfb
           sudo: required
-        - dist: trusty
+        - name: "Android 32 bit"
+          dist: trusty
           language: android
-          env: SPEC=android-g++ CONFIG=installer
+          env: SPEC=android-clang CONFIG=installer BITNESS=32-bit
           sudo: false
-        - os: osx
+        - name: "Android 64 bit"
+          dist: trusty
+          language: android
+          env: SPEC=android-clang CONFIG=installer BITNESS=64-bit
+          sudo: false
+        - name: "OSX Installer"
+          os: osx
           osx_image: xcode9.2
           env: SPEC=macx-clang CONFIG=installer
           sudo: required
@@ -82,16 +91,28 @@ install:
     fi
 
   # android dependencies: qt, gstreamer, android-ndk
-  - if [ "${SPEC}" = "android-g++" ]; then
+  - if [ "${SPEC}" = "android-clang" ]; then
         wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/gstreamer-1.0-android-universal-1.14.4.tar.bz2 &&
         tar jxf gstreamer-1.0-android-universal-1.14.4.tar.bz2 -C ${TRAVIS_BUILD_DIR} &&
-        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-android_armv7-min.tar.bz2 &&
-        tar jxf Qt5.11.0-android_armv7-min.tar.bz2 -C /tmp &&
-        wget --quiet https://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip &&
-        unzip android-ndk-r16b-linux-x86_64.zip > /dev/null &&
-        export ANDROID_NDK_ROOT=`pwd`/android-ndk-r16b &&
+        wget --quiet https://dl.google.com/android/repository/android-ndk-r20-linux-x86_64.zip &&
+        unzip android-ndk-r20-linux-x86_64.zip > /dev/null &&
+        export ANDROID_NDK_ROOT=`pwd`/android-ndk-r20 &&
         export ANDROID_SDK_ROOT=/usr/local/android-sdk &&
-        export PATH=/tmp/Qt5.11-android_armv7/5.11.0/android_armv7/bin:`pwd`/android-ndk-r16b:$PATH && echo $PATH
+        export PATH=`pwd`/android-ndk-r20:$PATH
+        ;
+    fi
+
+  - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "64-bit" ]]; then
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_arm64_v8a-min.tar.bz2 &&
+        tar jxf Qt5.12.4-android_arm64_v8a-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-android_arm64_v8a/5.12.4/android_arm64_v8a/bin:$PATH
+        ;
+    fi
+
+  - if [[ "${SPEC}" = "android-clang" && "${BITNESS}" = "32-bit" ]]; then
+        wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.12.4-android_armv7-min.tar.bz2 &&
+        tar jxf Qt5.12.4-android_armv7-min.tar.bz2 -C /tmp &&
+        export PATH=/tmp/Qt5.12-android_armv7/5.12.4/android_armv7/bin:$PATH
         ;
     fi
 
@@ -133,15 +154,15 @@ before_script:
   - cd ${TRAVIS_BUILD_DIR}
 
   # switch android config from installer to release if the android storepass isn't available
-  - if [[ "${SPEC}" = "android-g++" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
+  - if [[ "${SPEC}" = "android-clang" && "${CONFIG}" = "installer" && -z ${ANDROID_STOREPASS} ]]; then
         export CONFIG=release;
     fi
 
   # insert QGC version in AndroidManifest.xml
-  - if [ "${SPEC}" = "android-g++" ]; then
+  - if [ "${SPEC}" = "android-clang" ]; then
         git remote set-branches origin 'master' &&
         git fetch --tags origin master &&
-        ./tools/update_android_version.sh;
+        ./tools/update_android_version.sh ${BITNESS};
     fi
 
 script:
@@ -181,11 +202,11 @@ after_success:
     else
         GOOGLE_PLAY_PKG=none;
     fi
-  - if [[ "${SPEC}" = "android-g++" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
+  - if [[ "${SPEC}" = "android-clang" && "${TRAVIS_PULL_REQUEST}" = "false" && "${GOOGLE_PLAY_PKG}" != "none" ]]; then
         pip install --user --upgrade oauth2client &&
         pip install --user google-api-python-client pyopenssl ndg-httpsclient pyasn1 &&
         openssl aes-256-cbc -K $encrypted_25db6eb7c3fd_key -iv $encrypted_25db6eb7c3fd_iv -in android/Google_Play_Android_Developer-4432a3c4f5d1.json.enc -out android/Google_Play_Android_Developer-4432a3c4f5d1.json -d &&
-        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl.apk;
+        ./tools/google_play_upload.py production ${GOOGLE_PLAY_PKG} ${SHADOW_BUILD_DIR}/release/package/QGroundControl${BITNESS}.apk;
     fi
 
 before_deploy:

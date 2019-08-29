@@ -40,7 +40,7 @@ public class UsbIoManager implements Runnable {
     private static final String TAG = "QGC_UsbIoManager";
 
     private final UsbSerialDriver mDriver;
-    private int mUserData;
+    private long mUserData;
     private final ByteBuffer mReadBuffer = ByteBuffer.allocate(BUFSIZ);
     private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(BUFSIZ);
 
@@ -62,13 +62,13 @@ public class UsbIoManager implements Runnable {
         /**
          * Called when new incoming data is available.
          */
-        public void onNewData(byte[] data, int userData);
+        public void onNewData(byte[] data, long userData);
 
         /**
          * Called when {@link SerialInputOutputManager#run()} aborts due to an
          * error.
          */
-        public void onRunError(Exception e, int userData);
+        public void onRunError(Exception e, long userData);
     }
 
 
@@ -87,7 +87,7 @@ public class UsbIoManager implements Runnable {
     /**
      * Creates a new instance with the provided listener.
      */
-    public UsbIoManager(UsbSerialDriver driver, Listener listener, int userData)
+    public UsbIoManager(UsbSerialDriver driver, Listener listener, long userData)
     {
         mDriver = driver;
         mListener = listener;

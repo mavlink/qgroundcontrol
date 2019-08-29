@@ -313,12 +313,6 @@ DebugBuild {
 
 include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 
-#
-# External library configuration
-#
-
-include(QGCExternalLibs.pri)
-
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing")
@@ -326,10 +320,20 @@ contains (DEFINES, QGC_DISABLE_PAIRING) {
 } else:exists(user_config.pri):infile(user_config.pri, DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing (manual override from user_config.pri)")
     DEFINES -= QGC_ENABLE_NFC
+} else:AndroidBuild:contains(QT_ARCH, arm64) {
+    # Haven't figured out how to get 64 bit arm OpenSLL yet which pairing requires
+    message("Skipping support for Pairing (Missing Android OpenSSL 64 bit support)")
+    DEFINES -= QGC_ENABLE_NFC
 } else {
     message("Enabling support for Pairing")
     DEFINES += QGC_ENABLE_PAIRING
 }
+
+#
+# External library configuration
+#
+
+include(QGCExternalLibs.pri)
 
 #
 # Resources (custom code can replace them)
