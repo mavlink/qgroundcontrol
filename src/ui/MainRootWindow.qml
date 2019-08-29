@@ -184,9 +184,6 @@ ApplicationWindow {
     property bool _forceClose: false
 
     function finishCloseProcess() {
-        if(ScreenTools.isWindows) {
-            hide()
-        }
         QGroundControl.linkManager.shutdown()
         _forceClose = true
         mainWindow.close()
