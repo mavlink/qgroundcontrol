@@ -139,13 +139,11 @@ AndroidBuild {
     equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
-    } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
+    } else:contains(QT_ARCH, arm64) {
         # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
-    } else:equals(ANDROID_TARGET_ARCH, x86)  {
+    } else {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
-    } else {
-        error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
     }
 }
 
