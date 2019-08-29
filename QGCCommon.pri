@@ -43,6 +43,7 @@ linux {
         DEFINES += QGC_GST_MICROHARD_ENABLED 
         QMAKE_CXXFLAGS += -Wno-address-of-packed-member
         QMAKE_CXXFLAGS += -Wno-unused-command-line-argument
+        QMAKE_CFLAGS += -Wno-unused-command-line-argument
         QMAKE_LINK += -nostdlib++ # Hack fix?: https://forum.qt.io/topic/103713/error-cannot-find-lc-qt-5-12-android
         target.path = $$DESTDIR
         equals(ANDROID_TARGET_ARCH, x86)  {
