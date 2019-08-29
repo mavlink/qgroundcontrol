@@ -148,7 +148,7 @@ private:
     QString                 _getLocalIPInNetwork        (QString remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (QString name, QString connectionKey);
+    void                    _pairingCompleted           (QString name);
     void                    _connectionCompleted        (QString name);
     QDir                    _pairingCacheDir            ();
     QString                 _pairingCacheFile           (QString uavName);

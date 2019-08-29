@@ -53,11 +53,8 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_pairingCompleted(QString name, QString connectionKey)
+PairingManager::_pairingCompleted(QString name)
 {
-    QJsonObject jsonObj = _jsonDoc.object();
-    jsonObj.insert("EK", connectionKey);
-    _jsonDoc.setObject(jsonObj);
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
     _lastPaired = name;
@@ -152,8 +149,8 @@ PairingManager::_uploadFinished()
                 QString str = QString::fromUtf8(bytes.data(), bytes.size());
                 qCDebug(PairingManagerLog) << "Reply: " << str;
                 auto a = str.split(QRegExp("\\s+"));
-                if (a[0] == "Accepted" && a.length() > 2) {
-                    _pairingCompleted(a[1], a[2]);
+                if (a[0] == "Accepted" && a.length() > 1) {
+                    _pairingCompleted(a[1]);
                 } else if (a[0] == "Connected" && a.length() > 1) {
                     _connectionCompleted(a[1]);
                 } else if (a[0] == "Connection" && a.length() > 1) {
