@@ -136,14 +136,16 @@ MacBuild {
 
 # Include Android OpenSSL libs in order to make Qt OpenSSL support work
 AndroidBuild {
-    contains(QT_ARCH, arm) {
+    equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
-    } else:contains(QT_ARCH, arm64) {
+    } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
         # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
-    } else {
+    } else:equals(ANDROID_TARGET_ARCH, x86)  {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-x86/lib/libssl.so
+    } else {
+        error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
     }
 }
 
