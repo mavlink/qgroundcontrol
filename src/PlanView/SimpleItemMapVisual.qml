@@ -78,7 +78,7 @@ Item {
         target: _missionItem
 
         onIsCurrentItemChanged: {
-            if (_missionItem.isCurrentItem) {
+            if (_missionItem.isCurrentItem && map.planView) {
                 showDragArea()
             } else {
                 hideDragArea()
