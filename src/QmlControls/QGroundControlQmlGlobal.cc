@@ -248,3 +248,14 @@ void QGroundControlQmlGlobal::setFlightMapZoom(double zoom)
         emit flightMapZoomChanged(zoom);
     }
 }
+
+QString QGroundControlQmlGlobal::qgcVersion(void) const
+{
+    QString versionStr = qgcApp()->applicationVersion();
+#ifdef __androidArm32__
+    versionStr += QStringLiteral(" %1").arg(tr("32 bit"));
+#elif __androidArm64__
+    versionStr += QStringLiteral(" %1").arg(tr("64 bit"));
+#endif
+    return versionStr;
+}
