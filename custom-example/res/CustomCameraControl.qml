@@ -982,7 +982,7 @@ Item {
                         visible:        _camera && !_camera.isThermal && !CustomQuickInterface.joystickAsGimbalControl
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
-                            text:       qsTr("Use Gimbal Joystick Control")
+                            text:       qsTr("Use On-Screen Gimbal Joystick")
                             width:      _labelFieldWidth
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -999,7 +999,7 @@ Item {
                         visible:        _camera && !_camera.isThermal
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
-                            text:       qsTr("Use joystick for Gimbal Control")
+                            text:       qsTr("Use Physical Gimbal Joystick")
                             width:      _labelFieldWidth
                             anchors.verticalCenter: parent.verticalCenter
                         }
