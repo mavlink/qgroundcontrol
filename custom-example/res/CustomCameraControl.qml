@@ -999,7 +999,7 @@ Item {
                         visible:        _camera && !_camera.isThermal
                         anchors.horizontalCenter: parent.horizontalCenter
                         QGCLabel {
-                            text:       qsTr("Use Physical Gimbal Joystick")
+                            text:       qsTr("Use Physical Gimbal Joystick ")
                             width:      _labelFieldWidth
                             anchors.verticalCenter: parent.verticalCenter
                         }
