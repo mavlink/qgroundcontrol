@@ -226,7 +226,7 @@ public:
     virtual PhotoMode   photoMode           () { return _photoMode; }
     virtual qreal       photoLapse          () { return _photoLapse; }
     virtual int         photoLapseCount     () { return _photoLapseCount; }
-    virtual CameraMode  cameraMode          () { return _cameraMode; }
+    virtual CameraMode  cameraMode          ();
     virtual StorageStatus storageStatus     () { return _storageStatus; }
     virtual QStringList activeSettings      ();
     virtual quint32     storageFree         () { return _storageFree;  }
