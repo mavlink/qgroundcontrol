@@ -535,7 +535,6 @@ Item {
             maxHeight:          mapScale.y - toolStrip.y
 
             property bool _isRally:     _editingLayer == _layerRallyPoints
-            property bool _showZoom:    !ScreenTools.isMobile
 
             model: [
                 {
@@ -581,18 +580,6 @@ Item {
                     buttonEnabled:      true,
                     buttonVisible:      true,
                     dropPanelComponent: centerMapDropPanel
-                },
-                {
-                    name:               qsTr("In"),
-                    buttonEnabled:      true,
-                    buttonVisible:      _showZoom,
-                    iconSource:         "/qmlimages/ZoomPlus.svg"
-                },
-                {
-                    name:               qsTr("Out"),
-                    buttonEnabled:      true,
-                    buttonVisible:      _showZoom,
-                    iconSource:         "/qmlimages/ZoomMinus.svg"
                 }
             ]
 
@@ -620,12 +607,6 @@ Item {
                     if (_singleComplexItem) {
                         addComplexItem(_missionController.complexMissionItemNames[0])
                     }
-                    break
-                case 6:
-                    editorMap.zoomLevel += 0.5
-                    break
-                case 7:
-                    editorMap.zoomLevel -= 0.5
                     break
                 }
             }
@@ -832,6 +813,7 @@ Item {
             anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
             anchors.left:       parent.left
             mapControl:         editorMap
+            zoomButtonsOnLeft:  true
             visible:            _toolStripBottom < y
         }
 

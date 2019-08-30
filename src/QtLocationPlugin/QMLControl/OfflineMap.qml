@@ -400,6 +400,7 @@ Item {
                 anchors.left:           parent.left
                 anchors.bottom:         parent.bottom
                 mapControl:             _map
+                zoomButtonsOnLeft:      true
             }
 
             //-----------------------------------------------------------------
@@ -602,6 +603,7 @@ Item {
                             anchors.left:           parent.left
                             anchors.bottom:         parent.bottom
                             mapControl:             parent
+                            zoomButtonsVisible:     false
                         }
 
                         Rectangle {
@@ -641,6 +643,7 @@ Item {
                             anchors.left:           parent.left
                             anchors.bottom:         parent.bottom
                             mapControl:             parent
+                            zoomButtonsVisible:     false
                         }
 
                         Rectangle {
