@@ -377,7 +377,10 @@ QGCCameraControl::takePhoto()
                 0,                                                                          // Reserved (Set to 0)
                 static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
                 _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
-            _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
+            if(vendor() == "NextVision")
+                _setPhotoStatus(PHOTO_CAPTURE_IDLE);
+            else
+                _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
             if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
@@ -704,12 +707,14 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
+                qDebug() << "MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS: receive/response";
                 _captureInfoRetries = 0;
                 break;
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 _storageInfoRetries = 0;
                 break;
             case MAV_CMD_IMAGE_START_CAPTURE:
+                qDebug() << "MAV_CMD_IMAGE_START_CAPTURE: receive/response";
                 _captureStatusTimer.start(1000);
                 break;
         }
@@ -2168,4 +2173,12 @@ QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
         emit infoChanged();
     }
     return changed;
+}
+
+QGCCameraControl::CameraMode
+QGCCameraControl::cameraMode() {
+    if(vendor() == "NextVision")
+        return CAM_MODE_PHOTO;
+    else
+        return _cameraMode;
 }
