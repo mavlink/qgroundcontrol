@@ -249,7 +249,7 @@ void GeoTagWorker::run()
     for(int i = 0; i < maxIndex; i++) {
         int imageIndex = _imageIndices[i];
         if (imageIndex >= _imageList.count()) {
-            emit error(tr("Geotagging failed. Image requested not present."));
+            emit error(tr("Geotagging failed. Requesting image #%1, but only %2 images present.").arg(imageIndex).arg(_imageList.count()));
             return;
         }
         QFile fileRead(_imageList.at(_imageIndices[i]).absoluteFilePath());
