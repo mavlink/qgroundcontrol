@@ -20,7 +20,7 @@ import QGroundControl.Controls          1.0
 import QGroundControl.FlightMap         1.0
 import QGroundControl.ShapeFileHelper   1.0
 
-/// QGCmapPolyline map visuals
+/// QGCMapPolyline map visuals
 Item {
     id: _root
 
@@ -97,6 +97,8 @@ Item {
             removeHandles()
         }
     }
+
+    onVisibleChanged: _polylineComponent.visible = visible
 
     Component.onCompleted: {
         addVisuals()
