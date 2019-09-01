@@ -866,11 +866,10 @@ void FirmwarePlugin::_versionFileDownloadFinished(QString& remoteFile, QString& 
 
     // Check if lower version than stable or same version but different type
     if (currType == FIRMWARE_VERSION_TYPE_OFFICIAL && vehicle->versionCompare(version) < 0) {
-        const static QString currentVersion = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
-                                                                 .arg(vehicle->firmwareMinorVersion())
-                                                                 .arg(vehicle->firmwarePatchVersion());
-        const static QString message = tr("Vehicle is not running latest stable firmware! Running %2-%1, latest stable is %3.");
-        qgcApp()->showMessage(message.arg(vehicle->firmwareVersionTypeString(), currentVersion, version));
+        QString currentVersionNumber = QString("%1.%2.%3").arg(vehicle->firmwareMajorVersion())
+                .arg(vehicle->firmwareMinorVersion())
+                .arg(vehicle->firmwarePatchVersion());
+        qgcApp()->showMessage(tr("Vehicle is not running latest stable firmware! Running %1, latest stable is %2.").arg(currentVersionNumber, version));
     }
 }
 
