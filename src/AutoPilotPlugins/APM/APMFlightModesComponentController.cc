@@ -31,8 +31,9 @@ APMFlightModesComponentController::APMFlightModesComponentController(void)
         qmlRegisterUncreatableType<APMFlightModesComponentController>("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController", "Reference only");
     }
 
-    _modeParamPrefix = _vehicle->rover() ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
-    _modeChannelParam = _vehicle->rover() ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");
+    bool arduRoverFirmware = parameterExists(-1, QStringLiteral("MODE1"));
+    _modeParamPrefix = arduRoverFirmware ? QStringLiteral("MODE") : QStringLiteral("FLTMODE");
+    _modeChannelParam = arduRoverFirmware ? QStringLiteral("MODE_CH") : QStringLiteral("FLTMODE_CH");
 
     _simpleModeNames << tr("Off") << tr("Simple") << tr("Super-Simple") << tr("Custom");
     for (int i=0; i<_cFltModes; i++) {
