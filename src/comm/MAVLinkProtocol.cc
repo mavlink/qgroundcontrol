@@ -167,40 +167,24 @@ void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
 
 void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
 
-    uint8_t mavlinkChannel = link->mavlinkChannel();
-    static mavlink_message_t _sent_message;
+    uint8_t bytes_time[sizeof(quint64)];
 
-    for (int position = 0; position < b.size(); position++) {
+    Q_UNUSED(link);
 
-        if(mavlink_parse_char(mavlinkChannel, static_cast<uint8_t>(b[position]), &_sent_message, &_status)){
+    quint64 time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch() * 1000);
 
-            if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
-                uint8_t buf[MAVLINK_MAX_PACKET_LEN+sizeof(quint64)];
+    qToBigEndian(time,bytes_time);
 
-                // Write the uint64 time in microseconds in big endian format before the message.
-                // This timestamp is saved in UTC time. We are only saving in ms precision because
-                // getting more than this isn't possible with Qt without a ton of extra code.
-                quint64 time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch() * 1000);
-                qToBigEndian(time, buf);
+    b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
 
-                // Then write the message to the buffer
-                int len = mavlink_msg_to_send_buffer(buf + sizeof(quint64), &_sent_message);
+    int len = b.count(); 
 
-                // Determine how many bytes were written by adding the timestamp size to the message size
-                len += sizeof(quint64);
-
-                // Now write this timestamp/message pair to the log.
-                QByteArray b(reinterpret_cast<const char*>(buf), len);
-
-                if(_tempLogFile.write(b) != len)
-                {
-                    // If there's an error logging data, raise an alert and stop logging.
-                    emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
-                    _stopLogging();
-                    _logSuspendError = true;
-                }
-            }
-        }
+    if(_tempLogFile.write(b) != len)
+    {
+        // If there's an error logging data, raise an alert and stop logging.
+        emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
+        _stopLogging();
+        _logSuspendError = true;
     }
 
 }
