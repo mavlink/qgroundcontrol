@@ -8537,6 +8537,11 @@ is less than 50% of this value</short_desc>
       <boolean />
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter default="0" name="SENS_EN_PMW3901" type="INT32">
+      <short_desc>PMW3901 Optical Flow</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
     <parameter default="0" name="SENS_EN_PX4FLOW" type="INT32">
       <short_desc>PX4 Flow Optical Flow</short_desc>
       <boolean />
