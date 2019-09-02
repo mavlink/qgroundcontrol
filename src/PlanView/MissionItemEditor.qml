@@ -70,6 +70,8 @@ Rectangle {
         }
     }
 
+    /*
+      Trying no sequence numbers in ui
     QGCLabel {
         id:                     label
         anchors.verticalCenter: commandPicker.verticalCenter
@@ -77,7 +79,7 @@ Rectangle {
         anchors.left:           parent.left
         text:                   missionItem.homePosition ? "P" : missionItem.sequenceNumber
         color:                  _outerTextColor
-    }
+    }*/
 
     QGCColoredImage {
         id:                     hamburger
@@ -172,15 +174,28 @@ Rectangle {
                     checked = missionItem.rawEdit
                 }
             }
+
+            QGCMenuItem {
+                text:       qsTr("Item #%1").arg(missionItem.sequenceNumber)
+                enabled:    false
+            }
         }
     }
 
     QGCButton {
         id:                     commandPicker
         anchors.topMargin:      _margin / 2
-        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth
+
+        anchors.leftMargin:     _margin
+        anchors.left:           parent.left
+
+        /*
+            Trying no sequence numbers in ui
+        anchors.leftMargin:     ScreenTools.defaultFontPixelWidth * 2
         anchors.left:           label.right
+        */
+
         anchors.top:            parent.top
         visible:                !commandLabel.visible
         text:                   missionItem.commandName
@@ -197,12 +212,13 @@ Rectangle {
     }
 
     QGCLabel {
-        id:                 commandLabel
-        anchors.fill:       commandPicker
-        visible:            !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
-        verticalAlignment:  Text.AlignVCenter
-        text:               missionItem.commandName
-        color:              _outerTextColor
+        id:                     commandLabel
+        anchors.fill:           commandPicker
+        visible:                !missionItem.isCurrentItem || !missionItem.isSimpleItem || _waypointsOnlyMode
+        verticalAlignment:      Text.AlignVCenter
+        horizontalAlignment:    Text.AlignHCenter
+        text:                   missionItem.commandName
+        color:                  _outerTextColor
     }
 
     Loader {
