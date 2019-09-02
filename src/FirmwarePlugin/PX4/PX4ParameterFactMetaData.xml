@@ -1020,6 +1020,15 @@ See COM_OBL_ACT and COM_OBL_RC_ACT to configure action</short_desc>
       <unit>sec</unit>
       <reboot_required>true</reboot_required>
     </parameter>
+    <parameter default="1" name="COM_PREARM_MODE" type="INT32">
+      <short_desc>Condition to enter prearmed mode</short_desc>
+      <long_desc>Condition to enter the prearmed state, an intermediate state between disarmed and armed in which non-throttling actuators are active.</long_desc>
+      <values>
+        <value code="0">Disabled</value>
+        <value code="1">Safety button</value>
+        <value code="2">Always</value>
+      </values>
+    </parameter>
     <parameter default="1000" name="COM_RC_ARM_HYST" type="INT32">
       <short_desc>RC input arm/disarm command duration</short_desc>
       <long_desc>The default value of 1000 requires the stick to be held in the arm or disarm position for 1 second.</long_desc>
