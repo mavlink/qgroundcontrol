@@ -28,35 +28,35 @@ Item {
     property var    _mapPolygon:                object.surveyAreaPolygon
     property bool   _currentItem:               object.isCurrentItem
     property var    _transectPoints:            _missionItem.visualTransectPoints
-    property bool   _showPartialEntryExit:      !_currentItem && _missionItem.turnAroundDistance.rawValue !== 0 &&_transectPoints.length >= 2
+    property int    _transectCount:             _transectPoints.length / (_hasTurnaround ? 4 : 2)
+    property bool   _hasTurnaround:             _missionItem.turnAroundDistance.rawValue !== 0
+    property int    _firstTrueTransectIndex:    _hasTurnaround ? 1 : 0
+    property int    _lastTrueTransectIndex:     _transectPoints.length - (_hasTurnaround ? 2 : 1)
+    property int    _lastPointIndex:            _transectPoints.length - 1
+    property bool   _showPartialEntryExit:      !_currentItem && _hasTurnaround &&_transectPoints.length >= 2
     property var    _fullTransectsComponent:    null
     property var    _entryTransectsComponent:   null
     property var    _exitTransectsComponent:    null
     property var    _entryCoordinate
     property var    _exitCoordinate
+    property var    _dynamicComponents: [ ]
 
     signal clicked(int sequenceNumber)
 
     function _addVisualElements() {
-        _fullTransectsComponent =   fullTransectsComponent.createObject(map)
-        _entryTransectsComponent =  entryTransectComponent.createObject(map)
-        _exitTransectsComponent =   exitTransectComponent.createObject(map)
-        _entryCoordinate =          entryPointComponent.createObject(map)
-        _exitCoordinate =           exitPointComponent.createObject(map)
-
-        map.addMapItem(_fullTransectsComponent)
-        map.addMapItem(_entryTransectsComponent)
-        map.addMapItem(_exitTransectsComponent)
-        map.addMapItem(_entryCoordinate)
-        map.addMapItem(_exitCoordinate)
+        var toAdd = [ fullTransectsComponent, entryTransectComponent, exitTransectComponent, entryPointComponent, exitPointComponent,
+                     entryArrow1Component, entryArrow2Component, exitArrow1Component, exitArrow2Component ]
+        for (var i=0; i<toAdd.length; i++) {
+            _dynamicComponents.push(toAdd[i].createObject(map))
+            map.addMapItem(_dynamicComponents[_dynamicComponents.length -1])
+        }
     }
 
     function _destroyVisualElements() {
-        _fullTransectsComponent.destroy()
-        _entryTransectsComponent.destroy()
-        _exitTransectsComponent.destroy()
-        _entryCoordinate.destroy()
-        _exitCoordinate.destroy()
+        for (var i=0; i<_dynamicComponents.length; i++) {
+            _dynamicComponents[i].destroy()
+        }
+        _dynamicComponents = [ ]
     }
 
     Component.onCompleted: {
@@ -108,10 +108,8 @@ Item {
         MapPolyline {
             line.color: "white"
             line.width: 2
-            path:       _showPartialEntryExit ? [ _transectPoints[lastPointIndex - 1], _transectPoints[lastPointIndex] ] : []
+            path:       _showPartialEntryExit ? [ _transectPoints[_lastPointIndex - 1], _transectPoints[_lastPointIndex] ] : []
             visible:    _showPartialEntryExit
-
-            property int lastPointIndex: _transectPoints.length - 1
         }
     }
 
@@ -128,10 +126,57 @@ Item {
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.sequenceNumber
-                label:      qsTr("Entry")
                 checked:    _missionItem.isCurrentItem
                 onClicked:  _root.clicked(_missionItem.sequenceNumber)
             }
+        }
+    }
+
+    Component {
+        id: entryArrow1Component
+
+        MapLineArrow {
+            fromCoord:      _transectPoints[_firstTrueTransectIndex]
+            toCoord:        _transectPoints[_firstTrueTransectIndex + 1]
+            exitPosition:   false
+            visible:        _currentItem
+        }
+    }
+
+    Component {
+        id: entryArrow2Component
+
+        MapLineArrow {
+            fromCoord:      _transectPoints[nextTrueTransectIndex]
+            toCoord:        _transectPoints[nextTrueTransectIndex + 1]
+            exitPosition:   false
+            visible:        _currentItem && _transectCount > 3
+
+            property int nextTrueTransectIndex: _firstTrueTransectIndex + (_hasTurnaround ? 4 : 2)
+        }
+    }
+
+    Component {
+        id: exitArrow1Component
+
+        MapLineArrow {
+            fromCoord:      _transectPoints[_lastTrueTransectIndex - 1]
+            toCoord:        _transectPoints[_lastTrueTransectIndex]
+            exitPosition:   true
+            visible:        _currentItem
+        }
+    }
+
+    Component {
+        id: exitArrow2Component
+
+        MapLineArrow {
+            fromCoord:      _transectPoints[prevTrueTransectIndex - 1]
+            toCoord:        _transectPoints[prevTrueTransectIndex]
+            exitPosition:   true
+            visible:        _currentItem && _transectCount > 3
+
+            property int prevTrueTransectIndex: _lastTrueTransectIndex - (_hasTurnaround ? 4 : 2)
         }
     }
 
@@ -148,7 +193,6 @@ Item {
 
             sourceItem: MissionItemIndexLabel {
                 index:      _missionItem.lastSequenceNumber
-                label:      qsTr("Exit")
                 checked:    _missionItem.isCurrentItem
                 onClicked:  _root.clicked(_missionItem.sequenceNumber)
             }
