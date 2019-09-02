@@ -8414,6 +8414,7 @@ is less than 50% of this value</short_desc>
       <min>500</min>
       <max>1500</max>
       <unit>hPa</unit>
+      <reboot_required>true</reboot_required>
     </parameter>
     <parameter default="0" name="SENS_BOARD_ROT" type="INT32">
       <short_desc>Board rotation</short_desc>
