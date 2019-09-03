@@ -64,7 +64,8 @@ public:
 
     QStringList     pairingLinkTypeStrings      ();
     QString         pairingStatusStr            () const;
-    QStringList     pairedDeviceNameList        () { return _deviceList; }
+    QStringList     connectedDeviceNameList     ();
+    QStringList     pairedDeviceNameList        ();
     PairingStatus   pairingStatus               () { return _status; }
     QString         pairedVehicle               () { return _lastPaired; }
     int             nfcIndex                    () { return _nfcIndex; }
@@ -91,15 +92,16 @@ public:
 #endif
     Q_INVOKABLE void stopPairing();
 
-    Q_PROPERTY(QString          pairingStatusStr        READ pairingStatusStr       NOTIFY pairingStatusChanged)
-    Q_PROPERTY(PairingStatus    pairingStatus           READ pairingStatus          NOTIFY pairingStatusChanged)
-    Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList   NOTIFY pairedListChanged)
-    Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings CONSTANT)
-    Q_PROPERTY(QString          pairedVehicle           READ pairedVehicle          NOTIFY pairedVehicleChanged)
-    Q_PROPERTY(bool             errorState              READ errorState             NOTIFY pairingStatusChanged)
-    Q_PROPERTY(int              nfcIndex                READ nfcIndex               CONSTANT)
-    Q_PROPERTY(int              microhardIndex          READ microhardIndex         CONSTANT)
-    Q_PROPERTY(bool             firstBoot               READ firstBoot              WRITE setFirstBoot  NOTIFY firstBootChanged)
+    Q_PROPERTY(QString          pairingStatusStr        READ pairingStatusStr        NOTIFY pairingStatusChanged)
+    Q_PROPERTY(PairingStatus    pairingStatus           READ pairingStatus           NOTIFY pairingStatusChanged)
+    Q_PROPERTY(QStringList      connectedDeviceNameList READ connectedDeviceNameList NOTIFY connectedListChanged)
+    Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList    NOTIFY pairedListChanged)
+    Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings  CONSTANT)
+    Q_PROPERTY(QString          pairedVehicle           READ pairedVehicle           NOTIFY pairedVehicleChanged)
+    Q_PROPERTY(bool             errorState              READ errorState              NOTIFY pairingStatusChanged)
+    Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
+    Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
+    Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
 
 signals:
     void startUpload                            (QString pairURL, QJsonDocument);
@@ -110,6 +112,7 @@ signals:
     void pairingStatusChanged                   ();
     void parsePairingJson                       (QString json);
     void setPairingStatus                       (PairingStatus status, QString pairingStatus);
+    void connectedListChanged                   ();
     void pairedListChanged                      ();
     void pairedVehicleChanged                   ();
     void firstBootChanged                       ();

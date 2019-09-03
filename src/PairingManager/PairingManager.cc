@@ -67,6 +67,30 @@ PairingManager::_pairingCompleted(const QString name)
 }
 
 //-----------------------------------------------------------------------------
+QStringList
+PairingManager::connectedDeviceNameList()
+{
+    QStringList list;
+    foreach (auto a, _connectedDevices.keys()) {
+        list.append(a);
+    }
+    return list;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+PairingManager::pairedDeviceNameList()
+{
+    QStringList list;
+    foreach (auto a, _deviceList) {
+        if (!_connectedDevices.contains(a)) {
+            list.append(a);
+        }
+    }
+    return list;
+}
+
+//-----------------------------------------------------------------------------
 void
 PairingManager::_createUDPLink(const QString name, quint16 port)
 {
@@ -79,6 +103,8 @@ PairingManager::_createUDPLink(const QString name, quint16 port)
     SharedLinkConfigurationPointer linkConfig = _toolbox->linkManager()->addConfiguration(udpConfig);
     LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
     _connectedDevices[name] = link;
+    emit connectedListChanged();
+    emit pairedListChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -88,6 +114,8 @@ PairingManager::_removeUDPLink(const QString name)
     if (_connectedDevices.contains(name)) {
         _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
         _connectedDevices.remove(name);
+        emit connectedListChanged();
+        emit pairedListChanged();
     }
 }
 
