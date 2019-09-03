@@ -160,13 +160,13 @@ Rectangle {
                                 QGCLabel {
                                     text:       qsTr("Map Provider")
                                     width:      _labelWidth
-                                    visible:    _mapProvider && _mapProvider.visible
+                                    visible:    _mapProvider.visible
                                 }
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   _mapProvider
                                     indexModel:             false
-                                    visible:                _mapProvider && _mapProvider.visible
+                                    visible:                _mapProvider.visible
                                 }
 
                                 QGCLabel {
@@ -189,13 +189,13 @@ Rectangle {
 
                                 QGCLabel {
                                     text:       qsTr("Stream GCS Position")
-                                    visible:    _followTarget ? _followTarget.visible : false
+                                    visible:    _followTarget.visible
                                 }
                                 FactComboBox {
                                     Layout.preferredWidth:  _comboFieldWidth
                                     fact:                   _followTarget
                                     indexModel:             false
-                                    visible:                _followTarget ? _followTarget.visible : false
+                                    visible:                _followTarget.visible
                                 }
                             }
                         }
@@ -216,7 +216,7 @@ Rectangle {
                                 RowLayout {
                                     Layout.fillWidth:   false
                                     Layout.alignment:   Qt.AlignHCenter
-                                    visible:            _appFontPointSize ? _appFontPointSize.visible : false
+                                    visible:             _appFontPointSize.visible
 
                                     QGCLabel {
                                         text:   qsTr("Font Size:")
@@ -251,14 +251,14 @@ Rectangle {
                                 FactCheckBox {
                                     text:       qsTr("Use Vehicle Pairing")
                                     fact:       _usePairing
-                                    visible:    _usePairing && _usePairing.visible && QGroundControl.supportsPairing
+                                    visible:    _usePairing.visible && QGroundControl.supportsPairing
                                     property Fact _usePairing: QGroundControl.settingsManager.appSettings.usePairing
                                 }
 
                                 FactCheckBox {
                                     text:       qsTr("Mute all audio output")
                                     fact:       _audioMuted
-                                    visible:    _audioMuted && _audioMuted.visible
+                                    visible:    _audioMuted.visible
                                     property Fact _audioMuted: QGroundControl.settingsManager.appSettings.audioMuted
                                 }
 
@@ -308,7 +308,7 @@ Rectangle {
                                     QGCCheckBox {
                                         id:         announcePercentCheckbox
                                         text:       qsTr("Announce battery lower than")
-                                        checked:    _percentRemainingAnnounce && _percentRemainingAnnounce.value !== 0
+                                        checked:    _percentRemainingAnnounce.value !== 0
                                         onClicked: {
                                             if (checked) {
                                                 _percentRemainingAnnounce.value = _percentRemainingAnnounce.defaultValueString
@@ -334,13 +334,13 @@ Rectangle {
                             anchors.left:       parent.left
                             anchors.right:      parent.right
                             anchors.top:        miscColItem.bottom
-                            visible:            (_savePath && _savePath.visible) && !ScreenTools.isMobile
+                            visible:            _savePath.visible && !ScreenTools.isMobile
 
                             QGCLabel { text: qsTr("Application Load/Save Path") }
                             QGCTextField {
                                 Layout.fillWidth:   true
                                 readOnly:           true
-                                text:               _savePath ? (_savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value) : ""
+                                text:               _savePath.rawValue === "" ? qsTr("<not set>") : _savePath.value
                             }
                             QGCButton {
                                 text:       qsTr("Browse")
@@ -348,7 +348,7 @@ Rectangle {
                                 QGCFileDialog {
                                     id:             savePathBrowseDialog
                                     title:          qsTr("Choose the location to save/load files")
-                                    folder:         _savePath ? _savePath.rawValue : ""
+                                    folder:         _savePath.rawValue
                                     selectExisting: true
                                     selectFolder:   true
                                     onAcceptedForLoad: _savePath.rawValue = file
@@ -377,7 +377,7 @@ Rectangle {
                                 id:         disableDataPersistence
                                 text:       qsTr("Disable all data persistence")
                                 fact:       _disableDataPersistence
-                                visible:    _disableDataPersistence && _disableDataPersistence.visible
+                                visible:    _disableDataPersistence.visible
                                 property Fact _disableDataPersistence: QGroundControl.settingsManager.appSettings.disableAllPersistence
                             }
                             QGCLabel {
@@ -408,7 +408,7 @@ Rectangle {
                                 id:         promptSaveLog
                                 text:       qsTr("Save log after each flight")
                                 fact:       _telemetrySave
-                                visible:    _telemetrySave && _telemetrySave.visible
+                                visible:    _telemetrySave.visible
                                 enabled:    !disableDataPersistence.checked
                                 property Fact _telemetrySave: QGroundControl.settingsManager.appSettings.telemetrySave
                             }
@@ -416,7 +416,7 @@ Rectangle {
                                 id:         logIfNotArmed
                                 text:       qsTr("Save logs even if vehicle was not armed")
                                 fact:       _telemetrySaveNotArmed
-                                visible:    _telemetrySaveNotArmed && _telemetrySaveNotArmed.visible
+                                visible:    _telemetrySaveNotArmed.visible
                                 enabled:    promptSaveLog.checked && !disableDataPersistence.checked
                                 property Fact _telemetrySaveNotArmed: QGroundControl.settingsManager.appSettings.telemetrySaveNotArmed
                             }
@@ -446,7 +446,7 @@ Rectangle {
                             FactCheckBox {
                                 text:       qsTr("Use Preflight Checklist")
                                 fact:       _useChecklist
-                                visible:    _useChecklist && _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
+                                visible:    _useChecklist.visible && QGroundControl.corePlugin.options.preFlightChecklistUrl.toString().length
 
                                 property Fact _useChecklist: QGroundControl.settingsManager.appSettings.useChecklist
                             }
@@ -454,14 +454,14 @@ Rectangle {
                             FactCheckBox {
                                 text:       qsTr("Show Telemetry Log Replay Status Bar")
                                 fact:       _showLogReplayStatusBar
-                                visible:    _showLogReplayStatusBar && _showLogReplayStatusBar.visible
+                                visible:    _showLogReplayStatusBar.visible
 
                                 property Fact _showLogReplayStatusBar: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar
                             }
 
                             FactCheckBox {
                                 text:       qsTr("Virtual Joystick")
-                                visible:    _virtualJoystick && _virtualJoystick.visible
+                                visible:    _virtualJoystick.visible
                                 fact:       _virtualJoystick
 
                                 property Fact _virtualJoystick: QGroundControl.settingsManager.appSettings.virtualJoystick
@@ -469,7 +469,7 @@ Rectangle {
 
                             FactCheckBox {
                                 text:       qsTr("Auto-Center throttle")
-                                visible:    _virtualJoystickCentralized && _virtualJoystickCentralized.visible && activeVehicle && (activeVehicle.sub || activeVehicle.rover)
+                                visible:    _virtualJoystickCentralized.visible && activeVehicle && (activeVehicle.sub || activeVehicle.rover)
                                 fact:       _virtualJoystickCentralized
                                 Layout.leftMargin: _margins
 
@@ -477,21 +477,21 @@ Rectangle {
                             }
                             FactCheckBox {
                                 text:       qsTr("Use Vertical Instrument Panel")
-                                visible:    _alternateInstrumentPanel && _alternateInstrumentPanel.visible
+                                visible:    _alternateInstrumentPanel.visible
                                 fact:       _alternateInstrumentPanel
 
                                 property Fact _alternateInstrumentPanel: QGroundControl.settingsManager.flyViewSettings.alternateInstrumentPanel
                             }
                             FactCheckBox {
                                 text:       qsTr("Show additional heading indicators on Compass")
-                                visible:    _showAdditionalIndicatorsCompass ? _showAdditionalIndicatorsCompass.visible : false
+                                visible:    _showAdditionalIndicatorsCompass.visible
                                 fact:       _showAdditionalIndicatorsCompass
 
                                 property Fact _showAdditionalIndicatorsCompass: QGroundControl.settingsManager.flyViewSettings.showAdditionalIndicatorsCompass
                             }
                             FactCheckBox {
                                 text:       qsTr("Lock Compass Nose-Up")
-                                visible:    _lockNoseUpCompass ? _lockNoseUpCompass.visible : false
+                                visible:    _lockNoseUpCompass.visible
                                 fact:       _lockNoseUpCompass
 
                                 property Fact _lockNoseUpCompass: QGroundControl.settingsManager.flyViewSettings.lockNoseUpCompass
@@ -507,31 +507,31 @@ Rectangle {
 
                                 QGCLabel {
                                     text:                   qsTr("Guided Minimum Altitude")
-                                    visible:                parent._guidedMinimumAltitude && parent._guidedMinimumAltitude.visible
+                                    visible:                parent._guidedMinimumAltitude.visible
                                 }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
-                                    visible:                parent._guidedMinimumAltitude && parent._guidedMinimumAltitude.visible
+                                    visible:                parent._guidedMinimumAltitude.visible
                                     fact:                   parent._guidedMinimumAltitude
                                 }
 
                                 QGCLabel {
                                     text:                   qsTr("Guided Maximum Altitude")
-                                    visible:                parent._guidedMaximumAltitude && parent._guidedMaximumAltitude.visible
+                                    visible:                parent._guidedMaximumAltitude.visible
                                 }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
-                                    visible:                parent._guidedMaximumAltitude && parent._guidedMaximumAltitude.visible
+                                    visible:                parent._guidedMaximumAltitude.visible
                                     fact:                   parent._guidedMaximumAltitude
                                 }
 
                                 QGCLabel {
                                     text:                   qsTr("Go To Location Max Distance")
-                                    visible:                parent._maxGoToLocationDistance && parent._maxGoToLocationDistance.visible
+                                    visible:                parent._maxGoToLocationDistance.visible
                                 }
                                 FactTextField {
                                     Layout.preferredWidth:  _valueFieldWidth
-                                    visible:                parent._maxGoToLocationDistance && parent._maxGoToLocationDistance.visible
+                                    visible:                parent._maxGoToLocationDistance.visible
                                     fact:                   parent._maxGoToLocationDistance
                                 }
                             }
@@ -711,105 +711,99 @@ Rectangle {
                             columns:                    3
 
                             property var  rtkSettings:      QGroundControl.settingsManager.rtkSettings
-                            property bool useFixedPosition: rtkSettings && rtkSettings.useFixedBasePosition.rawValue
+                            property bool useFixedPosition: rtkSettings.useFixedBasePosition.rawValue
                             property real firstColWidth:    ScreenTools.defaultFontPixelWidth * 3
 
                             QGCRadioButton {
                                 text:               qsTr("Perform Survey-In")
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.useFixedBasePosition.visible
-                                checked:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.useFixedBasePosition.value === false
-                                onClicked: {
-                                    if(rtkGrid.rtkSettings)
-                                        rtkGrid.rtkSettings.useFixedBasePosition.value = false
-                                }
+                                visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
+                                checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === false
                                 Layout.columnSpan:  3
+                                onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = false
                             }
 
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCLabel {
-                                text:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.surveyInAccuracyLimit.shortDescription : ""
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.surveyInAccuracyLimit.visible
+                                text:               rtkGrid.rtkSettings.surveyInAccuracyLimit.shortDescription
+                                visible:            rtkGrid.rtkSettings.surveyInAccuracyLimit.visible
                                 enabled:            !rtkGrid.useFixedPosition
                             }
                             FactTextField {
-                                fact:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.surveyInAccuracyLimit : null
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.surveyInAccuracyLimit.visible
+                                fact:               rtkGrid.rtkSettings.surveyInAccuracyLimit
+                                visible:            rtkGrid.rtkSettings.surveyInAccuracyLimit.visible
                                 enabled:            !rtkGrid.useFixedPosition
                                 Layout.preferredWidth:  _valueFieldWidth
                             }
 
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCLabel {
-                                text:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.surveyInMinObservationDuration.shortDescription : ""
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.surveyInMinObservationDuration.visible
+                                text:               rtkGrid.rtkSettings.surveyInMinObservationDuration.shortDescription
+                                visible:            rtkGrid.rtkSettings.surveyInMinObservationDuration.visible
                                 enabled:            !rtkGrid.useFixedPosition
                             }
                             FactTextField {
-                                fact:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.surveyInMinObservationDuration : null
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.surveyInMinObservationDuration.visible
+                                fact:               rtkGrid.rtkSettings.surveyInMinObservationDuration
+                                visible:            rtkGrid.rtkSettings.surveyInMinObservationDuration.visible
                                 enabled:            !rtkGrid.useFixedPosition
                                 Layout.preferredWidth:  _valueFieldWidth
                             }
 
                             QGCRadioButton {
                                 text:               qsTr("Use Specified Base Position")
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.useFixedBasePosition.visible
-                                checked:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.useFixedBasePosition.value === true
-                                onClicked: {
-                                    if(rtkGrid.rtkSettings)
-                                        rtkGrid.rtkSettings.useFixedBasePosition.value = true
-                                }
+                                visible:            rtkGrid.rtkSettings.useFixedBasePosition.visible
+                                checked:            rtkGrid.rtkSettings.useFixedBasePosition.value === true
+                                onClicked:          rtkGrid.rtkSettings.useFixedBasePosition.value = true
                                 Layout.columnSpan:  3
                             }
 
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCLabel {
-                                text:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionLatitude.shortDescription : ""
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionLatitude.visible
+                                text:               rtkGrid.rtkSettings.fixedBasePositionLatitude.shortDescription
+                                visible:            rtkGrid.rtkSettings.fixedBasePositionLatitude.visible
                                 enabled:            rtkGrid.useFixedPosition
                             }
                             FactTextField {
-                                fact:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionLatitude : null
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionLatitude.visible
+                                fact:               rtkGrid.rtkSettings.fixedBasePositionLatitude
+                                visible:            rtkGrid.rtkSettings.fixedBasePositionLatitude.visible
                                 enabled:            rtkGrid.useFixedPosition
                                 Layout.fillWidth:   true
                             }
 
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCLabel {
-                                text:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionLongitude.shortDescription : ""
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionLongitude.visible
+                                text:               rtkGrid.rtkSettings.fixedBasePositionLongitude.shortDescription
+                                visible:            rtkGrid.rtkSettings.fixedBasePositionLongitude.visible
                                 enabled:            rtkGrid.useFixedPosition
                             }
                             FactTextField {
-                                fact:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionLongitude : null
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionLongitude.visible
+                                fact:               rtkGrid.rtkSettings.fixedBasePositionLongitude
+                                visible:            rtkGrid.rtkSettings.fixedBasePositionLongitude.visible
                                 enabled:            rtkGrid.useFixedPosition
                                 Layout.fillWidth:   true
                             }
 
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCLabel {
-                                text:           rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionAltitude.shortDescription : ""
-                                visible:        rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionAltitude.visible
+                                text:           rtkGrid.rtkSettings.fixedBasePositionAltitude.shortDescription
+                                visible:        rtkGrid.rtkSettings.fixedBasePositionAltitude.visible
                                 enabled:        rtkGrid.useFixedPosition
                             }
                             FactTextField {
-                                fact:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionAltitude : null
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionAltitude.visible
+                                fact:               rtkGrid.rtkSettings.fixedBasePositionAltitude
+                                visible:            rtkGrid.rtkSettings.fixedBasePositionAltitude.visible
                                 enabled:            rtkGrid.useFixedPosition
                                 Layout.fillWidth:   true
                             }
 
                             Item { width: rtkGrid.firstColWidth; height: 1 }
                             QGCLabel {
-                                text:           rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionAccuracy.shortDescription : ""
-                                visible:        rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionAccuracy.visible
+                                text:           rtkGrid.rtkSettings.fixedBasePositionAccuracy.shortDescription
+                                visible:        rtkGrid.rtkSettings.fixedBasePositionAccuracy.visible
                                 enabled:        rtkGrid.useFixedPosition
                             }
                             FactTextField {
-                                fact:               rtkGrid.rtkSettings ?  rtkGrid.rtkSettings.fixedBasePositionAccuracy : null
-                                visible:            rtkGrid.rtkSettings && rtkGrid.rtkSettings.fixedBasePositionAccuracy.visible
+                                fact:               rtkGrid.rtkSettings.fixedBasePositionAccuracy
+                                visible:            rtkGrid.rtkSettings.fixedBasePositionAccuracy.visible
                                 enabled:            rtkGrid.useFixedPosition
                                 Layout.fillWidth:   true
                             }
@@ -992,48 +986,45 @@ Rectangle {
 
                             QGCLabel {
                                 text:           qsTr("Indoor Image")
-                                visible:        _userBrandImageIndoor ? _userBrandImageIndoor.visible : false
+                                visible:        _userBrandImageIndoor.visible
                             }
                             QGCTextField {
                                 readOnly:           true
                                 Layout.fillWidth:   true
-                                text:               _userBrandImageIndoor ? _userBrandImageIndoor.valueString.replace("file:///","") : ""
+                                text:               _userBrandImageIndoor.valueString.replace("file:///","")
                             }
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  userBrandImageIndoorBrowseDialog.openForLoad()
                                 QGCFileDialog {
-                                    id:             userBrandImageIndoorBrowseDialog
-                                    title:          qsTr("Choose custom brand image file")
-                                    folder:         _userBrandImageIndoor ? _userBrandImageIndoor.rawValue.replace("file:///","") : ""
-                                    selectExisting: true
-                                    selectFolder:   false
-                                    onAcceptedForLoad: {
-                                        if(_userBrandImageIndoor)
-                                            _userBrandImageIndoor.rawValue = "file:///" + file
-                                    }
+                                    id:                 userBrandImageIndoorBrowseDialog
+                                    title:              qsTr("Choose custom brand image file")
+                                    folder:             _userBrandImageIndoor.rawValue.replace("file:///","")
+                                    selectExisting:     true
+                                    selectFolder:       false
+                                    onAcceptedForLoad:  _userBrandImageIndoor.rawValue = "file:///" + file
                                 }
                             }
 
                             QGCLabel {
                                 text:       qsTr("Outdoor Image")
-                                visible:    _userBrandImageOutdoor && _userBrandImageOutdoor.visible
+                                visible:    _userBrandImageOutdoor.visible
                             }
                             QGCTextField {
                                 readOnly:           true
                                 Layout.fillWidth:   true
-                                text:               _userBrandImageOutdoor ? _userBrandImageOutdoor.valueString.replace("file:///","") : ""
+                                text:                _userBrandImageOutdoor.valueString.replace("file:///","")
                             }
                             QGCButton {
                                 text:       qsTr("Browse")
                                 onClicked:  userBrandImageOutdoorBrowseDialog.openForLoad()
                                 QGCFileDialog {
-                                    id:             userBrandImageOutdoorBrowseDialog
-                                    title:          qsTr("Choose custom brand image file")
-                                    folder:         _userBrandImageOutdoor ? _userBrandImageOutdoor.rawValue.replace("file:///","") : ""
-                                    selectExisting: true
-                                    selectFolder:   false
-                                    onAcceptedForLoad: _userBrandImageOutdoor.rawValue = "file:///" + file
+                                    id:                 userBrandImageOutdoorBrowseDialog
+                                    title:              qsTr("Choose custom brand image file")
+                                    folder:             _userBrandImageOutdoor.rawValue.replace("file:///","")
+                                    selectExisting:     true
+                                    selectFolder:       false
+                                    onAcceptedForLoad:  _userBrandImageOutdoor.rawValue = "file:///" + file
                                 }
                             }
                             QGCButton {
