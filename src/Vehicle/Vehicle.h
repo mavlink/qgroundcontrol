@@ -546,7 +546,7 @@ public:
     Q_PROPERTY(bool                 autoDisarm              READ autoDisarm                                             NOTIFY autoDisarmChanged)
     Q_PROPERTY(bool                 flightModeSetAvailable  READ flightModeSetAvailable                                 CONSTANT)
     Q_PROPERTY(QStringList          flightModes             READ flightModes                                            NOTIFY flightModesChanged)
-    Q_PROPERTY(QStringList          allFlightModes          READ allFlightModes                                         NOTIFY flightModesChanged)
+    Q_PROPERTY(QStringList          joystickFlightModes     READ joystickFlightModes                                    NOTIFY flightModesChanged)
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
     Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
@@ -850,7 +850,7 @@ public:
 
     bool flightModeSetAvailable(void);
     QStringList flightModes(void);
-    QStringList allFlightModes(void);
+    QStringList joystickFlightModes(void);
     QString flightMode(void) const;
     void setFlightMode(const QString& flightMode);
 

@@ -2375,9 +2375,9 @@ QStringList Vehicle::flightModes(void)
     return _firmwarePlugin->flightModes(this);
 }
 
-QStringList Vehicle::allFlightModes(void)
+QStringList Vehicle::joystickFlightModes(void)
 {
-    return _firmwarePlugin->allFlightModes(this);
+    return _firmwarePlugin->joystickFlightModes(this);
 }
 
 QString Vehicle::flightMode(void) const
