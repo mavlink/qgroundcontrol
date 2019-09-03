@@ -168,6 +168,21 @@ QStringList PX4FirmwarePlugin::flightModes(Vehicle* vehicle)
     return flightModes;
 }
 
+QStringList PX4FirmwarePlugin::allFlightModes(Vehicle* vehicle)
+{
+    QStringList flightModes;
+    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
+        bool fw = (vehicle->fixedWing() && info.fixedWing);
+        bool mc = (vehicle->multiRotor() && info.multiRotor);
+        // show all modes for generic, vtol, etc
+        bool other = !vehicle->fixedWing() && !vehicle->multiRotor();
+        if (fw || mc || other) {
+            flightModes += *info.name;
+        }
+    }
+    return flightModes;
+}
+
 QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
 {
     QString flightMode = "Unknown";

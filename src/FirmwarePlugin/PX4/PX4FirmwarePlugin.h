@@ -34,6 +34,7 @@ public:
     AutoPilotPlugin*    autopilotPlugin                 (Vehicle* vehicle) override;
     bool                isCapable                       (const Vehicle *vehicle, FirmwareCapabilities capabilities) override;
     QStringList         flightModes                     (Vehicle* vehicle) override;
+    QStringList         allFlightModes                  (Vehicle* vehicle) override;
     QString             flightMode                      (uint8_t base_mode, uint32_t custom_mode) const override;
     bool                setFlightMode                   (const QString& flightMode, uint8_t* base_mode, uint32_t* custom_mode) override;
     void                setGuidedMode                   (Vehicle* vehicle, bool guidedMode) override;
