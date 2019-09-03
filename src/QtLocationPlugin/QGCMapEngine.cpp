@@ -50,6 +50,7 @@ static stQGeoTileCacheQGCMapTypes kMapTypes[] = {
     {"Google Street Map",       UrlFactory::GoogleMap},
     {"Google Satellite Map",    UrlFactory::GoogleSatellite},
     {"Google Terrain Map",      UrlFactory::GoogleTerrain},
+    {"Google Hybrid Map",       UrlFactory::GoogleHybrid},
 #endif
     {"Bing Street Map",         UrlFactory::BingMap},
     {"Bing Satellite Map",      UrlFactory::BingSatellite},
