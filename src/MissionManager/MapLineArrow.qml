@@ -22,17 +22,17 @@ MapQuickItem {
     property color  arrowColor:     "white"
     property var    fromCoord:      QtPositioning.coordinate()
     property var    toCoord:        QtPositioning.coordinate()
-    property bool   exitPosition:   false
+    property int    arrowPosition:  1 ///< 1: first quarter, 2: halfway, 3: last quarter
 
     property var    _map:           parent
-    property real   _arrowSize:     20
+    property real   _arrowSize:     15
     property real   _arrowHeading:  0
 
     function _updateArrowDetails() {
         if (fromCoord && fromCoord.isValid && toCoord && toCoord.isValid) {
             _arrowHeading = fromCoord.azimuthTo(toCoord)
             var lineDistanceQuarter = fromCoord.distanceTo(toCoord) / 4
-            coordinate = fromCoord.atDistanceAndAzimuth(lineDistanceQuarter * (exitPosition ? 3 : 1), _arrowHeading)
+            coordinate = fromCoord.atDistanceAndAzimuth(lineDistanceQuarter * arrowPosition, _arrowHeading)
         } else {
             coordinate = QtPositioning.coordinate()
             _arrowHeading = 0
