@@ -86,7 +86,7 @@ void FlightMapSettings::_newMapProvider(QVariant value)
         _removeEnumValue(mapTypeTerrain, enumStrings, enumValues);
         break;
     case mapProviderGoogle:
-        _removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
+        //_removeEnumValue(mapTypeHybrid, enumStrings, enumValues);
         break;
     case mapProviderStarkart:
         _removeEnumValue(mapTypeStreet, enumStrings, enumValues);
