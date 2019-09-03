@@ -22,6 +22,7 @@
 #include "TCPLink.h"
 #include "SettingsManager.h"
 #include "LogReplayLink.h"
+#include "PairingManager.h"
 #ifdef QGC_ENABLE_BLUETOOTH
 #include "BluetoothLink.h"
 #endif
@@ -675,6 +676,7 @@ void LinkManager::_updateAutoConnectLinks(void)
 
 #endif
 #endif // NO_SERIAL_LINK
+    _toolbox->pairingManager()->autoConnect();
 }
 
 void LinkManager::shutdown(void)
