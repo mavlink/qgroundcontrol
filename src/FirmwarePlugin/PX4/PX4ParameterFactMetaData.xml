@@ -5746,6 +5746,13 @@ the setpoint will be capped to MPC_XY_VEL_MAX</short_desc>
       <unit>m</unit>
     </parameter>
   </group>
+  <group name="Peripheral">
+    <parameter default="0" name="LIGHT_EN_BLINKM" type="INT32">
+      <short_desc>BlinkM LED</short_desc>
+      <boolean />
+      <reboot_required>true</reboot_required>
+    </parameter>
+  </group>
   <group name="Precision Land">
     <parameter default="5.0" name="PLD_BTOUT" type="FLOAT">
       <short_desc>Landing Target Timeout</short_desc>
