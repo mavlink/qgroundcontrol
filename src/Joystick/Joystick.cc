@@ -1092,9 +1092,21 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalLeft,    true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalRight,   true));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalCenter));
-    for(int i = 0; i < _assignableButtonActions.count(); i++) {
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalPitchUp, true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionGimbalPitchDown, true));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleThermal));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOn));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOff));
+    _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalNextPalette));
+
+    //-- Leave "No Action" out
+    for(int i = 1; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();
     }
+    //-- Sort list
+    _availableActionTitles.sort(Qt::CaseInsensitive);
+    //-- Append "No Action" to top of list
+    _availableActionTitles.insert(0,_buttonActionNone);
     emit assignableActionsChanged();
 }
