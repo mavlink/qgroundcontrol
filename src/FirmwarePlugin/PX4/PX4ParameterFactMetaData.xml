@@ -8380,7 +8380,7 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="30.0" name="IMU_ACCEL_CUTOFF" type="FLOAT">
       <short_desc>Driver level cutoff frequency for accel</short_desc>
-      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the accel driver. This features is currently supported by the mpu6000 and mpu9250. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the accel driver. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
       <unit>Hz</unit>
@@ -8388,9 +8388,17 @@ is less than 50% of this value</short_desc>
     </parameter>
     <parameter default="30.0" name="IMU_GYRO_CUTOFF" type="FLOAT">
       <short_desc>Driver level cutoff frequency for gyro</short_desc>
-      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the gyro driver. This features is currently supported by the mpu6000 and mpu9250. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
+      <long_desc>The cutoff frequency for the 2nd order butterworth filter on the gyro driver. This only affects the signal sent to the controllers, not the estimators. 0 disables the filter.</long_desc>
       <min>0</min>
       <max>1000</max>
+      <unit>Hz</unit>
+      <reboot_required>true</reboot_required>
+    </parameter>
+    <parameter default="0" name="IMU_GYRO_RATEMAX" type="INT32">
+      <short_desc>Gyro control data maximum publication rate</short_desc>
+      <long_desc>This is the maximum rate the gyro control data (sensor_gyro_control) will be allowed to publish at. Set to 0 to disable and publish at the native sensor sample rate.</long_desc>
+      <min>0</min>
+      <max>2000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
     </parameter>
