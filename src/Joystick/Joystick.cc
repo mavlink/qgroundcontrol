@@ -1127,9 +1127,14 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOff));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalNextPalette));
 
-    for(int i = 0; i < _assignableButtonActions.count(); i++) {
+    //-- Leave "No Action" out
+    for(int i = 1; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();
     }
+    //-- Sort list
+    _availableActionTitles.sort(Qt::CaseInsensitive);
+    //-- Append "No Action" to top of list
+    _availableActionTitles.insert(0,_buttonActionNone);
     emit assignableActionsChanged();
 }
