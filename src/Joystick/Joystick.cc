@@ -978,7 +978,7 @@ void Joystick::_executeButtonAction(const QString& action, bool buttonDown)
         if (buttonDown) emit setVtolInFwdFlight(true);
     } else if (action == _buttonActionVTOLMultiRotor) {
         if (buttonDown) emit setVtolInFwdFlight(false);
-    } else if (_activeVehicle->allFlightModes().contains(action)) {
+    } else if (_activeVehicle->joystickFlightModes().contains(action)) {
         if (buttonDown) emit setFlightMode(action);
     } else if(action == _buttonActionContinuousZoomIn || action == _buttonActionContinuousZoomOut) {
         if (buttonDown) {
@@ -1096,7 +1096,7 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionDisarm));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionToggleArm));
     if (activeVehicle) {
-        QStringList list = activeVehicle->allFlightModes();
+        QStringList list = activeVehicle->joystickFlightModes();
         foreach(auto mode, list) {
             _assignableButtonActions.append(new AssignableButtonAction(this, mode));
         }
@@ -1127,9 +1127,14 @@ void Joystick::_buildActionList(Vehicle* activeVehicle)
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalOff));
     _assignableButtonActions.append(new AssignableButtonAction(this, _buttonActionThermalNextPalette));
 
-    for(int i = 0; i < _assignableButtonActions.count(); i++) {
+    //-- Leave "No Action" out
+    for(int i = 1; i < _assignableButtonActions.count(); i++) {
         AssignableButtonAction* p = qobject_cast<AssignableButtonAction*>(_assignableButtonActions[i]);
         _availableActionTitles << p->action();
     }
+    //-- Sort list
+    _availableActionTitles.sort(Qt::CaseInsensitive);
+    //-- Append "No Action" to top of list
+    _availableActionTitles.insert(0,_buttonActionNone);
     emit assignableActionsChanged();
 }

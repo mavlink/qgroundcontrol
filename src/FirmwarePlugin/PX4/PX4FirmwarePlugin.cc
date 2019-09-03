@@ -71,7 +71,7 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
     };
 
     static const struct Modes2Name rgModes2Name[] = {
-        //main_mode                         sub_mode                                canBeSet  FW      MC
+        //main_mode                         sub_mode                                canBeSet  FW      MR
         { PX4_CUSTOM_MAIN_MODE_MANUAL,      0,                                      true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_STABILIZED,  0,                                      true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_ACRO,        0,                                      true,   true,   true },
@@ -80,7 +80,7 @@ PX4FirmwarePlugin::PX4FirmwarePlugin()
         { PX4_CUSTOM_MAIN_MODE_OFFBOARD,    0,                                      true,   false,  true },
         { PX4_CUSTOM_MAIN_MODE_SIMPLE,      0,                                      false,  false,  true },
         { PX4_CUSTOM_MAIN_MODE_POSCTL,      PX4_CUSTOM_SUB_MODE_POSCTL_POSCTL,      true,   true,   true },
-        { PX4_CUSTOM_MAIN_MODE_POSCTL,      PX4_CUSTOM_SUB_MODE_POSCTL_ORBIT,       false,  false,   false },
+        { PX4_CUSTOM_MAIN_MODE_POSCTL,      PX4_CUSTOM_SUB_MODE_POSCTL_ORBIT,       false,  false,  false },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_LOITER,        true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_MISSION,       true,   true,   true },
         { PX4_CUSTOM_MAIN_MODE_AUTO,        PX4_CUSTOM_SUB_MODE_AUTO_RTL,           true,   true,   true },
@@ -150,37 +150,24 @@ QList<VehicleComponent*> PX4FirmwarePlugin::componentsForVehicle(AutoPilotPlugin
 QStringList PX4FirmwarePlugin::flightModes(Vehicle* vehicle)
 {
     QStringList flightModes;
-
     foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
         if (info.canBeSet) {
             bool fw = (vehicle->fixedWing() && info.fixedWing);
             bool mc = (vehicle->multiRotor() && info.multiRotor);
-
-            // show all modes for generic, vtol, etc
+            // Show all modes for generic, vtol, etc
             bool other = !vehicle->fixedWing() && !vehicle->multiRotor();
-
             if (fw || mc || other) {
                 flightModes += *info.name;
             }
         }
     }
-
     return flightModes;
 }
 
-QStringList PX4FirmwarePlugin::allFlightModes(Vehicle* vehicle)
+QStringList PX4FirmwarePlugin::joystickFlightModes(Vehicle* vehicle)
 {
-    QStringList flightModes;
-    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
-        bool fw = (vehicle->fixedWing() && info.fixedWing);
-        bool mc = (vehicle->multiRotor() && info.multiRotor);
-        // show all modes for generic, vtol, etc
-        bool other = !vehicle->fixedWing() && !vehicle->multiRotor();
-        if (fw || mc || other) {
-            flightModes += *info.name;
-        }
-    }
-    return flightModes;
+    //-- By default, this is the same as flightModes()
+    return flightModes(vehicle);
 }
 
 QString PX4FirmwarePlugin::flightMode(uint8_t base_mode, uint32_t custom_mode) const
