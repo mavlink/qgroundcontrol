@@ -53,7 +53,7 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_pairingCompleted(QString name)
+PairingManager::_pairingCompleted(const QString name)
 {
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
@@ -68,8 +68,34 @@ PairingManager::_pairingCompleted(QString name)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_connectionCompleted(QString name)
+PairingManager::_createUDPLink(const QString name, quint16 port)
 {
+    if (_connectedDevices.contains(name)) {
+        return;
+    }
+    UDPConfiguration* udpConfig = new UDPConfiguration(name);
+    udpConfig->setLocalPort(port);
+    udpConfig->setDynamic(true);
+    SharedLinkConfigurationPointer linkConfig = _toolbox->linkManager()->addConfiguration(udpConfig);
+    LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
+    _connectedDevices[name] = link;
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_removeUDPLink(const QString name)
+{
+    if (_connectedDevices.contains(name)) {
+        _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
+        _connectedDevices.remove(name);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_connectionCompleted(const QString name)
+{
+    _createUDPLink(name, 24550);
     _setLastConnectedDevice(name);
     _toolbox->videoManager()->startVideo();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
@@ -219,6 +245,8 @@ PairingManager::removePairedDevice(QString name)
     file.close();
     file.remove();
 
+    _removeUDPLink(name);
+
     if (_connectedDevice == name) {
         _setLastConnectedDevice("");
         _toolbox->videoManager()->stopVideo();
@@ -274,6 +302,15 @@ PairingManager::_readPairingConfig()
         _firstDeviceToConnect = jsonObj.value("CONNECTED_DEVICE").toString();
     }
     _encryptionKey = jsonObj.value("EK").toString();
+}
+//-----------------------------------------------------------------------------
+void
+PairingManager::autoConnect()
+{
+    if (!_firstDeviceToConnect.isEmpty()) {
+        connectToPairedDevice(_firstDeviceToConnect);
+        _firstDeviceToConnect = "";
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -531,7 +568,6 @@ PairingManager::_createMicrohardPairingJson()
     QJsonObject jsonObj;
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
-    jsonObj.insert("P", 14550);
     jsonObj.insert("EK", _encryptionKey);
     return QJsonDocument(jsonObj);
 }
@@ -558,7 +594,7 @@ PairingManager::_createMicrohardConnectJson()
     QJsonObject jsonObj;
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
-    jsonObj.insert("P", 14550);
+    jsonObj.insert("P", 24550);
     return QJsonDocument(jsonObj);
 }
 

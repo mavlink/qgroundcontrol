@@ -20,6 +20,7 @@
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
+#include "UDPLink.h"
 #if defined QGC_ENABLE_NFC
 #include "PairingNFC.h"
 #endif
@@ -75,6 +76,7 @@ public:
     void            setStatusMessage            (PairingStatus status, QString statusStr) { emit setPairingStatus(status, statusStr); }
     void            jsonReceived                (QString json) { emit parsePairingJson(json); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
+    void            autoConnect                 ();
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
@@ -141,6 +143,7 @@ private:
     QString                 _connectedDevice{};
     QString                 _firstDeviceToConnect{};
     QStringList             _deviceList;
+    QMap<QString, LinkInterface*> _connectedDevices;
 
     void                    _parsePairingJsonFile       ();
     QJsonDocument           _createZeroTierConnectJson  ();
@@ -152,8 +155,8 @@ private:
     QString                 _getLocalIPInNetwork        (QString remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (QString name);
-    void                    _connectionCompleted        (QString name);
+    void                    _pairingCompleted           (const QString name);
+    void                    _connectionCompleted        (const QString name);
     QDir                    _pairingCacheDir            ();
     QString                 _pairingCacheFile           (QString uavName);
     void                    _updatePairedDeviceNameList ();
@@ -161,6 +164,8 @@ private:
     void                    _readPairingConfig          ();
     void                    _resetPairingConfig         ();
     void                    _setLastConnectedDevice     (QString name);
+    void                    _createUDPLink              (const QString name, quint16 port);
+    void                    _removeUDPLink              (const QString name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
