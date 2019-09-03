@@ -114,9 +114,6 @@ Joystick::Joystick(const QString& name, int axisCount, int buttonCount, int hatC
         _rgButtonValues[i] = BUTTON_UP;
         _buttonActionArray.append(nullptr);
     }
-    _buildActionList(_multiVehicleManager->activeVehicle());
-    _updateTXModeSettingsKey(_multiVehicleManager->activeVehicle());
-    _loadSettings();
     connect(_multiVehicleManager, &MultiVehicleManager::activeVehicleChanged, this, &Joystick::_activeVehicleChanged);
 }
 
@@ -201,10 +198,9 @@ void Joystick::_activeVehicleChanged(Vehicle* activeVehicle)
 {
     _updateTXModeSettingsKey(activeVehicle);
     if(activeVehicle) {
-        QSettings settings;
-        settings.beginGroup(_settingsGroup);
-        int mode = settings.value(_txModeSettingsKey, activeVehicle->firmwarePlugin()->defaultJoystickTXMode()).toInt();
-        setTXMode(mode);
+        _buildActionList(activeVehicle);
+        _updateTXModeSettingsKey(activeVehicle);
+        _loadSettings();
     }
 }
 
@@ -285,15 +281,20 @@ void Joystick::_loadSettings()
 
     for (int button = 0; button < _totalButtonCount; button++) {
         QString a = settings.value(QString(_buttonActionNameKey).arg(button), QString()).toString();
-        if(!a.isEmpty() && _findAssignableButtonAction(a) >= 0 && a != _buttonActionNone) {
-            if(_buttonActionArray[button]) {
-                _buttonActionArray[button]->deleteLater();
+        qCDebug(JoystickLog) << "Button" << button << QString(_buttonActionNameKey).arg(button) << a;
+        if(!a.isEmpty()) {
+            if(_findAssignableButtonAction(a) >= 0) {
+                if(a != _buttonActionNone) {
+                    if(_buttonActionArray[button]) {
+                        _buttonActionArray[button]->deleteLater();
+                    }
+                    AssignedButtonAction* ap = new AssignedButtonAction(this, a);
+                    ap->repeat = settings.value(QString(_buttonActionRepeatKey).arg(button), false).toBool();
+                    _buttonActionArray[button] = ap;
+                    _buttonActionArray[button]->buttonTime.start();
+                    qCDebug(JoystickLog) << "_loadSettings button:action" << button << _buttonActionArray[button]->action << _buttonActionArray[button]->repeat;
+                }
             }
-            AssignedButtonAction* ap = new AssignedButtonAction(this, a);
-            ap->repeat = settings.value(QString(_buttonActionRepeatKey).arg(button), false).toBool();
-            _buttonActionArray[button] = ap;
-            _buttonActionArray[button]->buttonTime.start();
-            qCDebug(JoystickLog) << "_loadSettings button:action" << button << _buttonActionArray[button]->action << _buttonActionArray[button]->repeat;
         }
     }
 
@@ -397,9 +398,11 @@ void Joystick::_remapAxes(int currentMode, int newMode, int (&newMapping)[maxFun
 
 void Joystick::setTXMode(int mode) {
     if(mode > 0 && mode <= 4) {
-        _remapAxes(_transmitterMode, mode, _rgFunctionAxis);
-        _transmitterMode = mode;
-        _saveSettings();
+        if(_transmitterMode != mode) {
+            _remapAxes(_transmitterMode, mode, _rgFunctionAxis);
+            _transmitterMode = mode;
+            _saveSettings();
+        }
     } else {
         qCWarning(JoystickLog) << "Invalid mode:" << mode;
     }
