@@ -70,7 +70,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)        ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QVariantList         waypointPath            READ waypointPath               NOTIFY waypointPathChanged)         ///< Used by Fly view only for static display
-    Q_PROPERTY(QmlObjectListModel*  directionArrows         READ directionArrows            NOTIFY directionArrowsChanged)
+    Q_PROPERTY(QmlObjectListModel*  directionArrows         READ directionArrows            CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
@@ -206,7 +206,6 @@ signals:
     void visualItemsChanged             (void);
     void waypointLinesChanged           (void);
     void waypointPathChanged            (void);
-    void directionArrowsChanged         (void);
     void newItemsFromVehicle            (void);
     void missionDistanceChanged         (double missionDistance);
     void missionTimeChanged             (void);

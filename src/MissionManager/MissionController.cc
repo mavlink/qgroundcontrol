@@ -1196,9 +1196,8 @@ void MissionController::_recalcWaypointLines(void)
         _waypointPath.append(QVariant::fromValue(QGeoCoordinate(0, 0)));
     }
 
-    //emit waypointLinesChanged();
+    emit waypointLinesChanged();
     emit waypointPathChanged();
-    emit directionArrowsChanged();
 }
 
 void MissionController::_updateBatteryInfo(int waypointIndex)
