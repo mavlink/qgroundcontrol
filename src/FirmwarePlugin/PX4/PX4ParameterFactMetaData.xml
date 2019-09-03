@@ -8401,6 +8401,14 @@ is less than 50% of this value</short_desc>
       <max>2000</max>
       <unit>Hz</unit>
       <reboot_required>true</reboot_required>
+      <values>
+        <value code="0">0 (no limit)</value>
+        <value code="50">50 Hz</value>
+        <value code="250">250 Hz</value>
+        <value code="400">400 Hz</value>
+        <value code="1000">1000 Hz</value>
+        <value code="2000">2000 Hz</value>
+      </values>
     </parameter>
     <parameter default="18139" name="INA226_CONFIG" type="INT32">
       <short_desc>INA226 Power Monitor Config</short_desc>
