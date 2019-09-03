@@ -86,6 +86,12 @@ public:
         return QStringList();
     }
 
+    /// Returns the list of all flight modes.
+    virtual QStringList allFlightModes(Vehicle* vehicle) {
+        Q_UNUSED(vehicle);
+        return QStringList();
+    }
+
     /// Returns the name for this flight mode. Flight mode names must be human readable as well as audio speakable.
     ///     @param base_mode Base mode from mavlink HEARTBEAT message
     ///     @param custom_mode Custom mode from mavlink HEARTBEAT message
