@@ -66,3 +66,19 @@ CustomFirmwarePlugin::toolBarIndicators(const Vehicle* vehicle)
     return _toolBarIndicatorList;
 }
 
+//-----------------------------------------------------------------------------
+QStringList
+CustomFirmwarePlugin::joystickFlightModes(Vehicle* vehicle)
+{
+    QStringList flightModes;
+    foreach (const FlightModeInfo_t& info, _flightModeInfoList) {
+        bool fw = (vehicle->fixedWing() && info.fixedWing);
+        bool mc = (vehicle->multiRotor() && info.multiRotor);
+        // show all modes for generic, vtol, etc
+        bool other = !vehicle->fixedWing() && !vehicle->multiRotor();
+        if (fw || mc || other) {
+            flightModes += *info.name;
+        }
+    }
+    return flightModes;
+}

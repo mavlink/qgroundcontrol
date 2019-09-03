@@ -86,8 +86,8 @@ public:
         return QStringList();
     }
 
-    /// Returns the list of all flight modes.
-    virtual QStringList allFlightModes(Vehicle* vehicle) {
+    /// Returns the list of available flight modes for joystick button assignment.
+    virtual QStringList joystickFlightModes(Vehicle* vehicle) {
         Q_UNUSED(vehicle);
         return QStringList();
     }
