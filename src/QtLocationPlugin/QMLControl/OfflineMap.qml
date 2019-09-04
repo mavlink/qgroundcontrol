@@ -400,7 +400,7 @@ Item {
                 anchors.left:           parent.left
                 anchors.bottom:         parent.bottom
                 mapControl:             _map
-                zoomButtonsOnLeft:      true
+                buttonsOnLeft:          true
             }
 
             //-----------------------------------------------------------------

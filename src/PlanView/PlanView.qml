@@ -819,13 +819,17 @@ Item {
         }
 
         MapScale {
-            id:                 mapScale
-            anchors.margins:    ScreenTools.defaultFontPixelHeight * (0.66)
-            anchors.bottom:     waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
-            anchors.left:       parent.left
-            mapControl:         editorMap
-            zoomButtonsOnLeft:  true
-            visible:            _toolStripBottom < y
+            id:                     mapScale
+            anchors.margins:        ScreenTools.defaultFontPixelHeight * (0.66)
+            anchors.bottom:         waypointValuesDisplay.visible ? waypointValuesDisplay.top : parent.bottom
+            anchors.left:           parent.left
+            mapControl:             editorMap
+            buttonsOnLeft:          true
+            terrainButtonVisible:   true
+            visible:                _toolStripBottom < y && _editingLayer === _layerMission
+            terrainButtonChecked:   waypointValuesDisplay.visible
+
+            onTerrainButtonClicked: waypointValuesDisplay.toggleVisible()
         }
 
         MissionItemStatus {
@@ -836,7 +840,13 @@ Item {
             maxWidth:           parent.width - rightPanel.width - x
             anchors.bottom:     parent.bottom
             missionItems:       _missionController.visualItems
-            visible:            _editingLayer === _layerMission && (_toolStripBottom + mapScale.height) < y && QGroundControl.corePlugin.options.showMissionStatus
+            visible:            _internalVisible && _editingLayer === _layerMission && (_toolStripBottom + mapScale.height) < y && QGroundControl.corePlugin.options.showMissionStatus
+
+            property bool _internalVisible: false
+
+            function toggleVisible() {
+                _internalVisible = !_internalVisible
+            }
         }
     }
 
