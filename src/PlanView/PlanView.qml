@@ -472,6 +472,17 @@ Item {
                 model: _editingLayer == _layerMission ? _missionController.waypointLines : undefined
             }
 
+            MapItemView {
+                model: _editingLayer == _layerMission ? _missionController.directionArrows : undefined
+
+                delegate: MapLineArrow {
+                    fromCoord:      object ? object.coordinate1 : undefined
+                    toCoord:        object ? object.coordinate2 : undefined
+                    arrowPosition:  2
+                    z:              QGroundControl.zOrderWaypointLines
+                }
+            }
+
             // Add the vehicles to the map
             MapItemView {
                 model: QGroundControl.multiVehicleManager.vehicles

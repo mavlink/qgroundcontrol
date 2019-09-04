@@ -70,6 +70,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
     Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)        ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QVariantList         waypointPath            READ waypointPath               NOTIFY waypointPathChanged)         ///< Used by Fly view only for static display
+    Q_PROPERTY(QmlObjectListModel*  directionArrows         READ directionArrows            CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
 
@@ -169,6 +170,7 @@ public:
 
     QmlObjectListModel* visualItems                 (void) { return _visualItems; }
     QmlObjectListModel* waypointLines               (void) { return &_waypointLines; }
+    QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QVariantList        waypointPath                (void) { return _waypointPath; }
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
@@ -273,7 +275,7 @@ private:
     void _updateBatteryInfo(int waypointIndex);
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
-    void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
+    CoordinateVector* _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
     int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i);
     void _warnIfTerrainFrameUsed(void);
@@ -285,6 +287,7 @@ private:
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;
     QVariantList            _waypointPath;
+    QmlObjectListModel      _directionArrows;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
