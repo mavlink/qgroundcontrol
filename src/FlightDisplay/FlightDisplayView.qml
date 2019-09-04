@@ -311,10 +311,7 @@ Item {
 
     Item {
         id:             _mapAndVideo
-        anchors.left:   parent.left
-        anchors.right:  parent.right
-        anchors.top:    parent.top
-        anchors.bottom: logReplayStatusBar.top
+        anchors.fill:   parent
 
         //-- Map View
         Item {
@@ -518,7 +515,7 @@ Item {
             anchors.left:       parent.left
             anchors.right:      altitudeSlider.visible ? altitudeSlider.left : parent.right
             anchors.bottom:     parent.bottom
-            anchors.top:        singleMultiSelector.visible? singleMultiSelector.bottom:undefined
+            anchors.top:        singleMultiSelector.visible? singleMultiSelector.bottom : undefined
             useLightColors:     isBackgroundDark
             missionController:  _missionController
             visible:            singleVehicleView.checked && !QGroundControl.videoManager.fullScreen
@@ -749,14 +746,6 @@ Item {
             color:              qgcPal.window
             visible:            false
         }
-    }
-
-    LogReplayStatusBar {
-        id:                 logReplayStatusBar
-        anchors.left:       parent.left
-        anchors.right:      parent.right
-        anchors.bottom:     parent.bottom
-        visible:            QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue &&_flightMapContainer.state === "fullMode"
     }
 
     //-- Airspace Indicator
