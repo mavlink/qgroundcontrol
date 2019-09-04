@@ -63,6 +63,7 @@ public:
     virtual bool        autoStreamConfigured();
     virtual bool        hasThermal          ();
     virtual void        restartVideo        ();
+    virtual void        restartVideoReceiver(VideoReceiver *receiver);
 
     virtual VideoReceiver*  videoReceiver           () { return _videoReceiver; }
     virtual VideoReceiver*  thermalVideoReceiver    () { return _thermalVideoReceiver; }
@@ -79,8 +80,8 @@ public:
     // Override from QGCTool
     virtual void        setToolbox          (QGCToolbox *toolbox);
 
-    Q_INVOKABLE void startVideo     ();
-    Q_INVOKABLE void stopVideo      ();
+    Q_INVOKABLE void startVideo     (VideoReceiver *receiver = nullptr);
+    Q_INVOKABLE void stopVideo      (VideoReceiver *receiver = nullptr);
 
 signals:
     void hasVideoChanged            ();

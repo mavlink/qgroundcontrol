@@ -27,11 +27,6 @@ DEFINES += GIT_VERSION=\"\\\"v$$CUSTOM_QGC_VERSION\\\"\"
 
 message(Custom QGC Version: $${CUSTOM_QGC_VERSION})
 
-# Build a single flight stack by disabling APM support
-MAVLINK_CONF = common
-CONFIG  += QGC_DISABLE_APM_MAVLINK
-CONFIG  += QGC_DISABLE_APM_PLUGIN QGC_DISABLE_APM_PLUGIN_FACTORY
-
 # We implement our own PX4 plugin factory
 CONFIG  += QGC_DISABLE_PX4_PLUGIN_FACTORY
 
