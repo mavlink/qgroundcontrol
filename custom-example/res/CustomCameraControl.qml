@@ -332,11 +332,11 @@ Item {
                             onClicked: {
                                 if(_cameraVideoMode) {
                                     if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
-                                        _camera.stopVideo()
                                         //-- Local video as well
                                         if (_recordingVideo) {
                                             _videoReceiver.stopRecording()
                                         }
+                                        _camera.stopVideo()
                                     } else {
                                         if(!_fullSD) {
                                             _camera.startVideo()

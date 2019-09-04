@@ -71,6 +71,8 @@ const char* QGCCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
 const char* QGCCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
 const char* QGCCameraControl::kCAM_MODE        = "CAM_MODE";
 
+static QGCCameraControl::CameraMode _gNvCamMode = QGCCameraControl::CameraMode::CAM_MODE_PHOTO;
+
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
     : QObject(parent)
@@ -317,6 +319,8 @@ QGCCameraControl::_setCameraMode(CameraMode mode)
 {
     if(_cameraMode != mode) {
         _cameraMode = mode;
+        if(vendor() == "NextVision")
+            _gNvCamMode = mode;
         emit cameraModeChanged();
         //-- Update stream status
         _streamStatusTimer.start(1000);
@@ -377,10 +381,7 @@ QGCCameraControl::takePhoto()
                 0,                                                                          // Reserved (Set to 0)
                 static_cast<float>(_photoMode == PHOTO_CAPTURE_SINGLE ? 0 : _photoLapse),   // Duration between two consecutive pictures (in seconds--ignored if single image)
                 _photoMode == PHOTO_CAPTURE_SINGLE ? 1 : _photoLapseCount);                 // Number of images to capture total - 0 for unlimited capture
-            if(vendor() == "NextVision")
-                _setPhotoStatus(PHOTO_CAPTURE_IDLE);
-            else
-                _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
+            _setPhotoStatus(PHOTO_CAPTURE_IN_PROGRESS);
             _captureInfoRetries = 0;
             //-- Capture local image as well
             if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
@@ -388,6 +389,12 @@ QGCCameraControl::takePhoto()
                 QDir().mkpath(photoPath);
                 photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
                 qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
+            }
+            if(vendor() == "NextVision") {
+                // Hack: NV doesn't respond to taking capture
+                QTimer::singleShot(500, [&](){
+                    _setPhotoStatus(PHOTO_CAPTURE_IDLE);
+                });
             }
             return true;
         }
@@ -429,6 +436,9 @@ QGCCameraControl::startVideo()
             return false;
         }
         if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
+            if(vendor() == "NextVision") {
+                _setVideoStatus(VIDEO_CAPTURE_STATUS_RUNNING);
+            }
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_START_CAPTURE,                // Command id
@@ -447,6 +457,9 @@ QGCCameraControl::stopVideo()
 {
     if(!_resetting) {
         qCDebug(CameraControlLog) << "stopVideo()";
+        if(vendor() == "NextVision") {
+            _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
+        }
         if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
@@ -1459,7 +1472,9 @@ void
 QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
     qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
-    _setCameraMode(static_cast<CameraMode>(settings.mode_id));
+    if(vendor() != "NextVision") {
+        _setCameraMode(static_cast<CameraMode>(settings.mode_id));
+    }
     qreal z = static_cast<qreal>(settings.zoomLevel);
     qreal f = static_cast<qreal>(settings.focusLevel);
     if(std::isfinite(z) && z != _zoomLevel) {
@@ -2178,7 +2193,7 @@ QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
 QGCCameraControl::CameraMode
 QGCCameraControl::cameraMode() {
     if(vendor() == "NextVision")
-        return CAM_MODE_PHOTO;
+        return _gNvCamMode;
     else
         return _cameraMode;
 }
