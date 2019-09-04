@@ -263,5 +263,12 @@
     "longDescription":  "Use Link Pairing.",
     "type":             "bool",
     "defaultValue":     false
+},
+{
+    "name":             "saveCsvTelemetry",
+    "shortDescription": "Save CSV Telementry Logs",
+    "longDescription":  "If this option is enabled, all Facts will be written to a CSV file with a 1 Hertz frequency.",
+    "type":             "bool",
+    "defaultValue":     false
 }
 ]
