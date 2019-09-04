@@ -138,7 +138,7 @@ Item {
         MapLineArrow {
             fromCoord:      _transectPoints[_firstTrueTransectIndex]
             toCoord:        _transectPoints[_firstTrueTransectIndex + 1]
-            exitPosition:   false
+            arrowPosition:  1
             visible:        _currentItem
         }
     }
@@ -149,7 +149,7 @@ Item {
         MapLineArrow {
             fromCoord:      _transectPoints[nextTrueTransectIndex]
             toCoord:        _transectPoints[nextTrueTransectIndex + 1]
-            exitPosition:   false
+            arrowPosition:  1
             visible:        _currentItem && _transectCount > 3
 
             property int nextTrueTransectIndex: _firstTrueTransectIndex + (_hasTurnaround ? 4 : 2)
@@ -162,7 +162,7 @@ Item {
         MapLineArrow {
             fromCoord:      _transectPoints[_lastTrueTransectIndex - 1]
             toCoord:        _transectPoints[_lastTrueTransectIndex]
-            exitPosition:   true
+            arrowPosition:  3
             visible:        _currentItem
         }
     }
@@ -173,7 +173,7 @@ Item {
         MapLineArrow {
             fromCoord:      _transectPoints[prevTrueTransectIndex - 1]
             toCoord:        _transectPoints[prevTrueTransectIndex]
-            exitPosition:   true
+            arrowPosition:  13
             visible:        _currentItem && _transectCount > 3
 
             property int prevTrueTransectIndex: _lastTrueTransectIndex - (_hasTurnaround ? 4 : 2)

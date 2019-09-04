@@ -1070,30 +1070,36 @@ double MissionController::_calcDistanceToHome(VisualMissionItem* currentItem, Vi
     return distanceOk ? homeCoord.distanceTo(currentCoord) : 0.0;
 }
 
-void MissionController::_addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair)
+CoordinateVector* MissionController::_addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair)
 {
+    CoordinateVector* coordVector = nullptr;
+
     if (prevItemPairHashTable.contains(pair)) {
         // Pair already exists and connected, just re-use
-        _linesTable[pair] = prevItemPairHashTable.take(pair);
+        _linesTable[pair] = coordVector = prevItemPairHashTable.take(pair);
     } else {
         // Create a new segment and wire update notifiers
-        auto linevect       = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
+        coordVector         = new CoordinateVector(pair.first->isSimpleItem() ? pair.first->coordinate() : pair.first->exitCoordinate(), pair.second->coordinate(), this);
         auto originNotifier = pair.first->isSimpleItem() ? &VisualMissionItem::coordinateChanged : &VisualMissionItem::exitCoordinateChanged;
         auto endNotifier    = &VisualMissionItem::coordinateChanged;
 
         // Use signals/slots to update the coordinate endpoints
-        connect(pair.first,     originNotifier, linevect, &CoordinateVector::setCoordinate1);
-        connect(pair.second,    endNotifier,    linevect, &CoordinateVector::setCoordinate2);
+        connect(pair.first,     originNotifier, coordVector, &CoordinateVector::setCoordinate1);
+        connect(pair.second,    endNotifier,    coordVector, &CoordinateVector::setCoordinate2);
 
         // FIXME: We should ideally have signals for 2D position change, alt change, and 3D position change
         // Not optimal, but still pretty fast, do a full update of range/bearing/altitudes
         connect(pair.second, &VisualMissionItem::coordinateChanged, this, &MissionController::_recalcMissionFlightStatus);
-        _linesTable[pair] = linevect;
+        _linesTable[pair] = coordVector;
     }
+
+    return coordVector;
 }
 
 void MissionController::_recalcWaypointLines(void)
 {
+    int                 segmentCount = 0;
+    CoordinateVector*   lastCoordVector = nullptr;
     bool                firstCoordinateItem =   true;
     VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
 
@@ -1105,6 +1111,7 @@ void MissionController::_recalcWaypointLines(void)
     _linesTable.clear();
     _waypointLines.clear();
     _waypointPath.clear();
+    _directionArrows.clear();
 
     bool linkEndToHome;
     SimpleMissionItem* lastItem = _visualItems->value<SimpleMissionItem*>(_visualItems->count() - 1);
@@ -1128,13 +1135,20 @@ void MissionController::_recalcWaypointLines(void)
         }
 
         if (item->specifiesCoordinate() && !item->isStandaloneCoordinate()) {
-            firstCoordinateItem = false;
             if (lastCoordinateItem != _settingsItem || (homePositionValid && linkStartToHome)) {
                 if (!_flyView) {
                     VisualItemPair pair(lastCoordinateItem, item);
-                    _addWaypointLineSegment(old_table, pair);
+                    lastCoordVector = _addWaypointLineSegment(old_table, pair);
+                    segmentCount++;
+                    if (firstCoordinateItem || !lastCoordinateItem->isSimpleItem() || !item->isSimpleItem()) {
+                        _directionArrows.append(lastCoordVector);
+                    } else if (segmentCount > 5) {
+                        segmentCount = 0;
+                        _directionArrows.append(lastCoordVector);
+                    }
                 }
             }
+            firstCoordinateItem = false;
             _waypointPath.append(QVariant::fromValue(item->coordinate()));
             lastCoordinateItem = item;
         }
@@ -1147,7 +1161,7 @@ void MissionController::_recalcWaypointLines(void)
     if (linkEndToHome && lastCoordinateItem != _settingsItem && homePositionValid) {
         if (!_flyView) {
             VisualItemPair pair(lastCoordinateItem, _settingsItem);
-            _addWaypointLineSegment(old_table, pair);
+            lastCoordVector = _addWaypointLineSegment(old_table, pair);
         } else {
             _waypointPath.append(QVariant::fromValue(_settingsItem->coordinate()));
         }
@@ -1168,10 +1182,14 @@ void MissionController::_recalcWaypointLines(void)
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(old_table);
 
+    if (lastCoordVector) {
+        _directionArrows.append(lastCoordVector);
+    }
+
     _recalcMissionFlightStatus();
 
     if (_waypointPath.count() == 0) {
-        // MapPolyLine has a bug where if you can from a path which has elements to an empty path the line drawn
+        // MapPolyLine has a bug where if you change from a path which has elements to an empty path the line drawn
         // is not cleared from the map. This hack works around that since it causes the previous lines to be remove
         // as then doesn't draw anything on the map.
         _waypointPath.append(QVariant::fromValue(QGeoCoordinate(0, 0)));
