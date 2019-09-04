@@ -30,7 +30,6 @@ Item {
     readonly property real _landingLengthMeters:    100
 
     property var    _missionItem:           object
-    property var    _itemVisuals:           [ ]
     property var    _mouseArea
     property var    _dragAreas:             [ ]
     property var    _flightPath
@@ -39,30 +38,16 @@ Item {
     property var    _landingPointObject
 
     function hideItemVisuals() {
-        for (var i=0; i<_itemVisuals.length; i++) {
-            _itemVisuals[i].destroy()
-        }
-        _itemVisuals = [ ]
+        objMgr.destroyObjects()
     }
 
     function showItemVisuals() {
-        if (_itemVisuals.length === 0) {            
-            var itemVisual = loiterPointComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals.push(itemVisual)
-            _loiterPointObject = itemVisual
-
-            itemVisual = landingPointComponent.createObject(map)
-            map.addMapItem(itemVisual)
-            _itemVisuals.push(itemVisual)
-            _landingPointObject = itemVisual
+        if (objMgr.rgDynamicObjects.length === 0) {
+            _loiterPointObject = objMgr.createObject(loiterPointComponent, map, true /* parentObjectIsMap */)
+            _landingPointObject = objMgr.createObject(landingPointComponent, map, true /* parentObjectIsMap */)
 
             var rgComponents = [ flightPathComponent, loiterRadiusComponent, landingAreaComponent, landingAreaLabelComponent, glideSlopeComponent, glideSlopeLabelComponent ]
-            for (var i=0; i<rgComponents.length; i++) {
-                var obj = rgComponents[i].createObject(map)
-                _itemVisuals.push(obj)
-                map.addMapItem(obj)
-            }
+            objMgr.createObjects(rgComponents, map, true /* parentObjectIsMap */)
         }
     }
 
@@ -96,6 +81,10 @@ Item {
 
     function _setFlightPath() {
         _flightPath = [ _missionItem.loiterTangentCoordinate, _missionItem.landingCoordinate ]
+    }
+
+    QGCDynamicObjectManager {
+        id: objMgr
     }
 
     Component.onCompleted: {

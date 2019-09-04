@@ -39,24 +39,17 @@ Item {
     property var    _exitTransectsComponent:    null
     property var    _entryCoordinate
     property var    _exitCoordinate
-    property var    _dynamicComponents: [ ]
 
     signal clicked(int sequenceNumber)
 
     function _addVisualElements() {
         var toAdd = [ fullTransectsComponent, entryTransectComponent, exitTransectComponent, entryPointComponent, exitPointComponent,
                      entryArrow1Component, entryArrow2Component, exitArrow1Component, exitArrow2Component ]
-        for (var i=0; i<toAdd.length; i++) {
-            _dynamicComponents.push(toAdd[i].createObject(map))
-            map.addMapItem(_dynamicComponents[_dynamicComponents.length -1])
-        }
+        objMgr.createObjects(toAdd, map, true /* parentObjectIsMap */)
     }
 
     function _destroyVisualElements() {
-        for (var i=0; i<_dynamicComponents.length; i++) {
-            _dynamicComponents[i].destroy()
-        }
-        _dynamicComponents = [ ]
+        objMgr.destroyObjects()
     }
 
     Component.onCompleted: {
@@ -65,6 +58,10 @@ Item {
 
     Component.onDestruction: {
         _destroyVisualElements()
+    }
+
+    QGCDynamicObjectManager {
+        id: objMgr
     }
 
     // Area polygon
