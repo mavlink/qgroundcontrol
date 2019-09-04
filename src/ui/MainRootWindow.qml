@@ -48,7 +48,7 @@ ApplicationWindow {
     property var                activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
     property bool               communicationLost:          activeVehicle ? activeVehicle.connectionLost : false
     property string             formatedMessage:            activeVehicle ? activeVehicle.formatedMessage : ""
-    property real               availableHeight:            mainWindow.height - mainWindow.header.height
+    property real               availableHeight:            mainWindow.height - mainWindow.header.height - mainWindow.footer.height
 
     property var                currentPlanMissionItem:     planMasterControllerPlan ? planMasterControllerPlan.missionController.currentPlanViewItem : null
     property var                planMasterControllerPlan:   null
@@ -266,6 +266,10 @@ ApplicationWindow {
                 }
             }
         }
+    }
+
+    footer: LogReplayStatusBar {
+        visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
 
     //-------------------------------------------------------------------------
