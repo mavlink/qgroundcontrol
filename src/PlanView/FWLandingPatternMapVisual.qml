@@ -11,6 +11,7 @@ import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtLocation       5.3
 import QtPositioning    5.3
+import QtQuick.Layouts  1.11
 
 import QGroundControl               1.0
 import QGroundControl.ScreenTools   1.0
@@ -29,13 +30,28 @@ Item {
     readonly property real _landingWidthMeters:     15
     readonly property real _landingLengthMeters:    100
 
-    property var    _missionItem:           object
+    property var    _missionItem:               object
     property var    _mouseArea
-    property var    _dragAreas:             [ ]
+    property var    _dragAreas:                 [ ]
     property var    _flightPath
-    property real   _landingAreaBearing:    _missionItem.landingCoordinate.azimuthTo(_missionItem.loiterTangentCoordinate)
+    property real   _landingAreaBearing:        _missionItem.landingCoordinate.azimuthTo(_missionItem.loiterTangentCoordinate)
     property var    _loiterPointObject
     property var    _landingPointObject
+    property real   _transitionAltitudeMeters
+    property real   _midSlopeAltitudeMeters
+    property real   _landingAltitudeMeters:     _missionItem.landingAltitude.rawValue
+    property real   _loiterAltitudeMeters:      _missionItem.loiterAltitude.rawValue
+
+    function _calcGlideSlopeHeights() {
+        var adjacent = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterTangentCoordinate)
+        var opposite = _loiterAltitudeMeters - _landingAltitudeMeters
+        var angleRadians = Math.atan(opposite / adjacent)
+        var transitionDistance = _landingLengthMeters / 2
+        var glideSlopeDistance = adjacent - transitionDistance
+
+        _transitionAltitudeMeters = Math.tan(angleRadians) * (transitionDistance)
+        _midSlopeAltitudeMeters = Math.tan(angleRadians) * (transitionDistance + (glideSlopeDistance / 2))
+    }
 
     function hideItemVisuals() {
         objMgr.destroyObjects()
@@ -46,7 +62,9 @@ Item {
             _loiterPointObject = objMgr.createObject(loiterPointComponent, map, true /* parentObjectIsMap */)
             _landingPointObject = objMgr.createObject(landingPointComponent, map, true /* parentObjectIsMap */)
 
-            var rgComponents = [ flightPathComponent, loiterRadiusComponent, landingAreaComponent, landingAreaLabelComponent, glideSlopeComponent, glideSlopeLabelComponent ]
+            var rgComponents = [ flightPathComponent, loiterRadiusComponent, landingAreaComponent, landingAreaLabelComponent,
+                                glideSlopeComponent, glideSlopeLabelComponent, transitionHeightComponent, midGlideSlopeHeightComponent,
+                                approachHeightComponent ]
             objMgr.createObjects(rgComponents, map, true /* parentObjectIsMap */)
         }
     }
@@ -105,6 +123,9 @@ Item {
         hideItemVisuals()
     }
 
+    on_LandingAltitudeMetersChanged:    _calcGlideSlopeHeights()
+    on_LoiterAltitudeMetersChanged:     _calcGlideSlopeHeights()
+
     Connections {
         target: _missionItem
 
@@ -139,8 +160,15 @@ Item {
             }
         }
 
-        onLandingCoordinateChanged:         _setFlightPath()
-        onLoiterTangentCoordinateChanged:   _setFlightPath()
+        onLandingCoordinateChanged: {
+            _calcGlideSlopeHeights()
+            _setFlightPath()
+        }
+
+        onLoiterTangentCoordinateChanged: {
+            _calcGlideSlopeHeights()
+            _setFlightPath()
+        }
     }
 
     // Mouse area to capture landing point coordindate
@@ -295,7 +323,7 @@ Item {
         id: glideSlopeLabelComponent
 
         MapQuickItem {
-            anchorPoint.x:  0
+            anchorPoint.x:  sourceItem._rawBearing > 180 ? sourceItem.contentWidth : 0
             anchorPoint.y:  sourceItem.contentHeight / 2
             z:              QGroundControl.zOrderMapItems
             visible:        _missionItem.isCurrentItem
@@ -320,7 +348,7 @@ Item {
                 }
 
                 transform: Rotation {
-                    origin.x:   0
+                    origin.x:   sourceItem._rawBearing > 180 ? sourceItem.contentWidth : 0
                     origin.y:   glideSlopeLabel.contentHeight / 2
                     angle:      glideSlopeLabel._adjustedBearing
                 }
@@ -399,6 +427,86 @@ Item {
                 target:                             _missionItem
                 onLandingCoordinateChanged:         recalc()
                 onLoiterTangentCoordinateChanged:   recalc()
+            }
+        }
+    }
+
+    Component {
+        id: transitionHeightComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  0
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+
+            sourceItem: HeightIndicator {
+                heightText: QGroundControl.metersToAppSettingsDistanceUnits(_transitionAltitudeMeters).toFixed(1) + " " +
+                            QGroundControl.appSettingsDistanceUnitsString
+            }
+
+            function recalc() {
+                var centeredCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(_landingLengthMeters / 2, _landingAreaBearing)
+                var angleIncrement = _landingAreaBearing > 180 ? -90 : 90
+                coordinate = centeredCoordinate.atDistanceAndAzimuth(_landingWidthMeters, _landingAreaBearing + angleIncrement)
+            }
+
+            Component.onCompleted: recalc()
+
+            Connections {
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+            }
+
+        }
+    }
+
+    Component {
+        id: midGlideSlopeHeightComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  0
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+
+            sourceItem: HeightIndicator {
+                heightText: QGroundControl.metersToAppSettingsDistanceUnits(_midSlopeAltitudeMeters).toFixed(1) + " " +
+                            QGroundControl.appSettingsDistanceUnitsString
+            }
+
+            function recalc() {
+                var transitionCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(_landingLengthMeters / 2, _landingAreaBearing)
+                var halfDistance = transitionCoordinate.distanceTo(_missionItem.loiterTangentCoordinate) / 2
+                var centeredCoordinate = transitionCoordinate.atDistanceAndAzimuth(halfDistance, _landingAreaBearing)
+                var angleIncrement = _landingAreaBearing > 180 ? -90 : 90
+                coordinate = centeredCoordinate.atDistanceAndAzimuth(_landingWidthMeters / 2, _landingAreaBearing + angleIncrement)
+            }
+
+            Component.onCompleted: recalc()
+
+            Connections {
+                target:                             _missionItem
+                onLandingCoordinateChanged:         recalc()
+                onLoiterTangentCoordinateChanged:   recalc()
+            }
+
+        }
+    }
+
+    Component {
+        id: approachHeightComponent
+
+        MapQuickItem {
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  0
+            z:              QGroundControl.zOrderMapItems
+            visible:        _missionItem.isCurrentItem
+            coordinate:     _missionItem.loiterTangentCoordinate
+
+            sourceItem: HeightIndicator {
+                heightText: _missionItem.loiterAltitude.value.toFixed(1) + " " + QGroundControl.appSettingsDistanceUnitsString
             }
         }
     }
