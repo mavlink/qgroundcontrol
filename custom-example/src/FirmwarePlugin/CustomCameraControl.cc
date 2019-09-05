@@ -83,7 +83,8 @@ CustomCameraControl::setPhotoMode()
         qCDebug(CustomCameraLog) << "setPhotoMode()";
         Fact* pFact = getFact(kCAM_MODE);
         if(pFact) {
-            pFact->setRawValue(CAM_MODE_PHOTO);
+            if(vendor() != "NextVision")
+                pFact->setRawValue(CAM_MODE_PHOTO);
             _setCameraMode(CAM_MODE_PHOTO);
         }
     }
