@@ -71,7 +71,6 @@ public:
     int             nfcIndex                    () { return _nfcIndex; }
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
-    QString         firstDeviceToConnect        () { return _firstDeviceToConnect; }
     bool            videoCanRestart             () { return !_connectedDeviceValid || !_connectedDevice.isEmpty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     void            setStatusMessage            (PairingStatus status, QString statusStr) { emit setPairingStatus(status, statusStr); }
@@ -144,8 +143,11 @@ private:
     bool                    _firstBoot = true;
     bool                    _connectedDeviceValid = false;
     QString                 _connectedDevice{};
-    QString                 _firstDeviceToConnect{};
+    QString                 _deviceToConnect{};
     QStringList             _deviceList;
+    QTimer                  _reconnectTimer;
+    QTimer                  _uploadTimer;
+
     QMap<QString, LinkInterface*> _connectedDevices;
 
     void                    _parsePairingJsonFile       ();
@@ -169,6 +171,7 @@ private:
     void                    _setLastConnectedDevice     (QString name);
     void                    _createUDPLink              (const QString name, quint16 port);
     void                    _removeUDPLink              (const QString name);
+    void                    _linkActiveChanged          (LinkInterface* link, bool active, int vehicleID);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;

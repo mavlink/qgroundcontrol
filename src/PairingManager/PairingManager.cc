@@ -33,6 +33,10 @@ PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     connect(this, &PairingManager::setPairingStatus, this, &PairingManager::_setPairingStatus);
     connect(this, &PairingManager::startUpload, this, &PairingManager::_startUpload);
     connect(this, &PairingManager::startCommand, this, &PairingManager::_startCommand);
+    connect(&_uploadTimer, &QTimer::timeout, this, &PairingManager::_startUploadRequest);
+    _uploadTimer.setSingleShot(true);
+    connect(&_reconnectTimer, &QTimer::timeout, this, &PairingManager::autoConnect);
+    _reconnectTimer.setSingleShot(true);
     _readPairingConfig();
 }
 
@@ -71,9 +75,15 @@ QStringList
 PairingManager::connectedDeviceNameList()
 {
     QStringList list;
-    foreach (auto a, _connectedDevices.keys()) {
-        list.append(a);
+
+    QMapIterator<QString, LinkInterface*> i(_connectedDevices);
+    while (i.hasNext()) {
+        i.next();
+        if (i.value()->active()) {
+            list.append(i.key());
+        }
     }
+
     return list;
 }
 
@@ -81,9 +91,10 @@ PairingManager::connectedDeviceNameList()
 QStringList
 PairingManager::pairedDeviceNameList()
 {
+    QStringList connectedDevs = connectedDeviceNameList();
     QStringList list;
     foreach (auto a, _deviceList) {
-        if (!_connectedDevices.contains(a)) {
+        if (!connectedDevs.contains(a)) {
             list.append(a);
         }
     }
@@ -92,16 +103,37 @@ PairingManager::pairedDeviceNameList()
 
 //-----------------------------------------------------------------------------
 void
+PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicleID)
+{
+    Q_UNUSED(vehicleID);
+    if (!active) {
+        QMapIterator<QString, LinkInterface*> i(_connectedDevices);
+        while (i.hasNext()) {
+            i.next();
+            if (i.value() == link) {
+                _deviceToConnect = i.key();
+                _reconnectTimer.start(5000);
+            }
+        }
+    } else {
+        _reconnectTimer.stop();
+        _deviceToConnect = "";
+    }
+    emit connectedListChanged();
+    emit pairedListChanged();
+}
+
+//-----------------------------------------------------------------------------
+void
 PairingManager::_createUDPLink(const QString name, quint16 port)
 {
-    if (_connectedDevices.contains(name)) {
-        return;
-    }
+    _removeUDPLink(name);
     UDPConfiguration* udpConfig = new UDPConfiguration(name);
     udpConfig->setLocalPort(port);
     udpConfig->setDynamic(true);
     SharedLinkConfigurationPointer linkConfig = _toolbox->linkManager()->addConfiguration(udpConfig);
     LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
+    connect(link, &LinkInterface::activeChanged, this, &PairingManager::_linkActiveChanged);
     _connectedDevices[name] = link;
     emit connectedListChanged();
     emit pairedListChanged();
@@ -214,6 +246,9 @@ PairingManager::_uploadFinished()
                     setPairingStatus(PairingRejected, tr("Pairing Rejected"));
                     qCDebug(PairingManagerLog) << "Pairing error: " << str;
                 }
+            } else if(_uploadURL.contains("connect")) {
+                qCDebug(PairingManagerLog) << "Connect error: " + reply->errorString();
+                _uploadTimer.start(3000);
             } else {
                 if(++_pairRetryCount > 3) {
                     qCDebug(PairingManagerLog) << "Giving up";
@@ -221,8 +256,8 @@ PairingManager::_uploadFinished()
                     _uploadManager->deleteLater();
                     _uploadManager = nullptr;
                 } else {
-                    qCDebug(PairingManagerLog) << "Upload error: " + reply->errorString();
-                    _startUploadRequest();
+                    qCDebug(PairingManagerLog) << "Pairing error: " + reply->errorString();
+                    _uploadTimer.start(3000);
                 }
             }
         }
@@ -327,7 +362,7 @@ PairingManager::_readPairingConfig()
     }
 
     if (jsonObj.contains("CONNECTED_DEVICE")) {
-        _firstDeviceToConnect = jsonObj.value("CONNECTED_DEVICE").toString();
+        _deviceToConnect = jsonObj.value("CONNECTED_DEVICE").toString();
     }
     _encryptionKey = jsonObj.value("EK").toString();
 }
@@ -335,10 +370,7 @@ PairingManager::_readPairingConfig()
 void
 PairingManager::autoConnect()
 {
-    if (!_firstDeviceToConnect.isEmpty()) {
-        connectToPairedDevice(_firstDeviceToConnect);
-        _firstDeviceToConnect = "";
-    }
+    connectToPairedDevice(_deviceToConnect);
 }
 
 //-----------------------------------------------------------------------------
