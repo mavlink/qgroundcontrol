@@ -23,6 +23,7 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property var vehicle    ///< Vehicle associated with this item
 
     property var    _missionItem:       object
     property var    _itemVisual
@@ -104,7 +105,7 @@ Item {
 
         MissionItemIndicator {
             coordinate:     _missionItem.coordinate
-            visible:        _missionItem.specifiesCoordinate
+            visible:        _missionItem.specifiesCoordinate && (_missionItem.homePosition || map.planView || _missionItem.isCurrentItem || (vehicle.flightMode === vehicle.pauseFlightMode && vehicle.armed))
             z:              QGroundControl.zOrderMapItems
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber

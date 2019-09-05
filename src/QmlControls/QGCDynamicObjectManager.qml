@@ -13,6 +13,9 @@ Item {
 
     function createObject(sourceComponent, parentObject, parentObjectIsMap) {
         var obj = sourceComponent.createObject(parentObject)
+        if (obj.status === Component.Error) {
+            console.log(obj.errorString())
+        }
         rgDynamicObjects.push(obj)
         if (arguments.length < 3) {
             parentObjectIsMap = false
