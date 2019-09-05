@@ -19,6 +19,7 @@ FlightModeMenu          1.0 FlightModeMenu.qml
 GeoFenceEditor          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
 HackFileDialog          1.0 HackFileDialog.qml
+HeightIndicator         1.0 HeightIndicator.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 LogReplayStatusBar      1.0 LogReplayStatusBar.qml
