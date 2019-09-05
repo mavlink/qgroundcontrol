@@ -144,7 +144,7 @@ ApplicationWindow {
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
     function showComponentDialog(component, title, charWidth, buttons) {
-        var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ScreenTools.defaultFontPixelWidth * charWidth
+        var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ((ScreenTools.defaultFontPixelWidth * charWidth) > (mainWindow.width * 0.75)) ? ScreenTools.defaultFontPixelWidth * charWidth : mainWindow.width * 0.75
         mainWindowDialog.width = dialogWidth
         mainWindowDialog.dialogComponent = component
         mainWindowDialog.dialogTitle = title
@@ -180,6 +180,14 @@ ApplicationWindow {
         }
         onClosed: {
             dlgLoader.source = ""
+        }
+        InputPanel {
+            visible: Qt.inputMethod.visible
+            active: Qt.inputMethod.visible
+
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
         }
     }
 
@@ -277,8 +285,8 @@ ApplicationWindow {
     InputPanel {
         id: inputPanel
 
-        visible: Qt.inputMethod.visible
-        active: Qt.inputMethod.visible
+        visible: Qt.inputMethod.visible && !mainWindowDialog.visible
+        active: Qt.inputMethod.visible && !mainWindowDialog.visible
 
         anchors.bottom: parent.bottom
         anchors.left: parent.left
