@@ -342,8 +342,10 @@ void GeoFenceController::_setReturnPointFromManager(QGeoCoordinate breachReturnP
 void GeoFenceController::_managerLoadComplete(void)
 {
     // Fly view always reloads on _loadComplete
-    // Plan view only reloads on _loadComplete if specifically requested
-    if (_flyView || _itemsRequested) {
+    // Plan view only reloads if:
+    //  - Load was specifically requested
+    //  - There is no current Plan
+    if (_flyView || _itemsRequested || isEmpty()) {
         _setReturnPointFromManager(_geoFenceManager->breachReturnPoint());
         _setFenceFromManager(_geoFenceManager->polygons(), _geoFenceManager->circles());
         setDirty(false);
@@ -518,4 +520,10 @@ void GeoFenceController::_parametersReady(void)
     _px4ParamCircularFenceFact = _managerVehicle->parameterManager()->getParameter(FactSystem::defaultComponentId, _px4ParamCircularFence);
     connect(_px4ParamCircularFenceFact, &Fact::rawValueChanged, this, &GeoFenceController::paramCircularFenceChanged);
     emit paramCircularFenceChanged();
+}
+
+bool GeoFenceController::isEmpty(void) const
+{
+    return _polygons.count() == 0 && _circles.count() == 0 && !_breachReturnPoint.isValid();
+
 }

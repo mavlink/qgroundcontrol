@@ -54,7 +54,8 @@ public:
     QString             editorQml               (void) const;
     QObject*            currentRallyPoint       (void) const { return _currentRallyPoint; }
 
-    void setCurrentRallyPoint(QObject* rallyPoint);
+    void setCurrentRallyPoint   (QObject* rallyPoint);
+    bool isEmpty                (void) const;
 
 signals:
     void currentRallyPointChanged(QObject* rallyPoint);
