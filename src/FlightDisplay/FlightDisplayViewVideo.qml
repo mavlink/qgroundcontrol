@@ -33,7 +33,7 @@ Item {
     property var    _camera:            _isCamera ? _dynamicCameras.cameras.get(_curCameraIndex) : null
     property bool   _hasZoom:           _camera && _camera.hasZoom
     property int    _fitMode:           QGroundControl.settingsManager.videoSettings.videoFit.rawValue
-
+    property bool   _thermaIsMain:      false
     property double _thermalHeightFactor: 0.85 //-- TODO
 
     Rectangle {
@@ -56,6 +56,7 @@ Item {
         }
     }
     Rectangle {
+        id: _mainRectItem
         anchors.fill:   parent
         color:          "black"
         visible:        _videoReceiver && _videoReceiver.videoRunning
@@ -75,15 +76,25 @@ Item {
             //-- Fit Width
             return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
         }
+
+        onWidthChanged: toggleMainVideo()
+        onHeightChanged: toggleMainVideo()
+
         //-- Main Video
+        Item {
+            id:             videoItem
+            height:         parent.height
+            width:          parent.width
+            x: 0
+            y: 0
         QGCVideoBackground {
-            id:             videoContent
-            height:         parent.getHeight()
-            width:          parent.getWidth()
-            anchors.centerIn: parent
-            receiver:       _videoReceiver
-            display:        _videoReceiver && _videoReceiver.videoSurface
-            visible:        _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+            id:                 videoContent
+            anchors.centerIn:   parent
+            width:              parent.width
+            height:             parent.height
+            receiver:           _videoReceiver
+            display:            _videoReceiver && _videoReceiver.videoSurface
+            visible:            _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
             Connections {
                 target:         _videoReceiver
                 onImageFileChanged: {
@@ -123,43 +134,72 @@ Item {
                 visible: _showGrid && !QGroundControl.videoManager.fullScreen
             }
         }
+        }
+
+        function setPIPForItems(mainView, previewItem) {
+            if(mainView && _mainRectItem) {
+                mainView.z = _mainRectItem.z + 1
+                mainView.height = _mainRectItem.getHeight()
+                mainView.width = _mainRectItem.getWidth()
+                mainView.x = 0
+                mainView.y = 0
+            }
+            if(previewItem && _mainRectItem) {
+                if(mainView)
+                    previewItem.z = mainView.z + 1
+
+                previewItem.height = _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_FULL ? _mainRectItem.getHeight() : (_camera.thermalMode === QGCCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : _mainRectItem.getHeight() * _thermalHeightFactor)) : 0
+                previewItem.width = previewItem.height * QGroundControl.videoManager.thermalAspectRatio
+
+                if(_camera && _camera.thermalMode === QGCCameraControl.THERMAL_PIP) {
+                    previewItem.anchors.centerIn    = undefined
+                    previewItem.anchors.top         = _mainRectItem.top
+                    previewItem.anchors.topMargin   = mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+                    previewItem.anchors.left        = _mainRectItem.left
+                    previewItem.anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 12
+                } else {
+                    previewItem.anchors.top         = undefined
+                    previewItem.anchors.topMargin   = undefined
+                    previewItem.anchors.left        = undefined
+                    previewItem.anchors.leftMargin  = undefined
+                    previewItem.anchors.centerIn    = _mainRectItem
+                }
+            }
+        }
+
+        function toggleMainVideo() {
+            setPIPForItems(_thermaIsMain ? thermalItem : videoItem, _thermaIsMain ? videoItem : thermalItem);
+        }
+
         //-- Thermal Image
         Item {
             id:                 thermalItem
-            width:              height * QGroundControl.videoManager.thermalAspectRatio
-            height:             _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_FULL ? parent.height : (_camera.thermalMode === QGCCameraControl.THERMAL_PIP ? ScreenTools.defaultFontPixelHeight * 12 : parent.height * _thermalHeightFactor)) : 0
             anchors.centerIn:   parent
             visible:            QGroundControl.videoManager.hasThermal && _camera.thermalMode !== QGCCameraControl.THERMAL_OFF
-            function pipOrNot() {
-                if(_camera) {
-                    if(_camera.thermalMode === QGCCameraControl.THERMAL_PIP) {
-                        anchors.centerIn    = undefined
-                        anchors.top         = parent.top
-                        anchors.topMargin   = mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
-                        anchors.left        = parent.left
-                        anchors.leftMargin  = ScreenTools.defaultFontPixelWidth * 12
-                    } else {
-                        anchors.top         = undefined
-                        anchors.topMargin   = undefined
-                        anchors.left        = undefined
-                        anchors.leftMargin  = undefined
-                        anchors.centerIn    = parent
-                    }
-                }
-            }
+
             Connections {
                 target:                 _camera
-                onThermalModeChanged:   thermalItem.pipOrNot()
+                onThermalModeChanged:   _mainRectItem.toggleMainVideo()
             }
             onVisibleChanged: {
-                thermalItem.pipOrNot()
+                _mainRectItem.toggleMainVideo()
             }
             QGCVideoBackground {
-                id:             thermalVideo
-                anchors.fill:   parent
-                receiver:       QGroundControl.videoManager.thermalVideoReceiver
-                display:        QGroundControl.videoManager.thermalVideoReceiver ? QGroundControl.videoManager.thermalVideoReceiver.videoSurface : null
-                opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+                id:                 thermalVideo
+                anchors.centerIn:   parent
+                width:              parent.width
+                height:             parent.height
+                receiver:           QGroundControl.videoManager.thermalVideoReceiver
+                display:            QGroundControl.videoManager.thermalVideoReceiver ? QGroundControl.videoManager.thermalVideoReceiver.videoSurface : null
+                opacity:            _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
+            }
+            //-- swtich
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    _thermaIsMain = !_thermaIsMain
+                    _mainRectItem.toggleMainVideo()
+                }
             }
         }
         //-- Full screen toggle
