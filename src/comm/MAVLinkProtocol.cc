@@ -170,21 +170,23 @@ void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
     uint8_t bytes_time[sizeof(quint64)];
 
     Q_UNUSED(link);
+    if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
 
-    quint64 time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch() * 1000);
+        quint64 time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch() * 1000);
 
-    qToBigEndian(time,bytes_time);
+        qToBigEndian(time,bytes_time);
 
-    b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
+        b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
 
-    int len = b.count(); 
+        int len = b.count();
 
-    if(_tempLogFile.write(b) != len)
-    {
-        // If there's an error logging data, raise an alert and stop logging.
-        emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
-        _stopLogging();
-        _logSuspendError = true;
+        if(_tempLogFile.write(b) != len)
+        {
+            // If there's an error logging data, raise an alert and stop logging.
+            emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
+            _stopLogging();
+            _logSuspendError = true;
+        }
     }
 
 }
