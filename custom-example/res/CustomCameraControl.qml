@@ -131,7 +131,7 @@ Item {
             id:             thermalBackgroundRect
             width:          buttonsRow.width  + (ScreenTools.defaultFontPixelWidth  * 4)
             height:         buttonsRow.height + (ScreenTools.defaultFontPixelHeight)
-            visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact || _camera.vendor === "NextVision"
+            visible:        QGroundControl.videoManager.hasThermal || _irPaletteFact || (_camera && _camera.vendor === "NextVision")
             anchors.horizontalCenter: parent.horizontalCenter
 
             ButtonGroup {
@@ -159,7 +159,7 @@ Item {
                     id:                 thermalPip
                     width:              buttonSize
                     height:             buttonSize
-                    visible:            _camera.vendor !== "NextVision"
+                    visible:            _camera && _camera.vendor !== "NextVision"
                     iconSource:        "/custom/img/thermal-pip.svg"
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_PIP
@@ -352,6 +352,7 @@ Item {
                                     } else {
                                         if(!_fullSD) {
                                             _camera.takePhoto()
+                                            photoCountLabel._nvPhotoCount += 1;
                                         }
                                     }
                                 }
@@ -427,8 +428,11 @@ Item {
                         font.pointSize:     ScreenTools.smallFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
                     }
+
                     QGCLabel {
-                        text:               activeVehicle && _cameraPhotoMode ? ('00000' + activeVehicle.cameraTriggerPoints.count).slice(-5) : "00000"
+                        id: photoCountLabel
+                        property int _nvPhotoCount: 0
+                        text:               activeVehicle && _cameraPhotoMode ? ('00000' + (_camera && _camera.vendor === "NextVision" ? _nvPhotoCount : activeVehicle.cameraTriggerPoints.count)).slice(-5) : "00000"
                         visible:            _cameraPhotoMode
                         font.pointSize:     ScreenTools.smallFontPointSize
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -832,7 +836,8 @@ Item {
                             value:          _camera ? _camera.thermalOpacity : 0
                             live:           true
                             onValueChanged: {
-                                _camera.thermalOpacity = value
+                                if(_camera)
+                                    _camera.thermalOpacity = value
                             }
                         }
                     }
