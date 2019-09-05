@@ -196,6 +196,8 @@ public:
     int  batteryChangePoint         (void) const { return _missionFlightStatus.batteryChangePoint; }    ///< -1 for not supported, 0 for not needed
     int  batteriesRequired          (void) const { return _missionFlightStatus.batteriesRequired; }     ///< -1 for not supported
 
+    bool isEmpty                    (void) const;
+
     // These are the names shown in the UI for the pattern items. They are public so custom builds can remove the ones
     // they don't want through the QGCCorePlugin::
     static const QString patternFWLandingName;

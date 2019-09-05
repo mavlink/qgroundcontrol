@@ -84,6 +84,7 @@ public:
     QString     currentPlanFile (void) const { return _currentPlanFile; }
     QStringList loadNameFilters (void) const;
     QStringList saveNameFilters (void) const;
+    bool        isEmpty         (void) const;
 
     QJsonDocument saveToJson    ();
 

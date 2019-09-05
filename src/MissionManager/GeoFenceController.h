@@ -82,7 +82,8 @@ public:
     QmlObjectListModel* circles                 (void) { return &_circles; }
     QGeoCoordinate      breachReturnPoint       (void) const { return _breachReturnPoint; }
 
-    void setBreachReturnPoint(const QGeoCoordinate& breachReturnPoint);
+    void setBreachReturnPoint   (const QGeoCoordinate& breachReturnPoint);
+    bool isEmpty                (void) const;
 
 signals:
     void breachReturnPointChanged       (QGeoCoordinate breachReturnPoint);
