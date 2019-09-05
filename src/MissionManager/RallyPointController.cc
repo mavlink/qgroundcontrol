@@ -202,8 +202,10 @@ QString RallyPointController::editorQml(void) const
 void RallyPointController::_managerLoadComplete(void)
 {
     // Fly view always reloads on _loadComplete
-    // Plan view only reloads on _loadComplete if specifically requested
-    if (_flyView || _itemsRequested) {
+    // Plan view only reloads if:
+    //  - Load was specifically requested
+    //  - There is no current Plan
+    if (_flyView || _itemsRequested || isEmpty()) {
         _points.clearAndDeleteContents();
         QObjectList pointList;
         for (int i=0; i<_rallyPointManager->points().count(); i++) {
@@ -317,4 +319,9 @@ bool RallyPointController::showPlanFromManagerVehicle (void)
             return false;
         }
     }
+}
+
+bool RallyPointController::isEmpty(void) const
+{
+    return _points.count() == 0;
 }
