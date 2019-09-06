@@ -319,18 +319,19 @@ PairingManager::_parsePairingJson(QString jsonEnc)
         _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(true);
         _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
         if (_remotePairingMap.contains("AIP")) {
-            _toolbox->microhardManager()->setRemoteIPAddr(_remotePairingMap["AIP"].toString());
+            //_toolbox->microhardManager()->setRemoteIPAddr(_remotePairingMap["AIP"].toString());
         }
         if (_remotePairingMap.contains("CU")) {
-            _toolbox->microhardManager()->setConfigUserName(_remotePairingMap["CU"].toString());
+            //_toolbox->microhardManager()->setConfigUserName(_remotePairingMap["CU"].toString());
         }
         if (_remotePairingMap.contains("CP")) {
-            _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
+            //_toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
         }
         if (_remotePairingMap.contains("EK") && !connecting) {
             _toolbox->microhardManager()->setEncryptionKey(_remotePairingMap["EK"].toString());
         }
-        _toolbox->microhardManager()->updateSettings();
+
+        //_toolbox->microhardManager()->updateSettings();
         emit startUpload(pairURL, jsonDoc);
     }
 }
