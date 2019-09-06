@@ -23,26 +23,26 @@ Item {
     property var    map                 ///< Map control to show items on
     property bool   largeMapView        ///< true: map takes up entire view, false: map is in small window
     property var    masterController    ///< Reference to PlanMasterController for vehicle
-    property bool   isActiveVehicle     ///< true: vehicle associated with plan is active, false: in-active
+    property var    vehicle             ///< Vehicle associated with these items
 
     property var    _map:                       map
+    property var    _vehicle:                   vehicle
     property var    _missionController:         masterController.missionController
     property var    _geoFenceController:        masterController.geoFenceController
     property var    _rallyPointController:      masterController.rallyPointController
     property var    _missionLineViewComponent
+    property bool   _isActiveVehicle:           vehicle.active
+
+    property string fmode: vehicle.flightMode
 
     // Add the mission item visuals to the map
     Repeater {
-        model: largeMapView ? _missionController.visualItems : 0
+        model: _isActiveVehicle && largeMapView ? _missionController.visualItems : 0
 
         delegate: MissionItemMapVisual {
             map:        _map
-            onClicked: {
-                if (isActiveVehicle) {
-                    // Only active vehicle supports click to change current mission item
-                    guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
-                }
-            }
+            vehicle:    _vehicle
+            onClicked:  guidedActionsController.confirmAction(guidedActionsController.actionSetWaypoint, Math.max(object.sequenceNumber, 1))
         }
     }
 

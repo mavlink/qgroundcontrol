@@ -233,7 +233,7 @@ FlightMap {
             map:                flightMap
             largeMapView:       mainIsMap
             masterController:   masterController
-            isActiveVehicle:    _vehicle.active
+            vehicle:            _vehicle
 
             property var _vehicle: object
 
