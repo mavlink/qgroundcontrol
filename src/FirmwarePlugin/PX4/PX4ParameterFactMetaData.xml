@@ -8479,6 +8479,7 @@ is less than 50% of this value</short_desc>
         <value code="32">Pitch 9°, Yaw 180°</value>
         <value code="33">Pitch 45°</value>
         <value code="34">Pitch 315°</value>
+        <value code="35">Roll 90°, Yaw 270°</value>
       </values>
     </parameter>
     <parameter default="0.0" name="SENS_BOARD_X_OFF" type="FLOAT">
