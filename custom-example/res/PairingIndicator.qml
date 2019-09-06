@@ -495,7 +495,7 @@ Item {
                                 standardButtons:    StandardButton.Yes | StandardButton.No
                                 onNo:               disconnectPrompt.close()
                                 onYes: {
-                                    QGroundControl.pairingManager.disconnectPairedDevice(modelData)
+                                    QGroundControl.pairingManager.disconnectDevice(modelData)
                                     disconnectPrompt.close()
                                 }
                             }
