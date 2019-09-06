@@ -1138,7 +1138,6 @@ void MissionController::_recalcWaypointLines(void)
 
         if (item->specifiesCoordinate() && !item->isStandaloneCoordinate()) {
             if (lastCoordinateItem != _settingsItem || (homePositionValid && linkStartToHome)) {
-#if 1
                 // Direction arrows are added to the first segment and every 5 segments in the middle.
                 bool addDirectionArrow = false;
                 if (firstCoordinateItem || !lastCoordinateItem->isSimpleItem() || !item->isSimpleItem()) {
@@ -1153,19 +1152,6 @@ void MissionController::_recalcWaypointLines(void)
                 if (!_flyView || addDirectionArrow) {
                     _directionArrows.append(_addWaypointLineSegment(old_table, lastSegmentVisualItemPair));
                 }
-#else
-                if (!_flyView) {
-                    VisualItemPair pair(lastCoordinateItem, item);
-                    lastCoordVector = _addWaypointLineSegment(old_table, pair);
-                    segmentCount++;
-                    if (firstCoordinateItem || !lastCoordinateItem->isSimpleItem() || !item->isSimpleItem()) {
-                        _directionArrows.append(lastCoordVector);
-                    } else if (segmentCount > 5) {
-                        segmentCount = 0;
-                        _directionArrows.append(lastCoordVector);
-                    }
-                }
-#endif
             }
             firstCoordinateItem = false;
             _waypointPath.append(QVariant::fromValue(item->coordinate()));
