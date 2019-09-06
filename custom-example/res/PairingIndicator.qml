@@ -414,7 +414,6 @@ Item {
                 id:                     connectionCol
                 spacing:                _contentSpacing
                 anchors.centerIn:       parent
-                Item { width: 1; height: 1; }
                 QGCLabel {
                     text:               kPairingManager
                     font.family:        ScreenTools.demiboldFontFamily
@@ -422,11 +421,10 @@ Item {
                     Layout.fillWidth:   true
                 }
                 Rectangle {
-                    width:              _contentWidth
+                    Layout.fillWidth:   true
                     height:             1
                     color:              qgcPal.globalTheme !== QGCPalette.Light ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
                 }
-                Item { width: 1; height: 1; }
 
                 //-----------------------------------------------------------
                 // Connected devices
@@ -436,7 +434,6 @@ Item {
                     visible:            _connectedVisible
                     columnSpacing:      ScreenTools.defaultFontPointSize
                     rowSpacing:         ScreenTools.defaultFontPointSize * 0.25
-                    Layout.fillWidth:   true
                     property var _connectedModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.connectedDeviceNameList : []
                     property bool _connectedVisible: QGroundControl.pairingManager ? (QGroundControl.pairingManager.connectedDeviceNameList.length > 0 && !cancelButton.visible) : false
                     QGCLabel {
@@ -450,14 +447,14 @@ Item {
                         Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
                         Layout.fillWidth:   true
                     }
-                    Item { width: 1; height: 1; Layout.row: 1; Layout.column: 0; Layout.columnSpan: 4}
 
                     Repeater {
-                        model:                  parent._connectedModel
+                        model: parent._connectedModel
                         delegate: QGCColoredImage {
                             Layout.row:             2 + index
                             Layout.column:          0
-                            Layout.fillWidth:       true
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelHeight
+                            Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight
                             height:                 ScreenTools.defaultFontPixelHeight
                             width:                  height
                             smooth:                 true
@@ -480,7 +477,7 @@ Item {
                         }
                     }
                     Repeater {
-                        model:                  parent._connectedModel
+                        model: parent._connectedModel
                         delegate: QGCButton {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 5
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
@@ -509,9 +506,8 @@ Item {
                         delegate: Item {
                             Layout.row:             2 + index
                             Layout.column:          3
-                            Layout.fillWidth:       true
-                            height:                 ScreenTools.defaultFontPixelHeight
-                            width:                  height
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth
+                            Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight
                         }
                     }
                 } // GridLayout
@@ -525,30 +521,30 @@ Item {
                     visible:            _availableVisible
                     columnSpacing:      ScreenTools.defaultFontPointSize
                     rowSpacing:         ScreenTools.defaultFontPointSize * 0.25
-                    Layout.fillWidth:   true
                     property var _pairModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.pairedDeviceNameList : []
                     property bool _availableVisible: QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
-                    property real _baseIndex: 2 + _connectedLayout._connectedModel ? _connectedLayout._connectedModel.len : 0
+                    property real _baseIndex: 2 + (_connectedLayout._connectedModel ? _connectedLayout._connectedModel.length : 0)
 
                     QGCLabel {
                         text:               qsTr("Available Devices")
                         visible:            parent._availableVisible
                         font.family:        ScreenTools.demiboldFontFamily
                         font.pointSize:     ScreenTools.mediumFontPointSize
-                        Layout.row:         0 + parent._baseIndex
+                        Layout.row:         parent._baseIndex
                         Layout.column:      0
                         Layout.columnSpan:  4
                         Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
                         Layout.fillWidth:   true
                     }
-                    Item { width: 1; height: 1; Layout.row: 1; Layout.column: 0; Layout.columnSpan: 4}
+                    Item { width: 1; height: 1; Layout.row: parent._baseIndex + 1; Layout.column: 0; Layout.columnSpan: 4}
 
                     Repeater {
-                        model:                  parent._pairModel
+                        model: parent._pairModel
                         delegate: QGCColoredImage {
                             Layout.row:             2 + parent._baseIndex + index
                             Layout.column:          0
-                            Layout.fillWidth:       true
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth
+                            Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight
                             height:                 ScreenTools.defaultFontPixelHeight
                             width:                  height
                             smooth:                 true
@@ -561,17 +557,16 @@ Item {
                         }
                     }
                     Repeater {
-                        model:                  parent._pairModel
+                        model: parent._pairModel
                         delegate: QGCLabel {
                             text:               modelData
                             Layout.row:         2 + parent._baseIndex + index
                             Layout.column:      1
-                            Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
                             Layout.fillWidth:   true
                         }
                     }
                     Repeater {
-                        model:                  parent._pairModel
+                        model: parent._pairModel
                         delegate: QGCButton {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 5
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
@@ -586,11 +581,12 @@ Item {
                         }
                     }
                     Repeater {
-                        model:                  parent._pairModel
+                        model: parent._pairModel
                         delegate: QGCColoredImage {
                             Layout.row:             2 + parent._baseIndex + index
                             Layout.column:          3
-                            Layout.fillWidth:       true
+                            Layout.minimumWidth:    ScreenTools.defaultFontPixelWidth
+                            Layout.minimumHeight:   ScreenTools.defaultFontPixelHeight
                             height:                 ScreenTools.defaultFontPixelHeight
                             width:                  height
                             smooth:                 true
@@ -600,6 +596,7 @@ Item {
                             source:                 "/custom/img/PairingDelete.svg"
                             sourceSize.height:      height
                             color:                  qgcPal.colorRed
+
                             MouseArea {
                                 anchors.fill:       parent
                                 onClicked: {
@@ -623,6 +620,7 @@ Item {
                 } // GridLayout
 
                 Item { width: 1; height: _contentSpacing; }
+
                 QGCButton {
                     width:              _contentWidth
                     text:               qsTr("Done")
