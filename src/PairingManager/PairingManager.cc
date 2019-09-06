@@ -720,8 +720,12 @@ PairingManager::stopPairing()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::disconnectPairedDevice(const QString& name) {
+PairingManager::disconnectDevice(const QString& name) {
     _removeUDPLink(name);
+    if (_connectedDevice == name) {
+        _setLastConnectedDevice("");
+        _toolbox->videoManager()->stopVideo();
+    }
 }
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
