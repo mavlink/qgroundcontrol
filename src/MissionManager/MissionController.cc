@@ -1101,7 +1101,7 @@ CoordinateVector* MissionController::_addWaypointLineSegment(CoordVectHashTable&
 void MissionController::_recalcWaypointLines(void)
 {
     int                 segmentCount = 0;
-    CoordinateVector*   lastCoordVector = nullptr;
+    VisualItemPair      lastSegmentVisualItemPair;
     bool                firstCoordinateItem =   true;
     VisualMissionItem*  lastCoordinateItem =    qobject_cast<VisualMissionItem*>(_visualItems->get(0));
 
@@ -1138,16 +1138,19 @@ void MissionController::_recalcWaypointLines(void)
 
         if (item->specifiesCoordinate() && !item->isStandaloneCoordinate()) {
             if (lastCoordinateItem != _settingsItem || (homePositionValid && linkStartToHome)) {
-                if (!_flyView) {
-                    VisualItemPair pair(lastCoordinateItem, item);
-                    lastCoordVector = _addWaypointLineSegment(old_table, pair);
-                    segmentCount++;
-                    if (firstCoordinateItem || !lastCoordinateItem->isSimpleItem() || !item->isSimpleItem()) {
-                        _directionArrows.append(lastCoordVector);
-                    } else if (segmentCount > 5) {
-                        segmentCount = 0;
-                        _directionArrows.append(lastCoordVector);
-                    }
+                // Direction arrows are added to the first segment and every 5 segments in the middle.
+                bool addDirectionArrow = false;
+                if (firstCoordinateItem || !lastCoordinateItem->isSimpleItem() || !item->isSimpleItem()) {
+                    addDirectionArrow = true;
+                } else if (segmentCount > 5) {
+                    segmentCount = 0;
+                    addDirectionArrow = true;
+                }
+                segmentCount++;
+
+                lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItem, item);
+                if (!_flyView || addDirectionArrow) {
+                    _directionArrows.append(_addWaypointLineSegment(old_table, lastSegmentVisualItemPair));
                 }
             }
             firstCoordinateItem = false;
@@ -1161,15 +1164,36 @@ void MissionController::_recalcWaypointLines(void)
     }
 
     if (linkEndToHome && lastCoordinateItem != _settingsItem && homePositionValid) {
-        if (!_flyView) {
-            VisualItemPair pair(lastCoordinateItem, _settingsItem);
-            lastCoordVector = _addWaypointLineSegment(old_table, pair);
-        } else {
+        lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItem, _settingsItem);
+        if (_flyView) {
             _waypointPath.append(QVariant::fromValue(_settingsItem->coordinate()));
         }
+        _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
     }
 
-    {
+    // Add direction arrow to last segment
+    if (lastSegmentVisualItemPair.first) {
+        CoordinateVector* coordVector = nullptr;
+
+        // The pair may not be in the hash, this can happen in the fly view where only segments with arrows on them are added to ahsh.
+        // check for that first and add if needed
+
+        if (_linesTable.contains(lastSegmentVisualItemPair)) {
+            // Pair exists in the new table already just reuse it
+             coordVector = _linesTable[lastSegmentVisualItemPair];
+        } else if (old_table.contains(lastSegmentVisualItemPair)) {
+            // Pair already exists in old table, pull from old to new and reuse
+            _linesTable[lastSegmentVisualItemPair] = coordVector = old_table.take(lastSegmentVisualItemPair);
+        } else {
+            // Create a new segment. Since this is the fly view there is no need to wire change signals.
+            coordVector = new CoordinateVector(lastSegmentVisualItemPair.first->isSimpleItem() ? lastSegmentVisualItemPair.first->coordinate() : lastSegmentVisualItemPair.first->exitCoordinate(), lastSegmentVisualItemPair.second->coordinate(), this);
+            _linesTable[lastSegmentVisualItemPair] = coordVector;
+        }
+
+        _directionArrows.append(coordVector);
+    }
+
+    if (!_flyView) {
         // Create a temporary QObjectList and replace the model data
         QObjectList objs;
         objs.reserve(_linesTable.count());
@@ -1183,10 +1207,6 @@ void MissionController::_recalcWaypointLines(void)
 
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(old_table);
-
-    if (lastCoordVector) {
-        _directionArrows.append(lastCoordVector);
-    }
 
     _recalcMissionFlightStatus();
 
