@@ -77,8 +77,8 @@ Item {
             return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
         }
 
-        onWidthChanged: toggleMainVideo()
-        onHeightChanged: toggleMainVideo()
+        onWidthChanged: layoutPIPItems()
+        onHeightChanged: layoutPIPItems()
 
         //-- Main Video
         Item {
@@ -167,8 +167,9 @@ Item {
             }
         }
 
-        function toggleMainVideo() {
-            setPIPForItems(_thermaIsMain ? thermalItem : videoItem, _thermaIsMain ? videoItem : thermalItem);
+        function layoutPIPItems() {
+            var doThermalAsMain = _thermaIsMain && QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_PIP
+            setPIPForItems(doThermalAsMain ? thermalItem : videoItem, doThermalAsMain ? videoItem : thermalItem);
         }
 
         //-- Thermal Image
@@ -179,10 +180,10 @@ Item {
 
             Connections {
                 target:                 _camera
-                onThermalModeChanged:   _mainRectItem.toggleMainVideo()
+                onThermalModeChanged:   _mainRectItem.layoutPIPItems()
             }
             onVisibleChanged: {
-                _mainRectItem.toggleMainVideo()
+                _mainRectItem.layoutPIPItems()
             }
             QGCVideoBackground {
                 id:                 thermalVideo
@@ -198,7 +199,7 @@ Item {
                 anchors.fill: parent
                 onClicked: {
                     _thermaIsMain = !_thermaIsMain
-                    _mainRectItem.toggleMainVideo()
+                    _mainRectItem.layoutPIPItems()
                 }
             }
         }
