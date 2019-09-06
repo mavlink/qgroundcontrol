@@ -120,7 +120,8 @@ Item {
                     id:                 standardMode
                     width:              buttonSize
                     height:             buttonSize
-                    iconSource:        "/custom/img/thermal-standard.svg"
+                    iconSource:         "/custom/img/thermal-standard.svg"
+                    checked:            _camera && _camera.thermalMode === QGCCameraControl.THERMAL_OFF
                     onClicked:  {
                         _camera.thermalMode = QGCCameraControl.THERMAL_OFF
                     }
