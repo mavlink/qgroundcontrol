@@ -68,7 +68,7 @@ public:
     } MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)        ///< Used by Plan view only for interactive editing
+    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              CONSTANT)                           ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QVariantList         waypointPath            READ waypointPath               NOTIFY waypointPathChanged)         ///< Used by Fly view only for static display
     Q_PROPERTY(QmlObjectListModel*  directionArrows         READ directionArrows            CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
@@ -206,7 +206,6 @@ public:
 
 signals:
     void visualItemsChanged             (void);
-    void waypointLinesChanged           (void);
     void waypointPathChanged            (void);
     void newItemsFromVehicle            (void);
     void missionDistanceChanged         (double missionDistance);

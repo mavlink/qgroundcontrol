@@ -1110,9 +1110,14 @@ void MissionController::_recalcWaypointLines(void)
     qCDebug(MissionControllerLog) << "_recalcWaypointLines homePositionValid" << homePositionValid;
 
     CoordVectHashTable old_table = _linesTable;
+
     _linesTable.clear();
-    _waypointLines.clear();
     _waypointPath.clear();
+
+    _waypointLines.beginReset();
+    _directionArrows.beginReset();
+
+    _waypointLines.clear();
     _directionArrows.clear();
 
     bool linkEndToHome;
@@ -1150,7 +1155,10 @@ void MissionController::_recalcWaypointLines(void)
 
                 lastSegmentVisualItemPair =  VisualItemPair(lastCoordinateItem, item);
                 if (!_flyView || addDirectionArrow) {
-                    _directionArrows.append(_addWaypointLineSegment(old_table, lastSegmentVisualItemPair));
+                    CoordinateVector* coordVector = _addWaypointLineSegment(old_table, lastSegmentVisualItemPair);
+                    if (addDirectionArrow) {
+                        _directionArrows.append(coordVector);
+                    }
                 }
             }
             firstCoordinateItem = false;
@@ -1205,6 +1213,9 @@ void MissionController::_recalcWaypointLines(void)
         _waypointLines.swapObjectList(objs);
     }
 
+    _waypointLines.endReset();
+    _directionArrows.endReset();
+
     // Anything left in the old table is an obsolete line object that can go
     qDeleteAll(old_table);
 
@@ -1218,7 +1229,6 @@ void MissionController::_recalcWaypointLines(void)
         _waypointPath.append(QVariant::fromValue(QGeoCoordinate(0, 0)));
     }
 
-    emit waypointLinesChanged();
     emit waypointPathChanged();
 }
 
