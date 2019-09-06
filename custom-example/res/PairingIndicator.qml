@@ -410,7 +410,7 @@ Item {
             width:              connectionCol.width  + (ScreenTools.defaultFontPixelWidth   * 8)
             height:             connectionCol.height + (ScreenTools.defaultFontPixelHeight  * 2)
             anchors.centerIn:   parent
-            Column {
+            ColumnLayout {
                 id:                     connectionCol
                 spacing:                _contentSpacing
                 anchors.centerIn:       parent
@@ -419,7 +419,7 @@ Item {
                     text:               kPairingManager
                     font.family:        ScreenTools.demiboldFontFamily
                     font.pointSize:     ScreenTools.mediumFontPointSize
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    Layout.fillWidth:   true
                 }
                 Rectangle {
                     width:              _contentWidth
@@ -428,13 +428,17 @@ Item {
                 }
                 Item { width: 1; height: 1; }
 
+                //-----------------------------------------------------------
+                // Connected devices
                 GridLayout {
+                    id: _connectedLayout
                     columns:            4
-                    visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.connectedDeviceNameList.length > 0 && !cancelButton.visible) : false
-                    columnSpacing:      ScreenTools.defaultFontPixelWidth
-                    rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    property var _pairModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.connectedDeviceNameList : []
+                    visible:            _connectedVisible
+                    columnSpacing:      ScreenTools.defaultFontPointSize
+                    rowSpacing:         ScreenTools.defaultFontPointSize * 0.25
+                    Layout.fillWidth:   true
+                    property var _connectedModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.connectedDeviceNameList : []
+                    property bool _connectedVisible: QGroundControl.pairingManager ? (QGroundControl.pairingManager.connectedDeviceNameList.length > 0 && !cancelButton.visible) : false
                     QGCLabel {
                         text:               qsTr("Connected Devices")
                         visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.connectedDeviceNameList.length > 0 && !cancelButton.visible) : false
@@ -449,7 +453,7 @@ Item {
                     Item { width: 1; height: 1; Layout.row: 1; Layout.column: 0; Layout.columnSpan: 4}
 
                     Repeater {
-                        model:                  parent._pairModel
+                        model:                  parent._connectedModel
                         delegate: QGCColoredImage {
                             Layout.row:             2 + index
                             Layout.column:          0
@@ -466,7 +470,7 @@ Item {
                         }
                     }
                     Repeater {
-                        model:                  parent._pairModel
+                        model:                  parent._connectedModel
                         delegate: QGCLabel {
                             text:               modelData
                             Layout.row:         2 + index
@@ -476,7 +480,7 @@ Item {
                         }
                     }
                     Repeater {
-                        model:                  parent._pairModel
+                        model:                  parent._connectedModel
                         delegate: QGCButton {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 5
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
@@ -494,45 +498,44 @@ Item {
                                 standardButtons:    StandardButton.Yes | StandardButton.No
                                 onNo:               disconnectPrompt.close()
                                 onYes: {
-                                    //QGroundControl.pairingManager.disconnectPairedDevice(modelData)
+                                    QGroundControl.pairingManager.disconnectPairedDevice(modelData)
                                     disconnectPrompt.close()
                                 }
                             }
                         }
                     }
                     Repeater {
-                        model:                  parent._pairModel
-                        delegate: QGCColoredImage {
+                        model: parent._connectedModel
+                        delegate: Item {
                             Layout.row:             2 + index
                             Layout.column:          3
                             Layout.fillWidth:       true
                             height:                 ScreenTools.defaultFontPixelHeight
                             width:                  height
-                            smooth:                 true
-                            mipmap:                 true
-                            antialiasing:           true
-                            fillMode:               Image.PreserveAspectFit
-                            source:                 "/custom/img/PairingDelete.svg"
-                            sourceSize.height:      height
-                            color:                  qgcPal.colorRed
-                            MouseArea {
-                                anchors.fill:       parent
-                                onClicked: {
-                                    disconnectPrompt.open()
-                                }
-                            }
                         }
                     }
+                } // GridLayout
 
-                    //-----------------------------------------------------------
-                    // Available devices
+                Item { width: 1; height: 1; }
+
+                //-----------------------------------------------------------
+                // Available devices
+                GridLayout {
+                    columns:            4
+                    visible:            _availableVisible
+                    columnSpacing:      ScreenTools.defaultFontPointSize
+                    rowSpacing:         ScreenTools.defaultFontPointSize * 0.25
+                    Layout.fillWidth:   true
+                    property var _pairModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.pairedDeviceNameList : []
+                    property bool _availableVisible: QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
+                    property real _baseIndex: 2 + _connectedLayout._connectedModel ? _connectedLayout._connectedModel.len : 0
 
                     QGCLabel {
                         text:               qsTr("Available Devices")
-                        visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
+                        visible:            parent._availableVisible
                         font.family:        ScreenTools.demiboldFontFamily
                         font.pointSize:     ScreenTools.mediumFontPointSize
-                        Layout.row:         0
+                        Layout.row:         0 + parent._baseIndex
                         Layout.column:      0
                         Layout.columnSpan:  4
                         Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
@@ -543,7 +546,7 @@ Item {
                     Repeater {
                         model:                  parent._pairModel
                         delegate: QGCColoredImage {
-                            Layout.row:             2 + index
+                            Layout.row:             2 + parent._baseIndex + index
                             Layout.column:          0
                             Layout.fillWidth:       true
                             height:                 ScreenTools.defaultFontPixelHeight
@@ -561,7 +564,7 @@ Item {
                         model:                  parent._pairModel
                         delegate: QGCLabel {
                             text:               modelData
-                            Layout.row:         2 + index
+                            Layout.row:         2 + parent._baseIndex + index
                             Layout.column:      1
                             Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
                             Layout.fillWidth:   true
@@ -572,30 +575,20 @@ Item {
                         delegate: QGCButton {
                             Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 5
                             Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
-                            Layout.row:             2 + index
+                            Layout.row:             2 + parent._baseIndex + index
                             Layout.column:          2
-                            text:                   qsTr("Disconnect")
+                            text:                   qsTr("Connect")
                             onClicked: {
-                                disconnectPrompt.open()
-                            }
-
-                            MessageDialog {
-                                id:                 disconnectPrompt
-                                title:              qsTr("Disconnect Vehicle")
-                                text:               qsTr("Confirm disconnecting vehicle %1?").arg(modelData)
-                                standardButtons:    StandardButton.Yes | StandardButton.No
-                                onNo:               disconnectPrompt.close()
-                                onYes: {
-                                    //QGroundControl.pairingManager.disconnectPairedDevice(modelData)
-                                    disconnectPrompt.close()
-                                }
+                                QGroundControl.pairingManager.connectToPairedDevice(modelData)
+                                connectionPopup.close()
+                                progressPopup.open()
                             }
                         }
                     }
                     Repeater {
                         model:                  parent._pairModel
                         delegate: QGCColoredImage {
-                            Layout.row:             2 + index
+                            Layout.row:             2 + parent._baseIndex + index
                             Layout.column:          3
                             Layout.fillWidth:       true
                             height:                 ScreenTools.defaultFontPixelHeight
@@ -610,69 +603,19 @@ Item {
                             MouseArea {
                                 anchors.fill:       parent
                                 onClicked: {
-                                    disconnectPrompt.open()
+                                    removePrompt.open()
                                 }
                             }
-                        }
-                    }
 
-
-                    GridLayout {
-                        columns:            3
-                        visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.pairedDeviceNameList.length > 0 && !cancelButton.visible) : false
-                        columnSpacing:      ScreenTools.defaultFontPixelWidth
-                        rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        property var _pairModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.pairedDeviceNameList : []
-                        Repeater {
-                            model:                  parent._pairModel
-                            delegate: QGCLabel {
-                                text:               modelData
-                                Layout.row:         index
-                                Layout.column:      0
-                                Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
-                                Layout.fillWidth:   true
-                            }
-                        }
-                        Repeater {
-                            model:                  parent._pairModel
-                            delegate: QGCButton {
-                                text:               qsTr("Connect")
-                                Layout.row:         index
-                                Layout.column:      1
-                                onClicked: {
-                                    QGroundControl.pairingManager.connectToPairedDevice(modelData)
-                                    connectionPopup.close()
-                                    progressPopup.open()
-                                }
-                            }
-                        }
-                        Repeater {
-                            model:                  parent._pairModel
-                            delegate: QGCColoredImage {
-                                Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 1.5
-                                Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
-                                sourceSize.height:      height
-                                source:                 "/res/TrashDelete.svg"
-                                color:                  qgcPal.colorRed
-                                Layout.row:             index
-                                Layout.column:          2
-                                MouseArea {
-                                    anchors.fill:       parent
-                                    onClicked: {
-                                        removePrompt.open()
-                                    }
-                                }
-                                MessageDialog {
-                                    id:                 removePrompt
-                                    title:              qsTr("Remove Paired Vehicle")
-                                    text:               qsTr("Confirm removing %1?").arg(modelData)
-                                    standardButtons:    StandardButton.Yes | StandardButton.No
-                                    onNo:               removePrompt.close()
-                                    onYes: {
-                                        QGroundControl.pairingManager.removePairedDevice(modelData)
-                                        removePrompt.close()
-                                    }
+                            MessageDialog {
+                                id:                 removePrompt
+                                title:              qsTr("Remove Paired Vehicle")
+                                text:               qsTr("Confirm removing %1?").arg(modelData)
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                onNo:               removePrompt.close()
+                                onYes: {
+                                    QGroundControl.pairingManager.removePairedDevice(modelData)
+                                    removePrompt.close()
                                 }
                             }
                         }
@@ -681,17 +624,17 @@ Item {
 
                 Item { width: 1; height: _contentSpacing; }
                 QGCButton {
-                    width:                  _contentWidth
-                    text:                   qsTr("Close")
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    width:              _contentWidth
+                    text:               qsTr("Done")
+                    Layout.fillWidth:   true
                     onClicked: {
                         connectionPopup.close()
                     }
                 }
                 QGCButton {
-                    text:                   qsTr("Pair Another")
-                    width:                  _contentWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    text:               qsTr("Pair Another")
+                    width:              _contentWidth
+                    Layout.fillWidth:   true
                     onClicked: {
                         connectionPopup.close()
                         mhPopup.open()

@@ -718,6 +718,12 @@ PairingManager::stopPairing()
     setPairingStatus(PairingIdle, "");
 }
 
+//-----------------------------------------------------------------------------
+void
+PairingManager::disconnectPairedDevice(const QString& name) {
+    _removeUDPLink(name);
+}
+
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
 //-----------------------------------------------------------------------------
 void
