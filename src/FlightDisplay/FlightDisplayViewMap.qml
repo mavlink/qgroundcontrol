@@ -244,6 +244,17 @@ FlightMap {
         }
     }
 
+    MapItemView {
+        model: mainIsMap ? _missionController.directionArrows : undefined
+
+        delegate: MapLineArrow {
+            fromCoord:      object ? object.coordinate1 : undefined
+            toCoord:        object ? object.coordinate2 : undefined
+            arrowPosition:  2
+            z:              QGroundControl.zOrderWaypointLines
+        }
+    }
+
     // Allow custom builds to add map items
     CustomMapItems {
         map:            flightMap

@@ -7,10 +7,6 @@
  *
  ****************************************************************************/
 
-
-/// @file
-///     @author Don Gagne <don@thegagnes.com>
-
 #include "CoordinateVector.h"
 
 CoordinateVector::CoordinateVector(QObject* parent)
