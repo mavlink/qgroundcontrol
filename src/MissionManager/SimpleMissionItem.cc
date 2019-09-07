@@ -743,6 +743,10 @@ void SimpleMissionItem::_setDefaultsForCommand(void)
         // No need to carry across previous lat/lon
         _missionItem._param5Fact.setRawValue(0);
         _missionItem._param6Fact.setRawValue(0);
+    } else if ((specifiesCoordinate() || isStandaloneCoordinate()) && _missionItem._param5Fact.rawValue().toDouble() == 0 && _missionItem._param6Fact.rawValue().toDouble() == 0) {
+        // We switched from a command without a coordinate to a command with a coordinate. Use the hint.
+        _missionItem._param5Fact.setRawValue(_mapCenterHint.latitude());
+        _missionItem._param6Fact.setRawValue(_mapCenterHint.longitude());
     }
 
     // Set global defaults first, then if there are param defaults they will get reset
