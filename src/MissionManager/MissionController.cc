@@ -69,6 +69,7 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _progressPct              (0)
     , _currentPlanViewIndex     (-1)
     , _currentPlanViewItem      (nullptr)
+    , _splitSegment             (nullptr)
 {
     _resetMissionFlightStatus();
     managerVehicleChanged(_managerVehicle);
@@ -2106,6 +2107,7 @@ VisualMissionItem* MissionController::currentPlanViewItem(void) const
 void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 {
     if(_visualItems && (force || sequenceNumber != _currentPlanViewIndex)) {
+        _splitSegment = nullptr;
         _currentPlanViewItem  = nullptr;
         _currentPlanViewIndex = -1;
         for (int i = 0; i < _visualItems->count(); i++) {
@@ -2114,12 +2116,26 @@ void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
                 pVI->setIsCurrentItem(true);
                 _currentPlanViewItem  = pVI;
                 _currentPlanViewIndex = sequenceNumber;
+
+                if (pVI->specifiesCoordinate() && !pVI->isStandaloneCoordinate()) {
+                    // Determine split segment used to display line split editing ui.
+                    for (int j=i-1; j>0; j--) {
+                        VisualMissionItem* pPrev = qobject_cast<VisualMissionItem*>(_visualItems->get(j));
+                        if (pPrev->specifiesCoordinate() && !pPrev->isStandaloneCoordinate()) {
+                            VisualItemPair splitPair(pPrev, pVI);
+                            if (_linesTable.contains(splitPair)) {
+                                _splitSegment = _linesTable[splitPair];
+                            }
+                        }
+                    }
+                }
             } else {
                 pVI->setIsCurrentItem(false);
             }
         }
         emit currentPlanViewIndexChanged();
         emit currentPlanViewItemChanged();
+        emit splitSegmentChanged();
     }
 }
 

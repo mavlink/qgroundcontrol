@@ -73,6 +73,7 @@ public:
     Q_PROPERTY(QmlObjectListModel*  directionArrows         READ directionArrows            CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
+    Q_PROPERTY(CoordinateVector*    splitSegment            MEMBER _splitSegment            NOTIFY splitSegmentChanged)         ///< Segment which show show + split ui element
 
     Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
 
@@ -207,6 +208,7 @@ public:
 signals:
     void visualItemsChanged             (void);
     void waypointPathChanged            (void);
+    void splitSegmentChanged             (void);
     void newItemsFromVehicle            (void);
     void missionDistanceChanged         (double missionDistance);
     void missionTimeChanged             (void);
@@ -302,6 +304,7 @@ private:
     QTimer                  _updateTimer;
     QGCGeoBoundingCube      _travelBoundingCube;
     QGeoCoordinate          _takeoffCoordinate;
+    CoordinateVector*       _splitSegment;
 
     static const char*  _settingsGroup;
 
