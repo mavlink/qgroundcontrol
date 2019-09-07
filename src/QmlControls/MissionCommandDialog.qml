@@ -20,6 +20,7 @@ QGCViewDialog {
     id: root
 
     property var missionItem
+    property var map
 
     property var _vehicle: QGroundControl.multiVehicleManager.activeVehicle
 
@@ -96,6 +97,7 @@ QGCViewDialog {
             MouseArea {
                 anchors.fill:   parent
                 onClicked: {
+                        missionItem.setMapCenterHintForCommandChange(map.center)
                     missionItem.command = mavCmdInfo.command
                     root.reject()
                 }
