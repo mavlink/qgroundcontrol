@@ -204,7 +204,8 @@ Rectangle {
             id: commandDialog
 
             MissionCommandDialog {
-                missionItem: _root.missionItem
+                missionItem:    _root.missionItem
+                map:            _root.map
             }
         }
 
