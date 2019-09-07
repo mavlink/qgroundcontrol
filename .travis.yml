@@ -187,7 +187,7 @@ script:
   - if [[ "${SPEC}" = "linux-g++-64" && "${CONFIG}" = "debug" ]]; then
     	mkdir -p ~/.config/QtProject/ &&
         cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/ &&
-        EXPORT QT_FATAL_WARNINGS=1 &&
+        export QT_FATAL_WARNINGS=1 &&
         ./debug/qgroundcontrol-start.sh --unittest;
     fi
 
