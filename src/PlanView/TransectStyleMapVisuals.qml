@@ -22,7 +22,8 @@ import QGroundControl.FlightMap     1.0
 Item {
     id: _root
 
-    property var map        ///< Map control to place item in
+    property var    map                                                 ///< Map control to place item in
+    property bool   polygonInteractive: true
 
     property var    _missionItem:               object
     property var    _mapPolygon:                object.surveyAreaPolygon
@@ -69,7 +70,7 @@ Item {
         id:                 mapPolygonVisuals
         mapControl:         map
         mapPolygon:         _mapPolygon
-        interactive:        _missionItem.isCurrentItem
+        interactive:        polygonInteractive && _missionItem.isCurrentItem
         borderWidth:        1
         borderColor:        "black"
         interiorColor:      "green"

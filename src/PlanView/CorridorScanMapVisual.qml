@@ -17,7 +17,9 @@ import QGroundControl.Controls      1.0
 
 /// Corridor Scan Complex Mission Item visuals
 TransectStyleMapVisuals {
-    property bool   _currentItem: object.isCurrentItem
+    polygonInteractive: false
+
+    property bool _currentItem: object.isCurrentItem
 
     Component.onCompleted: mapPolylineVisuals.addInitialPolyline()
 

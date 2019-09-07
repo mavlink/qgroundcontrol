@@ -20,6 +20,7 @@ Rectangle {
     radius:         width / 2
     border.color:   indicatorColor
     color:          "transparent"
+    opacity:        0.75
 
     property color indicatorColor: "white"
 
