@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick          2.3
 import QtQuick.Controls 1.2
 import QtQuick.Dialogs  1.2
@@ -27,8 +26,6 @@ import QGroundControl.Controllers       1.0
 import QGroundControl.ShapeFileHelper   1.0
 import QGroundControl.Airspace          1.0
 import QGroundControl.Airmap            1.0
-
-/// Mission Editor
 
 Item {
 
@@ -258,6 +255,7 @@ Item {
 
     Connections {
         target: _missionController
+
         onNewItemsFromVehicle: {
             if (_visualItems && _visualItems.count !== 1) {
                 mapFitFunctions.fitMapViewportToMissionItems()
@@ -478,8 +476,41 @@ Item {
                 delegate: MapLineArrow {
                     fromCoord:      object ? object.coordinate1 : undefined
                     toCoord:        object ? object.coordinate2 : undefined
-                    arrowPosition:  2
-                    z:              QGroundControl.zOrderWaypointLines
+                    arrowPosition:  3
+                    z:              QGroundControl.zOrderWaypointLines + 1
+                }
+            }
+
+            // UI for splitting the current segment
+            MapQuickItem {
+                id:             splitSegmentItem
+                anchorPoint.x:  sourceItem.width / 2
+                anchorPoint.y:  sourceItem.height / 2
+                z:              QGroundControl.zOrderWaypointLines + 1
+
+                sourceItem: SplitIndicator {
+                    onClicked:  insertSimpleMissionItem(splitSegmentItem.coordinate, _missionController.currentPlanViewIndex)
+                }
+
+                function _updateSplitCoord() {
+                    if (_missionController.splitSegment) {
+                        var distance = _missionController.splitSegment.coordinate1.distanceTo(_missionController.splitSegment.coordinate2)
+                        var azimuth = _missionController.splitSegment.coordinate1.azimuthTo(_missionController.splitSegment.coordinate2)
+                        splitSegmentItem.coordinate = _missionController.splitSegment.coordinate1.atDistanceAndAzimuth(distance / 2, azimuth)
+                    } else {
+                        coordinate = QtPositioning.coordinate()
+                    }
+                }
+
+                Connections {
+                    target:                 _missionController
+                    onSplitSegmentChanged:  splitSegmentItem._updateSplitCoord()
+                }
+
+                Connections {
+                    target:                 _missionController.splitSegment
+                    onCoordinate1Changed:   splitSegmentItem._updateSplitCoord()
+                    onCoordinate2Changed:   splitSegmentItem._updateSplitCoord()
                 }
             }
 
