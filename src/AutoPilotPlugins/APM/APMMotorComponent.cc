@@ -22,6 +22,13 @@ QUrl APMMotorComponent::setupSource(void) const
     case MAV_TYPE_SUBMARINE:
         return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMSubMotorComponent.qml"));
     default:
-        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/MotorComponent.qml"));
+        return QUrl::fromUserInput(QStringLiteral("qrc:/qml/APMMotorComponent.qml"));
     }
+}
+
+QString APMMotorComponent::motorIndexToLetter(int index)
+{
+    char letter = 'A';
+
+    return QString(letter + index);
 }

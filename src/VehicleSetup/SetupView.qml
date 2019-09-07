@@ -337,11 +337,13 @@ Rectangle {
         anchors.bottom:         parent.bottom
 
         function setSource(source, vehicleComponent) {
+            panelLoader.source = ""
             panelLoader.vehicleComponent = vehicleComponent
             panelLoader.source = source
         }
 
         function setSourceComponent(sourceComponent, vehicleComponent) {
+            panelLoader.sourceComponent = undefined
             panelLoader.vehicleComponent = vehicleComponent
             panelLoader.sourceComponent = sourceComponent
         }
