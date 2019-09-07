@@ -20,6 +20,8 @@ import QGroundControl.FlightMap     1.0
 
 /// Survey Complex Mission Item visuals
 TransectStyleMapVisuals {
+    polygonInteractive: true
+
     property var _mapPolygon: object.surveyAreaPolygon
 
     /// Add an initial 4 sided polygon if there is none
