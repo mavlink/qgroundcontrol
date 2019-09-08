@@ -205,6 +205,7 @@ protected:
 private slots:
     void _reallyQueryTransectsPathHeightInfo(void);
     void _followTerrainChanged              (bool followTerrain);
+    void _handleHoverAndCaptureEnabled      (QVariant enabled);
 
 private:
     void    _queryTransectsPathHeightInfo   (void);
