@@ -30,6 +30,8 @@ ComboBox {
     property string _flashText
     property bool   _showFlash:     false
 
+    Component.onCompleted: indicator.color = Qt.binding(function() { return _controlQGCPal.text })
+
     background: Rectangle {
         implicitWidth:                  ScreenTools.implicitComboBoxWidth
         implicitHeight:                 ScreenTools.implicitComboBoxHeight
@@ -57,7 +59,6 @@ ComboBox {
         Binding on checked { value: modelData.fact ?
                                          (modelData.fact.typeIsBool ? (modelData.fact.value === false ? Qt.Unchecked : Qt.Checked) : (modelData.fact.value === 0 ? Qt.Unchecked : Qt.Checked)) :
                                          modelData.checked }
-
 
         contentItem: RowLayout {
             spacing: ScreenTools.defaultFontPixelWidth
