@@ -34,7 +34,13 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
    //-- First see if plugin provides a position source
    _defaultSource = toolbox->corePlugin()->createPositionSource(this);
-   if(!_defaultSource) {
+
+   if (qgcApp()->runningUnitTests()) {
+       // Units test on travis fail due to lack of position source
+       return;
+   }
+
+   if (!_defaultSource) {
        //-- Otherwise, create a default one
        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
    }
@@ -136,11 +142,5 @@ void QGCPositionManager::setPositionSource(QGCPositionManager::QGCPositionSource
 
 void QGCPositionManager::_error(QGeoPositionInfoSource::Error positioningError)
 {
-    QGeoPositionInfoSource* source = qobject_cast<QGeoPositionInfoSource*>(sender());
-    if (source && qgcApp()->runningUnitTests() && source->sourceName() == "serialnmea") {
-        // We don't want unit tests run in the cloud which has no WiFi to pop a qWarning
-        qDebug() << "QGCPositionManager error" << positioningError;
-    } else {
-        qWarning() << "QGCPositionManager error" << positioningError;
-    }
+    qWarning() << "QGCPositionManager error" << positioningError;
 }
