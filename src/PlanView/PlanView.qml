@@ -916,6 +916,7 @@ Item {
                 } else {
                     _planMasterController.removeAllFromVehicle()
                 }
+                _missionController.setCurrentPlanViewIndex(0, true)
                 hideDialog()
             }
         }
@@ -927,6 +928,7 @@ Item {
             message: qsTr("Are you sure you want to remove all mission items and clear the mission from the vehicle?")
             function accept() {
                 _planMasterController.removeAllFromVehicle()
+                _missionController.setCurrentPlanViewIndex(0, true)
                 hideDialog()
             }
         }
