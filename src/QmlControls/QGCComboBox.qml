@@ -23,10 +23,14 @@ ComboBox {
 
     property bool centeredLabel:  false
 
+    property var _qgcPal: QGCPalette { colorGroupEnabled: enabled }
+
+    Component.onCompleted: indicator.color = Qt.binding(function() { return _qgcPal.text })
+
     background: Rectangle {
         implicitWidth:                  ScreenTools.implicitComboBoxWidth
         implicitHeight:                 ScreenTools.implicitComboBoxHeight
-        color:                          qgcPal.window
+        color:                          _qgcPal.window
         border.width:                   enabled ? 1 : 0
         border.color:                   "#999"
     }
@@ -38,12 +42,12 @@ ComboBox {
 
             contentItem: Text {
                 text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
-                color:                  control.currentIndex === index ? qgcPal.buttonHighlightText : qgcPal.buttonText
+                color:                  control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
                 verticalAlignment:      Text.AlignVCenter
             }
 
             background: Rectangle {
-                color:                  control.currentIndex === index ? qgcPal.buttonHighlight : qgcPal.button
+                color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
             }
 
             highlighted:                control.highlightedIndex === index
@@ -59,7 +63,7 @@ ComboBox {
             anchors.verticalCenter:     parent.verticalCenter
             anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
             text:                       control.currentText
-            color:                      qgcPal.text
+            color:                      _qgcPal.text
         }
     }
 }
