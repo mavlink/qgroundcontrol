@@ -105,7 +105,7 @@ Item {
 
         MissionItemIndicator {
             coordinate:     _missionItem.coordinate
-            visible:        _missionItem.specifiesCoordinate && (_missionItem.homePosition || map.planView || _missionItem.isCurrentItem || (vehicle.flightMode === vehicle.pauseFlightMode && vehicle.armed))
+            visible:        _missionItem.specifiesCoordinate && (_missionItem.abbreviation != "" || map.planView || _missionItem.isCurrentItem || (vehicle.flightMode === vehicle.pauseFlightMode && vehicle.armed))
             z:              QGroundControl.zOrderMapItems
             missionItem:    _missionItem
             sequenceNumber: _missionItem.sequenceNumber
