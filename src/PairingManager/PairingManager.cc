@@ -144,6 +144,10 @@ void
 PairingManager::_removeUDPLink(const QString name)
 {
     if (_connectedDevices.contains(name)) {
+        if (_connectedDevice == name) {
+            _setLastConnectedDevice("");
+            _toolbox->videoManager()->stopVideo();
+        }
         _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
         _connectedDevices.remove(name);
         emit connectedListChanged();
@@ -200,6 +204,9 @@ PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc)
 void
 PairingManager::_startUploadRequest()
 {
+    if (_uploadURL.contains("pair")) {
+        _pairingActive = true;
+    }
     QNetworkRequest req;
     req.setUrl(QUrl(_uploadURL));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -215,6 +222,7 @@ PairingManager::_stopUpload()
     if (_uploadManager != nullptr) {
         delete _uploadManager;
         _uploadManager = nullptr;
+        _pairingActive = false;
     }
 }
 
@@ -222,6 +230,7 @@ PairingManager::_stopUpload()
 void
 PairingManager::_uploadFinished()
 {
+    _pairingActive = false;
     QMutexLocker lock(&_uploadMutex);
     QNetworkReply* reply = qobject_cast<QNetworkReply*>(QObject::sender());
     if (reply) {
@@ -288,7 +297,9 @@ PairingManager::connectToPairedDevice(QString name)
     QFile file(_pairingCacheFile(name));
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json = file.readAll();
-    jsonReceived(json);
+    if (!json.isEmpty()) {
+        jsonReceived(json);
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -309,11 +320,6 @@ PairingManager::removePairedDevice(QString name)
     file.remove();
 
     _removeUDPLink(name);
-
-    if (_connectedDevice == name) {
-        _setLastConnectedDevice("");
-        _toolbox->videoManager()->stopVideo();
-    }
 
     QString pairURL = "http://" + map["IP"].toString() + ":" + pport + "/unpair";;
     emit startCommand(pairURL);
@@ -370,6 +376,9 @@ PairingManager::_readPairingConfig()
 void
 PairingManager::autoConnect()
 {
+    if (_pairingActive) {
+        return;
+    }
     connectToPairedDevice(_deviceToConnect);
 }
 
@@ -722,12 +731,9 @@ PairingManager::stopPairing()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::disconnectDevice(const QString& name) {
+PairingManager::disconnectDevice(const QString& name)
+{
     _removeUDPLink(name);
-    if (_connectedDevice == name) {
-        _setLastConnectedDevice("");
-        _toolbox->videoManager()->stopVideo();
-    }
 }
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
