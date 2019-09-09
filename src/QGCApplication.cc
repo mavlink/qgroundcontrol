@@ -724,6 +724,9 @@ void QGCApplication::showMessage(const QString& message)
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
         QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+    } else if (runningUnitTests()) {
+        // Unit tests can run without UI
+        qDebug() << "QGCApplication::showMessage unittest" << message;
     } else {
         qWarning() << "Internal error";
     }
