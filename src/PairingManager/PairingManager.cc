@@ -29,7 +29,7 @@ PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     , _aes("J6+KuWh9K2!hG(F'", 0x368de30e8ec063ce)
 {
     _jsonFileName = QDir::temp().filePath(jsonFileName);
-    connect(this, &PairingManager::parsePairingJson, this, &PairingManager::_parsePairingJson);
+    connect(this, &PairingManager::parsePairingJson, this, &PairingManager::_parsePairingJsonNFC);
     connect(this, &PairingManager::setPairingStatus, this, &PairingManager::_setPairingStatus);
     connect(this, &PairingManager::startUpload, this, &PairingManager::_startUpload);
     connect(this, &PairingManager::startCommand, this, &PairingManager::_startCommand);
@@ -457,7 +457,7 @@ PairingManager::_assumeMicrohardPairingJson()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_parsePairingJson(QString jsonEnc)
+PairingManager::_parsePairingJson(QString jsonEnc, bool updateSettings)
 {
     QString json = QString::fromStdString(_aes.decrypt(jsonEnc.toStdString()));
     if (json == "") {
@@ -521,22 +521,25 @@ PairingManager::_parsePairingJson(QString jsonEnc)
         }
     }
 
-    if (linkType == "ZT") {
-        _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(false);
-        _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
-        emit startUpload(pairURL, jsonDoc);
-    } else if (linkType == "MH") {
-        _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(true);
-        _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
-        if (_remotePairingMap.contains("AIP")) {
-            _toolbox->microhardManager()->setRemoteIPAddr(_remotePairingMap["AIP"].toString());
+    if (updateSettings) {
+        if (linkType == "ZT") {
+            _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(false);
+            _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
+        } else if (linkType == "MH") {
+            _toolbox->settingsManager()->appSettings()->enableMicrohard()->setRawValue(true);
+            _toolbox->settingsManager()->appSettings()->enableTaisync()->setRawValue(false);
+            if (_remotePairingMap.contains("AIP")) {
+                _toolbox->microhardManager()->setRemoteIPAddr(_remotePairingMap["AIP"].toString());
+            }
+            if (_remotePairingMap.contains("CU")) {
+                _toolbox->microhardManager()->setConfigUserName(_remotePairingMap["CU"].toString());
+            }
+            if (_remotePairingMap.contains("CP")) {
+                _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
+            }
         }
-        if (_remotePairingMap.contains("CU")) {
-            _toolbox->microhardManager()->setConfigUserName(_remotePairingMap["CU"].toString());
-        }
-        if (_remotePairingMap.contains("CP")) {
-            _toolbox->microhardManager()->setConfigPassword(_remotePairingMap["CP"].toString());
-        }
+    }
+    if (linkType == "MH") {
         if (!connecting) {
             _setLastConnectedDevice("");
             _toolbox->videoManager()->stopVideo();
@@ -546,8 +549,8 @@ PairingManager::_parsePairingJson(QString jsonEnc)
         }
 
         _toolbox->microhardManager()->updateSettings();
-        emit startUpload(pairURL, jsonDoc);
     }
+    emit startUpload(pairURL, jsonDoc);
 }
 
 //-----------------------------------------------------------------------------
@@ -703,7 +706,7 @@ PairingManager::startMicrohardPairing()
     stopPairing();
     _pairRetryCount = 0;
     setPairingStatus(PairingActive, tr("Pairing..."));
-    _parsePairingJson(_assumeMicrohardPairingJson());
+    _parsePairingJson(_assumeMicrohardPairingJson(), false);
 }
 #endif
 
