@@ -29,7 +29,7 @@ public:
     static QString  fixTextMessageForAudio  (const QString& string);
 
 public slots:
-    bool            say                     (const QString& text);
+    void            say                     (const QString& text);
 
 private slots:
     void            _stateChanged           (QTextToSpeech::State state);
