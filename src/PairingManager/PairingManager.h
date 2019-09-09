@@ -149,6 +149,7 @@ private:
     QStringList             _deviceList;
     QTimer                  _reconnectTimer;
     QTimer                  _uploadTimer;
+    bool                    _pairingActive = false;
 
     QMap<QString, LinkInterface*> _connectedDevices;
 
