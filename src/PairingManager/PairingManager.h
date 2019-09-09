@@ -122,7 +122,8 @@ private slots:
     void _startUpload                           (QString pairURL, QJsonDocument);
     void _stopUpload                            ();
     void _startUploadRequest                    ();
-    void _parsePairingJson                      (QString jsonEnc);
+    void _parsePairingJsonNFC                   (QString jsonEnc) { _parsePairingJson(jsonEnc, true); }
+    void _parsePairingJson                      (QString jsonEnc, bool updateSettings);
     void _setPairingStatus                      (PairingStatus status, QString pairingStatus);
 
 private:
