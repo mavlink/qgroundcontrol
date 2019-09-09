@@ -410,6 +410,12 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
 {
     ComplexMissionItem* newItem;
 
+    // If the ComplexMissionItem is inserted first, add a TakeOff SimpleMissionItem
+    if (_visualItems->count() == 1 && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol() || _controllerVehicle->multiRotor())) {
+        insertSimpleMissionItem(mapCenterCoordinate, i);
+        i++;
+    }
+
     int sequenceNumber = _nextSequenceNumber();
     if (itemName == _surveyMissionItemName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
