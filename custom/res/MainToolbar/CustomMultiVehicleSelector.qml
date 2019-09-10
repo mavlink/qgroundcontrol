@@ -24,7 +24,9 @@ Item {
     anchors.top:    parent.top
     anchors.bottom: parent.bottom
     width:          selectorRow.width
-    property bool _multiVehicles: QGroundControl.multiVehicleManager.vehicles.count > 1
+    property bool   _multiVehicles: QGroundControl.multiVehicleManager.vehicles.count > 1
+    property bool   _isVTOL:        activeVehicle && activeVehicle.vtol
+    property bool   _fwdFlight:     _isVTOL ? activeVehicle.vtolInFwdFlight : false
     Component.onCompleted: {
         updatemultiVehiclesMenu()
     }
@@ -42,14 +44,22 @@ Item {
             width:                  height
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            source:                 "/custom/img/vehicle.svg"
+            source:                 _fwdFlight ? "/qmlimages/PaperPlane.svg" : "/custom/img/vehicle.svg"
             color:                  qgcPal.text
         }
-        QGCLabel {
-            id:                     multiVehicleSelector
-            text:                   "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
-            color:                  qgcPal.buttonText
+        Column {
             anchors.verticalCenter: parent.verticalCenter
+            QGCLabel {
+                id:                 multiVehicleSelector
+                text:               "Vehicle " + (activeVehicle ? activeVehicle.id : "None")
+                color:              qgcPal.buttonText
+            }
+            QGCLabel {
+                text:               _fwdFlight ? "Fixed-wing" : "Multirotor"
+                color:              qgcPal.buttonText
+                visible:            _isVTOL
+                font.pointSize:     ScreenTools.smallFontPointSize
+            }
         }
         QGCColoredImage {
             visible:                _multiVehicles

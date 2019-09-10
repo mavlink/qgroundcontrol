@@ -41,6 +41,7 @@
         <file alias="BarcodeReader.qml">res/BarcodeReader.qml</file>
     </qresource>
     <qresource prefix="custom/img">
+        <file alias="air-speed.svg">res/Images/air-speed.svg</file>
         <file alias="altitude.svg">res/Images/altitude.svg</file>
         <file alias="attitude_crosshair.svg">res/Images/attitude_crosshair.svg</file>
         <file alias="attitude_dial.svg">res/Images/attitude_dial.svg</file>
