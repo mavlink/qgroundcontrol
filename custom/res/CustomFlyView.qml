@@ -46,6 +46,7 @@ Item {
 
     property bool   _communicationLost:     activeVehicle ? activeVehicle.connectionLost : false
     property bool   _isVehicleGps:          activeVehicle && activeVehicle.gps && activeVehicle.gps.count.rawValue > 1 && activeVehicle.gps.hdop.rawValue < 1.4
+    property bool   _isVTOL:                activeVehicle && activeVehicle.vtol
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
     property int    _curCameraIndex:        _dynamicCameras ? _dynamicCameras.currentCamera : 0
@@ -272,6 +273,47 @@ Item {
             columns:                7
             anchors.centerIn:       parent
 
+            //-- HDOP for non VTOL, Chronometer otherwise
+            QGCLabel {
+                height:                 _indicatorsHeight
+                width:                  height
+                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
+                text:                   "HDOP:"
+                visible:                vehicleIndicator._showGps && !_isVTOL
+            }
+            QGCColoredImage {
+                height:                 _indicatorsHeight
+                width:                  height
+                source:                 "/custom/img/chronometer.svg"
+                fillMode:               Image.PreserveAspectFit
+                sourceSize.height:      height
+                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
+                color:                  qgcPal.text
+                visible:                vehicleIndicator._showGps && _isVTOL
+            }
+            QGCLabel {
+                text:                   activeVehicle ? activeVehicle.gps.hdop.value.toFixed(activeVehicle.gps.hdop.decimalPlaces) : "-"
+                color:                  _indicatorsColor
+                font.pointSize:         ScreenTools.smallFontPointSize
+                Layout.fillWidth:       true
+                Layout.minimumWidth:    indicatorValueWidth
+                horizontalAlignment:    firstLabel.horizontalAlignment
+                visible:                vehicleIndicator._showGps && !_isVTOL
+            }
+            QGCLabel {
+                text: {
+                        if(activeVehicle)
+                            return secondsToHHMMSS(activeVehicle.getFact("flightTime").value)
+                    return "00:00:00"
+                }
+                color:                  _indicatorsColor
+                font.pointSize:         ScreenTools.smallFontPointSize
+                Layout.fillWidth:       true
+                Layout.minimumWidth:    indicatorValueWidth
+                horizontalAlignment:    firstLabel.horizontalAlignment
+                visible:                vehicleIndicator._showGps && _isVTOL
+            }
             //-- Latitude
             QGCLabel {
                 height:                 _indicatorsHeight
@@ -302,24 +344,6 @@ Item {
             }
             QGCLabel {
                 text:                   activeVehicle ? activeVehicle.gps.lon.value.toFixed(activeVehicle.gps.lon.decimalPlaces) : "-"
-                color:                  _indicatorsColor
-                font.pointSize:         ScreenTools.smallFontPointSize
-                Layout.fillWidth:       true
-                Layout.minimumWidth:    indicatorValueWidth
-                horizontalAlignment:    firstLabel.horizontalAlignment
-                visible:                vehicleIndicator._showGps
-            }
-            //-- HDOP
-            QGCLabel {
-                height:                 _indicatorsHeight
-                width:                  height
-                Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
-                color:                  qgcPal.text
-                text:                   "HDOP:"
-                visible:                vehicleIndicator._showGps
-            }
-            QGCLabel {
-                text:                   activeVehicle ? activeVehicle.gps.hdop.value.toFixed(activeVehicle.gps.hdop.decimalPlaces) : "-"
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
                 Layout.fillWidth:       true
@@ -399,11 +423,11 @@ Item {
                 }
             }
             //-- Second Row
-            //-- Chronometer
+            //-- Chronometer for non VTOL. Airspeed otherwise.
             QGCColoredImage {
                 height:                 _indicatorsHeight
                 width:                  height
-                source:                 "/custom/img/chronometer.svg"
+                source:                 _isVTOL ? "/custom/img/air-speed.svg" : "/custom/img/chronometer.svg"
                 fillMode:               Image.PreserveAspectFit
                 sourceSize.height:      height
                 Layout.alignment:       Qt.AlignVCenter | Qt.AlignHCenter
@@ -411,9 +435,16 @@ Item {
             }
             QGCLabel {
                 text: {
+                    if(_isVTOL) {
+                        if(activeVehicle)
+                            return activeVehicle.airSpeed.value.toFixed(1) + ' ' + activeVehicle.airSpeed.units
+                        else
+                            return "0.0"
+                    } else {
                         if(activeVehicle)
                             return secondsToHHMMSS(activeVehicle.getFact("flightTime").value)
-                    return "00:00:00"
+                        return "00:00:00"
+                    }
                 }
                 color:                  _indicatorsColor
                 font.pointSize:         ScreenTools.smallFontPointSize
