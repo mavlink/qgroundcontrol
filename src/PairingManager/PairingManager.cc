@@ -79,7 +79,7 @@ PairingManager::connectedDeviceNameList()
     QMapIterator<QString, LinkInterface*> i(_connectedDevices);
     while (i.hasNext()) {
         i.next();
-        if (i.value()->active()) {
+        if (i.value() && i.value()->active()) {
             list.append(i.key());
         }
     }
@@ -144,12 +144,12 @@ void
 PairingManager::_removeUDPLink(const QString name)
 {
     if (_connectedDevices.contains(name)) {
+        _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
+        _connectedDevices.remove(name);
         if (_connectedDevice == name) {
             _setLastConnectedDevice("");
             _toolbox->videoManager()->stopVideo();
         }
-        _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
-        _connectedDevices.remove(name);
         emit connectedListChanged();
         emit pairedListChanged();
     }
@@ -388,6 +388,8 @@ PairingManager::_setLastConnectedDevice(QString name)
 {
     if (!name.isEmpty()) {
         _connectedDeviceValid = true;
+    } else {
+        _deviceToConnect = "";
     }
     _connectedDevice = name;
 
@@ -556,7 +558,6 @@ PairingManager::_parsePairingJson(QString jsonEnc, bool updateSettings)
         } else if (_remotePairingMap.contains("EK")) {
             _toolbox->microhardManager()->switchToConnectionEncryptionKey(_remotePairingMap["EK"].toString());
         }
-
         _toolbox->microhardManager()->updateSettings();
     }
     emit startUpload(pairURL, jsonDoc);
