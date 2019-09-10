@@ -489,7 +489,7 @@ Item {
                 z:              QGroundControl.zOrderWaypointLines + 1
 
                 sourceItem: SplitIndicator {
-                    onClicked:  insertSimpleMissionItem(splitSegmentItem.coordinate, _missionController.currentPlanViewIndex)
+                    onClicked:  insertSimpleMissionItem(splitSegmentItem.coordinate, _missionController.visualItemIndexFromSequenceNumber(_missionController.currentPlanViewIndex))
                 }
 
                 function _updateSplitCoord() {
