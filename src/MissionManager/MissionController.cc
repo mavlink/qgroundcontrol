@@ -349,7 +349,7 @@ int MissionController::_nextSequenceNumber(void)
     }
 }
 
-int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
+int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex)
 {
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, this);
@@ -367,13 +367,13 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
         double  prevAltitude;
         int     prevAltitudeMode;
 
-        if (_findPreviousAltitude(i, &prevAltitude, &prevAltitudeMode)) {
+        if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
             newItem->altitude()->setRawValue(prevAltitude);
             newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
-    _visualItems->insert(i, newItem);
+    _visualItems->insert(visualItemIndex, newItem);
 
     // We send the click coordinate through here to be able to set the planned home position from the user click location if needed
     _recalcAllWithClickCoordinate(coordinate);
@@ -381,7 +381,7 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int i)
     return newItem->sequenceNumber();
 }
 
-int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
+int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex)
 {
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, this);
@@ -395,18 +395,18 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int i)
     double  prevAltitude;
     int     prevAltitudeMode;
 
-    if (_findPreviousAltitude(i, &prevAltitude, &prevAltitudeMode)) {
+    if (_findPreviousAltitude(visualItemIndex, &prevAltitude, &prevAltitudeMode)) {
         newItem->altitude()->setRawValue(prevAltitude);
         newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
     }
-    _visualItems->insert(i, newItem);
+    _visualItems->insert(visualItemIndex, newItem);
 
     _recalcAll();
 
     return newItem->sequenceNumber();
 }
 
-int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i)
+int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex)
 {
     ComplexMissionItem* newItem;
 
@@ -425,10 +425,10 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         return sequenceNumber;
     }
 
-    return _insertComplexMissionItemWorker(newItem, i);
+    return _insertComplexMissionItemWorker(newItem, visualItemIndex);
 }
 
-int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i)
+int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex)
 {
     ComplexMissionItem* newItem;
 
@@ -443,10 +443,10 @@ int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QS
         return _nextSequenceNumber();
     }
 
-    return _insertComplexMissionItemWorker(newItem, i);
+    return _insertComplexMissionItemWorker(newItem, visualItemIndex);
 }
 
-int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i)
+int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex)
 {
     int sequenceNumber = _nextSequenceNumber();
     bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) ||
@@ -482,10 +482,10 @@ int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* compl
     complexItem->setSequenceNumber(sequenceNumber);
     _initVisualItem(complexItem);
 
-    if (i == -1) {
+    if (visualItemIndex == -1) {
         _visualItems->append(complexItem);
     } else {
-        _visualItems->insert(i, complexItem);
+        _visualItems->insert(visualItemIndex, complexItem);
     }
 
     //-- Keep track of bounding box changes in complex items
@@ -2226,4 +2226,17 @@ void MissionController::_complexBoundingBoxChanged()
 bool MissionController::isEmpty(void) const
 {
     return _visualItems->count() <= 1;
+}
+
+int MissionController::visualItemIndexFromSequenceNumber(int sequenceNumber) const
+{
+    for (int i=0; i<_visualItems->count(); i++) {
+        const VisualMissionItem* vi = _visualItems->value<VisualMissionItem*>(i);
+        if (vi->sequenceNumber() == sequenceNumber) {
+            return i;
+        }
+    }
+
+    qWarning() << "MissionController::getVisualItemIndex visual item not found";
+    return 0;
 }
