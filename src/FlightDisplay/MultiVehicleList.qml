@@ -135,6 +135,7 @@ Item {
 
                     QGCCompassWidget {
                         size:       _widgetHeight
+                        usedByMultipleVehicleList: true
                         vehicle:    _vehicle
                     }
 

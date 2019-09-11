@@ -576,3 +576,10 @@ bool PlanMasterController::syncInProgress(void) const
             _geoFenceController.syncInProgress() ||
             _rallyPointController.syncInProgress();
 }
+
+bool PlanMasterController::isEmpty(void) const
+{
+    return _missionController.isEmpty() &&
+            _geoFenceController.isEmpty() &&
+            _rallyPointController.isEmpty();
+}

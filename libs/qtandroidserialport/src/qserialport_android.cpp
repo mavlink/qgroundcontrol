@@ -56,7 +56,7 @@ QT_BEGIN_NAMESPACE
 
 static const char kJniClassName[] {"org/mavlink/qgroundcontrol/QGCActivity"};
 
-static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jint userDataA)
+static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jlong userDataA)
 {
     Q_UNUSED(envA);
     Q_UNUSED(thizA);
@@ -64,7 +64,7 @@ static void jniDeviceHasDisconnected(JNIEnv *envA, jobject thizA, jint userDataA
         (reinterpret_cast<QSerialPortPrivate*>(userDataA))->q_ptr->close();
 }
 
-static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jint userDataA, jbyteArray dataA)
+static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jlong userDataA, jbyteArray dataA)
 {
     Q_UNUSED(thizA);
     if (userDataA != 0)
@@ -76,7 +76,7 @@ static void jniDeviceNewData(JNIEnv *envA, jobject thizA, jint userDataA, jbyteA
     }
 }
 
-static void jniDeviceException(JNIEnv *envA, jobject thizA, jint userDataA, jstring messageA)
+static void jniDeviceException(JNIEnv *envA, jobject thizA, jlong userDataA, jstring messageA)
 {
     Q_UNUSED(thizA);
     if(userDataA != 0)
@@ -143,9 +143,9 @@ void QSerialPortPrivate::setNativeMethods(void)
 
     //  REGISTER THE C++ FUNCTION WITH JNI
     JNINativeMethod javaMethods[] {
-        {"nativeDeviceHasDisconnected", "(I)V",                     reinterpret_cast<void *>(jniDeviceHasDisconnected)},
-        {"nativeDeviceNewData",         "(I[B)V",                   reinterpret_cast<void *>(jniDeviceNewData)},
-        {"nativeDeviceException",       "(ILjava/lang/String;)V",   reinterpret_cast<void *>(jniDeviceException)},
+        {"nativeDeviceHasDisconnected", "(J)V",                     reinterpret_cast<void *>(jniDeviceHasDisconnected)},
+        {"nativeDeviceNewData",         "(J[B)V",                   reinterpret_cast<void *>(jniDeviceNewData)},
+        {"nativeDeviceException",       "(JLjava/lang/String;)V",   reinterpret_cast<void *>(jniDeviceException)},
         {"qgcLogDebug",                 "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogDebug)},
         {"qgcLogWarning",               "(Ljava/lang/String;)V",    reinterpret_cast<void *>(jniLogWarning)}
     };
@@ -186,10 +186,10 @@ bool QSerialPortPrivate::open(QIODevice::OpenMode mode)
     deviceId = QAndroidJniObject::callStaticMethod<jint>(
         kJniClassName,
         "open",
-        "(Landroid/content/Context;Ljava/lang/String;I)I",
+        "(Landroid/content/Context;Ljava/lang/String;J)I",
         QtAndroid::androidActivity().object(),
         jnameL.object<jstring>(),
-        reinterpret_cast<jint>(this));
+        reinterpret_cast<jlong>(this));
     cleanJavaException();
 
     isReadStopped = false;

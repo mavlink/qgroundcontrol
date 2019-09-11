@@ -48,7 +48,7 @@ ApplicationWindow {
     property var                activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
     property bool               communicationLost:          activeVehicle ? activeVehicle.connectionLost : false
     property string             formatedMessage:            activeVehicle ? activeVehicle.formatedMessage : ""
-    property real               availableHeight:            mainWindow.height - mainWindow.header.height
+    property real               availableHeight:            mainWindow.height - mainWindow.header.height - mainWindow.footer.height
 
     property var                currentPlanMissionItem:     planMasterControllerPlan ? planMasterControllerPlan.missionController.currentPlanViewItem : null
     property var                planMasterControllerPlan:   null
@@ -181,36 +181,12 @@ ApplicationWindow {
         }
     }
 
-    //-------------------------------------------------------------------------
-    //-- Weird hack that has to be fixed elsewhere and have this removed
-
     property bool _forceClose: false
-
-    function reallyClose() {
-        _forceClose = true
-        mainWindow.close()
-    }
 
     function finishCloseProcess() {
         QGroundControl.linkManager.shutdown()
-        // The above shutdown causes a flurry of activity as the vehicle components are removed. This in turn
-        // causes the Windows Version of Qt to crash if you allow the close event to be accepted. In order to prevent
-        // the crash, we ignore the close event and setup a delayed timer to close the window after things settle down.
-        if(ScreenTools.isWindows) {
-            delayedWindowCloseTimer.start()
-        } else {
-            reallyClose()
-        }
-    }
-
-    Timer {
-        id:         delayedWindowCloseTimer
-        interval:   1500
-        running:    false
-        repeat:     false
-        onTriggered: {
-            reallyClose()
-        }
+        _forceClose = true
+        mainWindow.close()
     }
 
     MessageDialog {
@@ -234,6 +210,7 @@ ApplicationWindow {
     //-- Check for unsaved missions
 
     onClosing: {
+        // Check first for unsaved missions and active connections
         if (!_forceClose) {
             unsavedMissionCloseDialog.check()
             close.accepted = false
@@ -289,6 +266,10 @@ ApplicationWindow {
                 }
             }
         }
+    }
+
+    footer: LogReplayStatusBar {
+        visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
 
     //-------------------------------------------------------------------------

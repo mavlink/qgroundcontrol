@@ -19,7 +19,7 @@ import QGroundControl.Palette       1.0
 
 Rectangle {
     id:             root
-    width:          getPreferredInstrumentWidth() * 0.7
+    width:          getPreferredInstrumentWidth()
     height:         _outerRadius * 4 + _valuesWidget.height
     radius:         _outerRadius
     color:          qgcPal.window

@@ -57,8 +57,10 @@ SetupPage {
 
             property Fact _armingCheck: controller.getParameterFact(-1, "ARMING_CHECK")
 
-            property real _margins:     ScreenTools.defaultFontPixelHeight
-            property bool _showIcon:    !ScreenTools.isTinyScreen
+            property real _margins:         ScreenTools.defaultFontPixelHeight
+            property bool _showIcon:        !ScreenTools.isTinyScreen
+            property bool _roverFirmware:   controller.parameterExists(-1, "MODE1") // This catches all usage of ArduRover firmware vehicle types: Rover, Boat...
+
 
             property string _restartRequired: qsTr("Requires vehicle reboot")
 
@@ -322,7 +324,7 @@ SetupPage {
             }
 
             Loader {
-                sourceComponent: controller.vehicle.rover ? roverGeneralFS : undefined
+                sourceComponent: _roverFirmware ? roverGeneralFS : undefined
             }
 
             Component {

@@ -20,6 +20,10 @@
 #include "SettingsManager.h"
 #include "AppSettings.h"
 #include "APMMavlinkStreamRateSettings.h"
+#include "ArduPlaneFirmwarePlugin.h"
+#include "ArduCopterFirmwarePlugin.h"
+#include "ArduRoverFirmwarePlugin.h"
+#include "ArduSubFirmwarePlugin.h"
 
 #include <QTcpSocket>
 
@@ -1029,19 +1033,19 @@ void APMFirmwarePlugin::startMission(Vehicle* vehicle)
 QString APMFirmwarePlugin::_getLatestVersionFileUrl(Vehicle* vehicle)
 {
     const static QString baseUrl("http://firmware.ardupilot.org/%1/stable/PX4/git-version.txt");
-    if (vehicle->fixedWing()) {
+
+    if (qobject_cast<ArduPlaneFirmwarePlugin*>(vehicle->firmwarePlugin())) {
         return baseUrl.arg("Plane");
-    }
-    if (vehicle->vtol()) {
-        return baseUrl.arg("Plane");
-    }
-    if (vehicle->rover()) {
+    } else if (qobject_cast<ArduRoverFirmwarePlugin*>(vehicle->firmwarePlugin())) {
         return baseUrl.arg("Rover");
-    }
-    if (vehicle->sub()) {
+    } else if (qobject_cast<ArduSubFirmwarePlugin*>(vehicle->firmwarePlugin())) {
         return baseUrl.arg("Sub");
+    } else if (qobject_cast<ArduCopterFirmwarePlugin*>(vehicle->firmwarePlugin())) {
+        return baseUrl.arg("Copter");
+    } else {
+        qWarning() << "APMFirmwarePlugin::_getLatestVersionFileUrl Unknown vehicle firmware type" << vehicle->vehicleType();
+        return QString();
     }
-    return baseUrl.arg("Copter");
 }
 
 QString APMFirmwarePlugin::_versionRegex() {

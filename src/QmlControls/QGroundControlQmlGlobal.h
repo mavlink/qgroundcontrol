@@ -227,11 +227,11 @@ public:
     void    setFlightMapPosition        (QGeoCoordinate& coordinate);
     void    setFlightMapZoom            (double zoom);
 
-    QString parameterFileExtension(void) const  { return AppSettings::parameterFileExtension; }
-    QString missionFileExtension(void) const    { return AppSettings::missionFileExtension; }
-    QString telemetryFileExtension(void) const  { return AppSettings::telemetryFileExtension; }
+    QString parameterFileExtension  (void) const  { return AppSettings::parameterFileExtension; }
+    QString missionFileExtension    (void) const    { return AppSettings::missionFileExtension; }
+    QString telemetryFileExtension  (void) const  { return AppSettings::telemetryFileExtension; }
 
-    QString qgcVersion(void) const { return qgcApp()->applicationVersion(); }
+    QString qgcVersion              (void) const;
 
 #if defined(QGC_AIRMAP_ENABLED)
     bool    airmapSupported() { return true; }

@@ -9,6 +9,9 @@ VERSIONCODE=$(($(($minor*10000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($patch*1000)) + $VERSIONCODE))
 VERSIONCODE=$(($(($dev)) + $VERSIONCODE))
 
+# Command line specifies either 32 or 64 bit version
+VERSIONCODE=$1$VERSIONCODE
+
 MANIFEST_FILE=android/AndroidManifest.xml
 
 # manifest package
