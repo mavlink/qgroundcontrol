@@ -150,6 +150,12 @@ PairingManager::_removeUDPLink(const QString name)
             _setLastConnectedDevice("");
             _toolbox->videoManager()->stopVideo();
         }
+        _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
+        _connectedDevices.remove(name);
+        if (_connectedDevice == name) {
+            _setLastConnectedDevice("");
+            _toolbox->videoManager()->stopVideo();
+        }
         emit connectedListChanged();
         emit pairedListChanged();
     }
