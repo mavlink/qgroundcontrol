@@ -212,9 +212,9 @@ SetupPage {
                             var reversed = controller.getParameterFact(-1, "MOT_" + (_lastIndex + 1) + "_DIRECTION").value == -1
 
                             if (reversed) {
-                                controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value)
+                                controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value, 0)
                             } else {
-                                controller.vehicle.motorTest(_lastIndex, slider.motorSlider.value)
+                                controller.vehicle.motorTest(_lastIndex, slider.motorSlider.value, 0)
                             }
                     }
                 }
