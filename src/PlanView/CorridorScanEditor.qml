@@ -70,7 +70,9 @@ Rectangle {
             cameraCalc:                     missionItem.cameraCalc
             vehicleFlightIsFrontal:         true
             distanceToSurfaceLabel:         qsTr("Altitude")
-            distanceToSurfaceAltitudeMode:  missionItem.followTerrain ? QGroundControl.AltitudeModeAboveTerrain : QGroundControl.AltitudeModeRelative
+            distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
+                                                QGroundControl.AltitudeModeAboveTerrain :
+                                                missionItem.cameraCalc.distanceToSurfaceRelative
             frontalDistanceLabel:           qsTr("Trigger Dist")
             sideDistanceLabel:              qsTr("Spacing")
         }
@@ -100,26 +102,30 @@ Rectangle {
                 Layout.fillWidth:       true
             }
 
-            FactCheckBox {
-                text:               qsTr("Take images in turnarounds")
-                fact:               missionItem.cameraTriggerInTurnAround
-                enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
+            QGCOptionsComboBox {
                 Layout.columnSpan:  2
-            }
+                Layout.fillWidth:   true
 
-            QGCCheckBox {
-                id:                 relAlt
-                text:               qsTr("Relative altitude")
-                checked:            missionItem.cameraCalc.distanceToSurfaceRelative
-                enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
-                visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
-                Layout.alignment:   Qt.AlignLeft
-                Layout.columnSpan:  2
-                onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
+                model: [
+                    {
+                        text:       qsTr("Images in turnarounds"),
+                        fact:       missionItem.cameraTriggerInTurnAround,
+                        enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true,
+                        visible:    true
+                    },
+                    {
+                        text:       qsTr("Relative altitude"),
+                        enabled:    missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain,
+                        visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain),
+                        checked:    missionItem.cameraCalc.distanceToSurfaceRelative
+                    }
+                ]
 
-                Connections {
-                    target: missionItem.cameraCalc
-                    onDistanceToSurfaceRelativeChanged: relAlt.checked = missionItem.cameraCalc.distanceToSurfaceRelative
+                onItemClicked: {
+                    if (index == 1) {
+                        missionItem.cameraCalc.distanceToSurfaceRelative = !missionItem.cameraCalc.distanceToSurfaceRelative
+                        console.log(missionItem.cameraCalc.distanceToSurfaceRelative)
+                    }
                 }
             }
         }

@@ -20,7 +20,7 @@ import QGroundControl.Controls          1.0
 import QGroundControl.FlightMap         1.0
 import QGroundControl.ShapeFileHelper   1.0
 
-/// QGCmapPolyline map visuals
+/// QGCMapPolyline map visuals
 Item {
     id: _root
 
@@ -173,6 +173,7 @@ Item {
             line.width: lineWidth
             line.color: lineColor
             path:       mapPolyline.path
+            visible:    _root.visible
         }
     }
 
@@ -181,31 +182,14 @@ Item {
 
         MapQuickItem {
             id:             mapQuickItem
-            anchorPoint.x:  splitHandle.width / 2
-            anchorPoint.y:  splitHandle.height / 2
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  sourceItem.height / 2
+            z:              _zorderSplitHandle
 
             property int vertexIndex
 
-            sourceItem: Rectangle {
-                id:             splitHandle
-                width:          ScreenTools.defaultFontPixelHeight * 1.5
-                height:         width
-                radius:         width / 2
-                border.color:   "white"
-                color:          "transparent"
-                opacity:        .50
-                z:              _zorderSplitHandle
-
-                QGCLabel {
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    anchors.verticalCenter:     parent.verticalCenter
-                    text:                       "+"
-                }
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  mapPolyline.splitSegment(mapQuickItem.vertexIndex)
-                }
+            sourceItem: SplitIndicator {
+                onClicked:  mapPolyline.splitSegment(mapQuickItem.vertexIndex)
             }
         }
     }

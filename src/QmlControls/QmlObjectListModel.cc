@@ -20,9 +20,10 @@ const int QmlObjectListModel::ObjectRole = Qt::UserRole;
 const int QmlObjectListModel::TextRole = Qt::UserRole + 1;
 
 QmlObjectListModel::QmlObjectListModel(QObject* parent)
-    : QAbstractListModel(parent)
-    , _dirty(false)
-    , _skipDirtyFirstItem(false)
+    : QAbstractListModel        (parent)
+    , _dirty                    (false)
+    , _skipDirtyFirstItem       (false)
+    , _externalBeginResetModel  (false)
 {
 
 }
@@ -142,8 +143,13 @@ const QObject* QmlObjectListModel::operator[](int index) const
 
 void QmlObjectListModel::clear()
 {
-    while (rowCount()) {
-        removeAt(0);
+    if (!_externalBeginResetModel) {
+        beginResetModel();
+    }
+    _objectList.clear();
+    if (!_externalBeginResetModel) {
+        endResetModel();
+        emit countChanged(count());
     }
 }
 
@@ -221,10 +227,14 @@ void QmlObjectListModel::append(QList<QObject*> objects)
 QObjectList QmlObjectListModel::swapObjectList(const QObjectList& newlist)
 {
     QObjectList oldlist(_objectList);
-    beginResetModel();
+    if (!_externalBeginResetModel) {
+        beginResetModel();
+    }
     _objectList = newlist;
-    endResetModel();
-    emit countChanged(count());
+    if (!_externalBeginResetModel) {
+        endResetModel();
+        emit countChanged(count());
+    }
     return oldlist;
 }
 
@@ -272,5 +282,23 @@ void QmlObjectListModel::clearAndDeleteContents()
         _objectList[i]->deleteLater();
     }
     clear();
+    endResetModel();
+}
+
+void QmlObjectListModel::beginReset(void)
+{
+    if (_externalBeginResetModel) {
+        qWarning() << "QmlObjectListModel::beginReset already set";
+    }
+    _externalBeginResetModel = true;
+    beginResetModel();
+}
+
+void QmlObjectListModel::endReset(void)
+{
+    if (!_externalBeginResetModel) {
+        qWarning() << "QmlObjectListModel::endReset begin not set";
+    }
+    _externalBeginResetModel = false;
     endResetModel();
 }

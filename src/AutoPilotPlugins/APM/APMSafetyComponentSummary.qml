@@ -27,6 +27,9 @@ Item {
     property Fact _batt2FSCritAct:          controller.getParameterFact(-1, "BATT2_FS_CRT_ACT", false /* reportMissing */)
     property bool _batt1FSCritActAvailable: controller.parameterExists(-1, "BATT_FS_CRT_ACT")
 
+    property bool _roverFirmware:           controller.parameterExists(-1, "MODE1") // This catches all usage of ArduRover firmware vehicle types: Rover, Boat...
+
+
     Column {
         anchors.fill:       parent
 
@@ -56,7 +59,7 @@ Item {
         VehicleSummaryRow {
             labelText:  qsTr("Throttle failsafe:")
             valueText:  fact ? fact.enumStringValue : ""
-            visible:    controller.vehicle.rover
+            visible:    _roverFirmware
 
             property Fact fact: controller.getParameterFact(-1, "FS_THR_ENABLE", false /* reportMissing */)
         }
@@ -64,7 +67,7 @@ Item {
         VehicleSummaryRow {
             labelText:  qsTr("Failsafe Action:")
             valueText:  fact ? fact.enumStringValue : ""
-            visible:    controller.vehicle.rover
+            visible:    _roverFirmware
 
             property Fact fact: controller.getParameterFact(-1, "FS_ACTION", false /* reportMissing */)
         }
@@ -72,7 +75,7 @@ Item {
         VehicleSummaryRow {
             labelText:  qsTr("Failsafe Crash Check:")
             valueText:  fact ? fact.enumStringValue : ""
-            visible:    controller.vehicle.rover
+            visible:    _roverFirmware
 
             property Fact fact: controller.getParameterFact(-1, "FS_CRASH_CHECK", false /* reportMissing */)
         }

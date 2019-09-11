@@ -34,7 +34,13 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    QGCTool::setToolbox(toolbox);
    //-- First see if plugin provides a position source
    _defaultSource = toolbox->corePlugin()->createPositionSource(this);
-   if(!_defaultSource) {
+
+   if (qgcApp()->runningUnitTests()) {
+       // Units test on travis fail due to lack of position source
+       return;
+   }
+
+   if (!_defaultSource) {
        //-- Otherwise, create a default one
        _defaultSource = QGeoPositionInfoSource::createDefaultSource(this);
    }

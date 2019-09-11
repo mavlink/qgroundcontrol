@@ -33,6 +33,7 @@ public:
     
     int         count               () const;
     bool        dirty               () const { return _dirty; }
+
     void        setDirty            (bool dirty);
     void        append              (QObject* object);
     void        append              (QList<QObject*> objects);
@@ -56,8 +57,8 @@ public:
     /// Clears the list and calls deleteLater on each entry
     void clearAndDeleteContents     ();
 
-    void beginReset                 () { beginResetModel(); }
-    void endReset                   () { endResetModel();   }
+    void beginReset                 ();
+    void endReset                   ();
 
 signals:
     void countChanged               (int count);
@@ -80,6 +81,7 @@ private:
     
     bool _dirty;
     bool _skipDirtyFirstItem;
+    bool _externalBeginResetModel;
         
     static const int ObjectRole;
     static const int TextRole;

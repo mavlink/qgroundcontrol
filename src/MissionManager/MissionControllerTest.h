@@ -70,13 +70,11 @@ private:
 
     enum {
         visualItemsChangedSignalIndex = 0,
-        waypointLinesChangedSignalIndex,
         missionControllerMaxSignalIndex
     };
 
     enum {
         visualItemsChangedSignalMask =                 1 << visualItemsChangedSignalIndex,
-        waypointLinesChangedSignalMask =                1 << waypointLinesChangedSignalIndex,
     };
 
     MultiSignalSpy*     _multiSpyMissionController;

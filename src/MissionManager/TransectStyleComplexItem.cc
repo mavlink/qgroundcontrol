@@ -102,6 +102,8 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyVie
     connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(&_cameraCalc,                               &CameraCalc::distanceToSurfaceRelativeChanged, this, &TransectStyleComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 
+    connect(&_hoverAndCaptureFact,                      &Fact::rawValueChanged,         this, &TransectStyleComplexItem::_handleHoverAndCaptureEnabled);
+
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
 
@@ -767,5 +769,13 @@ void TransectStyleComplexItem::_followTerrainChanged(bool followTerrain)
     if (followTerrain) {
         _refly90DegreesFact.setRawValue(false);
         _hoverAndCaptureFact.setRawValue(false);
+    }
+}
+
+void TransectStyleComplexItem::_handleHoverAndCaptureEnabled(QVariant enabled)
+{
+    if (enabled.toBool() && _cameraTriggerInTurnAroundFact.rawValue().toBool()) {
+        qDebug() << "_handleHoverAndCaptureEnabled";
+        _cameraTriggerInTurnAroundFact.setRawValue(false);
     }
 }

@@ -19,6 +19,7 @@ FlightModeMenu          1.0 FlightModeMenu.qml
 GeoFenceEditor          1.0 GeoFenceEditor.qml
 GeoFenceMapVisuals      1.0 GeoFenceMapVisuals.qml
 HackFileDialog          1.0 HackFileDialog.qml
+HeightIndicator         1.0 HeightIndicator.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 LogReplayStatusBar      1.0 LogReplayStatusBar.qml
@@ -42,6 +43,7 @@ QGCButton               1.0 QGCButton.qml
 QGCCheckBox             1.0 QGCCheckBox.qml
 QGCColoredImage         1.0 QGCColoredImage.qml
 QGCComboBox             1.0 QGCComboBox.qml
+QGCDynamicObjectManager 1.0 QGCDynamicObjectManager.qml
 QGCFileDialog           1.0 QGCFileDialog.qml
 QGCFlickable            1.0 QGCFlickable.qml
 QGCGroupBox             1.0 QGCGroupBox.qml
@@ -56,6 +58,7 @@ QGCMenuItem             1.0 QGCMenuItem.qml
 QGCMenuSeparator        1.0 QGCMenuSeparator.qml
 QGCMouseArea            1.0 QGCMouseArea.qml
 QGCMovableItem          1.0 QGCMovableItem.qml
+QGCOptionsComboBox      1.0 QGCOptionsComboBox.qml
 QGCPipable              1.0 QGCPipable.qml
 QGCRadioButton          1.0 QGCRadioButton.qml
 QGCSlider               1.0 QGCSlider.qml
@@ -80,6 +83,7 @@ SliderSwitch            1.0 SliderSwitch.qml
 SubMenuButton           1.0 SubMenuButton.qml
 SurveyMapVisuals        1.0 SurveyMapVisuals.qml
 TransectStyleComplexItemStats 1.0 TransectStyleComplexItemStats.qml
+TransectStyleMapVisuals 1.0 TransectStyleMapVisuals.qml
 ToolStrip               1.0 ToolStrip.qml
 VehicleRotationCal      1.0 VehicleRotationCal.qml
 VehicleSummaryRow       1.0 VehicleSummaryRow.qml

@@ -1136,7 +1136,7 @@ QGCCacheWorker::_lookupReady(QHostInfo info)
             return;
         }
     }
-    qWarning() << "No Internet Access";
+    qDebug() << "No Internet Access";
     emit internetStatus(false);
 #endif
 }

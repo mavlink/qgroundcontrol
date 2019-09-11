@@ -267,32 +267,14 @@ Item {
 
         MapQuickItem {
             id:             mapQuickItem
-            anchorPoint.x:  dragHandle.width / 2
-            anchorPoint.y:  dragHandle.height / 2
+            anchorPoint.x:  sourceItem.width / 2
+            anchorPoint.y:  sourceItem.height / 2
             visible:        !_circle
 
             property int vertexIndex
 
-            sourceItem: Rectangle {
-                id:         dragHandle
-                width:      ScreenTools.defaultFontPixelHeight * 1.5
-                height:     width
-                radius:     width / 2
-                border.color:      "white"
-                color:      "transparent"
-                opacity:    .50
-                z:          _zorderSplitHandle
-
-                QGCLabel {
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    anchors.verticalCenter:     parent.verticalCenter
-                    text:                       "+"
-                }
-
-                QGCMouseArea {
-                    fillItem:   parent
-                    onClicked:  mapPolygon.splitPolygonSegment(mapQuickItem.vertexIndex)
-                }
+            sourceItem: SplitIndicator {
+                z: _zorderSplitHandle
             }
         }
     }

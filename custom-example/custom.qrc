@@ -10,6 +10,7 @@
         <file alias="CustomModeIndicator.qml">res/MainToolbar/CustomModeIndicator.qml</file>
         <file alias="CustomMultiVehicleSelector.qml">res/MainToolbar/CustomMultiVehicleSelector.qml</file>
         <file alias="CustomRCRSSIIndicator.qml">res/MainToolbar/CustomRCRSSIIndicator.qml</file>
+        <file alias="PairingIndicator.qml">res/PairingIndicator.qml</file>
         <file alias="PreFlightCheckList.qml">res/PreFlightCheckList.qml</file>
     </qresource>
     <qresource prefix="custom/img">
@@ -25,12 +26,16 @@
         <file alias="compass_pointer.svg">res/Images/compass_pointer.svg</file>
         <file alias="distance.svg">res/Images/distance.svg</file>
         <file alias="gimbal_icon.svg">res/Images/gimbal_icon.svg</file>
-        <file alias="gimbal_position.svg">res/Images/gimbal_position.svg</file>
         <file alias="gimbal_pitch_indoors.svg">res/Images/gimbal_pitch_indoors.svg</file>
         <file alias="gimbal_pitch_outdoors.svg">res/Images/gimbal_pitch_outdoors.svg</file>
+        <file alias="gimbal_position.svg">res/Images/gimbal_position.svg</file>
         <file alias="horizontal_speed.svg">res/Images/horizontal_speed.svg</file>
         <file alias="microSD.svg">res/Images/microSD.svg</file>
         <file alias="odometer.svg">res/Images/odometer.svg</file>
+        <file alias="PairingButton.svg">res/Images/PairingButton.svg</file>
+        <file alias="PairingConnected.svg">res/Images/PairingConnected.svg</file>
+        <file alias="PairingError.svg">res/Images/PairingError.svg</file>
+        <file alias="PairingIcon.svg">res/Images/PairingIcon.svg</file>
         <file alias="thermal-brightness.svg">res/Images/thermal-brightness.svg</file>
         <file alias="thermal-palette.svg">res/Images/thermal-palette.svg</file>
         <file alias="thermal-pip.svg">res/Images/thermal-pip.svg</file>

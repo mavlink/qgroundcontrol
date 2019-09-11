@@ -23,6 +23,29 @@ import QGroundControl.Palette               1.0
 Item {
     anchors.fill: parent
     readonly property real _indicatorMargins: ScreenTools.defaultFontPixelHeight * 0.75
+    Component.onCompleted: {
+        if(QGroundControl.pairingManager) {
+            if(!activeVehicle) {
+                pairingTimer.start()
+            }
+        }
+    }
+    //-------------------------------------------------------------------------
+    //-- Launch pairing manager if nothing connected
+    Timer {
+        id:        pairingTimer
+        interval:  5000
+        running:   false;
+        repeat:    false;
+        onTriggered: {
+            if(!activeVehicle) {
+                if(QGroundControl.pairingManager.firstBoot && pairingLoader.item) {
+                    QGroundControl.pairingManager.firstBoot = false
+                    pairingLoader.item.runPairing()
+                }
+            }
+        }
+    }
     //-------------------------------------------------------------------------
     //-- Waiting for a vehicle
     Row {
@@ -34,7 +57,6 @@ Item {
         anchors.left:               parent.left
         QGCColoredImage {
             id:                     menuEdge
-            visible:                !QGroundControl.supportsPairing || !QGroundControl.settingsManager.appSettings.usePairing.rawValue
             anchors.verticalCenter: parent.verticalCenter
             height:                 ScreenTools.defaultFontPixelHeight
             width:                  height
@@ -44,18 +66,28 @@ Item {
             color:                  qgcPal.buttonText
         }
         QGCLabel {
-            visible:                menuEdge.visible
             anchors.verticalCenter: parent.verticalCenter
             text:                   qsTr("Waiting for a vehicle")
             font.pointSize:         ScreenTools.mediumFontPointSize
             font.family:            ScreenTools.demiboldFontFamily
         }
+    }
+    //-------------------------------------------------------------------------
+    //-- Pairing Indicator (not connected)
+    Row {
+        id:                         pairingRow
+        anchors.top:                parent.top
+        anchors.bottom:             parent.bottom
+        anchors.right:              parent.right
+        anchors.rightMargin:        ScreenTools.defaultFontPixelWidth * 2
+        spacing:                    ScreenTools.defaultFontPixelWidth * 2
+        visible:                    !indicatorRow.visible
         Loader {
-            visible:                !menuEdge.visible
+            id:                     pairingLoader
             anchors.top:            parent.top
             anchors.bottom:         parent.bottom
             anchors.margins:        _indicatorMargins
-            source:                 "/toolbar/PairingIndicator.qml"
+            source:                 "/custom/PairingIndicator.qml"
         }
     }
     //-------------------------------------------------------------------------

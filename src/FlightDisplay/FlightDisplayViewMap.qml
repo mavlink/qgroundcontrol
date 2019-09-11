@@ -233,7 +233,7 @@ FlightMap {
             map:                flightMap
             largeMapView:       mainIsMap
             masterController:   masterController
-            isActiveVehicle:    _vehicle.active
+            vehicle:            _vehicle
 
             property var _vehicle: object
 
@@ -241,6 +241,17 @@ FlightMap {
                 id: masterController
                 Component.onCompleted: startStaticActiveVehicle(object)
             }
+        }
+    }
+
+    MapItemView {
+        model: mainIsMap ? _missionController.directionArrows : undefined
+
+        delegate: MapLineArrow {
+            fromCoord:      object ? object.coordinate1 : undefined
+            toCoord:        object ? object.coordinate2 : undefined
+            arrowPosition:  2
+            z:              QGroundControl.zOrderWaypointLines
         }
     }
 
@@ -470,6 +481,7 @@ FlightMap {
         anchors.topMargin:      ScreenTools.defaultFontPixelHeight * (0.33) + state === "bottomMode" ? 0 : ScreenTools.toolbarHeight
         anchors.bottomMargin:   ScreenTools.defaultFontPixelHeight * (0.33)
         mapControl:             flightMap
+        buttonsOnLeft:          false
         visible:                !ScreenTools.isTinyScreen && QGroundControl.corePlugin.options.enableMapScale
         state:                  "bottomMode"
         states: [

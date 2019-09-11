@@ -286,7 +286,7 @@
     </airframe>
   </airframe_group>
   <airframe_group image="QuadRotorX" name="Quadrotor x">
-    <airframe id="4001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Quadrotor x">
+    <airframe id="4001" maintainer="Lorenz Meier &lt;lorenz@px4.io&gt;" name="Generic Quadcopter">
       <class>Copter</class>
       <maintainer>Lorenz Meier &lt;lorenz@px4.io&gt;</maintainer>
       <type>Quadrotor x</type>
@@ -818,6 +818,15 @@
   </airframe_group>
   <airframe_group image="VTOLDuoRotorTailSitter" name="VTOL Duo Tailsitter">
     <airframe id="13001" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Caipiroshka Duo Tailsitter">
+      <class>VTOL</class>
+      <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
+      <type>VTOL Duo Tailsitter</type>
+      <output name="MAIN1">motor right</output>
+      <output name="MAIN2">motor left</output>
+      <output name="MAIN5">elevon right</output>
+      <output name="MAIN6">elevon left</output>
+    </airframe>
+    <airframe id="13200" maintainer="Roman Bapst &lt;roman@px4.io&gt;" name="Generic Tailsitter">
       <class>VTOL</class>
       <maintainer>Roman Bapst &lt;roman@px4.io&gt;</maintainer>
       <type>VTOL Duo Tailsitter</type>

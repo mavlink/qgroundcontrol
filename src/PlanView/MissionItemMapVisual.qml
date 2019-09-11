@@ -22,6 +22,7 @@ Item {
     id: _root
 
     property var map        ///< Map control to place item in
+    property var vehicle    ///< Vehicle associated with this item
 
     signal clicked(int sequenceNumber)
 
@@ -33,7 +34,7 @@ Item {
             if (component.status === Component.Error) {
                 console.log("Error loading Qml: ", object.mapVisualQML, component.errorString())
             }
-            _visualItem = component.createObject(map, { "map": _root.map })
+            _visualItem = component.createObject(map, { "map": _root.map, vehicle: _root.vehicle })
             _visualItem.clicked.connect(_root.clicked)
         }
     }

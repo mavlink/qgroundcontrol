@@ -162,7 +162,9 @@ Rectangle {
             cameraCalc:                     missionItem.cameraCalc
             vehicleFlightIsFrontal:         true
             distanceToSurfaceLabel:         qsTr("Altitude")
-            distanceToSurfaceAltitudeMode:  missionItem.followTerrain ? QGroundControl.AltitudeModeAboveTerrain : QGroundControl.AltitudeModeRelative
+            distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
+                                                QGroundControl.AltitudeModeAboveTerrain :
+                                                missionItem.cameraCalc.distanceToSurfaceRelative
             frontalDistanceLabel:           qsTr("Trigger Dist")
             sideDistanceLabel:              qsTr("Spacing")
             usingPreset:                    _usingPreset
@@ -235,48 +237,47 @@ Rectangle {
             }
             */
 
-            FactCheckBox {
-                text:               qsTr("Hover and capture image")
-                fact:               missionItem.hoverAndCapture
-                visible:            missionItem.hoverAndCaptureAllowed
-                enabled:            !missionItem.followTerrain
-                onClicked: {
-                    if (checked) {
-                        missionItem.cameraTriggerInTurnAround.rawValue = false
+            QGCOptionsComboBox {
+                Layout.fillWidth: true
+
+                model: [
+                    {
+                        text:       qsTr("Hover and capture image"),
+                        fact:       missionItem.hoverAndCapture,
+                        enabled:    !missionItem.followTerrain,
+                        visible:    missionItem.hoverAndCaptureAllowed
+                    },
+                    {
+                        text:       qsTr("Refly at 90 deg offset"),
+                        fact:       missionItem.refly90Degrees,
+                        enabled:    !missionItem.followTerrain,
+                        visible:    true
+                    },
+                    {
+                        text:       qsTr("Images in turnarounds"),
+                        fact:       missionItem.cameraTriggerInTurnAround,
+                        enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true,
+                        visible:    true
+                    },
+                    {
+                        text:       qsTr("Fly alternate transects"),
+                        fact:       missionItem.flyAlternateTransects,
+                        enabled:    true,
+                        visible:    _vehicle ? (_vehicle.fixedWing || _vehicle.vtol) : false
+                    },
+                    {
+                        text:       qsTr("Relative altitude"),
+                        enabled:    missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain,
+                        visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain),
+                        checked:    missionItem.cameraCalc.distanceToSurfaceRelative
                     }
-                }
-            }
+                ]
 
-            FactCheckBox {
-                text:               qsTr("Refly at 90 deg offset")
-                fact:               missionItem.refly90Degrees
-                enabled:            !missionItem.followTerrain
-            }
-
-            FactCheckBox {
-                text:               qsTr("Images in turnarounds")
-                fact:               missionItem.cameraTriggerInTurnAround
-                enabled:            missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true
-            }
-
-            FactCheckBox {
-                text:               qsTr("Fly alternate transects")
-                fact:               missionItem.flyAlternateTransects
-                visible:            _vehicle ? (_vehicle.fixedWing || _vehicle.vtol) : false
-            }
-
-            QGCCheckBox {
-                id:                 relAlt
-                Layout.alignment:   Qt.AlignLeft
-                text:               qsTr("Relative altitude")
-                checked:            missionItem.cameraCalc.distanceToSurfaceRelative
-                enabled:            missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain
-                visible:            QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain)
-                onClicked:          missionItem.cameraCalc.distanceToSurfaceRelative = checked
-
-                Connections {
-                    target: missionItem.cameraCalc
-                    onDistanceToSurfaceRelativeChanged: relAlt.checked = missionItem.cameraCalc.distanceToSurfaceRelative
+                onItemClicked: {
+                    if (index == 4) {
+                        missionItem.cameraCalc.distanceToSurfaceRelative = !missionItem.cameraCalc.distanceToSurfaceRelative
+                        console.log(missionItem.cameraCalc.distanceToSurfaceRelative)
+                    }
                 }
             }
         }

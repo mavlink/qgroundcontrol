@@ -44,6 +44,8 @@ Item {
     property real   _labelFieldWidth:       ScreenTools.defaultFontPixelWidth  * 28
     property real   _editFieldWidth:        ScreenTools.defaultFontPixelWidth  * 30
     property real   _editFieldHeight:       ScreenTools.defaultFontPixelHeight * 2
+    property var    _videoReceiver:         QGroundControl.videoManager.videoReceiver
+    property bool   _recordingLocalVideo:   _videoReceiver && _videoReceiver.recording
 
     property var    _dynamicCameras:        activeVehicle ? activeVehicle.dynamicCameras : null
     property bool   _isCamera:              _dynamicCameras ? _dynamicCameras.cameras.count > 0 : false
@@ -301,9 +303,17 @@ Item {
                                 if(_cameraVideoMode) {
                                     if(_camera.videoStatus === QGCCameraControl.VIDEO_CAPTURE_STATUS_RUNNING) {
                                         _camera.stopVideo()
+                                        //-- Local video as well
+                                        if (_recordingVideo) {
+                                            _videoReceiver.stopRecording()
+                                        }
                                     } else {
                                         if(!_fullSD) {
                                             _camera.startVideo()
+                                        }
+                                        //-- Local video as well
+                                        if(_videoReceiver) {
+                                            _videoReceiver.startRecording()
                                         }
                                     }
                                 } else {

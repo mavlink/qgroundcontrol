@@ -68,10 +68,12 @@ public:
     } MissionFlightStatus_t;
 
     Q_PROPERTY(QmlObjectListModel*  visualItems             READ visualItems                NOTIFY visualItemsChanged)
-    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              NOTIFY waypointLinesChanged)        ///< Used by Plan view only for interactive editing
+    Q_PROPERTY(QmlObjectListModel*  waypointLines           READ waypointLines              CONSTANT)                           ///< Used by Plan view only for interactive editing
     Q_PROPERTY(QVariantList         waypointPath            READ waypointPath               NOTIFY waypointPathChanged)         ///< Used by Fly view only for static display
+    Q_PROPERTY(QmlObjectListModel*  directionArrows         READ directionArrows            CONSTANT)
     Q_PROPERTY(QStringList          complexMissionItemNames READ complexMissionItemNames    NOTIFY complexMissionItemNamesChanged)
     Q_PROPERTY(QGeoCoordinate       plannedHomePosition     READ plannedHomePosition        NOTIFY plannedHomePositionChanged)
+    Q_PROPERTY(CoordinateVector*    splitSegment            MEMBER _splitSegment            NOTIFY splitSegmentChanged)         ///< Segment which show show + split ui element
 
     Q_PROPERTY(double               progressPct             READ progressPct                NOTIFY progressPctChanged)
 
@@ -101,28 +103,28 @@ public:
     Q_INVOKABLE void removeMissionItem(int index);
 
     /// Add a new simple mission item to the list
-    ///     @param i: index to insert at
+    ///     @param visualItemIndex: index to insert at
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int i);
+    Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex);
 
     /// Add a new ROI mission item to the list
-    ///     @param i: index to insert at
+    ///     @param visualItemIndex: index to insert at
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertROIMissionItem(QGeoCoordinate coordinate, int i);
+    Q_INVOKABLE int insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex);
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
     ///     @param mapCenterCoordinate: coordinate for current center of map
-    ///     @param i: index to insert at
+    ///     @param visualItemIndex: index to insert at
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int i);
+    Q_INVOKABLE int insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex);
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
     ///     @param file: kml or shp file to load from shape from
-    ///     @param i: index to insert at, -1 for end
+    ///     @param visualItemIndex: index to insert at, -1 for end
     /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int i);
+    Q_INVOKABLE int insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
@@ -132,6 +134,9 @@ public:
     /// Sets a new current mission item (PlanView).
     ///     @param sequenceNumber - index for new item, -1 to clear current item
     Q_INVOKABLE void setCurrentPlanViewIndex(int sequenceNumber, bool force);
+
+    /// Returns the index of this item in the visual item list
+    Q_INVOKABLE int visualItemIndexFromSequenceNumber(int sequenceNumber) const;
 
     /// Determines if the mission has all data needed to be saved or sent to the vehicle. Currently the only case where this
     /// would return false is when it is still waiting on terrain data to determine correct altitudes.
@@ -169,6 +174,7 @@ public:
 
     QmlObjectListModel* visualItems                 (void) { return _visualItems; }
     QmlObjectListModel* waypointLines               (void) { return &_waypointLines; }
+    QmlObjectListModel* directionArrows             (void) { return &_directionArrows; }
     QVariantList        waypointPath                (void) { return _waypointPath; }
     QStringList         complexMissionItemNames     (void) const;
     QGeoCoordinate      plannedHomePosition         (void) const;
@@ -194,6 +200,8 @@ public:
     int  batteryChangePoint         (void) const { return _missionFlightStatus.batteryChangePoint; }    ///< -1 for not supported, 0 for not needed
     int  batteriesRequired          (void) const { return _missionFlightStatus.batteriesRequired; }     ///< -1 for not supported
 
+    bool isEmpty                    (void) const;
+
     // These are the names shown in the UI for the pattern items. They are public so custom builds can remove the ones
     // they don't want through the QGCCorePlugin::
     static const QString patternFWLandingName;
@@ -202,8 +210,8 @@ public:
 
 signals:
     void visualItemsChanged             (void);
-    void waypointLinesChanged           (void);
     void waypointPathChanged            (void);
+    void splitSegmentChanged             (void);
     void newItemsFromVehicle            (void);
     void missionDistanceChanged         (double missionDistance);
     void missionTimeChanged             (void);
@@ -273,9 +281,9 @@ private:
     void _updateBatteryInfo(int waypointIndex);
     bool _loadItemsFromJson(const QJsonObject& json, QmlObjectListModel* visualItems, QString& errorString);
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
-    void _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
+    CoordinateVector* _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
-    int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int i);
+    int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex);
     void _warnIfTerrainFrameUsed(void);
 
 private:
@@ -285,6 +293,7 @@ private:
     MissionSettingsItem*    _settingsItem;
     QmlObjectListModel      _waypointLines;
     QVariantList            _waypointPath;
+    QmlObjectListModel      _directionArrows;
     CoordVectHashTable      _linesTable;
     bool                    _firstItemsFromVehicle;
     bool                    _itemsRequested;
@@ -298,6 +307,7 @@ private:
     QTimer                  _updateTimer;
     QGCGeoBoundingCube      _travelBoundingCube;
     QGeoCoordinate          _takeoffCoordinate;
+    CoordinateVector*       _splitSegment;
 
     static const char*  _settingsGroup;
 

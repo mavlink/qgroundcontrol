@@ -27,21 +27,15 @@ Item {
     property var _missionItem:      object
     property var _structurePolygon: object.structurePolygon
     property var _flightPolygon:    object.flightPolygon
-    property var _entryCoordinate
-    property var _exitCoordinate
 
     signal clicked(int sequenceNumber)
 
     function _addVisualElements() {
-        _entryCoordinate = entryPointComponent.createObject(map)
-        _exitCoordinate = exitPointComponent.createObject(map)
-        map.addMapItem(_entryCoordinate)
-        map.addMapItem(_exitCoordinate)
+        objMgr.createObjects([entryPointComponent, exitPointComponent], map, true /* parentObjectIsMap */)
     }
 
     function _destroyVisualElements() {
-        _entryCoordinate.destroy()
-        _exitCoordinate.destroy()
+        objMgr.destroyObjects()
     }
 
     /// Add an initial 4 sided polygon if there is none
@@ -83,6 +77,10 @@ Item {
 
     Component.onDestruction: {
         _destroyVisualElements()
+    }
+
+    QGCDynamicObjectManager {
+        id: objMgr
     }
 
     QGCMapPolygonVisuals {

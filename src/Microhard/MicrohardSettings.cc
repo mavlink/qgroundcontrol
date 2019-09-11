@@ -27,7 +27,8 @@ MicrohardSettings::start()
 {
     qCDebug(MicrohardLog) << "Start Microhard Settings";
     _loggedIn = false;
-    return _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
+    _start(MICROHARD_SETTINGS_PORT, QHostAddress(_address));
+    return true;
 }
 
 //-----------------------------------------------------------------------------
