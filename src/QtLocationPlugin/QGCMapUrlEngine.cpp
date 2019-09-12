@@ -28,47 +28,32 @@
 #include <QString>
 #include <QByteArray>
 
-#if defined(DEBUG_GOOGLE_MAPS)
-#include <QFile>
-#include <QStandardPaths>
-#endif
 
-static const unsigned char pngSignature[]   = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00};
-static const unsigned char jpegSignature[]  = {0xFF, 0xD8, 0xFF, 0x00};
-static const unsigned char gifSignature[]   = {0x47, 0x49, 0x46, 0x38, 0x00};
+#define AVERAGE_GOOGLE_TERRAIN_MAP  19391
+#define AVERAGE_BING_STREET_MAP     1297
+#define AVERAGE_BING_SAT_MAP        19597
+#define AVERAGE_GOOGLE_SAT_MAP      56887
+#define AVERAGE_MAPBOX_SAT_MAP      15739
+#define AVERAGE_MAPBOX_STREET_MAP   5648
+#define AVERAGE_TILE_SIZE           13652
+#define AVERAGE_AIRMAP_ELEV_SIZE    2786
 
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()
     : _timeout(5 * 1000)
-#ifndef QGC_NO_GOOGLE_MAPS
-    , _googleVersionRetrieved(false)
-    , _googleReply(nullptr)
-#endif
 {
-    QStringList langs = QLocale::system().uiLanguages();
-    if (langs.length() > 0) {
-        _language = langs[0];
-    }
+
+    // BingMaps
+    //_versionBingMaps             = "563";
 
 #ifndef QGC_NO_GOOGLE_MAPS
-    // Google version strings
-    _versionGoogleMap            = "m@354000000";
-    _versionGoogleSatellite      = "692";
-    _versionGoogleLabels         = "h@336";
-    _versionGoogleTerrain        = "t@354,r@354000000";
-    _secGoogleWord               = "Galileo";
+    _googleMapProvider = new GoogleMapProvider(this);
 #endif
-    // BingMaps
-    _versionBingMaps             = "563";
 }
 
 //-----------------------------------------------------------------------------
 UrlFactory::~UrlFactory()
 {
-#ifndef QGC_NO_GOOGLE_MAPS
-    if(_googleReply)
-        _googleReply->deleteLater();
-#endif
 }
 
 
@@ -76,157 +61,143 @@ UrlFactory::~UrlFactory()
 QString
 UrlFactory::getImageFormat(MapType type, const QByteArray& image)
 {
-    QString format;
-    if(image.size() > 2)
-    {
-        if (image.startsWith(reinterpret_cast<const char*>(pngSignature)))
-            format = "png";
-        else if (image.startsWith(reinterpret_cast<const char*>(jpegSignature)))
-            format = "jpg";
-        else if (image.startsWith(reinterpret_cast<const char*>(gifSignature)))
-            format = "gif";
-        else {
-            switch (type) {
-                case GoogleMap:
-                case GoogleLabels:
-                case GoogleTerrain:
-                case GoogleHybrid:
-                case BingMap:
-                case StatkartTopo:
-                    format = "png";
-                    break;
-                case EniroTopo:
-                    format = "png";
-                    break;
-                /*
-                case MapQuestMap:
-                case MapQuestSat:
-                case OpenStreetMap:
-                */
-                case MapboxStreets:
-                case MapboxLight:
-                case MapboxDark:
-                case MapboxSatellite:
-                case MapboxHybrid:
-                case MapboxWheatPaste:
-                case MapboxStreetsBasic:
-                case MapboxComic:
-                case MapboxOutdoors:
-                case MapboxRunBikeHike:
-                case MapboxPencil:
-                case MapboxPirates:
-                case MapboxEmerald:
-                case MapboxHighContrast:
-                case GoogleSatellite:
-                case BingSatellite:
-                case BingHybrid:
-                    format = "jpg";
-                    break;
-                case AirmapElevation:
-                    format = "bin";
-                    break;
-                case VWorldStreet :
-                    format = "png";
-                    break;
-                case VWorldSatellite :
-                    format = "jpg";
-                    break;
-                default:
-                    qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
-                    break;
-            }
-        }
-    }
-    return format;
+    Q_UNUSED(type);
+    return _googleMapProvider->getImageFormat(image);
+    //QString format;
+    //if(image.size() > 2)
+    //{
+    //    if (image.startsWith(reinterpret_cast<const char*>(pngSignature)))
+    //        format = "png";
+    //    else if (image.startsWith(reinterpret_cast<const char*>(jpegSignature)))
+    //        format = "jpg";
+    //    else if (image.startsWith(reinterpret_cast<const char*>(gifSignature)))
+    //        format = "gif";
+    //    else {
+    //        switch (type) {
+    //            case GoogleMap:
+    //            case GoogleLabels:
+    //            case GoogleTerrain:
+    //            case GoogleHybrid:
+    //            case BingMap:
+    //            case StatkartTopo:
+    //                format = "png";
+    //                break;
+    //            case EniroTopo:
+    //                format = "png";
+    //                break;
+    //            /*
+    //            case MapQuestMap:
+    //            case MapQuestSat:
+    //            case OpenStreetMap:
+    //            */
+    //            case MapboxStreets:
+    //            case MapboxLight:
+    //            case MapboxDark:
+    //            case MapboxSatellite:
+    //            case MapboxHybrid:
+    //            case MapboxWheatPaste:
+    //            case MapboxStreetsBasic:
+    //            case MapboxComic:
+    //            case MapboxOutdoors:
+    //            case MapboxRunBikeHike:
+    //            case MapboxPencil:
+    //            case MapboxPirates:
+    //            case MapboxEmerald:
+    //            case MapboxHighContrast:
+    //            case GoogleSatellite:
+    //            case BingSatellite:
+    //            case BingHybrid:
+    //                format = "jpg";
+    //                break;
+    //            case AirmapElevation:
+    //                format = "bin";
+    //                break;
+    //            case VWorldStreet :
+    //                format = "png";
+    //                break;
+    //            case VWorldSatellite :
+    //                format = "jpg";
+    //                break;
+    //            default:
+    //                qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
+    //                break;
+    //        }
+    //    }
+    //}
+    //return format;
 }
 
 //-----------------------------------------------------------------------------
 QNetworkRequest
 UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
-    //-- Build URL
-    QNetworkRequest request;
-    QString url = _getURL(type, x, y, zoom, networkManager);
-    if(url.isEmpty()) {
-        return request;
-    }
-    request.setUrl(QUrl(url));
-    request.setRawHeader("Accept", "*/*");
-    switch (type) {
-#ifndef QGC_NO_GOOGLE_MAPS
-        case GoogleMap:
-        case GoogleSatellite:
-        case GoogleLabels:
-        case GoogleTerrain:
-        case GoogleHybrid:
-            request.setRawHeader("Referrer", "https://www.google.com/maps/preview");
-            break;
-#endif
-        case BingHybrid:
-        case BingMap:
-        case BingSatellite:
-            request.setRawHeader("Referrer", "https://www.bing.com/maps/");
-            break;
-        case StatkartTopo:
-            request.setRawHeader("Referrer", "https://www.norgeskart.no/");
-            break;
-        case EniroTopo:
-            request.setRawHeader("Referrer", "https://www.eniro.se/");
-            break;
-        /*
-        case OpenStreetMapSurfer:
-        case OpenStreetMapSurferTerrain:
-            request.setRawHeader("Referrer", "http://www.mapsurfer.net/");
-            break;
-        case OpenStreetMap:
-        case OpenStreetOsm:
-            request.setRawHeader("Referrer", "https://www.openstreetmap.org/");
-            break;
-        */
+    Q_UNUSED(type);
+    return _googleMapProvider->getTileURL(x,y,zoom,networkManager);
+    ////-- Build URL
+    //QNetworkRequest request;
+    //QString url = _getURL(type, x, y, zoom, networkManager);
+    //if(url.isEmpty()) {
+    //    return request;
+    //}
+    //request.setUrl(QUrl(url));
+    //request.setRawHeader("Accept", "*/*");
+    //switch (type) {
+//    //    case GoogleMap:
+//    //    case GoogleSatellite:
+//    //    case GoogleLabels:
+//    //    case GoogleTerrain:
+//    //    case GoogleHybrid:
+//    //        request.setRawHeader("Referrer", "https://www.google.com/maps/preview");
+//    //        break;
+    //    case BingHybrid:
+    //    case BingMap:
+    //    case BingSatellite:
+    //        request.setRawHeader("Referrer", "https://www.bing.com/maps/");
+    //        break;
+    //    case StatkartTopo:
+    //        request.setRawHeader("Referrer", "https://www.norgeskart.no/");
+    //        break;
+    //    case EniroTopo:
+    //        request.setRawHeader("Referrer", "https://www.eniro.se/");
+    //        break;
+    //    /*
+    //    case OpenStreetMapSurfer:
+    //    case OpenStreetMapSurferTerrain:
+    //        request.setRawHeader("Referrer", "http://www.mapsurfer.net/");
+    //        break;
+    //    case OpenStreetMap:
+    //    case OpenStreetOsm:
+    //        request.setRawHeader("Referrer", "https://www.openstreetmap.org/");
+    //        break;
+    //    */
 
-        case EsriWorldStreet:
-        case EsriWorldSatellite:
-        case EsriTerrain: {
-                QByteArray token = qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toLatin1();
-                request.setRawHeader("User-Agent", QByteArrayLiteral("Qt Location based application"));
-                request.setRawHeader("User-Token", token);
-            }
-            return request;
+    //    case EsriWorldStreet:
+    //    case EsriWorldSatellite:
+    //    case EsriTerrain: {
+    //            QByteArray token = qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toLatin1();
+    //            request.setRawHeader("User-Agent", QByteArrayLiteral("Qt Location based application"));
+    //            request.setRawHeader("User-Token", token);
+    //        }
+    //        return request;
 
-        case AirmapElevation:
-            request.setRawHeader("Referrer", "https://api.airmap.com/");
-            break;
+    //    case AirmapElevation:
+    //        request.setRawHeader("Referrer", "https://api.airmap.com/");
+    //        break;
 
-        default:
-            break;
-    }
-    request.setRawHeader("User-Agent", _userAgent);
-    return request;
+    //    default:
+    //        break;
+    //}
+    //request.setRawHeader("User-Agent", _userAgent);
+    //return request;
 }
 
 //-----------------------------------------------------------------------------
-#ifndef QGC_NO_GOOGLE_MAPS
-void
-UrlFactory::_getSecGoogleWords(int x, int y, QString &sec1, QString &sec2)
-{
-    sec1 = ""; // after &x=...
-    sec2 = ""; // after &zoom=...
-    int seclen = ((x * 3) + y) % 8;
-    sec2 = _secGoogleWord.left(seclen);
-    if (y >= 10000 && y < 100000) {
-        sec1 = "&s=";
-    }
-}
-#endif
-
-//-----------------------------------------------------------------------------
+#if 0
 QString
 UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
     switch (type) {
-#ifdef QGC_NO_GOOGLE_MAPS
     Q_UNUSED(networkManager);
-#else
     case GoogleMap:
     {
         // http://mt1.google.com/vt/lyrs=m
@@ -273,7 +244,6 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
         return QString("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleTerrain).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
     }
     break;
-#endif
     case StatkartTopo:
     {
         return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);
@@ -476,181 +446,54 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
     return {};
 }
 
-//-----------------------------------------------------------------------------
-QString
-UrlFactory::_tileXYToQuadKey(int tileX, int tileY, int levelOfDetail)
-{
-    QString quadKey;
-    for (int i = levelOfDetail; i > 0; i--) {
-        char digit = '0';
-        int mask   = 1 << (i - 1);
-        if ((tileX & mask) != 0) {
-            digit++;
-        }
-        if ((tileY & mask) != 0) {
-            digit++;
-            digit++;
-        }
-        quadKey.append(digit);
-    }
-    return quadKey;
-}
 
 //-----------------------------------------------------------------------------
-int
-UrlFactory::_getServerNum(int x, int y, int max)
-{
-    return (x + 2 * y) % max;
-}
 
-//-----------------------------------------------------------------------------
-#ifndef QGC_NO_GOOGLE_MAPS
-void
-UrlFactory::_networkReplyError(QNetworkReply::NetworkError error)
-{
-    qWarning() << "Could not connect to google maps. Error:" << error;
-    if(_googleReply)
-    {
-        _googleReply->deleteLater();
-        _googleReply = nullptr;
-    }
-}
-#endif
-//-----------------------------------------------------------------------------
-#ifndef QGC_NO_GOOGLE_MAPS
-void
-UrlFactory::_replyDestroyed()
-{
-    _googleReply = nullptr;
-}
 #endif
 
-//-----------------------------------------------------------------------------
-#ifndef QGC_NO_GOOGLE_MAPS
-void
-UrlFactory::_googleVersionCompleted()
-{
-    if (!_googleReply || (_googleReply->error() != QNetworkReply::NoError)) {
-        qDebug() << "Error collecting Google maps version info";
-        return;
-    }
-    QString html = QString(_googleReply->readAll());
-
-#if defined(DEBUG_GOOGLE_MAPS)
-    QString filename = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
-    filename += "/google.output";
-    QFile file(filename);
-    if (file.open(QIODevice::ReadWrite))
-    {
-        QTextStream stream( &file );
-        stream << html << endl;
-    }
-#endif
-
-    QRegExp reg("\"*https?://mt\\D?\\d..*/vt\\?lyrs=m@(\\d*)", Qt::CaseInsensitive);
-    if (reg.indexIn(html) != -1) {
-        QStringList gc = reg.capturedTexts();
-        _versionGoogleMap = QString("m@%1").arg(gc[1]);
-    }
-    reg = QRegExp("\"*https?://khm\\D?\\d.googleapis.com/kh\\?v=(\\d*)", Qt::CaseInsensitive);
-    if (reg.indexIn(html) != -1) {
-        QStringList gc = reg.capturedTexts();
-        _versionGoogleSatellite = gc[1];
-    }
-    reg = QRegExp("\"*https?://mt\\D?\\d..*/vt\\?lyrs=t@(\\d*),r@(\\d*)", Qt::CaseInsensitive);
-    if (reg.indexIn(html) != -1) {
-        QStringList gc = reg.capturedTexts();
-        _versionGoogleTerrain = QString("t@%1,r@%2").arg(gc[1]).arg(gc[2]);
-    }
-    _googleReply->deleteLater();
-    _googleReply = nullptr;
-}
-#endif
-
-//-----------------------------------------------------------------------------
-#ifndef QGC_NO_GOOGLE_MAPS
-void
-UrlFactory::_tryCorrectGoogleVersions(QNetworkAccessManager* networkManager)
-{
-    QMutexLocker locker(&_googleVersionMutex);
-    if (_googleVersionRetrieved) {
-        return;
-    }
-    _googleVersionRetrieved = true;
-    if(networkManager)
-    {
-        QNetworkRequest qheader;
-        QNetworkProxy proxy = networkManager->proxy();
-        QNetworkProxy tProxy;
-        tProxy.setType(QNetworkProxy::DefaultProxy);
-        networkManager->setProxy(tProxy);
-        QSslConfiguration conf = qheader.sslConfiguration();
-        conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-        qheader.setSslConfiguration(conf);
-        QString url = "http://maps.google.com/maps/api/js?v=3.2&sensor=false";
-        qheader.setUrl(QUrl(url));
-        QByteArray ua;
-        ua.append(getQGCMapEngine()->userAgent());
-        qheader.setRawHeader("User-Agent", ua);
-        _googleReply = networkManager->get(qheader);
-        connect(_googleReply, &QNetworkReply::finished, this, &UrlFactory::_googleVersionCompleted);
-        connect(_googleReply, &QNetworkReply::destroyed, this, &UrlFactory::_replyDestroyed);
-        connect(_googleReply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-                this, &UrlFactory::_networkReplyError);
-        networkManager->setProxy(proxy);
-    }
-}
-#endif
-
-#define AVERAGE_GOOGLE_STREET_MAP   4913
-#define AVERAGE_GOOGLE_TERRAIN_MAP  19391
-#define AVERAGE_BING_STREET_MAP     1297
-#define AVERAGE_BING_SAT_MAP        19597
-#define AVERAGE_GOOGLE_SAT_MAP      56887
-#define AVERAGE_MAPBOX_SAT_MAP      15739
-#define AVERAGE_MAPBOX_STREET_MAP   5648
-#define AVERAGE_TILE_SIZE           13652
-#define AVERAGE_AIRMAP_ELEV_SIZE    2786
 
 //-----------------------------------------------------------------------------
 quint32
 UrlFactory::averageSizeForType(MapType type)
 {
-    switch (type) {
-    case GoogleMap:
-        return AVERAGE_GOOGLE_STREET_MAP;
-    case BingMap:
-        return AVERAGE_BING_STREET_MAP;
-    case GoogleSatellite:
-        return AVERAGE_GOOGLE_SAT_MAP;
-    case MapboxSatellite:
-        return AVERAGE_MAPBOX_SAT_MAP;
-    case BingHybrid:
-    case BingSatellite:
-        return AVERAGE_BING_SAT_MAP;
-    case GoogleTerrain:
-        return AVERAGE_GOOGLE_TERRAIN_MAP;
-    case MapboxStreets:
-    case MapboxStreetsBasic:
-    case MapboxRunBikeHike:
-        return AVERAGE_MAPBOX_STREET_MAP;
-    case AirmapElevation:
-        return AVERAGE_AIRMAP_ELEV_SIZE;
-    case GoogleLabels:
-    case MapboxDark:
-    case MapboxLight:
-    case MapboxOutdoors:
-    case MapboxPencil:
-    case OpenStreetMap:
-    case GoogleHybrid:
-    case MapboxComic:
-    case MapboxEmerald:
-    case MapboxHighContrast:
-    case MapboxHybrid:
-    case MapboxPirates:
-    case MapboxWheatPaste:
-    default:
-        break;
-    }
-    return AVERAGE_TILE_SIZE;
+    Q_UNUSED(type);
+    return GoogleMapProvider::getAverageSize();
+
+//    switch (type) {
+//    case GoogleMap:
+//        return AVERAGE_GOOGLE_STREET_MAP;
+//    case BingMap:
+//        return AVERAGE_BING_STREET_MAP;
+//    case GoogleSatellite:
+//        return AVERAGE_GOOGLE_SAT_MAP;
+//    case MapboxSatellite:
+//        return AVERAGE_MAPBOX_SAT_MAP;
+//    case BingHybrid:
+//    case BingSatellite:
+//        return AVERAGE_BING_SAT_MAP;
+//    case GoogleTerrain:
+//        return AVERAGE_GOOGLE_TERRAIN_MAP;
+//    case MapboxStreets:
+//    case MapboxStreetsBasic:
+//    case MapboxRunBikeHike:
+//        return AVERAGE_MAPBOX_STREET_MAP;
+//    case AirmapElevation:
+//        return AVERAGE_AIRMAP_ELEV_SIZE;
+//    case GoogleLabels:
+//    case MapboxDark:
+//    case MapboxLight:
+//    case MapboxOutdoors:
+//    case MapboxPencil:
+//    case OpenStreetMap:
+//    case GoogleHybrid:
+//    case MapboxComic:
+//    case MapboxEmerald:
+//    case MapboxHighContrast:
+//    case MapboxHybrid:
+//    case MapboxPirates:
+//    case MapboxWheatPaste:
+//    default:
+//        break;
+//    }
+//    return AVERAGE_TILE_SIZE;
 }

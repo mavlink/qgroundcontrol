@@ -16,12 +16,7 @@
 #ifndef QGC_MAP_URL_ENGINE_H
 #define QGC_MAP_URL_ENGINE_H
 
-#include <QString>
-#include <QPoint>
-#include <QByteArray>
-#include <QNetworkProxy>
-#include <QNetworkReply>
-#include <QMutex>
+#include "GoogleMapProvider.h"
 
 #define MAX_MAP_ZOOM (20.0)
 
@@ -90,41 +85,16 @@ public:
 
     static quint32  averageSizeForType  (MapType type);
 
-private slots:
-#ifndef QGC_NO_GOOGLE_MAPS
-    void    _networkReplyError          (QNetworkReply::NetworkError error);
-    void    _googleVersionCompleted     ();
-    void    _replyDestroyed             ();
-#endif
 
-private:
-    QString _getURL                     (MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
-    QString _tileXYToQuadKey            (int tileX, int tileY, int levelOfDetail);
-    int     _getServerNum               (int x, int y, int max);
-#ifndef QGC_NO_GOOGLE_MAPS
-    void    _getSecGoogleWords          (int x, int y, QString& sec1, QString& sec2);
-    void    _tryCorrectGoogleVersions   (QNetworkAccessManager* networkManager);
-#endif
+//private:
+//    QString _getURL                     (MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
 
 private:
     int             _timeout;
-    QByteArray      _userAgent;
-    QString         _language;
-
-    // Google version strings
-#ifndef QGC_NO_GOOGLE_MAPS
-    bool            _googleVersionRetrieved;
-    QNetworkReply*  _googleReply;
-    QMutex          _googleVersionMutex;
-    QString         _versionGoogleMap;
-    QString         _versionGoogleSatellite;
-    QString         _versionGoogleLabels;
-    QString         _versionGoogleTerrain;
-    QString         _secGoogleWord;
-#endif
 
     // BingMaps
-    QString         _versionBingMaps;
+    //QString         _versionBingMaps;
+    GoogleMapProvider*   _googleMapProvider;
 
 };
 

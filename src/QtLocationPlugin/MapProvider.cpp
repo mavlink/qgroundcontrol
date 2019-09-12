@@ -1,0 +1,63 @@
+#include "MapProvider.h"
+
+MapProvider::MapProvider(QString referrer, QString imageFormat,
+                         quint32 averageSize, QObject* parent)
+    : QObject(parent), _referrer(referrer), _imageFormat(imageFormat),
+      _averageSize(averageSize) {
+    QStringList langs = QLocale::system().uiLanguages();
+    if (langs.length() > 0) {
+        _language = langs[0];
+    }
+}
+
+QNetworkRequest MapProvider::getTileURL(int x, int y, int zoom,
+                                        QNetworkAccessManager* networkManager) {
+    //-- Build URL
+    QNetworkRequest request;
+    QString         url = _getURL(x, y, zoom, networkManager);
+    if (url.isEmpty()) {
+        return request;
+    }
+    request.setUrl(QUrl(url));
+    request.setRawHeader("Accept", "*/*");
+    request.setRawHeader("Referrer", _referrer.toUtf8());
+    request.setRawHeader("User-Agent", _userAgent);
+    return request;
+}
+
+QString MapProvider::getImageFormat(const QByteArray& image) {
+    QString format;
+    if (image.size() > 2) {
+        if (image.startsWith(reinterpret_cast<const char*>(pngSignature)))
+            format = "png";
+        else if (image.startsWith(reinterpret_cast<const char*>(jpegSignature)))
+            format = "jpg";
+        else if (image.startsWith(reinterpret_cast<const char*>(gifSignature)))
+            format = "gif";
+        else {
+            return _imageFormat;
+        }
+    }
+    return format;
+}
+
+QString MapProvider::_tileXYToQuadKey(int tileX, int tileY, int levelOfDetail) {
+    QString quadKey;
+    for (int i = levelOfDetail; i > 0; i--) {
+        char digit = '0';
+        int  mask  = 1 << (i - 1);
+        if ((tileX & mask) != 0) {
+            digit++;
+        }
+        if ((tileY & mask) != 0) {
+            digit++;
+            digit++;
+        }
+        quadKey.append(digit);
+    }
+    return quadKey;
+}
+
+int MapProvider::_getServerNum(int x, int y, int max) {
+    return (x + 2 * y) % max;
+}
