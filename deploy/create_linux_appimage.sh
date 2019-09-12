@@ -87,11 +87,16 @@ VERSION=$(strings ${APPDIR}/${QGC_CUSTOM_BINARY_NAME} | grep '^v[0-9*]\.[0-9*].[
 echo ${QGC_CUSTOM_APP_NAME} Version: ${VERSION}
 
 # Go out of AppImage
+APPIMAGE_ASSISTANT="./AppImageAssistant"
 cd ${TMPDIR}
-wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/5/AppImageAssistant" # (64-bit)
-chmod a+x ./AppImageAssistant
+if [ -f $HOME/cached/AppImageAssistant ]; then
+  APPIMAGE_ASSISTANT="$HOME/cached/AppImageAssistant"
+else
+  wget -c --quiet "https://github.com/probonopd/AppImageKit/releases/download/5/AppImageAssistant" # (64-bit)
+  chmod a+x ./AppImageAssistant
+fi
 
-./AppImageAssistant ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
+$APPIMAGE_ASSISTANT ./$APP.AppDir/ ${TMPDIR}/$APP".AppImage"
 
 cp ${TMPDIR}/$APP".AppImage" ${OUTPUT_DIR}/$APP".AppImage"
 
