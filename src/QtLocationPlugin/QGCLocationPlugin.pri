@@ -22,6 +22,8 @@ HEADERS += \
     $$PWD/QGeoServiceProviderPluginQGC.h \
     $$PWD/QGeoTileFetcherQGC.h \
     $$PWD/QGeoTiledMappingManagerEngineQGC.h \
+    $$PWD/MapProvider.h \
+    $$PWD/GoogleMapProvider.h \
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \
@@ -34,6 +36,8 @@ SOURCES += \
     $$PWD/QGeoServiceProviderPluginQGC.cpp \
     $$PWD/QGeoTileFetcherQGC.cpp \
     $$PWD/QGeoTiledMappingManagerEngineQGC.cpp \
+    $$PWD/MapProvider.cpp \
+    $$PWD/GoogleMapProvider.cpp \
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json
