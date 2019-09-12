@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
         // QApplication is necessary to use QMessageBox
         QApplication errorApp(argc, argv);
         QMessageBox::critical(nullptr, QObject::tr("Error"),
-            QObject::tr("A second instance of QGroundControl is already running. Please close the other instance and try again.")
+            QObject::tr("A second instance of %1 is already running. Please close the other instance and try again.").arg(QGC_APPLICATION_NAME)
         );
         return -1;
     }
