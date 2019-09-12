@@ -168,6 +168,8 @@ SetupPage {
                     onToggled: {
                         if (controller.vehicle.armed) {
                             timer.stop()
+                            enabled = false
+                            coolDownTimer.start()
                         }
 
                         controller.vehicle.armed = checked
@@ -183,6 +185,8 @@ SetupPage {
                         safetySwitch.checked = armed
                             if (!armed) {
                                 timer.stop()
+                                safetySwitch.enabled = false
+                                coolDownTimer.start()
                             } else {
                                 timer.start()
                             }
@@ -198,7 +202,14 @@ SetupPage {
                     text:   qsTr("Slide this switch to arm the vehicle and enable the motor test (CAUTION!)")
                 }
             } // Row
-
+            Row {
+                QGCLabel {
+                    id: cooldownLabel
+                    visible: coolDownTimer.running
+                    color:  qgcPal.warningText
+                    text:   qsTr("A 10 second coooldown is required before testing again, please stand by...")
+                }
+            }
             // Repeats the command signal and updates the checkbox every 50 ms
             Timer {
                 id: timer
@@ -212,11 +223,20 @@ SetupPage {
                             var reversed = controller.getParameterFact(-1, "MOT_" + (_lastIndex + 1) + "_DIRECTION").value == -1
 
                             if (reversed) {
-                                controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value)
+                                controller.vehicle.motorTest(_lastIndex, 100 - slider.motorSlider.value, 0)
                             } else {
-                                controller.vehicle.motorTest(_lastIndex, slider.motorSlider.value)
+                                controller.vehicle.motorTest(_lastIndex, slider.motorSlider.value, 0)
                             }
                     }
+                }
+            }
+            Timer {
+                id: coolDownTimer
+                interval:       11000
+                repeat:         false
+
+                onTriggered: {
+                    safetySwitch.enabled = true
                 }
             }
         } // Column
