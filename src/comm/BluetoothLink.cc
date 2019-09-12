@@ -78,7 +78,7 @@ void BluetoothLink::_writeBytes(const QByteArray bytes)
 {
     if (_targetSocket) {
         if(_targetSocket->write(bytes) > 0) {
-            emit bytesSent(this, data);
+            emit bytesSent(this, bytes);
             _logOutputDataRate(bytes.size(), QDateTime::currentMSecsSinceEpoch());
         } else {
             qWarning() << "Bluetooth write error";
