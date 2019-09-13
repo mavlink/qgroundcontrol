@@ -85,18 +85,16 @@ public:
 
     static quint32  averageSizeForType  (MapType type);
 
-
-//private:
-//    QString _getURL                     (MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager);
+    QHash<QString, MapProvider*> getProviderTable(){return _providersTable;}
 
 private:
     int             _timeout;
+    QHash<QString, MapProvider*> _providersTable;
 
     // BingMaps
     //QString         _versionBingMaps;
     MapProvider*   _curMapProvider;
 
-    QHash<QString, MapProvider*> _providersTable;
 
 };
 

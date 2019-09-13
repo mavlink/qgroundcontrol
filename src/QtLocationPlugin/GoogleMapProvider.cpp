@@ -5,11 +5,10 @@
 #endif
 #include "QGCMapEngine.h"
 
-#define AVERAGE_GOOGLE_STREET_MAP 4913
 
-GoogleMapProvider::GoogleMapProvider(QObject* parent)
+GoogleMapProvider::GoogleMapProvider(quint32 averageSize, QGeoMapType::MapStyle mapType ,QObject* parent)
     : MapProvider(QString("https://www.google.com/maps/preview"),
-                  QString("png"), quint32(AVERAGE_GOOGLE_STREET_MAP), parent),
+                  QString("png"), averageSize, mapType, parent),
       _googleVersionRetrieved(false), _googleReply(nullptr) {
 
     // Google version strings
@@ -127,7 +126,7 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(
     }
 }
 
-QString GoogleMapProvider::_getURL(int x, int y, int zoom,
+QString GoogleStreetMapProvider::_getURL(int x, int y, int zoom,
                                    QNetworkAccessManager* networkManager) {
     // http://mt1.google.com/vt/lyrs=m
     QString server  = "mt";

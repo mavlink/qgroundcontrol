@@ -3,16 +3,17 @@
 #include "MapProvider.h"
 
 #include <QByteArray>
+#include <QMutex>
 #include <QNetworkProxy>
 #include <QNetworkReply>
-#include <QString>
 #include <QPoint>
-#include <QMutex>
+#include <QString>
 
 class GoogleMapProvider : public MapProvider {
     Q_OBJECT
   public:
-    GoogleMapProvider(QObject* parent);
+    GoogleMapProvider(quint32 averageSize, QGeoMapType::MapStyle mapType,
+                      QObject* parent);
 
     ~GoogleMapProvider();
 
@@ -25,8 +26,8 @@ class GoogleMapProvider : public MapProvider {
 
   protected:
     // Define the url to Request
-    QString _getURL(int x, int y, int zoom,
-                    QNetworkAccessManager* networkManager) ;
+    virtual QString _getURL(int x, int y, int zoom,
+                            QNetworkAccessManager* networkManager) = 0;
 
     // Google Specific private methods
     void _getSecGoogleWords(int x, int y, QString& sec1, QString& sec2);
@@ -43,28 +44,78 @@ class GoogleMapProvider : public MapProvider {
     QString        _secGoogleWord;
 };
 
-class GoogleSatelliteMapProvider : public GoogleMapProvider {
+// NoMap = 0,
+// StreetMap,
+// SatelliteMapDay,
+// SatelliteMapNight,
+// TerrainMap,
+// HybridMap,
+// TransitMap,
+// GrayStreetMap,
+// PedestrianMap,
+// CarNavigationMap,
+// CycleMap,
+// CustomMap = 100
+
+const unsigned int AVERAGE_GOOGLE_STREET_MAP  = 4913;
+const unsigned int AVERAGE_GOOGLE_SAT_MAP     = 56887;
+const unsigned int AVERAGE_GOOGLE_TERRAIN_MAP = 19391;
+
+// -----------------------------------------------------------
+// Google Street Map
+
+class GoogleStreetMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
-    GoogleSatelliteMapProvider(QObject* parent):GoogleMapProvider(parent){}
+    GoogleStreetMapProvider(QObject* parent)
+        : GoogleMapProvider(AVERAGE_GOOGLE_STREET_MAP, QGeoMapType::StreetMap,
+                            parent) {}
+
   protected:
     QString _getURL(int x, int y, int zoom,
                     QNetworkAccessManager* networkManager);
 };
+
+// -----------------------------------------------------------
+// Google Street Map
+
+class GoogleSatelliteMapProvider : public GoogleMapProvider {
+    Q_OBJECT
+  public:
+    GoogleSatelliteMapProvider(QObject* parent)
+        : GoogleMapProvider(AVERAGE_GOOGLE_SAT_MAP,
+                            QGeoMapType::SatelliteMapDay, parent) {}
+
+  protected:
+    QString _getURL(int x, int y, int zoom,
+                    QNetworkAccessManager* networkManager);
+};
+
+// -----------------------------------------------------------
+// Google Labels Map
 
 class GoogleLabelsMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
-    GoogleLabelsMapProvider(QObject* parent):GoogleMapProvider(parent){}
+    GoogleLabelsMapProvider(QObject* parent)
+        : GoogleMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent) {
+    }
+
   protected:
     QString _getURL(int x, int y, int zoom,
                     QNetworkAccessManager* networkManager);
 };
 
+// -----------------------------------------------------------
+// Google Terrain Map
+
 class GoogleTerrainMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
-    GoogleTerrainMapProvider(QObject* parent):GoogleMapProvider(parent){}
+    GoogleTerrainMapProvider(QObject* parent)
+        : GoogleMapProvider(AVERAGE_GOOGLE_TERRAIN_MAP, QGeoMapType::TerrainMap,
+                            parent) {}
+
   protected:
     QString _getURL(int x, int y, int zoom,
                     QNetworkAccessManager* networkManager);
