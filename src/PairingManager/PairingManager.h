@@ -16,7 +16,8 @@
 #include <QTime>
 #include <QVariantMap>
 
-#include "aes.h"
+#include "openssl_aes.h"
+#include "openssl_rsa.h"
 #include "QGCToolbox.h"
 #include "QGCLoggingCategory.h"
 #include "Fact.h"
@@ -104,7 +105,7 @@ public:
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
 
 signals:
-    void startUpload                            (QString pairURL, QJsonDocument);
+    void startUpload                            (QString pairURL, QJsonDocument, bool signAndEncrypt);
     void startCommand                           (QString pairURL);
     void closeConnection                        ();
     void pairingConfigurationsChanged           ();
@@ -119,7 +120,7 @@ signals:
 
 private slots:
     void _startCommand                          (QString pairURL);
-    void _startUpload                           (QString pairURL, QJsonDocument);
+    void _startUpload                           (QString pairURL, QJsonDocument, bool signAndEncrypt);
     void _stopUpload                            ();
     void _startUploadRequest                    ();
     void _parsePairingJsonNFC                   (QString jsonEnc) { _parsePairingJson(jsonEnc, true); }
@@ -131,12 +132,15 @@ private:
     QString                 _jsonFileName;
     QString                 _lastPaired;
     QString                 _encryptionKey;
+    QString                 _publicKey;
     QVariantMap             _remotePairingMap;
     int                     _nfcIndex = -1;
     int                     _microhardIndex = -1;
     int                     _pairRetryCount = 0;
     PairingStatus           _status = PairingIdle;
-    AES                     _aes;
+    OpenSSL_AES             _aes;
+    OpenSSL_RSA             _rsa;
+    OpenSSL_RSA             _device_rsa;
     QJsonDocument           _jsonDoc{};
     QMutex                  _uploadMutex{};
     QNetworkAccessManager*  _uploadManager = nullptr;
@@ -163,8 +167,8 @@ private:
     QString                 _getLocalIPInNetwork        (QString remoteIP, int num);
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (const QString name);
-    void                    _connectionCompleted        (const QString name);
+    void                    _pairingCompleted           (const QString name, const QString devicePublicKey);
+    bool                    _connectionCompleted        (const QString response);
     QDir                    _pairingCacheDir            ();
     QString                 _pairingCacheFile           (QString uavName);
     void                    _updatePairedDeviceNameList ();
