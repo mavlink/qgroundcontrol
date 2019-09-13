@@ -57,8 +57,11 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_pairingCompleted(const QString name)
+PairingManager::_pairingCompleted(const QString name, const QString devicePublicKey)
 {
+    QJsonObject jsonObj = _jsonDoc.object();
+    jsonObj.insert("PublicKey", devicePublicKey);
+    _jsonDoc.setObject(jsonObj);
     _writeJson(_jsonDoc, _pairingCacheFile(name));
     _remotePairingMap["NM"] = name;
     _lastPaired = name;
@@ -160,13 +163,20 @@ PairingManager::_removeUDPLink(const QString name)
 }
 
 //-----------------------------------------------------------------------------
-void
-PairingManager::_connectionCompleted(const QString name)
+bool
+PairingManager::_connectionCompleted(const QString response)
 {
-    _createUDPLink(name, 24550);
-    _setLastConnectedDevice(name);
+    QStringList a = QString::fromStdString(_rsa.decrypt(response.toStdString())).split(";");
+    if (a.length() != 2 && !_device_rsa.verify(a[0].toStdString(), a[1].toStdString())) {
+        return false;
+    }
+
+    _createUDPLink(a[0], 24550);
+    _setLastConnectedDevice(a[0]);
     _toolbox->videoManager()->startVideo();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
+
+    return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -189,7 +199,7 @@ PairingManager::_startCommand(QString pairURL)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc)
+PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc, bool signAndEncrypt)
 {
     QMutexLocker lock(&_uploadMutex);
     if (_uploadManager != nullptr) {
@@ -199,7 +209,12 @@ PairingManager::_startUpload(QString pairURL, QJsonDocument jsonDoc)
 
     QString str = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
     qCDebug(PairingManagerLog) << "Starting upload to: " << pairURL << " " << str;
-    _uploadData = QString::fromStdString(_aes.encrypt(str.toStdString()));
+
+    std::string data = _aes.encrypt(str.toStdString());
+    if (signAndEncrypt) {
+        data = _device_rsa.encrypt(data + ";" + _rsa.sign(data));
+    }
+    _uploadData = QString::fromStdString(data);
     _uploadURL = pairURL;
     _startUploadRequest();
 }
@@ -245,13 +260,16 @@ PairingManager::_uploadFinished()
                 _uploadMutex.unlock();
                 qCDebug(PairingManagerLog) << "Upload finished.";
                 QByteArray bytes = reply->readAll();
-                QString str = QString::fromUtf8(bytes.data(), bytes.size());
+                QString str = QString::fromStdString(_aes.decrypt(QString::fromUtf8(bytes.data(), bytes.size()).toStdString()));
                 qCDebug(PairingManagerLog) << "Reply: " << str;
-                auto a = str.split(QRegExp("\\s+"));
-                if (a[0] == "Accepted" && a.length() > 1) {
-                    _pairingCompleted(a[1]);
+                auto a = str.split(";");
+                if (a[0] == "Accepted" && a.length() > 2) {
+                    _pairingCompleted(a[1], a[2]);
                 } else if (a[0] == "Connected" && a.length() > 1) {
-                    _connectionCompleted(a[1]);
+                    if (!_connectionCompleted(a[1])) {
+                        setPairingStatus(PairingConnectionRejected, tr("Connection verification failed."));
+                        qCDebug(PairingManagerLog) << "Connection error: failed to verify remote vehicle ID";
+                    }
                 } else if (a[0] == "Connection" && a.length() > 1) {
                     setPairingStatus(PairingConnectionRejected, tr("Connection Rejected"));
                     qCDebug(PairingManagerLog) << "Connection error: " << str;
@@ -366,7 +384,7 @@ PairingManager::_readPairingConfig()
     }
 
     QJsonObject jsonObj = _jsonDoc.object();
-    if (!jsonObj.contains("EK")) {
+    if (!jsonObj.contains("EK") || !jsonObj.contains("PublicKey") || !jsonObj.contains("PrivateKey")) {
         _resetPairingConfig();
         return;
     }
@@ -375,6 +393,9 @@ PairingManager::_readPairingConfig()
         _deviceToConnect = jsonObj.value("CONNECTED_DEVICE").toString();
     }
     _encryptionKey = jsonObj.value("EK").toString();
+    _publicKey = jsonObj.value("PublicKey").toString();
+    _rsa.generate_private(jsonObj.value("PrivateKey").toString().toStdString());
+    _rsa.generate_public(_publicKey.toStdString());
 }
 //-----------------------------------------------------------------------------
 void
@@ -425,8 +446,12 @@ PairingManager::_resetPairingConfig()
     QJsonDocument json;
     QJsonObject   jsonObject;
 
+    _rsa.generate();
+    _publicKey = QString::fromStdString(_rsa.get_public_key());
     _encryptionKey = _random_string(8);
     jsonObject.insert("EK", _encryptionKey);
+    jsonObject.insert("PublicKey", _publicKey);
+    jsonObject.insert("PrivateKey", QString::fromStdString(_rsa.get_private_key()));
     json.setObject(jsonObject);
 
     _writeJson(json, _pairingCacheFile("gcs"));
@@ -462,9 +487,9 @@ PairingManager::_assumeMicrohardPairingJson()
     QString ipPrefix = remoteIPAddr.left(remoteIPAddr.lastIndexOf('.'));
     jsonObject.insert("IP", ipPrefix + ".10");
     jsonObject.insert("AIP", remoteIPAddr);
-    jsonObject.insert("CU",  _toolbox->microhardManager()->configUserName());
-    jsonObject.insert("CP",  _toolbox->microhardManager()->configPassword());
-    jsonObject.insert("EK",  _encryptionKey);
+    jsonObject.insert("CU", _toolbox->microhardManager()->configUserName());
+    jsonObject.insert("CP", _toolbox->microhardManager()->configPassword());
+    jsonObject.insert("EK", _encryptionKey);
     json.setObject(jsonObject);
 
     return QString(json.toJson(QJsonDocument::Compact));
@@ -506,6 +531,10 @@ PairingManager::_parsePairingJson(QString jsonEnc, bool updateSettings)
     QString pport     = _remotePairingMap["PP"].toString();
     if (pport.length() == 0) {
         pport = "29351";
+    }
+
+    if (_remotePairingMap.contains("PublicKey")) {
+        _device_rsa.generate_public(_remotePairingMap["PublicKey"].toString().toStdString());
     }
 
     if (linkType.length() == 0) {
@@ -564,7 +593,7 @@ PairingManager::_parsePairingJson(QString jsonEnc, bool updateSettings)
         }
         _toolbox->microhardManager()->updateSettings();
     }
-    emit startUpload(pairURL, jsonDoc);
+    emit startUpload(pairURL, jsonDoc, connecting);
 }
 
 //-----------------------------------------------------------------------------
@@ -633,6 +662,7 @@ PairingManager::_createZeroTierPairingJson()
     jsonObj.insert("LT", "ZT");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("P", 14550);
+    jsonObj.insert("PublicKey", _publicKey);
     return QJsonDocument(jsonObj);
 }
 
@@ -646,6 +676,7 @@ PairingManager::_createMicrohardPairingJson()
     jsonObj.insert("LT", "MH");
     jsonObj.insert("IP", localIP);
     jsonObj.insert("EK", _encryptionKey);
+    jsonObj.insert("PublicKey", _publicKey);
     return QJsonDocument(jsonObj);
 }
 
