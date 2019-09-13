@@ -19,10 +19,6 @@ GoogleMapProvider::GoogleMapProvider(quint32 averageSize, QGeoMapType::MapStyle 
     _secGoogleWord          = "Galileo";
 }
 
-quint32 GoogleMapProvider::getAverageSize() {
-    return quint32(AVERAGE_GOOGLE_STREET_MAP);
-}
-
 GoogleMapProvider::~GoogleMapProvider() {
     if (_googleReply)
         _googleReply->deleteLater();

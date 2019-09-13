@@ -41,7 +41,10 @@ UrlFactory::UrlFactory()
     _providersTable["GoogleStreet"] = new GoogleStreetMapProvider(this);
     _providersTable["GoogleSatellite"] = new GoogleSatelliteMapProvider(this);
 #endif
-    _curMapProvider = _providersTable["GoogleStreet"];
+}
+
+void UrlFactory::registerProvider(QString name, MapProvider* provider){
+    _providersTable[name]=provider;
 }
 
 //-----------------------------------------------------------------------------
@@ -49,13 +52,17 @@ UrlFactory::~UrlFactory()
 {
 }
 
+QString
+UrlFactory::getImageFormat(int id, const QByteArray& image)
+{
+    return _providersTable[getTypeFromId(id)]->getImageFormat(image);
+}
 
 //-----------------------------------------------------------------------------
 QString
-UrlFactory::getImageFormat(MapType type, const QByteArray& image)
+UrlFactory::getImageFormat(QString type, const QByteArray& image)
 {
-    Q_UNUSED(type);
-    return _curMapProvider->getImageFormat(image);
+    return _providersTable[type]->getImageFormat(image);
     //QString format;
     //if(image.size() > 2)
     //{
@@ -119,13 +126,17 @@ UrlFactory::getImageFormat(MapType type, const QByteArray& image)
     //}
     //return format;
 }
+QNetworkRequest
+UrlFactory::getTileURL(int id, int x, int y, int zoom, QNetworkAccessManager* networkManager){
+
+    return _providersTable[getTypeFromId(id)]->getTileURL(x,y,zoom,networkManager);
+}
 
 //-----------------------------------------------------------------------------
 QNetworkRequest
-UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
+UrlFactory::getTileURL(QString type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
-    Q_UNUSED(type);
-    return _curMapProvider->getTileURL(x,y,zoom,networkManager);
+    return _providersTable[type]->getTileURL(x,y,zoom,networkManager);
     ////-- Build URL
     //QNetworkRequest request;
     //QString url = _getURL(type, x, y, zoom, networkManager);
@@ -187,7 +198,7 @@ UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManag
 //-----------------------------------------------------------------------------
 #if 0
 QString
-UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
+UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
     switch (type) {
     Q_UNUSED(networkManager);
@@ -447,10 +458,9 @@ UrlFactory::_getURL(MapType type, int x, int y, int zoom, QNetworkAccessManager*
 
 //-----------------------------------------------------------------------------
 quint32
-UrlFactory::averageSizeForType(MapType type)
+UrlFactory::averageSizeForType(QString type)
 {
-    Q_UNUSED(type);
-    return GoogleMapProvider::getAverageSize();
+    return _providersTable[type]->getAverageSize();
 
 //    switch (type) {
 //    case GoogleMap:
@@ -489,4 +499,24 @@ UrlFactory::averageSizeForType(MapType type)
 //        break;
 //    }
 //    return AVERAGE_TILE_SIZE;
+}
+
+QString UrlFactory::getTypeFromId(int id){
+
+    QHashIterator<QString, MapProvider*> i(_providersTable);
+
+    while(i.hasNext()){
+        i.next();
+        if(abs(qHash(i.key())) == id){
+            return i.key();
+        }
+    }
+    return "";
+}
+
+// Todo : qHash produce a uint bigger than max(int)
+// There is still a low probability for abs to
+// generate similar hash for different types
+int UrlFactory::getIdFromType(QString type){
+    return abs(qHash(type));
 }

@@ -30,6 +30,8 @@ class MapProvider : public QObject {
 
     QString getImageFormat(const QByteArray& image);
 
+    quint32 getAverageSize(){return _averageSize;}
+
     QGeoMapType::MapStyle getMapStyle(){return _mapType;}
 
   protected:

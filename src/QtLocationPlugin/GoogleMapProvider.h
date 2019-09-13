@@ -17,7 +17,6 @@ class GoogleMapProvider : public MapProvider {
 
     ~GoogleMapProvider();
 
-    static quint32 getAverageSize();
     // Google Specific private slots
   private slots:
     void _networkReplyError(QNetworkReply::NetworkError error);

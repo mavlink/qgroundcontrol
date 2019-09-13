@@ -106,10 +106,12 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     while(i.hasNext()){
         i.next();
-        id++;
-        mapList.append(QGCGEOMAPTYPE(i.value()->getMapStyle(), i.key(), i.key(), false, false, id)); 
+
+        qDebug()<< "Add MapProvider" <<i.value()->getMapStyle() << i.key()<<getQGCMapEngine()->urlFactory()->getIdFromType(i.key()); 
+        mapList.append(QGCGEOMAPTYPE(i.value()->getMapStyle(), i.key(), i.key(), false, false, getQGCMapEngine()->urlFactory()->getIdFromType(i.key()) )); 
     }
     setSupportedMapTypes(mapList);
+    qDebug() << "End Adding Provider";
     
     //-- IMPORTANT
     //   Changes here must reflect those in QGCMapEngine.cpp

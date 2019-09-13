@@ -71,13 +71,13 @@ public:
 
     void                        init                ();
     void                        addTask             (QGCMapTask *task);
-    void                        cacheTile           (UrlFactory::MapType type, int x, int y, int z, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
-    void                        cacheTile           (UrlFactory::MapType type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
-    QGCFetchTileTask*           createFetchTileTask (UrlFactory::MapType type, int x, int y, int z);
+    void                        cacheTile           (QString type, int x, int y, int z, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
+    void                        cacheTile           (QString type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set = UINT64_MAX);
+    QGCFetchTileTask*           createFetchTileTask (QString type, int x, int y, int z);
     QStringList                 getMapNameList      ();
     const QString               userAgent           () { return _userAgent; }
     void                        setUserAgent        (const QString& ua) { _userAgent = ua; }
-    UrlFactory::MapType         hashToType          (const QString& hash);
+    QString         hashToType          (const QString& hash);
     quint32                     getMaxDiskCache     ();
     void                        setMaxDiskCache     (quint32 size);
     quint32                     getMaxMemCache      ();
@@ -91,17 +91,17 @@ public:
     UrlFactory*                 urlFactory          () { return _urlFactory; }
 
     //-- Tile Math
-    static QGCTileSet           getTileCount        (int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, UrlFactory::MapType mapType);
+    static QGCTileSet           getTileCount        (int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType);
     static int                  long2tileX          (double lon, int z);
     static int                  lat2tileY           (double lat, int z);
     static int                  long2elevationTileX (double lon, int z);
     static int                  lat2elevationTileY  (double lat, int z);
-    static QString              getTileHash         (UrlFactory::MapType type, int x, int y, int z);
-    static UrlFactory::MapType  getTypeFromName     (const QString &name);
+    static QString              getTileHash         (QString type, int x, int y, int z);
+    static QString  getTypeFromName     (const QString &name);
     static QString              bigSizeToString     (quint64 size);
     static QString              storageFreeSizeToString(quint64 size_MB);
     static QString              numberToString      (quint64 number);
-    static int                  concurrentDownloads (UrlFactory::MapType type);
+    static int                  concurrentDownloads (QString type);
 
     /// size of an elevation tile in degree
     static const double         srtm1TileSize;
