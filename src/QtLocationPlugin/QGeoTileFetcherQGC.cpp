@@ -74,7 +74,7 @@ QGeoTiledMapReply*
 QGeoTileFetcherQGC::getTileImage(const QGeoTileSpec &spec)
 {
     //-- Build URL
-    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL((UrlFactory::MapType)spec.mapId(), spec.x(), spec.y(), spec.zoom(), _networkManager);
+    QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL(spec.mapId(), spec.x(), spec.y(), spec.zoom(), _networkManager);
     if ( ! request.url().isEmpty() ) {
         return new QGeoTiledMapReplyQGC(_networkManager, request, spec);
     }

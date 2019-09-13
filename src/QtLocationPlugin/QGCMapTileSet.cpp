@@ -47,7 +47,7 @@ QGCCachedTileSet::QGCCachedTileSet(const QString& name)
     , _deleting(false)
     , _downloading(false)
     , _id(0)
-    , _type(UrlFactory::Invalid)
+    , _type("Invalid")
     , _networkManager(nullptr)
     , _errorCount(0)
     , _noMoreTiles(false)
@@ -279,8 +279,8 @@ QGCCachedTileSet::_networkReplyFinished()
             }
             qCDebug(QGCCachedTileSetLog) << "Tile fetched" << hash;
             QByteArray image = reply->readAll();
-            UrlFactory::MapType type = getQGCMapEngine()->hashToType(hash);
-            if (type == UrlFactory::MapType::AirmapElevation) {
+            QString type = getQGCMapEngine()->hashToType(hash);
+            if (type == "AirmapElevation" ) {
                 image = TerrainTile::serialize(image);
             }
             QString format = getQGCMapEngine()->urlFactory()->getImageFormat(type, image);

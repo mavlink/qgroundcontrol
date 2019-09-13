@@ -69,8 +69,6 @@ QGCMapEngineManager::setToolbox(QGCToolbox *toolbox)
 void
 QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1, double lat1, int minZoom, int maxZoom, const QString& mapName)
 {
-    UrlFactory::MapType mapType = QGCMapEngine::getTypeFromName(mapName);
-
     _topleftLat     = lat0;
     _topleftLon     = lon0;
     _bottomRightLat = lat1;
@@ -82,11 +80,11 @@ QGCMapEngineManager::updateForCurrentView(double lon0, double lat0, double lon1,
     _elevationSet.clear();
 
     for(int z = minZoom; z <= maxZoom; z++) {
-        QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapType);
+        QGCTileSet set = QGCMapEngine::getTileCount(z, lon0, lat0, lon1, lat1, mapName);
         _imageSet += set;
     }
     if (_fetchElevation) {
-        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, UrlFactory::AirmapElevation);
+        QGCTileSet set = QGCMapEngine::getTileCount(1, lon0, lat0, lon1, lat1, "AirmapElevation");
         _elevationSet += set;
     }
 
@@ -129,7 +127,7 @@ void
 QGCMapEngineManager::_tileSetFetched(QGCCachedTileSet* tileSet)
 {
     //-- A blank (default) type means it uses various types and not just one
-    if(tileSet->type() == UrlFactory::Invalid) {
+    if(tileSet->type() == "Invalid") {
         tileSet->setMapTypeStr("Various");
     }
     _tileSets.append(tileSet);
@@ -152,7 +150,7 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setMaxZoom(_maxZoom);
         set->setTotalTileSize(_imageSet.tileSize);
         set->setTotalTileCount(static_cast<quint32>(_imageSet.tileCount));
-        set->setType(QGCMapEngine::getTypeFromName(mapType));
+        set->setType(mapType);
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
@@ -172,7 +170,7 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setMaxZoom(1);
         set->setTotalTileSize(_elevationSet.tileSize);
         set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
-        set->setType(QGCMapEngine::getTypeFromName("Airmap Elevation Data"));
+        set->setType("AirmapElevation");
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);

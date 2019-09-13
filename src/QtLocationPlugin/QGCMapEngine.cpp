@@ -39,68 +39,68 @@ static QLocale kLocale;
 
 struct stQGeoTileCacheQGCMapTypes {
     const char* name;
-    UrlFactory::MapType type;
+    QString type;
 };
 
 //-- IMPORTANT
 //   Changes here must reflect those in QGeoTiledMappingManagerEngineQGC.cpp
 
-static stQGeoTileCacheQGCMapTypes kMapTypes[] = {
-#ifndef QGC_LIMITED_MAPS
-    {"Google Street Map",       UrlFactory::GoogleMap},
-    {"Google Satellite Map",    UrlFactory::GoogleSatellite},
-    {"Google Terrain Map",      UrlFactory::GoogleTerrain},
-#endif
-    {"Bing Street Map",         UrlFactory::BingMap},
-    {"Bing Satellite Map",      UrlFactory::BingSatellite},
-    {"Bing Hybrid Map",         UrlFactory::BingHybrid},
-    {"Statkart Terrain Map",    UrlFactory::StatkartTopo},
-    {"ENIRO Terrain Map",       UrlFactory::EniroTopo},
+//static stQGeoTileCacheQGCMapTypes kMapTypes[] = {
+//#ifndef QGC_LIMITED_MAPS
+//    {"Google Street Map",       UrlFactory::GoogleMap},
+//    {"Google Satellite Map",    UrlFactory::GoogleSatellite},
+//    {"Google Terrain Map",      UrlFactory::GoogleTerrain},
+//#endif
+//    {"Bing Street Map",         UrlFactory::BingMap},
+//    {"Bing Satellite Map",      UrlFactory::BingSatellite},
+//    {"Bing Hybrid Map",         UrlFactory::BingHybrid},
+//    {"Statkart Terrain Map",    UrlFactory::StatkartTopo},
+//    {"ENIRO Terrain Map",       UrlFactory::EniroTopo},
+//
+//    {"VWorld Satellite Map",     UrlFactory::VWorldSatellite},
+//    {"VWorld Street Map",        UrlFactory::VWorldStreet}
+//
+//    /*
+//    {"MapQuest Street Map",     UrlFactory::MapQuestMap},
+//    {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
+//    {"Open Street Map",         UrlFactory::OpenStreetMap}
+//     */
+//};
 
-    {"VWorld Satellite Map",     UrlFactory::VWorldSatellite},
-    {"VWorld Street Map",        UrlFactory::VWorldStreet}
+//#define NUM_MAPS (sizeof(kMapTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-    /*
-    {"MapQuest Street Map",     UrlFactory::MapQuestMap},
-    {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
-    {"Open Street Map",         UrlFactory::OpenStreetMap}
-     */
-};
+//static stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
+//    {"Mapbox Street Map",       UrlFactory::MapboxStreets},
+//    {"Mapbox Satellite Map",    UrlFactory::MapboxSatellite},
+//    {"Mapbox High Contrast Map",UrlFactory::MapboxHighContrast},
+//    {"Mapbox Light Map",        UrlFactory::MapboxLight},
+//    {"Mapbox Dark Map",         UrlFactory::MapboxDark},
+//    {"Mapbox Hybrid Map",       UrlFactory::MapboxHybrid},
+//    {"Mapbox Wheat Paste Map",  UrlFactory::MapboxWheatPaste},
+//    {"Mapbox Streets Basic Map",UrlFactory::MapboxStreetsBasic},
+//    {"Mapbox Comic Map",        UrlFactory::MapboxComic},
+//    {"Mapbox Outdoors Map",     UrlFactory::MapboxOutdoors},
+//    {"Mapbox Run, Byke and Hike Map",   UrlFactory::MapboxRunBikeHike},
+//    {"Mapbox Pencil Map",       UrlFactory::MapboxPencil},
+//    {"Mapbox Pirates Map",      UrlFactory::MapboxPirates},
+//    {"Mapbox Emerald Map",      UrlFactory::MapboxEmerald}
+//};
+//
+//#define NUM_MAPBOXMAPS (sizeof(kMapboxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
-#define NUM_MAPS (sizeof(kMapTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-
-static stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
-    {"Mapbox Street Map",       UrlFactory::MapboxStreets},
-    {"Mapbox Satellite Map",    UrlFactory::MapboxSatellite},
-    {"Mapbox High Contrast Map",UrlFactory::MapboxHighContrast},
-    {"Mapbox Light Map",        UrlFactory::MapboxLight},
-    {"Mapbox Dark Map",         UrlFactory::MapboxDark},
-    {"Mapbox Hybrid Map",       UrlFactory::MapboxHybrid},
-    {"Mapbox Wheat Paste Map",  UrlFactory::MapboxWheatPaste},
-    {"Mapbox Streets Basic Map",UrlFactory::MapboxStreetsBasic},
-    {"Mapbox Comic Map",        UrlFactory::MapboxComic},
-    {"Mapbox Outdoors Map",     UrlFactory::MapboxOutdoors},
-    {"Mapbox Run, Byke and Hike Map",   UrlFactory::MapboxRunBikeHike},
-    {"Mapbox Pencil Map",       UrlFactory::MapboxPencil},
-    {"Mapbox Pirates Map",      UrlFactory::MapboxPirates},
-    {"Mapbox Emerald Map",      UrlFactory::MapboxEmerald}
-};
-
-#define NUM_MAPBOXMAPS (sizeof(kMapboxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-
-static stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
-    {"Esri Street Map",       UrlFactory::EsriWorldStreet},
-    {"Esri Satellite Map",    UrlFactory::EsriWorldSatellite},
-    {"Esri Terrain Map",      UrlFactory::EsriTerrain}
-};
-
-#define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-
-static stQGeoTileCacheQGCMapTypes kElevationTypes[] = {
-    {"Airmap Elevation Data", UrlFactory::AirmapElevation}
-};
-
-#define NUM_ELEVMAPS (sizeof(kElevationTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
+//static stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
+//    {"Esri Street Map",       UrlFactory::EsriWorldStreet},
+//    {"Esri Satellite Map",    UrlFactory::EsriWorldSatellite},
+//    {"Esri Terrain Map",      UrlFactory::EsriTerrain}
+//};
+//
+//#define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
+//
+//static stQGeoTileCacheQGCMapTypes kElevationTypes[] = {
+//    {"Airmap Elevation Data", UrlFactory::AirmapElevation}
+//};
+//
+//#define NUM_ELEVMAPS (sizeof(kElevationTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
 
 static const char* kMaxDiskCacheKey = "MaxDiskCache";
 static const char* kMaxMemCacheKey  = "MaxMemoryCache";
@@ -265,7 +265,7 @@ QGCMapEngine::addTask(QGCMapTask* task)
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngine::cacheTile(UrlFactory::MapType type, int x, int y, int z, const QByteArray& image, const QString &format, qulonglong set)
+QGCMapEngine::cacheTile(QString type, int x, int y, int z, const QByteArray& image, const QString &format, qulonglong set)
 {
     QString hash = getTileHash(type, x, y, z);
     cacheTile(type, hash, image, format, set);
@@ -273,7 +273,7 @@ QGCMapEngine::cacheTile(UrlFactory::MapType type, int x, int y, int z, const QBy
 
 //-----------------------------------------------------------------------------
 void
-QGCMapEngine::cacheTile(UrlFactory::MapType type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
+QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& image, const QString& format, qulonglong set)
 {
     AppSettings* appSettings = qgcApp()->toolbox()->settingsManager()->appSettings();
     //-- If we are allowed to persist data, save tile to cache
@@ -285,22 +285,22 @@ QGCMapEngine::cacheTile(UrlFactory::MapType type, const QString& hash, const QBy
 
 //-----------------------------------------------------------------------------
 QString
-QGCMapEngine::getTileHash(UrlFactory::MapType type, int x, int y, int z)
+QGCMapEngine::getTileHash(QString type, int x, int y, int z)
 {
-    return QString().sprintf("%04d%08d%08d%03d", static_cast<int>(type), x, y, z);
+    return QString().sprintf("%04d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
 }
 
 //-----------------------------------------------------------------------------
-UrlFactory::MapType
+QString
 QGCMapEngine::hashToType(const QString& hash)
 {
     QString type = hash.mid(0,4);
-    return static_cast<UrlFactory::MapType>(type.toInt());
+    return static_cast<QString>(type.toInt());
 }
 
 //-----------------------------------------------------------------------------
 QGCFetchTileTask*
-QGCMapEngine::createFetchTileTask(UrlFactory::MapType type, int x, int y, int z)
+QGCMapEngine::createFetchTileTask(QString type, int x, int y, int z)
 {
     QString hash = getTileHash(type, x, y, z);
     QGCFetchTileTask* task = new QGCFetchTileTask(hash);
@@ -309,12 +309,12 @@ QGCMapEngine::createFetchTileTask(UrlFactory::MapType type, int x, int y, int z)
 
 //-----------------------------------------------------------------------------
 QGCTileSet
-QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, UrlFactory::MapType mapType)
+QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType)
 {
     if(zoom <  1) zoom = 1;
     if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
     QGCTileSet set;
-    if (mapType != UrlFactory::AirmapElevation) {
+    if (mapType != "AirmapElevation") {
         set.tileX0 = long2tileX(topleftLon,     zoom);
         set.tileY0 = lat2tileY(topleftLat,      zoom);
         set.tileX1 = long2tileX(bottomRightLon, zoom);
@@ -326,7 +326,7 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
         set.tileY1 = lat2elevationTileY(topleftLat,         zoom);
     }
     set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
-    set.tileSize  = UrlFactory::averageSizeForType(mapType) * set.tileCount;
+    set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
     return set;
 }
 
@@ -361,48 +361,48 @@ QGCMapEngine::lat2elevationTileY(double lat, int z)
 }
 
 //-----------------------------------------------------------------------------
-UrlFactory::MapType
-QGCMapEngine::getTypeFromName(const QString& name)
-{
-    size_t i;
-    for(i = 0; i < NUM_MAPS; i++) {
-        if(name.compare(kMapTypes[i].name, Qt::CaseInsensitive) == 0)
-            return kMapTypes[i].type;
-    }
-    for(i = 0; i < NUM_MAPBOXMAPS; i++) {
-        if(name.compare(kMapboxTypes[i].name, Qt::CaseInsensitive) == 0)
-            return kMapboxTypes[i].type;
-    }
-    for(i = 0; i < NUM_ESRIMAPS; i++) {
-        if(name.compare(kEsriTypes[i].name, Qt::CaseInsensitive) == 0)
-            return kEsriTypes[i].type;
-    }
-    for(i = 0; i < NUM_ELEVMAPS; i++) {
-        if(name.compare(kElevationTypes[i].name, Qt::CaseInsensitive) == 0)
-            return kElevationTypes[i].type;
-    }
-    return UrlFactory::Invalid;
-}
+//QString
+//QGCMapEngine::getTypeFromName(const QString& name)
+//{
+//    size_t i;
+//    for(i = 0; i < NUM_MAPS; i++) {
+//        if(name.compare(kMapTypes[i].name, Qt::CaseInsensitive) == 0)
+//            return kMapTypes[i].type;
+//    }
+//    for(i = 0; i < NUM_MAPBOXMAPS; i++) {
+//        if(name.compare(kMapboxTypes[i].name, Qt::CaseInsensitive) == 0)
+//            return kMapboxTypes[i].type;
+//    }
+//    for(i = 0; i < NUM_ESRIMAPS; i++) {
+//        if(name.compare(kEsriTypes[i].name, Qt::CaseInsensitive) == 0)
+//            return kEsriTypes[i].type;
+//    }
+//    for(i = 0; i < NUM_ELEVMAPS; i++) {
+//        if(name.compare(kElevationTypes[i].name, Qt::CaseInsensitive) == 0)
+//            return kElevationTypes[i].type;
+//    }
+//    return UrlFactory::Invalid;
+//}
 
 //-----------------------------------------------------------------------------
 QStringList
 QGCMapEngine::getMapNameList()
 {
-    QStringList mapList;
-    for(size_t i = 0; i < NUM_MAPS; i++) {
-        mapList << kMapTypes[i].name;
-    }
-    if(!qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
-        for(size_t i = 0; i < NUM_MAPBOXMAPS; i++) {
-            mapList << kMapboxTypes[i].name;
-        }
-    }
-    if(!qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
-        for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
-            mapList << kEsriTypes[i].name;
-        }
-    }
-    return mapList;
+    return QStringList(getQGCMapEngine()->urlFactory()->getProviderTable().keys());
+    //for(size_t i = 0; i < NUM_MAPS; i++) {
+    //    mapList << kMapTypes[i].name;
+    //}
+    //if(!qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
+    //    for(size_t i = 0; i < NUM_MAPBOXMAPS; i++) {
+    //        mapList << kMapboxTypes[i].name;
+    //    }
+    //}
+    //if(!qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
+    //    for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
+    //        mapList << kEsriTypes[i].name;
+    //    }
+    //}
+    //return mapList;
 }
 
 //-----------------------------------------------------------------------------
@@ -513,34 +513,36 @@ QGCMapEngine::_pruned()
 
 //-----------------------------------------------------------------------------
 int
-QGCMapEngine::concurrentDownloads(UrlFactory::MapType type)
+QGCMapEngine::concurrentDownloads(QString type)
 {
-    switch(type) {
-    case UrlFactory::GoogleMap:
-    case UrlFactory::GoogleSatellite:
-    case UrlFactory::GoogleTerrain:
-    case UrlFactory::BingMap:
-    case UrlFactory::BingSatellite:
-    case UrlFactory::BingHybrid:
-    case UrlFactory::StatkartTopo:
-    case UrlFactory::EniroTopo:
-    case UrlFactory::EsriWorldStreet:
-    case UrlFactory::EsriWorldSatellite:
-    case UrlFactory::EsriTerrain:
-    case UrlFactory::AirmapElevation:
-    case UrlFactory::VWorldMap:
-    case UrlFactory::VWorldSatellite:
-    case UrlFactory::VWorldStreet:
-        return 12;
-    /*
-    case UrlFactory::MapQuestMap:
-    case UrlFactory::MapQuestSat:
-        return 8;
-    */
-    default:
-        break;
-    }
-    return 6;
+    Q_UNUSED(type);
+    return 12;
+    //switch(type) {
+    //case UrlFactory::GoogleMap:
+    //case UrlFactory::GoogleSatellite:
+    //case UrlFactory::GoogleTerrain:
+    //case UrlFactory::BingMap:
+    //case UrlFactory::BingSatellite:
+    //case UrlFactory::BingHybrid:
+    //case UrlFactory::StatkartTopo:
+    //case UrlFactory::EniroTopo:
+    //case UrlFactory::EsriWorldStreet:
+    //case UrlFactory::EsriWorldSatellite:
+    //case UrlFactory::EsriTerrain:
+    //case UrlFactory::AirmapElevation:
+    //case UrlFactory::VWorldMap:
+    //case UrlFactory::VWorldSatellite:
+    //case UrlFactory::VWorldStreet:
+    //    return 12;
+    ///*
+    //case UrlFactory::MapQuestMap:
+    //case UrlFactory::MapQuestSat:
+    //    return 8;
+    //*/
+    //default:
+    //    break;
+    //}
+    //return 6;
 }
 
 //-----------------------------------------------------------------------------
