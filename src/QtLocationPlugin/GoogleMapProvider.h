@@ -23,7 +23,7 @@ class GoogleMapProvider : public MapProvider {
     void _googleVersionCompleted();
     void _replyDestroyed();
 
-  private:
+  protected:
     // Define the url to Request
     QString _getURL(int x, int y, int zoom,
                     QNetworkAccessManager* networkManager) ;
@@ -41,4 +41,13 @@ class GoogleMapProvider : public MapProvider {
     QString        _versionGoogleLabels;
     QString        _versionGoogleTerrain;
     QString        _secGoogleWord;
+};
+
+class GoogleSatelliteMapProvider : public GoogleMapProvider {
+    Q_OBJECT
+  public:
+    GoogleSatelliteMapProvider(QObject* parent):GoogleMapProvider(parent){}
+  protected:
+    QString _getURL(int x, int y, int zoom,
+                    QNetworkAccessManager* networkManager);
 };
