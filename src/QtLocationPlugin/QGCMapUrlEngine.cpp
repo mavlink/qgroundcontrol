@@ -29,14 +29,6 @@
 #include <QByteArray>
 
 
-#define AVERAGE_GOOGLE_TERRAIN_MAP  19391
-#define AVERAGE_BING_STREET_MAP     1297
-#define AVERAGE_BING_SAT_MAP        19597
-#define AVERAGE_GOOGLE_SAT_MAP      56887
-#define AVERAGE_MAPBOX_SAT_MAP      15739
-#define AVERAGE_MAPBOX_STREET_MAP   5648
-#define AVERAGE_TILE_SIZE           13652
-#define AVERAGE_AIRMAP_ELEV_SIZE    2786
 
 //-----------------------------------------------------------------------------
 UrlFactory::UrlFactory()
@@ -46,7 +38,7 @@ UrlFactory::UrlFactory()
     // BingMaps
     //_versionBingMaps             = "563";
 #ifndef QGC_NO_GOOGLE_MAPS
-    _providersTable["GoogleStreet"] = new GoogleMapProvider(this);
+    _providersTable["GoogleStreet"] = new GoogleStreetMapProvider(this);
     _providersTable["GoogleSatellite"] = new GoogleSatelliteMapProvider(this);
 #endif
     _curMapProvider = _providersTable["GoogleStreet"];

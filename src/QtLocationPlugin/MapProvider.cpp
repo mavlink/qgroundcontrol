@@ -1,9 +1,9 @@
 #include "MapProvider.h"
 
 MapProvider::MapProvider(QString referrer, QString imageFormat,
-                         quint32 averageSize, QObject* parent)
+                         quint32 averageSize, QGeoMapType::MapStyle mapType,QObject* parent)
     : QObject(parent), _referrer(referrer), _imageFormat(imageFormat),
-      _averageSize(averageSize) {
+      _averageSize(averageSize), _mapType(mapType) {
     QStringList langs = QLocale::system().uiLanguages();
     if (langs.length() > 0) {
         _language = langs[0];
