@@ -45,10 +45,11 @@ UrlFactory::UrlFactory()
 
     // BingMaps
     //_versionBingMaps             = "563";
-
 #ifndef QGC_NO_GOOGLE_MAPS
-    _googleMapProvider = new GoogleSatelliteMapProvider(this);
+    _providersTable["GoogleStreet"] = new GoogleMapProvider(this);
+    _providersTable["GoogleSatellite"] = new GoogleSatelliteMapProvider(this);
 #endif
+    _curMapProvider = _providersTable["GoogleStreet"];
 }
 
 //-----------------------------------------------------------------------------
@@ -62,7 +63,7 @@ QString
 UrlFactory::getImageFormat(MapType type, const QByteArray& image)
 {
     Q_UNUSED(type);
-    return _googleMapProvider->getImageFormat(image);
+    return _curMapProvider->getImageFormat(image);
     //QString format;
     //if(image.size() > 2)
     //{
@@ -132,7 +133,7 @@ QNetworkRequest
 UrlFactory::getTileURL(MapType type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
     Q_UNUSED(type);
-    return _googleMapProvider->getTileURL(x,y,zoom,networkManager);
+    return _curMapProvider->getTileURL(x,y,zoom,networkManager);
     ////-- Build URL
     //QNetworkRequest request;
     //QString url = _getURL(type, x, y, zoom, networkManager);

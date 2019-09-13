@@ -5,7 +5,7 @@
 #endif
 #include "QGCMapEngine.h"
 
-#define AVERAGE_GOOGLE_STREET_MAP   4913
+#define AVERAGE_GOOGLE_STREET_MAP 4913
 
 GoogleMapProvider::GoogleMapProvider(QObject* parent)
     : MapProvider(QString("https://www.google.com/maps/preview"),
@@ -18,10 +18,9 @@ GoogleMapProvider::GoogleMapProvider(QObject* parent)
     _versionGoogleLabels    = "h@336";
     _versionGoogleTerrain   = "t@354,r@354000000";
     _secGoogleWord          = "Galileo";
-
 }
 
-quint32 GoogleMapProvider::getAverageSize(){
+quint32 GoogleMapProvider::getAverageSize() {
     return quint32(AVERAGE_GOOGLE_STREET_MAP);
 }
 
@@ -32,7 +31,7 @@ GoogleMapProvider::~GoogleMapProvider() {
 
 //-----------------------------------------------------------------------------
 void GoogleMapProvider::_getSecGoogleWords(int x, int y, QString& sec1,
-                                    QString& sec2) {
+                                           QString& sec2) {
     sec1       = ""; // after &x=...
     sec2       = ""; // after &zoom=...
     int seclen = ((x * 3) + y) % 8;
@@ -93,7 +92,6 @@ void GoogleMapProvider::_googleVersionCompleted() {
     _googleReply = nullptr;
 }
 
-//-----------------------------------------------------------------------------
 void GoogleMapProvider::_tryCorrectGoogleVersions(
     QNetworkAccessManager* networkManager) {
     QMutexLocker locker(&_googleVersionMutex);
@@ -128,10 +126,9 @@ void GoogleMapProvider::_tryCorrectGoogleVersions(
         networkManager->setProxy(proxy);
     }
 }
-//
-//-----------------------------------------------------------------------------
+
 QString GoogleMapProvider::_getURL(int x, int y, int zoom,
-                              QNetworkAccessManager* networkManager) {
+                                   QNetworkAccessManager* networkManager) {
     // http://mt1.google.com/vt/lyrs=m
     QString server  = "mt";
     QString request = "vt";
@@ -151,78 +148,11 @@ QString GoogleMapProvider::_getURL(int x, int y, int zoom,
         .arg(y)
         .arg(zoom)
         .arg(sec2);
-//} break;
-//case GoogleSatellite: {
-//    // http://mt1.google.com/vt/lyrs=s
-//    QString server  = "khm";
-//    QString request = "kh";
-//    QString sec1    = ""; // after &x=...
-//    QString sec2    = ""; // after &zoom=...
-//    _getSecGoogleWords(x, y, sec1, sec2);
-//    _tryCorrectGoogleVersions(networkManager);
-//    return QString(
-//               "http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10")
-//        .arg(server)
-//        .arg(_getServerNum(x, y, 4))
-//        .arg(request)
-//        .arg(_versionGoogleSatellite)
-//        .arg(_language)
-//        .arg(x)
-//        .arg(sec1)
-//        .arg(y)
-//        .arg(zoom)
-//        .arg(sec2);
-//} break;
-//case GoogleLabels: {
-//    QString server  = "mts";
-//    QString request = "vt";
-//    QString sec1    = ""; // after &x=...
-//    QString sec2    = ""; // after &zoom=...
-//    _getSecGoogleWords(x, y, sec1, sec2);
-//    _tryCorrectGoogleVersions(networkManager);
-//    return QString(
-//               "http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10")
-//        .arg(server)
-//        .arg(_getServerNum(x, y, 4))
-//        .arg(request)
-//        .arg(_versionGoogleLabels)
-//        .arg(_language)
-//        .arg(x)
-//        .arg(sec1)
-//        .arg(y)
-//        .arg(zoom)
-//        .arg(sec2);
-//} break;
-//case GoogleTerrain: {
-//    QString server  = "mt";
-//    QString request = "vt";
-//    QString sec1    = ""; // after &x=...
-//    QString sec2    = ""; // after &zoom=...
-//    _getSecGoogleWords(x, y, sec1, sec2);
-//    _tryCorrectGoogleVersions(networkManager);
-//    return QString(
-//               "http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10")
-//        .arg(server)
-//        .arg(_getServerNum(x, y, 4))
-//        .arg(request)
-//        .arg(_versionGoogleTerrain)
-//        .arg(_language)
-//        .arg(x)
-//        .arg(sec1)
-//        .arg(y)
-//        .arg(zoom)
-//        .arg(sec2);
-//} break;
-//default:
-//    qWarning("Unknown map id %d\n", type);
-//    break;
-//}
-//return {};
 }
 
-QString GoogleSatelliteMapProvider::_getURL(int x, int y, int zoom,
-                                 QNetworkAccessManager* networkManager) {
-    qDebug()<< "Yohou";
+QString
+GoogleSatelliteMapProvider::_getURL(int x, int y, int zoom,
+                                    QNetworkAccessManager* networkManager) {
     // http://mt1.google.com/vt/lyrs=s
     QString server  = "khm";
     QString request = "kh";
@@ -236,6 +166,52 @@ QString GoogleSatelliteMapProvider::_getURL(int x, int y, int zoom,
         .arg(_getServerNum(x, y, 4))
         .arg(request)
         .arg(_versionGoogleSatellite)
+        .arg(_language)
+        .arg(x)
+        .arg(sec1)
+        .arg(y)
+        .arg(zoom)
+        .arg(sec2);
+}
+
+QString
+GoogleLabelsMapProvider::_getURL(int x, int y, int zoom,
+                                 QNetworkAccessManager* networkManager) {
+    QString server  = "mts";
+    QString request = "vt";
+    QString sec1    = ""; // after &x=...
+    QString sec2    = ""; // after &zoom=...
+    _getSecGoogleWords(x, y, sec1, sec2);
+    _tryCorrectGoogleVersions(networkManager);
+    return QString(
+               "http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10")
+        .arg(server)
+        .arg(_getServerNum(x, y, 4))
+        .arg(request)
+        .arg(_versionGoogleLabels)
+        .arg(_language)
+        .arg(x)
+        .arg(sec1)
+        .arg(y)
+        .arg(zoom)
+        .arg(sec2);
+}
+
+QString
+GoogleTerrainMapProvider::_getURL(int x, int y, int zoom,
+                                  QNetworkAccessManager* networkManager) {
+    QString server  = "mt";
+    QString request = "vt";
+    QString sec1    = ""; // after &x=...
+    QString sec2    = ""; // after &zoom=...
+    _getSecGoogleWords(x, y, sec1, sec2);
+    _tryCorrectGoogleVersions(networkManager);
+    return QString(
+               "http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10")
+        .arg(server)
+        .arg(_getServerNum(x, y, 4))
+        .arg(request)
+        .arg(_versionGoogleTerrain)
         .arg(_language)
         .arg(x)
         .arg(sec1)

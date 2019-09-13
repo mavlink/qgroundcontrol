@@ -51,3 +51,21 @@ class GoogleSatelliteMapProvider : public GoogleMapProvider {
     QString _getURL(int x, int y, int zoom,
                     QNetworkAccessManager* networkManager);
 };
+
+class GoogleLabelsMapProvider : public GoogleMapProvider {
+    Q_OBJECT
+  public:
+    GoogleLabelsMapProvider(QObject* parent):GoogleMapProvider(parent){}
+  protected:
+    QString _getURL(int x, int y, int zoom,
+                    QNetworkAccessManager* networkManager);
+};
+
+class GoogleTerrainMapProvider : public GoogleMapProvider {
+    Q_OBJECT
+  public:
+    GoogleTerrainMapProvider(QObject* parent):GoogleMapProvider(parent){}
+  protected:
+    QString _getURL(int x, int y, int zoom,
+                    QNetworkAccessManager* networkManager);
+};

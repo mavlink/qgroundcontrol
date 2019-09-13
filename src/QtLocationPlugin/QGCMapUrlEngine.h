@@ -94,7 +94,9 @@ private:
 
     // BingMaps
     //QString         _versionBingMaps;
-    GoogleMapProvider*   _googleMapProvider;
+    MapProvider*   _curMapProvider;
+
+    QHash<QString, MapProvider*> _providersTable;
 
 };
 
