@@ -47,7 +47,7 @@ UrlFactory::UrlFactory()
     //_versionBingMaps             = "563";
 
 #ifndef QGC_NO_GOOGLE_MAPS
-    _googleMapProvider = new GoogleMapProvider(this);
+    _googleMapProvider = new GoogleSatelliteMapProvider(this);
 #endif
 }
 
