@@ -56,9 +56,9 @@ class GoogleMapProvider : public MapProvider {
 // CycleMap,
 // CustomMap = 100
 
-const unsigned int AVERAGE_GOOGLE_STREET_MAP  = 4913;
-const unsigned int AVERAGE_GOOGLE_SAT_MAP     = 56887;
-const unsigned int AVERAGE_GOOGLE_TERRAIN_MAP = 19391;
+const quint32 AVERAGE_GOOGLE_STREET_MAP  = 4913;
+const quint32 AVERAGE_GOOGLE_SAT_MAP     = 56887;
+const quint32 AVERAGE_GOOGLE_TERRAIN_MAP = 19391;
 
 // -----------------------------------------------------------
 // Google Street Map

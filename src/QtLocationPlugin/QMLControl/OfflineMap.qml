@@ -38,7 +38,7 @@ Item {
     property Fact   _mapboxFact:        _settingsManager ? _settingsManager.appSettings.mapboxToken : null
     property Fact   _esriFact:          _settingsManager ? _settingsManager.appSettings.esriToken : null
 
-    property string mapType:            _fmSettings ? (_fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue) : ""
+    property string mapType:            _fmSettings ? (_fmSettings.mapProvider.value + " " + _fmSettings.mapType.value) : ""
     property bool   isMapInteractive:   false
     property var    savedCenter:        undefined
     property real   savedZoom:          3
@@ -93,10 +93,10 @@ Item {
 
     function updateMap() {
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            //console.log(_map.supportedMapTypes[i].name)
+            console.log(_map.supportedMapTypes[i].name, i)
             if (mapType === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
-                //console.log("Update Map:" + " " + _map.activeMapType)
+                console.log("Update Map:" + " " + _map.activeMapType)
                 handleChanges()
                 return
             }

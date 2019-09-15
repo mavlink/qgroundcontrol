@@ -7,70 +7,72 @@
  *
  ****************************************************************************/
 
-
 /**
  *  @file
  *  @author Gus Grubba <mavlink@grubba.com>
- *  Original work: The OpenPilot Team, http://www.openpilot.org Copyright (C) 2012.
+ *  Original work: The OpenPilot Team, http://www.openpilot.org Copyright (C)
+ * 2012.
  */
 
 //#define DEBUG_GOOGLE_MAPS
 
+#include "AppSettings.h"
 #include "QGCApplication.h"
 #include "QGCMapEngine.h"
-#include "AppSettings.h"
 #include "SettingsManager.h"
 
-#include <QRegExp>
-#include <QNetworkReply>
-#include <QEventLoop>
-#include <QTimer>
-#include <QString>
 #include <QByteArray>
-
-
+#include <QEventLoop>
+#include <QNetworkReply>
+#include <QRegExp>
+#include <QString>
+#include <QTimer>
 
 //-----------------------------------------------------------------------------
-UrlFactory::UrlFactory()
-    : _timeout(5 * 1000)
-{
+UrlFactory::UrlFactory() : _timeout(5 * 1000) {
 
     // BingMaps
     //_versionBingMaps             = "563";
 #ifndef QGC_NO_GOOGLE_MAPS
-    _providersTable["GoogleStreet"] = new GoogleStreetMapProvider(this);
-    _providersTable["GoogleSatellite"] = new GoogleSatelliteMapProvider(this);
+    _providersTable["Google Street Map"] = new GoogleStreetMapProvider(this);
+    _providersTable["Google Satellite"]   = new GoogleSatelliteMapProvider(this);
+    _providersTable["Google Terrain"]   = new GoogleTerrainMapProvider(this);
 #endif
 }
 
-void UrlFactory::registerProvider(QString name, MapProvider* provider){
-    _providersTable[name]=provider;
+void UrlFactory::registerProvider(QString name, MapProvider* provider) {
+    _providersTable[name] = provider;
 }
 
 //-----------------------------------------------------------------------------
-UrlFactory::~UrlFactory()
-{
-}
+UrlFactory::~UrlFactory() {}
 
-QString
-UrlFactory::getImageFormat(int id, const QByteArray& image)
-{
-    return _providersTable[getTypeFromId(id)]->getImageFormat(image);
+QString UrlFactory::getImageFormat(int id, const QByteArray& image) {
+    QString type = getTypeFromId(id);
+    if (_providersTable.find(type) != _providersTable.end()) {
+        return _providersTable[getTypeFromId(id)]->getImageFormat(image);
+    } else {
+        return "";
+    }
 }
 
 //-----------------------------------------------------------------------------
-QString
-UrlFactory::getImageFormat(QString type, const QByteArray& image)
-{
-    return _providersTable[type]->getImageFormat(image);
-    //QString format;
-    //if(image.size() > 2)
+QString UrlFactory::getImageFormat(QString type, const QByteArray& image) {
+    if (_providersTable.find(type) != _providersTable.end()) {
+        return _providersTable[type]->getImageFormat(image);
+    } else {
+        return "";
+    }
+    // QString format;
+    // if(image.size() > 2)
     //{
     //    if (image.startsWith(reinterpret_cast<const char*>(pngSignature)))
     //        format = "png";
-    //    else if (image.startsWith(reinterpret_cast<const char*>(jpegSignature)))
+    //    else if (image.startsWith(reinterpret_cast<const
+    //    char*>(jpegSignature)))
     //        format = "jpg";
-    //    else if (image.startsWith(reinterpret_cast<const char*>(gifSignature)))
+    //    else if (image.startsWith(reinterpret_cast<const
+    //    char*>(gifSignature)))
     //        format = "gif";
     //    else {
     //        switch (type) {
@@ -119,40 +121,44 @@ UrlFactory::getImageFormat(QString type, const QByteArray& image)
     //                format = "jpg";
     //                break;
     //            default:
-    //                qWarning("UrlFactory::getImageFormat() Unknown map id %d", type);
-    //                break;
+    //                qWarning("UrlFactory::getImageFormat() Unknown map id %d",
+    //                type); break;
     //        }
     //    }
     //}
-    //return format;
+    // return format;
 }
-QNetworkRequest
-UrlFactory::getTileURL(int id, int x, int y, int zoom, QNetworkAccessManager* networkManager){
+QNetworkRequest UrlFactory::getTileURL(int id, int x, int y, int zoom,
+                                       QNetworkAccessManager* networkManager) {
 
-    return _providersTable[getTypeFromId(id)]->getTileURL(x,y,zoom,networkManager);
+    QString type = getTypeFromId(id);
+    if (_providersTable.find(type) != _providersTable.end()) {
+        return _providersTable[type]->getTileURL(x, y, zoom, networkManager);
+    }
+    return QNetworkRequest(QUrl());
 }
 
 //-----------------------------------------------------------------------------
-QNetworkRequest
-UrlFactory::getTileURL(QString type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
-{
-    return _providersTable[type]->getTileURL(x,y,zoom,networkManager);
+QNetworkRequest UrlFactory::getTileURL(QString type, int x, int y, int zoom,
+                                       QNetworkAccessManager* networkManager) {
+    return _providersTable[type]->getTileURL(x, y, zoom, networkManager);
     ////-- Build URL
-    //QNetworkRequest request;
-    //QString url = _getURL(type, x, y, zoom, networkManager);
-    //if(url.isEmpty()) {
+    // QNetworkRequest request;
+    // QString url = _getURL(type, x, y, zoom, networkManager);
+    // if(url.isEmpty()) {
     //    return request;
     //}
-    //request.setUrl(QUrl(url));
-    //request.setRawHeader("Accept", "*/*");
-    //switch (type) {
-//    //    case GoogleMap:
-//    //    case GoogleSatellite:
-//    //    case GoogleLabels:
-//    //    case GoogleTerrain:
-//    //    case GoogleHybrid:
-//    //        request.setRawHeader("Referrer", "https://www.google.com/maps/preview");
-//    //        break;
+    // request.setUrl(QUrl(url));
+    // request.setRawHeader("Accept", "*/*");
+    // switch (type) {
+    //    //    case GoogleMap:
+    //    //    case GoogleSatellite:
+    //    //    case GoogleLabels:
+    //    //    case GoogleTerrain:
+    //    //    case GoogleHybrid:
+    //    //        request.setRawHeader("Referrer",
+    //    "https://www.google.com/maps/preview");
+    //    //        break;
     //    case BingHybrid:
     //    case BingMap:
     //    case BingSatellite:
@@ -171,15 +177,17 @@ UrlFactory::getTileURL(QString type, int x, int y, int zoom, QNetworkAccessManag
     //        break;
     //    case OpenStreetMap:
     //    case OpenStreetOsm:
-    //        request.setRawHeader("Referrer", "https://www.openstreetmap.org/");
-    //        break;
+    //        request.setRawHeader("Referrer",
+    //        "https://www.openstreetmap.org/"); break;
     //    */
 
     //    case EsriWorldStreet:
     //    case EsriWorldSatellite:
     //    case EsriTerrain: {
-    //            QByteArray token = qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toLatin1();
-    //            request.setRawHeader("User-Agent", QByteArrayLiteral("Qt Location based application"));
+    //            QByteArray token =
+    //            qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().toLatin1();
+    //            request.setRawHeader("User-Agent", QByteArrayLiteral("Qt
+    //            Location based application"));
     //            request.setRawHeader("User-Token", token);
     //        }
     //        return request;
@@ -191,8 +199,8 @@ UrlFactory::getTileURL(QString type, int x, int y, int zoom, QNetworkAccessManag
     //    default:
     //        break;
     //}
-    //request.setRawHeader("User-Agent", _userAgent);
-    //return request;
+    // request.setRawHeader("User-Agent", _userAgent);
+    // return request;
 }
 
 //-----------------------------------------------------------------------------
@@ -455,59 +463,62 @@ UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager*
 
 #endif
 
-
 //-----------------------------------------------------------------------------
-quint32
-UrlFactory::averageSizeForType(QString type)
-{
-    return _providersTable[type]->getAverageSize();
+quint32 UrlFactory::averageSizeForType(QString type) {
+    qDebug() << "UrlFactory::averageSizeForType for" << type;
+    if (_providersTable.find(type) != _providersTable.end()) {
+        return _providersTable[type]->getAverageSize();
+    } else {
+        qDebug() << "UrlFactory::averageSizeForType " << type
+                 << " Not registered";
+    }
 
-//    switch (type) {
-//    case GoogleMap:
-//        return AVERAGE_GOOGLE_STREET_MAP;
-//    case BingMap:
-//        return AVERAGE_BING_STREET_MAP;
-//    case GoogleSatellite:
-//        return AVERAGE_GOOGLE_SAT_MAP;
-//    case MapboxSatellite:
-//        return AVERAGE_MAPBOX_SAT_MAP;
-//    case BingHybrid:
-//    case BingSatellite:
-//        return AVERAGE_BING_SAT_MAP;
-//    case GoogleTerrain:
-//        return AVERAGE_GOOGLE_TERRAIN_MAP;
-//    case MapboxStreets:
-//    case MapboxStreetsBasic:
-//    case MapboxRunBikeHike:
-//        return AVERAGE_MAPBOX_STREET_MAP;
-//    case AirmapElevation:
-//        return AVERAGE_AIRMAP_ELEV_SIZE;
-//    case GoogleLabels:
-//    case MapboxDark:
-//    case MapboxLight:
-//    case MapboxOutdoors:
-//    case MapboxPencil:
-//    case OpenStreetMap:
-//    case GoogleHybrid:
-//    case MapboxComic:
-//    case MapboxEmerald:
-//    case MapboxHighContrast:
-//    case MapboxHybrid:
-//    case MapboxPirates:
-//    case MapboxWheatPaste:
-//    default:
-//        break;
-//    }
-//    return AVERAGE_TILE_SIZE;
+    //    switch (type) {
+    //    case GoogleMap:
+    //        return AVERAGE_GOOGLE_STREET_MAP;
+    //    case BingMap:
+    //        return AVERAGE_BING_STREET_MAP;
+    //    case GoogleSatellite:
+    //        return AVERAGE_GOOGLE_SAT_MAP;
+    //    case MapboxSatellite:
+    //        return AVERAGE_MAPBOX_SAT_MAP;
+    //    case BingHybrid:
+    //    case BingSatellite:
+    //        return AVERAGE_BING_SAT_MAP;
+    //    case GoogleTerrain:
+    //        return AVERAGE_GOOGLE_TERRAIN_MAP;
+    //    case MapboxStreets:
+    //    case MapboxStreetsBasic:
+    //    case MapboxRunBikeHike:
+    //        return AVERAGE_MAPBOX_STREET_MAP;
+    //    case AirmapElevation:
+    //        return AVERAGE_AIRMAP_ELEV_SIZE;
+    //    case GoogleLabels:
+    //    case MapboxDark:
+    //    case MapboxLight:
+    //    case MapboxOutdoors:
+    //    case MapboxPencil:
+    //    case OpenStreetMap:
+    //    case GoogleHybrid:
+    //    case MapboxComic:
+    //    case MapboxEmerald:
+    //    case MapboxHighContrast:
+    //    case MapboxHybrid:
+    //    case MapboxPirates:
+    //    case MapboxWheatPaste:
+    //    default:
+    //        break;
+    //    }
+    //    return AVERAGE_TILE_SIZE;
 }
 
-QString UrlFactory::getTypeFromId(int id){
+QString UrlFactory::getTypeFromId(int id) {
 
     QHashIterator<QString, MapProvider*> i(_providersTable);
 
-    while(i.hasNext()){
+    while (i.hasNext()) {
         i.next();
-        if(abs(qHash(i.key())) == id){
+        if (abs(qHash(i.key())) == id) {
             return i.key();
         }
     }
@@ -517,6 +528,4 @@ QString UrlFactory::getTypeFromId(int id){
 // Todo : qHash produce a uint bigger than max(int)
 // There is still a low probability for abs to
 // generate similar hash for different types
-int UrlFactory::getIdFromType(QString type){
-    return abs(qHash(type));
-}
+int UrlFactory::getIdFromType(QString type) { return abs(qHash(type)); }
