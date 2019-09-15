@@ -38,8 +38,8 @@ Rectangle {
     property real _labelWidth:                  ScreenTools.defaultFontPixelWidth * 20
     property real _comboFieldWidth:             ScreenTools.defaultFontPixelWidth * 28
     property real _valueFieldWidth:             ScreenTools.defaultFontPixelWidth * 10
-    property Fact _mapProvider:                 QGroundControl.settingsManager.flightMapSettings.mapProvider
-    property Fact _mapType:                     QGroundControl.settingsManager.flightMapSettings.mapType
+    property string _mapProvider:               QGroundControl.settingsManager.flightMapSettings.mapProvider.value
+    property string _mapType:                   QGroundControl.settingsManager.flightMapSettings.mapType.value
     property Fact _followTarget:                QGroundControl.settingsManager.appSettings.followTarget
     property real _panelWidth:                  _root.width * _internalWidthRatio
     property real _margins:                     ScreenTools.defaultFontPixelWidth
@@ -160,30 +160,19 @@ Rectangle {
                                 QGCLabel {
                                     text:       qsTr("Map Provider")
                                     width:      _labelWidth
-                                    visible:    _mapProvider.visible
+                                    //visible:    _mapProvider.visible
                                 }
-                                FactComboBox {
+                                QGCComboBox {
+                                    id:             mapCombo
+                                    model:          QGroundControl.mapEngineManager.mapList
                                     Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   _mapProvider
-                                    indexModel:             false
-                                    visible:                _mapProvider.visible
+                                    onActivated: {
+                                    _mapProvider = textAt(index)
+                                    QGroundControl.settingsManager.flightMapSettings.mapProvider.value=textAt(index)
                                 }
-
-                                QGCLabel {
-                                    text:       qsTr("Map Type")
-                                    visible:    _mapType && _mapType.visible
-                                }
-                                FactComboBox {
-                                    id:                     mapTypes
-                                    Layout.preferredWidth:  _comboFieldWidth
-                                    fact:                   _mapType
-                                    indexModel:             false
-                                    visible:                _mapType && _mapType.visible
-                                    Connections {
-                                        target: QGroundControl.settingsManager.flightMapSettings
-                                        onMapTypeChanged: {
-                                            mapTypes.model = _mapType.enumStrings
-                                        }
+                                    Component.onCompleted: {
+                                        var index = mapCombo.find(_mapProvider)
+                                        mapCombo.currentIndex = index
                                     }
                                 }
 

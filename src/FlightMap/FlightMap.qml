@@ -95,7 +95,10 @@ Map {
 
     function updateActiveMapType() {
         var settings =  QGroundControl.settingsManager.flightMapSettings
-        var fullMapName = settings.mapProvider.enumStringValue + " " + settings.mapType.enumStringValue
+        //var fullMapName = settings.mapProvider.value + " " + settings.mapType.value
+        var fullMapName = settings.mapProvider.value
+
+        console.log("updateActiveMapType",fullMapName)
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
             if (fullMapName === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]

@@ -11,12 +11,12 @@ static const unsigned char pngSignature[]  = {0x89, 0x50, 0x4E, 0x47, 0x0D,
 static const unsigned char jpegSignature[] = {0xFF, 0xD8, 0xFF, 0x00};
 static const unsigned char gifSignature[]  = {0x47, 0x49, 0x46, 0x38, 0x00};
 
-const unsigned int AVERAGE_BING_STREET_MAP    = 1297;
-const unsigned int AVERAGE_BING_SAT_MAP       = 19597;
-const unsigned int AVERAGE_MAPBOX_SAT_MAP     = 15739;
-const unsigned int AVERAGE_MAPBOX_STREET_MAP  = 5648;
-const unsigned int AVERAGE_TILE_SIZE          = 13652;
-const unsigned int AVERAGE_AIRMAP_ELEV_SIZE   = 2786;
+const quint32 AVERAGE_BING_STREET_MAP    = 1297;
+const quint32 AVERAGE_BING_SAT_MAP       = 19597;
+const quint32 AVERAGE_MAPBOX_SAT_MAP     = 15739;
+const quint32 AVERAGE_MAPBOX_STREET_MAP  = 5648;
+const quint32 AVERAGE_TILE_SIZE          = 13652;
+const quint32 AVERAGE_AIRMAP_ELEV_SIZE   = 2786;
 
 class MapProvider : public QObject {
     Q_OBJECT
