@@ -16,6 +16,9 @@
 
 //#define DEBUG_GOOGLE_MAPS
 
+#include "QGCLoggingCategory.h"
+QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
+
 #include "AppSettings.h"
 #include "QGCApplication.h"
 #include "QGCMapEngine.h"
@@ -52,6 +55,7 @@ QString UrlFactory::getImageFormat(int id, const QByteArray& image) {
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[getTypeFromId(id)]->getImageFormat(image);
     } else {
+        qCDebug(QGCMapUrlEngineLog) << "getImageFormat : Map not registered :" << type;
         return "";
     }
 }
@@ -61,6 +65,7 @@ QString UrlFactory::getImageFormat(QString type, const QByteArray& image) {
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getImageFormat(image);
     } else {
+        qCDebug(QGCMapUrlEngineLog) << "getImageFormat : Map not registered :" << type;
         return "";
     }
     // QString format;
@@ -135,13 +140,19 @@ QNetworkRequest UrlFactory::getTileURL(int id, int x, int y, int zoom,
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getTileURL(x, y, zoom, networkManager);
     }
+
+    qCDebug(QGCMapUrlEngineLog) << "getTileURL : map not registered :" << type;
     return QNetworkRequest(QUrl());
 }
 
 //-----------------------------------------------------------------------------
 QNetworkRequest UrlFactory::getTileURL(QString type, int x, int y, int zoom,
                                        QNetworkAccessManager* networkManager) {
-    return _providersTable[type]->getTileURL(x, y, zoom, networkManager);
+    if (_providersTable.find(type) != _providersTable.end()) {
+        return _providersTable[type]->getTileURL(x, y, zoom, networkManager);
+    }
+    qCDebug(QGCMapUrlEngineLog) << "getTileURL : map not registered :" << type;
+    return QNetworkRequest(QUrl());
     ////-- Build URL
     // QNetworkRequest request;
     // QString url = _getURL(type, x, y, zoom, networkManager);
@@ -468,10 +479,9 @@ quint32 UrlFactory::averageSizeForType(QString type) {
     qDebug() << "UrlFactory::averageSizeForType for" << type;
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getAverageSize();
-    } else {
-        qDebug() << "UrlFactory::averageSizeForType " << type
-                 << " Not registered";
-    }
+    } 
+    qDebug() << "UrlFactory::averageSizeForType " << type
+        << " Not registered";
 
     //    switch (type) {
     //    case GoogleMap:
@@ -509,7 +519,7 @@ quint32 UrlFactory::averageSizeForType(QString type) {
     //    default:
     //        break;
     //    }
-    //    return AVERAGE_TILE_SIZE;
+    return AVERAGE_TILE_SIZE;
 }
 
 QString UrlFactory::getTypeFromId(int id) {
@@ -522,6 +532,7 @@ QString UrlFactory::getTypeFromId(int id) {
             return i.key();
         }
     }
+    qCDebug(QGCMapUrlEngineLog) << "getTypeFromId : id not found" << id
     return "";
 }
 
