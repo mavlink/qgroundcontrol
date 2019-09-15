@@ -160,11 +160,11 @@ Rectangle {
                                 QGCLabel {
                                     text:       qsTr("Map Provider")
                                     width:      _labelWidth
-                                    //visible:    _mapProvider.visible
                                 }
+                                
                                 QGCComboBox {
                                     id:             mapCombo
-                                    model:          QGroundControl.mapEngineManager.mapList
+                                    model:          QGroundControl.mapEngineManager.mapProviderList
                                     Layout.preferredWidth:  _comboFieldWidth
                                     onActivated: {
                                     _mapProvider = textAt(index)
@@ -173,6 +173,23 @@ Rectangle {
                                     Component.onCompleted: {
                                         var index = mapCombo.find(_mapProvider)
                                         mapCombo.currentIndex = index
+                                    }
+                                }
+                                QGCLabel {
+                                    text:       qsTr("Map Type")
+                                    width:      _labelWidth
+                                }
+                                QGCComboBox {
+                                    id:             mapTypeCombo
+                                    model:          QGroundControl.mapEngineManager.mapTypeList
+                                    Layout.preferredWidth:  _comboFieldWidth
+                                    onActivated: {
+                                    _mapType = textAt(index)
+                                    QGroundControl.settingsManager.flightMapSettings.mapType.value=textAt(index)
+                                    }
+                                    Component.onCompleted: {
+                                        var index = mapTypeCombo.find(_mapType)
+                                        mapTypeCombo.currentIndex = index
                                     }
                                 }
 

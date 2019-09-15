@@ -36,6 +36,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
 
     // BingMaps
     //_versionBingMaps             = "563";
+
+    // Warning : in _providersTable, keys needs to follow this format : "Provider Type"
 #ifndef QGC_NO_GOOGLE_MAPS
     _providersTable["Google Street Map"] = new GoogleStreetMapProvider(this);
     _providersTable["Google Satellite"]   = new GoogleSatelliteMapProvider(this);
@@ -532,7 +534,7 @@ QString UrlFactory::getTypeFromId(int id) {
             return i.key();
         }
     }
-    qCDebug(QGCMapUrlEngineLog) << "getTypeFromId : id not found" << id
+    qCDebug(QGCMapUrlEngineLog) << "getTypeFromId : id not found" << id;
     return "";
 }
 
