@@ -216,6 +216,27 @@ QGCMapEngineManager::mapList()
 {
     return getQGCMapEngine()->getMapNameList();
 }
+//-----------------------------------------------------------------------------
+QStringList
+QGCMapEngineManager::mapProviderList()
+{
+    // Extract Provider name from MapName ( format : "Provider Type")
+    QStringList mapList = getQGCMapEngine()->getMapNameList();
+    mapList.replaceInStrings(QRegExp("^([^\\ ]*) (.*)$"),"\\1");
+    mapList.removeDuplicates();
+    return mapList;
+}
+
+//-----------------------------------------------------------------------------
+QStringList
+QGCMapEngineManager::mapTypeList()
+{
+    // Extract type name from MapName ( format : "Provider Type")
+    QStringList mapList = getQGCMapEngine()->getMapNameList();
+    mapList.replaceInStrings(QRegExp("^([^\\ ]*) (.*)"),"\\2");
+    mapList.removeDuplicates();
+    return mapList;
+}
 
 //-----------------------------------------------------------------------------
 quint32

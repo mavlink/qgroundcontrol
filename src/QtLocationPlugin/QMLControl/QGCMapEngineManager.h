@@ -43,6 +43,8 @@ public:
     Q_PROPERTY(QString              tileSizeStr     READ    tileSizeStr     NOTIFY tileSizeChanged)
     Q_PROPERTY(QmlObjectListModel*  tileSets        READ    tileSets        NOTIFY tileSetsChanged)
     Q_PROPERTY(QStringList          mapList         READ    mapList         CONSTANT)
+    Q_PROPERTY(QStringList          mapProviderList READ    mapProviderList CONSTANT)
+    Q_PROPERTY(QStringList          mapTypeList     READ    mapTypeList     CONSTANT)
     Q_PROPERTY(quint32              maxMemCache     READ    maxMemCache     WRITE   setMaxMemCache  NOTIFY  maxMemCacheChanged)
     Q_PROPERTY(quint32              maxDiskCache    READ    maxDiskCache    WRITE   setMaxDiskCache NOTIFY  maxDiskCacheChanged)
     Q_PROPERTY(QString              errorMessage    READ    errorMessage    NOTIFY  errorMessageChanged)
@@ -77,6 +79,8 @@ public:
     quint64                         tileSize                () { return _imageSet.tileSize + _elevationSet.tileSize; }
     QString                         tileSizeStr             ();
     QStringList                     mapList                 ();
+    QStringList                     mapProviderList         ();
+    QStringList                     mapTypeList             ();
     QmlObjectListModel*             tileSets                () { return &_tileSets; }
     quint32                         maxMemCache             ();
     quint32                         maxDiskCache            ();
