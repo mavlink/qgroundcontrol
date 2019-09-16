@@ -42,7 +42,12 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Google Street Map"] = new GoogleStreetMapProvider(this);
     _providersTable["Google Satellite"]   = new GoogleSatelliteMapProvider(this);
     _providersTable["Google Terrain"]   = new GoogleTerrainMapProvider(this);
+    _providersTable["Google Labels"]   = new GoogleTerrainMapProvider(this);
 #endif
+
+    _providersTable["Bing Road"]      = new BingRoadMapProvider(this);
+    _providersTable["Bing Satellite"] = new BingSatelliteMapProvider(this);
+    _providersTable["Bing Hybrid"]    = new BingHybridMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -164,19 +169,6 @@ QNetworkRequest UrlFactory::getTileURL(QString type, int x, int y, int zoom,
     // request.setUrl(QUrl(url));
     // request.setRawHeader("Accept", "*/*");
     // switch (type) {
-    //    //    case GoogleMap:
-    //    //    case GoogleSatellite:
-    //    //    case GoogleLabels:
-    //    //    case GoogleTerrain:
-    //    //    case GoogleHybrid:
-    //    //        request.setRawHeader("Referrer",
-    //    "https://www.google.com/maps/preview");
-    //    //        break;
-    //    case BingHybrid:
-    //    case BingMap:
-    //    case BingSatellite:
-    //        request.setRawHeader("Referrer", "https://www.bing.com/maps/");
-    //        break;
     //    case StatkartTopo:
     //        request.setRawHeader("Referrer", "https://www.norgeskart.no/");
     //        break;
@@ -223,52 +215,6 @@ UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager*
 {
     switch (type) {
     Q_UNUSED(networkManager);
-    case GoogleMap:
-    {
-        // http://mt1.google.com/vt/lyrs=m
-        QString server  = "mt";
-        QString request = "vt";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
-        _getSecGoogleWords(x, y, sec1, sec2);
-        _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleMap).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
-    }
-    break;
-    case GoogleSatellite:
-    {
-        // http://mt1.google.com/vt/lyrs=s
-        QString server  = "khm";
-        QString request = "kh";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
-        _getSecGoogleWords(x, y, sec1, sec2);
-        _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleSatellite).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
-    }
-    break;
-    case GoogleLabels:
-    {
-        QString server  = "mts";
-        QString request = "vt";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
-        _getSecGoogleWords(x, y, sec1, sec2);
-        _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleLabels).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
-    }
-    break;
-    case GoogleTerrain:
-    {
-        QString server  = "mt";
-        QString request = "vt";
-        QString sec1    = ""; // after &x=...
-        QString sec2    = ""; // after &zoom=...
-        _getSecGoogleWords(x, y, sec1, sec2);
-        _tryCorrectGoogleVersions(networkManager);
-        return QString("http://%1%2.google.com/%3/v=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10").arg(server).arg(_getServerNum(x, y, 4)).arg(request).arg(_versionGoogleTerrain).arg(_language).arg(x).arg(sec1).arg(y).arg(zoom).arg(sec2);
-    }
-    break;
     case StatkartTopo:
     {
         return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);
@@ -307,20 +253,14 @@ UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager*
     */
     case BingMap:
     {
-        QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/r%2.png?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
     break;
     case BingSatellite:
     {
-        QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/a%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
     break;
     case BingHybrid:
     {
-        QString key = _tileXYToQuadKey(x, y, zoom);
-        return QString("http://ecn.t%1.tiles.virtualearth.net/tiles/h%2.jpeg?g=%3&mkt=%4").arg(_getServerNum(x, y, 4)).arg(key).arg(_versionBingMaps).arg(_language);
     }
     /*
     case MapQuestMap:

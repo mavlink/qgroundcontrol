@@ -11,8 +11,6 @@ static const unsigned char pngSignature[]  = {0x89, 0x50, 0x4E, 0x47, 0x0D,
 static const unsigned char jpegSignature[] = {0xFF, 0xD8, 0xFF, 0x00};
 static const unsigned char gifSignature[]  = {0x47, 0x49, 0x46, 0x38, 0x00};
 
-const quint32 AVERAGE_BING_STREET_MAP    = 1297;
-const quint32 AVERAGE_BING_SAT_MAP       = 19597;
 const quint32 AVERAGE_MAPBOX_SAT_MAP     = 15739;
 const quint32 AVERAGE_MAPBOX_STREET_MAP  = 5648;
 const quint32 AVERAGE_TILE_SIZE          = 13652;

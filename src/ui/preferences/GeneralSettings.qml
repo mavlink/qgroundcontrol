@@ -167,9 +167,10 @@ Rectangle {
                                     model:          QGroundControl.mapEngineManager.mapProviderList
                                     Layout.preferredWidth:  _comboFieldWidth
                                     onActivated: {
-                                    _mapProvider = textAt(index)
-                                    QGroundControl.settingsManager.flightMapSettings.mapProvider.value=textAt(index)
-                                }
+                                        _mapProvider = textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.mapProvider.value=textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.mapType.value=QGroundControl.mapEngineManager.mapTypeList(textAt(index))[0]
+                                    }
                                     Component.onCompleted: {
                                         var index = mapCombo.find(_mapProvider)
                                         mapCombo.currentIndex = index
@@ -181,11 +182,11 @@ Rectangle {
                                 }
                                 QGCComboBox {
                                     id:             mapTypeCombo
-                                    model:          QGroundControl.mapEngineManager.mapTypeList
+                                    model:          QGroundControl.mapEngineManager.mapTypeList(_mapProvider)
                                     Layout.preferredWidth:  _comboFieldWidth
                                     onActivated: {
-                                    _mapType = textAt(index)
-                                    QGroundControl.settingsManager.flightMapSettings.mapType.value=textAt(index)
+                                        _mapType = textAt(index)
+                                        QGroundControl.settingsManager.flightMapSettings.mapType.value=textAt(index)
                                     }
                                     Component.onCompleted: {
                                         var index = mapTypeCombo.find(_mapType)
