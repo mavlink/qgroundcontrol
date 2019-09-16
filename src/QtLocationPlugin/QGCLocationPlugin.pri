@@ -25,6 +25,7 @@ HEADERS += \
     $$PWD/MapProvider.h \
     $$PWD/GoogleMapProvider.h \
     $$PWD/BingMapProvider.h \
+    $$PWD/StatkartMapProvider.h \
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \
@@ -40,6 +41,7 @@ SOURCES += \
     $$PWD/MapProvider.cpp \
     $$PWD/GoogleMapProvider.cpp \
     $$PWD/BingMapProvider.cpp \
+    $$PWD/StatkartMapProvider.cpp \
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json
