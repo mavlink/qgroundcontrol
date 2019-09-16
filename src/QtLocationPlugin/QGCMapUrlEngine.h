@@ -18,7 +18,8 @@
 
 #include "GoogleMapProvider.h"
 #include "BingMapProvider.h"
-#include "StatkartMapProvider.h"
+#include "GenericMapProvider.h"
+#include "EsriMapProvider.h"
 
 #define MAX_MAP_ZOOM (20.0)
 
