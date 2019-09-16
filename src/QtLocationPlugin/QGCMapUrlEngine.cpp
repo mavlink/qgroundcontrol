@@ -24,6 +24,7 @@ QGC_LOGGING_CATEGORY(QGCMapUrlEngineLog, "QGCMapUrlEngineLog")
 #include "QGCMapEngine.h"
 #include "SettingsManager.h"
 
+
 #include <QByteArray>
 #include <QEventLoop>
 #include <QNetworkReply>
@@ -58,6 +59,16 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     //_providersTable["Esri World Street"] = new EsriWorldStreetMapProvider(this);
     //_providersTable["Esri World Satellite"] = new EsriWorldSatelliteMapProvider(this);
     //_providersTable["Esri Terrain"] = new EsriTerrainMapProvider(this);
+
+    _providersTable["Mapbox Streets"]      = new MapboxStreetMapProvider(this);
+    _providersTable["Mapbox Light"]        = new MapboxLightMapProvider(this);
+    _providersTable["Mapbox Dark"]         = new MapboxDarkMapProvider(this);
+    _providersTable["Mapbox Satellite"]    = new MapboxSatelliteMapProvider(this);
+    _providersTable["Mapbox Hybrid"]       = new MapboxHybridMapProvider(this);
+    _providersTable["Mapbox StreetsBasic"] = new MapboxStreetsBasicMapProvider(this);
+    _providersTable["Mapbox Outdoors"]     = new MapboxOutdoorsMapProvider(this);
+    _providersTable["Mapbox RunBikeHike"]  = new MapboxRunBikeHikeMapProvider(this);
+    _providersTable["Mapbox HighContrast"] = new MapboxHighContrastMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -219,7 +230,7 @@ QString
 UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager* networkManager)
 {
     switch (type) {
-    Q_UNUSED(networkManager);
+    (networkManager);
     case StatkartTopo:
     {
         return QString("http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom=%1&x=%2&y=%3").arg(zoom).arg(x).arg(y);

@@ -27,6 +27,7 @@ HEADERS += \
     $$PWD/BingMapProvider.h \
     $$PWD/GenericMapProvider.h \
     $$PWD/EsriMapProvider.h \
+    $$PWD/MapboxMapProvider.h \
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \
@@ -44,6 +45,7 @@ SOURCES += \
     $$PWD/BingMapProvider.cpp \
     $$PWD/GenericMapProvider.cpp \
     $$PWD/EsriMapProvider.cpp \
+    $$PWD/MapboxMapProvider.cpp \
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json

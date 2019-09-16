@@ -16,38 +16,18 @@
 #ifndef QGC_MAP_URL_ENGINE_H
 #define QGC_MAP_URL_ENGINE_H
 
+
 #include "GoogleMapProvider.h"
 #include "BingMapProvider.h"
 #include "GenericMapProvider.h"
 #include "EsriMapProvider.h"
+#include "MapboxMapProvider.h"
 
 #define MAX_MAP_ZOOM (20.0)
 
 class UrlFactory : public QObject {
     Q_OBJECT
 public:
-//
-//    enum QString
-//    {
-//        Invalid                 = -1,
-//
-//        GoogleMap               = 1,
-//        GoogleSatellite         = 4,
-//        GoogleLabels            = 8,
-//        GoogleTerrain           = 16,
-//        GoogleHybrid            = 20,
-//
-//        OpenStreetMap           = 32,
-//        OpenStreetOsm           = 33,
-//        OpenStreetMapSurfer     = 34,
-//        OpenStreetMapSurferTerrain=35,
-//
-//        StatkartTopo            = 100,
-//        EniroTopo               = 110,
-//
-//        BingMap                 = 444,
-//        BingSatellite           = 555,
-//        BingHybrid              = 666,
 //
 //        /*
 //        MapQuestMap             = 700,
@@ -73,9 +53,6 @@ public:
 //        MapboxEmerald           = 6012,
 //        MapboxHighContrast      = 6013,
 //
-//        EsriWorldStreet         = 7000,
-//        EsriWorldSatellite      = 7001,
-//        EsriTerrain             = 7002,
 //
 //        AirmapElevation         = 8001
 //    };
