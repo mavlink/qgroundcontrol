@@ -100,10 +100,11 @@ pipeline {
             QMAKE_VER = "5.11.0/gcc_64/bin/qmake"
           }
           agent {
-            docker {
+            label 'ubuntu'
+            /*docker {
               image 'mavlink/qgc-build-linux:2019-02-03'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw'
-            }
+            }*/
           }
           steps {
             sh 'export'
@@ -308,12 +309,13 @@ pipeline {
             QGC_CUSTOM_APP_ICON_NAME = "qgroundcontrol"
           }
           agent {
-            docker {
+            label 'centos'
+            /*docker {
               alwaysPull true
               label 'docker'
               image 'stefandunca/qgc:centos-5.12.4'
               args '-v ${CCACHE_DIR}:${CCACHE_DIR}:rw --privileged --cap-add SYS_ADMIN --device /dev/fuse'
-            }
+            }*/
           }
           steps {
             sh 'export'
