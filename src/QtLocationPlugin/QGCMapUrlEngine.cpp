@@ -48,6 +48,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Bing Road"]      = new BingRoadMapProvider(this);
     _providersTable["Bing Satellite"] = new BingSatelliteMapProvider(this);
     _providersTable["Bing Hybrid"]    = new BingHybridMapProvider(this);
+
+    _providersTable["Statkart Topo"]    = new StatkartMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -88,11 +90,6 @@ QString UrlFactory::getImageFormat(QString type, const QByteArray& image) {
     //        format = "gif";
     //    else {
     //        switch (type) {
-    //            case GoogleMap:
-    //            case GoogleLabels:
-    //            case GoogleTerrain:
-    //            case GoogleHybrid:
-    //            case BingMap:
     //            case StatkartTopo:
     //                format = "png";
     //                break;
