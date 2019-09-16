@@ -102,7 +102,6 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 
     QList<QGeoMapType> mapList;
     QHashIterator<QString, MapProvider*> i(getQGCMapEngine()->urlFactory()->getProviderTable());
-    int id = 0;
 
     while(i.hasNext()){
         i.next();
@@ -113,38 +112,6 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setSupportedMapTypes(mapList);
     qDebug() << "End Adding Provider";
     
-    //-- IMPORTANT
-    //   Changes here must reflect those in QGCMapEngine.cpp
-
-//    setSupportedMapTypes({
-//#ifndef QGC_NO_GOOGLE_MAPS
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Google Street Map",        "Google street map",            false,  false,  UrlFactory::GoogleMap),
-//        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "Google Satellite Map",     "Google satellite map",         false,  false,  UrlFactory::GoogleSatellite),
-//        QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Google Terrain Map",       "Google terrain map",           false,  false,  UrlFactory::GoogleTerrain),
-//#endif
-//
-//    /* TODO:
-//     *  Proper google hybrid maps requires collecting two separate bitmaps and overlaying them.
-//     *
-//     * mapTypes << QGCGEOMAPTYPE(QGeoMapType::HybridMap,       "Google Hybrid Map",        "Google hybrid map",            false, false, UrlFactory::GoogleHybrid),
-//     *
-//     */
-//
-//    // Bing
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Bing Street Map",          "Bing street map",                  false,  false,  UrlFactory::BingMap),
-//        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "Bing Satellite Map",       "Bing satellite map",               false,  false,  UrlFactory::BingSatellite),
-//        QGCGEOMAPTYPE(QGeoMapType::HybridMap,         "Bing Hybrid Map",          "Bing hybrid map",                  false,  false,  UrlFactory::BingHybrid),
-//
-//    // Statkart
-//        QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Statkart Terrain Map",     "Statkart Terrain Map",             false,  false,  UrlFactory::StatkartTopo),
-//    // Eniro
-//        QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Eniro Terrain Map",        "Eniro Terrain Map",                false,  false,  UrlFactory::EniroTopo),
-//
-//    // Esri
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Esri Street Map",          "ArcGIS Online World Street Map",   true,   false,  UrlFactory::EsriWorldStreet),
-//        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "Esri Satellite Map",       "ArcGIS Online World Imagery",      true,   false,  UrlFactory::EsriWorldSatellite),
-//        QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Esri Terrain Map",         "World Terrain Base",               false,  false,  UrlFactory::EsriTerrain),
-//
 //    // VWorld
 //        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "VWorld Satellite Map",      "VWorld Satellite Map",               false,  false,  UrlFactory::VWorldSatellite),
 //        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "VWorld Street Map",         "VWorld Street Map",                  false,  false,  UrlFactory::VWorldStreet),

@@ -1,5 +1,5 @@
-#include "QGCMapEngine.h"
 #include "GenericMapProvider.h"
+#include "QGCMapEngine.h"
 
 QString StatkartMapProvider::_getURL(int x, int y, int zoom,
                                      QNetworkAccessManager* networkManager) {
