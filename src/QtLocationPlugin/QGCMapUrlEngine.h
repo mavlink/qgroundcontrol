@@ -17,6 +17,7 @@
 #define QGC_MAP_URL_ENGINE_H
 
 #include "GoogleMapProvider.h"
+#include "BingMapProvider.h"
 
 #define MAX_MAP_ZOOM (20.0)
 

@@ -24,6 +24,7 @@ HEADERS += \
     $$PWD/QGeoTiledMappingManagerEngineQGC.h \
     $$PWD/MapProvider.h \
     $$PWD/GoogleMapProvider.h \
+    $$PWD/BingMapProvider.h \
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
     $$PWD/QGeoTiledMappingManagerEngineQGC.cpp \
     $$PWD/MapProvider.cpp \
     $$PWD/GoogleMapProvider.cpp \
+    $$PWD/BingMapProvider.cpp \
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json
