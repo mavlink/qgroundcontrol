@@ -37,19 +37,27 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     // BingMaps
     //_versionBingMaps             = "563";
 
-    // Warning : in _providersTable, keys needs to follow this format : "Provider Type"
+    // Warning : in _providersTable, keys needs to follow this format :
+    // "Provider Type"
 #ifndef QGC_NO_GOOGLE_MAPS
     _providersTable["Google Street Map"] = new GoogleStreetMapProvider(this);
-    _providersTable["Google Satellite"]   = new GoogleSatelliteMapProvider(this);
-    _providersTable["Google Terrain"]   = new GoogleTerrainMapProvider(this);
-    _providersTable["Google Labels"]   = new GoogleTerrainMapProvider(this);
+    _providersTable["Google Satellite"]  = new GoogleSatelliteMapProvider(this);
+    _providersTable["Google Terrain"]    = new GoogleTerrainMapProvider(this);
+    _providersTable["Google Labels"]     = new GoogleTerrainMapProvider(this);
 #endif
 
     _providersTable["Bing Road"]      = new BingRoadMapProvider(this);
     _providersTable["Bing Satellite"] = new BingSatelliteMapProvider(this);
     _providersTable["Bing Hybrid"]    = new BingHybridMapProvider(this);
 
-    _providersTable["Statkart Topo"]    = new StatkartMapProvider(this);
+    _providersTable["Statkart Topo"] = new StatkartMapProvider(this);
+
+    _providersTable["Eniro Topo"] = new EniroMapProvider(this);
+
+    // To be add later on Token entry !
+    //_providersTable["Esri World Street"] = new EsriWorldStreetMapProvider(this);
+    //_providersTable["Esri World Satellite"] = new EsriWorldSatelliteMapProvider(this);
+    //_providersTable["Esri Terrain"] = new EsriTerrainMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -219,7 +227,6 @@ UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager*
     break;
     case EniroTopo:
     {
-    	return QString("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/%2/%3.png").arg(zoom).arg(x).arg((1<<zoom)-1-y);
     }
     break;
     /*
@@ -274,11 +281,6 @@ UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager*
     break;
     */
     case EsriWorldStreet:
-        return QString("http://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
-    case EsriWorldSatellite:
-        return QString("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
-    case EsriTerrain:
-        return QString("http://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/%1/%2/%3").arg(zoom).arg(y).arg(x);
 
     case MapboxStreets:
     case MapboxLight:

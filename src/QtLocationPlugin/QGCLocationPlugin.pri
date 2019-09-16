@@ -25,7 +25,8 @@ HEADERS += \
     $$PWD/MapProvider.h \
     $$PWD/GoogleMapProvider.h \
     $$PWD/BingMapProvider.h \
-    $$PWD/StatkartMapProvider.h \
+    $$PWD/GenericMapProvider.h \
+    $$PWD/EsriMapProvider.h \
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \
@@ -41,7 +42,8 @@ SOURCES += \
     $$PWD/MapProvider.cpp \
     $$PWD/GoogleMapProvider.cpp \
     $$PWD/BingMapProvider.cpp \
-    $$PWD/StatkartMapProvider.cpp \
+    $$PWD/GenericMapProvider.cpp \
+    $$PWD/EsriMapProvider.cpp \
 
 OTHER_FILES += \
     $$PWD/qgc_maps_plugin.json

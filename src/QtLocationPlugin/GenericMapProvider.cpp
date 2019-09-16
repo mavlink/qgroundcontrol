@@ -1,15 +1,5 @@
-#include "StatkartMapProvider.h"
-#if defined(DEBUG_GOOGLE_MAPS)
-#include <QFile>
-#include <QStandardPaths>
-#endif
 #include "QGCMapEngine.h"
-
-StatkartMapProvider::StatkartMapProvider(QObject* parent)
-    : MapProvider(QString("https://www.norgeskart.no/"), QString("png"),
-                  AVERAGE_TILE_SIZE, QGeoMapType::StreetMap, parent) {}
-
-StatkartMapProvider::~StatkartMapProvider() {}
+#include "GenericMapProvider.h"
 
 QString StatkartMapProvider::_getURL(int x, int y, int zoom,
                                      QNetworkAccessManager* networkManager) {
@@ -21,3 +11,12 @@ QString StatkartMapProvider::_getURL(int x, int y, int zoom,
         .arg(y);
 }
 
+QString EniroMapProvider::_getURL(int x, int y, int zoom,
+                                  QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager);
+    return QString("http://map.eniro.com/geowebcache/service/tms1.0.0/map/%1/"
+                   "%2/%3.png")
+        .arg(zoom)
+        .arg(x)
+        .arg((1 << zoom) - 1 - y);
+}
