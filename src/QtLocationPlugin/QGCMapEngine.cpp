@@ -42,66 +42,6 @@ struct stQGeoTileCacheQGCMapTypes {
     QString type;
 };
 
-//-- IMPORTANT
-//   Changes here must reflect those in QGeoTiledMappingManagerEngineQGC.cpp
-
-//static stQGeoTileCacheQGCMapTypes kMapTypes[] = {
-//#ifndef QGC_LIMITED_MAPS
-//    {"Google Street Map",       UrlFactory::GoogleMap},
-//    {"Google Satellite Map",    UrlFactory::GoogleSatellite},
-//    {"Google Terrain Map",      UrlFactory::GoogleTerrain},
-//#endif
-//    {"Bing Street Map",         UrlFactory::BingMap},
-//    {"Bing Satellite Map",      UrlFactory::BingSatellite},
-//    {"Bing Hybrid Map",         UrlFactory::BingHybrid},
-//    {"Statkart Terrain Map",    UrlFactory::StatkartTopo},
-//    {"ENIRO Terrain Map",       UrlFactory::EniroTopo},
-//
-//    {"VWorld Satellite Map",     UrlFactory::VWorldSatellite},
-//    {"VWorld Street Map",        UrlFactory::VWorldStreet}
-//
-//    /*
-//    {"MapQuest Street Map",     UrlFactory::MapQuestMap},
-//    {"MapQuest Satellite Map",  UrlFactory::MapQuestSat}
-//    {"Open Street Map",         UrlFactory::OpenStreetMap}
-//     */
-//};
-
-//#define NUM_MAPS (sizeof(kMapTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-
-//static stQGeoTileCacheQGCMapTypes kMapboxTypes[] = {
-//    {"Mapbox Street Map",       UrlFactory::MapboxStreets},
-//    {"Mapbox Satellite Map",    UrlFactory::MapboxSatellite},
-//    {"Mapbox High Contrast Map",UrlFactory::MapboxHighContrast},
-//    {"Mapbox Light Map",        UrlFactory::MapboxLight},
-//    {"Mapbox Dark Map",         UrlFactory::MapboxDark},
-//    {"Mapbox Hybrid Map",       UrlFactory::MapboxHybrid},
-//    {"Mapbox Wheat Paste Map",  UrlFactory::MapboxWheatPaste},
-//    {"Mapbox Streets Basic Map",UrlFactory::MapboxStreetsBasic},
-//    {"Mapbox Comic Map",        UrlFactory::MapboxComic},
-//    {"Mapbox Outdoors Map",     UrlFactory::MapboxOutdoors},
-//    {"Mapbox Run, Byke and Hike Map",   UrlFactory::MapboxRunBikeHike},
-//    {"Mapbox Pencil Map",       UrlFactory::MapboxPencil},
-//    {"Mapbox Pirates Map",      UrlFactory::MapboxPirates},
-//    {"Mapbox Emerald Map",      UrlFactory::MapboxEmerald}
-//};
-//
-//#define NUM_MAPBOXMAPS (sizeof(kMapboxTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-
-//static stQGeoTileCacheQGCMapTypes kEsriTypes[] = {
-//    {"Esri Street Map",       UrlFactory::EsriWorldStreet},
-//    {"Esri Satellite Map",    UrlFactory::EsriWorldSatellite},
-//    {"Esri Terrain Map",      UrlFactory::EsriTerrain}
-//};
-//
-//#define NUM_ESRIMAPS (sizeof(kEsriTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-//
-//static stQGeoTileCacheQGCMapTypes kElevationTypes[] = {
-//    {"Airmap Elevation Data", UrlFactory::AirmapElevation}
-//};
-//
-//#define NUM_ELEVMAPS (sizeof(kElevationTypes) / sizeof(stQGeoTileCacheQGCMapTypes))
-
 static const char* kMaxDiskCacheKey = "MaxDiskCache";
 static const char* kMaxMemCacheKey  = "MaxMemoryCache";
 
@@ -361,48 +301,10 @@ QGCMapEngine::lat2elevationTileY(double lat, int z)
 }
 
 //-----------------------------------------------------------------------------
-//QString
-//QGCMapEngine::getTypeFromName(const QString& name)
-//{
-//    size_t i;
-//    for(i = 0; i < NUM_MAPS; i++) {
-//        if(name.compare(kMapTypes[i].name, Qt::CaseInsensitive) == 0)
-//            return kMapTypes[i].type;
-//    }
-//    for(i = 0; i < NUM_MAPBOXMAPS; i++) {
-//        if(name.compare(kMapboxTypes[i].name, Qt::CaseInsensitive) == 0)
-//            return kMapboxTypes[i].type;
-//    }
-//    for(i = 0; i < NUM_ESRIMAPS; i++) {
-//        if(name.compare(kEsriTypes[i].name, Qt::CaseInsensitive) == 0)
-//            return kEsriTypes[i].type;
-//    }
-//    for(i = 0; i < NUM_ELEVMAPS; i++) {
-//        if(name.compare(kElevationTypes[i].name, Qt::CaseInsensitive) == 0)
-//            return kElevationTypes[i].type;
-//    }
-//    return UrlFactory::Invalid;
-//}
-
-//-----------------------------------------------------------------------------
 QStringList
 QGCMapEngine::getMapNameList()
 {
     return QStringList(getQGCMapEngine()->urlFactory()->getProviderTable().keys());
-    //for(size_t i = 0; i < NUM_MAPS; i++) {
-    //    mapList << kMapTypes[i].name;
-    //}
-    //if(!qgcApp()->toolbox()->settingsManager()->appSettings()->mapboxToken()->rawValue().toString().isEmpty()) {
-    //    for(size_t i = 0; i < NUM_MAPBOXMAPS; i++) {
-    //        mapList << kMapboxTypes[i].name;
-    //    }
-    //}
-    //if(!qgcApp()->toolbox()->settingsManager()->appSettings()->esriToken()->rawValue().toString().isEmpty()) {
-    //    for(size_t i = 0; i < NUM_ESRIMAPS; i++) {
-    //        mapList << kEsriTypes[i].name;
-    //    }
-    //}
-    //return mapList;
 }
 
 //-----------------------------------------------------------------------------
@@ -516,33 +418,10 @@ int
 QGCMapEngine::concurrentDownloads(QString type)
 {
     Q_UNUSED(type);
+    // TODO : We may want different values depending on 
+    // the provider here, let it like this as all provider are set to 12 
+    // at the moment
     return 12;
-    //switch(type) {
-    //case UrlFactory::GoogleMap:
-    //case UrlFactory::GoogleSatellite:
-    //case UrlFactory::GoogleTerrain:
-    //case UrlFactory::BingMap:
-    //case UrlFactory::BingSatellite:
-    //case UrlFactory::BingHybrid:
-    //case UrlFactory::StatkartTopo:
-    //case UrlFactory::EniroTopo:
-    //case UrlFactory::EsriWorldStreet:
-    //case UrlFactory::EsriWorldSatellite:
-    //case UrlFactory::EsriTerrain:
-    //case UrlFactory::AirmapElevation:
-    //case UrlFactory::VWorldMap:
-    //case UrlFactory::VWorldSatellite:
-    //case UrlFactory::VWorldStreet:
-    //    return 12;
-    ///*
-    //case UrlFactory::MapQuestMap:
-    //case UrlFactory::MapQuestSat:
-    //    return 8;
-    //*/
-    //default:
-    //    break;
-    //}
-    //return 6;
 }
 
 //-----------------------------------------------------------------------------
