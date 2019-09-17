@@ -287,15 +287,15 @@ QGCMapEngine::cacheTile(QString type, const QString& hash, const QByteArray& ima
 QString
 QGCMapEngine::getTileHash(QString type, int x, int y, int z)
 {
-    return QString().sprintf("%04d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
+    return QString().sprintf("%09d%08d%08d%03d", getQGCMapEngine()->urlFactory()->getIdFromType(type), x, y, z);
 }
 
 //-----------------------------------------------------------------------------
 QString
 QGCMapEngine::hashToType(const QString& hash)
 {
-    QString type = hash.mid(0,4);
-    return static_cast<QString>(type.toInt());
+    QString type = hash.mid(0,9);
+    return urlFactory()->getTypeFromId(type.toInt());
 }
 
 //-----------------------------------------------------------------------------

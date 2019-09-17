@@ -38,22 +38,6 @@ public:
 //        VWorldSatellite          = 801,
 //        VWorldStreet             = 802,
 //
-//        MapboxStreets           = 6000,
-//        MapboxLight             = 6001,
-//        MapboxDark              = 6002,
-//        MapboxSatellite         = 6003,
-//        MapboxHybrid            = 6004,
-//        MapboxWheatPaste        = 6005,
-//        MapboxStreetsBasic      = 6006,
-//        MapboxComic             = 6007,
-//        MapboxOutdoors          = 6008,
-//        MapboxRunBikeHike       = 6009,
-//        MapboxPencil            = 6010,
-//        MapboxPirates           = 6011,
-//        MapboxEmerald           = 6012,
-//        MapboxHighContrast      = 6013,
-//
-//
 //        AirmapElevation         = 8001
 //    };
 
