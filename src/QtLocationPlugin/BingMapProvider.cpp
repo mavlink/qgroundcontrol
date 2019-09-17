@@ -5,9 +5,9 @@
 #endif
 #include "QGCMapEngine.h"
 
-BingMapProvider::BingMapProvider(quint32               averageSize,
+BingMapProvider::BingMapProvider(QString imageFormat, quint32 averageSize,
                                  QGeoMapType::MapStyle mapType, QObject* parent)
-    : MapProvider(QString("https://www.bing.com/maps/"), QString("png"),
+    : MapProvider(QString("https://www.bing.com/maps/"), imageFormat,
                   averageSize, mapType, parent) {}
 
 BingMapProvider::~BingMapProvider() {}

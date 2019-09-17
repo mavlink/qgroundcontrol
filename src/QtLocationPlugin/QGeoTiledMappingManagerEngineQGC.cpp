@@ -126,25 +126,7 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
 //        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "MapQuest Satellite Map",   "MapQuest satellite map",       false,  false,  UrlFactory::MapQuestSat),
 //    */
 //
-//    /*
-//     * These are OK as you need your own token for accessing it. Out-of-the box, QGC does not even offer these unless you enter a proper Mapbox token.
-//     */
-//
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Mapbox Street Map",        "Mapbox Street Map",            false,  false,  UrlFactory::MapboxStreets),
-//        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "Mapbox Satellite Map",     "Mapbox Satellite Map",         false,  false,  UrlFactory::MapboxSatellite),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox High Contrast Map", "Mapbox High Contrast Map",     false,  false,  UrlFactory::MapboxHighContrast),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Light Map",         "Mapbox Light Map",             false,  false,  UrlFactory::MapboxLight),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Dark Map",          "Mapbox Dark Map",              false,  false,  UrlFactory::MapboxDark),
-//        QGCGEOMAPTYPE(QGeoMapType::HybridMap,         "Mapbox Hybrid Map",        "Mapbox Hybrid Map",            false,  false,  UrlFactory::MapboxHybrid),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Wheat Paste Map",   "Mapbox Wheat Paste Map",       false,  false,  UrlFactory::MapboxWheatPaste),
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Mapbox Streets Basic Map", "Mapbox Streets Basic Map",     false,  false,  UrlFactory::MapboxStreetsBasic),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Comic Map",         "Mapbox Comic Map",             false,  false,  UrlFactory::MapboxComic),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Outdoors Map",      "Mapbox Outdoors Map",          false,  false,  UrlFactory::MapboxOutdoors),
-//        QGCGEOMAPTYPE(QGeoMapType::CycleMap,          "Mapbox Run, Byke and Hike Map",   "Mapbox Run, Byke and Hike Map",     false,  false,  UrlFactory::MapboxRunBikeHike),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Pencil Map",        "Mapbox Pencil Map",            false,  false,  UrlFactory::MapboxPencil),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Pirates Map",       "Mapbox Pirates Map",           false,  false,  UrlFactory::MapboxPirates),
-//        QGCGEOMAPTYPE(QGeoMapType::CustomMap,         "Mapbox Emerald Map",       "Mapbox Emerald Map",           false,  false,  UrlFactory::MapboxEmerald),
-//    });
+
 
     //-- Users (QML code) can define a different user agent
     if (parameters.contains(QStringLiteral("useragent"))) {

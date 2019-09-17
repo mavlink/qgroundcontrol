@@ -428,46 +428,14 @@ UrlFactory::_getURL(QString type, int x, int y, int zoom, QNetworkAccessManager*
 
 //-----------------------------------------------------------------------------
 quint32 UrlFactory::averageSizeForType(QString type) {
-    qDebug() << "UrlFactory::averageSizeForType for" << type;
     if (_providersTable.find(type) != _providersTable.end()) {
         return _providersTable[type]->getAverageSize();
     } 
-    qDebug() << "UrlFactory::averageSizeForType " << type
-        << " Not registered";
+    qCDebug(QGCMapUrlEngineLog) << "UrlFactory::averageSizeForType " << type
+        << " Not registeret";
 
-    //    switch (type) {
-    //    case GoogleMap:
-    //        return AVERAGE_GOOGLE_STREET_MAP;
-    //    case BingMap:
-    //        return AVERAGE_BING_STREET_MAP;
-    //    case GoogleSatellite:
-    //        return AVERAGE_GOOGLE_SAT_MAP;
-    //    case MapboxSatellite:
-    //        return AVERAGE_MAPBOX_SAT_MAP;
-    //    case BingHybrid:
-    //    case BingSatellite:
-    //        return AVERAGE_BING_SAT_MAP;
-    //    case GoogleTerrain:
-    //        return AVERAGE_GOOGLE_TERRAIN_MAP;
-    //    case MapboxStreets:
-    //    case MapboxStreetsBasic:
-    //    case MapboxRunBikeHike:
-    //        return AVERAGE_MAPBOX_STREET_MAP;
     //    case AirmapElevation:
     //        return AVERAGE_AIRMAP_ELEV_SIZE;
-    //    case GoogleLabels:
-    //    case MapboxDark:
-    //    case MapboxLight:
-    //    case MapboxOutdoors:
-    //    case MapboxPencil:
-    //    case OpenStreetMap:
-    //    case GoogleHybrid:
-    //    case MapboxComic:
-    //    case MapboxEmerald:
-    //    case MapboxHighContrast:
-    //    case MapboxHybrid:
-    //    case MapboxPirates:
-    //    case MapboxWheatPaste:
     //    default:
     //        break;
     //    }
