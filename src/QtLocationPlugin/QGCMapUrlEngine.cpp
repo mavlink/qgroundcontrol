@@ -69,6 +69,12 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Mapbox Outdoors"]     = new MapboxOutdoorsMapProvider(this);
     _providersTable["Mapbox RunBikeHike"]  = new MapboxRunBikeHikeMapProvider(this);
     _providersTable["Mapbox HighContrast"] = new MapboxHighContrastMapProvider(this);
+
+    //_providersTable["MapQuest Map"] = new MapQuestMapMapProvider(this);
+    //_providersTable["MapQuest Sat"] = new MapQuestSatMapProvider(this);
+    
+    _providersTable["VWorld Street Map"] = new VWorldStreetMapProvider(this);
+    _providersTable["VWorld Satellite Map"] = new VWorldSatMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -432,7 +438,7 @@ quint32 UrlFactory::averageSizeForType(QString type) {
         return _providersTable[type]->getAverageSize();
     } 
     qCDebug(QGCMapUrlEngineLog) << "UrlFactory::averageSizeForType " << type
-        << " Not registeret";
+        << " Not registered";
 
     //    case AirmapElevation:
     //        return AVERAGE_AIRMAP_ELEV_SIZE;
