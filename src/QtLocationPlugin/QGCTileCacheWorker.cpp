@@ -448,7 +448,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
         query.addBindValue(task->tileSet()->bottomRightLon());
         query.addBindValue(task->tileSet()->minZoom());
         query.addBindValue(task->tileSet()->maxZoom());
-        query.addBindValue(task->tileSet()->type());
+        query.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(task->tileSet()->type()));
         query.addBindValue(task->tileSet()->totalTileCount());
         query.addBindValue(QDateTime::currentDateTime().toTime_t());
         if(!query.exec()) {
@@ -476,7 +476,7 @@ QGCCacheWorker::_createTileSet(QGCMapTask *mtask)
                             query.prepare("INSERT OR IGNORE INTO TilesDownload(setID, hash, type, x, y, z, state) VALUES(?, ?, ?, ?, ? ,? ,?)");
                             query.addBindValue(setID);
                             query.addBindValue(hash);
-                            query.addBindValue(type);
+                            query.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(type));
                             query.addBindValue(x);
                             query.addBindValue(y);
                             query.addBindValue(z);
@@ -897,7 +897,7 @@ QGCCacheWorker::_exportSets(QGCMapTask* mtask)
                 exportQuery.addBindValue(set->bottomRightLon());
                 exportQuery.addBindValue(set->minZoom());
                 exportQuery.addBindValue(set->maxZoom());
-                exportQuery.addBindValue(set->type());
+                exportQuery.addBindValue(getQGCMapEngine()->urlFactory()->getIdFromType(set->type()));
                 exportQuery.addBindValue(set->totalTileCount());
                 exportQuery.addBindValue(set->defaultSet());
                 exportQuery.addBindValue(QDateTime::currentDateTime().toTime_t());
