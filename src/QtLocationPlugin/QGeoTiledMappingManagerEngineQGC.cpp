@@ -112,22 +112,6 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     setSupportedMapTypes(mapList);
     qDebug() << "End Adding Provider";
     
-//    // VWorld
-//        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "VWorld Satellite Map",      "VWorld Satellite Map",               false,  false,  UrlFactory::VWorldSatellite),
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "VWorld Street Map",         "VWorld Street Map",                  false,  false,  UrlFactory::VWorldStreet),
-//
-//    /* See: https://wiki.openstreetmap.org/wiki/Tile_usage_policy
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Open Street Map",          "Open Street map",              false, false, UrlFactory::OpenStreetMap),
-//    */
-//
-//    // MapQuest
-//    /*
-//        QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "MapQuest Street Map",      "MapQuest street map",          false,  false,  UrlFactory::MapQuestMap),
-//        QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "MapQuest Satellite Map",   "MapQuest satellite map",       false,  false,  UrlFactory::MapQuestSat),
-//    */
-//
-
-
     //-- Users (QML code) can define a different user agent
     if (parameters.contains(QStringLiteral("useragent"))) {
         getQGCMapEngine()->setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());
