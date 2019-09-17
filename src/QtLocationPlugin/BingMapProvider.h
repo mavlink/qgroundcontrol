@@ -12,8 +12,8 @@
 class BingMapProvider : public MapProvider {
     Q_OBJECT
   public:
-    BingMapProvider(quint32 averageSize, QGeoMapType::MapStyle mapType,
-                    QObject* parent);
+    BingMapProvider(QString imageFormat, quint32 averageSize,
+                    QGeoMapType::MapStyle mapType, QObject* parent);
 
     ~BingMapProvider();
 
@@ -35,7 +35,7 @@ class BingRoadMapProvider : public BingMapProvider {
     Q_OBJECT
   public:
     BingRoadMapProvider(QObject* parent)
-        : BingMapProvider(AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap,
+        : BingMapProvider(QString("png"), AVERAGE_BING_STREET_MAP, QGeoMapType::StreetMap,
                           parent) {}
 
   protected:
@@ -50,7 +50,7 @@ class BingSatelliteMapProvider : public BingMapProvider {
     Q_OBJECT
   public:
     BingSatelliteMapProvider(QObject* parent)
-        : BingMapProvider(AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay,
+        : BingMapProvider(QString("jpg"), AVERAGE_BING_SAT_MAP, QGeoMapType::SatelliteMapDay,
                           parent) {}
 
   protected:
@@ -65,7 +65,7 @@ class BingHybridMapProvider : public BingMapProvider {
     Q_OBJECT
   public:
     BingHybridMapProvider(QObject* parent)
-        : BingMapProvider(AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap,
+        : BingMapProvider(QString("jpg"),AVERAGE_BING_SAT_MAP, QGeoMapType::HybridMap,
                           parent) {}
 
   protected:

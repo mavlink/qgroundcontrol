@@ -12,8 +12,8 @@
 class GoogleMapProvider : public MapProvider {
     Q_OBJECT
   public:
-    GoogleMapProvider(quint32 averageSize, QGeoMapType::MapStyle mapType,
-                      QObject* parent);
+    GoogleMapProvider(QString imageFormat, quint32 averageSize,
+                      QGeoMapType::MapStyle mapType, QObject* parent);
 
     ~GoogleMapProvider();
 
@@ -67,8 +67,8 @@ class GoogleStreetMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
     GoogleStreetMapProvider(QObject* parent)
-        : GoogleMapProvider(AVERAGE_GOOGLE_STREET_MAP, QGeoMapType::StreetMap,
-                            parent) {}
+        : GoogleMapProvider(QString("png"), AVERAGE_GOOGLE_STREET_MAP,
+                            QGeoMapType::StreetMap, parent) {}
 
   protected:
     QString _getURL(int x, int y, int zoom,
@@ -82,7 +82,7 @@ class GoogleSatelliteMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
     GoogleSatelliteMapProvider(QObject* parent)
-        : GoogleMapProvider(AVERAGE_GOOGLE_SAT_MAP,
+        : GoogleMapProvider(QString("jpg"), AVERAGE_GOOGLE_SAT_MAP,
                             QGeoMapType::SatelliteMapDay, parent) {}
 
   protected:
@@ -97,8 +97,8 @@ class GoogleLabelsMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
     GoogleLabelsMapProvider(QObject* parent)
-        : GoogleMapProvider(AVERAGE_TILE_SIZE, QGeoMapType::CustomMap, parent) {
-    }
+        : GoogleMapProvider(QString("png"), AVERAGE_TILE_SIZE,
+                            QGeoMapType::CustomMap, parent) {}
 
   protected:
     QString _getURL(int x, int y, int zoom,
@@ -112,8 +112,8 @@ class GoogleTerrainMapProvider : public GoogleMapProvider {
     Q_OBJECT
   public:
     GoogleTerrainMapProvider(QObject* parent)
-        : GoogleMapProvider(AVERAGE_GOOGLE_TERRAIN_MAP, QGeoMapType::TerrainMap,
-                            parent) {}
+        : GoogleMapProvider(QString("png"), AVERAGE_GOOGLE_TERRAIN_MAP,
+                            QGeoMapType::TerrainMap, parent) {}
 
   protected:
     QString _getURL(int x, int y, int zoom,
