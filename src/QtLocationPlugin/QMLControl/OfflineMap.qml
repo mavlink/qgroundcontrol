@@ -93,10 +93,8 @@ Item {
 
     function updateMap() {
         for (var i = 0; i < _map.supportedMapTypes.length; i++) {
-            console.log(_map.supportedMapTypes[i].name, i)
             if (mapType === _map.supportedMapTypes[i].name) {
                 _map.activeMapType = _map.supportedMapTypes[i]
-                console.log("Update Map:" + " " + _map.activeMapType)
                 handleChanges()
                 return
             }
@@ -105,7 +103,7 @@ Item {
 
     function addNewSet() {
         isMapInteractive = true
-        mapType = _fmSettings.mapProvider.enumStringValue + " " + _fmSettings.mapType.enumStringValue
+        mapType = _fmSettings.mapProvider.value + " " + _fmSettings.mapType.value
         resetMapToDefaults()
         handleChanges()
         _map.visible = true
