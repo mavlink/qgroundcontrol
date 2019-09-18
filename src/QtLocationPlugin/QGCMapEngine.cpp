@@ -236,28 +236,37 @@ QGCMapEngine::hashToType(const QString& hash)
 }
 
 //-----------------------------------------------------------------------------
-QGCFetchTileTask*
+	QGCFetchTileTask*
 QGCMapEngine::createFetchTileTask(QString type, int x, int y, int z)
 {
-    QString hash = getTileHash(type, x, y, z);
-    QGCFetchTileTask* task = new QGCFetchTileTask(hash);
-    return task;
+	QString hash = getTileHash(type, x, y, z);
+	QGCFetchTileTask* task = new QGCFetchTileTask(hash);
+	return task;
 }
 
 //-----------------------------------------------------------------------------
-QGCTileSet
+	QGCTileSet
 QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType)
 {
-    if(zoom <  1) zoom = 1;
-    if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
-    QGCTileSet set;
-        set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
-        set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,      zoom);
-        set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
-        set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,  zoom);
-    set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
-    set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
-    return set;
+	if(zoom <  1) zoom = 1;
+	if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
+	QGCTileSet set;
+	if(mapType != "Airmap Elevation"){	
+		set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
+		set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,      zoom);
+		set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
+		set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,  zoom);
+	}else{
+		set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
+		set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,      zoom);
+		set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
+		set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,  zoom);
+
+	}
+	set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
+	qDebug() << "getTileCount : " << set.tileCount;
+	set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
+	return set;
 }
 
 

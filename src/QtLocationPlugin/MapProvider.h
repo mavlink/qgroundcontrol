@@ -29,9 +29,9 @@ class MapProvider : public QObject {
 
     QGeoMapType::MapStyle getMapStyle(){return _mapType;}
 
-    int long2tileX(double lon, int z);
+    virtual int long2tileX(double lon, int z);
 
-    int lat2tileY(double lat, int z);
+    virtual int lat2tileY(double lat, int z);
 
   protected:
     QString _tileXYToQuadKey(int tileX, int tileY, int levelOfDetail);

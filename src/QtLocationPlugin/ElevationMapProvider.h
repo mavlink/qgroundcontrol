@@ -21,8 +21,6 @@ class ElevationProvider : public MapProvider {
 
     ~ElevationProvider();
 
-    int long2tileX(double lon, int z);
-    int lat2tileY(double lat, int z);
 
   protected:
     // Define the url to Request
@@ -39,6 +37,10 @@ class AirmapElevationProvider : public ElevationProvider {
     AirmapElevationProvider(QObject* parent)
         : ElevationProvider(QString("bin"), AVERAGE_AIRMAP_ELEV_SIZE,
                             QGeoMapType::StreetMap, parent) {}
+
+    int long2tileX(double lon, int z);
+    int lat2tileY(double lat, int z);
+
 
   protected:
     QString _getURL(int x, int y, int zoom,

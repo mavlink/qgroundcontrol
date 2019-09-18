@@ -72,6 +72,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     
     _providersTable["VWorld Street Map"] = new VWorldStreetMapProvider(this);
     _providersTable["VWorld Satellite Map"] = new VWorldSatMapProvider(this);
+
+    _providersTable["Airmap Elevation"] = new AirmapElevationProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -121,16 +123,6 @@ QNetworkRequest UrlFactory::getTileURL(QString type, int x, int y, int zoom,
     qCDebug(QGCMapUrlEngineLog) << "getTileURL : map not registered :" << type;
     return QNetworkRequest(QUrl());
 }
-#if 0
-    case AirmapElevation:
-    {
-    }
-    break;
-
-
-//-----------------------------------------------------------------------------
-
-#endif
 
 //-----------------------------------------------------------------------------
 quint32 UrlFactory::averageSizeForType(QString type) {

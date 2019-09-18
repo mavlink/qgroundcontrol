@@ -233,7 +233,6 @@ QGCMapEngineManager::mapTypeList(QString provider)
 {
     // Extract type name from MapName ( format : "Provider Type")
     QStringList mapList = getQGCMapEngine()->getMapNameList();
-    qDebug()<< "mapTypeList : " << provider;
     mapList = mapList.filter(QRegularExpression(provider));
     mapList.replaceInStrings(QRegExp("^([^\\ ]*) (.*)$"),"\\2");
     mapList.removeDuplicates();
