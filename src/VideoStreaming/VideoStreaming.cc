@@ -28,13 +28,9 @@
 #endif
 
 #include "VideoStreaming.h"
-#include "VideoItem.h"
-#include "VideoSurface.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
-    // Our own plugin
-    GST_PLUGIN_STATIC_DECLARE(QGC_VIDEOSINK_PLUGIN);
     // The static plugins we use
 #if defined(__mobile__)
     GST_PLUGIN_STATIC_DECLARE(coreelements);
@@ -148,9 +144,6 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
             g_error_free(error);
         }
     #endif
-        // Our own plugin
-        GST_PLUGIN_STATIC_REGISTER(QGC_VIDEOSINK_PLUGIN);
-        // The static plugins we use
     #if defined(__android__)
         GST_PLUGIN_STATIC_REGISTER(coreelements);
         GST_PLUGIN_STATIC_REGISTER(libav);
@@ -170,8 +163,6 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     Q_UNUSED(logpath);
     Q_UNUSED(debuglevel);
 #endif
-    qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
-    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QStringLiteral("VideoSurface from QML is not supported"));
 }
 
 void shutdownVideoStreaming()

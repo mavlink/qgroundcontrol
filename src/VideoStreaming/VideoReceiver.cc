@@ -67,18 +67,15 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _restart_time_ms(1389)
     , _udpReconnect_us(5000000)
 #endif
-    , _videoSurface(nullptr)
     , _videoRunning(false)
     , _showFullScreen(false)
     , _videoSettings(nullptr)
     , _hwDecoderName(nullptr)
     , _swDecoderName("avdec_h264")
 {
-    _videoSurface = new VideoSurface;
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    _setVideoSink(_videoSurface->videoSink());
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
@@ -97,8 +94,6 @@ VideoReceiver::~VideoReceiver()
         gst_object_unref(_videoSink);
     }
 #endif
-    if(_videoSurface)
-        delete _videoSurface;
 }
 
 #if defined(QGC_GST_STREAMING)
@@ -890,43 +885,6 @@ void
 VideoReceiver::_updateTimer()
 {
 #if defined(QGC_GST_STREAMING)
-    if(_videoSurface) {
-        if(_stopping || _starting) {
-            return;
-        }
-        if(_streaming) {
-            if(!_videoRunning) {
-                _videoSurface->setLastFrame(0);
-                _videoRunning = true;
-                emit videoRunningChanged();
-            }
-        } else {
-            if(_videoRunning) {
-                _videoRunning = false;
-                emit videoRunningChanged();
-            }
-        }
-        if(_videoRunning) {
-            uint32_t timeout = 1;
-            if(qgcApp()->toolbox() && qgcApp()->toolbox()->settingsManager()) {
-                timeout = _videoSettings->rtspTimeout()->rawValue().toUInt();
-            }
-            time_t elapsed = 0;
-            time_t lastFrame = _videoSurface->lastFrame();
-            if(lastFrame != 0) {
-                elapsed = time(nullptr) - _videoSurface->lastFrame();
-            }
-            if(elapsed > static_cast<time_t>(timeout) && _videoSurface) {
-                stop();
-                // We want to start it back again with _updateTimer
-                _stop = false;
-            }
-        } else {
-            if(!_stop && _running && !_uri.isEmpty() && _videoSettings->streamEnabled()->rawValue().toBool()) {
-                start();
-            }
-        }
-    }
 #endif
 }
 
