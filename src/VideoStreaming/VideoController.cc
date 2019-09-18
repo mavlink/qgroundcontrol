@@ -13,20 +13,27 @@ VideoController::VideoController(QQuickItem *parent)
     setFlag(ItemHasContents);
 }
 
+VideoController::~VideoController() {
+    qDebug() << "Destroying the Video Controller";
+    gst_element_set_state (_pipeline, GST_STATE_NULL);
+}
+
 void VideoController::setPipeline(GstElement *pipeline)
 {
     if (_pipeline != pipeline) {
         _pipeline = pipeline;
+        Q_EMIT pipelineChanged(pipeline);
     }
-
-    if (_pipeline && _videoItem) {
-        startVideo();
-    }
+    startVideo();
 }
 
-VideoController::~VideoController() {
-    qDebug() << "Destroying the Video Controller";
-    gst_element_set_state (_pipeline, GST_STATE_NULL);
+void VideoController::setVideoSink(GstElement *videoSink)
+{
+    if (_videoSink != videoSink) {
+        _videoSink = videoSink;
+        Q_EMIT videoSinkChanged(videoSink);
+    }
+    startVideo();
 }
 
 void VideoController::setVideoItem(QObject *videoItem) {
@@ -35,18 +42,19 @@ void VideoController::setVideoItem(QObject *videoItem) {
         g_object_set(_videoSink, "widget", videoItem, nullptr);
         Q_EMIT videoItemChanged(_videoItem);
     }
-    if (_pipeline && _videoItem) {
-        startVideo();
-    }
+    startVideo();
 }
 
 void VideoController::startVideo() {
-    _shouldStartVideo = true;
-    update();
+    if (_pipeline && _videoSink && _videoItem) {
+        _shouldStartVideo = true;
+        update();
+    }
 }
 
 QSGNode *VideoController::updatePaintNode(QSGNode *node, UpdatePaintNodeData *data)
 {
+    Q_UNUSED(data);
     if (_shouldStartVideo) {
         gst_element_set_state(_pipeline, GST_STATE_PLAYING);
         _shouldStartVideo = false;
@@ -56,4 +64,12 @@ QSGNode *VideoController::updatePaintNode(QSGNode *node, UpdatePaintNodeData *da
 
 QObject *VideoController::videoItem() const {
     return _videoItem;
+}
+
+GstElement *VideoController::pipeline() const {
+    return _pipeline;
+}
+
+GstElement *VideoController::videoSink() const {
+    return _videoSink;
 }

@@ -19,6 +19,7 @@ import QGroundControl.Controls          1.0
 import QGroundControl.Palette           1.0
 import QGroundControl.Vehicle           1.0
 import QGroundControl.Controllers       1.0
+import QGroundControl.QgcQtGStreamer    1.0
 
 Item {
     id:     root
@@ -76,6 +77,8 @@ Item {
             return _ar != 0.0 ? parent.width * (1 / _ar) : parent.height
         }
         //-- Main Video
+        VideoController {
+        }
         QGCVideoBackground {
             id:             videoContent
             height:         parent.getHeight()
@@ -85,6 +88,10 @@ Item {
             // receiver:       _videoReceiver
             //display:        _videoReceiver && _videoReceiver.videoSurface
             visible: true //       _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+            VideoController {
+                videoItem: videoContent
+
+            }
 
             // TODO: Restore
             /*
