@@ -201,7 +201,15 @@ void QGCCachedTileSet::_doneWithDownload()
         _totalTileCount = _savedTileCount;
         _totalTileSize  = _savedTileSize;
         //-- Too expensive to compute the real size now. Estimate it for the time being.
-        quint32 avg = _savedTileSize / _savedTileCount;
+        quint32 avg;
+        if(_savedTileSize != 0){
+            avg = _savedTileSize / _savedTileCount;
+        }
+        else{
+            qWarning() << "QGCMapEngineManager::_doneWithDownload _savedTileSize=0 !";
+            avg = 0;
+        }
+
         _uniqueTileSize = _uniqueTileCount * avg;
     }
     emit totalTileCountChanged();
