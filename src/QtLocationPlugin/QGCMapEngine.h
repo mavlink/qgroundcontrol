@@ -92,19 +92,12 @@ public:
 
     //-- Tile Math
     static QGCTileSet           getTileCount        (int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType);
-    static int                  long2tileX          (double lon, int z);
-    static int                  lat2tileY           (double lat, int z);
-    static int                  long2elevationTileX (double lon, int z);
-    static int                  lat2elevationTileY  (double lat, int z);
     static QString              getTileHash         (QString type, int x, int y, int z);
-    static QString  getTypeFromName     (const QString &name);
+    static QString              getTypeFromName     (const QString &name);
     static QString              bigSizeToString     (quint64 size);
     static QString              storageFreeSizeToString(quint64 size_MB);
     static QString              numberToString      (quint64 number);
     static int                  concurrentDownloads (QString type);
-
-    /// size of an elevation tile in degree
-    static const double         srtm1TileSize;
 
 private slots:
     void _updateTotals          (quint32 totaltiles, quint64 totalsize, quint32 defaulttiles, quint64 defaultsize);

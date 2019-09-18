@@ -28,18 +28,6 @@
 class UrlFactory : public QObject {
     Q_OBJECT
 public:
-//
-//        /*
-//        MapQuestMap             = 700,
-//        MapQuestSat             = 701,
-//        */
-//
-//        VWorldMap                = 800,
-//        VWorldSatellite          = 801,
-//        VWorldStreet             = 802,
-//
-//        AirmapElevation         = 8001
-//    };
 
     UrlFactory      ();
     ~UrlFactory     ();
@@ -52,6 +40,9 @@ public:
 
     quint32  averageSizeForType  (QString type);
 
+    int long2tileX(QString mapType, double lon, int z);
+    int lat2tileY(QString mapType, double lat, int z);
+
     QHash<QString, MapProvider*> getProviderTable(){return _providersTable;}
 
     int getIdFromType(QString type);
@@ -61,10 +52,6 @@ private:
     int             _timeout;
     QHash<QString, MapProvider*> _providersTable;
     void registerProvider(QString Name, MapProvider* provider);
-
-    // BingMaps
-    //QString         _versionBingMaps;
-
 
 };
 

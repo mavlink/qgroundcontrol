@@ -426,11 +426,11 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
             }
         } else {
             if (_state != State::Downloading) {
-                QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL("AirmapElevation", QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1, &_networkManager);
+                QNetworkRequest request = getQGCMapEngine()->urlFactory()->getTileURL("AirmapElevation", getQGCMapEngine()->urlFactory()->long2tileX("Airmap Elevation",coordinate.longitude(), 1), getQGCMapEngine()->urlFactory()->lat2tileY("Airmap Elevation", coordinate.latitude(), 1), 1, &_networkManager);
                 qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates query from database" << request.url();
                 QGeoTileSpec spec;
-                spec.setX(QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1));
-                spec.setY(QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1));
+                spec.setX(getQGCMapEngine()->urlFactory()->long2tileX("Airmap Elevation", coordinate.longitude(), 1));
+                spec.setY(getQGCMapEngine()->urlFactory()->lat2tileY("Airmap Elevation", coordinate.latitude(), 1));
                 spec.setZoom(1);
                 spec.setMapId(getQGCMapEngine()->urlFactory()->getIdFromType("AirmapElevation"));
                 QGeoTiledMapReplyQGC* reply = new QGeoTiledMapReplyQGC(&_networkManager, request, spec);
@@ -539,7 +539,7 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
 QString TerrainTileManager::_getTileHash(const QGeoCoordinate& coordinate)
 {
-    QString ret = QGCMapEngine::getTileHash("AirmapElevation", QGCMapEngine::long2elevationTileX(coordinate.longitude(), 1), QGCMapEngine::lat2elevationTileY(coordinate.latitude(), 1), 1);
+    QString ret = QGCMapEngine::getTileHash("AirmapElevation", getQGCMapEngine()->urlFactory()->long2tileX("Airmap Elevation", coordinate.longitude(), 1), getQGCMapEngine()->urlFactory()->lat2tileY("Airmap Elevation", coordinate.latitude(), 1), 1);
     qCDebug(TerrainQueryVerboseLog) << "Computing unique tile hash for " << coordinate << ret;
 
     return ret;
