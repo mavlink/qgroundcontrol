@@ -10,17 +10,16 @@ ElevationProvider::ElevationProvider(QString imageFormat, quint32 averageSize,
                                      QObject*              parent)
     : MapProvider(QString("https://api.airmap.com/"), imageFormat, averageSize,
                   mapType, parent) {}
-
 ElevationProvider::~ElevationProvider() {}
 
 //-----------------------------------------------------------------------------
-int ElevationProvider::long2tileX(double lon, int z) {
+int AirmapElevationProvider::long2tileX(double lon, int z) {
     Q_UNUSED(z);
     return static_cast<int>(floor((lon + 180.0) / srtm1TileSize));
 }
 
 //-----------------------------------------------------------------------------
-int ElevationProvider::lat2tileY(double lat, int z) {
+int AirmapElevationProvider::lat2tileY(double lat, int z) {
     Q_UNUSED(z);
     return static_cast<int>(floor((lat + 90.0) / srtm1TileSize));
 }
