@@ -124,11 +124,11 @@ protected:
     virtual void                _shutdownRecordingBranch();
     virtual void                _shutdownPipeline       ();
     virtual void                _cleanupOldVideos       ();
-    virtual void                _setVideoSink           (GstElement* sink);
 
     GstElement*     _pipeline;
     GstElement*     _pipelineStopRec;
     GstElement*     _videoSink;
+    GstElement*     _glUpload;
 
     //-- Wait for Video Server to show up before starting
     QTimer          _frameTimer;

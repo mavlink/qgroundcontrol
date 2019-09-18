@@ -76,7 +76,9 @@ VideoReceiver::VideoReceiver(QObject* parent)
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    _setVideoSink(nullptr);
+    _glUpload = gst_element_factory_make ("glupload", nullptr);
+    _videoSink = gst_element_factory_make ("qmlglsink", nullptr);
+
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
@@ -96,21 +98,6 @@ VideoReceiver::~VideoReceiver()
     }
 #endif
 }
-
-#if defined(QGC_GST_STREAMING)
-void
-VideoReceiver::_setVideoSink(GstElement* sink)
-{
-    if (_videoSink) {
-        gst_object_unref(_videoSink);
-        _videoSink = nullptr;
-    }
-    if (sink) {
-        _videoSink = sink;
-        gst_object_ref_sink(_videoSink);
-    }
-}
-#endif
 
 //-----------------------------------------------------------------------------
 void
@@ -307,21 +294,21 @@ VideoReceiver::start()
         }
 
         if(isTaisyncUSB) {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, parser, _tee, queue, decoder, queue1, _glUpload, _videoSink, nullptr);
         } else {
-            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr);
+            gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _glUpload, _videoSink, nullptr);
         }
         pipelineUp = true;
 
         if(isUdp264 || isUdp265) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, demux, parser, _tee, queue, decoder, queue1, _glUpload, _videoSink, nullptr)) {
                 qCritical() << "Unable to link UDP elements.";
                 break;
             }
         } else if(isTaisyncUSB) {
             // Link the pipeline in front of the tee
-            if(!gst_element_link_many(dataSource, parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(dataSource, parser, _tee, queue, decoder, queue1, _glUpload, _videoSink, nullptr)) {
                 qCritical() << "Unable to link Taisync USB elements.";
                 break;
             }
@@ -330,14 +317,14 @@ VideoReceiver::start()
                 qCritical() << "Unable to link TCP/MPEG-TS dataSource to Demux.";
                 break;
             }
-            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _videoSink, nullptr)) {
+            if(!gst_element_link_many(parser, _tee, queue, decoder, queue1, _glUpload, _videoSink, nullptr)) {
                 qCritical() << "Unable to link TCP/MPEG-TS pipline to parser.";
                 break;
             }
             g_signal_connect(demux, "pad-added", G_CALLBACK(newPadCB), parser);
         } else {
             g_signal_connect(dataSource, "pad-added", G_CALLBACK(newPadCB), demux);
-            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _videoSink, nullptr)) {
+            if(!gst_element_link_many(demux, parser, _tee, queue, decoder, _glUpload, _videoSink, nullptr)) {
                 qCritical() << "Unable to link RTSP elements.";
                 break;
             }
@@ -355,7 +342,7 @@ VideoReceiver::start()
         }
 
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
-        running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
+       // running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
 
     } while(0);
 
