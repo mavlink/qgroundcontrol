@@ -412,8 +412,8 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
 
     // If the ComplexMissionItem is inserted first, add a TakeOff SimpleMissionItem
     if (_visualItems->count() == 1 && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol() || _controllerVehicle->multiRotor())) {
-        insertSimpleMissionItem(mapCenterCoordinate, i);
-        i++;
+        insertSimpleMissionItem(mapCenterCoordinate, visualItemIndex);
+        visualItemIndex++;
     }
 
     int sequenceNumber = _nextSequenceNumber();

@@ -106,12 +106,10 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
     while(i.hasNext()){
         i.next();
 
-        qDebug()<< "Add MapProvider" <<i.value()->getMapStyle() << i.key()<<getQGCMapEngine()->urlFactory()->getIdFromType(i.key()); 
         mapList.append(QGCGEOMAPTYPE(i.value()->getMapStyle(), i.key(), i.key(), false, false, getQGCMapEngine()->urlFactory()->getIdFromType(i.key()) )); 
     }
     setSupportedMapTypes(mapList);
-    qDebug() << "End Adding Provider";
-    
+
     //-- Users (QML code) can define a different user agent
     if (parameters.contains(QStringLiteral("useragent"))) {
         getQGCMapEngine()->setUserAgent(parameters.value(QStringLiteral("useragent")).toString().toLatin1());

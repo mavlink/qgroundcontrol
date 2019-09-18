@@ -124,12 +124,12 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
     QByteArray a = _reply->readAll();
     QString format = getQGCMapEngine()->urlFactory()->getImageFormat(tileSpec().mapId(), a);
     //-- Test for a specialized, elevation data (not map tile)
-    int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("AirmapElevation");
+    int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("Airmap Elevation");
     if (tileSpec().mapId() == AirmapElevationId) {
         a = TerrainTile::serialize(a);
         //-- Cache it if valid
         if(!a.isEmpty()) {
-            getQGCMapEngine()->cacheTile("AirmapElevation", tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
+            getQGCMapEngine()->cacheTile("Airmap Elevation", tileSpec().x(), tileSpec().y(), tileSpec().zoom(), a, format);
         }
         emit terrainDone(a, QNetworkReply::NoError);
     } else {
@@ -153,7 +153,7 @@ QGeoTiledMapReplyQGC::networkReplyError(QNetworkReply::NetworkError error)
         return;
     }
     //-- Test for a specialized, elevation data (not map tile)
-    int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("AirmapElevation");
+    int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("Airmap Elevation");
     if (tileSpec().mapId() == AirmapElevationId) {
         emit terrainDone(QByteArray(), error);
     } else {
@@ -172,7 +172,7 @@ void
 QGeoTiledMapReplyQGC::cacheError(QGCMapTask::TaskType type, QString /*errorString*/)
 {
     if(!getQGCMapEngine()->isInternetActive()) {
-        int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("AirmapElevation");
+        int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("Airmap Elevation");
         if (tileSpec().mapId() == AirmapElevationId) {
             emit terrainDone(QByteArray(), QNetworkReply::NetworkSessionFailedError);
         } else {
@@ -210,7 +210,7 @@ void
 QGeoTiledMapReplyQGC::cacheReply(QGCCacheTile* tile)
 {
     //-- Test for a specialized, elevation data (not map tile)
-    int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("AirmapElevation");
+    int AirmapElevationId = getQGCMapEngine()->urlFactory()->getIdFromType("Airmap Elevation");
     if (tileSpec().mapId() == AirmapElevationId) {
         emit terrainDone(tile->img(), QNetworkReply::NoError);
     } else {

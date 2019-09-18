@@ -9,6 +9,9 @@
 #include <QPoint>
 #include <QString>
 
+const quint32 AVERAGE_MAPBOX_SAT_MAP     = 15739;
+const quint32 AVERAGE_MAPBOX_STREET_MAP  = 5648;
+
 class MapboxMapProvider : public MapProvider {
     Q_OBJECT
   public:

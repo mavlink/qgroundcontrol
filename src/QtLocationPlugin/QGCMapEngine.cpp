@@ -57,9 +57,6 @@ getQGCMapEngine()
 }
 
 //-----------------------------------------------------------------------------
-const double QGCMapEngine::srtm1TileSize = 0.01;
-
-//-----------------------------------------------------------------------------
 void
 destroyMapEngine()
 {
@@ -254,51 +251,15 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
     if(zoom <  1) zoom = 1;
     if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
     QGCTileSet set;
-    if (mapType != "AirmapElevation") {
-        set.tileX0 = long2tileX(topleftLon,     zoom);
-        set.tileY0 = lat2tileY(topleftLat,      zoom);
-        set.tileX1 = long2tileX(bottomRightLon, zoom);
-        set.tileY1 = lat2tileY(bottomRightLat,  zoom);
-    } else {
-        set.tileX0 = long2elevationTileX(topleftLon,        zoom);
-        set.tileY0 = lat2elevationTileY(bottomRightLat,     zoom);
-        set.tileX1 = long2elevationTileX(bottomRightLon,    zoom);
-        set.tileY1 = lat2elevationTileY(topleftLat,         zoom);
-    }
+        set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
+        set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,      zoom);
+        set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
+        set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,  zoom);
     set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
     set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
     return set;
 }
 
-//-----------------------------------------------------------------------------
-int
-QGCMapEngine::long2tileX(double lon, int z)
-{
-    return static_cast<int>(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
-}
-
-//-----------------------------------------------------------------------------
-int
-QGCMapEngine::lat2tileY(double lat, int z)
-{
-    return static_cast<int>(floor((1.0 - log( tan(lat * M_PI/180.0) + 1.0 / cos(lat * M_PI/180.0)) / M_PI) / 2.0 * pow(2.0, z)));
-}
-
-//-----------------------------------------------------------------------------
-int
-QGCMapEngine::long2elevationTileX(double lon, int z)
-{
-    Q_UNUSED(z);
-    return static_cast<int>(floor((lon + 180.0) / srtm1TileSize));
-}
-
-//-----------------------------------------------------------------------------
-int
-QGCMapEngine::lat2elevationTileY(double lat, int z)
-{
-    Q_UNUSED(z);
-    return static_cast<int>(floor((lat + 90.0) / srtm1TileSize));
-}
 
 //-----------------------------------------------------------------------------
 QStringList
