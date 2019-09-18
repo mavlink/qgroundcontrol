@@ -47,7 +47,7 @@ MicrohardSettings::setEncryptionKey(QString key)
     if (!_tcpSocket) {
         return;
     }
-    QString cmd = "AT+MWVENCRYPT=1," + key + "\n";
+    QString cmd = key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";
     _tcpSocket->write(cmd.toStdString().c_str());
     cmd = "AT&W\n";
     _tcpSocket->write(cmd.toStdString().c_str());

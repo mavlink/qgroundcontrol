@@ -145,7 +145,7 @@ newPadCB(GstElement* element, GstPad* pad, gpointer data)
 void
 VideoReceiver::_restart_timeout()
 {
-    qgcApp()->toolbox()->videoManager()->restartVideo();
+    qgcApp()->toolbox()->videoManager()->restartVideoReceiver(this);
 }
 #endif
 
@@ -172,6 +172,10 @@ VideoReceiver::start()
        !_videoSettings->streamConfigured()) {
         qCDebug(VideoReceiverLog) << "start() but not enabled/configured";
         return;
+    }
+
+    if (_videoSurface) {
+        _videoSurface->setLastFrame(0);
     }
 
 #if defined(QGC_GST_STREAMING)
@@ -492,8 +496,14 @@ VideoReceiver::_handleError() {
     qCDebug(VideoReceiverLog) << "Gstreamer error!";
     // If there was an error we switch to software decoding only
     _tryWithHardwareDecoding = false;
-    stop();
-    _restart_timer.start(_restart_time_ms);
+
+    if (_videoSurface && _videoSurface->lastFrame() == 0) {
+        // We didn't receive any frame yet, so we restart after some time
+        stop();
+        _restart_timer.start(_restart_time_ms);
+    } else {
+        _restart_timeout();
+    }
 }
 #endif
 
