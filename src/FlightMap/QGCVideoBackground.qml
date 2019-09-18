@@ -16,11 +16,12 @@
 
 import QtQuick                          2.11
 import QtQuick.Controls                 2.4
-import QGroundControl.QgcQtGStreamer    1.0
+import org.freedesktop.gstreamer.GLVideoItem 1.0
 
-VideoItem {
-    id: videoBackground
-    property var display
-    property var receiver
-    surface: display
+GstGLVideoItem {
+    id: video
+    anchors.centerIn: parent
+    width: parent.width
+    height: parent.height
+    anchors.fill: parent
 }

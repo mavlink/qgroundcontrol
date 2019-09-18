@@ -145,6 +145,10 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
             qCritical() << "gst_init_check() failed: " << error->message;
             g_error_free(error);
         }
+        // This is just so I have the Qml item registered.
+        GstElement *sink = gst_element_factory_make ("qmlglsink", nullptr);
+        gst_object_unref(sink);
+
     #endif
     #if defined(__android__)
         GST_PLUGIN_STATIC_REGISTER(coreelements);
@@ -165,8 +169,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     Q_UNUSED(logpath);
     Q_UNUSED(debuglevel);
 #endif
-    qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
-    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QStringLiteral("VideoSurface from QML is not supported"));
+//    qmlRegisterType<VideoItem>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoItem");
+//    qmlRegisterUncreatableType<VideoSurface>("QGroundControl.QgcQtGStreamer", 1, 0, "VideoSurface", QStringLiteral("VideoSurface from QML is not supported"));
 }
 
 void shutdownVideoStreaming()

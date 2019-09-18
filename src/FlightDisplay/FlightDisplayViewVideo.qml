@@ -40,7 +40,7 @@ Item {
         id:             noVideo
         anchors.fill:   parent
         color:          Qt.rgba(0,0,0,0.75)
-        visible:        !(_videoReceiver && _videoReceiver.videoRunning)
+        visible:  false // TODO: Restore-me     !(_videoReceiver && _videoReceiver.videoRunning)
         QGCLabel {
             text:               QGroundControl.settingsManager.videoSettings.streamEnabled.rawValue ? qsTr("WAITING FOR VIDEO") : qsTr("VIDEO DISABLED")
             font.family:        ScreenTools.demiboldFontFamily
@@ -81,9 +81,13 @@ Item {
             height:         parent.getHeight()
             width:          parent.getWidth()
             anchors.centerIn: parent
-            receiver:       _videoReceiver
-            display:        _videoReceiver && _videoReceiver.videoSurface
-            visible:        _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+            // TODO: Restore
+            // receiver:       _videoReceiver
+            //display:        _videoReceiver && _videoReceiver.videoSurface
+            visible: true //       _videoReceiver && _videoReceiver.videoRunning && !(QGroundControl.videoManager.hasThermal && _camera.thermalMode === QGCCameraControl.THERMAL_FULL)
+
+            // TODO: Restore
+            /*
             Connections {
                 target:         _videoReceiver
                 onImageFileChanged: {
@@ -94,6 +98,7 @@ Item {
                     });
                 }
             }
+            */
             Rectangle {
                 color:  Qt.rgba(1,1,1,0.5)
                 height: parent.height
@@ -123,6 +128,7 @@ Item {
                 visible: _showGrid && !QGroundControl.videoManager.fullScreen
             }
         }
+
         //-- Thermal Image
         Item {
             id:                 thermalItem
@@ -154,13 +160,15 @@ Item {
             onVisibleChanged: {
                 thermalItem.pipOrNot()
             }
-            QGCVideoBackground {
+            // TODO: Restore
+          /*  QGCVideoBackground {
                 id:             thermalVideo
                 anchors.fill:   parent
                 receiver:       QGroundControl.videoManager.thermalVideoReceiver
                 display:        QGroundControl.videoManager.thermalVideoReceiver ? QGroundControl.videoManager.thermalVideoReceiver.videoSurface : null
                 opacity:        _camera ? (_camera.thermalMode === QGCCameraControl.THERMAL_BLEND ? _camera.thermalOpacity / 100 : 1.0) : 0
             }
+            */
         }
         //-- Full screen toggle
         MouseArea {
