@@ -191,9 +191,6 @@ VideoReceiver::start()
 
     _starting = true;
 
-    bool running    = false;
-    bool pipelineUp = false;
-
     GstElement*     dataSource  = nullptr;
     GstCaps*        caps        = nullptr;
     GstElement*     demux       = nullptr;
@@ -298,7 +295,6 @@ VideoReceiver::start()
         } else {
             gst_bin_add_many(GST_BIN(_pipeline), dataSource, demux, parser, _tee, queue, decoder, queue1, _glUpload, _videoSink, nullptr);
         }
-        pipelineUp = true;
 
         if(isUdp264 || isUdp265) {
             // Link the pipeline in front of the tee
@@ -342,7 +338,6 @@ VideoReceiver::start()
         }
 
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
-       // running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
 
     } while(0);
 
@@ -351,6 +346,8 @@ VideoReceiver::start()
         caps = nullptr;
     }
 
+    // running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
+    /* Don't do this cleaning here, GST_STATE_PLAYING needs to be set in the Gl Render Loop
     if (!running) {
         qCritical() << "VideoReceiver::start() failed";
 
@@ -392,14 +389,12 @@ VideoReceiver::start()
                 dataSource = nullptr;
             }
         }
-
-        _running = false;
     } else {
         GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-playing");
-        _running = true;
         qCDebug(VideoReceiverLog) << "Running";
     }
-    _starting = false;
+    */
+//    _starting = false;
 #endif
 }
 

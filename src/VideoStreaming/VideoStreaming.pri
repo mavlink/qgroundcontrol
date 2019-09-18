@@ -146,4 +146,3 @@ VideoEnabled {
         message("Skipping support for video streaming (Unsupported platform)")
     }
 }
-

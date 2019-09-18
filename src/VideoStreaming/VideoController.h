@@ -1,0 +1,35 @@
+#ifndef VIDEOCONTROLLER_H
+#define VIDEOCONTROLLER_H
+
+#include <QQuickItem>
+#include <gst/gst.h>
+
+class VideoController : public QQuickItem {
+    Q_OBJECT
+    Q_PROPERTY(QObject *videoItem WRITE setVideoItem READ videoItem NOTIFY videoItemChanged)
+
+public:
+    VideoController(QQuickItem *parent = nullptr);
+    virtual ~VideoController();
+
+    /* This is the Qml GstGLVideoItem  */
+    QObject *videoItem() const;
+    Q_SLOT void setVideoItem(QObject *videoItem);
+    Q_SIGNAL void videoItemChanged(QObject *videoItem);
+
+    void setPipeline(GstElement *pipeline);
+
+    /* This method sets the pipeline state to playing as soon as Qt allows it */
+    Q_INVOKABLE void startVideo();
+
+    /* This *actually* enables the video set by startVideo() */
+    QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *);
+
+private:
+    QObject *_videoItem;
+    GstElement *_pipeline;
+    GstElement *_videoSink;
+    bool _shouldStartVideo;
+};
+
+#endif // VIDEOCONTROLLER_H

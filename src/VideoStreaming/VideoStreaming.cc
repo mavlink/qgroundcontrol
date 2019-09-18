@@ -28,6 +28,7 @@
 #endif
 
 #include "VideoStreaming.h"
+#include "VideoController.h"
 
 #if defined(QGC_GST_STREAMING)
     G_BEGIN_DECLS
@@ -167,6 +168,8 @@ void initializeVideoStreaming(int &argc, char* argv[], char* logpath, char* debu
     Q_UNUSED(logpath);
     Q_UNUSED(debuglevel);
 #endif
+    // Fake Player to start the video in the Rendering Thread.
+    qmlRegisterType<VideoController>              ("QGroundControl.QgcQtGStreamer", 1, 0, "VideoController");
 }
 
 void shutdownVideoStreaming()
