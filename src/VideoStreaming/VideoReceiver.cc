@@ -67,18 +67,16 @@ VideoReceiver::VideoReceiver(QObject* parent)
     , _restart_time_ms(1389)
     , _udpReconnect_us(5000000)
 #endif
-    , _videoSurface(nullptr)
     , _videoRunning(false)
     , _showFullScreen(false)
     , _videoSettings(nullptr)
     , _hwDecoderName(nullptr)
     , _swDecoderName("avdec_h264")
 {
-    _videoSurface = new VideoSurface;
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    _setVideoSink(_videoSurface->videoSink());
+    _setVideoSink(nullptr);
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
     connect(this, &VideoReceiver::msgErrorReceived, this, &VideoReceiver::_handleError);
@@ -97,8 +95,6 @@ VideoReceiver::~VideoReceiver()
         gst_object_unref(_videoSink);
     }
 #endif
-    if(_videoSurface)
-        delete _videoSurface;
 }
 
 #if defined(QGC_GST_STREAMING)
@@ -881,6 +877,7 @@ void
 VideoReceiver::_updateTimer()
 {
 #if defined(QGC_GST_STREAMING)
+#if 0 // TODO: Re-enable
     if(_videoSurface) {
         if(_stopping || _starting) {
             return;
@@ -918,6 +915,7 @@ VideoReceiver::_updateTimer()
             }
         }
     }
+#endif
 #endif
 }
 

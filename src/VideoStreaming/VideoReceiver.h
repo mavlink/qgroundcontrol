@@ -20,8 +20,6 @@
 #include <QTimer>
 #include <QTcpSocket>
 
-#include "VideoSurface.h"
-
 #if defined(QGC_GST_STREAMING)
 #include <gst/gst.h>
 #endif
@@ -44,7 +42,6 @@ public:
 #if defined(QGC_GST_STREAMING)
     Q_PROPERTY(bool             recording           READ    recording           NOTIFY recordingChanged)
 #endif
-    Q_PROPERTY(VideoSurface*    videoSurface        READ    videoSurface        CONSTANT)
     Q_PROPERTY(bool             videoRunning        READ    videoRunning        NOTIFY  videoRunningChanged)
     Q_PROPERTY(QString          imageFile           READ    imageFile           NOTIFY  imageFileChanged)
     Q_PROPERTY(QString          videoFile           READ    videoFile           NOTIFY  videoFileChanged)
@@ -57,7 +54,6 @@ public:
     virtual bool            recording       () { return _recording; }
 #endif
 
-    virtual VideoSurface*   videoSurface    () { return _videoSurface; }
     virtual bool            videoRunning    () { return _videoRunning; }
     virtual QString         imageFile       () { return _imageFile; }
     virtual QString         videoFile       () { return _videoFile; }
@@ -146,7 +142,6 @@ protected:
     QString         _uri;
     QString         _imageFile;
     QString         _videoFile;
-    VideoSurface*   _videoSurface;
     bool            _videoRunning;
     bool            _showFullScreen;
     VideoSettings*  _videoSettings;
