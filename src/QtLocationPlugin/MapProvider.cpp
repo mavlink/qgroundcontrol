@@ -73,3 +73,5 @@ int MapProvider::lat2tileY(double lat, int z) {
          log(tan(lat * M_PI / 180.0) + 1.0 / cos(lat * M_PI / 180.0)) / M_PI) /
         2.0 * pow(2.0, z)));
 }
+
+bool MapProvider::_isElevationProvider(){return false;}

@@ -21,6 +21,7 @@ class ElevationProvider : public MapProvider {
 
     ~ElevationProvider();
 
+	bool _isElevationProvider(){return true;}
 
   protected:
     // Define the url to Request

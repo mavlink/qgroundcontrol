@@ -264,7 +264,6 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
 
 	}
 	set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
-	qDebug() << "getTileCount : " << set.tileCount;
 	set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
 	return set;
 }
