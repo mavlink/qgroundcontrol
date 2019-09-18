@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 #ifndef CoordinateVector_H
 #define CoordinateVector_H
 
@@ -24,7 +23,10 @@ public:
     
     Q_PROPERTY(QGeoCoordinate coordinate1 MEMBER _coordinate1 NOTIFY coordinate1Changed)
     Q_PROPERTY(QGeoCoordinate coordinate2 MEMBER _coordinate2 NOTIFY coordinate2Changed)
-    
+
+    QGeoCoordinate coordinate1(void) const { return _coordinate1; }
+    QGeoCoordinate coordinate2(void) const { return _coordinate2; }
+
     void setCoordinates(const QGeoCoordinate& coordinate1, const QGeoCoordinate& coordinate2);
 
 public slots:

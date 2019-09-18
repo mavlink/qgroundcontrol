@@ -19,33 +19,10 @@ import QGroundControl.Controls      1.0
 import QGroundControl.FlightMap     1.0
 
 /// Survey Complex Mission Item visuals
-Item {
-    id: _root
+TransectStyleMapVisuals {
+    polygonInteractive: true
 
-    property var map        ///< Map control to place item in
-
-    property var _missionItem:      object
-    property var _mapPolygon:       object.surveyAreaPolygon
-    property var _visualTransectsComponent
-    property var _entryCoordinate
-    property var _exitCoordinate
-
-    signal clicked(int sequenceNumber)
-
-    function _addVisualElements() {
-        _visualTransectsComponent = visualTransectsComponent.createObject(map)
-        _entryCoordinate = entryPointComponent.createObject(map)
-        _exitCoordinate = exitPointComponent.createObject(map)
-        map.addMapItem(_visualTransectsComponent)
-        map.addMapItem(_entryCoordinate)
-        map.addMapItem(_exitCoordinate)
-    }
-
-    function _destroyVisualElements() {
-        _visualTransectsComponent.destroy()
-        _entryCoordinate.destroy()
-        _exitCoordinate.destroy()
-    }
+    property var _mapPolygon: object.surveyAreaPolygon
 
     /// Add an initial 4 sided polygon if there is none
     function _addInitialPolygon() {
@@ -78,74 +55,5 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        _addInitialPolygon()
-        _addVisualElements()
-    }
-
-    Component.onDestruction: {
-        _destroyVisualElements()
-    }
-
-    QGCMapPolygonVisuals {
-        id:                 mapPolygonVisuals
-        mapControl:         map
-        mapPolygon:         _mapPolygon
-        interactive:        _missionItem.isCurrentItem
-        borderWidth:        1
-        borderColor:        "black"
-        interiorColor:      "green"
-        interiorOpacity:    0.5
-    }
-
-    // Transect lines
-    Component {
-        id: visualTransectsComponent
-
-        MapPolyline {
-            line.color: "white"
-            line.width: 2
-            path:       _missionItem.visualTransectPoints
-        }
-    }
-
-    // Entry point
-    Component {
-        id: entryPointComponent
-
-        MapQuickItem {
-            anchorPoint.x:  sourceItem.anchorPointX
-            anchorPoint.y:  sourceItem.anchorPointY
-            z:              QGroundControl.zOrderMapItems
-            coordinate:     _missionItem.coordinate
-            visible:        _missionItem.exitCoordinate.isValid
-
-            sourceItem: MissionItemIndexLabel {
-                index:      _missionItem.sequenceNumber
-                label:      "Entry"
-                checked:    _missionItem.isCurrentItem
-                onClicked:  _root.clicked(_missionItem.sequenceNumber)
-            }
-        }
-    }
-
-    // Exit point
-    Component {
-        id: exitPointComponent
-
-        MapQuickItem {
-            anchorPoint.x:  sourceItem.anchorPointX
-            anchorPoint.y:  sourceItem.anchorPointY
-            z:              QGroundControl.zOrderMapItems
-            coordinate:     _missionItem.exitCoordinate
-            visible:        _missionItem.exitCoordinate.isValid
-
-            sourceItem: MissionItemIndexLabel {
-                index:      _missionItem.lastSequenceNumber
-                label:      "Exit"
-                checked:    _missionItem.isCurrentItem
-                onClicked:  _root.clicked(_missionItem.sequenceNumber)
-            }
-        }
-    }
+    Component.onCompleted: _addInitialPolygon()
 }

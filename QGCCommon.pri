@@ -46,12 +46,18 @@ linux {
         QMAKE_CFLAGS += -Wno-unused-command-line-argument
         QMAKE_LINK += -nostdlib++ # Hack fix?: https://forum.qt.io/topic/103713/error-cannot-find-lc-qt-5-12-android
         target.path = $$DESTDIR
-        equals(ANDROID_TARGET_ARCH, x86)  {
+        equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
+            DEFINES += __androidArm32__
+            message("Android Arm 32 bit build")
+        } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
+            DEFINES += __androidArm64__
+            message("Android Arm 64 bit build")
+        } else:equals(ANDROID_TARGET_ARCH, x86)  {
             CONFIG += Androidx86Build
             DEFINES += __androidx86__
-            message("Android x86 build")
-        } else {
             message("Android Arm build")
+        } else {
+            error("Unsupported Android architecture: $${ANDROID_TARGET_ARCH}")
         }
     } else {
         error("Unsuported Linux toolchain, only GCC 32- or 64-bit is supported")

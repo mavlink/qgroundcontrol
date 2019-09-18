@@ -766,7 +766,8 @@ public:
     /// Test motor
     ///     @param motor Motor number, 1-based
     ///     @param percent 0-no power, 100-full power
-    Q_INVOKABLE void motorTest(int motor, int percent);
+    ///     @param timeoutSec Disabled motor after this amount of time
+    Q_INVOKABLE void motorTest(int motor, int percent, int timeoutSecs);
 
     Q_INVOKABLE void setPIDTuningTelemetryMode(bool pidTuning);
 
@@ -1333,6 +1334,8 @@ private:
     void _pidTuningAdjustRates(bool setRatesForTuning);
     void _handleUnsupportedRequestAutopilotCapabilities(void);
     void _handleUnsupportedRequestProtocolVersion(void);
+    void _initializeCsv();
+    void _writeCsvLine();
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1348,6 +1351,9 @@ private:
     bool                _soloFirmware;
     QGCToolbox*         _toolbox;
     SettingsManager*    _settingsManager;
+
+    QTimer                  _csvLogTimer;
+    QFile                   _csvLogFile;
 
     QList<LinkInterface*> _links;
 

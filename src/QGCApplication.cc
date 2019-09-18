@@ -448,6 +448,9 @@ void QGCApplication::setLanguage()
 
 void QGCApplication::_shutdown()
 {
+    // Close out all Qml before we delete toolbox. This way we don't get all sorts of null reference complaints from Qml.
+    delete _qmlAppEngine;
+
     shutdownVideoStreaming();
     delete _toolbox;
 }
@@ -721,6 +724,9 @@ void QGCApplication::showMessage(const QString& message)
         QVariant varReturn;
         QVariant varMessage = QVariant::fromValue(message);
         QMetaObject::invokeMethod(_rootQmlObject(), "showMessage", Q_RETURN_ARG(QVariant, varReturn), Q_ARG(QVariant, varMessage));
+    } else if (runningUnitTests()) {
+        // Unit tests can run without UI
+        qDebug() << "QGCApplication::showMessage unittest" << message;
     } else {
         qWarning() << "Internal error";
     }

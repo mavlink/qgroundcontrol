@@ -177,16 +177,22 @@ void VisualMissionItem::_updateTerrainAltitude(void)
         // This is an intermediate state we don't react to
         return;
     }
-    if (!_flyView && coordinate().isValid()) {
-        // We use a timer so that any additional requests before the timer fires result in only a single request
-        _updateTerrainTimer.start();
+    if (!_flyView && specifiesCoordinate() && coordinate().isValid()) {
+        if (specifiesCoordinate()) {
+            if (coordinate().isValid()) {
+                // We use a timer so that any additional requests before the timer fires result in only a single request
+                _updateTerrainTimer.start();
+            }
+        } else {
+            _terrainAltitude = qQNaN();
+        }
     }
 }
 
 void VisualMissionItem::_reallyUpdateTerrainAltitude(void)
 {
     QGeoCoordinate coord = coordinate();
-    if (coord.isValid() && (qIsNaN(_terrainAltitude) || !qFuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || qFuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
+    if (specifiesCoordinate() && coord.isValid() && (qIsNaN(_terrainAltitude) || !qFuzzyCompare(_lastLatTerrainQuery, coord.latitude()) || qFuzzyCompare(_lastLonTerrainQuery, coord.longitude()))) {
         _lastLatTerrainQuery = coord.latitude();
         _lastLonTerrainQuery = coord.longitude();
         TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
