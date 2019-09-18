@@ -33,6 +33,8 @@ class MapProvider : public QObject {
 
     virtual int lat2tileY(double lat, int z);
 
+	virtual bool _isElevationProvider();
+
   protected:
     QString _tileXYToQuadKey(int tileX, int tileY, int levelOfDetail);
     int     _getServerNum(int x, int y, int max);
