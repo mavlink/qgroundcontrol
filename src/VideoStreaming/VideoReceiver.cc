@@ -427,6 +427,8 @@ VideoReceiver::start()
 void VideoReceiver::prepareSmallPipeline()
 {
     qDebug() << "Prepare small pipeline running";
+    _stop = false;
+    _starting = false;
     _pipeline = gst_pipeline_new (nullptr);
 
     GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
