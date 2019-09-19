@@ -99,6 +99,6 @@ private:
     int _vehicleID = -1; // Vehicle ID for which the heartbeat is tracked.
     bool _high_latency = false; // Indicates if the link is a high latency link or not.
 
-    static const int    _messageReceivedTimeoutMSecs = 3500;  // Signal connection lost after 3.5 seconds of no messages
+    static const int    _messageReceivedTimeoutMSecs = 3500*3;  // Signal connection lost after 3.5 seconds of no messages
 };
 
