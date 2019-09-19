@@ -82,8 +82,11 @@ Item {
 
         //-- Main Video
         VideoController {
+            id: videoController
             videoItem: videoContent
-            videoReceiver: _videoReceiver
+            Component.onCompleted : {
+                videoController.startVideo();
+            }
         }
 
         QGCVideoBackground {
