@@ -53,6 +53,8 @@ public:
     Q_SLOT void setVideoItem(QObject *videoItem);
     Q_SIGNAL void videoItemChanged(QObject *videoItem);
 
+    Q_INVOKABLE void setVideoReceiver(QObject *videoReceiver);
+
     /* This method prepares the pipeline, creates the sink, links things together. */
     void preparePipeline();
 

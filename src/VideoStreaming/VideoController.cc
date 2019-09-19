@@ -77,7 +77,7 @@ VideoController::VideoController(QQuickItem *parent)
 {
     qDebug() << "Starting the video controller";
     setFlag(ItemHasContents);
-    preparePipeline();
+    // preparePipeline();
 }
 
 VideoController::~VideoController() {
@@ -86,6 +86,14 @@ VideoController::~VideoController() {
     gst_object_unref (m_pipeline);
 }
 
+void VideoController::setVideoReceiver(QObject *videoReceiver)
+{
+    auto receiver = qobject_cast<VideoReceiver*>(videoReceiver);
+    m_pipeline = receiver->pipeline();
+    m_videoSink = receiver->videoSink();
+}
+
+/* this is now being called from the VideoReceiver */
 void VideoController::preparePipeline() {
   m_pipeline = gst_pipeline_new (nullptr);
 

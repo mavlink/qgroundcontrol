@@ -85,6 +85,7 @@ Item {
             id: videoController
             videoItem: videoContent
             Component.onCompleted : {
+                videoController.setVideoReceiver(_videoReceiver);
                 videoController.startVideo();
             }
         }
@@ -108,7 +109,7 @@ Item {
                     });
                 }
             }
-
+            */
             Rectangle {
                 color:  Qt.rgba(1,1,1,0.5)
                 height: parent.height
@@ -137,7 +138,6 @@ Item {
                 y:      parent.height * 0.66
                 visible: _showGrid && !QGroundControl.videoManager.fullScreen
             }
-            */
         }
 
         //-- Thermal Image
