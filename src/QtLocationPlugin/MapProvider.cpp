@@ -74,4 +74,22 @@ int MapProvider::lat2tileY(double lat, int z) {
         2.0 * pow(2.0, z)));
 }
 
-bool MapProvider::_isElevationProvider(){return false;}
+bool MapProvider::_isElevationProvider() { return false; }
+
+QGCTileSet MapProvider::getTileCount(int zoom, double topleftLon,
+                                     double topleftLat, double bottomRightLon,
+                                     double bottomRightLat) {
+    QGCTileSet set;
+    set.tileX0 = long2tileX(topleftLon, zoom);
+    set.tileY0 = lat2tileY(topleftLat, zoom);
+    set.tileX1 = long2tileX(bottomRightLon, zoom);
+    set.tileY1 = lat2tileY(bottomRightLat, zoom);
+
+    set.tileCount = (static_cast<quint64>(set.tileX1) -
+                     static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) -
+                     static_cast<quint64>(set.tileY0) + 1);
+
+    set.tileSize = getAverageSize() * set.tileCount;
+    return set;
+}

@@ -49,7 +49,11 @@ public:
     int getIdFromType(QString type);
     QString getTypeFromId(int id);
 
-private:
+    QGCTileSet getTileCount(int zoom, double topleftLon, double topleftLat,
+                            double bottomRightLon, double bottomRightLat,
+                            QString mapType);
+
+  private:
     int             _timeout;
     QHash<QString, MapProvider*> _providersTable;
     void registerProvider(QString Name, MapProvider* provider);

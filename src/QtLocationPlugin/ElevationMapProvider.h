@@ -41,6 +41,9 @@ class AirmapElevationProvider : public ElevationProvider {
 
     int long2tileX(double lon, int z);
     int lat2tileY(double lat, int z);
+    QGCTileSet getTileCount(int zoom, double topleftLon,
+                                     double topleftLat, double bottomRightLon,
+                                     double bottomRightLat);
 
 
   protected:

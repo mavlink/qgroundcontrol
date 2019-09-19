@@ -250,22 +250,8 @@ QGCMapEngine::getTileCount(int zoom, double topleftLon, double topleftLat, doubl
 {
 	if(zoom <  1) zoom = 1;
 	if(zoom > MAX_MAP_ZOOM) zoom = MAX_MAP_ZOOM;
-	QGCTileSet set;
-	if(mapType != "Airmap Elevation"){	
-		set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
-		set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,      zoom);
-		set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
-		set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,  zoom);
-	}else{
-		set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
-		set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,      zoom);
-		set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
-		set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,  zoom);
 
-	}
-	set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
-	set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
-	return set;
+    return getQGCMapEngine()->urlFactory()->getTileCount(zoom, topleftLon, topleftLat, bottomRightLon, bottomRightLat, mapType);
 }
 
 
