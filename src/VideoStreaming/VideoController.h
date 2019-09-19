@@ -3,12 +3,12 @@
 
 #include <QQuickItem>
 #include <gst/gst.h>
+#include "VideoReceiver.h"
 
 class VideoController : public QQuickItem {
     Q_OBJECT
     Q_PROPERTY(QObject *videoItem WRITE setVideoItem READ videoItem NOTIFY videoItemChanged)
-    Q_PROPERTY(GstElement *pipeline WRITE setPipeline READ pipeline NOTIFY pipelineChanged)
-    Q_PROPERTY(GstElement *videoSink WRITE setVideoSink READ videoSink NOTIFY videoSinkChanged)
+    Q_PROPERTY(QObject *videoReceiver WRITE setVideoReceiver READ videoReceiver NOTIFY videoReceiverChanged)
 
 public:
     VideoController(QQuickItem *parent = nullptr);
@@ -19,13 +19,9 @@ public:
     Q_SLOT void setVideoItem(QObject *videoItem);
     Q_SIGNAL void videoItemChanged(QObject *videoItem);
 
-    void setPipeline(GstElement *pipeline);
-    GstElement *pipeline() const;
-    Q_SIGNAL void pipelineChanged(GstElement *pipeline);
-
-    void setVideoSink(GstElement *videoSink);
-    GstElement *videoSink() const;
-    Q_SIGNAL void videoSinkChanged(GstElement *videoSink);
+    void setVideoReceiver(QObject *videoReceiver);
+    QObject *videoReceiver() const;
+    Q_SIGNAL void videoReceiverChanged(QObject *videoReceiver);
 
     /* This method sets the pipeline state to playing as soon as Qt allows it */
     Q_INVOKABLE void startVideo();
@@ -34,6 +30,8 @@ public:
     QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *);
 
 private:
+    // They are passed thru as QVariant because I can't pass custom pointers to Qml.
+    VideoReceiver *_videoReceiver;
     QObject *_videoItem;
     GstElement *_pipeline;
     GstElement *_videoSink;

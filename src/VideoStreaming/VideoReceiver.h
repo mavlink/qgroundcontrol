@@ -52,6 +52,9 @@ public:
 
 #if defined(QGC_GST_STREAMING)
     virtual bool            recording       () { return _recording; }
+    // Those two methods are sending
+    Q_INVOKABLE GstElement *pipeline() const;
+    Q_INVOKABLE GstElement *videoSink() const;
 #endif
 
     virtual bool            videoRunning    () { return _videoRunning; }

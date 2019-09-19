@@ -78,6 +78,7 @@ VideoReceiver::VideoReceiver(QObject* parent)
     setVideoDecoder(H264_SW);
     _glUpload = gst_element_factory_make ("glupload", nullptr);
     _videoSink = gst_element_factory_make ("qmlglsink", nullptr);
+    qDebug() << "video sink created" << _videoSink;
 
     _restart_timer.setSingleShot(true);
     connect(&_restart_timer, &QTimer::timeout, this, &VideoReceiver::_restart_timeout);
@@ -97,6 +98,18 @@ VideoReceiver::~VideoReceiver()
         gst_object_unref(_videoSink);
     }
 #endif
+}
+
+GstElement *VideoReceiver::pipeline() const
+{
+    qDebug() << "Returning the pipeline" << _pipeline;
+    return _pipeline;
+}
+
+GstElement *VideoReceiver::videoSink() const
+{
+    qDebug() << "Returning the video sink" << _videoSink;
+    return _videoSink;
 }
 
 //-----------------------------------------------------------------------------
@@ -135,7 +148,7 @@ VideoReceiver::_restart_timeout()
 //-----------------------------------------------------------------------------
 // When we finish our pipeline will look like this:
 //
-//                                   +-->queue-->decoder-->_videosink
+//                                   +-->queue-->decoder-->_glUpload-->_videosink
 //                                   |
 //    datasource-->demux-->parser-->tee
 //                                   ^
@@ -144,6 +157,7 @@ VideoReceiver::_restart_timeout()
 void
 VideoReceiver::start()
 {
+    /*
     if (_uri.isEmpty()) {
         return;
     }
@@ -345,7 +359,7 @@ VideoReceiver::start()
         gst_caps_unref(caps);
         caps = nullptr;
     }
-
+    */
     // running = gst_element_set_state(_pipeline, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE;
     /* Don't do this cleaning here, GST_STATE_PLAYING needs to be set in the Gl Render Loop
     if (!running) {
@@ -395,13 +409,19 @@ VideoReceiver::start()
     }
     */
 //    _starting = false;
-#endif
+    _pipeline = gst_pipeline_new("receiver");
+    GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
+    gst_bin_add_many (GST_BIN (_pipeline), src, _glUpload, _videoSink, nullptr);
+    gst_element_link_many (src, _glUpload, _videoSink, nullptr);
+    qDebug() << "Pipeline criado";
+// #endif
 }
 
 //-----------------------------------------------------------------------------
 void
 VideoReceiver::stop()
 {
+    qDebug() << "Calling Stop";
     if(qgcApp() && qgcApp()->runningUnitTests()) {
         return;
     }
@@ -439,6 +459,7 @@ VideoReceiver::setUri(const QString & uri)
 #if defined(QGC_GST_STREAMING)
 void
 VideoReceiver::_shutdownPipeline() {
+    qDebug() << "Calling shutdown pipeline";
     if(!_pipeline) {
         qCDebug(VideoReceiverLog) << "No pipeline";
         return;

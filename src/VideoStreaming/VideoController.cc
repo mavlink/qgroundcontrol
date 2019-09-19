@@ -18,21 +18,11 @@ VideoController::~VideoController() {
     gst_element_set_state (_pipeline, GST_STATE_NULL);
 }
 
-void VideoController::setPipeline(GstElement *pipeline)
+void VideoController::setVideoReceiver(QObject *videoReceiver)
 {
-    if (_pipeline != pipeline) {
-        _pipeline = pipeline;
-        Q_EMIT pipelineChanged(pipeline);
-    }
-    startVideo();
-}
-
-void VideoController::setVideoSink(GstElement *videoSink)
-{
-    if (_videoSink != videoSink) {
-        _videoSink = videoSink;
-        Q_EMIT videoSinkChanged(videoSink);
-    }
+    _videoReceiver = qobject_cast<VideoReceiver*>(videoReceiver);
+    _pipeline = _videoReceiver->pipeline();
+    _videoSink = _videoReceiver->videoSink();
     startVideo();
 }
 
@@ -41,6 +31,7 @@ void VideoController::setVideoItem(QObject *videoItem) {
         _videoItem = videoItem;
         g_object_set(_videoSink, "widget", videoItem, nullptr);
         Q_EMIT videoItemChanged(_videoItem);
+        qDebug() << "video item set" << videoItem;
     }
     startVideo();
 }
@@ -48,14 +39,16 @@ void VideoController::setVideoItem(QObject *videoItem) {
 void VideoController::startVideo() {
     if (_pipeline && _videoSink && _videoItem) {
         _shouldStartVideo = true;
+        qDebug() << "request to start the video";
         update();
     }
 }
 
 QSGNode *VideoController::updatePaintNode(QSGNode *node, UpdatePaintNodeData *data)
 {
-    Q_UNUSED(data);
+    Q_UNUSED(data)
     if (_shouldStartVideo) {
+        qDebug() << "Video should start";
         gst_element_set_state(_pipeline, GST_STATE_PLAYING);
         _shouldStartVideo = false;
     }
@@ -66,10 +59,6 @@ QObject *VideoController::videoItem() const {
     return _videoItem;
 }
 
-GstElement *VideoController::pipeline() const {
-    return _pipeline;
-}
-
-GstElement *VideoController::videoSink() const {
-    return _videoSink;
+QObject *VideoController::videoReceiver() const {
+    return _videoReceiver;
 }
