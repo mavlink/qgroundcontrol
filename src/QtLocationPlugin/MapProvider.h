@@ -1,5 +1,7 @@
 #pragma once
 
+#include "QGCTileSet.h" 
+
 #include <QByteArray>
 #include <QNetworkProxy>
 #include <QNetworkReply>
@@ -34,6 +36,10 @@ class MapProvider : public QObject {
     virtual int lat2tileY(double lat, int z);
 
 	virtual bool _isElevationProvider();
+
+    virtual QGCTileSet getTileCount(int zoom, double topleftLon,
+                                     double topleftLat, double bottomRightLon,
+                                     double bottomRightLat);
 
   protected:
     QString _tileXYToQuadKey(int tileX, int tileY, int levelOfDetail);

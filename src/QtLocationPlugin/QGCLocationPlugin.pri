@@ -29,6 +29,8 @@ HEADERS += \
     $$PWD/GenericMapProvider.h \
     $$PWD/EsriMapProvider.h \
     $$PWD/MapboxMapProvider.h \
+    $$PWD/QGCTileSet.h \
+
 
 SOURCES += \
     $$PWD/QGCMapEngine.cpp \

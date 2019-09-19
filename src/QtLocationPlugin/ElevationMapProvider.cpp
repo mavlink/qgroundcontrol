@@ -37,3 +37,22 @@ AirmapElevationProvider::_getURL(int x, int y, int zoom,
         .arg(static_cast<double>(x + 1) * srtm1TileSize - 180.0);
 }
 
+QGCTileSet AirmapElevationProvider::getTileCount(int zoom, double topleftLon,
+                                                 double topleftLat,
+                                                 double bottomRightLon,
+                                                 double bottomRightLat) {
+    QGCTileSet set;
+    set.tileX0 = long2tileX(topleftLon, zoom);
+    set.tileY0 = lat2tileY(bottomRightLat, zoom);
+    set.tileX1 = long2tileX(bottomRightLon, zoom);
+    set.tileY1 = lat2tileY(topleftLat, zoom);
+
+    set.tileCount = (static_cast<quint64>(set.tileX1) -
+                     static_cast<quint64>(set.tileX0) + 1) *
+                    (static_cast<quint64>(set.tileY1) -
+                     static_cast<quint64>(set.tileY0) + 1);
+
+    set.tileSize = getAverageSize() * set.tileCount;
+
+    return set;
+}
