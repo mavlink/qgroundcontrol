@@ -50,6 +50,7 @@ QSGNode *VideoController::updatePaintNode(QSGNode *node, UpdatePaintNodeData *da
     if (_shouldStartVideo) {
         qDebug() << "Video should start";
         gst_element_set_state(_pipeline, GST_STATE_PLAYING);
+        GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
         _shouldStartVideo = false;
     }
     return node;

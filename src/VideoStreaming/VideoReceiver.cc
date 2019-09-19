@@ -76,8 +76,8 @@ VideoReceiver::VideoReceiver(QObject* parent)
     _videoSettings = qgcApp()->toolbox()->settingsManager()->videoSettings();
 #if defined(QGC_GST_STREAMING)
     setVideoDecoder(H264_SW);
-    _glUpload = gst_element_factory_make ("glupload", nullptr);
     _videoSink = gst_element_factory_make ("qmlglsink", nullptr);
+
     qDebug() << "video sink created" << _videoSink;
 
     _restart_timer.setSingleShot(true);
@@ -409,10 +409,15 @@ VideoReceiver::start()
     }
     */
 //    _starting = false;
-    _pipeline = gst_pipeline_new("receiver");
+    _pipeline = gst_pipeline_new (nullptr);
+
     GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
+    _glUpload = gst_element_factory_make ("glupload", nullptr);
+
     gst_bin_add_many (GST_BIN (_pipeline), src, _glUpload, _videoSink, nullptr);
     gst_element_link_many (src, _glUpload, _videoSink, nullptr);
+    GST_DEBUG_BIN_TO_DOT_FILE(GST_BIN(_pipeline), GST_DEBUG_GRAPH_SHOW_ALL, "pipeline-paused");
+
     qDebug() << "Pipeline criado";
 // #endif
 }
