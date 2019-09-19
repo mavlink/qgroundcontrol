@@ -146,7 +146,7 @@ QString UrlFactory::getTypeFromId(int id) {
 
     while (i.hasNext()) {
         i.next();
-        if (abs(qHash(i.key())) == id) {
+        if ((int)(qHash(i.key())>>1) == id) {
             return i.key();
         }
     }
@@ -155,9 +155,9 @@ QString UrlFactory::getTypeFromId(int id) {
 }
 
 // Todo : qHash produce a uint bigger than max(int)
-// There is still a low probability for abs to
+// There is still a low probability for this to
 // generate similar hash for different types
-int UrlFactory::getIdFromType(QString type) { return abs(qHash(type)); }
+int UrlFactory::getIdFromType(QString type) { return (int)(qHash(type)>>1); }
 
 //-----------------------------------------------------------------------------
 int
@@ -178,19 +178,9 @@ UrlFactory::lat2tileY(QString mapType, double lat, int z)
 QGCTileSet
 UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double bottomRightLon, double bottomRightLat, QString mapType)
 {
-	//QGCTileSet set;
-	//if(mapType != "Airmap Elevation"){	
-	//	set.tileX0 = long2tileX(mapType, topleftLon,     zoom);
-	//	set.tileY0 = lat2tileY(mapType, topleftLat,      zoom);
-	//	set.tileX1 = long2tileX(mapType, bottomRightLon, zoom);
-	//	set.tileY1 = lat2tileY(mapType, bottomRightLat,  zoom);
-	//}else{
-	//	set.tileX0 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, topleftLon,     zoom);
-	//	set.tileY0 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, bottomRightLat,      zoom);
-	//	set.tileX1 = getQGCMapEngine()->urlFactory()->long2tileX(mapType, bottomRightLon, zoom);
-	//	set.tileY1 = getQGCMapEngine()->urlFactory()->lat2tileY(mapType, topleftLat,  zoom);
-	//}
-	//set.tileCount = (static_cast<quint64>(set.tileX1) - static_cast<quint64>(set.tileX0) + 1) * (static_cast<quint64>(set.tileY1) - static_cast<quint64>(set.tileY0) + 1);
-	//set.tileSize  = getQGCMapEngine()->urlFactory()->averageSizeForType(mapType) * set.tileCount;
 	return _providersTable[mapType]->getTileCount(zoom, topleftLon, topleftLat, bottomRightLon, bottomRightLat);
+}
+
+bool UrlFactory::isElevation(int mapId){
+    return _providersTable[getTypeFromId(mapId)]->_isElevationProvider();
 }

@@ -53,6 +53,8 @@ public:
                             double bottomRightLon, double bottomRightLat,
                             QString mapType);
 
+    bool isElevation(int mapId);
+
   private:
     int             _timeout;
     QHash<QString, MapProvider*> _providersTable;
