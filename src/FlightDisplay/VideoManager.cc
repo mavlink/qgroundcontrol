@@ -22,6 +22,7 @@
 
 #include "ScreenToolsController.h"
 #include "VideoManager.h"
+#include "PairingManager.h"
 #include "QGCToolbox.h"
 #include "QGCCorePlugin.h"
 #include "QGCOptions.h"
@@ -91,18 +92,26 @@ VideoManager::setToolbox(QGCToolbox *toolbox)
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::startVideo()
+VideoManager::startVideo(VideoReceiver *receiver)
 {
-    if(_videoReceiver) _videoReceiver->start();
-    if(_thermalVideoReceiver) _thermalVideoReceiver->start();
+    if(_videoReceiver && (!receiver || receiver == _videoReceiver)) {
+        _videoReceiver->start();
+    }
+    if(_thermalVideoReceiver && (!receiver || receiver == _thermalVideoReceiver)) {
+        _thermalVideoReceiver->start();
+    }
 }
 
 //-----------------------------------------------------------------------------
 void
-VideoManager::stopVideo()
+VideoManager::stopVideo(VideoReceiver *receiver)
 {
-    if(_videoReceiver) _videoReceiver->stop();
-    if(_thermalVideoReceiver) _thermalVideoReceiver->stop();
+    if(_videoReceiver && (!receiver || receiver == _videoReceiver)) {
+        _videoReceiver->stop();
+    }
+    if(_thermalVideoReceiver && (!receiver || receiver == _thermalVideoReceiver)) {
+        _thermalVideoReceiver->stop();
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -357,11 +366,22 @@ VideoManager::_updateSettings()
 void
 VideoManager::restartVideo()
 {
+    restartVideoReceiver(nullptr);
+}
+
+//-----------------------------------------------------------------------------
+void
+VideoManager::restartVideoReceiver(VideoReceiver *receiver)
+{
 #if defined(QGC_GST_STREAMING)
+    if (!qgcApp()->toolbox()->pairingManager()->videoCanRestart()) {
+        return;
+    }
+
     qCDebug(VideoManagerLog) << "Restart video streaming";
-    stopVideo();
+    stopVideo(receiver);
     _updateSettings();
-    startVideo();
+    startVideo(receiver);
     emit aspectRatioChanged();
 #endif
 }

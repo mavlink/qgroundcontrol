@@ -36,7 +36,7 @@ Item {
 
     function runPairing() {
         QGroundControl.pairingManager.firstBoot = false
-        if(QGroundControl.pairingManager.pairedDeviceNameList.length > 0) {
+        if(QGroundControl.pairingManager.pairedDeviceNameList.length > 0 || QGroundControl.pairingManager.connectedDeviceNameList.length > 0) {
             connectionPopup.open()
         } else {
             mhPopup.open()
@@ -425,6 +425,60 @@ Item {
                     width:              _contentWidth
                     height:             1
                     color:              qgcPal.globalTheme !== QGCPalette.Light ? Qt.rgba(1,1,1,0.25) : Qt.rgba(0,0,0,0.25)
+                }
+                Item { width: 1; height: 1; }
+                QGCLabel {
+                    text:               qsTr("List Of Connected Devices")
+                    visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.connectedDeviceNameList.length > 0 && !cancelButton.visible) : false
+                    font.family:        ScreenTools.demiboldFontFamily
+                }
+                Item { width: 1; height: 1; }
+                GridLayout {
+                    columns:            3
+                    visible:            QGroundControl.pairingManager ? (QGroundControl.pairingManager.connectedDeviceNameList.length > 0 && !cancelButton.visible) : false
+                    columnSpacing:      ScreenTools.defaultFontPixelWidth
+                    rowSpacing:         ScreenTools.defaultFontPixelHeight * 0.25
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    property var _pairModel: QGroundControl.pairingManager ? QGroundControl.pairingManager.connectedDeviceNameList : []
+                    Repeater {
+                        model:                  parent._pairModel
+                        delegate: QGCLabel {
+                            text:               modelData
+                            Layout.row:         index
+                            Layout.column:      0
+                            Layout.minimumWidth:ScreenTools.defaultFontPixelWidth * 14
+                            Layout.fillWidth:   true
+                        }
+                    }
+                    Repeater {
+                        model:                  parent._pairModel
+                        delegate: QGCColoredImage {
+                            Layout.preferredWidth:  ScreenTools.defaultFontPixelHeight * 1.5
+                            Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                            sourceSize.height:      height
+                            source:                 "/res/TrashDelete.svg"
+                            color:                  qgcPal.colorRed
+                            Layout.row:             index
+                            Layout.column:          2
+                            MouseArea {
+                                anchors.fill:       parent
+                                onClicked: {
+                                    removePrompt.open()
+                                }
+                            }
+                            MessageDialog {
+                                id:                 removePrompt
+                                title:              qsTr("Remove Paired Vehicle")
+                                text:               qsTr("Confirm removing %1?").arg(modelData)
+                                standardButtons:    StandardButton.Yes | StandardButton.No
+                                onNo:               removePrompt.close()
+                                onYes: {
+                                    QGroundControl.pairingManager.removePairedDevice(modelData)
+                                    removePrompt.close()
+                                }
+                            }
+                        }
+                    }
                 }
                 Item { width: 1; height: 1; }
                 QGCLabel {
