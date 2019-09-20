@@ -97,7 +97,9 @@ JoystickConfigController::JoystickConfigController(void)
     _setStickPositions();
     _resetInternalCalibrationValues();
     _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
+#if ENABLE_GIMBAL
     _currentGimbalPositions << stGimbalCentered.leftX << stGimbalCentered.leftY << stGimbalCentered.rightX << stGimbalCentered.rightY;
+#endif
 }
 
 void JoystickConfigController::start(void)
@@ -214,10 +216,12 @@ void JoystickConfigController::_setupCurrentState()
     _calSaveCurrentValues();
     _currentStickPositions.clear();
     _currentStickPositions << state->stickPositions.leftX << state->stickPositions.leftY << state->stickPositions.rightX << state->stickPositions.rightY;
+#if ENABLE_GIMBAL
     _currentGimbalPositions.clear();
     _currentGimbalPositions << state->gimbalPositions.leftX << state->gimbalPositions.leftY << state->gimbalPositions.rightX << state->gimbalPositions.rightY;
-    emit stickPositionsChanged();
     emit gimbalPositionsChanged();
+#endif
+    emit stickPositionsChanged();
     emit nextEnabledChanged();
     emit skipEnabledChanged();
 }
@@ -619,11 +623,13 @@ void JoystickConfigController::_stopCalibration()
     _setStatusText("");
     emit calibratingChanged();
     _currentStickPositions.clear();
-    _currentGimbalPositions.clear();
     _currentStickPositions  << _sticksCentered.leftX  << _sticksCentered.leftY  << _sticksCentered.rightX  << _sticksCentered.rightY;
-    _currentGimbalPositions << stGimbalCentered.leftX << stGimbalCentered.leftY << stGimbalCentered.rightX << stGimbalCentered.rightY;
     emit stickPositionsChanged();
+#if ENABLE_GIMBAL
+    _currentGimbalPositions.clear();
+    _currentGimbalPositions << stGimbalCentered.leftX << stGimbalCentered.leftY << stGimbalCentered.rightX << stGimbalCentered.rightY;
     emit gimbalPositionsChanged();
+#endif
 }
 
 /// @brief Saves the current axis values, so that we can detect when the use moves an input.

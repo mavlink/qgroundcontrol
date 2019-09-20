@@ -448,7 +448,9 @@ HEADERS += \
 
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     HEADERS += \
-        src/PairingManager/aes.h
+        src/PairingManager/openssl_aes.h \
+        src/PairingManager/openssl_rsa.h \
+        src/PairingManager/openssl_base64.h
 }
 
 SOURCES += \
@@ -460,7 +462,9 @@ SOURCES += \
 
 contains (DEFINES, QGC_ENABLE_PAIRING) {
     SOURCES += \
-        src/PairingManager/aes.cpp
+        src/PairingManager/openssl_aes.cpp \
+        src/PairingManager/openssl_rsa.cpp \
+        src/PairingManager/openssl_base64.cpp
 }
 
 #
