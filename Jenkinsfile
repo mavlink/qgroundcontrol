@@ -10,7 +10,7 @@ pipeline {
           environment {
             CCACHE_BASEDIR = "${env.WORKSPACE}"
             QGC_CONFIG = 'installer'
-            QMAKE_VER = "5.11.0/android_armv7/bin/qmake"
+            QMAKE_VER = "5.12.4/android_armv7/bin/qmake"
           }
           agent {
             /*
