@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=AGS
-GenericName=Auterion Ground Station
-Comment=Auterion UAS ground control station
-Icon=Auterion_Icon
-Exec=qgroundcontrol-start.sh
-Terminal=false
-Categories=Utility;

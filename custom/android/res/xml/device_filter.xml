@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Allow anything connected -->
-    <usb-device />
-    <usb-accessory model="android.usbaoa" manufacturer="taisync" version="1.0"/>
-</resources>
-
