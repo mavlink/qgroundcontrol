@@ -23,6 +23,7 @@ Item {
 
     readonly property int menuItemHeight: 70
     readonly property int menuItemWidth: 180
+    property bool rollMenu: false
 
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
@@ -74,7 +75,8 @@ Item {
 
                 onClicked:
                 {
-                    menu.open()
+                    menu.visible = checked = !rollMenu
+                    rollMenu = !rollMenu;
                 }
 
                 Menu {
@@ -120,7 +122,7 @@ Item {
 
                         onTriggered:
                         {
-                            console.log(" ==================> triggered")
+                            planButton.checked = rollMenu =false
                         }
                     }
                 }
