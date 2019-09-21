@@ -77,6 +77,8 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
+    _geoPositionInfo = update;
+
     QGeoCoordinate newGCSPosition = QGeoCoordinate();
     qreal newGCSHeading = update.attribute(QGeoPositionInfo::Direction);
 

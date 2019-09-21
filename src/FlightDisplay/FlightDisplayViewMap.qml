@@ -80,7 +80,6 @@ FlightMap {
     // When the user pans the map we stop responding to vehicle coordinate updates until the panRecenterTimer fires
     onUserPannedChanged: {
         if (userPanned) {
-            console.log("user panned")
             userPanned = false
             _disableVehicleTracking = true
             panRecenterTimer.restart()

@@ -212,7 +212,7 @@
     "type":             "uint32",
     "enumStrings":      "Never,Always,When in Follow Me Flight Mode",
     "enumValues":       "0,1,2",
-    "defaultValue":     0
+    "defaultValue":     2
 },
 {
     "name":                 "apmStartMavlinkStreams",

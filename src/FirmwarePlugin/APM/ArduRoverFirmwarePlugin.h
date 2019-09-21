@@ -45,7 +45,8 @@ public:
     ArduRoverFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    QString pauseFlightMode                         (void) const override { return QString("Hold"); }
+    QString pauseFlightMode                         (void) const override { return QStringLiteral("Hold"); }
+    QString followFlightMode                        (void) const override { return QStringLiteral("Follow"); }
     void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
     const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
