@@ -48,7 +48,6 @@ Item {
 
     SideMenu {
         id: sideMenu
-
         onTriggerRollEvent: planButton.checked = false
     }
 
@@ -73,7 +72,7 @@ Item {
                 id:                 planButton
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
-                icon.source:        "/qmlimages/Plan.svg"
+                icon.source:        "/qmlimages/Menu.svg"
 
                 onClicked:
                 {

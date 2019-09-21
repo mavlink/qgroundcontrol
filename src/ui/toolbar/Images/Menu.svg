@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="18px" height="12px" viewBox="0 0 18 12" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: sketchtool 57 (101010) - https://sketch.com -->
+    <title>C79B8E1D-2D45-400D-B870-D29ED997BAE0</title>
+    <desc>Created with sketchtool.</desc>
+    <defs>
+        <path d="M3,6 L21,6 L21,8 L3,8 L3,6 L3,6 Z M3,11 L21,11 L21,13 L3,13 L3,11 L3,11 Z M3,16 L21,16 L21,18 L3,18 L3,16 Z" id="path-1"></path>
+    </defs>
+    <g id="Settings" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Settings-02.0.1B.1" transform="translate(-31.000000, -66.000000)">
+            <g id="Settings-02.0">
+                <g id="Bar-/-Navigation-Bar-/-Settings" transform="translate(0.000000, 32.000000)">
+                    <g id="TItle-Bar-/-Navigation-Bar-/-_Resource-/-Button-Left-/-Control-w-Header">
+                        <g id="Control-Bar-/-Navigation-Bar-/-_Resource-/-Button-Left-/-Menu">
+                            <g id="Button-Bar-/-Navigation-Bar-/-_Resource-/-Button-/-Default">
+                                <g id="Icon-Icon/menu" transform="translate(28.000000, 28.000000)">
+                                    <mask id="mask-2" fill="white">
+                                        <use xlink:href="#path-1"></use>
+                                    </mask>
+                                    <use id="Shape" fill="#EBEDEE" xlink:href="#path-1"></use>
+                                </g>
+                            </g>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

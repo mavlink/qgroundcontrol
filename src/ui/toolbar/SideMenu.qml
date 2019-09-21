@@ -62,7 +62,6 @@ Menu {
         {
             rollMenu = false
             menu.triggerRollEvent()
-           // console.log("parent.height", mainWindow.height)
         }
     }
 }
