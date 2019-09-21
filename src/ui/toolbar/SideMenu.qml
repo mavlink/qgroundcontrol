@@ -8,11 +8,21 @@ Menu {
     font.pixelSize: 17
     font.bold: true
 
+    property bool rollMenu: false
+
     background: Rectangle {
         implicitWidth: menuItemWidth
         implicitHeight: menuItemHeight
         color: qgcPal.window
         border.width: 2 * topWindow.sizeFactor; border.color: "#4c4d4f"
+    }
+
+    function triggerRoll()
+    {
+        visible = !rollMenu
+        rollMenu = !rollMenu;
+
+        return visible
     }
 
     MenuItem {
