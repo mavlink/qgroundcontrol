@@ -27,14 +27,18 @@ Button {
     {
         _icon.height += height
         _icon.width += width
+        iconRow.anchors.leftMargin = Math.abs(width)
+        button.width += Math.abs(width/2)
+        button.height += Math.abs(height/2)
     }
 
     background: Rectangle {
         anchors.fill: parent
-        color:  logo ? qgcPal.brandingPurple : (checked ? qgcPal.buttonHighlight : Qt.rgba(0,0,0,0))
+        color:  logo ? qgcPal.brandingPurple : (checked ? qgcPal.button : Qt.rgba(0,0,0,0))
     }
 
     contentItem: Row {
+        id: iconRow
         spacing:                    ScreenTools.defaultFontPixelWidth
         anchors.left:               button.left
         anchors.leftMargin:         ScreenTools.defaultFontPixelWidth
