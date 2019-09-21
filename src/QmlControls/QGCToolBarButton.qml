@@ -21,6 +21,13 @@ Button {
     autoExclusive:      true
 
     property bool logo: false
+    property int imageSize: ScreenTools.defaultFontPixelHeight * 2
+
+    function adjustImageSize(height, width)
+    {
+        _icon.height += height
+        _icon.width += width
+    }
 
     background: Rectangle {
         anchors.fill: parent
@@ -32,10 +39,11 @@ Button {
         anchors.left:               button.left
         anchors.leftMargin:         ScreenTools.defaultFontPixelWidth
         anchors.verticalCenter:     button.verticalCenter
+
         QGCColoredImage {
             id:                     _icon
-            height:                 ScreenTools.defaultFontPixelHeight * 2
-            width:                  height
+            height:                 imageSize
+            width:                  imageSize
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
             color:                  logo ? "white" : (button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText)

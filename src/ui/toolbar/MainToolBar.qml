@@ -74,6 +74,8 @@ Item {
                 anchors.bottom:     parent.bottom
                 icon.source:        "/qmlimages/Menu.svg"
 
+                Component.onCompleted: planButton.adjustImageSize(-25, -25)
+
                 onClicked:
                 {
                     checked = sideMenu.triggerRoll()
