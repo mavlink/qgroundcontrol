@@ -21,9 +21,6 @@ import QGroundControl.Controllers           1.0
 Item {
     id:         toolBar
 
-    readonly property int menuItemHeight: 70
-    readonly property int menuItemWidth: 180
-
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
@@ -49,7 +46,11 @@ Item {
         }
     }
 
-    SideMenu { id: sideMenu }
+    SideMenu {
+        id: sideMenu
+
+        onTriggerRollEvent: planButton.checked = false
+    }
 
     RowLayout {
         anchors.bottomMargin:   1

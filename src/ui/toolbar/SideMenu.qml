@@ -5,10 +5,16 @@ Menu {
     id: menu
 
     y: toolBar.height
+
+    height: mainWindow.height - toolBar.height
     font.pixelSize: 17
     font.bold: true
 
+    readonly property int menuItemHeight: 70
+    readonly property int menuItemWidth: 180
     property bool rollMenu: false
+
+    signal triggerRollEvent()
 
     background: Rectangle {
         implicitWidth: menuItemWidth
@@ -22,7 +28,7 @@ Menu {
         visible = !rollMenu
         rollMenu = !rollMenu;
 
-        return visible
+        return rollMenu
     }
 
     MenuItem {
@@ -54,7 +60,9 @@ Menu {
 
         onTriggered:
         {
-            planButton.checked = rollMenu =false
+            rollMenu = false
+            menu.triggerRollEvent()
+           // console.log("parent.height", mainWindow.height)
         }
     }
 }
