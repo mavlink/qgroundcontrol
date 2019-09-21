@@ -21,6 +21,9 @@ import QGroundControl.Controllers           1.0
 Item {
     id:         toolBar
 
+    readonly property int menuItemHeight: 70
+    readonly property int menuItemWidth: 180
+
     Component.onCompleted: {
         //-- TODO: Get this from the actual state
         flyButton.checked = true
@@ -68,9 +71,58 @@ Item {
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 icon.source:        "/qmlimages/Plan.svg"
-                onClicked: {
-                    checked = true
-                    mainWindow.showPlanView()
+
+                onClicked:
+                {
+                    menu.open()
+                }
+
+                Menu {
+                    id: menu
+
+                    y: toolBar.height
+                    font.pixelSize: 17
+                    font.bold: true
+
+                    background: Rectangle {
+                        implicitWidth: menuItemWidth
+                        implicitHeight: menuItemHeight
+                        color: qgcPal.window
+                        border.width: 2 * topWindow.sizeFactor; border.color: "#4c4d4f"
+                    }
+
+                    MenuItem {
+                        id: menuItem
+                        implicitWidth: menuItemWidth
+                        implicitHeight: menuItemHeight
+
+                        text: "Settings"
+
+                        background: Rectangle {
+                            id: backgroundRectangle
+                            anchors.fill: menu
+
+                            opacity: enabled ? 1 : 0.3
+                            color: menuItem.highlighted ? "darkblue" : "transparent"
+                        }
+
+                        contentItem: Text {
+                            leftPadding: 10
+                            rightPadding: 10
+                            text: menuItem.text
+                            font: menuItem.font
+                            opacity: enabled ? 1.0 : 0.3
+                            color: qgcPal.buttonText
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                        }
+
+                        onTriggered:
+                        {
+                            console.log(" ==================> triggered")
+                        }
+                    }
                 }
             }
 
