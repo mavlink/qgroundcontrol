@@ -64,30 +64,6 @@ Item {
             spacing:            ScreenTools.defaultFontPixelWidth / 2
 
             QGCToolBarButton {
-                id:                 settingsButton
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                icon.source:        "/res/QGCLogoWhite"
-                logo:               true
-                visible:            !QGroundControl.corePlugin.options.combineSettingsAndSetup
-                onClicked: {
-                    checked = true
-                    mainWindow.showSettingsView()
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 setupButton
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                icon.source:        "/qmlimages/Gears.svg"
-                onClicked: {
-                    checked = true
-                    mainWindow.showSetupView()
-                }
-            }
-
-            QGCToolBarButton {
                 id:                 planButton
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
@@ -95,29 +71,6 @@ Item {
                 onClicked: {
                     checked = true
                     mainWindow.showPlanView()
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 flyButton
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                icon.source:        "/qmlimages/PaperPlane.svg"
-                onClicked: {
-                    checked = true
-                    mainWindow.showFlyView()
-                }
-            }
-
-            QGCToolBarButton {
-                id:                 analyzeButton
-                anchors.top:        parent.top
-                anchors.bottom:     parent.bottom
-                icon.source:        "/qmlimages/Analyze.svg"
-                visible:            QGroundControl.corePlugin.showAdvancedUI
-                onClicked: {
-                    checked = true
-                    mainWindow.showAnalyzeView()
                 }
             }
 
@@ -129,13 +82,6 @@ Item {
                 color:              qgcPal.text
                 visible:            activeVehicle
             }
-        }
-
-        Loader {
-            id:                 toolbarIndicators
-            height:             parent.height
-            source:             "/toolbar/MainToolBarIndicators.qml"
-            Layout.fillWidth:   true
         }
     }
 
