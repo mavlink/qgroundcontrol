@@ -1,25 +1,50 @@
-import QtQuick.Window 2.2
-import QtQuick.Controls 2.12
+import QtQuick          2.11
+import QtQuick.Controls 2.4
 
-ApplicationWindow {
-    id: window
-    width: 400
-    height: 400
-    visible: true
+Menu {
+    id: menu
 
-    Button {
-        text: "Open"
-        onClicked: popup.open()
+    y: toolBar.height
+    font.pixelSize: 17
+    font.bold: true
+
+    background: Rectangle {
+        implicitWidth: menuItemWidth
+        implicitHeight: menuItemHeight
+        color: qgcPal.window
+        border.width: 2 * topWindow.sizeFactor; border.color: "#4c4d4f"
     }
 
-    Popup {
-        id: popup
-        x: 100
-        y: 100
-        width: 200
-        height: 300
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+    MenuItem {
+        id: menuItem
+        implicitWidth: menuItemWidth
+        implicitHeight: menuItemHeight
+
+        text: "Settings"
+
+        background: Rectangle {
+            id: backgroundRectangle
+            anchors.fill: menu
+
+            opacity: enabled ? 1 : 0.3
+            color: menuItem.highlighted ? "darkblue" : "transparent"
+        }
+
+        contentItem: Text {
+            leftPadding: 10
+            rightPadding: 10
+            text: menuItem.text
+            font: menuItem.font
+            opacity: enabled ? 1.0 : 0.3
+            color: qgcPal.buttonText
+            horizontalAlignment: Text.AlignLeft
+            verticalAlignment: Text.AlignVCenter
+            elide: Text.ElideRight
+        }
+
+        onTriggered:
+        {
+            planButton.checked = rollMenu =false
+        }
     }
 }
