@@ -313,6 +313,9 @@ DebugBuild {
 
 include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 
+# Until pairing can be made to work cleanly on all OS it is turned off
+DEFINES+=QGC_DISABLE_PAIRING
+
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing")
