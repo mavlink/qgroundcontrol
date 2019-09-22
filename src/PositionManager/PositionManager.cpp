@@ -46,12 +46,11 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    }
    _simulatedSource = new SimulatedPosition();
 
-   // Enable this to get a simulated target on desktop
-   // if (_defaultSource == nullptr) {
-   //     _defaultSource = _simulatedSource;
-   // }
-
+#if 0
    setPositionSource(QGCPositionSource::InternalGPS);
+#else
+   setPositionSource(QGCPositionManager::Simulated);
+#endif
 }
 
 void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
