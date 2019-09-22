@@ -12,6 +12,8 @@
 #include <QDate>
 
 #include "SimulatedPosition.h"
+#include "QGCApplication.h"
+#include "MultiVehicleManager.h"
 
 SimulatedPosition::SimulatedPosition()
     : QGeoPositionInfoSource(nullptr)
@@ -25,7 +27,10 @@ SimulatedPosition::SimulatedPosition()
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::GroundSpeed, _horizontalVelocityMetersPerSec);
     _lastPosition.setAttribute(QGeoPositionInfo::Attribute::VerticalSpeed, _verticalVelocityMetersPerSec);
 
-    connect(&_updateTimer, &QTimer::timeout, this, &SimulatedPosition::updatePosition);
+    // When a vehicle shows up we switch location to the vehicle home position
+    connect(qgcApp()->toolbox()->multiVehicleManager(), &MultiVehicleManager::vehicleAdded, this, &SimulatedPosition::_vehicleAdded);
+
+    connect(&_updateTimer, &QTimer::timeout, this, &SimulatedPosition::_updatePosition);
 }
 
 QGeoPositionInfo SimulatedPosition::lastKnownPosition(bool /*fromSatellitePositioningMethodsOnly*/) const
@@ -53,7 +58,7 @@ void SimulatedPosition::requestUpdate(int /*timeout*/)
     emit updateTimeout();
 }
 
-void SimulatedPosition::updatePosition(void)
+void SimulatedPosition::_updatePosition(void)
 {
     int intervalMsecs = _updateTimer.interval();
 
@@ -71,4 +76,21 @@ QGeoPositionInfoSource::Error SimulatedPosition::error() const
     return QGeoPositionInfoSource::NoError;
 }
 
+void SimulatedPosition::_vehicleAdded(Vehicle* vehicle)
+{
+    if (vehicle->homePosition().isValid()) {
+        _lastPosition.setCoordinate(vehicle->homePosition());
+    } else {
+        connect(vehicle, &Vehicle::homePositionChanged, this, &SimulatedPosition::_vehicleHomePositionChanged);
+    }
+}
 
+void SimulatedPosition::_vehicleHomePositionChanged(QGeoCoordinate homePosition)
+{
+    Vehicle* vehicle = qobject_cast<Vehicle*>(sender());
+
+    if (homePosition.isValid()) {
+        _lastPosition.setCoordinate(homePosition);
+        disconnect(vehicle, &Vehicle::homePositionChanged, this, &SimulatedPosition::_vehicleHomePositionChanged);
+    }
+}
