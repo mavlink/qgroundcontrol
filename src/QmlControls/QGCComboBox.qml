@@ -69,14 +69,12 @@ ComboBox {
         contentItem: Text {
             id: listViewForeground
             text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
-            //color: control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
             color: control.currentIndex === index ? _qgcPal.buttonText : _qgcPal.button
             verticalAlignment: Text.AlignVCenter
         }
 
         background: Rectangle {
             id: listViewBackground
-            //color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
             color: control.currentIndex === index ? _qgcPal.brandingDarkBlue : _qgcPal.window
         }
 

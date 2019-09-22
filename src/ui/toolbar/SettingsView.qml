@@ -57,12 +57,17 @@ Rectangle {
                     //                        orientation: Qt.Horizontal
                     //                    }
 
+                    property variant items: [qsTr("Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature")]
+
                     Repeater {
                         model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits,
                             QGroundControl.settingsManager.unitsSettings.areaUnits,
                             QGroundControl.settingsManager.unitsSettings.speedUnits,
                             QGroundControl.settingsManager.unitsSettings.temperatureUnits
                         ]
+
+                        //onDataChanged: console.log("!!!!!!!!!!!!!!!!!!!!!!!!!", index)
+
                         FactComboBox {
                             Layout.preferredWidth: settingsView.width - ScreenTools.defaultFontPixelWidth * 6
                             Layout.topMargin: ScreenTools.defaultFontPixelWidth * 2
@@ -77,7 +82,7 @@ Rectangle {
                                 hideIndicator()
                                 hideBorder()
                                 setItemFont(qgcPal.colorBlue, 14)
-                                showTitle("Distance")
+                                showTitle(unitsGrid.items[index])
                             }
                         }
                     }
