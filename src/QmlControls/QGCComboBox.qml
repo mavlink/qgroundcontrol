@@ -27,6 +27,21 @@ ComboBox {
 
     Component.onCompleted: indicator.color = Qt.binding(function() { return _qgcPal.text })
 
+    function hideIndicator() { control.indicator.visible = false }
+    function showTitle() { title.visible = true }
+
+    Text {
+        id: title
+        y: -(control.height / 2)
+
+        text: "test"
+        color: "lightgrey"
+        font.bold: true
+        font.pixelSize: 17
+        visible: false
+        horizontalAlignment: Text.AlignLeft
+    }
+
     background: Rectangle {
         implicitWidth:                  ScreenTools.implicitComboBoxWidth
         implicitHeight:                 ScreenTools.implicitComboBoxHeight
@@ -38,20 +53,20 @@ ComboBox {
     /*! Adding the Combobox list item to the theme.  */
 
     delegate: ItemDelegate {
-            width:                      control.width
+        width:                      control.width
 
-            contentItem: Text {
-                text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
-                color:                  control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
-                verticalAlignment:      Text.AlignVCenter
-            }
-
-            background: Rectangle {
-                color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
-            }
-
-            highlighted:                control.highlightedIndex === index
+        contentItem: Text {
+            text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
+            color:                  control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
+            verticalAlignment:      Text.AlignVCenter
         }
+
+        background: Rectangle {
+            color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
+        }
+
+        highlighted:                control.highlightedIndex === index
+    }
 
     /*! This defines the label of the button.  */
     contentItem: Item {

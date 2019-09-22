@@ -5,6 +5,7 @@ import QtQuick.Layouts  1.11
 import QGroundControl                       1.0
 import QGroundControl.Controls              1.0
 import QGroundControl.FactControls          1.0
+import QGroundControl.ScreenTools           1.0
 
 Rectangle {
     id:     settingsView
@@ -12,9 +13,9 @@ Rectangle {
     visible: false
 
     Item {
-        id:    settingsItem
+        id: settingsItem
         anchors.fill: parent
-        width:  Math.max(_root.width, settingsColumn.width)
+        width: Math.max(_root.width, settingsColumn.width)
         height: settingsColumn.height
 
         ColumnLayout {
@@ -22,9 +23,11 @@ Rectangle {
             anchors.horizontalCenter:   parent.horizontalCenter
 
             QGCLabel {
-                id:         unitsSectionLabel
-                text:       qsTr("Units")
-                visible:    QGroundControl.settingsManager.unitsSettings.visible
+                id: unitsSectionLabel
+                text: qsTr("Units")
+                visible: QGroundControl.settingsManager.unitsSettings.visible
+                Layout.alignment: Qt.AlignLeft
+                //.horizontalAlignment: Text.AlignLeft
             }
             Rectangle {
                 Layout.preferredHeight: unitsGrid.height + (_margins * 2)
@@ -34,25 +37,41 @@ Rectangle {
                 Layout.fillWidth:       true
 
                 GridLayout {
-                    id:                         unitsGrid
-                    anchors.topMargin:          _margins
-                    anchors.top:                parent.top
-                    Layout.fillWidth:           false
-                    anchors.horizontalCenter:   parent.horizontalCenter
-                    flow:                       GridLayout.TopToBottom
-                    rows:                       4
+                    id: unitsGrid
+                    anchors.topMargin: _margins
+                    anchors.top: parent.top
+                    Layout.fillWidth: false
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    flow: GridLayout.TopToBottom
+                    rows: 4
+
+//                    ToolSeparator
+//                    {
+//                        orientation: Qt.Horizontal
+//                    }
 
                     Repeater {
-                        model: [ qsTr("Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature") ]
-                        QGCLabel { text: modelData }
-                    }
-                    Repeater {
-                        model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits, QGroundControl.settingsManager.unitsSettings.areaUnits, QGroundControl.settingsManager.unitsSettings.speedUnits, QGroundControl.settingsManager.unitsSettings.temperatureUnits ]
+                        model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits,
+                            QGroundControl.settingsManager.unitsSettings.areaUnits,
+                            QGroundControl.settingsManager.unitsSettings.speedUnits,
+                            QGroundControl.settingsManager.unitsSettings.temperatureUnits
+                        ]
                         FactComboBox {
-                            Layout.preferredWidth:  _comboFieldWidth
-                            fact:                   modelData
-                            indexModel:             false
+                            Layout.preferredWidth:  ScreenTools.brandingComboBoxWidth
+                            //Layout.topMargin: 10
+                            Layout.bottomMargin: 30
+                            fact: modelData
+                            indexModel: false
+
+                            //ToolSeparator { orientation: Qt.Horizontal }
+
+                            Component.onCompleted:
+                            {
+                                hideIndicator()
+                                showTitle()
+                            }
                         }
+
                     }
                 }
             }
