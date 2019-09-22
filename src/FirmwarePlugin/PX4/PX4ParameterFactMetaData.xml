@@ -8616,6 +8616,7 @@ is less than 50% of this value</short_desc>
         <value code="2">TROne</value>
         <value code="3">TREvo60m</value>
         <value code="4">TREvo600Hz</value>
+        <value code="5">TREvo3m</value>
       </values>
     </parameter>
     <parameter default="6" name="SENS_FLOW_ROT" type="INT32">
