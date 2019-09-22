@@ -46,7 +46,7 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    }
    _simulatedSource = new SimulatedPosition();
 
-#if 0
+#if 1
    setPositionSource(QGCPositionSource::InternalGPS);
 #else
    setPositionSource(QGCPositionManager::Simulated);
