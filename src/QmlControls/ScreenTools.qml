@@ -90,7 +90,6 @@ Item {
     property real implicitTextFieldHeight:          Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxHeight:           Math.round(defaultFontPixelHeight * (isMobile ? 2.0 : 1.6))
     property real implicitComboBoxWidth:            Math.round(defaultFontPixelWidth *  (isMobile ? 7.0 : 5.0)) 
-    property real brandingComboBoxWidth:            600 // TODO: this is temporary value (works on desktop only), test & check, then set proper values
     property real comboBoxPadding:                  Math.round(defaultFontPixelWidth *  (isShortScreen ? 1 : 0.5))
     property real implicitSliderHeight:             isMobile ? Math.max(defaultFontPixelHeight, minTouchPixels) : defaultFontPixelHeight
     // It's not possible to centralize an even number of pixels, checkBoxIndicatorSize should be an odd number to allow centralization

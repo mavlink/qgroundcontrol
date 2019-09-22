@@ -18,36 +18,47 @@ import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
 
 ComboBox {
-    id:         control
-    padding:    ScreenTools.comboBoxPadding
+    id: control
+    padding: ScreenTools.comboBoxPadding
 
-    property bool centeredLabel:  false
-
+    property bool centeredLabel: false
     property var _qgcPal: QGCPalette { colorGroupEnabled: enabled }
 
     Component.onCompleted: indicator.color = Qt.binding(function() { return _qgcPal.text })
 
     function hideIndicator() { control.indicator.visible = false }
-    function showTitle() { title.visible = true }
+    function hideBorder() { backgroundRect.width = 0 }
+
+    function showTitle(text)
+    {
+        title.visible = true
+        title.text = text
+    }
+
+    function setItemFont(color, size)
+    {
+        text.color = color
+        text.font.pixelSize = 14
+    }
 
     Text {
         id: title
         y: -(control.height / 2)
 
-        text: "test"
-        color: "lightgrey"
-        font.bold: true
-        font.pixelSize: 17
+        color: _qgcPal.text
+        font.pixelSize: 15
         visible: false
+        leftPadding: control.padding
         horizontalAlignment: Text.AlignLeft
     }
 
     background: Rectangle {
-        implicitWidth:                  ScreenTools.implicitComboBoxWidth
-        implicitHeight:                 ScreenTools.implicitComboBoxHeight
-        color:                          _qgcPal.window
-        border.width:                   enabled ? 1 : 0
-        border.color:                   "#999"
+        id: backgroundRect
+        implicitWidth: ScreenTools.implicitComboBoxWidth
+        implicitHeight:ScreenTools.implicitComboBoxHeight
+        color: _qgcPal.window
+        border.width: enabled ? 1 : 0
+        border.color: "#999"
     }
 
     /*! Adding the Combobox list item to the theme.  */
@@ -56,13 +67,17 @@ ComboBox {
         width:                      control.width
 
         contentItem: Text {
-            text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
-            color:                  control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
-            verticalAlignment:      Text.AlignVCenter
+            id: listViewForeground
+            text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
+            //color: control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
+            color: control.currentIndex === index ? _qgcPal.buttonText : _qgcPal.button
+            verticalAlignment: Text.AlignVCenter
         }
 
         background: Rectangle {
-            color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
+            id: listViewBackground
+            //color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
+            color: control.currentIndex === index ? _qgcPal.brandingDarkBlue : _qgcPal.window
         }
 
         highlighted:                control.highlightedIndex === index

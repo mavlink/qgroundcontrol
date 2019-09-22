@@ -18,6 +18,7 @@
         <file alias="TelemetryRSSIIndicator.qml">src/ui/toolbar/TelemetryRSSIIndicator.qml</file>
         <file alias="VTOLModeIndicator.qml">src/ui/toolbar/VTOLModeIndicator.qml</file>
         <file alias="SideMenu.qml">src/ui/toolbar/SideMenu.qml</file>
+        <file alias="SideMenuModel.qml">src/ui/toolbar/SideMenuModel.qml</file>
         <file alias="SettingsView.qml">src/ui/toolbar/SettingsView.qml</file>
     </qresource>
     <qresource prefix="/qml">

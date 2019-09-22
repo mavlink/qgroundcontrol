@@ -8,36 +8,43 @@ import QGroundControl.FactControls          1.0
 import QGroundControl.ScreenTools           1.0
 
 Rectangle {
-    id:     settingsView
-    color:  qgcPal.window
+    id: settingsView
+    color: qgcPal.window
     visible: false
 
-    Item {
+    QGCLabel {
+        id: unitsSectionLabel
+        x: ScreenTools.defaultFontPixelWidth * 3 + ScreenTools.defaultFontPixelWidth / 2
+        y: ScreenTools.defaultFontPixelWidth
+        text: qsTr("UNITS")
+        color: qgcPal.button
+        font.pixelSize: 14
+        font.bold: true
+        visible: QGroundControl.settingsManager.unitsSettings.visible
+    }
+
+    Item{
         id: settingsItem
         anchors.fill: parent
         width: Math.max(_root.width, settingsColumn.width)
         height: settingsColumn.height
 
         ColumnLayout {
-            id:                         settingsColumn
-            anchors.horizontalCenter:   parent.horizontalCenter
+            id: settingsColumn
+            spacing: ScreenTools.defaultFontPixelWidth
+            anchors.horizontalCenter: parent.horizontalCenter
 
-            QGCLabel {
-                id: unitsSectionLabel
-                text: qsTr("Units")
-                visible: QGroundControl.settingsManager.unitsSettings.visible
-                Layout.alignment: Qt.AlignLeft
-                //.horizontalAlignment: Text.AlignLeft
-            }
             Rectangle {
+                Layout.topMargin: ScreenTools.defaultFontPixelWidth * 6
                 Layout.preferredHeight: unitsGrid.height + (_margins * 2)
                 Layout.preferredWidth:  unitsGrid.width + (_margins * 2)
-                color:                  qgcPal.windowShade
-                visible:                miscSectionLabel.visible
-                Layout.fillWidth:       true
+                color: qgcPal.windowShade
+                visible: miscSectionLabel.visible
+                Layout.fillWidth: true
 
                 GridLayout {
                     id: unitsGrid
+                    rowSpacing: ScreenTools.defaultFontPixelWidth
                     anchors.topMargin: _margins
                     anchors.top: parent.top
                     Layout.fillWidth: false
@@ -45,10 +52,10 @@ Rectangle {
                     flow: GridLayout.TopToBottom
                     rows: 4
 
-//                    ToolSeparator
-//                    {
-//                        orientation: Qt.Horizontal
-//                    }
+                    //                    ToolSeparator
+                    //                    {
+                    //                        orientation: Qt.Horizontal
+                    //                    }
 
                     Repeater {
                         model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits,
@@ -57,9 +64,9 @@ Rectangle {
                             QGroundControl.settingsManager.unitsSettings.temperatureUnits
                         ]
                         FactComboBox {
-                            Layout.preferredWidth:  ScreenTools.brandingComboBoxWidth
-                            //Layout.topMargin: 10
-                            Layout.bottomMargin: 30
+                            Layout.preferredWidth: settingsView.width - ScreenTools.defaultFontPixelWidth * 6
+                            Layout.topMargin: ScreenTools.defaultFontPixelWidth * 2
+                            Layout.bottomMargin: ScreenTools.defaultFontPixelWidth * 3
                             fact: modelData
                             indexModel: false
 
@@ -68,10 +75,11 @@ Rectangle {
                             Component.onCompleted:
                             {
                                 hideIndicator()
-                                showTitle()
+                                hideBorder()
+                                setItemFont(qgcPal.colorBlue, 14)
+                                showTitle("Distance")
                             }
                         }
-
                     }
                 }
             }

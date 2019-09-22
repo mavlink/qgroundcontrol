@@ -57,12 +57,7 @@ Item {
 
     SideMenu {
         id: sideMenu
-        onSetupMenuClicked:
-        {
-            planButton.checked = false
-            settingsView.visible = true
-            console.log("onSetupMenuClicked")
-        }
+        onSetupMenuClicked: settingsView.visible = true
     }
 
     RowLayout {
@@ -83,16 +78,18 @@ Item {
             spacing:            ScreenTools.defaultFontPixelWidth / 2
 
             QGCToolBarButton {
-                id:                 planButton
+                id:                 sideMenuButton
                 anchors.top:        parent.top
                 anchors.bottom:     parent.bottom
                 icon.source:        "/qmlimages/Menu.svg"
 
-                Component.onCompleted: planButton.adjustImageSize(-25, -25)
+                Component.onCompleted: sideMenuButton.adjustImageSize(-25, -25)
 
                 onClicked:
                 {
-                    checked = sideMenu.triggerRoll()
+                    checked = true
+                    sideMenu.visible = true
+                    // checked = sideMenu.triggerRoll()
                 }
             }
 

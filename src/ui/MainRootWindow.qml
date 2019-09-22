@@ -247,7 +247,7 @@ ApplicationWindow {
         height:         ScreenTools.toolbarHeight
         visible:        !QGroundControl.videoManager.fullScreen
         background:     Rectangle {
-            color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : QGroundControl.corePlugin.options.toolbarBackgroundDark
+            color:      qgcPal.globalTheme === QGCPalette.Light ? QGroundControl.corePlugin.options.toolbarBackgroundLight : qgcPal.window
         }
         Loader {
             id:             toolbar
