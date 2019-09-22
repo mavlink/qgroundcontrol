@@ -1088,7 +1088,7 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
 
 void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
 {
-    if (vehicle->homePosition().isValid()) {
+    if (!vehicle->homePosition().isValid()) {
         static bool sentOnce = false;
         if (!sentOnce) {
             sentOnce = true;
