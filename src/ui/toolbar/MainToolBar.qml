@@ -87,9 +87,10 @@ Item {
 
                 onClicked:
                 {
-                    checked = true
-                    sideMenu.visible = true
-                    // checked = sideMenu.triggerRoll()
+                    checked = sideMenu.visible = sideMenu.triggerRoll()
+
+                    if(!checked)
+                        settingsView.visible = false
                 }
             }
 
