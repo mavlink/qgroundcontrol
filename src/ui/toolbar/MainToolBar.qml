@@ -46,12 +46,21 @@ Item {
         }
     }
 
+    SettingsView
+    {
+        id: settingsView
+        x: sideMenu.x + sideMenu.width
+        y: toolBar.y + toolBar.height
+        height: mainWindow.height - toolBar.height
+        width: mainWindow.width - sideMenu.width
+    }
+
     SideMenu {
         id: sideMenu
         onSetupMenuClicked:
         {
             planButton.checked = false
-            mainWindow.showSetupView()
+            settingsView.visible = true
             console.log("onSetupMenuClicked")
         }
     }
