@@ -7,12 +7,13 @@
  *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <QtPositioning/qgeopositioninfosource.h>
 #include "QGCToolbox.h"
 #include <QTimer>
+
+class Vehicle;
 
 class SimulatedPosition : public QGeoPositionInfoSource
 {
@@ -33,7 +34,9 @@ public slots:
     void requestUpdate  (int timeout = 5000) override;
 
 private slots:
-    void updatePosition();
+    void _updatePosition                (void);
+    void _vehicleAdded                  (Vehicle* vehicle);
+    void _vehicleHomePositionChanged    (QGeoCoordinate homePosition);
 
 private:
     QTimer              _updateTimer;
