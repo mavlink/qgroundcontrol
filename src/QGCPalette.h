@@ -115,6 +115,8 @@ public:
     DEFINE_QGC_COLOR(alertText,             setAlertText)
     DEFINE_QGC_COLOR(missionItemEditor,     setMissionItemEditor)
     DEFINE_QGC_COLOR(hoverColor,            setHoverColor)
+    DEFINE_QGC_COLOR(brandingDarkBlue,      setBrandingDarkBlue)
+    DEFINE_QGC_COLOR(transparent,           setTransparent)
 
      QGCPalette(QObject* parent = nullptr);
     ~QGCPalette();

@@ -48,7 +48,12 @@ Item {
 
     SideMenu {
         id: sideMenu
-        onTriggerRollEvent: planButton.checked = false
+        onSetupMenuClicked:
+        {
+            planButton.checked = false
+            mainWindow.showSetupView()
+            console.log("onSetupMenuClicked")
+        }
     }
 
     RowLayout {
