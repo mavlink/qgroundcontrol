@@ -53,6 +53,8 @@ Rectangle {
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
+
+                        Rectangle { color: "green" }
                     }
                 }
                 MouseArea {

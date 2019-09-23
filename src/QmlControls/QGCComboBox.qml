@@ -28,6 +28,7 @@ ComboBox {
 
     function hideIndicator() { control.indicator.visible = false }
     function hideBorder() { backgroundRect.width = 0 }
+    function showSeparator() { separator.visible = true }
 
     function showTitle(text)
     {
@@ -61,10 +62,22 @@ ComboBox {
         border.color: "#999"
     }
 
+    Rectangle
+    {
+        id: separator
+        y: control.height + ScreenTools.defaultFontPixelWidth
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: 1
+        color: qgcPal.windowShade
+        visible: false
+    }
+
     /*! Adding the Combobox list item to the theme.  */
 
     delegate: ItemDelegate {
-        width:                      control.width
+        width: control.width
 
         contentItem: Text {
             id: listViewForeground
@@ -78,20 +91,20 @@ ComboBox {
             color: control.currentIndex === index ? _qgcPal.brandingDarkBlue : _qgcPal.window
         }
 
-        highlighted:                control.highlightedIndex === index
+        highlighted: control.highlightedIndex === index
     }
 
     /*! This defines the label of the button.  */
     contentItem: Item {
-        implicitWidth:                  text.implicitWidth
-        implicitHeight:                 text.implicitHeight
+        implicitWidth: text.implicitWidth
+        implicitHeight: text.implicitHeight
 
         QGCLabel {
-            id:                         text
-            anchors.verticalCenter:     parent.verticalCenter
-            anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
-            text:                       control.currentText
-            color:                      _qgcPal.text
+            id: text
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.horizontalCenter: centeredLabel ? parent.horizontalCenter : undefined
+            text: control.currentText
+            color: _qgcPal.text
         }
     }
 }

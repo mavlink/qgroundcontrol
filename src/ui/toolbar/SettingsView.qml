@@ -23,6 +23,17 @@ Rectangle {
         visible: QGroundControl.settingsManager.unitsSettings.visible
     }
 
+    Rectangle
+    {
+        y: unitsSectionLabel.y + unitsSectionLabel.height + 4
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: ScreenTools.defaultFontPixelWidth * 3 + ScreenTools.defaultFontPixelWidth / 3
+        anchors.rightMargin: ScreenTools.defaultFontPixelWidth * 3 + ScreenTools.defaultFontPixelWidth / 3
+        height: 1
+        color: qgcPal.windowShade
+    }
+
     Item{
         id: settingsItem
         anchors.fill: parent
@@ -50,14 +61,9 @@ Rectangle {
                     Layout.fillWidth: false
                     anchors.horizontalCenter: parent.horizontalCenter
                     flow: GridLayout.TopToBottom
-                    rows: 4
+                    rows: 9
 
-                    //                    ToolSeparator
-                    //                    {
-                    //                        orientation: Qt.Horizontal
-                    //                    }
-
-                    property variant items: [qsTr("Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature")]
+                    readonly property variant items: [qsTr("Distance"), qsTr("Area"), qsTr("Speed"), qsTr("Temperature")]
 
                     Repeater {
                         model:  [ QGroundControl.settingsManager.unitsSettings.distanceUnits,
@@ -66,8 +72,6 @@ Rectangle {
                             QGroundControl.settingsManager.unitsSettings.temperatureUnits
                         ]
 
-                        //onDataChanged: console.log("!!!!!!!!!!!!!!!!!!!!!!!!!", index)
-
                         FactComboBox {
                             Layout.preferredWidth: settingsView.width - ScreenTools.defaultFontPixelWidth * 6
                             Layout.topMargin: ScreenTools.defaultFontPixelWidth * 2
@@ -75,12 +79,11 @@ Rectangle {
                             fact: modelData
                             indexModel: false
 
-                            //ToolSeparator { orientation: Qt.Horizontal }
-
                             Component.onCompleted:
                             {
                                 hideIndicator()
                                 hideBorder()
+                                showSeparator()
                                 setItemFont(qgcPal.colorBlue, 14)
                                 showTitle(unitsGrid.items[index])
                             }
