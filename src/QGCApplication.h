@@ -22,6 +22,7 @@
 #include <QApplication>
 #include <QTimer>
 #include <QQmlApplicationEngine>
+#include <QElapsedTimer>
 
 #include "LinkConfiguration.h"
 #include "LinkManager.h"
@@ -97,6 +98,8 @@ public:
 
     void            setLanguage();
     QQuickItem*     mainRootWindow();
+
+    uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
 
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
@@ -192,6 +195,7 @@ private:
     QTranslator         _QGCTranslatorQt;
     QLocale             _locale;
     bool                _error                  = false;
+    QElapsedTimer       _msecsElapsedTime;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted
