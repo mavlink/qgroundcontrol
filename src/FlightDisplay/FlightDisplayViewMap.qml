@@ -49,6 +49,7 @@ FlightMap {
 
     property var    _geoFenceController:        missionController.geoFenceController
     property var    _rallyPointController:      missionController.rallyPointController
+    property var    activeVehicle:              QGroundControl.multiVehicleManager.activeVehicle
     property var    _activeVehicleCoordinate:   activeVehicle ? activeVehicle.coordinate : QtPositioning.coordinate()
     property real   _toolButtonTopMargin:       parent.height - mainWindow.height + (ScreenTools.defaultFontPixelHeight / 2)
     property bool   _airspaceEnabled:           QGroundControl.airmapSupported ? (QGroundControl.settingsManager.airMapSettings.enableAirMap.rawValue && QGroundControl.airspaceManager.connected): false
@@ -184,17 +185,24 @@ FlightMap {
         property real leftToolWidth: toolStrip.x + toolStrip.width
     }
 
-    // Add trajectory points to the map
-    MapItemView {
-        model: mainIsMap ? activeVehicle ? activeVehicle.trajectoryPoints : 0 : 0
-        delegate: MapPolyline {
-            line.width: 3
-            line.color: "red"
-            z:          QGroundControl.zOrderTrajectoryLines
-            path: [
-                object.coordinate1,
-                object.coordinate2,
-            ]
+    // Add trajectory lines to the map
+    MapPolyline {
+        id:         trajectoryPolyline
+        line.width: 3
+        line.color: "red"
+        z:          QGroundControl.zOrderTrajectoryLines
+        visible:    true//mainIsMap
+
+        Connections {
+            target:                 QGroundControl.multiVehicleManager
+            onActiveVehicleChanged: trajectoryPolyline.path = activeVehicle ? activeVehicle.trajectoryPoints.list() : []
+        }
+
+        Connections {
+            target:                 activeVehicle ? activeVehicle.trajectoryPoints : null
+            onPointAdded:           trajectoryPolyline.addCoordinate(coordinate)
+            onUpdateLastPoint:      trajectoryPolyline.replaceCoordinate(trajectoryPolyline.pathLength() - 1, coordinate)
+            onPointsCleared:        trajectoryPolyline.path = []
         }
     }
 
