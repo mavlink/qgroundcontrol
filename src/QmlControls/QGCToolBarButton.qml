@@ -34,7 +34,7 @@ Button {
 
     background: Rectangle {
         anchors.fill: parent
-        color:  logo ? qgcPal.brandingPurple : (checked ? qgcPal.button : Qt.rgba(0,0,0,0))
+        color:  logo ? qgcPal.brandingPurple : (checked ? qgcPal.windowShade : Qt.rgba(0,0,0,0))
     }
 
     contentItem: Row {
@@ -50,7 +50,7 @@ Button {
             width:                  imageSize
             sourceSize.height:      parent.height
             fillMode:               Image.PreserveAspectFit
-            color:                  logo ? "white" : (button.checked ? qgcPal.buttonHighlightText : qgcPal.buttonText)
+            color:                  logo ? qgcPal.buttonText : (button.checked ? qgcPal.transparent : qgcPal.buttonText)
             source:                 button.icon.source
             anchors.verticalCenter: parent.verticalCenter
         }
