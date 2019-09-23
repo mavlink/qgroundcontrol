@@ -63,6 +63,9 @@ mkdir libts
 dpkg -x libts-0.0-0_1.0-11_amd64.deb libts
 cp -L libts/usr/lib/x86_64-linux-gnu/libts-0.0.so.0 ${APPDIR}/usr/lib/x86_64-linux-gnu/
 
+# Copy libcrypto 1.0.0 into AppImage
+cp $(locate libcrypto.so.1.0.0)  ${APPDIR}/usr/lib/x86_64-linux-gnu/
+
 # copy QGroundControl release into appimage
 rsync -av --exclude=*.cpp --exclude=*.h --exclude=*.o --exclude="CMake*" --exclude="*.cmake" ${QGC_RELEASE_DIR}/* ${APPDIR}/
 rm -rf ${APPDIR}/package
