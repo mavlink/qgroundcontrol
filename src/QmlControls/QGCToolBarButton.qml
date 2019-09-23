@@ -62,5 +62,4 @@ Button {
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-
 }
