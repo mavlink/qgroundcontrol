@@ -84,8 +84,8 @@ Item {
         VideoController {
             id: videoController
             videoItem: videoContent
+            videoReceiver: _videoReceiver
             Component.onCompleted : {
-                videoController.setVideoReceiver(_videoReceiver);
                 videoController.startVideo();
             }
         }

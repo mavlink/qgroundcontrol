@@ -68,8 +68,6 @@ public:
 
     void                  setVideoDecoder   (VideoEncoding encoding);
 
-    void prepareSmallPipeline();
-
 signals:
     void videoRunningChanged                ();
     void imageFileChanged                   ();

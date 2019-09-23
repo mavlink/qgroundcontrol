@@ -157,8 +157,6 @@ VideoReceiver::_restart_timeout()
 void
 VideoReceiver::start()
 {
-    prepareSmallPipeline();
-    return;
     /*
     if (_uri.isEmpty()) {
         return;
@@ -422,22 +420,6 @@ VideoReceiver::start()
 
     qDebug() << "Pipeline criado";
 // #endif
-}
-
-void VideoReceiver::prepareSmallPipeline()
-{
-    qDebug() << "Prepare small pipeline running";
-    _stop = false;
-    _starting = false;
-    _pipeline = gst_pipeline_new (nullptr);
-
-    GstElement *src = gst_element_factory_make ("videotestsrc", nullptr);
-    GstElement *glupload = gst_element_factory_make ("glupload", nullptr);
-
-    _videoSink = gst_element_factory_make ("qmlglsink", nullptr);
-
-    gst_bin_add_many (GST_BIN (_pipeline), src, glupload, _videoSink, nullptr);
-    gst_element_link_many (src, glupload, _videoSink, nullptr);
 }
 
 //-----------------------------------------------------------------------------
