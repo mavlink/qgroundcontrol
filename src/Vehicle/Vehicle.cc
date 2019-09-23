@@ -449,7 +449,6 @@ void Vehicle::_commonInit(void)
     connect(this, &Vehicle::homePositionChanged,    this, &Vehicle::_updateDistanceHeadingToHome);
     connect(this, &Vehicle::hobbsMeterChanged,      this, &Vehicle::_updateHobbsMeter);
 
-
     connect(_toolbox->qgcPositionManager(), &QGCPositionManager::gcsPositionChanged, this, &Vehicle::_updateDistanceToGCS);
 
     _missionManager = new MissionManager(this);
@@ -525,6 +524,9 @@ void Vehicle::_commonInit(void)
 
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
+    _flightTimeUpdater.setInterval(1000);
+    _flightTimeUpdater.setSingleShot(false);
+    connect(&_flightTimeUpdater, &QTimer::timeout, this, &Vehicle::_updateFlightTime);
 
     // Set video stream to udp if running ArduSub and Video is disabled
     if (sub() && _settingsManager->videoSettings()->videoSource()->rawValue() == VideoSettings::videoDisabled) {
@@ -1667,6 +1669,7 @@ void Vehicle::_updateArmed(bool armed)
             _clearCameraTriggerPoints();
         } else {
             _trajectoryPoints->stop();
+            _flightTimerStop();
             // Also handle Video Streaming
             if(qgcApp()->toolbox()->videoManager()->videoReceiver()) {
                 if(_settingsManager->videoSettings()->disableWhenDisarmed()->rawValue().toBool()) {
@@ -2560,8 +2563,19 @@ void Vehicle::_clearCameraTriggerPoints(void)
 void Vehicle::_flightTimerStart(void)
 {
     _flightTimer.start();
+    _flightTimeUpdater.start();
     _flightDistanceFact.setRawValue(0);
     _flightTimeFact.setRawValue(0);
+}
+
+void Vehicle::_flightTimerStop(void)
+{
+    _flightTimeUpdater.stop();
+}
+
+void Vehicle::_updateFlightTime(void)
+{
+    _flightTimeFact.setRawValue((double)_flightTimer.elapsed() / 1000.0);
 }
 
 void Vehicle::_startPlanRequest(void)
