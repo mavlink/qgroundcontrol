@@ -28,7 +28,6 @@
 #include "ParameterManager.h"
 #include "QGCApplication.h"
 #include "QGCImageProvider.h"
-#include "FollowMe.h"
 #include "MissionCommandTree.h"
 #include "QGroundControlQmlGlobal.h"
 #include "SettingsManager.h"
@@ -244,9 +243,6 @@ Vehicle::Vehicle(LinkInterface*             link,
 
     _commonInit();
     _autopilotPlugin = _firmwarePlugin->autopilotPlugin(this);
-
-    // connect this vehicle to the follow me handle manager
-    connect(this, &Vehicle::flightModeChanged,_toolbox->followMe(), &FollowMe::followMeHandleManager);
 
     // PreArm Error self-destruct timer
     connect(&_prearmErrorTimer, &QTimer::timeout, this, &Vehicle::_prearmErrorTimeout);
@@ -3697,6 +3693,11 @@ QString Vehicle::landFlightMode(void) const
 QString Vehicle::takeControlFlightMode(void) const
 {
     return _firmwarePlugin->takeControlFlightMode();
+}
+
+QString Vehicle::followFlightMode(void) const
+{
+    return _firmwarePlugin->followFlightMode();
 }
 
 QString Vehicle::vehicleImageOpaque() const

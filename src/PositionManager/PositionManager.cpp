@@ -46,12 +46,11 @@ void QGCPositionManager::setToolbox(QGCToolbox *toolbox)
    }
    _simulatedSource = new SimulatedPosition();
 
-   // Enable this to get a simulated target on desktop
-   // if (_defaultSource == nullptr) {
-   //     _defaultSource = _simulatedSource;
-   // }
-
+#if 1
    setPositionSource(QGCPositionSource::InternalGPS);
+#else
+   setPositionSource(QGCPositionManager::Simulated);
+#endif
 }
 
 void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
@@ -77,6 +76,8 @@ void QGCPositionManager::setNmeaSourceDevice(QIODevice* device)
 
 void QGCPositionManager::_positionUpdated(const QGeoPositionInfo &update)
 {
+    _geoPositionInfo = update;
+
     QGeoCoordinate newGCSPosition = QGeoCoordinate();
     qreal newGCSHeading = update.attribute(QGeoPositionInfo::Direction);
 

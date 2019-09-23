@@ -161,6 +161,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests         (unitTesting)
 {
     _app = this;
+    _msecsElapsedTime.start();
+
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {

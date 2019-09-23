@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* ArduCopter/Rover: Add support for Follow Me
 * ArduPilot: Add Motor Test vehicle setup page
 * Compass Instrument: Add indicators for Home, COG and Next Waypoint headings.
 * Log Replay: Support changing speed of playback

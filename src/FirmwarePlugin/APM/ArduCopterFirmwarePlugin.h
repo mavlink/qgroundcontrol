@@ -64,12 +64,14 @@ public:
     bool    multiRotorCoaxialMotors             (Vehicle* vehicle) final;
     bool    multiRotorXConfig                   (Vehicle* vehicle) final;
     QString offlineEditingParamFile             (Vehicle* vehicle) final { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Copter.OfflineEditing.params"); }
-    QString pauseFlightMode                     (void) const override { return QString("Brake"); }
-    QString landFlightMode                      (void) const override { return QString("Land"); }
-    QString takeControlFlightMode               (void) const override { return QString("Loiter"); }
+    QString pauseFlightMode                     (void) const override { return QStringLiteral("Brake"); }
+    QString landFlightMode                      (void) const override { return QStringLiteral("Land"); }
+    QString takeControlFlightMode               (void) const override { return QStringLiteral("Loiter"); }
+    QString followFlightMode                    (void) const override { return QStringLiteral("Follow"); }
     bool    vehicleYawsToNextWaypointInMission  (const Vehicle* vehicle) const override;
     QString autoDisarmParameter                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral("DISARM_DELAY"); }
     bool    supportsSmartRTL                    (void) const override { return true; }
+    void    sendGCSMotionReport                 (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
 
 private:
     static bool _remapParamNameIntialized;
