@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* More performant flight path display algorithm. Mobile builds no longer show limited path length.
 * ArduPilot: Add Motor Test vehicle setup page
 * Compass Instrument: Add indicators for Home, COG and Next Waypoint headings.
 * Log Replay: Support changing speed of playback
