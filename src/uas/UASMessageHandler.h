@@ -7,20 +7,12 @@
  *
  ****************************************************************************/
 
-
-/*!
- * @file
- *   @brief Message Handler
- *   @author Gus Grubba <mavlink@grubba.com>
- */
-
 #pragma once
 
 #include <QObject>
 #include <QVector>
 #include <QMutex>
 
-#include "Vehicle.h"
 #include "QGCToolbox.h"
 
 class Vehicle;
