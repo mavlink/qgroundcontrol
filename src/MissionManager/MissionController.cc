@@ -2112,6 +2112,7 @@ VisualMissionItem* MissionController::currentPlanViewItem(void) const
 
 void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 {
+    qDebug() << "setCurrentPlanViewIndex" << sequenceNumber << force << _currentPlanViewIndex;
     if(_visualItems && (force || sequenceNumber != _currentPlanViewIndex)) {
         _splitSegment = nullptr;
         _currentPlanViewItem  = nullptr;
