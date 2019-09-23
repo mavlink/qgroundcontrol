@@ -44,6 +44,6 @@ private:
     QGeoCoordinate  _lastPoint;
     double          _lastAzimuth;
 
-    static constexpr double _distanceTolerance = 1.0;
+    static constexpr double _distanceTolerance = 2.0;
     static constexpr double _azimuthTolerance = 1.5;
 };
