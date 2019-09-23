@@ -17,6 +17,7 @@
 #include "FirmwarePlugin.h"
 #include "QGCLoggingCategory.h"
 #include "APMParameterMetaData.h"
+#include "FollowMe.h"
 
 #include <QAbstractSocket>
 
@@ -109,7 +110,9 @@ public:
 protected:
     /// All access to singleton is through stack specific implementation
     APMFirmwarePlugin(void);
-    void setSupportedModes(QList<APMCustomMode> supportedModes);
+
+    void setSupportedModes  (QList<APMCustomMode> supportedModes);
+    void _sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
 
     bool                _coaxialMotors;
 

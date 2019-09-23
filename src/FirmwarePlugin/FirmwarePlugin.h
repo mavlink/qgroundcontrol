@@ -19,6 +19,7 @@
 #include "AutoPilotPlugin.h"
 #include "GeoFenceManager.h"
 #include "RallyPointManager.h"
+#include "FollowMe.h"
 
 #include <QList>
 #include <QString>
@@ -121,6 +122,9 @@ public:
 
     /// Returns the flight mode which the vehicle will be in if it is performing a goto location
     virtual QString gotoFlightMode(void) const;
+
+    /// Returns the flight mode which the vehicle will be for follow me
+    virtual QString followFlightMode(void) const { return QString(); };
 
     /// Set guided flight mode
     virtual void setGuidedMode(Vehicle* vehicle, bool guidedMode);
@@ -319,6 +323,9 @@ public:
     ///     @param vehicleType - Type of current vehicle
     ///     @param metaData - MetaData for fact
     virtual void adjustMetaData(MAV_TYPE vehicleType, FactMetaData* metaData) {Q_UNUSED(vehicleType); Q_UNUSED(metaData);}
+
+    /// Sends the appropriate mavlink message for follow me support
+    virtual void sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities);
 
     // FIXME: Hack workaround for non pluginize FollowMe support
     static const QString px4FollowMeFlightMode;
