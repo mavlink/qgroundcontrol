@@ -1258,6 +1258,7 @@ private slots:
     void _adsbTimerTimeout      ();
     void _orbitTelemetryTimeout (void);
     void _protocolVersionTimeOut(void);
+    void _updateFlightTime      (void);
 
 private:
     bool _containsLink          (LinkInterface* link);
@@ -1331,6 +1332,7 @@ private:
     void _initializeCsv();
     void _writeCsvLine();
     void _flightTimerStart(void);
+    void _flightTimerStop(void);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1461,6 +1463,7 @@ private:
     int     _nextSendMessageMultipleIndex;
 
     QTime                           _flightTimer;
+    QTimer                          _flightTimeUpdater;
     TrajectoryPoints*               _trajectoryPoints;
     QmlObjectListModel              _cameraTriggerPoints;
     QmlObjectListModel              _adsbVehicles;
