@@ -54,9 +54,17 @@ Rectangle {
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
 
-                        Rectangle { color: "green" }
+                        Rectangle
+                        {
+                            height: item.height
+                            width: item.width - 1
+                            color: qgcPal.transparent
+                            border.width: 1
+                            border.color: qgcPal.windowShade
+                        }
                     }
                 }
+
                 MouseArea {
                     anchors.fill: parent
 
