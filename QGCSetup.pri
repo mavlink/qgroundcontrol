@@ -120,7 +120,8 @@ LinuxBuild {
         libQt5XcbQpa.so.5 \
         libQt5Xml.so.5 \
         libicui18n.so* \
-        libQt5TextToSpeech.so.5
+        libQt5TextToSpeech.so.5 \
+        libQt5NetworkAuth.so.5
 
     !contains(DEFINES, __rasp_pi2__) {
         # Some Qt distributions link with *.so.56
@@ -133,6 +134,8 @@ LinuxBuild {
     for(QT_LIB, QT_LIB_LIST) {
         QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_LIBS]/$$QT_LIB $$DESTDIR/Qt/libs/
     }
+
+    QMAKE_POST_LINK += && $$QMAKE_COPY --dereference $$[QT_INSTALL_BINS]/../../../Tools/OpenSSL/binary/lib/libcrypto.so.1.1 $$DESTDIR/Qt/libs/
 
     # QT_INSTALL_PLUGINS
     QT_PLUGIN_LIST = \
