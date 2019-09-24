@@ -14,11 +14,11 @@
 #include "VideoManager.h"
 
 //-----------------------------------------------------------------------------
-MicrohardSettings::MicrohardSettings(QString address_, QObject* parent, bool setEncryptionKey)
+MicrohardSettings::MicrohardSettings(QString address_, QObject* parent, bool configure)
     : MicrohardHandler(parent)
 {
     _address = address_;
-    _setEncryptionKey = setEncryptionKey;
+    _configure = configure;
 }
 
 //-----------------------------------------------------------------------------
@@ -42,17 +42,20 @@ MicrohardSettings::getStatus()
 
 //-----------------------------------------------------------------------------
 void
-MicrohardSettings::setEncryptionKey(QString key)
+MicrohardSettings::configure(QString key, QString power, int channel)
 {
     if (!_tcpSocket) {
+        _configureAfterConnect = true;
         return;
     }
-    QString cmd = key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";
-    _tcpSocket->write(cmd.toStdString().c_str());
-    cmd = "AT&W\n";
+
+    QString cmd = "AT+MWTXPOWER=" + power + "\n";
+    cmd += "AT+MWFREQ=" + QString::number(channel) + "\n";
+    cmd += key.isEmpty() ? "AT+MWVENCRYPT=0\n" : "AT+MWVENCRYPT=1," + key + "\n";
+    cmd += "AT&W\n";
     _tcpSocket->write(cmd.toStdString().c_str());
 
-    qCDebug(MicrohardLog) << "Set encryption key: " << key;
+    qCDebug(MicrohardLog) << "Configure key: " << key << " power: " << power << " channel: " << channel;
 }
 
 //-----------------------------------------------------------------------------
@@ -88,8 +91,9 @@ MicrohardSettings::_readBytes()
     } else if (bytesIn.contains("Login incorrect")) {
         emit connected(-1);
     } else if (bytesIn.contains("Entering")) {
-        if (!loggedIn() && _setEncryptionKey) {
-            qgcApp()->toolbox()->microhardManager()->setEncryptionKey();
+        if (!loggedIn() && (_configure || _configureAfterConnect)) {
+            _configureAfterConnect = false;
+            qgcApp()->toolbox()->microhardManager()->configure();
         }
         _loggedIn = true;
         emit connected(1);
