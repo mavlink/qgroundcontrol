@@ -540,6 +540,7 @@ public:
     Q_ENUM(MavlinkSysStatus)
 
     Q_PROPERTY(int                  id                      READ id                                                     CONSTANT)
+    Q_PROPERTY(QString              name                    READ name                                                   CONSTANT)
     Q_PROPERTY(AutoPilotPlugin*     autopilot               MEMBER _autopilotPlugin                                     CONSTANT)
     Q_PROPERTY(QGeoCoordinate       coordinate              READ coordinate                                             NOTIFY coordinateChanged)
     Q_PROPERTY(QGeoCoordinate       homePosition            READ homePosition                                           NOTIFY homePositionChanged)
@@ -816,6 +817,7 @@ public:
 
     // Property accesors
     int id(void) { return _id; }
+    QString name(void) { return (_priorityLink != nullptr) ? _priorityLink->getName() : ""; }
     MAV_AUTOPILOT firmwareType(void) const { return _firmwareType; }
     MAV_TYPE vehicleType(void) const { return _vehicleType; }
     Q_INVOKABLE QString vehicleTypeName(void) const;
