@@ -313,6 +313,9 @@ DebugBuild {
 
 include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 
+# Until pairing can be made to work cleanly on all OS it is turned off
+DEFINES+=QGC_DISABLE_PAIRING
+
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing")
@@ -413,7 +416,7 @@ INCLUDEPATH += \
     src/QtLocationPlugin/QMLControl \
     src/Settings \
     src/Terrain \
-    src/VehicleSetup \
+    src/Vehicle \
     src/ViewWidgets \
     src/Audio \
     src/comm \
@@ -664,7 +667,13 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
+    src/Vehicle/ADSBVehicle.h \
+    src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/MAVLinkLogManager.h \
+    src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/TrajectoryPoints.h \
+    src/Vehicle/Vehicle.h \
+    src/Vehicle/VehicleObjectAvoidance.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -882,7 +891,13 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
+    src/Vehicle/ADSBVehicle.cc \
+    src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/MAVLinkLogManager.cc \
+    src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/TrajectoryPoints.cc \
+    src/Vehicle/Vehicle.cc \
+    src/Vehicle/VehicleObjectAvoidance.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkInterface.cc \
@@ -984,7 +999,6 @@ SOURCES += \
 INCLUDEPATH += \
     src/AutoPilotPlugins/Common \
     src/FirmwarePlugin \
-    src/Vehicle \
     src/VehicleSetup \
 
 HEADERS+= \
@@ -999,11 +1013,6 @@ HEADERS+= \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
-    src/Vehicle/ADSBVehicle.h \
-    src/Vehicle/MultiVehicleManager.h \
-    src/Vehicle/GPSRTKFactGroup.h \
-    src/Vehicle/Vehicle.h \
-    src/Vehicle/VehicleObjectAvoidance.h \
     src/VehicleSetup/VehicleComponent.h \
 
 !MobileBuild { !NoSerialBuild {
@@ -1026,11 +1035,6 @@ SOURCES += \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
-    src/Vehicle/ADSBVehicle.cc \
-    src/Vehicle/MultiVehicleManager.cc \
-    src/Vehicle/GPSRTKFactGroup.cc \
-    src/Vehicle/Vehicle.cc \
-    src/Vehicle/VehicleObjectAvoidance.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
 !MobileBuild { !NoSerialBuild {

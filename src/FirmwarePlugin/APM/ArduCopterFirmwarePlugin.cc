@@ -43,7 +43,7 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { GUIDED_NOGPS, "Guided No GPS"},
         { SMART_RTL,    "Smart RTL"},
         { FLOWHOLD,     "Flow Hold" },
-        { FOLLOW,       "Follow Vehicle" },
+        { FOLLOW,       "Follow" },
         { ZIGZAG,       "ZigZag" },
     });
 }
@@ -136,3 +136,7 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     return true;
 }
 
+void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
+{
+    _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
+}
