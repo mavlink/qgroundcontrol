@@ -123,9 +123,12 @@ QGeoTiledMapReplyQGC::networkReplyFinished()
     }
     QByteArray a = _reply->readAll();
     QString format = getQGCMapEngine()->urlFactory()->getImageFormat(tileSpec().mapId(), a);
+
+    QString type = getQGCMapEngine()->urlFactory()->getTypeFromId(tileSpec().mapId());
+    a = getQGCMapEngine()->urlFactory()->serialize(type,a);
+
     //-- Test for a specialized, elevation data (not map tile)
     if( getQGCMapEngine()->urlFactory()->isElevation(tileSpec().mapId())){
-        a = TerrainTile::serialize(a);
         //-- Cache it if valid
         if(!a.isEmpty()) {
             getQGCMapEngine()->cacheTile(

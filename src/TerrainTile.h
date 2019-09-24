@@ -16,83 +16,98 @@ Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
 class TerrainTile
 {
 public:
-    TerrainTile();
-    ~TerrainTile();
+  TerrainTile()
+      : _minElevation(-1.0), _maxElevation(-1.0), _avgElevation(-1.0),
+        _isValid(false) {}
 
-    /**
-    * Constructor from json doc with elevation data (either from file or web)
-    *
-    * @param document
-    */
-    TerrainTile(QJsonDocument document);
+  virtual ~TerrainTile(){};
 
-    /**
-    * Constructor from serialized elevation data (either from file or web)
-    *
-    * @param document
-    */
-    TerrainTile(QByteArray byteArray);
+  /**
+   * Constructor from serialized elevation data (either from file or web)
+   *
+   * @param document
+   */
+   //TerrainTile(QByteArray byteArray);
 
-    /**
-    * Check for whether a coordinate lies within this tile
-    *
-    * @param coordinate
-    * @return true if within
-    */
-    bool isIn(const QGeoCoordinate& coordinate) const;
+  /**
+   * Check for whether a coordinate lies within this tile
+   *
+   * @param coordinate
+   * @return true if within
+   */
+  virtual bool isIn(const QGeoCoordinate& coordinate){
+      Q_UNUSED(coordinate);
+      qDebug() << "TerrainTile::isIn : Empty function Do Not USE"; 
+      return false;};
 
-    /**
-    * Check whether valid data is loaded
-    *
-    * @return true if data is valid
-    */
-    bool isValid(void) const { return _isValid; }
+  /**
+   * Check whether valid data is loaded
+   *
+   * @return true if data is valid
+   */
+  bool isValid(void) { return _isValid; }
 
-    /**
-    * Evaluates the elevation at the given coordinate
-    *
-    * @param coordinate
-    * @return elevation
-    */
-    double elevation(const QGeoCoordinate& coordinate) const;
+  /**
+   * Evaluates the elevation at the given coordinate
+   *
+   * @param coordinate
+   * @return elevation
+   */
+  virtual double elevation(const QGeoCoordinate& coordinate){Q_UNUSED(coordinate);return 0.;};
 
-    /**
-    * Accessor for the minimum elevation of the tile
-    *
-    * @return minimum elevation
-    */
-    double minElevation(void) const { return _minElevation; }
+  /**
+   * Accessor for the minimum elevation of the tile
+   *
+   * @return minimum elevation
+   */
+  double minElevation(void) { return _minElevation; }
 
-    /**
-    * Accessor for the maximum elevation of the tile
-    *
-    * @return maximum elevation
-    */
-    double maxElevation(void) const { return _maxElevation; }
+  /**
+   * Accessor for the maximum elevation of the tile
+   *
+   * @return maximum elevation
+   */
+  double maxElevation(void) { return _maxElevation; }
 
-    /**
-    * Accessor for the average elevation of the tile
-    *
-    * @return average elevation
-    */
-    double avgElevation(void) const { return _avgElevation; }
+  /**
+   * Accessor for the average elevation of the tile
+   *
+   * @return average elevation
+   */
+  double avgElevation(void) {return _avgElevation; }
 
-    /**
-    * Accessor for the center coordinate
-    *
-    * @return center coordinate
-    */
-    QGeoCoordinate centerCoordinate(void) const;
+  /**
+   * Accessor for the center coordinate
+   *
+   * @return center coordinate
+   */
+  virtual QGeoCoordinate centerCoordinate(void){return QGeoCoordinate(0,0);};
 
-    /**
-    * Serialize data
-    *
-    * @return serialized data
-    */
-    static QByteArray serialize(QByteArray input);
+  /// Approximate spacing of the elevation data measurement points
+  static constexpr double terrainAltitudeSpacing = 30.0;
+protected:
+    int16_t             _minElevation;                                  /// Minimum elevation in tile
+    int16_t             _maxElevation;                                  /// Maximum elevation in tile
+    double              _avgElevation;                                  /// Average elevation of the tile
+    bool                _isValid;                                       /// data loaded is valid
+};
 
-    /// Approximate spacing of the elevation data measurement points
-    static constexpr double terrainAltitudeSpacing = 30.0;
+class AirmapTerrainTile : public TerrainTile {
+
+public :
+    //AirmapTerrainTile();
+    AirmapTerrainTile(QByteArray byteArray);
+    ~AirmapTerrainTile();
+    bool isIn(const QGeoCoordinate& coordinate) override;
+    double elevation(const QGeoCoordinate& coordinate);
+    QGeoCoordinate centerCoordinate(void);
+
+  /**
+   * Serialize data
+   *
+   * @return serialized data
+   */
+  static QByteArray serialize(QByteArray input);
 
 private:
     typedef struct {
@@ -104,20 +119,16 @@ private:
         int16_t gridSizeLon;
     } TileInfo_t;
 
-    inline int _latToDataIndex(double latitude) const;
-    inline int _lonToDataIndex(double longitude) const;
+    int _latToDataIndex(double latitude);
+    int _lonToDataIndex(double longitude);
 
     QGeoCoordinate      _southWest;                                     /// South west corner of the tile
     QGeoCoordinate      _northEast;                                     /// North east corner of the tile
 
-    int16_t             _minElevation;                                  /// Minimum elevation in tile
-    int16_t             _maxElevation;                                  /// Maximum elevation in tile
-    double              _avgElevation;                                  /// Average elevation of the tile
 
     int16_t**           _data;                                          /// 2D elevation data array
     int16_t             _gridSizeLat;                                   /// data grid size in latitude direction
     int16_t             _gridSizeLon;                                   /// data grid size in longitude direction
-    bool                _isValid;                                       /// data loaded is valid
 
     // Json keys
     static const char*  _jsonStatusKey;

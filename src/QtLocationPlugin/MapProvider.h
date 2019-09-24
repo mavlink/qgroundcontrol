@@ -42,6 +42,11 @@ class MapProvider : public QObject {
                                      double topleftLat, double bottomRightLon,
                                      double bottomRightLat);
 
+    // This method is used to serialze tile before caching it
+    // If the input format is json for instance, output in binary
+    // Should be overwritten to do something
+    virtual QByteArray serialize(QByteArray buf){return buf;}
+
   protected:
     QString _tileXYToQuadKey(int tileX, int tileY, int levelOfDetail);
     int     _getServerNum(int x, int y, int max);

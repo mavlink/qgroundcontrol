@@ -2,6 +2,7 @@
 
 #include "MapProvider.h"
 #include <cmath>
+#include "TerrainTile.h"
 
 #include <QByteArray>
 #include <QMutex>
@@ -24,10 +25,14 @@ class ElevationProvider : public MapProvider {
 
 	bool _isElevationProvider(){return true;}
 
+    // Used to create a new TerrainTile associated to the provider
+    virtual TerrainTile * newTerrainTile(QByteArray buf) = 0;
+
   protected:
     // Define the url to Request
     virtual QString _getURL(int x, int y, int zoom,
                             QNetworkAccessManager* networkManager) = 0;
+
 };
 
 // -----------------------------------------------------------
@@ -46,6 +51,8 @@ class AirmapElevationProvider : public ElevationProvider {
                                      double topleftLat, double bottomRightLon,
                                      double bottomRightLat);
 
+    TerrainTile* newTerrainTile(QByteArray buf);
+    QByteArray   serialize(QByteArray buf);
 
   protected:
     QString _getURL(int x, int y, int zoom,

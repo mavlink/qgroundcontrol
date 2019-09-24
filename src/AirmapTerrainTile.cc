@@ -20,13 +20,13 @@ const char*  AirmapTerrainTile::_jsonMinElevationKey  = "min";
 const char*  AirmapTerrainTile::_jsonAvgElevationKey  = "avg";
 const char*  AirmapTerrainTile::_jsonCarpetKey        = "carpet";
 
-//AirmapTerrainTile::AirmapTerrainTile()
-//    :  TerrainTile()
-//    , _data(nullptr)
-//    , _gridSizeLat(-1)
-//    , _gridSizeLon(-1)
-//{
-//}
+AirmapTerrainTile::AirmapTerrainTile()
+    :  TerrainTile()
+    , _gridSizeLat(-1)
+    , _gridSizeLon(-1)
+    , _data(nullptr)
+{
+}
 
 AirmapTerrainTile::~AirmapTerrainTile()
 {
@@ -92,7 +92,7 @@ AirmapTerrainTile::AirmapTerrainTile(QByteArray byteArray)
 }
 
 
-bool AirmapTerrainTile::isIn(const QGeoCoordinate& coordinate)
+bool AirmapTerrainTile::isIn(const QGeoCoordinate& coordinate) const
 {
     if (!_isValid) {
         qCWarning(TerrainTileLog) << "isIn requested, but tile not valid";
@@ -104,7 +104,7 @@ bool AirmapTerrainTile::isIn(const QGeoCoordinate& coordinate)
     return ret;
 }
 
-double AirmapTerrainTile::elevation(const QGeoCoordinate& coordinate)
+double AirmapTerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
@@ -123,7 +123,7 @@ double AirmapTerrainTile::elevation(const QGeoCoordinate& coordinate)
     }
 }
 
-QGeoCoordinate AirmapTerrainTile::centerCoordinate(void)
+QGeoCoordinate AirmapTerrainTile::centerCoordinate(void) const
 {
     return _southWest.atDistanceAndAzimuth(_southWest.distanceTo(_northEast) / 2.0, _southWest.azimuthTo(_northEast));
 }
@@ -250,7 +250,7 @@ QByteArray AirmapTerrainTile::serialize(QByteArray input)
 }
 
 
-int AirmapTerrainTile::_latToDataIndex(double latitude)
+int AirmapTerrainTile::_latToDataIndex(double latitude) const
 {
     if (isValid() && _southWest.isValid() && _northEast.isValid()) {
         return qRound((latitude - _southWest.latitude()) / (_northEast.latitude() - _southWest.latitude()) * (_gridSizeLat - 1));
@@ -260,7 +260,7 @@ int AirmapTerrainTile::_latToDataIndex(double latitude)
     }
 }
 
-int AirmapTerrainTile::_lonToDataIndex(double longitude)
+int AirmapTerrainTile::_lonToDataIndex(double longitude) const
 {
     if (isValid() && _southWest.isValid() && _northEast.isValid()) {
         return qRound((longitude - _southWest.longitude()) / (_northEast.longitude() - _southWest.longitude()) * (_gridSizeLon - 1));

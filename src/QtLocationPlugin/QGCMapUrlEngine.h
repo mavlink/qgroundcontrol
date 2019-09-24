@@ -54,6 +54,9 @@ public:
                             QString mapType);
 
     bool isElevation(int mapId);
+    bool isElevation(QString mapType);
+
+    QByteArray serialize(QString mapType, QByteArray buf);
 
   private:
     int             _timeout;

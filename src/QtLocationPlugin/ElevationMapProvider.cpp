@@ -12,6 +12,17 @@ ElevationProvider::ElevationProvider(QString imageFormat, quint32 averageSize,
                   mapType, parent) {}
 ElevationProvider::~ElevationProvider() {}
 
+
+//-----------------------------------------------------------------------------
+QByteArray AirmapElevationProvider::serialize(QByteArray buf){
+    return AirmapTerrainTile::serialize(buf);
+}
+//-----------------------------------------------------------------------------
+TerrainTile * AirmapElevationProvider::newTerrainTile(QByteArray buf){
+    TerrainTile * t = new AirmapTerrainTile(buf);
+    return t;
+}
+
 //-----------------------------------------------------------------------------
 int AirmapElevationProvider::long2tileX(double lon, int z) {
     Q_UNUSED(z);

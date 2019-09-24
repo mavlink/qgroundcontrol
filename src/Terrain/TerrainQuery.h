@@ -149,7 +149,7 @@ private:
     QNetworkAccessManager       _networkManager;
 
     QMutex                      _tilesMutex;
-    QHash<QString, TerrainTile> _tiles;
+    QHash<QString, TerrainTile*> _tiles;
 };
 
 /// Used internally by TerrainAtCoordinateQuery to batch coordinate requests together

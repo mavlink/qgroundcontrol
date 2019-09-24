@@ -75,6 +75,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["VWorld Satellite Map"] = new VWorldSatMapProvider(this);
 
     _providersTable["Airmap Elevation"] = new AirmapElevationProvider(this);
+
+    _providersTable["Test Vanuatu"] = new TestMapProvider(this);
 }
 
 void UrlFactory::registerProvider(QString name, MapProvider* provider) {
@@ -133,11 +135,6 @@ quint32 UrlFactory::averageSizeForType(QString type) {
     qCDebug(QGCMapUrlEngineLog) << "UrlFactory::averageSizeForType " << type
         << " Not registered";
 
-    //    case AirmapElevation:
-    //        return AVERAGE_AIRMAP_ELEV_SIZE;
-    //    default:
-    //        break;
-    //    }
     return AVERAGE_TILE_SIZE;
 }
 
@@ -185,3 +182,12 @@ UrlFactory::getTileCount(int zoom, double topleftLon, double topleftLat, double 
 bool UrlFactory::isElevation(int mapId){
     return _providersTable[getTypeFromId(mapId)]->_isElevationProvider();
 }
+
+bool UrlFactory::isElevation(QString mapType){
+    return _providersTable[mapType]->_isElevationProvider();
+}
+
+QByteArray UrlFactory::serialize(QString mapType, QByteArray buf){
+    return _providersTable[mapType]->serialize(buf);
+}
+
