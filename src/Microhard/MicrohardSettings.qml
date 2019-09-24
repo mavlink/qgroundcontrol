@@ -254,6 +254,15 @@ Rectangle {
                                 echoMode:       TextInput.Password
                                 Layout.minimumWidth: _valueWidth
                             }
+                            QGCLabel {
+                                text:           qsTr("Channel:")
+                            }
+                            QGCComboBox {
+                                id:             connectingChannel
+                                model:          QGroundControl.microhardManager.channelLabels
+                                currentIndex:   QGroundControl.microhardManager.connectingChannel - 1
+                                Layout.minimumWidth: _valueWidth
+                            }
                         }
                         Item {
                             width:  1
@@ -266,12 +275,13 @@ Rectangle {
                                 return false
                             }
                             function testEnabled() {
-                                if(localIP.text          === QGroundControl.microhardManager.localIPAddr &&
-                                    remoteIP.text        === QGroundControl.microhardManager.remoteIPAddr &&
-                                    netMask.text         === QGroundControl.microhardManager.netMask &&
-                                    configUserName.text  === QGroundControl.microhardManager.configUserName &&
-                                    configPassword.text  === QGroundControl.microhardManager.configPassword &&
-                                    encryptionKey.text   === QGroundControl.microhardManager.encryptionKey)
+                                if(localIP.text            === QGroundControl.microhardManager.localIPAddr &&
+                                    remoteIP.text          === QGroundControl.microhardManager.remoteIPAddr &&
+                                    netMask.text           === QGroundControl.microhardManager.netMask &&
+                                    configUserName.text    === QGroundControl.microhardManager.configUserName &&
+                                    configPassword.text    === QGroundControl.microhardManager.configPassword &&
+                                    encryptionKey.text     === QGroundControl.microhardManager.encryptionKey &&
+                                    connectingChannel.text === QGroundControl.microhardManager.connectingChannel)
                                     return false
                                 if(!validateIPaddress(localIP.text))  return false
                                 if(!validateIPaddress(remoteIP.text)) return false
@@ -282,7 +292,13 @@ Rectangle {
                             text:               qsTr("Apply")
                             anchors.horizontalCenter:   parent.horizontalCenter
                             onClicked: {
-                                QGroundControl.microhardManager.setIPSettings(localIP.text, remoteIP.text, netMask.text, configUserName.text, configPassword.text, encryptionKey.text)
+                                QGroundControl.microhardManager.setIPSettings(localIP.text,
+                                                                              remoteIP.text,
+                                                                              netMask.text,
+                                                                              configUserName.text,
+                                                                              configPassword.text,
+                                                                              encryptionKey.text,
+                                                                              connectingChannel.currentIndex + 1)
                             }
 
                         }
