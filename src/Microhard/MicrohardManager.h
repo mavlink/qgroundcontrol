@@ -20,6 +20,8 @@
 class AppSettings;
 class QGCApplication;
 
+#define DEFAULT_PAIRING_CHANNEL 78
+
 //-----------------------------------------------------------------------------
 class MicrohardManager : public QGCTool
 {
@@ -30,14 +32,16 @@ public:
     Q_PROPERTY(int          linkConnected       READ linkConnected                              NOTIFY linkConnectedChanged)
     Q_PROPERTY(int          uplinkRSSI          READ uplinkRSSI                                 NOTIFY linkChanged)
     Q_PROPERTY(int          downlinkRSSI        READ downlinkRSSI                               NOTIFY linkChanged)
-    Q_PROPERTY(QString      localIPAddr         READ localIPAddr      WRITE setLocalIPAddr      NOTIFY localIPAddrChanged)
-    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr     WRITE setRemoteIPAddr     NOTIFY remoteIPAddrChanged)
+    Q_PROPERTY(QString      localIPAddr         READ localIPAddr         WRITE setLocalIPAddr   NOTIFY localIPAddrChanged)
+    Q_PROPERTY(QString      remoteIPAddr        READ remoteIPAddr        WRITE setRemoteIPAddr  NOTIFY remoteIPAddrChanged)
     Q_PROPERTY(QString      netMask             READ netMask                                    NOTIFY netMaskChanged)
     Q_PROPERTY(QString      configUserName      READ configUserName                             NOTIFY configUserNameChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
+    Q_PROPERTY(int          connectingChannel   READ connectingChannel                          NOTIFY connectingChannelChanged)
+    Q_PROPERTY(QStringList  channelLabels       READ channelLabels                              NOTIFY channelLabelsChanged)
 
-    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encyrptionKey);
+    Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encyrptionKey, int channel);
 
     explicit MicrohardManager                   (QGCApplication* app, QGCToolbox* toolbox);
     ~MicrohardManager                           () override;
@@ -54,14 +58,15 @@ public:
     QString     configUserName                  () { return _configUserName; }
     QString     configPassword                  () { return _configPassword; }
     QString     encryptionKey                   () { return _encryptionKey; }
+    int         connectingChannel               () { return _connectingChannel; }
+    QStringList channelLabels                   () { return _channelLabels; }
 
     void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
     void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
-    void        setEncryptionKey                (QString val) { _encryptionKey = val; emit encryptionKeyChanged(); }
     void        updateSettings                  ();
-    void        setEncryptionKey                ();
+    void        configure                       ();
     void        switchToPairingEncryptionKey    ();
     void        switchToConnectionEncryptionKey (QString encryptionKey);
 
@@ -75,6 +80,8 @@ signals:
     void    configUserNameChanged           ();
     void    configPasswordChanged           ();
     void    encryptionKeyChanged            ();
+    void    connectingChannelChanged        ();
+    void    channelLabelsChanged            ();
 
 private slots:
     void    _connectedLoc                   (int status);
@@ -109,7 +116,12 @@ private:
     QString            _configUserName;
     QString            _configPassword;
     QString            _encryptionKey;
-    bool               _useCommunicationEncryptionKey = false;
     QString            _communicationEncryptionKey;
+    bool               _usePairingSettings = true;
+    QString            _pairingPower = "7";
+    QString            _connectingPower = "30";
+    int                _pairingChannel = DEFAULT_PAIRING_CHANNEL;
+    int                _connectingChannel = DEFAULT_PAIRING_CHANNEL;
+    QStringList        _channelLabels;
     QTime              _timeoutTimer;
 };
