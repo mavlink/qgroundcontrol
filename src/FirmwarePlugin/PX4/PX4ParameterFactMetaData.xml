@@ -4533,8 +4533,8 @@ the vehicle will accelerate at this rate until the normal position control speed
         <value code="1">Jerk-limited trajectory</value>
       </values>
     </parameter>
-    <parameter default="45." name="MPC_COL_PREV_ANG" type="FLOAT">
-      <short_desc>Angle left/right from the commanded setpoint in which the range data is used to calculate speed limitations. All data further from the commanded direction is not considered</short_desc>
+    <parameter default="30." name="MPC_COL_PREV_CNG" type="FLOAT">
+      <short_desc>Angle left/right from the commanded setpoint by which the collision prevention algorithm can choose to change the setpoint direction</short_desc>
       <long_desc>Only used in Position mode.</long_desc>
       <min>0</min>
       <max>90</max>
@@ -4542,13 +4542,13 @@ the vehicle will accelerate at this rate until the normal position control speed
     </parameter>
     <parameter default="-1.0" name="MPC_COL_PREV_D" type="FLOAT">
       <short_desc>Minimum distance the vehicle should keep to all obstacles</short_desc>
-      <long_desc>Only used in Position mode. Collision avoidace is disabled by setting this parameter to a negative value</long_desc>
+      <long_desc>Only used in Position mode. Collision avoidance is disabled by setting this parameter to a negative value</long_desc>
       <min>-1</min>
       <max>15</max>
       <unit>meters</unit>
     </parameter>
-    <parameter default="0." name="MPC_COL_PREV_DLY" type="FLOAT">
-      <short_desc>Average delay of the range sensor message in seconds</short_desc>
+    <parameter default="0.4" name="MPC_COL_PREV_DLY" type="FLOAT">
+      <short_desc>Average delay of the range sensor message plus the tracking delay of the position controller in seconds</short_desc>
       <long_desc>Only used in Position mode.</long_desc>
       <min>0</min>
       <max>1</max>
