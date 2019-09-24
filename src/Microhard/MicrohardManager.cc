@@ -18,6 +18,11 @@
 #define SHORT_TIMEOUT 2500
 #define LONG_TIMEOUT  5000
 
+// Microhard pMDDL 2350 constants
+#define MICROHARD_CHANNEL_START   1     // First MH channel
+#define MICROHARD_CHANNEL_END     81    // Last MH channel
+#define MICROHARD_FREQUENCY_START 2310  // First MH frequency in MHz
+
 static const char *kMICROHARD_GROUP     = "Microhard";
 static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
@@ -25,23 +30,33 @@ static const char *kNET_MASK            = "NetMask";
 static const char *kCFG_USERNAME        = "ConfigUserName";
 static const char *kCFG_PASSWORD        = "ConfigPassword";
 static const char *kENC_KEY             = "EncryptionKey";
+static const char *kPAIR_CH             = "PairingChannel";
+static const char *kCONN_CH             = "ConnectingChannel";
 
 //-----------------------------------------------------------------------------
 MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
+    for (int i = MICROHARD_CHANNEL_START; i <= MICROHARD_CHANNEL_END; i++) {
+        _channelLabels.append(QString::number(i) +
+                              " - " +
+                              QString::number(i + MICROHARD_FREQUENCY_START - MICROHARD_CHANNEL_START) +
+                              " MHz");
+    }
     connect(&_workTimer, &QTimer::timeout, this, &MicrohardManager::_checkMicrohard);
     _workTimer.setSingleShot(true);
     connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout);
     connect(&_remTimer, &QTimer::timeout, this, &MicrohardManager::_remTimeout);
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
-    _localIPAddr    = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
-    _remoteIPAddr   = settings.value(kREMOTE_IP,      QString("192.168.168.2")).toString();
-    _netMask        = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
-    _configUserName = settings.value(kCFG_USERNAME,   QString("admin")).toString();
-    _configPassword = settings.value(kCFG_PASSWORD,   QString("admin")).toString();
-    _encryptionKey  = settings.value(kENC_KEY,        QString("1234567890")).toString();
+    _localIPAddr       = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
+    _remoteIPAddr      = settings.value(kREMOTE_IP,      QString("192.168.168.2")).toString();
+    _netMask           = settings.value(kNET_MASK,       QString("255.255.255.0")).toString();
+    _configUserName    = settings.value(kCFG_USERNAME,   QString("admin")).toString();
+    _configPassword    = settings.value(kCFG_PASSWORD,   QString("admin")).toString();
+    _encryptionKey     = settings.value(kENC_KEY,        QString("1234567890")).toString();
+    _pairingChannel    = settings.value(kPAIR_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
+    _connectingChannel = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
     settings.endGroup();
 }
 
@@ -119,22 +134,26 @@ void
 MicrohardManager::switchToConnectionEncryptionKey(QString encryptionKey)
 {
     _communicationEncryptionKey = encryptionKey;
-    _useCommunicationEncryptionKey = true;
+    _usePairingSettings = false;
 }
 
 //-----------------------------------------------------------------------------
 void
 MicrohardManager::switchToPairingEncryptionKey()
 {
-    _useCommunicationEncryptionKey = false;
+    _usePairingSettings = true;
 }
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::setEncryptionKey()
+MicrohardManager::configure()
 {
     if (_mhSettingsLoc) {
-        _mhSettingsLoc->setEncryptionKey(_useCommunicationEncryptionKey ? _communicationEncryptionKey : _encryptionKey);
+        if (_usePairingSettings) {
+            _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _pairingChannel);
+        } else {
+            _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower, _connectingChannel);
+        }
     }
 }
 
@@ -142,7 +161,7 @@ MicrohardManager::setEncryptionKey()
 void
 MicrohardManager::updateSettings()
 {
-    setEncryptionKey();
+    configure();
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
     settings.setValue(kLOCAL_IP, _localIPAddr);
@@ -150,6 +169,8 @@ MicrohardManager::updateSettings()
     settings.setValue(kNET_MASK, _netMask);
     settings.setValue(kCFG_PASSWORD, _configPassword);
     settings.setValue(kENC_KEY, _encryptionKey);
+    settings.setValue(kPAIR_CH, QString::number(_pairingChannel));
+    settings.setValue(kCONN_CH, QString::number(_connectingChannel));
     settings.endGroup();
 
     _reset();
@@ -157,17 +178,18 @@ MicrohardManager::updateSettings()
 
 //-----------------------------------------------------------------------------
 bool
-MicrohardManager::setIPSettings(QString localIP_, QString remoteIP_, QString netMask_, QString cfgUserName_, QString cfgPassword_, QString encryptionKey_)
+MicrohardManager::setIPSettings(QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encryptionKey, int channel)
 {
-    if (_localIPAddr != localIP_ || _remoteIPAddr != remoteIP_ || _netMask != netMask_ ||
-        _configUserName != cfgUserName_ || _configPassword != cfgPassword_ || _encryptionKey != encryptionKey_)
+    if (_localIPAddr != localIP || _remoteIPAddr != remoteIP || _netMask != netMask ||
+        _configUserName != cfgUserName || _configPassword != cfgPassword || _encryptionKey != encryptionKey || _connectingChannel != channel)
     {
-        _localIPAddr    = localIP_;
-        _remoteIPAddr   = remoteIP_;
-        _netMask        = netMask_;
-        _configUserName = cfgUserName_;
-        _configPassword = cfgPassword_;
-        _encryptionKey  = encryptionKey_;
+        _localIPAddr       = localIP;
+        _remoteIPAddr      = remoteIP;
+        _netMask           = netMask;
+        _configUserName    = cfgUserName;
+        _configPassword    = cfgPassword;
+        _encryptionKey     = encryptionKey;
+        _connectingChannel = channel;
 
         updateSettings();
 

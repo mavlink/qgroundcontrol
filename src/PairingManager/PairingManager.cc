@@ -677,6 +677,7 @@ PairingManager::_createMicrohardPairingJson()
     jsonObj.insert("IP", localIP);
     jsonObj.insert("EK", _encryptionKey);
     jsonObj.insert("PublicKey", _publicKey);
+    jsonObj.insert("CC", _toolbox->microhardManager()->connectingChannel());
     return QJsonDocument(jsonObj);
 }
 
