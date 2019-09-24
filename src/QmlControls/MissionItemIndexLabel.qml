@@ -15,7 +15,7 @@ Canvas {
     property string label                           ///< Label to show to the side of the index indicator
     property int    index:                  0       ///< Index to show in the indicator, 0 will show single char label instead, -1 first char of label in indicator full label to the side
     property bool   checked:                false
-    property bool   small:                  false
+    property bool   small:                  !checked
     property bool   child:                  false
     property bool   highlightSelected:      false
     property var    color:                  checked ? "green" : (child ? qgcPal.mapIndicatorChild : qgcPal.mapIndicator)
@@ -30,12 +30,14 @@ Canvas {
     property real   _height:            showGimbalYaw ? _gimbalYawWidth : (labelControl.visible ? labelControl.height : indicator.height)
     property real   _gimbalYawRadius:   ScreenTools.defaultFontPixelHeight
     property real   _gimbalYawWidth:    _gimbalYawRadius * 2
-    property real   _indicatorRadius:   small ? (ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio * 1.25 / 2) : (ScreenTools.defaultFontPixelHeight * 0.66)
+    property real   _smallRadius:       (ScreenTools.defaultFontPixelHeight * ScreenTools.smallFontPointRatio) / 2
+    property real   _normalRadius:      ScreenTools.defaultFontPixelHeight * 0.66
+    property real   _indicatorRadius:   small ? _smallRadius : _normalRadius
     property real   _gimbalRadians:     degreesToRadians(vehicleYaw + gimbalYaw - 90)
     property real   _labelMargin:       2
     property real   _labelRadius:       _indicatorRadius + _labelMargin
     property string _label:             label.length > 1 ? label : ""
-    property string _index:             index === 0 || index === -1 ? label.charAt(0) : ""/*index*/
+    property string _index:             index === 0 || index === -1 ? label.charAt(0) : "" /*index*/
 
     onColorChanged:         requestPaint()
     onShowGimbalYawChanged: requestPaint()
@@ -67,6 +69,8 @@ Canvas {
         context.clearRect(0, 0, width, height)
         paintGimbalYaw(context)
     }
+
+    Behavior on _indicatorRadius { PropertyAnimation {} }
 
     Rectangle {
         id:                     labelControl
@@ -115,6 +119,7 @@ Canvas {
         }
     }
 
+    // Extra circle to indicate selection
     Rectangle {
         width:          indicator.width * 2
         height:         width
@@ -126,8 +131,15 @@ Canvas {
         anchors.centerIn: indicator
     }
 
+    // The mouse click area is always the size of a normal indicator
+    Item {
+        id:                 mouseAreaFill
+        anchors.margins:    small ? -(_normalRadius - _smallRadius) : 0
+        anchors.fill:       indicator
+    }
+
     QGCMouseArea {
-        fillItem:   parent
+        fillItem:   mouseAreaFill
         onClicked: {
             focus = true
             parent.clicked()
