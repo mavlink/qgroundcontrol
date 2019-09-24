@@ -15,10 +15,10 @@ class MicrohardSettings : public MicrohardHandler
 {
     Q_OBJECT
 public:
-    explicit MicrohardSettings          (QString address, QObject* parent = nullptr, bool setEncryptionKey = false);
+    explicit MicrohardSettings          (QString address, QObject* parent = nullptr, bool configure = false);
     bool    start                       () override;
     void    getStatus                   ();
-    void    setEncryptionKey            (QString key);
+    void    configure                   (QString key, QString power, int channel);
     bool    loggedIn                    () { return _loggedIn; }
 
 protected slots:
@@ -31,5 +31,6 @@ private:
     bool    _loggedIn;
     int     _rssiVal;
     QString _address;
-    bool    _setEncryptionKey;
+    bool    _configure;
+    bool    _configureAfterConnect{false};
 };
