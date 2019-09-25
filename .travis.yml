@@ -57,8 +57,7 @@ before_install:
   # fetch entire git repo to properly determine the version
   - if [ "${CONFIG}" = "installer" ]; then
     cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow &&
-    git fetch --all --tags &&
-    git submodule update --init --recursive --force;
+    git fetch --all --tags &&;
     fi
   # detect compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
