@@ -817,7 +817,7 @@ public:
 
     // Property accesors
     int id(void) { return _id; }
-    QString name(void) { return (_priorityLink != nullptr) ? _priorityLink->getName() : ""; }
+    QString name(void);
     MAV_AUTOPILOT firmwareType(void) const { return _firmwareType; }
     MAV_TYPE vehicleType(void) const { return _vehicleType; }
     Q_INVOKABLE QString vehicleTypeName(void) const;

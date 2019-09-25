@@ -131,7 +131,7 @@ void
 PairingManager::_createUDPLink(const QString name, quint16 port)
 {
     _removeUDPLink(name);
-    UDPConfiguration* udpConfig = new UDPConfiguration(name);
+    UDPConfiguration* udpConfig = new UDPConfiguration(name + " (Paired)");
     udpConfig->setLocalPort(port);
     udpConfig->setDynamic(true);
     SharedLinkConfigurationPointer linkConfig = _toolbox->linkManager()->addConfiguration(udpConfig);

@@ -4143,6 +4143,19 @@ void Vehicle::_handleObstacleDistance(const mavlink_message_t& message)
     _objectAvoidance->update(&o);
 }
 
+QString Vehicle::name(void)
+{
+    if (_priorityLink != nullptr) {
+        QString n = _priorityLink->getName();
+        int i = n.indexOf(" (Paired)");
+        if (i > 0) {
+            return n.left(n.length() - i + 1);
+        }
+    }
+
+    return "Vehicle " + QString::number(_id);
+}
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
