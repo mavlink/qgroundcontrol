@@ -20,7 +20,7 @@
 class AppSettings;
 class QGCApplication;
 
-#define DEFAULT_PAIRING_CHANNEL 78
+#define DEFAULT_PAIRING_CHANNEL 76
 
 //-----------------------------------------------------------------------------
 class MicrohardManager : public QGCTool
