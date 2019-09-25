@@ -41,7 +41,7 @@ pipeline {
           }
           post {
             always {
-              archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+              //archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
               archiveArtifacts artifacts: '*.apk'
             }
             cleanup {
@@ -156,7 +156,7 @@ pipeline {
           }
           post {
             always {
-                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                //archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
                 archiveArtifacts artifacts: '*.AppImage'
             }
             cleanup {
@@ -379,7 +379,7 @@ pipeline {
           }
           post {
             always {
-                archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                //archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
                 archiveArtifacts artifacts: '*-installer.exe'
             }
             cleanup {
@@ -431,7 +431,7 @@ pipeline {
 
             post {
                 always {
-                    archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
+                    //archiveArtifacts artifacts: 'build/release/**/*', onlyIfSuccessful: true
                     archiveArtifacts artifacts: '*.AppImage'
                 }
                 cleanup {
