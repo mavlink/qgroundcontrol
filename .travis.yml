@@ -6,6 +6,9 @@ env:
   global:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
 
+git:
+  depth: false
+
 matrix:
   fast_finish: true
   include:
@@ -54,11 +57,6 @@ addons:
       - wget
 
 before_install:
-  # fetch entire git repo to properly determine the version
-  - if [ "${CONFIG}" = "installer" ]; then
-    cd ${TRAVIS_BUILD_DIR} && git fetch --unshallow &&
-    git fetch --all --tags &&;
-    fi
   # detect compile threads
   - if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
     export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1));
