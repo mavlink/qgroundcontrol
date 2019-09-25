@@ -369,11 +369,13 @@ pipeline {
             }
           }
           steps {
-            //bat 'git submodule sync && git submodule deinit -f .'
-            //bat 'git clean -ff -x -d .'
-            //bat 'git submodule update --init --recursive --force'
-            bat '.\\tools\\build\\build_windows.bat release build'
-            bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                //bat 'git submodule sync && git submodule deinit -f .'
+                //bat 'git clean -ff -x -d .'
+                //bat 'git submodule update --init --recursive --force'
+                bat '.\\tools\\build\\build_windows.bat release build'
+                bat 'copy /Y .\\build\\release\\*-installer.exe .\\'
+            }
           }
           post {
             always {
