@@ -30,9 +30,9 @@ pipeline {
           steps {
             sh 'export'
             sh 'ccache -z'
-            sh 'git submodule sync && git submodule deinit -f .'
-            sh 'git clean -ff -x -d .'
-            sh 'git submodule update --init --recursive --force'
+            //sh 'git submodule sync && git submodule deinit -f .'
+            //sh 'git clean -ff -x -d .'
+            //sh 'git submodule update --init --recursive --force'
             sh 'ln -s $CI_ANDROID_GSTREAMER_LOCATION ${WORKSPACE}/'
             sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG}'
             sh 'cd build; make -j`nproc --all`'
@@ -415,7 +415,7 @@ pipeline {
                 //sh 'git submodule sync && git submodule deinit -f .'
                 //sh 'git clean -ff -x -d .'
                 //sh 'git submodule update --init --recursive --force'
-                sh 'ln -s custom-example custom'
+                //sh 'ln -s custom-example custom'
                 sh 'mkdir build; cd build; ${QT_PATH}/${QMAKE_VER} -r ${WORKSPACE}/qgroundcontrol.pro CONFIG+=${QGC_CONFIG}'
                 sh 'cd build; make -j`nproc --all`'
                 // Create AppImage
