@@ -3,6 +3,8 @@
 
 #include "QGCLoggingCategory.h"
 
+#include "cpl_conv.h" // for CPLMalloc()
+#include "gdal_priv.h"
 #include <QGeoCoordinate>
 
 Q_DECLARE_LOGGING_CATEGORY(TerrainTileLog)
@@ -141,6 +143,31 @@ private:
     static const char*  _jsonMinElevationKey;
     static const char*  _jsonAvgElevationKey;
     static const char*  _jsonCarpetKey;
+};
+
+class GeotiffTerrainTile : public TerrainTile {
+
+public :
+    GeotiffTerrainTile(QByteArray byteArray);
+    ~GeotiffTerrainTile();
+    bool isIn(const QGeoCoordinate& coordinate);
+    double elevation(const QGeoCoordinate& coordinate);
+    QGeoCoordinate centerCoordinate(void);
+
+  static QByteArray serialize(QByteArray input);
+
+private:
+  
+  int lonlatToxy(const QGeoCoordinate& c);
+  int xyTolonlat(const QGeoCoordinate& c);
+  int lonlatToPixel(const QGeoCoordinate& c, int xy[2]);
+
+  GDALDataset *poDataset;
+  GDALRasterBand *poBand;
+  double adfGeoTransform[6];
+
+  OGRCoordinateTransformation *lonlatToxyTransformation;
+  OGRCoordinateTransformation *xyTolonlatTransformation;
 };
 
 #endif // TERRAINTILE_H

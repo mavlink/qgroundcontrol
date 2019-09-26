@@ -20,13 +20,13 @@ const char*  AirmapTerrainTile::_jsonMinElevationKey  = "min";
 const char*  AirmapTerrainTile::_jsonAvgElevationKey  = "avg";
 const char*  AirmapTerrainTile::_jsonCarpetKey        = "carpet";
 
-//AirmapTerrainTile::AirmapTerrainTile()
-//    :  TerrainTile()
-//    , _data(nullptr)
-//    , _gridSizeLat(-1)
-//    , _gridSizeLon(-1)
-//{
-//}
+AirmapTerrainTile::AirmapTerrainTile()
+    :  TerrainTile()
+    , _gridSizeLat(-1)
+    , _gridSizeLon(-1)
+    , _data(nullptr)
+{
+}
 
 AirmapTerrainTile::~AirmapTerrainTile()
 {
@@ -92,7 +92,7 @@ AirmapTerrainTile::AirmapTerrainTile(QByteArray byteArray)
 }
 
 
-bool AirmapTerrainTile::isIn(const QGeoCoordinate& coordinate)
+bool AirmapTerrainTile::isIn(const QGeoCoordinate& coordinate) const
 {
     if (!_isValid) {
         qCWarning(TerrainTileLog) << "isIn requested, but tile not valid";
@@ -104,7 +104,7 @@ bool AirmapTerrainTile::isIn(const QGeoCoordinate& coordinate)
     return ret;
 }
 
-double AirmapTerrainTile::elevation(const QGeoCoordinate& coordinate)
+double AirmapTerrainTile::elevation(const QGeoCoordinate& coordinate) const
 {
     if (_isValid) {
         qCDebug(TerrainTileLog) << "elevation: " << coordinate << " , in sw " << _southWest << " , ne " << _northEast;
@@ -123,7 +123,7 @@ double AirmapTerrainTile::elevation(const QGeoCoordinate& coordinate)
     }
 }
 
-QGeoCoordinate AirmapTerrainTile::centerCoordinate(void)
+QGeoCoordinate AirmapTerrainTile::centerCoordinate(void) const
 {
     return _southWest.atDistanceAndAzimuth(_southWest.distanceTo(_northEast) / 2.0, _southWest.azimuthTo(_northEast));
 }
@@ -250,7 +250,7 @@ QByteArray AirmapTerrainTile::serialize(QByteArray input)
 }
 
 
-int AirmapTerrainTile::_latToDataIndex(double latitude)
+int AirmapTerrainTile::_latToDataIndex(double latitude) const
 {
     if (isValid() && _southWest.isValid() && _northEast.isValid()) {
         return qRound((latitude - _southWest.latitude()) / (_northEast.latitude() - _southWest.latitude()) * (_gridSizeLat - 1));
@@ -260,7 +260,7 @@ int AirmapTerrainTile::_latToDataIndex(double latitude)
     }
 }
 
-int AirmapTerrainTile::_lonToDataIndex(double longitude)
+int AirmapTerrainTile::_lonToDataIndex(double longitude) const
 {
     if (isValid() && _southWest.isValid() && _northEast.isValid()) {
         return qRound((longitude - _southWest.longitude()) / (_northEast.longitude() - _southWest.longitude()) * (_gridSizeLon - 1));
@@ -268,136 +268,4 @@ int AirmapTerrainTile::_lonToDataIndex(double longitude)
         qCWarning(TerrainTileLog) << "AirmapTerrainTile::_lonToDataIndex internal error" << isValid() << _southWest.isValid() << _northEast.isValid();
         return -1;
     }
-}
-
-//------------------------------------------------------------------------------
-
-
-bool GeotiffTerrainTile::isIn(const QGeoCoordinate& coordinate) {
-  int xy[2];
-  lonlatToPixel(coordinate, xy);
-
-  qDebug() << "GeotiffTerrainTile isIn " << xy[0] << " " << xy[1];
-
-  if (xy[0] < poBand->GetXSize() && xy[1] < poBand->GetYSize()) {
-    int ret = poBand->GetDataCoverageStatus(xy[0], xy[1], 1, 1, 0, nullptr);
-    if (ret == GDAL_DATA_COVERAGE_STATUS_DATA){
-        // If data is NoDataValue, return false
-        qDebug() << "GeotiffTerrainTile isIn " << (elevation(coordinate)) << coordinate;
-        return (elevation(coordinate)!=poBand->GetNoDataValue());
-    }
-  }
-  qDebug() << "GeotiffTerrainTile isIn " << "false" << coordinate.longitude() <<  coordinate.latitude();
-  return false;
-}
-
-QGeoCoordinate GeotiffTerrainTile::centerCoordinate(void){
-    QGeoCoordinate result;
-    double xSize = poDataset->GetRasterXSize();
-    double ySize = poDataset->GetRasterYSize();
-
-    // Fill coord with XY data before transformation
-   result.setLongitude(adfGeoTransform[0]+ xSize*adfGeoTransform[1]/2);
-   result.setLatitude(adfGeoTransform[3]+ ySize*adfGeoTransform[5]/2);
-
-   xyTolonlat(result);
-   return result;
-
-}
-
-int GeotiffTerrainTile::lonlatToxy(const QGeoCoordinate& c) {
-  double lon = c.longitude();
-  double lat = c.latitude();
-  int ret = lonlatToxyTransformation->Transform(1, &lon, &lat, NULL);
-  return ret;
-}
-
-int GeotiffTerrainTile::xyTolonlat(const QGeoCoordinate& c) {
-  double lon = c.longitude();
-  double lat = c.latitude();
-  int ret = xyTolonlatTransformation->Transform(1, &lon, &lat, NULL);
-  return ret;
-}
-
-int GeotiffTerrainTile::lonlatToPixel(const QGeoCoordinate& c, int xy[2]) {
-  double lon = c.longitude();
-  double lat = c.latitude();
-  int ret = lonlatToxyTransformation->Transform(1, &lon, &lat, NULL);
-
-  xy[0] = (int)(((lon - adfGeoTransform[0]) / adfGeoTransform[1]));
-  xy[1] = (int)(((lat - adfGeoTransform[3]) / adfGeoTransform[5]));
-
-  qDebug() << "GeotiffTerrainTile lonlatToPixel " << ret<< " " << lon << " " << lat;
-
-  return ret;
-}
-
-GeotiffTerrainTile::~GeotiffTerrainTile() { GDALClose(poDataset); }
-
-GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
-
-  GDALAllRegister();
-  poDataset = (GDALDataset *)GDALOpen("/home/pierre/Downloads/dsm.tif", GA_ReadOnly);
-  if (poDataset == NULL) {
-    _isValid = false;
-  }
-
-  if (poDataset->GetProjectionRef() != NULL) {
-    _isValid = false;
-  }
-  if (poDataset->GetGeoTransform(adfGeoTransform) != CE_None) {
-    _isValid = false;
-  }
-  _isValid = true;
-
-  OGRSpatialReference src;
-  src.SetWellKnownGeogCS("WGS84");
-  OGRSpatialReference dest(poDataset->GetProjectionRef());
-  lonlatToxyTransformation = OGRCreateCoordinateTransformation(&src, &dest);
-  xyTolonlatTransformation = OGRCreateCoordinateTransformation(&dest, &src);
-
-  // Fetch a raster band
-
-  poBand = poDataset->GetRasterBand(1);
-
-  double minElev_d, maxElev_d;
-  poBand->ComputeStatistics(true, &minElev_d, &maxElev_d, &_avgElevation, NULL, NULL, NULL);
-
-  _minElevation = minElev_d;
-  _maxElevation = maxElev_d;
-
-  qDebug() << "GeotiffTerrainTile" << minElev_d << " " << maxElev_d;
-
-}
-
-double GeotiffTerrainTile::elevation(const QGeoCoordinate& coordinate) {
-  int xy[2];
-  qCDebug(TerrainTileLog) << "elevation for" << coordinate;
-  lonlatToPixel(coordinate, xy);
-
-  QGeoCoordinate curpoint;
-  curpoint.setLongitude(coordinate.longitude());
-  curpoint.setLatitude(coordinate.latitude());
-
-  if(!(xy[0] < poBand->GetXSize() && xy[1] < poBand->GetYSize())) {
-      qCDebug(TerrainTileLog) << "elevation error" ;
-      return poBand->GetNoDataValue(nullptr);
-  }
-  // Reading raster data
-  float *pafScanline;
-  int nXSize = poBand->GetXSize();
-  pafScanline = (float *)CPLMalloc(sizeof(float) * nXSize);
-  int ret = poBand->RasterIO(GF_Read, 0, xy[1], nXSize, 1, pafScanline, nXSize, 1,
-                   GDT_Float32, 0, 0);
-  if(ret != CE_None){
-      qCDebug(TerrainTileLog) << "elevation error : RasterIO"  << ret ;
-      return poBand->GetNoDataValue(nullptr);
-  }
-
-  CPLFree(pafScanline);
-  return pafScanline[xy[0]];
-}
-
-QByteArray GeotiffTerrainTile::serialize(QByteArray input){
-    return input;
 }

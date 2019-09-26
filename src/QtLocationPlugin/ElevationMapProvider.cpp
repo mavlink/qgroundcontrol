@@ -67,3 +67,55 @@ QGCTileSet AirmapElevationProvider::getTileCount(int zoom, double topleftLon,
 
     return set;
 }
+
+
+
+
+QByteArray GeotiffElevationProvider::serialize(QByteArray buf){
+    return GeotiffTerrainTile::serialize(buf);
+}
+//-----------------------------------------------------------------------------
+TerrainTile * GeotiffElevationProvider::newTerrainTile(QByteArray buf){
+    TerrainTile * t = new GeotiffTerrainTile(buf);
+    return t;
+}
+
+double GeotiffElevationProvider::tilex2long(int x, int z) 
+{
+	return x / (double)(1 << z) * 360.0 - 180;
+}
+
+double GeotiffElevationProvider::tiley2lat(int y, int z) 
+{
+	double n = M_PI - 2.0 * M_PI * y / (double)(1 << z);
+	return 180.0 / M_PI * atan(0.5 * (exp(n) - exp(-n)));
+}
+
+
+QString
+GeotiffElevationProvider::_getURL(int x, int y, int zoom,
+                                 QNetworkAccessManager* networkManager) {
+    Q_UNUSED(networkManager);
+    Q_UNUSED(zoom);
+
+    // Params
+    int resolution = 3600;
+    QString layer = "QGCTerrainTest:dtm";
+
+    // Infos here https://wiki.openstreetmap.org/wiki/Zoom_levels
+
+    double lon = tilex2long(x,zoom);
+    double lat = tiley2lat(y,zoom);
+
+    double delta_lat  = 40075016.686 * cos(lat)/pow(2,zoom);
+    double delta_long = 360/pow(2,zoom);
+
+    return QString("https://services.aeronavics.com/geoserver/QGCTerrainTest/wms?service=WMS&version=1.1.0&request=GetMap&layers=%1&bbox=%2,%3,%4,%5&width=%6&height=%7&srs=EPSG:32760&format=image/geotiff")
+        .arg(layer)
+        .arg(lon)
+        .arg(lat)
+        .arg(fmod((lon+delta_lat+180.),360) - 180)
+        .arg(fmod((lat+delta_long+180.),360) - 180.)
+        .arg(resolution)
+        .arg(resolution);
+}

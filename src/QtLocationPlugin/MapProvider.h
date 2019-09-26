@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include "QGCTileSet.h" 
+#include "TerrainTile.h"
 
 #include <QByteArray>
 #include <QNetworkProxy>
@@ -46,6 +47,11 @@ class MapProvider : public QObject {
     // If the input format is json for instance, output in binary
     // Should be overwritten to do something
     virtual QByteArray serialize(QByteArray buf){return buf;}
+
+    virtual TerrainTile* newTerrainTile(QByteArray buf){
+        Q_UNUSED(buf);
+        return nullptr;
+    }
 
   protected:
     QString _tileXYToQuadKey(int tileX, int tileY, int levelOfDetail);

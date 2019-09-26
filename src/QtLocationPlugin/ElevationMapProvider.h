@@ -43,7 +43,7 @@ class AirmapElevationProvider : public ElevationProvider {
   public:
     AirmapElevationProvider(QObject* parent)
         : ElevationProvider(QString("bin"), AVERAGE_AIRMAP_ELEV_SIZE,
-                            QGeoMapType::StreetMap, parent) {}
+                            QGeoMapType::CustomMap, parent) {}
 
     int long2tileX(double lon, int z);
     int lat2tileY(double lat, int z);
@@ -59,3 +59,31 @@ class AirmapElevationProvider : public ElevationProvider {
                     QNetworkAccessManager* networkManager);
 };
 
+
+// -----------------------------------------------------------
+// Geotiff Elevation
+
+class GeotiffElevationProvider : public ElevationProvider {
+    Q_OBJECT
+  public:
+    GeotiffElevationProvider(QObject* parent)
+        : ElevationProvider(QString("bin"), AVERAGE_AIRMAP_ELEV_SIZE,
+                            QGeoMapType::CustomMap, parent) {}
+
+    //int long2tileX(double lon, int z);
+    //int lat2tileY(double lat, int z);
+    //QGCTileSet getTileCount(int zoom, double topleftLon,
+    //                                 double topleftLat, double bottomRightLon,
+    //                                 double bottomRightLat);
+
+    TerrainTile* newTerrainTile(QByteArray buf);
+    QByteArray   serialize(QByteArray buf);
+
+  protected:
+    QString _getURL(int x, int y, int zoom,
+                    QNetworkAccessManager* networkManager);
+
+  private:
+    double tilex2long(int x, int z);
+    double tiley2lat(int y, int z);
+};

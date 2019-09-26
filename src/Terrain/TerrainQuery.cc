@@ -33,7 +33,7 @@ Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _TerrainAtCoordinateBatchManage
 Q_GLOBAL_STATIC(TerrainTileManager, _terrainTileManager)
 
 // Will be added to SettingsManager and connected to a menu
-const QString elevationProvider = "Airmap Elevation";
+const QString elevationProvider = "Geotiff Elevation";
 
 TerrainAirMapQuery::TerrainAirMapQuery(QObject* parent)
     : TerrainQueryInterface(parent)
@@ -496,9 +496,12 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
 
     // Create a new tile from the corresponding current elevationProvider and
     // add it to _tiles hash table
-    
-    TerrainTile* terrainTile = new AirmapTerrainTile(responseBytes);
-    if (terrainTile->isValid()) {
+
+    TerrainTile* terrainTile = getQGCMapEngine()
+                                   ->urlFactory()
+                                   ->getProviderTable()[elevationProvider]
+                                   ->newTerrainTile(responseBytes);
+    if (terrainTile!=nullptr && terrainTile->isValid()) {
         _tilesMutex.lock();
         if (!_tiles.contains(hash)) {
             _tiles.insert(hash, terrainTile);
@@ -507,8 +510,8 @@ void TerrainTileManager::_terrainDone(QByteArray responseBytes, QNetworkReply::N
         }
         _tilesMutex.unlock();
     } else {
+        qCWarning(TerrainQueryLog) << "Received invalid tile" << (terrainTile==nullptr?"nullptr":"isValid is false");
         delete terrainTile;
-        qCWarning(TerrainQueryLog) << "Received invalid tile";
     }
     reply->deleteLater();
 
