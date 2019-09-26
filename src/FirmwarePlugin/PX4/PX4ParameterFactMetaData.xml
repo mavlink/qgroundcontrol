@@ -1376,10 +1376,30 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <unit>rad</unit>
       <decimal>2</decimal>
     </parameter>
-    <parameter default="0.05" name="EKF2_EVP_NOISE" type="FLOAT">
+    <parameter default="5.0" name="EKF2_EVP_GATE" type="FLOAT">
+      <short_desc>Gate size for vision position fusion
+Sets the number of standard deviations used by the innovation consistency test</short_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="0.1" name="EKF2_EVP_NOISE" type="FLOAT">
       <short_desc>Measurement noise for vision position observations used when the vision system does not supply error estimates</short_desc>
       <min>0.01</min>
       <unit>m</unit>
+      <decimal>2</decimal>
+    </parameter>
+    <parameter default="3.0" name="EKF2_EVV_GATE" type="FLOAT">
+      <short_desc>Gate size for vision velocity estimate fusion</short_desc>
+      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
+      <min>1.0</min>
+      <unit>SD</unit>
+      <decimal>1</decimal>
+    </parameter>
+    <parameter default="0.1" name="EKF2_EVV_NOISE" type="FLOAT">
+      <short_desc>Measurement noise for vision velocity observations used when the vision system does not supply error estimates</short_desc>
+      <min>0.01</min>
+      <unit>m/s</unit>
       <decimal>2</decimal>
     </parameter>
     <parameter default="175" name="EKF2_EV_DELAY" type="FLOAT">
@@ -1389,13 +1409,6 @@ Increasing it makes the multi-rotor wind estimates adjust more slowly</short_des
       <unit>ms</unit>
       <decimal>1</decimal>
       <reboot_required>true</reboot_required>
-    </parameter>
-    <parameter default="5.0" name="EKF2_EV_GATE" type="FLOAT">
-      <short_desc>Gate size for vision estimate fusion</short_desc>
-      <long_desc>Sets the number of standard deviations used by the innovation consistency test.</long_desc>
-      <min>1.0</min>
-      <unit>SD</unit>
-      <decimal>1</decimal>
     </parameter>
     <parameter default="0.0" name="EKF2_EV_POS_X" type="FLOAT">
       <short_desc>X position of VI sensor focal point in body frame</short_desc>
