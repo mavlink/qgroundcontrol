@@ -20,12 +20,12 @@ matrix:
     - name: CentOS Installer
       os: linux
       dist: xenial
-      env: SPEC=linux-g++-64 CONFIG=installer DOCKER_IMAGE=stefandunca/qgc:centos-5.12.4
+      env: SPEC=linux-g++-64 CONFIG=installer DOCKER_IMAGE=centos:7
       services: docker
       sudo: required
       before_install:
         - docker pull ${DOCKER_IMAGE}
-        - docker run --name centos -d ${DOCKER_IMAGE}
+        - docker run --name centos -td ${DOCKER_IMAGE} /bin/bash
       script:
         - docker exec -it centos bash -c "uname -a"
   exclude:
@@ -142,6 +142,7 @@ before_script:
 #    fi
 
 script:
+  - uname -a
 #  # run qmake
 #  - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
 #  # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
