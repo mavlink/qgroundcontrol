@@ -10,14 +10,59 @@ git:
   depth: false
   submodules: false
 
-matrix:
-  fast_finish: true
+stages:
+  - Build
+  - Unit Test
+  - name: GitHub Release
+    if: branch = master
+
+#matrix:
+#  exclude:
+#    - name: Linux Debug
+#      os: linux
+#      dist: xenial
+#      env: SPEC=linux-g++-64 CONFIG=debug
+#      services: xvfb
+#      sudo: required
+#    - name: Android 32 bit
+#      dist: trusty
+#      language: android
+#      env: SPEC=android-clang CONFIG=installer BITNESS=32
+#      android:
+#        components:
+#          - android-25
+#          - build-tools-25.0.3
+#          - platform-tools
+#    - name: Android 64 bit
+#      dist: trusty
+#      language: android
+#      env: SPEC=android-clang CONFIG=installer BITNESS=64
+#    - name: OSX Installer
+#      os: osx
+#      osx_image: xcode9.2
+#      env: SPEC=macx-clang CONFIG=installer
+
+jobs:
   include:
-    - name: Linux Installer
+    - stage: Build
+      name: Linux Installer
       os: linux
       dist: xenial
       env: SPEC=linux-g++-64 CONFIG=installer
-    - name: CentOS Installer
+      addons:
+        apt:
+          packages:
+            - speech-dispatcher
+            - libgstreamer-plugins-base1.0-dev
+            - libgstreamer1.0-0:amd64
+            - libgstreamer1.0-dev
+            - libsdl2-dev
+            - libudev-dev
+            - wget
+      script:
+        - uname -a
+    - stage: Build
+      name: CentOS Installer
       os: linux
       dist: xenial
       env: SPEC=linux-g++-64 CONFIG=installer DOCKER_IMAGE=centos:7
@@ -27,55 +72,34 @@ matrix:
         - docker pull ${DOCKER_IMAGE}
         - docker run --name centos -td ${DOCKER_IMAGE} /bin/bash
       script:
-        - docker exec -it centos bash -c "uname -a"
-  exclude:
-    - name: Linux Debug
+        - docker exec -it centos bash -c "cat /etc/centos-release"
+    - stage: Unit Test
+      name: Linux Installer
       os: linux
       dist: xenial
-      env: SPEC=linux-g++-64 CONFIG=debug
-      services: xvfb
-      sudo: required
-    - name: Android 32 bit
-      dist: trusty
-      language: android
-      env: SPEC=android-clang CONFIG=installer BITNESS=32
-      sudo: false
-    - name: Android 64 bit
-      dist: trusty
-      language: android
-      env: SPEC=android-clang CONFIG=installer BITNESS=64
-      sudo: false
-    - name: OSX Installer
-      os: osx
-      osx_image: xcode9.2
-      env: SPEC=macx-clang CONFIG=installer
+      script:
+        - mkdir -p ~/.config/QtProject/
+    - stage: GitHub Release
+      script: echo "Deploying to GitHub releases ..."
+      deploy:
+        provider: releases
+        api_key:
+          secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
+        file_glob: true
+        file:
+          - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
+          - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
+        skip_cleanup: true
+        on:
+          tags: true
+          condition: $CONFIG = installer
+          repo: Auterion/auterion-qgroundcontrol
 
-#android:
-#  components:
-#    - android-25
-#    - build-tools-25.0.3
-#    - platform-tools
-
-addons:
-  apt:
-    packages:
-      - speech-dispatcher
-      - libgstreamer-plugins-base1.0-dev
-      - libgstreamer1.0-0:amd64
-      - libgstreamer1.0-dev
-      - libsdl2-dev
-      - libudev-dev
-      - wget
 
 before_install:
   # inject CI User github OAuth Token
   - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc
   - git submodule update --init --recursive
-#  - if [ -ne "${DOCKER_IMAGE}" ]; then
-#    docker pull ${DOCKER_IMAGE} &&
-#    docker run ${DOCKER_IMAGE} &&
-#    docker ps -a;
-#    fi
 
 install:
 #  # linux dependencies: qt
@@ -142,7 +166,6 @@ before_script:
 #    fi
 
 script:
-  - uname -a
 #  # run qmake
 #  - mkdir ${SHADOW_BUILD_DIR} && cd ${SHADOW_BUILD_DIR}
 #  # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
@@ -174,19 +197,6 @@ before_deploy:
 #    ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package;
 #    fi
 
-deploy:
-  provider: releases
-  api_key:
-    secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
-  file_glob: true
-  file:
-    - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
-    - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
-  skip_cleanup: true
-  on:
-    tags: true
-    condition: $CONFIG = installer
-    repo: Auterion/auterion-qgroundcontrol
 
 notifications:
   slack:
