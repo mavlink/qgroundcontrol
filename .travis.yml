@@ -13,7 +13,7 @@ git:
 
 .template_linux: &template_linux
   os: linux
-  dist: trusty
+  dist: xenial
   addons:
     apt:
       packages:
@@ -28,6 +28,7 @@ git:
 
 .template_android: &template_android
   <<: *template_linux
+  dist: trusty
   language: android
   android:
     components:
@@ -41,7 +42,7 @@ matrix:
     - name: Linux Installer
       <<: *template_linux
     - name: CentOS Installer
-      <<: *template_linux
+      os: linux
       dist: xenial
       env: DOCKER_IMAGE=centos:7
       services: docker
