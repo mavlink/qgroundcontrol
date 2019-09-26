@@ -68,7 +68,7 @@ RUN	dpkg --add-architecture i386 \
 	&& apt-get clean autoclean \
 	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
 
-COPY scripts/extract-qt-installer.sh /tmp/qt/
+COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
 
 # Download & unpack Qt toolchains & clean
 RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/official_releases/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run" \
@@ -93,7 +93,7 @@ RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
 
 # create and start as LOCAL_USER_ID
-COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/bin/bash"]

@@ -46,7 +46,7 @@ RUN yum -y install\
         fuse \
         fuse-devel
 
-COPY scripts/extract-qt-installer.sh /tmp/qt/
+COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
 
 # Download Qt toolchains
 RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run"
@@ -69,7 +69,7 @@ RUN QT_PACKAGE_VER="$(echo "${QT_VERSION}" | tr -d .)" QT_CI_PACKAGES=qt,qt.qt5.
 RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
 
 # create and start as LOCAL_USER_ID
-COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/bin/bash"]
