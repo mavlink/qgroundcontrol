@@ -25,7 +25,7 @@ matrix:
       sudo: required
       before_install:
         - docker pull ${DOCKER_IMAGE}
-        - docker run --name centos -td ${DOCKER_IMAGE} /bin/bash
+        - docker run --name centos -d ${DOCKER_IMAGE}
       script:
         - docker exec -it centos bash -c "uname -a"
   exclude:
