@@ -1,8 +1,8 @@
 # Auterion Ground Control Station
 
-[![Releases](https://img.shields.io/github/release/mavlink/QGroundControl.svg)](https://github.com/Auterion/QGroundControl/releases)
-[![Travis Build Status](https://travis-ci.org/mavlink/qgroundcontrol.svg?branch=master)](https://travis-ci.org/Auterion/qgroundcontrol)
-[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/crxcm4qayejuvh6c/branch/master?svg=true)](https://ci.appveyor.com/project/Auterion/qgroundcontrol)
+[![Releases](https://img.shields.io/github/v/release/Auterion/auterion-qgroundcontrol.svg)](https://github.com/Auterion/auterion-qgroundcontrol/releases)
+[![Travis Build Status](https://travis-ci.org/Auterion/auterion-qgroundcontrol.svg?branch=master)](https://travis-ci.org/Auterion/auterion-qgroundcontrol)
+[![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/crxcm4qayejuvh6c/branch/master?svg=true)](https://ci.appveyor.com/project/Auterion/auterion-qgroundcontrol)
 
 
 This is the official repo for Auterion's Ground Station based on the upstream QGC: https://github.com/mavlink/qgroundcontrol
