@@ -69,6 +69,7 @@ public:
     void        configure                       ();
     void        switchToPairingEncryptionKey    ();
     void        switchToConnectionEncryptionKey (QString encryptionKey);
+    void        setProductName                  (QString product);
 
 signals:
     void    linkChanged                     ();
@@ -124,4 +125,7 @@ private:
     int                _connectingChannel = DEFAULT_PAIRING_CHANNEL;
     QStringList        _channelLabels;
     QTime              _timeoutTimer;
+    int                _channelMin = 1;
+    int                _channelMax = 81;
+
 };

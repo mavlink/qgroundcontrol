@@ -18,11 +18,6 @@
 #define SHORT_TIMEOUT 2500
 #define LONG_TIMEOUT  5000
 
-// Microhard pMDDL 2350 constants
-#define MICROHARD_CHANNEL_START   1     // First MH channel
-#define MICROHARD_CHANNEL_END     81    // Last MH channel
-#define MICROHARD_FREQUENCY_START 2310  // First MH frequency in MHz
-
 static const char *kMICROHARD_GROUP     = "Microhard";
 static const char *kLOCAL_IP            = "LocalIP";
 static const char *kREMOTE_IP           = "RemoteIP";
@@ -37,12 +32,6 @@ static const char *kCONN_CH             = "ConnectingChannel";
 MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
-    for (int i = MICROHARD_CHANNEL_START; i <= MICROHARD_CHANNEL_END; i++) {
-        _channelLabels.append(QString::number(i) +
-                              " - " +
-                              QString::number(i + MICROHARD_FREQUENCY_START - MICROHARD_CHANNEL_START) +
-                              " MHz");
-    }
     connect(&_workTimer, &QTimer::timeout, this, &MicrohardManager::_checkMicrohard);
     _workTimer.setSingleShot(true);
     connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout);
@@ -329,3 +318,40 @@ MicrohardManager::_checkMicrohard()
     }
     _workTimer.start(_connectedStatus > 0 ? SHORT_TIMEOUT : LONG_TIMEOUT);
 }
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::setProductName(QString product)
+{
+    qCDebug(MicrohardLog) << "Detected Microhard modem: " << product;
+
+    int frequencyStart = 0;
+
+    if (product == "pMDDL2350") {
+        _channelMin = 1;
+        _channelMax = 81;
+        frequencyStart = 2310;
+    } else if (product == "pMDDL2450") {
+        _channelMin = 6;
+        _channelMax = 76;
+        frequencyStart = 2407;
+    } else if (product == "pMDDL2550") {
+        _channelMin = 6;
+        _channelMax = 76;
+        frequencyStart = 2500;
+    }
+
+    _channelLabels.clear();
+    if (frequencyStart > 0) {
+        for (int i = _channelMin; i <= _channelMax; i++) {
+            _channelLabels.append(QString::number(i) +
+                                  " - " +
+                                  QString::number(i + frequencyStart - _channelMin) +
+                                  " MHz");
+        }
+    }
+
+    emit channelLabelsChanged();
+}
+
+//-----------------------------------------------------------------------------
