@@ -57,6 +57,7 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     _encryptionKey     = settings.value(kENC_KEY,        QString("1234567890")).toString();
     _pairingChannel    = settings.value(kPAIR_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
     _connectingChannel = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
+    _pairingChannel = DEFAULT_PAIRING_CHANNEL;
     settings.endGroup();
 }
 
