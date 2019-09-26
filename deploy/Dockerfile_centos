@@ -1,0 +1,77 @@
+#
+# QGroundControl linux build environment
+#
+
+FROM centos:7
+MAINTAINER Daniel Agar <daniel@agar.ca>
+
+ARG QT_VERSION=5.12.4
+
+ENV DISPLAY :99
+
+ENV QMAKESPEC linux-g++-64
+
+ENV QT_PATH /opt/Qt
+ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
+
+ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+
+RUN yum -y install epel-release
+RUN yum -y upgrade \
+RUN yum -y groupinstall \
+        'Development Tools' \
+RUN yum -y install\
+        ca-certificates \
+        ccache \
+        cmake \
+        curl \
+        espeak \
+        git \
+        libXext-devel \
+        $(repoquery --qf '%{name}' -a gstreamer1-* | awk '{ print $1 }' | grep -v gstreamer1.0-hybris) \
+        SDL2-devel \
+        SDL2 \
+        mesa-libGL-devel \
+        libudev-devel \
+        make \
+        pkgconfig \
+        speech-dispatcher \
+        wget \
+        fuse \
+        kmod \
+        rsync \
+        openssl-devel \
+        libXScrnSaver \
+        ccache \
+        fuse \
+        fuse-devel
+
+COPY scripts/extract-qt-installer.sh /tmp/qt/
+
+# Download Qt toolchains
+RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run"
+
+RUN yum -y install\
+        freetype.i686 \
+        freetype \
+        freetype-devel \
+        fontconfig \
+        fontconfig-devel \
+        libstdc++ \
+        libX11
+
+# Unpack Qt toolchains & clean
+RUN QT_PACKAGE_VER="$(echo "${QT_VERSION}" | tr -d .)" QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.gcc_64,qt.qt5.${QT_PACKAGE_VER}.qtcharts,qt.qt5.${QT_PACKAGE_VER}.qtvirtualkeyboard,qt.qt5.5124.qtnetworkauth /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+        && find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
+        && rm -rf /tmp/*
+
+# create user with id 1001 (jenkins docker workflow default)
+RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
+
+# create and start as LOCAL_USER_ID
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["/bin/bash"]
+
+ENV DEBIAN_FRONTEND teletype

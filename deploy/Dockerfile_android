@@ -1,0 +1,99 @@
+#
+# QGroundControl android build environment
+#
+
+FROM ubuntu:xenial
+MAINTAINER Daniel Agar <daniel@agar.ca>
+
+ARG QT_VERSION=5.11.0
+
+ARG NDK_VERSION=r16b
+ARG SDK_PLATFORM=android-21
+ARG SDK_BUILD_TOOLS=21.1.2
+ARG SDK_PACKAGES="tools platform-tools"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QMAKESPEC android-g++
+
+ENV QT_PATH /opt/Qt
+ENV QT_ANDROID ${QT_PATH}/${QT_VERSION}/android_armv7
+
+ENV ANDROID_HOME /opt/android-sdk
+
+ENV ANDROID_SDK_ROOT ${ANDROID_HOME}
+
+ENV ANDROID_NDK_ROOT /opt/android-ndk
+ENV ANDROID_NDK_TOOLCHAIN_PREFIX arm-linux-androideabi
+ENV ANDROID_NDK_TOOLCHAIN_VERSION 4.9
+ENV ANDROID_NDK_HOST linux-x86_64
+ENV ANDROID_NDK_PLATFORM ${SDK_PLATFORM}
+ENV ANDROID_NDK_TOOLS_PREFIX ${ANDROID_NDK_TOOLCHAIN_PREFIX}
+
+ENV PATH /usr/lib/ccache:${QT_ANDROID}/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
+
+RUN	dpkg --add-architecture i386 \
+	&& apt-get update && apt-get -y --quiet --no-install-recommends install \
+		ant \
+		ca-certificates \
+		ccache \
+		cmake \
+		curl \
+		default-jdk \
+		git \
+		gosu \
+		libc6:i386 \
+		libdbus-1-3 \
+		libfontconfig1 \
+		libgcc1:i386 \
+		libice6 \
+		libncurses5:i386 \
+		libsdl1.2debian:i386 \
+		libsm6 \
+		libstdc++6:i386 \
+		libxext6 \
+		libxrender1 \
+		libz1:i386 \
+		locales \
+		make \
+		ninja-build \
+		openssh-client \
+		unzip \
+		wget \
+		xvfb \
+		zlib1g:i386 \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+COPY scripts/extract-qt-installer.sh /tmp/qt/
+
+# Download & unpack Qt toolchains & clean
+RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/official_releases/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run" \
+	&& QT_CI_PACKAGES=qt.qt5.$(echo "${QT_VERSION}" | tr -d .).android_armv7,qt.qt5.$(echo "${QT_VERSION}" | tr -d .).qtcharts /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+	&& find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
+	&& rm -rf /tmp/*
+
+# Download & unpack android SDK
+RUN curl -Lo /tmp/sdk-tools.zip 'https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip' \
+	&& mkdir -p /opt/android-sdk && unzip -q /tmp/sdk-tools.zip -d /opt/android-sdk && rm -f /tmp/sdk-tools.zip \
+	&& yes | sdkmanager --licenses && sdkmanager --verbose "platforms;${SDK_PLATFORM}" "build-tools;${SDK_BUILD_TOOLS}" ${SDK_PACKAGES}
+
+# Download & unpack android NDK
+RUN mkdir /tmp/android && cd /tmp/android && curl -Lo ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux-x86_64.zip" \
+	&& unzip -q ndk.zip && mv android-ndk-* $ANDROID_NDK_ROOT && chmod -R +rX $ANDROID_NDK_ROOT \
+	&& rm -rf /tmp/android
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1001 (jenkins docker workflow default)
+RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
+
+# create and start as LOCAL_USER_ID
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["/bin/bash"]

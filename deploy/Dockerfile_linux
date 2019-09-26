@@ -1,0 +1,71 @@
+#
+# QGroundControl linux build environment
+#
+
+FROM ubuntu:xenial
+MAINTAINER Daniel Agar <daniel@agar.ca>
+
+ARG QT_VERSION=5.11.0
+
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV DISPLAY :99
+
+ENV QMAKESPEC linux-g++-64
+
+ENV QT_PATH /opt/Qt
+ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
+
+ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+
+RUN	apt-get update && apt-get -y --quiet --no-install-recommends install \
+		build-essential \
+		ca-certificates \
+		ccache \
+		cmake \
+		curl \
+		espeak \
+		g++ \
+		gcc \
+		git \
+		gosu \
+		libespeak-dev \
+		libfontconfig1 \
+		libfuse2 \
+		libgstreamer-plugins-base1.0-dev \
+		libgstreamer1.0-0:amd64 \
+		libgstreamer1.0-dev \
+		libsdl2-dev \
+		libudev-dev \
+		locales \
+		make \
+		ninja-build \
+		openssh-client \
+		pkg-config \
+		snapcraft \
+		speech-dispatcher \
+		wget \
+		xvfb \
+	&& apt-get -y autoremove \
+	&& apt-get clean autoclean \
+	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
+
+COPY scripts/extract-qt-installer.sh /tmp/qt/
+
+# Download & unpack Qt toolchains & clean
+RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/official_releases/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run" \
+	&& QT_CI_PACKAGES=qt.qt5.$(echo "${QT_VERSION}" | tr -d .).gcc_64,qt.qt5.$(echo "${QT_VERSION}" | tr -d .).qtcharts /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+	&& find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
+	&& rm -rf /tmp/*
+
+# Reconfigure locale
+RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
+
+# create user with id 1001 (jenkins docker workflow default)
+RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
+
+# create and start as LOCAL_USER_ID
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+CMD ["/bin/bash"]
