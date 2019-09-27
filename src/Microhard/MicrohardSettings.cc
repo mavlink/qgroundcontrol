@@ -65,6 +65,7 @@ MicrohardSettings::_readBytes()
     if (!_tcpSocket) {
         return;
     }
+    int j;
     QByteArray bytesIn = _tcpSocket->read(_tcpSocket->bytesAvailable());
 
     //qCDebug(MicrohardLog) << "Read bytes: " << bytesIn;
@@ -91,6 +92,18 @@ MicrohardSettings::_readBytes()
     } else if (bytesIn.contains("Login incorrect")) {
         emit connected(-1);
     } else if (bytesIn.contains("Entering")) {
+        if (!_configure) {
+            _loggedIn = true;
+            emit connected(1);
+        } else {
+            _tcpSocket->write("at+mssysi\n");
+        }
+    } else if ((j = bytesIn.indexOf("Product")) > 0) {
+        int i = bytesIn.indexOf(": ", j);
+        if (i > 0) {
+            QString product = bytesIn.mid(i + 2, bytesIn.indexOf("\r", i + 3) - (i + 2));
+            qgcApp()->toolbox()->microhardManager()->setProductName(product);
+        }
         if (!loggedIn() && (_configure || _configureAfterConnect)) {
             _configureAfterConnect = false;
             qgcApp()->toolbox()->microhardManager()->configure();
