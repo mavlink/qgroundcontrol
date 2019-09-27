@@ -56,136 +56,172 @@ Rectangle {
         anchors.right:      parent.right
         spacing:            _margin
 
-        QGCLabel {
+        QGCTabBar {
+            id:             tabBar
             anchors.left:   parent.left
             anchors.right:  parent.right
-            text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
-            wrapMode:       Text.WordWrap
-            color:          qgcPal.warningText
-            visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
+
+            Component.onCompleted: currentIndex = 0
+
+            QGCTabButton { text: qsTr("Grid") }
+            QGCTabButton { text: qsTr("Camera") }
         }
 
+        Column {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            _margin
+            visible:            tabBar.currentIndex == 0
 
-        CameraCalc {
-            cameraCalc:                     missionItem.cameraCalc
-            vehicleFlightIsFrontal:         true
-            distanceToSurfaceLabel:         qsTr("Altitude")
-            distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
-                                                QGroundControl.AltitudeModeAboveTerrain :
-                                                missionItem.cameraCalc.distanceToSurfaceRelative
-            frontalDistanceLabel:           qsTr("Trigger Dist")
-            sideDistanceLabel:              qsTr("Spacing")
-        }
-
-        SectionHeader {
-            id:     corridorHeader
-            text:   qsTr("Corridor")
-        }
-
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columnSpacing:  _margin
-            rowSpacing:     _margin
-            columns:        2
-            visible:        corridorHeader.checked
-
-            QGCLabel { text: qsTr("Width") }
-            FactTextField {
-                fact:                   missionItem.corridorWidth
-                Layout.fillWidth:       true
+            QGCLabel {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                text:           qsTr("WARNING: Photo interval is below minimum interval (%1 secs) supported by camera.").arg(_cameraMinTriggerInterval.toFixed(1))
+                wrapMode:       Text.WordWrap
+                color:          qgcPal.warningText
+                visible:        missionItem.cameraShots > 0 && _cameraMinTriggerInterval !== 0 && _cameraMinTriggerInterval > missionItem.timeBetweenShots
             }
 
-            QGCLabel { text: qsTr("Turnaround dist") }
-            FactTextField {
-                fact:                   missionItem.turnAroundDistance
-                Layout.fillWidth:       true
+
+            CameraCalcGrid {
+                cameraCalc:                     missionItem.cameraCalc
+                vehicleFlightIsFrontal:         true
+                distanceToSurfaceLabel:         qsTr("Altitude")
+                distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
+                                                    QGroundControl.AltitudeModeAboveTerrain :
+                                                    missionItem.cameraCalc.distanceToSurfaceRelative
+                frontalDistanceLabel:           qsTr("Trigger Dist")
+                sideDistanceLabel:              qsTr("Spacing")
             }
 
-            QGCOptionsComboBox {
-                Layout.columnSpan:  2
-                Layout.fillWidth:   true
-
-                model: [
-                    {
-                        text:       qsTr("Images in turnarounds"),
-                        fact:       missionItem.cameraTriggerInTurnAround,
-                        enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true,
-                        visible:    true
-                    },
-                    {
-                        text:       qsTr("Relative altitude"),
-                        enabled:    missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain,
-                        visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain),
-                        checked:    missionItem.cameraCalc.distanceToSurfaceRelative
-                    }
-                ]
-
-                onItemClicked: {
-                    if (index == 1) {
-                        missionItem.cameraCalc.distanceToSurfaceRelative = !missionItem.cameraCalc.distanceToSurfaceRelative
-                        console.log(missionItem.cameraCalc.distanceToSurfaceRelative)
-                    }
-                }
-            }
-        }
-
-        QGCButton {
-            text:       qsTr("Rotate Entry Point")
-            onClicked:  missionItem.rotateEntryPoint()
-        }
-
-        SectionHeader {
-            id:         terrainHeader
-            text:       qsTr("Terrain")
-            checked:    missionItem.followTerrain
-        }
-
-        ColumnLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            spacing:        _margin
-            visible:        terrainHeader.checked
-
-            QGCCheckBox {
-                id:         followsTerrainCheckBox
-                text:       qsTr("Vehicle follows terrain")
-                checked:    missionItem.followTerrain
-                onClicked:  missionItem.followTerrain = checked
+            SectionHeader {
+                id:     corridorHeader
+                text:   qsTr("Corridor")
             }
 
             GridLayout {
-                Layout.fillWidth:   true
-                columnSpacing:      _margin
-                rowSpacing:         _margin
-                columns:            2
-                visible:            followsTerrainCheckBox.checked
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                columnSpacing:  _margin
+                rowSpacing:     _margin
+                columns:        2
+                visible:        corridorHeader.checked
 
-                QGCLabel { text: qsTr("Tolerance") }
+                QGCLabel { text: qsTr("Width") }
                 FactTextField {
-                    fact:               missionItem.terrainAdjustTolerance
-                    Layout.fillWidth:   true
+                    fact:                   missionItem.corridorWidth
+                    Layout.fillWidth:       true
                 }
 
-                QGCLabel { text: qsTr("Max Climb Rate") }
+                QGCLabel { text: qsTr("Turnaround dist") }
                 FactTextField {
-                    fact:               missionItem.terrainAdjustMaxClimbRate
-                    Layout.fillWidth:   true
+                    fact:                   missionItem.turnAroundDistance
+                    Layout.fillWidth:       true
                 }
 
-                QGCLabel { text: qsTr("Max Descent Rate") }
-                FactTextField {
-                    fact:               missionItem.terrainAdjustMaxDescentRate
+                QGCOptionsComboBox {
+                    Layout.columnSpan:  2
                     Layout.fillWidth:   true
+
+                    model: [
+                        {
+                            text:       qsTr("Images in turnarounds"),
+                            fact:       missionItem.cameraTriggerInTurnAround,
+                            enabled:    missionItem.hoverAndCaptureAllowed ? !missionItem.hoverAndCapture.rawValue : true,
+                            visible:    true
+                        },
+                        {
+                            text:       qsTr("Relative altitude"),
+                            enabled:    missionItem.cameraCalc.isManualCamera && !missionItem.followTerrain,
+                            visible:    QGroundControl.corePlugin.options.showMissionAbsoluteAltitude || (!missionItem.cameraCalc.distanceToSurfaceRelative && !missionItem.followTerrain),
+                            checked:    missionItem.cameraCalc.distanceToSurfaceRelative
+                        }
+                    ]
+
+                    onItemClicked: {
+                        if (index == 1) {
+                            missionItem.cameraCalc.distanceToSurfaceRelative = !missionItem.cameraCalc.distanceToSurfaceRelative
+                            console.log(missionItem.cameraCalc.distanceToSurfaceRelative)
+                        }
+                    }
                 }
             }
-        }
 
-        SectionHeader {
-            id:     statsHeader
-            text:   qsTr("Statistics")
-        }
+            QGCButton {
+                text:       qsTr("Rotate Entry Point")
+                onClicked:  missionItem.rotateEntryPoint()
+            }
 
-        TransectStyleComplexItemStats { }
-    } // Column
+            SectionHeader {
+                id:         terrainHeader
+                text:       qsTr("Terrain")
+                checked:    missionItem.followTerrain
+            }
+
+            ColumnLayout {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                spacing:        _margin
+                visible:        terrainHeader.checked
+
+                QGCCheckBox {
+                    id:         followsTerrainCheckBox
+                    text:       qsTr("Vehicle follows terrain")
+                    checked:    missionItem.followTerrain
+                    onClicked:  missionItem.followTerrain = checked
+                }
+
+                GridLayout {
+                    Layout.fillWidth:   true
+                    columnSpacing:      _margin
+                    rowSpacing:         _margin
+                    columns:            2
+                    visible:            followsTerrainCheckBox.checked
+
+                    QGCLabel { text: qsTr("Tolerance") }
+                    FactTextField {
+                        fact:               missionItem.terrainAdjustTolerance
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCLabel { text: qsTr("Max Climb Rate") }
+                    FactTextField {
+                        fact:               missionItem.terrainAdjustMaxClimbRate
+                        Layout.fillWidth:   true
+                    }
+
+                    QGCLabel { text: qsTr("Max Descent Rate") }
+                    FactTextField {
+                        fact:               missionItem.terrainAdjustMaxDescentRate
+                        Layout.fillWidth:   true
+                    }
+                }
+            }
+
+            SectionHeader {
+                id:     statsHeader
+                text:   qsTr("Statistics")
+            }
+
+            TransectStyleComplexItemStats { }
+        } // Grid Column
+
+        Column {
+            anchors.left:       parent.left
+            anchors.right:      parent.right
+            spacing:            _margin
+            visible:            tabBar.currentIndex == 1
+
+            CameraCalcCamera {
+                cameraCalc:                     missionItem.cameraCalc
+                vehicleFlightIsFrontal:         true
+                distanceToSurfaceLabel:         qsTr("Altitude")
+                distanceToSurfaceAltitudeMode:  missionItem.followTerrain ?
+                                                    QGroundControl.AltitudeModeAboveTerrain :
+                                                    missionItem.cameraCalc.distanceToSurfaceRelative
+                frontalDistanceLabel:           qsTr("Trigger Dist")
+                sideDistanceLabel:              qsTr("Spacing")
+            }
+        } // Camera Column
+    }
 } // Rectangle
