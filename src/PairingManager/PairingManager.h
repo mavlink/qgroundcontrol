@@ -82,6 +82,7 @@ public:
 #endif
     Q_INVOKABLE void connectToDevice            (QString name);
     Q_INVOKABLE void removePairedDevice         (QString name);
+    Q_INVOKABLE void setConnectingChannel       (int channel);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     Q_INVOKABLE void startNFCScan();

@@ -36,6 +36,8 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     _workTimer.setSingleShot(true);
     connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout);
     connect(&_remTimer, &QTimer::timeout, this, &MicrohardManager::_remTimeout);
+    connect(this, &MicrohardManager::pairingChannelChanged, this, &MicrohardManager::_updateSettings);
+
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
     _localIPAddr       = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
@@ -46,7 +48,6 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     _encryptionKey     = settings.value(kENC_KEY,        QString("1234567890")).toString();
     _pairingChannel    = settings.value(kPAIR_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
     _connectingChannel = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
-    _pairingChannel = DEFAULT_PAIRING_CHANNEL;
     settings.endGroup();
 }
 
@@ -149,9 +150,8 @@ MicrohardManager::configure()
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::updateSettings()
+MicrohardManager::_updateSettings()
 {
-    configure();
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
     settings.setValue(kLOCAL_IP, _localIPAddr);
@@ -162,7 +162,14 @@ MicrohardManager::updateSettings()
     settings.setValue(kPAIR_CH, QString::number(_pairingChannel));
     settings.setValue(kCONN_CH, QString::number(_connectingChannel));
     settings.endGroup();
+}
 
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::updateSettings()
+{
+    configure();
+    _updateSettings();
     _reset();
 }
 
@@ -349,9 +356,22 @@ MicrohardManager::setProductName(QString product)
                                   QString::number(i + frequencyStart - _channelMin) +
                                   " MHz");
         }
+
+        if (_pairingChannel < _channelMin) {
+            _pairingChannel = _channelMin;
+        } else if (_pairingChannel > _channelMax) {
+            _pairingChannel = _channelMax;
+        }
+        if (_connectingChannel < _channelMin) {
+            _connectingChannel = _channelMin;
+        } else if (_connectingChannel > _channelMax) {
+            _connectingChannel = _channelMax;
+        }
     }
 
     emit channelLabelsChanged();
+    emit pairingChannelChanged();
+    emit connectingChannelChanged();
 }
 
 //-----------------------------------------------------------------------------

@@ -38,6 +38,7 @@ public:
     Q_PROPERTY(QString      configUserName      READ configUserName                             NOTIFY configUserNameChanged)
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
+    Q_PROPERTY(int          pairingChannel      READ pairingChannel     WRITE setPairingChannel NOTIFY pairingChannelChanged)
     Q_PROPERTY(int          connectingChannel   READ connectingChannel                          NOTIFY connectingChannelChanged)
     Q_PROPERTY(QStringList  channelLabels       READ channelLabels                              NOTIFY channelLabelsChanged)
     Q_PROPERTY(int          channelMin          READ channelMin                                 NOTIFY channelMinChanged)
@@ -60,6 +61,7 @@ public:
     QString     configUserName                  () { return _configUserName; }
     QString     configPassword                  () { return _configPassword; }
     QString     encryptionKey                   () { return _encryptionKey; }
+    int         pairingChannel                  () { return _pairingChannel; }
     int         connectingChannel               () { return _connectingChannel; }
     QStringList channelLabels                   () { return _channelLabels; }
     int         channelMin                      () { return _channelMin; }
@@ -69,6 +71,7 @@ public:
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
     void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
+    void        setPairingChannel               (int val)     { _pairingChannel = val; emit pairingChannelChanged(); }
     void        updateSettings                  ();
     void        configure                       ();
     void        switchToPairingEncryptionKey    ();
@@ -85,6 +88,7 @@ signals:
     void    configUserNameChanged           ();
     void    configPasswordChanged           ();
     void    encryptionKeyChanged            ();
+    void    pairingChannelChanged           ();
     void    connectingChannelChanged        ();
     void    channelLabelsChanged            ();
     void    channelMinChanged               ();
@@ -133,4 +137,5 @@ private:
     QTime              _timeoutTimer;
     int                _channelMin = 1;
     int                _channelMax = 81;
+    void               _updateSettings();
 };

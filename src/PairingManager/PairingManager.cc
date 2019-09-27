@@ -415,6 +415,13 @@ PairingManager::removePairedDevice(QString name)
 }
 
 //-----------------------------------------------------------------------------
+void
+PairingManager::setConnectingChannel(int channel)
+{
+
+}
+
+//-----------------------------------------------------------------------------
 QString
 PairingManager::_random_string(uint length)
 {
