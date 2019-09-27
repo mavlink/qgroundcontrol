@@ -14,16 +14,12 @@ Column {
     anchors.right:  parent.right
     spacing:        _margin
 
-    visible: !usingPreset || !cameraSpecifiedInPreset
-
     property var    cameraCalc
     property bool   vehicleFlightIsFrontal:         true
     property string distanceToSurfaceLabel
     property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
-    property bool   usingPreset:                    false
-    property bool   cameraSpecifiedInPreset:        false
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
     property string _cameraName:        cameraCalc.cameraName.value
@@ -49,7 +45,6 @@ Column {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        !usingPreset
             Item { Layout.fillWidth: true }
             QGCLabel {
                 Layout.preferredWidth:  _root._fieldWidth
@@ -65,7 +60,6 @@ Column {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        !usingPreset
             QGCLabel { text: qsTr("Overlap"); Layout.fillWidth: true }
             FactTextField {
                 Layout.preferredWidth:  _root._fieldWidth
@@ -82,7 +76,6 @@ Column {
             text:                   qsTr("Select one:")
             Layout.preferredWidth:  parent.width
             Layout.columnSpan:      2
-            visible:                !usingPreset
         }
 
         GridLayout {
@@ -91,7 +84,6 @@ Column {
             columnSpacing:  _margin
             rowSpacing:     _margin
             columns:        2
-            visible:        !usingPreset
 
             QGCRadioButton {
                 id:                     fixedDistanceRadio
