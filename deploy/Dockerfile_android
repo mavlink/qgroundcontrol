@@ -5,34 +5,32 @@
 FROM ubuntu:xenial
 MAINTAINER Daniel Agar <daniel@agar.ca>
 
-ARG QT_VERSION=5.11.0
-
-ARG NDK_VERSION=r16b
-ARG SDK_PLATFORM=android-21
-ARG SDK_BUILD_TOOLS=21.1.2
+ARG QT_VERSION=5.12.4
+ARG NDK_VERSION=r20
+ARG SDK_BUILD_TOOLS=25.0.3
 ARG SDK_PACKAGES="tools platform-tools"
+ARG SDK_PLATFORM=android-21
 
-ENV DEBIAN_FRONTEND noninteractive
-
-ENV DISPLAY :99
-
-ENV QMAKESPEC android-g++
-
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:99
+ENV QMAKESPEC=android-clang
 ENV QT_PATH /opt/Qt
-ENV QT_ANDROID ${QT_PATH}/${QT_VERSION}/android_armv7
+ENV QT_PLATFORM=android_armv7
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_NDK_ARCH=arch-arm
+ENV ANDROID_NDK_EABI=llvm
+ENV ANDROID_NDK_HOST=linux-x86_64
+ENV ANDROID_NDK_TOOLCHAIN_PREFIX=arm-linux-androideabi
+ENV ANDROID_NDK_TOOLCHAIN_VERSION=4.9
+ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
+ENV ANDROID_NDK_PLATFORM=${SDK_PLATFORM}
+ENV ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk-${NDK_VERSION}
+ENV ANDROID_NDK_TOOLS_PREFIX=${ANDROID_NDK_TOOLCHAIN_PREFIX}
+ENV ANDROID_DEV=${ANDROID_NDK_ROOT}/platforms/${ANDROID_NDK_PLATFORM}/${ANDROID_NDK_ARCH}/usr
+ENV ANDROID_NDK_TOOLCHAIN=${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_TOOLCHAIN_PREFIX}-${ANDROID_NDK_TOOLCHAIN_VERSION}/prebuilt/${ANDROID_NDK_HOST}
 
-ENV ANDROID_HOME /opt/android-sdk
-
-ENV ANDROID_SDK_ROOT ${ANDROID_HOME}
-
-ENV ANDROID_NDK_ROOT /opt/android-ndk
-ENV ANDROID_NDK_TOOLCHAIN_PREFIX arm-linux-androideabi
-ENV ANDROID_NDK_TOOLCHAIN_VERSION 4.9
-ENV ANDROID_NDK_HOST linux-x86_64
-ENV ANDROID_NDK_PLATFORM ${SDK_PLATFORM}
-ENV ANDROID_NDK_TOOLS_PREFIX ${ANDROID_NDK_TOOLCHAIN_PREFIX}
-
-ENV PATH /usr/lib/ccache:${QT_ANDROID}/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
+ENV PATH=${QT_PATH}/${QT_VERSION}/${QT_PLATFORM}/bin:${ANDROID_NDK_TOOLCHAIN}/${ANDROID_NDK_TOOLCHAIN_PREFIX}/bin:${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_EABI}/prebuilt/${ANDROID_NDK_HOST}/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
+ENV PATH=/usr/lib/ccache:${PATH}
 
 RUN	dpkg --add-architecture i386 \
 	&& apt-get update && apt-get -y --quiet --no-install-recommends install \
@@ -72,13 +70,13 @@ COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
 
 # Download & unpack Qt toolchains & clean
 RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/official_releases/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run" \
-	&& QT_CI_PACKAGES=qt.qt5.$(echo "${QT_VERSION}" | tr -d .).android_armv7,qt.qt5.$(echo "${QT_VERSION}" | tr -d .).qtcharts /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
+	&& QT_PACKAGE_VER=$(echo "${QT_VERSION}" | tr -d .) QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.android_arm64_v8a,qt.qt5.${QT_PACKAGE_VER}.android_armv7,qt.qt5.${QT_PACKAGE_VER}.qtcharts.android_armv7,qt.qt5.${QT_PACKAGE_VER}.qtcharts.android_arm64_v8a,qt.qt5.${QT_PACKAGE_VER}.qtnetworkauth.android_armv7,qt.qt5.${QT_PACKAGE_VER}.qtnetworkauth.android_arm64_v8a /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
 	&& find "${QT_PATH}" -mindepth 1 -maxdepth 1 ! -name "${QT_VERSION}" -exec echo 'Cleaning Qt SDK: {}' \; -exec rm -r '{}' \; \
 	&& rm -rf /tmp/*
 
 # Download & unpack android SDK
 RUN curl -Lo /tmp/sdk-tools.zip 'https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip' \
-	&& mkdir -p /opt/android-sdk && unzip -q /tmp/sdk-tools.zip -d /opt/android-sdk && rm -f /tmp/sdk-tools.zip \
+	&& mkdir -p ${ANDROID_HOME} && unzip -q /tmp/sdk-tools.zip -d ${ANDROID_HOME} && rm -f /tmp/sdk-tools.zip \
 	&& yes | sdkmanager --licenses && sdkmanager --verbose "platforms;${SDK_PLATFORM}" "build-tools;${SDK_BUILD_TOOLS}" ${SDK_PACKAGES}
 
 # Download & unpack android NDK

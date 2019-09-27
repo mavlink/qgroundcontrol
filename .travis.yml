@@ -6,6 +6,8 @@ env:
   global:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
     - CONFIG=installer
+    - CONTAINER_NAME=builder_container
+    - RELEASE_DIR=$TRAVIS_BUILD_DIR/release
 
 git:
   depth: false
@@ -16,11 +18,20 @@ git:
   dist: xenial
   services: docker
   sudo: required
+  env:
+    - DOCKERFILE=Dockerfile_linux
+    - DOCKER_IMAGE=auterion/ags_builder_linux
+    - SH="docker exec -it $CONTAINER_NAME bash -c"
   before_install:
-    - docker build -f deploy/${DOCKERFILE} -t builder .
-    - docker run builder --name build_container -td ${DOCKERFILE} /bin/bash
+    - docker build -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
+    - docker run --name $CONTAINER_NAME --rm -td -v `pwd`:`pwd` -w `pwd` $DOCKER_IMAGE
   script:
-    - docker exec -it build_container bash -c "lsb_release -a"
+    - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $PWD/qgroundcontrol.pro CONFIG+=$CONFIG"
+    - $SH "cd $SHADOW_BUILD_DIR; make -j`nproc --all`"
+    - mkdir $RELEASE_DIR
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/AuterionGS/package/qgroundcontrol.* $RELEASE_DIR
+     #- ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
+
   # TODO: replaced by Docker builds or refactor?
   #before_deploy:
   #  # create linux appimage
@@ -30,19 +41,21 @@ git:
   #    fi
 
 matrix:
-  fast_finish: true
   include:
     - name: Linux Installer
       <<: *template_linux
-      env: DOCKERFILE=Dockerfile_linux
     - name: CentOS Installer
       <<: *template_linux
-      env: DOCKERFILE=Dockerfile_centos
+      env:
+        - DOCKERFILE=Dockerfile_centos
+        - DOCKER_IMAGE=auterion/ags_builder_centos
       script:
-        - docker exec -it build_container bash -c "cat /etc/centos-release"
+        - $SH "cat /etc/centos-release"
     - name: Android Installer
       <<: *template_linux
-      env: DOCKERFILE=Dockerfile_android
+      env:
+        - DOCKERFILE=Dockerfile_android
+        - DOCKER_IMAGE=ags_builder_linux
       # TODO: still required? if yes move into dockerfile
       #before_script:
       #  - cd ${TRAVIS_BUILD_DIR}
@@ -50,49 +63,49 @@ matrix:
       #  -  git remote set-branches origin 'master'
       #  -  git fetch --tags origin master
       #  -  ./tools/update_android_version.sh ${BITNESS}
-  exclude:
-    - name: Linux Debug
-      <<: *template_linux
-      services: xvfb
-      env:
-        - CONFIG=debug
-        - DOCKERFILE=Dockerfile_linux
-        - QT_FATAL_WARNINGS=1
-      script:
-        - docker exec -it build_container bash -c "lsb_release -a"
-      # TODO:
-      #  # unit tests linux
-      #  - mkdir -p ~/.config/QtProject/
-      #  - cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
-      #  - ./debug/qgroundcontrol-start.sh --unittest
-      #before_deploy: skip
-    - name: OSX Installer
-      os: osx
-      osx_image: xcode9.2
-      env:
-        - QT_DIR=Qt5.11-clang_64/5.11.0/clang_64
-        - QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins
-        - QML2_IMPORT_PATH=/tmp/$QT_DIR/qml
-        - PATH=/tmp/$QT_DIR/bin:$PATH
-        - IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang`
-        - IOS_CCACHE_CXX=`/usr/bin/xcrun sdk iphoneos -find clang++`
-        - PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
-      install:
-        # osx dependencies: qt (master builds only: gstreamer, gstreamer-devel)
-        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-clang_64-min.tar.bz2
-        - tar jxf Qt5.11.0-clang_64-min.tar.bz2 -C /tmp
-        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2
-        - sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
-        # ios dependencies: qt
-        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-ios-min.tar.bz2
-      script:
-        - mkdir ${SHADOW_BUILD_DIR}
-        - cd ${SHADOW_BUILD_DIR}
-        # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
-        - make -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC}
-        - xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
-    - name: Windows Installer
-      os: windows
+  #TODO: implement further build cases
+#  exclude:
+#    - name: Linux Debug
+#      <<: *template_linux
+#      services: xvfb
+#      env:
+#        - CONFIG=debug
+#        - DOCKERFILE=Dockerfile_linux
+#        - QT_FATAL_WARNINGS=1
+#      script:
+#        - docker exec -it $CONTAINER_NAME bash -c "lsb_release -a"
+#      # TODO:
+#      #  # unit tests linux
+#      #  - mkdir -p ~/.config/QtProject/
+#      #  - cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
+#      #  - ./debug/qgroundcontrol-start.sh --unittest
+#      #before_deploy: skip
+#    - name: OSX Installer
+#      os: osx
+#      osx_image: xcode9.2
+#      env:
+#        - QT_DIR=Qt5.11-clang_64/5.11.0/clang_64
+#        - QT_QPA_PLATFORM_PLUGIN_PATH=/tmp/$QT_DIR/plugins
+#        - QML2_IMPORT_PATH=/tmp/$QT_DIR/qml
+#        - PATH=/tmp/$QT_DIR/bin:$PATH
+#        - IOS_CCACHE_CC=`/usr/bin/xcrun -sdk iphoneos -find clang`
+#        - IOS_CCACHE_CXX=`/usr/bin/xcrun sdk iphoneos -find clang++`
+#        - PATH=/tmp/Qt5.9-ios/5.9.3/ios/bin:$PATH
+#      install:
+#        # osx dependencies: qt (master builds only: gstreamer, gstreamer-devel)
+#        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.11.0-clang_64-min.tar.bz2
+#        - tar jxf Qt5.11.0-clang_64-min.tar.bz2 -C /tmp
+#        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/osx-gstreamer.tar.bz2
+#        - sudo tar jxf osx-gstreamer.tar.bz2 -C /Library/Frameworks
+#        # ios dependencies: qt
+#        - wget --quiet https://s3-us-west-2.amazonaws.com/qgroundcontrol/dependencies/Qt5.9.3-ios-min.tar.bz2
+#      script:
+#        - mkdir $SHADOW_BUILD_DIR
+#        - cd $SHADOW_BUILD_DIR
+#        - make -r $TRAVIS_BUILD_DIR/qgroundcontrol.pro CONFIG+=$CONFIG
+#        - xcodebuild -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty -c && $(exit ${PIPESTATUS[0]})
+#    - name: Windows Installer
+#      os: windows
 
 
 before_install:
@@ -100,21 +113,21 @@ before_install:
   - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc
   - git submodule update --init --recursive
 
-
+#TODO: finalize release process
 deploy:
   provider: releases
   api_key:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
   file_glob: true
   file:
-    - ${SHADOW_BUILD_DIR}/release/package/qgroundcontrol.*
-    - ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
+    - $RELEASE_DIR/package/qgroundcontrol.*
+    - $RELEASE_DIR/package/QGroundControl.*
   skip_cleanup: true
   on:
     tags: true
     condition: $CONFIG = installer
     repo: Auterion/auterion-qgroundcontrol
-    if: branch = master
+    #if: branch = master
 
 notifications:
   slack:
