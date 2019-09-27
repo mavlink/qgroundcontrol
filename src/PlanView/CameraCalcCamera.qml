@@ -14,16 +14,12 @@ Column {
     anchors.right:  parent.right
     spacing:        _margin
 
-    visible: !usingPreset || !cameraSpecifiedInPreset
-
     property var    cameraCalc
     property bool   vehicleFlightIsFrontal:         true
     property string distanceToSurfaceLabel
     property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
-    property bool   usingPreset:                    false
-    property bool   cameraSpecifiedInPreset:        false
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
     property string _cameraName:        cameraCalc.cameraName.value
