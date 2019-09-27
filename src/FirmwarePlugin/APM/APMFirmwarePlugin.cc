@@ -656,6 +656,10 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
             vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
         }
     }
+
+    // Streaming of home position is required for various features in QGC to work correctly. Otherwise relative altitudes
+    // cannot be calculated correctly.
+    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, true /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
 }
 
 
