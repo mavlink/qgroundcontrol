@@ -33,6 +33,7 @@ VisualMissionItem::VisualMissionItem(Vehicle* vehicle, bool flyView, QObject* pa
     , _altPercent               (0.0)
     , _terrainPercent           (qQNaN())
     , _terrainCollision         (false)
+    , _terrainCustomDEM         (false)
     , _azimuth                  (0.0)
     , _distance                 (0.0)
     , _missionGimbalYaw         (qQNaN())
@@ -55,6 +56,7 @@ VisualMissionItem::VisualMissionItem(const VisualMissionItem& other, bool flyVie
     , _altPercent               (0.0)
     , _terrainPercent           (qQNaN())
     , _terrainCollision         (false)
+    , _terrainCustomDEM         (false)
     , _azimuth                  (0.0)
     , _distance                 (0.0)
     , _wizardMode               (false)
@@ -142,6 +144,13 @@ void VisualMissionItem::setTerrainCollision(bool terrainCollision)
     if (terrainCollision != _terrainCollision) {
         _terrainCollision = terrainCollision;
         emit terrainCollisionChanged(terrainCollision);
+    }
+}
+
+void VisualMissionItem::setTerrainCustomDEM(bool terrainCustomDEM){
+    if (terrainCustomDEM != _terrainCustomDEM) {
+        _terrainCustomDEM = terrainCustomDEM;
+        emit terrainCustomDEMChanged(terrainCustomDEM);
     }
 }
 

@@ -85,6 +85,7 @@ public:
     Q_PROPERTY(double altPercent        READ altPercent         WRITE setAltPercent         NOTIFY altPercentChanged)           ///< Percent of total altitude change in mission altitude
     Q_PROPERTY(double terrainPercent    READ terrainPercent     WRITE setTerrainPercent     NOTIFY terrainPercentChanged)       ///< Percent of terrain altitude in mission altitude
     Q_PROPERTY(bool   terrainCollision  READ terrainCollision   WRITE setTerrainCollision   NOTIFY terrainCollisionChanged)     ///< true: Item collides with terrain
+    Q_PROPERTY(bool   terrainCustomDEM  READ terrainCustomDEM   WRITE setTerrainCollision   NOTIFY terrainCustomDEMChanged)     ///< true: Item uses custom DEM
     Q_PROPERTY(double azimuth           READ azimuth            WRITE setAzimuth            NOTIFY azimuthChanged)              ///< Azimuth to previous waypoint
     Q_PROPERTY(double distance          READ distance           WRITE setDistance           NOTIFY distanceChanged)             ///< Distance to previous waypoint
 
@@ -108,6 +109,7 @@ public:
     void setAltPercent      (double altPercent);
     void setTerrainPercent  (double terrainPercent);
     void setTerrainCollision(bool terrainCollision);
+    void setTerrainCustomDEM(bool terrainCustomDEM);
     void setAzimuth         (double azimuth);
     void setDistance        (double distance);
     void setWizardMode      (bool wizardMode);
@@ -183,6 +185,7 @@ signals:
     void altPercentChanged              (double altPercent);
     void terrainPercentChanged          (double terrainPercent);
     void terrainCollisionChanged        (double terrainCollision);
+    void terrainCustomDEMChanged        (double terrainCustomDEM);
     void azimuthChanged                 (double azimuth);
     void commandDescriptionChanged      (void);
     void commandNameChanged             (void);
@@ -224,6 +227,7 @@ protected:
     double      _altPercent;                ///< Percent of total altitude change in mission
     double      _terrainPercent;            ///< Percent of terrain altitude for coordinate
     bool        _terrainCollision;          ///< true: item collides with terrain
+    bool        _terrainCustomDEM;          ///< true: item uses Custom DEM 
     double      _azimuth;                   ///< Azimuth to previous waypoint
     double      _distance;                  ///< Distance to previous waypoint
     QString     _editorQml;                 ///< Qml resource for editing item

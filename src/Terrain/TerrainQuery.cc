@@ -33,7 +33,7 @@ Q_GLOBAL_STATIC(TerrainAtCoordinateBatchManager, _TerrainAtCoordinateBatchManage
 Q_GLOBAL_STATIC(TerrainTileManager, _terrainTileManager)
 
 // Will be added to SettingsManager and connected to a menu
-const QString elevationProvider = "Geotiff Elevation";
+const QString elevationProvider = "Airmap Elevation";
 
 TerrainAirMapQuery::TerrainAirMapQuery(QObject* parent)
     : TerrainQueryInterface(parent)
@@ -336,6 +336,9 @@ TerrainTileManager::TerrainTileManager(void)
 }
 
 void createCustomDEMTerrainTile(QString fname){
+    if(_terrainTileManager->custom_dem_tile != nullptr){
+        delete _terrainTileManager->custom_dem_tile;
+    }
     _terrainTileManager->custom_dem_tile = new GeotiffTerrainTile(fname.toUtf8());
 }
 

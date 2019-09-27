@@ -277,17 +277,17 @@ bool GeotiffTerrainTile::isIn(const QGeoCoordinate& coordinate) {
   int xy[2];
   lonlatToPixel(coordinate, xy);
 
-  qDebug() << "GeotiffTerrainTile isIn " << xy[0] << " " << xy[1];
-
   if (xy[0] < poBand->GetXSize() && xy[1] < poBand->GetYSize()) {
     int ret = poBand->GetDataCoverageStatus(xy[0], xy[1], 1, 1, 0, nullptr);
     if (ret == GDAL_DATA_COVERAGE_STATUS_DATA){
         // If data is NoDataValue, return false
-        qDebug() << "GeotiffTerrainTile isIn " << (elevation(coordinate)) << coordinate;
+        if (elevation(coordinate) != poBand->GetNoDataValue())
+            qCDebug(TerrainTileLog) << "GeotiffTerrainTile isIn "
+                                    << (elevation(coordinate)) << coordinate;
         return (elevation(coordinate)!=poBand->GetNoDataValue());
     }
   }
-  qDebug() << "GeotiffTerrainTile isIn " << "false" << coordinate.longitude() <<  coordinate.latitude();
+  qCDebug(TerrainTileLog) << "GeotiffTerrainTile isIn " << "false" << coordinate.longitude() <<  coordinate.latitude();
   return false;
 }
 
@@ -327,8 +327,6 @@ int GeotiffTerrainTile::lonlatToPixel(const QGeoCoordinate& c, int xy[2]) {
   xy[0] = (int)(((lon - adfGeoTransform[0]) / adfGeoTransform[1]));
   xy[1] = (int)(((lat - adfGeoTransform[3]) / adfGeoTransform[5]));
 
-  qDebug() << "GeotiffTerrainTile lonlatToPixel " << ret<< " " << lon << " " << lat;
-
   return ret;
 }
 
@@ -338,7 +336,7 @@ GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
 
   QString fname = QString(buff);
 
-  qDebug() << "GeotiffTerrainTile : create with file: " << fname;
+  qCDebug(TerrainTileLog) << "GeotiffTerrainTile : create with file: " << fname;
 
   GDALAllRegister();
   poDataset = (GDALDataset *)GDALOpen(fname.toStdString().c_str(), GA_ReadOnly);

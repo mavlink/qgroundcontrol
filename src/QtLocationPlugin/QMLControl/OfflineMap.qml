@@ -212,10 +212,6 @@ Item {
 
         onAcceptedForLoad: {
             // Instanciate custom dem TerrainTile
-
-            //if(!QGroundControl.mapEngineManager.importSets(file)) {
-            //    showList();
-            //}
             QGroundControl.mapEngineManager.newCustomDEMTerrainTile(file)
             close()
         }

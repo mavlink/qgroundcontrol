@@ -160,9 +160,9 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
     } else {
         qWarning() <<  "QGCMapEngineManager::startDownload() No Tiles to save";
     }
-    if (mapType != "Geotiff Elevation" && _fetchElevation) {
+    if (mapType != "Airmap Elevation" && _fetchElevation) {
         QGCCachedTileSet* set = new QGCCachedTileSet(name + " Elevation");
-        set->setMapTypeStr("Geotiff Elevation");
+        set->setMapTypeStr("Airmap Elevation");
         set->setTopleftLat(_topleftLat);
         set->setTopleftLon(_topleftLon);
         set->setBottomRightLat(_bottomRightLat);
@@ -171,7 +171,7 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setMaxZoom(_maxZoom);
         set->setTotalTileSize(_elevationSet.tileSize);
         set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
-        set->setType("Geotiff Elevation");
+        set->setType("Airmap Elevation");
         QGCCreateTileSetTask* task = new QGCCreateTileSetTask(set);
         //-- Create Tile Set (it will also create a list of tiles to download)
         connect(task, &QGCCreateTileSetTask::tileSetSaved, this, &QGCMapEngineManager::_tileSetSaved);
