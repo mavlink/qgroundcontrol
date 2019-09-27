@@ -21,7 +21,8 @@
 
 QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 
-static const char* jsonFileName = "pairing.json";
+static const char*  jsonFileName = "pairing.json";
+static const qint64 min_time_between_connects = 5000;
 
 //-----------------------------------------------------------------------------
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -34,9 +35,11 @@ PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
     connect(this, &PairingManager::startUpload, this, &PairingManager::_startUpload);
     connect(this, &PairingManager::startCommand, this, &PairingManager::_startCommand);
     connect(&_uploadTimer, &QTimer::timeout, this, &PairingManager::_startUploadRequest);
+    connect(this, &PairingManager::connectToPairedDevice, this, &PairingManager::_connectToPairedDevice);
     _uploadTimer.setSingleShot(true);
-    connect(&_reconnectTimer, &QTimer::timeout, this, &PairingManager::autoConnect);
-    _reconnectTimer.setSingleShot(true);
+    connect(&_reconnectTimer, &QTimer::timeout, this, &PairingManager::_autoConnect);
+    _reconnectTimer.setSingleShot(false);
+    _reconnectTimer.start(1000);
     _readPairingConfig();
 }
 
@@ -108,19 +111,19 @@ PairingManager::pairedDeviceNameList()
 void
 PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicleID)
 {
-    Q_UNUSED(vehicleID);
-    if (!active) {
-        QMapIterator<QString, LinkInterface*> i(_connectedDevices);
-        while (i.hasNext()) {
-            i.next();
-            if (i.value() == link) {
-                _deviceToConnect = i.key();
-                _reconnectTimer.start(5000);
+    Q_UNUSED(vehicleID)
+
+    QMapIterator<QString, LinkInterface*> i(_connectedDevices);
+    while (i.hasNext()) {
+        i.next();
+        if (i.value() == link) {
+            if (!active) {
+                connectToDevice(i.key());
+            } else {
+                _devicesToConnect.remove(i.key());
             }
+            break;
         }
-    } else {
-        _reconnectTimer.stop();
-        _deviceToConnect = "";
     }
     emit connectedListChanged();
     emit pairedListChanged();
@@ -138,6 +141,7 @@ PairingManager::_createUDPLink(const QString name, quint16 port)
     LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
     connect(link, &LinkInterface::activeChanged, this, &PairingManager::_linkActiveChanged);
     _connectedDevices[name] = link;
+    _updateConnectedDevices();
     emit connectedListChanged();
     emit pairedListChanged();
 }
@@ -149,16 +153,8 @@ PairingManager::_removeUDPLink(const QString name)
     if (_connectedDevices.contains(name)) {
         _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
         _connectedDevices.remove(name);
-        if (_connectedDevice == name) {
-            _setLastConnectedDevice("");
-            _toolbox->videoManager()->stopVideo();
-        }
-        _toolbox->linkManager()->disconnectLink(_connectedDevices[name]);
-        _connectedDevices.remove(name);
-        if (_connectedDevice == name) {
-            _setLastConnectedDevice("");
-            _toolbox->videoManager()->stopVideo();
-        }
+        _updateConnectedDevices();
+        _toolbox->videoManager()->stopVideo();
         emit connectedListChanged();
         emit pairedListChanged();
     }
@@ -174,7 +170,6 @@ PairingManager::_connectionCompleted(const QString response)
     }
 
     _createUDPLink(a[0], 24550);
-    _setLastConnectedDevice(a[0]);
     _toolbox->videoManager()->startVideo();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 
@@ -312,18 +307,86 @@ PairingManager::_parsePairingJsonFile()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::connectToPairedDevice(QString name)
+PairingManager::connectToDevice(QString name)
 {
     if (name.isEmpty()) {
         return;
     }
-    setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
+
+    _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_autoConnect()
+{
+    if (_pairingActive) {
+        return;
+    }
+
+    QString connectingTo = "";
+
+    for (QString name : _devicesToConnect.keys())
+    {
+        if (!connectingTo.isEmpty()) {
+            connectingTo += ", ";
+        }
+        connectingTo += name;
+        qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
+        if (currentTime - _devicesToConnect.value(name) >= min_time_between_connects) {
+            _devicesToConnect[name] = currentTime;
+            emit connectToPairedDevice(name);
+        }
+    }
+    if (!connectingTo.isEmpty()) {
+        setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(connectingTo));
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_connectToPairedDevice(QString name)
+{
     QFile file(_pairingCacheFile(name));
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json = file.readAll();
     if (!json.isEmpty()) {
         jsonReceived(json);
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+PairingManager::_updateConnectedDevices()
+{
+    QFile file(_pairingCacheFile("gcs"));
+    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QString jsonEnc = file.readAll();
+    QString json = QString::fromStdString(_aes.decrypt(jsonEnc.toStdString()));
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(json.toUtf8());
+    file.close();
+
+    if (jsonDoc.isNull() || !jsonDoc.isObject()) {
+        return;
+    }
+
+    QJsonObject jsonObj = jsonDoc.object();
+    jsonObj.remove("CONNECTED_DEVICE");
+    QString cd = "";
+    QMapIterator<QString, LinkInterface*> i(_connectedDevices);
+    while (i.hasNext()) {
+        i.next();
+        if (!cd.isEmpty()) {
+            cd += ";";
+        }
+        cd += i.key();
+    }
+    if (!cd.isEmpty()) {
+        jsonObj.insert("CONNECTED_DEVICE", cd);
+    }
+    jsonDoc.setObject(jsonObj);
+
+    _writeJson(jsonDoc, _pairingCacheFile("gcs"));
 }
 
 //-----------------------------------------------------------------------------
@@ -345,7 +408,7 @@ PairingManager::removePairedDevice(QString name)
 
     _removeUDPLink(name);
 
-    QString pairURL = "http://" + map["IP"].toString() + ":" + pport + "/unpair";;
+    QString pairURL = "http://" + map["IP"].toString() + ":" + pport + "/unpair";
     emit startCommand(pairURL);
     _updatePairedDeviceNameList();
     emit pairedListChanged();
@@ -392,53 +455,14 @@ PairingManager::_readPairingConfig()
     }
 
     if (jsonObj.contains("CONNECTED_DEVICE")) {
-        _deviceToConnect = jsonObj.value("CONNECTED_DEVICE").toString();
+        foreach (auto cd, jsonObj.value("CONNECTED_DEVICE").toString().split(";")) {
+            connectToDevice(cd);
+        }
     }
     _encryptionKey = jsonObj.value("EK").toString();
     _publicKey = jsonObj.value("PublicKey").toString();
     _rsa.generate_private(jsonObj.value("PrivateKey").toString().toStdString());
     _rsa.generate_public(_publicKey.toStdString());
-}
-//-----------------------------------------------------------------------------
-void
-PairingManager::autoConnect()
-{
-    if (_pairingActive) {
-        return;
-    }
-    connectToPairedDevice(_deviceToConnect);
-}
-
-//-----------------------------------------------------------------------------
-void
-PairingManager::_setLastConnectedDevice(QString name)
-{
-    if (!name.isEmpty()) {
-        _connectedDeviceValid = true;
-    } else {
-        _deviceToConnect = "";
-    }
-    _connectedDevice = name;
-
-    QFile file(_pairingCacheFile("gcs"));
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QString jsonEnc = file.readAll();
-    QString json = QString::fromStdString(_aes.decrypt(jsonEnc.toStdString()));
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(json.toUtf8());
-    file.close();
-
-    if (jsonDoc.isNull() || !jsonDoc.isObject()) {
-        return;
-    }
-
-    QJsonObject jsonObj = jsonDoc.object();
-    jsonObj.remove("CONNECTED_DEVICE");
-    if (!_connectedDevice.isEmpty()) {
-        jsonObj.insert("CONNECTED_DEVICE", _connectedDevice);
-    }
-    jsonDoc.setObject(jsonObj);
-
-    _writeJson(jsonDoc, _pairingCacheFile("gcs"));
 }
 
 //-----------------------------------------------------------------------------
@@ -587,7 +611,6 @@ PairingManager::_parsePairingJson(QString jsonEnc, bool updateSettings)
     }
     if (linkType == "MH") {
         if (!connecting) {
-            _setLastConnectedDevice("");
             _toolbox->videoManager()->stopVideo();
             _toolbox->microhardManager()->switchToPairingEncryptionKey();
         } else if (_remotePairingMap.contains("EK")) {
@@ -771,12 +794,10 @@ PairingManager::stopPairing()
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::disconnectDevice(const QString& name) {
+PairingManager::disconnectDevice(const QString& name)
+{
     _removeUDPLink(name);
-    if (_connectedDevice == name) {
-        _setLastConnectedDevice("");
-        _toolbox->videoManager()->stopVideo();
-    }
+    _toolbox->videoManager()->stopVideo();
 }
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC

@@ -260,7 +260,7 @@ Rectangle {
                             QGCComboBox {
                                 id:             connectingChannel
                                 model:          QGroundControl.microhardManager.channelLabels
-                                currentIndex:   QGroundControl.microhardManager.connectingChannel - 1
+                                currentIndex:   QGroundControl.microhardManager.connectingChannel - QGroundControl.microhardManager.channelMin
                                 Layout.minimumWidth: _valueWidth
                             }
                         }
@@ -298,7 +298,7 @@ Rectangle {
                                                                               configUserName.text,
                                                                               configPassword.text,
                                                                               encryptionKey.text,
-                                                                              connectingChannel.currentIndex + 1)
+                                                                              connectingChannel.currentIndex + QGroundControl.microhardManager.channelMin)
                             }
 
                         }
