@@ -134,8 +134,6 @@ void TransectStyleComplexItem::setDirty(bool dirty)
 
 void TransectStyleComplexItem::_save(QJsonObject& complexObject)
 {
-    ComplexMissionItem::_saveItem(complexObject);
-
     QJsonObject innerObject;
 
     innerObject[JsonHelper::jsonVersionKey] =       1;
@@ -189,8 +187,6 @@ void TransectStyleComplexItem::setSequenceNumber(int sequenceNumber)
 
 bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forPresets, QString& errorString)
 {
-    ComplexMissionItem::_loadItem(complexObject);
-
     QList<JsonHelper::KeyValidateInfo> keyInfoList = {
         { _jsonTransectStyleComplexItemKey, QJsonValue::Object, true },
     };
@@ -248,7 +244,7 @@ bool TransectStyleComplexItem::_load(const QJsonObject& complexObject, bool forP
     }
 
     // Load CameraCalc data
-    if (!_cameraCalc.load(innerObject[_jsonCameraCalcKey].toObject(), forPresets, cameraInPreset(), errorString)) {
+    if (!_cameraCalc.load(innerObject[_jsonCameraCalcKey].toObject(), errorString)) {
         return false;
     }
 
