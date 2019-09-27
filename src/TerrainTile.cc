@@ -336,8 +336,12 @@ GeotiffTerrainTile::~GeotiffTerrainTile() { GDALClose(poDataset); }
 
 GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
 
+  QString fname = QString(buff);
+
+  qDebug() << "GeotiffTerrainTile : create with file: " << fname;
+
   GDALAllRegister();
-  poDataset = (GDALDataset *)GDALOpen("/home/pierre/Downloads/dsm.tif", GA_ReadOnly);
+  poDataset = (GDALDataset *)GDALOpen(fname.toStdString().c_str(), GA_ReadOnly);
   if (poDataset == NULL) {
     _isValid = false;
   }

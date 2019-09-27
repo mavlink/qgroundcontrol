@@ -19,6 +19,7 @@
 #include "QGCApplication.h"
 #include "QGCMapTileSet.h"
 #include "QGCMapUrlEngine.h"
+#include "TerrainQuery.h"
 
 #include <QSettings>
 #include <QStorageInfo>
@@ -575,4 +576,9 @@ QGCMapEngineManager::_updateDiskFreeSpace()
             emit freeDiskSpaceChanged();
         }
     }
+}
+
+void QGCMapEngineManager::newCustomDEMTerrainTile(QString fname){
+    qDebug() << "QGCMapEngineManager newCustomDEMTerrainTile";
+    createCustomDEMTerrainTile(fname);
 }

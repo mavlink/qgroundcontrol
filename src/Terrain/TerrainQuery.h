@@ -118,6 +118,8 @@ public:
     void addCoordinateQuery (TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates);
     void addPathQuery       (TerrainOfflineAirMapQuery* terrainQueryInterface, const QGeoCoordinate& startPoint, const QGeoCoordinate& endPoint);
 
+    GeotiffTerrainTile  *custom_dem_tile;
+
 private slots:
     void _terrainDone       (QByteArray responseBytes, QNetworkReply::NetworkError error);
 
@@ -295,3 +297,4 @@ private:
     TerrainAirMapQuery _terrainQuery;
 };
 
+void createCustomDEMTerrainTile(QString fname);

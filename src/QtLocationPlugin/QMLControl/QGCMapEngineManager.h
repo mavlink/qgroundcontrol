@@ -102,6 +102,8 @@ public:
     // Override from QGCTool
     void setToolbox(QGCToolbox *toolbox);
 
+    Q_INVOKABLE void newCustomDEMTerrainTile(QString fname); 
+
 signals:
     void tileCountChanged       ();
     void tileSizeChanged        ();
@@ -115,6 +117,7 @@ signals:
     void actionProgressChanged  ();
     void importActionChanged    ();
     void importReplaceChanged   ();
+    
 
 public slots:
     void taskError              (QGCMapTask::TaskType type, QString error);

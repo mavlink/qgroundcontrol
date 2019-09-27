@@ -205,6 +205,21 @@ Item {
             QGroundControl.mapEngineManager.saveSetting(mapKey, mapType)
         }
     }
+    QGCFileDialog {
+        id:             demfileDialog
+        folder:         QGroundControl.settingsManager.appSettings.missionSavePath
+        nameFilters:    ["DEM (*.tiff,*.tif,*.geotiff)"]
+
+        onAcceptedForLoad: {
+            // Instanciate custom dem TerrainTile
+
+            //if(!QGroundControl.mapEngineManager.importSets(file)) {
+            //    showList();
+            //}
+            QGroundControl.mapEngineManager.newCustomDEMTerrainTile(file)
+            close()
+        }
+    }
 
     QGCFileDialog {
         id:             fileDialog
@@ -1004,6 +1019,16 @@ Item {
                 onClicked: {
                     QGroundControl.mapEngineManager.importAction = QGCMapEngineManager.ActionNone
                     importDialog.open()
+                }
+            }
+            QGCButton {
+                text:           qsTr("Import DEM")
+                width:          _buttonSize
+                visible:        QGroundControl.corePlugin.options.showOfflineMapImport
+                onClicked: {
+                    demfileDialog.title = qsTr("Import Tile Set")
+                    demfileDialog.selectExisting = true
+                    demfileDialog.openForLoad()
                 }
             }
             QGCButton {

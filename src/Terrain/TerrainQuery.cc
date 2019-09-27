@@ -333,7 +333,10 @@ void TerrainOfflineAirMapQuery::_signalCarpetHeights(bool success, double minHei
 
 TerrainTileManager::TerrainTileManager(void)
 {
+}
 
+void createCustomDEMTerrainTile(QString fname){
+    _terrainTileManager->custom_dem_tile = new GeotiffTerrainTile(fname.toUtf8());
 }
 
 void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates)
@@ -412,7 +415,22 @@ bool TerrainTileManager::_getAltitudesForCoordinates(const QList<QGeoCoordinate>
         qCDebug(TerrainQueryLog) << "TerrainTileManager::_getAltitudesForCoordinates hash:coordinate" << tileHash << coordinate;
 
         _tilesMutex.lock();
-        if (_tiles.contains(tileHash)) {
+        // Test Custom DEM tile first
+        if (custom_dem_tile != nullptr && custom_dem_tile->isIn(coordinate)) {
+            double elevation = custom_dem_tile->elevation(coordinate);
+            if (qIsNaN(elevation)) {
+                error = true;
+                qCWarning(TerrainQueryLog)
+                    << "TerrainTileManager::_getAltitudesForCoordinates "
+                       "Internal Error: negative elevation in tile cache";
+            } else {
+                qCDebug(TerrainQueryLog)
+                    << "TerrainTileManager::_getAltitudesForCoordinates "
+                       "returning elevation from tile cache"
+                    << elevation;
+            }
+            altitudes.push_back(elevation);
+        } else if (_tiles.contains(tileHash)) {
             if (_tiles[tileHash]->isIn(coordinate)) {
                 double elevation = _tiles[tileHash]->elevation(coordinate);
                 if (qIsNaN(elevation)) {

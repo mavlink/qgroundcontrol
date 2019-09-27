@@ -99,7 +99,7 @@ GeotiffElevationProvider::_getURL(int x, int y, int zoom,
     Q_UNUSED(zoom);
 
     // Params
-    int resolution = 3600;
+    int resolution = 512;
     QString layer = "QGCTerrainTest:dtm";
 
     // Infos here https://wiki.openstreetmap.org/wiki/Zoom_levels
@@ -107,8 +107,8 @@ GeotiffElevationProvider::_getURL(int x, int y, int zoom,
     double lon = tilex2long(x,zoom);
     double lat = tiley2lat(y,zoom);
 
-    double delta_lat  = 40075016.686 * cos(lat)/pow(2,zoom);
-    double delta_long = 360/pow(2,zoom);
+    double delta_lat  = (40075016.686 * cos(lat*M_PI/180.))/pow(2,zoom);
+    double delta_long = 360./pow(2,zoom);
 
     return QString("https://services.aeronavics.com/geoserver/QGCTerrainTest/wms?service=WMS&version=1.1.0&request=GetMap&layers=%1&bbox=%2,%3,%4,%5&width=%6&height=%7&srs=EPSG:32760&format=image/geotiff")
         .arg(layer)
