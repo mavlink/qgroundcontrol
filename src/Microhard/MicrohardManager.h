@@ -40,6 +40,8 @@ public:
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
     Q_PROPERTY(int          connectingChannel   READ connectingChannel                          NOTIFY connectingChannelChanged)
     Q_PROPERTY(QStringList  channelLabels       READ channelLabels                              NOTIFY channelLabelsChanged)
+    Q_PROPERTY(int          channelMin          READ channelMin                                 NOTIFY channelMinChanged)
+    Q_PROPERTY(int          channelMax          READ channelMax                                 NOTIFY channelMaxChanged)
 
     Q_INVOKABLE bool setIPSettings              (QString localIP, QString remoteIP, QString netMask, QString cfgUserName, QString cfgPassword, QString encyrptionKey, int channel);
 
@@ -60,6 +62,8 @@ public:
     QString     encryptionKey                   () { return _encryptionKey; }
     int         connectingChannel               () { return _connectingChannel; }
     QStringList channelLabels                   () { return _channelLabels; }
+    int         channelMin                      () { return _channelMin; }
+    int         channelMax                      () { return _channelMax; }
 
     void        setLocalIPAddr                  (QString val) { _localIPAddr = val; emit localIPAddrChanged(); }
     void        setRemoteIPAddr                 (QString val) { _remoteIPAddr = val; emit remoteIPAddrChanged(); }
@@ -83,6 +87,8 @@ signals:
     void    encryptionKeyChanged            ();
     void    connectingChannelChanged        ();
     void    channelLabelsChanged            ();
+    void    channelMinChanged               ();
+    void    channelMaxChanged               ();
 
 private slots:
     void    _connectedLoc                   (int status);
@@ -127,5 +133,4 @@ private:
     QTime              _timeoutTimer;
     int                _channelMin = 1;
     int                _channelMax = 81;
-
 };
