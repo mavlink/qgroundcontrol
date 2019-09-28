@@ -10630,17 +10630,5 @@ MPC_Z_VEL_MAX_DN at zero throttle, and 0.5 * MPC_LAND_SPEED at full throttle</sh
     <parameter default="0.1" name="RV_YAW_P" type="FLOAT">
       <short_desc>RV_YAW_P</short_desc>
     </parameter>
-    <parameter default="1.0" name="SEG_Q2V" type="FLOAT">
-      <short_desc>SEG_Q2V</short_desc>
-    </parameter>
-    <parameter default="0.0" name="SEG_TH2V_I" type="FLOAT">
-      <short_desc>SEG_TH2V_I</short_desc>
-    </parameter>
-    <parameter default="0.0" name="SEG_TH2V_I_MAX" type="FLOAT">
-      <short_desc>SEG_TH2V_I_MAX</short_desc>
-    </parameter>
-    <parameter default="10.0" name="SEG_TH2V_P" type="FLOAT">
-      <short_desc>SEG_TH2V_P</short_desc>
-    </parameter>
   </group>
 </parameters>
