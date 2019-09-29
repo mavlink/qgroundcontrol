@@ -165,9 +165,27 @@ private:
   GDALDataset *poDataset;
   GDALRasterBand *poBand;
   double adfGeoTransform[6];
+  QString fname;
 
   OGRCoordinateTransformation *lonlatToxyTransformation;
   OGRCoordinateTransformation *xyTolonlatTransformation;
+};
+
+class GeotiffDatasetTerrainTile : public TerrainTile {
+
+public :
+    GeotiffDatasetTerrainTile(QByteArray byteArray);
+    ~GeotiffDatasetTerrainTile();
+    bool isIn(const QGeoCoordinate& coordinate);
+    double elevation(const QGeoCoordinate& coordinate);
+    QGeoCoordinate centerCoordinate(void);
+
+  static QByteArray serialize(QByteArray input);
+
+private:
+
+  QList<GeotiffTerrainTile *> _tiles;
+
 };
 
 #endif // TERRAINTILE_H

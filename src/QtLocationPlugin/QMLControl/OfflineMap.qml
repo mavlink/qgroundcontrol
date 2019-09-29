@@ -207,8 +207,8 @@ Item {
     }
     QGCFileDialog {
         id:             demfileDialog
+        selectFolder:   true
         folder:         QGroundControl.settingsManager.appSettings.missionSavePath
-        nameFilters:    ["DEM (*.tiff,*.tif,*.geotiff)"]
 
         onAcceptedForLoad: {
             // Instanciate custom dem TerrainTile

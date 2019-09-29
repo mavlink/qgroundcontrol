@@ -339,7 +339,7 @@ void createCustomDEMTerrainTile(QString fname){
     if(_terrainTileManager->custom_dem_tile != nullptr){
         delete _terrainTileManager->custom_dem_tile;
     }
-    _terrainTileManager->custom_dem_tile = new GeotiffTerrainTile(fname.toUtf8());
+    _terrainTileManager->custom_dem_tile = new GeotiffDatasetTerrainTile(fname.toUtf8());
 }
 
 void TerrainTileManager::addCoordinateQuery(TerrainOfflineAirMapQuery* terrainQueryInterface, const QList<QGeoCoordinate>& coordinates)

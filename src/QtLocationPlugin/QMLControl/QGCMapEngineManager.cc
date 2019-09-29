@@ -579,6 +579,6 @@ QGCMapEngineManager::_updateDiskFreeSpace()
 }
 
 void QGCMapEngineManager::newCustomDEMTerrainTile(QString fname){
-    qDebug() << "QGCMapEngineManager newCustomDEMTerrainTile";
+    qDebug() << "QGCMapEngineManager newCustomDEMTerrainTile" << fname;
     createCustomDEMTerrainTile(fname);
 }
