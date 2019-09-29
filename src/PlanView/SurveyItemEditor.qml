@@ -61,7 +61,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
 
-            Component.onCompleted: currentIndex = 0
+            Component.onCompleted: currentIndex = QGroundControl.settingsManager.planViewSettings.displayPresetsTabFirst.rawValue ? 2 : 0
 
             QGCTabButton { text: qsTr("Grid") }
             QGCTabButton { text: qsTr("Camera") }
@@ -255,7 +255,11 @@ Rectangle {
                 text:   qsTr("Statistics")
             }
 
-            TransectStyleComplexItemStats { }
+            TransectStyleComplexItemStats {
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                visible:        statsHeader.checked
+            }
         } // Grid Column
 
         Column {
@@ -320,6 +324,63 @@ Rectangle {
                 Layout.fillWidth:   true
                 text:               qsTr("Save Settings As New Preset")
                 onClicked:          mainWindow.showComponentDialog(savePresetDialog, qsTr("Save Preset"), mainWindow.showDialogDefaultWidth, StandardButton.Save | StandardButton.Cancel)
+            }
+
+            SectionHeader {
+                id:                 presectsTransectsHeader
+                anchors.left:       undefined
+                anchors.right:      undefined
+                Layout.fillWidth:   true
+                text:               qsTr("Transects")
+            }
+
+            GridLayout {
+                Layout.fillWidth:   true
+                columnSpacing:      _margin
+                rowSpacing:         _margin
+                columns:            2
+                visible:            presectsTransectsHeader.checked
+
+                QGCLabel { text: qsTr("Angle") }
+                FactTextField {
+                    fact:                   missionItem.gridAngle
+                    Layout.fillWidth:       true
+                    onUpdated:              presetsAngleSlider.value = missionItem.gridAngle.value
+                }
+
+                QGCSlider {
+                    id:                     presetsAngleSlider
+                    minimumValue:           0
+                    maximumValue:           359
+                    stepSize:               1
+                    tickmarksEnabled:       false
+                    Layout.fillWidth:       true
+                    Layout.columnSpan:      2
+                    Layout.preferredHeight: ScreenTools.defaultFontPixelHeight * 1.5
+                    onValueChanged:         missionItem.gridAngle.value = value
+                    Component.onCompleted:  value = missionItem.gridAngle.value
+                    updateValueWhileDragging: true
+                }
+
+                QGCButton {
+                    Layout.columnSpan:  2
+                    Layout.fillWidth:   true
+                    text:               qsTr("Rotate Entry Point")
+                    onClicked:          missionItem.rotateEntryPoint();
+                }
+            }
+
+            SectionHeader {
+                id:     presetsStatsHeader
+                anchors.left:       undefined
+                anchors.right:      undefined
+                Layout.fillWidth:   true
+                text:   qsTr("Statistics")
+            }
+
+            TransectStyleComplexItemStats {
+                Layout.fillWidth:   true
+                visible:            presetsStatsHeader.checked
             }
         } // Camera Column
 
