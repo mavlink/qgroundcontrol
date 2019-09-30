@@ -7,6 +7,12 @@ env:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
     - CONFIG=installer
     - RELEASE_DIR=/tmp/release
+    - DOCKER_USER=auterionci
+    # encrypted DOCKER_PASS
+    - secure: "urD4DJ5N7e2AJOfyaWysLigaCc4DwZT7v3NRLTw5339XOXN9388dT65FhW0/HPOisUxOP50ejUKZNhTiGaMAH516xZAj+i0vWWsNYUeF8y5GS76ycuQtafhM6OAyx5zIe7Hsi6GYltDbNgrYzN6W5aMuFKvX0QZJpeEd9qO1D73HQVYeiL83+18U1LBltnJ1KkNDMS9yJIR4th5PnDPKQz4K5LgneswnCkTy0JJbIWTL5nCd9TMedDeQnciMlch9w2GpzgqpfcPCmpVM9/tAzcrFW82esxpbD/knbGBRK9ynV9xJRi7DuXzjLFiQULMWylTdQcR0WhpHmETGTQm1Tdb8Fgtcp7gEqe4DS8unfQoghEyrz0edEwRKs1YoEKXbpQ5ITddUiBk3JJHoBdgeZExDf4katM7IyAxN3Ecr9lvmgDhipiLHAebnV3NoCghj+dWvabd1AfWAhvPpdgtXTUK49AGYVjMYXABACTRmG9nqFdIfXlNNXF5YPrkqmgUBXtyUz0yV1wcvZ1GUXGwruFK1hs7WVGq6BvNitb+tBiQ7nJdpsIN95WhDLhqG3WToYdjhDFBBXmswnjdqpavxWt9zIJZO3HUQ4V122Qq9HmdMYcuWiFN7qwNEHZ6yCZLKS6ry3zh/lmTu6+7j3tu9xMtEG1uKDFumknrsFE+S0Yw="
+    - COMMIT=${TRAVIS_COMMIT::6}
+    - CONTAINER_NAME=builder_container
+    - SH="docker exec -it $CONTAINER_NAME bash -c"
 git:
   depth: false
   submodules: false
@@ -17,14 +23,8 @@ git:
   services: docker
   sudo: required
   env:
-    - DOCKER_USER=auterionci
-    # encrypted DOCKER_PASS
-    - secure: "urD4DJ5N7e2AJOfyaWysLigaCc4DwZT7v3NRLTw5339XOXN9388dT65FhW0/HPOisUxOP50ejUKZNhTiGaMAH516xZAj+i0vWWsNYUeF8y5GS76ycuQtafhM6OAyx5zIe7Hsi6GYltDbNgrYzN6W5aMuFKvX0QZJpeEd9qO1D73HQVYeiL83+18U1LBltnJ1KkNDMS9yJIR4th5PnDPKQz4K5LgneswnCkTy0JJbIWTL5nCd9TMedDeQnciMlch9w2GpzgqpfcPCmpVM9/tAzcrFW82esxpbD/knbGBRK9ynV9xJRi7DuXzjLFiQULMWylTdQcR0WhpHmETGTQm1Tdb8Fgtcp7gEqe4DS8unfQoghEyrz0edEwRKs1YoEKXbpQ5ITddUiBk3JJHoBdgeZExDf4katM7IyAxN3Ecr9lvmgDhipiLHAebnV3NoCghj+dWvabd1AfWAhvPpdgtXTUK49AGYVjMYXABACTRmG9nqFdIfXlNNXF5YPrkqmgUBXtyUz0yV1wcvZ1GUXGwruFK1hs7WVGq6BvNitb+tBiQ7nJdpsIN95WhDLhqG3WToYdjhDFBBXmswnjdqpavxWt9zIJZO3HUQ4V122Qq9HmdMYcuWiFN7qwNEHZ6yCZLKS6ry3zh/lmTu6+7j3tu9xMtEG1uKDFumknrsFE+S0Yw="
-    - COMMIT=${TRAVIS_COMMIT::6}
     - DOCKERFILE=Dockerfile_linux
-    - CONTAINER_NAME=builder_container
     - DOCKER_IMAGE=auterion/ags_builder_linux
-    - SH="docker exec -it $CONTAINER_NAME bash -c"
   install:
     - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
     - docker pull $DOCKER_IMAGE || true
@@ -42,9 +42,6 @@ git:
         echo $COMMIT;
       fi`
     - echo $DOCKER_IMAGE:$TAG
-  before_deploy:
-    provider: script
-    script:
     - docker tag $DOCKER_IMAGE:$COMMIT $DOCKER_IMAGE:$TAG
     - docker push $DOCKER_IMAGE
 
@@ -69,7 +66,7 @@ matrix:
       <<: *template_linux
       env:
         - DOCKERFILE=Dockerfile_android
-        - DOCKER_IMAGE=ags_builder_linux
+        - DOCKER_IMAGE=auterion/ags_builder_android
       # TODO: still required? if yes move into dockerfile
       #before_script:
       #  - cd ${TRAVIS_BUILD_DIR}
