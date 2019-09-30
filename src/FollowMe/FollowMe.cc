@@ -93,6 +93,7 @@ void FollowMe::_sendGCSMotionReport()
     estimatation_capabilities |=    (1 << POS);
 
     if (geoPositionInfo.hasAttribute(QGeoPositionInfo::Direction) == true) {
+        estimatation_capabilities |= (1 << HEADING);
         motionReport.headingDegrees = geoPositionInfo.attribute(QGeoPositionInfo::Direction);
     }
 
