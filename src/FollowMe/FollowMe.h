@@ -47,7 +47,8 @@ public:
         POS = 0,
         VEL = 1,
         ACCEL = 2,
-        ATT_RATES = 3
+        ATT_RATES = 3,
+        HEADING = 4
     };
 
     void setToolbox(QGCToolbox* toolbox) override;
