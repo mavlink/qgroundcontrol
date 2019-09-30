@@ -345,7 +345,15 @@ GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
     poDataset =
         (GDALDataset*)GDALOpen(fname.toStdString().c_str(), GA_ReadOnly);
     if (poDataset == NULL) {
+
+    const char* filename = "vsiFile";
+    VSIFileFromMemBuffer(filename, (unsigned char*)(buff.data()), buff.size(), true);
+        // Try if buff is an image array
+    poDataset =
+        (GDALDataset*)GDALOpen(filename, GA_ReadOnly);
+
         _isValid = false;
+        
     }
 
     if (poDataset->GetRasterCount() != 1){
@@ -465,4 +473,5 @@ double GeotiffDatasetTerrainTile::elevation(const QGeoCoordinate& coordinate){
 }
 
 QGeoCoordinate GeotiffDatasetTerrainTile::centerCoordinate(void){
+    return QGeoCoordinate(0,0);
 }

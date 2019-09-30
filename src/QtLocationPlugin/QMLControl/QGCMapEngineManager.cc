@@ -167,8 +167,8 @@ QGCMapEngineManager::startDownload(const QString& name, const QString& mapType)
         set->setTopleftLon(_topleftLon);
         set->setBottomRightLat(_bottomRightLat);
         set->setBottomRightLon(_bottomRightLon);
-        set->setMinZoom(_minZoom);
-        set->setMaxZoom(_maxZoom);
+        set->setMinZoom(1);
+        set->setMaxZoom(1);
         set->setTotalTileSize(_elevationSet.tileSize);
         set->setTotalTileCount(static_cast<quint32>(_elevationSet.tileCount));
         set->setType("Airmap Elevation");

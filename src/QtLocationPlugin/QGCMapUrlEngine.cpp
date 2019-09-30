@@ -75,7 +75,8 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["VWorld Satellite Map"] = new VWorldSatMapProvider(this);
 
     _providersTable["Airmap Elevation"] = new AirmapElevationProvider(this);
-    _providersTable["Geotiff Elevation"] = new GeotiffElevationProvider(this);
+    //_providersTable["Geotiff Elevation"] = new GeotiffElevationProvider(this);
+    //_providersTable["AW3D Elevation"] = new AW3DElevationProvider(this);
 
     _providersTable["Test Vanuatu"] = new TestMapProvider(this);
 }
