@@ -26,7 +26,7 @@ git:
     - docker build -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
     - docker run --name $CONTAINER_NAME --rm -td -v `pwd`:`pwd` -w `pwd` $DOCKER_IMAGE
   script:
-    - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $TRAVIS_BUILD_DIR/qgroundcontrol.pro CONFIG+=$CONFIG"
+    - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $PWD/qgroundcontrol.pro CONFIG+=$CONFIG"
     - $SH "cd $SHADOW_BUILD_DIR; make -j`nproc --all`"
     - mkdir $RELEASE_DIR
     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/package/ $RELEASE_DIR
@@ -48,8 +48,6 @@ matrix:
       env:
         - DOCKERFILE=Dockerfile_centos
         - DOCKER_IMAGE=auterion/ags_builder_centos
-      script:
-        - $SH "cat /etc/centos-release"
     - name: Android Installer
       <<: *template_linux
       env:
