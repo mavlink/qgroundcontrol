@@ -39,7 +39,7 @@ public:
     Q_PROPERTY(QString      configPassword      READ configPassword                             NOTIFY configPasswordChanged)
     Q_PROPERTY(QString      encryptionKey       READ encryptionKey                              NOTIFY encryptionKeyChanged)
     Q_PROPERTY(int          pairingChannel      READ pairingChannel     WRITE setPairingChannel NOTIFY pairingChannelChanged)
-    Q_PROPERTY(int          connectingChannel   READ connectingChannel                          NOTIFY connectingChannelChanged)
+    Q_PROPERTY(int          connectingChannel   READ connectingChannel  WRITE setConnectChannel NOTIFY connectingChannelChanged)
     Q_PROPERTY(QStringList  channelLabels       READ channelLabels                              NOTIFY channelLabelsChanged)
     Q_PROPERTY(int          channelMin          READ channelMin                                 NOTIFY channelMinChanged)
     Q_PROPERTY(int          channelMax          READ channelMax                                 NOTIFY channelMaxChanged)
@@ -72,6 +72,7 @@ public:
     void        setConfigUserName               (QString val) { _configUserName = val; emit configUserNameChanged(); }
     void        setConfigPassword               (QString val) { _configPassword = val; emit configPasswordChanged(); }
     void        setPairingChannel               (int val)     { _pairingChannel = val; emit pairingChannelChanged(); }
+    void        setConnectChannel               (int val)     { _connectingChannel = val; emit connectingChannelChanged(); }
     void        updateSettings                  ();
     void        configure                       ();
     void        switchToPairingEncryptionKey    ();
