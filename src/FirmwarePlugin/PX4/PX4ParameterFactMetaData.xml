@@ -8609,7 +8609,8 @@ is less than 50% of this value</short_desc>
         <value code="2">SF10/b</value>
         <value code="3">SF10/c</value>
         <value code="4">SF11/c</value>
-        <value code="5">SF/LW20</value>
+        <value code="5">SF/LW20/b</value>
+        <value code="6">SF/LW20/c</value>
       </values>
     </parameter>
     <parameter default="-1" name="SENS_EN_THERMAL" type="INT32">
