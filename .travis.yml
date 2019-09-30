@@ -1,5 +1,3 @@
-if: branch = test_travis_ci
-
 language: cpp
 
 env:
@@ -10,7 +8,6 @@ env:
     - DOCKER_USER=auterionci
     # encrypted DOCKER_PASS
     - secure: "urD4DJ5N7e2AJOfyaWysLigaCc4DwZT7v3NRLTw5339XOXN9388dT65FhW0/HPOisUxOP50ejUKZNhTiGaMAH516xZAj+i0vWWsNYUeF8y5GS76ycuQtafhM6OAyx5zIe7Hsi6GYltDbNgrYzN6W5aMuFKvX0QZJpeEd9qO1D73HQVYeiL83+18U1LBltnJ1KkNDMS9yJIR4th5PnDPKQz4K5LgneswnCkTy0JJbIWTL5nCd9TMedDeQnciMlch9w2GpzgqpfcPCmpVM9/tAzcrFW82esxpbD/knbGBRK9ynV9xJRi7DuXzjLFiQULMWylTdQcR0WhpHmETGTQm1Tdb8Fgtcp7gEqe4DS8unfQoghEyrz0edEwRKs1YoEKXbpQ5ITddUiBk3JJHoBdgeZExDf4katM7IyAxN3Ecr9lvmgDhipiLHAebnV3NoCghj+dWvabd1AfWAhvPpdgtXTUK49AGYVjMYXABACTRmG9nqFdIfXlNNXF5YPrkqmgUBXtyUz0yV1wcvZ1GUXGwruFK1hs7WVGq6BvNitb+tBiQ7nJdpsIN95WhDLhqG3WToYdjhDFBBXmswnjdqpavxWt9zIJZO3HUQ4V122Qq9HmdMYcuWiFN7qwNEHZ6yCZLKS6ry3zh/lmTu6+7j3tu9xMtEG1uKDFumknrsFE+S0Yw="
-    - COMMIT=${TRAVIS_COMMIT::6}
     - CONTAINER_NAME=builder_container
     - SH="docker exec -it $CONTAINER_NAME bash -c"
 git:
@@ -28,7 +25,7 @@ git:
   install:
     - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
     - docker pull $DOCKER_IMAGE || true
-    - docker build --pull --cache-from $DOCKER_IMAGE -f deploy/$DOCKERFILE -t $DOCKER_IMAGE:$COMMIT .
+    - docker build --pull --cache-from $DOCKER_IMAGE -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
     - docker run --name $CONTAINER_NAME --rm -td -v `pwd`:`pwd` -w `pwd` $DOCKER_IMAGE
   script:
     - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $PWD/qgroundcontrol.pro CONFIG+=$CONFIG"
@@ -36,14 +33,9 @@ git:
     - mkdir $RELEASE_DIR
     - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/package/ $RELEASE_DIR
   after_success:
-    - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then
-        echo "latest";
-      else
-        echo $COMMIT;
-      fi`
-    - echo $DOCKER_IMAGE:$TAG
-    - docker tag $DOCKER_IMAGE:$COMMIT $DOCKER_IMAGE:$TAG
-    - docker push $DOCKER_IMAGE
+    - if ([ "$TRAVIS_BRANCH" == "master" ]; then
+      docker tag $DOCKER_IMAGE:$COMMIT $DOCKER_IMAGE; docker push $DOCKER_IMAGE
+      fi
 
   # TODO: replaced by Docker builds or refactor?
   #before_deploy:
@@ -125,7 +117,7 @@ before_install:
   - git submodule update --init --recursive
 
 #TODO: finalize release process
-deploy:
+.template_deploy: &template_deploy
   provider: releases
   api_key:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
@@ -135,9 +127,20 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+    branch: master
     condition: $CONFIG = installer
-    repo: Auterion/auterion-qgroundcontrol
-    #if: branch = master
+
+deploy:
+  # release a version when on master and commit is tagged
+  - <<: *template_deploy
+  # pre-release a version for each commit on any branch except master
+  - <<: *template_deploy
+    name: $TRAVIS_BRANCH
+    prerelease: true
+    overwrite: true
+    on:
+      all_branches: true
+      condition: $TRAVIS_BRANCH != master
 
 notifications:
   slack:
