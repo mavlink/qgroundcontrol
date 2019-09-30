@@ -7,7 +7,7 @@ env:
     - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
     - CONFIG=installer
     - CONTAINER_NAME=builder_container
-    - RELEASE_DIR=$TRAVIS_BUILD_DIR/release
+    - RELEASE_DIR=/tmp/release
 
 git:
   depth: false
@@ -26,11 +26,10 @@ git:
     - docker build -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
     - docker run --name $CONTAINER_NAME --rm -td -v `pwd`:`pwd` -w `pwd` $DOCKER_IMAGE
   script:
-    - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $PWD/qgroundcontrol.pro CONFIG+=$CONFIG"
+    - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $TRAVIS_BUILD_DIR/qgroundcontrol.pro CONFIG+=$CONFIG"
     - $SH "cd $SHADOW_BUILD_DIR; make -j`nproc --all`"
     - mkdir $RELEASE_DIR
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/AuterionGS/package/qgroundcontrol.* $RELEASE_DIR
-     #- ${SHADOW_BUILD_DIR}/release/package/QGroundControl.*
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/package/ $RELEASE_DIR
 
   # TODO: replaced by Docker builds or refactor?
   #before_deploy:
@@ -120,7 +119,6 @@ deploy:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
   file_glob: true
   file:
-    - $RELEASE_DIR/package/qgroundcontrol.*
     - $RELEASE_DIR/package/QGroundControl.*
   skip_cleanup: true
   on:
