@@ -1,0 +1,27 @@
+diff --git a/gdal/frmts/sigdem/sigdemdataset.cpp b/gdal/frmts/sigdem/sigdemdataset.cpp
+index 5ffc6e6..448da46 100644
+--- a/gdal/frmts/sigdem/sigdemdataset.cpp
++++ b/gdal/frmts/sigdem/sigdemdataset.cpp
+@@ -556,7 +556,7 @@ CPLErr SIGDEMRasterBand::IWriteBlock(
+             nValue = NO_DATA;
+         } else {
+             nValue = static_cast<int32_t>(
+-                std::round((dfValue - dfOffset) * dfScaleFactor));
++                round((dfValue - dfOffset) * dfScaleFactor));
+         }
+         *pnDestValues = CPL_MSBWORD32(nValue);
+         padfSourceValues++;
+diff --git a/gdal/gcore/overview.cpp b/gdal/gcore/overview.cpp
+index eeeb1b1..8686c6b 100644
+--- a/gdal/gcore/overview.cpp
++++ b/gdal/gcore/overview.cpp
+@@ -1933,7 +1933,7 @@ GDALResampleChunk32R_ConvolutionT( double dfXRatioDstToSrc,
+             fClamped = fDstMax;
+         if( isIntegerDT )
+         {
+-            if( nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)) )
++            if( nNodataValueInt64 == static_cast<GInt64>(round(fClamped)) )
+             {
+                 // Do not use the nodata value
+                 return fReplacementVal;
+
