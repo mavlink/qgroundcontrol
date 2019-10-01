@@ -125,22 +125,20 @@ before_install:
   file:
     - $RELEASE_DIR/package/QGroundControl.*
   skip_cleanup: true
-  on:
-    tags: true
-    branch: master
-    condition: $CONFIG = installer
 
 deploy:
   # release a version when on master and commit is tagged
   - <<: *template_deploy
-  # pre-release a version for each commit on any branch except master
+    on:
+      tags: true
+      condition: $CONFIG = installer
+  # pre-release a Release Candidate on any branch except master based on a tag
   - <<: *template_deploy
-    name: $TRAVIS_BRANCH
     prerelease: true
     overwrite: true
     on:
-      all_branches: true
-      condition: $TRAVIS_BRANCH != master
+      tags: true
+      condition: $TRAVIS_TAG =~ ^rc$
 
 notifications:
   slack:
