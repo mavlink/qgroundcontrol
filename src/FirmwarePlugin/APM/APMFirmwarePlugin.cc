@@ -829,10 +829,13 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
-        if (vehicle->versionCompare(3, 7, 0) >= 0) {  // 3.7.0 and higher
+        if (vehicle->versionCompare(4, 0, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.0.xml");
+        }
+        if (vehicle->versionCompare(3, 7, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.7.xml");
         }
-        if (vehicle->versionCompare(3, 6, 0) >= 0) {  // 3.6.0 and higher
+        if (vehicle->versionCompare(3, 6, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
         }
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
@@ -845,6 +848,9 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
+        if (vehicle->versionCompare(4, 0, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.0.xml");
+        }
         if (vehicle->versionCompare(3, 10, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.10.xml");
         }
@@ -855,6 +861,9 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
 
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
+        if (vehicle->versionCompare(4, 0, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.0.xml");
+        }
         if (vehicle->versionCompare(3, 6, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.6.xml");
         }
