@@ -32,10 +32,26 @@ static const char *kCONN_CH             = "ConnectingChannel";
 MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     : QGCTool(app, toolbox)
 {
-    connect(&_workTimer, &QTimer::timeout, this, &MicrohardManager::_checkMicrohard);
+}
+
+//-----------------------------------------------------------------------------
+MicrohardManager::~MicrohardManager()
+{
+    _close();
+}
+
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::setToolbox(QGCToolbox* toolbox)
+{
+    QGCTool::setToolbox(toolbox);
+
+    connect(&_workTimer, &QTimer::timeout, this, &MicrohardManager::_checkMicrohard, Qt::QueuedConnection);
     _workTimer.setSingleShot(true);
-    connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout);
-    connect(&_remTimer, &QTimer::timeout, this, &MicrohardManager::_remTimeout);
+    connect(&_locTimer, &QTimer::timeout, this, &MicrohardManager::_locTimeout, Qt::QueuedConnection);
+    connect(&_remTimer, &QTimer::timeout, this, &MicrohardManager::_remTimeout, Qt::QueuedConnection);
+    connect(this, &MicrohardManager::pairingChannelChanged, this, &MicrohardManager::_updateSettings, Qt::QueuedConnection);
+
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
     _localIPAddr       = settings.value(kLOCAL_IP,       QString("192.168.168.1")).toString();
@@ -46,14 +62,12 @@ MicrohardManager::MicrohardManager(QGCApplication* app, QGCToolbox* toolbox)
     _encryptionKey     = settings.value(kENC_KEY,        QString("1234567890")).toString();
     _pairingChannel    = settings.value(kPAIR_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
     _connectingChannel = settings.value(kCONN_CH,        DEFAULT_PAIRING_CHANNEL).toInt();
-    _pairingChannel = DEFAULT_PAIRING_CHANNEL;
     settings.endGroup();
-}
 
-//-----------------------------------------------------------------------------
-MicrohardManager::~MicrohardManager()
-{
-    _close();
+    setProductName("");
+
+    //-- Start it all
+    _reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -86,7 +100,7 @@ MicrohardManager::_reset()
     emit linkConnectedChanged();
     if(!_appSettings) {
         _appSettings = _toolbox->settingsManager()->appSettings();
-        connect(_appSettings->enableMicrohard(), &Fact::rawValueChanged, this, &MicrohardManager::_setEnabled);
+        connect(_appSettings->enableMicrohard(), &Fact::rawValueChanged, this, &MicrohardManager::_setEnabled, Qt::QueuedConnection);
     }
     _setEnabled();
 }
@@ -108,15 +122,6 @@ MicrohardManager::_createMetadata(const char* name, QStringList enums)
     metaData->setRawMin(0);
     metaData->setRawMin(enums.size() - 1);
     return metaData;
-}
-
-//-----------------------------------------------------------------------------
-void
-MicrohardManager::setToolbox(QGCToolbox* toolbox)
-{
-    QGCTool::setToolbox(toolbox);
-    //-- Start it all
-    _reset();
 }
 
 //-----------------------------------------------------------------------------
@@ -149,9 +154,8 @@ MicrohardManager::configure()
 
 //-----------------------------------------------------------------------------
 void
-MicrohardManager::updateSettings()
+MicrohardManager::_updateSettings()
 {
-    configure();
     QSettings settings;
     settings.beginGroup(kMICROHARD_GROUP);
     settings.setValue(kLOCAL_IP, _localIPAddr);
@@ -162,7 +166,14 @@ MicrohardManager::updateSettings()
     settings.setValue(kPAIR_CH, QString::number(_pairingChannel));
     settings.setValue(kCONN_CH, QString::number(_connectingChannel));
     settings.endGroup();
+}
 
+//-----------------------------------------------------------------------------
+void
+MicrohardManager::updateSettings()
+{
+    configure();
+    _updateSettings();
     _reset();
 }
 
@@ -197,13 +208,13 @@ MicrohardManager::_setEnabled()
     if(enable) {
         if(!_mhSettingsLoc) {
             _mhSettingsLoc = new MicrohardSettings(localIPAddr(), this, true);
-            connect(_mhSettingsLoc, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedLoc);
-            connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedLoc);
+            connect(_mhSettingsLoc, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedLoc, Qt::QueuedConnection);
+            connect(_mhSettingsLoc, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedLoc, Qt::QueuedConnection);
         }
         if(!_mhSettingsRem) {
             _mhSettingsRem = new MicrohardSettings(remoteIPAddr(), this);
-            connect(_mhSettingsRem, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedRem);
-            connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedRem);
+            connect(_mhSettingsRem, &MicrohardSettings::connected,      this, &MicrohardManager::_connectedRem, Qt::QueuedConnection);
+            connect(_mhSettingsRem, &MicrohardSettings::rssiUpdated,    this, &MicrohardManager::_rssiUpdatedRem, Qt::QueuedConnection);
         }
         _workTimer.start(SHORT_TIMEOUT);
     } else {
@@ -325,7 +336,9 @@ MicrohardManager::setProductName(QString product)
 {
     qCDebug(MicrohardLog) << "Detected Microhard modem: " << product;
 
-    int frequencyStart = 0;
+    _channelMin = 6;
+    _channelMax = 76;
+    int frequencyStart = 2407;
 
     if (product == "pMDDL2350") {
         _channelMin = 1;
@@ -342,16 +355,27 @@ MicrohardManager::setProductName(QString product)
     }
 
     _channelLabels.clear();
-    if (frequencyStart > 0) {
-        for (int i = _channelMin; i <= _channelMax; i++) {
-            _channelLabels.append(QString::number(i) +
-                                  " - " +
-                                  QString::number(i + frequencyStart - _channelMin) +
-                                  " MHz");
-        }
+    for (int i = _channelMin; i <= _channelMax; i++) {
+        _channelLabels.append(QString::number(i) +
+                              " - " +
+                              QString::number(i + frequencyStart - _channelMin) +
+                              " MHz");
+    }
+
+    if (_pairingChannel < _channelMin) {
+        _pairingChannel = _channelMin;
+    } else if (_pairingChannel > _channelMax) {
+        _pairingChannel = _channelMax;
+    }
+    if (_connectingChannel < _channelMin) {
+        _connectingChannel = _channelMin;
+    } else if (_connectingChannel > _channelMax) {
+        _connectingChannel = _channelMax;
     }
 
     emit channelLabelsChanged();
+    emit pairingChannelChanged();
+    emit connectingChannelChanged();
 }
 
 //-----------------------------------------------------------------------------
