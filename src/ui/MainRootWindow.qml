@@ -590,6 +590,29 @@ ApplicationWindow {
             height: loader.height
             color:  Qt.rgba(0,0,0,0)
         }
+        //-- Dismiss popup. Workaround for the can't get out of popup issue on CentOS touch devices after plugging out keyboard
+        QGCColoredImage {
+            property real _margins: ScreenTools.defaultFontPixelHeight * 0.5
+            x:                  visible ? loader.item.x + loader.item.width - _margins - width : 0
+            y:                  visible ? loader.item.y + _margins : 0
+            z:                  visible ? loader.item.z + 1 : 0
+            visible:            loader.item !== null
+            width:              ScreenTools.isMobile ? ScreenTools.defaultFontPixelHeight * 1.5 : ScreenTools.defaultFontPixelHeight
+            height:             width
+            sourceSize.height:  width
+            source:             "/res/XDelete.svg"
+            fillMode:           Image.PreserveAspectFit
+            mipmap:             true
+            smooth:             true
+            color:              qgcPal.text
+            MouseArea {
+                anchors.fill:       parent
+                anchors.margins:    ScreenTools.isMobile ? -ScreenTools.defaultFontPixelHeight : 0
+                onClicked: {
+                    indicatorDropdown.close()
+                }
+            }
+        }
         Loader {
             id:             loader
             onLoaded: {
