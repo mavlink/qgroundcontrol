@@ -68,10 +68,8 @@ PairingManager::_pairingCompleted(const QString& name, const QString& devicePubl
     jsonObj.insert("PublicKey", devicePublicKey);
     _jsonDoc.setObject(jsonObj);
     _writeJson(_jsonDoc, _pairingCacheFile(name));
-    _lastPaired = name;
     _updatePairedDeviceNameList();
     emit pairedListChanged();
-    emit pairedVehicleChanged();
     setPairingStatus(PairingSuccess, tr("Pairing Successfull"));
     _toolbox->microhardManager()->switchToConnectionEncryptionKey(_encryptionKey);
     // Automatically connect to newly paired device
@@ -167,9 +165,10 @@ PairingManager::_connectionCompleted(const QString& response)
     if (a.length() != 2 && !_device_rsa.verify(a[0].toStdString(), a[1].toStdString())) {
         return false;
     }
-
-    _createUDPLink(a[0], 24550);
+    _lastConnected = a[0];
+    _createUDPLink(_lastConnected, 24550);
     _toolbox->videoManager()->startVideo();
+    emit connectedVehicleChanged();
     setPairingStatus(PairingConnected, tr("Connection Successfull"));
 
     return true;
@@ -313,6 +312,7 @@ PairingManager::connectToDevice(const QString& name)
         return;
     }
 
+    setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
     _devicesToConnect[name] = QDateTime::currentMSecsSinceEpoch() - min_time_between_connects;
 }
 
@@ -418,6 +418,7 @@ PairingManager::removePairedDevice(const QString& name)
     emit startCommand(name, unpairURL, "");
     _updatePairedDeviceNameList();
     emit pairedListChanged();
+    setPairingStatus(PairingIdle, "");
 }
 
 //-----------------------------------------------------------------------------
@@ -829,6 +830,7 @@ PairingManager::disconnectDevice(const QString& name)
 {
     _removeUDPLink(name);
     _toolbox->videoManager()->stopVideo();
+    setPairingStatus(PairingIdle, "");
 }
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
