@@ -1,0 +1,3 @@
+@copy "@osgeo4w@\bin\osgeo4w-setup.exe" "@osgeo4w@\bin\osgeo4w-setup-work.exe"
+@start /B "Running Setup" "@osgeo4w@\bin\osgeo4w-setup-work.exe" -R "@osgeo4w@" %*
+

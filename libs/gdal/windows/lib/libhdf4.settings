@@ -1,0 +1,41 @@
+      SUMMARY OF THE HDF4 CONFIGURATION
+      =================================
+
+General Information:
+-------------------
+                   HDF4 Version: 4.2.14
+                  Configured on: 2019-02-05
+                  Configured by: Visual Studio 14 2015
+                 Configure mode: CMAKE 3.12.3
+                    Host system: Windows-10.0.17134
+              Uname information: Windows
+                      Libraries: 
+             Installation point: C:/src/osgeo4w/hdf4/osgeo4w/install-x86
+
+Compiling Options:
+------------------
+               Compilation Mode: 
+                     C Compiler: C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/cl.exe
+                         CFLAGS: /DWIN32 /D_WINDOWS /W3
+                       CPPFLAGS: /DWIN32 /D_WINDOWS /W3 /GR /EHsc
+               Shared Libraries: NO
+               Static Libraries: YES
+  Statically Linked Executables: 
+                        LDFLAGS: /machine:X86
+                Extra libraries: 
+                       Archiver: 
+                         Ranlib: 
+
+Languages:
+----------
+                        Fortran: OFF
+               Fortran Compiler: 
+                  Fortran Flags: 
+
+                            JAVA: OFF
+                     JAVA Compiler:  
+
+Features:
+---------
+               SZIP compression: enabled with decoder only
+   Support for netCDF API 2.3.2: ON

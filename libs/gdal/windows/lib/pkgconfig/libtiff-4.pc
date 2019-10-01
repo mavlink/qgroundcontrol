@@ -1,0 +1,11 @@
+prefix=D:/src/osgeo4w64/src/tiff-4.0.8/osgeo4w/install-x86
+exec_prefix=D:/src/osgeo4w64/src/tiff-4.0.8/osgeo4w/install-x86
+libdir=D:/src/osgeo4w64/src/tiff-4.0.8/osgeo4w/install-x86/lib
+includedir=D:/src/osgeo4w64/src/tiff-4.0.8/osgeo4w/install-x86/include
+
+Name: libtiff
+Description:  Tag Image File Format (TIFF) library.
+Version: 4.0.8
+Libs: -LD:/src/osgeo4w64/src/tiff-4.0.8/osgeo4w/install-x86/lib -ltiff
+Libs.private: 
+Cflags: -ID:/src/osgeo4w64/src/tiff-4.0.8/osgeo4w/install-x86/include

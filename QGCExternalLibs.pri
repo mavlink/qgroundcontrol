@@ -114,6 +114,14 @@ MacBuild {
 } else:LinuxBuild {
     PKGCONFIG = sdl2
 } else:WindowsBuild {
+    INCLUDEPATH += C:/OSGeo4W/include
+    LIBS += -LC:/OSGeo4W/lib
+    LIBS += -LC:/OSGeo4W/bin
+    LIBS += C:/OSGeo4W/lib/gdal_i.lib
+
+    message($$sprintf("GDAL ? '%1'.", $$INCLUDEPATH))
+
+
     INCLUDEPATH += $$BASEDIR/libs/lib/sdl2/msvc/include
     INCLUDEPATH += $$BASEDIR/libs/zlib/Windows/include
 

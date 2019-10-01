@@ -601,7 +601,7 @@
 #define PG_KRB_SRVNAM "postgres"
 
 /* A string containing the version number, platform, and C compiler */
-#define PG_VERSION_STR "PostgreSQL 10.8, compiled by Visual C++ build " CppAsString2(_MSC_VER) ", 64-bit"
+#define PG_VERSION_STR "PostgreSQL 10.8, compiled by Visual C++ build " CppAsString2(_MSC_VER) ", 32-bit"
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
@@ -724,8 +724,7 @@
 #define XLOG_SEG_SIZE (16 * 1024 * 1024)
 #define USE_FLOAT4_BYVAL 1
 #define FLOAT4PASSBYVAL true
-#define USE_FLOAT8_BYVAL 1
-#define FLOAT8PASSBYVAL true
+#define FLOAT8PASSBYVAL false
 #define HAVE_UUID_OSSP
 #define HAVE_UUID_H
 #define HAVE_LIBXML2

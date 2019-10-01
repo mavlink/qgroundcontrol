@@ -33,7 +33,7 @@ DebugBuild {
 
 QML_IMPORT_PATH += $$PWD/src/QmlControls
 
-LIBS+= -lgdal
+#LIBS+= -lgdal
 
 #
 # OS Specific settings

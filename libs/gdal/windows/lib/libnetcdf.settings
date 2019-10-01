@@ -1,0 +1,39 @@
+# NetCDF C Configuration Summary
+==============================
+
+# General
+-------
+NetCDF Version:		4.6.2
+Configured On:		Fri Sep  6 22:56:03 GMT 2019
+Host System:		i686-MINGW32_NT-6.2-1.0.18(0.48/3/2)
+Build Directory: 	C:/src/osgeo4w/netcdf/osgeo4w/build-x86
+Install Prefix:         C:/src/osgeo4w/netcdf/osgeo4w/install-x86
+
+# Compiling Options
+-----------------
+C Compiler:		C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/cl.exe
+CFLAGS:			/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1
+CPPFLAGS:		 
+LDFLAGS:		/machine:X86 /LARGEADDRESSAWARE /STACK:40000000 /debug /INCREMENTAL
+AM_CFLAGS:		
+AM_CPPFLAGS:		
+AM_LDFLAGS:		
+Shared Library:		yes
+Static Library:		no
+Extra libraries:	-lhdf5 -lhdf5_hl -lzlib -lcurl
+
+# Features
+--------
+NetCDF-2 API:		yes
+HDF4 Support:		no
+NetCDF-4 API:		yes
+NC-4 Parallel Support:	no
+PnetCDF Support:	no
+DAP2 Support:		yes
+DAP4 Support:		yes
+Diskless Support:	yes
+MMap Support:		no
+JNA Support:		no
+CDF5 Support:		no
+ERANGE Fill Support:	yes
+Relaxed Boundary Check:	yes

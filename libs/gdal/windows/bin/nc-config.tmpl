@@ -1,0 +1,419 @@
+#! /bin/sh
+#
+# This forms the basis for the nc-config utility, which tells you
+# various things about the netCDF installation. This code was
+# contributed by netCDF user Arlindo DaSilva. Thanks Arlindo!
+
+prefix="@osgeo4w_msys@"
+exec_prefix="@osgeo4w_msys@"
+libdir="@osgeo4w_msys@/lib"
+includedir="@osgeo4w_msys@/include"
+
+cc="C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/bin/cl.exe"
+cflags="-I@osgeo4w_msys@/include"
+libs="-L@osgeo4w_msys@/lib -lnetcdf -lhdf5 -lhdf5_hl -lzlib -lcurl"
+
+has_dap2="ON"
+if [ -z $has_dap2 -o "$has_dap2" = "OFF" ]; then
+    has_dap2="no"
+else
+    has_dap2="yes"
+fi
+
+has_dap4="ON"
+if [ -z $has_dap4 -o "$has_dap4" = "OFF" ]; then
+    has_dap4="no"
+else
+    has_dap4="yes"
+fi
+
+has_nc2="ON"
+
+
+if [ -z "$has_nc2" -o "$has_nc2" = "OFF" ]; then
+    has_nc2="no"
+else
+    has_nc2="yes"
+fi
+
+has_nc4="ON"
+if [ -z "$has_nc4" -o "$has_nc4" = "OFF" ]; then
+    has_nc4="no"
+else
+    has_nc4="yes"
+fi
+
+has_logging="OFF"
+if [ -z "$has_logging" -o "$has_logging" = "OFF" ]; then
+    has_logging="no"
+else
+    has_logging="yes"
+fi
+
+has_hdf4=""
+if [ -z "$has_hdf4" -o "$has_hdf4" = "OFF" ]; then
+    has_hdf4="no"
+else
+    has_hdf4="yes"
+fi
+
+has_pnetcdf=""
+if [ -z "$has_pnetcdf" -o "$has_pnetcdf" = "OFF" ]; then
+    has_pnetcdf="no"
+else
+    has_pnetcdf="yes"
+fi
+
+has_hdf5="ON"
+if [ -z "$has_hdf5" -o "$has_hdf5" = "OFF" ]; then
+    has_hdf5="no"
+else
+    has_hdf5="yes"
+fi
+
+has_szlib=""
+if [ -z "$has_szlib" -o "$has_szlib" = "OFF" ]; then
+    has_szlib="no"
+else
+    has_szlib="yes"
+fi
+
+has_cdf5="OFF"
+if [ -z "$has_cdf5" -o "$has_cdf5" = "OFF" -o "$has_cdf5" = "FALSE" ]; then
+    has_cdf5="no"
+else
+    has_cdf5="yes"
+fi
+
+has_parallel4=""
+if [ -z $has_parallel4 ]; then
+    has_parallel4="no"
+else
+    has_parallel4="yes"
+fi
+
+has_parallel=""
+if [ -z $has_parallel ]; then
+    has_parallel="no"
+else
+    has_parallel="yes"
+fi
+
+version="netCDF 4.6.2"
+
+
+has_fortran="no"
+has_f90="no"
+has_f03="no"
+
+nfconf=$(which nf-config 2>/dev/null)
+
+if [ -f "$nfconf" ]; then
+  has_fortran="yes"
+  fc=`nf-config --fc`
+  fflags=`nf-config --fflags`
+  flibs=`nf-config --flibs`
+  has_f90=`nf-config --has-f90`
+  has_f03=`nf-config --has-f03`
+fi
+
+has_cxx="no"
+has_cxx4="no"
+
+ncxxconf=$(which ncxx-config 2>/dev/null)
+ncxx4conf=$(which ncxx4-config 2>/dev/null)
+
+if [ -f "$ncxx4conf" ]; then
+  cxx4=`ncxx4-config --cxx`
+  cxx4flags=`ncxx4-config --cflags`
+  cxx4libs=`ncxx4-config --libs`
+  has_cxx4="yes"
+elif [ -f "$ncxxconf" ]; then
+  cxx=`ncxx-config --cxx`
+  cxxflags=`ncxx-config --cflags`
+  cxxlibs=`ncxx-config --libs`
+  has_cxx="yes"
+fi
+
+usage()
+{
+    cat <<EOF
+Usage: nc-config [OPTION]
+
+Available values for OPTION include:
+
+  --help          display this help message and exit
+  --all           display all options
+  --cc            C compiler
+  --cflags        pre-processor and compiler flags
+  --has-c++       whether C++ API is installed
+  --has-c++4      whether netCDF-4 C++ API is installed
+  --has-fortran   whether Fortran API is installed
+  --has-dap2      whether OPeNDAP (DAP2) is enabled in this build
+  --has-dap4      whether DAP4 is enabled in this build
+  --has-dap       same as --has-dap2 (Deprecated)
+  --has-nc2       whether NetCDF-2 API is enabled
+  --has-nc4       whether NetCDF-4/HDF-5 is enabled in this build
+  --has-hdf5      whether HDF5 is used in build (always the same as --has-nc4)
+  --has-hdf4      whether HDF4 was used in build
+  --has-logging   whether logging is enabled with --enable-logging.
+  --has-pnetcdf   whether PnetCDF was used in build
+  --has-szlib     whether szlib is included in build
+  --has-cdf5      whether cdf5 support is included in build
+  --has-parallel4 whether has parallel IO support via HDF5
+  --has-parallel  whether has parallel IO support via HDF5 or PnetCDF
+  --libs          library linking information for netcdf
+  --prefix        Install prefix
+  --includedir    Include directory
+  --libdir        Library directory
+  --version       Library version
+
+EOF
+if [ -f "$ncxx4conf" ]; then
+    cat <<EOF
+  --cxx4          C++ compiler for netCDF-4 C++ library
+  --cxx4flags     flags needed to compile a C++ program
+  --cxx4libs      libraries needed to link a C++ program
+EOF
+elif [ -f "$ncxxconf" ]; then
+    cat <<EOF
+  --cxx           C++ compiler
+  --cxxflags      flags needed to compile a C++ program
+  --cxxlibs       libraries needed to link a C++ program
+EOF
+fi
+if [ -f "$nfconf" ]; then
+    cat <<EOF
+  --fc            Fortran compiler
+  --fflags        flags needed to compile a Fortran program
+  --flibs         libraries needed to link a Fortran program
+  --has-f90       whether Fortran 90 API is installed
+  --has-f03       whether Fortran 03 API is installed (implies F90).
+EOF
+fi
+    exit $1
+}
+
+all()
+{
+        echo
+        echo "This $version has been built with the following features: "
+        echo
+        echo "  --cc            -> $cc"
+        echo "  --cflags        -> $cflags"
+        echo "  --libs          -> $libs"
+        echo
+        echo "  --has-c++       -> $has_cxx"
+        echo "  --cxx           -> $cxx"
+
+if [ -f "$ncxxconf" ]; then
+        echo "  --cxxflags      -> $cxxflags"
+        echo "  --cxxlibs       -> $cxxlibs"
+fi
+        echo
+        echo "  --has-c++4      -> $has_cxx4"
+        echo "  --cxx4          -> $cxx4"
+if [ -f "$ncxx4conf" ]; then
+        echo "  --cxx4flags     -> $cxx4flags"
+        echo "  --cxx4libs      -> $cxx4libs"
+fi
+        echo
+
+        echo "  --has-fortran   -> $has_fortran"
+if [ -f "$nfconf" ]; then
+        echo "  --fc            -> $fc"
+        echo "  --fflags        -> $fflags"
+        echo "  --flibs         -> $flibs"
+        echo "  --has-f90       -> $has_f90"
+        echo "  --has-f03       -> $has_f03"
+        echo
+fi
+        echo "  --has-dap       -> $has_dap2"
+        echo "  --has-dap2      -> $has_dap2"
+        echo "  --has-dap4      -> $has_dap4"
+        echo "  --has-nc2       -> $has_nc2"
+        echo "  --has-nc4       -> $has_nc4"
+        echo "  --has-hdf5      -> $has_hdf5"
+        echo "  --has-hdf4      -> $has_hdf4"
+        echo "  --has-logging   -> $has_logging"
+        echo "  --has-pnetcdf   -> $has_pnetcdf"
+        echo "  --has-szlib     -> $has_szlib"
+        echo "  --has-cdf5      -> $has_cdf5"
+        echo "  --has-parallel4 -> $has_parallel4"
+        echo "  --has-parallel  -> $has_parallel"
+        echo
+        echo "  --prefix        -> $prefix"
+        echo "  --includedir    -> $includedir"
+        echo "  --libdir        -> $libdir"
+        echo "  --version       -> $version"
+        echo
+}
+
+if test $# -eq 0; then
+    usage 1
+fi
+
+while test $# -gt 0; do
+    case "$1" in
+    # this deals with options in the style
+    # --option=value and extracts the value part
+    # [not currently used]
+    -*=*) value=`echo "$1" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+    *) value= ;;
+    esac
+
+    case "$1" in
+
+    --help)
+        usage 0
+        ;;
+
+    --all)
+        all
+        ;;
+
+    --cc)
+        echo $cc
+        ;;
+
+    --cflags)
+        echo $cflags
+        ;;
+
+    --has-dap)
+        echo $has_dap2
+        ;;
+
+    --has-dap2)
+        echo $has_dap2
+        ;;
+
+    --has-dap4)
+        echo $has_dap4
+        ;;
+
+    --has-nc2)
+        echo $has_nc2
+        ;;
+
+    --has-nc4)
+        echo $has_nc4
+        ;;
+
+    --has-hdf5)
+        echo $has_hdf5
+        ;;
+
+    --has-hdf4)
+        echo $has_hdf4
+        ;;
+
+    --has-logging)
+        echo $has_logging
+        ;;
+
+    --has-pnetcdf)
+        echo $has_pnetcdf
+        ;;
+
+    --has-szlib)
+        echo $has_szlib
+        ;;
+
+    --has-cdf5)
+        echo $has_cdf5
+        ;;
+
+    --has-parallel4)
+        echo $has_parallel4
+        ;;
+
+    --has-parallel)
+        echo $has_parallel
+        ;;
+
+    --libs)
+        echo $libs
+        ;;
+
+    --prefix)
+        echo "${prefix}"
+        ;;
+
+    --includedir)
+        echo "${includedir}"
+        ;;
+
+    --libdir)
+        echo "${libdir}"
+        ;;
+
+    --version)
+        echo $version
+        ;;
+
+    --has-c++)
+        echo $has_cxx
+        ;;
+
+    --cxx)
+        echo $cxx
+        ;;
+
+    --cxxflags)
+        echo $cxxflags
+        ;;
+
+    --cxxlibs)
+        echo $cxxlibs
+        ;;
+
+    --has-c++4)
+        echo $has_cxx4
+        ;;
+
+    --cxx4)
+        echo $cxx4
+        ;;
+
+    --cxx4flags)
+        echo $cxx4flags
+        ;;
+
+    --cxx4libs)
+        echo $cxx4libs
+        ;;
+
+    --has-fortran)
+        echo $has_fortran
+        ;;
+
+    --fc)
+        echo $fc
+        ;;
+
+    --fflags)
+        echo $fflags
+        ;;
+
+    --flibs)
+        echo $flibs
+        ;;
+
+    --has-f90)
+        echo $has_f90
+        ;;
+
+    --has-f03)
+        echo $has_f03
+        ;;
+
+    *)
+        echo "unknown option: $1"
+        usage 1
+        ;;
+    esac
+    shift
+done
+
+exit 0
