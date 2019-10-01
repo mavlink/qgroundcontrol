@@ -625,6 +625,8 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _parserName = "h265parse";
 #if defined(__android__)
         _hwDecoderName = "amcviddec-omxgooglehevcdecoder";
+#else
+        _hwDecoderName = "vaapih265dec";
 #endif
         _swDecoderName = "avdec_h265";
     } else {
@@ -632,6 +634,8 @@ VideoReceiver::setVideoDecoder(VideoEncoding encoding)
         _parserName = "h264parse";
 #if defined(__android__)
         _hwDecoderName = "amcviddec-omxgoogleh264decoder";
+#else
+        _hwDecoderName = "vaapih264dec";
 #endif
         _swDecoderName = "avdec_h264";
     }
