@@ -64,7 +64,7 @@ signals:
     void lightColorsChanged(bool lightColors);
     
 private:
-    bool _lightColors;
+    bool _lightColors = false;
 
     static const int _cColorGroups = 2;
 
