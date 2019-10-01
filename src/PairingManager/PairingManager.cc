@@ -23,7 +23,7 @@ QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 
 static const char*  jsonFileName = "pairing.json";
 static const qint64 min_time_between_connects = 5000;
-static const int pairRetries = 3;
+static const int pairRetries = 5;
 static const int pairRetryWait = 3000;
 
 //-----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ PairingManager::connectedDeviceNameList()
     QMapIterator<QString, LinkInterface*> i(_connectedDevices);
     while (i.hasNext()) {
         i.next();
-        if (i.value() && i.value()->active()) {
+        if (i.value()) {
             list.append(i.key());
         }
     }
@@ -120,13 +120,12 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
         i.next();
         if (i.value() == link) {
             if (!active) {
+                _removeUDPLink(i.key());
                 connectToDevice(i.key());
             }
             break;
         }
     }
-    emit connectedListChanged();
-    emit pairedListChanged();
 }
 
 //-----------------------------------------------------------------------------
