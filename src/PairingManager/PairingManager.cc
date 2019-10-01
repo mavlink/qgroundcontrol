@@ -121,8 +121,6 @@ PairingManager::_linkActiveChanged(LinkInterface* link, bool active, int vehicle
         if (i.value() == link) {
             if (!active) {
                 connectToDevice(i.key());
-            } else {
-                _devicesToConnect.remove(i.key());
             }
             break;
         }
@@ -180,13 +178,14 @@ PairingManager::_connectionCompleted(const QString& response)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_startCommand(const QString& url, const QString& content)
+PairingManager::_startCommand(const QString& name, const QString& url, const QString& content)
 {
     qCDebug(PairingManagerLog) << "Starting command: " << url;
     QNetworkRequest req;
     req.setUrl(QUrl(url));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     QNetworkReply *reply = _uploadManager.post(req, content.toUtf8());
+    reply->setProperty("name", QVariant(name));
     reply->setProperty("url", QVariant(url));
     reply->setProperty("content", QVariant(content));
     connect(reply, &QNetworkReply::finished, this, &PairingManager::_commandFinished, Qt::QueuedConnection);
@@ -195,7 +194,7 @@ PairingManager::_startCommand(const QString& url, const QString& content)
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_startUpload(const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt)
+PairingManager::_startUpload(const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt)
 {
     QString str = jsonDoc.toJson(QJsonDocument::JsonFormat::Compact);
     qCDebug(PairingManagerLog) << "Starting upload to: " << pairURL << " " << str;
@@ -204,12 +203,12 @@ PairingManager::_startUpload(const QString& pairURL, const QJsonDocument& jsonDo
     if (signAndEncrypt) {
         data = _device_rsa.encrypt(data + ";" + _rsa.sign(data));
     }
-    _startUploadRequest(pairURL, QString::fromStdString(data));
+    _startUploadRequest(name, pairURL, QString::fromStdString(data));
 }
 
 //-----------------------------------------------------------------------------
 void
-PairingManager::_startUploadRequest(const QString& url, const QString& data)
+PairingManager::_startUploadRequest(const QString& name, const QString& url, const QString& data)
 {
     if (url.contains("pair")) {
         _devicesToConnect.clear();
@@ -218,6 +217,7 @@ PairingManager::_startUploadRequest(const QString& url, const QString& data)
     req.setUrl(QUrl(url));
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     QNetworkReply *reply = _uploadManager.post(req, data.toUtf8());
+    reply->setProperty("name", QVariant(name));
     reply->setProperty("url", QVariant(url));
     reply->setProperty("content", QVariant(data));
     connect(reply, &QNetworkReply::finished, this, &PairingManager::_uploadFinished, Qt::QueuedConnection);
@@ -233,6 +233,7 @@ PairingManager::_uploadFinished()
         return;
     }
     QString url = reply->property("url").toString();
+    QString name = reply->property("name").toString();
     if (reply->error() == QNetworkReply::NoError) {
         qCDebug(PairingManagerLog) << "Upload finished.";
         QByteArray bytes = reply->readAll();
@@ -255,6 +256,7 @@ PairingManager::_uploadFinished()
         }
     } else if(url.contains("connect")) {
         qCDebug(PairingManagerLog) << "Connect error: " + reply->errorString();
+        connectToDevice(name);
     } else {
         if(++_pairRetryCount > pairRetries) {
             qCDebug(PairingManagerLog) << "Giving up";
@@ -262,9 +264,9 @@ PairingManager::_uploadFinished()
         } else {
             qCDebug(PairingManagerLog) << "Pairing error: " + reply->errorString();
             QString content = reply->property("content").toString();
-            QTimer::singleShot(pairRetryWait, [this,url,content]()
+            QTimer::singleShot(pairRetryWait, [this,name, url,content]()
             {
-                emit _startUploadRequest(url, content);
+                emit _startUploadRequest(name, url, content);
             });
         }
     }
@@ -342,6 +344,7 @@ PairingManager::_autoConnect()
 void
 PairingManager::_connectToPairedDevice(const QString& name)
 {
+    _devicesToConnect.remove(name);
     QFile file(_pairingCacheFile(name));
     file.open(QIODevice::ReadOnly | QIODevice::Text);
     QString json = file.readAll();
@@ -413,7 +416,7 @@ PairingManager::removePairedDevice(const QString& name)
     _removeUDPLink(name);
 
     QString unpairURL = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/unpair";
-    emit startCommand(unpairURL, "");
+    emit startCommand(name, unpairURL, "");
     _updatePairedDeviceNameList();
     emit pairedListChanged();
 }
@@ -440,7 +443,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel)
 {
     QVariantMap map = _getPairingMap(name);
     QString cmd = "http://" + map["IP"].toString() + ":" + map["PP"].toString() + "/channel";
-    emit startCommand(cmd, QString::number(channel));
+    emit startCommand(name, cmd, QString::number(channel));
 }
 
 //-----------------------------------------------------------------------------
@@ -647,7 +650,7 @@ PairingManager::_parsePairingJson(const QString& jsonEnc, bool updateSettings)
         }
         _toolbox->microhardManager()->updateSettings();
     }
-    emit startUpload(pairURL, jsonDoc, connecting);
+    emit startUpload("", pairURL, jsonDoc, connecting);
 }
 
 //-----------------------------------------------------------------------------

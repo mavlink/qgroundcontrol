@@ -104,9 +104,9 @@ public:
     Q_PROPERTY(bool             firstBoot               READ firstBoot               WRITE setFirstBoot  NOTIFY firstBootChanged)
 
 signals:
-    void startUpload                            (const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
+    void startUpload                            (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
     void stopUpload                             ();
-    void startCommand                           (const QString& url, const QString& content);
+    void startCommand                           (const QString& name, const QString& url, const QString& content);
     void closeConnection                        ();
     void pairingConfigurationsChanged           ();
     void nameListChanged                        ();
@@ -120,9 +120,9 @@ signals:
     void connectToPairedDevice                  (const QString& name);
 
 private slots:
-    void _startCommand                          (const QString& pairURL, const QString& content);
-    void _startUpload                           (const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
-    void _startUploadRequest                    (const QString& url, const QString& data);
+    void _startCommand                          (const QString& name, const QString& pairURL, const QString& content);
+    void _startUpload                           (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
+    void _startUploadRequest                    (const QString& name, const QString& url, const QString& data);
     void _parsePairingJsonNFC                   (const QString& jsonEnc) { _parsePairingJson(jsonEnc, true); }
     void _parsePairingJson                      (const QString& jsonEnc, bool updateSettings);
     void _setPairingStatus                      (PairingStatus status, const QString& pairingStatus);
