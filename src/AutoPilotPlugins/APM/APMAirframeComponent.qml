@@ -178,8 +178,12 @@ SetupPage {
 
                                     property bool valid: true
 
-                                    function selectFrameType(frameType) {
-                                        var index = object.frameTypeEnumValues.findIndex(v => v==frameType)
+                                    function checkFrameType(value) {
+                                        return value == _frameType.rawValue
+                                    }
+
+                                    function selectFrameType() {
+                                        var index = object.frameTypeEnumValues.findIndex(checkFrameType)
                                         if (index == -1 && combo.visible) {
                                             // Frame Class/Type is set to an invalid combination
                                             combo.valid = false
@@ -189,12 +193,12 @@ SetupPage {
                                         }
                                     }
 
-                                    Component.onCompleted: selectFrameType(_frameType.rawValue)
+                                    Component.onCompleted: selectFrameType()
 
                                     Connections {
                                         target:                 _frameTypeAvailable ? _frameType : null
                                         ignoreUnknownSignals:   true
-                                        onRawValueChanged:      combo.selectFrameType(value)
+                                        onRawValueChanged:      combo.selectFrameType()
                                     }
                                 }
                             }
