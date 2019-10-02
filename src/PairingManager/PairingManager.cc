@@ -21,7 +21,6 @@
 
 QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 
-static const char*  jsonFileName = "pairing.json";
 static const qint64 min_time_between_connects = 5000;
 static const int pairRetries = 5;
 static const int pairRetryWait = 3000;
@@ -65,6 +64,7 @@ void
 PairingManager::_pairingCompleted(const QString& name, const QString& devicePublicKey)
 {
     QJsonObject jsonObj = _jsonDoc.object();
+    jsonObj.insert("Name", name);
     jsonObj.insert("PublicKey", devicePublicKey);
     _jsonDoc.setObject(jsonObj);
     _writeJson(_jsonDoc, _pairingCacheFile(name));
@@ -289,19 +289,6 @@ PairingManager::_commandFinished()
         }
     }
     reply->deleteLater();
-}
-
-//-----------------------------------------------------------------------------
-void
-PairingManager::_parsePairingJsonFile()
-{
-    QFile file(QDir::temp().filePath(jsonFileName));
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
-    QString json = file.readAll();
-    file.remove();
-    file.close();
-
-    jsonReceived(json);
 }
 
 //-----------------------------------------------------------------------------
@@ -591,6 +578,8 @@ PairingManager::_parsePairingJson(const QString& jsonEnc, bool updateSettings)
         pport = "29351";
     }
 
+    QString name = remotePairingMap.contains("Name") ? remotePairingMap["Name"].toString() : "";
+
     if (remotePairingMap.contains("PublicKey")) {
         _device_rsa.generate_public(remotePairingMap["PublicKey"].toString().toStdString());
     }
@@ -650,7 +639,7 @@ PairingManager::_parsePairingJson(const QString& jsonEnc, bool updateSettings)
         }
         _toolbox->microhardManager()->updateSettings();
     }
-    emit startUpload("", pairURL, jsonDoc, connecting);
+    emit startUpload(name, pairURL, jsonDoc, connecting);
 }
 
 //-----------------------------------------------------------------------------

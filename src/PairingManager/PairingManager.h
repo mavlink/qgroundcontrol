@@ -149,7 +149,6 @@ private:
 
     QMap<QString, LinkInterface*> _connectedDevices;
 
-    void                    _parsePairingJsonFile       ();
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
     QJsonDocument           _createZeroTierPairingJson  (const QVariantMap& remotePairingMap);
