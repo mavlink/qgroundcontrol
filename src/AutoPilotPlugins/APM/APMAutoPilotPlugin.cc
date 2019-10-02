@@ -10,9 +10,10 @@
 
 #include "APMAutoPilotPlugin.h"
 #include "UAS.h"
-#include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
-#include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
-#include "FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h"
+#include "APMParameterMetaData.h"
+#include "APMFirmwarePlugin.h"
+#include "ArduCopterFirmwarePlugin.h"
+#include "ArduRoverFirmwarePlugin.h"
 #include "VehicleComponent.h"
 #include "APMAirframeComponent.h"
 #include "APMFlightModesComponent.h"
@@ -103,7 +104,7 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
 
-            if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
+            if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
                     _vehicle->parameterManager()->parameterExists(-1, QStringLiteral("FOLL_ENABLE"))) {
                 _followComponent = new APMFollowComponent(_vehicle, this);
                 _followComponent->setupTriggerSignals();
