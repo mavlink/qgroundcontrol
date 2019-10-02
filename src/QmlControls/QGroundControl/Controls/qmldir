@@ -24,6 +24,7 @@ HeightIndicator         1.0 HeightIndicator.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
 LogReplayStatusBar      1.0 LogReplayStatusBar.qml
+MainWindowSavedState    1.0 MainWindowSavedState.qml
 MAVLinkMessageButton    1.0 MAVLinkMessageButton.qml
 MissionCommandDialog    1.0 MissionCommandDialog.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
