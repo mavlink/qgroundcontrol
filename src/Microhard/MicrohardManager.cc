@@ -340,18 +340,18 @@ MicrohardManager::setProductName(QString product)
     _channelMax = 76;
     int frequencyStart = 2407;
 
-    if (product == "pMDDL2350") {
+    if (product == "pMDDL2350" || product == "pDDL2350") {
         _channelMin = 1;
         _channelMax = 81;
         frequencyStart = 2310;
-    } else if (product == "pMDDL2450") {
+    } else if (product == "pMDDL2450" || product == "pDDL2450") {
         _channelMin = 6;
         _channelMax = 76;
         frequencyStart = 2407;
-    } else if (product == "pMDDL2550") {
-        _channelMin = 6;
-        _channelMax = 76;
-        frequencyStart = 2500;
+    } else if (product == "pMDDL1800" || product == "pDDL1800" ) {
+        _channelMin = 3;
+        _channelMax = 57;
+        frequencyStart = 1813;
     }
 
     _channelLabels.clear();
