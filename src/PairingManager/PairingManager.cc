@@ -254,7 +254,9 @@ PairingManager::_uploadFinished()
         }
     } else if(url.contains("connect")) {
         qCDebug(PairingManagerLog) << "Connect error: " + reply->errorString();
-        connectToDevice(name);
+        if (!reply->errorString().contains("canceled")) {
+            connectToDevice(name);
+        }
     } else {
         if(++_pairRetryCount > pairRetries) {
             qCDebug(PairingManagerLog) << "Giving up";
