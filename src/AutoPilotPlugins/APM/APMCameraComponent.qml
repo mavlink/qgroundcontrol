@@ -272,6 +272,7 @@ SetupPage {
                             anchors.left:       gimbalOutLabel.right
                             width:              mountAngMinField.width
                             model:              gimbalOutModel
+                            textRole:           "text"
                             currentIndex:       gimbalOutIndex
 
                             onActivated: setRCFunction(gimbalOutModel.get(index).value, rcFunction)

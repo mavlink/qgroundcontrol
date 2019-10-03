@@ -303,7 +303,8 @@ RowLayout {
             QGCLabel { text: qsTr("Increment/Decrement %") }
 
             QGCComboBox {
-                id:     adjustPercentCombo
+                id:         adjustPercentCombo
+                textRole:   "text"
                 model:  ListModel {
                     id: adjustPercentModel
                     ListElement { text: "5"; value: 0.05 }

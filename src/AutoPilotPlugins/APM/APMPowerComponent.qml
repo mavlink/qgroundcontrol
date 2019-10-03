@@ -398,6 +398,7 @@ SetupPage {
                     id:                     sensorCombo
                     Layout.minimumWidth:    _fieldWidth
                     model:                  sensorModel
+                    textRole:               "text"
 
                     onActivated: {
                         if (index < sensorModel.count - 1) {
