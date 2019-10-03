@@ -409,6 +409,7 @@ SetupPage {
                                 anchors.right:  parent.right
                                 visible:        px4Flow
                                 model:          px4FlowFirmwareList
+                                textRole:       "text"
                                 currentIndex:   _defaultFirmwareIsPX4 ? 0 : 1
                             }
 
