@@ -49,7 +49,8 @@ SetupPage {
             property int  _followComboMaintainIndex:    0
             property int  _followComboSpecifyIndex:     1
             property bool _followMaintain:              followPositionCombo.currentIndex === _followComboMaintainIndex
-            property bool _isFollowMeSetup:             _followEnabled.rawValue == 1 && _followParamsAvailable && _followOffsetType.rawValue == 1 && _followAltitudeType.rawValue == 1 && _followSysId.rawValue == 0
+            property bool _isFollowMeSetup:             _followEnabled.rawValue == 1 && _followParamsAvailable && _followOffsetType.rawValue == 1 && (_roverFirmware || (!_roverFirmware && _followAltitudeType.rawValue == 1)) && _followSysId.rawValue == 0
+            property bool _roverFirmware:               controller.roverFirmware
 
             readonly property int _followYawBehaviorNone:   0
             readonly property int _followYawBehaviorFace:   1
@@ -79,13 +80,17 @@ SetupPage {
                     controller.angle.rawValue = _radiansToHeading(angleRadians)
                 }
                 controller.height.rawValue = -_followOffsetZ.rawValue
-                pointVehicleCombo.currentIndex = _followYawBehavior.rawValue
+                if (!_roverFirmware) {
+                    pointVehicleCombo.currentIndex = _followYawBehavior.rawValue
+                }
             }
 
             function _setFollowMeParamDefaults() {
                 _followOffsetType.rawValue =    1   // Relative to vehicle
-                _followAltitudeType.rawValue =  1   // Altitude is relative
                 _followSysId.rawValue =         0   // Follow first message sent
+                if (!_roverFirmware) {
+                    _followAltitudeType.rawValue = 1   // Altitude is relative
+                }
 
                 controller.distance.value = controller.distance.defaultValue
                 controller.angle.value = controller.angle.defaultValue
@@ -143,11 +148,14 @@ SetupPage {
                     _followOffsetY =        controller.getParameterFact(-1, "FOLL_OFS_Y")
                     _followOffsetZ =        controller.getParameterFact(-1, "FOLL_OFS_Z")
                     _followOffsetType =     controller.getParameterFact(-1, "FOLL_OFS_TYPE")
-                    _followAltitudeType =   controller.getParameterFact(-1, "FOLL_ALT_TYPE")
-                    _followYawBehavior =    controller.getParameterFact(-1, "FOLL_YAW_BEHAVE")
+                    if (!_roverFirmware) {
+                        _followAltitudeType =   controller.getParameterFact(-1, "FOLL_ALT_TYPE")
+                        _followYawBehavior =    controller.getParameterFact(-1, "FOLL_YAW_BEHAVE")
+                        _followYawBehavior.rawValue = 1   // Point at GCS
+                    }
+
                     _followParamsAvailable = true
                     vehicleParamRefreshLabel.visible = false
-                    _followYawBehavior.rawValue = 1   // Point at GCS
                     _setFollowMeParamDefaults()
                 }
             }
@@ -160,7 +168,12 @@ SetupPage {
                 onClicked: {
                     if (checked) {
                         _followEnabled.rawValue = 1
-                        controller.getMissingParameters([ "FOLL_DIST_MAX", "FOLL_SYSID", "FOLL_OFS_X", "FOLL_OFS_Y", "FOLL_OFS_Z", "FOLL_OFS_TYPE", "FOLL_ALT_TYPE", "FOLL_YAW_BEHAVE" ])
+                        var missingParameters = [ "FOLL_DIST_MAX", "FOLL_SYSID", "FOLL_OFS_X", "FOLL_OFS_Y", "FOLL_OFS_Z", "FOLL_OFS_TYPE"  ]
+                        if (!_roverFirmware) {
+                            missingParameters.push("FOLL_ALT_TYPE")
+                            missingParameters.push("FOLL_YAW_BEHAVE")
+                        }
+                        controller.getMissingParameters(missingParameters)
                         vehicleParamRefreshLabel.visible = true
                     } else {
                         _followEnabled.rawValue = 0
@@ -204,12 +217,16 @@ SetupPage {
                             }
                         }
 
-                        QGCLabel { text: qsTr("Point Vehicle") }
+                        QGCLabel {
+                            text:       qsTr("Point Vehicle")
+                            visible:    !_roverFirmware
+                        }
                         QGCComboBox {
                             id:                     pointVehicleCombo
                             Layout.fillWidth:       true
                             // NOTE: The indices for the model below must match the values for FOLL_YAW_BEHAVE
                             model:                  [ qsTr("Maintain current vehicle orientation"), qsTr("Point at ground station location"), qsTr("Same orientation as ground station"), qsTr("Same direction as ground station movement") ]
+                            visible:                !_roverFirmware
                             onActivated:            _followYawBehavior.rawValue = index
                         }
                     }
@@ -237,10 +254,14 @@ SetupPage {
                             onUpdated:  _setXYOffsetByAngleAndDistance(controller.angle.rawValue, controller.distance.rawValue)
                         }
 
-                        QGCLabel { text: qsTr("Height") }
+                        QGCLabel {
+                            id:         heightLabel
+                            text:       qsTr("Height")
+                            visible:    !_roverFirmware && !_followMaintain
+                        }
                         FactTextField {
                             fact:       controller.height
-                            visible:    !_followMaintain
+                            visible:    heightLabel.visible
                             onUpdated:  _followOffsetZ.rawValue = -controller.height.rawValue
                         }
                     }
@@ -313,11 +334,12 @@ SetupPage {
                             transform: Rotation {
                                 origin.x:       vehicleIcon.width  / 2
                                 origin.y:       vehicleIcon.height / 2
-                                angle:          _followYawBehavior.rawValue == _followYawBehaviorNone ?
-                                                    0 :
-                                                    (_followYawBehavior.rawValue == _followYawBehaviorFace ?
-                                                         180 :
-                                                         -controller.angle.rawValue)
+                                angle:          _roverFirmware ? 0 :
+                                                                 (_followYawBehavior.rawValue == _followYawBehaviorNone ?
+                                                                      0 :
+                                                                      (_followYawBehavior.rawValue == _followYawBehaviorFace ?
+                                                                           180 :
+                                                                           -controller.angle.rawValue))
                             }
                         }
 
@@ -375,6 +397,7 @@ SetupPage {
                 ColumnLayout {
                     Layout.fillHeight:  true
                     spacing:            0
+                    visible:            !_roverFirmware
 
                     Image {
                         id:                 vehicleIconHeight
@@ -395,7 +418,7 @@ SetupPage {
                     Item {
                         Layout.alignment:   Qt.AlignHCenter
                         Layout.fillHeight:  true
-                        width:              Math.max(ScreenTools.defaultFontPixelWidth * 2, heightLabel.width)
+                        width:              Math.max(ScreenTools.defaultFontPixelWidth * 2, heightValueLabel.width)
 
                         Rectangle {
                             id:                         heightLine
@@ -424,7 +447,7 @@ SetupPage {
                         }
 
                         QGCLabel {
-                            id:                 heightLabel
+                            id:                 heightValueLabel
                             anchors.centerIn:   parent
                             text:               controller.height.valueString + " " + QGroundControl.appSettingsDistanceUnitsString
                         }
