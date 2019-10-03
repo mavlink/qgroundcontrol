@@ -968,7 +968,7 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _airSpeedFact.setRawValue(qIsNaN(vfrHud.airspeed) ? 0 : vfrHud.airspeed);
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
-    _throttlePctFact.setRawValue(vfrHud.throttle);
+    _throttlePctFact.setRawValue(static_cast<int16_t>(vfrHud.throttle));
 }
 
 void Vehicle::_handleEstimatorStatus(mavlink_message_t& message)
