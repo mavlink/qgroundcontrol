@@ -88,17 +88,31 @@ exists(user_config.pri):infile(user_config.pri, CONFIG) {
 # is present. It's useful to run "regular" builds to make sure you didn't
 # break anything.
 
+# Default build is disabled because of the constant presence of the custom build
+
+# QGC_CUSTOM_BUILD_FOLDER can be defined in dev environment to change the custom folder
+# this will also trigger enabling of custom build
+QGC_CUSTOM_BUILD_FOLDER=$$(QGC_CUSTOM_BUILD_FOLDER)
+isEmpty(QGC_CUSTOM_BUILD_FOLDER) {
+    # Use the default name for the custom folder: custom
+    QGC_CUSTOM_BUILD_FOLDER=$$PWD/$$QGC_CUSTOM_BUILD_FOLDER/custom.pri
+    # Default build is disabled because of the constant presence of the custom build
+    CONFIG += QGC_DISABLE_CUSTOM_BUILD
+} else {
+    message("Externally triggered custom build override")
+}
+
 contains (CONFIG, QGC_DISABLE_CUSTOM_BUILD) {
     message("Disable custom build override")
 } else {
-    exists($$PWD/custom/custom.pri) {
+    exists($${QGC_CUSTOM_BUILD_FOLDER}) {
         message("Found custom build")
         CONFIG  += CustomBuild
         DEFINES += QGC_CUSTOM_BUILD
         # custom.pri must define:
         # CUSTOMCLASS  = YourIQGCCorePluginDerivation
         # CUSTOMHEADER = \"\\\"YourIQGCCorePluginDerivation.h\\\"\"
-        include($$PWD/custom/custom.pri)
+        include($$PWD/$$QGC_CUSTOM_BUILD_FOLDER/custom.pri)
     }
 }
 
@@ -340,21 +354,21 @@ include(QGCExternalLibs.pri)
 #
 
 CustomBuild {
-    exists($$PWD/custom/qgroundcontrol.qrc) {
+    exists($$PWD/$$QGC_CUSTOM_BUILD_FOLDER/qgroundcontrol.qrc) {
         message("Using custom qgroundcontrol.qrc")
-        RESOURCES += $$PWD/custom/qgroundcontrol.qrc
+        RESOURCES += $$PWD/$$QGC_CUSTOM_BUILD_FOLDER/qgroundcontrol.qrc
     } else {
         RESOURCES += $$PWD/qgroundcontrol.qrc
     }
-    exists($$PWD/custom/qgcresources.qrc) {
+    exists($$PWD/$$QGC_CUSTOM_BUILD_FOLDER/qgcresources.qrc) {
         message("Using custom qgcresources.qrc")
-        RESOURCES += $$PWD/custom/qgcresources.qrc
+        RESOURCES += $$PWD/$$QGC_CUSTOM_BUILD_FOLDER/qgcresources.qrc
     } else {
         RESOURCES += $$PWD/qgcresources.qrc
     }
-    exists($$PWD/custom/qgcimages.qrc) {
+    exists($$PWD/$$QGC_CUSTOM_BUILD_FOLDER/qgcimages.qrc) {
         message("Using custom qgcimages.qrc")
-        RESOURCES += $$PWD/custom/qgcimages.qrc
+        RESOURCES += $$PWD/$$QGC_CUSTOM_BUILD_FOLDER/qgcimages.qrc
     } else {
         RESOURCES += $$PWD/qgcimages.qrc
     }
