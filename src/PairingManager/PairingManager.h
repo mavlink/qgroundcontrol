@@ -67,7 +67,7 @@ public:
     QStringList     connectedDeviceNameList     ();
     QStringList     pairedDeviceNameList        ();
     PairingStatus   pairingStatus               () { return _status; }
-    QString         pairedVehicle               () { return _lastPaired; }
+    QString         connectedVehicle            () { return _lastConnected; }
     int             nfcIndex                    () { return _nfcIndex; }
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
@@ -97,7 +97,7 @@ public:
     Q_PROPERTY(QStringList      connectedDeviceNameList READ connectedDeviceNameList NOTIFY connectedListChanged)
     Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList    NOTIFY pairedListChanged)
     Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings  CONSTANT)
-    Q_PROPERTY(QString          pairedVehicle           READ pairedVehicle           NOTIFY pairedVehicleChanged)
+    Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle        NOTIFY connectedVehicleChanged)
     Q_PROPERTY(bool             errorState              READ errorState              NOTIFY pairingStatusChanged)
     Q_PROPERTY(int              nfcIndex                READ nfcIndex                CONSTANT)
     Q_PROPERTY(int              microhardIndex          READ microhardIndex          CONSTANT)
@@ -115,7 +115,7 @@ signals:
     void setPairingStatus                       (PairingStatus status, const QString& pairingStatus);
     void connectedListChanged                   ();
     void pairedListChanged                      ();
-    void pairedVehicleChanged                   ();
+    void connectedVehicleChanged                ();
     void firstBootChanged                       ();
     void connectToPairedDevice                  (const QString& name);
 
@@ -130,7 +130,7 @@ private slots:
 
 private:
     QString                 _statusString;
-    QString                 _lastPaired;
+    QString                 _lastConnected;
     QString                 _encryptionKey; // TODO get rid of this
     QString                 _publicKey; // TODO get rid of this
     int                     _nfcIndex = -1;
@@ -149,7 +149,6 @@ private:
 
     QMap<QString, LinkInterface*> _connectedDevices;
 
-    void                    _parsePairingJsonFile       ();
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
     QJsonDocument           _createZeroTierPairingJson  (const QVariantMap& remotePairingMap);
