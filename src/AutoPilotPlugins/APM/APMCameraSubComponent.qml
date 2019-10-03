@@ -316,10 +316,11 @@ SetupPage {
                                             }
 
                                             QGCComboBox {
-                                                id:           outputChan
-                                                width:        servoPWMMinField.width
-                                                model:        gimbalOutModel
-                                                currentIndex: gimbalOutIndex
+                                                id:             outputChan
+                                                width:          servoPWMMinField.width
+                                                model:          gimbalOutModel
+                                                textRole:       "text"
+                                                currentIndex:   gimbalOutIndex
 
                                                 onActivated: setRCFunction(gimbalOutModel.get(index).value, rcFunction)
                                             }
