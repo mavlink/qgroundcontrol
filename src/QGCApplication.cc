@@ -687,7 +687,11 @@ bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
 
 void QGCApplication::reportMissingParameter(int componentId, const QString& name)
 {
-    _missingParams += QString("%1:%2").arg(componentId).arg(name);
+    QPair<int, QString>  missingParam(componentId, name);
+
+    if (!_missingParams.contains(missingParam)) {
+        _missingParams.append(missingParam);
+    }
     _missingParamsDelayedDisplayTimer.start();
 }
 
@@ -696,12 +700,14 @@ void QGCApplication::_missingParamsDisplay(void)
 {
     if (_missingParams.count()) {
         QString params;
-        foreach (const QString &name, _missingParams) {
+        for (QPair<int, QString>& missingParam: _missingParams) {
+            QString param = QStringLiteral("%1:%2").arg(missingParam.first).arg(missingParam.second);
             if (params.isEmpty()) {
-                params += name;
+                params += param;
             } else {
-                params += QString(", %1").arg(name);
+                params += QStringLiteral(", %1").arg(param);
             }
+
         }
         _missingParams.clear();
 
