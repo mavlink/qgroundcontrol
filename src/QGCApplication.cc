@@ -665,8 +665,6 @@ void QGCApplication::checkTelemetrySavePathOnMainThread()
 
 bool QGCApplication::_checkTelemetrySavePath(bool useMessageBox)
 {
-    QString errorTitle = tr("Telemetry save error");
-
     QString saveDirPath = _toolbox->settingsManager()->appSettings()->telemetrySavePath();
     if (saveDirPath.isEmpty()) {
         QString error = tr("Unable to save telemetry log. Application save directory is not set.");
