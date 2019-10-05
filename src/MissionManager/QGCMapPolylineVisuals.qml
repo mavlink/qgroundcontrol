@@ -30,85 +30,92 @@ Item {
     property int    lineWidth:      3
     property color  lineColor:      "#be781c"
 
-
-    property var    _polylineComponent
     property var    _dragHandlesComponent
     property var    _splitHandlesComponent
+    property bool   _traceMode:             false
+    property string _instructionText:       _corridorToolsText
+    property real   _zorderDragHandle:      QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
+    property real   _zorderSplitHandle:     QGroundControl.zOrderMapItems + 2
+    property var    _savedVertices:         [ ]
 
-    property real _zorderDragHandle:    QGroundControl.zOrderMapItems + 3   // Highest to prevent splitting when items overlap
-    property real _zorderSplitHandle:   QGroundControl.zOrderMapItems + 2
+    readonly property string _corridorToolsText:    qsTr("Corridor Tools")
+    readonly property string _traceText:            qsTr("Click in the map to add vertices. Click 'Done Tracing' when finished.")
 
-    function addVisuals() {
-        _polylineComponent = polylineComponent.createObject(mapControl)
-        mapControl.addMapItem(_polylineComponent)
-    }
-
-    function removeVisuals() {
-        _polylineComponent.destroy()
-    }
-
-    function addHandles() {
-        if (!_dragHandlesComponent) {
-            _dragHandlesComponent = dragHandlesComponent.createObject(mapControl)
-            _splitHandlesComponent = splitHandlesComponent.createObject(mapControl)
+    function _addCommonVisuals() {
+        if (_objMgrCommonVisuals.empty) {
+            _objMgrCommonVisuals.createObject(polylineComponent, mapControl, true)
         }
     }
 
-    function removeHandles() {
-        if (_dragHandlesComponent) {
-            _dragHandlesComponent.destroy()
-            _dragHandlesComponent = undefined
-        }
-        if (_splitHandlesComponent) {
-            _splitHandlesComponent.destroy()
-            _splitHandlesComponent = undefined
+    function _addInteractiveVisuals() {
+        if (_objMgrInteractiveVisuals.empty) {
+            _objMgrInteractiveVisuals.createObjects([ dragHandlesComponent, splitHandlesComponent, toolbarComponent ], mapControl)
         }
     }
 
     /// Calculate the default/initial polyline
-    function defaultPolylineVertices() {
-        var x = map.centerViewport.x + (map.centerViewport.width / 2)
-        var yInset = map.centerViewport.height / 4
-        var topPointCoord =     map.toCoordinate(Qt.point(x, map.centerViewport.y + yInset),                                false /* clipToViewPort */)
-        var bottomPointCoord =  map.toCoordinate(Qt.point(x, map.centerViewport.y + map.centerViewport.height - yInset),    false /* clipToViewPort */)
+    function _defaultPolylineVertices() {
+        var x = mapControl.centerViewport.x + (mapControl.centerViewport.width / 2)
+        var yInset = mapControl.centerViewport.height / 4
+        var topPointCoord =     mapControl.toCoordinate(Qt.point(x, mapControl.centerViewport.y + yInset),                                false /* clipToViewPort */)
+        var bottomPointCoord =  mapControl.toCoordinate(Qt.point(x, mapControl.centerViewport.y + mapControl.centerViewport.height - yInset),    false /* clipToViewPort */)
         return [ topPointCoord, bottomPointCoord ]
     }
 
-    /// Add an initial 2 point polyline
-    function addInitialPolyline() {
-        if (mapPolyline.count < 2) {
-            mapPolyline.clear()
-            var initialVertices = defaultPolylineVertices()
-            mapPolyline.appendVertex(initialVertices[0])
-            mapPolyline.appendVertex(initialVertices[1])
+    /// Reset polyline back to initial default
+    function _resetPolyline() {
+        mapPolyline.beginReset()
+        mapPolyline.clear()
+        var initialVertices = _defaultPolylineVertices()
+        mapPolyline.appendVertex(initialVertices[0])
+        mapPolyline.appendVertex(initialVertices[1])
+        mapPolyline.endReset()
+    }
+
+    function _saveCurrentVertices() {
+        _savedVertices = [ ]
+        for (var i=0; i<mapPolyline.count; i++) {
+            _savedVertices.push(mapPolyline.vertexCoordinate(i))
         }
     }
 
-    /// Reset polyline back to initial default
-    function resetPolyline() {
+    function _restorePreviousVertices() {
+        mapPolyline.beginReset()
         mapPolyline.clear()
-        addInitialPolyline()
+        for (var i=0; i<_savedVertices.length; i++) {
+            mapPolyline.appendVertex(_savedVertices[i])
+        }
+        mapPolyline.endReset()
     }
 
     onInteractiveChanged: {
         if (interactive) {
-            addHandles()
+            _addInteractiveVisuals()
         } else {
-            removeHandles()
+            _objMgrInteractiveVisuals.destroyObjects()
+        }
+    }
+
+    on_TraceModeChanged: {
+        if (_traceMode) {
+            _instructionText = _traceText
+            _objMgrTraceVisuals.createObject(traceMouseAreaComponent, mapControl, false)
+        } else {
+            _instructionText = _corridorToolsText
+            _objMgrTraceVisuals.destroyObjects()
         }
     }
 
     Component.onCompleted: {
-        addVisuals()
+        _addCommonVisuals()
         if (interactive) {
-            addHandles()
+            _addInteractiveVisuals()
         }
     }
 
-    Component.onDestruction: {
-        removeVisuals()
-        removeHandles()
-    }
+    QGCDynamicObjectManager { id: _objMgrCommonVisuals }
+    QGCDynamicObjectManager { id: _objMgrInteractiveVisuals }
+    QGCDynamicObjectManager { id: _objMgrTraceVisuals }
 
     QGCPalette { id: qgcPal }
 
@@ -142,18 +149,9 @@ Item {
             onTriggered:    mapPolyline.removeVertex(menu._removeVertexIndex)
         }
 
-        QGCMenuSeparator {
-            visible:        removeVertexItem.visible
-        }
-
         QGCMenuItem {
             text:           qsTr("Edit position..." )
             onTriggered:    mainWindow.showComponentDialog(editPositionDialog, qsTr("Edit Position"), mainWindow.showDialogDefaultWidth, StandardButton.Cancel)
-        }
-
-        QGCMenuItem {
-            text:           qsTr("Load KML...")
-            onTriggered:    kmlLoadDialog.openForLoad()
         }
     }
 
@@ -307,6 +305,67 @@ Item {
                         _visuals[i].destroy()
                     }
                     _visuals = [ ]
+                }
+            }
+        }
+    }
+
+    Component {
+        id: toolbarComponent
+
+        PlanEditToolbar {
+            x:          mapControl.centerViewport.left + _margins
+            y:          mapControl.centerViewport.top + _margins
+            width:      mapControl.centerViewport.width - (_margins * 2)
+            z:          QGroundControl.zOrderMapItems + 2
+
+            property real _margins: ScreenTools.defaultFontPixelWidth
+
+            QGCButton {
+                _horizontalPadding: 0
+                text:               qsTr("Basic Corridor")
+                visible:            !_traceMode
+                onClicked:          _resetPolyline()
+            }
+
+            QGCButton {
+                _horizontalPadding: 0
+                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace Corridor")
+                onClicked: {
+                    if (_traceMode) {
+                        if (mapPolyline.count < 2) {
+                            _restorePreviousVertices()
+                        }
+                        _traceMode = false
+                    } else {
+                        _saveCurrentVertices()
+                        _traceMode = true
+                        mapPolyline.clear();
+                    }
+                }
+            }
+
+            QGCButton {
+                _horizontalPadding: 0
+                text:               qsTr("Load KML...")
+                onClicked:          kmlLoadDialog.openForLoad()
+                visible:            !_traceMode
+            }
+        }
+    }
+
+    // Mouse area to capture clicks for tracing a polyline
+    Component {
+        id:  traceMouseAreaComponent
+
+        MouseArea {
+            anchors.fill:       mapControl
+            preventStealing:    true
+            z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
+
+            onClicked: {
+                if (mouse.button === Qt.LeftButton) {
+                    mapPolyline.appendVertex(mapControl.toCoordinate(Qt.point(mouse.x, mouse.y), false /* clipToViewPort */))
                 }
             }
         }

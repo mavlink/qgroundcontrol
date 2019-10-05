@@ -21,8 +21,6 @@ TransectStyleMapVisuals {
 
     property bool _currentItem: object.isCurrentItem
 
-    Component.onCompleted: mapPolylineVisuals.addInitialPolyline()
-
     QGCMapPolylineVisuals {
         id:             mapPolylineVisuals
         mapControl:     map
