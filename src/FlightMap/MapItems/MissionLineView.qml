@@ -24,6 +24,6 @@ MapItemView {
         line.color: "#be781c"                           // Hack, can't get palette to work in here
         z:          QGroundControl.zOrderWaypointLines
 
-        path: object ? [ object.coordinate1, object.coordinate2 ] : [ ]
+        path: object && object.coordinate1.isValid && object.coordinate2.isValid ? [ object.coordinate1, object.coordinate2 ] : []
     }
 }
