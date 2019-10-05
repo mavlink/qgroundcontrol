@@ -23,6 +23,7 @@ HackFileDialog          1.0 HackFileDialog.qml
 HeightIndicator         1.0 HeightIndicator.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
+KMLOrSHPFileDialog      1.0 KMLOrSHPFileDialog.qml
 LogReplayStatusBar      1.0 LogReplayStatusBar.qml
 MainWindowSavedState    1.0 MainWindowSavedState.qml
 MAVLinkMessageButton    1.0 MAVLinkMessageButton.qml
