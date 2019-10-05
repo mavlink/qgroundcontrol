@@ -6,6 +6,7 @@ Note: This file only contains high level features or important fixes.
 
 ### 3.6.0 - Daily Build
 
+* New Corridor editing tools ui. Includes ability to trace polyline by clicking.
 * New Polygon editing tools ui. Includes ability to trace polygon by clicking.
 * ArduCopter/Rover: Follow Me setup page
 * More performant flight path display algorithm. Mobile builds no longer show limited path length.

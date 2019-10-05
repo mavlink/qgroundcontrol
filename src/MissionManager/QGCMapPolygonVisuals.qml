@@ -71,9 +71,9 @@ Item {
     }
 
 
-    function addToolVisuals() {
+    function addToolbarVisuals() {
         if (_objMgrToolVisuals.empty) {
-            _objMgrToolVisuals.createObject(editHeaderComponent, mapControl)
+            _objMgrToolVisuals.createObject(toolbarComponent, mapControl)
         }
     }
 
@@ -155,7 +155,7 @@ Item {
     function _handleInteractiveChanged() {
         if (interactive) {
             addEditingVisuals()
-            addToolVisuals()
+            addToolbarVisuals()
         } else {
             _traceMode = false
             removeEditingVisuals()
@@ -513,73 +513,53 @@ Item {
     }
 
     Component {
-        id: editHeaderComponent
+        id: toolbarComponent
 
-        Item {
-            x:          mapControl.centerViewport.left + _viewportMargins
-            y:          mapControl.centerViewport.top + _viewportMargins
-            width:      mapControl.centerViewport.width - (_viewportMargins * 2)
-            height:     editHeaderRowLayout.y + editHeaderRowLayout.height + _viewportMargins
+        PlanEditToolbar {
+            x:          mapControl.centerViewport.left + _margins
+            y:          mapControl.centerViewport.top + _margins
+            width:      mapControl.centerViewport.width - (_margins * 2)
             z:          QGroundControl.zOrderMapItems + 2
 
-            property real   _radius:            ScreenTools.defaultFontPixelWidth / 2
-            property real   _viewportMargins:   ScreenTools.defaultFontPixelWidth
+            property real   _margins: ScreenTools.defaultFontPixelWidth
 
-            Rectangle {
-                anchors.fill:    parent
-                radius:         _radius
-                color:          "white"
-                opacity:        0.75
+            QGCButton {
+                _horizontalPadding: 0
+                text:               qsTr("Basic Polygon")
+                visible:            !_traceMode
+                onClicked:          _resetPolygon()
             }
 
-            RowLayout {
-                id:                 editHeaderRowLayout
-                anchors.margins:    _viewportMargins
-                anchors.top:        parent.top
-                anchors.left:       parent.left
-                anchors.right:      parent.right
+            QGCButton {
+                _horizontalPadding: 0
+                text:               qsTr("Circular Polygon")
+                visible:            !_traceMode
+                onClicked:          _resetCircle()
+            }
 
-                QGCButton {
-                    text:       qsTr("Basic Polygon")
-                    visible:    !_traceMode
-                    onClicked:  _resetPolygon()
-                }
-
-                QGCButton {
-                    text:       qsTr("Circular Polygon")
-                    visible:    !_traceMode
-                    onClicked:  _resetCircle()
-                }
-
-                QGCButton {
-                    text:       _traceMode ? qsTr("Done Tracing") : qsTr("Trace Polygon")
-                    onClicked: {
-                        if (_traceMode) {
-                            if (mapPolygon.count < 3) {
-                                _restorePreviousVertices()
-                            }
-                            _traceMode = false
-                        } else {
-                            _saveCurrentVertices()
-                            _circleMode = false
-                            _traceMode = true
-                            mapPolygon.clear();
+            QGCButton {
+                _horizontalPadding: 0
+                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace Polygon")
+                onClicked: {
+                    if (_traceMode) {
+                        if (mapPolygon.count < 3) {
+                            _restorePreviousVertices()
                         }
+                        _traceMode = false
+                    } else {
+                        _saveCurrentVertices()
+                        _circleMode = false
+                        _traceMode = true
+                        mapPolygon.clear();
                     }
                 }
+            }
 
-                QGCButton {
-                    text:       qsTr("Load KML/SHP...")
-                    onClicked:  kmlOrSHPLoadDialog.openForLoad()
-                    visible:    !_traceMode
-                }
-
-                QGCLabel {
-                    id:                     instructionLabel
-                    color:                  "black"
-                    text:                   _instructionText
-                    Layout.fillWidth:       true
-                }
+            QGCButton {
+                _horizontalPadding: 0
+                text:               qsTr("Load KML/SHP...")
+                onClicked:          kmlOrSHPLoadDialog.openForLoad()
+                visible:            !_traceMode
             }
         }
     }
@@ -589,7 +569,7 @@ Item {
         id:  traceMouseAreaComponent
 
         MouseArea {
-            anchors.fill:       map
+            anchors.fill:       mapControl
             preventStealing:    true
             z:                  QGroundControl.zOrderMapItems + 1   // Over item indicators
 
@@ -640,38 +620,6 @@ Item {
                     _lastRadius = radius
                 }
             }
-
-            /*
-            onItemCoordinateChanged: delayTimer.radius = mapPolygon.center.distanceTo(itemCoordinate)
-
-            onDragStart:    delayTimer.start()
-            onDragStop:     { delayTimer.stop(); delayTimer.update() }
-
-            // Use a delayed update to increase performance of redraw while dragging
-            Timer {
-                id:             delayTimer
-                interval:       100
-                repeat:         true
-
-                property real radius
-                property real _lastRadius
-
-                onRadiusChanged: console.log(radius)
-
-                function update() {
-                    // Prevent signalling re-entrancy
-                    if (!_circleRadiusDrag && radius != _lastRadius) {
-                        _circleRadiusDrag = true
-                        _createCircularPolygon(mapPolygon.center, radius)
-                        _circleRadiusDragCoord = itemCoordinate
-                        _circleRadiusDrag = false
-                        _lastRadius = radius
-                    }
-                }
-
-                onTriggered: update()
-            }
-        */
         }
     }
 
