@@ -7,7 +7,6 @@
  *
  ****************************************************************************/
 
-
 import QtQuick          2.3
 import QtQuick.Controls 2.4
 
@@ -18,9 +17,13 @@ import QGroundControl.ScreenTools   1.0
 Button {
     id:                 button
     height:             ScreenTools.defaultFontPixelHeight * 3
+    leftPadding:        _horizontalMargin
+    rightPadding:       _horizontalMargin
     autoExclusive:      true
 
     property bool logo: false
+
+    property real _horizontalMargin: ScreenTools.defaultFontPixelWidth
 
     background: Rectangle {
         anchors.fill: parent
@@ -28,10 +31,8 @@ Button {
     }
 
     contentItem: Row {
-        spacing:                    ScreenTools.defaultFontPixelWidth
-        anchors.left:               button.left
-        anchors.leftMargin:         ScreenTools.defaultFontPixelWidth
-        anchors.verticalCenter:     button.verticalCenter
+        spacing:                ScreenTools.defaultFontPixelWidth
+        anchors.verticalCenter: button.verticalCenter
         QGCColoredImage {
             id:                     _icon
             height:                 ScreenTools.defaultFontPixelHeight * 2
@@ -50,5 +51,4 @@ Button {
             anchors.verticalCenter: parent.verticalCenter
         }
     }
-
 }
