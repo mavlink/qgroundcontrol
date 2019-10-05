@@ -405,10 +405,10 @@ Item {
             planView:                   true
 
             // This is the center rectangle of the map which is not obscured by tools
-            property rect centerViewport:   Qt.rect(_leftToolWidth, 0, editorMap.width - _leftToolWidth - _rightPanelWidth, editorMap.height - _statusHeight)
+            property rect centerViewport:   Qt.rect(_leftToolWidth, 0, editorMap.width - _leftToolWidth - _rightToolWidth, mapScale.y)
 
-            property real _leftToolWidth:   toolStrip.x + toolStrip.width
-            property real _statusHeight:    waypointValuesDisplay.visible ? editorMap.height - waypointValuesDisplay.y : 0
+            property real _leftToolWidth:       toolStrip.x + toolStrip.width
+            property real _rightToolWidth:      rightPanel.width + rightPanel.anchors.rightMargin
 
             readonly property real animationDuration: 500
 
