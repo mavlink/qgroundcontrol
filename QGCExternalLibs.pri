@@ -113,6 +113,7 @@ MacBuild {
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
+    LIBS+= -lgdal
 } else:WindowsBuild {
     INCLUDEPATH += C:/OSGeo4W/include
     LIBS += -LC:/OSGeo4W/lib
@@ -147,6 +148,10 @@ AndroidBuild {
     equals(ANDROID_TARGET_ARCH, armeabi-v7a)  {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libcrypto.so
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
+        INCLUDEPATH += $$BASEDIR/libs/gdal/android/include
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.so
+        #LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.a
+
     } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {
         # Haven't figured out how to get 64 bit arm OpenSLL yet. This means things like terrain queries will not qork.
     } else:equals(ANDROID_TARGET_ARCH, x86)  {
