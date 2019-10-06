@@ -323,14 +323,14 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Basic Corridor")
+                text:               qsTr("Basic")
                 visible:            !_traceMode
                 onClicked:          _resetPolyline()
             }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace Corridor")
+                text:               _traceMode ? qsTr("Done Tracing") : qsTr("Trace")
                 onClicked: {
                     if (_traceMode) {
                         if (mapPolyline.count < 2) {
