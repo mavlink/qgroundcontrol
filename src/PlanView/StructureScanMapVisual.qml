@@ -18,7 +18,7 @@ import QGroundControl.Palette       1.0
 import QGroundControl.Controls      1.0
 import QGroundControl.FlightMap     1.0
 
-/// Survey Complex Mission Item visuals
+/// Structure Scan Complex Mission Item visuals
 Item {
     id: _root
 
@@ -34,54 +34,11 @@ Item {
         objMgr.createObjects([entryPointComponent, exitPointComponent], map, true /* parentObjectIsMap */)
     }
 
-    function _destroyVisualElements() {
-        objMgr.destroyObjects()
-    }
-
-    /// Add an initial 4 sided polygon if there is none
-    function _addInitialPolygon() {
-        if (_structurePolygon.count < 3) {
-            // Initial polygon is inset to take 2/3rds space
-            var rect = Qt.rect(map.centerViewport.x, map.centerViewport.y, map.centerViewport.width, map.centerViewport.height)
-            rect.x += (rect.width * 0.25) / 2
-            rect.y += (rect.height * 0.25) / 2
-            rect.width *= 0.75
-            rect.height *= 0.75
-
-            var centerCoord =       map.toCoordinate(Qt.point(rect.x + (rect.width / 2), rect.y + (rect.height / 2)),   false /* clipToViewPort */)
-            var topLeftCoord =      map.toCoordinate(Qt.point(rect.x, rect.y),                                          false /* clipToViewPort */)
-            var topRightCoord =     map.toCoordinate(Qt.point(rect.x + rect.width, rect.y),                             false /* clipToViewPort */)
-            var bottomLeftCoord =   map.toCoordinate(Qt.point(rect.x, rect.y + rect.height),                            false /* clipToViewPort */)
-            var bottomRightCoord =  map.toCoordinate(Qt.point(rect.x + rect.width, rect.y + rect.height),               false /* clipToViewPort */)
-
-            // Adjust polygon to max size
-            var maxSize = 100
-            var halfWidthMeters =   Math.min(topLeftCoord.distanceTo(topRightCoord), maxSize) / 2
-            var halfHeightMeters =  Math.min(topLeftCoord.distanceTo(bottomLeftCoord), maxSize) / 2
-            topLeftCoord =      centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 0)
-            topRightCoord =     centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 0)
-            bottomLeftCoord =   centerCoord.atDistanceAndAzimuth(halfWidthMeters, -90).atDistanceAndAzimuth(halfHeightMeters, 180)
-            bottomRightCoord =  centerCoord.atDistanceAndAzimuth(halfWidthMeters, 90).atDistanceAndAzimuth(halfHeightMeters, 180)
-
-            _structurePolygon.appendVertex(topLeftCoord)
-            _structurePolygon.appendVertex(topRightCoord)
-            _structurePolygon.appendVertex(bottomRightCoord)
-            _structurePolygon.appendVertex(bottomLeftCoord)
-        }
-    }
-
     Component.onCompleted: {
-        _addInitialPolygon()
         _addVisualElements()
     }
 
-    Component.onDestruction: {
-        _destroyVisualElements()
-    }
-
-    QGCDynamicObjectManager {
-        id: objMgr
-    }
+    QGCDynamicObjectManager { id: objMgr }
 
     QGCMapPolygonVisuals {
         mapControl:         map
