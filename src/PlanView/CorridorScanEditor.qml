@@ -72,7 +72,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        missionItem.surveyAreaPolygon.isValid
+            visible:        missionItem.corridorPolyline.isValid
 
             QGCTabBar {
                 id:             tabBar

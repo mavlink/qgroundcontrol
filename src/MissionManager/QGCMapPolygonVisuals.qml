@@ -525,14 +525,14 @@ Item {
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Basic Polygon")
+                text:               qsTr("Basic")
                 visible:            !_traceMode
                 onClicked:          _resetPolygon()
             }
 
             QGCButton {
                 _horizontalPadding: 0
-                text:               qsTr("Circular Polygon")
+                text:               qsTr("Circular")
                 visible:            !_traceMode
                 onClicked:          _resetCircle()
             }
