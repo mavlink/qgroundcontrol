@@ -1,6 +1,6 @@
 #!/bin/sh
 CONFIG_LIBS="-L/external/gdal/lib -lgdal"
-CONFIG_DEP_LIBS=" -lz  -lm -ldl  -lsupc++ -lstdc++                    "
+CONFIG_DEP_LIBS=" -lz  -lm -ldl  -lsupc++ -lstdc++ -l/scripts/libcrypto.so -l/scripts/libssl.so                     "
 CONFIG_PREFIX="/external/gdal"
 CONFIG_CFLAGS="-I/external/gdal/include"
 CONFIG_DATA="/external/gdal/share/gdal"

@@ -20,8 +20,8 @@ git apply /scripts/gdal.patch
 
 ./autogen.sh
 
-CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mthumb -D__ANDROID_API__=21 " CXXFLAGS="-mthumb -D__ANDROID_API__=21" LIBS=" -lsupc++ -lstdc++"       ./configure --host=arm-linux-androideabi --without-grib --prefix=$PROJECT/external/gdal 
+CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mthumb -D__ANDROID_API__=21 " CXXFLAGS="-mthumb -D__ANDROID_API__=21" LIBS=" -lsupc++ -lstdc++ -l/scripts/libcrypto.so -l/scripts/libssl.so " ./configure --host=arm-linux-androideabi --without-grib --prefix=$PROJECT/external/gdal 
 
 make -j8
-#make install
-cp -r .libs /scripts
+make install
+cp -r /external/gdal /scripts

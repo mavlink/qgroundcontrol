@@ -17,7 +17,7 @@ old_library='libgdal.a'
 inherited_linker_flags=''
 
 # Libraries that this one depends upon.
-dependency_libs=' -lz -lsupc++'
+dependency_libs=' -lz -lsupc++ -l/scripts/libcrypto.so -l/scripts/libssl.so'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''
