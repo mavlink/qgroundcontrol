@@ -61,6 +61,9 @@ void QGCMapPolyline::_init(void)
 {
     connect(&_polylineModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolyline::_polylineModelDirtyChanged);
     connect(&_polylineModel, &QmlObjectListModel::countChanged, this, &QGCMapPolyline::_polylineModelCountChanged);
+
+    connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isValidChanged);
+    connect(this, &QGCMapPolyline::countChanged, this, &QGCMapPolyline::isEmptyChanged);
 }
 
 void QGCMapPolyline::clear(void)
