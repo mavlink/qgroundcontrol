@@ -30,8 +30,8 @@ public:
     Q_PROPERTY(QmlObjectListModel*  pathModel   READ qmlPathModel                           CONSTANT)
     Q_PROPERTY(bool                 dirty       READ dirty          WRITE setDirty          NOTIFY dirtyChanged)
     Q_PROPERTY(bool                 interactive READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
-    Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY countChanged)
-    Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY countChanged)
+    Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY isValidChanged)
+    Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY isEmptyChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
@@ -104,6 +104,8 @@ signals:
     void dirtyChanged       (bool dirty);
     void cleared            (void);
     void interactiveChanged (bool interactive);
+    void isValidChanged     (void);
+    void isEmptyChanged     (void);
 
 private slots:
     void _polylineModelCountChanged(int count);

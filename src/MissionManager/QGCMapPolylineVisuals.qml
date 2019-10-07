@@ -314,12 +314,10 @@ Item {
         id: toolbarComponent
 
         PlanEditToolbar {
-            x:          mapControl.centerViewport.left + _margins
-            y:          mapControl.centerViewport.top + _margins
-            width:      mapControl.centerViewport.width - (_margins * 2)
+            x:          mapControl.centerViewport.left
+            y:          mapControl.centerViewport.top
+            width:      mapControl.centerViewport.width
             z:          QGroundControl.zOrderMapItems + 2
-
-            property real _margins: ScreenTools.defaultFontPixelWidth
 
             QGCButton {
                 _horizontalPadding: 0

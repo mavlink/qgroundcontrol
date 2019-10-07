@@ -100,6 +100,7 @@ FixedWingLandingComplexItem::FixedWingLandingComplexItem(Vehicle* vehicle, bool 
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::coordinateHasRelativeAltitudeChanged);
     connect(this,                       &FixedWingLandingComplexItem::altitudesAreRelativeChanged,      this, &FixedWingLandingComplexItem::exitCoordinateHasRelativeAltitudeChanged);
 
+    connect(this,                       &FixedWingLandingComplexItem::landingCoordSetChanged,           this, &FixedWingLandingComplexItem::readyForSaveStateChanged);
     if (vehicle->apmFirmware()) {
         // ArduPilot does not support camera commands
         _stopTakingVideoFact.setRawValue(false);
@@ -707,4 +708,9 @@ void FixedWingLandingComplexItem::_calcGlideSlope(void)
 void FixedWingLandingComplexItem::_signalLastSequenceNumberChanged(void)
 {
     emit lastSequenceNumberChanged(lastSequenceNumber());
+}
+
+FixedWingLandingComplexItem::ReadyForSaveState FixedWingLandingComplexItem::readyForSaveState(void) const
+{
+    return _landingCoordSet ? ReadyForSave : NotReadyForSaveData;
 }
