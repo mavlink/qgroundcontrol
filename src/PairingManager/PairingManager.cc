@@ -60,6 +60,15 @@ PairingManager::setToolbox(QGCToolbox *toolbox)
 }
 
 //-----------------------------------------------------------------------------
+bool
+PairingManager::videoCanRestart()
+{
+    return
+        !_toolbox->settingsManager()->appSettings()->usePairing()->rawValue().toBool() ||
+        !_connectedDevices.empty();
+}
+
+//-----------------------------------------------------------------------------
 void
 PairingManager::_pairingCompleted(const QString& name, const QString& devicePublicKey)
 {
