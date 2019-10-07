@@ -8,10 +8,10 @@
  ****************************************************************************/
 
 import QtQuick                  2.11
-import QtQuick.Window           2.11
-import QtQuick.Controls         2.11
-import QtQuick.Controls.impl    2.11
-import QtQuick.Templates        2.11 as T
+import QtQuick.Window           2.3
+import QtQuick.Controls         2.4
+import QtQuick.Controls.impl    2.4
+import QtQuick.Templates        2.4 as T
 
 import QGroundControl.ScreenTools   1.0
 import QGroundControl.Palette       1.0
@@ -20,12 +20,11 @@ T.ComboBox {
     id:             control
     padding:        ScreenTools.comboBoxPadding
     spacing:        ScreenTools.defaultFontPixelWidth
-    implicitWidth:  Math.max(implicitBackgroundWidth + leftInset + rightInset,
-                             implicitContentWidth + leftPadding + rightPadding,
-                             sizeToContents ? _popupWidth : 0)
-    implicitHeight: Math.max(implicitBackgroundHeight + topInset + bottomInset,
-                             implicitContentHeight + topPadding + bottomPadding,
-                             implicitIndicatorHeight + topPadding + bottomPadding)
+    implicitWidth:  Math.max(background ? background.implicitWidth : 0,
+                            contentItem.implicitWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(background ? background.implicitHeight : 0,
+                             Math.max(contentItem.implicitHeight,
+                                      indicator ? indicator.implicitHeight : 0) + topPadding + bottomPadding)
     leftPadding:    padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
     rightPadding:   padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width)
 
