@@ -180,7 +180,7 @@ public:
     QGeoCoordinate      plannedHomePosition         (void) const;
     VisualMissionItem*  currentPlanViewItem         (void) const;
     double              progressPct                 (void) const { return _progressPct; }
-    QString             surveyComplexItemName       (void) const { return _surveyMissionItemName; }
+    QString             surveyComplexItemName       (void) const { return patternSurveyName; }
     QString             corridorScanComplexItemName (void) const { return patternCorridorScanName; }
     QString             structureScanComplexItemName(void) const { return patternStructureScanName; }
 
@@ -207,6 +207,7 @@ public:
     static const QString patternFWLandingName;
     static const QString patternStructureScanName;
     static const QString patternCorridorScanName;
+    static const QString patternSurveyName;
 
 signals:
     void visualItemsChanged             (void);
@@ -299,7 +300,6 @@ private:
     bool                    _itemsRequested;
     bool                    _inRecalcSequence;
     MissionFlightStatus_t   _missionFlightStatus;
-    QString                 _surveyMissionItemName;
     AppSettings*            _appSettings;
     double                  _progressPct;
     int                     _currentPlanViewIndex;

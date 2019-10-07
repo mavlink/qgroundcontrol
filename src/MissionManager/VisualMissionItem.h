@@ -40,6 +40,13 @@ public:
 
     const VisualMissionItem& operator=(const VisualMissionItem& other);
 
+    enum ReadyForSaveState {
+        ReadyForSave,
+        NotReadyForSaveTerrain,
+        NotReadyForSaveData,
+    };
+    Q_ENUM(ReadyForSaveState)
+
     Q_PROPERTY(bool             homePosition                        READ homePosition                                                   CONSTANT)                                           ///< true: This item is being used as a home position indicator
     Q_PROPERTY(QGeoCoordinate   coordinate                          READ coordinate                         WRITE setCoordinate         NOTIFY coordinateChanged)                           ///< This is the entry point for a waypoint line into the item. For a simple item it is also the location of the item
     Q_PROPERTY(double           terrainAltitude                     READ terrainAltitude                                                NOTIFY terrainAltitudeChanged)                      ///< The altitude of terrain at the coordinate position, NaN if not known
@@ -67,6 +74,7 @@ public:
     Q_PROPERTY(double           missionGimbalYaw                    READ missionGimbalYaw                                               NOTIFY missionGimbalYawChanged)                     ///< Current gimbal yaw state at this point in mission
     Q_PROPERTY(double           missionVehicleYaw                   READ missionVehicleYaw                                              NOTIFY missionVehicleYawChanged)                    ///< Expected vehicle yaw at this point in mission
     Q_PROPERTY(bool             flyView                             READ flyView                                                        CONSTANT)
+    Q_PROPERTY(ReadyForSaveState readyForSaveState                  READ readyForSaveState                                              NOTIFY readyForSaveStateChanged)
 
     Q_PROPERTY(QGCGeoBoundingCube* boundingCube                     READ boundingCube                                                   NOTIFY boundingCubeChanged)
 
@@ -139,10 +147,8 @@ public:
     virtual void setSequenceNumber  (int sequenceNumber) = 0;
     virtual int  lastSequenceNumber (void) const = 0;
 
-    /// Specifies whether the item has all the data it needs such that it can be saved. Currently the only
-    /// case where this returns false is if it has not determined terrain values yet.
-    /// @return true: Ready to save, false: Still waiting on information
-    virtual bool readyForSave(void) const { return true; }
+    /// @return Returns whether the item is ready for save and if not, why
+    virtual ReadyForSaveState readyForSaveState(void) const { return ReadyForSave; }
 
     /// Save the item(s) in Json format
     ///     @param missionItems Current set of mission items, new items should be appended to the end
@@ -198,6 +204,7 @@ signals:
     void terrainAltitudeChanged         (double terrainAltitude);
     void additionalTimeDelayChanged     (void);
     void boundingCubeChanged            (void);
+    void readyForSaveStateChanged       (void);
 
     void coordinateHasRelativeAltitudeChanged       (bool coordinateHasRelativeAltitude);
     void exitCoordinateHasRelativeAltitudeChanged   (bool exitCoordinateHasRelativeAltitude);

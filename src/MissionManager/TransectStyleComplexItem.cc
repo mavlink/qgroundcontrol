@@ -109,6 +109,8 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyVie
 
     connect(this,                                       &TransectStyleComplexItem::followTerrainChanged, this, &TransectStyleComplexItem::_followTerrainChanged);
 
+    connect(&_surveyAreaPolygon,                        &QGCMapPolygon::isValidChanged, this, &TransectStyleComplexItem::readyForSaveStateChanged);
+
     setDirty(false);
 }
 
@@ -417,6 +419,7 @@ void TransectStyleComplexItem::_rebuildTransects(void)
 void TransectStyleComplexItem::_queryTransectsPathHeightInfo(void)
 {
     _transectsPathHeightInfo.clear();
+    emit readyForSaveStateChanged();
 
     if (_transects.count()) {
         // We don't actually send the query until this timer times out. This way we only send
@@ -461,6 +464,7 @@ void TransectStyleComplexItem::_reallyQueryTransectsPathHeightInfo(void)
 void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<TerrainPathQuery::PathHeightInfo_t>& rgPathHeightInfo)
 {
     _transectsPathHeightInfo.clear();
+    emit readyForSaveStateChanged();
 
     if (success) {
         // Break out into individual transects
@@ -473,6 +477,7 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
             }
             pathHeightIndex++;  // There is an extra on between each transect
         }
+        emit readyForSaveStateChanged();
 
         // Now that we have terrain data we can adjust
         _adjustTransectsForTerrain();
@@ -485,16 +490,19 @@ void TransectStyleComplexItem::_polyPathTerrainData(bool success, const QList<Te
     _terrainPolyPathQuery = nullptr;
 }
 
-bool TransectStyleComplexItem::readyForSave(void) const
+TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSaveState(void) const
 {
-    // Make sure we have the terrain data we need
-    return _followTerrain ? _transectsPathHeightInfo.count() : true;
+    bool terrainReady = _followTerrain ? _transectsPathHeightInfo.count() : true;
+    bool polygonNotReady = !_surveyAreaPolygon.isValid();
+    return polygonNotReady ?
+                NotReadyForSaveData :
+                (terrainReady ? ReadyForSave : NotReadyForSaveTerrain);
 }
 
 void TransectStyleComplexItem::_adjustTransectsForTerrain(void)
 {
     if (_followTerrain) {
-        if (!readyForSave()) {
+        if (readyForSaveState() != ReadyForSave) {
             qCWarning(TransectStyleComplexItemLog) << "_adjustTransectPointsForTerrain called when terrain data not ready";
             qgcApp()->showMessage(tr("INTERNAL ERROR: TransectStyleComplexItem::_adjustTransectPointsForTerrain called when terrain data not ready. Plan will be incorrect."));
             return;

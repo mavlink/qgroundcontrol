@@ -16,6 +16,10 @@
 #include "JsonHelper.h"
 #include "MissionManager.h"
 #include "KML.h"
+#include "SurveyPlanCreator.h"
+#include "StructureScanPlanCreator.h"
+#include "CorridorScanPlanCreator.h"
+#include "CustomPlanCreator.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceFlightPlanProvider.h"
 #endif
@@ -50,6 +54,7 @@ PlanMasterController::PlanMasterController(QObject* parent)
     , _sendGeoFence             (false)
     , _sendRallyPoints          (false)
     , _deleteWhenSendCompleted  (false)
+    , _planCreators             (nullptr)
 {
     connect(&_missionController,    &MissionController::dirtyChanged,       this, &PlanMasterController::dirtyChanged);
     connect(&_geoFenceController,   &GeoFenceController::dirtyChanged,      this, &PlanMasterController::dirtyChanged);
@@ -78,6 +83,8 @@ void PlanMasterController::start(bool flyView)
 
     connect(_multiVehicleMgr, &MultiVehicleManager::activeVehicleChanged, this, &PlanMasterController::_activeVehicleChanged);
     _activeVehicleChanged(_multiVehicleMgr->activeVehicle());
+
+    _updatePlanCreatorsList();
 
 #if defined(QGC_AIRMAP_ENABLED)
     //-- This assumes there is one single instance of PlanMasterController in edit mode.
@@ -115,12 +122,15 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
         disconnect(_managerVehicle->missionManager(),       &MissionManager::sendComplete,              this, &PlanMasterController::_sendMissionComplete);
         disconnect(_managerVehicle->geoFenceManager(),      &GeoFenceManager::sendComplete,             this, &PlanMasterController::_sendGeoFenceComplete);
         disconnect(_managerVehicle->rallyPointManager(),    &RallyPointManager::sendComplete,           this, &PlanMasterController::_sendRallyPointsComplete);
+        disconnect(_managerVehicle,                         &Vehicle::vehicleTypeChanged,               this, &PlanMasterController::_updatePlanCreatorsList);
     }
 
     bool newOffline = false;
     if (activeVehicle == nullptr) {
         // Since there is no longer an active vehicle we use the offline controller vehicle as the manager vehicle
         _managerVehicle = _controllerVehicle;
+        // The vehicle type can change on the offline vehicle. Keep the creators list in sync with that.
+        connect(_managerVehicle, &Vehicle::vehicleTypeChanged, this, &PlanMasterController::_updatePlanCreatorsList);
         newOffline = true;
     } else {
         newOffline = false;
@@ -172,6 +182,8 @@ void PlanMasterController::_activeVehicleChanged(Vehicle* activeVehicle)
             _showPlanFromManagerVehicle();
         }
     }
+
+    _updatePlanCreatorsList();
 }
 
 void PlanMasterController::loadFromVehicle(void)
@@ -582,4 +594,27 @@ bool PlanMasterController::isEmpty(void) const
     return _missionController.isEmpty() &&
             _geoFenceController.isEmpty() &&
             _rallyPointController.isEmpty();
+}
+
+void PlanMasterController::_updatePlanCreatorsList(void)
+{
+    if (!_flyView) {
+        if (!_planCreators) {
+            _planCreators = new QmlObjectListModel(this);
+            _planCreators->append(new SurveyPlanCreator(this, this));
+            _planCreators->append(new CorridorScanPlanCreator(this, this));
+            _planCreators->append(new CustomPlanCreator(this, this));
+            emit planCreatorsChanged(_planCreators);
+        }
+
+        if (_managerVehicle->fixedWing()) {
+            if (_planCreators->count() == 4) {
+                _planCreators->removeAt(_planCreators->count() - 2);
+            }
+        } else {
+            if (_planCreators->count() != 4) {
+                _planCreators->insert(_planCreators->count() - 1, new StructureScanPlanCreator(this, this));
+            }
+        }
+    }
 }

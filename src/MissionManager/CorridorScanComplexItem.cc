@@ -51,6 +51,8 @@ CorridorScanComplexItem::CorridorScanComplexItem(Vehicle* vehicle, bool flyView,
     connect(&_corridorPolyline,     &QGCMapPolyline::pathChanged,   this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
     connect(&_corridorWidthFact,    &Fact::valueChanged,            this, &CorridorScanComplexItem::_rebuildCorridorPolygon);
 
+    connect(&_corridorPolyline,     &QGCMapPolyline::isValidChanged,this, &CorridorScanComplexItem::readyForSaveStateChanged);
+
     if (!kmlFile.isEmpty()) {
         _corridorPolyline.loadKMLFile(kmlFile);
         _corridorPolyline.setDirty(false);
@@ -490,9 +492,9 @@ void CorridorScanComplexItem::_recalcCameraShots(void)
     emit cameraShotsChanged();
 }
 
-bool CorridorScanComplexItem::readyForSave(void) const
+CorridorScanComplexItem::ReadyForSaveState CorridorScanComplexItem::readyForSaveState(void) const
 {
-    return TransectStyleComplexItem::readyForSave();
+    return TransectStyleComplexItem::readyForSaveState();
 }
 
 double CorridorScanComplexItem::timeBetweenShots(void)
