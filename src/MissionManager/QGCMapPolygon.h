@@ -36,8 +36,8 @@ public:
     Q_PROPERTY(QGeoCoordinate       center      READ center         WRITE setCenter         NOTIFY centerChanged)
     Q_PROPERTY(bool                 centerDrag  READ centerDrag     WRITE setCenterDrag     NOTIFY centerDragChanged)
     Q_PROPERTY(bool                 interactive READ interactive    WRITE setInteractive    NOTIFY interactiveChanged)
-    Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY countChanged)
-    Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY countChanged)
+    Q_PROPERTY(bool                 isValid     READ isValid                                NOTIFY isValidChanged)
+    Q_PROPERTY(bool                 empty       READ empty                                  NOTIFY isEmptyChanged)
 
     Q_INVOKABLE void clear(void);
     Q_INVOKABLE void appendVertex(const QGeoCoordinate& coordinate);
@@ -122,6 +122,8 @@ signals:
     void centerChanged      (QGeoCoordinate center);
     void centerDragChanged  (bool centerDrag);
     void interactiveChanged (bool interactive);
+    bool isValidChanged     (void);
+    bool isEmptyChanged     (void);
 
 private slots:
     void _polygonModelCountChanged(int count);

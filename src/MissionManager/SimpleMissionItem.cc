@@ -710,25 +710,24 @@ void SimpleMissionItem::_terrainAltChanged(void)
     }
 
     if (qIsNaN(terrainAltitude())) {
-        qDebug() << "1";
         // Set NaNs to signal we are waiting on terrain data
         _missionItem._param7Fact.setRawValue(qQNaN());
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
     } else {
         double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
         double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
-        qDebug() << "2" << newAboveTerrain << oldAboveTerrain;
         if (qIsNaN(oldAboveTerrain) || !qFuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
-            qDebug() << "3";
             _missionItem._param7Fact.setRawValue(newAboveTerrain);
             _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
         }
     }
+    emit readyForSaveStateChanged();
 }
 
-bool SimpleMissionItem::readyForSave(void) const
+SimpleMissionItem::ReadyForSaveState SimpleMissionItem::readyForSaveState(void) const
 {
-    return !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
+    bool terrainReady =  !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
+    return terrainReady ? ReadyForSave : NotReadyForSaveTerrain;
 }
 
 void SimpleMissionItem::_setDefaultsForCommand(void)

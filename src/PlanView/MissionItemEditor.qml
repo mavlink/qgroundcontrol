@@ -18,6 +18,7 @@ Rectangle {
     height: editorLoader.visible ? (editorLoader.y + editorLoader.height + (_margin * 2)) : (commandPicker.y + commandPicker.height + _margin / 2)
     color:  _currentItem ? qgcPal.missionItemEditor : qgcPal.windowShade
     radius: _radius
+    opacity: _currentItem ? 1.0 : 0.7
 
     property var    map                 ///< Map control
     property var    masterController
@@ -70,16 +71,27 @@ Rectangle {
         }
     }
 
-    /*
-      Trying no sequence numbers in ui
-    QGCLabel {
-        id:                     label
+    Rectangle {
         anchors.verticalCenter: commandPicker.verticalCenter
         anchors.leftMargin:     _margin
         anchors.left:           parent.left
-        text:                   missionItem.homePosition ? "P" : missionItem.sequenceNumber
-        color:                  _outerTextColor
-    }*/
+        width:                  readyForSaveLabel.contentHeight
+        height:                 width
+        border.width:           1
+        border.color:           "red"
+        color:                  "white"
+        radius:                 width / 2
+        visible:                missionItem.readyForSaveState !== VisualMissionItem.ReadyForSave
+
+        QGCLabel {
+            id:                 readyForSaveLabel
+            anchors.centerIn:   parent
+            //: Indicator in Plan view to show mission item is not ready for save/send
+            text:               qsTr("?")
+            color:              "red"
+            font.pointSize:     ScreenTools.smallFontPointSize
+        }
+    }
 
     QGCColoredImage {
         id:                     hamburger

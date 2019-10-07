@@ -51,7 +51,10 @@ void QGCMapPolygon::_init(void)
 {
     connect(&_polygonModel, &QmlObjectListModel::dirtyChanged, this, &QGCMapPolygon::_polygonModelDirtyChanged);
     connect(&_polygonModel, &QmlObjectListModel::countChanged, this, &QGCMapPolygon::_polygonModelCountChanged);
-    connect(this, &QGCMapPolygon::pathChanged, this, &QGCMapPolygon::_updateCenter);
+
+    connect(this, &QGCMapPolygon::pathChanged,  this, &QGCMapPolygon::_updateCenter);
+    connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isValidChanged);
+    connect(this, &QGCMapPolygon::countChanged, this, &QGCMapPolygon::isEmptyChanged);
 }
 
 const QGCMapPolygon& QGCMapPolygon::operator=(const QGCMapPolygon& other)

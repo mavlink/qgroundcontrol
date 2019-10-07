@@ -51,9 +51,10 @@ const char* MissionController::_jsonMavAutopilotKey =           "MAV_AUTOPILOT";
 
 const int   MissionController::_missionFileVersion =            2;
 
-const QString MissionController::patternFWLandingName      (QT_TRANSLATE_NOOP("MissionController", "Fixed Wing Landing"));
-const QString MissionController::patternStructureScanName  (QT_TRANSLATE_NOOP("MissionController", "Structure Scan"));
-const QString MissionController::patternCorridorScanName   (QT_TRANSLATE_NOOP("MissionController", "Corridor Scan"));
+const QString MissionController::patternSurveyName          (QT_TRANSLATE_NOOP("MissionController", "Survey"));
+const QString MissionController::patternFWLandingName       (QT_TRANSLATE_NOOP("MissionController", "Fixed Wing Landing"));
+const QString MissionController::patternStructureScanName   (QT_TRANSLATE_NOOP("MissionController", "Structure Scan"));
+const QString MissionController::patternCorridorScanName    (QT_TRANSLATE_NOOP("MissionController", "Corridor Scan"));
 
 MissionController::MissionController(PlanMasterController* masterController, QObject *parent)
     : PlanElementController     (masterController, parent)
@@ -64,7 +65,6 @@ MissionController::MissionController(PlanMasterController* masterController, QOb
     , _firstItemsFromVehicle    (false)
     , _itemsRequested           (false)
     , _inRecalcSequence         (false)
-    , _surveyMissionItemName    (tr("Survey"))
     , _appSettings              (qgcApp()->toolbox()->settingsManager()->appSettings())
     , _progressPct              (0)
     , _currentPlanViewIndex     (-1)
@@ -417,7 +417,7 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
     }
 
     int sequenceNumber = _nextSequenceNumber();
-    if (itemName == _surveyMissionItemName) {
+    if (itemName == patternSurveyName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
         newItem->setCoordinate(mapCenterCoordinate);
     } else if (itemName == patternFWLandingName) {
@@ -438,7 +438,7 @@ int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QS
 {
     ComplexMissionItem* newItem;
 
-    if (itemName == _surveyMissionItemName) {
+    if (itemName == patternSurveyName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else if (itemName == patternStructureScanName) {
         newItem = new StructureScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
@@ -987,7 +987,7 @@ bool MissionController::readyForSaveSend(void) const
 {
     for (int i=0; i<_visualItems->count(); i++) {
         VisualMissionItem* visualItem = qobject_cast<VisualMissionItem*>(_visualItems->get(i));
-        if (!visualItem->readyForSave()) {
+        if (visualItem->readyForSaveState() != VisualMissionItem::ReadyForSave) {
             return false;
         }
     }
@@ -2006,7 +2006,7 @@ QStringList MissionController::complexMissionItemNames(void) const
 {
     QStringList complexItems;
 
-    complexItems.append(_surveyMissionItemName);
+    complexItems.append(patternSurveyName);
     complexItems.append(patternCorridorScanName);
     if (_controllerVehicle->fixedWing()) {
         complexItems.append(patternFWLandingName);
@@ -2112,7 +2112,6 @@ VisualMissionItem* MissionController::currentPlanViewItem(void) const
 
 void MissionController::setCurrentPlanViewIndex(int sequenceNumber, bool force)
 {
-    qDebug() << "setCurrentPlanViewIndex" << sequenceNumber << force << _currentPlanViewIndex;
     if(_visualItems && (force || sequenceNumber != _currentPlanViewIndex)) {
         _splitSegment = nullptr;
         _currentPlanViewItem  = nullptr;

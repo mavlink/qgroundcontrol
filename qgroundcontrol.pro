@@ -591,6 +591,8 @@ HEADERS += \
     src/MissionManager/CameraSpec.h \
     src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/CorridorScanComplexItem.h \
+    src/MissionManager/CorridorScanPlanCreator.h \
+    src/MissionManager/CustomPlanCreator.h \
     src/MissionManager/FixedWingLandingComplexItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
@@ -603,6 +605,7 @@ HEADERS += \
     src/MissionManager/MissionManager.h \
     src/MissionManager/MissionSettingsItem.h \
     src/MissionManager/PlanElementController.h \
+    src/MissionManager/PlanCreator.h \
     src/MissionManager/PlanManager.h \
     src/MissionManager/PlanMasterController.h \
     src/MissionManager/QGCFenceCircle.h \
@@ -617,7 +620,9 @@ HEADERS += \
     src/MissionManager/Section.h \
     src/MissionManager/SpeedSection.h \
     src/MissionManager/StructureScanComplexItem.h \
+    src/MissionManager/StructureScanPlanCreator.h \
     src/MissionManager/SurveyComplexItem.h \
+    src/MissionManager/SurveyPlanCreator.h \
     src/MissionManager/TransectStyleComplexItem.h \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
@@ -817,6 +822,8 @@ SOURCES += \
     src/MissionManager/CameraSpec.cc \
     src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/CorridorScanComplexItem.cc \
+    src/MissionManager/CorridorScanPlanCreator.cc \
+    src/MissionManager/CustomPlanCreator.cc \
     src/MissionManager/FixedWingLandingComplexItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
@@ -829,6 +836,7 @@ SOURCES += \
     src/MissionManager/MissionManager.cc \
     src/MissionManager/MissionSettingsItem.cc \
     src/MissionManager/PlanElementController.cc \
+    src/MissionManager/PlanCreator.cc \
     src/MissionManager/PlanManager.cc \
     src/MissionManager/PlanMasterController.cc \
     src/MissionManager/QGCFenceCircle.cc \
@@ -842,7 +850,9 @@ SOURCES += \
     src/MissionManager/SimpleMissionItem.cc \
     src/MissionManager/SpeedSection.cc \
     src/MissionManager/StructureScanComplexItem.cc \
+    src/MissionManager/StructureScanPlanCreator.cc \
     src/MissionManager/SurveyComplexItem.cc \
+    src/MissionManager/SurveyPlanCreator.cc \
     src/MissionManager/TransectStyleComplexItem.cc \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \

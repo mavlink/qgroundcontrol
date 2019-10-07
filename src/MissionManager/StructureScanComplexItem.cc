@@ -69,6 +69,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
 
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
+    connect(&_structurePolygon, &QGCMapPolygon::isValidChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
     connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
     connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
@@ -616,4 +617,9 @@ void StructureScanComplexItem::_recalcScanDistance()
     qCDebug(StructureScanComplexItemLog) << "StructureScanComplexItem--_recalcScanDistance layers: "
                                   << _layersFact.rawValue().toInt() << " structure height: " << surfaceHeight
                                   << " scanDistance: " << _scanDistance;
+}
+
+StructureScanComplexItem::ReadyForSaveState StructureScanComplexItem::readyForSaveState(void) const
+{
+    return _structurePolygon.isValid() ? ReadyForSave : NotReadyForSaveData;
 }
