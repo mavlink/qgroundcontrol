@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from utils import start_qgc
-import navbar
 import main_menu
 from settings import general
 import popups
@@ -8,7 +7,7 @@ import popups
 
 def main():
     start_qgc()
-    navbar.open_main_menu()
+    main_menu.open_main_menu()
     main_menu.open_settings()
     general.change_distance_units("Feet")
     test.compare(
