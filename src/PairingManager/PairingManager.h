@@ -71,7 +71,7 @@ public:
     int             nfcIndex                    () { return _nfcIndex; }
     int             microhardIndex              () { return _microhardIndex; }
     bool            firstBoot                   () { return _firstBoot; }
-    bool            videoCanRestart             () { return !_connectedDevices.empty(); }
+    bool            videoCanRestart             ();
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
     void            jsonReceived                (const QString& json) { emit parsePairingJson(json); }
