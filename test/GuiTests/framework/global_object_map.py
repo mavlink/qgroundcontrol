@@ -5,6 +5,13 @@ o_QQuickApplicationWindow = {
     "unnamed": 1,
     "visible": True,
 }
+sliderDragArea_QGCMouseArea = {
+    "container": o_QQuickApplicationWindow,
+    "id": "sliderDragArea",
+    "type": "QGCMouseArea",
+    "unnamed": 1,
+    "visible": True,
+}
 o_ToolBar = {
     "container": o_QQuickApplicationWindow,
     "type": "ToolBar",
@@ -16,6 +23,39 @@ o_icon_Image = {
     "id": "_icon",
     "source": "qrc:/res/QGCLogoWhite",
     "type": "Image",
+    "unnamed": 1,
+    "visible": True,
+}
+vehicle_1_Text = {
+    "container": o_ToolBar,
+    "text": "Vehicle 1",
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+
+o_CustomArmedIndicator = {
+    "container": o_ToolBar,
+    "type": "CustomArmedIndicator",
+    "unnamed": 1,
+    "visible": True,
+}
+armedIndicatorRow = {
+    "container": o_CustomArmedIndicator,
+    "id": "labelRow",
+    "type": "Row",
+    "unnamed": 1,
+    "visible": True,
+}
+armedIndicatorLabel = {
+    "container": armedIndicatorRow,
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+armedIndicatorLed = {
+    "container": armedIndicatorRow,
+    "type": "Rectangle",
     "unnamed": 1,
     "visible": True,
 }

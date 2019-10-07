@@ -33,22 +33,39 @@ def start_qgc(remove_settings=True):
     test.endSection()
 
 
-def start_headless_emulator():
-    test.startSection("Start headless simulator")
+def start_headless_simulator():
+    test.startSection("[Test Setup] Start headless simulator")
     try:
-        remote_sys = RemoteSystem()
+        rs = RemoteSystem()
     except:
         raise
     local_path = squish.findFile("scripts", "scripts/run_simulator_headless.sh")
-    remote_path = (
-        remote_sys.getEnvironmentVariable("HOME") + "/run_simulator_headless.sh"
-    )
+    remote_path = rs.getEnvironmentVariable("HOME") + "/run_simulator_headless.sh"
 
-    if remote_sys.exists(remote_path):
-        test.log(f'Remove existing remote "{remote_path}"')
-        remote_sys.deleteFile(remote_path)
-    test.log(f'Upload local "{local_path}" to remote "{remote_path}"')
-    remote_sys.upload(local_path, remote_path)
-    test.log(f'Set execution rights to remote "{remote_path}"')
-    remote_sys.execute(["chmod", "a+x", remote_path])
+    if rs.exists(remote_path):
+        test.log(f'[Test Setup] Remove existing remote "{remote_path}"')
+        rs.deleteFile(remote_path)
+    test.log(f'[Test Setup] Upload local "{local_path}" to remote "{remote_path}"')
+    rs.upload(local_path, remote_path)
+    test.log(f'[Test Setup] Set execution rights to remote "{remote_path}"')
+    rs.execute(["chmod", "a+x", remote_path])
+    test.log(f'[Test Setup] Launch simulator "{remote_path}"')
+
+    cmd = f"{remote_path}"
+    exitcode, stdout, stderr = rs.execute([remote_path])
+    squish.waitForObjectExists(names.vehicle_1_Text, 45000)
+    test.log("[Test Setup] Simulator started")
     test.endSection()
+
+
+def confirm_with_slider():
+    test.log("Confirm with a slider")
+    squish.mouseDrag(
+        squish.waitForObject(names.sliderDragArea_QGCMouseArea),
+        150,
+        23,
+        300,
+        23,
+        squish.Qt.NoModifier,
+        squish.Qt.LeftButton,
+    )
