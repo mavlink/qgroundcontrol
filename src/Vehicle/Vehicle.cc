@@ -150,6 +150,7 @@ Vehicle::Vehicle(LinkInterface*             link,
     , _capabilityBits(0)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
+    , _receivingAttitudeHud(false)
     , _cameras(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -355,6 +356,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _capabilityBits(MAV_PROTOCOL_CAPABILITY_MISSION_FENCE | MAV_PROTOCOL_CAPABILITY_MISSION_RALLY)
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
+    , _receivingAttitudeHud(false)
     , _cameras(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
@@ -969,6 +971,25 @@ void Vehicle::_handleVfrHud(mavlink_message_t& message)
     _groundSpeedFact.setRawValue(qIsNaN(vfrHud.groundspeed) ? 0 : vfrHud.groundspeed);
     _climbRateFact.setRawValue(qIsNaN(vfrHud.climb) ? 0 : vfrHud.climb);
     _throttlePctFact.setRawValue(static_cast<int16_t>(vfrHud.throttle));
+
+    float quat_norm_2 = vfrHud.q1 * vfrHud.q1 + vfrHud.q2 * vfrHud.q2 + vfrHud.q3 * vfrHud.q3 + vfrHud.q4 * vfrHud.q4;
+
+    if (quat_norm_2 < 0.5f) {
+        _receivingAttitudeHud = false;
+
+    } else {
+        _receivingAttitudeHud = true;
+
+        float roll, pitch, yaw;
+        float q[] = { vfrHud.q1, vfrHud.q2, vfrHud.q3, vfrHud.q4 };
+        mavlink_quaternion_to_euler(q, &roll, &pitch, &yaw);
+
+        _handleAttitudeWorker(roll, pitch, yaw);
+    
+        rollRate()->setRawValue(qRadiansToDegrees(vfrHud.rollspeed));
+        pitchRate()->setRawValue(qRadiansToDegrees(vfrHud.pitchspeed));
+        yawRate()->setRawValue(qRadiansToDegrees(vfrHud.yawspeed));
+    }
 }
 
 void Vehicle::_handleEstimatorStatus(mavlink_message_t& message)
@@ -1115,7 +1136,7 @@ void Vehicle::_handleAttitudeWorker(double rollRadians, double pitchRadians, dou
 
 void Vehicle::_handleAttitude(mavlink_message_t& message)
 {
-    if (_receivingAttitudeQuaternion) {
+    if (_receivingAttitudeQuaternion || _receivingAttitudeHud) {
         return;
     }
 
@@ -1128,6 +1149,10 @@ void Vehicle::_handleAttitude(mavlink_message_t& message)
 void Vehicle::_handleAttitudeQuaternion(mavlink_message_t& message)
 {
     _receivingAttitudeQuaternion = true;
+
+    if (_receivingAttitudeHud) {
+        return;
+    }
 
     mavlink_attitude_quaternion_t attitudeQuaternion;
     mavlink_msg_attitude_quaternion_decode(&message, &attitudeQuaternion);

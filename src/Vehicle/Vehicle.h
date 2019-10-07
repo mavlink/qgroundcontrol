@@ -1401,6 +1401,7 @@ private:
     uint64_t        _capabilityBits;
     bool            _highLatencyLink;
     bool            _receivingAttitudeQuaternion;
+    bool            _receivingAttitudeHud;
 
     QGCCameraManager* _cameras;
 
