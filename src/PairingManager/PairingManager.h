@@ -164,6 +164,7 @@ private:
     void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey);
     bool                    _connectionCompleted        (const QString& response);
     QDir                    _pairingCacheDir            ();
+    QDir                    _pairingCacheTempDir        ();
     QString                 _pairingCacheFile           (const QString& uavName);
     void                    _updatePairedDeviceNameList ();
     QString                 _random_string              (uint length);

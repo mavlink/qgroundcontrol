@@ -21,9 +21,10 @@
 
 QGC_LOGGING_CATEGORY(PairingManagerLog, "PairingManagerLog")
 
-static const qint64 min_time_between_connects = 5000;
-static const int uploadRetries = 5;
-static const int pairRetryWait = 3000;
+static const qint64  min_time_between_connects = 5000;
+static const int     uploadRetries = 5;
+static const int     pairRetryWait = 3000;
+static const QString tempPrefix = "temp";
 
 //-----------------------------------------------------------------------------
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -674,9 +675,25 @@ PairingManager::_pairingCacheDir()
 }
 
 //-----------------------------------------------------------------------------
+QDir
+PairingManager::_pairingCacheTempDir()
+{
+    const QString spath(QFileInfo(QSettings().fileName()).dir().absolutePath());
+    QDir dir = spath + QDir::separator() + "PairingCache" + QDir::separator() + tempPrefix;
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    return dir;
+}
+
+//-----------------------------------------------------------------------------
 QString
 PairingManager::_pairingCacheFile(const QString& uavName)
 {
+    if (uavName.startsWith(tempPrefix)) {
+        return _pairingCacheTempDir().filePath(uavName.mid(tempPrefix.length()));
+    }
     return _pairingCacheDir().filePath(uavName);
 }
 
@@ -912,7 +929,7 @@ PairingManager::startMicrohardPairing()
     }
     receivedJsonDoc.setObject(jsonObject);
 
-    QString tempName = _random_string(16);
+    QString tempName = tempPrefix + _random_string(16);
     _writeJson(receivedJsonDoc, _pairingCacheFile(tempName));
 
     QString pairURL = "http://" + remotePairingMap["IP"].toString() + ":" + pport + "/pair";
