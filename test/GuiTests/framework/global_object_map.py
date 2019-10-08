@@ -146,3 +146,116 @@ close_QGCButton = {
     "unnamed": 1,
     "visible": True,
 }
+altitudeSlider_GuidedAltitudeSlider = {
+    "container": o_QQuickApplicationWindow,
+    "id": "altitudeSlider",
+    "type": "GuidedAltitudeSlider",
+    "unnamed": 1,
+    "visible": True,
+}
+header_GuidedAltitudeSlider_Column = {
+    "container": altitudeSlider_GuidedAltitudeSlider,
+    "id": "headerColumn",
+    "type": "Column",
+    "unnamed": 1,
+    "visible": True,
+}
+sliderAltField = {
+    "container": header_GuidedAltitudeSlider_Column,
+    "id": "altField",
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+altSlider_QGCSlider = {
+    "container": altitudeSlider_GuidedAltitudeSlider,
+    "id": "altSlider",
+    "type": "QGCSlider",
+    "unnamed": 1,
+    "visible": True,
+}
+fakeHandle_Item = {
+    "container": altSlider_QGCSlider,
+    "id": "fakeHandle",
+    "type": "Item",
+    "unnamed": 1,
+    "visible": True,
+}
+takeoff_QGCHoverButton = {
+    "checkable": False,
+    "container": o_QQuickApplicationWindow,
+    "id": "buttonTemplate",
+    "text": "Takeoff",
+    "type": "QGCHoverButton",
+    "unnamed": 1,
+    "visible": True,
+}
+rtl_QGCHoverButton = {
+    "checkable": False,
+    "container": o_QQuickApplicationWindow,
+    "id": "buttonTemplate",
+    "text": "RTL",
+    "type": "QGCHoverButton",
+    "unnamed": 1,
+    "visible": True,
+}
+vehicleStatusGrid_GridLayout = {
+    "container": o_QQuickApplicationWindow,
+    "id": "vehicleStatusGrid",
+    "type": "GridLayout",
+    "unnamed": 1,
+    "visible": True,
+}
+currentDroneAltitude = {
+    "container": vehicleStatusGrid_GridLayout,
+    "occurrence": 7,
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+currentDroneDistance = {
+    "container": vehicleStatusGrid_GridLayout,
+    "occurrence": 6,
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+currentDroneSpeed = {
+    "container": vehicleStatusGrid_GridLayout,
+    "occurrence": 2,
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+o_fMap_FlightDisplayViewMap = {
+    "container": o_QQuickApplicationWindow,
+    "id": "_fMap",
+    "type": "FlightDisplayViewMap",
+    "unnamed": 1,
+    "visible": True,
+}
+o_QQuickMenuPopupWindow1 = {
+    "type": "QQuickMenuPopupWindow1",
+    "unnamed": 1,
+    "visible": True,
+}
+scrollView_ScrollView = {
+    "container": o_QQuickMenuPopupWindow1,
+    "id": "scrollView",
+    "type": "ScrollView",
+    "unnamed": 1,
+    "visible": True,
+}
+scrollView_Go_to_location_Text = {
+    "container": scrollView_ScrollView,
+    "text": "Go to location",
+    "type": "Text",
+    "unnamed": 1,
+    "visible": True,
+}
+o_VehicleMapItem = {
+    "container": o_QQuickApplicationWindow,
+    "type": "VehicleMapItem",
+    "unnamed": 1,
+    "visible": True,
+}

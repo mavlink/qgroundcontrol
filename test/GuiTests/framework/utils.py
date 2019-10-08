@@ -18,6 +18,18 @@ def file_exists(file_path):
     return True if remote_sys.exists(file_path) else False
 
 
+def upload_file(local_path, remote_path, force=True):
+    try:
+        rs = RemoteSystem()
+    except:
+        raise
+    if force and rs.exists(remote_path):
+        test.log(f'[Test Setup] Remove existing remote "{remote_path}"')
+        rs.deleteFile(remote_path)
+    test.log(f'[Test Setup] Upload local "{local_path}" to remote "{remote_path}"')
+    rs.upload(local_path, remote_path)
+
+
 def start_qgc(remove_settings=True):
     test.startSection("[Test Setup] Starting the QGroundControl Ground Control Station")
     if remove_settings:
@@ -69,3 +81,7 @@ def confirm_with_slider():
         squish.Qt.NoModifier,
         squish.Qt.LeftButton,
     )
+
+
+def compare_position(pos1, pos2, epsilon=1):
+    return (abs(pos1[0] - pos2[0]) <= epsilon) and (abs(pos1[1] - pos2[1]) <= epsilon)
