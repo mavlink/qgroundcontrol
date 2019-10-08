@@ -127,7 +127,7 @@ PairingNFC::handlePolledNdefMessage(QNdefMessage message)
     for (const QNdefRecord &record : message) {
         if (record.isRecordType<QNdefNfcTextRecord>()) {
             QNdefNfcTextRecord textRecord(record);
-            qgcApp()->toolbox()->pairingManager()->jsonReceived(textRecord.text());
+            qgcApp()->toolbox()->pairingManager()->jsonReceivedStartPairing(textRecord.text());
         }
     }
 }

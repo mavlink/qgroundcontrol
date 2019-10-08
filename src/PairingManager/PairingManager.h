@@ -75,9 +75,9 @@ public:
     bool            videoCanRestart             () { return !_usePairing || !_connectedDevices.empty(); }
     bool            errorState                  () { return _status == PairingRejected || _status == PairingConnectionRejected || _status == PairingError; }
     void            setStatusMessage            (PairingStatus status, const QString& statusStr) { emit setPairingStatus(status, statusStr); }
-    void            jsonReceived                (const QString& json) { emit parsePairingJson(json); }
     void            setFirstBoot                (bool set) { _firstBoot = set; emit firstBootChanged(); }
     void            setUsePairing               (bool set);
+    void            jsonReceivedStartPairing    (const QString& jsonEnc);
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
@@ -107,14 +107,13 @@ public:
     Q_PROPERTY(bool             usePairing              READ usePairing              WRITE setUsePairing NOTIFY usePairingChanged)
 
 signals:
-    void startUpload                            (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
+    void startUpload                            (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt, int retries);
     void stopUpload                             ();
     void startCommand                           (const QString& name, const QString& url, const QString& content);
     void closeConnection                        ();
     void pairingConfigurationsChanged           ();
     void nameListChanged                        ();
     void pairingStatusChanged                   ();
-    void parsePairingJson                       (const QString& json);
     void setPairingStatus                       (PairingStatus status, const QString& pairingStatus);
     void connectedListChanged                   ();
     void pairedListChanged                      ();
@@ -125,27 +124,25 @@ signals:
 
 private slots:
     void _startCommand                          (const QString& name, const QString& pairURL, const QString& content);
-    void _startUpload                           (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt);
-    void _startUploadRequest                    (const QString& name, const QString& url, const QString& data);
-    void _parsePairingJsonNFC                   (const QString& jsonEnc) { _parsePairingJson(jsonEnc, true); }
-    void _parsePairingJson                      (const QString& jsonEnc, bool updateSettings);
+    void _startUpload                           (const QString& name, const QString& pairURL, const QJsonDocument& jsonDoc, bool signAndEncrypt, int retries);
+    void _startUploadRequest                    (const QString& name, const QString& url, const QString& data, int retries);
+    void _parsePairingJsonAndConnect            (const QString& jsonEnc);
     void _setPairingStatus                      (PairingStatus status, const QString& pairingStatus);
     void _connectToPairedDevice                 (const QString& name);
     void _setEnabled                            ();
 
 private:
-    QString                 _statusString;
-    QString                 _lastConnected;
-    QString                 _encryptionKey; // TODO get rid of this
-    QString                 _publicKey; // TODO get rid of this
     int                     _nfcIndex = -1;
     int                     _microhardIndex = -1;
-    int                     _pairRetryCount = 0;
     PairingStatus           _status = PairingIdle;
+    QString                 _statusString;
+    QString                 _lastConnected;
+    QString                 _encryptionKey;
+    QString                 _publicKey;
     OpenSSL_AES             _aes;
     OpenSSL_RSA             _rsa;
     OpenSSL_RSA             _device_rsa;
-    QJsonDocument           _jsonDoc{}; // TODO get rid of this
+    QJsonDocument           _gcsJsonDoc{};
     QNetworkAccessManager   _uploadManager;
     bool                    _firstBoot = true;
     bool                    _usePairing = false;
@@ -159,13 +156,12 @@ private:
     QJsonDocument           _createMicrohardConnectJson (const QVariantMap& remotePairingMap);
     QJsonDocument           _createZeroTierPairingJson  (const QVariantMap& remotePairingMap);
     QJsonDocument           _createMicrohardPairingJson (const QVariantMap& remotePairingMap);
-    QString                 _assumeMicrohardPairingJson ();
     void                    _writeJson                  (const QJsonDocument &jsonDoc, const QString& fileName);
     QString                 _getLocalIPInNetwork        (const QString& remoteIP, int num);
     void                    _commandFinished            ();
     void                    _uploadFinished             ();
     void                    _uploadError                (QNetworkReply::NetworkError code);
-    void                    _pairingCompleted           (const QString& name, const QString& devicePublicKey);
+    void                    _pairingCompleted           (const QString& tempName, const QString& newName, const QString& devicePublicKey);
     bool                    _connectionCompleted        (const QString& response);
     QDir                    _pairingCacheDir            ();
     QString                 _pairingCacheFile           (const QString& uavName);
@@ -178,9 +174,10 @@ private:
     void                    _removeUDPLink              (const QString& name);
     void                    _linkActiveChanged          (LinkInterface* link, bool active, int vehicleID);
     void                    _autoConnect                ();
+    QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
     QVariantMap             _getPairingMap              (const QString& name);
     void                    _setConnectingChannel       (const QString& name, int channel);
-
+    QString                 _removeRSAkey               (QString s);
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
 #endif
