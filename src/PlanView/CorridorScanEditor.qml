@@ -56,15 +56,26 @@ Rectangle {
         anchors.right:      parent.right
 
         ColumnLayout {
+            id:             wizardModeColumn
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        !missionItem.corridorPolyline.isValid
+            visible:        !missionItem.corridorPolyline.isValid || missionItem.wizardMode
 
             QGCLabel {
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Use the Corridor Tools to create the polyline which defines the corridor.")
+            }
+
+            QGCButton {
+                text:               qsTr("Done With Polyline")
+                Layout.fillWidth:   true
+                enabled:            missionItem.corridorPolyline.isValid
+                onClicked: {
+                    missionItem.wizardMode = false
+                    editorRoot.selectNextNotReadyItem()
+                }
             }
         }
 
@@ -72,7 +83,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        missionItem.corridorPolyline.isValid
+            visible:        !wizardModeColumn.visible
 
             QGCTabBar {
                 id:             tabBar

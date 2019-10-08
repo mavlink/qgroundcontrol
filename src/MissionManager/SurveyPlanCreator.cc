@@ -10,6 +10,8 @@
 #include "SurveyPlanCreator.h"
 #include "PlanMasterController.h"
 #include "MissionSettingsItem.h"
+#include "FixedWingLandingComplexItem.h"
+#include "FixedWingLandingComplexItem.h"
 
 SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController, QObject* parent)
     : PlanCreator(planMasterController, MissionController::patternSurveyName, QStringLiteral("/qmlimages/PlanCreator/SurveyPlanCreator.png"), parent)
@@ -20,18 +22,16 @@ SurveyPlanCreator::SurveyPlanCreator(PlanMasterController* planMasterController,
 void SurveyPlanCreator::createPlan(const QGeoCoordinate& mapCenterCoord)
 {
     _planMasterController->removeAll();
-    int seqNum = _missionController->insertComplexMissionItem(
-                                    MissionController::patternSurveyName,
-                                    mapCenterCoord,
-                                    _missionController->visualItems()->count());
+    VisualMissionItem* takeoffItem = _missionController->insertSimpleMissionItem(mapCenterCoord, -1);
+    takeoffItem->setWizardMode(true);
+    _missionController->insertComplexMissionItem(MissionController::patternSurveyName, mapCenterCoord, -1)->setWizardMode(true);
     if (_planMasterController->managerVehicle()->fixedWing()) {
-        _missionController->insertComplexMissionItem(
-                    MissionController::patternFWLandingName,
-                    mapCenterCoord,
-                    _missionController->visualItems()->count());
+        FixedWingLandingComplexItem* landingItem = qobject_cast<FixedWingLandingComplexItem*>(_missionController->insertComplexMissionItem(MissionController::patternFWLandingName, mapCenterCoord, -1));
+        landingItem->setWizardMode(true);
+        landingItem->setLoiterDragAngleOnly(true);
     } else {
         MissionSettingsItem* settingsItem = _missionController->visualItems()->value<MissionSettingsItem*>(0);
         settingsItem->setMissionEndRTL(true);
     }
-    _missionController->setCurrentPlanViewIndex(seqNum, false);
+    _missionController->setCurrentPlanViewIndex(takeoffItem->sequenceNumber(), true);
 }

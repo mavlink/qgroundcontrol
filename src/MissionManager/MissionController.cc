@@ -349,7 +349,7 @@ int MissionController::_nextSequenceNumber(void)
     }
 }
 
-int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex)
+VisualMissionItem* MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, this);
@@ -373,15 +373,23 @@ int MissionController::insertSimpleMissionItem(QGeoCoordinate coordinate, int vi
         }
     }
     newItem->setMissionFlightStatus(_missionFlightStatus);
-    _visualItems->insert(visualItemIndex, newItem);
+    if (visualItemIndex == -1) {
+        _visualItems->append(newItem);
+    } else {
+        _visualItems->insert(visualItemIndex, newItem);
+    }
 
     // We send the click coordinate through here to be able to set the planned home position from the user click location if needed
     _recalcAllWithClickCoordinate(coordinate);
 
-    return newItem->sequenceNumber();
+    if (makeCurrentItem) {
+        setCurrentPlanViewIndex(newItem->sequenceNumber(), true);
+    }
+
+    return newItem;
 }
 
-int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex)
+VisualMissionItem* MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
     SimpleMissionItem * newItem = new SimpleMissionItem(_controllerVehicle, _flyView, this);
@@ -399,16 +407,24 @@ int MissionController::insertROIMissionItem(QGeoCoordinate coordinate, int visua
         newItem->altitude()->setRawValue(prevAltitude);
         newItem->setAltitudeMode(static_cast<QGroundControlQmlGlobal::AltitudeMode>(prevAltitudeMode));
     }
-    _visualItems->insert(visualItemIndex, newItem);
+    if (visualItemIndex == -1) {
+        _visualItems->append(newItem);
+    } else {
+        _visualItems->insert(visualItemIndex, newItem);
+    }
 
     _recalcAll();
 
-    return newItem->sequenceNumber();
+    if (makeCurrentItem) {
+        setCurrentPlanViewIndex(newItem->sequenceNumber(), true);
+    }
+
+    return newItem;
 }
 
-int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex)
+VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex, bool makeCurrentItem)
 {
-    ComplexMissionItem* newItem;
+    ComplexMissionItem* newItem = nullptr;
 
     // If the ComplexMissionItem is inserted first, add a TakeOff SimpleMissionItem
     if (_visualItems->count() == 1 && (_controllerVehicle->fixedWing() || _controllerVehicle->vtol() || _controllerVehicle->multiRotor())) {
@@ -416,7 +432,6 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         visualItemIndex++;
     }
 
-    int sequenceNumber = _nextSequenceNumber();
     if (itemName == patternSurveyName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
         newItem->setCoordinate(mapCenterCoordinate);
@@ -428,15 +443,17 @@ int MissionController::insertComplexMissionItem(QString itemName, QGeoCoordinate
         newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
-        return sequenceNumber;
+        return nullptr;
     }
 
-    return _insertComplexMissionItemWorker(newItem, visualItemIndex);
+    _insertComplexMissionItemWorker(newItem, visualItemIndex, makeCurrentItem);
+
+    return newItem;
 }
 
-int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex)
+VisualMissionItem* MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex, bool makeCurrentItem)
 {
-    ComplexMissionItem* newItem;
+    ComplexMissionItem* newItem = nullptr;
 
     if (itemName == patternSurveyName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, file, _visualItems);
@@ -446,13 +463,15 @@ int MissionController::insertComplexMissionItemFromKMLOrSHP(QString itemName, QS
         newItem = new CorridorScanComplexItem(_controllerVehicle, _flyView, file, _visualItems);
     } else {
         qWarning() << "Internal error: Unknown complex item:" << itemName;
-        return _nextSequenceNumber();
+        return nullptr;
     }
 
-    return _insertComplexMissionItemWorker(newItem, visualItemIndex);
+    _insertComplexMissionItemWorker(newItem, visualItemIndex, makeCurrentItem);
+
+    return newItem;
 }
 
-int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex)
+void MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem)
 {
     int sequenceNumber = _nextSequenceNumber();
     bool surveyStyleItem = qobject_cast<SurveyComplexItem*>(complexItem) ||
@@ -500,7 +519,9 @@ int MissionController::_insertComplexMissionItemWorker(ComplexMissionItem* compl
     }
     _recalcAll();
 
-    return complexItem->sequenceNumber();
+    if (makeCurrentItem) {
+        setCurrentPlanViewIndex(complexItem->sequenceNumber(), true);
+    }
 }
 
 void MissionController::removeMissionItem(int index)
