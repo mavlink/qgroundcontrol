@@ -72,13 +72,13 @@ linux:
 android:
   addons:
     apt:
-	  packages:
-	  - speech-dispatcher
-	  - libgstreamer-plugins-base1.0-dev
-	  - libgstreamer1.0-0:amd64
-	  - libgstreamer1.0-dev
-	  - libudev-dev
-	  - wget
+      packages:
+      - speech-dispatcher
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer1.0-0:amd64
+      - libgstreamer1.0-dev
+      - libudev-dev
+      - wget
 
 before_install:
   # fetch entire git repo to properly determine the version
