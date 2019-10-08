@@ -57,16 +57,28 @@ android:
     - build-tools-25.0.3
     - platform-tools
 
-addons:
-  apt:
-    packages:
-    - speech-dispatcher
-    - libgstreamer-plugins-base1.0-dev
-    - libgstreamer1.0-0:amd64
-    - libgstreamer1.0-dev
-    - libsdl2-dev
-    - libudev-dev
-    - wget
+linux:
+  addons:
+    apt:
+      packages:
+      - speech-dispatcher
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer1.0-0:amd64
+      - libgstreamer1.0-dev
+      - libsdl2-dev
+      - libudev-dev
+      - wget
+
+android:
+  addons:
+    apt:
+	  packages:
+	  - speech-dispatcher
+	  - libgstreamer-plugins-base1.0-dev
+	  - libgstreamer1.0-0:amd64
+	  - libgstreamer1.0-dev
+	  - libudev-dev
+	  - wget
 
 before_install:
   # fetch entire git repo to properly determine the version
