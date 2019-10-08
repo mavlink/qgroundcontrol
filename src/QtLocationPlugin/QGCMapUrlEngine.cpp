@@ -41,6 +41,7 @@ UrlFactory::UrlFactory() : _timeout(5 * 1000) {
     _providersTable["Google Street Map"] = new GoogleStreetMapProvider(this);
     _providersTable["Google Satellite"]  = new GoogleSatelliteMapProvider(this);
     _providersTable["Google Terrain"]    = new GoogleTerrainMapProvider(this);
+    _providersTable["Google Hybrid"]    = new GoogleHybridMapProvider(this);
     _providersTable["Google Labels"]     = new GoogleTerrainMapProvider(this);
 #endif
 
