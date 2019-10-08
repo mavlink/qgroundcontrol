@@ -22,6 +22,7 @@
 #include <QApplication>
 #include <QTimer>
 #include <QQmlApplicationEngine>
+#include <QElapsedTimer>
 
 #include "LinkConfiguration.h"
 #include "LinkManager.h"
@@ -98,6 +99,8 @@ public:
     void            setLanguage();
     QQuickItem*     mainRootWindow();
 
+    uint64_t        msecsSinceBoot(void) { return _msecsElapsedTime.elapsed(); }
+
 public slots:
     /// You can connect to this slot to show an information message box from a different thread.
     void informationMessageBoxOnMainThread(const QString& title, const QString& msg);
@@ -171,10 +174,10 @@ private:
     void        _exitWithError          (QString errorMessage);
 
 
-    bool                _runningUnitTests;                                  ///< true: running unit tests, false: normal app
-    static const int    _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
-    QTimer              _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
-    QStringList         _missingParams;                                     ///< List of missing facts to be displayed
+    bool                        _runningUnitTests;                                  ///< true: running unit tests, false: normal app
+    static const int            _missingParamsDelayedDisplayTimerTimeout = 1000;    ///< Timeout to wait for next missing fact to come in before display
+    QTimer                      _missingParamsDelayedDisplayTimer;                  ///< Timer use to delay missing fact display
+    QList<QPair<int,QString>>   _missingParams;                                     ///< List of missing parameter component id:name
 
     QQmlApplicationEngine* _qmlAppEngine        = nullptr;
     bool                _logOutput              = false;                    ///< true: Log Qt debug output to file
@@ -192,6 +195,7 @@ private:
     QTranslator         _QGCTranslatorQt;
     QLocale             _locale;
     bool                _error                  = false;
+    QElapsedTimer       _msecsElapsedTime;
 
     static const char* _settingsVersionKey;             ///< Settings key which hold settings version
     static const char* _deleteAllSettingsKey;           ///< If this settings key is set on boot, all settings will be deleted

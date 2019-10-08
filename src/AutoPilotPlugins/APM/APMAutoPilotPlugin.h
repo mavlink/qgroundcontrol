@@ -27,6 +27,7 @@ class APMLightsComponent;
 class APMSubFrameComponent;
 class ESP8266Component;
 class APMHeliComponent;
+class APMFollowComponent;
 
 /// This is the APM specific implementation of the AutoPilot class.
 class APMAutoPilotPlugin : public AutoPilotPlugin
@@ -56,6 +57,7 @@ protected:
     APMTuningComponent*         _tuningComponent;
     ESP8266Component*           _esp8266Component;
     APMHeliComponent*           _heliComponent;
+    APMFollowComponent*         _followComponent;
 
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
 private slots:

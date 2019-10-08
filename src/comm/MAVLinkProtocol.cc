@@ -160,6 +160,38 @@ void MAVLinkProtocol::resetMetadataForLink(LinkInterface *link)
 }
 
 /**
+ * This method parses all outcoming bytes and log a MAVLink packet.
+ * @param link The interface to read from
+ * @see LinkInterface
+ **/
+
+void MAVLinkProtocol::logSentBytes(LinkInterface* link, QByteArray b){
+
+    uint8_t bytes_time[sizeof(quint64)];
+
+    Q_UNUSED(link);
+    if (!_logSuspendError && !_logSuspendReplay && _tempLogFile.isOpen()) {
+
+        quint64 time = static_cast<quint64>(QDateTime::currentMSecsSinceEpoch() * 1000);
+
+        qToBigEndian(time,bytes_time);
+
+        b.insert(0,QByteArray((const char*)bytes_time,sizeof(bytes_time)));
+
+        int len = b.count();
+
+        if(_tempLogFile.write(b) != len)
+        {
+            // If there's an error logging data, raise an alert and stop logging.
+            emit protocolStatusMessage(tr("MAVLink Protocol"), tr("MAVLink Logging failed. Could not write to file %1, logging disabled.").arg(_tempLogFile.fileName()));
+            _stopLogging();
+            _logSuspendError = true;
+        }
+    }
+
+}
+
+/**
  * This method parses all incoming bytes and constructs a MAVLink packet.
  * It can handle multiple links in parallel, as each link has it's own buffer/
  * parsing state machine.
@@ -362,7 +394,7 @@ void MAVLinkProtocol::setSystemId(int id)
 /** @return Component id of this application */
 int MAVLinkProtocol::getComponentId()
 {
-    return 0;
+    return MAV_COMP_ID_MISSIONPLANNER;
 }
 
 void MAVLinkProtocol::enableVersionCheck(bool enabled)

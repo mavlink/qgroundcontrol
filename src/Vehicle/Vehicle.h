@@ -38,6 +38,7 @@ class ADSBVehicle;
 class QGCCameraManager;
 class Joystick;
 class VehicleObjectAvoidance;
+class TrajectoryPoints;
 
 #if defined(QGC_AIRMAP_ENABLED)
 class AirspaceVehicleManager;
@@ -548,7 +549,7 @@ public:
     Q_PROPERTY(QStringList          flightModes             READ flightModes                                            NOTIFY flightModesChanged)
     Q_PROPERTY(QString              flightMode              READ flightMode             WRITE setFlightMode             NOTIFY flightModeChanged)
     Q_PROPERTY(bool                 hilMode                 READ hilMode                WRITE setHilMode                NOTIFY hilModeChanged)
-    Q_PROPERTY(QmlObjectListModel*  trajectoryPoints        READ trajectoryPoints                                       CONSTANT)
+    Q_PROPERTY(TrajectoryPoints*    trajectoryPoints        MEMBER _trajectoryPoints                                    CONSTANT)
     Q_PROPERTY(QmlObjectListModel*  cameraTriggerPoints     READ cameraTriggerPoints                                    CONSTANT)
     Q_PROPERTY(float                latitude                READ latitude                                               NOTIFY coordinateChanged)
     Q_PROPERTY(float                longitude               READ longitude                                              NOTIFY coordinateChanged)
@@ -606,6 +607,7 @@ public:
     Q_PROPERTY(bool                 supportsSmartRTL        READ supportsSmartRTL                                       CONSTANT)
     Q_PROPERTY(QString              landFlightMode          READ landFlightMode                                         CONSTANT)
     Q_PROPERTY(QString              takeControlFlightMode   READ takeControlFlightMode                                  CONSTANT)
+    Q_PROPERTY(QString              followFlightMode        READ followFlightMode                                       CONSTANT)
     Q_PROPERTY(QString              firmwareTypeString      READ firmwareTypeString                                     NOTIFY firmwareTypeChanged)
     Q_PROPERTY(QString              vehicleTypeString       READ vehicleTypeString                                      NOTIFY vehicleTypeChanged)
     Q_PROPERTY(QString              vehicleImageOpaque      READ vehicleImageOpaque                                     CONSTANT)
@@ -877,9 +879,8 @@ public:
     QString prearmError(void) const { return _prearmError; }
     void setPrearmError(const QString& prearmError);
 
-    QmlObjectListModel* trajectoryPoints(void) { return &_mapTrajectoryList; }
-    QmlObjectListModel* cameraTriggerPoints(void) { return &_cameraTriggerPoints; }
-    QmlObjectListModel* adsbVehicles(void) { return &_adsbVehicles; }
+    QmlObjectListModel* cameraTriggerPoints (void) { return &_cameraTriggerPoints; }
+    QmlObjectListModel* adsbVehicles        (void) { return &_adsbVehicles; }
 
     int  flowImageIndex() { return _flowImageIndex; }
 
@@ -942,6 +943,7 @@ public:
     bool            supportsSmartRTL        () const;
     QString         landFlightMode          () const;
     QString         takeControlFlightMode   () const;
+    QString         followFlightMode        () const;
     double          defaultCruiseSpeed      () const { return _defaultCruiseSpeed; }
     double          defaultHoverSpeed       () const { return _defaultHoverSpeed; }
     QString         firmwareTypeString      () const;
@@ -1226,7 +1228,6 @@ private slots:
     void _linkInactiveOrDeleted(LinkInterface* link);
     void _sendMessageOnLink(LinkInterface* link, mavlink_message_t message);
     void _sendMessageMultipleNext(void);
-    void _addNewMapTrajectoryPoint(void);
     void _parametersReady(bool parametersReady);
     void _remoteControlRSSIChanged(uint8_t rssi);
     void _handleFlightModeChanged(const QString& flightMode);
@@ -1246,7 +1247,6 @@ private slots:
     void _geoFenceLoadComplete(void);
     void _rallyPointLoadComplete(void);
     void _sendMavCommandAgain(void);
-    void _clearTrajectoryPoints(void);
     void _clearCameraTriggerPoints(void);
     void _updateDistanceHeadingToHome(void);
     void _updateHeadingToNextWP(void);
@@ -1260,6 +1260,7 @@ private slots:
     void _adsbTimerTimeout      ();
     void _orbitTelemetryTimeout (void);
     void _protocolVersionTimeOut(void);
+    void _updateFlightTime      (void);
 
 private:
     bool _containsLink          (LinkInterface* link);
@@ -1313,8 +1314,6 @@ private:
     void _missionManagerError(int errorCode, const QString& errorMsg);
     void _geoFenceManagerError(int errorCode, const QString& errorMsg);
     void _rallyPointManagerError(int errorCode, const QString& errorMsg);
-    void _mapTrajectoryStart(void);
-    void _mapTrajectoryStop(void);
     void _linkActiveChanged(LinkInterface* link, bool active, int vehicleID);
     void _say(const QString& text);
     QString _vehicleIdSpeech(void);
@@ -1334,6 +1333,8 @@ private:
     void _handleUnsupportedRequestProtocolVersion(void);
     void _initializeCsv();
     void _writeCsvLine();
+    void _flightTimerStart(void);
+    void _flightTimerStop(void);
 
     int     _id;                    ///< Mavlink system id
     int     _defaultComponentId;
@@ -1463,15 +1464,10 @@ private:
     QTimer  _sendMultipleTimer;
     int     _nextSendMessageMultipleIndex;
 
-    QTime               _flightTimer;
-    QTimer              _mapTrajectoryTimer;
-    QmlObjectListModel  _mapTrajectoryList;
-    QGeoCoordinate      _mapTrajectoryLastCoordinate;
-    bool                _mapTrajectoryHaveFirstCoordinate;
-    static const int    _mapTrajectoryMsecsBetweenPoints = 1000;
-
-    QmlObjectListModel  _cameraTriggerPoints;
-
+    QTime                           _flightTimer;
+    QTimer                          _flightTimeUpdater;
+    TrajectoryPoints*               _trajectoryPoints;
+    QmlObjectListModel              _cameraTriggerPoints;
     QmlObjectListModel              _adsbVehicles;
     QMap<uint32_t, ADSBVehicle*>    _adsbICAOMap;
     QMap<QString, ADSBVehicle*>     _trafficVehicleMap;

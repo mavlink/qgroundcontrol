@@ -70,7 +70,6 @@ public:
     QString         mapVisualQML        (void) const final { return QStringLiteral("StructureScanMapVisual.qml"); }
 
     // Overrides from VisualMissionItem
-
     bool            dirty                   (void) const final { return _dirty; }
     bool            isSimpleItem            (void) const final { return false; }
     bool            isStandaloneCoordinate  (void) const final { return false; }
@@ -89,6 +88,7 @@ public:
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
     void            applyNewAltitude        (double newAltitude) final;
     double          additionalTimeDelay     (void) const final { return 0; }
+    ReadyForSaveState readyForSaveState     (void) const final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return true; }
     bool exitCoordinateHasRelativeAltitude  (void) const final { return true; }

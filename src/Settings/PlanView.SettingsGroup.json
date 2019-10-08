@@ -1,2 +1,8 @@
 [
+{
+    "name":             "displayPresetsTabFirst",
+    "shortDescription": "Display the presets tab at start",
+    "type":             "bool",
+    "defaultValue":     false
+}
 ]

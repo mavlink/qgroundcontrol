@@ -81,6 +81,7 @@ void TCPLink::_writeBytes(const QByteArray data)
 
     if (_socket) {
         _socket->write(data);
+        emit bytesSent(this, data);
         _logOutputDataRate(data.size(), QDateTime::currentMSecsSinceEpoch());
     }
 }

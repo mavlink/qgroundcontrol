@@ -573,7 +573,7 @@ Item {
             anchors.left:       isInstrumentRight() ? _mapAndVideo.left : undefined
             anchors.rightMargin:isInstrumentRight() ? undefined : ScreenTools.defaultFontPixelWidth
             anchors.right:      isInstrumentRight() ? undefined : _mapAndVideo.right
-            anchors.topMargin:  mainWindow.header.height + (ScreenTools.defaultFontPixelHeight * 0.5)
+            anchors.topMargin:  ScreenTools.defaultFontPixelHeight * 0.5
             anchors.top:        parent.top
             z:                  _mapAndVideo.z + 4
             maxHeight:          (_flightVideo.visible ? _flightVideo.y : parent.height) - toolStrip.y

@@ -201,9 +201,8 @@ void CameraCalc::save(QJsonObject& json) const
     }
 }
 
-bool CameraCalc::load(const QJsonObject& json, bool forPresets, bool cameraSpecInPreset, QString& errorString)
+bool CameraCalc::load(const QJsonObject& json, QString& errorString)
 {
-    qDebug() << "CameraCalc::load" << forPresets << cameraSpecInPreset;
     QJsonObject v1Json = json;
 
     if (!json.contains(JsonHelper::jsonVersionKey)) {
@@ -238,7 +237,7 @@ bool CameraCalc::load(const QJsonObject& json, bool forPresets, bool cameraSpecI
         return false;
     }
 
-    _disableRecalc = !forPresets;
+    _disableRecalc = true;
 
     _distanceToSurfaceRelative = v1Json[distanceToSurfaceRelativeName].toBool();
 
@@ -259,36 +258,16 @@ bool CameraCalc::load(const QJsonObject& json, bool forPresets, bool cameraSpecI
         _sideOverlapFact.setRawValue        (v1Json[sideOverlapName].toDouble());
     }
 
-    if (forPresets) {
-        if (isManualCamera()) {
-            _distanceToSurfaceFact.setRawValue(v1Json[distanceToSurfaceName].toDouble());
-        } else {
-            if (_valueSetIsDistanceFact.rawValue().toBool()) {
-                _distanceToSurfaceFact.setRawValue(v1Json[distanceToSurfaceName].toDouble());
-            } else {
-                _imageDensityFact.setRawValue(v1Json[imageDensityName].toDouble());
-            }
+    _cameraNameFact.setRawValue                 (v1Json[cameraNameName].toString());
+    _adjustedFootprintSideFact.setRawValue      (v1Json[adjustedFootprintSideName].toDouble());
+    _adjustedFootprintFrontalFact.setRawValue   (v1Json[adjustedFootprintFrontalName].toDouble());
+    _distanceToSurfaceFact.setRawValue          (v1Json[distanceToSurfaceName].toDouble());
+    if (!isManualCamera()) {
+        _imageDensityFact.setRawValue(v1Json[imageDensityName].toDouble());
 
-            if (cameraSpecInPreset) {
-                _cameraNameFact.setRawValue(v1Json[cameraNameName].toString());
-                if (!CameraSpec::load(v1Json, errorString)) {
-                    _disableRecalc = false;
-                    return false;
-                }
-            }
-        }
-    } else {
-        _cameraNameFact.setRawValue                 (v1Json[cameraNameName].toString());
-        _adjustedFootprintSideFact.setRawValue      (v1Json[adjustedFootprintSideName].toDouble());
-        _adjustedFootprintFrontalFact.setRawValue   (v1Json[adjustedFootprintFrontalName].toDouble());
-        _distanceToSurfaceFact.setRawValue          (v1Json[distanceToSurfaceName].toDouble());
-        if (!isManualCamera()) {
-            _imageDensityFact.setRawValue(v1Json[imageDensityName].toDouble());
-
-            if (!CameraSpec::load(v1Json, errorString)) {
-                _disableRecalc = false;
-                return false;
-            }
+        if (!CameraSpec::load(v1Json, errorString)) {
+            _disableRecalc = false;
+            return false;
         }
     }
 

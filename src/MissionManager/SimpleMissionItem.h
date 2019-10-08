@@ -52,7 +52,7 @@ public:
     /// This should be called before changing the command. It is needed if the command changes
     /// from an item which does not include a coordinate to an item which requires a coordinate.
     /// It uses this value to set that new coordinate.
-    Q_INVOKABLE void setMapCenterHintForCommandChange(QGeoCoordinate mapCenter) { _mapCenterHint = mapCenter; };
+    Q_INVOKABLE void setMapCenterHintForCommandChange(QGeoCoordinate mapCenter) { _mapCenterHint = mapCenter; }
 
     /// Scans the loaded items for additional section settings
     ///     @param visualItems List of all visual items
@@ -99,7 +99,6 @@ public:
     const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
-
     bool            dirty                   (void) const final { return _dirty; }
     bool            isSimpleItem            (void) const final { return true; }
     bool            isStandaloneCoordinate  (void) const final;
@@ -118,7 +117,7 @@ public:
     void            appendMissionItems      (QList<MissionItem*>& items, QObject* missionItemParent) final;
     void            applyNewAltitude        (double newAltitude) final;
     void            setMissionFlightStatus  (MissionController::MissionFlightStatus_t& missionFlightStatus) final;
-    bool            readyForSave            (void) const final;
+    ReadyForSaveState readyForSaveState     (void) const final;
     double          additionalTimeDelay     (void) const final;
 
     bool coordinateHasRelativeAltitude      (void) const final { return _missionItem.relativeAltitude(); }
@@ -154,7 +153,7 @@ private slots:
     void _rebuildFacts                      (void);
     void _rebuildTextFieldFacts             (void);
     void _possibleAdditionalTimeDelayChanged(void);
-    void _setDefaultsForCommand              (void);
+    void _setDefaultsForCommand             (void);
 
 private:
     void _connectSignals        (void);

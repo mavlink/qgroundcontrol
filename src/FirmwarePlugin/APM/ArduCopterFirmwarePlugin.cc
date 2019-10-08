@@ -43,7 +43,7 @@ APMCopterMode::APMCopterMode(uint32_t mode, bool settable) :
         { GUIDED_NOGPS, "Guided No GPS"},
         { SMART_RTL,    "Smart RTL"},
         { FLOWHOLD,     "Flow Hold" },
-        { FOLLOW,       "Follow Vehicle" },
+        { FOLLOW,       "Follow" },
         { ZIGZAG,       "ZigZag" },
     });
 }
@@ -97,6 +97,11 @@ ArduCopterFirmwarePlugin::ArduCopterFirmwarePlugin(void)
         remapV3_7["RC11_OPTION"] =      QStringLiteral("CH11_OPT");
         remapV3_7["RC12_OPTION"] =      QStringLiteral("CH12_OPT");
 
+        FirmwarePlugin::remapParamNameMap_t& remapV4_0 = _remapParamName[4][0];
+
+        remapV4_0["TUNE_MIN"] = QStringLiteral("TUNE_HIGH");
+        remapV3_7["TUNE_MAX"] = QStringLiteral("TUNE_LOW");
+
         _remapParamNameIntialized = true;
     }
 }
@@ -136,3 +141,7 @@ bool ArduCopterFirmwarePlugin::vehicleYawsToNextWaypointInMission(const Vehicle*
     return true;
 }
 
+void ArduCopterFirmwarePlugin::sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities)
+{
+    _sendGCSMotionReport(vehicle, motionReport, estimatationCapabilities);
+}
