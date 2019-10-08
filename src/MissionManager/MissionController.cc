@@ -432,7 +432,6 @@ VisualMissionItem* MissionController::insertComplexMissionItem(QString itemName,
         visualItemIndex++;
     }
 
-    int sequenceNumber = _nextSequenceNumber();
     if (itemName == patternSurveyName) {
         newItem = new SurveyComplexItem(_controllerVehicle, _flyView, QString() /* kmlFile */, _visualItems /* parent */);
         newItem->setCoordinate(mapCenterCoordinate);
