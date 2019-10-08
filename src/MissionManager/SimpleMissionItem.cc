@@ -200,6 +200,8 @@ void SimpleMissionItem::_connectSignals(void)
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_setDirty);
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 
+    connect(this, &SimpleMissionItem::wizardModeChanged,             this, &SimpleMissionItem::readyForSaveStateChanged);
+
     // These are coordinate parameters, they must emit coordinateChanged signal
     connect(&_missionItem._param5Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
     connect(&_missionItem._param6Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
@@ -325,6 +327,7 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
         }
         _updateOptionalSections();
     }
+
     return success;
 }
 
@@ -726,6 +729,10 @@ void SimpleMissionItem::_terrainAltChanged(void)
 
 SimpleMissionItem::ReadyForSaveState SimpleMissionItem::readyForSaveState(void) const
 {
+    if (_wizardMode) {
+        return NotReadyForSaveData;
+    }
+
     bool terrainReady =  !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
     return terrainReady ? ReadyForSave : NotReadyForSaveTerrain;
 }

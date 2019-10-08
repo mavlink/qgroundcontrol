@@ -103,28 +103,35 @@ public:
     Q_INVOKABLE void removeMissionItem(int index);
 
     /// Add a new simple mission item to the list
-    ///     @param visualItemIndex: index to insert at
-    /// @return Sequence number for new item
-    Q_INVOKABLE int insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex);
+    ///     @param coordinate: Coordinate for item
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item
+    Q_INVOKABLE VisualMissionItem* insertSimpleMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
 
     /// Add a new ROI mission item to the list
-    ///     @param visualItemIndex: index to insert at
-    /// @return Sequence number for new item
-    Q_INVOKABLE int insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex);
+    ///     @param coordinate: Coordinate for item
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item
+    Q_INVOKABLE VisualMissionItem*  insertROIMissionItem(QGeoCoordinate coordinate, int visualItemIndex, bool makeCurrentItem = false);
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
     ///     @param mapCenterCoordinate: coordinate for current center of map
-    ///     @param visualItemIndex: index to insert at
-    /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex);
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item
+    Q_INVOKABLE VisualMissionItem*  insertComplexMissionItem(QString itemName, QGeoCoordinate mapCenterCoordinate, int visualItemIndex, bool makeCurrentItem = false);
 
     /// Add a new complex mission item to the list
     ///     @param itemName: Name of complex item to create (from complexMissionItemNames)
     ///     @param file: kml or shp file to load from shape from
-    ///     @param visualItemIndex: index to insert at, -1 for end
-    /// @return Sequence number for new item
-    Q_INVOKABLE int insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex);
+    ///     @param coordinate: Coordinate for item
+    ///     @param visualItemIndex: index to insert at, -1 for end of list
+    ///     @param makeCurrentItem: true: Make this item the current item
+    /// @return Newly created item
+    Q_INVOKABLE VisualMissionItem*  insertComplexMissionItemFromKMLOrSHP(QString itemName, QString file, int visualItemIndex, bool makeCurrentItem = false);
 
     Q_INVOKABLE void resumeMission(int resumeIndex);
 
@@ -284,7 +291,7 @@ private:
     void _initLoadedVisualItems(QmlObjectListModel* loadedVisualItems);
     CoordinateVector* _addWaypointLineSegment(CoordVectHashTable& prevItemPairHashTable, VisualItemPair& pair);
     void _addTimeDistance(bool vtolInHover, double hoverTime, double cruiseTime, double extraTime, double distance, int seqNum);
-    int _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex);
+    void _insertComplexMissionItemWorker(ComplexMissionItem* complexItem, int visualItemIndex, bool makeCurrentItem);
     void _warnIfTerrainFrameUsed(void);
 
 private:

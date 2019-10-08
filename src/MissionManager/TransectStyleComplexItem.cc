@@ -106,8 +106,8 @@ TransectStyleComplexItem::TransectStyleComplexItem(Vehicle* vehicle, bool flyVie
 
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::complexDistanceChanged);
     connect(this,                                       &TransectStyleComplexItem::visualTransectPointsChanged, this, &TransectStyleComplexItem::greatestDistanceToChanged);
-
-    connect(this,                                       &TransectStyleComplexItem::followTerrainChanged, this, &TransectStyleComplexItem::_followTerrainChanged);
+    connect(this,                                       &TransectStyleComplexItem::followTerrainChanged,        this, &TransectStyleComplexItem::_followTerrainChanged);
+    connect(this,                                       &TransectStyleComplexItem::wizardModeChanged,           this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
     connect(&_surveyAreaPolygon,                        &QGCMapPolygon::isValidChanged, this, &TransectStyleComplexItem::readyForSaveStateChanged);
 
@@ -494,7 +494,7 @@ TransectStyleComplexItem::ReadyForSaveState TransectStyleComplexItem::readyForSa
 {
     bool terrainReady = _followTerrain ? _transectsPathHeightInfo.count() : true;
     bool polygonNotReady = !_surveyAreaPolygon.isValid();
-    return polygonNotReady ?
+    return (polygonNotReady || _wizardMode) ?
                 NotReadyForSaveData :
                 (terrainReady ? ReadyForSave : NotReadyForSaveTerrain);
 }

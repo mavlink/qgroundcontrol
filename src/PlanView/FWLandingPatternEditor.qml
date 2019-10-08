@@ -49,7 +49,7 @@ Rectangle {
         anchors.left:       parent.left
         anchors.right:      parent.right
         spacing:            _margin
-        visible:            missionItem.landingCoordSet
+        visible:            !editorColumnNeedLandingPoint.visible
 
         SectionHeader {
             id:     loiterPointSection
@@ -216,33 +216,70 @@ Rectangle {
         anchors.top:        parent.top
         anchors.left:       parent.left
         anchors.right:      parent.right
-        visible:            !missionItem.landingCoordSet
+        visible:            !missionItem.landingCoordSet || missionItem.wizardMode
         spacing:            ScreenTools.defaultFontPixelHeight
 
-        QGCLabel {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            wrapMode:               Text.WordWrap
-            horizontalAlignment:    Text.AlignHCenter
-            text:                   qsTr("Click in map to set landing point.")
+        Column {
+            id:             landingCoordColumn
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        ScreenTools.defaultFontPixelHeight
+            visible:        !missionItem.landingCoordSet
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                wrapMode:               Text.WordWrap
+                horizontalAlignment:    Text.AlignHCenter
+                text:                   qsTr("Click in map to set landing point.")
+            }
+
+            QGCLabel {
+                anchors.left:           parent.left
+                anchors.right:          parent.right
+                horizontalAlignment:    Text.AlignHCenter
+                text:                   qsTr("- or -")
+                visible:                activeVehicle
+            }
+
+            QGCButton {
+                anchors.horizontalCenter:   parent.horizontalCenter
+                text:                       _setToVehicleLocationStr
+                visible:                    activeVehicle
+
+                onClicked: {
+                    missionItem.landingCoordinate = activeVehicle.coordinate
+                    missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+                }
+            }
         }
 
-        QGCLabel {
-            anchors.left:           parent.left
-            anchors.right:          parent.right
-            horizontalAlignment:    Text.AlignHCenter
-            text:                   qsTr("- or -")
-            visible:                activeVehicle
-        }
+        ColumnLayout {
+            anchors.left:   parent.left
+            anchors.right:  parent.right
+            spacing:        ScreenTools.defaultFontPixelHeight
+            visible:        !landingCoordColumn.visible
 
-        QGCButton {
-            anchors.horizontalCenter:   parent.horizontalCenter
-            text:                       _setToVehicleLocationStr
-            visible:                    activeVehicle
+            onVisibleChanged: {
+                if (visible) {
+                    console.log(missionItem.landingDistance.rawValue)
+                }
+            }
 
-            onClicked: {
-                missionItem.landingCoordinate = activeVehicle.coordinate
-                missionItem.landingHeading.rawValue = activeVehicle.heading.rawValue
+            QGCLabel {
+                Layout.fillWidth:   true
+                wrapMode:           Text.WordWrap
+                text:               qsTr("Drag the loiter point to adjust landing direction for wind and obstacles.")
+            }
+
+            QGCButton {
+                text:               qsTr("Done Adjusting")
+                Layout.fillWidth:   true
+                onClicked: {
+                    missionItem.wizardMode = false
+                    missionItem.landingDragAngleOnly = false
+                    editorRoot.selectNextNotReadyItem()
+                }
             }
         }
     }

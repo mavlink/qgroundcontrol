@@ -56,15 +56,26 @@ Rectangle {
         anchors.right:      parent.right
 
         ColumnLayout {
+            id:             wizardColumn
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        !missionItem.surveyAreaPolygon.isValid
+            visible:        !missionItem.surveyAreaPolygon.isValid || missionItem.wizardMode
 
             QGCLabel {
                 Layout.fillWidth:   true
                 wrapMode:           Text.WordWrap
                 text:               qsTr("Use the Polygon Tools to create the polygon which outlines your survey area.")
+            }
+
+            QGCButton {
+                text:               qsTr("Done With Polygon")
+                Layout.fillWidth:   true
+                enabled:            missionItem.surveyAreaPolygon.isValid
+                onClicked: {
+                    missionItem.wizardMode = false
+                    editorRoot.selectNextNotReadyItem()
+                }
             }
         }
 
@@ -72,7 +83,7 @@ Rectangle {
             anchors.left:   parent.left
             anchors.right:  parent.right
             spacing:        _margin
-            visible:        missionItem.surveyAreaPolygon.isValid
+            visible:        !wizardColumn.visible
 
             QGCTabBar {
                 id:             tabBar
