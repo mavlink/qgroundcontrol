@@ -4,7 +4,11 @@
 QT += network qml quick
 
 SOURCES += \
+    $$PWD/AbstractPhotoTrigger.cc \
+    $$PWD/AsyncDownloadPhotoTrigger.cc \
     $$PWD/PhotoFileStore.cc \
 
 HEADERS += \
+    $$PWD/AbstractPhotoTrigger.h \
+    $$PWD/AsyncDownloadPhotoTrigger.h \
     $$PWD/PhotoFileStore.h \
