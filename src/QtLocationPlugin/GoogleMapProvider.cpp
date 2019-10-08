@@ -17,6 +17,7 @@ GoogleMapProvider::GoogleMapProvider(QString imageFormat, quint32 averageSize,
     _versionGoogleSatellite = "692";
     _versionGoogleLabels    = "h@336";
     _versionGoogleTerrain   = "t@354,r@354000000";
+    _versionGoogleHybrid    = "y";
     _secGoogleWord          = "Galileo";
 }
 
@@ -209,6 +210,29 @@ GoogleTerrainMapProvider::_getURL(int x, int y, int zoom,
         .arg(_getServerNum(x, y, 4))
         .arg(request)
         .arg(_versionGoogleTerrain)
+        .arg(_language)
+        .arg(x)
+        .arg(sec1)
+        .arg(y)
+        .arg(zoom)
+        .arg(sec2);
+}
+
+QString
+GoogleHybridMapProvider::_getURL(int x, int y, int zoom,
+                                  QNetworkAccessManager* networkManager) {
+    QString server = "mt";
+    QString request = "vt";
+    QString sec1 = ""; // after &x=...
+    QString sec2 = ""; // after &zoom=...
+    _getSecGoogleWords(x, y, sec1, sec2);
+    _tryCorrectGoogleVersions(networkManager);
+    return QString(
+               "http://%1%2.google.com/%3/lyrs=%4&hl=%5&x=%6%7&y=%8&z=%9&s=%10")
+        .arg(server)
+        .arg(_getServerNum(x, y, 4))
+        .arg(request)
+        .arg(_versionGoogleHybrid)
         .arg(_language)
         .arg(x)
         .arg(sec1)

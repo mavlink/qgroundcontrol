@@ -40,6 +40,7 @@ class GoogleMapProvider : public MapProvider {
     QString        _versionGoogleSatellite;
     QString        _versionGoogleLabels;
     QString        _versionGoogleTerrain;
+    QString        _versionGoogleHybrid;
     QString        _secGoogleWord;
 };
 
@@ -114,6 +115,21 @@ class GoogleTerrainMapProvider : public GoogleMapProvider {
     GoogleTerrainMapProvider(QObject* parent)
         : GoogleMapProvider(QString("png"), AVERAGE_GOOGLE_TERRAIN_MAP,
                             QGeoMapType::TerrainMap, parent) {}
+
+  protected:
+    QString _getURL(int x, int y, int zoom,
+                    QNetworkAccessManager* networkManager);
+};
+
+// -----------------------------------------------------------
+// Google Hybrid Map
+
+class GoogleHybridMapProvider : public GoogleMapProvider {
+    Q_OBJECT
+  public:
+    GoogleHybridMapProvider(QObject* parent)
+        : GoogleMapProvider(QString("png"), AVERAGE_GOOGLE_SAT_MAP,
+                            QGeoMapType::HybridMap, parent) {}
 
   protected:
     QString _getURL(int x, int y, int zoom,
