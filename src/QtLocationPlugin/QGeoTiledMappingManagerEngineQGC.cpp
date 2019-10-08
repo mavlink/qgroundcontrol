@@ -108,14 +108,8 @@ QGeoTiledMappingManagerEngineQGC::QGeoTiledMappingManagerEngineQGC(const QVarian
         QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Google Street Map",        "Google street map",            false,  false,  UrlFactory::GoogleMap),
         QGCGEOMAPTYPE(QGeoMapType::SatelliteMapDay,   "Google Satellite Map",     "Google satellite map",         false,  false,  UrlFactory::GoogleSatellite),
         QGCGEOMAPTYPE(QGeoMapType::TerrainMap,        "Google Terrain Map",       "Google terrain map",           false,  false,  UrlFactory::GoogleTerrain),
+        QGCGEOMAPTYPE(QGeoMapType::HybridMap,         "Google Hybrid Map",        "Google hybrid map",            false, false,   UrlFactory::GoogleHybrid),
 #endif
-
-    /* TODO:
-     *  Proper google hybrid maps requires collecting two separate bitmaps and overlaying them.
-     *
-     * mapTypes << QGCGEOMAPTYPE(QGeoMapType::HybridMap,       "Google Hybrid Map",        "Google hybrid map",            false, false, UrlFactory::GoogleHybrid),
-     *
-     */
 
     // Bing
         QGCGEOMAPTYPE(QGeoMapType::StreetMap,         "Bing Street Map",          "Bing street map",                  false,  false,  UrlFactory::BingMap),
