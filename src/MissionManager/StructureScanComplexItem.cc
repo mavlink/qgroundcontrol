@@ -87,6 +87,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
     connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcScanDistance);
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcScanDistance);
 
+    connect(this, &StructureScanComplexItem::wizardModeChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
+
     _recalcLayerInfo();
 
     if (!kmlOrShpFile.isEmpty()) {
@@ -621,5 +623,5 @@ void StructureScanComplexItem::_recalcScanDistance()
 
 StructureScanComplexItem::ReadyForSaveState StructureScanComplexItem::readyForSaveState(void) const
 {
-    return _structurePolygon.isValid() ? ReadyForSave : NotReadyForSaveData;
+    return _structurePolygon.isValid() && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
 }

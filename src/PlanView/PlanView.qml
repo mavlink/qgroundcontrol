@@ -68,13 +68,11 @@ Item {
     }
 
     function insertComplexMissionItem(complexItemName, coordinate, index) {
-        var sequenceNumber = _missionController.insertComplexMissionItem(complexItemName, coordinate, index)
-        _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
+        _missionController.insertComplexMissionItem(complexItemName, coordinate, index, true /* makeCurrentItem */)
     }
 
     function insertComplexMissionItemFromKMLOrSHP(complexItemName, file, index) {
-        var sequenceNumber = _missionController.insertComplexMissionItemFromKMLOrSHP(complexItemName, file, index)
-        _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
+        _missionController.insertComplexMissionItemFromKMLOrSHP(complexItemName, file, index, true /* makeCurrentItem */)
     }
 
     function updateAirspace(reset) {
@@ -267,8 +265,7 @@ Item {
     ///     @param coordinate Location to insert item
     ///     @param index Insert item at this index
     function insertSimpleMissionItem(coordinate, index) {
-        var sequenceNumber = _missionController.insertSimpleMissionItem(coordinate, index)
-        _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
+        _missionController.insertSimpleMissionItem(coordinate, index, true /* makeCurrentItem */)
     }
 
     /// Inserts a new ROI mission item
@@ -279,6 +276,17 @@ Item {
         _missionController.setCurrentPlanViewIndex(sequenceNumber, true)
         _addROIOnClick = false
         toolStrip.lastClickedButton.checked = false
+    }
+
+    function selectNextNotReady() {
+        var foundCurrent = false
+        for (var i=0; i<_missionController.visualItems.count; i++) {
+            var vmi = _missionController.visualItems.get(i)
+            if (vmi.readyForSaveState === VisualMissionItem.NotReadyForSaveData) {
+                _missionController.setCurrentPlanViewIndex(vmi.sequenceNumber, true)
+                break
+            }
+        }
     }
 
     property int _moveDialogMissionItemIndex
@@ -822,8 +830,9 @@ Item {
                             }
                             _missionController.setCurrentPlanViewIndex(removeIndex, true)
                         }
-                        onInsertWaypoint:       insertSimpleMissionItem(editorMap.center, index)
-                        onInsertComplexItem:    insertComplexMissionItem(complexItemName, editorMap.center, index)
+                        onInsertWaypoint:           insertSimpleMissionItem(editorMap.center, index)
+                        onInsertComplexItem:        insertComplexMissionItem(complexItemName, editorMap.center, index)
+                        onSelectNextNotReadyItem:   selectNextNotReady()
                     }
                 }
             }

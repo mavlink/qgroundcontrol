@@ -99,7 +99,6 @@ public:
     const MissionItem& missionItem(void) const { return _missionItem; }
 
     // Overrides from VisualMissionItem
-
     bool            dirty                   (void) const final { return _dirty; }
     bool            isSimpleItem            (void) const final { return true; }
     bool            isStandaloneCoordinate  (void) const final;
@@ -154,7 +153,7 @@ private slots:
     void _rebuildFacts                      (void);
     void _rebuildTextFieldFacts             (void);
     void _possibleAdditionalTimeDelayChanged(void);
-    void _setDefaultsForCommand              (void);
+    void _setDefaultsForCommand             (void);
 
 private:
     void _connectSignals        (void);
