@@ -198,11 +198,25 @@ Item {
             itemIndicator:  _loiterPointObject
             itemCoordinate: _missionItem.loiterCoordinate
 
-            onItemCoordinateChanged: _missionItem.loiterCoordinate = itemCoordinate
+            property bool _preventReentrancy: false
+
+            onItemCoordinateChanged: {
+                if (!_preventReentrancy) {
+                    if (Drag.active && _missionItem.loiterDragAngleOnly) {
+                        _preventReentrancy = true
+                        var angle = _missionItem.landingCoordinate.azimuthTo(itemCoordinate)
+                        var distance = _missionItem.landingCoordinate.distanceTo(_missionItem.loiterCoordinate)
+                        _missionItem.loiterCoordinate = _missionItem.landingCoordinate.atDistanceAndAzimuth(distance, angle)
+                        _preventReentrancy = false
+                    } else {
+                        _missionItem.loiterCoordinate = itemCoordinate
+                    }
+                }
+            }
         }
     }
 
-    // Control which is used to drag the loiter point
+    // Control which is used to drag the landing point
     Component {
         id: landDragAreaComponent
 
