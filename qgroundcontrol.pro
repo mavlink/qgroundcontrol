@@ -313,6 +313,9 @@ DebugBuild {
 
 include(src/QtLocationPlugin/QGCLocationPlugin.pri)
 
+# Until pairing can be made to work cleanly on all OS it is turned off
+DEFINES+=QGC_DISABLE_PAIRING
+
 # Pairing
 contains (DEFINES, QGC_DISABLE_PAIRING) {
     message("Skipping support for Pairing")
@@ -413,7 +416,7 @@ INCLUDEPATH += \
     src/QtLocationPlugin/QMLControl \
     src/Settings \
     src/Terrain \
-    src/VehicleSetup \
+    src/Vehicle \
     src/ViewWidgets \
     src/Audio \
     src/comm \
@@ -588,6 +591,8 @@ HEADERS += \
     src/MissionManager/CameraSpec.h \
     src/MissionManager/ComplexMissionItem.h \
     src/MissionManager/CorridorScanComplexItem.h \
+    src/MissionManager/CorridorScanPlanCreator.h \
+    src/MissionManager/CustomPlanCreator.h \
     src/MissionManager/FixedWingLandingComplexItem.h \
     src/MissionManager/GeoFenceController.h \
     src/MissionManager/GeoFenceManager.h \
@@ -600,6 +605,7 @@ HEADERS += \
     src/MissionManager/MissionManager.h \
     src/MissionManager/MissionSettingsItem.h \
     src/MissionManager/PlanElementController.h \
+    src/MissionManager/PlanCreator.h \
     src/MissionManager/PlanManager.h \
     src/MissionManager/PlanMasterController.h \
     src/MissionManager/QGCFenceCircle.h \
@@ -614,7 +620,9 @@ HEADERS += \
     src/MissionManager/Section.h \
     src/MissionManager/SpeedSection.h \
     src/MissionManager/StructureScanComplexItem.h \
+    src/MissionManager/StructureScanPlanCreator.h \
     src/MissionManager/SurveyComplexItem.h \
+    src/MissionManager/SurveyPlanCreator.h \
     src/MissionManager/TransectStyleComplexItem.h \
     src/MissionManager/VisualMissionItem.h \
     src/PositionManager/PositionManager.h \
@@ -660,7 +668,13 @@ HEADERS += \
     src/SHPFileHelper.h \
     src/Terrain/TerrainQuery.h \
     src/TerrainTile.h \
+    src/Vehicle/ADSBVehicle.h \
+    src/Vehicle/GPSRTKFactGroup.h \
     src/Vehicle/MAVLinkLogManager.h \
+    src/Vehicle/MultiVehicleManager.h \
+    src/Vehicle/TrajectoryPoints.h \
+    src/Vehicle/Vehicle.h \
+    src/Vehicle/VehicleObjectAvoidance.h \
     src/VehicleSetup/JoystickConfigController.h \
     src/comm/LinkConfiguration.h \
     src/comm/LinkInterface.h \
@@ -808,6 +822,8 @@ SOURCES += \
     src/MissionManager/CameraSpec.cc \
     src/MissionManager/ComplexMissionItem.cc \
     src/MissionManager/CorridorScanComplexItem.cc \
+    src/MissionManager/CorridorScanPlanCreator.cc \
+    src/MissionManager/CustomPlanCreator.cc \
     src/MissionManager/FixedWingLandingComplexItem.cc \
     src/MissionManager/GeoFenceController.cc \
     src/MissionManager/GeoFenceManager.cc \
@@ -820,6 +836,7 @@ SOURCES += \
     src/MissionManager/MissionManager.cc \
     src/MissionManager/MissionSettingsItem.cc \
     src/MissionManager/PlanElementController.cc \
+    src/MissionManager/PlanCreator.cc \
     src/MissionManager/PlanManager.cc \
     src/MissionManager/PlanMasterController.cc \
     src/MissionManager/QGCFenceCircle.cc \
@@ -833,7 +850,9 @@ SOURCES += \
     src/MissionManager/SimpleMissionItem.cc \
     src/MissionManager/SpeedSection.cc \
     src/MissionManager/StructureScanComplexItem.cc \
+    src/MissionManager/StructureScanPlanCreator.cc \
     src/MissionManager/SurveyComplexItem.cc \
+    src/MissionManager/SurveyPlanCreator.cc \
     src/MissionManager/TransectStyleComplexItem.cc \
     src/MissionManager/VisualMissionItem.cc \
     src/PositionManager/PositionManager.cpp \
@@ -878,7 +897,13 @@ SOURCES += \
     src/SHPFileHelper.cc \
     src/Terrain/TerrainQuery.cc \
     src/TerrainTile.cc\
+    src/Vehicle/ADSBVehicle.cc \
+    src/Vehicle/GPSRTKFactGroup.cc \
     src/Vehicle/MAVLinkLogManager.cc \
+    src/Vehicle/MultiVehicleManager.cc \
+    src/Vehicle/TrajectoryPoints.cc \
+    src/Vehicle/Vehicle.cc \
+    src/Vehicle/VehicleObjectAvoidance.cc \
     src/VehicleSetup/JoystickConfigController.cc \
     src/comm/LinkConfiguration.cc \
     src/comm/LinkInterface.cc \
@@ -980,7 +1005,6 @@ SOURCES += \
 INCLUDEPATH += \
     src/AutoPilotPlugins/Common \
     src/FirmwarePlugin \
-    src/Vehicle \
     src/VehicleSetup \
 
 HEADERS+= \
@@ -995,11 +1019,6 @@ HEADERS+= \
     src/FirmwarePlugin/CameraMetaData.h \
     src/FirmwarePlugin/FirmwarePlugin.h \
     src/FirmwarePlugin/FirmwarePluginManager.h \
-    src/Vehicle/ADSBVehicle.h \
-    src/Vehicle/MultiVehicleManager.h \
-    src/Vehicle/GPSRTKFactGroup.h \
-    src/Vehicle/Vehicle.h \
-    src/Vehicle/VehicleObjectAvoidance.h \
     src/VehicleSetup/VehicleComponent.h \
 
 !MobileBuild { !NoSerialBuild {
@@ -1022,11 +1041,6 @@ SOURCES += \
     src/FirmwarePlugin/CameraMetaData.cc \
     src/FirmwarePlugin/FirmwarePlugin.cc \
     src/FirmwarePlugin/FirmwarePluginManager.cc \
-    src/Vehicle/ADSBVehicle.cc \
-    src/Vehicle/MultiVehicleManager.cc \
-    src/Vehicle/GPSRTKFactGroup.cc \
-    src/Vehicle/Vehicle.cc \
-    src/Vehicle/VehicleObjectAvoidance.cc \
     src/VehicleSetup/VehicleComponent.cc \
 
 !MobileBuild { !NoSerialBuild {
@@ -1064,6 +1078,8 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMCompassCal.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.h \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.h \
+        src/AutoPilotPlugins/APM/APMFollowComponent.h \
+        src/AutoPilotPlugins/APM/APMFollowComponentController.h \
         src/AutoPilotPlugins/APM/APMHeliComponent.h \
         src/AutoPilotPlugins/APM/APMLightsComponent.h \
         src/AutoPilotPlugins/APM/APMSubFrameComponent.h \
@@ -1089,6 +1105,8 @@ APMFirmwarePlugin {
         src/AutoPilotPlugins/APM/APMCompassCal.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponent.cc \
         src/AutoPilotPlugins/APM/APMFlightModesComponentController.cc \
+        src/AutoPilotPlugins/APM/APMFollowComponent.cc \
+        src/AutoPilotPlugins/APM/APMFollowComponentController.cc \
         src/AutoPilotPlugins/APM/APMHeliComponent.cc \
         src/AutoPilotPlugins/APM/APMLightsComponent.cc \
         src/AutoPilotPlugins/APM/APMSubFrameComponent.cc \

@@ -29,6 +29,10 @@ FactPanelController::FactPanelController()
     } else {
         _vehicle = qgcApp()->toolbox()->multiVehicleManager()->offlineEditingVehicle();
     }
+
+    _missingParametersTimer.setInterval(500);
+    _missingParametersTimer.setSingleShot(true);
+    connect(&_missingParametersTimer, &QTimer::timeout, this, &FactPanelController::_checkForMissingParameters);
 }
 
 void FactPanelController::_notifyPanelMissingParameter(const QString& missingParam)
@@ -113,4 +117,30 @@ void FactPanelController::_showInternalError(const QString& errorMsg)
     _notifyPanelErrorMsg(tr("Internal Error: %1").arg(errorMsg));
     qCWarning(FactPanelControllerLog) << "Internal Error" << errorMsg;
     qgcApp()->showMessage(errorMsg);
+}
+
+void FactPanelController::getMissingParameters(QStringList rgNames)
+{
+    for (const QString& name: rgNames) {
+        _missingParameterWaitList.append(name);
+        _vehicle->parameterManager()->refreshParameter(MAV_COMP_ID_AUTOPILOT1, name);
+    }
+
+    _missingParametersTimer.start();
+}
+
+void FactPanelController::_checkForMissingParameters(void)
+{
+    QStringList waitList = _missingParameterWaitList;
+    for (const QString& name: waitList) {
+        if (_vehicle->parameterManager()->parameterExists(MAV_COMP_ID_AUTOPILOT1, name)) {
+            _missingParameterWaitList.removeOne(name);
+        }
+    }
+
+    if (_missingParameterWaitList.isEmpty()) {
+        emit missingParametersAvailable();
+    } else {
+        _missingParametersTimer.start();
+    }
 }

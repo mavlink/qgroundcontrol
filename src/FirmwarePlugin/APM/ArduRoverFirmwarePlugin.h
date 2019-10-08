@@ -45,13 +45,15 @@ public:
     ArduRoverFirmwarePlugin(void);
 
     // Overrides from FirmwarePlugin
-    QString pauseFlightMode                         (void) const override { return QString("Hold"); }
+    QString pauseFlightMode                         (void) const override { return QStringLiteral("Hold"); }
+    QString followFlightMode                        (void) const override { return QStringLiteral("Follow"); }
     void    guidedModeChangeAltitude                (Vehicle* vehicle, double altitudeChange) final;
     int     remapParamNameHigestMinorVersionNumber  (int majorVersionNumber) const final;
     const   FirmwarePlugin::remapParamNameMajorVersionMap_t& paramNameRemapMajorVersionMap(void) const final { return _remapParamName; }
     bool    supportsNegativeThrust                  (Vehicle *) final;
     bool    supportsSmartRTL                        (void) const override { return true; }
     QString offlineEditingParamFile                 (Vehicle* vehicle) override { Q_UNUSED(vehicle); return QStringLiteral(":/FirmwarePlugin/APM/Rover.OfflineEditing.params"); }
+    void    sendGCSMotionReport                     (Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimatationCapabilities) override;
 
 private:
     static bool _remapParamNameIntialized;

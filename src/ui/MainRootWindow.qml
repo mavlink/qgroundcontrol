@@ -122,6 +122,10 @@ ApplicationWindow {
         simpleMessageDialog.open()
     }
 
+    MainWindowSavedState {
+        window: mainWindow
+    }
+
     MessageDialog {
         id:                 simpleMessageDialog
         standardButtons:    StandardButton.Ok

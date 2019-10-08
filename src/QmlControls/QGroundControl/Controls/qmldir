@@ -3,7 +3,8 @@ Module QGroundControl.Controls
 AnalyzePage             1.0 AnalyzePage.qml
 AppMessages             1.0 AppMessages.qml
 AxisMonitor             1.0 AxisMonitor.qml
-CameraCalc              1.0 CameraCalc.qml
+CameraCalcCamera        1.0 CameraCalcCamera.qml
+CameraCalcGrid          1.0 CameraCalcGrid.qml
 APMSubMotorDisplay      1.0 APMSubMotorDisplay.qml
 CameraSection           1.0 CameraSection.qml
 ClickableColor          1.0 ClickableColor.qml
@@ -22,7 +23,9 @@ HackFileDialog          1.0 HackFileDialog.qml
 HeightIndicator         1.0 HeightIndicator.qml
 IndicatorButton         1.0 IndicatorButton.qml
 JoystickThumbPad        1.0 JoystickThumbPad.qml
+KMLOrSHPFileDialog      1.0 KMLOrSHPFileDialog.qml
 LogReplayStatusBar      1.0 LogReplayStatusBar.qml
+MainWindowSavedState    1.0 MainWindowSavedState.qml
 MAVLinkMessageButton    1.0 MAVLinkMessageButton.qml
 MissionCommandDialog    1.0 MissionCommandDialog.qml
 MissionItemEditor       1.0 MissionItemEditor.qml
@@ -36,6 +39,8 @@ PageView                1.0 PageView.qml
 ParameterEditor         1.0 ParameterEditor.qml
 ParameterEditorDialog   1.0 ParameterEditorDialog.qml
 PIDTuning               1.0 PIDTuning.qml
+PlanEditToolbar         1.0 PlanEditToolbar.qml
+PlanStartOverlay        1.0 PlanStartOverlay.qml
 PreFlightCheckButton    1.0 PreFlightCheckButton.qml
 PreFlightCheckGroup     1.0 PreFlightCheckGroup.qml
 PreFlightCheckModel     1.0 PreFlightCheckModel.qml

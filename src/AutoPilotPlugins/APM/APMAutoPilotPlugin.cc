@@ -10,9 +10,10 @@
 
 #include "APMAutoPilotPlugin.h"
 #include "UAS.h"
-#include "FirmwarePlugin/APM/APMParameterMetaData.h"  // FIXME: Hack
-#include "FirmwarePlugin/APM/APMFirmwarePlugin.h"  // FIXME: Hack
-#include "FirmwarePlugin/APM/ArduCopterFirmwarePlugin.h"
+#include "APMParameterMetaData.h"
+#include "APMFirmwarePlugin.h"
+#include "ArduCopterFirmwarePlugin.h"
+#include "ArduRoverFirmwarePlugin.h"
 #include "VehicleComponent.h"
 #include "APMAirframeComponent.h"
 #include "APMFlightModesComponent.h"
@@ -25,6 +26,7 @@
 #include "APMCameraComponent.h"
 #include "APMLightsComponent.h"
 #include "APMSubFrameComponent.h"
+#include "APMFollowComponent.h"
 #include "ESP8266Component.h"
 #include "APMHeliComponent.h"
 #include "QGCApplication.h"
@@ -51,6 +53,7 @@ APMAutoPilotPlugin::APMAutoPilotPlugin(Vehicle* vehicle, QObject* parent)
     , _tuningComponent          (nullptr)
     , _esp8266Component         (nullptr)
     , _heliComponent            (nullptr)
+    , _followComponent          (nullptr)
 {
 #if !defined(NO_SERIAL_LINK) && !defined(__android__)
     connect(vehicle->parameterManager(), &ParameterManager::parametersReadyChanged, this, &APMAutoPilotPlugin::_checkForBadCubeBlack);
@@ -100,6 +103,13 @@ const QVariantList& APMAutoPilotPlugin::vehicleComponents(void)
             _safetyComponent = new APMSafetyComponent(_vehicle, this);
             _safetyComponent->setupTriggerSignals();
             _components.append(QVariant::fromValue((VehicleComponent*)_safetyComponent));
+
+            if ((qobject_cast<ArduCopterFirmwarePlugin*>(_vehicle->firmwarePlugin()) || qobject_cast<ArduRoverFirmwarePlugin*>(_vehicle->firmwarePlugin())) &&
+                    _vehicle->parameterManager()->parameterExists(-1, QStringLiteral("FOLL_ENABLE"))) {
+                _followComponent = new APMFollowComponent(_vehicle, this);
+                _followComponent->setupTriggerSignals();
+                _components.append(QVariant::fromValue((VehicleComponent*)_followComponent));
+            }
 
             if (_vehicle->vehicleType() == MAV_TYPE_HELICOPTER) {
                 _heliComponent = new APMHeliComponent(_vehicle, this);

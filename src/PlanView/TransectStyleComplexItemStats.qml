@@ -10,11 +10,8 @@ Grid {
     // The following properties must be available up the hierarchy chain
     //property var    missionItem       ///< Mission Item for editor
 
-    anchors.left:   parent.left
-    anchors.right:  parent.right
     columns:        2
     columnSpacing:  ScreenTools.defaultFontPixelWidth
-    visible:        statsHeader.checked
 
     QGCLabel { text: qsTr("Survey Area") }
     QGCLabel { text: QGroundControl.squareMetersToAppSettingsAreaUnits(missionItem.coveredArea).toFixed(2) + " " + QGroundControl.appSettingsAreaUnitsString }

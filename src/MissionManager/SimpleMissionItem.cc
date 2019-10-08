@@ -200,6 +200,8 @@ void SimpleMissionItem::_connectSignals(void)
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_setDirty);
     connect(this, &SimpleMissionItem::cameraSectionChanged,         this, &SimpleMissionItem::_updateLastSequenceNumber);
 
+    connect(this, &SimpleMissionItem::wizardModeChanged,             this, &SimpleMissionItem::readyForSaveStateChanged);
+
     // These are coordinate parameters, they must emit coordinateChanged signal
     connect(&_missionItem._param5Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
     connect(&_missionItem._param6Fact,  &Fact::valueChanged, this, &SimpleMissionItem::_sendCoordinateChanged);
@@ -325,6 +327,7 @@ bool SimpleMissionItem::load(QTextStream &loadStream)
         }
         _updateOptionalSections();
     }
+
     return success;
 }
 
@@ -710,25 +713,28 @@ void SimpleMissionItem::_terrainAltChanged(void)
     }
 
     if (qIsNaN(terrainAltitude())) {
-        qDebug() << "1";
         // Set NaNs to signal we are waiting on terrain data
         _missionItem._param7Fact.setRawValue(qQNaN());
         _amslAltAboveTerrainFact.setRawValue(qQNaN());
     } else {
         double newAboveTerrain = terrainAltitude() + _altitudeFact.rawValue().toDouble();
         double oldAboveTerrain = _amslAltAboveTerrainFact.rawValue().toDouble();
-        qDebug() << "2" << newAboveTerrain << oldAboveTerrain;
         if (qIsNaN(oldAboveTerrain) || !qFuzzyCompare(newAboveTerrain, oldAboveTerrain)) {
-            qDebug() << "3";
             _missionItem._param7Fact.setRawValue(newAboveTerrain);
             _amslAltAboveTerrainFact.setRawValue(newAboveTerrain);
         }
     }
+    emit readyForSaveStateChanged();
 }
 
-bool SimpleMissionItem::readyForSave(void) const
+SimpleMissionItem::ReadyForSaveState SimpleMissionItem::readyForSaveState(void) const
 {
-    return !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
+    if (_wizardMode) {
+        return NotReadyForSaveData;
+    }
+
+    bool terrainReady =  !specifiesAltitude() || !qIsNaN(_missionItem._param7Fact.rawValue().toDouble());
+    return terrainReady ? ReadyForSave : NotReadyForSaveTerrain;
 }
 
 void SimpleMissionItem::_setDefaultsForCommand(void)

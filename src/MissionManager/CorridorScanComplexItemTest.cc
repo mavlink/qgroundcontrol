@@ -139,7 +139,7 @@ void CorridorScanComplexItemTest::_waitForReadyForSave(void)
 {
     int loops = 0;
     while (loops++ < 8) {
-        if (_corridorItem->readyForSave()) {
+        if (_corridorItem->readyForSaveState() == CorridorScanComplexItem::ReadyForSave) {
             return;
         }
         QTest::qWait(500);

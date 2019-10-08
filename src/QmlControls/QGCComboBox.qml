@@ -1,59 +1,92 @@
 /****************************************************************************
  *
- * (c) 2009-2019 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
  *
- * @file
- *   @author Gus Grubba <gus@auterion.com>
- */
+ ****************************************************************************/
 
-import QtQuick                      2.11
-import QtQuick.Controls             2.4
-import QtQuick.Layouts              1.11
+import QtQuick                  2.11
+import QtQuick.Window           2.3
+import QtQuick.Controls         2.4
+import QtQuick.Controls.impl    2.4
+import QtQuick.Templates        2.4 as T
 
-import QGroundControl.Controls      1.0
-import QGroundControl.Palette       1.0
 import QGroundControl.ScreenTools   1.0
+import QGroundControl.Palette       1.0
 
-ComboBox {
-    id:         control
-    padding:    ScreenTools.comboBoxPadding
+T.ComboBox {
+    id:             control
+    padding:        ScreenTools.comboBoxPadding
+    spacing:        ScreenTools.defaultFontPixelWidth
+    implicitWidth:  Math.max(background ? background.implicitWidth : 0,
+                            contentItem.implicitWidth + leftPadding + rightPadding)
+    implicitHeight: Math.max(background ? background.implicitHeight : 0,
+                             Math.max(contentItem.implicitHeight,
+                                      indicator ? indicator.implicitHeight : 0) + topPadding + bottomPadding)
+    leftPadding:    padding + (!control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width + spacing)
+    rightPadding:   padding + (control.mirrored || !indicator || !indicator.visible ? 0 : indicator.width)
 
-    property bool centeredLabel:  false
+    property bool   centeredLabel:  false
+    property bool   sizeToContents: false
+    property string alternateText:  ""
 
-    property var _qgcPal: QGCPalette { colorGroupEnabled: enabled }
+    property var    _qgcPal:           QGCPalette { colorGroupEnabled: enabled }
+    property real   _largestTextWidth: 0
+    property real   _popupWidth:       sizeToContents ? _largestTextWidth + leftPadding + rightPadding : control.width
 
-    Component.onCompleted: indicator.color = Qt.binding(function() { return _qgcPal.text })
-
-    background: Rectangle {
-        implicitWidth:                  ScreenTools.implicitComboBoxWidth
-        implicitHeight:                 ScreenTools.implicitComboBoxHeight
-        color:                          _qgcPal.window
-        border.width:                   enabled ? 1 : 0
-        border.color:                   "#999"
+    TextMetrics {
+        id: textMetrics
     }
 
-    /*! Adding the Combobox list item to the theme.  */
+    onModelChanged: {
+        if (sizeToContents) {
+            _largestTextWidth = 0
+            textMetrics.font = control.font
+            for (var i = 0; i < model.length; i++){
+                textMetrics.text = model[i]
+                _largestTextWidth = Math.max(textMetrics.width, _largestTextWidth)
+            }
+        }
+    }
 
+    // The items in the popup
     delegate: ItemDelegate {
-            width:                      control.width
+        width: _popupWidth
 
-            contentItem: Text {
-                text:                   control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
-                color:                  control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
-                verticalAlignment:      Text.AlignVCenter
-            }
+        property string _text: control.textRole ? (Array.isArray(control.model) ? modelData[control.textRole] : model[control.textRole]) : modelData
 
-            background: Rectangle {
-                color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
-            }
-
-            highlighted:                control.highlightedIndex === index
+        TextMetrics {
+            id:    popupItemMetrics
+            text:  _text
         }
 
-    /*! This defines the label of the button.  */
+        contentItem: Text {
+            text:                   _text
+            font:                   control.font
+            color:                  control.currentIndex === index ? _qgcPal.buttonHighlightText : _qgcPal.buttonText
+            verticalAlignment:      Text.AlignVCenter
+        }
+
+        background: Rectangle {
+            color:                  control.currentIndex === index ? _qgcPal.buttonHighlight : _qgcPal.button
+        }
+
+        highlighted:                control.highlightedIndex === index
+    }
+
+    // Dropdown indicator
+    indicator: ColorImage {
+        x:              control.mirrored ? control.padding : control.width - width
+        y:              control.topPadding + (control.availableHeight - height) / 2
+        color:          _qgcPal.text
+        defaultColor:   "#353637"
+        source:         "qrc:/qt-project.org/imports/QtQuick/Controls.2/images/double-arrow.png"
+        opacity:        enabled ? 1 : 0.3
+    }
+
+    // The label of the button
     contentItem: Item {
         implicitWidth:                  text.implicitWidth
         implicitHeight:                 text.implicitHeight
@@ -62,8 +95,47 @@ ComboBox {
             id:                         text
             anchors.verticalCenter:     parent.verticalCenter
             anchors.horizontalCenter:   centeredLabel ? parent.horizontalCenter : undefined
-            text:                       control.currentText
+            text:                       control.alternateText === "" ? control.currentText : control.alternateText
+            font:                       control.font
             color:                      _qgcPal.text
+        }
+    }
+
+    background: Rectangle {
+        implicitWidth:  ScreenTools.implicitComboBoxWidth
+        implicitHeight: ScreenTools.implicitComboBoxHeight
+        color:          _qgcPal.window
+        border.width:   enabled ? 1 : 0
+        border.color:   "#999"
+    }
+
+    popup: T.Popup {
+        y:              control.height
+        width:          _popupWidth
+        height:         Math.min(contentItem.implicitHeight, control.Window.height - topMargin - bottomMargin)
+        topMargin:      6
+        bottomMargin:   6
+
+        contentItem: ListView {
+            clip:                   true
+            implicitHeight:         contentHeight
+            model:                  control.delegateModel
+            currentIndex:           control.highlightedIndex
+            highlightMoveDuration:  0
+
+            Rectangle {
+                z:              10
+                width:          parent.width
+                height:         parent.height
+                color:          "transparent"
+                border.color:   _qgcPal.text
+            }
+
+            T.ScrollIndicator.vertical: ScrollIndicator { }
+        }
+
+        background: Rectangle {
+            color: control.palette.window
         }
     }
 }

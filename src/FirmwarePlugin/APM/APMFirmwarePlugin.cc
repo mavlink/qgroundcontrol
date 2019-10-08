@@ -14,6 +14,7 @@
 #include "APMFlightModesComponentController.h"
 #include "APMAirframeComponentController.h"
 #include "APMSensorsComponentController.h"
+#include "APMFollowComponentController.h"
 #include "MissionManager.h"
 #include "ParameterManager.h"
 #include "QGCFileDownload.h"
@@ -158,6 +159,7 @@ APMFirmwarePlugin::APMFirmwarePlugin(void)
     qmlRegisterType<APMFlightModesComponentController>  ("QGroundControl.Controllers", 1, 0, "APMFlightModesComponentController");
     qmlRegisterType<APMAirframeComponentController>     ("QGroundControl.Controllers", 1, 0, "APMAirframeComponentController");
     qmlRegisterType<APMSensorsComponentController>      ("QGroundControl.Controllers", 1, 0, "APMSensorsComponentController");
+    qmlRegisterType<APMFollowComponentController>       ("QGroundControl.Controllers", 1, 0, "APMFollowComponentController");
 }
 
 AutoPilotPlugin* APMFirmwarePlugin::autopilotPlugin(Vehicle* vehicle)
@@ -396,7 +398,8 @@ bool APMFirmwarePlugin::_handleIncomingStatusText(Vehicle* vehicle, mavlink_mess
                 }
 
                 if (supportedMajorNumber != -1) {
-                    if (firmwareVersion.majorNumber() < supportedMajorNumber || firmwareVersion.minorNumber() < supportedMinorNumber) {
+                    if (firmwareVersion.majorNumber() < supportedMajorNumber ||
+                            (firmwareVersion.majorNumber() == supportedMajorNumber && firmwareVersion.minorNumber() < supportedMinorNumber)) {
                         qgcApp()->showMessage(tr("QGroundControl fully supports Version %1.%2 and above. You are using a version prior to that. This combination is untested, you may run into unpredictable results.").arg(supportedMajorNumber).arg(supportedMinorNumber));
                     }
                 }
@@ -656,6 +659,10 @@ void APMFirmwarePlugin::initializeStreamRates(Vehicle* vehicle)
             vehicle->requestDataStream(streamInfo.mavStream, static_cast<uint16_t>(streamInfo.streamRate));
         }
     }
+
+    // Streaming of home position is required for various features in QGC to work correctly. Otherwise relative altitudes
+    // cannot be calculated correctly.
+    vehicle->sendMavCommand(MAV_COMP_ID_AUTOPILOT1, MAV_CMD_SET_MESSAGE_INTERVAL, true /* showError */, MAVLINK_MSG_ID_HOME_POSITION, 1000000 /* 1 second interval in usec */);
 }
 
 
@@ -822,10 +829,13 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_TRICOPTER:
     case MAV_TYPE_COAXIAL:
     case MAV_TYPE_HELICOPTER:
-        if (vehicle->versionCompare(3, 7, 0) >= 0) {  // 3.7.0 and higher
+        if (vehicle->versionCompare(4, 0, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.4.0.xml");
+        }
+        if (vehicle->versionCompare(3, 7, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.7.xml");
         }
-        if (vehicle->versionCompare(3, 6, 0) >= 0) {  // 3.6.0 and higher
+        if (vehicle->versionCompare(3, 6, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.6.xml");
         }
         return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Copter.3.5.xml");
@@ -838,6 +848,9 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
     case MAV_TYPE_VTOL_RESERVED4:
     case MAV_TYPE_VTOL_RESERVED5:
     case MAV_TYPE_FIXED_WING:
+        if (vehicle->versionCompare(4, 0, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.4.0.xml");
+        }
         if (vehicle->versionCompare(3, 10, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Plane.3.10.xml");
         }
@@ -848,6 +861,9 @@ QString APMFirmwarePlugin::internalParameterMetaDataFile(Vehicle* vehicle)
 
     case MAV_TYPE_GROUND_ROVER:
     case MAV_TYPE_SURFACE_BOAT:
+        if (vehicle->versionCompare(4, 0, 0) >= 0) {
+            return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.4.0.xml");
+        }
         if (vehicle->versionCompare(3, 6, 0) >= 0) {
             return QStringLiteral(":/FirmwarePlugin/APM/APMParameterFactMetaData.Rover.3.6.xml");
         }
@@ -1086,3 +1102,47 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
                 &channels);
 }
 
+void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
+{
+    if (!vehicle->homePosition().isValid()) {
+        static bool sentOnce = false;
+        if (!sentOnce) {
+            sentOnce = true;
+            qgcApp()->showMessage(tr("Follow failed: Home position not set."));
+        }
+        return;
+    }
+
+    if (!(estimationCapabilities & (FollowMe::POS | FollowMe::VEL | FollowMe::HEADING))) {
+        static bool sentOnce = false;
+        if (!sentOnce) {
+            sentOnce = true;
+            qWarning() << "APMFirmwarePlugin::_sendGCSMotionReport estimateCapabilities" << estimationCapabilities;
+            qgcApp()->showMessage(tr("Follow failed: Ground station cannot provide required position information."));
+        }
+        return;
+    }
+
+    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+
+    mavlink_global_position_int_t globalPositionInt;
+    memset(&globalPositionInt, 0, sizeof(globalPositionInt));
+
+    globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
+    globalPositionInt.lat =             motionReport.lat_int;
+    globalPositionInt.lon =             motionReport.lon_int;
+    globalPositionInt.alt =             static_cast<int32_t>(motionReport.altMetersAMSL * 1000);                                        // mm
+    globalPositionInt.relative_alt =    static_cast<int32_t>((motionReport.altMetersAMSL - vehicle->homePosition().altitude()) * 1000); // mm
+    globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);                                        // cm/sec
+    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);                                        // cm/sec
+    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);                                        // cm/sec
+    globalPositionInt.hdg =             static_cast<uint16_t>(motionReport.headingDegrees * 100.0);                                     // centi-degrees
+
+    mavlink_message_t message;
+    mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+                                          static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+                                          vehicle->priorityLink()->mavlinkChannel(),
+                                          &message,
+                                          &globalPositionInt);
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+}

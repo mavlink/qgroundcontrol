@@ -162,6 +162,9 @@ public:
 
     Q_INVOKABLE bool linesIntersect(QPointF xLine1, QPointF yLine1, QPointF xLine2, QPointF yLine2);
 
+    Q_INVOKABLE double degreesToRadians(double degrees) { return qDegreesToRadians(degrees); }
+    Q_INVOKABLE double radiansToDegrees(double radians) { return qRadiansToDegrees(radians); }
+
     // Property accesors
 
     QString                 appName             ()  { return qgcApp()->applicationName(); }

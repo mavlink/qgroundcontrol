@@ -162,7 +162,7 @@ before_script:
   - if [ "${SPEC}" = "android-clang" ]; then
         git remote set-branches origin 'master' &&
         git fetch --tags origin master &&
-        ./tools/update_android_version.sh ${BITNESS};
+        ./tools/update_android_version.sh ${BITNESS} ${TRAVIS_BRANCH};
     fi
 
 script:

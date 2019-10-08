@@ -69,6 +69,7 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
 
     connect(&_structurePolygon, &QGCMapPolygon::dirtyChanged,   this, &StructureScanComplexItem::_polygonDirtyChanged);
     connect(&_structurePolygon, &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_rebuildFlightPolygon);
+    connect(&_structurePolygon, &QGCMapPolygon::isValidChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
     connect(&_structurePolygon, &QGCMapPolygon::countChanged,   this, &StructureScanComplexItem::_updateLastSequenceNumber);
     connect(&_layersFact,       &Fact::valueChanged,            this, &StructureScanComplexItem::_updateLastSequenceNumber);
@@ -85,6 +86,8 @@ StructureScanComplexItem::StructureScanComplexItem(Vehicle* vehicle, bool flyVie
 
     connect(&_layersFact,                           &Fact::valueChanged,            this, &StructureScanComplexItem::_recalcScanDistance);
     connect(&_flightPolygon,                        &QGCMapPolygon::pathChanged,    this, &StructureScanComplexItem::_recalcScanDistance);
+
+    connect(this, &StructureScanComplexItem::wizardModeChanged, this, &StructureScanComplexItem::readyForSaveStateChanged);
 
     _recalcLayerInfo();
 
@@ -213,7 +216,7 @@ bool StructureScanComplexItem::load(const QJsonObject& complexObject, int sequen
     setSequenceNumber(sequenceNumber);
 
     // Load CameraCalc first since it will trigger camera name change which will trounce gimbal angles
-    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), false /* forPresets */, false /* cameraSpecInPreset */, errorString)) {
+    if (!_cameraCalc.load(complexObject[_jsonCameraCalcKey].toObject(), errorString)) {
         return false;
     }
 
@@ -616,4 +619,9 @@ void StructureScanComplexItem::_recalcScanDistance()
     qCDebug(StructureScanComplexItemLog) << "StructureScanComplexItem--_recalcScanDistance layers: "
                                   << _layersFact.rawValue().toInt() << " structure height: " << surfaceHeight
                                   << " scanDistance: " << _scanDistance;
+}
+
+StructureScanComplexItem::ReadyForSaveState StructureScanComplexItem::readyForSaveState(void) const
+{
+    return _structurePolygon.isValid() && !_wizardMode ? ReadyForSave : NotReadyForSaveData;
 }

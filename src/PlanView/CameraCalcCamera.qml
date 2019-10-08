@@ -8,13 +8,11 @@ import QGroundControl.Controls          1.0
 import QGroundControl.FactControls      1.0
 import QGroundControl.Palette           1.0
 
-// Camera calculator section for mission item editors
+// Camera calculator "Camera" section for mission item editors
 Column {
     anchors.left:   parent.left
     anchors.right:  parent.right
     spacing:        _margin
-
-    visible: !usingPreset || !cameraSpecifiedInPreset
 
     property var    cameraCalc
     property bool   vehicleFlightIsFrontal:         true
@@ -22,8 +20,6 @@ Column {
     property int    distanceToSurfaceAltitudeMode:  QGroundControl.AltitudeModeNone
     property string frontalDistanceLabel
     property string sideDistanceLabel
-    property bool   usingPreset:                    false
-    property bool   cameraSpecifiedInPreset:        false
 
     property real   _margin:            ScreenTools.defaultFontPixelWidth / 2
     property string _cameraName:        cameraCalc.cameraName.value
@@ -70,17 +66,10 @@ Column {
         id: cameraOrientationGroup
     }
 
-    SectionHeader {
-        id:         cameraHeader
-        text:       qsTr("Camera")
-        showSpacer: false
-    }
-
     Column {
         anchors.left:   parent.left
         anchors.right:  parent.right
         spacing:        _margin
-        visible:        cameraHeader.checked
 
         QGCComboBox {
             id:             gridTypeCombo
@@ -184,113 +173,7 @@ Column {
                         fact:                   cameraCalc.focalLength
                     }
                 }
-
             } // Column - custom camera specs
-
-            RowLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
-                visible:        !usingPreset
-                Item { Layout.fillWidth: true }
-                QGCLabel {
-                    Layout.preferredWidth:  _root._fieldWidth
-                    text:                   qsTr("Front Lap")
-                }
-                QGCLabel {
-                    Layout.preferredWidth:  _root._fieldWidth
-                    text:                   qsTr("Side Lap")
-                }
-            }
-
-            RowLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                spacing:        _margin
-                visible:        !usingPreset
-                QGCLabel { text: qsTr("Overlap"); Layout.fillWidth: true }
-                FactTextField {
-                    Layout.preferredWidth:  _root._fieldWidth
-                    fact:                   cameraCalc.frontalOverlap
-                }
-                FactTextField {
-                    Layout.preferredWidth:  _root._fieldWidth
-                    fact:                   cameraCalc.sideOverlap
-                }
-            }
-
-            QGCLabel {
-                wrapMode:               Text.WordWrap
-                text:                   qsTr("Select one:")
-                Layout.preferredWidth:  parent.width
-                Layout.columnSpan:      2
-                visible:                !usingPreset
-            }
-
-            GridLayout {
-                anchors.left:   parent.left
-                anchors.right:  parent.right
-                columnSpacing:  _margin
-                rowSpacing:     _margin
-                columns:        2
-                visible:        !usingPreset
-
-                QGCRadioButton {
-                    id:                     fixedDistanceRadio
-                    text:                   distanceToSurfaceLabel
-                    checked:                !!cameraCalc.valueSetIsDistance.value
-                    onClicked:              cameraCalc.valueSetIsDistance.value = 1
-                }
-
-                AltitudeFactTextField {
-                    fact:                   cameraCalc.distanceToSurface
-                    altitudeMode:           distanceToSurfaceAltitudeMode
-                    enabled:                fixedDistanceRadio.checked
-                    Layout.fillWidth:       true
-                }
-
-                QGCRadioButton {
-                    id:                     fixedImageDensityRadio
-                    text:                   qsTr("Ground Res")
-                    checked:                !cameraCalc.valueSetIsDistance.value
-                    onClicked:              cameraCalc.valueSetIsDistance.value = 0
-                }
-
-                FactTextField {
-                    fact:                   cameraCalc.imageDensity
-                    enabled:                fixedImageDensityRadio.checked
-                    Layout.fillWidth:       true
-                }
-            }
         } // Column - Camera spec based ui
-
-        // No camera spec ui
-        GridLayout {
-            anchors.left:   parent.left
-            anchors.right:  parent.right
-            columnSpacing:  _margin
-            rowSpacing:     _margin
-            columns:        2
-            visible:        cameraCalc.isManualCamera
-
-            QGCLabel { text: distanceToSurfaceLabel }
-            AltitudeFactTextField {
-                fact:               cameraCalc.distanceToSurface
-                altitudeMode:       distanceToSurfaceAltitudeMode
-                Layout.fillWidth:   true
-            }
-
-            QGCLabel { text: frontalDistanceLabel }
-            FactTextField {
-                Layout.fillWidth:   true
-                fact:               cameraCalc.adjustedFootprintFrontal
-            }
-
-            QGCLabel { text: sideDistanceLabel }
-            FactTextField {
-                Layout.fillWidth:   true
-                fact:               cameraCalc.adjustedFootprintSide
-            }
-        } // GridLayout
     } // Column - Camera Section
 } // Column

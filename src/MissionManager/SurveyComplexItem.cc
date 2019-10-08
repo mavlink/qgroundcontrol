@@ -1496,9 +1496,9 @@ void SurveyComplexItem::applyNewAltitude(double newAltitude)
     _cameraCalc.setDistanceToSurfaceRelative(true);
 }
 
-bool SurveyComplexItem::readyForSave(void) const
+SurveyComplexItem::ReadyForSaveState SurveyComplexItem::readyForSaveState(void) const
 {
-    return TransectStyleComplexItem::readyForSave();
+    return TransectStyleComplexItem::readyForSaveState();
 }
 
 void SurveyComplexItem::appendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent)
