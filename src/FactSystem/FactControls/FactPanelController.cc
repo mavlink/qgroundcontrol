@@ -61,6 +61,10 @@ void FactPanelController::_notifyPanelErrorMsg(const QString& errorMsg)
 
 void FactPanelController::_reportMissingParameter(int componentId, const QString& name)
 {
+    if (componentId == FactSystem::defaultComponentId) {
+        componentId = _vehicle->defaultComponentId();
+    }
+
     qgcApp()->reportMissingParameter(componentId, name);
 
     QString missingParam = QString("%1:%2").arg(componentId).arg(name);
