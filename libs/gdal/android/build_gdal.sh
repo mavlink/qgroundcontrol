@@ -1,17 +1,34 @@
 #!/bin/bash
 
 # How to run
-# docker run -v ${PWD}:/scripts --rm -it mavlink/qgc_android /scripts/build_gdal.sh
+# docker run -v ${PWD}:/scripts --rm -it mavlink/qgc-build-android /scripts/build_gdal.sh
 # This will buid the libs in the current folder
 
 apt update
-apt install -y python pkg-config automake
+apt install -y python pkg-config automake autoconf autogen libtool
 
 /opt/android-ndk/build/tools/make-standalone-toolchain.sh --platform=android-21 --install-dir=/android-21-toolchain
 
 export ANDROID_NDK='/opt/android-ndk'
 export ANDROID_SDK='/opt/android-sdk'
 export PATH=$PATH:/android-21-toolchain/bin/
+
+
+## Compile PROJ
+
+git clone https://github.com/OSGeo/PROJ/
+cd PROJ/
+git checkout 5.2.0
+./autogen.sh
+CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mthumb -D__ANDROID_API__=21 " CXXFLAGS="-mthumb -D__ANDROID_API__=21" LIBS=" -lsupc++ -lstdc++ -l/scripts/libcrypto.so -l/scripts/libssl.so " ./configure --host=arm-linux-androideabi \
+ --prefix=$PROJECT/external/proj 
+make -j16
+make install
+cp -r /external/proj /scripts
+
+cd /scripts
+
+
 
 git clone https://github.com/OSGeo/gdal.git
 cd gdal/gdal
@@ -25,6 +42,7 @@ CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mt
  --with-libtiff=internal \
  --with-geotiff=internal \
  --with-libjson-c=internal \
+ --with-proj \
  --with-hide-internal-symbols=yes \
  --with-threads  \
  --with-libz=internal  \
@@ -91,7 +109,6 @@ CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mt
  --without-poppler  \
  --without-podofo \
  --without-pdfium \
- --without-static-proj4 \
  --without-macosx-framework    \
  --without-perl            \
  --without-python \
