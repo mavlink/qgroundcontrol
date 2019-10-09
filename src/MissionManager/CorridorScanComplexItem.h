@@ -69,9 +69,10 @@ private slots:
     void _recalcCameraShots         (void) final;
 
 private:
-    int _transectCount              (void) const;
-    void _buildAndAppendMissionItems(QList<MissionItem*>& items, QObject* missionItemParent);
-    void _appendLoadedMissionItems  (QList<MissionItem*>& items, QObject* missionItemParent);
+    double  _transectSpacing            (void) const;
+    int     _transectCount              (void) const;
+    void    _buildAndAppendMissionItems (QList<MissionItem*>& items, QObject* missionItemParent);
+    void    _appendLoadedMissionItems   (QList<MissionItem*>& items, QObject* missionItemParent);
 
     QGCMapPolyline                  _corridorPolyline;
     QList<QList<QGeoCoordinate>>    _transectSegments;      ///< Internal transect segments including grid exit, turnaround and internal camera points
