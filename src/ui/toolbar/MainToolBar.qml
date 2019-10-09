@@ -50,7 +50,7 @@ Item {
         anchors.bottomMargin:   1
         anchors.rightMargin:    ScreenTools.defaultFontPixelWidth / 2
         anchors.fill:           parent
-        spacing:                ScreenTools.defaultFontPixelWidth * 2
+        spacing:                ScreenTools.defaultFontPixelWidth / 2
 
         ButtonGroup {
             buttons:            viewRow.children
