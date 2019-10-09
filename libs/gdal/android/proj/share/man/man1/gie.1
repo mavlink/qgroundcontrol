@@ -1,0 +1,490 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GIE" "1" "Sep 10, 2018" "5.2.0" "PROJ.4"
+.SH NAME
+gie \- The Geospatial Integrity Investigation Environment
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+\fBgie\fP [ \fB\-hovql\fP [ args ] ] file[s]
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+\fBgie\fP, the Geospatial Integrity Investigation Environment, is a
+regression testing environment for the PROJ transformation library. Its primary
+design goal is to be able to perform regression testing of code that are a part
+of PROJ, while not requiring any other kind of tooling than the same C compiler
+already employed for compiling the library.
+.INDENT 0.0
+.TP
+.B \-h, \-\-help
+Print usage information
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-o <file>, \-\-output <file>
+Specify output file name
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v, \-\-verbose
+Verbose: Provide non\-essential informational output. Repeat \fI\%\-v\fP for
+more verbosity (e.g. \fB\-vv\fP)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q, \-\-quiet
+Quiet: Opposite of verbose. In quiet mode not even errors are
+reported. Only interaction is through the return code (0 on success,
+non\-zero indicates number of FAILED tests)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-l, \-\-list
+List the PROJ internal system error codes
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-version
+Print version number
+.UNINDENT
+.sp
+Tests for \fBgie\fP are defined in simple text files. Usually having the
+extension \fB\&.gie\fP\&. Test for \fBgie\fP are written in the purpose\-build command language for gie.
+The basic functionality of the gie command language is implemented through just
+3 command verbs: \fBoperation\fP, which defines the PROJ operation to test,
+\fBaccept\fP, which defines the input coordinate to read, and \fBexpect\fP, which
+defines the result to expect.
+.sp
+A sample test file for \fBgie\fP that uses the three above basic commands looks
+like:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+<gie>
+
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+Test output of the UTM projection
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+operation  +proj=utm  +zone=32  +ellps=GRS80
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+accept     12  55
+expect     691_875.632_14   6_098_907.825_05
+
+</gie>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Parsing of a \fBgie\fP file starts at \fB<gie>\fP and ends when \fB</gie>\fP
+is reached. Anything before \fB<gie>\fP and after \fB</gie>\fP is not considered.
+Test cases are created by defining an \fI\%operation\fP which
+\fI\%accept\fP an input coordinate and \fI\%expect\fP an output
+coordinate.
+.sp
+Because \fBgie\fP tests are wrapped in the \fB<gie>\fP/\fB</gie>\fP tags it is
+also possible to add test cases to custom made init files\&.
+The tests will be ignore by PROJ when reading the init file with \fI+init\fP and
+\fBgie\fP ignores anything not wrapped in \fB<gie>\fP/\fB</gie>\fP\&.
+.sp
+\fBgie\fP tests are defined by a set of commands like \fI\%operation\fP,
+\fI\%accept\fP and \fI\%expect\fP in the example above. Together the
+commands make out the \fBgie\fP command language. Any line in a
+\fBgie\fP file that does not start with a command is ignored. In the
+example above it is seen how this can be used to add comments and styling to
+\fBgie\fP test files in order to make them more readable as well as
+documenting what the purpose of the various tests are.
+.sp
+Below the \fI\%gie command language\fP is explained in details.
+.SH EXAMPLES
+.INDENT 0.0
+.IP 1. 3
+Run all tests in a file with all debug information turned on
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gie \-vvvv corner\-cases.gie
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP 2. 3
+Run all tests in several files
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gie foo bar
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH GIE COMMAND LANGUAGE
+.INDENT 0.0
+.TP
+.B operation <+args>
+Define a PROJ operation to test. Example:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation proj=utm zone=32 ellps=GRS80
+# test 4D function
+accept    12 55 0 0
+expect    691875.63214  6098907.82501  0  0
+
+# test 2D function
+accept    12 56
+expect    687071.4391   6210141.3267
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B accept <x y [z [t]]>
+Define the input coordinate to read. Takes test coordinate. The coordinate
+can be defined by either 2, 3 or 4 values, where the first two values are
+the x\- and y\-components, the 3rd is the z\-component and the 4th is the time
+component. The number of components in the coordinate determines which
+version of the operation is tested (2D, 3D or 4D). Many coordinates can be
+accepted for one \fI\%operation\fP\&. For each \fI\%accept\fP an
+accompanying \fI\%expect\fP is needed.
+.sp
+Note that \fBgie\fP accepts the underscore (\fB_\fP) as a thousands
+separator. It is not required (in fact, it is entirely ignored by the
+input routine), but it significantly improves the readability of the very
+long strings of numbers typically required in projected coordinates.
+.sp
+See \fI\%operation\fP for an example.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B expect <x y [z [t]]> | <error code>
+Define the expected coordinate that will be returned from accepted
+coordinate passed though an operation. The expected coordinate can be
+defined by either 2, 3 or 4 components, similarly to \fI\%accept\fP\&.
+Many coordinates can be expected for one \fI\%operation\fP\&. For each
+\fI\%expect\fP an accompanying \fI\%accept\fP is needed.
+.sp
+See \fI\%operation\fP for an example.
+.sp
+In addition to expecting a coordinate it is also possible to expect a
+PROJ error code in case an operation can’t be created. This is useful when
+testing that errors are caught and handled correctly. Below is an example of
+that tests that the pipeline operator fails correctly when a non\-invertible
+pipeline is constructed.
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation   proj=pipeline step
+            proj=urm5 n=0.5 inv
+expect      failure pjd_err_malformed_pipeline
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+See \fBgie \-l\fP for a list of error codes that can be expected.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B tolerance <tolerance>
+The \fI\%tolerance\fP command controls how much accepted coordinates
+can deviate from the expected coordinate. This is handy to test that an
+operation meets a certain numerical tolerance threshold. Some operations
+are expected to be accurate within millimeters where others might only be
+accurate within a few meters. \fI\%tolerance\fP should
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation       proj=merc
+# test coordinate as returned by \(ga\(ga\(gaecho 12 55 | proj +proj=merc\(ga\(ga
+tolerance       1 cm
+accept          12 55
+expect          1335833.89 7326837.72
+
+# test that the same coordinate with a 50 m false easting as determined
+# by \(ga\(gaecho 12 55 |proj +proj=merc +x_0=50\(ga\(ga is still within a 100 m
+# tolerance of the unaltered coordinate from proj=merc
+tolerance       100 m
+accept          12 55
+expect          1335883.89  7326837.72
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The default tolerance is 0.5 mm. See \fBproj \-lu\fP for a list of possible
+units.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B roundtrip <n> <tolerance>
+Do a roundtrip test of an operation. \fI\%roundtrip\fP needs a
+\fI\%operation\fP and a \fI\%accept\fP command
+to function. The accepted coordinate is passed to the operation first in
+it’s forward mode, then the output from the forward operation is passed
+back to the inverse operation. This procedure is done \fBn\fP times. If the
+resulting coordinate is within the set tolerance of the initial coordinate,
+the test is passed.
+.sp
+Example with the default 100 iterations and the default tolerance:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation       proj=merc
+accept          12 55
+roundtrip
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Example with count and default tolerance:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation       proj=merc
+accept          12 55
+roundtrip       10000
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Example with count and tolerance:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation       proj=merc
+accept          12 55
+roundtrip       10000 5 mm
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B direction <direction>
+The \fI\%direction\fP command specifies in which direction an operation
+is performed. This can either be \fBforward\fP or \fBinverse\fP\&. An example of
+this is seen below where it is tested that a symmetrical transformation
+pipeline returns the same results in both directions.
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation proj=pipeline zone=32 step
+          proj=utm  ellps=GRS80 step
+          proj=utm  ellps=GRS80 inv
+tolerance 0.1 mm
+
+accept 12 55 0 0
+expect 12 55 0 0
+
+# Now the inverse direction (still same result: the pipeline is symmetrical)
+
+direction inverse
+expect 12 55 0 0
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The default direction is “forward”.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B ignore <error code>
+This is especially
+useful in test cases that rely on a grid that is not guaranteed to be
+available. Below is an example of that situation.
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+operation proj=hgridshift +grids=nzgd2kgrid0005.gsb ellps=GRS80
+tolerance 1 mm
+ignore    pjd_err_failed_to_load_grid
+accept    172.999892181021551 \-45.001620431954613
+expect    173                 \-45
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+See \fBgie \-l\fP for a list of error codes that can be ignored.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B require_grid <grid_name>
+Checks the availability of the grid <grid_name>. If it is not found, then
+all \fI\%accept\fP/\fI\%expect\fP pairs until the next
+\fI\%operation\fP will be skipped.
+\fI\%require_grid\fP can be repeated several times to specify several grids whose
+presence is required.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B echo <text>
+Add user defined text to the output stream. See the example below.
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+<gie>
+echo ** Mercator projection tests **
+operation +proj=merc
+accept  0   0
+expect  0   0
+</gie>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+which returns
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+Reading file \(aqtest.gie\(aq
+** Mercator projection test **
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+total:  1 tests succeeded,  0 tests skipped,  0 tests failed.
+\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B skip
+Skip any test after the first occurrence of \fI\%skip\fP\&. In the example below only
+the first test will be performed. The second test is skipped. This feature is mostly
+relevant for debugging when writing new test cases.
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+<gie>
+operation proj=merc
+accept  0   0
+expect  0   0
+skip
+accept  0   1
+expect  0   110579.9
+</gie>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SH BACKGROUND
+.sp
+More importantly than being an acronym for “Geospatial Integrity Investigation
+Environment”, gie were also the initials, user id, and USGS email address of
+Gerald Ian Evenden (1935–2016), the geospatial visionary, who, already in the
+1980s, started what was to become the PROJ of today.
+.sp
+Gerald’s clear vision was that map projections are \fIjust special functions\fP\&.
+Some of them rather complex, most of them of two variables, but all of them
+\fIjust special functions\fP, and not particularly more special than the \fBsin()\fP,
+\fBcos()\fP, \fBtan()\fP, and \fBhypot()\fP already available in the C standard library.
+.sp
+And hence, according to Gerald, \fIthey should not be particularly much harder
+to use\fP, for a programmer, than the \fBsin()\fP’s, \fBtan()\fP’s and
+\fBhypot()\fP’s so readily available.
+.sp
+Gerald’s ingenuity also showed in the implementation of the vision, where
+he devised a comprehensive, yet simple, system of key\-value pairs for
+parameterising a map projection, and the highly flexible \fBPJ\fP struct, storing
+run\-time compiled versions of those key\-value pairs, hence making a map
+projection function call, \fBpj_fwd(PJ, point)\fP, as easy as a traditional function
+call like \fBhypot(x,y)\fP\&.
+.sp
+While today, we may have more formally well defined metadata systems (most
+prominent the OGC WKT2 representation), nothing comes close being as easily
+readable (“human compatible”) as Gerald’s key\-value system. This system in
+particular, and the PROJ system in general, was Gerald’s great gift to anyone
+using and/or communicating about geodata.
+.sp
+It is only reasonable to name a program, keeping an eye on the
+integrity of the PROJ system, in honour of Gerald.
+.sp
+So in honour, and hopefully also in the spirit, of Gerald Ian Evenden
+(1935–2016), this is the Geospatial Integrity Investigation Environment.
+.SH SEE ALSO
+.sp
+\fBproj(1)\fP, \fBcs2cs(1)\fP, \fBcct(1)\fP, \fBgeod(1)\fP
+.SH BUGS
+.sp
+A list of know bugs can be found at \fI\%https://github.com/OSGeo/proj.4/issues\fP
+where new bug reports can be submitted to.
+.SH HOME PAGE
+.sp
+\fI\%https://proj4.org/\fP
+.SH AUTHOR
+Thomas Knudsen
+.SH COPYRIGHT
+1983-2018
+.\" Generated by docutils manpage writer.
+.

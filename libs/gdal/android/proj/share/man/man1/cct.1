@@ -1,0 +1,268 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "CCT" "1" "Sep 10, 2018" "5.2.0" "PROJ.4"
+.SH NAME
+cct \- Coordinate Conversion and Transformation
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+\fBcct\fP [ \fB\-cIostvz\fP [ args ] ] \fI+opts[=arg]\fP file[s]
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+\fBcct\fP a 4D equivalent to the \fBproj\fP projection program,
+performs transformation coordinate systems on a set of input points. The
+coordinate system transformation can include translation between projected
+and geographic coordinates as well as the application of datum shifts.
+.sp
+The following control parameters can appear in any order:
+.INDENT 0.0
+.TP
+.B \-c <x,y,z,t>
+Specify input columns for (up to) 4 input parameters. Defaults to 1,2,3,4.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-d <n>
+.UNINDENT
+.sp
+New in version 5.2.0: Specify the number of decimals in the output.
+
+.INDENT 0.0
+.TP
+.B \-I
+Do the inverse transformation.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-o <output file name>, \-\-output=<output file name>
+Specify the name of the output file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t <time>, \-\-time=<time>
+Specify a fixed observation \fItime\fP to be used for all input data.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-z <height>, \-\-height=<height>
+Specify a fixed observation \fIheight\fP to be used for all input data.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s <n>, \-\-skip\-lines=<n>
+New in version 5.1.0.
+
+.sp
+Skip the first \fIn\fP lines of input. This applies to any kind of input, whether
+it comes from \fBSTDIN\fP, a file or interactive user input.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v, \-\-verbose
+Write non\-essential, but potentially useful, information to stderr.
+Repeat for additional information (\fB\-vv\fP, \fB\-vvv\fP, etc.)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-version
+Print version number.
+.UNINDENT
+.sp
+The \fI+args\fP arguments are associated with coordinate operation parameters.
+Usage varies with operation.
+.sp
+\fBcct\fP is an acronym meaning \fICoordinate Conversion and Transformation\fP\&.
+.sp
+The acronym refers to definitions given in the OGC 08\-015r2/ISO\-19111
+standard “Geographical Information – Spatial Referencing by Coordinates”,
+which defines two different classes of \fIcoordinate operations\fP:
+.sp
+\fICoordinate Conversions\fP, which are coordinate operations where input
+and output datum are identical (e.g. conversion from geographical to
+cartesian coordinates) and
+.sp
+\fICoordinate Transformations\fP, which are coordinate operations where
+input and output datums differ (e.g. change of reference frame).
+.SH EXAMPLES
+.INDENT 0.0
+.IP 1. 3
+The operator specs describe the action to be performed by \fBcct\fP\&. So
+the following script
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+echo 12 55 0 0 | cct +proj=utm +zone=32 +ellps=GRS80
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+will transform the input geographic coordinates into UTM zone 32 coordinates.
+Hence, the command
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+echo 12 55 | cct \-z0 \-t0 +proj=utm +zone=32 +ellps=GRS80
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Should give results comparable to the classic \fBproj\fP command
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+echo 12 55 | proj +proj=utm +zone=32 +ellps=GRS80
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP 2. 3
+Convert geographical input to UTM zone 32 on the GRS80 ellipsoid:
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cct +proj=utm +ellps=GRS80 +zone=32
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP 3. 3
+Roundtrip accuracy check for the case above:
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cct +proj=pipeline +proj=utm +ellps=GRS80 +zone=32 +step +step +inv
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP 4. 3
+As (2) but specify input columns for longitude, latitude, height and time:
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cct \-c 5,2,1,4 +proj=utm +ellps=GRS80 +zone=32
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP 5. 3
+As (2) but specify fixed height and time, hence needing only 2 cols in
+input:
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+cct \-t 0 \-z 0 +proj=utm +ellps=GRS80 +zone=32
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.IP 6. 3
+Auxiliary data following the coordinate input is forward to the output
+stream:
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ echo 12 56 100 2018.0 auxiliary data | cct +proj=merc
+1335833.8895   7522963.2411      100.0000     2018.0000 auxiliary data
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH BACKGROUND
+.sp
+\fBcct\fP also refers to Carl Christian Tscherning (1942–2014),
+professor of Geodesy at the University of Copenhagen, mentor and advisor
+for a generation of Danish geodesists, colleague and collaborator for
+two generations of global geodesists, Secretary General for the
+International Association of Geodesy, IAG (1995–2007), fellow of the
+American Geophysical Union (1991), recipient of the IAG Levallois Medal
+(2007), the European Geosciences Union Vening Meinesz Medal (2008), and
+of numerous other honours.
+.sp
+\fIcct\fP, or Christian, as he was known to most of us, was recognized for his
+good mood, his sharp wit, his tireless work, and his great commitment to
+the development of geodesy – both through his scientific contributions,
+comprising more than 250 publications, and by his mentoring and teaching
+of the next generations of geodesists.
+.sp
+As Christian was an avid Fortran programmer, and a keen Unix connoisseur,
+he would have enjoyed to know that his initials would be used to name a
+modest Unix style transformation filter, hinting at the tireless aspect
+of his personality, which was certainly one of the reasons he accomplished
+so much, and meant so much to so many people.
+.sp
+Hence, in honour of \fIcct\fP (the geodesist) this is \fBcct\fP (the program).
+.SH SEE ALSO
+.sp
+\fBproj(1)\fP, \fBcs2cs(1)\fP, \fBgeod(1)\fP, \fBgie(1)\fP
+.SH BUGS
+.sp
+A list of know bugs can be found at \fI\%https://github.com/OSGeo/proj.4/issues\fP
+where new bug reports can be submitted to.
+.SH HOME PAGE
+.sp
+\fI\%https://proj4.org/\fP
+.SH AUTHOR
+Thomas Knudsen
+.SH COPYRIGHT
+1983-2018
+.\" Generated by docutils manpage writer.
+.
