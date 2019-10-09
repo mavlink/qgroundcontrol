@@ -95,6 +95,7 @@ public:
     double  altPercent      (void) const { return _altPercent; }
     double  terrainPercent  (void) const { return _terrainPercent; }
     bool    terrainCollision(void) const { return _terrainCollision; }
+    bool    terrainCustomDEM(void) const { return _terrainCustomDEM; }
     double  azimuth         (void) const { return _azimuth; }
     double  distance        (void) const { return _distance; }
     bool    isCurrentItem   (void) const { return _isCurrentItem; }
