@@ -64,7 +64,6 @@ addons:
     - libgstreamer-plugins-base1.0-dev
     - libgstreamer1.0-0:amd64
     - libgstreamer1.0-dev
-    - libsdl2-dev
     - libudev-dev
     - wget
 
@@ -79,6 +78,11 @@ before_install:
         export JOBS=$((`cat /proc/cpuinfo | grep -c ^processor`+1));
     elif [ "${TRAVIS_OS_NAME}" = "osx" ]; then
         export JOBS=$((`sysctl -n hw.ncpu`+1));
+    fi
+
+  # Linux needs sdl2 but not android
+  - if [ "${SPEC}" = "linux-g++-64" ]; then
+        sudo apt-get install -y libsdl2-dev;
     fi
 
 install:
