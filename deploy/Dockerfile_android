@@ -16,6 +16,8 @@ ENV DISPLAY=:99
 ENV QMAKESPEC=android-clang
 ENV QT_PATH /opt/Qt
 ENV QT_PLATFORM=android_armv7
+ENV QGC_ANDROID_GSTREAMER_URL=https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2
+ENV QGC_ANDROID_GSTREAMER_PATH=/opt/gstreamer-1.0-android-universal-1.14.4
 ENV ANDROID_HOME=/opt/android-sdk
 ENV ANDROID_NDK_ARCH=arch-arm
 ENV ANDROID_NDK_EABI=llvm
@@ -31,6 +33,7 @@ ENV ANDROID_NDK_TOOLCHAIN=${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_TOOLCHAIN
 
 ENV PATH=${QT_PATH}/${QT_VERSION}/${QT_PLATFORM}/bin:${ANDROID_NDK_TOOLCHAIN}/${ANDROID_NDK_TOOLCHAIN_PREFIX}/bin:${ANDROID_NDK_ROOT}/toolchains/${ANDROID_NDK_EABI}/prebuilt/${ANDROID_NDK_HOST}/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
 ENV PATH=/usr/lib/ccache:${PATH}
+ENV SHADOW_BUILD_DIR=/tmp/shadow_build_dir
 
 RUN	dpkg --add-architecture i386 \
 	&& apt-get update && apt-get -y --quiet --no-install-recommends install \
@@ -62,6 +65,7 @@ RUN	dpkg --add-architecture i386 \
 		wget \
 		xvfb \
 		zlib1g:i386 \
+		bzip2 \
 	&& apt-get -y autoremove \
 	&& apt-get clean autoclean \
 	&& rm -rf /var/lib/apt/lists/{apt,dpkg,cache,log} /tmp/* /var/tmp/*
@@ -75,14 +79,18 @@ RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/official_releases/qt/
 	&& rm -rf /tmp/*
 
 # Download & unpack android SDK
-RUN curl -Lo /tmp/sdk-tools.zip 'https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip' \
+RUN curl --silent -Lo /tmp/sdk-tools.zip 'https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip' \
 	&& mkdir -p ${ANDROID_HOME} && unzip -q /tmp/sdk-tools.zip -d ${ANDROID_HOME} && rm -f /tmp/sdk-tools.zip \
 	&& yes | sdkmanager --licenses && sdkmanager --verbose "platforms;${SDK_PLATFORM}" "build-tools;${SDK_BUILD_TOOLS}" ${SDK_PACKAGES}
 
 # Download & unpack android NDK
-RUN mkdir /tmp/android && cd /tmp/android && curl -Lo ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux-x86_64.zip" \
-	&& unzip -q ndk.zip && mv android-ndk-* $ANDROID_NDK_ROOT && chmod -R +rX $ANDROID_NDK_ROOT \
+RUN mkdir /tmp/android && curl --silent -Lo /tmp/android/ndk.zip "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux-x86_64.zip" \
+	&& unzip -q /tmp/android/ndk.zip -d /tmp/android/ && mv /tmp/android/android-ndk-* $ANDROID_NDK_ROOT && chmod -R +rX $ANDROID_NDK_ROOT \
 	&& rm -rf /tmp/android
+
+ENV QGC_ANDROID_GSTREAMER_URL=https://gstreamer.freedesktop.org/data/pkg/android/1.14.4/gstreamer-1.0-android-universal-1.14.4.tar.bz2
+ENV QGC_ANDROID_GSTREAMER_PATH=/opt/gstreamer-1.0-android-universal-1.14.4
+RUN curl --silent -Lo /tmp/gstreamer-android.tar.bz2 ${QGC_ANDROID_GSTREAMER_URL} && mkdir ${QGC_ANDROID_GSTREAMER_PATH} && tar jxf /tmp/gstreamer-android.tar.bz2 -C ${QGC_ANDROID_GSTREAMER_PATH} && rm -f /tmp/gstreamer-android.tar.bz2
 
 # Reconfigure locale
 RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales

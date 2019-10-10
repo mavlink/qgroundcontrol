@@ -15,11 +15,13 @@ ENV QT_PATH /opt/Qt
 ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
 
 ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+ENV SHADOW_BUILD_DIR=/tmp/shadow_build_dir
 
 RUN yum -y install epel-release
-RUN yum -y upgrade \
+RUN yum -y upgrade
 RUN yum -y groupinstall \
-        'Development Tools' \
+        'Development Tools'
+
 RUN yum -y install\
         ca-certificates \
         ccache \
@@ -28,30 +30,22 @@ RUN yum -y install\
         espeak \
         git \
         libXext-devel \
-        $(repoquery --qf '%{name}' -a gstreamer1-* | awk '{ print $1 }' | grep -v gstreamer1.0-hybris) \
         SDL2-devel \
         SDL2 \
         mesa-libGL-devel \
+        mesa-libGLU-devel \
         libudev-devel \
         make \
         pkgconfig \
         speech-dispatcher \
         wget \
-        fuse \
         kmod \
         rsync \
+        openssl \
         openssl-devel \
         libXScrnSaver \
-        ccache \
         fuse \
-        fuse-devel
-
-COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
-
-# Download Qt toolchains
-RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run"
-
-RUN yum -y install\
+        fuse-devel \
         freetype.i686 \
         freetype \
         freetype-devel \
@@ -59,6 +53,14 @@ RUN yum -y install\
         fontconfig-devel \
         libstdc++ \
         libX11
+
+# Install gstreamer dependencies
+RUN yum -y --skip-broken install gstreamer1*
+
+COPY deploy/scripts/extract-qt-installer.sh /tmp/qt/
+
+# Download Qt toolchains
+RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${QT_VERSION}" | cut -d. -f 1-2)/${QT_VERSION}/qt-opensource-linux-x64-${QT_VERSION}.run"
 
 # Unpack Qt toolchains & clean
 RUN QT_PACKAGE_VER="$(echo "${QT_VERSION}" | tr -d .)" QT_CI_PACKAGES=qt,qt.qt5.${QT_PACKAGE_VER},qt.qt5.${QT_PACKAGE_VER}.gcc_64,qt.qt5.${QT_PACKAGE_VER}.qtcharts,qt.qt5.${QT_PACKAGE_VER}.qtvirtualkeyboard,qt.qt5.5124.qtnetworkauth /tmp/qt/extract-qt-installer.sh /tmp/qt/installer.run "$QT_PATH" \
@@ -68,6 +70,17 @@ RUN QT_PACKAGE_VER="$(echo "${QT_VERSION}" | tr -d .)" QT_CI_PACKAGES=qt,qt.qt5.
 # create user with id 1001 (jenkins docker workflow default)
 RUN useradd --shell /bin/bash -u 1001 -c "" -m user && usermod -a -G dialout user
 
+# Compile OpenSSL 1.1.1.c
+RUN cd /usr/local/src/ \
+    && wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz \
+    && tar -xf openssl-1.1.1c.tar.gz \
+    && cd openssl-1.1.1c \
+    && ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib \
+    && make \
+    && make install \
+    && mkdir -p ${QT_PATH}/Tools/OpenSSL/binary/lib/ && cp -f /usr/local/ssl/lib/libcrypto.so.1.1 ${QT_PATH}/Tools/OpenSSL/binary/lib/ \
+    && cp -f /usr/local/ssl/lib/libssl.so.1.1 ${QT_PATH}/Tools/OpenSSL/binary/lib/
+
 # create and start as LOCAL_USER_ID
 COPY deploy/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -75,3 +88,4 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/bin/bash"]
 
 ENV DEBIAN_FRONTEND teletype
+

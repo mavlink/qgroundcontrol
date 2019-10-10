@@ -2,14 +2,27 @@ language: cpp
 
 env:
   global:
-    - SHADOW_BUILD_DIR=/tmp/shadow_build_dir
-    - CONFIG=installer
-    - RELEASE_DIR=/tmp/release
-    - DOCKER_USER=auterionci
+    - CONFIG="installer"
+    - RELEASE_DIR="/tmp/release"
+    - DOCKER_USER="auterionci"
     # encrypted DOCKER_PASS
     - secure: "urD4DJ5N7e2AJOfyaWysLigaCc4DwZT7v3NRLTw5339XOXN9388dT65FhW0/HPOisUxOP50ejUKZNhTiGaMAH516xZAj+i0vWWsNYUeF8y5GS76ycuQtafhM6OAyx5zIe7Hsi6GYltDbNgrYzN6W5aMuFKvX0QZJpeEd9qO1D73HQVYeiL83+18U1LBltnJ1KkNDMS9yJIR4th5PnDPKQz4K5LgneswnCkTy0JJbIWTL5nCd9TMedDeQnciMlch9w2GpzgqpfcPCmpVM9/tAzcrFW82esxpbD/knbGBRK9ynV9xJRi7DuXzjLFiQULMWylTdQcR0WhpHmETGTQm1Tdb8Fgtcp7gEqe4DS8unfQoghEyrz0edEwRKs1YoEKXbpQ5ITddUiBk3JJHoBdgeZExDf4katM7IyAxN3Ecr9lvmgDhipiLHAebnV3NoCghj+dWvabd1AfWAhvPpdgtXTUK49AGYVjMYXABACTRmG9nqFdIfXlNNXF5YPrkqmgUBXtyUz0yV1wcvZ1GUXGwruFK1hs7WVGq6BvNitb+tBiQ7nJdpsIN95WhDLhqG3WToYdjhDFBBXmswnjdqpavxWt9zIJZO3HUQ4V122Qq9HmdMYcuWiFN7qwNEHZ6yCZLKS6ry3zh/lmTu6+7j3tu9xMtEG1uKDFumknrsFE+S0Yw="
-    - CONTAINER_NAME=builder_container
+    - CONTAINER_NAME="builder_container"
     - SH="docker exec -it $CONTAINER_NAME bash -c"
+    - SHADOW_BUILD_DIR="/tmp/shadow_build_dir"
+    - QGC_CUSTOM_APP_NAME="AGS"
+    - QGC_CUSTOM_GENERIC_NAME="Auterion Ground Station"
+    - QGC_CUSTOM_BINARY_NAME="AuterionGS"
+    - QGC_CUSTOM_LINUX_START_SH="$PWD/custom/deploy/qgroundcontrol-start.sh"
+    - QGC_CUSTOM_APP_ICON="$PWD/custom/res/src/Auterion_Icon.png"
+    - QGC_CUSTOM_APP_ICON_NAME="Auterion_Icon"
+    - GIT_USER="Auterion_CI"
+    - GIT_EMAIL="auterion_ci@auterion.com"
+    - CCACHE_DIR="$HOME/.ccache"
+    - PROJECT_ROOT="$PWD"
+
+cache: ccache
+
 git:
   depth: false
   submodules: false
@@ -19,48 +32,69 @@ git:
   dist: xenial
   services: docker
   sudo: required
-  env:
-    - DOCKERFILE=Dockerfile_linux
-    - DOCKER_IMAGE=auterion/ags_builder_linux
   install:
-    - docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+    - echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
     - docker pull $DOCKER_IMAGE || true
     - docker build --pull --cache-from $DOCKER_IMAGE -f deploy/$DOCKERFILE -t $DOCKER_IMAGE .
-    - docker run --name $CONTAINER_NAME --rm -td -v `pwd`:`pwd` -w `pwd` $DOCKER_IMAGE
+    - docker run --privileged --name $CONTAINER_NAME --rm -td  -e PROJECT_ROOT="$PROJECT_ROOT" -e CCACHE_DIR="$CCACHE_DIR"
+      -e QGC_CUSTOM_APP_NAME="$QGC_CUSTOM_APP_NAME" -e QGC_CUSTOM_GENERIC_NAME="$QGC_CUSTOM_GENERIC_NAME"
+      -e QGC_CUSTOM_BINARY_NAME="$QGC_CUSTOM_BINARY_NAME" -e QGC_CUSTOM_LINUX_START_SH="$QGC_CUSTOM_LINUX_START_SH"
+      -e QGC_CUSTOM_APP_ICON="$QGC_CUSTOM_APP_ICON" -e QGC_CUSTOM_APP_ICON_NAME="$QGC_CUSTOM_APP_ICON_NAME"
+      -v `pwd`:`pwd` -v "$CCACHE_DIR:$CCACHE_DIR" -w `pwd` $DOCKER_IMAGE
   script:
-    - $SH "mkdir $SHADOW_BUILD_DIR; cd $SHADOW_BUILD_DIR; qmake -r $PWD/qgroundcontrol.pro CONFIG+=$CONFIG"
-    - $SH "cd $SHADOW_BUILD_DIR; make -j`nproc --all`"
-    - mkdir $RELEASE_DIR
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/package/ $RELEASE_DIR
+    - $SH 'ccache -z'
+    - $SH 'mkdir $SHADOW_BUILD_DIR && cd $SHADOW_BUILD_DIR && qmake -r $PROJECT_ROOT/qgroundcontrol.pro CONFIG+=$CONFIG && make -j`nproc --all`'
+    - $SH 'ccache -s'
   after_success:
-    - if ([ "$TRAVIS_BRANCH" == "master" ]; then
-      docker tag $DOCKER_IMAGE:$COMMIT $DOCKER_IMAGE; docker push $DOCKER_IMAGE
-      fi
-
-  # TODO: replaced by Docker builds or refactor?
-  #before_deploy:
-  #  # create linux appimage
-  #  - cd ${TRAVIS_BUILD_DIR}
-  #  - if [[ "${CONFIG}" = "installer" ]]; then
-  #    ./deploy/create_linux_appimage.sh ${TRAVIS_BUILD_DIR} ${SHADOW_BUILD_DIR}/release ${SHADOW_BUILD_DIR}/release/package;
-  #    fi
+    - docker push $DOCKER_IMAGE
+  before_deploy:
+    - mkdir $RELEASE_DIR
+    # create linux appimage
+    - $SH './deploy/create_linux_appimage.sh $PROJECT_ROOT $SHADOW_BUILD_DIR/release $SHADOW_BUILD_DIR/release'
+    # copy the AppImage from container to the build host
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR
+    - mv $RELEASE_DIR/$QGC_CUSTOM_BINARY_NAME.AppImage $RELEASE_DIR/$APPIMAGE_BINARY_NAME
+    - chmod +x $RELEASE_DIR/$APPIMAGE_BINARY_NAME
+    # Set up git user name and tag this commit
+    - git config --local user.name "$GIT_USER"
+    - git config --local user.email "$GIT_EMAIL"
+    - export TRAVIS_TAG=$($SH 'export version=$(< $SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt) && echo $version') && echo $TRAVIS_TAG
+    - git tag $TRAVIS_TAG
 
 matrix:
   include:
     - name: Linux Installer
       <<: *template_linux
+      env:
+        - DOCKERFILE=Dockerfile_linux
+        - DOCKER_IMAGE=auterion/ags_builder_linux
+        #to rename the duplicated AuterionGS.AppImage name during Github Release deploy, avoid overwrite
+        - APPIMAGE_BINARY_NAME="AuterionGS_linux.AppImage"
     - name: CentOS Installer
       <<: *template_linux
       env:
         - DOCKERFILE=Dockerfile_centos
         - DOCKER_IMAGE=auterion/ags_builder_centos
+        #to rename the duplicated AuterionGS.AppImage name during Github Release deploy, avoid overwrite
+        - APPIMAGE_BINARY_NAME="AuterionGS_centos.AppImage"
     - name: Android Installer
       <<: *template_linux
       env:
         - DOCKERFILE=Dockerfile_android
         - DOCKER_IMAGE=auterion/ags_builder_android
-      # TODO: still required? if yes move into dockerfile
-      #before_script:
+      before_script:
+        - $SH 'ln -snf $QGC_ANDROID_GSTREAMER_PATH ./'
+      before_deploy:
+        - mkdir $RELEASE_DIR
+        # copy the apk from container to the build host
+        - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/release/android-build//build/outputs/apk/android-build-debug.apk $RELEASE_DIR
+        # Set up git user name and tag this commit
+        - git config --local user.name "$GIT_USER"
+        - git config --local user.email "$GIT_EMAIL"
+        # TODO, the echo commands can be removed after the tagging is running stable
+        - export TRAVIS_TAG=$($SH 'export version=$(< $SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt) && echo $version') && echo $TRAVIS_TAG
+        - git tag $TRAVIS_TAG
+      # TODO: This is a build time action. Update it to work with custom
       #  - cd ${TRAVIS_BUILD_DIR}
       #  # insert QGC version in AndroidManifest.xml
       #  -  git remote set-branches origin 'master'
@@ -74,14 +108,14 @@ matrix:
 #      env:
 #        - CONFIG=debug
 #        - DOCKERFILE=Dockerfile_linux
+#        - DOCKER_IMAGE=auterion/ags_builder_linux
 #        - QT_FATAL_WARNINGS=1
 #      script:
-#        - docker exec -it $CONTAINER_NAME bash -c "lsb_release -a"
 #      # TODO:
 #      #  # unit tests linux
-#      #  - mkdir -p ~/.config/QtProject/
-#      #  - cp ${TRAVIS_BUILD_DIR}/test/qtlogging.ini ~/.config/QtProject/
-#      #  - ./debug/qgroundcontrol-start.sh --unittest
+#      #  - $SH 'mkdir -p $PWD/.config/QtProject/'
+#      #  - $SH 'cp $PWD/test/qtlogging.ini $PWD/.config/QtProject/'
+#      #  - $SH './debug/qgroundcontrol-start.sh --unittest'
 #      #before_deploy: skip
 #    - name: OSX Installer
 #      os: osx
@@ -114,31 +148,33 @@ matrix:
 before_install:
   # inject CI User github OAuth Token stored as env in Travis-CI Project
   - echo -e "machine github.com\n  login $CI_USER_TOKEN" > ~/.netrc
-  - git submodule update --init --recursive
+  - git submodule update --init --recursive --force
 
-#TODO: finalize release process
 .template_deploy: &template_deploy
   provider: releases
   api_key:
     secure: pPLTR3o8zgPwzbDH6C2Z1qHXtDxpSTtPT0gT0N4/Emf1d39vkCT0iQKlZjUQL/7CqunC7/9RTauoc8jZh2oSFpVbf2XaJjdUX/yOf0ZWDGEye/FsWi6v7LkwZUlDzT81SPHCRc0AjHvi4WdEjdT4uMuriisDx+pKVl/cg5Ofwfb3FD2nMug1vGImoLU0ue47Uqxwn5XGc76PD1N7zIzNzYs7w4Y1vFVbHZwNrix6uCReYn9I5StIBiVBMBciZHL1Y3dGIiyfnMod29/jfWuL4VsT/u1HDH0sXDv6d3gvPJWXOuA2LWXEy7N+gopVj/NeEDj1XJT04AN9hzPydllqd++PeSk5a1DUpAiYDd8deQB2VUlV6fHIkE92ljkoSb+pO5TNdcPUCpsXl/CH5LncFnPnJG6PRSPBZSkY9QiehtFEzpQRTCCjNeVnY5RgFyqRfXUHBI3NwylRr76J+JJibIwVMYLDguV73/T2noB3gEMDJZYdz1uv3nry6E4CHmsOZdGkHQi6DsbSxIjTI2XL+fpaKS0xaslchv9iyJBDj2YkRcTSfyxhevumWAvoXMB+yp8eH9LhJauL0SYgTdg5dsWUeFImd4BopFhiEbbuN43e/fxU5kUJb2LrMuc22fLPJjG4g7FJMsywmoebAcg90a66jTD8DMJi3A/Nb0KDCVY=
   file_glob: true
   file:
-    - $RELEASE_DIR/package/QGroundControl.*
+    - $RELEASE_DIR/*
   skip_cleanup: true
 
 deploy:
-  # release a version when on master and commit is tagged
+  # release a stable version when a commit is tagged with prefix "v*'
   - <<: *template_deploy
     on:
-      tags: true
-      condition: $CONFIG = installer
-  # pre-release a Release Candidate on any branch except master based on a tag
+      branch: master
+      condition: "$TRAVIS_TAG =~ ^v*$ && $CONFIG == installer"
+  #  # pre-release a version for each commit with prefix 'pr-*' on any branch except master
   - <<: *template_deploy
+    name: $TRAVIS_BRANCH
     prerelease: true
     overwrite: true
     on:
-      tags: true
-      condition: $TRAVIS_TAG =~ ^rc$
+      all_branches: true
+      branch:
+        - /^pr-$/
+      condition: $CONFIG == installer
 
 notifications:
   slack:

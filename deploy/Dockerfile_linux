@@ -17,6 +17,7 @@ ENV QT_PATH /opt/Qt
 ENV QT_DESKTOP $QT_PATH/${QT_VERSION}/gcc_64
 
 ENV PATH /usr/lib/ccache:$QT_DESKTOP/bin:$PATH
+ENV SHADOW_BUILD_DIR=/tmp/shadow_build_dir
 
 RUN apt-get update \
         && apt-get -y --quiet --no-install-recommends install \
@@ -71,8 +72,8 @@ RUN curl -Lo /tmp/qt/installer.run "https://download.qt.io/archive/qt/$(echo "${
 RUN locale-gen en_US.UTF-8 && dpkg-reconfigure locales
 
 # Compile OpenSSL 1.1.1.c
-RUN    cd /usr/local/src/ \
-    && sudo wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz \
+RUN cd /usr/local/src/ \
+    && wget https://www.openssl.org/source/openssl-1.1.1c.tar.gz \
     && tar -xf openssl-1.1.1c.tar.gz \
     && cd openssl-1.1.1c \
     && ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl shared zlib \

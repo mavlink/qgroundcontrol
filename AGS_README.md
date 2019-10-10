@@ -1,7 +1,7 @@
 # Auterion Ground Control Station
 
 [![Releases](https://img.shields.io/github/v/release/Auterion/auterion-qgroundcontrol.svg)](https://github.com/Auterion/auterion-qgroundcontrol/releases)
-[![Travis Build Status](https://travis-ci.org/Auterion/auterion-qgroundcontrol.svg?branch=master)](https://travis-ci.org/Auterion/auterion-qgroundcontrol)
+[![Travis Build Status](https://travis-ci.com/Auterion/auterion-qgroundcontrol.svg?token=3v8n3uzgrQ9bqFByAxSF&branch=master)](https://travis-ci.com/Auterion/auterion-qgroundcontrol)
 [![Appveyor Build Status](https://ci.appveyor.com/api/projects/status/crxcm4qayejuvh6c/branch/master?svg=true)](https://ci.appveyor.com/project/Auterion/auterion-qgroundcontrol)
 
 
