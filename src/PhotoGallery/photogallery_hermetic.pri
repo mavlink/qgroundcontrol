@@ -8,9 +8,11 @@ SOURCES += \
     $$PWD/AsyncDownloadPhotoTrigger.cc \
     $$PWD/PhotoFileStore.cc \
     $$PWD/PhotoGalleryModel.cc \
+    $$PWD/PhotoGalleryView.cc \
 
 HEADERS += \
     $$PWD/AbstractPhotoTrigger.h \
     $$PWD/AsyncDownloadPhotoTrigger.h \
     $$PWD/PhotoFileStore.h \
     $$PWD/PhotoGalleryModel.h \
+    $$PWD/PhotoGalleryView.h \
