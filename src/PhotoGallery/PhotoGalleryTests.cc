@@ -9,6 +9,7 @@
 
 #include "AsyncDownloadPhotoTrigger.h"
 #include "PhotoFileStore.h"
+#include "PhotoGalleryModel.h"
 
 #include <QtTest/QtTest>
 
@@ -204,14 +205,26 @@ private:
     std::vector<std::string> m_seen_request_uris;
 };
 
-std::string createJPEGImage(int width, int height)
+QByteArray createJPEGImageByteArray(int width, int height)
 {
     QImage image(width, height, QImage::Format_ARGB32);
     QByteArray ba;
     QBuffer buffer(&ba);
     buffer.open(QIODevice::WriteOnly);
     image.save(&buffer, "JPEG");
+    return ba;
+}
+
+std::string createJPEGImage(int width, int height)
+{
+    QByteArray ba = createJPEGImageByteArray(width, height);
     return std::string(ba.begin(), ba.end());
+}
+
+void verifyImage(const QImage & image, int width, int height)
+{
+    QCOMPARE(image.width(), width);
+    QCOMPARE(image.height(), height);
 }
 
 void verifyImage(const PhotoFileStore & store, const QString & id,
@@ -220,8 +233,7 @@ void verifyImage(const PhotoFileStore & store, const QString & id,
     auto data = store.read(id);
     QVERIFY(data.canConvert<QByteArray>());
     QImage image = QImage::fromData(data.value<QByteArray>());
-    QCOMPARE(image.width(), width);
-    QCOMPARE(image.height(), height);
+    verifyImage(image, width, height);
 }
 
 void
@@ -266,6 +278,7 @@ private slots:
     void testPhotoTriggerAbortEarly();
     void testPhotoTriggerDownloadFail();
     void testPhotoUnsolicitedDownload();
+    void testPhotoGalleryModel();
 };
 
 /// Verify photo store interacts correctly with filesystem.
@@ -512,6 +525,56 @@ void PhotoGalleryTests::testPhotoUnsolicitedDownload()
     }
 
     verifyImage(store, "foo.jpg", 16, 16);
+}
+
+void PhotoGalleryTests::testPhotoGalleryModel()
+{
+    QTemporaryDir temp_dir;
+    QVERIFY(temp_dir.isValid());
+
+    setFileContents(temp_dir.filePath("2019-09-01.jpg"), createJPEGImageByteArray(16, 16));
+    setFileContents(temp_dir.filePath("2019-09-02.jpg"), createJPEGImageByteArray(17, 17));
+
+    PhotoFileStore store;
+    PhotoGalleryModel model(&store);
+
+    using index_set_t = std::set<PhotoGalleryModelIndex>;
+    index_set_t added, removed;
+    QObject::connect(
+        &model, &PhotoGalleryModel::added,
+        [&added](const index_set_t & indices) {
+            added = indices;
+        });
+    QObject::connect(
+        &model, &PhotoGalleryModel::removed,
+        [&removed](const index_set_t & indices) {
+            removed = indices;
+        });
+
+    store.setLocation(temp_dir.path());
+    QCOMPARE(added, (index_set_t{0, 1}));
+    QCOMPARE(removed, (index_set_t{}));
+
+    auto id4 = store.add("2019-09-04.jpg", createJPEGImageByteArray(15, 15));
+    QCOMPARE(added, (index_set_t{2}));
+
+    auto id3 = store.add("2019-09-03.jpg", createJPEGImageByteArray(14, 14));
+    QCOMPARE(added, (index_set_t{2}));
+
+    store.remove({"2019-09-02.jpg"});
+    QCOMPARE(removed, (index_set_t{1}));
+
+    auto pic0 = model.data(0);
+    QCOMPARE(pic0.id, "2019-09-01.jpg");
+    verifyImage(*pic0.image, 16, 16);
+
+    auto pic1 = model.data(1);
+    QCOMPARE(pic1.id, "2019-09-03.jpg");
+    verifyImage(*pic1.image, 14, 14);
+
+    auto pic2 = model.data(2);
+    QCOMPARE(pic2.id, "2019-09-04.jpg");
+    verifyImage(*pic2.image, 15, 15);
 }
 
 QTEST_MAIN(PhotoGalleryTests)
