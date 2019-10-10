@@ -113,7 +113,8 @@ MacBuild {
         -framework SDL2
 } else:LinuxBuild {
     PKGCONFIG = sdl2
-    LIBS+= -lgdal
+    LIBS+= -lgdal#/external/gdal/lib/libgdal.a -ldl -lpthread -lgeos_c -ljson-c
+	INCLUDEPATH+= /external/gdal/include/
 } else:WindowsBuild {
     INCLUDEPATH += C:/OSGeo4W/include
     LIBS += -LC:/OSGeo4W/lib
@@ -150,6 +151,9 @@ AndroidBuild {
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/OpenSSL/Android/arch-armeabi-v7a/lib/libssl.so
         INCLUDEPATH += $$BASEDIR/libs/gdal/android/include
         ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.so
+        ANDROID_EXTRA_LIBS += $$BASEDIR/libs/gdal/android/proj/lib/libproj.so
+        LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.so
+        LIBS += $$BASEDIR/libs/gdal/android/proj/lib/libproj.so
         #LIBS += $$BASEDIR/libs/gdal/android/lib/libgdal.a
 
     } else:equals(ANDROID_TARGET_ARCH, arm64-v8a)  {

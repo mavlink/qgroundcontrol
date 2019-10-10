@@ -324,10 +324,15 @@ int GeotiffTerrainTile::xyTolonlat(const QGeoCoordinate& c) {
 int GeotiffTerrainTile::lonlatToPixel(const QGeoCoordinate& c, int xy[2]) {
     double lon = c.longitude();
     double lat = c.latitude();
+
+
     int    ret = lonlatToxyTransformation->Transform(1, &lon, &lat, NULL);
 
-    xy[0] = (int)(((lon - adfGeoTransform[0]) / adfGeoTransform[1]));
-    xy[1] = (int)(((lat - adfGeoTransform[3]) / adfGeoTransform[5]));
+    if(adfGeoTransform[1] == 0 || adfGeoTransform[5] == 0){
+        qCDebug(TerrainTileLog) << "Division by zero !";
+    }
+    xy[0] = (int)((lon - adfGeoTransform[0]) / adfGeoTransform[1]);
+    xy[1] = (int)((lat - adfGeoTransform[3]) / adfGeoTransform[5]);
 
     return ret;
 }
@@ -361,19 +366,37 @@ GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
         _isValid = false;
     }
 
-    if (poDataset->GetProjectionRef() != NULL) {
+    if (poDataset->GetProjectionRef() == NULL) {
+        qCDebug(TerrainTileLog) << "GeotiffTerrainTile " << "GetProjectionRef KO";
         _isValid = false;
     }
     if (poDataset->GetGeoTransform(adfGeoTransform) != CE_None) {
+        qCDebug(TerrainTileLog) << "GeotiffTerrainTile " << "GetGeoTransform KO" << poDataset->GetGeoTransform(adfGeoTransform);
         _isValid = false;
     }
+    qCDebug(TerrainTileLog) << "GeotiffTerrainTile " << "GetGeoTransform :" << 
+        adfGeoTransform[0] << " " << 
+        adfGeoTransform[1] << " " << 
+        adfGeoTransform[2] << " " << 
+        adfGeoTransform[3] << " " << 
+        adfGeoTransform[4] << " " << 
+        adfGeoTransform[5];
     _isValid = true;
 
     OGRSpatialReference src;
     src.SetWellKnownGeogCS("WGS84");
     OGRSpatialReference dest(poDataset->GetProjectionRef());
+
     lonlatToxyTransformation = OGRCreateCoordinateTransformation(&src, &dest);
     xyTolonlatTransformation = OGRCreateCoordinateTransformation(&dest, &src);
+    if(lonlatToxyTransformation == NULL){
+        qCDebug(TerrainTileLog) << "GeotiffTerrainTile : OGRCreateCoordinateTransformation lonlatToxyTransformation failed" ;
+        _isValid = false;
+    }
+    if(xyTolonlatTransformation == NULL){
+        qCDebug(TerrainTileLog) << "GeotiffTerrainTile : OGRCreateCoordinateTransformation xyTolonlatTransformation failed" ;
+        _isValid = false;
+    }
 
     // Fetch a raster band
 
@@ -386,7 +409,7 @@ GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
     _minElevation = minElev_d;
     _maxElevation = maxElev_d;
 
-    qDebug() << "GeotiffTerrainTile" << minElev_d << " " << maxElev_d;
+    qCDebug(TerrainTileLog) << "GeotiffTerrainTile" << minElev_d << " " << maxElev_d;
 }
 
 double GeotiffTerrainTile::elevation(const QGeoCoordinate& coordinate) {

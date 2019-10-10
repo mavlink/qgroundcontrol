@@ -28,7 +28,7 @@ cp -r /external/proj /scripts
 
 cd /scripts
 
-
+## Compile GDAL
 
 git clone https://github.com/OSGeo/gdal.git
 cd gdal/gdal
