@@ -101,8 +101,8 @@ public :
     AirmapTerrainTile(QByteArray byteArray);
     ~AirmapTerrainTile();
     bool isIn(const QGeoCoordinate& coordinate) override;
-    double elevation(const QGeoCoordinate& coordinate);
-    QGeoCoordinate centerCoordinate(void);
+    double elevation(const QGeoCoordinate& coordinate) override;
+    QGeoCoordinate centerCoordinate(void) override;
 
   /**
    * Serialize data
@@ -150,9 +150,9 @@ class GeotiffTerrainTile : public TerrainTile {
 public :
     GeotiffTerrainTile(QByteArray byteArray);
     ~GeotiffTerrainTile();
-    bool isIn(const QGeoCoordinate& coordinate);
-    double elevation(const QGeoCoordinate& coordinate);
-    QGeoCoordinate centerCoordinate(void);
+    bool isIn(const QGeoCoordinate& coordinate) override;
+    double elevation(const QGeoCoordinate& coordinate) override;
+    QGeoCoordinate centerCoordinate(void) override;
 
   static QByteArray serialize(QByteArray input);
 
@@ -176,9 +176,9 @@ class GeotiffDatasetTerrainTile : public TerrainTile {
 public :
     GeotiffDatasetTerrainTile(QByteArray byteArray);
     ~GeotiffDatasetTerrainTile();
-    bool isIn(const QGeoCoordinate& coordinate);
-    double elevation(const QGeoCoordinate& coordinate);
-    QGeoCoordinate centerCoordinate(void);
+    bool isIn(const QGeoCoordinate& coordinate) override;
+    double elevation(const QGeoCoordinate& coordinate) override;
+    QGeoCoordinate centerCoordinate(void) override;
 
   static QByteArray serialize(QByteArray input);
 

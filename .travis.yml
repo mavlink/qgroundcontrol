@@ -82,7 +82,7 @@ before_install:
 
   # Linux needs sdl2 but not android
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        sudo apt-get install -y libsdl2-dev;
+        sudo apt-get install -y libsdl2-dev libgdal-dev;
     fi
 
 install:

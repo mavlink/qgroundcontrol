@@ -350,12 +350,13 @@ GeotiffTerrainTile::GeotiffTerrainTile(QByteArray buff) {
     poDataset =
         (GDALDataset*)GDALOpen(fname.toStdString().c_str(), GA_ReadOnly);
     if (poDataset == NULL) {
-
-    const char* filename = "vsiFile";
-    VSIFileFromMemBuffer(filename, (unsigned char*)(buff.data()), buff.size(), true);
-        // Try if buff is an image array
-    poDataset =
-        (GDALDataset*)GDALOpen(filename, GA_ReadOnly);
+    // TODO This part is WIP : if buff is not a filename then it's a cached buffer that contains a geotiff,
+    // parse it using VSI Mem Buffer :
+    //const char* filename = "vsiFile";
+    //VSIFileFromMemBuffer(filename, (unsigned char*)(buff.data()), buff.size(), true);
+    // Try if buff is an image array
+    //poDataset =
+    //    (GDALDataset*)GDALOpen(filename, GA_ReadOnly);
 
         _isValid = false;
         
