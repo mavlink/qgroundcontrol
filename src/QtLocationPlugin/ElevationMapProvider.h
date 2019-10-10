@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MapProvider.h"
+#include <cmath>
 
 #include <QByteArray>
 #include <QMutex>
