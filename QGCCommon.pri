@@ -168,6 +168,10 @@ exists ($$PWD/.git) {
 DEFINES += GIT_VERSION=\"\\\"$$GIT_VERSION\\\"\"
 DEFINES += EIGEN_MPL2_ONLY
 
+# The files with a ".in" extension suffix are copied to the builddir by stripping the .in suffix,
+# and most importantly by expanding (substituting) any qmake variable defined in the file
+QMAKE_SUBSTITUTES += deploy/build_version.txt.in
+
 # Installer configuration
 
 installer {
