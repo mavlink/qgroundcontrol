@@ -58,8 +58,8 @@ git:
     # Set up git user name and tag this commit
     - git config --local user.name "$GIT_USER"
     - git config --local user.email "$GIT_EMAIL"
-    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt $RELEASE_DIR
-    - export TRAVIS_TAG=v$(< $RELEASE_DIR/custom_build_version.txt)
+    - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
+    - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
     - git tag $TRAVIS_TAG
 
 matrix:
@@ -92,8 +92,8 @@ matrix:
         # Set up git user name and tag this commit
         - git config --local user.name "$GIT_USER"
         - git config --local user.email "$GIT_EMAIL"
-        - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt $RELEASE_DIR
-        - export TRAVIS_TAG=v$(< $RELEASE_DIR/custom_build_version.txt)
+        - docker cp $CONTAINER_NAME:$SHADOW_BUILD_DIR/custom/deploy/custom_build_version.txt /tmp
+        - export TRAVIS_TAG=v$(< /tmp/custom_build_version.txt)
         - git tag $TRAVIS_TAG
       # TODO: This is a build time action. Update it to work with custom
       #  - cd ${TRAVIS_BUILD_DIR}
