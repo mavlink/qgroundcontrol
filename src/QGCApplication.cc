@@ -96,6 +96,7 @@
 #include "GeoTagController.h"
 #include "LogReplayLink.h"
 #include "VehicleObjectAvoidance.h"
+#include "TrajectoryPoints.h"
 
 #if defined(QGC_ENABLE_PAIRING)
 #include "PairingManager.h"
@@ -161,6 +162,8 @@ QGCApplication::QGCApplication(int &argc, char* argv[], bool unitTesting)
     , _runningUnitTests         (unitTesting)
 {
     _app = this;
+    _msecsElapsedTime.start();
+
 #ifdef Q_OS_LINUX
 #ifndef __mobile__
     if (!_runningUnitTests) {
@@ -347,7 +350,7 @@ void QGCApplication::_exitWithError(QString errorMessage)
     pEngine->rootContext()->setContextProperty("errorMessage", errorMessage);
     pEngine->load(QUrl(QStringLiteral("qrc:/qml/ExitWithErrorWindow.qml")));
     // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit, Qt::QueuedConnection);
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 }
 
 void QGCApplication::setLanguage()
@@ -508,6 +511,7 @@ void QGCApplication::_initCommon()
 
     qmlRegisterUncreatableType<QGCMapPolygon>       ("QGroundControl.FlightMap",            1, 0, "QGCMapPolygon",              kRefOnly);
     qmlRegisterUncreatableType<QGCGeoBoundingCube>  ("QGroundControl.FlightMap",            1, 0, "QGCGeoBoundingCube",         kRefOnly);
+    qmlRegisterUncreatableType<TrajectoryPoints>    ("QGroundControl.FlightMap",            1, 0, "TrajectoryPoints",           kRefOnly);
 
     qmlRegisterType<QGCMapCircle>                   ("QGroundControl.FlightMap",            1, 0, "QGCMapCircle");
 
@@ -552,7 +556,7 @@ bool QGCApplication::_initForNormalAppBoot()
     QSettings settings;
 
     // Exit main application when last window is closed
-    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit, Qt::QueuedConnection);
+    connect(this, &QGCApplication::lastWindowClosed, this, QGCApplication::quit);
 
     _qmlAppEngine = toolbox()->corePlugin()->createRootWindow(this);
 

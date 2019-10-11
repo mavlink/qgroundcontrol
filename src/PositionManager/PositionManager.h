@@ -35,17 +35,16 @@ public:
         NmeaGPS
     };
 
-    QGeoCoordinate gcsPosition(void) { return _gcsPosition; }
+    QGeoCoordinate      gcsPosition         (void) { return _gcsPosition; }
+    qreal               gcsHeading          (void) { return _gcsHeading; }
+    QGeoPositionInfo    geoPositionInfo     (void) const { return _geoPositionInfo; }
+    void                setPositionSource   (QGCPositionSource source);
+    int                 updateInterval      (void) const;
+    void                setNmeaSourceDevice (QIODevice* device);
 
-    qreal gcsHeading() { return _gcsHeading; }
+    // Overrides from QGCTool
+    void setToolbox(QGCToolbox* toolbox) override;
 
-    void setPositionSource(QGCPositionSource source);
-
-    int updateInterval() const;
-
-    void setToolbox(QGCToolbox* toolbox);
-
-    void setNmeaSourceDevice(QIODevice* device);
 
 private slots:
     void _positionUpdated(const QGeoPositionInfo &update);
@@ -57,9 +56,10 @@ signals:
     void positionInfoUpdated(QGeoPositionInfo update);
 
 private:
-    int             _updateInterval;
-    QGeoCoordinate  _gcsPosition;
-    qreal           _gcsHeading;
+    int                 _updateInterval;
+    QGeoPositionInfo    _geoPositionInfo;
+    QGeoCoordinate      _gcsPosition;
+    qreal               _gcsHeading;
 
     QGeoPositionInfoSource*     _currentSource;
     QGeoPositionInfoSource*     _defaultSource;

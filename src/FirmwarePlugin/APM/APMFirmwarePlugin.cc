@@ -1086,3 +1086,47 @@ void APMFirmwarePlugin::_handleRCChannelsRaw(Vehicle* vehicle, mavlink_message_t
                 &channels);
 }
 
+void APMFirmwarePlugin::_sendGCSMotionReport(Vehicle* vehicle, FollowMe::GCSMotionReport& motionReport, uint8_t estimationCapabilities)
+{
+    if (!vehicle->homePosition().isValid()) {
+        static bool sentOnce = false;
+        if (!sentOnce) {
+            sentOnce = true;
+            qgcApp()->showMessage(tr("Follow failed: Home position not set."));
+        }
+        return;
+    }
+
+    if (!(estimationCapabilities & (FollowMe::POS | FollowMe::VEL))) {
+        static bool sentOnce = false;
+        if (!sentOnce) {
+            sentOnce = true;
+            qWarning() << "APMFirmwarePlugin::_sendGCSMotionReport estimateCapabilities" << estimationCapabilities;
+            qgcApp()->showMessage(tr("Follow failed: Ground station cannot provide required position information."));
+        }
+        return;
+    }
+
+    MAVLinkProtocol* mavlinkProtocol = qgcApp()->toolbox()->mavlinkProtocol();
+
+    mavlink_global_position_int_t globalPositionInt;
+    memset(&globalPositionInt, 0, sizeof(globalPositionInt));
+
+    globalPositionInt.time_boot_ms =    static_cast<uint32_t>(qgcApp()->msecsSinceBoot());
+    globalPositionInt.lat =             motionReport.lat_int;
+    globalPositionInt.lon =             motionReport.lon_int;
+    globalPositionInt.alt =             static_cast<int32_t>(motionReport.altMetersAMSL * 1000);                                        // mm
+    globalPositionInt.relative_alt =    static_cast<int32_t>((motionReport.altMetersAMSL - vehicle->homePosition().altitude()) * 1000); // mm
+    globalPositionInt.vx =              static_cast<int16_t>(motionReport.vxMetersPerSec * 100);                                        // cm/sec
+    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vyMetersPerSec * 100);                                        // cm/sec
+    globalPositionInt.vy =              static_cast<int16_t>(motionReport.vzMetersPerSec * 100);                                        // cm/sec
+    globalPositionInt.hdg =             UINT16_MAX;
+
+    mavlink_message_t message;
+    mavlink_msg_global_position_int_encode_chan(static_cast<uint8_t>(mavlinkProtocol->getSystemId()),
+                                          static_cast<uint8_t>(mavlinkProtocol->getComponentId()),
+                                          vehicle->priorityLink()->mavlinkChannel(),
+                                          &message,
+                                          &globalPositionInt);
+    vehicle->sendMessageOnLink(vehicle->priorityLink(), message);
+}
