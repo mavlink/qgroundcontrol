@@ -439,7 +439,7 @@ PairingManager::_setConnectingChannel(const QString& name, int channel)
 QString
 PairingManager::_random_string(uint length)
 {
-    std::srand(static_cast<unsigned int>(std::time(nullptr)));
+    srand(static_cast<unsigned int>(time(nullptr)));
     auto randchar = []() -> char
     {
         const char charset[] =
