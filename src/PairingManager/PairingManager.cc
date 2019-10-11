@@ -25,7 +25,8 @@ static const qint64  min_time_between_connects = 5000;
 static const int     uploadRetries = 5;
 static const int     pairRetryWait = 3000;
 static const QString tempPrefix = "temp";
-static const QString chSeparator = "   ";
+static const QString chSeparator = "\t";
+static const QString timeFormat = "yyyy-MM-dd HH:mm:ss";
 
 //-----------------------------------------------------------------------------
 PairingManager::PairingManager(QGCApplication* app, QGCToolbox* toolbox)
@@ -117,6 +118,21 @@ PairingManager::_getDeviceChannel(const QString& name)
 }
 
 //-----------------------------------------------------------------------------
+QDateTime
+PairingManager::_getDeviceConnectTime(const QString& name)
+{
+    if (_devices.contains(name)) {
+        QJsonObject jsonObj = _devices[name].object();
+        QString ts = jsonObj["LastConnection"].toString();
+        if (!ts.isEmpty()) {
+            return QDateTime::fromString(ts, timeFormat);
+        }
+    }
+
+    return QDateTime::currentDateTime().addYears(-10);
+}
+
+//-----------------------------------------------------------------------------
 QStringList
 PairingManager::connectedDeviceNameList()
 {
@@ -129,6 +145,13 @@ PairingManager::connectedDeviceNameList()
             list.append(tr("CH:") + QString::number(_getDeviceChannel(i.key())).rightJustified(2, '0') + chSeparator + i.key());
         }
     }
+    std::sort(list.begin(), list.end(),
+        [this](const QString &name1, const QString &name2)
+        {
+            QDateTime dt1 = _getDeviceConnectTime(extractName(name1));
+            QDateTime dt2 = _getDeviceConnectTime(extractName(name2));
+            return dt1 > dt2;
+        });
 
     return list;
 }
@@ -144,6 +167,14 @@ PairingManager::pairedDeviceNameList()
             list.append(tr("CH:") + QString::number(_getDeviceChannel(name)).rightJustified(2, '0') + chSeparator + name);
         }
     }
+    std::sort(list.begin(), list.end(),
+        [this](const QString &name1, const QString &name2)
+        {
+            QDateTime dt1 = _getDeviceConnectTime(extractName(name1));
+            QDateTime dt2 = _getDeviceConnectTime(extractName(name2));
+            return dt1 > dt2;
+        });
+
     return list;
 }
 
@@ -178,8 +209,15 @@ PairingManager::_createUDPLink(const QString& name, quint16 port)
     LinkInterface* link = _toolbox->linkManager()->createConnectedLink(linkConfig);
     connect(link, &LinkInterface::activeChanged, this, &PairingManager::_linkActiveChanged, Qt::QueuedConnection);
     _connectedDevices[name] = link;
+
+    QJsonDocument jsonDoc = _devices[name];
+    QJsonObject jsonObj = jsonDoc.object();
+    jsonObj.insert("LastConnection", QDateTime::currentDateTime().toString(timeFormat));
+    jsonDoc.setObject(jsonObj);
+    _devices[name] = jsonDoc;
+    _writeJson(jsonDoc, _pairingCacheFile(name));
+
     _updateConnectedDevices();
-    emit deviceListChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -191,7 +229,6 @@ PairingManager::_removeUDPLink(const QString& name)
         _connectedDevices.remove(name);
         _updateConnectedDevices();
         _toolbox->videoManager()->stopVideo();
-        emit deviceListChanged();
     }
 }
 
@@ -423,6 +460,7 @@ PairingManager::_updateConnectedDevices()
     }
     _gcsJsonDoc.setObject(jsonObj);
     _writeJson(_gcsJsonDoc, _pairingCacheFile("gcs"));
+    emit deviceListChanged();
 }
 
 //-----------------------------------------------------------------------------

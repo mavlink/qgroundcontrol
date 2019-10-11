@@ -180,6 +180,7 @@ private:
     void                    _setConnectingChannel       (const QString& name, int channel);
     QString                 _removeRSAkey               (const QString& s);
     int                     _getDeviceChannel           (const QString& name);
+    QDateTime               _getDeviceConnectTime       (const QString& name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
