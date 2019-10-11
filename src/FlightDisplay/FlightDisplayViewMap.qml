@@ -31,11 +31,6 @@ FlightMap {
     allowVehicleLocationCenter: !_keepVehicleCentered
     planView:                   false
 
-    onVisibleChanged: {
-        // I don't know what is causing this to become invisible when a connection is dropped
-        if(!visible) visible = true
-    }
-
     property alias  scaleState: mapScale.state
 
     // The following properties must be set by the consumer
@@ -190,7 +185,7 @@ FlightMap {
         line.width: 3
         line.color: "red"
         z:          QGroundControl.zOrderTrajectoryLines
-        visible:    true//mainIsMap
+        visible:    mainIsMap
 
         Connections {
             target:                 QGroundControl.multiVehicleManager
@@ -320,9 +315,9 @@ FlightMap {
         property bool inGotoFlightMode: activeVehicle ? activeVehicle.flightMode === activeVehicle.gotoFlightMode : false
 
         onInGotoFlightModeChanged: {
-            if (!inGotoFlightMode && visible) {
+            if (!inGotoFlightMode && gotoLocationItem.visible) {
                 // Hide goto indicator when vehicle falls out of guided mode
-                visible = false
+                gotoLocationItem.visible = false
             }
         }
 
@@ -330,7 +325,7 @@ FlightMap {
             target: mainWindow
             onActiveVehicleChanged: {
                 if (!activeVehicle) {
-                    visible = false
+                    gotoLocationItem.visible = false
                 }
             }
         }
@@ -368,7 +363,7 @@ FlightMap {
             target: mainWindow
             onActiveVehicleChanged: {
                 if (!activeVehicle) {
-                    visible = false
+                    orbitMapCircle.visible = false
                 }
             }
         }
