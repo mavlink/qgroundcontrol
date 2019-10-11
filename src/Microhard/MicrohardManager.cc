@@ -361,7 +361,7 @@ MicrohardManager::setProductName(QString product)
 
     _channelLabels.clear();
     for (int i = _channelMin; i <= _channelMax; i++) {
-        _channelLabels.append(QString::number(i) +
+        _channelLabels.append(QString::number(i).rightJustified(2, '0') +
                               " - " +
                               QString::number(i + frequencyStart - _channelMin) +
                               " MHz");

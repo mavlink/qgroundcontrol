@@ -81,23 +81,25 @@ public:
 #ifdef __android__
     static void     setNativeMethods            (void);
 #endif
-    Q_INVOKABLE void connectToDevice            (const QString& name);
-    Q_INVOKABLE void removePairedDevice         (const QString& name);
-    Q_INVOKABLE void setConnectingChannel       (int channel);
+    Q_INVOKABLE void    connectToDevice         (const QString& name);
+    Q_INVOKABLE void    removePairedDevice      (const QString& name);
+    Q_INVOKABLE void    setConnectingChannel    (int channel);
+    Q_INVOKABLE QString extractName             (const QString& name);
+    Q_INVOKABLE QString extractChannel          (const QString& name);
 
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
-    Q_INVOKABLE void startNFCScan();
+    Q_INVOKABLE void    startNFCScan();
 #endif    
 #if QGC_GST_MICROHARD_ENABLED
-    Q_INVOKABLE void startMicrohardPairing();
+    Q_INVOKABLE void    startMicrohardPairing();
 #endif
-    Q_INVOKABLE void stopPairing();
-    Q_INVOKABLE void disconnectDevice           (const QString& name);
+    Q_INVOKABLE void    stopPairing();
+    Q_INVOKABLE void    disconnectDevice        (const QString& name);
 
     Q_PROPERTY(QString          pairingStatusStr        READ pairingStatusStr        NOTIFY pairingStatusChanged)
     Q_PROPERTY(PairingStatus    pairingStatus           READ pairingStatus           NOTIFY pairingStatusChanged)
-    Q_PROPERTY(QStringList      connectedDeviceNameList READ connectedDeviceNameList NOTIFY connectedListChanged)
-    Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList    NOTIFY pairedListChanged)
+    Q_PROPERTY(QStringList      connectedDeviceNameList READ connectedDeviceNameList NOTIFY deviceListChanged)
+    Q_PROPERTY(QStringList      pairedDeviceNameList    READ pairedDeviceNameList    NOTIFY deviceListChanged)
     Q_PROPERTY(QStringList      pairingLinkTypeStrings  READ pairingLinkTypeStrings  CONSTANT)
     Q_PROPERTY(QString          connectedVehicle        READ connectedVehicle        NOTIFY connectedVehicleChanged)
     Q_PROPERTY(bool             errorState              READ errorState              NOTIFY pairingStatusChanged)
@@ -115,8 +117,7 @@ signals:
     void nameListChanged                        ();
     void pairingStatusChanged                   ();
     void setPairingStatus                       (PairingStatus status, const QString& pairingStatus);
-    void connectedListChanged                   ();
-    void pairedListChanged                      ();
+    void deviceListChanged                      ();
     void connectedVehicleChanged                ();
     void firstBootChanged                       ();
     void usePairingChanged                      ();
@@ -132,24 +133,23 @@ private slots:
     void _setEnabled                            ();
 
 private:
-    int                     _nfcIndex = -1;
-    int                     _microhardIndex = -1;
-    PairingStatus           _status = PairingIdle;
-    QString                 _statusString;
-    QString                 _lastConnected;
-    QString                 _encryptionKey;
-    QString                 _publicKey;
-    OpenSSL_AES             _aes;
-    OpenSSL_RSA             _rsa;
-    OpenSSL_RSA             _device_rsa;
-    QJsonDocument           _gcsJsonDoc{};
-    QNetworkAccessManager   _uploadManager;
-    bool                    _firstBoot = true;
-    bool                    _usePairing = false;
-    QMap<QString, qint64>   _devicesToConnect{};
-    QStringList             _deviceList;
-    QTimer                  _reconnectTimer;
-
+    int                           _nfcIndex = -1;
+    int                           _microhardIndex = -1;
+    PairingStatus                 _status = PairingIdle;
+    QString                       _statusString;
+    QString                       _lastConnected;
+    QString                       _encryptionKey;
+    QString                       _publicKey;
+    OpenSSL_AES                   _aes;
+    OpenSSL_RSA                   _rsa;
+    OpenSSL_RSA                   _device_rsa;
+    QJsonDocument                 _gcsJsonDoc{};
+    QMap<QString, QJsonDocument>  _devices{};
+    QNetworkAccessManager         _uploadManager;
+    bool                          _firstBoot = true;
+    bool                          _usePairing = false;
+    QMap<QString, qint64>         _devicesToConnect{};
+    QTimer                        _reconnectTimer;
     QMap<QString, LinkInterface*> _connectedDevices;
 
     QJsonDocument           _createZeroTierConnectJson  (const QVariantMap& remotePairingMap);
@@ -178,7 +178,9 @@ private:
     QJsonDocument           _getPairingJsonDoc          (const QString& name, bool remove = false);
     QVariantMap             _getPairingMap              (const QString& name);
     void                    _setConnectingChannel       (const QString& name, int channel);
-    QString                 _removeRSAkey               (QString s);
+    QString                 _removeRSAkey               (const QString& s);
+    int                     _getDeviceChannel           (const QString& name);
+
 #if defined QGC_ENABLE_NFC || defined QGC_ENABLE_QTNFC
     PairingNFC              pairingNFC;
 #endif
