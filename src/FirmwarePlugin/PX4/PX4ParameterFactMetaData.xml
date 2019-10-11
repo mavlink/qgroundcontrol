@@ -2623,7 +2623,7 @@ Set to 0 to disable heading hold</short_desc>
     <parameter default="50.0" name="FW_R_LIM" type="FLOAT">
       <short_desc>Controller roll limit</short_desc>
       <long_desc>The maximum roll the controller will output.</long_desc>
-      <min>35.0</min>
+      <min>20.0</min>
       <max>65.0</max>
       <unit>deg</unit>
       <decimal>1</decimal>
