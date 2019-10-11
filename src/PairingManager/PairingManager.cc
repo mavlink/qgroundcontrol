@@ -142,7 +142,7 @@ PairingManager::connectedDeviceNameList()
     while (i.hasNext()) {
         i.next();
         if (i.value()) {
-            list.append(tr("CH:") + QString::number(_getDeviceChannel(i.key())).rightJustified(2, '0') + chSeparator + i.key());
+            list.append(tr("Channel: ") + QString::number(_getDeviceChannel(i.key())).rightJustified(2, '0') + chSeparator + i.key());
         }
     }
     std::sort(list.begin(), list.end(),
@@ -164,7 +164,7 @@ PairingManager::pairedDeviceNameList()
     for (QString name : _devices.keys())
     {
         if (!_connectedDevices.contains(name)) {
-            list.append(tr("CH:") + QString::number(_getDeviceChannel(name)).rightJustified(2, '0') + chSeparator + name);
+            list.append(tr("Channel: ") + QString::number(_getDeviceChannel(name)).rightJustified(2, '0') + chSeparator + name);
         }
     }
     std::sort(list.begin(), list.end(),
