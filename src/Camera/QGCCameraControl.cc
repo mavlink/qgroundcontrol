@@ -71,8 +71,6 @@ const char* QGCCameraControl::kCAM_APERTURE    = "CAM_APERTURE";
 const char* QGCCameraControl::kCAM_WBMODE      = "CAM_WBMODE";
 const char* QGCCameraControl::kCAM_MODE        = "CAM_MODE";
 
-static QGCCameraControl::CameraMode _gNvCamMode = QGCCameraControl::CameraMode::CAM_MODE_PHOTO;
-
 //-----------------------------------------------------------------------------
 QGCCameraOptionExclusion::QGCCameraOptionExclusion(QObject* parent, QString param_, QString value_, QStringList exclusions_)
     : QObject(parent)
@@ -319,8 +317,6 @@ QGCCameraControl::_setCameraMode(CameraMode mode)
 {
     if(_cameraMode != mode) {
         _cameraMode = mode;
-        if(vendor() == "NextVision")
-            _gNvCamMode = mode;
         emit cameraModeChanged();
         //-- Update stream status
         _streamStatusTimer.start(1000);
@@ -390,12 +386,6 @@ QGCCameraControl::takePhoto()
                 photoPath += + "/" + QDateTime::currentDateTime().toString("yyyy-MM-dd_hh.mm.ss.zzz") + ".jpg";
                 qgcApp()->toolbox()->videoManager()->videoReceiver()->grabImage(photoPath);
             }
-            if(vendor() == "NextVision") {
-                // Hack: NV doesn't respond to taking capture
-                QTimer::singleShot(500, [&](){
-                    _setPhotoStatus(PHOTO_CAPTURE_IDLE);
-                });
-            }
             return true;
         }
     }
@@ -436,9 +426,6 @@ QGCCameraControl::startVideo()
             return false;
         }
         if(videoStatus() != VIDEO_CAPTURE_STATUS_RUNNING) {
-            if(vendor() == "NextVision") {
-                _setVideoStatus(VIDEO_CAPTURE_STATUS_RUNNING);
-            }
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
                 MAV_CMD_VIDEO_START_CAPTURE,                // Command id
@@ -457,9 +444,6 @@ QGCCameraControl::stopVideo()
 {
     if(!_resetting) {
         qCDebug(CameraControlLog) << "stopVideo()";
-        if(vendor() == "NextVision") {
-            _setVideoStatus(VIDEO_CAPTURE_STATUS_STOPPED);
-        }
         if(videoStatus() == VIDEO_CAPTURE_STATUS_RUNNING) {
             _vehicle->sendMavCommand(
                 _compID,                                    // Target component
@@ -720,14 +704,12 @@ QGCCameraControl::_mavCommandResult(int vehicleId, int component, int command, i
                 _captureStatusTimer.start(1000);
                 break;
             case MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS:
-                qDebug() << "MAV_CMD_REQUEST_CAMERA_CAPTURE_STATUS: receive/response";
                 _captureInfoRetries = 0;
                 break;
             case MAV_CMD_REQUEST_STORAGE_INFORMATION:
                 _storageInfoRetries = 0;
                 break;
             case MAV_CMD_IMAGE_START_CAPTURE:
-                qDebug() << "MAV_CMD_IMAGE_START_CAPTURE: receive/response";
                 _captureStatusTimer.start(1000);
                 break;
         }
@@ -1472,9 +1454,7 @@ void
 QGCCameraControl::handleSettings(const mavlink_camera_settings_t& settings)
 {
     qCDebug(CameraControlLog) << "handleSettings() Mode:" << settings.mode_id;
-    if(vendor() != "NextVision") {
-        _setCameraMode(static_cast<CameraMode>(settings.mode_id));
-    }
+    _setCameraMode(static_cast<CameraMode>(settings.mode_id));
     qreal z = static_cast<qreal>(settings.zoomLevel);
     qreal f = static_cast<qreal>(settings.focusLevel);
     if(std::isfinite(z) && z != _zoomLevel) {
@@ -2188,12 +2168,4 @@ QGCVideoStreamInfo::update(const mavlink_video_stream_status_t* vs)
         emit infoChanged();
     }
     return changed;
-}
-
-QGCCameraControl::CameraMode
-QGCCameraControl::cameraMode() {
-    if(vendor() == "NextVision")
-        return _gNvCamMode;
-    else
-        return _cameraMode;
 }

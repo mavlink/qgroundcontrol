@@ -1497,7 +1497,6 @@ private:
     float               _curGinmbalYaw  = 0.0f;
     bool                _haveGimbalData = false;
     Joystick*           _activeJoystick = nullptr;
-    QTimer              _gimbalTimer;
 
     int _firmwareMajorVersion;
     int _firmwareMinorVersion;

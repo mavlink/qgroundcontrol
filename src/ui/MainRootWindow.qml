@@ -21,8 +21,6 @@ import QGroundControl.ScreenTools   1.0
 import QGroundControl.FlightDisplay 1.0
 import QGroundControl.FlightMap     1.0
 
-import QtQuick.VirtualKeyboard      2.1
-
 /// Native QML top level window
 ApplicationWindow {
     id:             mainWindow
@@ -144,7 +142,7 @@ ApplicationWindow {
     readonly property int showDialogDefaultWidth:   40  ///< Use for default dialog width
 
     function showComponentDialog(component, title, charWidth, buttons) {
-        var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ((ScreenTools.defaultFontPixelWidth * charWidth) > (mainWindow.width * 0.75)) ? ScreenTools.defaultFontPixelWidth * charWidth : mainWindow.width * 0.75
+        var dialogWidth = charWidth === showDialogFullWidth ? mainWindow.width : ScreenTools.defaultFontPixelWidth * charWidth
         mainWindowDialog.width = dialogWidth
         mainWindowDialog.dialogComponent = component
         mainWindowDialog.dialogTitle = title
@@ -180,14 +178,6 @@ ApplicationWindow {
         }
         onClosed: {
             dlgLoader.source = ""
-        }
-        InputPanel {
-            visible: Qt.inputMethod.visible
-            active: Qt.inputMethod.visible
-
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
         }
     }
 
@@ -278,28 +268,9 @@ ApplicationWindow {
         }
     }
 
-    InputPanel {
-        id: inputPanel
-
-        visible: Qt.inputMethod.visible && !mainWindowDialog.visible
-        active: Qt.inputMethod.visible && !mainWindowDialog.visible
-
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-    }
-
     footer: LogReplayStatusBar {
         visible: QGroundControl.settingsManager.flyViewSettings.showLogReplayStatusBar.rawValue
     }
-
-Item {
-    id: qtkHelper
-
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: parent.top
-    anchors.bottom: inputPanel.visible ? inputPanel.top : parent.bottom
 
     //-------------------------------------------------------------------------
     //-- Fly View
@@ -359,7 +330,6 @@ Item {
         id: rootLoader
         anchors.centerIn: parent
     }
-} // qtkHelper
 
     //-------------------------------------------------------------------------
     //-- Vehicle Messages

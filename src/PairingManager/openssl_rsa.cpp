@@ -225,18 +225,18 @@ OpenSSL_RSA::sign(std::string message)
     }
 
     unsigned char hash[SHA256_DIGEST_LENGTH];
-    unsigned char sign[RSA_size(_rsa_private.get())];
+    std::unique_ptr<unsigned char[]> sign(new unsigned char[static_cast<unsigned int>(RSA_size(_rsa_private.get()))]);
     unsigned int signLen;
 
     SHA256(reinterpret_cast<const unsigned char *>(message.c_str()), message.length() + 1, hash);
 
     // Sign with private key
-    int rc = RSA_sign(NID_sha256, hash, SHA256_DIGEST_LENGTH, sign, &signLen, _rsa_private.get());
+    int rc = RSA_sign(NID_sha256, hash, SHA256_DIGEST_LENGTH, sign.get(), &signLen, _rsa_private.get());
     if (rc != 1) {
         return {};
     }
 
-    std::vector<unsigned char> data(sign, sign + signLen);
+    std::vector<unsigned char> data(sign.get(), sign.get() + signLen);
     return OpenSSL_Base64::encode(data);
 }
 
