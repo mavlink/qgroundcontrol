@@ -51,6 +51,8 @@ signals:
     void    cameraLabelsChanged     ();
     void    currentCameraChanged    ();
     void    streamChanged           ();
+    void imageCaptured (const QString & uri);
+    void imageCaptureFailure();
 
 protected slots:
     virtual void    _vehicleReady           (bool ready);
@@ -83,6 +85,7 @@ protected:
     virtual void    _handleCaptureStatus    (const mavlink_message_t& message);
     virtual void    _handleVideoStreamInfo  (const mavlink_message_t& message);
     virtual void    _handleVideoStreamStatus(const mavlink_message_t& message);
+    virtual void    _handleImageCapture     (const mavlink_message_t& message);
 
 protected:
 
