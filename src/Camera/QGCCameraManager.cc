@@ -97,6 +97,9 @@ QGCCameraManager::_mavlinkMessageReceived(const mavlink_message_t& message)
             case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
                 _handleVideoStreamStatus(message);
                 break;
+            case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
+                _handleImageCapture(message);
+                break;
         }
     }
 }
@@ -355,6 +358,19 @@ QGCCameraManager::_handleVideoStreamStatus(const mavlink_message_t& message)
         mavlink_video_stream_status_t streamStatus;
         mavlink_msg_video_stream_status_decode(&message, &streamStatus);
         pCamera->handleVideoStatus(&streamStatus);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+QGCCameraManager::_handleImageCapture(const mavlink_message_t& message)
+{
+    mavlink_camera_image_captured_t captureStatus;
+    mavlink_msg_camera_image_captured_decode(&message, &captureStatus);
+    if (captureStatus.capture_result == 1) {
+        emit imageCaptured(captureStatus.file_url);
+    } else {
+        emit imageCaptureFailure();
     }
 }
 
