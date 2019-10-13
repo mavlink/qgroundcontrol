@@ -133,6 +133,17 @@ PairingManager::_getDeviceConnectTime(const QString& name)
 }
 
 //-----------------------------------------------------------------------------
+QString
+PairingManager::_getDeviceIP(const QString& name)
+{
+    if (!_devices.contains(name)) {
+        return "";
+    }
+    QJsonObject jsonObj = _devices[name].object();
+    return jsonObj["IP"].toString();
+}
+
+//-----------------------------------------------------------------------------
 QStringList
 PairingManager::connectedDeviceNameList()
 {
@@ -393,6 +404,22 @@ PairingManager::connectToDevice(const QString& name)
 {
     if (name.isEmpty()) {
         return;
+    }
+
+    QString ip = _getDeviceIP(name);
+    // If multiple vehicles share same IP then disconnect
+    for (QString n : _connectedDevices.keys()) {
+        if (ip == _getDeviceIP(n)) {
+            disconnectDevice(n);
+            break;
+        }
+    }
+    // If multiple vehicles share same IP then do not try to autoconnect anymore
+    for (QString n : _devicesToConnect.keys()) {
+        if (ip == _getDeviceIP(n)) {
+            _devicesToConnect.remove(n);
+            break;
+        }
     }
 
     setPairingStatus(PairingConnecting, tr("Connecting to %1").arg(name));
