@@ -82,7 +82,7 @@ before_install:
 
   # Linux needs sdl2 but not android
   - if [ "${SPEC}" = "linux-g++-64" ]; then
-        sudo apt-get install -y libsdl2-dev libgdal-dev;
+        sudo apt-get install -y libsdl2-dev;
     fi
 
 install:
@@ -175,6 +175,10 @@ script:
   # Due to possible bug in Qt 5.11 WarningsAsErrorsOn is off for Linux builds. Hopefully back on once that is resolved.
   - if [ "${SPEC}" = "macx-clang" ]; then
         qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} CONFIG+=WarningsAsErrorsOn -spec ${SPEC};
+    fi
+  - if [ "${SPEC}" = "linux-g++-64" ]; then
+    # Use already compiled GDAL for QGC
+        qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC} INCLUDEPATH+=${TRAVIS_BUILD_DIR}/libs/gdal/linux/include LIBS+= -L${TRAVIS_BUILD_DIR}/libs/gdal/linux/lib/ -lproj;
     else
         qmake -r ${TRAVIS_BUILD_DIR}/qgroundcontrol.pro CONFIG+=${CONFIG} -spec ${SPEC};
     fi

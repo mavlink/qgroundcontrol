@@ -1,0 +1,11 @@
+prefix=/external/proj
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: proj
+Description: Cartographic Projections Library.
+Requires:
+Version: 5.2.0
+Libs: -L${libdir} -lproj
+Cflags: -I${includedir}

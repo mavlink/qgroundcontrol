@@ -24,7 +24,7 @@ CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mt
  --prefix=$PROJECT/external/proj 
 make -j16
 make install
-cp -r /external/proj /scripts
+cp -r /external/proj/* /scripts
 
 cd /scripts
 
@@ -122,4 +122,4 @@ CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mt
 
 make -j8
 make install
-cp -r /external/gdal /scripts
+cp -r /external/gdal/* /scripts
