@@ -42,7 +42,7 @@ CC="arm-linux-androideabi-clang" CXX="arm-linux-androideabi-clang++" CFLAGS="-mt
  --with-libtiff=internal \
  --with-geotiff=internal \
  --with-libjson-c=internal \
- --with-proj \
+ --with-static-proj4=/external/proj/ \
  --with-hide-internal-symbols=yes \
  --with-threads  \
  --with-libz=internal  \
