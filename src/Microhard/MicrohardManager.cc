@@ -10,9 +10,12 @@
 #include "MicrohardManager.h"
 #include "MicrohardSettings.h"
 #include "SettingsManager.h"
-#include "PairingManager.h"
 #include "QGCApplication.h"
 #include "QGCCorePlugin.h"
+
+#ifdef QGC_ENABLE_PAIRING
+#include "PairingManager.h"
+#endif
 
 #include <QSettings>
 
@@ -145,15 +148,17 @@ void
 MicrohardManager::configure()
 {
     if (_mhSettingsLoc) {
+#ifdef QGC_ENABLE_PAIRING
         if (_toolbox->pairingManager()->usePairing()) {
             if (_usePairingSettings) {
                 _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _pairingChannel);
             } else {
                 _mhSettingsLoc->configure(_communicationEncryptionKey, _connectingPower, _connectingChannel);
             }
-        } else {
-            _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _connectingChannel);
+            return;
         }
+#endif
+        _mhSettingsLoc->configure(_encryptionKey, _pairingPower, _connectingChannel);
     }
 }
 
