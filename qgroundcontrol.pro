@@ -407,6 +407,7 @@ INCLUDEPATH += \
     src/FlightMap/Widgets \
     src/FollowMe \
     src/GPS \
+    src/ImageGallery \
     src/Joystick \
     src/PlanView \
     src/MissionManager \
@@ -1371,6 +1372,11 @@ contains (CONFIG, DISABLE_VIDEOSTREAMING) {
 } else {
     include(src/VideoStreaming/VideoStreaming.pri)
 }
+
+#-------------------------------------------------------------------------------------
+# Video Streaming
+
+include(src/PhotoGallery/photogallery.pri)
 
 #-------------------------------------------------------------------------------------
 # Android
