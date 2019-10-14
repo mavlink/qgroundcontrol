@@ -80,6 +80,7 @@ ApplicationWindow {
         analyzeWindow.visible   = false
         flightView.visible      = false
         planViewLoader.visible  = false
+        photoGalleryView.visible = false
         if(isPlanView) {
             toolbar.source  = _planToolbar
         } else {
@@ -110,6 +111,11 @@ ApplicationWindow {
     function showSettingsView() {
         viewSwitch(false)
         settingsWindow.visible = true
+    }
+
+    function showPhotoGalleryView() {
+        viewSwitch(false)
+        photoGalleryView.visible = true
     }
 
     //-------------------------------------------------------------------------
@@ -349,6 +355,15 @@ Item {
         anchors.fill:   parent
         visible:        false
         source:         "AnalyzeView.qml"
+    }
+
+    //-------------------------------------------------------------------------
+    //-- Photo Gallery
+    Loader {
+        id:             photoGalleryView
+        anchors.fill:   parent
+        visible:        false
+        source:         "PhotoGalleryView.qml"
     }
 
     //-------------------------------------------------------------------------
