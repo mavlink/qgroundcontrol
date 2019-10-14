@@ -174,11 +174,11 @@ VideoReceiver::start()
         return;
     }
 
+#if defined(QGC_GST_STREAMING)
     if (_videoSurface) {
         _videoSurface->setLastFrame(0);
     }
 
-#if defined(QGC_GST_STREAMING)
     _stop = false;
 
 #if defined(QGC_GST_TAISYNC_ENABLED) && (defined(__android__) || defined(__ios__))
